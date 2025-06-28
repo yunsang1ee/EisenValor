@@ -11,10 +11,10 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_hWnd = hwnd;
 
 	globalRegistry.Register<IInputGlobal>(InputGlobal::Create());
-	globalRegistry.Register<ITimer>(Timer::Create());
+	globalRegistry.Register<ITimerGlobal>(TimerGlobal::Create());
 
 	globalRegistry.Get<IInputGlobal>();
-	globalRegistry.Get<ITimer>();
+	globalRegistry.Get<ITimerGlobal>();
 	return true;
 }
 

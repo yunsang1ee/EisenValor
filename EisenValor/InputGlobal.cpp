@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "InputSystem.h"
+#include "InputGlobal.h"
 
 void InputGlobal::Initialize()
 {
@@ -9,7 +9,7 @@ void InputGlobal::BeforeUpdate()
 {
 	std::swap(m_InputEventsFront, m_InputEventsBack);
 	m_InputEventsBack.clear();
-	for (const auto [keyIndex, isPressed, isUp] : m_InputEventsFront)
+	for (const auto& [keyIndex, isPressed, isUp] : m_InputEventsFront)
 	{
 		uint8_t mask = 0;
 		if (not isPressed && not isUp)	mask = DInputBits::Down | DInputBits::Pressed;

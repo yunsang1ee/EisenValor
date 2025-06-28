@@ -1,9 +1,12 @@
 #pragma once
-#include "ISystem.h"
+#include "IGlobal.h"
+#include <unordered_map>
+#include <string_view>
 
 template <typename T>
-concept NoCopyMove = !(std::is_copy_constructible_v<T>
-    || std::is_move_constructible_v<T>);
+concept IsRegistrable = IsGlobal<T>
+&& !std::is_copy_constructible_v<T>
+&& !std::is_move_constructible_v<T>;
 
 //class GlobalRegistry {
 //public:
@@ -39,29 +42,45 @@ concept NoCopyMove = !(std::is_copy_constructible_v<T>
 
 class GlobalRegistry {
 public:
-    template<typename Interface>
-        requires IsGlobal<Interface> && NoCopyMove<Interface>
-    Interface& Register(std::unique_ptr<Interface> instance) {
-        assert(instance != nullptr);
-        return *(registry<Interface>() = std::move(instance));
+    using SlotID = std::string_view;
+
+    template<IsRegistrable Interface>
+    static Interface& Register(SlotID id, std::unique_ptr<Interface> instance) {
+        assert(instance != nullptr && "Global: is null instance.");
+        SetActive<Interface>(id);
+        return *(registryMap<Interface>()[id] = std::move(instance));
     }
 
-    template<IsGlobal Interface>
-    Interface& Get() {
-        auto& ptr = registry<Interface>();
+    template<IsRegistrable Interface>
+    static void SetActive(SlotID id) {
+        assert(registryMap<Interface>().count(id));
+        active<Interface>() = id;
+    }
+
+    template<IsRegistrable Interface>
+    static Interface& Get() {
+        auto& ptr = registryMap<Interface>()[active<Interface>()];
         assert(ptr != nullptr && "Global: Not Registered");
         return *ptr;
     }
 
-    template <IsGlobal Interface>
-    void Reset() {
-        registry<Interface>().reset();
+    template<IsRegistrable Interface>
+    static void Reset(SlotID id) {
+        registryMap<Interface>().erase(id);
+        if (active<Interface>() == id)
+            active<Interface>() = {};
     }
 
 private:
-    template<IsGlobal Interface>
-    std::unique_ptr<Interface>& registry() {
-        static std::unique_ptr<Interface> instance;
-        return instance;
+    template<IsRegistrable Interface>
+    static std::unordered_map<SlotID, std::unique_ptr<Interface>>& registryMap() {
+        static std::unordered_map<SlotID, std::unique_ptr<Interface>> map;
+        return map;
+    }
+
+    template<IsRegistrable Interface>
+    static SlotID& active() {
+        static SlotID current{};
+        return current;
     }
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "IInputSystem.h"
+#include "IInputGlobal.h"
 
 class InputGlobal : public GlobalMakerBase<InputGlobal, IInputGlobal> {
 	struct DInputEvent

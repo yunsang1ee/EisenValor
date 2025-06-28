@@ -1,7 +1,7 @@
 #pragma once
-#include "ISystem.h"
+#include "IGlobal.h"
 
-class ITimer : public IGlobal {
+class ITimerGlobal : public IGlobal {
 public:
 	virtual void Initialize() = 0;
 	virtual void Update() = 0;

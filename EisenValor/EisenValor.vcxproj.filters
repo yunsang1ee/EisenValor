@@ -13,20 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Systems">
-      <UniqueIdentifier>{04aafb1e-85c9-497b-9a5d-e3f0468a9dd9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Mocks">
       <UniqueIdentifier>{48fdd436-da4f-458d-864f-f40b5a8d7fee}</UniqueIdentifier>
     </Filter>
     <Filter Include="Interfaces">
       <UniqueIdentifier>{f8f0ee75-deb0-4f05-a00f-07f017fc629a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Systems\InputSystem">
-      <UniqueIdentifier>{7a490342-8cfc-443e-93ac-617349dd5516}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Systems\TimerSystem">
-      <UniqueIdentifier>{7c58dce9-5568-4597-80f6-47383c01b514}</UniqueIdentifier>
     </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{d0555e50-c284-443c-abd7-c952067109d2}</UniqueIdentifier>
@@ -37,30 +28,33 @@
     <Filter Include="Common\Math">
       <UniqueIdentifier>{5102b7f6-7f00-456f-8015-91745736a346}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Global\Globals">
+      <UniqueIdentifier>{04aafb1e-85c9-497b-9a5d-e3f0468a9dd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Global\Globals\InputGlobal">
+      <UniqueIdentifier>{7a490342-8cfc-443e-93ac-617349dd5516}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Global\Globals\TimerGlobal">
+      <UniqueIdentifier>{7c58dce9-5568-4597-80f6-47383c01b514}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="3DGameProgramming.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SystemInterfaces.h">
+    <ClInclude Include="IInputGlobal.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="IInputSystem.h">
-      <Filter>Interfaces</Filter>
+    <ClInclude Include="InputGlobal.h">
+      <Filter>Common\Global\Globals\InputGlobal</Filter>
     </ClInclude>
-    <ClInclude Include="InputSystem.h">
-      <Filter>Systems\InputSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="ISystem.h">
+    <ClInclude Include="IGlobal.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="InputDef.h">
-      <Filter>Systems\InputSystem</Filter>
+      <Filter>Common\Global\Globals\InputGlobal</Filter>
     </ClInclude>
-    <ClInclude Include="ITimer.h">
+    <ClInclude Include="ITimerGlobal.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="GameFramework.h">
@@ -69,8 +63,8 @@
     <ClInclude Include="stdafx.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Systems\TimerSystem</Filter>
+    <ClInclude Include="TimerGlobal.h">
+      <Filter>Common\Global\Globals\TimerGlobal</Filter>
     </ClInclude>
     <ClInclude Include="Global.h">
       <Filter>Common\Global</Filter>
@@ -102,26 +96,35 @@
     <ClInclude Include="Plane.h">
       <Filter>Common\Math</Filter>
     </ClInclude>
+    <ClInclude Include="EisenValor.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalInterfaces.h">
+      <Filter>Common\Global</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="3DGameProgramming.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="InputSystem.cpp">
-      <Filter>Systems\InputSystem</Filter>
+    <ClCompile Include="InputGlobal.cpp">
+      <Filter>Common\Global\Globals\InputGlobal</Filter>
     </ClCompile>
     <ClCompile Include="GameFramework.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Systems\TimerSystem</Filter>
+    <ClCompile Include="TimerGlobal.cpp">
+      <Filter>Common\Global\Globals\TimerGlobal</Filter>
+    </ClCompile>
+    <ClCompile Include="EisenValor.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalInterfaces.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="3DGameProgramming.rc">
+    <ResourceCompile Include="EisenValor.rc">
       <Filter>리소스 파일</Filter>
     </ResourceCompile>
   </ItemGroup>
@@ -129,7 +132,7 @@
     <Image Include="small.ico">
       <Filter>리소스 파일</Filter>
     </Image>
-    <Image Include="3DGameProgramming.ico">
+    <Image Include="EisenValor.ico">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

@@ -1,5 +1,5 @@
 #pragma once
-#include "ISystem.h"
+#include "IGlobal.h"
 #include "InputDef.h"
 
 class IInputGlobal : public IGlobal {

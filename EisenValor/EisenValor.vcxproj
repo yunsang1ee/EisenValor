@@ -144,20 +144,20 @@
     <ClInclude Include="Color.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="Global.h" />
-    <ClInclude Include="IInputSystem.h" />
+    <ClInclude Include="GlobalInterfaces.h" />
+    <ClInclude Include="IInputGlobal.h" />
     <ClInclude Include="InputDef.h" />
-    <ClInclude Include="InputSystem.h" />
+    <ClInclude Include="InputGlobal.h" />
     <ClInclude Include="IntX.h" />
-    <ClInclude Include="ISystem.h" />
-    <ClInclude Include="ITimer.h" />
+    <ClInclude Include="IGlobal.h" />
+    <ClInclude Include="ITimerGlobal.h" />
     <ClInclude Include="Mat4.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="SystemInterfaces.h" />
-    <ClInclude Include="Timer.h" />
+    <ClInclude Include="TimerGlobal.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Vec3.h" />
     <ClInclude Include="Vec4.h" />
@@ -167,7 +167,8 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="GameFramework.cpp" />
-    <ClCompile Include="InputSystem.cpp" />
+    <ClCompile Include="GlobalInterfaces.cpp" />
+    <ClCompile Include="InputGlobal.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -175,7 +176,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="TimerGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />

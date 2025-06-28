@@ -1,5 +1,6 @@
 #pragma once
 #include <concepts>
+#include <memory>
 
 class IGlobal {
 public:
