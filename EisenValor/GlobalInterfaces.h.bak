@@ -6,10 +6,7 @@
 
 namespace Globals
 {
-    struct RegisterAllGlobal
-    {
-        void operator()();
-    };
+    inline void RegisterAllGlobal();
 
     inline IInputGlobal& Input() noexcept {
         return GlobalRegistry::Get<IInputGlobal>();

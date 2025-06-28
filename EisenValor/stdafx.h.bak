@@ -34,16 +34,11 @@
 #include <Mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 
-#include <wrl.h>
 // DirectX
-#include <d3d12.h>
-#include <dxgi1_4.h>
-#include <D3Dcompiler.h>
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
-#include <DXGIDebug.h>
 
 // My
 #include "Math.h"
@@ -58,7 +53,6 @@
 
 namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;
-using Microsoft::WRL::ComPtr;
 
 constexpr size_t kFrameBufferWidth = 1920;
 constexpr size_t kFrameBufferHeight = 1080;

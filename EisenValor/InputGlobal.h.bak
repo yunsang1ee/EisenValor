@@ -28,14 +28,14 @@ public:
 	}
 
 	inline void OnMouseMove(int x, int y) noexcept final {
-		m_MouseState.deltaX = static_cast<float>(x - m_MouseState.x);
-		m_MouseState.deltaY = static_cast<float>(y - m_MouseState.y);
+		m_MouseState.deltaX = x - m_MouseState.x;
+		m_MouseState.deltaY = y - m_MouseState.y;
 		m_MouseState.x = x;
 		m_MouseState.y = y;
 	}
 
 	inline void OnWheelScroll(int delta) noexcept final {
-		m_MouseState.wheelDelta = static_cast<float>(delta);
+		m_MouseState.wheelDelta = delta;
 	}
 #pragma endregion
 
@@ -53,12 +53,16 @@ public:
 	}
 
 	[[nodiscard]] inline int GetWheelScroll() const noexcept final {
-		return static_cast<int>(m_MouseState.wheelDelta);
+		return m_MouseState.wheelDelta;
 	}
 
-	[[nodiscard]] inline DX::XMFLOAT2 GetMousePosition() const noexcept final {
-		return { float(m_MouseState.x), float(m_MouseState.y) };
-	}
+	//[[nodiscard]] inline bool GetMousePosition() const noexcept final {
+	//	return m_MouseState.x, m_MouseState.y;
+	//}
+
+	//[[nodiscard]] inline bool GetMousePosition() const noexcept final {
+	//	return m_MouseState.x, m_MouseState.y;
+	//}
 #pragma endregion
 
 private:

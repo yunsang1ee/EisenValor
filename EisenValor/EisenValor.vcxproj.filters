@@ -120,7 +120,7 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GlobalInterfaces.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Common\Global</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

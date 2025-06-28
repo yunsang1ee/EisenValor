@@ -1,9 +1,11 @@
 #pragma once
+#include "Global.h"
 
 class GameFramework
 {
+	GlobalRegistry globalRegistry;
 public:
-	GameFramework() = default;
+	GameFramework() : globalRegistry{} {}
 
 	bool Initialize(HINSTANCE hInstance, HWND hwnd);
 	void Run();
@@ -15,7 +17,6 @@ public:
 	 
 private:
 	void Update();
-	void FixedUpdate();
 	void LateUpdate();
 	void Render();
 
