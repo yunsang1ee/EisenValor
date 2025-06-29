@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Server.cpp">
+      <Filter>00. Server</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>99. pch</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="00. Server">
+      <UniqueIdentifier>{cd2a2db3-f1f0-4a1b-bf92-80e83ed3fdb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Scripts">
+      <UniqueIdentifier>{0fc7fec9-5f24-426c-b3c1-9055ddde20ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="99. pch">
+      <UniqueIdentifier>{64f719ef-6016-45fe-a3ed-1988873376d4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>99. pch</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Scripts\CopyHeaders.bat">
+      <Filter>98. Scripts</Filter>
+    </None>
+  </ItemGroup>
+</Project>
