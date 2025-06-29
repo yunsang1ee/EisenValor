@@ -1,4 +1,5 @@
 #pragma once
+#include "stdafxClientFramework.h"
 #include "IntX.h"
 #include "Vec2.h"
 #include "Vec3.h"

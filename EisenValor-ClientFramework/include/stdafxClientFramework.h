@@ -72,7 +72,7 @@ inline UINT32 RandomColor()
 	static std::uniform_int_distribution<UINT32> dist(0, 0xFFFFFF);
 	return 0xFF000000 | dist(rng);
 }
-consteval float DegreeToRadian(float degrees){ return degrees * 3.141592654f / 180.0f; }
+consteval float DegreeToRadian(float degrees) { return degrees * 3.141592654f / 180.0f; }
 
 constexpr auto EPSILON = 1.0e-6f;
 

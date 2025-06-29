@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "stdafxClientFramework.h"
 #include "GameFramework.h"
 #include "GlobalInterfaces.h"
 
@@ -19,8 +19,6 @@ void GameFramework::Run()
 {
 	Globals::Timer().Update();
 	Globals::Input().BeforeUpdate();
-	CD3D12_ROOT_PARAMETER rootParam;
-	rootParam.InitAsConstants(50, 0, 0, D3D12_SHADER_VISIBILITY_ALL); // 50°³ÀÇ float (b0)
 
 	if(Globals::Timer().ShouldFixedUpdate())
 		FixedUpdate();

@@ -1,4 +1,5 @@
 #pragma once
+#include "stdafxClientFramework.h"
 
 class GameFramework
 {

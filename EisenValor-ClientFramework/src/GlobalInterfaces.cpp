@@ -1,20 +1,19 @@
-#include "stdafx.h"
+#include "stdafxClientFramework.h"
 #include "GlobalInterfaces.h"
 
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
 
-inline void Globals::RegisterAllGlobal()
+void Globals::RegisterAllGlobal::operator()()
 {
 	static bool isCall{};
 	if (not isCall) isCall = true; else assert(false && "corruptCall");
 
 	GlobalRegistry::Register<IInputGlobal>("main", InputGlobal::Create());
 	GlobalRegistry::Register<ITimerGlobal>("main", TimerGlobal::Create());
-	//GlobalRegistry::Register<ISceneGlobal>("main", TimerGlobal::Create());
-	//GlobalRegistry::Register<ICollisionGlobal>("main", TimerGlobal::Create());
-	//GlobalRegistry::Register<IObejectGlobal>("main", TimerGlobal::Create());
-
+	//GlobalRegistry::Register<ISceneGlobal>("main", ISceneGlobal::Create());
+	//GlobalRegistry::Register<ICollisionGlobal>("main", ICollisionGlobal::Create());
+	//GlobalRegistry::Register<IObejectGlobal>("main", IObejectGlobal::Create());
 	//GlobalRegistry::Register<IRendererGlobal>("main", RendererGlobal::Create());
 	//GlobalRegistry::Register<IDeviceGlobal>("main", DeviceGlobal::Create());
 	//GlobalRegistry::Register<ISwapchainGlobal>("main", SwapchainGlobal::Create());

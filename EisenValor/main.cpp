@@ -1,9 +1,12 @@
-﻿// 3DGameProgramming.cpp : 애플리케이션에 대한 진입점을 정의합니다.
-//
-
-#include "stdafx.h"
+﻿#include "stdafxClient.h"
 #include "EisenValor.h"
-#include "GameFramework.h"
+#include <GameFramework.h>
+
+#ifdef _DEBUG
+#pragma comment(lib, "..\\x64\\Debug\\EisenValor-ClientFramework.lib")
+#else
+#pragma comment(lib, "..\\x64\\Release\\EisenValor-ClientFramework.lib")
+#endif
 
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR szTitle[MAX_LOADSTRING];
