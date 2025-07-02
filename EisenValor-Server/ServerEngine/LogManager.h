@@ -44,7 +44,7 @@ namespace ServerEngine {
 			ofs << oss.str();
 		}
 
-		static void PrintLastError() noexcept;
+		static void PrintLastError(const std::source_location& loc = std::source_location::current()) noexcept;
 	};
 
 }
