@@ -6,4 +6,11 @@
 #pragma comment(lib, "ServerEngine\\Release\\ServerEngine_Release.lib")
 #endif
 
-#include "ServerEngine\\ServerEnginePch.h"
+#include "ServerEnginePch.h"
+#include "TestPackets.h"
+
+namespace Server {
+	class ClientSession;
+}
+
+std::shared_ptr<Server::ClientSession> MakeClientSessionFunc();

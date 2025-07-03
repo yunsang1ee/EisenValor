@@ -40,12 +40,12 @@ int main()
 
 	while(true) {
 		std::string str;
-		std::cin >> str;
+		std::getline(std::cin, str); 
 		CS_CHAT_PACKET sendPkt;
 		sendPkt.packetSize = sizeof(sendPkt);
 		sendPkt.packetType = static_cast<uint16>(PACKET_TYPE::CS_CHAT);
 		memcpy(sendPkt.msg, str.data(), str.size());
-		sendPkt.msg[static_cast<int32>(str.size())] = 0;
+		sendPkt.msg[str.size()] = 0;
 		send(clientSocket, (const char*)(&sendPkt), sizeof(sendPkt), 0);
 	}
 
