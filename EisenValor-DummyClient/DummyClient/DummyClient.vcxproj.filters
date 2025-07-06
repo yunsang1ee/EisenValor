@@ -23,8 +23,5 @@
     <ClInclude Include="pch.h">
       <Filter>99. pch</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\EisenValor-Server\Server\TestPackets.h">
-      <Filter>98. Headers</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

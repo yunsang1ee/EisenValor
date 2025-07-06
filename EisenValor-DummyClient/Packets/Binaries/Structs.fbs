@@ -1,0 +1,3 @@
+include "Enums.fbs";
+
+namespace FB_STRUCTS;
