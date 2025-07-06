@@ -19,6 +19,15 @@
     <ClInclude Include="SendBuffer.h">
       <Filter>01. NetworkBuffer\01. SendBuffer</Filter>
     </ClInclude>
+    <ClInclude Include="PacketHandler.h">
+      <Filter>02. Packets\01. PacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\EisenValor-Server\Server\TestPackets.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="NetBridgeEnums.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetworkManager.cpp">
@@ -35,6 +44,9 @@
     </ClCompile>
     <ClCompile Include="SendBuffer.cpp">
       <Filter>01. NetworkBuffer\01. SendBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketHandler.cpp">
+      <Filter>02. Packets\01. PacketHandler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,5 +71,22 @@
     <Filter Include="01. NetworkBuffer\01. SendBuffer">
       <UniqueIdentifier>{777c754d-8bb4-4b45-a07c-faafad0b58bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Packets\01. PacketHandler">
+      <UniqueIdentifier>{728e1d37-bc7a-4e34-8e09-d805c4092f64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Packets\00. FBS">
+      <UniqueIdentifier>{23c30aac-9bc0-4e71-8f9e-b468e11047fb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs">
+      <Filter>02. Packets\00. FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Structs.fbs">
+      <Filter>02. Packets\00. FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Tables.fbs">
+      <Filter>02. Packets\00. FBS</Filter>
+    </None>
   </ItemGroup>
 </Project>

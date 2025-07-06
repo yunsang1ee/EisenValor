@@ -1,6 +1,19 @@
 #include "pch.h"
 #include "NetworkManager.h"
 
+#include "RecvBuffer.h"
+#include "PacketHandler.h"
+
+NetBridge::NetworkManager::NetworkManager()
+	:m_socket{ INVALID_SOCKET }, m_recvBuffer{ std::make_unique<RecvBuffer>(NW_BUFFER_CAPACITY) /*64kb*/ }
+{
+
+}
+
+NetBridge::NetworkManager::~NetworkManager()
+{
+}
+
 bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 port)
 {
 	std::wcout.imbue(std::locale("korean"));
@@ -54,7 +67,30 @@ bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 por
 
 void NetBridge::NetworkManager::ProcessIO()
 {
-	// TODO: ProcessIO
+	RecvBuffer* const recvBuffer = m_recvBuffer.get();
+
+	const int32 recvLen = ::recv(m_socket, recvBuffer->GetWritePos(), m_recvBuffer->GetFreeSize(), 0);
+	
+	if(recvLen == 0) {
+		std::cout << "Recv Zero" << std::endl;
+	}
+	else if(recvLen < 0) {
+		const int32 errCode = ::WSAGetLastError();
+		if(WSAEWOULDBLOCK != errCode)
+			std::println("Recv Error = {}", errCode);
+		return;
+	}
+	else {
+		if(false == recvBuffer->OnWrite(recvLen)) {
+			std::println("RecvBuffer Write OverFlow = {}", WSAGetLastError());
+			return;
+		}
+
+		const uint32 remainDataSize = recvBuffer->GetDataSize();
+		const uint32 processLen = AssembleReceivedData(recvBuffer->GetReadPos(), remainDataSize);
+		recvBuffer->OnRead(processLen);
+		recvBuffer->Clean();
+	}
 }
 
 void NetBridge::NetworkManager::Terminate()
@@ -63,4 +99,37 @@ void NetBridge::NetworkManager::Terminate()
 	closesocket(m_socket);
 	WSACleanup();
 	std::cout << "NetworkManager Terminate!" << std::endl;
+}
+
+uint32 NetBridge::NetworkManager::AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept
+{
+	uint32 processLen = 0;
+
+	while(true) {
+		const uint32 dataSize = remainDataSize - processLen;
+
+		if(dataSize < sizeof(PacketHeader))
+			break;
+
+		const PacketHeader header = *reinterpret_cast<const PacketHeader*>(buffer);
+		
+		if(0 == header.packetSize)
+			break;
+
+		if(dataSize < header.packetSize)
+			break;
+
+		ProcessPacket(buffer);
+
+		processLen += header.packetSize;
+	}
+
+	return processLen;
+}
+
+void NetBridge::NetworkManager::ProcessPacket(const char* const buffer) noexcept
+{
+	const PacketHeader header = *reinterpret_cast<const PacketHeader*>(buffer);
+	const char* const packetData = buffer + sizeof(PacketHeader);
+	ServerPacketHandler::HandlePacket(m_socket, packetData, header);
 }
