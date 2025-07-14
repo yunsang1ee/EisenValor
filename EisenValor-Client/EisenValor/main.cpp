@@ -1,6 +1,10 @@
-﻿#include "stdafxClient.h"
+﻿#define _CRTDBG_MAP_ALLOC
+#include "stdafxClient.h"
 #include "EisenValor.h"
 #include <GameFramework.h>
+#include <Vec3.h>
+#include <chrono>
+#include <DxMath.h>
 
 #ifdef _DEBUG
 #pragma comment(lib, "..\\x64\\Debug\\EisenValor-ClientFramework.lib")
@@ -15,7 +19,7 @@ WCHAR szWindowClass[MAX_LOADSTRING];
 GameFramework* g_Framework = nullptr;
 
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
 {
 	if (g_Framework)
 		return g_Framework->OnWindowMessage(hWnd, msg, wParam, lParam);
@@ -71,7 +75,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-
 #ifdef _DEBUG
 	if (AllocConsole())
 	{
@@ -81,9 +84,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		freopen_s(&fp, "CONIN$", "r", stdin);
 		std::ios::sync_with_stdio();
 	}
-#endif  // _DEBUG
+
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtSetBreakAlloc(1215);
+	//_CrtSetBreakAlloc(1739);
+#endif  // _DEBUG
 	
 	// TODO: 여기에 코드를 입력합니다.
 	GameFramework gameFramework;
@@ -97,12 +101,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	if (!CreateAppWindow(hInstance, nCmdShow)) return FALSE;
 
 	MSG msg;
-	while (true) {
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {//event
+	bool quit = false;
+
+	while (not quit) {
+		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{//event
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
 			if (msg.message == WM_QUIT)
+			{
+				quit = true;
 				break;
+			}
 		}
 		gameFramework.Run();
 	}

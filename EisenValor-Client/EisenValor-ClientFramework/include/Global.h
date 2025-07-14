@@ -41,17 +41,22 @@ concept IsRegisterable = IsGlobal<T>
 
 class GlobalRegistry {
 public:
-    using SlotID = std::string_view;
+    enum class RegistryType
+    {
+        Main,
+        Mock,
+        Test,
+    };
 
     template<IsRegisterable Interface>
-    static Interface& Register(SlotID id, std::unique_ptr<Interface> instance) {
+    static Interface& Register(RegistryType id, std::unique_ptr<Interface> instance) {
         assert(instance != nullptr && "Global: is null instance.");
         active<Interface>() = id;
         return *(registryMap<Interface>()[id] = std::move(instance));
     }
 
     template<IsRegisterable Interface>
-    static void SetActive(SlotID id) {
+    static void SetActive(RegistryType id) {
         assert(registryMap<Interface>().count(id) && "Global: not Found id");
         active<Interface>() = id;
     }
@@ -64,7 +69,7 @@ public:
     }
 
     template<IsRegisterable Interface>
-    static void Reset(SlotID id) {
+    static void Reset(RegistryType id) {
         registryMap<Interface>().erase(id);
         if (active<Interface>() == id)
             active<Interface>() = {};
@@ -72,14 +77,14 @@ public:
 
 private:
     template<IsRegisterable Interface>
-    static std::unordered_map<SlotID, std::unique_ptr<Interface>>& registryMap() {
-        static std::unordered_map<SlotID, std::unique_ptr<Interface>> map;
+    static std::unordered_map<RegistryType, std::unique_ptr<Interface>>& registryMap() {
+        static std::unordered_map<RegistryType, std::unique_ptr<Interface>> map;
         return map;
     }
 
     template<IsRegisterable Interface>
-    static SlotID& active() {
-        static SlotID current{};
+    static RegistryType& active() {
+        static RegistryType current{};
         return current;
     }
 };

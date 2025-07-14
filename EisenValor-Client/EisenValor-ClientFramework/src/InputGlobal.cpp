@@ -19,7 +19,7 @@ void InputGlobal::BeforeUpdate()
 		m_InputState[keyIndex] = 
 			(m_InputState[keyIndex] & ~(DInputBits::Down | DInputBits::Up)) | mask;
 
-		DEBUG_LOG_FMT("{:#X}\t{:#} | {:}", keyIndex, keyIndex
+		DEBUG_LOG_FMT("{:#X}\t{:#} | {:}\n", keyIndex, keyIndex
 			, (m_InputState[keyIndex] & DInputBits::Down) ? "Down"
 			: (m_InputState[keyIndex] & DInputBits::Up) ? "Up"
 			: (m_InputState[keyIndex] & DInputBits::Pressed) ? "Pressed" : "");

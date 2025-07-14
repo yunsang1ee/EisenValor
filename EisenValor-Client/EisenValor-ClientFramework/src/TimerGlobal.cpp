@@ -1,45 +1,41 @@
 #include "stdafxClientFramework.h"
 #include "TimerGlobal.h"
+#include <thread>
 
 void TimerGlobal::Initialize()
 {
-	QueryPerformanceFrequency(&m_CpuFrequency);
-	QueryPerformanceCounter(&m_PrevFrequency);
+	m_prevTime = clock::now();
+	m_curTime = m_prevTime;
+	m_runTime = 0.0f;
+	m_accumulator = 0.0f;
+	m_deltaTime = 0.0f;
+	m_lastFrameTime = 0.0f;
+	m_frameCount = 0;
+	m_curFPS = 0;
 }
 
 void TimerGlobal::Update()
 {
-	QueryPerformanceCounter(&m_CurFrequency);
-	float diffFrequency = static_cast<float>(m_CurFrequency.QuadPart - m_PrevFrequency.QuadPart);
-	m_DeltaTime = diffFrequency / static_cast<float>(m_CpuFrequency.QuadPart);
-
-	if (m_TargetFPS > 0)
+	if (m_targetDeltaTime > 0)
 	{
-		float minFrameTime = 1.0f / m_TargetFPS;
-		while (m_DeltaTime < minFrameTime - 0.002f)
-		{
-			Sleep(0);
-			QueryPerformanceCounter(&m_CurFrequency);
-			diffFrequency = static_cast<float>(m_CurFrequency.QuadPart - m_PrevFrequency.QuadPart);
-			m_DeltaTime = diffFrequency / static_cast<float>(m_CpuFrequency.QuadPart);
-		}
-		while (m_DeltaTime < minFrameTime)
-		{
-			QueryPerformanceCounter(&m_CurFrequency);
-			diffFrequency = static_cast<float>(m_CurFrequency.QuadPart - m_PrevFrequency.QuadPart);
-			m_DeltaTime = diffFrequency / static_cast<float>(m_CpuFrequency.QuadPart);
-		}
+		m_curTime = clock::now();
+		auto frameEndTimeTarget = m_prevTime + std::chrono::duration<float>(m_targetDeltaTime);
+
+		while (clock::now() < frameEndTimeTarget);
 	}
-	m_PrevFrequency.QuadPart = m_CurFrequency.QuadPart;
-	m_RunTime += m_DeltaTime;
-	m_accumulator += m_DeltaTime;
+	m_curTime = clock::now();
+	m_deltaTime = std::chrono::duration<float>(m_curTime - m_prevTime).count();
 
-	m_FrameCount++;
-	m_CurTime += m_DeltaTime;
-	if (m_CurTime > 1.0f)
+	m_prevTime = m_curTime;
+	m_runTime += m_deltaTime;
+	m_accumulator += m_deltaTime;
+	
+	m_frameCount++;
+	m_lastFrameTime += m_deltaTime;
+	if (m_lastFrameTime >= 1.0f)
 	{
-		m_CurFPS = m_FrameCount;
-		m_FrameCount = 0;
-		m_CurTime = 0;
+		m_curFPS = m_frameCount;
+		m_frameCount = 0;
+		m_lastFrameTime = 0.0f;
 	}
 }

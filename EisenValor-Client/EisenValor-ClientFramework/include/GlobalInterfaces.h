@@ -6,16 +6,15 @@
 
 namespace Globals
 {
-    struct RegisterAllGlobal
-    {
-        void operator()();
-    };
+    void InitializeGlobalRegistry();
 
-    inline IInputGlobal& Input() noexcept {
+    inline IInputGlobal& Input() noexcept
+    {
         return GlobalRegistry::Get<IInputGlobal>();
     }
 
-    inline ITimerGlobal& Timer() noexcept {
+    inline ITimerGlobal& Timer() noexcept
+    {
         return GlobalRegistry::Get<ITimerGlobal>();
     }
 }

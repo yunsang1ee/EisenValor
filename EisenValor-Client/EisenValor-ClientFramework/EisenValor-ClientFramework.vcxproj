@@ -140,27 +140,36 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="GameFramework.h" />
-    <ClInclude Include="include\Color.h" />
+    <ClInclude Include="include\DxCommandContext.h" />
+    <ClInclude Include="include\DxCommandContextPool.h" />
+    <ClInclude Include="include\DxCommandQueueGlobal.h" />
+    <ClInclude Include="include\DxCommon.h" />
+    <ClInclude Include="include\DxDebugGlobal.h" />
+    <ClInclude Include="include\DxDeviceGlobal.h" />
+    <ClInclude Include="include\DxSwapChain.h" />
+    <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\Global.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
+    <ClInclude Include="include\IComponent.h" />
     <ClInclude Include="include\IGlobal.h" />
     <ClInclude Include="include\IInputGlobal.h" />
     <ClInclude Include="include\InputDef.h" />
     <ClInclude Include="include\InputGlobal.h" />
-    <ClInclude Include="include\IntX.h" />
     <ClInclude Include="include\ITimerGlobal.h" />
-    <ClInclude Include="include\Mat4.h" />
     <ClInclude Include="include\DxMath.h" />
-    <ClInclude Include="include\Plane.h" />
-    <ClInclude Include="include\Quaternion.h" />
-    <ClInclude Include="include\TimerGlobal.h" />
-    <ClInclude Include="include\Vec2.h" />
-    <ClInclude Include="include\Vec3.h" />
-    <ClInclude Include="include\Vec4.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
+    <ClInclude Include="include\TimerGlobal.h" />
+    <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DxCommandContext.cpp" />
+    <ClCompile Include="src\DxCommandContextPool.cpp" />
+    <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
+    <ClCompile Include="src\DxDebugGlobal.cpp" />
+    <ClCompile Include="src\DxDeviceGlobal.cpp" />
+    <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
+    <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">

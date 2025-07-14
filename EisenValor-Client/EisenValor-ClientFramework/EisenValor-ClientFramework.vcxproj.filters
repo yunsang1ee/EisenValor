@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="리소스 파일">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Mocks">
       <UniqueIdentifier>{64fef551-cd17-4168-9fe2-3733a116bb6f}</UniqueIdentifier>
     </Filter>
@@ -37,39 +25,45 @@
     <Filter Include="Common\Math">
       <UniqueIdentifier>{53cf2af8-f784-4ef2-a2e3-158d66ce8726}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{f70ac7b0-5795-4e7d-b0dd-2cee3eec07fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{64dd2a36-df34-4eac-9a5a-de0ab2c2bb63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces\Globals">
+      <UniqueIdentifier>{93850fdb-a298-4cb5-aaab-aaca79afd46f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{c5a1ad20-20ac-4ecf-8e41-100dd36b9cc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\DxCommon">
+      <UniqueIdentifier>{c298625d-7cb6-4ec9-a006-ebbbf1ecc396}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Device">
+      <UniqueIdentifier>{4ea4859c-a0dd-4b49-b8ee-4435bc18d9ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Resource">
+      <UniqueIdentifier>{f7ffe1d7-3f16-470e-b3fb-c1d634977d0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Pipeline">
+      <UniqueIdentifier>{5efc1c3e-690d-419a-b6bb-46ef8ce939d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Renderer">
+      <UniqueIdentifier>{0ae04057-4f25-4ac2-8e3e-7f138947ff4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Device\Command">
+      <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafxClientFramework.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="GameFramework.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Vec2.h">
-      <Filter>Common\Math</Filter>
     </ClInclude>
     <ClInclude Include="include\Vec3.h">
       <Filter>Common\Math</Filter>
     </ClInclude>
-    <ClInclude Include="include\Vec4.h">
-      <Filter>Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Color.h">
-      <Filter>Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\IntX.h">
-      <Filter>Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mat4.h">
-      <Filter>Common\Math</Filter>
-    </ClInclude>
     <ClInclude Include="include\DxMath.h">
-      <Filter>Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Plane.h">
-      <Filter>Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Quaternion.h">
       <Filter>Common\Math</Filter>
     </ClInclude>
     <ClInclude Include="include\InputGlobal.h">
@@ -84,23 +78,48 @@
     <ClInclude Include="include\GlobalInterfaces.h">
       <Filter>Common\Global</Filter>
     </ClInclude>
-    <ClInclude Include="include\IGlobal.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ITimerGlobal.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="include\TimerGlobal.h">
       <Filter>Common\Global\Globals\TimerGlobal</Filter>
     </ClInclude>
-    <ClInclude Include="include\IInputGlobal.h">
+    <ClInclude Include="include\stdafxClientFramework.h" />
+    <ClInclude Include="include\IComponent.h">
       <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameObject.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IGlobal.h">
+      <Filter>Interfaces\Globals</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IInputGlobal.h">
+      <Filter>Interfaces\Globals</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ITimerGlobal.h">
+      <Filter>Interfaces\Globals</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxDebugGlobal.h">
+      <Filter>Graphics\DxCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxCommon.h">
+      <Filter>Graphics\DxCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxDeviceGlobal.h">
+      <Filter>Graphics\Device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxCommandQueueGlobal.h">
+      <Filter>Graphics\Device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxCommandContext.h">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxCommandContextPool.h">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxSwapChain.h">
+      <Filter>Graphics\Device</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GameFramework.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="src\InputGlobal.cpp">
       <Filter>Common\Global\Globals\InputGlobal</Filter>
     </ClCompile>
@@ -110,8 +129,30 @@
     <ClCompile Include="src\GlobalInterfaces.cpp">
       <Filter>Common\Global</Filter>
     </ClCompile>
-    <ClCompile Include="src\stdafxClientFramework.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="src\stdafxClientFramework.cpp" />
+    <ClCompile Include="src\GameFramework.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameObject.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxDebugGlobal.cpp">
+      <Filter>Graphics\DxCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxDeviceGlobal.cpp">
+      <Filter>Graphics\Device</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxCommandQueueGlobal.cpp">
+      <Filter>Graphics\Device</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxCommandContext.cpp">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxCommandContextPool.cpp">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxSwapChain.cpp">
+      <Filter>Graphics\Device</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

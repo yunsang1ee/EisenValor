@@ -1,5 +1,4 @@
 #pragma once
-#include "IGlobal.h"
 
 class ITimerGlobal : public IGlobal {
 public:

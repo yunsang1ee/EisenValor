@@ -7,19 +7,20 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
-	Globals::RegisterAllGlobal{}();
+	Globals::InitializeGlobalRegistry();
+
 	Globals::Timer().Initialize();
-	Globals::Timer().SetFixedFPS(30);
-	Globals::Timer().SetTargetFPS(14344);
+	Globals::Timer().SetFixedFPS(60);
+	Globals::Timer().SetTargetFPS(144);
 
 	return true;
 }
 
 void GameFramework::Run()
 {
-	Globals::Timer().Update();
 	Globals::Input().BeforeUpdate();
 
+	Globals::Timer().Update();
 	if(Globals::Timer().ShouldFixedUpdate())
 		FixedUpdate();
 	Update();
@@ -34,7 +35,7 @@ void GameFramework::Release()
 {
 }
 
-LRESULT GameFramework::OnWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
 {
 	WORD keyflags;
 	bool isPressed;
