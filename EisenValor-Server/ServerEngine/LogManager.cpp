@@ -9,10 +9,13 @@ void ServerEngine::LogManager::Init() noexcept
 		std::filesystem::create_directory("LOG");
 }
 
-void ServerEngine::LogManager::PrintLastError() noexcept
+void ServerEngine::LogManager::PrintLastError(const std::source_location& loc) noexcept
 {
-	const int32 errCode = WSAGetLastError();
+	const fs::path file_path = loc.file_name();
 
+	std::print("{}:{} | ", file_path.filename().string(), loc.line());
+
+	const int32 errCode = WSAGetLastError();	
 	WCHAR* lpMsgBuf;
 	FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -21,5 +24,5 @@ void ServerEngine::LogManager::PrintLastError() noexcept
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		(LPTSTR)&lpMsgBuf, 0, NULL);
 
-	std::wcout << lpMsgBuf << std::endl;
+	std::wcout << lpMsgBuf;
 }
