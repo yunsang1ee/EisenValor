@@ -10,17 +10,18 @@ namespace ServerEngine {
 
 	class RIOContext : public RIO_BUF {
 	private:
-		RIO_CONTEXT_TYPE			m_type;
-		std::shared_ptr<Session>	m_session;
+		RIO_CONTEXT_TYPE						m_type;
+		std::atomic<std::shared_ptr<Session>>	m_session;
 
-	public:
+	protected:
 		explicit RIOContext(RIO_CONTEXT_TYPE type);
+		friend class Session;
 
 	public:
 		void Init();
-		void HoldSession(std::shared_ptr<Session> session) { m_session = session; }
-		void ReleaseSession() { m_session = nullptr; }
-		std::shared_ptr<Session> GetSession() const noexcept { return m_session; }
+		void HoldSession(std::shared_ptr<Session> session) { m_session.store(session); }
+		void ReleaseSession() {  m_session.exchange(nullptr); }
+		std::shared_ptr<Session> GetSession() const noexcept { return m_session.load(); }
 
 	public:
 		RIO_CONTEXT_TYPE GetType() const noexcept { return m_type; }
@@ -28,11 +29,12 @@ namespace ServerEngine {
 	};
 
 	class RecvContext : public RIOContext {
-	public:
+	private:
 		RecvContext();
+		friend class MemoryPool;
+		friend class Session;
 	};
 
-	// TODO: ObjectPool을 만들어서 SendContext 재사용 해야함.
 	class SendContext : public RIOContext {
 	public:
 		SendContext();

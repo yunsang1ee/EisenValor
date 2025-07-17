@@ -1,16 +1,15 @@
 #pragma once
 
 #include "../../EisenValor-Server/ServerEngine/Singleton.hpp"
-#include "SendBuffer.h"
+#include "PacketBuffer.h"
 
 namespace NetBridge {
 	class RecvBuffer;
-	class SendBuffer;
+	class PacketBuffer;
 	
 	// ===========================================
 	// * Non-Blockig I/O Model
 	// ===========================================
-
 	class NetworkManager : public Singleton<NetworkManager> {
 	private:
 		NetworkManager();
@@ -49,7 +48,7 @@ namespace NetBridge {
 #endif 
 		}
 
-		void Send(std::shared_ptr<NetBridge::SendBuffer> sendBuffer) noexcept
+		void Send(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 		{
 			retry:
 			const int32 sendBytes = send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
@@ -82,7 +81,7 @@ static inline void SendPacket(Packet&& sendPkt) noexcept
 	MANAGER(NetBridge::NetworkManager)->Send(std::forward<Packet>(sendPkt));
 }
 
-static inline void SendPacket(std::shared_ptr<NetBridge::SendBuffer>&& sendBuffer) noexcept
+static inline void SendPacket(std::shared_ptr<NetBridge::PacketBuffer>&& sendBuffer) noexcept
 {
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(sendBuffer));
 }

@@ -16,8 +16,8 @@
     <ClInclude Include="RecvBuffer.h">
       <Filter>01. NetworkBuffer\00. RecvBuffer</Filter>
     </ClInclude>
-    <ClInclude Include="SendBuffer.h">
-      <Filter>01. NetworkBuffer\01. SendBuffer</Filter>
+    <ClInclude Include="PacketBuffer.h">
+      <Filter>01. NetworkBuffer\01. PacketBuffer</Filter>
     </ClInclude>
     <ClInclude Include="PacketHandler.h">
       <Filter>02. Packets\01. PacketHandler</Filter>
@@ -42,8 +42,8 @@
     <ClCompile Include="RecvBuffer.cpp">
       <Filter>01. NetworkBuffer\00. RecvBuffer</Filter>
     </ClCompile>
-    <ClCompile Include="SendBuffer.cpp">
-      <Filter>01. NetworkBuffer\01. SendBuffer</Filter>
+    <ClCompile Include="PacketBuffer.cpp">
+      <Filter>01. NetworkBuffer\01. PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="PacketHandler.cpp">
       <Filter>02. Packets\01. PacketHandler</Filter>
@@ -68,14 +68,14 @@
     <Filter Include="01. NetworkBuffer\00. RecvBuffer">
       <UniqueIdentifier>{88a1f1c2-a0c2-45de-ba1f-313a09a386ef}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. NetworkBuffer\01. SendBuffer">
-      <UniqueIdentifier>{777c754d-8bb4-4b45-a07c-faafad0b58bf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Packets\01. PacketHandler">
       <UniqueIdentifier>{728e1d37-bc7a-4e34-8e09-d805c4092f64}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Packets\00. FBS">
       <UniqueIdentifier>{23c30aac-9bc0-4e71-8f9e-b468e11047fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. NetworkBuffer\01. PacketBuffer">
+      <UniqueIdentifier>{777c754d-8bb4-4b45-a07c-faafad0b58bf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -88,5 +88,6 @@
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>02. Packets\00. FBS</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

@@ -11,7 +11,6 @@ namespace Server {
 		virtual void OnConnected() override;
 		virtual void OnDisconnected() override;
 		virtual void ProcessPacket(const char* const buffer, const uint16 packetSize) override;
+		virtual void OnSend(const uint32 bytesTransferred) override;
 	};
 }
-
-

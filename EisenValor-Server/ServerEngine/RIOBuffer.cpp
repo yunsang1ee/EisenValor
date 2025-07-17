@@ -3,8 +3,8 @@
 
 #include "RIOCore.h"
 
-ServerEngine::RIOBuffer::RIOBuffer(const uint32 capacity)
-	:m_id{RIO_INVALID_BUFFERID}, m_buffer{nullptr}, m_capacity{capacity}
+ServerEngine::RIOBuffer::RIOBuffer(const uint32 bufferSize)
+	:m_id{ RIO_INVALID_BUFFERID }, m_buffer{ nullptr }, m_size{ bufferSize }, m_capacity {bufferSize * BUFFER_COUNT}, m_readPos{ 0 }, m_writePos{ 0 }
 {
 	m_buffer = reinterpret_cast<char*>(VirtualAllocEx(GetCurrentProcess(), 0, m_capacity, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 
@@ -12,9 +12,9 @@ ServerEngine::RIOBuffer::RIOBuffer(const uint32 capacity)
 		ServerEngine::LogManager::PrintLastError();
 
 	SYSTEM_INFO systemInfo;
-	GetSystemInfo(&systemInfo);
-	const uint64 granularity = systemInfo.dwAllocationGranularity;
-
+	GetSystemInfo(&systemInfo); // 기본 페이지 4kb
+	const uint64 granularity = systemInfo.dwAllocationGranularity;	// 메모리 할당할 때 이 숫자의 배수로 메모리 반환해줌. (64kb 65536)
+	
 	assert(m_capacity % granularity == 0);
 
 	if(nullptr != m_buffer)
@@ -30,4 +30,40 @@ ServerEngine::RIOBuffer::~RIOBuffer()
 
 	if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
 		ServerEngine::LogManager::PrintLastError();
+}
+
+bool ServerEngine::RIOBuffer::OnRead(const uint32 numOfBytes)
+{
+	if(numOfBytes > GetDataSize())
+		return false;
+
+	m_readPos += numOfBytes;
+
+	return true;
+}
+
+bool ServerEngine::RIOBuffer::OnWrite(const uint32 numOfBytes)
+{
+	if(numOfBytes > GetFreeSize())
+		return false;
+
+	m_writePos += numOfBytes;
+
+	return true;
+}
+
+void ServerEngine::RIOBuffer::CleanBuffer() noexcept
+{
+	const uint32 dataSize = GetDataSize();
+
+	if(dataSize == 0) {
+		m_readPos = m_writePos = 0;
+	}
+	else {
+		if(GetFreeSize() < m_size) {
+			::memcpy(&m_buffer[0], &m_buffer[m_readPos], dataSize);
+			m_readPos = 0;
+			m_writePos = dataSize;
+		}
+	}
 }

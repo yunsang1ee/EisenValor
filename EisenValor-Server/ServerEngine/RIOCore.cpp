@@ -15,8 +15,10 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 		return false;
 	}
 
+
 	// 2. Create Listen Socket AndGet MULTIPLE_EXTENSION_FUNCTION_POINTER, Set ServerAddress
-	m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_REGISTERED_IO);
+	m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 
+		WSA_FLAG_REGISTERED_IO/* Listen Socket을 WSA_FLAG_REGISTERED I/O로 하면 논블로킹 안됨 -> 지금은 Accept Thread 따로 빼서 그냥 Blocking으로*/);
 
 	if(m_listenSocket == INVALID_SOCKET) {
 		ServerEngine::LogManager::PrintLastError();
@@ -29,8 +31,7 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 	GUID functionTableId = WSAID_MULTIPLE_RIO;
 	DWORD bytes = 0;
 	
-	if(0 != WSAIoctl(m_listenSocket, SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER, &functionTableId, sizeof(GUID),
-		(void**)&m_rioExtfuncTable, sizeof(m_rioExtfuncTable), &bytes, NULL, NULL)) {
+	if(0 != WSAIoctl(m_listenSocket, SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER, &functionTableId, sizeof(GUID), (void**)&m_rioExtfuncTable, sizeof(m_rioExtfuncTable), &bytes, NULL, NULL)) {
 		ServerEngine::LogManager::PrintLastError();
 		return false;
 	}
@@ -68,7 +69,7 @@ bool ServerEngine::RIOCore::StartAccept() noexcept
 
 	// 2. Accept
 	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this]() {
-		TLS_THREAD_ID = (std::thread::hardware_concurrency() / 2) + 1;
+		TLS_THREAD_ID = LISTEN_THREAD_ID;
 		DoAcceptLoop();
 		});
 
@@ -80,7 +81,12 @@ void ServerEngine::RIOCore::StartIO() noexcept
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i]() {
 			TLS_THREAD_ID = i+1;
-			m_rioWorkers[i]->WorkIO();
+			while(LOOP_EXIT == false) {
+					m_rioWorkers[i]->FlushPacketQueue();
+					m_rioWorkers[i]->DequeueCompletion();
+				
+				// TODO: 공용 일감 처리(GlobalTaskQueue)
+			}
 		});
 	}
 }
@@ -88,20 +94,18 @@ void ServerEngine::RIOCore::StartIO() noexcept
 void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 {
 	while(false == LOOP_EXIT) {
+		
+		// Non-Blocking Accept
 		const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
-
-		if(clientSocket == INVALID_SOCKET) {
-			std::this_thread::sleep_for(1ms);
-			continue;
-		}
-		else if(clientSocket == SOCKET_ERROR) {
+		
+		if(clientSocket == SOCKET_ERROR) {
 			std::cout << "Accept Loop Break" << std::endl;
 			break;
 		}
 
 		SOCKADDR_IN clientaddr;
 		int addrlen = sizeof(clientaddr);
-		getpeername(clientSocket, (SOCKADDR*)&clientaddr, &addrlen);
+		getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
 
 		std::cout << "Client Accept Success!" << std::endl;
 		
@@ -110,6 +114,7 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 		InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
 		std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
 		
+		// RioWorker에게 하나씩 분배
 		m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
 	}

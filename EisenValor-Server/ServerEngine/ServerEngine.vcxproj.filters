@@ -20,13 +20,13 @@
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="LogManager.h">
-      <Filter>96. Managers\00. LogManager</Filter>
+      <Filter>95. Managers\00. LogManager</Filter>
     </ClInclude>
     <ClInclude Include="ServerEngineGlobalVariables.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="ThreadManager.h">
-      <Filter>96. Managers\01. ThreadManager</Filter>
+      <Filter>95. Managers\01. ThreadManager</Filter>
     </ClInclude>
     <ClInclude Include="ServerEngineTLS.h">
       <Filter>97. Headers</Filter>
@@ -55,6 +55,21 @@
     <ClInclude Include="RIOBuffer.h">
       <Filter>02. RIOBuffer</Filter>
     </ClInclude>
+    <ClInclude Include="PacketBuffer.h">
+      <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketHeader.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>96. Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerEngineContainers.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectPool.h">
+      <Filter>04. ObjectPool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -67,10 +82,10 @@
       <Filter>00. RIOCore</Filter>
     </ClCompile>
     <ClCompile Include="LogManager.cpp">
-      <Filter>96. Managers\00. LogManager</Filter>
+      <Filter>95. Managers\00. LogManager</Filter>
     </ClCompile>
     <ClCompile Include="ThreadManager.cpp">
-      <Filter>96. Managers\01. ThreadManager</Filter>
+      <Filter>95. Managers\01. ThreadManager</Filter>
     </ClCompile>
     <ClCompile Include="RIOWorker.cpp">
       <Filter>00. RIOCore\00. RIOWorker</Filter>
@@ -93,6 +108,15 @@
     <ClCompile Include="RIOBuffer.cpp">
       <Filter>02. RIOBuffer</Filter>
     </ClCompile>
+    <ClCompile Include="PacketBuffer.cpp">
+      <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>96. Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectPool.cpp">
+      <Filter>04. ObjectPool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -109,15 +133,6 @@
     </Filter>
     <Filter Include="97. Headers">
       <UniqueIdentifier>{6a2de00f-6658-4f89-82d3-66f988195fa6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="96. Managers">
-      <UniqueIdentifier>{7c7af7e4-cec0-40df-91c6-d41042cc9d8f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="96. Managers\00. LogManager">
-      <UniqueIdentifier>{b18df161-993b-456d-a224-8396640585d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="96. Managers\01. ThreadManager">
-      <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
     </Filter>
     <Filter Include="00. RIOCore\00. RIOWorker">
       <UniqueIdentifier>{b5e94d73-e7cc-4350-8abe-df1290498a79}</UniqueIdentifier>
@@ -137,11 +152,26 @@
     <Filter Include="02. RIOBuffer\01. SendBuffer">
       <UniqueIdentifier>{94f86bd4-6f19-4e31-869a-241dd17ea156}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. RIOBuffer\02. PacketBuffer">
+      <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers">
+      <UniqueIdentifier>{7c7af7e4-cec0-40df-91c6-d41042cc9d8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\00. LogManager">
+      <UniqueIdentifier>{b18df161-993b-456d-a224-8396640585d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\01. ThreadManager">
+      <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Utils">
+      <UniqueIdentifier>{855f9310-39d4-4a17-a7d6-7ae7c8fe2037}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. ObjectPool">
+      <UniqueIdentifier>{1d58aba8-4053-4370-bdfc-a12582f80127}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Scripts\CopyHeaders.bat">
-      <Filter>98. Scripts</Filter>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
 </Project>

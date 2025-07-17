@@ -1,23 +1,25 @@
 #pragma once
 
-#include "SendBuffer.h"
+#include "PacketBuffer.h"
 
 using PacketHandlerFunc = bool(*)(const SOCKET&, const char* const, const PacketHeader&);
 
-extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max()+1> PacketHandlerFuncs{};
+extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs{};
 
 enum class PACKET_TYPE : uint16 {
-	CS_CHAT = 1,
-	SC_CHAT = 2,
+	CS_LOGIN = 1,
+
+	CS_CHAT = 2,
+	SC_CHAT = 3,
 
 	END
 };
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
-bool Handle_CS_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::CS_CHAT_PACKET& recvPkt);
+bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 
 namespace NetBridge {
-	class SendBuffer;
+	class PacketBuffer;
 
 	class ServerPacketHandler {
 	private:
@@ -34,7 +36,7 @@ namespace NetBridge {
 			for(auto& packetHandlerFunc : PacketHandlerFuncs)
 				packetHandlerFunc = Handle_Invalid;
 
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHAT)] = [] (const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_CHAT_PACKET>(Handle_CS_CHAT_PACKET, socket, buffer, header); };
+			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHAT)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_CHAT_PACKET>(Handle_SC_CHAT_PACKET, socket, buffer, header); };
 		}
 
 		static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
@@ -46,8 +48,11 @@ namespace NetBridge {
 		static bool HandlePacket(HandleFunc handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
 		{
 			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
-			return handleFunc(socket, *packet); 
+			return handleFunc(socket, *packet);
 		}
+
+		template<typename T>
+		struct PacketArgTraits;
 
 		// 패킷 만드는 부분
 		template<typename PacketFunc, typename... Args>
@@ -59,44 +64,49 @@ namespace NetBridge {
 			return builder.Release();
 		}
 
-		template<typename T>
-		struct PacketArgTraits;
-
-		// =========================
-		// CS_CHAT_PACKET
-		// =========================
-		template<>
-		struct PacketArgTraits<struct FB_TABLES::CS_CHAT_PACKET> {
-			using ArgTypes = std::tuple<std::string_view>;
-			template<typename... Args>
-			static constexpr bool ValidArgs = sizeof...(Args) == 1 && (std::convertible_to<Args, std::string_view> && ...);
-		};
-
-		template<typename PacketTag, typename... Args>
-		static constexpr bool is_valid_packet_args_v = PacketArgTraits<PacketTag>::template ValidArgs<Args...>;
-
-		template<typename... Args>
-		[[nodiscard("반환값 절대 무시하지 마세요.")]]
-		static flatbuffers::DetachedBuffer Make_CS_CHAT_PACKET(Args&&... args)
-		{
-			static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly one std::string_view argument");
-			static_assert(sizeof...(Args) == 1, "CS_CHAT_PACKET expects exactly 1 argument");
-			static_assert((std::convertible_to<Args, std::string_view> && ...), "All arguments must be convertible to std::string_view");
-			return MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, std::forward<Args>(args)...);
-		}
-
-		// =========================
-		// CS_CHAT_PACKET
-		// =========================
-		static std::shared_ptr<NetBridge::SendBuffer> MakeSendBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
+		static std::shared_ptr<NetBridge::PacketBuffer> MakeSendBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
 		{
 			const uint32 packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
-			auto sendBuffer = std::make_shared<NetBridge::SendBuffer>(packetSize);
+			auto sendBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
 			PacketHeader* header = reinterpret_cast<PacketHeader*>(sendBuffer->GetBuffer());
 			header->packetType = static_cast<uint16>(packetType);
 			header->packetSize = packetSize;
 			memcpy_s(&header[1], sendBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
 			return sendBuffer;
 		}
+
+#pragma region CS_LOGIN_PACKET
+		template<typename... Args>
+		[[nodiscard("반환값 절대 무시하지 마세요.")]]
+		static flatbuffers::DetachedBuffer Make_CS_LOGIN_PACKET(Args&&... args)
+		{
+			//static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly one std::string_view argument");
+			//static_assert(sizeof...(Args) == 1, "CS_CHAT_PACKET expects exactly 1 argument");
+			//static_assert((std::convertible_to<Args, std::string_view> && ...), "All arguments must be convertible to std::string_view");
+			return MakePacket(FB_TABLES::CreateCS_LOGIN_PACKETDirect, std::forward<Args>(args)...);
+		}
+#pragma endregion
+
+#pragma region CS_CHAT_PACKET
+		//template<>
+		//struct PacketArgTraits<struct FB_TABLES::CS_CHAT_PACKET> {
+		//	using ArgTypes = std::tuple<std::string_view>;
+		//	template<typename... Args>
+		//	static constexpr bool ValidArgs = sizeof...(Args) == 1 && (std::convertible_to<Args, std::string_view> && ...);
+		//};
+
+		//template<typename PacketTag, typename... Args>
+		//static constexpr bool is_valid_packet_args_v = PacketArgTraits<PacketTag>::template ValidArgs<Args...>;
+
+		template<typename... Args>
+		[[nodiscard("반환값 절대 무시하지 마세요.")]]
+		static flatbuffers::DetachedBuffer Make_CS_CHAT_PACKET(Args&&... args)
+		{
+			//static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly one std::string_view argument");
+			//static_assert(sizeof...(Args) == 1, "CS_CHAT_PACKET expects exactly 1 argument");
+			//static_assert((std::convertible_to<Args, std::string_view> && ...), "All arguments must be convertible to std::string_view");
+			return MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, std::forward<Args>(args)...);
+		}
+#pragma endregion
 	};
 }

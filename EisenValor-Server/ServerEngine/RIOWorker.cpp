@@ -45,33 +45,43 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 	return true;
 }
 
-void ServerEngine::RIOWorker::WorkIO()
+void ServerEngine::RIOWorker::FlushPacketQueue()
+{
+	std::lock_guard<std::mutex> lk{ m_mutex };
+	for(auto iter = m_connectedSession.begin(); iter != m_connectedSession.end();) {
+		if(SESSION_STATE::ALLOC == (*iter)->GetState()) {
+			(*iter)->FlushPacketQueue();
+			++iter;
+		}
+		else
+			iter = m_connectedSession.erase(iter);
+	}
+}
+
+void ServerEngine::RIOWorker::DequeueCompletion()
 {
 	assert(TLS_THREAD_ID == m_id);
-
-	std::println("Worker ID = {}, WorkIO!", m_id);
 	
 	std::array<RIORESULT, MAX_RIO_RESULT> ioResults;
 	
-	while(LOOP_EXIT == false) {
+	while(true) {
 		memset(ioResults.data(), 0, sizeof(ioResults));
 
-		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, ioResults.data(), static_cast<ULONG>(ioResults.size()));
+		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, ioResults.data(), static_cast<uint32>(ioResults.size()));
 		if(0 == numResults) {
 			std::this_thread::sleep_for(1ms);
-			continue;
+			break;
 		}
-		else if(RIO_CORRUPT_CQ == numResults) {
+		else if(RIO_CORRUPT_CQ == numResults)
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
-		}
 		else {
 			std::println("Worker ID ={}, has results!", m_id);
 			for(uint32 i = 0; i < numResults; ++i) {
 				RIOContext* const context = reinterpret_cast<RIOContext*>(ioResults[i].RequestContext);
-				auto session = context->GetSession();
+				auto session = context->GetSession();	
+				assert(context && session);
 				const uint32 bytesTransferred = ioResults[i].BytesTransferred;
 				std::println("BytesTransferred = {}", bytesTransferred);
-				assert(context && session);
 				session->Dispatch(context, bytesTransferred);
 			}
 		}
@@ -80,9 +90,18 @@ void ServerEngine::RIOWorker::WorkIO()
 
 void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr)
 {
-	assert(TLS_THREAD_ID == (std::thread::hardware_concurrency() / 2) + 1);
+	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
 	std::println("Session Accept!, RioWorker ID ={}", m_id);
 	auto session = m_sessionPool.get()->DeqSession();
 	session->SetOwner(shared_from_this());
 	session->Connect(socket, clientAddr);
+
+	std::lock_guard<std::mutex>lk{ m_mutex };
+	m_connectedSession.insert(std::move(session));
+}
+
+void ServerEngine::RIOWorker::ReleaseSession(std::shared_ptr<Session> session)
+{
+	std::lock_guard<std::mutex>lk{ m_mutex };
+	m_connectedSession.erase(session);
 }

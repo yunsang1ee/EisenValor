@@ -6,7 +6,7 @@ namespace ServerEngine {
 	class ThreadManager : public Singleton<ThreadManager> {
 		SINGLETON(ThreadManager)
 	private:
-		int16						m_workerThreadCount;
+		uint16						m_workerThreadCount;
 		std::mutex					m_mutex;
 		std::vector<std::jthread>	m_threads;
 
@@ -16,7 +16,7 @@ namespace ServerEngine {
 		void Join();
 
 	public:
-		int16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
+		uint16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
 
 	private:
 		static void InitTLS();
