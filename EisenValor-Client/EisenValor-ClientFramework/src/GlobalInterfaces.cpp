@@ -19,10 +19,17 @@ void Globals::InitializeGlobalRegistry()
 
 #ifdef _DEBUG
 	GR::Register<IDxDebugGlobal>	(GR::RegistryType::Main, DxDebugGlobal::Create());
-#endif //_DEBUG
+#endif _DEBUG
 
 	GR::Register<IDxDeviceGlobal> (GR::RegistryType::Main, DxDeviceGlobal::Create());
-	auto device = GlobalRegistry::Get<IDxDeviceGlobal>();
+	
+	//auto device = GlobalRegistry::Get<IDxDeviceGlobal>();
+
+	//추상 클래스 등록 에러 수정
+	GlobalRegistry::Register<IDxDeviceGlobal>(GlobalRegistry::RegistryType::Main, DxDeviceGlobal::Create());
+	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
+
+	device.Initialize();
 	device.Initialize();
 
 	GR::Register<IDxGraphicsCommandQueueGlobal>	(GR::RegistryType::Main, DxGraphicsCommandQueueGlobal::Create());
