@@ -23,11 +23,17 @@ private:
 	void Render();
 
 private:
-	// 새로 추가할 멤버들
+	// 새로 추가할 멤버들 25.07.19
 	std::unique_ptr<DxSwapChain> m_swapChain;
 	ComPtr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
 	uint32_t m_rtvDescriptorSize = 0;
 	std::unique_ptr<DxCommandContextPool> m_commandContextPool;
+
+	// 렌더링 리소스 추가 25.07.20
+	ComPtr<ID3D12RootSignature> m_rootSignature;
+	ComPtr<ID3D12PipelineState> m_pipelineState;	
+	ComPtr<ID3D12Resource> m_vertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
 private:
 	HWND m_hWnd = nullptr;
