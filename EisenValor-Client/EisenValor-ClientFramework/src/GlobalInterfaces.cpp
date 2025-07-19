@@ -19,7 +19,7 @@ void Globals::InitializeGlobalRegistry()
 
 #ifdef _DEBUG
 	GR::Register<IDxDebugGlobal>	(GR::RegistryType::Main, DxDebugGlobal::Create());
-#endif _DEBUG
+#endif //_DEBUG
 
 	GR::Register<IDxDeviceGlobal> (GR::RegistryType::Main, DxDeviceGlobal::Create());
 	
