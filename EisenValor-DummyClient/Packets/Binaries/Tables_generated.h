@@ -18,6 +18,9 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 
 namespace FB_TABLES {
 
+struct CS_LOGIN_PACKET;
+struct CS_LOGIN_PACKETBuilder;
+
 struct CS_CHAT_PACKET;
 struct CS_CHAT_PACKETBuilder;
 
@@ -35,6 +38,71 @@ struct SC_CHAT_PACKETBuilder;
 
 struct SC_MOVE_PACKET_XYZ;
 struct SC_MOVE_PACKET_XYZBuilder;
+
+struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_LOGIN_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_PW = 6
+  };
+  const ::flatbuffers::String *id() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ID);
+  }
+  const ::flatbuffers::String *pw() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_PW);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_ID) &&
+           verifier.VerifyString(id()) &&
+           VerifyOffset(verifier, VT_PW) &&
+           verifier.VerifyString(pw()) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_LOGIN_PACKETBuilder {
+  typedef CS_LOGIN_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_id(::flatbuffers::Offset<::flatbuffers::String> id) {
+    fbb_.AddOffset(CS_LOGIN_PACKET::VT_ID, id);
+  }
+  void add_pw(::flatbuffers::Offset<::flatbuffers::String> pw) {
+    fbb_.AddOffset(CS_LOGIN_PACKET::VT_PW, pw);
+  }
+  explicit CS_LOGIN_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_LOGIN_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_LOGIN_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_LOGIN_PACKET> CreateCS_LOGIN_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> pw = 0) {
+  CS_LOGIN_PACKETBuilder builder_(_fbb);
+  builder_.add_pw(pw);
+  builder_.add_id(id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<CS_LOGIN_PACKET> CreateCS_LOGIN_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *id = nullptr,
+    const char *pw = nullptr) {
+  auto id__ = id ? _fbb.CreateString(id) : 0;
+  auto pw__ = pw ? _fbb.CreateString(pw) : 0;
+  return FB_TABLES::CreateCS_LOGIN_PACKET(
+      _fbb,
+      id__,
+      pw__);
+}
 
 struct CS_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_CHAT_PACKETBuilder Builder;

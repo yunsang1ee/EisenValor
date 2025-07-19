@@ -17,40 +17,25 @@ void Server::ClientSession::OnConnected()
 {
 	std::cout << "ClientSession OnConnected!" << std::endl;
 
-	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<Server::ClientSession>(shared_from_this()));
+	MANAGER(Server::ClientSessionManager)->AddSession(std::move(std::static_pointer_cast<Server::ClientSession>(shared_from_this())));
 }
 
 void Server::ClientSession::OnDisconnected()
 {
+	MANAGER(Server::ClientSessionManager)->RemoveSession(std::move(std::static_pointer_cast<Server::ClientSession>(shared_from_this())));
 	std::cout << "ClientSession OnDisconnected!" << std::endl;
-
-	MANAGER(Server::ClientSessionManager)->RemoveSession(std::static_pointer_cast<Server::ClientSession>(shared_from_this()));
+	// TODO: REMOVE_PLAYER_PACKET 보내주기
 }
 
 void Server::ClientSession::ProcessPacket(const char* const buffer, const uint16 packetSize)
 {
-	std::cout << "ClientSesion ProcessPacket" << std::endl;
+	const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer);
+	const char* const packetData = buffer + sizeof(PacketHeader);
+	ClientPacketHandler::HandlePacket(shared_from_this(), packetData, packetHeader);
+}
 
-	const PacketHeader* const packetHeader = reinterpret_cast<const PacketHeader*>(buffer);
-	std::println("Packet Size: {}", packetHeader->packetSize);
-	std::println("Packet Type: {}", packetHeader->packetType);
-	switch(auto type = static_cast<PACKET_TYPE>(packetHeader->packetType)) {
-		case PACKET_TYPE::CS_CHAT:
-		{
-			CS_CHAT_PACKET chatPkt = *reinterpret_cast<const CS_CHAT_PACKET*>(buffer);
-			std::cout << chatPkt.msg << std::endl;
-
-			SC_CHAT_PACKET sendPkt; 
-			memcpy(&sendPkt, &chatPkt, sizeof(chatPkt));
-
-			// TODO :SendBuffer에 SendPkt 담기
-			// TODO: SendBuffer 전달
-
-			break;
-		}
-		default:
-			break;
-	}
-
+void Server::ClientSession::OnSend(const uint32 bytesTransferred)
+{
+	std::println("OnSend, Len = {}", bytesTransferred);
 }
  

@@ -73,11 +73,14 @@ void NetBridge::NetworkManager::ProcessIO()
 	
 	if(recvLen == 0) {
 		std::cout << "Recv Zero" << std::endl;
+		exit(-1);
 	}
 	else if(recvLen < 0) {
 		const int32 errCode = ::WSAGetLastError();
-		if(WSAEWOULDBLOCK != errCode)
+		if(WSAEWOULDBLOCK != errCode) {
 			std::println("Recv Error = {}", errCode);
+			exit(-1);
+		}
 		return;
 	}
 	else {

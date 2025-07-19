@@ -1,0 +1,9 @@
+include "Enums.fbs";
+include "Structs.fbs";
+
+namespace FB_PACKETS;
+
+table CS_CHAT_PACKET {
+	msg: string;				
+}
+

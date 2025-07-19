@@ -5,8 +5,8 @@ namespace ServerEngine {
 
 	class SessionPool {
 	private:
+		SessionFactoryFunc								m_func;
 		std::queue<std::shared_ptr<Session>>			m_freeSessions;
-		std::unordered_set<std::shared_ptr<Session>>	m_allocedSessions;
 
 	public:
 		void Init(SessionFactoryFunc sessionFunc);
@@ -15,5 +15,3 @@ namespace ServerEngine {
 
 	};
 }
-
-

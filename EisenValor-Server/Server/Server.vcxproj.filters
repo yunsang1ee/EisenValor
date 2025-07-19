@@ -16,8 +16,23 @@
     <ClCompile Include="ClientSessionManager.cpp">
       <Filter>01. ClientSessionManager</Filter>
     </ClCompile>
+    <ClCompile Include="ClientPacketHandler.cpp">
+      <Filter>03. Packets\01. PacketHandler</Filter>
+    </ClCompile>
     <ClCompile Include="GameMatch.cpp">
       <Filter>02. Contents\00. GameMatch</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>02. Contents\01. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="General.cpp">
+      <Filter>02. Contents\01. GameObject\00. General</Filter>
+    </ClCompile>
+    <ClCompile Include="Soldier.cpp">
+      <Filter>02. Contents\01. GameObject\01. Soldier</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjectFactory.cpp">
+      <Filter>02. Contents\02. Factory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -51,11 +66,26 @@
     <Filter Include="02. Contents\00. GameMatch">
       <UniqueIdentifier>{22cf3e7d-4884-4e60-8ba4-1b388524b406}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. GameMatch\00. GameObject">
+    <Filter Include="03. Packets">
+      <UniqueIdentifier>{a72fea0a-efab-4482-a77f-c526fc498cbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\01. PacketHandler">
+      <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\00. Schema">
+      <UniqueIdentifier>{2b95e60b-2a18-4e25-8e90-c47c9b9dd645}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\01. GameObject">
       <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. GameMatch\00. GameObject\00. Player">
-      <UniqueIdentifier>{205d4272-d1c8-4341-867e-4a0a9753be53}</UniqueIdentifier>
+    <Filter Include="02. Contents\01. GameObject\00. General">
+      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\01. GameObject\01. Soldier">
+      <UniqueIdentifier>{a3c6f62a-55d7-4f07-9cab-0acbac186255}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. Factory">
+      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -74,14 +104,47 @@
     <ClInclude Include="TestPackets.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ClientPacketHandler.h">
+      <Filter>03. Packets\01. PacketHandler</Filter>
+    </ClInclude>
     <ClInclude Include="GameMatch.h">
       <Filter>02. Contents\00. GameMatch</Filter>
     </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>02. Contents\01. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="General.h">
+      <Filter>02. Contents\01. GameObject\00. General</Filter>
+    </ClInclude>
+    <ClInclude Include="Soldier.h">
+      <Filter>02. Contents\01. GameObject\01. Soldier</Filter>
+    </ClInclude>
+    <ClInclude Include="TestMath.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerEnums.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjectFactory.h">
+      <Filter>02. Contents\02. Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerStructs.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Scripts\CopyHeaders.bat">
-      <Filter>98. Scripts</Filter>
-    </None>
     <None Include="packages.config" />
+    <None Include="..\Packets\Binaries\GenPackets.bat">
+      <Filter>03. Packets\00. Schema</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Enums.fbs">
+      <Filter>03. Packets\00. Schema</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Structs.fbs">
+      <Filter>03. Packets\00. Schema</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Tables.fbs">
+      <Filter>03. Packets\00. Schema</Filter>
+    </None>
   </ItemGroup>
 </Project>

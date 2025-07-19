@@ -4,6 +4,5 @@
 
 std::shared_ptr<Server::ClientSession> MakeClientSessionFunc()
 {
-	// std::cout << "MakeSession!" << std::endl;
-	return std::make_shared<Server::ClientSession>();
+	return ServerEngine::ObjectPool<Server::ClientSession>::MakeShared();
 }
