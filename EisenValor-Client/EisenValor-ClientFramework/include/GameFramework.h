@@ -69,7 +69,11 @@ private:
 	ConstantBuffer m_constantBufferData2;
 	UINT8* m_pCbvDataBegin2 = nullptr;
 
-	static constexpr uint32_t MAX_INSTANCES = 1000; // 최대 인스턴스 개수
+	// 플레이어 위치 및 이동
+	float m_playerX = 0.0f;
+	float m_playerY = 0.5f;  // 막대기 높이
+	float m_playerZ = 0.0f;
+	float m_playerSpeed = 5.0f;  // 이동 속도 (초당 단위)
 
 private:
 	HWND m_hWnd = nullptr;

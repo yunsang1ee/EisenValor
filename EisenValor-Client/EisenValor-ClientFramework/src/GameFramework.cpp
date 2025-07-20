@@ -355,6 +355,27 @@ void GameFramework::Update()
 		DEBUG_LOG_FMT("close");
 		::PostQuitMessage(0);
 	}
+
+	// 플레이어 이동 처리 WASD
+	float deltaTime = Globals::Timer().GetDeltaTime();
+	float moveDistance = m_playerSpeed * deltaTime;
+
+	if (Globals::Input().GetInput(87))  // W키
+		m_playerZ += moveDistance;  // 앞으로
+	if (Globals::Input().GetInput(83))  // S키
+		m_playerZ -= moveDistance;  // 뒤로
+	if (Globals::Input().GetInput(65))  // A키
+		m_playerX -= moveDistance;  // 왼쪽으로
+	if (Globals::Input().GetInput(68))  // D키
+		m_playerX += moveDistance;  // 오른쪽으로
+
+	// 디버깅
+	static float lastX = 0, lastY = 1, lastZ = 0;
+	if (m_playerX != lastX || m_playerZ != lastZ) {
+		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
+			m_playerX, m_playerY, m_playerZ);
+		lastX = m_playerX; lastY = m_playerY; lastZ = m_playerZ;
+	}
 }
 
 void GameFramework::FixedUpdate()
@@ -383,9 +404,9 @@ void GameFramework::Render()
 
 	// 뷰 행렬 (카메라)
 	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 5.0f, -15.0f, 0.0f), // 카메라 위치 
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // 보는 지점 (원점)
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // 위쪽 방향
+		XMVectorSet(0.0f, 5.0f, -18.0f, 0.0f),
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
 	);
 
 	// 투영 행렬
@@ -447,8 +468,20 @@ void GameFramework::Render()
 	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
 
+	// ===== 땅 그리기 =====
+	XMMATRIX groundWorld = XMMatrixScaling(20.0f, 0.2f, 20.0f) *
+		XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMMATRIX groundMVP = groundWorld * view * projection;
+
+	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
+	memcpy(m_pCbvDataBegin2, &m_constantBufferData2, sizeof(m_constantBufferData2));
+
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
+	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+
 	// 큐브
-	XMMATRIX cubeWorld = XMMatrixScaling(0.3f, 0.8f, 0.3f) * XMMatrixTranslation(0.0f, 1.0f, 0.0f);
+	XMMATRIX cubeWorld = XMMatrixScaling(0.3f, 0.8f, 0.3f) * XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
 	XMMATRIX cubeMVP = cubeWorld * view * projection;
 
 	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(cubeMVP));
@@ -457,16 +490,6 @@ void GameFramework::Render()
 	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 	
-	// ===== 땅 그리기 =====
-	XMMATRIX groundWorld = XMMatrixScaling(10.0f, 0.2f, 10.0f) *
-		XMMatrixTranslation(0.0f, -3.0f, 0.0f);
-	XMMATRIX groundMVP = groundWorld * view * projection;
-
-	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
-	memcpy(m_pCbvDataBegin2, &m_constantBufferData2, sizeof(m_constantBufferData2));
-
-	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
-	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 	// 백버퍼를 프레젠트 상태로 전환
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
