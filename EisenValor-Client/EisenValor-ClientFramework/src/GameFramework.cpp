@@ -373,12 +373,68 @@ void GameFramework::Update()
 	if (Globals::Input().GetInput(76))  // 아래로 (L)
 		m_playerY -= moveDistance;
 
-	// 디버깅
+	// 위치 디버깅
 	static float lastX = 0, lastY = 1, lastZ = 0;
 	if (m_playerX != lastX || m_playerZ != lastZ) {
 		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
 			m_playerX, m_playerY, m_playerZ);
 		lastX = m_playerX; lastY = m_playerY; lastZ = m_playerZ;
+	}
+
+	// ===== 마우스로 카메라 이동 =====
+	bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
+	// 현재 마우스 위치
+	auto mousePos = Globals::Input().GetMousePosition();
+
+	if (isLeftButtonPressed)
+	{
+		if (!m_isMouseDragging)
+		{
+			m_isMouseDragging = true;
+			m_lastMouseX = mousePos.x;  // 시작 위치 저장
+			m_lastMouseY = mousePos.y;
+			DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
+		}
+		else
+		{
+			// 움직임 감지
+			float deltaX = mousePos.x - m_lastMouseX;
+			float deltaY = mousePos.y - m_lastMouseY;
+
+			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) 
+			{
+				// 카메라 회전 업데이트
+				m_cameraYaw += deltaX * m_mouseSensitivity;
+				//m_cameraPitch += deltaY * m_mouseSensitivity;
+
+				// Pitch 제한 (위아래 회전 제한)
+				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
+
+				//디버깅
+				DEBUG_LOG_FMT("Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n",
+					deltaX, deltaY, m_cameraYaw, m_cameraPitch);
+			}
+
+			m_lastMouseX = mousePos.x;
+			m_lastMouseY = mousePos.y;
+		}
+	}
+	else
+	{
+		if (m_isMouseDragging)
+		{
+			// 드래그 종료
+			m_isMouseDragging = false;
+			DEBUG_LOG_FMT("Camera drag ended\n");
+		}
+	}
+
+	//마우스 휠로 줌인아웃
+	int wheelDelta = Globals::Input().GetWheelScroll();
+	if (wheelDelta != 0)
+	{
+		m_cameraDistance -= wheelDelta * 0.001f;
+		m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
 	}
 }
 
@@ -406,11 +462,18 @@ void GameFramework::Render()
 	// 월드 행렬
 	XMMATRIX world = XMMatrixIdentity();
 
-	// 뷰 행렬 (카메라)
+	float camX = m_playerX - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
+	float camY = m_playerY + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
+	float camZ = m_playerZ - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
+
+	float lookX = m_playerX + 2.0f * sinf(m_cameraYaw); 
+	float lookY = m_playerY + 1.0f + 2.0f * sinf(m_cameraPitch);
+	float lookZ = m_playerZ + 2.0f * cosf(m_cameraYaw);
+
 	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 5.0f, -18.0f, 0.0f),
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+		XMVectorSet(camX, camY, camZ, 0.0f),          // 플레이어 뒤쪽 위치
+		XMVectorSet(lookX, lookY, lookZ, 0.0f),       // 플레이어 주변을 바라봄
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)          // 업 벡터
 	);
 
 	// 투영 행렬
@@ -484,7 +547,7 @@ void GameFramework::Render()
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 
-	// 큐브
+	// 플레이어
 	XMMATRIX cubeWorld = XMMatrixScaling(0.3f, 0.8f, 0.3f) * XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
 	XMMATRIX cubeMVP = cubeWorld * view * projection;
 
@@ -507,3 +570,5 @@ void GameFramework::Render()
 
 
 }
+
+
