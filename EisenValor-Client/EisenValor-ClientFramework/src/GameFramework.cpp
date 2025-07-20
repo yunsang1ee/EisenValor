@@ -5,6 +5,8 @@
 #include "DxCommandQueueGlobal.h"
 #include "Vertex.h"
 
+using namespace DirectX;
+
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -61,15 +63,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	);
 
 
-	// 2. 삼각형 정점 데이터 25.07.20
-	std::vector<Vertex> triangleVertices = {
-		{ {  0.0f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } }, // 빨간색 위쪽
-		{ {  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } }, // 녹색 오른쪽 아래
-		{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }  // 파란색 왼쪽 아래
-	};
-
+	// 2. 큐브
 	// 정점 버퍼 생성
-	const UINT vertexBufferSize = sizeof(Vertex) * triangleVertices.size();
+	const UINT vertexBufferSize = sizeof(Vertex) * cubeVertices.size();
 
 	// GPU에 업로드할 힙
 	D3D12_HEAP_PROPERTIES heapProps = {};
@@ -96,11 +92,12 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 		IID_PPV_ARGS(&m_vertexBuffer)
 	));
 
+
 	// 정점 데이터를 버퍼에 복사
 	UINT8* pVertexDataBegin;
 	D3D12_RANGE readRange = { 0, 0 };
 	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, triangleVertices.data(), vertexBufferSize);
+	memcpy(pVertexDataBegin, cubeVertices.data(), vertexBufferSize);
 	m_vertexBuffer->Unmap(0, nullptr);
 
 	// VertexBufferView 설정
@@ -108,11 +105,57 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 	m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
+	// 인덱스 버퍼 크기 계산
+	const UINT indexBufferSize = sizeof(uint16_t) * playerIndices.size();
+
+	// 인덱스 버퍼용 힙 속성 (정점 버퍼와 동일)
+	D3D12_HEAP_PROPERTIES indexHeapProps = {};
+	indexHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	// 인덱스 버퍼 리소스 설명
+	D3D12_RESOURCE_DESC indexResourceDesc = {};
+	indexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	indexResourceDesc.Width = indexBufferSize;
+	indexResourceDesc.Height = 1;
+	indexResourceDesc.DepthOrArraySize = 1;
+	indexResourceDesc.MipLevels = 1;
+	indexResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	indexResourceDesc.SampleDesc.Count = 1;
+	indexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	// 인덱스 버퍼 생성
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&indexHeapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&indexResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_indexBuffer)
+	));
+
+	// 인덱스 데이터를 버퍼에 복사
+	UINT8* pIndexDataBegin;
+	D3D12_RANGE indexReadRange = { 0, 0 };
+	ThrowIfFailed(m_indexBuffer->Map(0, &indexReadRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, playerIndices.data(), indexBufferSize);
+	m_indexBuffer->Unmap(0, nullptr);
+
+	// Index Buffer View 설정
+	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+	m_indexBufferView.SizeInBytes = indexBufferSize;
+	m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;  // 16비트 부호 없는 정수
+
+	// 루트 파라미터 정의 (상수 버퍼용)
+	D3D12_ROOT_PARAMETER rootParameter = {};
+	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 상수 버퍼 뷰
+	rootParameter.Descriptor.ShaderRegister = 0;  // register(b0)
+	rootParameter.Descriptor.RegisterSpace = 0;
+	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
 	
-	// 3. 루트 시그니처 생성 (Simple)
+	// 3. 루트 시그니처 생성 25.07.20
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-	rootSignatureDesc.NumParameters = 0;
-	rootSignatureDesc.pParameters = nullptr;
+	rootSignatureDesc.NumParameters = 1;
+	rootSignatureDesc.pParameters = &rootParameter;
 	rootSignatureDesc.NumStaticSamplers = 0;
 	rootSignatureDesc.pStaticSamplers = nullptr;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -122,10 +165,10 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
 	ThrowIfFailed(device.GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 
-
 	// 4. 셰이더 컴파일 (Simple)
 	ComPtr<ID3DBlob> vertexShader;
 	ComPtr<ID3DBlob> pixelShader;
+
 
 #ifdef _DEBUG
 	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
@@ -143,7 +186,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// PSO 생성하기
+	// PS 생성하기
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = m_rootSignature.Get();
@@ -161,6 +204,38 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	psoDesc.SampleDesc.Count = 1;
 
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+
+	// 상수버퍼 생성 25.07.20
+	// 상수 버퍼용 힙 속성
+	D3D12_HEAP_PROPERTIES cbHeapProps = {};
+	cbHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	// 상수 버퍼 크기 (256바이트 정렬)
+	const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
+
+	// 상수 버퍼 리소스 설명
+	D3D12_RESOURCE_DESC cbResourceDesc = {};
+	cbResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbResourceDesc.Width = constantBufferSize;
+	cbResourceDesc.Height = 1;
+	cbResourceDesc.DepthOrArraySize = 1;
+	cbResourceDesc.MipLevels = 1;
+	cbResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	cbResourceDesc.SampleDesc.Count = 1;
+	cbResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	// 상수 버퍼 생성
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&cbHeapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&cbResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_constantBuffer)
+	));
+
+	// 상수 버퍼 매핑 CPU가 읽을 수 있게 함
+	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
 
 	return true;
 }
@@ -271,15 +346,43 @@ void GameFramework::Render()
 	// 현재 프레임 준비
 	m_commandContextPool->AdvanceFrame();
 	auto& context = m_commandContextPool->GetCurrentContext();
+	context.Reset();	//Command List Start
 
-	// 커맨드 리스트 시작
-	context.Reset();
+	// MVP행렬 계산
+	// 회전 애니메이션
+	static float rotation = 0.0f;
+	rotation += 0.01f; // 회전 속도
+
+	// 월드 행렬
+	XMMATRIX world = XMMatrixIdentity();
+
+	// 뷰 행렬 (카메라)
+	XMMATRIX view = XMMatrixLookAtLH(
+		XMVectorSet(2.0f, 2.0f, -3.0f, 0.0f), // 카메라 위치 (약간 위, 오른쪽, 뒤)
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // 보는 지점 (원점)
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // 위쪽 방향
+	);
+
+	// 투영 행렬
+	XMMATRIX projection = XMMatrixPerspectiveFovLH(
+		XM_PI / 4.0f,                                    // 45도 시야각
+		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // 종횡비
+		0.1f,                                           // 가까운 클리핑 평면
+		100.0f                                          // 먼 클리핑 평면
+	);
+
+	// MVP 행렬 조합
+	XMMATRIX mvp = world * view * projection;
+
+	// 상수 버퍼에 복사
+	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(mvp)); // 전치 필요
+	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 
 	// 현재 백버퍼 가져오기
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
 
-	// 백버퍼를 렌더 타겟으로 전환
+	// 백버퍼를 렌더 타겟으로 전환(Resource barrier)
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -292,11 +395,9 @@ void GameFramework::Render()
 
 	// 렌더 타겟 설정
 	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
 	// 화면을 파란색으로 클리어
 	float clearColor[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // 파란색
 	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
 
 	// 뷰포트 설정
 	D3D12_VIEWPORT viewport = {};
@@ -317,11 +418,14 @@ void GameFramework::Render()
 	// 파이프라인 설정
 	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
 	context.CommandList()->SetPipelineState(m_pipelineState.Get());
+
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());		//상수 버퍼 추가 25.07.20
 	context.CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-	// 삼각형 그리기
-	context.CommandList()->DrawInstanced(3, 1, 0, 0);
+	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
+	
+	//큐브 그리기
+	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 	// 백버퍼를 프레젠트 상태로 전환
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -330,7 +434,6 @@ void GameFramework::Render()
 
 	// 커맨드 실행
 	m_commandContextPool->SignalCurrentFrame();
-
 	// 화면에 표시
 	m_swapChain->Present(1, 0);
 

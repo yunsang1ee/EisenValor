@@ -3,6 +3,13 @@
 #include "DxSwapChain.h"
 #include "DxCommandContextPool.h"
 
+// MVP 행렬 추가(상수버퍼) 25.07.20
+struct ConstantBuffer
+{
+	DirectX::XMFLOAT4X4 mvp;  // Model-View-Projection 행렬
+	//XMat4x4
+};
+
 class GameFramework
 {
 public:
@@ -35,7 +42,19 @@ private:
 	ComPtr<ID3D12Resource> m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
+	// 인덱스 버퍼 추가 25.07.20
+	ComPtr<ID3D12Resource> m_indexBuffer;
+	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+
+	// 상수 버퍼 추가 25.07.20
+	ComPtr<ID3D12Resource> m_constantBuffer;
+	ConstantBuffer m_constantBufferData;
+	UINT8* m_pCbvDataBegin = nullptr;	//시작 주소
+
 private:
 	HWND m_hWnd = nullptr;
 	HINSTANCE m_hInstance = nullptr;
 };
+
+
+
