@@ -368,6 +368,10 @@ void GameFramework::Update()
 		m_playerX -= moveDistance;  // 왼쪽으로
 	if (Globals::Input().GetInput(68))  // D키
 		m_playerX += moveDistance;  // 오른쪽으로
+	if (Globals::Input().GetInput(72))  // 위로 (H)
+		m_playerY += moveDistance;
+	if (Globals::Input().GetInput(76))  // 아래로 (L)
+		m_playerY -= moveDistance;
 
 	// 디버깅
 	static float lastX = 0, lastY = 1, lastZ = 0;
