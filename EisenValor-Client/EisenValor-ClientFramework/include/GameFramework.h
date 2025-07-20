@@ -35,6 +35,10 @@ private:
 	ComPtr<ID3D12Resource> m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
+	// 인덱스 버퍼 추가 25.07.20
+	ComPtr<ID3D12Resource> m_indexBuffer;
+	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+
 private:
 	HWND m_hWnd = nullptr;
 	HINSTANCE m_hInstance = nullptr;

@@ -61,15 +61,16 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	);
 
 
-	// 2. 삼각형 정점 데이터 25.07.20
-	std::vector<Vertex> triangleVertices = {
-		{ {  0.0f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } }, // 빨간색 위쪽
-		{ {  0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } }, // 녹색 오른쪽 아래
-		{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }  // 파란색 왼쪽 아래
+	// 2. 사각형 정점 데이터 25.07.21
+	std::vector<Vertex> quadVertices = {
+		{ { -0.5f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } }, // 0: 왼쪽 위 (빨강)
+		{ {  0.5f,  0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } }, // 1: 오른쪽 위 (녹색)
+		{ {  0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }, // 2: 오른쪽 아래 (파랑)
+		{ { -0.5f, -0.5f, 0.0f }, { 1.0f, 1.0f, 0.0f, 1.0f } }  // 3: 왼쪽 아래 (노랑)
 	};
 
 	// 정점 버퍼 생성
-	const UINT vertexBufferSize = sizeof(Vertex) * triangleVertices.size();
+	const UINT vertexBufferSize = sizeof(Vertex) * quadVertices.size();
 
 	// GPU에 업로드할 힙
 	D3D12_HEAP_PROPERTIES heapProps = {};
@@ -96,17 +97,64 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 		IID_PPV_ARGS(&m_vertexBuffer)
 	));
 
+
 	// 정점 데이터를 버퍼에 복사
 	UINT8* pVertexDataBegin;
 	D3D12_RANGE readRange = { 0, 0 };
 	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, triangleVertices.data(), vertexBufferSize);
+	memcpy(pVertexDataBegin, quadVertices.data(), vertexBufferSize);
 	m_vertexBuffer->Unmap(0, nullptr);
 
 	// VertexBufferView 설정
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 	m_vertexBufferView.SizeInBytes = vertexBufferSize;
+
+	// 25.07.20 인덱스 정보 추가
+	std::vector<uint16_t> quadIndices = {
+		0, 1, 2,  // 첫 번째 삼각형: 왼쪽위 → 오른쪽위 → 오른쪽아래
+		0, 2, 3   // 두 번째 삼각형: 왼쪽위 → 오른쪽아래 → 왼쪽아래
+	};
+
+	// 인덱스 버퍼 크기 계산
+	const UINT indexBufferSize = sizeof(uint16_t) * quadIndices.size();
+
+	// 인덱스 버퍼용 힙 속성 (정점 버퍼와 동일)
+	D3D12_HEAP_PROPERTIES indexHeapProps = {};
+	indexHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	// 인덱스 버퍼 리소스 설명
+	D3D12_RESOURCE_DESC indexResourceDesc = {};
+	indexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	indexResourceDesc.Width = indexBufferSize;
+	indexResourceDesc.Height = 1;
+	indexResourceDesc.DepthOrArraySize = 1;
+	indexResourceDesc.MipLevels = 1;
+	indexResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	indexResourceDesc.SampleDesc.Count = 1;
+	indexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	// 인덱스 버퍼 생성
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&indexHeapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&indexResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_indexBuffer)
+	));
+
+	// 인덱스 데이터를 버퍼에 복사
+	UINT8* pIndexDataBegin;
+	D3D12_RANGE indexReadRange = { 0, 0 };
+	ThrowIfFailed(m_indexBuffer->Map(0, &indexReadRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, quadIndices.data(), indexBufferSize);
+	m_indexBuffer->Unmap(0, nullptr);
+
+	// Index Buffer View 설정
+	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+	m_indexBufferView.SizeInBytes = indexBufferSize;
+	m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;  // 16비트 부호 없는 정수
 
 	
 	// 3. 루트 시그니처 생성 (Simple)
@@ -122,10 +170,10 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
 	ThrowIfFailed(device.GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 
-
 	// 4. 셰이더 컴파일 (Simple)
 	ComPtr<ID3DBlob> vertexShader;
 	ComPtr<ID3DBlob> pixelShader;
+
 
 #ifdef _DEBUG
 	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
@@ -320,8 +368,8 @@ void GameFramework::Render()
 	context.CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
-	// 삼각형 그리기
-	context.CommandList()->DrawInstanced(3, 1, 0, 0);
+	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
+	context.CommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 	// 백버퍼를 프레젠트 상태로 전환
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
