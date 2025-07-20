@@ -151,7 +151,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	rootParameter.Descriptor.ShaderRegister = 0;  // register(b0)
 	rootParameter.Descriptor.RegisterSpace = 0;
 	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
-	
+
 	// 3. 루트 시그니처 생성 25.07.20
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.NumParameters = 1;
@@ -236,7 +236,33 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	// 상수 버퍼 매핑 CPU가 읽을 수 있게 함
 	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+	
+	// 두 번째 상수 버퍼
+	const UINT constantBufferSize2 = (sizeof(ConstantBuffer) + 255) & ~255;
+	D3D12_HEAP_PROPERTIES cbHeapProps2 = {};
+	cbHeapProps2.Type = D3D12_HEAP_TYPE_UPLOAD;
 
+	D3D12_RESOURCE_DESC cbResourceDesc2 = {};
+	cbResourceDesc2.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbResourceDesc2.Width = constantBufferSize2;
+	cbResourceDesc2.Height = 1;
+	cbResourceDesc2.DepthOrArraySize = 1;
+	cbResourceDesc2.MipLevels = 1;
+	cbResourceDesc2.Format = DXGI_FORMAT_UNKNOWN;
+	cbResourceDesc2.SampleDesc.Count = 1;
+	cbResourceDesc2.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&cbHeapProps2,
+		D3D12_HEAP_FLAG_NONE,
+		&cbResourceDesc2,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_constantBuffer2)
+	));
+
+	D3D12_RANGE readRange2 = { 0, 0 };
+	ThrowIfFailed(m_constantBuffer2->Map(0, &readRange2, reinterpret_cast<void**>(&m_pCbvDataBegin2)));
 	return true;
 }
 
@@ -245,7 +271,7 @@ void GameFramework::Run()
 	Globals::Input().BeforeUpdate();
 
 	Globals::Timer().Update();
-	if(Globals::Timer().ShouldFixedUpdate())
+	if (Globals::Timer().ShouldFixedUpdate())
 		FixedUpdate();
 	Update();
 	LateUpdate();
@@ -284,7 +310,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		if (code)
 			Globals::Input().OnInputState(code, isPressed, isUp);
 	}
-		break;
+	break;
 	case WM_MOUSEMOVE:
 		Globals::Input().OnMouseMove(LOWORD(lParam), HIWORD(lParam));
 		break;
@@ -346,7 +372,6 @@ void GameFramework::Render()
 	// 현재 프레임 준비
 	m_commandContextPool->AdvanceFrame();
 	auto& context = m_commandContextPool->GetCurrentContext();
-	context.Reset();	//Command List Start
 
 	// MVP행렬 계산
 	// 회전 애니메이션
@@ -358,7 +383,7 @@ void GameFramework::Render()
 
 	// 뷰 행렬 (카메라)
 	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(2.0f, 2.0f, -3.0f, 0.0f), // 카메라 위치 (약간 위, 오른쪽, 뒤)
+		XMVectorSet(0.0f, 5.0f, -15.0f, 0.0f), // 카메라 위치 
 		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // 보는 지점 (원점)
 		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // 위쪽 방향
 	);
@@ -418,13 +443,29 @@ void GameFramework::Render()
 	// 파이프라인 설정
 	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
 	context.CommandList()->SetPipelineState(m_pipelineState.Get());
-
-	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());		//상수 버퍼 추가 25.07.20
 	context.CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
+
+	// 큐브
+	XMMATRIX cubeWorld = XMMatrixScaling(0.3f, 0.8f, 0.3f) * XMMatrixTranslation(0.0f, 1.0f, 0.0f);
+	XMMATRIX cubeMVP = cubeWorld * view * projection;
+
+	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(cubeMVP));
+	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
+	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 	
-	//큐브 그리기
+	// ===== 땅 그리기 =====
+	XMMATRIX groundWorld = XMMatrixScaling(10.0f, 0.2f, 10.0f) *
+		XMMatrixTranslation(0.0f, -3.0f, 0.0f);
+	XMMATRIX groundMVP = groundWorld * view * projection;
+
+	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
+	memcpy(m_pCbvDataBegin2, &m_constantBufferData2, sizeof(m_constantBufferData2));
+
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 	// 백버퍼를 프레젠트 상태로 전환
@@ -439,4 +480,3 @@ void GameFramework::Render()
 
 
 }
-

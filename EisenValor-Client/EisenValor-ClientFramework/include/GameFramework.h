@@ -10,6 +10,19 @@ struct ConstantBuffer
 	//XMat4x4
 };
 
+//// 인스턴싱을 위한 구조체
+//struct InstanceData
+//{
+//	DirectX::XMFLOAT4X4 world; // 각 인스턴스의 월드 행렬
+//	DirectX::XMFLOAT4 color;   // 각 인스턴스의 색상
+//};
+//
+//struct PerFrameData
+//{
+//	DirectX::XMFLOAT4X4 view;       // 뷰 행렬
+//	DirectX::XMFLOAT4X4 projection; // 프로젝션 행렬
+//};
+
 class GameFramework
 {
 public:
@@ -50,6 +63,13 @@ private:
 	ComPtr<ID3D12Resource> m_constantBuffer;
 	ConstantBuffer m_constantBufferData;
 	UINT8* m_pCbvDataBegin = nullptr;	//시작 주소
+
+	//Ground Constant Buffer
+	ComPtr<ID3D12Resource> m_constantBuffer2;
+	ConstantBuffer m_constantBufferData2;
+	UINT8* m_pCbvDataBegin2 = nullptr;
+
+	static constexpr uint32_t MAX_INSTANCES = 1000; // 최대 인스턴스 개수
 
 private:
 	HWND m_hWnd = nullptr;
