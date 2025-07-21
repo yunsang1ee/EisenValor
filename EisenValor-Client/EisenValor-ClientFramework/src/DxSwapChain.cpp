@@ -1,18 +1,18 @@
 #include "stdafxClientFramework.h"
 #include "DxSwapChain.h"
+#include <DxCommandQueueGlobal.h>
 
 constexpr UINT SWAP_CHAIN_FLAGS = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, ID3D12CommandQueue* commandQueue,
+DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphicsCommandQueueGlobal& commandQueue,
     HWND hwnd, uint32_t width, uint32_t height, uint32_t backBufferCount, DXGI_FORMAT format,
     D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
-    : m_device(device), m_factory(factory), m_commandQueue(commandQueue),
+    : m_device(device), m_factory(factory), m_graphicsCommandQueueGlobal(commandQueue),
     m_hwnd(hwnd), m_width(width), m_height(height), m_backBufferCount(backBufferCount), m_format(format),
     m_rtvDescriptorStart(rtvDescriptorStart), m_rtvDescriptorSize(rtvDescriptorSize)
 {
     assert(device && "[DxSwapChain] ID3D12Device is null.");
     assert(factory && "[DxSwapChain] IDXGIFactory6 is null.");
-    assert(commandQueue && "[DxSwapChain] ID3D12CommandQueue is null.");
     assert(hwnd && "[DxSwapChain] HWND is null.");
     assert(width > 0 && "[DxSwapChain] Width > 0.");
     assert(height > 0 && "[DxSwapChain] Height > 0.");
@@ -40,7 +40,7 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, ID3D12Com
 
     ComPtr<IDXGISwapChain1> swapChain1;
     ThrowIfFailed(m_factory->CreateSwapChainForHwnd(
-        m_commandQueue,
+        m_graphicsCommandQueueGlobal.GetQueue(),
         m_hwnd,
         &swapChainDesc,
         nullptr, // Fullscreen Optimizations
@@ -51,9 +51,9 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, ID3D12Com
     ThrowIfFailed(swapChain1.As(&m_swapChain));
 	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)); //TODO: Alt+Enter Input Processing in InputGlobal
 
-    CreateResources(device, m_commandQueue, m_rtvDescriptorStart, m_rtvDescriptorSize);
+    CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
-    DEBUG_LOG_FMT("[DxSwapChain] SwapChain created: %dx%d, BackBuffers: %d, Format: %d\n",
+    DEBUG_LOG_FMT("[DxSwapChain] SwapChain created: {}x{}, BackBuffers: {}, Format: {}\n",
         m_width, m_height, m_backBufferCount, (int)m_format);
 }
 
@@ -65,6 +65,7 @@ DxSwapChain::~DxSwapChain()
 
 void DxSwapChain::ReleaseBackBuffers()
 {
+	m_graphicsCommandQueueGlobal.WaitForIdle(); // Ensure all GPU operations are complete before releasing resources
     for (auto& backBuffer : m_backBuffers)
     {
         if (backBuffer)
@@ -80,6 +81,7 @@ void DxSwapChain::Present(UINT syncInterval, UINT flags)
     ThrowIfFailed(m_swapChain->Present(syncInterval, flags));
     m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
+
 void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t newHeight,
     D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
 {
@@ -103,9 +105,9 @@ void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t new
     m_width = newWidth;
     m_height = newHeight;
 
-    CreateResources(device, m_commandQueue, m_rtvDescriptorStart, m_rtvDescriptorSize);
+    CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
-    DEBUG_LOG_FMT("[DxSwapChain] SwapChain resized to %dx%d. BackBuffers recreated.\n", m_width, m_height);
+    DEBUG_LOG_FMT("[DxSwapChain] SwapChain resized to {}x{}. BackBuffers recreated.\n", m_width, m_height);
 }
 
 void DxSwapChain::CreateResources(ID3D12Device* device, ID3D12CommandQueue* commandQueue,
@@ -135,7 +137,7 @@ ID3D12Resource* DxSwapChain::GetBackBuffer(uint32_t index) const
 {
     if (index >= m_backBufferCount)
     {
-        DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid back buffer index %d. Max is %d.\n", index, m_backBufferCount - 1);
+        DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid back buffer index {}. Max is {}.\n", index, m_backBufferCount - 1);
         return nullptr;
     }
     return m_backBuffers[index].Get();
@@ -150,7 +152,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxSwapChain::GetBackBufferRTV(uint32_t index) const
 {
     if (index >= m_backBufferCount)
     {
-        DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid RTV index %d. Max is %d.\n", index, m_backBufferCount - 1);
+        DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid RTV index {}. Max is {}.\n", index, m_backBufferCount - 1);
         return {};
     }
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescriptorStart;

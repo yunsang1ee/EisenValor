@@ -30,6 +30,8 @@ class DxGraphicsCommandQueueGlobal
 	: public GlobalMakerBase<DxGraphicsCommandQueueGlobal, IDxGraphicsCommandQueueGlobal>
 {
 public:
+	~DxGraphicsCommandQueueGlobal();
+
 	void Initialize(ID3D12Device* device) override;
 
 	void ExecuteCommandList(ID3D12CommandList* commandList) override;
@@ -43,6 +45,10 @@ public:
 private:
 	ComPtr<ID3D12CommandQueue>	m_commandQueue;
 	ID3D12Device* m_device = nullptr;
+
+	ComPtr<ID3D12Fence> m_idleFence;
+	uint64_t            m_idleValue = 0;
+	HANDLE              m_idleEvent = nullptr;
 };
 
 class DxComputeCommandQueueGlobal

@@ -45,7 +45,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_swapChain = std::make_unique<DxSwapChain>(
 		device.GetDevice(),
 		device.GetFactory(),
-		commandQueue.GetQueue(),
+		commandQueue,
 		m_hWnd,
 		width,
 		height,
@@ -338,6 +338,9 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		Globals::Input().OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 	case WM_DESTROY:
+		DEBUG_LOG_FMT("WaitForIdle....\n");
+		GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().WaitForIdle();
+		DEBUG_LOG_FMT("Window destroyed. Initiating application shutdown.\n");
 		PostQuitMessage(0);
 		break;
 
@@ -352,8 +355,8 @@ void GameFramework::Update()
 {
 	if (Globals::Input().GetInputDown(VK_ESCAPE))
 	{
-		DEBUG_LOG_FMT("close");
-		::PostQuitMessage(0);
+		DEBUG_LOG_FMT("close\n");
+		::DestroyWindow(m_hWnd);
 	}
 
 	// 플레이어 이동 처리 WASD
