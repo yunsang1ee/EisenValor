@@ -151,7 +151,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	rootParameter.Descriptor.ShaderRegister = 0;  // register(b0)
 	rootParameter.Descriptor.RegisterSpace = 0;
 	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
-	
+
 	// 3. 루트 시그니처 생성 25.07.20
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.NumParameters = 1;
@@ -236,7 +236,33 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	// 상수 버퍼 매핑 CPU가 읽을 수 있게 함
 	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+	
+	// 두 번째 상수 버퍼
+	const UINT constantBufferSize2 = (sizeof(ConstantBuffer) + 255) & ~255;
+	D3D12_HEAP_PROPERTIES cbHeapProps2 = {};
+	cbHeapProps2.Type = D3D12_HEAP_TYPE_UPLOAD;
 
+	D3D12_RESOURCE_DESC cbResourceDesc2 = {};
+	cbResourceDesc2.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbResourceDesc2.Width = constantBufferSize2;
+	cbResourceDesc2.Height = 1;
+	cbResourceDesc2.DepthOrArraySize = 1;
+	cbResourceDesc2.MipLevels = 1;
+	cbResourceDesc2.Format = DXGI_FORMAT_UNKNOWN;
+	cbResourceDesc2.SampleDesc.Count = 1;
+	cbResourceDesc2.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&cbHeapProps2,
+		D3D12_HEAP_FLAG_NONE,
+		&cbResourceDesc2,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_constantBuffer2)
+	));
+
+	D3D12_RANGE readRange2 = { 0, 0 };
+	ThrowIfFailed(m_constantBuffer2->Map(0, &readRange2, reinterpret_cast<void**>(&m_pCbvDataBegin2)));
 	return true;
 }
 
@@ -245,7 +271,7 @@ void GameFramework::Run()
 	Globals::Input().BeforeUpdate();
 
 	Globals::Timer().Update();
-	if(Globals::Timer().ShouldFixedUpdate())
+	if (Globals::Timer().ShouldFixedUpdate())
 		FixedUpdate();
 	Update();
 	LateUpdate();
@@ -284,7 +310,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		if (code)
 			Globals::Input().OnInputState(code, isPressed, isUp);
 	}
-		break;
+	break;
 	case WM_MOUSEMOVE:
 		Globals::Input().OnMouseMove(LOWORD(lParam), HIWORD(lParam));
 		break;
@@ -329,6 +355,87 @@ void GameFramework::Update()
 		DEBUG_LOG_FMT("close");
 		::PostQuitMessage(0);
 	}
+
+	// 플레이어 이동 처리 WASD
+	float deltaTime = Globals::Timer().GetDeltaTime();
+	float moveDistance = m_playerSpeed * deltaTime;
+
+	if (Globals::Input().GetInput(87))  // W키
+		m_playerZ += moveDistance;  // 앞으로
+	if (Globals::Input().GetInput(83))  // S키
+		m_playerZ -= moveDistance;  // 뒤로
+	if (Globals::Input().GetInput(65))  // A키
+		m_playerX -= moveDistance;  // 왼쪽으로
+	if (Globals::Input().GetInput(68))  // D키
+		m_playerX += moveDistance;  // 오른쪽으로
+	if (Globals::Input().GetInput(72))  // 위로 (H)
+		m_playerY += moveDistance;
+	if (Globals::Input().GetInput(76))  // 아래로 (L)
+		m_playerY -= moveDistance;
+
+	// 위치 디버깅
+	static float lastX = 0, lastY = 1, lastZ = 0;
+	if (m_playerX != lastX || m_playerZ != lastZ) {
+		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
+			m_playerX, m_playerY, m_playerZ);
+		lastX = m_playerX; lastY = m_playerY; lastZ = m_playerZ;
+	}
+
+	// ===== 마우스로 카메라 이동 =====
+	bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
+	// 현재 마우스 위치
+	auto mousePos = Globals::Input().GetMousePosition();
+
+	if (isLeftButtonPressed)
+	{
+		if (!m_isMouseDragging)
+		{
+			m_isMouseDragging = true;
+			m_lastMouseX = mousePos.x;  // 시작 위치 저장
+			m_lastMouseY = mousePos.y;
+			DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
+		}
+		else
+		{
+			// 움직임 감지
+			float deltaX = mousePos.x - m_lastMouseX;
+			float deltaY = mousePos.y - m_lastMouseY;
+
+			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) 
+			{
+				// 카메라 회전 업데이트
+				m_cameraYaw += deltaX * m_mouseSensitivity;
+				//m_cameraPitch += deltaY * m_mouseSensitivity;
+
+				// Pitch 제한 (위아래 회전 제한)
+				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
+
+				//디버깅
+				DEBUG_LOG_FMT("Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n",
+					deltaX, deltaY, m_cameraYaw, m_cameraPitch);
+			}
+
+			m_lastMouseX = mousePos.x;
+			m_lastMouseY = mousePos.y;
+		}
+	}
+	else
+	{
+		if (m_isMouseDragging)
+		{
+			// 드래그 종료
+			m_isMouseDragging = false;
+			DEBUG_LOG_FMT("Camera drag ended\n");
+		}
+	}
+
+	//마우스 휠로 줌인아웃
+	int wheelDelta = Globals::Input().GetWheelScroll();
+	if (wheelDelta != 0)
+	{
+		m_cameraDistance -= wheelDelta * 0.001f;
+		m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
+	}
 }
 
 void GameFramework::FixedUpdate()
@@ -346,7 +453,6 @@ void GameFramework::Render()
 	// 현재 프레임 준비
 	m_commandContextPool->AdvanceFrame();
 	auto& context = m_commandContextPool->GetCurrentContext();
-	context.Reset();	//Command List Start
 
 	// MVP행렬 계산
 	// 회전 애니메이션
@@ -356,11 +462,18 @@ void GameFramework::Render()
 	// 월드 행렬
 	XMMATRIX world = XMMatrixIdentity();
 
-	// 뷰 행렬 (카메라)
+	float camX = m_playerX - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
+	float camY = m_playerY + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
+	float camZ = m_playerZ - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
+
+	float lookX = m_playerX + 2.0f * sinf(m_cameraYaw); 
+	float lookY = m_playerY + 1.0f + 2.0f * sinf(m_cameraPitch);
+	float lookZ = m_playerZ + 2.0f * cosf(m_cameraYaw);
+
 	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(2.0f, 2.0f, -3.0f, 0.0f), // 카메라 위치 (약간 위, 오른쪽, 뒤)
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),  // 보는 지점 (원점)
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)   // 위쪽 방향
+		XMVectorSet(camX, camY, camZ, 0.0f),          // 플레이어 뒤쪽 위치
+		XMVectorSet(lookX, lookY, lookZ, 0.0f),       // 플레이어 주변을 바라봄
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)          // 업 벡터
 	);
 
 	// 투영 행렬
@@ -418,14 +531,32 @@ void GameFramework::Render()
 	// 파이프라인 설정
 	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
 	context.CommandList()->SetPipelineState(m_pipelineState.Get());
-
-	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());		//상수 버퍼 추가 25.07.20
 	context.CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
-	
-	//큐브 그리기
+
+	// ===== 땅 그리기 =====
+	XMMATRIX groundWorld = XMMatrixScaling(20.0f, 0.2f, 20.0f) *
+		XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMMATRIX groundMVP = groundWorld * view * projection;
+
+	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
+	memcpy(m_pCbvDataBegin2, &m_constantBufferData2, sizeof(m_constantBufferData2));
+
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+
+	// 플레이어
+	XMMATRIX cubeWorld = XMMatrixScaling(0.3f, 0.8f, 0.3f) * XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
+	XMMATRIX cubeMVP = cubeWorld * view * projection;
+
+	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(cubeMVP));
+	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
+	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+	
 
 	// 백버퍼를 프레젠트 상태로 전환
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -439,4 +570,5 @@ void GameFramework::Render()
 
 
 }
+
 

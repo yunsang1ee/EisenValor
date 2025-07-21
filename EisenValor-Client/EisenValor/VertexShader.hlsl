@@ -1,5 +1,4 @@
-// VertexShader.hlsl
-// 상수 버퍼 추가
+// VertexShader.hlsl (원래 버전)
 cbuffer ConstantBuffer : register(b0)
 {
     matrix mvp;
@@ -20,10 +19,7 @@ struct VertexOutput
 VertexOutput main(VertexInput input)
 {
     VertexOutput output;
-    
-    //MVP 행렬 적용
     output.position = mul(float4(input.position, 1.0f), mvp);
     output.color = input.color;
-    
     return output;
 }
