@@ -359,22 +359,47 @@ void GameFramework::Update()
 		::DestroyWindow(m_hWnd);
 	}
 
-	// 플레이어 이동 처리 WASD
-	float deltaTime = Globals::Timer().GetDeltaTime();
-	float moveDistance = m_playerSpeed * deltaTime;
+	// 플레이어 바라보는 방향 벡터 계산
+	float forwardX = sinf(m_cameraYaw);
+	float forwardZ = cosf(m_cameraYaw);
 
-	if (Globals::Input().GetInput(87))  // W키
-		m_playerZ += moveDistance;  // 앞으로
-	if (Globals::Input().GetInput(83))  // S키
-		m_playerZ -= moveDistance;  // 뒤로
-	if (Globals::Input().GetInput(65))  // A키
-		m_playerX -= moveDistance;  // 왼쪽으로
-	if (Globals::Input().GetInput(68))  // D키
-		m_playerX += moveDistance;  // 오른쪽으로
-	if (Globals::Input().GetInput(72))  // 위로 (H)
-		m_playerY += moveDistance;
-	if (Globals::Input().GetInput(76))  // 아래로 (L)
-		m_playerY -= moveDistance;
+	// 우측 벡터 계산
+	float rightX = sinf(m_cameraYaw + XM_PIDIV2);
+	float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
+
+	float moveSpeed = m_playerSpeed * Globals::Timer().GetDeltaTime();
+
+	// WASD 입력 처리
+	if (Globals::Input().GetInput('W'))  // 전진
+	{
+		m_playerX += forwardX * moveSpeed;
+		m_playerZ += forwardZ * moveSpeed;
+	}
+	if (Globals::Input().GetInput('S'))  // 후진
+	{
+		m_playerX -= forwardX * moveSpeed;
+		m_playerZ -= forwardZ * moveSpeed;
+	}
+	if (Globals::Input().GetInput('A'))  // 좌측 이동
+	{
+		m_playerX -= rightX * moveSpeed;
+		m_playerZ -= rightZ * moveSpeed;
+	}
+	if (Globals::Input().GetInput('D'))  // 우측 이동
+	{
+		m_playerX += rightX * moveSpeed;
+		m_playerZ += rightZ * moveSpeed;
+	}
+
+	// 수직 이동 (H/L 키)
+	if (Globals::Input().GetInput('H'))
+	{
+		m_playerY -= moveSpeed;  // 아래로
+	}
+	if (Globals::Input().GetInput('L'))
+	{
+		m_playerY += moveSpeed;  // 위로
+	}
 
 	// 위치 디버깅
 	static float lastX = 0, lastY = 1, lastZ = 0;
@@ -487,8 +512,11 @@ void GameFramework::Render()
 		100.0f                                          // 먼 클리핑 평면
 	);
 
-	// MVP 행렬 조합
-	XMMATRIX mvp = world * view * projection;
+
+	XMMATRIX playerRotation = XMMatrixRotationY(m_cameraYaw);
+	XMMATRIX playerTranslation = XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
+	XMMATRIX playerWorld = playerRotation * playerTranslation;
+	XMMATRIX mvp = playerWorld * view * projection;
 
 	// 상수 버퍼에 복사
 	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(mvp)); // 전치 필요
