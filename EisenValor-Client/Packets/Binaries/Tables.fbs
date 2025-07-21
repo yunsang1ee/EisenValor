@@ -1,0 +1,40 @@
+include "Enums.fbs";
+include "Structs.fbs";
+
+namespace FB_TABLES;
+
+table CS_LOGIN_PACKET {
+	id: string;
+	pw: string;
+}
+
+table CS_CHAT_PACKET {
+	msg: string;				
+}
+
+table CS_MOVE_PACKET_XY {
+	x: short;
+	y: short;
+}
+
+table CS_MOVE_PACKET_XYZ {
+	x: float;
+	y: float;
+	z: float;
+}
+
+table CS_TEST_PACKET {
+	x: float;
+	y: float;
+	z: float;
+}
+
+table SC_CHAT_PACKET {
+	msg: string;
+}
+
+table SC_MOVE_PACKET_XYZ {
+	x: float;
+	y: float;
+	z: float;
+}
