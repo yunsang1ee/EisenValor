@@ -433,7 +433,7 @@ void GameFramework::Update()
 			{
 				// 카메라 회전 업데이트
 				m_cameraYaw += deltaX * m_mouseSensitivity;
-				//m_cameraPitch += deltaY * m_mouseSensitivity;
+				m_cameraPitch += deltaY * m_mouseSensitivity;
 
 				// Pitch 제한 (위아래 회전 제한)
 				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
@@ -513,15 +513,6 @@ void GameFramework::Render()
 	);
 
 
-	XMMATRIX playerRotation = XMMatrixRotationY(m_cameraYaw);
-	XMMATRIX playerTranslation = XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
-	XMMATRIX playerWorld = playerRotation * playerTranslation;
-	XMMATRIX mvp = playerWorld * view * projection;
-
-	// 상수 버퍼에 복사
-	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(mvp)); // 전치 필요
-	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-
 	// 현재 백버퍼 가져오기
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
@@ -577,12 +568,15 @@ void GameFramework::Render()
 	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
+	// 플레이어 그리기
+	XMMATRIX playerScale = XMMatrixScaling(0.3f, 0.8f, 0.3f);
+	XMMATRIX playerRotation = XMMatrixRotationY(m_cameraYaw);
+	XMMATRIX playerTranslation = XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
+	XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
+	XMMATRIX mvp = playerWorld * view * projection;
 
-	// 플레이어
-	XMMATRIX cubeWorld = XMMatrixScaling(0.3f, 0.8f, 0.3f) * XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
-	XMMATRIX cubeMVP = cubeWorld * view * projection;
-
-	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(cubeMVP));
+	// 상수 버퍼에 복사
+	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(mvp)); // 전치 필요
 	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 
 	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
