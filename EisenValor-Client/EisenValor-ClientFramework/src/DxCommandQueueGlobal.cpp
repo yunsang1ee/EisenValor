@@ -2,10 +2,19 @@
 #include "DxCommandQueueGlobal.h"
 #include <DxDeviceGlobal.h>
 
+DxGraphicsCommandQueueGlobal::~DxGraphicsCommandQueueGlobal()
+{
+	if (m_idleEvent)
+	{
+		CloseHandle(m_idleEvent);
+		m_idleEvent = nullptr;
+	}
+	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Destroyed DxGraphicsCommandQueueGlobal.\n");
+}
 
 void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 {
-	assert(device && "[DxCommandQueue] device is null");
+	assert(device && "[DxGraphicsCommandQueueGlobal] device is null");
     m_device = device;
 
 	D3D12_COMMAND_QUEUE_DESC desc = {
@@ -15,47 +24,40 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 
 	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_commandQueue)));
 
-	DEBUG_LOG_FMT("[DxCommandQueue] Initialized CommandQueue.\n");
+	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+		IID_PPV_ARGS(&m_idleFence)));
+	m_idleEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	assert(m_idleEvent && "Failed to create fence event");
+
+	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Initialized DxGraphicsCommandQueueGlobal.\n");
 }
 
 void DxGraphicsCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
 {
-	assert(commandList && "[DxCommandQueue] commandList is null");
+	assert(commandList && "[DxGraphicsCommandQueueGlobal] commandList is null");
 	m_commandQueue->ExecuteCommandLists(1, &commandList);
 }
 
 void DxGraphicsCommandQueueGlobal::Signal(ID3D12Fence* fence, uint64_t fenceValue)
 {
-	assert(fence && "[DxCommandQueue] fence is null");
+	assert(fence && "[DxGraphicsCommandQueueGlobal] fence is null");
 	ThrowIfFailed(m_commandQueue->Signal(fence, fenceValue));
 }
 
 void DxGraphicsCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
 {
-	assert(fence && "[DxCommandQueue] fence is null");
+	assert(fence && "[DxGraphicsCommandQueueGlobal] fence is null");
 	ThrowIfFailed(m_commandQueue->Wait(fence, fenceValue));
 }
 
 void DxGraphicsCommandQueueGlobal::WaitForIdle()
 {
-    static ComPtr<ID3D12Fence> s_idleFence;
-    static uint64_t            s_idleValue = 0;
-    static HANDLE              s_event = nullptr;
+    const uint64_t waitValue = ++m_idleValue;
+    ThrowIfFailed(m_commandQueue->Signal(m_idleFence.Get(), waitValue));
 
-    if (!s_idleFence)
+    if (m_idleFence->GetCompletedValue() < waitValue)
     {
-        ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-            IID_PPV_ARGS(&s_idleFence)));
-        s_event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        assert(s_event && "Failed to create fence event");
-    }
-
-    const uint64_t waitValue = ++s_idleValue;
-    ThrowIfFailed(m_commandQueue->Signal(s_idleFence.Get(), waitValue));
-
-    if (s_idleFence->GetCompletedValue() < waitValue)
-    {
-        ThrowIfFailed(s_idleFence->SetEventOnCompletion(waitValue, s_event));
-        ::WaitForSingleObject(s_event, INFINITE);
+        ThrowIfFailed(m_idleFence->SetEventOnCompletion(waitValue, m_idleEvent));
+        ::WaitForSingleObject(m_idleEvent, INFINITE);
     }
 }

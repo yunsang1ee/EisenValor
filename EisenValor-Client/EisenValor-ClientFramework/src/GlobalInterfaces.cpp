@@ -23,13 +23,8 @@ void Globals::InitializeGlobalRegistry()
 
 	GR::Register<IDxDeviceGlobal> (GR::RegistryType::Main, DxDeviceGlobal::Create());
 	
-	//auto device = GlobalRegistry::Get<IDxDeviceGlobal>();
-
-	//추상 클래스 등록 에러 수정
-	GlobalRegistry::Register<IDxDeviceGlobal>(GlobalRegistry::RegistryType::Main, DxDeviceGlobal::Create());
+	// Fix: Removed duplicate creation and initialization of the device
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
-
-	device.Initialize();
 	device.Initialize();
 
 	GR::Register<IDxGraphicsCommandQueueGlobal>	(GR::RegistryType::Main, DxGraphicsCommandQueueGlobal::Create());

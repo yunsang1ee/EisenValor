@@ -114,7 +114,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 				break;
 			}
 		}
-		gameFramework.Run();
+		if(not quit) gameFramework.Run();
 	}
 
 	gameFramework.Release();
