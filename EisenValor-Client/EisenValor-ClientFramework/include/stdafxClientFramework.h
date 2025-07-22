@@ -51,6 +51,18 @@
 
 #pragma endregion
 
+
+#pragma region NetworkLibrary
+#include "NetBridgePch.h"
+
+#ifdef _DEBUG
+#pragma comment(lib, "NetBridge\\Debug\\NetBridge_Debug.lib")
+#else
+#pragma comment(lib, "NetBridge\\Release\\NetBridge_Release.lib")
+#endif
+#pragma endregion
+
+
 #pragma region DebugHelpers
 std::string GetTimestamp();
 

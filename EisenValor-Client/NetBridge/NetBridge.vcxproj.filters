@@ -28,6 +28,12 @@
     <ClInclude Include="NetBridgeEnums.h">
       <Filter>98. Headers</Filter>
     </ClInclude>
+    <ClInclude Include="NetBridgeTypes.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="NetBridgeStructs.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NetworkManager.cpp">
@@ -88,6 +94,5 @@
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>02. Packets\00. FBS</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>
