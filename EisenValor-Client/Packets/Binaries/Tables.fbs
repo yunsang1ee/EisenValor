@@ -12,29 +12,25 @@ table CS_CHAT_PACKET {
 	msg: string;				
 }
 
-table CS_MOVE_PACKET_XY {
-	x: short;
-	y: short;
-}
-
-table CS_MOVE_PACKET_XYZ {
-	x: float;
-	y: float;
-	z: float;
-}
-
-table CS_TEST_PACKET {
-	x: float;
-	y: float;
-	z: float;
+table CS_MOVE_PACKET {
+	pos_x : float;
+	pos_y : float;
+	pos_z : float;
+	rot_x : float;
+	rot_y : float;
+	rot_z : float;
 }
 
 table SC_CHAT_PACKET {
 	msg: string;
 }
 
-table SC_MOVE_PACKET_XYZ {
-	x: float;
-	y: float;
-	z: float;
+table SC_MOVE_PACKET {
+	id	  : uint;
+	pos_x : float;
+	pos_y : float;
+	pos_z : float;
+	rot_x : float;
+	rot_y : float;
+	rot_z : float;
 }

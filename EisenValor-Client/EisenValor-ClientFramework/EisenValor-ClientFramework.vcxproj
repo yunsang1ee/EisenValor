@@ -132,6 +132,9 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -151,6 +154,9 @@
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\DxCommandContext.h" />
@@ -172,6 +178,10 @@
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\ITimerGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
+    <ClInclude Include="include\NetworkManager.h" />
+    <ClInclude Include="include\PacketBuffer.h" />
+    <ClInclude Include="include\PacketHandler.h" />
+    <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Vec3.h" />
@@ -188,11 +198,20 @@
     <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
+    <ClCompile Include="src\NetworkManager.cpp" />
+    <ClCompile Include="src\PacketBuffer.cpp" />
+    <ClCompile Include="src\PacketHandler.cpp" />
+    <ClCompile Include="src\RecvBuffer.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs" />
+    <None Include="..\Packets\Binaries\Structs.fbs" />
+    <None Include="..\Packets\Binaries\Tables.fbs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
