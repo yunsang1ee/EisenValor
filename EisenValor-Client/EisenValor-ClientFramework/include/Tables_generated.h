@@ -24,20 +24,14 @@ struct CS_LOGIN_PACKETBuilder;
 struct CS_CHAT_PACKET;
 struct CS_CHAT_PACKETBuilder;
 
-struct CS_MOVE_PACKET_XY;
-struct CS_MOVE_PACKET_XYBuilder;
-
-struct CS_MOVE_PACKET_XYZ;
-struct CS_MOVE_PACKET_XYZBuilder;
-
-struct CS_TEST_PACKET;
-struct CS_TEST_PACKETBuilder;
+struct CS_MOVE_PACKET;
+struct CS_MOVE_PACKETBuilder;
 
 struct SC_CHAT_PACKET;
 struct SC_CHAT_PACKETBuilder;
 
-struct SC_MOVE_PACKET_XYZ;
-struct SC_MOVE_PACKET_XYZBuilder;
+struct SC_MOVE_PACKET;
+struct SC_MOVE_PACKETBuilder;
 
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
@@ -155,176 +149,94 @@ inline ::flatbuffers::Offset<CS_CHAT_PACKET> CreateCS_CHAT_PACKETDirect(
       msg__);
 }
 
-struct CS_MOVE_PACKET_XY FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_MOVE_PACKET_XYBuilder Builder;
+struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6
+    VT_POS_X = 4,
+    VT_POS_Y = 6,
+    VT_POS_Z = 8,
+    VT_ROT_X = 10,
+    VT_ROT_Y = 12,
+    VT_ROT_Z = 14
   };
-  int16_t x() const {
-    return GetField<int16_t>(VT_X, 0);
+  float pos_x() const {
+    return GetField<float>(VT_POS_X, 0.0f);
   }
-  int16_t y() const {
-    return GetField<int16_t>(VT_Y, 0);
+  float pos_y() const {
+    return GetField<float>(VT_POS_Y, 0.0f);
+  }
+  float pos_z() const {
+    return GetField<float>(VT_POS_Z, 0.0f);
+  }
+  float rot_x() const {
+    return GetField<float>(VT_ROT_X, 0.0f);
+  }
+  float rot_y() const {
+    return GetField<float>(VT_ROT_Y, 0.0f);
+  }
+  float rot_z() const {
+    return GetField<float>(VT_ROT_Z, 0.0f);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<int16_t>(verifier, VT_X, 2) &&
-           VerifyField<int16_t>(verifier, VT_Y, 2) &&
+           VerifyField<float>(verifier, VT_POS_X, 4) &&
+           VerifyField<float>(verifier, VT_POS_Y, 4) &&
+           VerifyField<float>(verifier, VT_POS_Z, 4) &&
+           VerifyField<float>(verifier, VT_ROT_X, 4) &&
+           VerifyField<float>(verifier, VT_ROT_Y, 4) &&
+           VerifyField<float>(verifier, VT_ROT_Z, 4) &&
            verifier.EndTable();
   }
 };
 
-struct CS_MOVE_PACKET_XYBuilder {
-  typedef CS_MOVE_PACKET_XY Table;
+struct CS_MOVE_PACKETBuilder {
+  typedef CS_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_x(int16_t x) {
-    fbb_.AddElement<int16_t>(CS_MOVE_PACKET_XY::VT_X, x, 0);
+  void add_pos_x(float pos_x) {
+    fbb_.AddElement<float>(CS_MOVE_PACKET::VT_POS_X, pos_x, 0.0f);
   }
-  void add_y(int16_t y) {
-    fbb_.AddElement<int16_t>(CS_MOVE_PACKET_XY::VT_Y, y, 0);
+  void add_pos_y(float pos_y) {
+    fbb_.AddElement<float>(CS_MOVE_PACKET::VT_POS_Y, pos_y, 0.0f);
   }
-  explicit CS_MOVE_PACKET_XYBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  void add_pos_z(float pos_z) {
+    fbb_.AddElement<float>(CS_MOVE_PACKET::VT_POS_Z, pos_z, 0.0f);
+  }
+  void add_rot_x(float rot_x) {
+    fbb_.AddElement<float>(CS_MOVE_PACKET::VT_ROT_X, rot_x, 0.0f);
+  }
+  void add_rot_y(float rot_y) {
+    fbb_.AddElement<float>(CS_MOVE_PACKET::VT_ROT_Y, rot_y, 0.0f);
+  }
+  void add_rot_z(float rot_z) {
+    fbb_.AddElement<float>(CS_MOVE_PACKET::VT_ROT_Z, rot_z, 0.0f);
+  }
+  explicit CS_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_MOVE_PACKET_XY> Finish() {
+  ::flatbuffers::Offset<CS_MOVE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_MOVE_PACKET_XY>(end);
+    auto o = ::flatbuffers::Offset<CS_MOVE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_MOVE_PACKET_XY> CreateCS_MOVE_PACKET_XY(
+inline ::flatbuffers::Offset<CS_MOVE_PACKET> CreateCS_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    int16_t x = 0,
-    int16_t y = 0) {
-  CS_MOVE_PACKET_XYBuilder builder_(_fbb);
-  builder_.add_y(y);
-  builder_.add_x(x);
-  return builder_.Finish();
-}
-
-struct CS_MOVE_PACKET_XYZ FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_MOVE_PACKET_XYZBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6,
-    VT_Z = 8
-  };
-  float x() const {
-    return GetField<float>(VT_X, 0.0f);
-  }
-  float y() const {
-    return GetField<float>(VT_Y, 0.0f);
-  }
-  float z() const {
-    return GetField<float>(VT_Z, 0.0f);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
-           VerifyField<float>(verifier, VT_Z, 4) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_MOVE_PACKET_XYZBuilder {
-  typedef CS_MOVE_PACKET_XYZ Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_x(float x) {
-    fbb_.AddElement<float>(CS_MOVE_PACKET_XYZ::VT_X, x, 0.0f);
-  }
-  void add_y(float y) {
-    fbb_.AddElement<float>(CS_MOVE_PACKET_XYZ::VT_Y, y, 0.0f);
-  }
-  void add_z(float z) {
-    fbb_.AddElement<float>(CS_MOVE_PACKET_XYZ::VT_Z, z, 0.0f);
-  }
-  explicit CS_MOVE_PACKET_XYZBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_MOVE_PACKET_XYZ> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_MOVE_PACKET_XYZ>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_MOVE_PACKET_XYZ> CreateCS_MOVE_PACKET_XYZ(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    float x = 0.0f,
-    float y = 0.0f,
-    float z = 0.0f) {
-  CS_MOVE_PACKET_XYZBuilder builder_(_fbb);
-  builder_.add_z(z);
-  builder_.add_y(y);
-  builder_.add_x(x);
-  return builder_.Finish();
-}
-
-struct CS_TEST_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_TEST_PACKETBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6,
-    VT_Z = 8
-  };
-  float x() const {
-    return GetField<float>(VT_X, 0.0f);
-  }
-  float y() const {
-    return GetField<float>(VT_Y, 0.0f);
-  }
-  float z() const {
-    return GetField<float>(VT_Z, 0.0f);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
-           VerifyField<float>(verifier, VT_Z, 4) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_TEST_PACKETBuilder {
-  typedef CS_TEST_PACKET Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_x(float x) {
-    fbb_.AddElement<float>(CS_TEST_PACKET::VT_X, x, 0.0f);
-  }
-  void add_y(float y) {
-    fbb_.AddElement<float>(CS_TEST_PACKET::VT_Y, y, 0.0f);
-  }
-  void add_z(float z) {
-    fbb_.AddElement<float>(CS_TEST_PACKET::VT_Z, z, 0.0f);
-  }
-  explicit CS_TEST_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_TEST_PACKET> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_TEST_PACKET>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_TEST_PACKET> CreateCS_TEST_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    float x = 0.0f,
-    float y = 0.0f,
-    float z = 0.0f) {
-  CS_TEST_PACKETBuilder builder_(_fbb);
-  builder_.add_z(z);
-  builder_.add_y(y);
-  builder_.add_x(x);
+    float pos_x = 0.0f,
+    float pos_y = 0.0f,
+    float pos_z = 0.0f,
+    float rot_x = 0.0f,
+    float rot_y = 0.0f,
+    float rot_z = 0.0f) {
+  CS_MOVE_PACKETBuilder builder_(_fbb);
+  builder_.add_rot_z(rot_z);
+  builder_.add_rot_y(rot_y);
+  builder_.add_rot_x(rot_x);
+  builder_.add_pos_z(pos_z);
+  builder_.add_pos_y(pos_y);
+  builder_.add_pos_x(pos_x);
   return builder_.Finish();
 }
 
@@ -379,64 +291,104 @@ inline ::flatbuffers::Offset<SC_CHAT_PACKET> CreateSC_CHAT_PACKETDirect(
       msg__);
 }
 
-struct SC_MOVE_PACKET_XYZ FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_MOVE_PACKET_XYZBuilder Builder;
+struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6,
-    VT_Z = 8
+    VT_ID = 4,
+    VT_POS_X = 6,
+    VT_POS_Y = 8,
+    VT_POS_Z = 10,
+    VT_ROT_X = 12,
+    VT_ROT_Y = 14,
+    VT_ROT_Z = 16
   };
-  float x() const {
-    return GetField<float>(VT_X, 0.0f);
+  uint32_t id() const {
+    return GetField<uint32_t>(VT_ID, 0);
   }
-  float y() const {
-    return GetField<float>(VT_Y, 0.0f);
+  float pos_x() const {
+    return GetField<float>(VT_POS_X, 0.0f);
   }
-  float z() const {
-    return GetField<float>(VT_Z, 0.0f);
+  float pos_y() const {
+    return GetField<float>(VT_POS_Y, 0.0f);
+  }
+  float pos_z() const {
+    return GetField<float>(VT_POS_Z, 0.0f);
+  }
+  float rot_x() const {
+    return GetField<float>(VT_ROT_X, 0.0f);
+  }
+  float rot_y() const {
+    return GetField<float>(VT_ROT_Y, 0.0f);
+  }
+  float rot_z() const {
+    return GetField<float>(VT_ROT_Z, 0.0f);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
-           VerifyField<float>(verifier, VT_Z, 4) &&
+           VerifyField<uint32_t>(verifier, VT_ID, 4) &&
+           VerifyField<float>(verifier, VT_POS_X, 4) &&
+           VerifyField<float>(verifier, VT_POS_Y, 4) &&
+           VerifyField<float>(verifier, VT_POS_Z, 4) &&
+           VerifyField<float>(verifier, VT_ROT_X, 4) &&
+           VerifyField<float>(verifier, VT_ROT_Y, 4) &&
+           VerifyField<float>(verifier, VT_ROT_Z, 4) &&
            verifier.EndTable();
   }
 };
 
-struct SC_MOVE_PACKET_XYZBuilder {
-  typedef SC_MOVE_PACKET_XYZ Table;
+struct SC_MOVE_PACKETBuilder {
+  typedef SC_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_x(float x) {
-    fbb_.AddElement<float>(SC_MOVE_PACKET_XYZ::VT_X, x, 0.0f);
+  void add_id(uint32_t id) {
+    fbb_.AddElement<uint32_t>(SC_MOVE_PACKET::VT_ID, id, 0);
   }
-  void add_y(float y) {
-    fbb_.AddElement<float>(SC_MOVE_PACKET_XYZ::VT_Y, y, 0.0f);
+  void add_pos_x(float pos_x) {
+    fbb_.AddElement<float>(SC_MOVE_PACKET::VT_POS_X, pos_x, 0.0f);
   }
-  void add_z(float z) {
-    fbb_.AddElement<float>(SC_MOVE_PACKET_XYZ::VT_Z, z, 0.0f);
+  void add_pos_y(float pos_y) {
+    fbb_.AddElement<float>(SC_MOVE_PACKET::VT_POS_Y, pos_y, 0.0f);
   }
-  explicit SC_MOVE_PACKET_XYZBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  void add_pos_z(float pos_z) {
+    fbb_.AddElement<float>(SC_MOVE_PACKET::VT_POS_Z, pos_z, 0.0f);
+  }
+  void add_rot_x(float rot_x) {
+    fbb_.AddElement<float>(SC_MOVE_PACKET::VT_ROT_X, rot_x, 0.0f);
+  }
+  void add_rot_y(float rot_y) {
+    fbb_.AddElement<float>(SC_MOVE_PACKET::VT_ROT_Y, rot_y, 0.0f);
+  }
+  void add_rot_z(float rot_z) {
+    fbb_.AddElement<float>(SC_MOVE_PACKET::VT_ROT_Z, rot_z, 0.0f);
+  }
+  explicit SC_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_MOVE_PACKET_XYZ> Finish() {
+  ::flatbuffers::Offset<SC_MOVE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_MOVE_PACKET_XYZ>(end);
+    auto o = ::flatbuffers::Offset<SC_MOVE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_MOVE_PACKET_XYZ> CreateSC_MOVE_PACKET_XYZ(
+inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    float x = 0.0f,
-    float y = 0.0f,
-    float z = 0.0f) {
-  SC_MOVE_PACKET_XYZBuilder builder_(_fbb);
-  builder_.add_z(z);
-  builder_.add_y(y);
-  builder_.add_x(x);
+    uint32_t id = 0,
+    float pos_x = 0.0f,
+    float pos_y = 0.0f,
+    float pos_z = 0.0f,
+    float rot_x = 0.0f,
+    float rot_y = 0.0f,
+    float rot_z = 0.0f) {
+  SC_MOVE_PACKETBuilder builder_(_fbb);
+  builder_.add_rot_z(rot_z);
+  builder_.add_rot_y(rot_y);
+  builder_.add_rot_x(rot_x);
+  builder_.add_pos_z(pos_z);
+  builder_.add_pos_y(pos_y);
+  builder_.add_pos_x(pos_x);
+  builder_.add_id(id);
   return builder_.Finish();
 }
 

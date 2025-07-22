@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "stdafxClientFramework.h"
 #include "PacketBuffer.h"
 
 NetBridge::PacketBuffer::PacketBuffer(const uint64 capacity)

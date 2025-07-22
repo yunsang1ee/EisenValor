@@ -6,7 +6,7 @@
 #include "Vertex.h"
 
 using namespace DirectX;
-#define SERVER
+// #define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -306,7 +306,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 void GameFramework::Run()
 {
+#ifdef SERVER
 	MANAGER(NetBridge::NetworkManager)->ProcessIO();
+#endif
 
 	Globals::Input().BeforeUpdate();
 
@@ -641,8 +643,6 @@ void GameFramework::Render()
 	m_commandContextPool->SignalCurrentFrame();
 	// 화면에 표시
 	m_swapChain->Present(1, 0);
-
-
 }
 
 

@@ -4,9 +4,7 @@
 #include "GameFramework.h"
 #include "Vec3.h"
 #include "DxMath.h"
-
 #include <chrono>
-
 
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR szTitle[MAX_LOADSTRING];
