@@ -19,6 +19,7 @@ enum class PACKET_TYPE : uint16 {
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
+bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
 
 namespace NetBridge {
 	class PacketBuffer;

@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "stdafxClientFramework.h"
 #include "RecvBuffer.h"
 
 NetBridge::RecvBuffer::RecvBuffer(const uint32 bufferSize)

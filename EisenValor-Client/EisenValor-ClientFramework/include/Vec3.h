@@ -1,62 +1,8 @@
 #pragma once
-
-// Store Only
-struct Vec3
-{
-	float x = 0.0f, y = 0.0f, z = 0.0f;
-
-#pragma region Constructor & Translator
-	constexpr Vec3() noexcept = default;
-	constexpr Vec3(float x_, float y_, float z_) noexcept : x(x_), y(y_), z(z_) {}
-
-	[[nodiscard]]
-	constexpr explicit Vec3(const DirectX::XMFLOAT3& v) noexcept : x(v.x), y(v.y), z(v.z) {}
-	
-	[[nodiscard]]
-	constexpr operator DirectX::XMFLOAT3() const noexcept { return DirectX::XMFLOAT3(x, y, z); }
-
-	[[nodiscard]]
-	DirectX::XMVECTOR ToVector() const noexcept
-	{
-		return DirectX::XMVectorSet(x, y, z, 0.0f);
-	}
-	[[nodiscard]]
-	static Vec3 FromVector(DirectX::XMVECTOR v) noexcept
-	{
-		DirectX::XMFLOAT3 out;
-		DirectX::XMStoreFloat3(&out, v);
-		return static_cast<Vec3>(out);
-	}
-#pragma endregion
-
-#pragma region Static
-	[[nodiscard]] static consteval Vec3 Zero() noexcept 
-	{
-		return { 0.0f, 0.0f, 0.0f };
-	}
-	[[nodiscard]] static consteval Vec3 One() noexcept 
-	{
-		return { 1.0f, 1.0f, 1.0f };
-	}
-	[[nodiscard]] static consteval Vec3 Right() noexcept 
-	{
-		return { 1.0f, 0.0f, 0.0f };
-	}
-	[[nodiscard]] static consteval Vec3 Up() noexcept 
-	{
-		return { 0.0f, 1.0f, 0.0f };
-	}
-	[[nodiscard]] static consteval Vec3 Forward() noexcept 
-	{
-		return { 0.0f, 0.0f, 1.0f };
-	}
-#pragma endregion
-};
-
-
 // -----------------------------------------------
 // Aligned Vec3
 // -----------------------------------------------
+using Vec3 = DX::XMFLOAT3;
 
 struct alignas(16) Vec3A
 {
@@ -88,7 +34,7 @@ struct alignas(16) Vec3A
 		: v(DirectX::XMLoadFloat3A(&v_)) {}
 	[[nodiscard]]
 	explicit Vec3A(const Vec3& v_) noexcept 
-		: v(v_.ToVector()) {}
+		: v(DirectX::XMLoadFloat3(&v_)) {}
 
 	[[nodiscard]]
 	constexpr explicit Vec3A(DirectX::XMVECTOR v_) noexcept : v(v_) {}
@@ -103,7 +49,7 @@ struct alignas(16) Vec3A
 
 	[[nodiscard]] DirectX::XMVECTOR Vector() const noexcept { return v; }
 
-	[[nodiscard]] Vec3 ToVec3() const noexcept { return Vec3::FromVector(v); }
+	[[nodiscard]] Vec3 ToVec3() const noexcept { Vec3 temp; DirectX::XMStoreFloat3(&temp, this->v); return temp; }
 
 	[[nodiscard]] DirectX::XMFLOAT3A ToFloat3A() const noexcept
 	{

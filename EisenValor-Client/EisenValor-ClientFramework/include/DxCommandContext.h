@@ -18,5 +18,6 @@ private:
 	ComPtr<ID3D12CommandAllocator>		m_allocator;
 	ComPtr<ID3D12GraphicsCommandList>	m_commandList;
 	D3D12_COMMAND_LIST_TYPE				m_type;
+	bool								m_isClosed = false;
 };
 

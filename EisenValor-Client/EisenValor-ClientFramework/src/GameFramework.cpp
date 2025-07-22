@@ -6,7 +6,7 @@
 #include "Vertex.h"
 
 using namespace DirectX;
-#define SERVER
+// #define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -270,12 +270,45 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	D3D12_RANGE readRange2 = { 0, 0 };
 	ThrowIfFailed(m_constantBuffer2->Map(0, &readRange2, reinterpret_cast<void**>(&m_pCbvDataBegin2)));
+
+
+	// 표시등용 세 번째 상수 버퍼 추가
+	const UINT constantBufferSize3 = (sizeof(ConstantBuffer) + 255) & ~255;
+	D3D12_HEAP_PROPERTIES cbHeapProps3 = {};
+	cbHeapProps3.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RESOURCE_DESC cbResourceDesc3 = {};
+	cbResourceDesc3.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbResourceDesc3.Width = constantBufferSize3;
+	cbResourceDesc3.Height = 1;
+	cbResourceDesc3.DepthOrArraySize = 1;
+	cbResourceDesc3.MipLevels = 1;
+	cbResourceDesc3.Format = DXGI_FORMAT_UNKNOWN;
+	cbResourceDesc3.SampleDesc.Count = 1;
+	cbResourceDesc3.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&cbHeapProps3,
+		D3D12_HEAP_FLAG_NONE,
+		&cbResourceDesc3,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_constantBuffer3)
+	));
+
+	D3D12_RANGE readRange3 = { 0, 0 };
+	ThrowIfFailed(m_constantBuffer3->Map(0, &readRange3, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
+
 	return true;
+
+
 }
 
 void GameFramework::Run()
 {
+#ifdef SERVER
 	MANAGER(NetBridge::NetworkManager)->ProcessIO();
+#endif
 
 	Globals::Input().BeforeUpdate();
 
@@ -582,13 +615,22 @@ void GameFramework::Render()
 	XMMATRIX playerRotation = XMMatrixRotationY(m_cameraYaw);
 	XMMATRIX playerTranslation = XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
 	XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
-	XMMATRIX mvp = playerWorld * view * projection;
-
+	XMMATRIX playerMVP = playerWorld * view * projection;
 	// 상수 버퍼에 복사
-	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(mvp)); // 전치 필요
+	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(playerMVP)); // 전치 필요
 	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-
 	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
+	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+	
+	// 표시등 큐브
+	XMMATRIX markerOffset = XMMatrixTranslation(0.0f, 0.2f, 0.2f); 
+	XMMATRIX markerScale = XMMatrixScaling(0.1f, 0.1f, 0.1f);
+	XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
+	XMMATRIX markerMVP = markerWorld * view * projection;
+	// 표시등용 상수버퍼에 업데이트
+	XMStoreFloat4x4(&m_constantBufferData3.mvp, XMMatrixTranspose(markerMVP));
+	memcpy(m_pCbvDataBegin3, &m_constantBufferData3, sizeof(m_constantBufferData3));
+	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
 	
 
@@ -601,8 +643,6 @@ void GameFramework::Render()
 	m_commandContextPool->SignalCurrentFrame();
 	// 화면에 표시
 	m_swapChain->Present(1, 0);
-
-
 }
 
 
