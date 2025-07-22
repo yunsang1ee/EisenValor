@@ -6,10 +6,17 @@
 #include "Vertex.h"
 
 using namespace DirectX;
-
+#define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
+#ifdef SERVER
+	NetBridge::ServerPacketHandler::Init();
+
+	if(false == MANAGER(NetBridge::NetworkManager)->Init())
+		return false;
+#endif
+
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
@@ -177,8 +184,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 #endif
 
 	// 셰이더 파일에서 컴파일
-	ThrowIfFailed(D3DCompileFromFile(L"VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(L"PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"../../../EisenValor/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"../../../EisenValor/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
 	// 5. 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
@@ -299,6 +306,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 void GameFramework::Run()
 {
+	MANAGER(NetBridge::NetworkManager)->ProcessIO();
+
 	Globals::Input().BeforeUpdate();
 
 	Globals::Timer().Update();

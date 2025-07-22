@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Mocks">
@@ -57,9 +57,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameFramework.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="include\Vec3.h">
       <Filter>Common\Math</Filter>
     </ClInclude>
@@ -118,6 +115,12 @@
     <ClInclude Include="include\DxSwapChain.h">
       <Filter>Graphics\Device</Filter>
     </ClInclude>
+    <ClInclude Include="include\GameFramework.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxDescriptorHeap.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -153,6 +156,9 @@
     </ClCompile>
     <ClCompile Include="src\DxSwapChain.cpp">
       <Filter>Graphics\Device</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxDescriptorHeap.cpp">
+      <Filter>Graphics\Resource</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

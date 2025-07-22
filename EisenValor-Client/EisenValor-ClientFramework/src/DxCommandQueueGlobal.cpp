@@ -1,6 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxCommandQueueGlobal.h"
-#include <DxDeviceGlobal.h>
+#include "DxDeviceGlobal.h"
 
 DxGraphicsCommandQueueGlobal::~DxGraphicsCommandQueueGlobal()
 {
@@ -19,7 +19,7 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 
 	D3D12_COMMAND_QUEUE_DESC desc = {
 	    .Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-	    .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE
+	    .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
     };
 
 	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_commandQueue)));
