@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "PacketHandler.h"
- 
+std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;
+
 bool Handle_Invalid(const SOCKET&, const char* const, const PacketHeader&)
 {
 	return false;

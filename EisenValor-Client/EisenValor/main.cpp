@@ -1,5 +1,5 @@
-﻿#define _CRTDBG_MAP_ALLOC
-#include "stdafxClient.h"
+﻿#include "stdafxClient.h"
+#define _CRTDBG_MAP_ALLOC
 #include "EisenValor.h"
 #include <GameFramework.h>
 #include <Vec3.h>
@@ -17,7 +17,6 @@ WCHAR szTitle[MAX_LOADSTRING];
 WCHAR szWindowClass[MAX_LOADSTRING];
 
 GameFramework* g_Framework = nullptr;
-
 
 LRESULT CALLBACK WndProc(HWND hWnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
 {

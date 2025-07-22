@@ -57,9 +57,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameFramework.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="include\Vec3.h">
       <Filter>Common\Math</Filter>
     </ClInclude>
@@ -117,6 +114,9 @@
     </ClInclude>
     <ClInclude Include="include\DxSwapChain.h">
       <Filter>Graphics\Device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameFramework.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
