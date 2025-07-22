@@ -7,9 +7,9 @@
 #include <DxMath.h>
 
 #ifdef _DEBUG
-#pragma comment(lib, "..\\x64\\Debug\\EisenValor-ClientFramework.lib")
+#pragma comment(lib, "EisenValor-ClientFramework\\Debug\\EisenValor-ClientFramework_Debug.lib")
 #else
-#pragma comment(lib, "..\\x64\\Release\\EisenValor-ClientFramework.lib")
+#pragma comment(lib, "EisenValor-ClientFramework\\Release\\EisenValor-ClientFramework_Release.lib")
 #endif
 
 constexpr size_t MAX_LOADSTRING = 100;
