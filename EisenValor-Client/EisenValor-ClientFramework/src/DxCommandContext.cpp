@@ -1,6 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxCommandContext.h"
-#include <DxCommandQueueGlobal.h>
+#include "DxCommandQueueGlobal.h"
 
 DxCommandContext::DxCommandContext(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type)
     : m_type(type)
@@ -23,11 +23,14 @@ void DxCommandContext::Reset()
 {
     ThrowIfFailed(m_allocator->Reset());
     ThrowIfFailed(m_commandList->Reset(m_allocator.Get(), nullptr));
+	m_isClosed = false;
 }
 
 void DxCommandContext::Close()
 {
+	if (m_isClosed) return;
     ThrowIfFailed(m_commandList->Close());
+	m_isClosed = true;
 }
 
 void DxCommandContext::Execute(IDxGraphicsCommandQueueGlobal& queue)

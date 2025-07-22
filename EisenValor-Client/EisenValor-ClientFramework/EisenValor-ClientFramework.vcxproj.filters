@@ -118,6 +118,9 @@
     <ClInclude Include="include\DxSwapChain.h">
       <Filter>Graphics\Device</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxDescriptorHeap.h">
+      <Filter>Graphics\Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -153,6 +156,9 @@
     </ClCompile>
     <ClCompile Include="src\DxSwapChain.cpp">
       <Filter>Graphics\Device</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxDescriptorHeap.cpp">
+      <Filter>Graphics\Resource</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

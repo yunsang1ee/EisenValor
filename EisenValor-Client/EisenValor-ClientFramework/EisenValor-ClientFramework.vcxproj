@@ -145,6 +145,7 @@
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
     <ClInclude Include="include\DxCommon.h" />
     <ClInclude Include="include\DxDebugGlobal.h" />
+    <ClInclude Include="include\DxDescriptorHeap.h" />
     <ClInclude Include="include\DxDeviceGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\GameObject.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="src\DxCommandContextPool.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
     <ClCompile Include="src\DxDebugGlobal.cpp" />
+    <ClCompile Include="src\DxDescriptorHeap.cpp" />
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />

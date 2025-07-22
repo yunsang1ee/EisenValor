@@ -13,7 +13,7 @@ public:
 
 	void Present(UINT syncInterval, UINT flags);
 
-	// All GPU operations must complete before resizing. recommended to call DxCommandContextPool::WaitForGpu().
+	// All GPU operations must complete before resizing. recommended to call DxCommandContextPool::WaitForGPU().
 	void OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t newHeight,
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize);
 

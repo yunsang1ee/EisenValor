@@ -22,7 +22,7 @@ void Globals::InitializeGlobalRegistry()
 #endif //_DEBUG
 
 	GR::Register<IDxDeviceGlobal> (GR::RegistryType::Main, DxDeviceGlobal::Create());
-	auto device = GlobalRegistry::Get<IDxDeviceGlobal>();
+	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 	device.Initialize();
 
 	GR::Register<IDxGraphicsCommandQueueGlobal>	(GR::RegistryType::Main, DxGraphicsCommandQueueGlobal::Create());
