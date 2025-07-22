@@ -1,10 +1,12 @@
 #pragma once
 
+#define NOMINMAX
+#include <numeric>
 #include "PacketBuffer.h"
 
 using PacketHandlerFunc = bool(*)(const SOCKET&, const char* const, const PacketHeader&);
 
-extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs{};
+extern std::array<PacketHandlerFunc, 65536> PacketHandlerFuncs;
 
 enum class PACKET_TYPE : uint16 {
 	CS_LOGIN = 1,
