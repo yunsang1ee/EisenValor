@@ -1,7 +1,7 @@
 #include "stdafxClientFramework.h"
 #include "DxCommandContextPool.h"
 
-#include <DxCommandQueueGlobal.h>
+#include "DxCommandQueueGlobal.h"
 
 DxCommandContextPool::FrameEntry::FrameEntry(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type)
 	: context(device, type)
@@ -36,12 +36,12 @@ void DxCommandContextPool::AdvanceFrame()
 	// Wait for the GPU to finish processing the previous frame's commands
 	m_queue.Wait(prevFrame.fence.Get(), prevFrame.fenceValue);
 
-	WaitForGpu(prevIndex);
+	WaitForGPU(prevIndex);
 
 	m_entries[m_frameIndex].context.Reset();
 }
 
-void DxCommandContextPool::WaitForGpu(uint32_t frameIndex)
+void DxCommandContextPool::WaitForGPU(uint32_t frameIndex)
 {
 	const FrameEntry& frame = m_entries[frameIndex];
 	if (frame.fence->GetCompletedValue() < frame.fenceValue)

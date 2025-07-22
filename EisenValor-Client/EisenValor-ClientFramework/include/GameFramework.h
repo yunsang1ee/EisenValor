@@ -34,7 +34,7 @@ public:
 
 	HWND GetHWND() const noexcept { return m_hWnd; }
 
-	LRESULT OnWindowMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	LRESULT OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam);
 	 
 private:
 	void Update();

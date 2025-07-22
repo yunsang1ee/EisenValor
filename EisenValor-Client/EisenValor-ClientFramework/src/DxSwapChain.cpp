@@ -21,22 +21,22 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphi
     assert(rtvDescriptorSize > 0 && "[DxSwapChain] RTV Descriptor Size > 0.");
 
 
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {
-        .Width = m_width,
-        .Height = m_height,
-        .Format = m_format,
-        .Stereo = FALSE,
-        .SampleDesc {
-            .Count = 1,
-            .Quality = 0
-        },
-        .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-        .BufferCount = m_backBufferCount,
-        .Scaling = DXGI_SCALING_NONE,
-        .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-        .AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED,
-        .Flags = SWAP_CHAIN_FLAGS
-    };
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {
+		.Width = m_width,
+		.Height = m_height,
+		.Format = m_format,
+		.Stereo = FALSE,
+		.SampleDesc {
+			.Count = 1,
+			.Quality = 0
+		},
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = m_backBufferCount,
+		.Scaling = DXGI_SCALING_NONE,
+		.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+		.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED,
+		.Flags = SWAP_CHAIN_FLAGS
+	};
 
     ComPtr<IDXGISwapChain1> swapChain1;
     ThrowIfFailed(m_factory->CreateSwapChainForHwnd(
@@ -48,7 +48,7 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphi
         &swapChain1
     ));
 
-    ThrowIfFailed(swapChain1.As(&m_swapChain));
+	ThrowIfFailed(swapChain1.As(&m_swapChain));
 	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)); //TODO: Alt+Enter Input Processing in InputGlobal
 
     CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
@@ -59,8 +59,8 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphi
 
 DxSwapChain::~DxSwapChain()
 {
-    ReleaseBackBuffers();
-    DEBUG_LOG_FMT("[DxSwapChain] DxSwapChain destroyed.\n");
+	ReleaseBackBuffers();
+	DEBUG_LOG_FMT("[DxSwapChain] DxSwapChain destroyed.\n");
 }
 
 void DxSwapChain::ReleaseBackBuffers()
@@ -78,32 +78,32 @@ void DxSwapChain::ReleaseBackBuffers()
 
 void DxSwapChain::Present(UINT syncInterval, UINT flags)
 {
-    ThrowIfFailed(m_swapChain->Present(syncInterval, flags));
-    m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
+	ThrowIfFailed(m_swapChain->Present(syncInterval, flags));
+	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
 void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t newHeight,
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
 {
-    if (newWidth == 0 || newHeight == 0)
-    {
-        DEBUG_LOG_FMT("[DxSwapChain] OnResize called with 0 width/height. Skipping resize.\n");
-        return;
-    }
+	if (newWidth == 0 || newHeight == 0)
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] OnResize called with 0 width/height. Skipping resize.\n");
+		return;
+	}
 
-    ReleaseBackBuffers();
-    ThrowIfFailed(m_swapChain->ResizeBuffers(
-        m_backBufferCount,
-        newWidth,
-        newHeight,
-        m_format,
-        SWAP_CHAIN_FLAGS
-    ));
+	ReleaseBackBuffers();
+	ThrowIfFailed(m_swapChain->ResizeBuffers(
+		m_backBufferCount,
+		newWidth,
+		newHeight,
+		m_format,
+		SWAP_CHAIN_FLAGS
+	));
 
-    m_rtvDescriptorStart = rtvDescriptorStart;
-    m_rtvDescriptorSize = rtvDescriptorSize;
-    m_width = newWidth;
-    m_height = newHeight;
+	m_rtvDescriptorStart = rtvDescriptorStart;
+	m_rtvDescriptorSize = rtvDescriptorSize;
+	m_width = newWidth;
+	m_height = newHeight;
 
     CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
@@ -111,26 +111,26 @@ void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t new
 }
 
 void DxSwapChain::CreateResources(ID3D12Device* device, ID3D12CommandQueue* commandQueue,
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
 {
-    m_backBuffers.resize(m_backBufferCount);
+	m_backBuffers.resize(m_backBufferCount);
 
-    for (uint32_t i = 0; i < m_backBufferCount; ++i)
-    {
-        ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_backBuffers[i])));
+	for (uint32_t i = 0; i < m_backBufferCount; ++i)
+	{
+		ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_backBuffers[i])));
 
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvDescriptorStart;
-        rtvHandle.ptr += static_cast<size_t>(i) * rtvDescriptorSize;
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvDescriptorStart;
+		rtvHandle.ptr += static_cast<size_t>(i) * rtvDescriptorSize;
 
-        device->CreateRenderTargetView(m_backBuffers[i].Get(), nullptr, rtvHandle);
-    }
+		device->CreateRenderTargetView(m_backBuffers[i].Get(), nullptr, rtvHandle);
+	}
 
-    m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
+	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
 ID3D12Resource* DxSwapChain::GetCurrentBackBuffer() const
 {
-    return m_backBuffers[m_currentBackBufferIndex].Get();
+	return m_backBuffers[m_currentBackBufferIndex].Get();
 }
 
 ID3D12Resource* DxSwapChain::GetBackBuffer(uint32_t index) const
@@ -145,7 +145,7 @@ ID3D12Resource* DxSwapChain::GetBackBuffer(uint32_t index) const
 
 D3D12_CPU_DESCRIPTOR_HANDLE DxSwapChain::GetCurrentBackBufferRTV() const
 {
-    return GetBackBufferRTV(m_currentBackBufferIndex);
+	return GetBackBufferRTV(m_currentBackBufferIndex);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DxSwapChain::GetBackBufferRTV(uint32_t index) const

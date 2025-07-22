@@ -1,16 +1,11 @@
 ﻿#define _CRTDBG_MAP_ALLOC
 #include "stdafxClient.h"
 #include "EisenValor.h"
-#include <GameFramework.h>
-#include <Vec3.h>
-#include <chrono>
-#include <DxMath.h>
+#include "GameFramework.h"
+#include "Vec3.h"
+#include "DxMath.h"
 
-#ifdef _DEBUG
-#pragma comment(lib, "..\\x64\\Debug\\EisenValor-ClientFramework.lib")
-#else
-#pragma comment(lib, "..\\x64\\Release\\EisenValor-ClientFramework.lib")
-#endif
+#include <chrono>
 
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR szTitle[MAX_LOADSTRING];

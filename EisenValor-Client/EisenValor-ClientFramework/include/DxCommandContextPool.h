@@ -10,7 +10,7 @@ public:
 	~DxCommandContextPool();
 
 	void AdvanceFrame();
-	void WaitForGpu(uint32_t frameIndex);
+	void WaitForGPU(uint32_t frameIndex);
 
 	DxCommandContext& GetCurrentContext();
 	uint32_t GetCurrentFrameIndex() const { return m_frameIndex; }
