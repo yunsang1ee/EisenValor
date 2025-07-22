@@ -69,6 +69,11 @@ private:
 	ConstantBuffer m_constantBufferData2;
 	UINT8* m_pCbvDataBegin2 = nullptr;
 
+	// 표시등 큐브용 상수버퍼
+	ComPtr<ID3D12Resource> m_constantBuffer3;
+	ConstantBuffer m_constantBufferData3;
+	UINT8* m_pCbvDataBegin3 = nullptr;
+
 	// 플레이어 위치 및 이동
 	float m_playerX = 0.0f;
 	float m_playerY = 0.5f;  
