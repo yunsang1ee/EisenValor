@@ -31,7 +31,6 @@ namespace ServerEngine {
 	class RecvContext : public RIOContext {
 	private:
 		RecvContext();
-		friend class MemoryPool;
 		friend class Session;
 	};
 

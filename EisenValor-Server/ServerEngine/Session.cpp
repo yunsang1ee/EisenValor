@@ -10,8 +10,8 @@
 ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_lastSendTime{0}
 {
-	static std::atomic_int16_t idGen = 1;
-	m_id = idGen.fetch_add(1);
+	static int16 idGen = 1;
+	m_id = idGen++;
 }
 
 ServerEngine::Session::~Session()
@@ -22,7 +22,7 @@ ServerEngine::Session::~Session()
 
 void ServerEngine::Session::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
 {
-	switch(auto type = context->GetType()) {
+	switch(const auto type = context->GetType()) {
 		case ServerEngine::RIO_CONTEXT_TYPE::RECV:
 		{
 			ProcessRecv(bytesTransferred);
@@ -50,7 +50,7 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 	lingerOption.l_linger = 0;
 
 	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
-		printf_s("[DEBUG] setsockopt linger option error: %d\n", GetLastError());
+		std::println("setsockopt linger option error: {}", GetLastError());
 
 	m_connected = false;
 
@@ -74,7 +74,8 @@ void ServerEngine::Session::FlushPacketQueue()
 
 		if(packetBuffer == nullptr) break;
 
-		m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize());
+		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
+			assert(nullptr);
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
 			if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
@@ -108,10 +109,13 @@ bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
 		ServerEngine::LogManager::PrintLastError();
 		sendContext->ReleaseSession();
 		delete sendContext;
+		Disconnect("moveSendOffset");
 		return false;
 	}
 
 	if(false == m_sendBuffer.moveSendOffset(size)) {
+		sendContext->ReleaseSession();
+		delete sendContext;
 		Disconnect("moveSendOffset");
 		return false;
 	}
@@ -168,11 +172,15 @@ void ServerEngine::Session::PostRecv()
 {
 	// 맨 처음 PostRecv는 AcceptThread가 수행.
 
-	if(false == IsConnected())
+	if(false == IsConnected()) {
+		Disconnect("IsConnected False");
 		return;
+	}
 
-	if(m_recvBuffer.GetFreeSize() <= 0)
+	if(m_recvBuffer.GetFreeSize() <= 0) {
+		Disconnect("RecvBuffer FreeSize 0");
 		return;
+	}
 
 	m_recvContext.Init();
 	m_recvContext.HoldSession(shared_from_this());
@@ -186,6 +194,7 @@ void ServerEngine::Session::PostRecv()
 	if(false == RIO_EXT_FUNC_TB.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
 		ServerEngine::LogManager::PrintLastError();
 		m_recvContext.ReleaseSession();
+		Disconnect("RioReceive Fail");
 	}
 }
 
@@ -240,7 +249,7 @@ uint32 ServerEngine::Session::AssembleReceivedData(std::span<const char> buf)
 		if(buf.size() < header.packetSize)
 			break;
 
-		ProcessPacket(reinterpret_cast<const char*>(buf.data()), header.packetSize);
+		ProcessPacket(buf);
 
 		buf = buf.subspan(header.packetSize);
 		processed += header.packetSize;

@@ -157,6 +157,7 @@
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="ClientSessionManager.cpp" />
     <ClCompile Include="GameMatch.cpp" />
+    <ClCompile Include="GameMatchManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
     <ClCompile Include="General.cpp" />
@@ -171,10 +172,12 @@
     <ClCompile Include="Soldier.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="ClientSessionManager.h" />
     <ClInclude Include="GameMatch.h" />
+    <ClInclude Include="GameMatchManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
     <ClInclude Include="General.h" />
@@ -182,11 +185,11 @@
     <ClInclude Include="ServerEnums.h" />
     <ClInclude Include="ServerManager.h" />
     <ClInclude Include="ServerStructs.h" />
+    <ClInclude Include="ServerTypes.h" />
     <ClInclude Include="Soldier.h" />
-    <ClInclude Include="TestMath.h" />
-    <ClInclude Include="TestPackets.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\GenPackets.bat" />
     <None Include="..\Packets\Binaries\Structs.fbs" />

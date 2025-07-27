@@ -34,6 +34,9 @@
     <ClCompile Include="GameObjectFactory.cpp">
       <Filter>02. Contents\02. Factory</Filter>
     </ClCompile>
+    <ClCompile Include="GameMatchManager.cpp">
+      <Filter>96. Managers\01. GameMatchManager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="00. Server">
@@ -87,6 +90,9 @@
     <Filter Include="02. Contents\02. Factory">
       <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
+    <Filter Include="96. Managers\01. GameMatchManager">
+      <UniqueIdentifier>{69b99707-0b8a-4adb-88d6-69a279587bcb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -100,9 +106,6 @@
     </ClInclude>
     <ClInclude Include="ClientSessionManager.h">
       <Filter>01. ClientSessionManager</Filter>
-    </ClInclude>
-    <ClInclude Include="TestPackets.h">
-      <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="ClientPacketHandler.h">
       <Filter>03. Packets\01. PacketHandler</Filter>
@@ -119,9 +122,6 @@
     <ClInclude Include="Soldier.h">
       <Filter>02. Contents\01. GameObject\01. Soldier</Filter>
     </ClInclude>
-    <ClInclude Include="TestMath.h">
-      <Filter>97. Headers</Filter>
-    </ClInclude>
     <ClInclude Include="ServerEnums.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
@@ -130,6 +130,15 @@
     </ClInclude>
     <ClInclude Include="ServerStructs.h">
       <Filter>97. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libraries\inc\SimpleMath.h">
+      <Filter>99. pch</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerTypes.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMatchManager.h">
+      <Filter>96. Managers\01. GameMatchManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -145,6 +154,9 @@
     </None>
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>03. Packets\00. Schema</Filter>
+    </None>
+    <None Include="..\Libraries\inc\SimpleMath.inl">
+      <Filter>99. pch</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -155,6 +155,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="LockQueue.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="PacketBuffer.h" />
@@ -176,10 +177,15 @@
     <ClInclude Include="Session.h" />
     <ClInclude Include="SessionPool.h" />
     <ClInclude Include="Singleton.hpp" />
+    <ClInclude Include="Task.h" />
+    <ClInclude Include="TaskQueue.h" />
+    <ClInclude Include="TaskQueueManager.h" />
+    <ClInclude Include="TaskTimer.h" />
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="LockQueue.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="ObjectPool.cpp" />
     <ClCompile Include="PacketBuffer.cpp" />
@@ -198,6 +204,10 @@
     <ClCompile Include="ServerEnginePch.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SessionPool.cpp" />
+    <ClCompile Include="Task.cpp" />
+    <ClCompile Include="TaskQueue.cpp" />
+    <ClCompile Include="TaskQueueManager.cpp" />
+    <ClCompile Include="TaskTimer.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
