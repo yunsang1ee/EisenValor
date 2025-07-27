@@ -43,6 +43,6 @@ namespace ServerEngine {
     };
 
     template<typename Type>
-    tbb::memory_pool< oneapi::tbb::scalable_allocator<char> >
+    tbb::memory_pool<oneapi::tbb::scalable_allocator<char>>
         ObjectPool<Type>::m_pool;
 }

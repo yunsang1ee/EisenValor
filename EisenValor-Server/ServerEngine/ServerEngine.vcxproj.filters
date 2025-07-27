@@ -61,14 +61,29 @@
     <ClInclude Include="PacketHeader.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>96. Utils</Filter>
-    </ClInclude>
     <ClInclude Include="ServerEngineContainers.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="ObjectPool.h">
       <Filter>04. ObjectPool</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskQueueManager.h">
+      <Filter>95. Managers\02. TaskQueueManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>05. Task\00. TaskQueue\00. Task</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskQueue.h">
+      <Filter>05. Task\00. TaskQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>96. Utils\00. Timer</Filter>
+    </ClInclude>
+    <ClInclude Include="LockQueue.h">
+      <Filter>96. Utils\01. LockQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskTimer.h">
+      <Filter>95. Managers\03. TaskTimer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -111,11 +126,26 @@
     <ClCompile Include="PacketBuffer.cpp">
       <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
     </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>96. Utils</Filter>
-    </ClCompile>
     <ClCompile Include="ObjectPool.cpp">
       <Filter>04. ObjectPool</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskQueueManager.cpp">
+      <Filter>95. Managers\02. TaskQueueManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Task.cpp">
+      <Filter>05. Task\00. TaskQueue\00. Task</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskQueue.cpp">
+      <Filter>05. Task\00. TaskQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>96. Utils\00. Timer</Filter>
+    </ClCompile>
+    <ClCompile Include="LockQueue.cpp">
+      <Filter>96. Utils\01. LockQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskTimer.cpp">
+      <Filter>95. Managers\03. TaskTimer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,11 +194,32 @@
     <Filter Include="95. Managers\01. ThreadManager">
       <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. ObjectPool">
+      <UniqueIdentifier>{1d58aba8-4053-4370-bdfc-a12582f80127}</UniqueIdentifier>
+    </Filter>
     <Filter Include="96. Utils">
       <UniqueIdentifier>{855f9310-39d4-4a17-a7d6-7ae7c8fe2037}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. ObjectPool">
-      <UniqueIdentifier>{1d58aba8-4053-4370-bdfc-a12582f80127}</UniqueIdentifier>
+    <Filter Include="05. Task">
+      <UniqueIdentifier>{7dc49616-dce0-4960-9bdb-c9031956520d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. Task\00. TaskQueue">
+      <UniqueIdentifier>{d5ccbc04-1854-4dbb-8a22-cb8ebcd7be04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\02. TaskQueueManager">
+      <UniqueIdentifier>{23b44939-13d9-4f85-af07-d221aabddd14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. Task\00. TaskQueue\00. Task">
+      <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Utils\00. Timer">
+      <UniqueIdentifier>{69cdb712-faaa-4fa1-9059-8073e90ec835}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Utils\01. LockQueue">
+      <UniqueIdentifier>{5dc3df8c-7926-4827-bcac-6716fcb3b008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\03. TaskTimer">
+      <UniqueIdentifier>{54ba449c-e187-47d0-9401-817fa3e8204c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

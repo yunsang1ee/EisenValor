@@ -11,7 +11,7 @@ namespace ServerEngine {
 		std::unique_ptr<SessionPool>					m_sessionPool;
 		int												m_id;
 		std::set<std::shared_ptr<Session>>				m_connectedSession;
-		std::mutex										m_mutex;
+		std::shared_mutex								m_mutex;
 
 	public:
 		explicit RIOWorker(const uint16 id);
@@ -19,13 +19,20 @@ namespace ServerEngine {
 
 	public:
 		bool			Init(SessionFactoryFunc sessionFunc);
-		void			FlushPacketQueue();
-		void			DequeueCompletion();
+		void			Work();
+
 		void			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr);
 		void			ReleaseSession(std::shared_ptr<Session> session);
+
 	public:
 		const RIO_CQ&	GetCQ() const noexcept { return m_cq; }
 		SessionPool*	GetSessionPool() noexcept { return m_sessionPool.get(); }
+
+	private:
+		void			FlushPacketQueue();
+		void			DequeueCompletion();
+		void			DistributeReservedTask();
+		void			DoTask();
 	};
 }
 

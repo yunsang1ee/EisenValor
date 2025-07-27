@@ -12,6 +12,9 @@ using uint64 = unsigned __int64;
 
 namespace ServerEngine {
 	class Session;
+	class Task;
+	class TaskQueue;
 }
 
-using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::Session>()>;
+using SessionFactoryFunc = std::function<std::shared_ptr<class ServerEngine::Session>()>;
+
