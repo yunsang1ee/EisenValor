@@ -3,7 +3,8 @@
 #include "DxSwapChain.h"
 #include "DxCommandContextPool.h"
 #include "DxCommon.h"
-#include "GameObject.h" 
+#include "GameObject.h"
+#include "Ground.h"
 #include <memory>
 
 
@@ -68,6 +69,9 @@ private:
 	// Player 객체 추가
 	std::vector<std::unique_ptr<GameObject>> m_gameObjects;
 	GameObject* m_player = nullptr;
+
+	// Ground 객체 추가
+	std::unique_ptr<Ground> m_ground;  
 
 private:
 	HWND m_hWnd = nullptr;

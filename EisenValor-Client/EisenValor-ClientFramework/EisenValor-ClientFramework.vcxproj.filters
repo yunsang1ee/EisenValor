@@ -79,9 +79,6 @@
     <Filter Include="NetBridge\01. NWBuffer\01. PacketBuffer">
       <UniqueIdentifier>{b76b1070-81c6-43fa-a4ab-97758300ab18}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Player">
-      <UniqueIdentifier>{ff0db68e-268e-4bf6-811b-bbf50f9d5b5a}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -161,7 +158,10 @@
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
-      <Filter>Player</Filter>
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Ground.h">
+      <Filter>Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -214,8 +214,11 @@
     <ClCompile Include="src\PacketBuffer.cpp">
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Player</Filter>
+    <ClCompile Include="src\Player.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ground.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
