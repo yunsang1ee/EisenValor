@@ -114,7 +114,7 @@ uint32 NetBridge::NetworkManager::AssembleReceivedData(const char* const buffer,
 		if(dataSize < sizeof(PacketHeader))
 			break;
 
-		const PacketHeader header = *reinterpret_cast<const PacketHeader*>(buffer);
+		const PacketHeader header = *reinterpret_cast<const PacketHeader*>(&buffer[processLen]);
 		
 		if(0 == header.packetSize)
 			break;
@@ -122,7 +122,7 @@ uint32 NetBridge::NetworkManager::AssembleReceivedData(const char* const buffer,
 		if(dataSize < header.packetSize)
 			break;
 
-		ProcessPacket(buffer);
+		ProcessPacket(&buffer[processLen]);
 
 		processLen += header.packetSize;
 	}

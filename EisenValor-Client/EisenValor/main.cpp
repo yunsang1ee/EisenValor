@@ -5,7 +5,7 @@
 #include "Vec3.h"
 #include "DxMath.h"
 #include <chrono>
-
+		
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR szTitle[MAX_LOADSTRING];
 WCHAR szWindowClass[MAX_LOADSTRING];
@@ -69,8 +69,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 #ifdef _DEBUG
-	if (AllocConsole())
-	{
+	if(AllocConsole()) {
 		FILE* fp;
 		freopen_s(&fp, "CONOUT$", "w", stdout);
 		freopen_s(&fp, "CONOUT$", "w", stderr);
@@ -81,7 +80,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(1739);
 #endif  // _DEBUG
-	
+
 	// TODO: 여기에 코드를 입력합니다.
 	GameFramework gameFramework;
 	g_Framework = &gameFramework;

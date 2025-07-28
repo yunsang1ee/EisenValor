@@ -4,9 +4,12 @@
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "Vertex.h"
+#include "PacketHandler.h"
+#include "NetworkManager.h"
 
 using namespace DirectX;
-// #define SERVER
+
+#define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -15,6 +18,19 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	if(false == MANAGER(NetBridge::NetworkManager)->Init())
 		return false;
+
+	std::string id, pw;
+	std::cout << "아이디 입력: ";
+	std::cin >> id;
+	id = "eisenvalor-id";
+	std::cout << "\n";
+	std::cout << "비밀번호 입력: ";
+	std::cin >> pw;
+	pw = "eisenvalor-pw";
+	
+	const auto packetData = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+	auto packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_LOGIN, packetData);
+	MANAGER(NetBridge::NetworkManager)->Send(std::move(packetBuffer));
 #endif
 
 	m_hInstance = hInstance;
@@ -603,8 +619,7 @@ void GameFramework::Render()
 	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
 
 	// ===== 땅 그리기 =====
-	XMMATRIX groundWorld = XMMatrixScaling(20.0f, 0.2f, 20.0f) *
-		XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMMATRIX groundWorld = XMMatrixScaling(20.0f, 0.2f, 20.0f) * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 	XMMATRIX groundMVP = groundWorld * view * projection;
 
 	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
@@ -635,7 +650,6 @@ void GameFramework::Render()
 	memcpy(m_pCbvDataBegin3, &m_constantBufferData3, sizeof(m_constantBufferData3));
 	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
-	
 
 	// 백버퍼를 프레젠트 상태로 전환
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
