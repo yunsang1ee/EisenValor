@@ -5,7 +5,7 @@
 #include "DxCommandQueueGlobal.h"
 #include "Vertex.h"
 #include "Player.h"
-
+#include "Ground.h"
 
 
 using namespace DirectX;
@@ -74,110 +74,6 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	);
 
 
-	// 2. 큐브
-	// 정점 버퍼 생성
-	// 땅용 데이터를 지역 변수로 정의
-	Vertex groundVertices[] = {
-		{ DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f) },
-		{ DirectX::XMFLOAT3(-0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f) },
-		{ DirectX::XMFLOAT3( 0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f) },
-		{ DirectX::XMFLOAT3( 0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f) },
-		{ DirectX::XMFLOAT3(-0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(0.4f, 0.2f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3(-0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.4f, 0.2f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3( 0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.4f, 0.2f, 0.0f, 1.0f) },
-		{ DirectX::XMFLOAT3( 0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(0.4f, 0.2f, 0.0f, 1.0f) }
-	};
-
-	uint16_t groundIndices[] = {
-		0, 1, 2,  0, 2, 3,
-		4, 6, 5,  4, 7, 6,
-		0, 5, 1,  0, 4, 5,
-		3, 2, 6,  3, 6, 7,
-		1, 5, 6,  1, 6, 2,
-		0, 3, 7,  0, 7, 4
-	};
-
-	// 기존의 cubeVertices.data()를 groundVertices로 변경
-	const UINT vertexBufferSize = sizeof(groundVertices);
-
-	// GPU에 업로드할 힙
-	D3D12_HEAP_PROPERTIES heapProps = {};
-	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	// 버퍼 리소스 설명
-	D3D12_RESOURCE_DESC resourceDesc = {};
-	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resourceDesc.Width = vertexBufferSize;
-	resourceDesc.Height = 1;
-	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.MipLevels = 1;
-	resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-	resourceDesc.SampleDesc.Count = 1;
-	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	// 정점 버퍼 생성
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)
-	));
-
-
-	// 정점 데이터를 버퍼에 복사
-	UINT8* pVertexDataBegin;
-	D3D12_RANGE readRange = { 0, 0 };
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, groundVertices, sizeof(groundVertices));
-	m_vertexBuffer->Unmap(0, nullptr);
-
-	// VertexBufferView 설정
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = vertexBufferSize;
-
-	// 인덱스 버퍼 크기 계산
-	const UINT indexBufferSize = sizeof(groundIndices);
-
-	// 인덱스 버퍼용 힙 속성 (정점 버퍼와 동일)
-	D3D12_HEAP_PROPERTIES indexHeapProps = {};
-	indexHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	// 인덱스 버퍼 리소스 설명
-	D3D12_RESOURCE_DESC indexResourceDesc = {};
-	indexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	indexResourceDesc.Width = indexBufferSize;
-	indexResourceDesc.Height = 1;
-	indexResourceDesc.DepthOrArraySize = 1;
-	indexResourceDesc.MipLevels = 1;
-	indexResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-	indexResourceDesc.SampleDesc.Count = 1;
-	indexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	// 인덱스 버퍼 생성
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&indexHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&indexResourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)
-	));
-
-	// 인덱스 데이터를 버퍼에 복사
-	UINT8* pIndexDataBegin;
-	D3D12_RANGE indexReadRange = { 0, 0 };
-	ThrowIfFailed(m_indexBuffer->Map(0, &indexReadRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-	memcpy(pIndexDataBegin, groundIndices, sizeof(groundIndices));
-	m_indexBuffer->Unmap(0, nullptr);
-
-	// Index Buffer View 설정
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.SizeInBytes = indexBufferSize;
-	m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;  // 16비트 부호 없는 정수
-
 	// 루트 파라미터 정의 (상수 버퍼용)
 	D3D12_ROOT_PARAMETER rootParameter = {};
 	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 상수 버퍼 뷰
@@ -241,42 +137,17 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
-	
-	// 두 번째 상수 버퍼
-	const UINT constantBufferSize2 = (sizeof(ConstantBuffer) + 255) & ~255;
-	D3D12_HEAP_PROPERTIES cbHeapProps2 = {};
-	cbHeapProps2.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	D3D12_RESOURCE_DESC cbResourceDesc2 = {};
-	cbResourceDesc2.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	cbResourceDesc2.Width = constantBufferSize2;
-	cbResourceDesc2.Height = 1;
-	cbResourceDesc2.DepthOrArraySize = 1;
-	cbResourceDesc2.MipLevels = 1;
-	cbResourceDesc2.Format = DXGI_FORMAT_UNKNOWN;
-	cbResourceDesc2.SampleDesc.Count = 1;
-	cbResourceDesc2.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&cbHeapProps2,
-		D3D12_HEAP_FLAG_NONE,
-		&cbResourceDesc2,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer2)
-	));
-
-	D3D12_RANGE readRange2 = { 0, 0 };
-	ThrowIfFailed(m_constantBuffer2->Map(0, &readRange2, reinterpret_cast<void**>(&m_pCbvDataBegin2)));
+	// Ground 객체 생성 및 초기화
+	m_ground = std::make_unique<Ground>();
+	m_ground->Initialize(device.GetDevice());
 
 	// Player 객체 생성 및 초기화 추가
 	auto player = std::make_unique<Player>();
 	player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
 	player->Initialize(device.GetDevice());
-
-
 	m_player = player.get();
 
+	//Objects들 추가
 	m_gameObjects.push_back(std::move(player));
 
 	return true;
@@ -405,11 +276,6 @@ void GameFramework::Render()
 	auto& context = m_commandContextPool->GetCurrentContext();
 
 	// MVP행렬 계산
-	// 회전 애니메이션
-	static float rotation = 0.0f;
-	rotation += 0.01f; // 회전 속도
-
-
 	// 월드 행렬
 	XMMATRIX world = XMMatrixIdentity();
 
@@ -470,16 +336,9 @@ void GameFramework::Render()
 	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
 
-	// ===== 땅 그리기 =====
-	XMMATRIX groundWorld = XMMatrixScaling(20.0f, 0.2f, 20.0f) *
-		XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	XMMATRIX groundMVP = groundWorld * view * projection;
 
-	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
-	memcpy(m_pCbvDataBegin2, &m_constantBufferData2, sizeof(m_constantBufferData2));
-
-	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
-	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
+	// Ground 렌더링
+	m_ground->Render(context.CommandList(), view, projection);
 	
 	// 모든 GameObject 렌더링
 	for (auto& gameObject : m_gameObjects)
@@ -498,32 +357,4 @@ void GameFramework::Render()
 	// 화면에 표시
 	m_swapChain->Present(1, 0);
 
-}std::vector<Vertex> cubeVertices = {
-		// 앞면 정점들 (z = 0.5)
-		{ { -0.5f,  0.5f,  0.5f }, { 1.0f, 0.0f, 0.0f, 1.0f } }, // 0: 왼쪽 위 앞 (빨강)
-		{ {  0.5f,  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f, 1.0f } }, // 1: 오른쪽 위 앞 (녹색)
-		{ {  0.5f, -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f, 1.0f } }, // 2: 오른쪽 아래 앞 (파랑)
-		{ { -0.5f, -0.5f,  0.5f }, { 1.0f, 1.0f, 0.0f, 1.0f } }, // 3: 왼쪽 아래 앞 (노랑)
-
-		// 뒷면 정점들 (z = -0.5)
-		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 0.0f, 1.0f, 1.0f } }, // 4: 왼쪽 위 뒤 (자홍)
-		{ {  0.5f,  0.5f, -0.5f }, { 0.0f, 1.0f, 1.0f, 1.0f } }, // 5: 오른쪽 위 뒤 (청록)
-		{ {  0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } }, // 6: 오른쪽 아래 뒤 (회색)
-		{ { -0.5f, -0.5f, -0.5f }, { 0.8f, 0.8f, 0.8f, 1.0f } }  // 7: 왼쪽 아래 뒤 (연회색)
-};
-
-// 플레이어 인덱스
-std::vector<uint16_t> playerIndices = {
-	// 앞면
-	0, 1, 2,    0, 2, 3,
-	// 뒷면
-	5, 4, 7,    5, 7, 6,
-	// 왼쪽면
-	4, 0, 3,    4, 3, 7,
-	// 오른쪽면
-	1, 5, 6,    1, 6, 2,
-	// 위면 (이게 실제 땅 표면!)
-	4, 5, 1,    4, 1, 0,
-	// 아래면
-	3, 2, 6,    3, 6, 7
-};
+}

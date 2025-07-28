@@ -160,6 +160,9 @@
     <ClInclude Include="Player.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="include\Ground.h">
+      <Filter>Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -212,6 +215,9 @@
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="src\Player.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ground.cpp">
       <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>

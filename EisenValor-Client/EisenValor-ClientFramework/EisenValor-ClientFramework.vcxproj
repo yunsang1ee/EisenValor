@@ -171,6 +171,7 @@
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\Global.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
+    <ClInclude Include="include\Ground.h" />
     <ClInclude Include="include\IComponent.h" />
     <ClInclude Include="include\IGlobal.h" />
     <ClInclude Include="include\IInputGlobal.h" />
@@ -198,6 +199,7 @@
     <ClCompile Include="src\GameFramework.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
+    <ClCompile Include="src\Ground.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
