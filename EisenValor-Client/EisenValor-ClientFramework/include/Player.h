@@ -3,7 +3,6 @@
 #include "GameObject.h"
 #include "DxCommon.h"
 
-
 class Player : public GameObject
 {
 public:
@@ -36,7 +35,7 @@ public:
 	// 카메라 관련 함수 추가
 	DirectX::XMMATRIX GetViewMatrix() const;
 
-private:
+protected:
 	// 플레이어 속성
 	float m_playerSpeed = 5.0f;  // 이동 속도
 

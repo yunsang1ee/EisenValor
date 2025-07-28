@@ -79,6 +79,15 @@
     <Filter Include="NetBridge\01. NWBuffer\01. PacketBuffer">
       <UniqueIdentifier>{b76b1070-81c6-43fa-a4ab-97758300ab18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Player">
+      <UniqueIdentifier>{ff0db68e-268e-4bf6-811b-bbf50f9d5b5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Manager">
+      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ground">
+      <UniqueIdentifier>{d1d2085e-dcd5-4ecd-89a1-adcb07148799}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -157,11 +166,17 @@
     <ClInclude Include="include\PacketBuffer.h">
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Object</Filter>
+    <ClInclude Include="include\Player.h">
+      <Filter>Player</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LocalPlayer.h">
+      <Filter>Player</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameObjectManager.h">
+      <Filter>Manager</Filter>
     </ClInclude>
     <ClInclude Include="include\Ground.h">
-      <Filter>Object</Filter>
+      <Filter>Ground</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -215,10 +230,16 @@
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="src\Player.cpp">
-      <Filter>Object</Filter>
+      <Filter>Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LocalPlayer.cpp">
+      <Filter>Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameObjectManager.cpp">
+      <Filter>Manager</Filter>
     </ClCompile>
     <ClCompile Include="src\Ground.cpp">
-      <Filter>Object</Filter>
+      <Filter>Ground</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

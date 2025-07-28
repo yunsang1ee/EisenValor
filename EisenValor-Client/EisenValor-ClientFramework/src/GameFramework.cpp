@@ -4,13 +4,11 @@
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "Vertex.h"
-#include "Player.h"
+#include "GameObjectManager.h"
+#include "LocalPlayer.h"
 #include "Ground.h"
-
-
 using namespace DirectX;
-// #define SERVER
-
+#define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -20,7 +18,6 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	if (false == MANAGER(NetBridge::NetworkManager)->Init())
 		return false;
 #endif
-
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
@@ -29,7 +26,6 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	Globals::Timer().Initialize();
 	Globals::Timer().SetFixedFPS(60);
 	Globals::Timer().SetTargetFPS(144);
-
 
 	// 1. 스왑체인 생성 코드 추가 25.07.19
 
@@ -137,22 +133,33 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
+	std::string id, pw;
+	std::cout << "Input ID(any):";
+	std::cin >> id;
+	id = "ID";
+	std::cout << "\n";
+	std::cout << "Input PW(any):";
+	std::cin >> pw;
+	pw = "PW";
+
+	const auto packetData = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+	auto packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_LOGIN, packetData);
+	MANAGER(NetBridge::NetworkManager)->Send(std::move(packetBuffer));
+
 	// Ground 객체 생성 및 초기화
 	m_ground = std::make_unique<Ground>();
 	m_ground->Initialize(device.GetDevice());
 
 	// Player 객체 생성 및 초기화 추가
-	auto player = std::make_unique<Player>();
-	player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
-	player->Initialize(device.GetDevice());
-	m_player = player.get();
+	// auto player = std::make_unique<Player>();
+	// player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
+	// player->Initialize(device.GetDevice());
+	// m_player = player.get();
 
 	//Objects들 추가
-	m_gameObjects.push_back(std::move(player));
+	// m_gameObjects.push_back(std::move(player));
 
 	return true;
-
-
 }
 
 void GameFramework::Run()
@@ -172,6 +179,7 @@ void GameFramework::Run()
 	Render();
 
 	Globals::Input().AfterUpdate();
+	MANAGER(GameObjectManager)->FinalUpdate();
 }
 
 void GameFramework::Release()
@@ -252,11 +260,9 @@ void GameFramework::Update()
 		::DestroyWindow(m_hWnd);
 	}
 
-	//모든 GameObject 업데이트
-	for (auto& gameObject : m_gameObjects)
-	{
-		gameObject->Update(Globals::Timer().GetDeltaTime());
-	}
+	const float dt = Globals::Timer().GetDeltaTime();
+
+	MANAGER(GameObjectManager)->Update(dt);
 }
 
 void GameFramework::FixedUpdate()
@@ -267,30 +273,25 @@ void GameFramework::LateUpdate()
 {
 }
 
-
 //Render 코드 생성 25.07.20
 void GameFramework::Render()
 {
+	auto localPlayer = MANAGER(GameObjectManager)->GetLocalPlayer();
+	if(localPlayer == nullptr) return;
+
 	// 현재 프레임 준비
 	m_commandContextPool->AdvanceFrame();
 	auto& context = m_commandContextPool->GetCurrentContext();
 
-	// MVP행렬 계산
-	// 월드 행렬
-	XMMATRIX world = XMMatrixIdentity();
+	const XMMATRIX view = localPlayer->GetViewMatrix();
 
-	// 뷰 행렬
-	Player* player = static_cast<Player*>(m_player);
-	XMMATRIX view = player->GetViewMatrix();
-
-	// 투영 행렬
+	//// 투영 행렬
 	XMMATRIX projection = XMMatrixPerspectiveFovLH(
 		XM_PI / 4.0f,                                    // 45도 시야각
 		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // 종횡비
 		0.1f,                                           // 가까운 클리핑 평면
 		100.0f                                          // 먼 클리핑 평면
 	);
-
 
 	// 현재 백버퍼 가져오기
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
@@ -332,29 +333,21 @@ void GameFramework::Render()
 	// 파이프라인 설정
 	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
 	context.CommandList()->SetPipelineState(m_pipelineState.Get());
-	context.CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
 
+	// Ground 렌더링 (임시)
+	const auto cmdList = context.CommandList();
+	m_ground->Render(cmdList, view, projection);
 
-	// Ground 렌더링
-	m_ground->Render(context.CommandList(), view, projection);
-	
-	// 모든 GameObject 렌더링
-	for (auto& gameObject : m_gameObjects)
-	{
-		gameObject->Render(context.CommandList(), view, projection);
-	}
+	// GameObject 렌더링 (임시)
+	MANAGER(GameObjectManager)->Render(cmdList, view, projection);
 
 	// 백버퍼를 프레젠트 상태로 전환
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
-
 	// 커맨드 실행
 	m_commandContextPool->SignalCurrentFrame();
 	// 화면에 표시
 	m_swapChain->Present(1, 0);
-
 }

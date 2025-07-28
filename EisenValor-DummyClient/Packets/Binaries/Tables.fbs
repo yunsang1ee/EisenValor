@@ -39,20 +39,12 @@ table SC_CHAT_PACKET {
 }
 
 table CS_PLAYER_MOVE_PACKET {
-	pos_x : float;
-	pos_y : float;
-	pos_z : float;
-	rot_x : float;
-	rot_y : float;
-	rot_z : float;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
 }
 
 table SC_PLAYER_MOVE_PACKET {
 	player_id : ushort;
-	pos_x : float;
-	pos_y : float;
-	pos_z : float;
-	rot_x : float;
-	rot_y : float;
-	rot_z : float;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
 }

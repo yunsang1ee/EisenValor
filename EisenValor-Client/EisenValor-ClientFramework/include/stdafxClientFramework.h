@@ -112,6 +112,9 @@ struct PacketHeader {
 #include "Structs_generated.h"
 #include "Tables_generated.h"
 
+#include "NetworkManager.h"
+#include "PacketHandler.h"
+
 #pragma region DebugHelpers
 std::string GetTimestamp();
 

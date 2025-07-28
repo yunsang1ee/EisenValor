@@ -78,7 +78,10 @@ void DxSwapChain::ReleaseBackBuffers()
 
 void DxSwapChain::Present(UINT syncInterval, UINT flags)
 {
-	ThrowIfFailed(m_swapChain->Present(syncInterval, flags));
+	const auto hr = m_swapChain->Present(syncInterval, flags);
+	if(FAILED(hr)) {
+		int a{};
+	}
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 

@@ -140,5 +140,14 @@ namespace NetBridge {
 		}
 #pragma endregion
 
+#pragma region CS_PLAYER_MOVE_PACKET
+		template<typename... Args>
+		[[nodiscard("반환값 절대 무시하지 마세요.")]]
+		static flatbuffers::DetachedBuffer Make_CS_PLAYER_MOVE_PACKET(Args&&... args)
+		{
+			return MakePacket(FB_TABLES::CreateCS_PLAYER_MOVE_PACKET, std::forward<Args>(args)...);
+		}
+#pragma endregion
+
 	};
 }

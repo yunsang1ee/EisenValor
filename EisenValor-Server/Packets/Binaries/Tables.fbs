@@ -8,29 +8,43 @@ table CS_LOGIN_PACKET {
 	pw: string;
 }
 
-table CS_CHAT_PACKET {
-	msg: string;				
+table SC_LOGIN_PACKET {
+	player_id : uint;
 }
 
-table CS_MOVE_PACKET {
-	pos_x : float;
-	pos_y : float;
-	pos_z : float;
-	rot_x : float;
-	rot_y : float;
-	rot_z : float;
+table CS_ENTER_MATCH_PACKET {
+	player_id : uint;
+}
+
+table SC_ENTER_MATCH_PACKET {
+	match_id: ushort;
+}
+
+table SC_ADD_PLAYER_INFO_PACKET {
+	player_id : uint;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
+}
+
+table SC_REMOVE_PLAYER_INFO_PACKET {
+	player_id : uint;
+}
+
+table CS_CHAT_PACKET {
+	msg: string;				
 }
 
 table SC_CHAT_PACKET {
 	msg: string;
 }
 
-table SC_MOVE_PACKET {
-	id	  : uint;
-	pos_x : float;
-	pos_y : float;
-	pos_z : float;
-	rot_x : float;
-	rot_y : float;
-	rot_z : float;
+table CS_PLAYER_MOVE_PACKET {
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
+}
+
+table SC_PLAYER_MOVE_PACKET {
+	player_id : ushort;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
 }

@@ -23,7 +23,7 @@ void Server::Contents::GameMatch::EnterMatch(std::shared_ptr<ClientSession> clie
 	// TODO: 현재는 일단 ID, 위치랑 회전값만 전송
 	// TODO: 나중에 시야에 보이는 애들만 보내줘야 하기 때문에 그 부분도 생각해야함.
 	{
-		static const Vec3 offset{ 10.f, 0.f, 10.f };
+		static const Vec3 offset{ 1.f, 0.f, 1.f };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
 		startPos += offset;
 		const Vec3 pos{ startPos };
@@ -65,7 +65,7 @@ void Server::Contents::GameMatch::EnterMatch(std::shared_ptr<ClientSession> clie
 void Server::Contents::GameMatch::LeaveMatch(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	const uint32 leaveID = clientSession->GetID();
-
+	
 	{
 		std::lock_guard<std::mutex> lk{ m_mutex };
 		if(m_generals.find(leaveID) != m_generals.end())
