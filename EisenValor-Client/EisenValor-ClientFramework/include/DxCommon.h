@@ -15,6 +15,13 @@ namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
+// MVP 행렬 추가(상수버퍼) 25.07.20
+struct ConstantBuffer
+{
+	DirectX::XMFLOAT4X4 mvp;  // Model-View-Projection 행렬
+	//XMat4x4
+};
+
 
 #ifndef ThrowIfFailed
 #define ThrowIfFailed(x)											\
@@ -27,4 +34,6 @@ using Microsoft::WRL::ComPtr;
 		}															\
 	} while(false)
 #endif
+
+
 

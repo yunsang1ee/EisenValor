@@ -1,9 +1,3 @@
 include "Enums.fbs";
 
 namespace FB_STRUCTS;
-
-struct Vec3{
-	x: float;
-	y: float;
-	z: float;
-}
