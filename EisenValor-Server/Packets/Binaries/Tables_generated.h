@@ -21,23 +21,32 @@ namespace FB_TABLES {
 struct CS_LOGIN_PACKET;
 struct CS_LOGIN_PACKETBuilder;
 
+struct SC_LOGIN_PACKET;
+struct SC_LOGIN_PACKETBuilder;
+
+struct CS_ENTER_MATCH_PACKET;
+struct CS_ENTER_MATCH_PACKETBuilder;
+
+struct SC_ENTER_MATCH_PACKET;
+struct SC_ENTER_MATCH_PACKETBuilder;
+
+struct SC_ADD_PLAYER_INFO_PACKET;
+struct SC_ADD_PLAYER_INFO_PACKETBuilder;
+
+struct SC_REMOVE_PLAYER_INFO_PACKET;
+struct SC_REMOVE_PLAYER_INFO_PACKETBuilder;
+
 struct CS_CHAT_PACKET;
 struct CS_CHAT_PACKETBuilder;
-
-struct CS_MOVE_PACKET_XY;
-struct CS_MOVE_PACKET_XYBuilder;
-
-struct CS_MOVE_PACKET_XYZ;
-struct CS_MOVE_PACKET_XYZBuilder;
-
-struct CS_TEST_PACKET;
-struct CS_TEST_PACKETBuilder;
 
 struct SC_CHAT_PACKET;
 struct SC_CHAT_PACKETBuilder;
 
-struct SC_MOVE_PACKET_XYZ;
-struct SC_MOVE_PACKET_XYZBuilder;
+struct CS_PLAYER_MOVE_PACKET;
+struct CS_PLAYER_MOVE_PACKETBuilder;
+
+struct SC_PLAYER_MOVE_PACKET;
+struct SC_PLAYER_MOVE_PACKETBuilder;
 
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
@@ -104,6 +113,231 @@ inline ::flatbuffers::Offset<CS_LOGIN_PACKET> CreateCS_LOGIN_PACKETDirect(
       pw__);
 }
 
+struct SC_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_LOGIN_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_ID = 4
+  };
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_LOGIN_PACKETBuilder {
+  typedef SC_LOGIN_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(SC_LOGIN_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
+  explicit SC_LOGIN_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_LOGIN_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_LOGIN_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_LOGIN_PACKET> CreateSC_LOGIN_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t player_id = 0) {
+  SC_LOGIN_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
+  return builder_.Finish();
+}
+
+struct CS_ENTER_MATCH_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_ENTER_MATCH_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_ID = 4
+  };
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_ENTER_MATCH_PACKETBuilder {
+  typedef CS_ENTER_MATCH_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(CS_ENTER_MATCH_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
+  explicit CS_ENTER_MATCH_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_ENTER_MATCH_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_ENTER_MATCH_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_ENTER_MATCH_PACKET> CreateCS_ENTER_MATCH_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t player_id = 0) {
+  CS_ENTER_MATCH_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
+  return builder_.Finish();
+}
+
+struct SC_ENTER_MATCH_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_MATCH_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MATCH_ID = 4
+  };
+  uint16_t match_id() const {
+    return GetField<uint16_t>(VT_MATCH_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_MATCH_ID, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_ENTER_MATCH_PACKETBuilder {
+  typedef SC_ENTER_MATCH_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_match_id(uint16_t match_id) {
+    fbb_.AddElement<uint16_t>(SC_ENTER_MATCH_PACKET::VT_MATCH_ID, match_id, 0);
+  }
+  explicit SC_ENTER_MATCH_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_ENTER_MATCH_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_ENTER_MATCH_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_ENTER_MATCH_PACKET> CreateSC_ENTER_MATCH_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t match_id = 0) {
+  SC_ENTER_MATCH_PACKETBuilder builder_(_fbb);
+  builder_.add_match_id(match_id);
+  return builder_.Finish();
+}
+
+struct SC_ADD_PLAYER_INFO_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ADD_PLAYER_INFO_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_ID = 4,
+    VT_POS = 6,
+    VT_ROT = 8
+  };
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
+  const FB_STRUCTS::Vec3 *pos() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
+  }
+  const FB_STRUCTS::Vec3 *rot() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_ROT);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_ADD_PLAYER_INFO_PACKETBuilder {
+  typedef SC_ADD_PLAYER_INFO_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(SC_ADD_PLAYER_INFO_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
+  void add_pos(const FB_STRUCTS::Vec3 *pos) {
+    fbb_.AddStruct(SC_ADD_PLAYER_INFO_PACKET::VT_POS, pos);
+  }
+  void add_rot(const FB_STRUCTS::Vec3 *rot) {
+    fbb_.AddStruct(SC_ADD_PLAYER_INFO_PACKET::VT_ROT, rot);
+  }
+  explicit SC_ADD_PLAYER_INFO_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_ADD_PLAYER_INFO_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_ADD_PLAYER_INFO_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_ADD_PLAYER_INFO_PACKET> CreateSC_ADD_PLAYER_INFO_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t player_id = 0,
+    const FB_STRUCTS::Vec3 *pos = nullptr,
+    const FB_STRUCTS::Vec3 *rot = nullptr) {
+  SC_ADD_PLAYER_INFO_PACKETBuilder builder_(_fbb);
+  builder_.add_rot(rot);
+  builder_.add_pos(pos);
+  builder_.add_player_id(player_id);
+  return builder_.Finish();
+}
+
+struct SC_REMOVE_PLAYER_INFO_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_REMOVE_PLAYER_INFO_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_ID = 4
+  };
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_REMOVE_PLAYER_INFO_PACKETBuilder {
+  typedef SC_REMOVE_PLAYER_INFO_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(SC_REMOVE_PLAYER_INFO_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
+  explicit SC_REMOVE_PLAYER_INFO_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_REMOVE_PLAYER_INFO_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_REMOVE_PLAYER_INFO_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_REMOVE_PLAYER_INFO_PACKET> CreateSC_REMOVE_PLAYER_INFO_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t player_id = 0) {
+  SC_REMOVE_PLAYER_INFO_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
+  return builder_.Finish();
+}
+
 struct CS_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_CHAT_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -153,179 +387,6 @@ inline ::flatbuffers::Offset<CS_CHAT_PACKET> CreateCS_CHAT_PACKETDirect(
   return FB_TABLES::CreateCS_CHAT_PACKET(
       _fbb,
       msg__);
-}
-
-struct CS_MOVE_PACKET_XY FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_MOVE_PACKET_XYBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6
-  };
-  int16_t x() const {
-    return GetField<int16_t>(VT_X, 0);
-  }
-  int16_t y() const {
-    return GetField<int16_t>(VT_Y, 0);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<int16_t>(verifier, VT_X, 2) &&
-           VerifyField<int16_t>(verifier, VT_Y, 2) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_MOVE_PACKET_XYBuilder {
-  typedef CS_MOVE_PACKET_XY Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_x(int16_t x) {
-    fbb_.AddElement<int16_t>(CS_MOVE_PACKET_XY::VT_X, x, 0);
-  }
-  void add_y(int16_t y) {
-    fbb_.AddElement<int16_t>(CS_MOVE_PACKET_XY::VT_Y, y, 0);
-  }
-  explicit CS_MOVE_PACKET_XYBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_MOVE_PACKET_XY> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_MOVE_PACKET_XY>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_MOVE_PACKET_XY> CreateCS_MOVE_PACKET_XY(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    int16_t x = 0,
-    int16_t y = 0) {
-  CS_MOVE_PACKET_XYBuilder builder_(_fbb);
-  builder_.add_y(y);
-  builder_.add_x(x);
-  return builder_.Finish();
-}
-
-struct CS_MOVE_PACKET_XYZ FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_MOVE_PACKET_XYZBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6,
-    VT_Z = 8
-  };
-  float x() const {
-    return GetField<float>(VT_X, 0.0f);
-  }
-  float y() const {
-    return GetField<float>(VT_Y, 0.0f);
-  }
-  float z() const {
-    return GetField<float>(VT_Z, 0.0f);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
-           VerifyField<float>(verifier, VT_Z, 4) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_MOVE_PACKET_XYZBuilder {
-  typedef CS_MOVE_PACKET_XYZ Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_x(float x) {
-    fbb_.AddElement<float>(CS_MOVE_PACKET_XYZ::VT_X, x, 0.0f);
-  }
-  void add_y(float y) {
-    fbb_.AddElement<float>(CS_MOVE_PACKET_XYZ::VT_Y, y, 0.0f);
-  }
-  void add_z(float z) {
-    fbb_.AddElement<float>(CS_MOVE_PACKET_XYZ::VT_Z, z, 0.0f);
-  }
-  explicit CS_MOVE_PACKET_XYZBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_MOVE_PACKET_XYZ> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_MOVE_PACKET_XYZ>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_MOVE_PACKET_XYZ> CreateCS_MOVE_PACKET_XYZ(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    float x = 0.0f,
-    float y = 0.0f,
-    float z = 0.0f) {
-  CS_MOVE_PACKET_XYZBuilder builder_(_fbb);
-  builder_.add_z(z);
-  builder_.add_y(y);
-  builder_.add_x(x);
-  return builder_.Finish();
-}
-
-struct CS_TEST_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_TEST_PACKETBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6,
-    VT_Z = 8
-  };
-  float x() const {
-    return GetField<float>(VT_X, 0.0f);
-  }
-  float y() const {
-    return GetField<float>(VT_Y, 0.0f);
-  }
-  float z() const {
-    return GetField<float>(VT_Z, 0.0f);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
-           VerifyField<float>(verifier, VT_Z, 4) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_TEST_PACKETBuilder {
-  typedef CS_TEST_PACKET Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_x(float x) {
-    fbb_.AddElement<float>(CS_TEST_PACKET::VT_X, x, 0.0f);
-  }
-  void add_y(float y) {
-    fbb_.AddElement<float>(CS_TEST_PACKET::VT_Y, y, 0.0f);
-  }
-  void add_z(float z) {
-    fbb_.AddElement<float>(CS_TEST_PACKET::VT_Z, z, 0.0f);
-  }
-  explicit CS_TEST_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_TEST_PACKET> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_TEST_PACKET>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_TEST_PACKET> CreateCS_TEST_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    float x = 0.0f,
-    float y = 0.0f,
-    float z = 0.0f) {
-  CS_TEST_PACKETBuilder builder_(_fbb);
-  builder_.add_z(z);
-  builder_.add_y(y);
-  builder_.add_x(x);
-  return builder_.Finish();
 }
 
 struct SC_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -379,64 +440,115 @@ inline ::flatbuffers::Offset<SC_CHAT_PACKET> CreateSC_CHAT_PACKETDirect(
       msg__);
 }
 
-struct SC_MOVE_PACKET_XYZ FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_MOVE_PACKET_XYZBuilder Builder;
+struct CS_PLAYER_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_PLAYER_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_X = 4,
-    VT_Y = 6,
-    VT_Z = 8
+    VT_POS = 4,
+    VT_ROT = 6
   };
-  float x() const {
-    return GetField<float>(VT_X, 0.0f);
+  const FB_STRUCTS::Vec3 *pos() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
   }
-  float y() const {
-    return GetField<float>(VT_Y, 0.0f);
-  }
-  float z() const {
-    return GetField<float>(VT_Z, 0.0f);
+  const FB_STRUCTS::Vec3 *rot() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_ROT);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
-           VerifyField<float>(verifier, VT_Z, 4) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
            verifier.EndTable();
   }
 };
 
-struct SC_MOVE_PACKET_XYZBuilder {
-  typedef SC_MOVE_PACKET_XYZ Table;
+struct CS_PLAYER_MOVE_PACKETBuilder {
+  typedef CS_PLAYER_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_x(float x) {
-    fbb_.AddElement<float>(SC_MOVE_PACKET_XYZ::VT_X, x, 0.0f);
+  void add_pos(const FB_STRUCTS::Vec3 *pos) {
+    fbb_.AddStruct(CS_PLAYER_MOVE_PACKET::VT_POS, pos);
   }
-  void add_y(float y) {
-    fbb_.AddElement<float>(SC_MOVE_PACKET_XYZ::VT_Y, y, 0.0f);
+  void add_rot(const FB_STRUCTS::Vec3 *rot) {
+    fbb_.AddStruct(CS_PLAYER_MOVE_PACKET::VT_ROT, rot);
   }
-  void add_z(float z) {
-    fbb_.AddElement<float>(SC_MOVE_PACKET_XYZ::VT_Z, z, 0.0f);
-  }
-  explicit SC_MOVE_PACKET_XYZBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_PLAYER_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_MOVE_PACKET_XYZ> Finish() {
+  ::flatbuffers::Offset<CS_PLAYER_MOVE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_MOVE_PACKET_XYZ>(end);
+    auto o = ::flatbuffers::Offset<CS_PLAYER_MOVE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_MOVE_PACKET_XYZ> CreateSC_MOVE_PACKET_XYZ(
+inline ::flatbuffers::Offset<CS_PLAYER_MOVE_PACKET> CreateCS_PLAYER_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    float x = 0.0f,
-    float y = 0.0f,
-    float z = 0.0f) {
-  SC_MOVE_PACKET_XYZBuilder builder_(_fbb);
-  builder_.add_z(z);
-  builder_.add_y(y);
-  builder_.add_x(x);
+    const FB_STRUCTS::Vec3 *pos = nullptr,
+    const FB_STRUCTS::Vec3 *rot = nullptr) {
+  CS_PLAYER_MOVE_PACKETBuilder builder_(_fbb);
+  builder_.add_rot(rot);
+  builder_.add_pos(pos);
+  return builder_.Finish();
+}
+
+struct SC_PLAYER_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_PLAYER_MOVE_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_ID = 4,
+    VT_POS = 6,
+    VT_ROT = 8
+  };
+  uint16_t player_id() const {
+    return GetField<uint16_t>(VT_PLAYER_ID, 0);
+  }
+  const FB_STRUCTS::Vec3 *pos() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
+  }
+  const FB_STRUCTS::Vec3 *rot() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_ROT);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_PLAYER_ID, 2) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_PLAYER_MOVE_PACKETBuilder {
+  typedef SC_PLAYER_MOVE_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint16_t player_id) {
+    fbb_.AddElement<uint16_t>(SC_PLAYER_MOVE_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
+  void add_pos(const FB_STRUCTS::Vec3 *pos) {
+    fbb_.AddStruct(SC_PLAYER_MOVE_PACKET::VT_POS, pos);
+  }
+  void add_rot(const FB_STRUCTS::Vec3 *rot) {
+    fbb_.AddStruct(SC_PLAYER_MOVE_PACKET::VT_ROT, rot);
+  }
+  explicit SC_PLAYER_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET> CreateSC_PLAYER_MOVE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t player_id = 0,
+    const FB_STRUCTS::Vec3 *pos = nullptr,
+    const FB_STRUCTS::Vec3 *rot = nullptr) {
+  SC_PLAYER_MOVE_PACKETBuilder builder_(_fbb);
+  builder_.add_rot(rot);
+  builder_.add_pos(pos);
+  builder_.add_player_id(player_id);
   return builder_.Finish();
 }
 

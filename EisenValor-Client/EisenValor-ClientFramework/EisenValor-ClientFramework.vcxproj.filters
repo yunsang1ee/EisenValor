@@ -55,6 +55,39 @@
     <Filter Include="Graphics\Device\Command">
       <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NetBridge">
+      <UniqueIdentifier>{757ff512-363e-4b4b-9995-e514033e6060}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\00. NetworkManager">
+      <UniqueIdentifier>{b75b3135-5ffe-448c-ae59-f676b9c0c512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\01. NWBuffer">
+      <UniqueIdentifier>{e76c6816-d432-4b93-89cd-3c016a7a8e3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\02. Packets">
+      <UniqueIdentifier>{b1245d74-3102-4148-9f18-5dce752394e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\02. Packets\00. FBS">
+      <UniqueIdentifier>{28de1129-6935-4ce6-be39-c8943084330f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\02. Packets\01. PacketHandler">
+      <UniqueIdentifier>{acb9ba7b-a3b1-4ba5-a521-58020aa3f206}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\01. NWBuffer\00. RecvBuffer">
+      <UniqueIdentifier>{a3109b9e-f30d-47f1-a469-c2e290563598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\01. NWBuffer\01. PacketBuffer">
+      <UniqueIdentifier>{b76b1070-81c6-43fa-a4ab-97758300ab18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Player">
+      <UniqueIdentifier>{ff0db68e-268e-4bf6-811b-bbf50f9d5b5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Manager">
+      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ground">
+      <UniqueIdentifier>{d1d2085e-dcd5-4ecd-89a1-adcb07148799}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Graphics\Resource\Heap">
       <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
     </Filter>
@@ -124,6 +157,30 @@
     <ClInclude Include="include\DxDescriptorHeap.h">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
+    <ClInclude Include="include\PacketHandler.h">
+      <Filter>NetBridge\02. Packets\01. PacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NetworkManager.h">
+      <Filter>NetBridge\00. NetworkManager</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RecvBuffer.h">
+      <Filter>NetBridge\01. NWBuffer\00. RecvBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PacketBuffer.h">
+      <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Player.h">
+      <Filter>Player</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LocalPlayer.h">
+      <Filter>Player</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameObjectManager.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Ground.h">
+      <Filter>Ground</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -163,5 +220,40 @@
     <ClCompile Include="src\DxDescriptorHeap.cpp">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
+    <ClCompile Include="src\PacketHandler.cpp">
+      <Filter>NetBridge\02. Packets\01. PacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetworkManager.cpp">
+      <Filter>NetBridge\00. NetworkManager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RecvBuffer.cpp">
+      <Filter>NetBridge\01. NWBuffer\00. RecvBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PacketBuffer.cpp">
+      <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Player.cpp">
+      <Filter>Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LocalPlayer.cpp">
+      <Filter>Player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GameObjectManager.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ground.cpp">
+      <Filter>Ground</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs">
+      <Filter>NetBridge\02. Packets\00. FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Structs.fbs">
+      <Filter>NetBridge\02. Packets\00. FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Tables.fbs">
+      <Filter>NetBridge\02. Packets\00. FBS</Filter>
+    </None>
   </ItemGroup>
 </Project>

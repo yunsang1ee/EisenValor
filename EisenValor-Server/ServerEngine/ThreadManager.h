@@ -7,7 +7,7 @@ namespace ServerEngine {
 		SINGLETON(ThreadManager)
 	private:
 		uint16						m_workerThreadCount;
-		std::mutex					m_mutex;
+		tbb::spin_mutex				m_mutex;
 		std::vector<std::jthread>	m_threads;
 
 	public:

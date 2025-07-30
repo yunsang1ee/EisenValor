@@ -19,7 +19,7 @@ bool ServerEngine::ThreadManager::Init()
 
 void ServerEngine::ThreadManager::EnqueueTask(std::function<void()> task)
 {
-	std::lock_guard<std::mutex> lk{ m_mutex };
+	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	// InitTLS() 시점과 EnqueueTask() 호출 시점이 동일하지 않음.
 
 	// EnqueueTask()에서 새로운 쓰레드를 만들어 .emplace_back()으로 바로 실행하지만,
@@ -37,7 +37,7 @@ void ServerEngine::ThreadManager::EnqueueTask(std::function<void()> task)
 void ServerEngine::ThreadManager::Join()
 {
 	{
-		std::lock_guard<std::mutex> lk{ m_mutex };
+		std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 		m_threads.clear();
 	}
 

@@ -155,32 +155,6 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\EisenValor-Server\Server\TestPackets.h" />
-    <ClInclude Include="NetBridgeDefines.h" />
-    <ClInclude Include="NetBridgeEnums.h" />
-    <ClInclude Include="NetBridgePch.h" />
-    <ClInclude Include="NetBridgeStructs.h" />
-    <ClInclude Include="NetBridgeTypes.h" />
-    <ClInclude Include="NetworkManager.h" />
-    <ClInclude Include="PacketHandler.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="RecvBuffer.h" />
-    <ClInclude Include="PacketBuffer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="NetBridgePch.cpp" />
-    <ClCompile Include="NetworkManager.cpp" />
-    <ClCompile Include="PacketHandler.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="RecvBuffer.cpp" />
-    <ClCompile Include="PacketBuffer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />

@@ -4,7 +4,9 @@
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "Vertex.h"
-
+#include "GameObjectManager.h"
+#include "LocalPlayer.h"
+#include "Ground.h"
 using namespace DirectX;
 //#define SERVER
 
@@ -13,10 +15,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 #ifdef SERVER
 	NetBridge::ServerPacketHandler::Init();
 
-	if(false == MANAGER(NetBridge::NetworkManager)->Init())
+	if (false == MANAGER(NetBridge::NetworkManager)->Init())
 		return false;
 #endif
-
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
@@ -26,27 +27,26 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	Globals::Timer().SetFixedFPS(60);
 	Globals::Timer().SetTargetFPS(144);
 
+	// 1. ìŠ¤ì™‘ì²´ì¸ ìƒì„± ì½”ë“œ ì¶”ê°€ 25.07.19
 
-	// 1. ½º¿ÒÃ¼ÀÎ »ı¼º ÄÚµå Ãß°¡ 25.07.19
-
-	// RTV µğ½ºÅ©¸³ÅÍ Èü »ı¼º
+	// RTV ë””ìŠ¤í¬ë¦½í„° í™ ìƒì„±
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.NumDescriptors = 3;  // ¹é¹öÆÛ 3°³
+	rtvHeapDesc.NumDescriptors = 3;  // ë°±ë²„í¼ 3ê°œ
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	// À©µµ¿ì Å©±â °¡Á®¿À±â
+	// ìœˆë„ìš° í¬ê¸° ê°€ì ¸ì˜¤ê¸°
 	RECT clientRect;
 	GetClientRect(m_hWnd, &clientRect);
 	uint32_t width = clientRect.right - clientRect.left;
 	uint32_t height = clientRect.bottom - clientRect.top;
 
-	// ½º¿ÒÃ¼ÀÎ »ı¼º
+	// ìŠ¤ì™‘ì²´ì¸ ìƒì„±
 	auto& commandQueue = GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>();
 
 	m_swapChain = std::make_unique<DxSwapChain>(
@@ -56,110 +56,28 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 		m_hWnd,
 		width,
 		height,
-		3, // ¹é¹öÆÛ °³¼ö
+		3, // ë°±ë²„í¼ ê°œìˆ˜
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
 	);
 
-	// Ä¿¸Çµå ÄÁÅØ½ºÆ® Ç® »ı¼º
+	// ì»¤ë§¨ë“œ ì»¨í…ìŠ¤íŠ¸ í’€ ìƒì„±
 	m_commandContextPool = std::make_unique<DxCommandContextPool>(
 		device.GetDevice(),
 		commandQueue,
-		3	//¹é¹öÆÛ °³¼ö
+		3	//ë°±ë²„í¼ ê°œìˆ˜
 	);
 
 
-	// 2. Å¥ºê
-	// Á¤Á¡ ¹öÆÛ »ı¼º
-	const UINT vertexBufferSize = sizeof(Vertex) * cubeVertices.size();
-
-	// GPU¿¡ ¾÷·ÎµåÇÒ Èü
-	D3D12_HEAP_PROPERTIES heapProps = {};
-	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	// ¹öÆÛ ¸®¼Ò½º ¼³¸í
-	D3D12_RESOURCE_DESC resourceDesc = {};
-	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resourceDesc.Width = vertexBufferSize;
-	resourceDesc.Height = 1;
-	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.MipLevels = 1;
-	resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-	resourceDesc.SampleDesc.Count = 1;
-	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	// Á¤Á¡ ¹öÆÛ »ı¼º
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&heapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)
-	));
-
-
-	// Á¤Á¡ µ¥ÀÌÅÍ¸¦ ¹öÆÛ¿¡ º¹»ç
-	UINT8* pVertexDataBegin;
-	D3D12_RANGE readRange = { 0, 0 };
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, cubeVertices.data(), vertexBufferSize);
-	m_vertexBuffer->Unmap(0, nullptr);
-
-	// VertexBufferView ¼³Á¤
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = vertexBufferSize;
-
-	// ÀÎµ¦½º ¹öÆÛ Å©±â °è»ê
-	const UINT indexBufferSize = sizeof(uint16_t) * playerIndices.size();
-
-	// ÀÎµ¦½º ¹öÆÛ¿ë Èü ¼Ó¼º (Á¤Á¡ ¹öÆÛ¿Í µ¿ÀÏ)
-	D3D12_HEAP_PROPERTIES indexHeapProps = {};
-	indexHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	// ÀÎµ¦½º ¹öÆÛ ¸®¼Ò½º ¼³¸í
-	D3D12_RESOURCE_DESC indexResourceDesc = {};
-	indexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	indexResourceDesc.Width = indexBufferSize;
-	indexResourceDesc.Height = 1;
-	indexResourceDesc.DepthOrArraySize = 1;
-	indexResourceDesc.MipLevels = 1;
-	indexResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-	indexResourceDesc.SampleDesc.Count = 1;
-	indexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	// ÀÎµ¦½º ¹öÆÛ »ı¼º
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&indexHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&indexResourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)
-	));
-
-	// ÀÎµ¦½º µ¥ÀÌÅÍ¸¦ ¹öÆÛ¿¡ º¹»ç
-	UINT8* pIndexDataBegin;
-	D3D12_RANGE indexReadRange = { 0, 0 };
-	ThrowIfFailed(m_indexBuffer->Map(0, &indexReadRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-	memcpy(pIndexDataBegin, playerIndices.data(), indexBufferSize);
-	m_indexBuffer->Unmap(0, nullptr);
-
-	// Index Buffer View ¼³Á¤
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.SizeInBytes = indexBufferSize;
-	m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;  // 16ºñÆ® ºÎÈ£ ¾ø´Â Á¤¼ö
-
-	// ·çÆ® ÆÄ¶ó¹ÌÅÍ Á¤ÀÇ (»ó¼ö ¹öÆÛ¿ë)
+	// ë£¨íŠ¸ íŒŒë¼ë¯¸í„° ì •ì˜ (ìƒìˆ˜ ë²„í¼ìš©)
 	D3D12_ROOT_PARAMETER rootParameter = {};
-	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // »ó¼ö ¹öÆÛ ºä
+	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // ìƒìˆ˜ ë²„í¼ ë·°
 	rootParameter.Descriptor.ShaderRegister = 0;  // register(b0)
 	rootParameter.Descriptor.RegisterSpace = 0;
-	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // Á¤Á¡ ¼ÎÀÌ´õ¿¡¼­¸¸ »ç¿ë
+	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // ì •ì  ì…°ì´ë”ì—ì„œë§Œ ì‚¬ìš©
 
-	// 3. ·çÆ® ½Ã±×´ÏÃ³ »ı¼º 25.07.20
+	// 3. ë£¨íŠ¸ ì‹œê·¸ë‹ˆì²˜ ìƒì„± 25.07.20
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
 	rootSignatureDesc.NumParameters = 1;
 	rootSignatureDesc.pParameters = &rootParameter;
@@ -172,7 +90,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
 	ThrowIfFailed(device.GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 
-	// 4. ¼ÎÀÌ´õ ÄÄÆÄÀÏ (Simple)
+	// 4. ì…°ì´ë” ì»´íŒŒì¼ (Simple)
 	ComPtr<ID3DBlob> vertexShader;
 	ComPtr<ID3DBlob> pixelShader;
 
@@ -183,17 +101,17 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	UINT compileFlags = 0;
 #endif
 
-	// ¼ÎÀÌ´õ ÆÄÀÏ¿¡¼­ ÄÄÆÄÀÏ
+	// ì…°ì´ë” íŒŒì¼ì—ì„œ ì»´íŒŒì¼
 	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
 	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
-	// 5. ÀÔ·Â ·¹ÀÌ¾Æ¿ô Á¤ÀÇ
+	// 5. ì…ë ¥ ë ˆì´ì•„ì›ƒ ì •ì˜
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
-	// PS »ı¼ºÇÏ±â
+	// PS ìƒì„±í•˜ê¸°
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 	psoDesc.pRootSignature = m_rootSignature.Get();
@@ -212,64 +130,32 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
-	// »ó¼ö¹öÆÛ »ı¼º 25.07.20
-	// »ó¼ö ¹öÆÛ¿ë Èü ¼Ó¼º
-	D3D12_HEAP_PROPERTIES cbHeapProps = {};
-	cbHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+	std::string id, pw;
+	std::cout << "Input ID(any):";
+	std::cin >> id;
+	id = "ID";
+	std::cout << "\n";
+	std::cout << "Input PW(any):";
+	std::cin >> pw;
+	pw = "PW";
 
-	// »ó¼ö ¹öÆÛ Å©±â (256¹ÙÀÌÆ® Á¤·Ä)
-	const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
+	const auto packetData = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+	auto packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_LOGIN, packetData);
+	MANAGER(NetBridge::NetworkManager)->Send(std::move(packetBuffer));
 
-	// »ó¼ö ¹öÆÛ ¸®¼Ò½º ¼³¸í
-	D3D12_RESOURCE_DESC cbResourceDesc = {};
-	cbResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	cbResourceDesc.Width = constantBufferSize;
-	cbResourceDesc.Height = 1;
-	cbResourceDesc.DepthOrArraySize = 1;
-	cbResourceDesc.MipLevels = 1;
-	cbResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
-	cbResourceDesc.SampleDesc.Count = 1;
-	cbResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	// Ground ê°ì²´ ìƒì„± ë° ì´ˆê¸°í™”
+	m_ground = std::make_unique<Ground>();
+	m_ground->Initialize(device.GetDevice());
 
-	// »ó¼ö ¹öÆÛ »ı¼º
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&cbHeapProps,
-		D3D12_HEAP_FLAG_NONE,
-		&cbResourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)
-	));
+	// Player ê°ì²´ ìƒì„± ë° ì´ˆê¸°í™” ì¶”ê°€
+	// auto player = std::make_unique<Player>();
+	// player->SetPosition(0.0f, 0.5f, 0.0f);  // ì´ˆê¸° ìœ„ì¹˜ ì„¤ì •
+	// player->Initialize(device.GetDevice());
+	// m_player = player.get();
 
-	// »ó¼ö ¹öÆÛ ¸ÅÇÎ CPU°¡ ÀĞÀ» ¼ö ÀÖ°Ô ÇÔ
-	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
-	
-	// µÎ ¹øÂ° »ó¼ö ¹öÆÛ
-	const UINT constantBufferSize2 = (sizeof(ConstantBuffer) + 255) & ~255;
-	D3D12_HEAP_PROPERTIES cbHeapProps2 = {};
-	cbHeapProps2.Type = D3D12_HEAP_TYPE_UPLOAD;
+	//Objectsë“¤ ì¶”ê°€
+	// m_gameObjects.push_back(std::move(player));
 
-	D3D12_RESOURCE_DESC cbResourceDesc2 = {};
-	cbResourceDesc2.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	cbResourceDesc2.Width = constantBufferSize2;
-	cbResourceDesc2.Height = 1;
-	cbResourceDesc2.DepthOrArraySize = 1;
-	cbResourceDesc2.MipLevels = 1;
-	cbResourceDesc2.Format = DXGI_FORMAT_UNKNOWN;
-	cbResourceDesc2.SampleDesc.Count = 1;
-	cbResourceDesc2.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&cbHeapProps2,
-		D3D12_HEAP_FLAG_NONE,
-		&cbResourceDesc2,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_constantBuffer2)
-	));
-
-	D3D12_RANGE readRange2 = { 0, 0 };
-	ThrowIfFailed(m_constantBuffer2->Map(0, &readRange2, reinterpret_cast<void**>(&m_pCbvDataBegin2)));
 	return true;
 }
 
@@ -290,6 +176,7 @@ void GameFramework::Run()
 	Render();
 
 	Globals::Input().AfterUpdate();
+	MANAGER(GameObjectManager)->FinalUpdate();
 }
 
 void GameFramework::Release()
@@ -370,121 +257,9 @@ void GameFramework::Update()
 		::DestroyWindow(m_hWnd);
 	}
 
-	if (Globals::Input().GetInputDown(VK_F11))
-	{
-		m_swapChain->ToggleBorderlessFullscreen();
-	}
+	const float dt = Globals::Timer().GetDeltaTime();
 
-	if (Globals::Input().GetInput(VK_MENU) && Globals::Input().GetInputDown(VK_RETURN))
-	{
-		m_swapChain->ToggleFullscreen();
-	}
-
-	// ÇÃ·¹ÀÌ¾î ¹Ù¶óº¸´Â ¹æÇâ º¤ÅÍ °è»ê
-	float forwardX = sinf(m_cameraYaw);
-	float forwardZ = cosf(m_cameraYaw);
-
-	// ¿ìÃø º¤ÅÍ °è»ê
-	float rightX = sinf(m_cameraYaw + XM_PIDIV2);
-	float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
-
-	float moveSpeed = m_playerSpeed * Globals::Timer().GetDeltaTime();
-
-	// WASD ÀÔ·Â Ã³¸®
-	if (Globals::Input().GetInput('W'))  // ÀüÁø
-	{
-		m_playerX += forwardX * moveSpeed;
-		m_playerZ += forwardZ * moveSpeed;
-	}
-	if (Globals::Input().GetInput('S'))  // ÈÄÁø
-	{
-		m_playerX -= forwardX * moveSpeed;
-		m_playerZ -= forwardZ * moveSpeed;
-	}
-	if (Globals::Input().GetInput('A'))  // ÁÂÃø ÀÌµ¿
-	{
-		m_playerX -= rightX * moveSpeed;
-		m_playerZ -= rightZ * moveSpeed;
-	}
-	if (Globals::Input().GetInput('D'))  // ¿ìÃø ÀÌµ¿
-	{
-		m_playerX += rightX * moveSpeed;
-		m_playerZ += rightZ * moveSpeed;
-	}
-
-	// ¼öÁ÷ ÀÌµ¿ (H/L Å°)
-	if (Globals::Input().GetInput('H'))
-	{
-		m_playerY -= moveSpeed;  // ¾Æ·¡·Î
-	}
-	if (Globals::Input().GetInput('L'))
-	{
-		m_playerY += moveSpeed;  // À§·Î
-	}
-
-	// À§Ä¡ µğ¹ö±ë
-	static float lastX = 0, lastY = 1, lastZ = 0;
-	if (m_playerX != lastX || m_playerZ != lastZ) {
-		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
-			m_playerX, m_playerY, m_playerZ);
-		lastX = m_playerX; lastY = m_playerY; lastZ = m_playerZ;
-	}
-
-	// ===== ¸¶¿ì½º·Î Ä«¸Ş¶ó ÀÌµ¿ =====
-	bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
-	// ÇöÀç ¸¶¿ì½º À§Ä¡
-	auto mousePos = Globals::Input().GetMousePosition();
-
-	if (isLeftButtonPressed)
-	{
-		if (!m_isMouseDragging)
-		{
-			m_isMouseDragging = true;
-			m_lastMouseX = mousePos.x;  // ½ÃÀÛ À§Ä¡ ÀúÀå
-			m_lastMouseY = mousePos.y;
-			DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
-		}
-		else
-		{
-			// ¿òÁ÷ÀÓ °¨Áö
-			float deltaX = mousePos.x - m_lastMouseX;
-			float deltaY = mousePos.y - m_lastMouseY;
-
-			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) 
-			{
-				// Ä«¸Ş¶ó È¸Àü ¾÷µ¥ÀÌÆ®
-				m_cameraYaw += deltaX * m_mouseSensitivity;
-				m_cameraPitch += deltaY * m_mouseSensitivity;
-
-				// Pitch Á¦ÇÑ (À§¾Æ·¡ È¸Àü Á¦ÇÑ)
-				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
-
-				//µğ¹ö±ë
-				DEBUG_LOG_FMT("Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n",
-					deltaX, deltaY, m_cameraYaw, m_cameraPitch);
-			}
-
-			m_lastMouseX = mousePos.x;
-			m_lastMouseY = mousePos.y;
-		}
-	}
-	else
-	{
-		if (m_isMouseDragging)
-		{
-			// µå·¡±× Á¾·á
-			m_isMouseDragging = false;
-			DEBUG_LOG_FMT("Camera drag ended\n");
-		}
-	}
-
-	//¸¶¿ì½º ÈÙ·Î ÁÜÀÎ¾Æ¿ô
-	int wheelDelta = Globals::Input().GetWheelScroll();
-	if (wheelDelta != 0)
-	{
-		m_cameraDistance -= wheelDelta * 0.001f;
-		m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
-	}
+	MANAGER(GameObjectManager)->Update(dt);
 }
 
 void GameFramework::FixedUpdate()
@@ -495,50 +270,31 @@ void GameFramework::LateUpdate()
 {
 }
 
-
-//Render ÄÚµå »ı¼º 25.07.20
+//Render ì½”ë“œ ìƒì„± 25.07.20
 void GameFramework::Render()
 {
-	// ÇöÀç ÇÁ·¹ÀÓ ÁØºñ
+	auto localPlayer = MANAGER(GameObjectManager)->GetLocalPlayer();
+	if(localPlayer == nullptr) return;
+
+	// í˜„ì¬ í”„ë ˆì„ ì¤€ë¹„
 	m_commandContextPool->AdvanceFrame();
 	auto& context = m_commandContextPool->GetCurrentContext();
 
-	// MVPÇà·Ä °è»ê
-	// È¸Àü ¾Ö´Ï¸ŞÀÌ¼Ç
-	static float rotation = 0.0f;
-	rotation += 0.01f; // È¸Àü ¼Óµµ
+	const XMMATRIX view = localPlayer->GetViewMatrix();
 
-	// ¿ùµå Çà·Ä
-	XMMATRIX world = XMMatrixIdentity();
-
-	float camX = m_playerX - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
-	float camY = m_playerY + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
-	float camZ = m_playerZ - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
-
-	float lookX = m_playerX + 2.0f * sinf(m_cameraYaw); 
-	float lookY = m_playerY + 1.0f + 2.0f * sinf(m_cameraPitch);
-	float lookZ = m_playerZ + 2.0f * cosf(m_cameraYaw);
-
-	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(camX, camY, camZ, 0.0f),          // ÇÃ·¹ÀÌ¾î µÚÂÊ À§Ä¡
-		XMVectorSet(lookX, lookY, lookZ, 0.0f),       // ÇÃ·¹ÀÌ¾î ÁÖº¯À» ¹Ù¶óº½
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)          // ¾÷ º¤ÅÍ
-	);
-
-	// Åõ¿µ Çà·Ä
+	//// íˆ¬ì˜ í–‰ë ¬
 	XMMATRIX projection = XMMatrixPerspectiveFovLH(
-		XM_PI / 4.0f,                                    // 45µµ ½Ã¾ß°¢
-		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // Á¾È¾ºñ
-		0.1f,                                           // °¡±î¿î Å¬¸®ÇÎ Æò¸é
-		100.0f                                          // ¸Õ Å¬¸®ÇÎ Æò¸é
+		XM_PI / 4.0f,                                    // 45ë„ ì‹œì•¼ê°
+		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // ì¢…íš¡ë¹„
+		0.1f,                                           // ê°€ê¹Œìš´ í´ë¦¬í•‘ í‰ë©´
+		100.0f                                          // ë¨¼ í´ë¦¬í•‘ í‰ë©´
 	);
 
-
-	// ÇöÀç ¹é¹öÆÛ °¡Á®¿À±â
+	// í˜„ì¬ ë°±ë²„í¼ ê°€ì ¸ì˜¤ê¸°
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
 
-	// ¹é¹öÆÛ¸¦ ·»´õ Å¸°ÙÀ¸·Î ÀüÈ¯(Resource barrier)
+	// ë°±ë²„í¼ë¥¼ ë Œë” íƒ€ê²Ÿìœ¼ë¡œ ì „í™˜(Resource barrier)
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -549,13 +305,13 @@ void GameFramework::Render()
 
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
-	// ·»´õ Å¸°Ù ¼³Á¤
+	// ë Œë” íƒ€ê²Ÿ ì„¤ì •
 	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-	// È­¸éÀ» ÆÄ¶õ»öÀ¸·Î Å¬¸®¾î
-	float clearColor[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // ÆÄ¶õ»ö
+	// í™”ë©´ì„ íŒŒë€ìƒ‰ìœ¼ë¡œ í´ë¦¬ì–´
+	float clearColor[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // íŒŒë€ìƒ‰
 	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	// ºäÆ÷Æ® ¼³Á¤
+	// ë·°í¬íŠ¸ ì„¤ì •
 	D3D12_VIEWPORT viewport = {};
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
@@ -571,45 +327,23 @@ void GameFramework::Render()
 	context.CommandList()->RSSetViewports(1, &viewport);
 	context.CommandList()->RSSetScissorRects(1, &scissorRect);
 
-	// ÆÄÀÌÇÁ¶óÀÎ ¼³Á¤
+	// íŒŒì´í”„ë¼ì¸ ì„¤ì •
 	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
 	context.CommandList()->SetPipelineState(m_pipelineState.Get());
-	context.CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	context.CommandList()->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	context.CommandList()->IASetIndexBuffer(&m_indexBufferView);
 
-	// ===== ¶¥ ±×¸®±â =====
-	XMMATRIX groundWorld = XMMatrixScaling(20.0f, 0.2f, 20.0f) *
-		XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	XMMATRIX groundMVP = groundWorld * view * projection;
+	// Ground ë Œë”ë§ (ì„ì‹œ)
+	const auto cmdList = context.CommandList();
+	m_ground->Render(cmdList, view, projection);
 
-	XMStoreFloat4x4(&m_constantBufferData2.mvp, XMMatrixTranspose(groundMVP));
-	memcpy(m_pCbvDataBegin2, &m_constantBufferData2, sizeof(m_constantBufferData2));
+	// GameObject ë Œë”ë§ (ì„ì‹œ)
+	MANAGER(GameObjectManager)->Render(cmdList, view, projection);
 
-	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer2->GetGPUVirtualAddress());
-	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
-
-	// ÇÃ·¹ÀÌ¾î ±×¸®±â
-	XMMATRIX playerScale = XMMatrixScaling(0.3f, 0.8f, 0.3f);
-	XMMATRIX playerRotation = XMMatrixRotationY(m_cameraYaw);
-	XMMATRIX playerTranslation = XMMatrixTranslation(m_playerX, m_playerY, m_playerZ);
-	XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
-	XMMATRIX mvp = playerWorld * view * projection;
-
-	// »ó¼ö ¹öÆÛ¿¡ º¹»ç
-	XMStoreFloat4x4(&m_constantBufferData.mvp, XMMatrixTranspose(mvp)); // ÀüÄ¡ ÇÊ¿ä
-	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-
-	context.CommandList()->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
-	context.CommandList()->DrawIndexedInstanced(36, 1, 0, 0, 0);
-	
-
-	// ¹é¹öÆÛ¸¦ ÇÁ·¹Á¨Æ® »óÅÂ·Î ÀüÈ¯
+	// ë°±ë²„í¼ë¥¼ í”„ë ˆì  íŠ¸ ìƒíƒœë¡œ ì „í™˜
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
-	// Ä¿¸Çµå ½ÇÇà
+	// ì»¤ë§¨ë“œ ì‹¤í–‰
 	m_commandContextPool->SignalCurrentFrame();
 	
 	m_swapChain->PresentMaxPerformance();

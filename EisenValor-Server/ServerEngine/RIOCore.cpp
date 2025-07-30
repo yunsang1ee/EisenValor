@@ -15,10 +15,9 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 		return false;
 	}
 
-
 	// 2. Create Listen Socket AndGet MULTIPLE_EXTENSION_FUNCTION_POINTER, Set ServerAddress
-	m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 
-		WSA_FLAG_REGISTERED_IO/* Listen Socket을 WSA_FLAG_REGISTERED I/O로 하면 논블로킹 안됨 -> 지금은 Accept Thread 따로 빼서 그냥 Blocking으로*/);
+	/* Listen Socket을 WSA_FLAG_REGISTERED I/O로 하면 논블로킹 안됨 -> 지금은 Accept Thread 따로 빼서 그냥 Blocking으로*/
+	m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_REGISTERED_IO);
 
 	if(m_listenSocket == INVALID_SOCKET) {
 		ServerEngine::LogManager::PrintLastError();
@@ -81,12 +80,8 @@ void ServerEngine::RIOCore::StartIO() noexcept
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i]() {
 			TLS_THREAD_ID = i+1;
-			while(LOOP_EXIT == false) {
-					m_rioWorkers[i]->FlushPacketQueue();
-					m_rioWorkers[i]->DequeueCompletion();
-				
-				// TODO: 공용 일감 처리(GlobalTaskQueue)
-			}
+			while(LOOP_EXIT == false)
+				m_rioWorkers[i]->Work();
 		});
 	}
 }
@@ -115,6 +110,7 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 		std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
 		
 		// RioWorker에게 하나씩 분배
+		// RioWorker는 자신이 보유하고 있는 세션풀에서 세션 하나 꺼내 해당 세션에 소켓 등록
 		m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
 	}

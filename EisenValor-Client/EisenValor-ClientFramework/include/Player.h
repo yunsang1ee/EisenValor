@@ -1,0 +1,66 @@
+#pragma once
+#include "stdafxClientFramework.h"
+#include "GameObject.h"
+#include "DxCommon.h"
+
+class Player : public GameObject
+{
+public:
+	Player() = default;
+	virtual ~Player() = default;
+
+	// GameObject 순수 가상 함수 구현
+	virtual void Initialize(ID3D12Device* device) override;
+	virtual void Update(float deltaTime) override;
+	virtual void Render(ID3D12GraphicsCommandList* cmdList,
+		DirectX::XMMATRIX view,
+		DirectX::XMMATRIX projection) override;
+
+	// GameObject의 ObjectType 반환
+	virtual ObjectType GetObjectType() const override { return ObjectType::Player; }
+
+	// Player 전용 함수들
+	void SetSpeed(float speed) { m_playerSpeed = speed; }
+	float GetSpeed() const { return m_playerSpeed; }
+
+	// 카메라 관련 함수들 추가
+	float GetCameraYaw() const { return m_cameraYaw; }
+	float GetCameraPitch() const { return m_cameraPitch; }
+	float GetCameraDistance() const { return m_cameraDistance; }
+
+	void SetCameraYaw(float yaw) { m_cameraYaw = yaw; }
+	void SetCameraPitch(float pitch) { m_cameraPitch = pitch; }
+	void SetCameraDistance(float distance) { m_cameraDistance = distance; }
+
+	// 카메라 관련 함수 추가
+	DirectX::XMMATRIX GetViewMatrix() const;
+
+protected:
+	// 플레이어 속성
+	float m_playerSpeed = 5.0f;  // 이동 속도
+
+	// 카메라 관련 변수들 추가
+	bool m_isMouseDragging = false;
+	float m_cameraYaw = 0.0f;          // 좌우
+	float m_cameraPitch = 0.0f;        // 위아래  
+	float m_cameraDistance = 15.0f;
+	float m_mouseSensitivity = 0.005f;
+	float m_lastMouseX = 0.0f;
+	float m_lastMouseY = 0.0f;
+
+	// 렌더링 리소스들
+	ComPtr<ID3D12Resource> m_vertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+
+	ComPtr<ID3D12Resource> m_indexBuffer;
+	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+
+	// 상수 버퍼 추가 25.07.20
+	ComPtr<ID3D12Resource> m_constantBuffer;
+	ConstantBuffer m_constantBufferData;
+	UINT8* m_pCbvDataBegin = nullptr;	// 시작 주소
+
+	ComPtr<ID3D12Resource> m_constantBuffer3;  // 표시등
+	ConstantBuffer m_constantBufferData3;
+	UINT8* m_pCbvDataBegin3 = nullptr;
+};

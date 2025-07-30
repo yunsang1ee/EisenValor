@@ -6,19 +6,34 @@
 
 using PacketHandlerFunc = bool(*)(const SOCKET&, const char* const, const PacketHeader&);
 
-extern std::array<PacketHandlerFunc, 65536> PacketHandlerFuncs;
+extern std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;
 
 enum class PACKET_TYPE : uint16 {
 	CS_LOGIN = 1,
+	SC_LOGIN = 2,
 
-	CS_CHAT = 2,
-	SC_CHAT = 3,
+	CS_CHAT = 3,
+	SC_CHAT = 4,
+
+	CS_ENTER_MATCH = 5,
+	SC_ENTER_MATCH = 6,
+
+	SC_ADD_PLAYER_INFO = 7,
+	SC_REMOVE_PLAYER_INFO = 8,
+
+	CS_PLAYER_MOVE = 9,
+	SC_PLAYER_MOVE = 10,
 
 	END
 };
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
+bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
+bool Handle_SC_ENTER_MATCH_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_MATCH_PACKET& recvPkt);
+bool Handle_SC_ADD_PLAYER_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_PLAYER_INFO_PACKET& recvPkt);
+bool Handle_SC_REMOVE_PLAYER_INFO(const SOCKET& socket, const FB_TABLES::SC_REMOVE_PLAYER_INFO_PACKET& recvPkt);
+bool Handle_SC_PLAYER_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_MOVE_PACKET& recvPkt);
 
 namespace NetBridge {
 	class PacketBuffer;
@@ -38,7 +53,12 @@ namespace NetBridge {
 			for(auto& packetHandlerFunc : PacketHandlerFuncs)
 				packetHandlerFunc = Handle_Invalid;
 
+			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOGIN)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_LOGIN_PACKET>(Handle_SC_LOGIN_PACKET, socket, buffer, header); };
 			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHAT)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_CHAT_PACKET>(Handle_SC_CHAT_PACKET, socket, buffer, header); };
+			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_MATCH)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_ENTER_MATCH_PACKET>(Handle_SC_ENTER_MATCH_PACKET, socket, buffer, header); };
+			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ADD_PLAYER_INFO)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_ADD_PLAYER_INFO_PACKET>(Handle_SC_ADD_PLAYER_INFO_PACKET, socket, buffer, header); };
+			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMOVE_PLAYER_INFO)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_REMOVE_PLAYER_INFO_PACKET>(Handle_SC_REMOVE_PLAYER_INFO, socket, buffer, header); };
+			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PLAYER_MOVE)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_PLAYER_MOVE_PACKET>(Handle_SC_PLAYER_MOVE_PACKET, socket, buffer, header); };
 		}
 
 		static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
@@ -110,5 +130,24 @@ namespace NetBridge {
 			return MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, std::forward<Args>(args)...);
 		}
 #pragma endregion
+
+#pragma region CS_ENTER_MATCH_PACKET
+		template<typename... Args>
+		[[nodiscard("반환값 절대 무시하지 마세요.")]]
+		static flatbuffers::DetachedBuffer Make_CS_ENTER_MATCH_PACKET(Args&&... args)
+		{
+			return MakePacket(FB_TABLES::CreateCS_ENTER_MATCH_PACKET, std::forward<Args>(args)...);
+		}
+#pragma endregion
+
+#pragma region CS_PLAYER_MOVE_PACKET
+		template<typename... Args>
+		[[nodiscard("반환값 절대 무시하지 마세요.")]]
+		static flatbuffers::DetachedBuffer Make_CS_PLAYER_MOVE_PACKET(Args&&... args)
+		{
+			return MakePacket(FB_TABLES::CreateCS_PLAYER_MOVE_PACKET, std::forward<Args>(args)...);
+		}
+#pragma endregion
+
 	};
 }

@@ -4,7 +4,7 @@ namespace ServerEngine {
 	class Timer {
 	private:
 		high_resolution_clock::time_point m_startTime;
-
+	
 	public:
 		Timer();
 		~Timer() = default;

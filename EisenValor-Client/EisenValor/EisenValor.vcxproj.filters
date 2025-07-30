@@ -46,12 +46,4 @@
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="PixelShader.hlsl">
-      <Filter>헤더 파일</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexShader.hlsl">
-      <Filter>헤더 파일</Filter>
-    </FxCompile>
-  </ItemGroup>
 </Project>

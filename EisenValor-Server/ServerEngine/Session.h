@@ -13,7 +13,7 @@ namespace ServerEngine {
 	
 	class Session : public std::enable_shared_from_this<Session> {
 	private:
-		uint16										m_id;
+		uint32										m_id;
 		SOCKET										m_socket;
 		std::weak_ptr<RIOWorker>					m_owner;
 
@@ -25,8 +25,8 @@ namespace ServerEngine {
 		RecvContext									m_recvContext;
 
 		// 1. PacketBuffer를 만들어서 Packet 내용을 PacketBufffer에 집어넣는다.
-		// 2. Send(packetBuffer)를 하면, PacketBuffer는 Session 안에 있는 packetBufferPool에 저장되게 된다.
-		// 3. 매번 Dispatch 하기 전에, 일정 시간마다 packetBufferPool에 쌓여있는 PacketBuffer들을 꺼내서 sendbuffer에 쌓는다.(DEFFER)
+		// 2. Send(packetBuffer)를 하면, PacketBuffer는 Session 안에 있는 packetBufferQueue에 저장되게 된다.
+		// 3. 매번 Dispatch 하기 전에, 일정 시간마다 packetBufferQueue에 쌓여있는 PacketBuffer들을 꺼내서 sendbuffer에 쌓는다.(DEFFER)
 		// 4. SendBuffer의 크기가 다 차면 RegisterSend를 걸어준다. (실제 Send하지 않고 RIO_MSG_DEFFER)
 		// 5. 마지막에 SEND(MSG_COMMIT_ONLY) 한다.
 	
@@ -59,9 +59,9 @@ namespace ServerEngine {
 		void SetOwner(std::weak_ptr<RIOWorker> owner) noexcept { m_owner = owner; }
 		void SetState(const SESSION_STATE state) noexcept { m_state = state; }
 		
-		uint16 GetID() const noexcept { return m_id; }
+		uint32 GetID() const noexcept { return m_id; }
 		SESSION_STATE GetState() const noexcept { return m_state; }
-		bool IsConnected() { return m_connected; }
+		bool IsConnected() noexcept { return m_connected; }
 		
 	private:
 		void Init();
@@ -71,7 +71,7 @@ namespace ServerEngine {
 
 	private:
 		uint32 AssembleReceivedData(std::span<const char> buf);
-		virtual void ProcessPacket(const char* const buffer, const uint16 packetSize) {};
+		virtual void ProcessPacket(const std::span<const char>& buf) {};
 		virtual void OnSend(const uint32 bytesTransferred) {}
 		
 	private:
