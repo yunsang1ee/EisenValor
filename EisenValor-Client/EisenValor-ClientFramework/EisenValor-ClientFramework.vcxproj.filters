@@ -55,6 +55,9 @@
     <Filter Include="Graphics\Device\Command">
       <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Resource\Heap">
+      <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -119,7 +122,7 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="include\DxDescriptorHeap.h">
-      <Filter>Graphics\Resource</Filter>
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -158,7 +161,7 @@
       <Filter>Graphics\Device</Filter>
     </ClCompile>
     <ClCompile Include="src\DxDescriptorHeap.cpp">
-      <Filter>Graphics\Resource</Filter>
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@
 #include "Vertex.h"
 
 using namespace DirectX;
-#define SERVER
+//#define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -184,8 +184,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 #endif
 
 	// 셰이더 파일에서 컴파일
-	ThrowIfFailed(D3DCompileFromFile(L"../../../EisenValor/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(L"../../../EisenValor/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
 	// 5. 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
@@ -275,7 +275,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 void GameFramework::Run()
 {
+#ifdef SERVER
 	MANAGER(NetBridge::NetworkManager)->ProcessIO();
+#endif
 
 	Globals::Input().BeforeUpdate();
 
@@ -292,6 +294,8 @@ void GameFramework::Run()
 
 void GameFramework::Release()
 {
+	DEBUG_LOG_FMT("WaitForIdle....\n");
+	GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().WaitForIdle();
 }
 
 LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
@@ -347,8 +351,6 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		Globals::Input().OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 	case WM_DESTROY:
-		DEBUG_LOG_FMT("WaitForIdle....\n");
-		GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().WaitForIdle();
 		DEBUG_LOG_FMT("Window destroyed. Initiating application shutdown.\n");
 		PostQuitMessage(0);
 		break;
@@ -366,6 +368,16 @@ void GameFramework::Update()
 	{
 		DEBUG_LOG_FMT("close\n");
 		::DestroyWindow(m_hWnd);
+	}
+
+	if (Globals::Input().GetInputDown(VK_F11))
+	{
+		m_swapChain->ToggleBorderlessFullscreen();
+	}
+
+	if (Globals::Input().GetInput(VK_MENU) && Globals::Input().GetInputDown(VK_RETURN))
+	{
+		m_swapChain->ToggleFullscreen();
 	}
 
 	// 플레이어 바라보는 방향 벡터 계산
@@ -599,10 +611,8 @@ void GameFramework::Render()
 
 	// 커맨드 실행
 	m_commandContextPool->SignalCurrentFrame();
-	// 화면에 표시
-	m_swapChain->Present(1, 0);
-
-
+	
+	m_swapChain->PresentMaxPerformance();
 }
 
 
