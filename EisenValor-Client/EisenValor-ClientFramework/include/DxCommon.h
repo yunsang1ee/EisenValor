@@ -28,12 +28,6 @@ public:
 		m_expression(expression)
 	{
 	}
-// MVP 행렬 추가(상수버퍼) 25.07.20
-struct ConstantBuffer
-{
-	DirectX::XMFLOAT4X4 mvp;  // Model-View-Projection 행렬
-	//XMat4x4
-};
 
 
 	HRESULT GetErrorCode() const { return m_hr; }
@@ -46,6 +40,13 @@ private:
 	std::string m_file;
 	int m_line;
 	std::string m_expression;
+};
+
+// MVP 행렬 추가(상수버퍼) 25.07.20
+struct ConstantBuffer
+{
+	DirectX::XMFLOAT4X4 mvp;  // Model-View-Projection 행렬
+	//XMat4x4
 };
 
 #ifndef ThrowIfFailed
