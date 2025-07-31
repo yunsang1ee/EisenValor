@@ -9,19 +9,6 @@ struct alignas(16) Vec3A
 	using dimensionTag = std::integral_constant<int, 3>;
 
 	DirectX::XMVECTOR v;
-	/*
-	union
-	{
-		struct alignas(16)
-		{
-			float x;
-			float y;
-			float z;
-			[[maybe_unused]] float _padding;
-		};
-		DirectX::XMVECTOR v;
-	};
-	*/
 
 #pragma region Constructor & Translator
 	Vec3A() noexcept 
@@ -149,7 +136,7 @@ struct alignas(16) Vec3A
 #pragma endregion
 
 #pragma region Static
-	[[nodiscard]] static constexpr Vec3A Zero() noexcept 
+	[[nodiscard]] static Vec3A Zero() noexcept 
 	{
 		return Vec3A(DirectX::XMVectorZero());
 	}

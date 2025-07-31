@@ -8,12 +8,12 @@ namespace Globals
 {
     void InitializeGlobalRegistry();
 
-    inline IInputGlobal& Input() noexcept
+    inline auto& Input() noexcept
     {
         return GlobalRegistry::Get<IInputGlobal>();
     }
 
-    inline ITimerGlobal& Timer() noexcept
+    inline auto& Timer() noexcept
     {
         return GlobalRegistry::Get<ITimerGlobal>();
     }

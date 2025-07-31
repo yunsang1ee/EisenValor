@@ -88,6 +88,9 @@
     <Filter Include="Ground">
       <UniqueIdentifier>{d1d2085e-dcd5-4ecd-89a1-adcb07148799}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Resource\Heap">
+      <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -152,7 +155,7 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="include\DxDescriptorHeap.h">
-      <Filter>Graphics\Resource</Filter>
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
     <ClInclude Include="include\PacketHandler.h">
       <Filter>NetBridge\02. Packets\01. PacketHandler</Filter>
@@ -215,7 +218,7 @@
       <Filter>Graphics\Device</Filter>
     </ClCompile>
     <ClCompile Include="src\DxDescriptorHeap.cpp">
-      <Filter>Graphics\Resource</Filter>
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
     <ClCompile Include="src\PacketHandler.cpp">
       <Filter>NetBridge\02. Packets\01. PacketHandler</Filter>

@@ -23,6 +23,7 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
     };
 
 	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_commandQueue)));
+	m_commandQueue->SetName(L"GfxQueue");
 
 	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
 		IID_PPV_ARGS(&m_idleFence)));
@@ -32,9 +33,26 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Initialized DxGraphicsCommandQueueGlobal.\n");
 }
 
+void DxGraphicsCommandQueueGlobal::Release()
+{
+    if (m_idleEvent)
+	{
+        CloseHandle(m_idleEvent);
+        m_idleEvent = nullptr;
+    }
+    m_commandQueue.Reset();
+    m_idleFence.Reset();
+    m_device = nullptr;
+    m_idleValue = 0;
+}
+
 void DxGraphicsCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
 {
-	assert(commandList && "[DxGraphicsCommandQueueGlobal] commandList is null");
+	if (!commandList)
+	{
+		DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
+		return;
+	}
 	m_commandQueue->ExecuteCommandLists(1, &commandList);
 }
 
