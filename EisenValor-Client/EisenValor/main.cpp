@@ -94,7 +94,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	MSG msg;
 	bool quit = false;
 
-	while (not quit) {
+	while (not quit)
+	{
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{//event
 			::TranslateMessage(&msg);

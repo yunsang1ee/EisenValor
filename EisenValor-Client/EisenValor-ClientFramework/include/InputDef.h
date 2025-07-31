@@ -25,32 +25,39 @@ struct DInputState
 
 public:
 #pragma region Indexing
-	[[nodiscard]] constexpr InputState& operator[](InputCode code) noexcept {
+	[[nodiscard]] constexpr InputState& operator[](InputCode code) noexcept
+	{
 		assert(code < kMaxInputCode);
 		return inputs[(code < kMaxInputCode) ? code : 0];
 	}
 
-	[[nodiscard]] constexpr const InputState& operator[](InputCode code) const noexcept {
+	[[nodiscard]] constexpr const InputState& operator[](InputCode code) const noexcept
+	{
 		assert(code < kMaxInputCode);
 		return inputs[(code < kMaxInputCode) ? code : 0];
 	}
 
-	[[nodiscard]] constexpr InputState& at(InputCode code) {
-		if (code >= kMaxInputCode) [[unlikely]] {
+	[[nodiscard]] constexpr InputState& at(InputCode code)
+	{
+		if (code >= kMaxInputCode) [[unlikely]]
+		{
 			throw std::out_of_range(std::format("InputStates::at - index out of range: {:}", code));
 		}
 		return inputs[code];
 	}
 
-	[[nodiscard]] constexpr const InputState& at(InputCode code) const {
-		if (code > kMaxInputCode) [[unlikely]] {
+	[[nodiscard]] constexpr const InputState& at(InputCode code) const
+	{
+		if (code > kMaxInputCode) [[unlikely]]
+		{
 			throw std::out_of_range(std::format("InputStates::at - index out of range: {:}", code));
 		}
 		return inputs[code];
 	}
 #pragma endregion
 
-	void Clear() noexcept {
+	void Clear() noexcept
+	{
 		inputs.fill(0);
 	}
 };
@@ -64,7 +71,8 @@ struct DMouseState
 	float deltaY = 0.0f;
 	float wheelDelta = 0.0f;
 
-	void Clear() noexcept {
+	void Clear() noexcept
+	{
 		deltaX = deltaY = wheelDelta = 0.0f;
 	}
 };

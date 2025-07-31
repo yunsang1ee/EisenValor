@@ -5,6 +5,7 @@ class IDxGraphicsCommandQueueGlobal : public IGlobal
 {
 public:
 	virtual void Initialize(ID3D12Device* device) = 0;
+	virtual void Release() = 0;
 
 	virtual void ExecuteCommandList(ID3D12CommandList* commandList) = 0;
 	virtual void Signal(ID3D12Fence* fence, uint64_t fenceValue) = 0;
@@ -33,6 +34,7 @@ public:
 	~DxGraphicsCommandQueueGlobal();
 
 	void Initialize(ID3D12Device* device) override;
+	void Release() override;
 
 	void ExecuteCommandList(ID3D12CommandList* commandList) override;
 	void Signal(ID3D12Fence* fence, uint64_t fenceValue) override;

@@ -97,7 +97,8 @@ namespace Math
 		return Vec3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
 	}
 
-	inline Int2 XMConvertToInt2(const XMFLOAT2& f) { return Int2(int32_t(f.x), int32_t(f.y)); }
+	inline Int2 XMConvertToInt2(const XMFLOAT2& f
+	return Int2(int32_t(f.x), int32_t(f.y)); }
 	inline XMFLOAT2 XMConvertToXMFLOAT2(const Int2& i) { return XMFLOAT2(float(i.x), float(i.y)); }
 	*/
 }
