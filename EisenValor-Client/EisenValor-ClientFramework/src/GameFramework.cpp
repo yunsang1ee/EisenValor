@@ -256,6 +256,14 @@ void GameFramework::Update()
 		DEBUG_LOG_FMT("close\n");
 		::DestroyWindow(m_hWnd);
 	}
+	if (Globals::Input().GetInputDown(VK_F11))
+	{
+		m_swapChain->ToggleBorderlessFullscreen();
+	}
+	if (Globals::Input().GetInput(VK_MENU) && Globals::Input().GetInputDown(VK_RETURN))
+	{
+		m_swapChain->ToggleFullscreen();
+	}
 
 	const float dt = Globals::Timer().GetDeltaTime();
 
