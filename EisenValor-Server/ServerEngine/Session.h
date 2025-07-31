@@ -10,7 +10,7 @@ namespace ServerEngine {
 	class RioContext;
 	class PacketBuffer;
 	class SendBuffer;
-	
+
 	class Session : public std::enable_shared_from_this<Session> {
 	private:
 		uint32										m_id;
@@ -31,12 +31,18 @@ namespace ServerEngine {
 		// 5. 마지막에 SEND(MSG_COMMIT_ONLY) 한다.
 	
 		// RioSend가 Thread-Safe가 아니라 일단 Send는 packetBufferQuuee에 모아놨다가 RioWorker 전용 쓰레드가 packetBufferQueue에서 빼서 처리
-		tbb::concurrent_queue<std::shared_ptr<PacketBuffer>> m_packetBufferQueue;	
-		SendBuffer									m_sendBuffer;
+		// tbb::concurrent_queue<std::shared_ptr<PacketBuffer>> m_packetBufferQueue;	
 
-		std::atomic<SESSION_STATE>					m_state;
+		// std::mutex m_mutex;
+		// std::priority_queue<std::shared_ptr<PacketBuffer>> m_packetBufferQueue;
+		LockQueue<std::shared_ptr<PacketBuffer>> m_packetBufferQueue;
+		// LockQueue<SendPacket> m_packetBufferQueue;
+
+		SendBuffer										m_sendBuffer;
+
+		std::atomic<SESSION_STATE>						m_state;
 		
-		int64										m_lastSendTime;
+		std::chrono::high_resolution_clock::time_point	m_lastSendTime{};
 
 	public:
 		Session();

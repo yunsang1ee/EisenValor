@@ -8,7 +8,7 @@
 Server::ClientSession::ClientSession()
 	:m_general{nullptr}
 {
-	std::cout << "ClientSession" << std::endl;
+	// std::cout << "ClientSession" << std::endl;
 } 
 
 Server::ClientSession::~ClientSession()

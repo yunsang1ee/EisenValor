@@ -10,7 +10,7 @@ namespace ServerEngine {
 		RIO_CQ											m_cq;
 		std::unique_ptr<SessionPool>					m_sessionPool;
 		int												m_id;
-		std::set<std::shared_ptr<Session>>				m_connectedSession;
+		std::vector<std::shared_ptr<Session>>				m_connectedSession;
 		std::shared_mutex								m_mutex;
 
 	public:
@@ -22,7 +22,6 @@ namespace ServerEngine {
 		void			Work();
 
 		void			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr);
-		void			ReleaseSession(std::shared_ptr<Session> session);
 
 	public:
 		const RIO_CQ&	GetCQ() const noexcept { return m_cq; }

@@ -21,9 +21,7 @@ namespace ServerEngine {
 	
 		void Execute()
 		{
-			if(nullptr == m_cbFunc)
-				assert(nullptr);
-			else
+			if(m_cbFunc)
 				m_cbFunc();
 		}
 	};

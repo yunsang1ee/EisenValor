@@ -19,6 +19,10 @@ namespace FB_STRUCTS {
 
 struct Vec3;
 
+struct Test;
+
+struct Vec3Test;
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
   float x_;
@@ -47,6 +51,46 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(Vec3, 12);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Test FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t player_id_;
+  FB_STRUCTS::Vec3 pos_;
+
+ public:
+  Test()
+      : player_id_(0),
+        pos_() {
+  }
+  Test(uint32_t _player_id, const FB_STRUCTS::Vec3 &_pos)
+      : player_id_(::flatbuffers::EndianScalar(_player_id)),
+        pos_(_pos) {
+  }
+  uint32_t player_id() const {
+    return ::flatbuffers::EndianScalar(player_id_);
+  }
+  const FB_STRUCTS::Vec3 &pos() const {
+    return pos_;
+  }
+};
+FLATBUFFERS_STRUCT_END(Test, 16);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3Test FLATBUFFERS_FINAL_CLASS {
+ private:
+  float pos_[3];
+
+ public:
+  Vec3Test()
+      : pos_() {
+  }
+  Vec3Test(::flatbuffers::span<const float, 3> _pos) {
+    ::flatbuffers::CastToArray(pos_).CopyFromSpan(_pos);
+  }
+  const ::flatbuffers::Array<float, 3> *pos() const {
+    return &::flatbuffers::CastToArray(pos_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Vec3Test, 12);
 
 }  // namespace FB_STRUCTS
 

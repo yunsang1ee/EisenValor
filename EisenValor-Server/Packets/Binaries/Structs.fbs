@@ -7,3 +7,11 @@ struct Vec3{
 	y: float;
 	z: float;
 }
+
+struct Test {
+	player_id : uint;
+	pos: Vec3;
+}
+struct Vec3Test {
+	pos: [float:3];
+}

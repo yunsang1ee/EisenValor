@@ -7,6 +7,8 @@
 
 void Server::Contents::GameMatch::EnterMatch(std::shared_ptr<ClientSession> clientSession) noexcept
 {
+	std::cout << "Enter Match" << std::endl;
+
 	clientSession->SetState(SESSION_STATE::IN_MATCH);
 	
 	// TODO: Factory에서 생성해야함.
@@ -30,15 +32,9 @@ void Server::Contents::GameMatch::EnterMatch(std::shared_ptr<ClientSession> clie
 		const Vec3 rot{ 0.f, 0.f, 0.f };
 		general->SetPos(pos);
 		general->SetRotation(rot);
-
-		// TODO: 패킷 만드는 부분을 따로 만들어야..
-		FB_STRUCTS::Vec3 sendPos{ pos.x,pos.y, pos.z };
-		FB_STRUCTS::Vec3 sendRot{ rot.x,rot.y, rot.z };
-
-		auto packetData = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(myID, &sendPos, &sendRot);
-		auto packetBuffer = ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_PLAYER_INFO, packetData);
-		if(clientSession->GetState() == SESSION_STATE::IN_MATCH)
-			clientSession->Send(packetBuffer);
+		
+		auto packetBuffer = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(myID, pos, rot);
+		clientSession->Send(packetBuffer);
 	}
 
 	// 2. 나에게 Match 안에 있는 상대방 정보 전송
@@ -49,13 +45,8 @@ void Server::Contents::GameMatch::EnterMatch(std::shared_ptr<ClientSession> clie
 			const Vec3 pos{ gen->GetPos() };
 			const Vec3 rot{ gen->GetRotation() };
 
-			FB_STRUCTS::Vec3 sp{ pos.x,pos.y, pos.z };
-			FB_STRUCTS::Vec3 sr{ rot.x,rot.y, rot.z };
-
-			auto pd = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(id, &sp, &sr);
-			auto pb = ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_PLAYER_INFO, pd);
-			if(clientSession->GetState() == SESSION_STATE::IN_MATCH)
-				clientSession->Send(pb);
+			auto pb = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(id, pos, rot);
+			clientSession->Send(pb);
 		}
 	}
 
@@ -72,8 +63,7 @@ void Server::Contents::GameMatch::LeaveMatch(std::shared_ptr<ClientSession> clie
 			m_generals.erase(leaveID);
 	}
 
-	auto pd = ClientPacketHandler::Make_SC_REMOVE_PLAYER_INFO_PACKET(leaveID);
-	auto pb = ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_PLAYER_INFO, pd);
+	auto pb = ClientPacketHandler::Make_SC_REMOVE_PLAYER_INFO_PACKET(leaveID);
 	
 	BroadcastInMatch(pb);
 }
@@ -104,10 +94,8 @@ void Server::Contents::GameMatch::AddGeneral(std::shared_ptr<General>&& general)
 	general->SetMatch(std::static_pointer_cast<GameMatch>(shared_from_this()));
 	const Vec3 pos{ general->GetPos() };
 	const Vec3 rot{ general->GetRotation() };
-	FB_STRUCTS::Vec3 sp{ pos.x,pos.y, pos.z };
-	FB_STRUCTS::Vec3 sr{ rot.x,rot.y, rot.z };
-	auto pd = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(genID, &sp, &sr);
-	auto pb = ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_PLAYER_INFO, pd);;
+	
+	auto pb = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(genID, pos, rot);
 
 	BroadcastInMatch(pb);
 	

@@ -23,6 +23,7 @@ bool ServerEngine::SendBuffer::Append(const char* const data, const uint32 size)
 	return true;
 }
 
+
 bool ServerEngine::SendBuffer::moveSendOffset(const uint32 bytesTransferred)
 {
 	if(bytesTransferred > GetFreeSize())

@@ -44,7 +44,13 @@ table CS_PLAYER_MOVE_PACKET {
 }
 
 table SC_PLAYER_MOVE_PACKET {
-	player_id : ushort;
+	player_id : uint;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
+}
+
+table SC_TEST_PACKET {
+	player_id : uint;
 	pos: FB_STRUCTS.Vec3;
 	rot: FB_STRUCTS.Vec3;
 }

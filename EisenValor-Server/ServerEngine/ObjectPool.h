@@ -30,8 +30,10 @@ namespace ServerEngine {
 
         static void Push(Type* const obj)
         {
-            obj->~Type();
-            m_pool.free(obj);
+            if(obj) {
+                obj->~Type();
+                m_pool.free(obj);
+            }
         }
 
         template<typename... Args>

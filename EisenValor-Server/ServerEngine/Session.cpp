@@ -8,7 +8,7 @@
 #include "SessionPool.h"
 
 ServerEngine::Session::Session()
-	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_lastSendTime{0}
+	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }
 {
 	static int16 idGen = 1;
 	m_id = idGen++;
@@ -58,24 +58,34 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 
 	OnDisconnected();
 
+	m_state = SESSION_STATE::FREE;
+
 	// m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
-	m_owner.lock()->ReleaseSession(shared_from_this());
+	// m_owner.lock()->ReleaseSession(shared_from_this());
 }
 
 void ServerEngine::Session::FlushPacketQueue()
 {
-	long long currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+	const auto currentTime = std::chrono::high_resolution_clock::now();
+	const auto lastSendElapsed = currentTime - m_lastSendTime;
+
+	// ½Ì±Û¾²·¹µå 
+	if(IsConnected() == false || lastSendElapsed < 20ms)
+		return;
 
 	int deferCount{};
 
-	while(m_packetBufferQueue.empty() == false) {
-		std::shared_ptr<PacketBuffer> packetBuffer;
-		m_packetBufferQueue.try_pop(packetBuffer);
+	while(m_packetBufferQueue.Empty() == false) {
+		// std::shared_ptr<PacketBuffer> packetBuffer;
+		//m_packetBufferQueue.try_pop(packetBuffer);
+		{
+			auto packetBuffer = m_packetBufferQueue.Pop();
 
-		if(packetBuffer == nullptr) break;
+			if(packetBuffer == nullptr) break;
 
-		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
-			assert(nullptr);
+			if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
+				assert(nullptr);
+		}
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
 			if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
@@ -84,15 +94,15 @@ void ServerEngine::Session::FlushPacketQueue()
 		}
 	}
 
-	if(currentTime - m_lastSendTime >= COMMIT_TIME_MS_LIMIT && deferCount > 0) {
+	if(deferCount >= 256 || lastSendElapsed > 20ms) {
 		CommitSend();
-		m_lastSendTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+		m_lastSendTime = currentTime;
 	}
 }
 
 void ServerEngine::Session::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
-	m_packetBufferQueue.push(packetBuffer);
+	m_packetBufferQueue.Push(packetBuffer);
 }
 
 bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
