@@ -99,8 +99,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 #endif
 
 	// 셰이더 파일에서 컴파일
-	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/Resource/Shader/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
 	// 5. 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
@@ -232,13 +232,16 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		break;
 	}
 	case WM_MOUSEWHEEL:
+	{
 		Globals::Input().OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
+	}
 	case WM_DESTROY:
+	{
 		DEBUG_LOG_FMT("Window destroyed. Initiating application shutdown.\n");
 		PostQuitMessage(0);
 		break;
-
+	}
 	default:
 		break;
 	}
@@ -248,16 +251,17 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 
 void GameFramework::Update()
 {
-	if (Globals::Input().GetInputDown(VK_ESCAPE))
+	auto& input = Globals::Input();
+	if (input.GetInputDown(VK_ESCAPE))
 	{
 		DEBUG_LOG_FMT("close\n");
 		::DestroyWindow(m_hWnd);
 	}
-	if (Globals::Input().GetInputDown(VK_F11))
+	if (input.GetInputDown(VK_F11))
 	{
 		m_swapChain->ToggleBorderlessFullscreen();
 	}
-	if (Globals::Input().GetInput(VK_MENU) && Globals::Input().GetInputDown(VK_RETURN))
+	if (input.GetInput(VK_MENU) && input.GetInputDown(VK_RETURN))
 	{
 		m_swapChain->ToggleFullscreen();
 	}
