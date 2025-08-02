@@ -2,9 +2,9 @@ name: EisenValor-CI
 
 on:
   push:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
+    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol, Test-CI]
   pull_request:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
+    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol, Test-CI]
 
 jobs:
   build-client:
