@@ -81,6 +81,15 @@ jobs:
         restore-keys: |
           ${{ matrix.cache_key }}-${{ runner.os }}-
 
+    - name: Setop NuGet CLI (6.x)
+      uses: NuGet/setup-nuget@v2
+      with:
+        nuget-version: "6.x"
+
+    - name: NuGet restore (packages.config)
+      working-directory: ${{ matrix.solution_path }}
+      run: nuget restore ${{ matrix.solution_file }}
+
     - name: Build ${{ matrix.project }}
       working-directory: ${{ matrix.solution_path }}
       run: |
