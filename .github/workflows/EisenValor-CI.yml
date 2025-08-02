@@ -2,158 +2,100 @@ name: EisenValor-CI
 
 on:
   push:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
+    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol, Test-CI]
   pull_request:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
+    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol, Test-CI]
 
 jobs:
-  build-client:
+  build-all:
     runs-on: windows-latest
-    
+
     strategy:
       fail-fast: false
       matrix:
-        configuration: [Debug, Release]
-        platform: [x64]
+        include:
+          # EisenValor-Client (Debug / Release)
+          - project: "EisenValor-Client"
+            solution_path: "EisenValor-Client"
+            solution_file: "EisenValor.sln"
+            cache_key: "nuget-client"
+            configuration: "Debug"
+            platform: "x64"
+            upload_artifacts: false
+          - project: "EisenValor-Client"
+            solution_path: "EisenValor-Client"
+            solution_file: "EisenValor.sln"
+            cache_key: "nuget-client"
+            configuration: "Release"
+            platform: "x64"
+            upload_artifacts: true
+
+          # EisenValor-Server (Debug / Release)
+          - project: "EisenValor-Server"
+            solution_path: "EisenValor-Server"
+            solution_file: "EisenValor-Server.sln"
+            cache_key: "nuget-server"
+            configuration: "Debug"
+            platform: "x64"
+            upload_artifacts: false
+          - project: "EisenValor-Server"
+            solution_path: "EisenValor-Server"
+            solution_file: "EisenValor-Server.sln"
+            cache_key: "nuget-server"
+            configuration: "Release"
+            platform: "x64"
+            upload_artifacts: true
+
+          # EisenValor-DummyClient (Debug / Release)
+          - project: "EisenValor-DummyClient"
+            solution_path: "EisenValor-DummyClient"
+            solution_file: "EisenValor-DummyClient.sln"
+            cache_key: "nuget-dummy"
+            configuration: "Debug"
+            platform: "x64"
+            upload_artifacts: false
+          - project: "EisenValor-DummyClient"
+            solution_path: "EisenValor-DummyClient"
+            solution_file: "EisenValor-DummyClient.sln"
+            cache_key: "nuget-dummy"
+            configuration: "Release"
+            platform: "x64"
+            upload_artifacts: true
+
+    name: "Build ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
 
     steps:
-    - name: Checkout
+    - name: Checkout repository (with submodules)
       uses: actions/checkout@v4
-      with: 
+      with:
         submodules: recursive
 
-    - name: Add MSBuild to PATH
+    - name: Set up MSBuild (VS 2022)
       uses: microsoft/setup-msbuild@v2
 
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
-        path: ~/.nuget/packages
-        key: nuget-client-${{ runner.os }}-${{ hashFiles('EisenValor-Client/**/packages.config', 'EisenValor-Client/**/*.vcxproj') }}
+        path: ${{ env.USERPROFILE }}\.nuget\packages
+        key: ${{ matrix.cache_key }}-${{ runner.os }}-${{ hashFiles(format('{0}/**/packages.config', matrix.solution_path), format('{0}/**/*.vcxproj', matrix.solution_path)) }}
         restore-keys: |
-          nuget-client-${{ runner.os }}-
+          ${{ matrix.cache_key }}-${{ runner.os }}-
 
-    - name: Build EisenValor-Client
-      working-directory: EisenValor-Client
+    - name: Build ${{ matrix.project }}
+      working-directory: ${{ matrix.solution_path }}
       run: |
-        Write-Host "Building EisenValor-Client (${{ matrix.configuration }}|${{ matrix.platform }})"
-        
-        msbuild *.sln `
-          -t:Restore,Build `
-          -p:Configuration=${{ matrix.configuration }} `
-          -p:Platform=${{ matrix.platform }} `
-          -maxCpuCount `
-          -verbosity:minimal
+        Write-Host "Building ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
+        msbuild ${{ matrix.solution_file }} -t:Restore,Build -p:Configuration=${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} -maxCpuCount -verbosity:minimal
 
-    - name: Upload Client Artifacts
-      if: matrix.configuration == 'Release'
+    - name: Upload Artifacts
+      if: matrix.upload_artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: EisenValor-Client-${{ matrix.configuration }}-${{ matrix.platform }}
+        name: ${{ matrix.project }}-${{ matrix.configuration }}-${{ matrix.platform }}
         path: |
-          EisenValor-Client/Binaries/**/${{ matrix.configuration }}/**/*.exe
-          EisenValor-Client/Binaries/**/${{ matrix.configuration }}/**/*.dll
-          EisenValor-Client/Binaries/**/${{ matrix.configuration }}/**/*.pdb
-          EisenValor-Client/Libraries/**/${{ matrix.configuration }}/**/*.lib
-          EisenValor-Client/EisenValor/Resource/Shader/**/*.hlsl
-        retention-days: 30
-
-  build-server:
-    runs-on: windows-latest
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [Debug, Release]
-        platform: [x64]
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with: 
-        submodules: recursive
-
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: nuget-server-${{ runner.os }}-${{ hashFiles('EisenValor-Server/**/packages.config', 'EisenValor-Server/**/*.vcxproj') }}
-        restore-keys: |
-          nuget-server-${{ runner.os }}-
-
-    - name: Build EisenValor-Server
-      working-directory: EisenValor-Server
-      run: |
-        Write-Host "Building EisenValor-Server (${{ matrix.configuration }}|${{ matrix.platform }})"
-        
-        msbuild *.sln `
-          -t:Restore,Build `
-          -p:Configuration=${{ matrix.configuration }} `
-          -p:Platform=${{ matrix.platform }} `
-          -maxCpuCount `
-          -verbosity:minimal
-
-    - name: Upload Server Artifacts
-      if: matrix.configuration == 'Release'
-      uses: actions/upload-artifact@v4
-      with:
-        name: EisenValor-Server-${{ matrix.configuration }}-${{ matrix.platform }}
-        path: |
-          EisenValor-Server/Binaries/**/${{ matrix.configuration }}/**/*.exe
-          EisenValor-Server/Binaries/**/${{ matrix.configuration }}/**/*.dll
-          EisenValor-Server/Binaries/**/${{ matrix.configuration }}/**/*.pdb
-          EisenValor-Server/Libraries/**/${{ matrix.configuration }}/**/*.lib
-        retention-days: 30
-
-  build-dummy-client:
-    runs-on: windows-latest
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [Debug, Release]
-        platform: [x64]
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with: 
-        submodules: recursive
-
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: nuget-dummy-${{ runner.os }}-${{ hashFiles('EisenValor-DummyClient/**/packages.config', 'EisenValor-DummyClient/**/*.vcxproj') }}
-        restore-keys: |
-          nuget-dummy-${{ runner.os }}-
-
-    - name: Build EisenValor-DummyClient
-      working-directory: EisenValor-DummyClient
-      run: |
-        Write-Host "Building EisenValor-DummyClient (${{ matrix.configuration }}|${{ matrix.platform }})"
-        
-        msbuild *.sln `
-          -t:Restore,Build `
-          -p:Configuration=${{ matrix.configuration }} `
-          -p:Platform=${{ matrix.platform }} `
-          -maxCpuCount `
-          -verbosity:minimal
-
-    - name: Upload DummyClient Artifacts  
-      if: matrix.configuration == 'Release'
-      uses: actions/upload-artifact@v4
-      with:
-        name: EisenValor-DummyClient-${{ matrix.configuration }}-${{ matrix.platform }}
-        path: |
-          EisenValor-DummyClient/Binaries/**/${{ matrix.configuration }}/**/*.exe
-          EisenValor-DummyClient/Binaries/**/${{ matrix.configuration }}/**/*.dll
-          EisenValor-DummyClient/Binaries/**/${{ matrix.configuration }}/**/*.pdb
-          EisenValor-DummyClient/Libraries/**/${{ matrix.configuration }}/**/*.lib
+          ${{ matrix.solution_path }}/Binaries/**/${{ matrix.configuration }}/**/*.exe
+          ${{ matrix.solution_path }}/Binaries/**/${{ matrix.configuration }}/**/*.dll
+          ${{ matrix.solution_path }}/Binaries/**/${{ matrix.configuration }}/**/*.pdb
+          ${{ matrix.solution_path }}/Libraries/**/${{ matrix.configuration }}/**/*.lib
+          ${{ matrix.solution_path }}/**/Resource/Shader/**/*.hlsl
         retention-days: 30
