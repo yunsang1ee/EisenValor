@@ -2,9 +2,9 @@ name: EisenValor-CI
 
 on:
   push:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol, Test-CI]
+    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
   pull_request:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol, Test-CI]
+    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
 
 jobs:
   build-all:
@@ -47,20 +47,20 @@ jobs:
             upload_artifacts: true
 
           # EisenValor-DummyClient (Debug / Release)
-          - project: "EisenValor-DummyClient"
-            solution_path: "EisenValor-DummyClient"
-            solution_file: "EisenValor-DummyClient.sln"
-            cache_key: "nuget-dummy"
-            configuration: "Debug"
-            platform: "x64"
-            upload_artifacts: false
-          - project: "EisenValor-DummyClient"
-            solution_path: "EisenValor-DummyClient"
-            solution_file: "EisenValor-DummyClient.sln"
-            cache_key: "nuget-dummy"
-            configuration: "Release"
-            platform: "x64"
-            upload_artifacts: true
+          # - project: "EisenValor-DummyClient"
+          #   solution_path: "EisenValor-DummyClient"
+          #   solution_file: "EisenValor-DummyClient.sln"
+          #   cache_key: "nuget-dummy"
+          #   configuration: "Debug"
+          #   platform: "x64"
+          #   upload_artifacts: false
+          # - project: "EisenValor-DummyClient"
+          #   solution_path: "EisenValor-DummyClient"
+          #   solution_file: "EisenValor-DummyClient.sln"
+          #   cache_key: "nuget-dummy"
+          #   configuration: "Release"
+          #   platform: "x64"
+          #   upload_artifacts: true
 
     name: "Build ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
 
