@@ -8,7 +8,7 @@ namespace Server {
 		class GameMatchManager : public Singleton<GameMatchManager> {
 		private:
 			tbb::spin_rw_mutex									m_mutex;
-			std::map<uint16, std::shared_ptr<GameMatch>>	m_matches;
+			std::map<uint16, std::shared_ptr<GameMatch>>		m_matches;
 
 		public:
 			void Init();

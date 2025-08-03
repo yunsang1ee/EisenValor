@@ -11,34 +11,31 @@ void Server::Contents::GameMatch::EnterMatch(std::shared_ptr<ClientSession> clie
 
 	clientSession->SetState(SESSION_STATE::IN_MATCH);
 	
-	// TODO: Factory에서 생성해야함.
 	auto general = ServerEngine::ObjectPool<Server::Contents::General>::MakeShared();
 
-	// 현재는 Session ID와 player ID 일치하도록.
 	const uint32 myID = clientSession->GetID();
 	general->SetID(myID);
 	 
 	clientSession->SetGeneral(general);
 	general->SetSession(clientSession);
 
-	// 1. 나에게 내 정보 전송
-	// TODO: 현재는 일단 ID, 위치랑 회전값만 전송
-	// TODO: 나중에 시야에 보이는 애들만 보내줘야 하기 때문에 그 부분도 생각해야함.
 	{
 		static const Vec3 offset{ 1.f, 0.f, 1.f };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
 		startPos += offset;
-		const Vec3 pos{ startPos };
 		const Vec3 rot{ 0.f, 0.f, 0.f };
-		general->SetPos(pos);
+		general->SetPos(startPos);
 		general->SetRotation(rot);
+
+		for(int i = 0; i < 10; ++i) {
+			auto soldier = ServerEngine::ObjectPool<Server::Contents::Soldier>::MakeShared();
+			general->AddSoldier(soldier);
+		}
 		
-		auto packetBuffer = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(myID, pos, rot);
+		auto packetBuffer = ClientPacketHandler::Make_SC_ADD_PLAYER_INFO_PACKET(myID, startPos, rot);
 		clientSession->Send(packetBuffer);
 	}
 
-	// 2. 나에게 Match 안에 있는 상대방 정보 전송
-	// 현재는 일단 ID, 위치랑 회전값만 전송
 	{
 		std::lock_guard<std::mutex> lk{ m_mutex };
 		for(const auto& [id, gen] : m_generals) {
@@ -89,7 +86,6 @@ std::shared_ptr<Server::Contents::General> Server::Contents::GameMatch::GetGener
 
 void Server::Contents::GameMatch::AddGeneral(std::shared_ptr<General>&& general) noexcept
 {
-	// Match 안에 있는 player들에게 내 정보 전달
 	const uint16 genID = general->GetID();
 	general->SetMatch(std::static_pointer_cast<GameMatch>(shared_from_this()));
 	const Vec3 pos{ general->GetPos() };

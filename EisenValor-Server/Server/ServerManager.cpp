@@ -33,7 +33,6 @@ void Server::ServerManager::Run() noexcept
 
 	MANAGER(ServerEngine::RIOCore)->StartIO();
 	
-	// 메인쓰레드는 입력 처리
 	char ch;
 
 	while(true) {
@@ -41,7 +40,7 @@ void Server::ServerManager::Run() noexcept
 		ch = _getch();
 		if(ch == 27) {
 			LOOP_EXIT = true;
-			std::cout << "\nESC 입력 감지, 서버를 종료합니다.\n";
+			std::cout << "Server Finish" << std::endl;
 			break;
 		}
 	}

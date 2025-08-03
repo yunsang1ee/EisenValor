@@ -47,7 +47,7 @@ void ServerEngine::RIOWorker::Work()
 
 void ServerEngine::RIOWorker::FlushPacketQueue()
 {
-	std::shared_lock<std::shared_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 	auto iter = m_connectedSession.begin();
 	for(; iter != m_connectedSession.end();) {
 		if(SESSION_STATE::FREE != (*iter)->GetState()) {
@@ -73,8 +73,10 @@ void ServerEngine::RIOWorker::DequeueCompletion()
 			std::this_thread::sleep_for(1ms);
 			break;
 		}
-		else if(RIO_CORRUPT_CQ == numResults)
+		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
+			break;
+		}
 		else {
 			std::println("Worker ID ={}, has results!", m_id);
 			for(uint32 i = 0; i < numResults; ++i) {
@@ -120,6 +122,6 @@ void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 	session->SetOwner(shared_from_this());
 	session->Connect(socket, clientAddr);
 
-	std::lock_guard<std::shared_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 	m_connectedSession.push_back(std::move(session));
 }

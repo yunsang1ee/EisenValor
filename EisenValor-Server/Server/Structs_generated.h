@@ -19,9 +19,7 @@ namespace FB_STRUCTS {
 
 struct Vec3;
 
-struct Test;
-
-struct Vec3Test;
+struct SoldierInfo;
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
@@ -52,45 +50,34 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(Vec3, 12);
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Test FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) SoldierInfo FLATBUFFERS_FINAL_CLASS {
  private:
-  uint32_t player_id_;
+  uint32_t soldier_id_;
   FB_STRUCTS::Vec3 pos_;
+  FB_STRUCTS::Vec3 rot_;
 
  public:
-  Test()
-      : player_id_(0),
-        pos_() {
+  SoldierInfo()
+      : soldier_id_(0),
+        pos_(),
+        rot_() {
   }
-  Test(uint32_t _player_id, const FB_STRUCTS::Vec3 &_pos)
-      : player_id_(::flatbuffers::EndianScalar(_player_id)),
-        pos_(_pos) {
+  SoldierInfo(uint32_t _soldier_id, const FB_STRUCTS::Vec3 &_pos, const FB_STRUCTS::Vec3 &_rot)
+      : soldier_id_(::flatbuffers::EndianScalar(_soldier_id)),
+        pos_(_pos),
+        rot_(_rot) {
   }
-  uint32_t player_id() const {
-    return ::flatbuffers::EndianScalar(player_id_);
+  uint32_t soldier_id() const {
+    return ::flatbuffers::EndianScalar(soldier_id_);
   }
   const FB_STRUCTS::Vec3 &pos() const {
     return pos_;
   }
-};
-FLATBUFFERS_STRUCT_END(Test, 16);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3Test FLATBUFFERS_FINAL_CLASS {
- private:
-  float pos_[3];
-
- public:
-  Vec3Test()
-      : pos_() {
-  }
-  Vec3Test(::flatbuffers::span<const float, 3> _pos) {
-    ::flatbuffers::CastToArray(pos_).CopyFromSpan(_pos);
-  }
-  const ::flatbuffers::Array<float, 3> *pos() const {
-    return &::flatbuffers::CastToArray(pos_);
+  const FB_STRUCTS::Vec3 &rot() const {
+    return rot_;
   }
 };
-FLATBUFFERS_STRUCT_END(Vec3Test, 12);
+FLATBUFFERS_STRUCT_END(SoldierInfo, 28);
 
 }  // namespace FB_STRUCTS
 

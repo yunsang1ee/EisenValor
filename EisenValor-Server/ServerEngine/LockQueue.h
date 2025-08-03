@@ -6,7 +6,7 @@ namespace ServerEngine {
 	class LockQueue {
 	private:
 		std::queue<T>			m_queue;
-		std::shared_mutex		m_mutex;	// 동일 쓰레드의 재귀적 락 허용
+		std::shared_mutex		m_mutex;
 	
 	public:
 		void Push(T item)

@@ -49,8 +49,6 @@ table SC_PLAYER_MOVE_PACKET {
 	rot: FB_STRUCTS.Vec3;
 }
 
-table SC_TEST_PACKET {
-	player_id : uint;
-	pos: FB_STRUCTS.Vec3;
-	rot: FB_STRUCTS.Vec3;
+table SC_SOLDIER_INFO_PACKET {
+	info: [FB_STRUCTS.SoldierInfo];
 }

@@ -7,7 +7,6 @@ namespace ServerEngine {
 	class TaskQueueManager : public Singleton<TaskQueueManager> {
 		SINGLETON(TaskQueueManager)
 	private:
-		// tbb::concurrent_queue<std::shared_ptr<ServerEngine::TaskQueue>> m_taskQueues;
 		LockQueue<std::shared_ptr<ServerEngine::TaskQueue>> m_taskQueues;
 
 	public:

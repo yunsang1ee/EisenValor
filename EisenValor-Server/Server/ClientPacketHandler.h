@@ -12,6 +12,12 @@ namespace ServerEngine {
 	class PacketBuffer;
 }
 
+namespace Server {
+	namespace Contents {
+		class Soldier;
+	}
+}
+
 enum class PACKET_TYPE : uint16 {
 	CS_LOGIN = 1,
 	SC_LOGIN = 2,
@@ -27,6 +33,9 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_PLAYER_MOVE = 9,
 	SC_PLAYER_MOVE = 10,
+
+	SC_SOLDIER_INFO = 11,
+
 
 	END
 };
@@ -131,6 +140,13 @@ public:
 	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_PLAYER_INFO_PACKET(const uint32 id)
 	{
 		return MakePacketBuffer(PACKET_TYPE::SC_REMOVE_PLAYER_INFO, MakePacket(FB_TABLES::CreateSC_REMOVE_PLAYER_INFO_PACKET, id));
+	}
+#pragma endregion
+
+#pragma region SC_SOLDIER_INFO
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SOLDIER_INFO_PACKET(const std::vector<FB_STRUCTS::SoldierInfo>& soldiers)
+	{
+		return MakePacketBuffer(PACKET_TYPE::SC_SOLDIER_INFO, MakePacket(FB_TABLES::CreateSC_SOLDIER_INFO_PACKETDirect, &soldiers));
 	}
 #pragma endregion
 };
