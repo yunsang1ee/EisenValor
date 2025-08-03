@@ -76,25 +76,102 @@ jobs:
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
-        path: ${{ env.USERPROFILE }}\.nuget\packages
+        path: |
+          ${{ env.USERPROFILE }}\.nuget\packages
+          ${{ matrix.solution_path }}\packages
         key: ${{ matrix.cache_key }}-${{ runner.os }}-${{ hashFiles(format('{0}/**/packages.config', matrix.solution_path), format('{0}/**/*.vcxproj', matrix.solution_path)) }}
         restore-keys: |
           ${{ matrix.cache_key }}-${{ runner.os }}-
 
-    - name: Setop NuGet CLI (6.x)
+    - name: Setup NuGet CLI (6.x)
       uses: NuGet/setup-nuget@v2
       with:
         nuget-version: "6.x"
 
-    - name: NuGet restore (packages.config)
+    - name: Detect NuGet package management and restore
       working-directory: ${{ matrix.solution_path }}
-      run: nuget restore ${{ matrix.solution_file }}
+      run: |
+        Write-Host "Detecting NuGet package management for ${{ matrix.project }}..."
+        
+        $packagesConfigFiles = Get-ChildItem -Path . -Name "packages.config" -Recurse -ErrorAction SilentlyContinue
+        $hasPackagesConfig = $packagesConfigFiles.Count -gt 0
+        
+        $vcxprojFiles = Get-ChildItem -Path . -Name "*.vcxproj" -Recurse -ErrorAction SilentlyContinue
+        $hasPackageReference = $false
+        $packageRefCount = 0
+        
+        foreach ($proj in $vcxprojFiles)
+        {
+          try
+          {
+            $content = Get-Content $proj.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content -and $content -match "<PackageReference\s+Include=")
+            {
+              $hasPackageReference = $true
+              $matches = [regex]::Matches($content, "<PackageReference\s+Include=")
+              $packageRefCount += $matches.Count
+            }
+          }
+          catch
+          {
+            Write-Warning "Could not read $($proj.FullName)"
+          }
+        }
+        
+        Write-Host ""
+        Write-Host "Package Management Detection Results:"
+        Write-Host "Solution: ${{ matrix.project }}"
+        Write-Host "packages.config files: $($packagesConfigFiles.Count)"
+        Write-Host ".vcxproj files scanned: $($vcxprojFiles.Count)"
+        Write-Host "PackageReference entries: $packageRefCount"
+        Write-Host "Has packages.config: $hasPackagesConfig"
+        Write-Host "Has PackageReference: $hasPackageReference"
+        
+        $needsRestore = $false
+        
+        if ($hasPackagesConfig)
+        {
+          Write-Host ""
+          Write-Host "Strategy 1: Legacy packages.config restore"
+          try
+          {
+            nuget restore ${{ matrix.solution_file }}
+            Write-Host "packages.config restore completed"
+            $needsRestore = $true
+          }
+          catch
+          {
+            Write-Warning "packages.config restore failed: $($_.Exception.Message)"
+          }
+        }
+        
+        if ($hasPackageReference)
+        {
+          Write-Host ""
+          Write-Host "Strategy 2: PackageReference restore (will be handled by MSBuild)"
+          $needsRestore = $true
+        }
+        
+        if (-not $needsRestore)
+        {
+          Write-Host ""
+          Write-Host "No NuGet packages detected - this solution uses only system libraries"
+          Write-Host "This is normal for projects that only use DirectX, Windows SDK, etc."
+        }
+        
+        Write-Host ""
+        Write-Host "Package restore strategy complete for ${{ matrix.project }}"
 
     - name: Build ${{ matrix.project }}
       working-directory: ${{ matrix.solution_path }}
       run: |
         Write-Host "Building ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
-        msbuild ${{ matrix.solution_file }} -t:Restore,Build -p:Configuration=${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} -maxCpuCount -verbosity:minimal
+        msbuild ${{ matrix.solution_file }} `
+        -t:Restore,Build `
+        -p:Configuration=${{ matrix.configuration }} `
+        -p:Platform=${{ matrix.platform }} `
+        -maxCpuCount `
+        -verbosity:minimal
 
     - name: Upload Artifacts
       if: matrix.upload_artifacts
