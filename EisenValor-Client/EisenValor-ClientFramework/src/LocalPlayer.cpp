@@ -81,6 +81,7 @@ void LocalPlayer::Update(float deltaTime)
             if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) {
                 // 카메라 회전 업데이트
                 m_cameraYaw += deltaX * m_mouseSensitivity;
+                m_yaw = m_cameraYaw;
                 m_cameraPitch += deltaY * m_mouseSensitivity;
 
                 // Pitch 제한 (위아래 회전 제한)
@@ -88,7 +89,7 @@ void LocalPlayer::Update(float deltaTime)
 
                 //디버깅
                 DEBUG_LOG_FMT("Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n",
-                    deltaX, deltaY, m_cameraYaw, m_cameraPitch);
+                    deltaX, deltaY, m_yaw, m_cameraPitch);
             }
 
             m_lastMouseX = mousePos.x;
