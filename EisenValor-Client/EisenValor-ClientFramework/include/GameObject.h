@@ -29,6 +29,8 @@ public:
 
     virtual ObjectType GetObjectType() const = 0;
 
+    uint32  m_id;
+    bool    alive{ true };
 protected:
     // 기본 Transform 데이터
     float m_x = 0.0f;

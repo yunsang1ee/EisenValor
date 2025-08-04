@@ -6,9 +6,9 @@ enum RIO_FIGURE {
 
 	MAX_RIO_BUFFER_CAPACITY = MAX_RIO_BUFFER_SIZE * MAX_RIO_BUFFER_COUNT,	
 	
-	MAX_RIO_RESULT = 256,
-	MAX_SEND_RQ_SIZE_PER_SOCKET = 64,
-	MAX_RECV_RQ_SIZE_PER_SOCKET = 64,
+	MAX_RIO_RESULT = 512,
+	MAX_SEND_RQ_SIZE_PER_SOCKET = 2048,
+	MAX_RECV_RQ_SIZE_PER_SOCKET = 2048,
 	MAX_SESION_PER_RIO_WORKER = 50,
 	MAX_CQ_SIZE_PER_RIO_THREAD	 = (MAX_SEND_RQ_SIZE_PER_SOCKET + MAX_RECV_RQ_SIZE_PER_SOCKET) * MAX_SESION_PER_RIO_WORKER,
 
@@ -20,7 +20,7 @@ enum RIO_FIGURE {
 };
 
 enum class SESSION_STATE : uint8 {
-	FREE,		// Session »ý¼º/¼Ò¸ê 
-	ALLOC,		// Accept Á÷ÈÄ 
-	IN_MATCH,	// Å¬¶ó·ÎºÎÅÍ ·Î±×ÀÎ ÆÐÅ¶ ¹Þ°í match¿¡ ÀÔÀåÇßÀ» ¶§ 
+	FREE,		// Session ìƒì„± ì†Œë©¸
+	ALLOC,		// Accept ì§í›„ 
+	IN_MATCH,	// í´ë¼ë¡œë¶€í„° ë¡œê·¸ì¸ íŒ¨í‚· ë°›ê³ , Match ìž…ìž¥ ì‹œ
 };

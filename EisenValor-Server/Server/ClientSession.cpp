@@ -8,7 +8,7 @@
 Server::ClientSession::ClientSession()
 	:m_general{nullptr}
 {
-	std::cout << "ClientSession" << std::endl;
+	// std::cout << "ClientSession" << std::endl;
 } 
 
 Server::ClientSession::~ClientSession()
@@ -28,9 +28,11 @@ void Server::ClientSession::OnDisconnected()
 	MANAGER(Server::ClientSessionManager)->RemoveSession(clientSession);
 	std::cout << "ClientSession OnDisconnected!" << std::endl;
 
-	auto match = m_general->GetMatch();
-	if(match)
-		match->ExecuteAsyncronously(&Server::Contents::GameMatch::LeaveMatch, clientSession);
+	if(m_general) {
+		auto match = m_general->GetMatch();
+		if(match)
+			match->ExecuteAsyncronously(&Server::Contents::GameMatch::LeaveMatch, clientSession);
+	}
 }
 
 void Server::ClientSession::ProcessPacket(const std::span<const char>& buffer)

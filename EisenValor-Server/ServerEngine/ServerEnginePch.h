@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable: 4819)
 
 #include "ServerEngineDefines.h"
 
@@ -24,6 +25,7 @@
 #include <set>
 #include <map>
 #include <unordered_set>
+#include <queue>
 
 #include <span>
 
@@ -67,4 +69,4 @@ namespace fs = std::filesystem;
 
 #include "ServerEngineContainers.h"
 #include "ObjectPool.h"
-
+#include "LockQueue.h"

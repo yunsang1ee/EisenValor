@@ -5,7 +5,6 @@
 
 void Server::Contents::GameMatchManager::Init()
 {
-	// 몇 개의 GameMatch 만들기(임시용)
 	for(int i = 0; i < 10; ++i) {
 		const uint16 id = i + 1;
 		auto match = ServerEngine::ObjectPool<GameMatch>::MakeShared(id);

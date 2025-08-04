@@ -147,6 +147,9 @@
     <ClCompile Include="TaskTimer.cpp">
       <Filter>95. Managers\03. TaskTimer</Filter>
     </ClCompile>
+    <ClCompile Include="ServerEngineTLS.cpp">
+      <Filter>97. Headers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">

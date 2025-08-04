@@ -8,33 +8,47 @@ table CS_LOGIN_PACKET {
 	pw: string;
 }
 
+table SC_LOGIN_PACKET {
+	player_id : uint;
+}
+
+table CS_ENTER_MATCH_PACKET {
+	player_id : uint;
+}
+
+table SC_ENTER_MATCH_PACKET {
+	match_id: ushort;
+}
+
+table SC_ADD_PLAYER_INFO_PACKET {
+	player_id : uint;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
+}
+
+table SC_REMOVE_PLAYER_INFO_PACKET {
+	player_id : uint;
+}
+
 table CS_CHAT_PACKET {
 	msg: string;				
-}
-
-table CS_MOVE_PACKET_XY {
-	x: short;
-	y: short;
-}
-
-table CS_MOVE_PACKET_XYZ {
-	x: float;
-	y: float;
-	z: float;
-}
-
-table CS_TEST_PACKET {
-	x: float;
-	y: float;
-	z: float;
 }
 
 table SC_CHAT_PACKET {
 	msg: string;
 }
 
-table SC_MOVE_PACKET_XYZ {
-	x: float;
-	y: float;
-	z: float;
+table CS_PLAYER_MOVE_PACKET {
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
+}
+
+table SC_PLAYER_MOVE_PACKET {
+	player_id : uint;
+	pos: FB_STRUCTS.Vec3;
+	rot: FB_STRUCTS.Vec3;
+}
+
+table SC_SOLDIER_INFO_PACKET {
+	info: [FB_STRUCTS.SoldierInfo];
 }

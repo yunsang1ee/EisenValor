@@ -15,11 +15,11 @@ void ServerEngine::RIOContext::Init()
 }
 
 ServerEngine::RecvContext::RecvContext()
-	:RIOContext(RIO_CONTEXT_TYPE::RECV)
+	:RIOContext{ RIO_CONTEXT_TYPE::RECV }
 {
 }
 
 ServerEngine::SendContext::SendContext()
-	:RIOContext(RIO_CONTEXT_TYPE::SEND)
+	:RIOContext{RIO_CONTEXT_TYPE::SEND}
 {
 }

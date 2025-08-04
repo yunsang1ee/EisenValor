@@ -8,7 +8,7 @@
 #include "SessionPool.h"
 
 ServerEngine::Session::Session()
-	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_lastSendTime{0}
+	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_deferCount{}
 {
 	static int16 idGen = 1;
 	m_id = idGen++;
@@ -58,41 +58,53 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 
 	OnDisconnected();
 
+	m_state = SESSION_STATE::FREE;
+
+	std::cout << reason << std::endl;
+
 	// m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
-	m_owner.lock()->ReleaseSession(shared_from_this());
+	// m_owner.lock()->ReleaseSession(shared_from_this());
 }
 
 void ServerEngine::Session::FlushPacketQueue()
 {
-	long long currentTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+	const auto currentTime = std::chrono::high_resolution_clock::now();
+	const auto lastSendElapsed = currentTime - m_lastSendTime;
+
+	// 싱글쓰레드 
+	if(IsConnected() == false)
+		return;
 
 	int deferCount{};
 
-	while(m_packetBufferQueue.empty() == false) {
-		std::shared_ptr<PacketBuffer> packetBuffer;
-		m_packetBufferQueue.try_pop(packetBuffer);
+	while(m_packetBufferQueue.Empty() == false) {
+		{
+			auto packetBuffer = m_packetBufferQueue.Pop();
 
-		if(packetBuffer == nullptr) break;
+			if(packetBuffer == nullptr) break;
 
-		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
-			assert(nullptr);
+			if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
+				assert(nullptr);
+		}
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
 			if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
 				break;
 			deferCount++;
+
+			if(deferCount >= 243) break;
 		}
 	}
 
-	if(currentTime - m_lastSendTime >= COMMIT_TIME_MS_LIMIT && deferCount > 0) {
+	if(deferCount > 0  || lastSendElapsed > COMMIT_MS ) {
 		CommitSend();
-		m_lastSendTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+		m_lastSendTime = currentTime;
 	}
 }
 
 void ServerEngine::Session::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
-	m_packetBufferQueue.push(packetBuffer);
+	m_packetBufferQueue.Push(packetBuffer);
 }
 
 bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
@@ -106,16 +118,21 @@ bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
 	sendContext->Length = size;
 
 	if(false == RIO_EXT_FUNC_TB.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
+		// FIX: 여기서 오류 발생
+		// aaa다.
+
+		// 버퍼가 부족하진 않음.
+		// -> 큐 공간이 부족한거 같음
 		ServerEngine::LogManager::PrintLastError();
 		sendContext->ReleaseSession();
-		delete sendContext;
-		Disconnect("moveSendOffset");
+		ObjectPool<SendContext>::Push(sendContext);
+		Disconnect("RIO_SEND_FAILED");
 		return false;
 	}
 
 	if(false == m_sendBuffer.moveSendOffset(size)) {
 		sendContext->ReleaseSession();
-		delete sendContext;
+		ObjectPool<SendContext>::Push(sendContext);
 		Disconnect("moveSendOffset");
 		return false;
 	}
@@ -165,7 +182,7 @@ void ServerEngine::Session::Init()
 		exit(1);
 	}
 
-	std::cout << "Session Init Success!" << std::endl;
+	// std::cout << "Session Init Success!" << std::endl;
 }
 
 void ServerEngine::Session::PostRecv()
@@ -200,7 +217,7 @@ void ServerEngine::Session::PostRecv()
 
 void ServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 {
-	std::cout << "ProcessRecv" << std::endl;
+	// std::cout << "ProcessRecv" << std::endl;
 
 	m_recvContext.ReleaseSession();
 
@@ -231,7 +248,7 @@ void ServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 
 void ServerEngine::Session::ProcessSend(const uint32 bytesTransferred)
 {
-	std::cout << "ProcessSend" << std::endl;
+	// std::cout << "ProcessSend" << std::endl;
 
 	m_sendBuffer.OnRead(bytesTransferred);
 

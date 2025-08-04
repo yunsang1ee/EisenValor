@@ -10,7 +10,7 @@
 #include "TaskQueue.h"
 
 ServerEngine::RIOWorker::RIOWorker(const uint16 id)
-	:m_id{id}, m_cq{RIO_INVALID_CQ}
+	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
 	std::println("RioWorker, ID = {}", m_id);
 }
@@ -37,7 +37,7 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 
 void ServerEngine::RIOWorker::Work()
 {
-	TLS_END_TICK = high_resolution_clock::now() + 64ms;
+	TLS_END_TICK = high_resolution_clock::now() + 128ms;
 
 	FlushPacketQueue();
 	DequeueCompletion();
@@ -47,8 +47,9 @@ void ServerEngine::RIOWorker::Work()
 
 void ServerEngine::RIOWorker::FlushPacketQueue()
 {
-	std::shared_lock<std::shared_mutex> lk{ m_mutex };
-	for(auto iter = m_connectedSession.begin(); iter != m_connectedSession.end();) {
+	std::lock_guard<std::mutex> lk{ m_mutex };
+	auto iter = m_connectedSession.begin();
+	for(; iter != m_connectedSession.end();) {
 		if(SESSION_STATE::FREE != (*iter)->GetState()) {
 			(*iter)->FlushPacketQueue();
 			++iter;
@@ -61,9 +62,9 @@ void ServerEngine::RIOWorker::FlushPacketQueue()
 void ServerEngine::RIOWorker::DequeueCompletion()
 {
 	assert(TLS_THREAD_ID == m_id);
-	
+
 	std::array<RIORESULT, MAX_RIO_RESULT> ioResults;
-	
+
 	while(true) {
 		memset(ioResults.data(), 0, sizeof(ioResults));
 
@@ -72,13 +73,15 @@ void ServerEngine::RIOWorker::DequeueCompletion()
 			std::this_thread::sleep_for(1ms);
 			break;
 		}
-		else if(RIO_CORRUPT_CQ == numResults)
+		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
+			break;
+		}
 		else {
 			std::println("Worker ID ={}, has results!", m_id);
 			for(uint32 i = 0; i < numResults; ++i) {
 				RIOContext* const context = reinterpret_cast<RIOContext*>(ioResults[i].RequestContext);
-				auto session = context->GetSession();	
+				auto session = context->GetSession();
 				assert(context && session);
 				const uint32 bytesTransferred = ioResults[i].BytesTransferred;
 				std::println("BytesTransferred = {}", bytesTransferred);
@@ -103,9 +106,10 @@ void ServerEngine::RIOWorker::DoTask()
 			std::println("End");
 			break;
 		}
+		
 		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->Pop();
-		if(nullptr == taskQueue) break;
-
+		if(nullptr == taskQueue)
+			break;
 		taskQueue->Flush();
 	}
 }
@@ -118,12 +122,6 @@ void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 	session->SetOwner(shared_from_this());
 	session->Connect(socket, clientAddr);
 
-	std::lock_guard<std::shared_mutex> lk{ m_mutex };
-	m_connectedSession.insert(std::move(session));
-}
-
-void ServerEngine::RIOWorker::ReleaseSession(std::shared_ptr<Session> session)
-{
-	std::lock_guard<std::shared_mutex> lk{ m_mutex };
-	m_connectedSession.erase(session);
+	std::lock_guard<std::mutex> lk{ m_mutex };
+	m_connectedSession.push_back(std::move(session));
 }

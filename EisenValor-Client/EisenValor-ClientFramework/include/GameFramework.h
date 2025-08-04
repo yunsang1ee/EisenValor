@@ -7,7 +7,6 @@
 #include "Ground.h"
 #include <memory>
 
-
 //// 인스턴싱을 위한 구조체
 //struct InstanceData
 //{
@@ -60,15 +59,10 @@ private:
 	ComPtr<ID3D12Resource> m_indexBuffer;
 	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 
-
 	//Ground Constant Buffer
 	ComPtr<ID3D12Resource> m_constantBuffer2;
 	ConstantBuffer m_constantBufferData2;
 	UINT8* m_pCbvDataBegin2 = nullptr;
-
-	// Player 객체 추가
-	std::vector<std::unique_ptr<GameObject>> m_gameObjects;
-	GameObject* m_player = nullptr;
 
 	// Ground 객체 추가
 	std::unique_ptr<Ground> m_ground;  

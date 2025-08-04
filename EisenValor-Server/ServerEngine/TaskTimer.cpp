@@ -10,7 +10,7 @@ void ServerEngine::TaskTimer::Reserve(uint64 afterMS, std::weak_ptr<ServerEngine
 	const auto executeTick = now + next;
 	TaskData* taskData{ ObjectPool<TaskData>::Pop(owner, task) };
 
-	std::lock_guard<tbb::rw_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 	m_items.push(TimerItem{ executeTick, taskData });
 }
 
@@ -21,7 +21,7 @@ void ServerEngine::TaskTimer::DistributeReservedTask(high_resolution_clock::time
 
 	std::vector<TimerItem> items;
 	{
-		std::lock_guard<tbb::rw_mutex> lk{ m_mutex };
+		std::lock_guard<std::mutex> lk{ m_mutex };
 		while(false == m_items.empty()) {
 			const TimerItem& timerItem = m_items.top();
 			if(now < timerItem.tick)
@@ -45,7 +45,7 @@ void ServerEngine::TaskTimer::DistributeReservedTask(high_resolution_clock::time
 
 void ServerEngine::TaskTimer::Clear()
 {
-	std::lock_guard<tbb::rw_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 
 	while(false == m_items.empty()) {
 		const TimerItem& timerItem = m_items.top();

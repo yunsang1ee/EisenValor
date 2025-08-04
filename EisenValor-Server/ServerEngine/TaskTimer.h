@@ -24,8 +24,9 @@ namespace ServerEngine {
 	class TaskTimer : public Singleton<TaskTimer> {
 		SINGLETON(TaskTimer)
 	private:
-		tbb::rw_mutex m_mutex;
-		std::priority_queue<TimerItem> m_items;
+		// tbb::rw_mutex					m_mutex;
+		std::mutex						m_mutex;
+		std::priority_queue<TimerItem>	m_items;
 		std::atomic_bool				m_distributing{ false };
 
 	public:

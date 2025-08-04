@@ -17,6 +17,7 @@ namespace Server {
 
 	public:
 		void SetGeneral(std::shared_ptr<Server::Contents::General> general) noexcept { m_general = general; }
+		std::shared_ptr<Server::Contents::General> GetGeneral() { return m_general; }
 
 	public:
 		virtual void OnConnected() override;

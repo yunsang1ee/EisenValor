@@ -1,5 +1,5 @@
 ﻿#pragma once
-
+#pragma warning(disable: 4819)
 #ifdef _DEBUG
 #pragma comment(lib, "ServerEngine\\Debug\\ServerEngine_Debug.lib")
 #else

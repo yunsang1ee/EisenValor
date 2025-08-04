@@ -15,4 +15,70 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 
 #include "Enums_generated.h"
 
+namespace FB_STRUCTS {
+
+struct Vec3;
+
+struct SoldierInfo;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
+ private:
+  float x_;
+  float y_;
+  float z_;
+
+ public:
+  Vec3()
+      : x_(0),
+        y_(0),
+        z_(0) {
+  }
+  Vec3(float _x, float _y, float _z)
+      : x_(::flatbuffers::EndianScalar(_x)),
+        y_(::flatbuffers::EndianScalar(_y)),
+        z_(::flatbuffers::EndianScalar(_z)) {
+  }
+  float x() const {
+    return ::flatbuffers::EndianScalar(x_);
+  }
+  float y() const {
+    return ::flatbuffers::EndianScalar(y_);
+  }
+  float z() const {
+    return ::flatbuffers::EndianScalar(z_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Vec3, 12);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) SoldierInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t soldier_id_;
+  FB_STRUCTS::Vec3 pos_;
+  FB_STRUCTS::Vec3 rot_;
+
+ public:
+  SoldierInfo()
+      : soldier_id_(0),
+        pos_(),
+        rot_() {
+  }
+  SoldierInfo(uint32_t _soldier_id, const FB_STRUCTS::Vec3 &_pos, const FB_STRUCTS::Vec3 &_rot)
+      : soldier_id_(::flatbuffers::EndianScalar(_soldier_id)),
+        pos_(_pos),
+        rot_(_rot) {
+  }
+  uint32_t soldier_id() const {
+    return ::flatbuffers::EndianScalar(soldier_id_);
+  }
+  const FB_STRUCTS::Vec3 &pos() const {
+    return pos_;
+  }
+  const FB_STRUCTS::Vec3 &rot() const {
+    return rot_;
+  }
+};
+FLATBUFFERS_STRUCT_END(SoldierInfo, 28);
+
+}  // namespace FB_STRUCTS
+
 #endif  // FLATBUFFERS_GENERATED_STRUCTS_FB_STRUCTS_H_

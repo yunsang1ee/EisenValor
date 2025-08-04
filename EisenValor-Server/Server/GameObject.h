@@ -6,11 +6,10 @@ namespace Server {
 
 		class GameObject {
 		private:
-			std::wstring	m_name;
-			uint32			m_id;	// GENERAL의 경우 SESSION ID와 동일하게 
-			Transform		m_transform;
-
-			std::weak_ptr<GameMatch> m_match;
+			std::wstring				m_name;
+			uint32						m_id;
+			Transform					m_transform;
+			std::weak_ptr<GameMatch>	m_match;
 
 		public:
 			explicit GameObject();

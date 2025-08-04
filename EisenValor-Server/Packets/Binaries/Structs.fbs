@@ -1,3 +1,15 @@
 include "Enums.fbs";
 
 namespace FB_STRUCTS;
+
+struct Vec3{
+	x: float;
+	y: float;
+	z: float;
+}
+
+struct SoldierInfo {
+	soldier_id: uint;
+	pos: Vec3;
+	rot: Vec3;
+}

@@ -38,4 +38,5 @@ namespace ServerEngine {
 	public:
 		SendContext();
 	};
+
 }

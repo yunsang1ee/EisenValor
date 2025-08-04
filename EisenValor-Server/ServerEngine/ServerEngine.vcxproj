@@ -202,6 +202,7 @@
     <ClCompile Include="RIOWorker.cpp" />
     <ClCompile Include="SendBuffer.cpp" />
     <ClCompile Include="ServerEnginePch.cpp" />
+    <ClCompile Include="ServerEngineTLS.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SessionPool.cpp" />
     <ClCompile Include="Task.cpp" />

@@ -3,6 +3,8 @@
 #include "RIOBuffer.h"
 
 namespace ServerEngine {
+	class PacketBuffer;
+
 	class SendBuffer : public RIOBuffer {
 		enum { BUFFER_COUNT = 10, };
 	private:

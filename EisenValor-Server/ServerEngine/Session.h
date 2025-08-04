@@ -10,7 +10,7 @@ namespace ServerEngine {
 	class RioContext;
 	class PacketBuffer;
 	class SendBuffer;
-	
+
 	class Session : public std::enable_shared_from_this<Session> {
 	private:
 		uint32										m_id;
@@ -23,27 +23,18 @@ namespace ServerEngine {
 		
 		RecvBuffer									m_recvBuffer;
 		RecvContext									m_recvContext;
+		uint32										m_deferCount;
 
-		// 1. PacketBuffer를 만들어서 Packet 내용을 PacketBufffer에 집어넣는다.
-		// 2. Send(packetBuffer)를 하면, PacketBuffer는 Session 안에 있는 packetBufferQueue에 저장되게 된다.
-		// 3. 매번 Dispatch 하기 전에, 일정 시간마다 packetBufferQueue에 쌓여있는 PacketBuffer들을 꺼내서 sendbuffer에 쌓는다.(DEFFER)
-		// 4. SendBuffer의 크기가 다 차면 RegisterSend를 걸어준다. (실제 Send하지 않고 RIO_MSG_DEFFER)
-		// 5. 마지막에 SEND(MSG_COMMIT_ONLY) 한다.
-	
-		// RioSend가 Thread-Safe가 아니라 일단 Send는 packetBufferQuuee에 모아놨다가 RioWorker 전용 쓰레드가 packetBufferQueue에서 빼서 처리
-		tbb::concurrent_queue<std::shared_ptr<PacketBuffer>> m_packetBufferQueue;	
-		SendBuffer									m_sendBuffer;
-
-		std::atomic<SESSION_STATE>					m_state;
-		
-		int64										m_lastSendTime;
-
+		LockQueue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+		SendBuffer										m_sendBuffer;
+		std::atomic<SESSION_STATE>						m_state;
+		std::chrono::high_resolution_clock::time_point	m_lastSendTime{};
+		static constexpr auto COMMIT_MS = 20ms;
 	public:
 		Session();
 		virtual ~Session();
 
 	public:
-		// 컨텐츠에서 오버라이딩해서 사용하는 함수
 		virtual void OnConnected() {}
 		virtual void OnDisconnected() {}
 

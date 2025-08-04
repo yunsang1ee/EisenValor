@@ -5,10 +5,17 @@
 #include "Tables_generated.h"
 
 #include "PacketHeader.h"
+#include "PacketBuffer.h"
 
 namespace ServerEngine {
 	class Session;
 	class PacketBuffer;
+}
+
+namespace Server {
+	namespace Contents {
+		class Soldier;
+	}
 }
 
 enum class PACKET_TYPE : uint16 {
@@ -26,6 +33,9 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_PLAYER_MOVE = 9,
 	SC_PLAYER_MOVE = 10,
+
+	SC_SOLDIER_INFO = 11,
+
 
 	END
 };
@@ -73,10 +83,6 @@ public:
 		return handleFunc(session, *packet);
 	}
 
-	// 패킷 만드는 부분
-	template<typename T>
-	struct PacketArgTraits;
-
 	template<typename PacketFunc, typename... Args>
 	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args)
 	{
@@ -86,6 +92,7 @@ public:
 		return builder.Release();
 	}
 
+	// TODO: 이 부분 삭제해야 함.
 	static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
 	{
 		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
@@ -95,59 +102,51 @@ public:
 		return packetBuffer;
 	}
 
-
+public:
 #pragma region SC_LOGIN_PACKET
-	template<typename... Args>
-	static flatbuffers::DetachedBuffer Make_SC_LOGIN_PACKET(Args&&... args)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id)
 	{
-		return MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, std::forward<Args>(args)...);
+		return MakePacketBuffer(PACKET_TYPE::SC_LOGIN, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
 	}
 #pragma endregion
 
 #pragma region SC_CHAT_PACKET
-	//template<>
-	//struct PacketArgTraits<struct FB_TABLES::SC_CHAT_PACKET/*패킷명*/> {
-	//	using ArgTypes = std::tuple<std::string_view/*패킷 인자*/>;
-	//	template<typename... Args>
-	//	static constexpr bool ValidArgs = sizeof...(Args) == 1/*패킷 인자 개수*/ && (std::convertible_to<Args, std::string_view/*패킷 인자*/> && ...);
-	//};
-
-	//template<typename PacketTag, typename... Args>
-	//static constexpr bool is_valid_packet_args_v = PacketArgTraits<PacketTag>::template ValidArgs<Args...>;
-
-	template<typename... Args>
-	[[nodiscard("반환값 절대 무시하지 마세요.")]]
-	/*Make_패킷명*/
-	static flatbuffers::DetachedBuffer Make_SC_CHAT_PACKET(Args&&... args)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg)
 	{
-		//static_assert(is_valid_packet_args_v<FB_TABLES::SC_CHAT_PACKET/*패킷명*/, Args...>, "SC_CHAT_PACKET requires exactly one std::string_view argument");
-		//static_assert(sizeof...(Args) == 1/*패킷 인자 개수*/, "SC_CHAT_PACKET expects exactly 1 argument");
-		//static_assert((std::convertible_to<Args, std::string_view/*패킷 인자*/> && ...), "All arguments must be convertible to std::string_view");
-		return MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, std::forward<Args>(args)...);
+		return MakePacketBuffer(PACKET_TYPE::SC_CHAT, MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
 	}
 #pragma endregion
 
 #pragma region SC_PLAYER_MOVE_PACKET
-	template<typename... Args>
-	static flatbuffers::DetachedBuffer Make_SC_PLAYER_MOVE_PACKET(Args&&... args)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PLAYER_MOVE_PACKET(const uint32 id, const Vec3& pos, const Vec3& rot)
 	{
-		return MakePacket(FB_TABLES::CreateSC_PLAYER_MOVE_PACKET, std::forward<Args>(args)...);
+		const FB_STRUCTS::Vec3 p{ pos.x, pos.y, pos.z };
+		const FB_STRUCTS::Vec3 r{ rot.x, rot.y, rot.z };
+
+		return MakePacketBuffer(PACKET_TYPE::SC_PLAYER_MOVE, MakePacket(FB_TABLES::CreateSC_PLAYER_MOVE_PACKET, id, &p, &r));
 	}
 #pragma endregion
 
 #pragma region SC_ADD_PLAYER_INFO
-	template<typename... Args>
-	static flatbuffers::DetachedBuffer Make_SC_ADD_PLAYER_INFO_PACKET(Args&&... args)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_PLAYER_INFO_PACKET(const uint32 id, const Vec3& pos, const Vec3& rot)
 	{
-		return MakePacket(FB_TABLES::CreateSC_ADD_PLAYER_INFO_PACKET, std::forward<Args>(args)...);
+		const FB_STRUCTS::Vec3 p{ pos.x, pos.y, pos.z };
+		const FB_STRUCTS::Vec3 r{ rot.x, rot.y, rot.z };
+		return MakePacketBuffer(PACKET_TYPE::SC_ADD_PLAYER_INFO, MakePacket(FB_TABLES::CreateSC_ADD_PLAYER_INFO_PACKET, id, &p, &r));
 	}
 #pragma endregion
 
 #pragma region SC_REMOVE_PLAYER_INFO
-	template<typename... Args>
-	static flatbuffers::DetachedBuffer Make_SC_REMOVE_PLAYER_INFO_PACKET(Args&&... args)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_PLAYER_INFO_PACKET(const uint32 id)
 	{
-		return MakePacket(FB_TABLES::CreateSC_REMOVE_PLAYER_INFO_PACKET, std::forward<Args>(args)...);
+		return MakePacketBuffer(PACKET_TYPE::SC_REMOVE_PLAYER_INFO, MakePacket(FB_TABLES::CreateSC_REMOVE_PLAYER_INFO_PACKET, id));
+	}
+#pragma endregion
+
+#pragma region SC_SOLDIER_INFO
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SOLDIER_INFO_PACKET(const std::vector<FB_STRUCTS::SoldierInfo>& soldiers)
+	{
+		return MakePacketBuffer(PACKET_TYPE::SC_SOLDIER_INFO, MakePacket(FB_TABLES::CreateSC_SOLDIER_INFO_PACKETDirect, &soldiers));
 	}
 #pragma endregion
 };
