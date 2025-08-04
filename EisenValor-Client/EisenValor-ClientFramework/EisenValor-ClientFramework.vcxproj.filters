@@ -181,6 +181,9 @@
     <ClInclude Include="include\Ground.h">
       <Filter>Ground</Filter>
     </ClInclude>
+    <ClInclude Include="include\NPC.h">
+      <Filter>Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -243,6 +246,9 @@
     </ClCompile>
     <ClCompile Include="src\Ground.cpp">
       <Filter>Ground</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NPC.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -4,6 +4,7 @@
 #include "LocalPlayer.h"
 #include "GameObjectManager.h"
 #include "DxDeviceGlobal.h"
+#include "NPC.h"
 
 std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;
 
@@ -62,6 +63,7 @@ bool Handle_SC_ADD_PLAYER_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_
 
 	auto device = GlobalRegistry::Get<IDxDeviceGlobal>().GetDevice();
 
+	//로컬 플레이어 생성
 	if(id == localID) {
 		auto localPlayer = std::make_shared<LocalPlayer>();
 		localPlayer->Initialize(device);
@@ -69,10 +71,18 @@ bool Handle_SC_ADD_PLAYER_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_
 		localPlayer->SetPosition(recvPkt.pos()->x(), recvPkt.pos()->y(), recvPkt.pos()->z());
 		localPlayer->SetRotation(recvPkt.rot()->y());
 
+		//NPC 생성
+        auto npc = std::make_shared<NPC>();
+        npc->Initialize(device);
+        npc->SetTarget(localPlayer);
+
 		MANAGER(GameObjectManager)->SetLocalPlayer(localPlayer);
 		MANAGER(GameObjectManager)->AddObject(localPlayer);
+		//NPC
+		MANAGER(GameObjectManager)->AddObject(npc);
 	}
 	else {
+		//다른 플레이어 처리
 		auto player = std::make_shared<Player>();
 		player->Initialize(device);
 		player->m_id = id;
@@ -82,6 +92,16 @@ bool Handle_SC_ADD_PLAYER_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_
 		player->SetPosition(pos.x, pos.y, pos.z);
 		player->SetRotation(rot.y);
 
+		// NPC 생성
+		auto npc = std::make_shared<NPC>();
+		npc->Initialize(device);
+		npc->SetTarget(player);
+		npc->SetPosition(
+			pos.x + 2.0f,
+			pos.y,
+			pos.z
+		);
+
 		std::println("----------------------------------------------------");
 		std::println("Hello! ADD_PLAYER, ID:{}", id);
 		std::println("Pos X:{}, Y:{}, Z:{}, ", pos.x, pos.y, pos.z);
@@ -89,6 +109,7 @@ bool Handle_SC_ADD_PLAYER_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_
 		std::println("----------------------------------------------------\n");
 
 		MANAGER(GameObjectManager)->AddObject(player);
+		MANAGER(GameObjectManager)->AddObject(npc);
 	}
 	
 	return true;

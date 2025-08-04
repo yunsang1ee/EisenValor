@@ -24,7 +24,8 @@ public:
     // 오브젝트 타입 구분용
     enum class ObjectType
     {
-        Player  //일단 플레이어만
+        Player,
+        NPC
     };
 
     virtual ObjectType GetObjectType() const = 0;

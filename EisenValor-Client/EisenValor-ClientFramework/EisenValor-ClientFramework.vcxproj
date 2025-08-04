@@ -184,6 +184,7 @@
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\LocalPlayer.h" />
     <ClInclude Include="include\NetworkManager.h" />
+    <ClInclude Include="include\NPC.h" />
     <ClInclude Include="include\PacketBuffer.h" />
     <ClInclude Include="include\PacketHandler.h" />
     <ClInclude Include="include\Player.h" />
@@ -208,6 +209,7 @@
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\LocalPlayer.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
+    <ClCompile Include="src\NPC.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
     <ClCompile Include="src\PacketHandler.cpp" />
     <ClCompile Include="src\Player.cpp" />
