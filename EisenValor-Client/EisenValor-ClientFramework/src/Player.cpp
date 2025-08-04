@@ -140,7 +140,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList,
 
     // 플레이어 큐브 렌더링
     DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
-    DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_cameraYaw);
+    DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_yaw);
     DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_x, m_y, m_z);
     DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
     DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
