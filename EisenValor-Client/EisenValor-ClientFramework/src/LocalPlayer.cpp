@@ -6,54 +6,54 @@ using namespace DirectX;
 
 void LocalPlayer::Update(float deltaTime)
 {
-    // GameFrameworkï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Úµå¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Å±ï¿½
-  // ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Ù¶óº¸´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+    // GameFramework¿¡¼­ ÇÃ·¹ÀÌ¾î ¾÷µ¥ÀÌÆ® ÄÚµå¸¦ ¿©±â·Î ¿Å±è
+    // ÇÃ·¹ÀÌ¾î ¹Ù¶óº¸´Â ¹æÇâ º¤ÅÍ °è»ê
     float forwardX = sinf(m_cameraYaw);
     float forwardZ = cosf(m_cameraYaw);
 
-    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+    // ¿ìÃø º¤ÅÍ °è»ê
     float rightX = sinf(m_cameraYaw + XM_PIDIV2);
     float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
 
     float moveSpeed = m_playerSpeed * deltaTime;
 
-    // WASD ï¿½Ô·ï¿½ Ã³ï¿½ï¿½
-    if (Globals::Input().GetInput('W'))  // ï¿½ï¿½ï¿½ï¿½
+    // WASD ÀÔ·Â Ã³¸®
+    if (Globals::Input().GetInput('W'))  // ÀüÁø
     {
         m_x += forwardX * moveSpeed;
         m_z += forwardZ * moveSpeed;
         sendFlag = true;
     }
-    if (Globals::Input().GetInput('S'))  // ï¿½ï¿½ï¿½ï¿½
+    if (Globals::Input().GetInput('S'))  // ÈÄÁø
     {
         m_x -= forwardX * moveSpeed;
         m_z -= forwardZ * moveSpeed;
         sendFlag = true;
     }
-    if (Globals::Input().GetInput('A'))  // ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+    if (Globals::Input().GetInput('A'))  // ÁÂÃø ÀÌµ¿
     {
         m_x -= rightX * moveSpeed;
         m_z -= rightZ * moveSpeed;
         sendFlag = true;
     }
-    if (Globals::Input().GetInput('D'))  // ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+    if (Globals::Input().GetInput('D'))  // ¿ìÃø ÀÌµ¿
     {
         m_x += rightX * moveSpeed;
         m_z += rightZ * moveSpeed;
         sendFlag = true;
     }
 
-    // ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ (H/L Å°)
+    // ¼öÁ÷ ÀÌµ¿ (H/L Å°)
     if (Globals::Input().GetInput('H')) {
-        m_y -= moveSpeed;  // ï¿½Æ·ï¿½ï¿½ï¿½
+        m_y -= moveSpeed;  // ¾Æ·¡·Î
         sendFlag = true;
     }
     if (Globals::Input().GetInput('L')) {
-        m_y += moveSpeed;  // ï¿½ï¿½ï¿½ï¿½
+        m_y += moveSpeed;  // À§·Î
         sendFlag = true;
     }
 
-    // ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½
+    // À§Ä¡ µð¹ö±ë
     static float lastX = 0, lastY = 1, lastZ = 0;
     if (m_x != lastX || m_z != lastZ) {
         DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
@@ -61,32 +61,32 @@ void LocalPlayer::Update(float deltaTime)
         lastX = m_x; lastY = m_y; lastZ = m_z;
     }
 
-    // ===== ï¿½ï¿½ï¿½ì½ºï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ ï¿½Ìµï¿½ =====
+    // ===== ¸¶¿ì½º·Î Ä«¸Þ¶ó ÀÌµ¿ =====
     bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
-    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ì½º ï¿½ï¿½Ä¡
+    // ÇöÀç ¸¶¿ì½º À§Ä¡
     auto mousePos = Globals::Input().GetMousePosition();
 
     if (isLeftButtonPressed) {
         if (!m_isMouseDragging) {
             m_isMouseDragging = true;
-            m_lastMouseX = mousePos.x;  // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
+            m_lastMouseX = mousePos.x;  // ½ÃÀÛ À§Ä¡ ÀúÀå
             m_lastMouseY = mousePos.y;
             DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
         }
         else {
-            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            // ¿òÁ÷ÀÓ °¨Áö
             float deltaX = mousePos.x - m_lastMouseX;
             float deltaY = mousePos.y - m_lastMouseY;
 
             if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) {
-                // Ä«ï¿½Þ¶ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+                // Ä«¸Þ¶ó È¸Àü ¾÷µ¥ÀÌÆ®
                 m_cameraYaw += deltaX * m_mouseSensitivity;
                 m_cameraPitch += deltaY * m_mouseSensitivity;
 
-                // Pitch ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½Æ·ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+                // Pitch Á¦ÇÑ (À§¾Æ·¡ È¸Àü Á¦ÇÑ)
                 m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
 
-                //ï¿½ï¿½ï¿½ï¿½ï¿½
+                //µð¹ö±ë
                 DEBUG_LOG_FMT("Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n",
                     deltaX, deltaY, m_cameraYaw, m_cameraPitch);
             }
@@ -97,13 +97,13 @@ void LocalPlayer::Update(float deltaTime)
     }
     else {
         if (m_isMouseDragging) {
-            // ï¿½å·¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            // µå·¡±× Á¾·á
             m_isMouseDragging = false;
             DEBUG_LOG_FMT("Camera drag ended\n");
         }
     }
 
-    //ï¿½ï¿½ï¿½ì½º ï¿½Ù·ï¿½ ï¿½ï¿½ï¿½Î¾Æ¿ï¿½
+    //¸¶¿ì½º ÈÙ·Î ÁÜÀÎ¾Æ¿ô
     int wheelDelta = Globals::Input().GetWheelScroll();
     if (wheelDelta != 0) {
         m_cameraDistance -= wheelDelta * 0.001f;
