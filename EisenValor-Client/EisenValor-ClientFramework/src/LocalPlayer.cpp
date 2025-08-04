@@ -18,25 +18,25 @@ void LocalPlayer::Update(float deltaTime)
     float moveSpeed = m_playerSpeed * deltaTime;
 
     // WASD �Է� ó��
-    if(Globals::Input().GetInput('W'))  // ����
+    if (Globals::Input().GetInput('W'))  // ����
     {
         m_x += forwardX * moveSpeed;
         m_z += forwardZ * moveSpeed;
         sendFlag = true;
     }
-    if(Globals::Input().GetInput('S'))  // ����
+    if (Globals::Input().GetInput('S'))  // ����
     {
         m_x -= forwardX * moveSpeed;
         m_z -= forwardZ * moveSpeed;
         sendFlag = true;
     }
-    if(Globals::Input().GetInput('A'))  // ���� �̵�
+    if (Globals::Input().GetInput('A'))  // ���� �̵�
     {
         m_x -= rightX * moveSpeed;
         m_z -= rightZ * moveSpeed;
         sendFlag = true;
     }
-    if(Globals::Input().GetInput('D'))  // ���� �̵�
+    if (Globals::Input().GetInput('D'))  // ���� �̵�
     {
         m_x += rightX * moveSpeed;
         m_z += rightZ * moveSpeed;
@@ -44,18 +44,18 @@ void LocalPlayer::Update(float deltaTime)
     }
 
     // ���� �̵� (H/L Ű)
-    if(Globals::Input().GetInput('H')) {
+    if (Globals::Input().GetInput('H')) {
         m_y -= moveSpeed;  // �Ʒ���
         sendFlag = true;
     }
-    if(Globals::Input().GetInput('L')) {
+    if (Globals::Input().GetInput('L')) {
         m_y += moveSpeed;  // ����
         sendFlag = true;
     }
 
     // ��ġ �����
     static float lastX = 0, lastY = 1, lastZ = 0;
-    if(m_x != lastX || m_z != lastZ) {
+    if (m_x != lastX || m_z != lastZ) {
         DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
             m_x, m_y, m_z);
         lastX = m_x; lastY = m_y; lastZ = m_z;
@@ -66,8 +66,8 @@ void LocalPlayer::Update(float deltaTime)
     // ���� ���콺 ��ġ
     auto mousePos = Globals::Input().GetMousePosition();
 
-    if(isLeftButtonPressed) {
-        if(!m_isMouseDragging) {
+    if (isLeftButtonPressed) {
+        if (!m_isMouseDragging) {
             m_isMouseDragging = true;
             m_lastMouseX = mousePos.x;  // ���� ��ġ ����
             m_lastMouseY = mousePos.y;
@@ -78,7 +78,7 @@ void LocalPlayer::Update(float deltaTime)
             float deltaX = mousePos.x - m_lastMouseX;
             float deltaY = mousePos.y - m_lastMouseY;
 
-            if(abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) {
+            if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) {
                 // ī�޶� ȸ�� ������Ʈ
                 m_cameraYaw += deltaX * m_mouseSensitivity;
                 m_cameraPitch += deltaY * m_mouseSensitivity;
@@ -96,7 +96,7 @@ void LocalPlayer::Update(float deltaTime)
         }
     }
     else {
-        if(m_isMouseDragging) {
+        if (m_isMouseDragging) {
             // �巡�� ����
             m_isMouseDragging = false;
             DEBUG_LOG_FMT("Camera drag ended\n");
@@ -105,12 +105,12 @@ void LocalPlayer::Update(float deltaTime)
 
     //���콺 �ٷ� ���ξƿ�
     int wheelDelta = Globals::Input().GetWheelScroll();
-    if(wheelDelta != 0) {
+    if (wheelDelta != 0) {
         m_cameraDistance -= wheelDelta * 0.001f;
         m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
     }
 
-    if(sendFlag) {
+    if (sendFlag) {
         const FB_STRUCTS::Vec3 pos{ m_x, m_y, m_z };
         const FB_STRUCTS::Vec3 rot{ 0.f, m_yaw, 0.f };
         const auto packetData = NetBridge::ServerPacketHandler::Make_CS_PLAYER_MOVE_PACKET(&pos, &rot);
