@@ -7,3 +7,9 @@ struct Vec3{
 	y: float;
 	z: float;
 }
+
+struct SoldierInfo {
+	soldier_id: uint;
+	pos: Vec3;
+	rot: Vec3;
+}

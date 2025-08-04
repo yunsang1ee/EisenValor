@@ -8,7 +8,7 @@
 #include "LocalPlayer.h"
 #include "Ground.h"
 using namespace DirectX;
-//#define SERVER
+#define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
