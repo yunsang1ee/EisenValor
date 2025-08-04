@@ -7,7 +7,7 @@ using namespace DirectX;
 void LocalPlayer::Update(float deltaTime)
 {
     // GameFramework에서 플레이어 업데이트 코드를 여기로 옮김
-  // 플레이어 바라보는 방향 벡터 계산
+    // 플레이어 바라보는 방향 벡터 계산
     float forwardX = sinf(m_cameraYaw);
     float forwardZ = cosf(m_cameraYaw);
 

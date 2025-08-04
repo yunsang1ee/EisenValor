@@ -22,13 +22,11 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_hWnd = hwnd;
 
 	Globals::InitializeGlobalRegistry();
-
 	Globals::Timer().Initialize();
 	Globals::Timer().SetFixedFPS(60);
 	Globals::Timer().SetTargetFPS(144);
 
 	// 1. 스왑체인 생성 코드 추가 25.07.19
-
 	// RTV 디스크립터 힙 생성
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 
@@ -36,7 +34,6 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.NumDescriptors = 3;  // 백버퍼 3개
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -301,7 +298,6 @@ void GameFramework::Render()
 	// 현재 백버퍼 가져오기
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
-
 	// 백버퍼를 렌더 타겟으로 전환(Resource barrier)
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -310,7 +306,6 @@ void GameFramework::Render()
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
 	// 렌더 타겟 설정
@@ -327,11 +322,9 @@ void GameFramework::Render()
 	viewport.Height = static_cast<float>(m_swapChain->GetHeight());
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
-
 	D3D12_RECT scissorRect = {};
 	scissorRect.right = static_cast<LONG>(m_swapChain->GetWidth());
 	scissorRect.bottom = static_cast<LONG>(m_swapChain->GetHeight());
-
 	context.CommandList()->RSSetViewports(1, &viewport);
 	context.CommandList()->RSSetScissorRects(1, &scissorRect);
 
