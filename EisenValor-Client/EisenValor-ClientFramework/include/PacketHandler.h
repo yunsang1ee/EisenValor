@@ -105,7 +105,7 @@ public:
 	template <typename T>
 	struct PacketArgTraits;
 
-	// ÆÐÅ¶ ¸¸µå´Â ºÎºÐ
+	// íŒ¨í‚· ë§Œë“œëŠ” ë¶€ë¶„
 	template <typename PacketFunc, typename... Args>
 	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args)
 	{
@@ -130,7 +130,7 @@ public:
 
 #pragma region CS_LOGIN_PACKET
 	template <typename... Args>
-	[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
+	[[nodiscard("ë°˜í™˜ê°’ ì ˆëŒ€ ë¬´ì‹œí•˜ì§€ ë§ˆì„¸ìš”.")]]
 	static flatbuffers::DetachedBuffer Make_CS_LOGIN_PACKET(Args&&... args)
 	{
 		// static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly
@@ -153,7 +153,7 @@ public:
 	// static constexpr bool is_valid_packet_args_v = PacketArgTraits<PacketTag>::template ValidArgs<Args...>;
 
 	template <typename... Args>
-	[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
+	[[nodiscard("ë°˜í™˜ê°’ ì ˆëŒ€ ë¬´ì‹œí•˜ì§€ ë§ˆì„¸ìš”.")]]
 	static flatbuffers::DetachedBuffer Make_CS_CHAT_PACKET(Args&&... args)
 	{
 		// static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly
@@ -166,7 +166,7 @@ public:
 
 #pragma region CS_ENTER_MATCH_PACKET
 	template <typename... Args>
-	[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
+	[[nodiscard("ë°˜í™˜ê°’ ì ˆëŒ€ ë¬´ì‹œí•˜ì§€ ë§ˆì„¸ìš”.")]]
 	static flatbuffers::DetachedBuffer Make_CS_ENTER_MATCH_PACKET(Args&&... args)
 	{
 		return MakePacket(FB_TABLES::CreateCS_ENTER_MATCH_PACKET, std::forward<Args>(args)...);
@@ -175,7 +175,7 @@ public:
 
 #pragma region CS_PLAYER_MOVE_PACKET
 	template <typename... Args>
-	[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
+	[[nodiscard("ë°˜í™˜ê°’ ì ˆëŒ€ ë¬´ì‹œí•˜ì§€ ë§ˆì„¸ìš”.")]]
 	static flatbuffers::DetachedBuffer Make_CS_PLAYER_MOVE_PACKET(Args&&... args)
 	{
 		return MakePacket(FB_TABLES::CreateCS_PLAYER_MOVE_PACKET, std::forward<Args>(args)...);

@@ -9,20 +9,20 @@ public:
 	Player() = default;
 	virtual ~Player() = default;
 
-	// GameObject ¼ø¼ö °¡»ó ÇÔ¼ö ±¸Çö
+	// GameObject ìˆœìˆ˜ ê°€ìƒ í•¨ìˆ˜ êµ¬í˜„
 	virtual void Initialize(ID3D12Device* device) override;
 	virtual void Update(float deltaTime) override;
 	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 		override;
 
-	// GameObjectÀÇ ObjectType ¹İÈ¯
+	// GameObjectì˜ ObjectType ë°˜í™˜
 	virtual ObjectType GetObjectType() const override { return ObjectType::Player; }
 
-	// Player Àü¿ë ÇÔ¼öµé
+	// Player ì „ìš© í•¨ìˆ˜ë“¤
 	void  SetSpeed(float speed) { m_playerSpeed = speed; }
 	float GetSpeed() const { return m_playerSpeed; }
 
-	// Ä«¸Ş¶ó °ü·Ã ÇÔ¼öµé Ãß°¡
+	// ì¹´ë©”ë¼ ê´€ë ¨ í•¨ìˆ˜ë“¤ ì¶”ê°€
 	float GetCameraYaw() const { return m_cameraYaw; }
 	float GetCameraPitch() const { return m_cameraPitch; }
 	float GetCameraDistance() const { return m_cameraDistance; }
@@ -31,35 +31,35 @@ public:
 	void SetCameraPitch(float pitch) { m_cameraPitch = pitch; }
 	void SetCameraDistance(float distance) { m_cameraDistance = distance; }
 
-	// Ä«¸Ş¶ó °ü·Ã ÇÔ¼ö Ãß°¡
+	// ì¹´ë©”ë¼ ê´€ë ¨ í•¨ìˆ˜ ì¶”ê°€
 	DirectX::XMMATRIX GetViewMatrix() const;
 
 protected:
-	// ÇÃ·¹ÀÌ¾î ¼Ó¼º
-	float m_playerSpeed = 5.0f; // ÀÌµ¿ ¼Óµµ
+	// í”Œë ˆì´ì–´ ì†ì„±
+	float m_playerSpeed = 5.0f; // ì´ë™ ì†ë„
 
-	// Ä«¸Ş¶ó °ü·Ã º¯¼öµé Ãß°¡
+	// ì¹´ë©”ë¼ ê´€ë ¨ ë³€ìˆ˜ë“¤ ì¶”ê°€
 	bool  m_isMouseDragging = false;
-	float m_cameraYaw = 0.0f;	// ÁÂ¿ì
-	float m_cameraPitch = 0.0f; // À§¾Æ·¡
+	float m_cameraYaw = 0.0f;	// ì¢Œìš°
+	float m_cameraPitch = 0.0f; // ìœ„ì•„ë˜
 	float m_cameraDistance = 15.0f;
 	float m_mouseSensitivity = 0.005f;
 	float m_lastMouseX = 0.0f;
 	float m_lastMouseY = 0.0f;
 
-	// ·»´õ¸µ ¸®¼Ò½ºµé
+	// ë Œë”ë§ ë¦¬ì†ŒìŠ¤ë“¤
 	ComPtr<ID3D12Resource>	 m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
 	ComPtr<ID3D12Resource>	m_indexBuffer;
 	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 
-	// »ó¼ö ¹öÆÛ Ãß°¡ 25.07.20
+	// ìƒìˆ˜ ë²„í¼ ì¶”ê°€ 25.07.20
 	ComPtr<ID3D12Resource> m_constantBuffer;
 	ConstantBuffer		   m_constantBufferData;
-	UINT8*				   m_pCbvDataBegin = nullptr; // ½ÃÀÛ ÁÖ¼Ò
+	UINT8*				   m_pCbvDataBegin = nullptr; // ì‹œì‘ ì£¼ì†Œ
 
-	ComPtr<ID3D12Resource> m_constantBuffer3; // Ç¥½Ãµî
+	ComPtr<ID3D12Resource> m_constantBuffer3; // í‘œì‹œë“±
 	ConstantBuffer		   m_constantBufferData3;
 	UINT8*				   m_pCbvDataBegin3 = nullptr;
 };

@@ -125,7 +125,7 @@ bool Handle_SC_REMOVE_PLAYER_INFO(const SOCKET& socket, const FB_TABLES::SC_REMO
 bool Handle_SC_ENTER_MATCH_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_MATCH_PACKET& recvPkt)
 {
 	// TODO: Handle_SC_ENTER_MATCH_PACKET
-	// TODO: ¼­¹ö·ÎºÎÅÍ À§Ä¡ ¹Þ±â.
+	// TODO: ì„œë²„ë¡œë¶€í„° ìœ„ì¹˜ ë°›ê¸°.
 
 	return true;
 }

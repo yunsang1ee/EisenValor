@@ -1,4 +1,4 @@
-﻿#include "stdafxClientFramework.h"
+#include "stdafxClientFramework.h"
 #include "DxSwapChain.h"
 #include <DxCommandQueueGlobal.h>
 
