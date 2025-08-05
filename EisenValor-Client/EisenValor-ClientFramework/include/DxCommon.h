@@ -39,10 +39,10 @@ private:
 	std::string m_expression;
 };
 
-// MVP Çà·Ä Ãß°¡(»ó¼ö¹öÆÛ) 25.07.20
+// MVP í–‰ë ¬ ì¶”ê°€(ìƒìˆ˜ë²„í¼) 25.07.20
 struct ConstantBuffer
 {
-	DirectX::XMFLOAT4X4 mvp; // Model-View-Projection Çà·Ä
+	DirectX::XMFLOAT4X4 mvp; // Model-View-Projection í–‰ë ¬
 							 // XMat4x4
 };
 

@@ -12,18 +12,18 @@ public:
 	void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection);
 
 private:
-	// ·»´õ¸µ ¸®¼Ò½º
+	// ë Œë”ë§ ë¦¬ì†ŒìŠ¤
 	ComPtr<ID3D12Resource>	 m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 	ComPtr<ID3D12Resource>	 m_indexBuffer;
 	D3D12_INDEX_BUFFER_VIEW	 m_indexBufferView;
 
-	// »ó¼ö ¹öÆÛ
+	// ìƒìˆ˜ ë²„í¼
 	ComPtr<ID3D12Resource> m_constantBuffer;
 	ConstantBuffer		   m_constantBufferData;
 	UINT8*				   m_pCbvDataBegin = nullptr;
 
-	// Å©±â ¹× À§Ä¡
+	// í¬ê¸° ë° ìœ„ì¹˜
 	float			  m_width = 20.0f;
 	float			  m_height = 0.2f;
 	float			  m_depth = 20.0f;
