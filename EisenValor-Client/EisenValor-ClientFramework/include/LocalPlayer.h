@@ -2,10 +2,11 @@
 
 #include "Player.h"
 
-class LocalPlayer : public Player {
+class LocalPlayer : public Player
+{
 private:
-	bool sendFlag{ false };
+	bool sendFlag{false};
+
 public:
 	virtual void Update(float deltaTime) override;
 };
-

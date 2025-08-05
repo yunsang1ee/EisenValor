@@ -15,18 +15,17 @@ DxGraphicsCommandQueueGlobal::~DxGraphicsCommandQueueGlobal()
 void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 {
 	assert(device && "[DxGraphicsCommandQueueGlobal] device is null");
-    m_device = device;
+	m_device = device;
 
 	D3D12_COMMAND_QUEUE_DESC desc = {
-	    .Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-	    .Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
-    };
+		.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+		.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
+	};
 
 	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_commandQueue)));
 	m_commandQueue->SetName(L"GfxQueue");
 
-	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-		IID_PPV_ARGS(&m_idleFence)));
+	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_idleFence)));
 	m_idleEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	assert(m_idleEvent && "Failed to create fence event");
 
@@ -35,15 +34,15 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 
 void DxGraphicsCommandQueueGlobal::Release()
 {
-    if (m_idleEvent)
+	if (m_idleEvent)
 	{
-        CloseHandle(m_idleEvent);
-        m_idleEvent = nullptr;
-    }
-    m_commandQueue.Reset();
-    m_idleFence.Reset();
-    m_device = nullptr;
-    m_idleValue = 0;
+		CloseHandle(m_idleEvent);
+		m_idleEvent = nullptr;
+	}
+	m_commandQueue.Reset();
+	m_idleFence.Reset();
+	m_device = nullptr;
+	m_idleValue = 0;
 }
 
 void DxGraphicsCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
@@ -70,12 +69,12 @@ void DxGraphicsCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
 
 void DxGraphicsCommandQueueGlobal::WaitForIdle()
 {
-    const uint64_t waitValue = ++m_idleValue;
-    ThrowIfFailed(m_commandQueue->Signal(m_idleFence.Get(), waitValue));
+	const uint64_t waitValue = ++m_idleValue;
+	ThrowIfFailed(m_commandQueue->Signal(m_idleFence.Get(), waitValue));
 
-    if (m_idleFence->GetCompletedValue() < waitValue)
-    {
-        ThrowIfFailed(m_idleFence->SetEventOnCompletion(waitValue, m_idleEvent));
-        ::WaitForSingleObject(m_idleEvent, INFINITE);
-    }
+	if (m_idleFence->GetCompletedValue() < waitValue)
+	{
+		ThrowIfFailed(m_idleFence->SetEventOnCompletion(waitValue, m_idleEvent));
+		::WaitForSingleObject(m_idleEvent, INFINITE);
+	}
 }

@@ -34,7 +34,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.NumDescriptors = 3;  // 백버퍼 3개
+	rtvHeapDesc.NumDescriptors = 3; // 백버퍼 3개
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
@@ -50,30 +50,22 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	auto& commandQueue = GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>();
 
 	m_swapChain = std::make_unique<DxSwapChain>(
-		device.GetDevice(),
-		device.GetFactory(),
-		commandQueue,
-		m_hWnd,
-		width,
-		height,
+		device.GetDevice(), device.GetFactory(), commandQueue, m_hWnd, width, height,
 		3, // 백버퍼 개수
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-		m_rtvDescriptorSize
+		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
 
 	// 커맨드 컨텍스트 풀 생성
 	m_commandContextPool = std::make_unique<DxCommandContextPool>(
-		device.GetDevice(),
-		commandQueue,
-		3	//백버퍼 개수
+		device.GetDevice(), commandQueue,
+		3 // 백버퍼 개수
 	);
 
 
 	// 루트 파라미터 정의 (상수 버퍼용)
 	D3D12_ROOT_PARAMETER rootParameter = {};
 	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 상수 버퍼 뷰
-	rootParameter.Descriptor.ShaderRegister = 0;  // register(b0)
+	rootParameter.Descriptor.ShaderRegister = 0;				 // register(b0)
 	rootParameter.Descriptor.RegisterSpace = 0;
 	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
 
@@ -88,7 +80,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-	ThrowIfFailed(device.GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+	ThrowIfFailed(device.GetDevice()->CreateRootSignature(
+		0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)
+	));
 
 	// 4. 셰이더 컴파일 (Simple)
 	ComPtr<ID3DBlob> vertexShader;
@@ -102,21 +96,27 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 #endif
 
 	// 셰이더 파일에서 컴파일
-	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-	ThrowIfFailed(D3DCompileFromFile(L"../EisenValor/Resource/Shader/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(
+		L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0,
+		&vertexShader, nullptr
+	));
+	ThrowIfFailed(D3DCompileFromFile(
+		L"../EisenValor/Resource/Shader/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0,
+		&pixelShader, nullptr
+	));
 
 	// 5. 입력 레이아웃 정의
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 	};
 
 	// PS 생성하기
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
 	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
-	psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
+	psoDesc.VS = {reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize()};
+	psoDesc.PS = {reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize()};
 	psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
@@ -140,7 +140,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	pw = "PW";
 
 	const auto packetData = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-	auto packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_LOGIN, packetData);
+	auto	   packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_LOGIN, packetData);
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(packetBuffer));
 
 	// Ground 객체 생성 및 초기화
@@ -153,8 +153,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	// player->Initialize(device.GetDevice());
 	// m_player = player.get();
 
-	//Objects들 추가
-	// m_gameObjects.push_back(std::move(player));
+	// Objects들 추가
+	//  m_gameObjects.push_back(std::move(player));
 
 	return true;
 }
@@ -187,9 +187,9 @@ void GameFramework::Release()
 
 LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
 {
-	WORD keyflags;
-	bool isPressed;
-	bool isUp;
+	WORD	  keyflags;
+	bool	  isPressed;
+	bool	  isUp;
 	InputCode code;
 
 	switch (message)
@@ -274,19 +274,16 @@ void GameFramework::Update()
 	MANAGER(GameObjectManager)->Update(dt);
 }
 
-void GameFramework::FixedUpdate()
-{
-}
+void GameFramework::FixedUpdate() {}
 
-void GameFramework::LateUpdate()
-{
-}
+void GameFramework::LateUpdate() {}
 
-//Render 코드 생성 25.07.20
+// Render 코드 생성 25.07.20
 void GameFramework::Render()
 {
 	auto localPlayer = MANAGER(GameObjectManager)->GetLocalPlayer();
-	if(localPlayer == nullptr) return;
+	if (localPlayer == nullptr)
+		return;
 
 	// 현재 프레임 준비
 	m_commandContextPool->AdvanceFrame();
@@ -296,10 +293,10 @@ void GameFramework::Render()
 
 	//// 투영 행렬
 	XMMATRIX projection = XMMatrixPerspectiveFovLH(
-		XM_PI / 4.0f,                                    // 45도 시야각
+		XM_PI / 4.0f,											   // 45도 시야각
 		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // 종횡비
-		0.1f,                                           // 가까운 클리핑 평면
-		100.0f                                          // 먼 클리핑 평면
+		0.1f,													   // 가까운 클리핑 평면
+		100.0f													   // 먼 클리핑 평면
 	);
 
 	// 현재 백버퍼 가져오기
@@ -320,7 +317,7 @@ void GameFramework::Render()
 	// 렌더 타겟 설정
 	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 	// 화면을 파란색으로 클리어
-	float clearColor[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // 파란색
+	float clearColor[] = {0.0f, 0.0f, 1.0f, 1.0f}; // 파란색
 	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	// 뷰포트 설정
@@ -357,8 +354,6 @@ void GameFramework::Render()
 
 	// 커맨드 실행
 	m_commandContextPool->SignalCurrentFrame();
-	
+
 	m_swapChain->PresentMaxPerformance();
 }
-
-
