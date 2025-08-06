@@ -6,157 +6,181 @@
 using namespace DirectX;
 
 void Player::Initialize(ID3D12Device* device)
-{						 // íë¸Œ ë²„í…ìŠ¤ ë°ì´í„° (GameFrameworkì—ì„œ ì‚¬ìš©í•˜ë˜ ê²ƒê³¼ ë™ì¼)
-	Vertex vertices[] = {// ì „ë©´
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)},
-						 // í›„ë©´
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)}
-	};
+{ // Å¥ºê ¹öÅØ½º µ¥ÀÌÅÍ (GameFramework¿¡¼­ »ç¿ëÇÏ´ø °Í°ú µ¿ÀÏ)
+    Vertex vertices[] = {
+        // Àü¸é
+        { DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(-0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { DirectX::XMFLOAT3(0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
+        // ÈÄ¸é
+        { DirectX::XMFLOAT3(-0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(-0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
+        { DirectX::XMFLOAT3(0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f) },
+        { DirectX::XMFLOAT3(0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) }
+    };
 
-	// ì¸ë±ìŠ¤ ë°ì´í„°
-	UINT indices[] = {// ì „ë©´
-					  0, 1, 2, 0, 2, 3,
-					  // í›„ë©´
-					  4, 6, 5, 4, 7, 6,
-					  // ì¢Œì¸¡ë©´
-					  0, 5, 1, 0, 4, 5,
-					  // ìš°ì¸¡ë©´
-					  3, 2, 6, 3, 6, 7,
-					  // ìƒë‹¨
-					  1, 5, 6, 1, 6, 2,
-					  // í•˜ë‹¨
-					  0, 3, 7, 0, 7, 4
-	};
+    // ÀÎµ¦½º µ¥ÀÌÅÍ
+    UINT indices[] = {
+        // Àü¸é
+        0, 1, 2,  0, 2, 3,
+        // ÈÄ¸é  
+        4, 6, 5,  4, 7, 6,
+        // ÁÂÃø¸é
+        0, 5, 1,  0, 4, 5,
+        // ¿ìÃø¸é
+        3, 2, 6,  3, 6, 7,
+        // »ó´Ü
+        1, 5, 6,  1, 6, 2,
+        // ÇÏ´Ü
+        0, 3, 7,  0, 7, 4
+    };
 
-	// ë²„í…ìŠ¤ ë²„í¼ ìƒì„±
-	const UINT			  vertexBufferSize = sizeof(vertices);
-	D3D12_HEAP_PROPERTIES heapProps = {};
-	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+    // ¹öÅØ½º ¹öÆÛ »ý¼º
+    const UINT vertexBufferSize = sizeof(vertices);
+    D3D12_HEAP_PROPERTIES heapProps = {};
+    heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-	D3D12_RESOURCE_DESC bufferDesc = {};
-	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	bufferDesc.Width = vertexBufferSize;
-	bufferDesc.Height = 1;
-	bufferDesc.DepthOrArraySize = 1;
-	bufferDesc.MipLevels = 1;
-	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-	bufferDesc.SampleDesc.Count = 1;
-	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    D3D12_RESOURCE_DESC bufferDesc = {};
+    bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    bufferDesc.Width = vertexBufferSize;
+    bufferDesc.Height = 1;
+    bufferDesc.DepthOrArraySize = 1;
+    bufferDesc.MipLevels = 1;
+    bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+    bufferDesc.SampleDesc.Count = 1;
+    bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)
-	));
+    ThrowIfFailed(device->CreateCommittedResource(
+        &heapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_vertexBuffer)
+    ));
 
-	// ë²„í…ìŠ¤ ë°ì´í„° ë³µì‚¬
-	UINT8*		pVertexDataBegin;
-	D3D12_RANGE readRange = {0, 0};
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, vertices, sizeof(vertices));
-	m_vertexBuffer->Unmap(0, nullptr);
+    // ¹öÅØ½º µ¥ÀÌÅÍ º¹»ç
+    UINT8* pVertexDataBegin;
+    D3D12_RANGE readRange = { 0, 0 };
+    ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+    memcpy(pVertexDataBegin, vertices, sizeof(vertices));
+    m_vertexBuffer->Unmap(0, nullptr);
 
-	// ë²„í…ìŠ¤ ë²„í¼ ë·° ì„¤ì •
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = vertexBufferSize;
+    // ¹öÅØ½º ¹öÆÛ ºä ¼³Á¤
+    m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+    m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+    m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
-	// ì¸ë±ìŠ¤ ë²„í¼ ìƒì„±
-	const UINT indexBufferSize = sizeof(indices);
-	bufferDesc.Width = indexBufferSize;
+    // ÀÎµ¦½º ¹öÆÛ »ý¼º
+    const UINT indexBufferSize = sizeof(indices);
+    bufferDesc.Width = indexBufferSize;
 
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)
-	));
+    ThrowIfFailed(device->CreateCommittedResource(
+        &heapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_indexBuffer)
+    ));
 
-	// ì¸ë±ìŠ¤ ë°ì´í„° ë³µì‚¬
-	UINT8* pIndexDataBegin;
-	ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-	memcpy(pIndexDataBegin, indices, sizeof(indices));
-	m_indexBuffer->Unmap(0, nullptr);
+    // ÀÎµ¦½º µ¥ÀÌÅÍ º¹»ç
+    UINT8* pIndexDataBegin;
+    ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+    memcpy(pIndexDataBegin, indices, sizeof(indices));
+    m_indexBuffer->Unmap(0, nullptr);
 
-	// ì¸ë±ìŠ¤ ë²„í¼ ë·° ì„¤ì •
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_indexBufferView.SizeInBytes = indexBufferSize;
+    // ÀÎµ¦½º ¹öÆÛ ºä ¼³Á¤
+    m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+    m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    m_indexBufferView.SizeInBytes = indexBufferSize;
 
-	// í”Œë ˆì´ì–´ ìƒìˆ˜ ë²„í¼ ìƒì„±
-	const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
-	bufferDesc.Width = constantBufferSize;
+    // ÇÃ·¹ÀÌ¾î »ó¼ö ¹öÆÛ »ý¼º
+    const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
+    bufferDesc.Width = constantBufferSize;
 
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)
-	));
+    ThrowIfFailed(device->CreateCommittedResource(
+        &heapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_constantBuffer)
+    ));
 
-	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
 
-	// í‘œì‹œë“± ìƒìˆ˜ ë²„í¼ ìƒì„±
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_constantBuffer3)
-	));
+    // Ç¥½Ãµî »ó¼ö ¹öÆÛ »ý¼º
+    ThrowIfFailed(device->CreateCommittedResource(
+        &heapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &bufferDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&m_constantBuffer3)
+    ));
 
-	ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
+    ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
 }
 
-void Player::Update(float deltaTime) {}
-
-void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
+void Player::Update(float deltaTime)
 {
-	// ë²„í…ìŠ¤ ë° ì¸ë±ìŠ¤ ë²„í¼ ì„¤ì •
-	cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	cmdList->IASetIndexBuffer(&m_indexBufferView);
-	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // í”Œë ˆì´ì–´ íë¸Œ ë Œë”ë§
+}
+
+void Player::Render(ID3D12GraphicsCommandList* cmdList,
+    DirectX::XMMATRIX view,
+    DirectX::XMMATRIX projection)
+{
+    // ¹öÅØ½º ¹× ÀÎµ¦½º ¹öÆÛ ¼³Á¤
+    cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    cmdList->IASetIndexBuffer(&m_indexBufferView);
+    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // ÇÃ·¹ÀÌ¾î Å¥ºê ·»´õ¸µ
     DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
     DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_yaw);
     DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_x, m_y, m_z);
     DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
     DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
 
-	// í”Œë ˆì´ì–´ ìƒìˆ˜ ë²„í¼ì— ë³µì‚¬
-	DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(playerMVP));
-	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+    // ÇÃ·¹ÀÌ¾î »ó¼ö ¹öÆÛ¿¡ º¹»ç
+    DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(playerMVP));
+    memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 
-	// í”Œë ˆì´ì–´ íë¸Œ ê·¸ë¦¬ê¸°
-	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
-	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+    // ÇÃ·¹ÀÌ¾î Å¥ºê ±×¸®±â
+    cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
+    cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
-	// í‘œì‹œë“± íë¸Œ ë Œë”ë§
-	DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.2f, 0.2f);
-	DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f);
-	DirectX::XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
-	DirectX::XMMATRIX markerMVP = markerWorld * view * projection;
+    // Ç¥½Ãµî Å¥ºê ·»´õ¸µ
+    DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.2f, 0.2f);
+    DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f);
+    DirectX::XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
+    DirectX::XMMATRIX markerMVP = markerWorld * view * projection;
 
-	// í‘œì‹œë“± ìƒìˆ˜ ë²„í¼ì— ì—…ë°ì´íŠ¸
-	DirectX::XMStoreFloat4x4(&m_constantBufferData3.mvp, DirectX::XMMatrixTranspose(markerMVP));
-	memcpy(m_pCbvDataBegin3, &m_constantBufferData3, sizeof(m_constantBufferData3));
+    // Ç¥½Ãµî »ó¼ö ¹öÆÛ¿¡ ¾÷µ¥ÀÌÆ®
+    DirectX::XMStoreFloat4x4(&m_constantBufferData3.mvp, DirectX::XMMatrixTranspose(markerMVP));
+    memcpy(m_pCbvDataBegin3, &m_constantBufferData3, sizeof(m_constantBufferData3));
 
-	// í‘œì‹œë“± íë¸Œ ê·¸ë¦¬ê¸°
-	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
-	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+    // Ç¥½Ãµî Å¥ºê ±×¸®±â
+    cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
+    cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
 {
-	float camX = m_x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
-	float camY = m_y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
-	float camZ = m_z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
+    float camX = m_x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
+    float camY = m_y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
+    float camZ = m_z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
 
-	float lookX = m_x + 2.0f * sinf(m_cameraYaw);
-	float lookY = m_y + 1.0f + 2.0f * sinf(m_cameraPitch);
-	float lookZ = m_z + 2.0f * cosf(m_cameraYaw);
+    float lookX = m_x + 2.0f * sinf(m_cameraYaw);
+    float lookY = m_y + 1.0f + 2.0f * sinf(m_cameraPitch);
+    float lookZ = m_z + 2.0f * cosf(m_cameraYaw);
 
-	return DirectX::XMMatrixLookAtLH(
-		DirectX::XMVectorSet(camX, camY, camZ, 0.0f), DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),
-		DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-	);
+    return DirectX::XMMatrixLookAtLH(
+        DirectX::XMVectorSet(camX, camY, camZ, 0.0f),
+        DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),
+        DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+    );
 }

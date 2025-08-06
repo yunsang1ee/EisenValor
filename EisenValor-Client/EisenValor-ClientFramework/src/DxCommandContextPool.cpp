@@ -10,9 +10,10 @@ DxCommandContextPool::FrameEntry::FrameEntry(ID3D12Device* device, D3D12_COMMAND
 	fence.Get()->SetName((L"FrameEntryFence_" + std::to_wstring(frameIndex)).c_str());
 }
 
-DxCommandContextPool::DxCommandContextPool(
-	ID3D12Device* device, IDxGraphicsCommandQueueGlobal& queue, uint32_t numFrames, D3D12_COMMAND_LIST_TYPE type
-)
+DxCommandContextPool::DxCommandContextPool(	ID3D12Device* device,
+											IDxGraphicsCommandQueueGlobal& queue,
+											uint32_t numFrames,
+											D3D12_COMMAND_LIST_TYPE type)
 	: m_queue(queue), m_type(type)
 {
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);

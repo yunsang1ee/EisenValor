@@ -21,8 +21,7 @@ void TimerGlobal::Update()
 		m_curTime = clock::now();
 		auto frameEndTimeTarget = m_prevTime + std::chrono::duration<float>(m_targetDeltaTime);
 
-		while (clock::now() < frameEndTimeTarget)
-			;
+		while (clock::now() < frameEndTimeTarget);
 	}
 	m_curTime = clock::now();
 	m_deltaTime = std::chrono::duration<float>(m_curTime - m_prevTime).count();
@@ -30,7 +29,7 @@ void TimerGlobal::Update()
 	m_prevTime = m_curTime;
 	m_runTime += m_deltaTime;
 	m_accumulator += m_deltaTime;
-
+	
 	m_frameCount++;
 	m_lastFrameTime += m_deltaTime;
 	if (m_lastFrameTime >= 1.0f)

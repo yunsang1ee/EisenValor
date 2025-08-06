@@ -48,6 +48,9 @@ struct CS_PLAYER_MOVE_PACKETBuilder;
 struct SC_PLAYER_MOVE_PACKET;
 struct SC_PLAYER_MOVE_PACKETBuilder;
 
+struct SC_SOLDIER_INFO_PACKET;
+struct SC_SOLDIER_INFO_PACKETBuilder;
+
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -498,8 +501,8 @@ struct SC_PLAYER_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Ta
     VT_POS = 6,
     VT_ROT = 8
   };
-  uint16_t player_id() const {
-    return GetField<uint16_t>(VT_PLAYER_ID, 0);
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
   }
   const FB_STRUCTS::Vec3 *pos() const {
     return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
@@ -509,7 +512,7 @@ struct SC_PLAYER_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Ta
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint16_t>(verifier, VT_PLAYER_ID, 2) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
            VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
            verifier.EndTable();
@@ -520,8 +523,8 @@ struct SC_PLAYER_MOVE_PACKETBuilder {
   typedef SC_PLAYER_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_player_id(uint16_t player_id) {
-    fbb_.AddElement<uint16_t>(SC_PLAYER_MOVE_PACKET::VT_PLAYER_ID, player_id, 0);
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(SC_PLAYER_MOVE_PACKET::VT_PLAYER_ID, player_id, 0);
   }
   void add_pos(const FB_STRUCTS::Vec3 *pos) {
     fbb_.AddStruct(SC_PLAYER_MOVE_PACKET::VT_POS, pos);
@@ -542,7 +545,7 @@ struct SC_PLAYER_MOVE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET> CreateSC_PLAYER_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t player_id = 0,
+    uint32_t player_id = 0,
     const FB_STRUCTS::Vec3 *pos = nullptr,
     const FB_STRUCTS::Vec3 *rot = nullptr) {
   SC_PLAYER_MOVE_PACKETBuilder builder_(_fbb);
@@ -550,6 +553,57 @@ inline ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET> CreateSC_PLAYER_MOVE_PACKET(
   builder_.add_pos(pos);
   builder_.add_player_id(player_id);
   return builder_.Finish();
+}
+
+struct SC_SOLDIER_INFO_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_SOLDIER_INFO_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_INFO = 4
+  };
+  const ::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *> *info() const {
+    return GetPointer<const ::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *> *>(VT_INFO);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_INFO) &&
+           verifier.VerifyVector(info()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_SOLDIER_INFO_PACKETBuilder {
+  typedef SC_SOLDIER_INFO_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_info(::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *>> info) {
+    fbb_.AddOffset(SC_SOLDIER_INFO_PACKET::VT_INFO, info);
+  }
+  explicit SC_SOLDIER_INFO_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET> CreateSC_SOLDIER_INFO_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *>> info = 0) {
+  SC_SOLDIER_INFO_PACKETBuilder builder_(_fbb);
+  builder_.add_info(info);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET> CreateSC_SOLDIER_INFO_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<FB_STRUCTS::SoldierInfo> *info = nullptr) {
+  auto info__ = info ? _fbb.CreateVectorOfStructs<FB_STRUCTS::SoldierInfo>(*info) : 0;
+  return FB_TABLES::CreateSC_SOLDIER_INFO_PACKET(
+      _fbb,
+      info__);
 }
 
 }  // namespace FB_TABLES

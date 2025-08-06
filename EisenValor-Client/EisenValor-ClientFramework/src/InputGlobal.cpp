@@ -1,7 +1,9 @@
 #include "stdafxClientFramework.h"
 #include "InputGlobal.h"
 
-void InputGlobal::Initialize() {}
+void InputGlobal::Initialize()
+{
+}
 
 void InputGlobal::BeforeUpdate()
 {
@@ -10,22 +12,17 @@ void InputGlobal::BeforeUpdate()
 	for (const auto& [keyIndex, isPressed, isUp] : m_InputEventsFront)
 	{
 		uint8_t mask = 0;
-		if (not isPressed && not isUp)
-			mask = DInputBits::Down | DInputBits::Pressed;
-		else if (isPressed && not isUp)
-			mask = DInputBits::Pressed;
-		else if (isUp)
-			mask = DInputBits::Up;
+		if (not isPressed && not isUp)	mask = DInputBits::Down | DInputBits::Pressed;
+		else if (isPressed && not isUp)	mask = DInputBits::Pressed;
+		else if (isUp)					mask = DInputBits::Up;
+		
+		m_InputState[keyIndex] = 
+			(m_InputState[keyIndex] & ~(DInputBits::Down | DInputBits::Up)) | mask;
 
-		m_InputState[keyIndex] = (m_InputState[keyIndex] & ~(DInputBits::Down | DInputBits::Up)) | mask;
-
-		DEBUG_LOG_FMT(
-			"{:#X}\t{:#} | {:}\n", keyIndex, keyIndex,
-			(m_InputState[keyIndex] & DInputBits::Down)		 ? "Down"
-			: (m_InputState[keyIndex] & DInputBits::Up)		 ? "Up"
-			: (m_InputState[keyIndex] & DInputBits::Pressed) ? "Pressed"
-															 : ""
-		);
+		DEBUG_LOG_FMT("{:#X}\t{:#} | {:}\n", keyIndex, keyIndex
+			, (m_InputState[keyIndex] & DInputBits::Down) ? "Down"
+			: (m_InputState[keyIndex] & DInputBits::Up) ? "Up"
+			: (m_InputState[keyIndex] & DInputBits::Pressed) ? "Pressed" : "");
 	}
 }
 
@@ -39,6 +36,5 @@ void InputGlobal::AfterUpdate()
 			m_InputState[keyIndex] &= ~DInputBits::Down;
 	}
 	m_MouseState.wheelDelta = 0;
-	m_MouseState.deltaX = 0;
-	m_MouseState.deltaY = 0;
+	m_MouseState.deltaX = 0; m_MouseState.deltaY = 0;
 }

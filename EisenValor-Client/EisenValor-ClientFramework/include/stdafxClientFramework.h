@@ -1,4 +1,4 @@
-// stdafx.h : 자주 사용하지만 자주 변경되지는 않는
+﻿// stdafx.h : 자주 사용하지만 자주 변경되지는 않는
 // 표준 시스템 포함 파일 및 프로젝트 관련 포함 파일이
 // 들어 있는 포함 파일입니다.
 //
@@ -6,25 +6,25 @@
 #pragma once
 
 #pragma region Preprocessor Macro
-#define WIN32_LEAN_AND_MEAN // 거의 사용되지 않는 내용은 Windows 헤더에서 제외합니다.
+#define WIN32_LEAN_AND_MEAN		// 거의 사용되지 않는 내용은 Windows 헤더에서 제외합니다.
 #define _WIN32_WINNT 0x0A00
 #define NOMINMAX
 
-#define SINGLETON_CLASS(classname)                                                                                     \
-private:                                                                                                               \
-	classname() = default;                                                                                             \
-	~classname() = default;                                                                                            \
-	classname(const classname&) = delete;                                                                              \
-	classname& operator=(const classname&) = delete;                                                                   \
-	classname(classname&&) = delete;                                                                                   \
-	classname& operator=(classname&&) = delete;                                                                        \
-                                                                                                                       \
-public:                                                                                                                \
-	static classname* GetInstance()                                                                                    \
-	{                                                                                                                  \
-		static classname instance;                                                                                     \
-		return &instance;                                                                                              \
-	}
+#define SINGLETON_CLASS(classname)                      \
+private:                                                \
+    classname() = default;                              \
+    ~classname() = default;                             \
+    classname(const classname&) = delete;               \
+    classname& operator=(const classname&) = delete;    \
+    classname(classname&&) = delete;                    \
+    classname& operator=(classname&&) = delete;         \
+                                                        \
+public:                                                 \
+    static classname* GetInstance()                     \
+    {                                                   \
+        static classname instance;                      \
+        return &instance;                               \
+    }
 
 #define MANAGER(classname) (classname::GetInstance())
 
@@ -42,17 +42,16 @@ using uint32 = unsigned __int32;
 using uint64 = unsigned __int64;
 
 // Enums
-enum
-{
-	NW_BUFFER_CAPACITY = 65536,
+enum {
+    NW_BUFFER_CAPACITY = 65536,
+
 };
 
 // Structs
 #pragma pack(push, 1)
-struct PacketHeader
-{
-	uint16 packetType;
-	uint16 packetSize; // PacketHeader 크기 포함
+struct PacketHeader {
+    uint16		packetType;
+    uint16		packetSize;	// PacketHeader 크기 포함
 };
 #pragma pack(pop)
 
@@ -120,12 +119,11 @@ struct PacketHeader
 std::string GetTimestamp();
 
 #ifdef _DEBUG
-#define DEBUG_LOG_FMT(fmt, ...)                                                                                        \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		std::cout << GetTimestamp();                                                                                   \
-		std::cout << std::format((fmt), __VA_ARGS__);                                                                  \
-	} while (false)
+#define DEBUG_LOG_FMT(fmt, ...)                                                      \
+    do {                                                                             \
+        std::cout << GetTimestamp();                                                 \
+        std::cout << std::format((fmt), __VA_ARGS__);                                \
+    } while (false)
 #else
 #define DEBUG_LOG_FMT(fmt, ...) ((void)0)
 #endif
