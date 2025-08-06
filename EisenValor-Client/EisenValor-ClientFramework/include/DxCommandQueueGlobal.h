@@ -15,20 +15,19 @@ public:
 	virtual ID3D12CommandQueue* GetQueue() const = 0;
 };
 
-class IDxComputeCommandQueueGlobal : public IGlobal 
+class IDxComputeCommandQueueGlobal : public IGlobal
 {
 	// This class would be similar to DxGraphicsCommandQueueGlobal but for compute operations.
 };
 
-class IDxCopyCommandQueueGlobal : public IGlobal 
-{ 
+class IDxCopyCommandQueueGlobal : public IGlobal
+{
 	// This class would be similar to DxGraphicsCommandQueueGlobal but for copy operations.
 };
 #pragma endregion
 
 #pragma region Implementations
-class DxGraphicsCommandQueueGlobal
-	: public GlobalMakerBase<DxGraphicsCommandQueueGlobal, IDxGraphicsCommandQueueGlobal>
+class DxGraphicsCommandQueueGlobal : public GlobalMakerBase<DxGraphicsCommandQueueGlobal, IDxGraphicsCommandQueueGlobal>
 {
 public:
 	~DxGraphicsCommandQueueGlobal();
@@ -45,22 +44,20 @@ public:
 	ID3D12CommandQueue* GetQueue() const override { return m_commandQueue.Get(); }
 
 private:
-	ComPtr<ID3D12CommandQueue>	m_commandQueue;
-	ID3D12Device* m_device = nullptr;
+	ComPtr<ID3D12CommandQueue> m_commandQueue;
+	ID3D12Device*			   m_device = nullptr;
 
 	ComPtr<ID3D12Fence> m_idleFence;
-	uint64_t            m_idleValue = 0;
-	HANDLE              m_idleEvent = nullptr;
+	uint64_t			m_idleValue = 0;
+	HANDLE				m_idleEvent = nullptr;
 };
 
-class DxComputeCommandQueueGlobal
-	: public GlobalMakerBase<DxComputeCommandQueueGlobal, IDxComputeCommandQueueGlobal>
+class DxComputeCommandQueueGlobal : public GlobalMakerBase<DxComputeCommandQueueGlobal, IDxComputeCommandQueueGlobal>
 {
 	// This class would be similar to DxGraphicsCommandQueueGlobal but for compute operations.
 };
 
-class DxCopyCommandQueueGlobal
-	: public GlobalMakerBase<DxCopyCommandQueueGlobal, IDxCopyCommandQueueGlobal>
+class DxCopyCommandQueueGlobal : public GlobalMakerBase<DxCopyCommandQueueGlobal, IDxCopyCommandQueueGlobal>
 {
 	// This class would be similar to DxGraphicsCommandQueueGlobal but for copy operations.
 };

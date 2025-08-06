@@ -10,7 +10,8 @@
 using InputCode = BYTE;
 using InputState = BYTE;
 
-struct DInputBits {
+struct DInputBits
+{
 	static constexpr InputState Down = 0b0001;
 	static constexpr InputState Pressed = 0b0010;
 	static constexpr InputState Up = 0b0100;
@@ -18,7 +19,7 @@ struct DInputBits {
 
 struct DInputState
 {
-	static constexpr size_t kMaxInputCode = std::numeric_limits<InputCode>::max() + 1;
+	static constexpr size_t				  kMaxInputCode = std::numeric_limits<InputCode>::max() + 1;
 	std::array<InputState, kMaxInputCode> inputs{};
 
 	DInputState() = default;
@@ -56,23 +57,17 @@ public:
 	}
 #pragma endregion
 
-	void Clear() noexcept
-	{
-		inputs.fill(0);
-	}
+	void Clear() noexcept { inputs.fill(0); }
 };
 
 struct DMouseState
 {
 	DMouseState() = default;
-	int x = 0;
-	int y = 0;
+	int	  x = 0;
+	int	  y = 0;
 	float deltaX = 0.0f;
 	float deltaY = 0.0f;
 	float wheelDelta = 0.0f;
 
-	void Clear() noexcept
-	{
-		deltaX = deltaY = wheelDelta = 0.0f;
-	}
+	void Clear() noexcept { deltaX = deltaY = wheelDelta = 0.0f; }
 };

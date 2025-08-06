@@ -8,9 +8,9 @@
 #define ENABLE_HEAP_GROWTH 0
 #endif
 
-DxDescriptorHeap::DxDescriptorHeap(ID3D12Device* device,
-	D3D12_DESCRIPTOR_HEAP_TYPE type,
-	uint32_t descriptorCount, bool shaderVisible)
+DxDescriptorHeap::DxDescriptorHeap(
+	ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t descriptorCount, bool shaderVisible
+)
 	: m_type(type), m_capacity(descriptorCount), m_shaderVisible(shaderVisible)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {
@@ -29,18 +29,21 @@ DxDescriptorHeap::DxDescriptorHeap(ID3D12Device* device,
 		m_baseGPU = m_heap->GetGPUDescriptorHandleForHeapStart();
 	}
 
-	std::wstring heapName = L"DxDescriptorHeap_Type" + std::to_wstring(static_cast<int>(type)) 
-		+ L"_Count" + std::to_wstring(descriptorCount);
+	std::wstring heapName = L"DxDescriptorHeap_Type" + std::to_wstring(static_cast<int>(type)) + L"_Count" +
+							std::to_wstring(descriptorCount);
 	m_heap->SetName(heapName.c_str());
-	DEBUG_LOG_FMT("[DxDescriptorHeap] Created heap: Type={}, Count={}, ShaderVisible={}, Name={}\n",
-		(int)type, descriptorCount, shaderVisible, std::string(heapName.begin(), heapName.end()));
+	DEBUG_LOG_FMT(
+		"[DxDescriptorHeap] Created heap: Type={}, Count={}, ShaderVisible={}, Name={}\n", (int)type, descriptorCount,
+		shaderVisible, std::string(heapName.begin(), heapName.end())
+	);
 }
 
 void DxDescriptorHeap::Grow()
 {
 #if ENABLE_HEAP_GROWTH
 	uint32_t newCapacity = m_capacity * 2;
-	if (newCapacity == 0) newCapacity = 1;
+	if (newCapacity == 0)
+		newCapacity = 1;
 
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {
 		.Type = m_type,
@@ -49,7 +52,7 @@ void DxDescriptorHeap::Grow()
 		.NodeMask = 0
 	};
 
-	ComPtr<ID3D12Device> device;
+	ComPtr<ID3D12Device>		 device;
 	ComPtr<ID3D12DescriptorHeap> newHeap;
 	ThrowIfFailed(m_heap->GetDevice(IID_PPV_ARGS(&device)));
 	ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&newHeap)));

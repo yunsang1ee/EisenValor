@@ -1,4 +1,4 @@
-// VertexShader.hlsl (¿ø·¡ ¹öÀü)
+// VertexShader.hlsl (ì›ë˜ ë²„ì „)
 cbuffer ConstantBuffer : register(b0)
 {
     matrix mvp;

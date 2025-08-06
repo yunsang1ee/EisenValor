@@ -2,12 +2,21 @@
 #include "DxSwapChain.h"
 #include <DxCommandQueueGlobal.h>
 
-DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphicsCommandQueueGlobal& commandQueue,
-	HWND hwnd, uint32_t width, uint32_t height, uint32_t backBufferCount, DXGI_FORMAT format,
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
-	: m_device(device), m_factory(factory), m_graphicsCommandQueueGlobal(commandQueue),
-	m_hwnd(hwnd), m_width(width), m_height(height), m_backBufferCount(backBufferCount), m_format(format),
-	m_rtvDescriptorStart(rtvDescriptorStart), m_rtvDescriptorSize(rtvDescriptorSize)
+DxSwapChain::DxSwapChain(
+	ID3D12Device*				   device,
+	IDXGIFactory6*				   factory,
+	IDxGraphicsCommandQueueGlobal& commandQueue,
+	HWND						   hwnd,
+	uint32_t					   width,
+	uint32_t					   height,
+	uint32_t					   backBufferCount,
+	DXGI_FORMAT					   format,
+	D3D12_CPU_DESCRIPTOR_HANDLE	   rtvDescriptorStart,
+	uint32_t					   rtvDescriptorSize
+)
+	: m_device(device), m_factory(factory), m_graphicsCommandQueueGlobal(commandQueue), m_hwnd(hwnd), m_width(width),
+	  m_height(height), m_backBufferCount(backBufferCount), m_format(format), m_rtvDescriptorStart(rtvDescriptorStart),
+	  m_rtvDescriptorSize(rtvDescriptorSize)
 {
 	assert(device && "[DxSwapChain] ID3D12Device is null.");
 	assert(factory && "[DxSwapChain] IDXGIFactory6 is null.");
@@ -19,8 +28,9 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphi
 	assert(rtvDescriptorSize > 0 && "[DxSwapChain] RTV Descriptor Size > 0.");
 
 	BOOL tearingSupport = FALSE;
-	if (SUCCEEDED(m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING,
-		&tearingSupport, sizeof(tearingSupport))))
+	if (SUCCEEDED(
+			m_factory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearingSupport, sizeof(tearingSupport))
+		))
 	{
 		m_supportsTearing = (tearingSupport == TRUE);
 	}
@@ -30,10 +40,7 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphi
 		.Height = m_height,
 		.Format = m_format,
 		.Stereo = FALSE,
-		.SampleDesc {
-			.Count = 1,
-			.Quality = 0
-		},
+		.SampleDesc{.Count = 1, .Quality = 0},
 		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
 		.BufferCount = m_backBufferCount,
 		.Scaling = DXGI_SCALING_NONE,
@@ -44,26 +51,26 @@ DxSwapChain::DxSwapChain(ID3D12Device* device, IDXGIFactory6* factory, IDxGraphi
 
 	ComPtr<IDXGISwapChain1> swapChain1;
 	ThrowIfFailed(m_factory->CreateSwapChainForHwnd(
-		m_graphicsCommandQueueGlobal.GetQueue(),
-		m_hwnd,
-		&swapChainDesc,
+		m_graphicsCommandQueueGlobal.GetQueue(), m_hwnd, &swapChainDesc,
 		nullptr, // Fullscreen Optimizations
-		nullptr,
-		&swapChain1
+		nullptr, &swapChain1
 	));
 
 	ThrowIfFailed(swapChain1.As(&m_swapChain));
-	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)); //TODO: Alt+Enter Input Processing in InputGlobal
+	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)
+	); // TODO: Alt+Enter Input Processing in InputGlobal
 
 	CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
 	EnumerateDisplayModes();
 	m_currentDisplayMode = GetNativeDisplayMode();
 
-	LogMonitorInfo();  //µð¹ö±ë Á¤º¸ Ãâ·Â
+	LogMonitorInfo(); // ë””ë²„ê¹… ì •ë³´ ì¶œë ¥
 
-	DEBUG_LOG_FMT("[DxSwapChain] SwapChain created: {}x{}, BackBuffers: {}, Format: {}, Tearing: {}\n",
-		m_width, m_height, m_backBufferCount, (int)m_format, m_supportsTearing);
+	DEBUG_LOG_FMT(
+		"[DxSwapChain] SwapChain created: {}x{}, BackBuffers: {}, Format: {}, Tearing: {}\n", m_width, m_height,
+		m_backBufferCount, (int)m_format, m_supportsTearing
+	);
 }
 
 DxSwapChain::~DxSwapChain()
@@ -92,7 +99,7 @@ void DxSwapChain::Present(UINT syncInterval, UINT flags)
 	{
 		presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
-	
+
 	ThrowIfFailed(m_swapChain->Present(syncInterval, presentFlags));
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	++m_frameCount;
@@ -105,20 +112,27 @@ void DxSwapChain::PresentMaxPerformance()
 	{
 		presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
-	
+
 	ThrowIfFailed(m_swapChain->Present(0, presentFlags));
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	++m_frameCount;
-	
+
 	if (m_frameCount % 1000 == 0)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", 
-					  m_frameCount, m_supportsTearing, !m_isFullscreen && !m_isBorderlessFullscreen);
+		DEBUG_LOG_FMT(
+			"[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", m_frameCount, m_supportsTearing,
+			!m_isFullscreen && !m_isBorderlessFullscreen
+		);
 	}
 }
 
-void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t newHeight,
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
+void DxSwapChain::OnResize(
+	ID3D12Device*				device,
+	uint32_t					newWidth,
+	uint32_t					newHeight,
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart,
+	uint32_t					rtvDescriptorSize
+)
 {
 	if (newWidth == 0 || newHeight == 0)
 	{
@@ -128,13 +142,7 @@ void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t new
 
 	ReleaseBackBuffers();
 
-	ThrowIfFailed(m_swapChain->ResizeBuffers(
-		m_backBufferCount,
-		newWidth,
-		newHeight,
-		m_format,
-		m_swapChainFlags
-	));
+	ThrowIfFailed(m_swapChain->ResizeBuffers(m_backBufferCount, newWidth, newHeight, m_format, m_swapChainFlags));
 
 	m_rtvDescriptorStart = rtvDescriptorStart;
 	m_rtvDescriptorSize = rtvDescriptorSize;
@@ -146,8 +154,12 @@ void DxSwapChain::OnResize(ID3D12Device* device, uint32_t newWidth, uint32_t new
 	DEBUG_LOG_FMT("[DxSwapChain] SwapChain resized to {}x{}. BackBuffers recreated.\n", m_width, m_height);
 }
 
-void DxSwapChain::CreateResources(ID3D12Device* device, ID3D12CommandQueue* commandQueue,
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart, uint32_t rtvDescriptorSize)
+void DxSwapChain::CreateResources(
+	ID3D12Device*				device,
+	ID3D12CommandQueue*			commandQueue,
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart,
+	uint32_t					rtvDescriptorSize
+)
 {
 	m_backBuffers.resize(m_backBufferCount);
 
@@ -173,7 +185,9 @@ ID3D12Resource* DxSwapChain::GetBackBuffer(uint32_t index) const
 {
 	if (index >= m_backBufferCount)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid back buffer index {}. Max is {}.\n", index, m_backBufferCount - 1);
+		DEBUG_LOG_FMT(
+			"[DxSwapChain] Warning: Invalid back buffer index {}. Max is {}.\n", index, m_backBufferCount - 1
+		);
 		return nullptr;
 	}
 	if (!m_backBuffers[index])
@@ -203,8 +217,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxSwapChain::GetBackBufferRTV(uint32_t index) const
 
 DxSwapChain::SwapChainInfo DxSwapChain::GetInfo() const
 {
-	return SwapChainInfo
-	{
+	return SwapChainInfo{
 		.width = m_width,
 		.height = m_height,
 		.backBufferCount = m_backBufferCount,
@@ -220,16 +233,18 @@ DxSwapChain::SwapChainInfo DxSwapChain::GetInfo() const
 
 void DxSwapChain::SetFullscreen(bool enable)
 {
-	if (m_isBorderlessFullscreen || m_isFullscreen == enable) return;
+	if (m_isBorderlessFullscreen || m_isFullscreen == enable)
+		return;
 
 	m_isFullscreen = enable;
 
 	ThrowIfFailed(m_swapChain->SetFullscreenState(enable ? TRUE : FALSE, nullptr));
-	
-	if (enable) 
+
+	if (enable)
 	{
-		OnResize(m_device, m_currentDisplayMode.width, m_currentDisplayMode.height,
-				 m_rtvDescriptorStart, m_rtvDescriptorSize);
+		OnResize(
+			m_device, m_currentDisplayMode.width, m_currentDisplayMode.height, m_rtvDescriptorStart, m_rtvDescriptorSize
+		);
 	}
 	else
 	{
@@ -237,38 +252,42 @@ void DxSwapChain::SetFullscreen(bool enable)
 		GetClientRect(m_hwnd, &clientRect);
 		uint32_t width = std::max(1u, static_cast<uint32_t>(clientRect.right - clientRect.left));
 		uint32_t height = std::max(1u, static_cast<uint32_t>(clientRect.bottom - clientRect.top));
-		
+
 		OnResize(m_device, width, height, m_rtvDescriptorStart, m_rtvDescriptorSize);
 	}
-	
+
 	DEBUG_LOG_FMT("[DxSwapChain] Fullscreen: {}\n", enable);
 }
 
 void DxSwapChain::SetBorderlessFullscreen(bool enable)
 {
-	if (m_isFullscreen || m_isBorderlessFullscreen == enable) return;
+	if (m_isFullscreen || m_isBorderlessFullscreen == enable)
+		return;
 
-	if (enable) 
+	if (enable)
 	{
 		StoreWindowedState();
-		
+
 		SetWindowLongPtr(m_hwnd, GWL_STYLE, WS_POPUP);
 		SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-		
-		SetWindowPos(m_hwnd, HWND_TOPMOST, 
-					 0, 0, 
-			m_currentDisplayMode.width, m_currentDisplayMode.height,
-					 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-		
+
+		SetWindowPos(
+			m_hwnd, HWND_TOPMOST, 0, 0, m_currentDisplayMode.width, m_currentDisplayMode.height,
+			SWP_FRAMECHANGED | SWP_SHOWWINDOW
+		);
+
 		m_isBorderlessFullscreen = true;
-		
-		OnResize(m_device, m_currentDisplayMode.width, m_currentDisplayMode.height,
-				 m_rtvDescriptorStart, m_rtvDescriptorSize);
-		
-		DEBUG_LOG_FMT("[DxSwapChain] Borderless Fullscreen enabled: {}x{}\n", 
-						m_currentDisplayMode.width, m_currentDisplayMode.height);
-	} 
-	else 
+
+		OnResize(
+			m_device, m_currentDisplayMode.width, m_currentDisplayMode.height, m_rtvDescriptorStart, m_rtvDescriptorSize
+		);
+
+		DEBUG_LOG_FMT(
+			"[DxSwapChain] Borderless Fullscreen enabled: {}x{}\n", m_currentDisplayMode.width,
+			m_currentDisplayMode.height
+		);
+	}
+	else
 	{
 		m_isBorderlessFullscreen = false;
 
@@ -280,63 +299,60 @@ void DxSwapChain::SetBorderlessFullscreen(bool enable)
 void DxSwapChain::EnumerateDisplayModes()
 {
 	m_supportedModes.clear();
-	
+
 	ComPtr<IDXGIOutput> output;
 	if (SUCCEEDED(m_swapChain->GetContainingOutput(&output)))
 	{
 		UINT numModes = 0;
 		output->GetDisplayModeList(m_format, DXGI_ENUM_MODES_INTERLACED, &numModes, nullptr);
-		
+
 		DEBUG_LOG_FMT("[DxSwapChain] Found {} display modes for format {}\n", numModes, (int)m_format);
-		
+
 		if (numModes > 0)
 		{
 			std::vector<DXGI_MODE_DESC> modes(numModes);
 			output->GetDisplayModeList(m_format, DXGI_ENUM_MODES_INTERLACED, &numModes, modes.data());
-			
+
 			DEBUG_LOG_FMT("[DxSwapChain] Available display modes:\n");
 			uint32_t logCount = std::min(numModes, 10u);
 			for (uint32_t i = 0; i < logCount; ++i)
 			{
 				const auto& mode = modes[i];
-				uint32_t refreshRate = mode.RefreshRate.Numerator / mode.RefreshRate.Denominator;
+				uint32_t	refreshRate = mode.RefreshRate.Numerator / mode.RefreshRate.Denominator;
 				DEBUG_LOG_FMT("[DxSwapChain] Mode {}: {}x{} @ {}Hz\n", i, mode.Width, mode.Height, refreshRate);
 			}
-			
+
 			for (const auto& mode : modes)
 			{
 				m_supportedModes.emplace_back(
-					mode.Width,
-					mode.Height,
-					mode.RefreshRate.Numerator,
-					mode.RefreshRate.Denominator,
-					mode.Format,
+					mode.Width, mode.Height, mode.RefreshRate.Numerator, mode.RefreshRate.Denominator, mode.Format,
 					mode.Scaling
 				);
 			}
 		}
 	}
-	
+
 	DEBUG_LOG_FMT("[DxSwapChain] Enumerated {} display modes\n", m_supportedModes.size());
 }
 
 DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
 {
-	MONITORINFO primaryMi = { sizeof(primaryMi) };
-	HMONITOR primaryMonitor = MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
+	MONITORINFO primaryMi = {sizeof(primaryMi)};
+	HMONITOR	primaryMonitor = MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
 	GetMonitorInfo(primaryMonitor, &primaryMi);
-	
+
 	uint32_t primaryWidth = primaryMi.rcMonitor.right - primaryMi.rcMonitor.left;
 	uint32_t primaryHeight = primaryMi.rcMonitor.bottom - primaryMi.rcMonitor.top;
 
 	DEBUG_LOG_FMT("[DxSwapChain] Primary Monitor: {}x{}\n", primaryWidth, primaryHeight);
-	
+
 	auto bestMode = FindBestModeForPrimaryMonitor();
 	if (bestMode.width > 0)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Found best mode for primary monitor: {}x{} @ {}Hz\n",
-			bestMode.width, bestMode.height,
-			bestMode.refreshRateNumerator / bestMode.refreshRateDenominator);
+		DEBUG_LOG_FMT(
+			"[DxSwapChain] Found best mode for primary monitor: {}x{} @ {}Hz\n", bestMode.width, bestMode.height,
+			bestMode.refreshRateNumerator / bestMode.refreshRateDenominator
+		);
 		return bestMode;
 	}
 
@@ -350,7 +366,7 @@ DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
 		DEBUG_LOG_FMT("[DxSwapChain] System refresh rate: {}Hz\n", systemRefreshRate);
 	}
 
-	DisplayModeInfo fallbackMode {
+	DisplayModeInfo fallbackMode{
 		.width = primaryWidth,
 		.height = primaryHeight,
 		.refreshRateNumerator = systemRefreshRate,
@@ -358,55 +374,60 @@ DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
 		.format = m_format
 	};
 
-	DEBUG_LOG_FMT("[DxSwapChain] Using primary monitor fallback: {}x{} @ {}Hz\n",
-		fallbackMode.width, fallbackMode.height, systemRefreshRate);
+	DEBUG_LOG_FMT(
+		"[DxSwapChain] Using primary monitor fallback: {}x{} @ {}Hz\n", fallbackMode.width, fallbackMode.height,
+		systemRefreshRate
+	);
 
 	return fallbackMode;
 }
 
 bool DxSwapChain::IsValidResolution(uint32_t width, uint32_t height) const
 {
-	if (width < 800 || height < 600) return false;
-	if (width > 7680 || height > 4320) return false;
-	
+	if (width < 800 || height < 600)
+		return false;
+	if (width > 7680 || height > 4320)
+		return false;
+
 	float aspectRatio = static_cast<float>(width) / height;
-	if (aspectRatio < 1.0f || aspectRatio > 3.0f) return false;
-	
-	std::vector<std::pair<uint32_t, uint32_t>> commonResolutions = {
-		{7680, 4320}, {3840, 2160}, {2560, 1440}, {1920, 1080},
-		{1680, 1050}, {1600, 900}, {1366, 768}, {1280, 720}
-	};
-	
+	if (aspectRatio < 1.0f || aspectRatio > 3.0f)
+		return false;
+
+	std::vector<std::pair<uint32_t, uint32_t>> commonResolutions = {{7680, 4320}, {3840, 2160}, {2560, 1440},
+																	{1920, 1080}, {1680, 1050}, {1600, 900},
+																	{1366, 768},  {1280, 720}};
+
 	for (const auto& [w, h] : commonResolutions)
 	{
-		if (width == w && height == h) return true;
+		if (width == w && height == h)
+			return true;
 	}
-	
+
 	for (const auto& [w, h] : commonResolutions)
 	{
 		for (float scale : {1.25f, 1.5f, 1.75f, 2.0f})
 		{
 			uint32_t scaledW = static_cast<uint32_t>(w * scale);
 			uint32_t scaledH = static_cast<uint32_t>(h * scale);
-			if (std::abs(static_cast<int>(width - scaledW)) <= 10 && 
-				std::abs(static_cast<int>(height - scaledH)) <= 10)
+			if (std::abs(static_cast<int>(width - scaledW)) <= 10 && std::abs(static_cast<int>(height - scaledH)) <= 10)
 			{
 				return true;
 			}
 		}
 	}
-	
+
 	return false;
 }
 
 DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForPrimaryMonitor() const
 {
 	DisplayModeInfo bestMode{};
-	uint32_t maxPixels = 0;
-	uint32_t maxRefreshRate = 0;
+	uint32_t		maxPixels = 0;
+	uint32_t		maxRefreshRate = 0;
 
-	DEBUG_LOG_FMT("[DxSwapChain] Finding best mode for primary monitor from {} available modes\n",
-		m_supportedModes.size());
+	DEBUG_LOG_FMT(
+		"[DxSwapChain] Finding best mode for primary monitor from {} available modes\n", m_supportedModes.size()
+	);
 
 	for (const auto& mode : m_supportedModes)
 	{
@@ -422,14 +443,18 @@ DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForPrimaryMonitor() const
 		if (pixels > maxPixels)
 		{
 			isBetterMode = true;
-			DEBUG_LOG_FMT("[DxSwapChain] Higher resolution found: {}x{} @ {}Hz ({}Mp)\n",
-				mode.width, mode.height, refreshRate, pixels / 1'000'000);
+			DEBUG_LOG_FMT(
+				"[DxSwapChain] Higher resolution found: {}x{} @ {}Hz ({}Mp)\n", mode.width, mode.height, refreshRate,
+				pixels / 1'000'000
+			);
 		}
 		else if (pixels == maxPixels && refreshRate > maxRefreshRate)
 		{
 			isBetterMode = true;
-			DEBUG_LOG_FMT("[DxSwapChain] Same resolution, higher refresh rate: {}x{} @ {}Hz\n",
-				mode.width, mode.height, refreshRate);
+			DEBUG_LOG_FMT(
+				"[DxSwapChain] Same resolution, higher refresh rate: {}x{} @ {}Hz\n", mode.width, mode.height,
+				refreshRate
+			);
 		}
 
 		if (isBetterMode)
@@ -442,8 +467,10 @@ DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForPrimaryMonitor() const
 
 	if (bestMode.width > 0)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Selected best mode: {}x{} @ {}Hz ({}Mp)\n",
-			bestMode.width, bestMode.height, maxRefreshRate, maxPixels / 1'000'000);
+		DEBUG_LOG_FMT(
+			"[DxSwapChain] Selected best mode: {}x{} @ {}Hz ({}Mp)\n", bestMode.width, bestMode.height, maxRefreshRate,
+			maxPixels / 1'000'000
+		);
 	}
 
 	return bestMode;
@@ -460,31 +487,31 @@ void DxSwapChain::RestoreWindowedState()
 {
 	SetWindowLongPtr(m_hwnd, GWL_STYLE, m_windowedStyle);
 	SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, m_windowedExStyle);
-	
-	SetWindowPos(m_hwnd, HWND_NOTOPMOST,
-				 m_windowedRect.left, m_windowedRect.top,
-				 m_windowedRect.right - m_windowedRect.left,
-				 m_windowedRect.bottom - m_windowedRect.top,
-				 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-	
-	OnResize(m_device, 
-			 m_windowedRect.right - m_windowedRect.left,
-			 m_windowedRect.bottom - m_windowedRect.top,
-			 m_rtvDescriptorStart, m_rtvDescriptorSize);
+
+	SetWindowPos(
+		m_hwnd, HWND_NOTOPMOST, m_windowedRect.left, m_windowedRect.top, m_windowedRect.right - m_windowedRect.left,
+		m_windowedRect.bottom - m_windowedRect.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW
+	);
+
+	OnResize(
+		m_device, m_windowedRect.right - m_windowedRect.left, m_windowedRect.bottom - m_windowedRect.top,
+		m_rtvDescriptorStart, m_rtvDescriptorSize
+	);
 }
 
 void DxSwapChain::LogMonitorInfo() const
 {
 	DEBUG_LOG_FMT("[DxSwapChain] === Monitor Information ===\n");
-	
+
 	DEBUG_LOG_FMT("[DxSwapChain] Monitor Count: {}\n", GetSystemMetrics(SM_CMONITORS));
-	DEBUG_LOG_FMT("[DxSwapChain] Virtual Screen: {}x{}\n", 
-				  GetSystemMetrics(SM_CXVIRTUALSCREEN), 
-				  GetSystemMetrics(SM_CYVIRTUALSCREEN));
-	DEBUG_LOG_FMT("[DxSwapChain] Primary Screen: {}x{}\n", 
-				  GetSystemMetrics(SM_CXSCREEN), 
-				  GetSystemMetrics(SM_CYSCREEN));
-	
+	DEBUG_LOG_FMT(
+		"[DxSwapChain] Virtual Screen: {}x{}\n", GetSystemMetrics(SM_CXVIRTUALSCREEN),
+		GetSystemMetrics(SM_CYVIRTUALSCREEN)
+	);
+	DEBUG_LOG_FMT(
+		"[DxSwapChain] Primary Screen: {}x{}\n", GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)
+	);
+
 	HDC hdc = GetDC(nullptr);
 	if (hdc)
 	{
@@ -493,6 +520,6 @@ void DxSwapChain::LogMonitorInfo() const
 		DEBUG_LOG_FMT("[DxSwapChain] System DPI: {}x{}\n", dpiX, dpiY);
 		ReleaseDC(nullptr, hdc);
 	}
-	
+
 	DEBUG_LOG_FMT("[DxSwapChain] ===============================\n");
 }
