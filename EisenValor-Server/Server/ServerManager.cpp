@@ -12,8 +12,7 @@ void Server::ServerManager::Init() noexcept
 
 	ClientPacketHandler::Init();
 	MANAGER(Server::Contents::GameMatchManager)->Init();
-	// Server::Contents::GameObjectFactory::Init();
-
+	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
 		exit(1);
 	}

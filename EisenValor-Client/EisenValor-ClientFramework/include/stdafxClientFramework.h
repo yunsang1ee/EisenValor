@@ -139,3 +139,10 @@ constexpr size_t kFrameBufferHeight = 1080;
 constexpr size_t kExplosionDebrises = 240;
 
 #pragma endregion
+
+    // 오브젝트 타입 구분용
+enum class ObjectType
+{
+	Player,
+	NPC
+};

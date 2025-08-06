@@ -14,28 +14,29 @@ namespace ServerEngine {
 
 namespace Server {
 	namespace Contents {
-		class Soldier;
+		class NPC;
 	}
 }
 
 enum class PACKET_TYPE : uint16 {
-	CS_LOGIN = 1,
-	SC_LOGIN = 2,
+	CS_LOGIN_PKT = 1,
+	SC_LOGIN_PKT = 2,
 
-	CS_CHAT = 3,
-	SC_CHAT = 4,
+	CS_ENTER_WORLD_PKT = 3,
+	SC_ENTER_WORLD_PKT = 4,
+	
+	SC_LOCAL_PLAYER_PKT = 5,
 
-	CS_ENTER_MATCH = 5,
-	SC_ENTER_MATCH = 6,
+	SC_ADD_OBJ_PKT = 6,
+	SC_REMOVE_OBJ_PKT = 7,
 
-	SC_ADD_PLAYER_INFO = 7,
-	SC_REMOVE_PLAYER_INFO = 8,
+	CS_CHAT_PKT = 8,
+	SC_CHAT_PKT = 9,
 
-	CS_PLAYER_MOVE = 9,
-	SC_PLAYER_MOVE = 10,
+	CS_MOVE_PKT = 10,
+	SC_MOVE_PKT = 11,
 
-	SC_SOLDIER_INFO = 11,
-
+	CS_SUMMON_NPC_PKT = 12,
 
 	END
 };
@@ -46,8 +47,9 @@ extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16
 bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>&, const char* const, const PacketHeader&) noexcept;
 bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt);
 bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt);
-bool Handle_CS_ENTER_MATCH_PACKET (const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_MATCH_PACKET& recvPkt) noexcept;
-bool Handle_CS_PLAYER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_MOVE_PACKET& recvPkt);
+bool Handle_CS_ENTER_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_WORLD_PACKET& recvPkt) noexcept;
+bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt);
+bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt);
 
 class ClientPacketHandler {
 private:
@@ -65,10 +67,12 @@ public:
 			packetHandlerFunc = Handle_INVALID_PACKET;
 
 		// 패킷 받는 부분 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(Handle_CS_LOGIN_PACKET, session, buffer, header); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHAT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_CHAT_PACKET>(Handle_CS_CHAT_PACKET, session, buffer, header); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_MATCH)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_MATCH_PACKET>(Handle_CS_ENTER_MATCH_PACKET , session, buffer, header); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_MOVE)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_MOVE_PACKET>(Handle_CS_PLAYER_MOVE_PACKET , session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(Handle_CS_LOGIN_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHAT_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_CHAT_PACKET>(Handle_CS_CHAT_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_WORLD_PACKET>(Handle_CS_ENTER_WORLD_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer, header); };
+		
 	}
 
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader)
@@ -106,47 +110,60 @@ public:
 #pragma region SC_LOGIN_PACKET
 	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id)
 	{
-		return MakePacketBuffer(PACKET_TYPE::SC_LOGIN, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
+		return MakePacketBuffer(PACKET_TYPE::SC_LOGIN_PKT, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
 	}
 #pragma endregion
 
 #pragma region SC_CHAT_PACKET
 	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg)
 	{
-		return MakePacketBuffer(PACKET_TYPE::SC_CHAT, MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
+		return MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
 	}
 #pragma endregion
 
-#pragma region SC_PLAYER_MOVE_PACKET
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PLAYER_MOVE_PACKET(const uint32 id, const Vec3& pos, const Vec3& rot)
+#pragma region SC_LOCAL_PLAYER
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& info)
 	{
-		const FB_STRUCTS::Vec3 p{ pos.x, pos.y, pos.z };
-		const FB_STRUCTS::Vec3 r{ rot.x, rot.y, rot.z };
+		const FB_STRUCTS::Vec3 pos{ info.position.x, info.position.y , info.position.z };
+		const FB_STRUCTS::Vec3 rot{ info.rotation.x, info.rotation.y , info.rotation.z };
+		const FB_STRUCTS::Vec3 vel{ info.velocity.x, info.velocity.y , info.velocity.z };
 
-		return MakePacketBuffer(PACKET_TYPE::SC_PLAYER_MOVE, MakePacket(FB_TABLES::CreateSC_PLAYER_MOVE_PACKET, id, &p, &r));
+		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel };
+
+		return MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo));
 	}
 #pragma endregion
 
-#pragma region SC_ADD_PLAYER_INFO
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_PLAYER_INFO_PACKET(const uint32 id, const Vec3& pos, const Vec3& rot)
+#pragma region SC_ADD_OBJ
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const KinematicInfo& info)
 	{
-		const FB_STRUCTS::Vec3 p{ pos.x, pos.y, pos.z };
-		const FB_STRUCTS::Vec3 r{ rot.x, rot.y, rot.z };
-		return MakePacketBuffer(PACKET_TYPE::SC_ADD_PLAYER_INFO, MakePacket(FB_TABLES::CreateSC_ADD_PLAYER_INFO_PACKET, id, &p, &r));
+		const FB_STRUCTS::Vec3 pos{ info.position.x, info.position.y , info.position.z };
+		const FB_STRUCTS::Vec3 rot{ info.rotation.x, info.rotation.y , info.rotation.z };
+		const FB_STRUCTS::Vec3 vel{ info.velocity.x, info.velocity.y , info.velocity.z };
+
+		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel };
+
+		return MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, &kinematicInfo));
 	}
 #pragma endregion
 
-#pragma region SC_REMOVE_PLAYER_INFO
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_PLAYER_INFO_PACKET(const uint32 id)
+#pragma region SC_REMOVE_OBJ
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id)
 	{
-		return MakePacketBuffer(PACKET_TYPE::SC_REMOVE_PLAYER_INFO, MakePacket(FB_TABLES::CreateSC_REMOVE_PLAYER_INFO_PACKET, id));
+		return MakePacketBuffer(PACKET_TYPE::SC_REMOVE_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 #pragma endregion
 
-#pragma region SC_SOLDIER_INFO
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SOLDIER_INFO_PACKET(const std::vector<FB_STRUCTS::SoldierInfo>& soldiers)
+#pragma region MOVE
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const KinematicInfo& transform)
 	{
-		return MakePacketBuffer(PACKET_TYPE::SC_SOLDIER_INFO, MakePacket(FB_TABLES::CreateSC_SOLDIER_INFO_PACKETDirect, &soldiers));
+		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
+		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
+		const FB_STRUCTS::Vec3 vel{ 0.f, 0.f, 0.f };
+
+		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel };
+
+		return MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, MakePacket(FB_TABLES::CreateSC_MOVE_PACKET, id, &info));
 	}
 #pragma endregion
 };
