@@ -10,10 +10,9 @@ struct DescriptorHandles
 class DxDescriptorHeap
 {
 public:
-	DxDescriptorHeap(	ID3D12Device* device,
-						D3D12_DESCRIPTOR_HEAP_TYPE type,
-						uint32_t descriptorCount,
-						bool shaderVisible = false);
+	DxDescriptorHeap(
+		ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t descriptorCount, bool shaderVisible = false
+	);
 
 	DxDescriptorHeap(const DxDescriptorHeap&) = delete;
 	DxDescriptorHeap& operator=(const DxDescriptorHeap&) = delete;
@@ -24,9 +23,9 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32_t index) const;
 
 	ID3D12DescriptorHeap* GetHeap() const { return m_heap.Get(); }
-	constexpr uint32_t GetDescriptorSize() const noexcept { return m_descriptorSize; }
-	uint32_t GetCapacity() const { return m_capacity; }
-	uint32_t GetAllocatedCount() const { return m_allocIndex; }
+	constexpr uint32_t	  GetDescriptorSize() const noexcept { return m_descriptorSize; }
+	uint32_t			  GetCapacity() const { return m_capacity; }
+	uint32_t			  GetAllocatedCount() const { return m_allocIndex; }
 
 	void Reset();
 
@@ -40,9 +39,8 @@ private:
 	uint32_t m_allocIndex = 0;
 
 	D3D12_DESCRIPTOR_HEAP_TYPE m_type;
-	bool m_shaderVisible = false;
+	bool					   m_shaderVisible = false;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE m_baseCPU{};
 	D3D12_GPU_DESCRIPTOR_HANDLE m_baseGPU{};
 };
-

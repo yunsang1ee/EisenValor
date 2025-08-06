@@ -5,29 +5,27 @@
 class Ground
 {
 public:
-    Ground() = default;
-    ~Ground() = default;
+	Ground() = default;
+	~Ground() = default;
 
-    void Initialize(ID3D12Device* device);
-    void Render(ID3D12GraphicsCommandList* cmdList,
-        DirectX::XMMATRIX view,
-        DirectX::XMMATRIX projection);
+	void Initialize(ID3D12Device* device);
+	void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection);
 
 private:
-    // ∑ª¥ı∏µ ∏Æº“Ω∫
-    ComPtr<ID3D12Resource> m_vertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-    ComPtr<ID3D12Resource> m_indexBuffer;
-    D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+	// Î†åÎçîÎßÅ Î¶¨ÏÜåÏä§
+	ComPtr<ID3D12Resource>	 m_vertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+	ComPtr<ID3D12Resource>	 m_indexBuffer;
+	D3D12_INDEX_BUFFER_VIEW	 m_indexBufferView;
 
-    // ªÛºˆ πˆ∆€
-    ComPtr<ID3D12Resource> m_constantBuffer;
-    ConstantBuffer m_constantBufferData;
-    UINT8* m_pCbvDataBegin = nullptr;
+	// ÏÉÅÏàò Î≤ÑÌçº
+	ComPtr<ID3D12Resource> m_constantBuffer;
+	ConstantBuffer		   m_constantBufferData;
+	UINT8*				   m_pCbvDataBegin = nullptr;
 
-    // ≈©±‚ π◊ ¿ßƒ°
-    float m_width = 20.0f;
-    float m_height = 0.2f;
-    float m_depth = 20.0f;
-    DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
+	// ÌÅ¨Í∏∞ Î∞è ÏúÑÏπò
+	float			  m_width = 20.0f;
+	float			  m_height = 0.2f;
+	float			  m_depth = 20.0f;
+	DirectX::XMFLOAT3 m_position = {0.0f, 0.0f, 0.0f};
 };

@@ -5,38 +5,41 @@
 class GameObject
 {
 public:
-    GameObject() = default;
-    virtual ~GameObject() = default;
+	GameObject() = default;
+	virtual ~GameObject() = default;
 
-    // ¸ğµç °ÔÀÓ ¿ÀºêÁ§Æ®°¡ ±¸ÇöÇØ¾ß ÇÏ´Â ¼ø¼ö °¡»ó ÇÔ¼öµé
-    virtual void Initialize(ID3D12Device* device) = 0;
-    virtual void Update(float deltaTime) = 0;
-    virtual void Render(ID3D12GraphicsCommandList* cmdList,
-        DirectX::XMMATRIX view,
-        DirectX::XMMATRIX projection) = 0;
+	// ëª¨ë“  ê²Œì„ ì˜¤ë¸Œì íŠ¸ê°€ êµ¬í˜„í•´ì•¼ í•˜ëŠ” ìˆœìˆ˜ ê°€ìƒ í•¨ìˆ˜ë“¤
+	virtual void Initialize(ID3D12Device* device) = 0;
+	virtual void Update(float deltaTime) = 0;
+	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection) = 0;
 
-    // °øÅë ±â´Éµé
-    virtual void SetPosition(float x, float y, float z) { m_x = x; m_y = y; m_z = z; }
-    virtual DirectX::XMFLOAT3 GetPosition() const { return { m_x, m_y, m_z }; }
-    virtual void SetRotation(float yaw) { m_yaw = yaw; }
-    virtual float GetRotation() const { return m_yaw; }
+	// ê³µí†µ ê¸°ëŠ¥ë“¤
+	virtual void SetPosition(float x, float y, float z)
+	{
+		m_x = x;
+		m_y = y;
+		m_z = z;
+	}
+	virtual DirectX::XMFLOAT3 GetPosition() const { return {m_x, m_y, m_z}; }
+	virtual void			  SetRotation(float yaw) { m_yaw = yaw; }
+	virtual float			  GetRotation() const { return m_yaw; }
 
-    // ¿ÀºêÁ§Æ® Å¸ÀÔ ±¸ºĞ¿ë
+    // ì˜¤ë¸Œì íŠ¸ íƒ€ì… êµ¬ë¶„ìš©
     enum class ObjectType
     {
         Player,
         NPC
     };
 
-    virtual ObjectType GetObjectType() const = 0;
+	virtual ObjectType GetObjectType() const = 0;
 
-    uint32  m_id;
-    bool    alive{ true };
+	uint32 m_id;
+	bool   alive{true};
+
 protected:
-    // ±âº» Transform µ¥ÀÌÅÍ
-    float m_x = 0.0f;
-    float m_y = 0.0f;
-    float m_z = 0.0f;
-    float m_yaw = 0.0f;
+	// ê¸°ë³¸ Transform ë°ì´í„°
+	float m_x = 0.0f;
+	float m_y = 0.0f;
+	float m_z = 0.0f;
+	float m_yaw = 0.0f;
 };
-

@@ -1,16 +1,12 @@
 #include "stdafxClientFramework.h"
 #include "PacketBuffer.h"
 
-NetBridge::PacketBuffer::PacketBuffer(const uint64 capacity)
-	:m_capacity(capacity), m_dataSize{0}
+NetBridge::PacketBuffer::PacketBuffer(const uint64 capacity) : m_capacity(capacity), m_dataSize{0}
 {
 	m_buffer.resize(m_capacity);
 }
 
-NetBridge::PacketBuffer::~PacketBuffer()
-{
-
-}
+NetBridge::PacketBuffer::~PacketBuffer() {}
 
 void NetBridge::PacketBuffer::Append(const char* const src, const uint64 size)
 {

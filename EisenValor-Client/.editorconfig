@@ -1,0 +1,9 @@
+# EisenValor EditorConfig
+root = true
+
+[*.{cpp,h}]
+charset = utf-8
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
