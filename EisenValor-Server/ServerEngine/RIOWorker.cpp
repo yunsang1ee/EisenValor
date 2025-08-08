@@ -37,12 +37,16 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 
 void ServerEngine::RIOWorker::Work()
 {
-	TLS_END_TICK = high_resolution_clock::now() + 128ms;
-
+	TLS_END_TICK = high_resolution_clock::now() + 64ms;
+	// auto start = high_resolution_clock::now();
 	FlushPacketQueue();
 	DequeueCompletion();
 	DistributeReservedTask();
 	DoTask();
+
+	// 13~14ms
+	// auto elapsed = high_resolution_clock::now() - start;
+	// println("ID: {}, Elapsed:{}", m_id, std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
 }
 
 void ServerEngine::RIOWorker::FlushPacketQueue()
@@ -78,13 +82,13 @@ void ServerEngine::RIOWorker::DequeueCompletion()
 			break;
 		}
 		else {
-			std::println("Worker ID ={}, has results!", m_id);
+			// std::println("Worker ID ={}, has results!", m_id);
 			for(uint32 i = 0; i < numResults; ++i) {
 				RIOContext* const context = reinterpret_cast<RIOContext*>(ioResults[i].RequestContext);
 				auto session = context->GetSession();
 				assert(context && session);
 				const uint32 bytesTransferred = ioResults[i].BytesTransferred;
-				std::println("BytesTransferred = {}", bytesTransferred);
+				// std::println("BytesTransferred = {}", bytesTransferred);
 				session->Dispatch(context, bytesTransferred);
 			}
 		}

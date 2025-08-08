@@ -11,7 +11,7 @@ namespace ServerEngine {
 		std::unique_ptr<SessionPool>					m_sessionPool;
 		int32											m_id;
 		std::vector<std::shared_ptr<Session>>			m_connectedSession;
-		std::mutex								m_mutex;
+		std::mutex										m_mutex;
 
 	public:
 		explicit RIOWorker(const uint16 id);

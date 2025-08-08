@@ -117,8 +117,8 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 
     // 플레이어 큐브 렌더링
     DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
-    DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_yaw);
-    DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_x, m_y, m_z);
+    DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
+    DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
     DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
     DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
 
@@ -147,13 +147,13 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
 {
-	float camX = m_x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
-	float camY = m_y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
-	float camZ = m_z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
+	float camX = m_pos.x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
+	float camY = m_pos.y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
+	float camZ = m_pos.z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
 
-	float lookX = m_x + 2.0f * sinf(m_cameraYaw);
-	float lookY = m_y + 1.0f + 2.0f * sinf(m_cameraPitch);
-	float lookZ = m_z + 2.0f * cosf(m_cameraYaw);
+	float lookX = m_pos.x + 2.0f * sinf(m_cameraYaw);
+	float lookY = m_pos.y + 1.0f + 2.0f * sinf(m_cameraPitch);
+	float lookZ = m_pos.z + 2.0f * cosf(m_cameraYaw);
 
 	return DirectX::XMMatrixLookAtLH(
 		DirectX::XMVectorSet(camX, camY, camZ, 0.0f), DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),

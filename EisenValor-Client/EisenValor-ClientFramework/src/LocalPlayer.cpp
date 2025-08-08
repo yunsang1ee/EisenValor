@@ -20,49 +20,54 @@ void LocalPlayer::Update(float deltaTime)
 	// WASD 입력 처리
 	if (Globals::Input().GetInput('W')) // 전진
 	{
-		m_x += forwardX * moveSpeed;
-		m_z += forwardZ * moveSpeed;
+		m_pos.x += forwardX * moveSpeed;
+		m_pos.z+= forwardZ * moveSpeed;
 		sendFlag = true;
 	}
 	if (Globals::Input().GetInput('S')) // 후진
 	{
-		m_x -= forwardX * moveSpeed;
-		m_z -= forwardZ * moveSpeed;
+		m_pos.x -= forwardX * moveSpeed;
+		m_pos.z -= forwardZ * moveSpeed;
 		sendFlag = true;
 	}
 	if (Globals::Input().GetInput('A')) // 좌측 이동
 	{
-		m_x -= rightX * moveSpeed;
-		m_z -= rightZ * moveSpeed;
+		m_pos.x -= rightX * moveSpeed;
+		m_pos.z -= rightZ * moveSpeed;
 		sendFlag = true;
 	}
 	if (Globals::Input().GetInput('D')) // 우측 이동
 	{
-		m_x += rightX * moveSpeed;
-		m_z += rightZ * moveSpeed;
+		m_pos.x += rightX * moveSpeed;
+		m_pos.z += rightZ * moveSpeed;
 		sendFlag = true;
 	}
 
 	// 수직 이동 (H/L 키)
 	if (Globals::Input().GetInput('H'))
 	{
-		m_y -= moveSpeed; // 아래로
+		m_pos.y -= moveSpeed; // 아래로
 		sendFlag = true;
 	}
 	if (Globals::Input().GetInput('L'))
 	{
-		m_y += moveSpeed; // 위로
+		m_pos.y += moveSpeed; // 위로
 		sendFlag = true;
+	}
+
+	if (Globals::Input().GetInputDown('R')) {
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
 	// 위치 디버깅
 	static float lastX = 0, lastY = 1, lastZ = 0;
-	if (m_x != lastX || m_z != lastZ)
+	if (m_pos.x != lastX || m_pos.z != lastZ)
 	{
-		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", m_x, m_y, m_z);
-		lastX = m_x;
-		lastY = m_y;
-		lastZ = m_z;
+		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", m_pos.x, m_pos.y, m_pos.z);
+		lastX = m_pos.x;
+		lastY = m_pos.y;
+		lastZ = m_pos.z;
 	}
 
 	// ===== 마우스로 카메라 이동 =====
@@ -89,6 +94,7 @@ void LocalPlayer::Update(float deltaTime)
 			{
 				// 카메라 회전 업데이트
 				m_cameraYaw += deltaX * m_mouseSensitivity;
+				m_rot.y = m_cameraYaw;
 				m_cameraPitch += deltaY * m_mouseSensitivity;
 
 				// Pitch 제한 (위아래 회전 제한)
@@ -103,6 +109,7 @@ void LocalPlayer::Update(float deltaTime)
 
 			m_lastMouseX = mousePos.x;
 			m_lastMouseY = mousePos.y;
+			sendFlag = true;
 		}
 	}
 	else
@@ -125,12 +132,11 @@ void LocalPlayer::Update(float deltaTime)
 
 	if (sendFlag)
 	{
-		const FB_STRUCTS::Vec3 pos{m_x, m_y, m_z};
-		const FB_STRUCTS::Vec3 rot{0.f, m_yaw, 0.f};
-		const auto			   packetData = NetBridge::ServerPacketHandler::Make_CS_PLAYER_MOVE_PACKET(&pos, &rot);
-		const auto			   packetBuffer =
-			NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_PLAYER_MOVE, packetData);
-		MANAGER(NetBridge::NetworkManager)->Send(packetBuffer);
+		const Vec3 pos{GetPosition()};
+		const Vec3 rot{0.f, m_rot.y, 0.f};
+		const Vec3 vel{0.f, 0.f, 0.f};
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(pos, rot, vel);
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 		sendFlag = false;
 	}
 }

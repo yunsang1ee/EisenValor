@@ -136,9 +136,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	std::cin >> pw;
 	pw = "PW";
 
-	const auto packetData = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-	auto	   packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_LOGIN, packetData);
-	MANAGER(NetBridge::NetworkManager)->Send(std::move(packetBuffer));
+	auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	// Ground 객체 생성 및 초기화
 	m_ground = std::make_unique<Ground>();

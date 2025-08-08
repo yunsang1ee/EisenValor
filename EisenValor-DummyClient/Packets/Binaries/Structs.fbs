@@ -8,8 +8,8 @@ struct Vec3{
 	z: float;
 }
 
-struct SoldierInfo {
-	soldier_id: uint;
+struct KinematicInfo {
 	pos: Vec3;
 	rot: Vec3;
+	vel: Vec3;
 }

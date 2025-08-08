@@ -21,7 +21,7 @@ void Server::ClientSessionManager::Broadcast(std::shared_ptr<ClientSession> clie
 {
 	 std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	for(const auto& session : m_sessions) {
-		if( session != clientSession && SESSION_STATE::IN_MATCH !=  session->GetState()) {
+		if( session != clientSession && SESSION_STATE::IN_WORLD !=  session->GetState()) {
 			session->Send(buffer);
 		}
 	}

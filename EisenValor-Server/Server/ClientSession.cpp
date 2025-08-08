@@ -2,11 +2,11 @@
 #include "ClientSession.h"
 
 #include "ClientSessionManager.h"
-#include "General.h"
-#include "GameMatch.h"
+#include "Player.h"
+#include "GameWorld.h"
 
 Server::ClientSession::ClientSession()
-	:m_general{nullptr}
+	:m_player{nullptr}
 {
 	// std::cout << "ClientSession" << std::endl;
 } 
@@ -28,10 +28,10 @@ void Server::ClientSession::OnDisconnected()
 	MANAGER(Server::ClientSessionManager)->RemoveSession(clientSession);
 	std::cout << "ClientSession OnDisconnected!" << std::endl;
 
-	if(m_general) {
-		auto match = m_general->GetMatch();
+	if(m_player) {
+		auto match = m_player->GetGameWorld();
 		if(match)
-			match->ExecuteAsyncronously(&Server::Contents::GameMatch::LeaveMatch, clientSession);
+			match->ExecuteAsyncronously(&Server::Contents::GameWorld::LeaveMatch, clientSession);
 	}
 }
 
@@ -44,8 +44,6 @@ void Server::ClientSession::ProcessPacket(const std::span<const char>& buffer)
 
 void Server::ClientSession::OnSend(const uint32 bytesTransferred)
 {
-#ifdef _DEBUG
-	std::println("OnSend, Len = {}", bytesTransferred);
-#endif // _DEBUG
+	// std::println("OnSend, Len = {}", bytesTransferred);
 }
  

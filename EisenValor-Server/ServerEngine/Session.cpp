@@ -118,11 +118,6 @@ bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
 	sendContext->Length = size;
 
 	if(false == RIO_EXT_FUNC_TB.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
-		// FIX: 여기서 오류 발생
-		// aaa다.
-
-		// 버퍼가 부족하진 않음.
-		// -> 큐 공간이 부족한거 같음
 		ServerEngine::LogManager::PrintLastError();
 		sendContext->ReleaseSession();
 		ObjectPool<SendContext>::Push(sendContext);
@@ -175,7 +170,7 @@ void ServerEngine::Session::Init()
 {
 	const auto& cq = m_owner.lock()->GetCQ();
 
-	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SOCKET, 1, MAX_SEND_RQ_SIZE_PER_SOCKET, 1, cq, cq, 0);
+	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);
 
 	if(m_rq == RIO_INVALID_RQ) {
 		ServerEngine::LogManager::PrintLastError();
