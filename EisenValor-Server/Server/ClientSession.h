@@ -1,23 +1,22 @@
 #pragma once
 #include "Session.h"
 
-
 namespace Server {
 	namespace Contents {
-		class General;
+		class Player;
 	}
 
 	class ClientSession : public ServerEngine::Session {
 	private:
-		std::shared_ptr<Server::Contents::General> m_general;
+		std::shared_ptr<Server::Contents::Player> m_player;
 
 	public:
 		ClientSession();
 		virtual ~ClientSession();
 
 	public:
-		void SetGeneral(std::shared_ptr<Server::Contents::General> general) noexcept { m_general = general; }
-		std::shared_ptr<Server::Contents::General> GetGeneral() { return m_general; }
+		void SetPlayer(std::shared_ptr<Server::Contents::Player> general) noexcept { m_player = general; }
+		std::shared_ptr<Server::Contents::Player> GetPlayer() { return m_player; }
 
 	public:
 		virtual void OnConnected() override;

@@ -3,10 +3,10 @@
 
 #include "TaskQueue.h"
 
-void ServerEngine::TaskTimer::Reserve(uint64 afterMS, std::weak_ptr<ServerEngine::TaskQueue> owner, std::shared_ptr<Task> task)
+void ServerEngine::TaskTimer::Reserve(const std::chrono::milliseconds ms, std::weak_ptr<ServerEngine::TaskQueue> owner, std::shared_ptr<Task> task)
 {
 	auto now = (high_resolution_clock::now());
-	auto next = milliseconds(afterMS);
+	auto next = ms;
 	const auto executeTick = now + next;
 	TaskData* taskData{ ObjectPool<TaskData>::Pop(owner, task) };
 

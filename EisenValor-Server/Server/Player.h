@@ -6,25 +6,26 @@ namespace Server {
 	class ClientSession;
 
 	namespace Contents {
-		class Soldier;
-		class General : public GameObject {
+		class NPC;
+		class Player : public GameObject {
 		private:
 			std::weak_ptr<ClientSession>			m_session;
-			std::vector<std::shared_ptr<Soldier>>	m_soldiers;
+			std::vector<std::shared_ptr<NPC>>		m_npcs;
 
 		public:
-			General();
-			virtual ~General() = default;
+			Player();
+			virtual ~Player() = default;
 
 		public:
 			void SetSession(std::weak_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
 
 		public:
-			void AddSoldier(std::shared_ptr<Soldier> soldier);
+			void AddNpcs(std::shared_ptr<NPC> npc);
 
 		public:
 			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
-			const auto& GetSoldiers() const noexcept { return m_soldiers; }
+			const auto& GetNpcs() const noexcept { return m_npcs; }
+		
 		};
 	}
 }

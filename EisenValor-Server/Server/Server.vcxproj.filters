@@ -19,17 +19,17 @@
     <ClCompile Include="ClientPacketHandler.cpp">
       <Filter>03. Packets\01. PacketHandler</Filter>
     </ClCompile>
-    <ClCompile Include="GameMatch.cpp">
+    <ClCompile Include="GameWorld.cpp">
       <Filter>02. Contents\00. GameMatch</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>02. Contents\01. GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="General.cpp">
-      <Filter>02. Contents\01. GameObject\00. General</Filter>
+    <ClCompile Include="Player.cpp">
+      <Filter>02. Contents\01. GameObject\00. Player</Filter>
     </ClCompile>
-    <ClCompile Include="Soldier.cpp">
-      <Filter>02. Contents\01. GameObject\01. Soldier</Filter>
+    <ClCompile Include="NPC.cpp">
+      <Filter>02. Contents\01. GameObject\01. NPC</Filter>
     </ClCompile>
     <ClCompile Include="GameObjectFactory.cpp">
       <Filter>02. Contents\02. Factory</Filter>
@@ -81,17 +81,17 @@
     <Filter Include="02. Contents\01. GameObject">
       <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\01. GameObject\00. General">
-      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\01. GameObject\01. Soldier">
-      <UniqueIdentifier>{a3c6f62a-55d7-4f07-9cab-0acbac186255}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\02. Factory">
       <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
     <Filter Include="96. Managers\01. GameMatchManager">
       <UniqueIdentifier>{69b99707-0b8a-4adb-88d6-69a279587bcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\01. GameObject\00. Player">
+      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\01. GameObject\01. NPC">
+      <UniqueIdentifier>{a3c6f62a-55d7-4f07-9cab-0acbac186255}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -110,17 +110,17 @@
     <ClInclude Include="ClientPacketHandler.h">
       <Filter>03. Packets\01. PacketHandler</Filter>
     </ClInclude>
-    <ClInclude Include="GameMatch.h">
+    <ClInclude Include="GameWorld.h">
       <Filter>02. Contents\00. GameMatch</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>02. Contents\01. GameObject</Filter>
     </ClInclude>
-    <ClInclude Include="General.h">
-      <Filter>02. Contents\01. GameObject\00. General</Filter>
+    <ClInclude Include="Player.h">
+      <Filter>02. Contents\01. GameObject\00. Player</Filter>
     </ClInclude>
-    <ClInclude Include="Soldier.h">
-      <Filter>02. Contents\01. GameObject\01. Soldier</Filter>
+    <ClInclude Include="NPC.h">
+      <Filter>02. Contents\01. GameObject\01. NPC</Filter>
     </ClInclude>
     <ClInclude Include="ServerEnums.h">
       <Filter>97. Headers</Filter>

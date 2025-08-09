@@ -13,10 +13,10 @@
 #include "Structs_generated.h"
 #include "Tables_generated.h"
 #include "ServerTypes.h"
-#include "ClientPacketHandler.h"
-
 #include "ServerEnums.h"
 #include "ServerStructs.h"
+
+#include "ClientPacketHandler.h"
 
 namespace Server {
 	class ClientSession;

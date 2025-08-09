@@ -24,17 +24,20 @@ struct CS_LOGIN_PACKETBuilder;
 struct SC_LOGIN_PACKET;
 struct SC_LOGIN_PACKETBuilder;
 
-struct CS_ENTER_MATCH_PACKET;
-struct CS_ENTER_MATCH_PACKETBuilder;
+struct CS_ENTER_WORLD_PACKET;
+struct CS_ENTER_WORLD_PACKETBuilder;
 
-struct SC_ENTER_MATCH_PACKET;
-struct SC_ENTER_MATCH_PACKETBuilder;
+struct SC_ENTER_WORLD_PACKET;
+struct SC_ENTER_WORLD_PACKETBuilder;
 
-struct SC_ADD_PLAYER_INFO_PACKET;
-struct SC_ADD_PLAYER_INFO_PACKETBuilder;
+struct SC_LOCAL_PLAYER_PACKET;
+struct SC_LOCAL_PLAYER_PACKETBuilder;
 
-struct SC_REMOVE_PLAYER_INFO_PACKET;
-struct SC_REMOVE_PLAYER_INFO_PACKETBuilder;
+struct SC_ADD_OBJ_PACKET;
+struct SC_ADD_OBJ_PACKETBuilder;
+
+struct SC_REMOVE_OBJ_PACKET;
+struct SC_REMOVE_OBJ_PACKETBuilder;
 
 struct CS_CHAT_PACKET;
 struct CS_CHAT_PACKETBuilder;
@@ -42,14 +45,14 @@ struct CS_CHAT_PACKETBuilder;
 struct SC_CHAT_PACKET;
 struct SC_CHAT_PACKETBuilder;
 
-struct CS_PLAYER_MOVE_PACKET;
-struct CS_PLAYER_MOVE_PACKETBuilder;
+struct CS_MOVE_PACKET;
+struct CS_MOVE_PACKETBuilder;
 
-struct SC_PLAYER_MOVE_PACKET;
-struct SC_PLAYER_MOVE_PACKETBuilder;
+struct SC_MOVE_PACKET;
+struct SC_MOVE_PACKETBuilder;
 
-struct SC_SOLDIER_INFO_PACKET;
-struct SC_SOLDIER_INFO_PACKETBuilder;
+struct CS_SUMMON_NPC;
+struct CS_SUMMON_NPCBuilder;
 
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
@@ -157,8 +160,8 @@ inline ::flatbuffers::Offset<SC_LOGIN_PACKET> CreateSC_LOGIN_PACKET(
   return builder_.Finish();
 }
 
-struct CS_ENTER_MATCH_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_ENTER_MATCH_PACKETBuilder Builder;
+struct CS_ENTER_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_ENTER_WORLD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PLAYER_ID = 4
   };
@@ -172,172 +175,223 @@ struct CS_ENTER_MATCH_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Ta
   }
 };
 
-struct CS_ENTER_MATCH_PACKETBuilder {
-  typedef CS_ENTER_MATCH_PACKET Table;
+struct CS_ENTER_WORLD_PACKETBuilder {
+  typedef CS_ENTER_WORLD_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(CS_ENTER_MATCH_PACKET::VT_PLAYER_ID, player_id, 0);
+    fbb_.AddElement<uint32_t>(CS_ENTER_WORLD_PACKET::VT_PLAYER_ID, player_id, 0);
   }
-  explicit CS_ENTER_MATCH_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_ENTER_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_ENTER_MATCH_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_ENTER_WORLD_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_ENTER_MATCH_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_ENTER_WORLD_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_ENTER_MATCH_PACKET> CreateCS_ENTER_MATCH_PACKET(
+inline ::flatbuffers::Offset<CS_ENTER_WORLD_PACKET> CreateCS_ENTER_WORLD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t player_id = 0) {
-  CS_ENTER_MATCH_PACKETBuilder builder_(_fbb);
+  CS_ENTER_WORLD_PACKETBuilder builder_(_fbb);
   builder_.add_player_id(player_id);
   return builder_.Finish();
 }
 
-struct SC_ENTER_MATCH_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_ENTER_MATCH_PACKETBuilder Builder;
+struct SC_ENTER_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_WORLD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MATCH_ID = 4
+    VT_WORLD_ID = 4
   };
-  uint16_t match_id() const {
-    return GetField<uint16_t>(VT_MATCH_ID, 0);
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint16_t>(verifier, VT_MATCH_ID, 2) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
            verifier.EndTable();
   }
 };
 
-struct SC_ENTER_MATCH_PACKETBuilder {
-  typedef SC_ENTER_MATCH_PACKET Table;
+struct SC_ENTER_WORLD_PACKETBuilder {
+  typedef SC_ENTER_WORLD_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_match_id(uint16_t match_id) {
-    fbb_.AddElement<uint16_t>(SC_ENTER_MATCH_PACKET::VT_MATCH_ID, match_id, 0);
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(SC_ENTER_WORLD_PACKET::VT_WORLD_ID, world_id, 0);
   }
-  explicit SC_ENTER_MATCH_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_ENTER_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_ENTER_MATCH_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_ENTER_WORLD_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_ENTER_MATCH_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_ENTER_WORLD_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_ENTER_MATCH_PACKET> CreateSC_ENTER_MATCH_PACKET(
+inline ::flatbuffers::Offset<SC_ENTER_WORLD_PACKET> CreateSC_ENTER_WORLD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t match_id = 0) {
-  SC_ENTER_MATCH_PACKETBuilder builder_(_fbb);
-  builder_.add_match_id(match_id);
+    uint16_t world_id = 0) {
+  SC_ENTER_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_world_id(world_id);
   return builder_.Finish();
 }
 
-struct SC_ADD_PLAYER_INFO_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_ADD_PLAYER_INFO_PACKETBuilder Builder;
+struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_LOCAL_PLAYER_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PLAYER_ID = 4,
-    VT_POS = 6,
-    VT_ROT = 8
+    VT_KINEMATIC_INFO = 6
   };
   uint32_t player_id() const {
     return GetField<uint32_t>(VT_PLAYER_ID, 0);
   }
-  const FB_STRUCTS::Vec3 *pos() const {
-    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
-  }
-  const FB_STRUCTS::Vec3 *rot() const {
-    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_ROT);
+  const FB_STRUCTS::KinematicInfo *kinematic_info() const {
+    return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
-           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
-           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
            verifier.EndTable();
   }
 };
 
-struct SC_ADD_PLAYER_INFO_PACKETBuilder {
-  typedef SC_ADD_PLAYER_INFO_PACKET Table;
+struct SC_LOCAL_PLAYER_PACKETBuilder {
+  typedef SC_LOCAL_PLAYER_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(SC_ADD_PLAYER_INFO_PACKET::VT_PLAYER_ID, player_id, 0);
+    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_PLAYER_ID, player_id, 0);
   }
-  void add_pos(const FB_STRUCTS::Vec3 *pos) {
-    fbb_.AddStruct(SC_ADD_PLAYER_INFO_PACKET::VT_POS, pos);
+  void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
+    fbb_.AddStruct(SC_LOCAL_PLAYER_PACKET::VT_KINEMATIC_INFO, kinematic_info);
   }
-  void add_rot(const FB_STRUCTS::Vec3 *rot) {
-    fbb_.AddStruct(SC_ADD_PLAYER_INFO_PACKET::VT_ROT, rot);
-  }
-  explicit SC_ADD_PLAYER_INFO_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_LOCAL_PLAYER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_ADD_PLAYER_INFO_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_ADD_PLAYER_INFO_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_ADD_PLAYER_INFO_PACKET> CreateSC_ADD_PLAYER_INFO_PACKET(
+inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t player_id = 0,
-    const FB_STRUCTS::Vec3 *pos = nullptr,
-    const FB_STRUCTS::Vec3 *rot = nullptr) {
-  SC_ADD_PLAYER_INFO_PACKETBuilder builder_(_fbb);
-  builder_.add_rot(rot);
-  builder_.add_pos(pos);
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+  SC_LOCAL_PLAYER_PACKETBuilder builder_(_fbb);
+  builder_.add_kinematic_info(kinematic_info);
   builder_.add_player_id(player_id);
   return builder_.Finish();
 }
 
-struct SC_REMOVE_PLAYER_INFO_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_REMOVE_PLAYER_INFO_PACKETBuilder Builder;
+struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ADD_OBJ_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PLAYER_ID = 4
+    VT_OBJ_ID = 4,
+    VT_OBJ_TYPE = 6,
+    VT_KINEMATIC_INFO = 8
   };
-  uint32_t player_id() const {
-    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  }
+  uint8_t obj_type() const {
+    return GetField<uint8_t>(VT_OBJ_TYPE, 0);
+  }
+  const FB_STRUCTS::KinematicInfo *kinematic_info() const {
+    return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint8_t>(verifier, VT_OBJ_TYPE, 1) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
            verifier.EndTable();
   }
 };
 
-struct SC_REMOVE_PLAYER_INFO_PACKETBuilder {
-  typedef SC_REMOVE_PLAYER_INFO_PACKET Table;
+struct SC_ADD_OBJ_PACKETBuilder {
+  typedef SC_ADD_OBJ_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(SC_REMOVE_PLAYER_INFO_PACKET::VT_PLAYER_ID, player_id, 0);
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_OBJ_ID, obj_id, 0);
   }
-  explicit SC_REMOVE_PLAYER_INFO_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  void add_obj_type(uint8_t obj_type) {
+    fbb_.AddElement<uint8_t>(SC_ADD_OBJ_PACKET::VT_OBJ_TYPE, obj_type, 0);
+  }
+  void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
+    fbb_.AddStruct(SC_ADD_OBJ_PACKET::VT_KINEMATIC_INFO, kinematic_info);
+  }
+  explicit SC_ADD_OBJ_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_REMOVE_PLAYER_INFO_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_REMOVE_PLAYER_INFO_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_ADD_OBJ_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_REMOVE_PLAYER_INFO_PACKET> CreateSC_REMOVE_PLAYER_INFO_PACKET(
+inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t player_id = 0) {
-  SC_REMOVE_PLAYER_INFO_PACKETBuilder builder_(_fbb);
-  builder_.add_player_id(player_id);
+    uint32_t obj_id = 0,
+    uint8_t obj_type = 0,
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+  SC_ADD_OBJ_PACKETBuilder builder_(_fbb);
+  builder_.add_kinematic_info(kinematic_info);
+  builder_.add_obj_id(obj_id);
+  builder_.add_obj_type(obj_type);
+  return builder_.Finish();
+}
+
+struct SC_REMOVE_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_REMOVE_OBJ_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4
+  };
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_REMOVE_OBJ_PACKETBuilder {
+  typedef SC_REMOVE_OBJ_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_REMOVE_OBJ_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  explicit SC_REMOVE_OBJ_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> CreateSC_REMOVE_OBJ_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0) {
+  SC_REMOVE_OBJ_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
   return builder_.Finish();
 }
 
@@ -443,167 +497,125 @@ inline ::flatbuffers::Offset<SC_CHAT_PACKET> CreateSC_CHAT_PACKETDirect(
       msg__);
 }
 
-struct CS_PLAYER_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_PLAYER_MOVE_PACKETBuilder Builder;
+struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_POS = 4,
-    VT_ROT = 6
+    VT_KINEMATIC_INFO = 4
   };
-  const FB_STRUCTS::Vec3 *pos() const {
-    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
-  }
-  const FB_STRUCTS::Vec3 *rot() const {
-    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_ROT);
+  const FB_STRUCTS::KinematicInfo *kinematic_info() const {
+    return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
-           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
            verifier.EndTable();
   }
 };
 
-struct CS_PLAYER_MOVE_PACKETBuilder {
-  typedef CS_PLAYER_MOVE_PACKET Table;
+struct CS_MOVE_PACKETBuilder {
+  typedef CS_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_pos(const FB_STRUCTS::Vec3 *pos) {
-    fbb_.AddStruct(CS_PLAYER_MOVE_PACKET::VT_POS, pos);
+  void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
+    fbb_.AddStruct(CS_MOVE_PACKET::VT_KINEMATIC_INFO, kinematic_info);
   }
-  void add_rot(const FB_STRUCTS::Vec3 *rot) {
-    fbb_.AddStruct(CS_PLAYER_MOVE_PACKET::VT_ROT, rot);
-  }
-  explicit CS_PLAYER_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_PLAYER_MOVE_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_MOVE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_PLAYER_MOVE_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_MOVE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_PLAYER_MOVE_PACKET> CreateCS_PLAYER_MOVE_PACKET(
+inline ::flatbuffers::Offset<CS_MOVE_PACKET> CreateCS_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const FB_STRUCTS::Vec3 *pos = nullptr,
-    const FB_STRUCTS::Vec3 *rot = nullptr) {
-  CS_PLAYER_MOVE_PACKETBuilder builder_(_fbb);
-  builder_.add_rot(rot);
-  builder_.add_pos(pos);
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+  CS_MOVE_PACKETBuilder builder_(_fbb);
+  builder_.add_kinematic_info(kinematic_info);
   return builder_.Finish();
 }
 
-struct SC_PLAYER_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_PLAYER_MOVE_PACKETBuilder Builder;
+struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PLAYER_ID = 4,
-    VT_POS = 6,
-    VT_ROT = 8
+    VT_OBJ_ID = 4,
+    VT_KINEMATIC_INFO = 6
   };
-  uint32_t player_id() const {
-    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
   }
-  const FB_STRUCTS::Vec3 *pos() const {
-    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
-  }
-  const FB_STRUCTS::Vec3 *rot() const {
-    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_ROT);
+  const FB_STRUCTS::KinematicInfo *kinematic_info() const {
+    return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
-           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
-           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_ROT, 4) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
            verifier.EndTable();
   }
 };
 
-struct SC_PLAYER_MOVE_PACKETBuilder {
-  typedef SC_PLAYER_MOVE_PACKET Table;
+struct SC_MOVE_PACKETBuilder {
+  typedef SC_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(SC_PLAYER_MOVE_PACKET::VT_PLAYER_ID, player_id, 0);
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_MOVE_PACKET::VT_OBJ_ID, obj_id, 0);
   }
-  void add_pos(const FB_STRUCTS::Vec3 *pos) {
-    fbb_.AddStruct(SC_PLAYER_MOVE_PACKET::VT_POS, pos);
+  void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
+    fbb_.AddStruct(SC_MOVE_PACKET::VT_KINEMATIC_INFO, kinematic_info);
   }
-  void add_rot(const FB_STRUCTS::Vec3 *rot) {
-    fbb_.AddStruct(SC_PLAYER_MOVE_PACKET::VT_ROT, rot);
-  }
-  explicit SC_PLAYER_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_MOVE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_MOVE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_PLAYER_MOVE_PACKET> CreateSC_PLAYER_MOVE_PACKET(
+inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t player_id = 0,
-    const FB_STRUCTS::Vec3 *pos = nullptr,
-    const FB_STRUCTS::Vec3 *rot = nullptr) {
-  SC_PLAYER_MOVE_PACKETBuilder builder_(_fbb);
-  builder_.add_rot(rot);
-  builder_.add_pos(pos);
-  builder_.add_player_id(player_id);
+    uint32_t obj_id = 0,
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+  SC_MOVE_PACKETBuilder builder_(_fbb);
+  builder_.add_kinematic_info(kinematic_info);
+  builder_.add_obj_id(obj_id);
   return builder_.Finish();
 }
 
-struct SC_SOLDIER_INFO_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_SOLDIER_INFO_PACKETBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_INFO = 4
-  };
-  const ::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *> *info() const {
-    return GetPointer<const ::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *> *>(VT_INFO);
-  }
+struct CS_SUMMON_NPC FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_SUMMON_NPCBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_INFO) &&
-           verifier.VerifyVector(info()) &&
            verifier.EndTable();
   }
 };
 
-struct SC_SOLDIER_INFO_PACKETBuilder {
-  typedef SC_SOLDIER_INFO_PACKET Table;
+struct CS_SUMMON_NPCBuilder {
+  typedef CS_SUMMON_NPC Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_info(::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *>> info) {
-    fbb_.AddOffset(SC_SOLDIER_INFO_PACKET::VT_INFO, info);
-  }
-  explicit SC_SOLDIER_INFO_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_SUMMON_NPCBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_SUMMON_NPC> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_SUMMON_NPC>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET> CreateSC_SOLDIER_INFO_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::SoldierInfo *>> info = 0) {
-  SC_SOLDIER_INFO_PACKETBuilder builder_(_fbb);
-  builder_.add_info(info);
+inline ::flatbuffers::Offset<CS_SUMMON_NPC> CreateCS_SUMMON_NPC(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_SUMMON_NPCBuilder builder_(_fbb);
   return builder_.Finish();
-}
-
-inline ::flatbuffers::Offset<SC_SOLDIER_INFO_PACKET> CreateSC_SOLDIER_INFO_PACKETDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<FB_STRUCTS::SoldierInfo> *info = nullptr) {
-  auto info__ = info ? _fbb.CreateVectorOfStructs<FB_STRUCTS::SoldierInfo>(*info) : 0;
-  return FB_TABLES::CreateSC_SOLDIER_INFO_PACKET(
-      _fbb,
-      info__);
 }
 
 }  // namespace FB_TABLES

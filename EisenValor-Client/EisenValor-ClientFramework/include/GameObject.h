@@ -14,22 +14,10 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection) = 0;
 
 	// 공통 기능들
-	virtual void SetPosition(float x, float y, float z)
-	{
-		m_x = x;
-		m_y = y;
-		m_z = z;
-	}
-	virtual DirectX::XMFLOAT3 GetPosition() const { return {m_x, m_y, m_z}; }
-	virtual void			  SetRotation(float yaw) { m_yaw = yaw; }
-	virtual float			  GetRotation() const { return m_yaw; }
-
-    // 오브젝트 타입 구분용
-    enum class ObjectType
-    {
-        Player,
-        NPC
-    };
+	virtual void SetPosition(const Vec3& pos) { m_pos = pos; }
+	virtual Vec3 GetPosition() const { return m_pos; }
+	virtual void SetRotation(const Vec3& rot) { m_rot = rot; }
+	virtual Vec3 GetRotation() const { return m_rot; }
 
 	virtual ObjectType GetObjectType() const = 0;
 
@@ -38,8 +26,6 @@ public:
 
 protected:
 	// 기본 Transform 데이터
-	float m_x = 0.0f;
-	float m_y = 0.0f;
-	float m_z = 0.0f;
-	float m_yaw = 0.0f;
+	Vec3 m_pos;
+	Vec3 m_rot;
 };
