@@ -29,6 +29,15 @@ enum class PACKET_TYPE : uint16
 
 	CS_SUMMON_NPC_PKT = 12,
 
+	CS_KEY_UP_PKT = 13,
+	SC_KEY_UP_PKT = 14,
+
+	CS_MOVE_START = 15,
+	SC_MOVE_START = 16,
+
+	CS_MOVE_FINISH = 17,
+	SC_MOVE_FINISH = 18,
+
 	END
 };
 
@@ -40,7 +49,6 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
-
 namespace NetBridge
 {
 class PacketBuffer;
@@ -157,20 +165,26 @@ public:
 #pragma region CS_CHAT_PACKET
 	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_CHAT_PACKET(const std::string_view msg)
 	{
-		return MakePacketBuffer(PACKET_TYPE::CS_CHAT_PKT, MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, msg.data()));
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_CHAT_PKT, MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, msg.data())
+		);
 	}
 #pragma endregion
 
 #pragma region CS_MOVE_PACKET
 	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_MOVE_PACKET(
-		const Vec3& pos, const Vec3& rot, const Vec3& vel
+		const bool isRun, const bool isRotate, const Vec3& pos, const Vec3& rot, const Vec3& vel, const Vec3& accel, const uint64 timeStamp
 	)
 	{
-		const FB_STRUCTS::Vec3			p{pos.x, pos.y, pos.z};
-		const FB_STRUCTS::Vec3			r{rot.x, rot.y, rot.z};
-		const FB_STRUCTS::Vec3			v{vel.x, vel.y, vel.z};
-		const FB_STRUCTS::KinematicInfo kInfo{p, r, v};
-		return MakePacketBuffer(PACKET_TYPE::CS_MOVE_PKT, MakePacket(FB_TABLES::CreateCS_MOVE_PACKET, &kInfo));
+
+		const FB_STRUCTS::Vec3 p{pos.x, pos.y, pos.z};
+		const FB_STRUCTS::Vec3 r{rot.x, rot.y, rot.z};
+		const FB_STRUCTS::Vec3 v{vel.x, vel.y, vel.z};
+		const FB_STRUCTS::Vec3 a{accel.x, accel.y, accel.z};
+
+		const FB_STRUCTS::KinematicInfo kInfo{p, r, v, a, timeStamp};
+
+		return MakePacketBuffer(PACKET_TYPE::CS_MOVE_PKT, MakePacket(FB_TABLES::CreateCS_MOVE_PACKET, isRun, isRotate, &kInfo));
 	}
 #pragma endregion
 
@@ -180,5 +194,6 @@ public:
 		return MakePacketBuffer(PACKET_TYPE::CS_SUMMON_NPC_PKT, MakePacket(FB_TABLES::CreateCS_SUMMON_NPC));
 	}
 #pragma endregion
+
 };
 } // namespace NetBridge

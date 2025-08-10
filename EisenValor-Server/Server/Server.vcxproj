@@ -156,8 +156,8 @@
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="ClientSessionManager.cpp" />
-    <ClCompile Include="GameWorld.cpp" />
-    <ClCompile Include="GameMatchManager.cpp" />
+    <ClCompile Include="GameRoom.cpp" />
+    <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -176,8 +176,8 @@
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="ClientSessionManager.h" />
-    <ClInclude Include="GameWorld.h" />
-    <ClInclude Include="GameMatchManager.h" />
+    <ClInclude Include="GameRoom.h" />
+    <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
     <ClInclude Include="Player.h" />

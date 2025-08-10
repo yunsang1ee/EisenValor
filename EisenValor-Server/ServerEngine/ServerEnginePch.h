@@ -70,3 +70,10 @@ namespace fs = std::filesystem;
 #include "ServerEngineContainers.h"
 #include "ObjectPool.h"
 #include "LockQueue.h"
+
+
+struct PacketInfo {
+	PacketHeader header;
+	const uint8* ptr;
+	uint32 size;
+};

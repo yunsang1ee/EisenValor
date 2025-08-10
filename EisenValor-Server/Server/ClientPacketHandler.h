@@ -28,7 +28,7 @@ enum class PACKET_TYPE : uint16 {
 	SC_LOCAL_PLAYER_PKT = 5,
 
 	SC_ADD_OBJ_PKT = 6,
-	SC_REMOVE_OBJ_PKT = 7,
+	SC_REMOVE_OBJ_PKT = 7,	
 
 	CS_CHAT_PKT = 8,
 	SC_CHAT_PKT = 9,
@@ -72,7 +72,6 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_WORLD_PACKET>(Handle_CS_ENTER_WORLD_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer, header); };
-		
 	}
 
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader)
@@ -106,12 +105,24 @@ public:
 		return packetBuffer;
 	}
 
+	//static PacketInfo MakePacketInfo(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
+	//{
+	//	const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
+	//	const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
+	//	return PacketInfo{ header, packetData.data(), packetSize };
+	//}
+	
 public:
 #pragma region SC_LOGIN_PACKET
 	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id)
 	{
 		return MakePacketBuffer(PACKET_TYPE::SC_LOGIN_PKT, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
 	}
+
+	//static PacketInfo Make_SC_LOGIN_PACKET(const uint32 id)
+	//{
+	//	return MakePacketInfo(PACKET_TYPE::SC_LOGIN_PKT, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
+	//}
 #pragma endregion
 
 #pragma region SC_CHAT_PACKET
@@ -122,28 +133,32 @@ public:
 #pragma endregion
 
 #pragma region SC_LOCAL_PLAYER
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& info)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& transform)
 	{
-		const FB_STRUCTS::Vec3 pos{ info.position.x, info.position.y , info.position.z };
-		const FB_STRUCTS::Vec3 rot{ info.rotation.x, info.rotation.y , info.rotation.z };
-		const FB_STRUCTS::Vec3 vel{ info.velocity.x, info.velocity.y , info.velocity.z };
+		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
+		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
+		const FB_STRUCTS::Vec3 vel{ transform.velocity.x, transform.velocity.y, transform.velocity.z };
+		const FB_STRUCTS::Vec3 accel{ transform.acceleration.x, transform.acceleration.y, transform.acceleration.z };
+		const uint64 timeStamp{ transform.timeStamp };
 
-		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel };
+		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel, accel, timeStamp };
 
 		return MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo));
 	}
 #pragma endregion
 
 #pragma region SC_ADD_OBJ
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const KinematicInfo& info)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const KinematicInfo& transform)
 	{
-		const FB_STRUCTS::Vec3 pos{ info.position.x, info.position.y , info.position.z };
-		const FB_STRUCTS::Vec3 rot{ info.rotation.x, info.rotation.y , info.rotation.z };
-		const FB_STRUCTS::Vec3 vel{ info.velocity.x, info.velocity.y , info.velocity.z };
+		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
+		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
+		const FB_STRUCTS::Vec3 vel{ transform.velocity.x, transform.velocity.y, transform.velocity.z };
+		const FB_STRUCTS::Vec3 accel{ transform.acceleration.x, transform.acceleration.y, transform.acceleration.z };
+		const uint64 timeStamp{ transform.timeStamp };
 
-		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel };
+		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 
-		return MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, &kinematicInfo));
+		return MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, &info));
 	}
 #pragma endregion
 
@@ -159,11 +174,14 @@ public:
 	{
 		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
 		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
-		const FB_STRUCTS::Vec3 vel{ 0.f, 0.f, 0.f };
+		const FB_STRUCTS::Vec3 vel{ transform.velocity.x, transform.velocity.y, transform.velocity.z };
+		const FB_STRUCTS::Vec3 accel{ transform.acceleration.x, transform.acceleration.y, transform.acceleration.z };
+		const uint64 timeStamp{ transform.timeStamp };
 
-		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel };
+		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 
 		return MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, MakePacket(FB_TABLES::CreateSC_MOVE_PACKET, id, &info));
 	}
 #pragma endregion
+
 };
