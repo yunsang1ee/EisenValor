@@ -106,7 +106,101 @@ void Player::Initialize(ID3D12Device* device)
 	ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
 }
 
-void Player::Update(float deltaTime) {}
+void Player::Update(float deltaTime)
+{
+#ifdef DEAD_RECKONING
+	if (keyup)
+	{
+		const float dampingFactor = 0.95f;
+
+		// 직접 곱해줌 (operator *= 없이)
+		m_velocity.x = m_velocity.x * dampingFactor;
+		m_velocity.y = m_velocity.y * dampingFactor;
+		m_velocity.z = m_velocity.z * dampingFactor;
+
+		// 속도 크기 제곱 직접 계산 (LengthSquared)
+		float speedSq = m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y + m_velocity.z * m_velocity.z;
+
+		// 아주 느려지면 스냅 (멈춘 걸로 처리)
+		if (speedSq < 0.001f)
+		{
+			m_velocity.x = 0.f;
+			m_velocity.y = 0.f;
+			m_velocity.z = 0.f;
+		}
+
+		// 위치 이동 적용
+		m_pos.x = m_pos.x + m_velocity.x * deltaTime;
+		m_pos.y = m_pos.y + m_velocity.y * deltaTime;
+		m_pos.z = m_pos.z + m_velocity.z * deltaTime;
+	}
+	else
+	{
+		const uint64 now = std::chrono::duration_cast<std::chrono::milliseconds>(
+							   std::chrono::high_resolution_clock::now().time_since_epoch()
+		)
+							   .count();
+		const double serverDT = (now - lastServerTimestamp) / 1000.f;
+
+		const Vec3 predictedPosition =
+			PredictPosition(lastServerPosition, lastServerVelocity, lastServerAcceleration, serverDT);
+
+		if (m_pos.x == predictedPosition.x && m_pos.y == predictedPosition.y && m_pos.z == predictedPosition.z)
+			return;
+
+		// 보간 계수 계산 (deltaTime 기반)
+		const float smoothingSpeed = 10.0f; // 높을수록 빠르게 수렴
+		const float alpha = 1.0f - std::exp(-smoothingSpeed * deltaTime);
+
+		m_pos = Lerp(m_pos, predictedPosition, alpha);
+	}
+#endif
+	Vec3 curPos{GetPosition()};
+	Vec3 destPos{lastServerPosition};
+
+	if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+		return;
+
+	float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
+	if (lerpFactor > 1.0f)
+		lerpFactor = 1.0f; // 목적지 overshoot 방지
+
+	Vec3 newPos;
+	newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
+	newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
+	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+	SetPosition(newPos);
+
+	{
+		Vec3 curEuler = GetRotation();		 // 현재 회전 (deg)
+		Vec3 destEuler = lastServerRotation; // 목표 회전 (deg)
+
+		float t = deltaTime * 8.f;
+		if (t > 1.f)
+			t = 1.f;
+
+		// 1. 오일러(deg) → 쿼터니언
+		XMVECTOR curQuat = XMQuaternionRotationRollPitchYaw(
+			XMConvertToRadians(curEuler.x), XMConvertToRadians(curEuler.y), XMConvertToRadians(curEuler.z)
+		);
+		XMVECTOR destQuat = XMQuaternionRotationRollPitchYaw(
+			XMConvertToRadians(destEuler.x), XMConvertToRadians(destEuler.y), XMConvertToRadians(destEuler.z)
+		);
+
+		// 2. 쿼터니언 보간
+		XMVECTOR newQuat = XMQuaternionSlerp(curQuat, destQuat, t);
+
+		// 3. 쿼터니언 → 행렬
+		XMMATRIX rotMat = XMMatrixRotationQuaternion(newQuat);
+
+		// 4. 행렬 → 오일러(deg)
+		Vec3 newEuler;
+		newEuler.y = XMConvertToDegrees(atan2f(rotMat.r[0].m128_f32[2], rotMat.r[2].m128_f32[2])); // yaw
+		newEuler.x = XMConvertToDegrees(asinf(-rotMat.r[1].m128_f32[2]));						   // pitch
+		newEuler.z = XMConvertToDegrees(atan2f(rotMat.r[1].m128_f32[0], rotMat.r[1].m128_f32[1])); // roll
+		SetRotation(newEuler);
+	}
+}
 
 void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
@@ -115,12 +209,12 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->IASetIndexBuffer(&m_indexBufferView);
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // 플레이어 큐브 렌더링
-    DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
-    DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
-    DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
-    DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
-    DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
+	// 플레이어 큐브 렌더링
+	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
+	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
+	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
+	DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
+	DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
 
 	// 플레이어 상수 버퍼에 복사
 	DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(playerMVP));

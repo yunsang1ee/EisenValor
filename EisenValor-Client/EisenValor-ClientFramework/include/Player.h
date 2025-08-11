@@ -34,6 +34,22 @@ public:
 	// 카메라 관련 함수 추가
 	DirectX::XMMATRIX GetViewMatrix() const;
 
+	private:
+	Vec3 PredictPosition(const Vec3& pos, const Vec3& vel, const Vec3& acc, double t)
+	{
+		float tf = static_cast<float>(t);
+		float half_t_squared = 0.5f * tf * tf;
+
+		return Vec3{
+			pos.x + vel.x * tf + acc.x * half_t_squared, pos.y + vel.y * tf + acc.y * half_t_squared,
+			pos.z + vel.z * tf + acc.z * half_t_squared
+		};
+	}
+
+	Vec3 Lerp(const Vec3& a, const Vec3& b, float t) {
+		return Vec3{a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t};
+	}
+
 protected:
 	// 플레이어 속성
 	float m_playerSpeed = 5.0f; // 이동 속도

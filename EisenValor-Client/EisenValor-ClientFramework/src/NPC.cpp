@@ -145,6 +145,24 @@ void NPC::Update(float deltaTime)
 
  //   DirectX::XMFLOAT3 pos = GetPosition();
 	//SetPosition(Vec3{pos.x, m_baseY, pos.z});
+
+    	// TOOD: 현재 위치에서 서버 위치로 보간.
+ Vec3 curPos{GetPosition()};
+ Vec3 destPos{lastServerPosition};
+
+ if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+	 return;
+
+ float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
+ if (lerpFactor > 1.0f)
+	 lerpFactor = 1.0f; // 목적지 overshoot 방지
+
+ Vec3 newPos;
+ newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
+ newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
+ newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+
+ SetPosition(newPos);
 }
 
 void NPC::Render(ID3D12GraphicsCommandList* cmdList,
