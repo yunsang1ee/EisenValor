@@ -28,8 +28,8 @@ namespace ServerEngine {
 		SessionPool*	GetSessionPool() noexcept { return m_sessionPool.get(); }
 
 	private:
-		void			FlushPacketQueue();
-		void			DequeueCompletion();
+		void			FlushSessionPacketQueue();
+		void			DequeueCompletion() const;
 		void			DistributeReservedTask();
 		void			DoTask();
 	};

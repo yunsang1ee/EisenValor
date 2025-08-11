@@ -8,8 +8,6 @@ namespace Server {
 
 		class NPC : public GameObject {
 		private:
-			std::chrono::high_resolution_clock::time_point m_lastUpdate;
-			bool m_firstUpdate = true;
 			std::weak_ptr<Player> m_owner;
 			Vec3 m_formationOffset;   // 플레이어 기준 대열 오프셋
 			Vec3 m_targetPos;
@@ -25,7 +23,7 @@ namespace Server {
 			void SetTargetPos(const Vec3& targetPos) noexcept { m_targetPos = targetPos; }
 
 		public:
-			void Update();
+			virtual void Update(const float dt) override;
 
 		};
 	}

@@ -53,11 +53,6 @@ bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOC
 			recvPkt.kinematic_info()->rot().z()
 		};
 
-		const Vec3 vel{
-			recvPkt.kinematic_info()->vel().x(), recvPkt.kinematic_info()->vel().y(),
-			recvPkt.kinematic_info()->vel().z()
-		};
-
 		localPlayer->SetPosition(pos);
 		localPlayer->SetRotation(rot);
 
@@ -88,6 +83,11 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	const Vec3 vel{
 		recvPkt.kinematic_info()->vel().x(), recvPkt.kinematic_info()->vel().y(), recvPkt.kinematic_info()->vel().z()
 	};
+	
+	const Vec3 accel{
+		recvPkt.kinematic_info()->accel().x(), recvPkt.kinematic_info()->accel().y(),
+		recvPkt.kinematic_info()->accel().z()
+	};
 
 	switch (auto type = static_cast<ObjectType>(recvPkt.obj_type()))
 	{
@@ -98,6 +98,9 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		player->m_id = id;
 		player->SetPosition(pos);
 		player->SetRotation(pos);
+		player->SetVelocity(vel);
+		player->SetAccelration(accel);
+		player->lastServerPosition = pos;
 
 		MANAGER(GameObjectManager)->AddObject(player);
 		break;
@@ -109,7 +112,9 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		npc->m_id = id;
 		npc->SetPosition(pos);
 		npc->SetRotation(pos);
-		
+		npc->SetVelocity(vel);
+		npc->SetAccelration(accel);
+		npc->lastServerPosition = pos;
 		MANAGER(GameObjectManager)->AddObject(npc);
 		break;
 	}
@@ -163,8 +168,9 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 	if (id == localID)
 		return false;
 
-	auto		 obj = MANAGER(GameObjectManager)->FindObject(id);
-	if (obj) {
+	auto obj = MANAGER(GameObjectManager)->FindObject(id);
+	if (obj)
+	{
 		const Vec3 pos{
 			recvPkt.kinematic_info()->pos().x(), recvPkt.kinematic_info()->pos().y(),
 			recvPkt.kinematic_info()->pos().z()
@@ -177,9 +183,11 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 			recvPkt.kinematic_info()->vel().x(), recvPkt.kinematic_info()->vel().y(),
 			recvPkt.kinematic_info()->vel().z()
 		};
-
-		obj->SetPosition(pos);
-		obj->SetRotation(rot);
+		const Vec3 accel{
+			recvPkt.kinematic_info()->accel().x(), recvPkt.kinematic_info()->accel().y(),
+			recvPkt.kinematic_info()->accel().z()
+		};
+		obj->Handle_SC_MOVE(pos, rot, vel, accel, recvPkt.kinematic_info()->time_stamp());
 	}
 	return true;
 }
