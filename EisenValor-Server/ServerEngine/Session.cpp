@@ -66,6 +66,24 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 	// m_owner.lock()->ReleaseSession(shared_from_this());
 }
 
+void ServerEngine::Session::FlushPacketQueueSecond()
+{
+	if(IsConnected() == false)
+		return;
+
+	int deferCount{};
+	{
+		std::shared_lock<std::shared_mutex> lk{ m_sendPktInfoslk };
+		deferCount = m_sendPktInfos.size();
+	}
+
+	if(deferCount > 0)
+		DeferSend();
+
+	if(deferCount > 0)
+		CommitSend();
+}
+
 void ServerEngine::Session::FlushPacketQueue()
 {
 	const auto currentTime = std::chrono::high_resolution_clock::now();
@@ -84,7 +102,7 @@ void ServerEngine::Session::FlushPacketQueue()
 			if(packetBuffer == nullptr) break;
 
 			if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
-				assert(nullptr);
+				Disconnect("SendBuffer Append");
 		}
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
@@ -92,7 +110,15 @@ void ServerEngine::Session::FlushPacketQueue()
 				break;
 			deferCount++;
 
-			if(deferCount >= 243) break;
+			if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION){
+				std::println("DeferCount:{}", deferCount);
+				break;
+			}
+		}
+
+		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
+			std::println("DeferCount:{}", deferCount);
+			break;
 		}
 	}
 
@@ -105,6 +131,51 @@ void ServerEngine::Session::FlushPacketQueue()
 void ServerEngine::Session::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
 	m_packetBufferQueue.Push(packetBuffer);
+}
+
+void ServerEngine::Session::Send(const PacketInfo& info)
+{
+	{
+		std::lock_guard<std::mutex> lk{ m_sendBufferlk };
+		memcpy(m_sendBuffer.GetWriteCursor(), (char*)&info.header, sizeof(PacketHeader));
+		m_sendBuffer.OnWrite(sizeof(PacketHeader));
+		memcpy(m_sendBuffer.GetWriteCursor(), info.ptr, info.size- sizeof(PacketHeader));
+		m_sendBuffer.OnWrite(info.size - sizeof(PacketHeader));
+		std::pair<int32, int32> sd{ m_sendBuffer.GetSendOffset(), info.size };
+		m_sendBuffer.moveSendOffset(info.size);
+		
+		std::unique_lock<std::shared_mutex> slk{ m_sendPktInfoslk };
+		m_sendPktInfos.push_back(sd);
+	}
+}
+
+bool ServerEngine::Session::DeferSend()
+{
+	std::unique_lock<std::shared_mutex> slk{ m_sendPktInfoslk };
+	for(auto& info : m_sendPktInfos) {
+		SendContext* sendContext = ObjectPool<SendContext>::Pop();
+		sendContext->Init();
+		sendContext->HoldSession(shared_from_this());
+
+		sendContext->BufferId = m_sendBuffer.GetID();
+		sendContext->Offset = info.first;
+		sendContext->Length = info.second;
+
+		if(false == RIO_EXT_FUNC_TB.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
+			ServerEngine::LogManager::PrintLastError();
+			sendContext->ReleaseSession();
+			ObjectPool<SendContext>::Push(sendContext);
+			Disconnect("RIO_SEND_FAILED");
+			return false;
+		}
+
+		/*if(false == m_sendBuffer.moveSendOffset(size)) {
+			sendContext->ReleaseSession();
+			ObjectPool<SendContext>::Push(sendContext);
+			Disconnect("moveSendOffset");
+			return false;
+		}*/
+	}
 }
 
 bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
@@ -139,7 +210,7 @@ void ServerEngine::Session::CommitSend()
 {
 	if(false == RIO_EXT_FUNC_TB.RIOSend(m_rq, nullptr, 0, RIO_MSG_COMMIT_ONLY, nullptr)) {
 		ServerEngine::LogManager::PrintLastError();
-		Disconnect("SendCommit");
+		Disconnect("CommitSend");
 	}
 }
 
@@ -170,6 +241,7 @@ void ServerEngine::Session::Init()
 {
 	const auto& cq = m_owner.lock()->GetCQ();
 
+	// CQ의 크기가 RQ의 크기보다 작으면 만들기 실패
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);
 
 	if(m_rq == RIO_INVALID_RQ) {

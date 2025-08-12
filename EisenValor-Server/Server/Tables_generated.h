@@ -54,6 +54,12 @@ struct SC_MOVE_PACKETBuilder;
 struct CS_SUMMON_NPC;
 struct CS_SUMMON_NPCBuilder;
 
+struct CS_KEY_UP;
+struct CS_KEY_UPBuilder;
+
+struct SC_KEY_UP;
+struct SC_KEY_UPBuilder;
+
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -257,7 +263,7 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
-           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            verifier.EndTable();
   }
 };
@@ -313,7 +319,7 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_OBJ_TYPE, 1) &&
-           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            verifier.EndTable();
   }
 };
@@ -500,14 +506,24 @@ inline ::flatbuffers::Offset<SC_CHAT_PACKET> CreateSC_CHAT_PACKETDirect(
 struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_KINEMATIC_INFO = 4
+    VT_IS_MOVE = 4,
+    VT_IS_ROTATE = 6,
+    VT_KINEMATIC_INFO = 8
   };
+  bool is_move() const {
+    return GetField<uint8_t>(VT_IS_MOVE, 0) != 0;
+  }
+  bool is_rotate() const {
+    return GetField<uint8_t>(VT_IS_ROTATE, 0) != 0;
+  }
   const FB_STRUCTS::KinematicInfo *kinematic_info() const {
     return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
+           VerifyField<uint8_t>(verifier, VT_IS_MOVE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_IS_ROTATE, 1) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            verifier.EndTable();
   }
 };
@@ -516,6 +532,12 @@ struct CS_MOVE_PACKETBuilder {
   typedef CS_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_is_move(bool is_move) {
+    fbb_.AddElement<uint8_t>(CS_MOVE_PACKET::VT_IS_MOVE, static_cast<uint8_t>(is_move), 0);
+  }
+  void add_is_rotate(bool is_rotate) {
+    fbb_.AddElement<uint8_t>(CS_MOVE_PACKET::VT_IS_ROTATE, static_cast<uint8_t>(is_rotate), 0);
+  }
   void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
     fbb_.AddStruct(CS_MOVE_PACKET::VT_KINEMATIC_INFO, kinematic_info);
   }
@@ -532,9 +554,13 @@ struct CS_MOVE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_MOVE_PACKET> CreateCS_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    bool is_move = false,
+    bool is_rotate = false,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
   CS_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_kinematic_info(kinematic_info);
+  builder_.add_is_rotate(is_rotate);
+  builder_.add_is_move(is_move);
   return builder_.Finish();
 }
 
@@ -553,7 +579,7 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
-           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 4) &&
+           VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            verifier.EndTable();
   }
 };
@@ -615,6 +641,76 @@ struct CS_SUMMON_NPCBuilder {
 inline ::flatbuffers::Offset<CS_SUMMON_NPC> CreateCS_SUMMON_NPC(
     ::flatbuffers::FlatBufferBuilder &_fbb) {
   CS_SUMMON_NPCBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CS_KEY_UP FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_KEY_UPBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_KEY_UPBuilder {
+  typedef CS_KEY_UP Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_KEY_UPBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_KEY_UP> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_KEY_UP>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_KEY_UP> CreateCS_KEY_UP(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_KEY_UPBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct SC_KEY_UP FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_KEY_UPBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_ID = 4
+  };
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_KEY_UPBuilder {
+  typedef SC_KEY_UP Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(SC_KEY_UP::VT_PLAYER_ID, player_id, 0);
+  }
+  explicit SC_KEY_UPBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_KEY_UP> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_KEY_UP>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_KEY_UP> CreateSC_KEY_UP(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t player_id = 0) {
+  SC_KEY_UPBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
   return builder_.Finish();
 }
 

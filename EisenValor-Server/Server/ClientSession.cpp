@@ -3,7 +3,7 @@
 
 #include "ClientSessionManager.h"
 #include "Player.h"
-#include "GameWorld.h"
+#include "GameRoom.h"
 
 Server::ClientSession::ClientSession()
 	:m_player{nullptr}
@@ -31,7 +31,7 @@ void Server::ClientSession::OnDisconnected()
 	if(m_player) {
 		auto match = m_player->GetGameWorld();
 		if(match)
-			match->ExecuteAsyncronously(&Server::Contents::GameWorld::LeaveMatch, clientSession);
+			match->ExecuteAsyncronously(&Server::Contents::GameRoom::LeaveMatch, clientSession);
 	}
 }
 

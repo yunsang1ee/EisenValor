@@ -64,6 +64,8 @@ table SC_CHAT_PACKET {
 //						MOVE
 // ================================================
 table CS_MOVE_PACKET {
+	is_move: bool;
+	is_rotate: bool;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
@@ -77,4 +79,12 @@ table SC_MOVE_PACKET {
 // ================================================
 table CS_SUMMON_NPC {
 
+}
+
+
+table CS_KEY_UP{
+}
+
+table SC_KEY_UP {
+player_id: uint;
 }

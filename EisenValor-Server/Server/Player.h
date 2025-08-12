@@ -13,6 +13,9 @@ namespace Server {
 			std::vector<std::shared_ptr<NPC>>		m_npcs;
 
 		public:
+			std::atomic_bool						m_moveStart{ false };
+
+		public:
 			Player();
 			virtual ~Player() = default;
 
@@ -25,6 +28,9 @@ namespace Server {
 		public:
 			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
 			const auto& GetNpcs() const noexcept { return m_npcs; }
+
+		public:
+			virtual void Update(const float dt) override;
 		
 		};
 	}
