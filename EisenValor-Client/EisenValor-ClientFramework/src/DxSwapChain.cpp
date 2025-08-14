@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxSwapChain.h"
+#include "DxUtils.h"
 #include <DxCommandQueueGlobal.h>
 
 DxSwapChain::DxSwapChain(
@@ -167,10 +168,11 @@ void DxSwapChain::CreateResources(
 	{
 		ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_backBuffers[i])));
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvDescriptorStart;
-		rtvHandle.ptr += static_cast<size_t>(i) * rtvDescriptorSize;
-
+		auto rtvHandle = DxUtils::OffsetHandle(rtvDescriptorStart, i, rtvDescriptorSize);
 		device->CreateRenderTargetView(m_backBuffers[i].Get(), nullptr, rtvHandle);
+
+		std::wstring bufferName = L"SwapChainBackBuffer_" + std::to_wstring(i);
+		DxUtils::SetDebugName(m_backBuffers[i].Get(), bufferName);
 	}
 
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -210,9 +212,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxSwapChain::GetBackBufferRTV(uint32_t index) const
 		DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid RTV index {}. Max is {}.\n", index, m_backBufferCount - 1);
 		return {};
 	}
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescriptorStart;
-	rtvHandle.ptr += static_cast<size_t>(index) * m_rtvDescriptorSize;
-	return rtvHandle;
+
+	return DxUtils::OffsetHandle(m_rtvDescriptorStart, index, m_rtvDescriptorSize);
 }
 
 DxSwapChain::SwapChainInfo DxSwapChain::GetInfo() const

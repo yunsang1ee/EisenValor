@@ -169,6 +169,7 @@
     <ClInclude Include="include\DxDescriptorHeap.h" />
     <ClInclude Include="include\DxDeviceGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
+    <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GameObjectManager.h" />
@@ -201,6 +202,7 @@
     <ClCompile Include="src\DxDescriptorHeap.cpp" />
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
+    <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GameObjectManager.cpp" />

@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxDescriptorHeap.h"
+#include "DxUtils.h"
 #include <string>
 
 #ifdef _DEBUG
@@ -31,7 +32,9 @@ DxDescriptorHeap::DxDescriptorHeap(
 
 	std::wstring heapName = L"DxDescriptorHeap_Type" + std::to_wstring(static_cast<int>(type)) + L"_Count" +
 							std::to_wstring(descriptorCount);
-	m_heap->SetName(heapName.c_str());
+	
+	DxUtils::SetDebugName(m_heap.Get(), heapName);
+	
 	DEBUG_LOG_FMT(
 		"[DxDescriptorHeap] Created heap: Type={}, Count={}, ShaderVisible={}, Name={}\n", (int)type, descriptorCount,
 		shaderVisible, std::string(heapName.begin(), heapName.end())
@@ -59,10 +62,8 @@ void DxDescriptorHeap::Grow()
 
 	for (uint32_t i = 0; i < m_allocIndex; ++i)
 	{
-		D3D12_CPU_DESCRIPTOR_HANDLE src = m_baseCPU;
-		src.ptr += static_cast<size_t>(i) * m_descriptorSize;
-		D3D12_CPU_DESCRIPTOR_HANDLE dst = newHeap->GetCPUDescriptorHandleForHeapStart();
-		dst.ptr += static_cast<size_t>(i) * m_descriptorSize;
+		auto src = DxUtils::OffsetHandle(m_baseCPU, i, m_descriptorSize);
+		auto dst = DxUtils::OffsetHandle(newHeap->GetCPUDescriptorHandleForHeapStart(), i, m_descriptorSize);
 		device->CopyDescriptorsSimple(1, dst, src, m_type);
 	}
 
@@ -89,10 +90,10 @@ DescriptorHandles DxDescriptorHeap::Allocate()
 	}
 
 	DescriptorHandles handles;
-	handles.cpuHandle.ptr = m_baseCPU.ptr + static_cast<size_t>(m_allocIndex) * m_descriptorSize;
+	handles.cpuHandle = DxUtils::OffsetHandle(m_baseCPU, m_allocIndex, m_descriptorSize);
 
 	if (m_shaderVisible)
-		handles.gpuHandle.ptr = m_baseGPU.ptr + static_cast<size_t>(m_allocIndex) * m_descriptorSize;
+		handles.gpuHandle = DxUtils::OffsetHandle(m_baseGPU, m_allocIndex, m_descriptorSize);
 
 	handles.index = m_allocIndex;
 	++m_allocIndex;
@@ -104,9 +105,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetCPUHandle(uint32_t index) const
 	if (index >= m_capacity)
 		throw std::runtime_error("DxDescriptorHeap: GetCPUHandle index out of range");
 
-	D3D12_CPU_DESCRIPTOR_HANDLE handle = m_baseCPU;
-	handle.ptr += static_cast<size_t>(index) * m_descriptorSize;
-	return handle;
+	return DxUtils::OffsetHandle(m_baseCPU, index, m_descriptorSize);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetGPUHandle(uint32_t index) const
@@ -117,9 +116,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetGPUHandle(uint32_t index) const
 	if (index >= m_capacity)
 		throw std::runtime_error("DxDescriptorHeap: GetGPUHandle index out of range");
 
-	D3D12_GPU_DESCRIPTOR_HANDLE handle = m_baseGPU;
-	handle.ptr += static_cast<size_t>(index) * m_descriptorSize;
-	return handle;
+	return DxUtils::OffsetHandle(m_baseGPU, index, m_descriptorSize);
 }
 
 void DxDescriptorHeap::Reset()

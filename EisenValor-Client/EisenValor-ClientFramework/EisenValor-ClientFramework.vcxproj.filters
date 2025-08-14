@@ -184,6 +184,7 @@
     <ClInclude Include="include\NPC.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -250,6 +251,7 @@
     <ClCompile Include="src\NPC.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="src\DxUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs">

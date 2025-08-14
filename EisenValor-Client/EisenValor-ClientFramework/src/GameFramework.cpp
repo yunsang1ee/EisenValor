@@ -3,6 +3,7 @@
 #include "GlobalInterfaces.h"
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
+#include "DxUtils.h"
 #include "Vertex.h"
 #include "GameObjectManager.h"
 #include "LocalPlayer.h"
@@ -298,14 +299,13 @@ void GameFramework::Render()
 	// 현재 백버퍼 가져오기
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
+	
 	// 백버퍼를 렌더 타겟으로 전환(Resource barrier)
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = backBuffer;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	auto barrier = DxUtils::CreateTransitionBarrier(
+		backBuffer, 
+		D3D12_RESOURCE_STATE_PRESENT, 
+		D3D12_RESOURCE_STATE_RENDER_TARGET
+	);
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
 	// 렌더 타겟 설정
@@ -340,8 +340,11 @@ void GameFramework::Render()
 	MANAGER(GameObjectManager)->Render(cmdList, view, projection);
 
 	// 백버퍼를 프레젠트 상태로 전환
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	barrier = DxUtils::CreateTransitionBarrier(
+		backBuffer, 
+		D3D12_RESOURCE_STATE_RENDER_TARGET, 
+		D3D12_RESOURCE_STATE_PRESENT
+	);
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
 	// 커맨드 실행
