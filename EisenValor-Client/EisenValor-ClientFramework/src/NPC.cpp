@@ -8,37 +8,37 @@ using namespace DirectX;
 
 void NPC::Initialize(ID3D12Device* device)
 {
-    // NPC Àü¿ë ¹öÅØ½º µ¥ÀÌÅÍ (ÇÃ·¹ÀÌ¾îº¸´Ù ÀÛ°í ´Ù¸¥ »ö±ò)
+    // NPC ì „ìš© ë²„í…ìŠ¤ ë°ì´í„° (í”Œë ˆì´ì–´ë³´ë‹¤ ì‘ê³  ë‹¤ë¥¸ ìƒ‰ê¹”)
     Vertex vertices[] = {
-        // Àü¸é
+        // ì „ë©´
         { DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
         { DirectX::XMFLOAT3(-0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
         { DirectX::XMFLOAT3(0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
         { DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-        // ÈÄ¸é
+        // í›„ë©´
         { DirectX::XMFLOAT3(-0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
         { DirectX::XMFLOAT3(-0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
         { DirectX::XMFLOAT3(0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
         { DirectX::XMFLOAT3(0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }
     };
 
-    // ÀÎµ¦½º µ¥ÀÌÅÍ (Å¥ºê¿Í µ¿ÀÏ)
+    // ì¸ë±ìŠ¤ ë°ì´í„° (íë¸Œì™€ ë™ì¼)
     UINT indices[] = {
-        // ¾Õ¸é
+        // ì•ë©´
         0, 1, 2,  0, 2, 3,
-        // µŞ¸é  
+        // ë’·ë©´  
         4, 6, 5,  4, 7, 6,
-        // ¿ŞÂÊ¸é
+        // ì™¼ìª½ë©´
         0, 5, 1,  0, 4, 5,
-        // ¿À¸¥ÂÊ¸é
+        // ì˜¤ë¥¸ìª½ë©´
         3, 2, 6,  3, 6, 7,
-        // À§ÂÊ
+        // ìœ„ìª½
         1, 5, 6,  1, 6, 2,
-        // ¾Æ·¡ÂÊ
+        // ì•„ë˜ìª½
         0, 3, 7,  0, 7, 4
     };
 
-    // ¹öÅØ½º ¹öÆÛ »ı¼º
+    // ë²„í…ìŠ¤ ë²„í¼ ìƒì„±
     const UINT vertexBufferSize = sizeof(vertices);
     D3D12_HEAP_PROPERTIES heapProps = {};
     heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -62,19 +62,19 @@ void NPC::Initialize(ID3D12Device* device)
         IID_PPV_ARGS(&m_vertexBuffer)
     ));
 
-    // ¹öÅØ½º µ¥ÀÌÅÍ º¹»ç
+    // ë²„í…ìŠ¤ ë°ì´í„° ë³µì‚¬
     UINT8* pVertexDataBegin;
     D3D12_RANGE readRange = { 0, 0 };
     ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
     memcpy(pVertexDataBegin, vertices, sizeof(vertices));
     m_vertexBuffer->Unmap(0, nullptr);
 
-    // ¹öÅØ½º ¹öÆÛ ºä ¼³Á¤
+    // ë²„í…ìŠ¤ ë²„í¼ ë·° ì„¤ì •
     m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
     m_vertexBufferView.StrideInBytes = sizeof(Vertex);
     m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
-    // ÀÎµ¦½º ¹öÆÛ »ı¼º
+    // ì¸ë±ìŠ¤ ë²„í¼ ìƒì„±
     const UINT indexBufferSize = sizeof(indices);
     bufferDesc.Width = indexBufferSize;
 
@@ -87,18 +87,18 @@ void NPC::Initialize(ID3D12Device* device)
         IID_PPV_ARGS(&m_indexBuffer)
     ));
 
-    // ÀÎµ¦½º µ¥ÀÌÅÍ º¹»ç
+    // ì¸ë±ìŠ¤ ë°ì´í„° ë³µì‚¬
     UINT8* pIndexDataBegin;
     ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
     memcpy(pIndexDataBegin, indices, sizeof(indices));
     m_indexBuffer->Unmap(0, nullptr);
 
-    // ÀÎµ¦½º ¹öÆÛ ºä ¼³Á¤
+    // ì¸ë±ìŠ¤ ë²„í¼ ë·° ì„¤ì •
     m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
     m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
     m_indexBufferView.SizeInBytes = indexBufferSize;
 
-    // »ó¼ö ¹öÆÛ »ı¼º
+    // ìƒìˆ˜ ë²„í¼ ìƒì„±
     const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
     bufferDesc.Width = constantBufferSize;
 
@@ -116,58 +116,76 @@ void NPC::Initialize(ID3D12Device* device)
 
 void NPC::Update(float deltaTime)
 {
-    if (!m_target) return;
+ //   if (!m_target) return;
 
-    // ÇÃ·¹ÀÌ¾î À§Ä¡ °¡Á®¿À±â
-    DirectX::XMFLOAT3 targetPos = m_target->GetPosition();
-    DirectX::XMFLOAT3 currentPos = GetPosition();
+ //   // í”Œë ˆì´ì–´ ìœ„ì¹˜ ê°€ì ¸ì˜¤ê¸°
+ //   DirectX::XMFLOAT3 targetPos = m_target->GetPosition();
+ //   DirectX::XMFLOAT3 currentPos = GetPosition();
 
-    // °Å¸® °è»ê
-    float dx = targetPos.x - currentPos.x;
-    float dy = targetPos.y - currentPos.y;
-    float dz = targetPos.z - currentPos.z;
-    float distance = sqrt(dx * dx + dy * dy + dz * dz);
+ //   // ê±°ë¦¬ ê³„ì‚°
+ //   float dx = targetPos.x - currentPos.x;
+ //   float dy = targetPos.y - currentPos.y;
+ //   float dz = targetPos.z - currentPos.z;
+ //   float distance = sqrt(dx * dx + dy * dy + dz * dz);
 
-    // ÀÏÁ¤ °Å¸® ÀÌ»óÀÌ¸é µû¶ó°¡±â
-    if (distance > m_followDistance) {
-        // ¹æÇâ º¤ÅÍ Á¤±ÔÈ­
-        dx /= distance;
-        dy /= distance;
-        dz /= distance;
+ //   // ì¼ì • ê±°ë¦¬ ì´ìƒì´ë©´ ë”°ë¼ê°€ê¸°
+ //   if (distance > m_followDistance) {
+ //       // ë°©í–¥ ë²¡í„° ì •ê·œí™”
+ //       dx /= distance;
+ //       dy /= distance;
+ //       dz /= distance;
 
-        // »õ À§Ä¡ °è»ê (»ìÂ¦ ºÎµå·´°Ô ÀÌµ¿)
-        float moveX = currentPos.x + dx * m_moveSpeed * deltaTime;
-        float moveY = currentPos.y + dy * m_moveSpeed * deltaTime;
-        float moveZ = currentPos.z + dz * m_moveSpeed * deltaTime;
+ //       // ìƒˆ ìœ„ì¹˜ ê³„ì‚° (ì‚´ì§ ë¶€ë“œëŸ½ê²Œ ì´ë™)
+ //       float moveX = currentPos.x + dx * m_moveSpeed * deltaTime;
+ //       float moveY = currentPos.y + dy * m_moveSpeed * deltaTime;
+ //       float moveZ = currentPos.z + dz * m_moveSpeed * deltaTime;
 
-        SetPosition(moveX, moveY, moveZ);
-    }
+ //       SetPosition(Vec3{moveX, moveY, moveZ});
+ //   }
 
-    DirectX::XMFLOAT3 pos = GetPosition();
-    SetPosition(pos.x, m_baseY, pos.z);
+ //   DirectX::XMFLOAT3 pos = GetPosition();
+	//SetPosition(Vec3{pos.x, m_baseY, pos.z});
+
+    	// TOOD: í˜„ì¬ ìœ„ì¹˜ì—ì„œ ì„œë²„ ìœ„ì¹˜ë¡œ ë³´ê°„.
+ Vec3 curPos{GetPosition()};
+ Vec3 destPos{lastServerPosition};
+
+ if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+	 return;
+
+ float lerpFactor = deltaTime * 5.f; // speed: ì´ˆë‹¹ ì´ë™ ë¹„ìœ¨ (0~1 ì´ìƒ ê°€ëŠ¥)
+ if (lerpFactor > 1.0f)
+	 lerpFactor = 1.0f; // ëª©ì ì§€ overshoot ë°©ì§€
+
+ Vec3 newPos;
+ newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
+ newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
+ newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+
+ SetPosition(newPos);
 }
 
 void NPC::Render(ID3D12GraphicsCommandList* cmdList,
     DirectX::XMMATRIX view,
     DirectX::XMMATRIX projection)
 {
-    // ¹öÅØ½º ¹× ÀÎµ¦½º ¹öÆÛ ¼³Á¤
+    // ë²„í…ìŠ¤ ë° ì¸ë±ìŠ¤ ë²„í¼ ì„¤ì •
     cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     cmdList->IASetIndexBuffer(&m_indexBufferView);
     cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // NPC º¯È¯ Çà·Ä °è»ê
+    // NPC ë³€í™˜ í–‰ë ¬ ê³„ì‚°
     DirectX::XMMATRIX npcScale = DirectX::XMMatrixScaling(0.2f, 0.5f, 0.2f);
     DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rotation);
-    DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_x, m_y, m_z);
+    DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
     DirectX::XMMATRIX npcWorld = npcScale * npcRotation * npcTranslation;
     DirectX::XMMATRIX npcMVP = npcWorld * view * projection;
 
-    // »ó¼ö ¹öÆÛ¿¡ µ¥ÀÌÅÍ º¹»ç
+    // ìƒìˆ˜ ë²„í¼ì— ë°ì´í„° ë³µì‚¬
     DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(npcMVP));
     memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 
-    // NPC ±×¸®±â
+    // NPC ê·¸ë¦¬ê¸°
     cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
     cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
@@ -176,6 +194,6 @@ void NPC::SetTarget(std::shared_ptr<GameObject> target)
 {
     m_target = target;
     if (target) {
-        m_baseY = target->GetPosition().y;  // ±âÁØ ³ôÀÌ ¼³Á¤
+        m_baseY = target->GetPosition().y;  // ê¸°ì¤€ ë†’ì´ ì„¤ì •
     }
 }

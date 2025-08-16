@@ -1,4 +1,4 @@
-﻿// stdafx.cpp: 미리 컴파일된 헤더에 해당하는 소스 파일
+// stdafx.cpp: 미리 컴파일된 헤더에 해당하는 소스 파일
 
 #include "stdafxClient.h"
 

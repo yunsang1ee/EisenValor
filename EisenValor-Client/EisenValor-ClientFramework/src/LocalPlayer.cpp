@@ -6,128 +6,469 @@ using namespace DirectX;
 
 void LocalPlayer::Update(float deltaTime)
 {
-    // GameFramework¿¡¼­ ÇÃ·¹ÀÌ¾î ¾÷µ¥ÀÌÆ® ÄÚµå¸¦ ¿©±â·Î ¿Å±è
-    // ÇÃ·¹ÀÌ¾î ¹Ù¶óº¸´Â ¹æÇâ º¤ÅÍ °è»ê
-    float forwardX = sinf(m_cameraYaw);
-    float forwardZ = cosf(m_cameraYaw);
+#ifdef DEAD_RECKONING
+	UniformAcceleration(deltaTime);
+#else
+	// UniformVelocity(deltaTime);
+	UpdateInput(deltaTime);
+#endif // DEAD_RECKONING
+}
 
-    // ¿ìÃø º¤ÅÍ °è»ê
-    float rightX = sinf(m_cameraYaw + XM_PIDIV2);
-    float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
+void LocalPlayer::UniformVelocity(const float deltaTime)
+{
+	// CS_MOVE_START
+	// - í‚¤ë¥¼ ì²˜ìŒ ëˆŒë €ê±°ë‚˜ ë—ì„ë•Œ || ë§ˆìš°ìŠ¤ë¥¼ ì›€ì§ì´ê³  ìžˆì„ ë•Œ
+	// - ë³´ë‚´ì¤˜ì•¼ í•˜ëŠ” ë‚´ìš©
+	//	  - Vec3 pos
+	//    - Vec3 velocity(ì†ë ¥ + ë°©í–¥)
+	//	  - Vec3 acceleration
+	//	  - Vec3 rot
 
-    float moveSpeed = m_playerSpeed * deltaTime;
+	// ì„œë²„ëŠ” pos += dir * speed * server DT
+	//		  m_rot.y += DT * mouse_move;
 
-    // WASD ÀÔ·Â Ã³¸®
-    if (Globals::Input().GetInput('W'))  // ÀüÁø
-    {
-        m_x += forwardX * moveSpeed;
-        m_z += forwardZ * moveSpeed;
-        sendFlag = true;
-    }
-    if (Globals::Input().GetInput('S'))  // ÈÄÁø
-    {
-        m_x -= forwardX * moveSpeed;
-        m_z -= forwardZ * moveSpeed;
-        sendFlag = true;
-    }
-    if (Globals::Input().GetInput('A'))  // ÁÂÃø ÀÌµ¿
-    {
-        m_x -= rightX * moveSpeed;
-        m_z -= rightZ * moveSpeed;
-        sendFlag = true;
-    }
-    if (Globals::Input().GetInput('D'))  // ¿ìÃø ÀÌµ¿
-    {
-        m_x += rightX * moveSpeed;
-        m_z += rightZ * moveSpeed;
-        sendFlag = true;
-    }
+	// SC_MOVE
+	// - Vec3 serverPos;
+	// - Vec3 serverVelocity;
+	// - Vec3 serverRot;
+	// -
 
-    // ¼öÁ÷ ÀÌµ¿ (H/L Å°)
-    if (Globals::Input().GetInput('H')) 
-    {
-        m_y -= moveSpeed;  // ¾Æ·¡·Î
-        sendFlag = true;
-    }
-    if (Globals::Input().GetInput('L')) 
-    {
-        m_y += moveSpeed;  // À§·Î
-        sendFlag = true;
-    }
 
-    // À§Ä¡ µð¹ö±ë
-    static float lastX = 0, lastY = 1, lastZ = 0;
-    if (m_x != lastX || m_z != lastZ) 
-    {
-        DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n",
-            m_x, m_y, m_z);
-        lastX = m_x; lastY = m_y; lastZ = m_z;
-    }
+	// ë§ˆìš°ìŠ¤ íœ ë¡œ ì¤Œì¸ì•„ì›ƒ
+	int wheelDelta = Globals::Input().GetWheelScroll();
+	if (wheelDelta != 0)
+	{
+		m_cameraDistance -= wheelDelta * 0.001f;
+		m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
+	}
 
-    // ===== ¸¶¿ì½º·Î Ä«¸Þ¶ó ÀÌµ¿ =====
-    bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
-    // ÇöÀç ¸¶¿ì½º À§Ä¡
-    auto mousePos = Globals::Input().GetMousePosition();
+	// í”Œë ˆì´ì–´ ì •ë©´ ë²¡í„°
+	const float forwardX = sinf(m_cameraYaw);
+	const float forwardZ = cosf(m_cameraYaw);
 
-    if (isLeftButtonPressed) 
-    {
-        if (!m_isMouseDragging) 
-        {
-            m_isMouseDragging = true;
-            m_lastMouseX = mousePos.x;  // ½ÃÀÛ À§Ä¡ ÀúÀå
-            m_lastMouseY = mousePos.y;
-            DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
-        }
-        else 
-        {
-            // ¿òÁ÷ÀÓ °¨Áö
-            float deltaX = mousePos.x - m_lastMouseX;
-            float deltaY = mousePos.y - m_lastMouseY;
+	// í”Œë ˆì´ì–´ ìš°ì¸¡ ë²¡í„°
+	const float rightX = sinf(m_cameraYaw + XM_PIDIV2);
+	const float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
 
-            if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f) 
-            {
-                // Ä«¸Þ¶ó È¸Àü ¾÷µ¥ÀÌÆ®
-                m_cameraYaw += deltaX * m_mouseSensitivity;
-                m_yaw = m_cameraYaw;
-                m_cameraPitch += deltaY * m_mouseSensitivity;
+	const float moveSpeed = m_playerSpeed * deltaTime;
 
-                // Pitch Á¦ÇÑ (À§¾Æ·¡ È¸Àü Á¦ÇÑ)
-                m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
 
-                //µð¹ö±ë
-                DEBUG_LOG_FMT("Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n",
-                    deltaX, deltaY, m_yaw, m_cameraPitch);
-            }
+	if (Globals::Input().GetInputUp('W') || Globals::Input().GetInputUp('S') || Globals::Input().GetInputUp('A') ||
+		Globals::Input().GetInputUp('D'))
+	{
+	}
 
-            m_lastMouseX = mousePos.x;
-            m_lastMouseY = mousePos.y;
-        }
-    }
-    else 
-    {
-        if (m_isMouseDragging) 
-        {
-            // µå·¡±× Á¾·á
-            m_isMouseDragging = false;
-            DEBUG_LOG_FMT("Camera drag ended\n");
-        }
-    }
+	if (Globals::Input().GetInput('W')) // ì „ì§„
+	{
+		m_pos.x += forwardX * moveSpeed;
+		m_pos.z += forwardZ * moveSpeed;
+		// sendFlag = true;
+	}
+	else if (Globals::Input().GetInput('S')) // í›„ì§„
+	{
+		m_pos.x -= forwardX * moveSpeed;
+		m_pos.z -= forwardZ * moveSpeed;
+		// sendFlag = true;
+	}
+	else if (Globals::Input().GetInput('A')) // ì¢Œì¸¡ ì´ë™
+	{
+		m_pos.x -= rightX * moveSpeed;
+		m_pos.z -= rightZ * moveSpeed;
+		//	sendFlag = true;
+	}
+	else if (Globals::Input().GetInput('D')) // ìš°ì¸¡ ì´ë™
+	{
+		m_pos.x += rightX * moveSpeed;
+		m_pos.z += rightZ * moveSpeed;
+		//	sendFlag = true;
+	}
 
-    //¸¶¿ì½º ÈÙ·Î ÁÜÀÎ¾Æ¿ô
-    int wheelDelta = Globals::Input().GetWheelScroll();
-    if (wheelDelta != 0) 
-    {
-        m_cameraDistance -= wheelDelta * 0.001f;
-        m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
-    }
+	//// ìˆ˜ì§ ì´ë™ (H/L í‚¤)
+	if (Globals::Input().GetInput('H'))
+	{
+		m_pos.y -= moveSpeed; // ì•„ëž˜ë¡œ
+							  //		sendFlag = true;
+	}
+	if (Globals::Input().GetInput('L'))
+	{
+		m_pos.y += moveSpeed; // ìœ„ë¡œ
+							  //		sendFlag = true;
+	}
 
-    if (sendFlag)
-    {
-        const FB_STRUCTS::Vec3 pos{ m_x, m_y, m_z };
-        const FB_STRUCTS::Vec3 rot{ 0.f, m_yaw, 0.f };
-        const auto packetData = NetBridge::ServerPacketHandler::Make_CS_PLAYER_MOVE_PACKET(&pos, &rot);
-        const auto packetBuffer = NetBridge::ServerPacketHandler::MakeSendBuffer(PACKET_TYPE::CS_PLAYER_MOVE, packetData);
-        MANAGER(NetBridge::NetworkManager)->Send(packetBuffer);
-        sendFlag = false;
-    }
+
+	// ìœ„ì¹˜ ë””ë²„ê¹…
+	static float lastX = 0, lastY = 1, lastZ = 0;
+	if (m_pos.x != lastX || m_pos.z != lastZ)
+	{
+		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", m_pos.x, m_pos.y, m_pos.z);
+		lastX = m_pos.x;
+		lastY = m_pos.y;
+		lastZ = m_pos.z;
+	}
+
+	if (sendFlag)
+	{
+		const Vec3	 pos{GetPosition()};
+		const Vec3	 rot{0.f, m_rot.y, 0.f};
+		const Vec3	 vel{GetVelocity()};
+		const Vec3	 accel{GetAcceleration()};
+		const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+									 std::chrono::high_resolution_clock::now().time_since_epoch()
+		)
+									 .count();
+
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		sendFlag = false;
+	}
+}
+
+void LocalPlayer::UniformAcceleration(const float deltaTime)
+{
+	m_acceleration = Vec3{0, 0, 0}; // ë§¤ í”„ë ˆìž„ ì´ˆê¸°í™”
+	Vec3 forwardDir{sinf(m_cameraYaw), 0.f, cosf(m_cameraYaw)};
+	Vec3 rightDir{sinf(m_cameraYaw + XM_PIDIV2), 0.f, cosf(m_cameraYaw + XM_PIDIV2)};
+
+	constexpr float accelValue = 5.f;
+
+	if (Globals::Input().GetInputDown('W'))
+	{
+		m_acceleration.x += forwardDir.x * accelValue;
+		m_acceleration.y += forwardDir.y * accelValue;
+		m_acceleration.z += forwardDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+		sendFlag = true;
+	}
+
+	else if (Globals::Input().GetInputDown('S'))
+	{
+		m_acceleration.x -= forwardDir.x * accelValue;
+		m_acceleration.y -= forwardDir.y * accelValue;
+		m_acceleration.z -= forwardDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+		sendFlag = true;
+	}
+	else if (Globals::Input().GetInputUp('W'))
+	{
+		sendFlag = false;
+	}
+	else if (Globals::Input().GetInputUp('S'))
+	{
+		sendFlag = false;
+	}
+	else if (Globals::Input().GetInputUp('A'))
+	{
+		sendFlag = false;
+	}
+	else if (Globals::Input().GetInputUp('D'))
+	{
+		sendFlag = false;
+	}
+	else if (Globals::Input().GetInputDown('A'))
+	{
+		m_acceleration.x -= rightDir.x * accelValue;
+		m_acceleration.y -= rightDir.y * accelValue;
+		m_acceleration.z -= rightDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+		sendFlag = true;
+	}
+	else if (Globals::Input().GetInputDown('D'))
+	{
+		m_acceleration.x += rightDir.x * accelValue;
+		m_acceleration.y += rightDir.y * accelValue;
+		m_acceleration.z += rightDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+		sendFlag = true;
+	}
+
+
+	else if (Globals::Input().GetInput('W'))
+	{
+		m_acceleration.x += forwardDir.x * accelValue;
+		m_acceleration.y += forwardDir.y * accelValue;
+		m_acceleration.z += forwardDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+		// sendFlag = true;
+	}
+
+	else if (Globals::Input().GetInput('S'))
+	{
+		m_acceleration.x -= forwardDir.x * accelValue;
+		m_acceleration.y -= forwardDir.y * accelValue;
+		m_acceleration.z -= forwardDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+		// sendFlag = true;
+	}
+
+	else if (Globals::Input().GetInput('A'))
+	{
+		m_acceleration.x -= rightDir.x * accelValue;
+		m_acceleration.y -= rightDir.y * accelValue;
+		m_acceleration.z -= rightDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+
+		// sendFlag = true;
+	}
+
+	else if (Globals::Input().GetInput('D'))
+	{
+		m_acceleration.x += rightDir.x * accelValue;
+		m_acceleration.y += rightDir.y * accelValue;
+		m_acceleration.z += rightDir.z * accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+
+		// sendFlag = true;
+	}
+
+	// ìˆ˜ì§ ì´ë™ë„ ì¶”ê°€ ê°€ëŠ¥
+	else if (Globals::Input().GetInput('L'))
+	{
+		m_acceleration.y += accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+
+		//	sendFlag = true;
+	}
+	else if (Globals::Input().GetInput('H'))
+	{
+		m_acceleration.y -= accelValue;
+
+		m_velocity.x += m_acceleration.x * deltaTime;
+		m_velocity.y += m_acceleration.y * deltaTime;
+		m_velocity.z += m_acceleration.z * deltaTime;
+
+		//		sendFlag = true;
+	}
+	else
+	{
+		const float dampingFactor = 0.95f; // ì˜ˆ: 0.9 ~ 0.95 ì •ë„ë¡œ ì‹œìž‘
+
+		m_velocity.x *= dampingFactor;
+		m_velocity.y *= dampingFactor;
+		m_velocity.z *= dampingFactor;
+	}
+
+	if (Globals::Input().GetInputDown('R'))
+	{
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+
+	m_pos.x += m_velocity.x * deltaTime;
+	m_pos.y += m_velocity.y * deltaTime;
+	m_pos.z += m_velocity.z * deltaTime;
+
+	// ìœ„ì¹˜ ë””ë²„ê¹…
+	static float lastX = 0, lastY = 1, lastZ = 0;
+	if (m_pos.x != lastX || m_pos.z != lastZ)
+	{
+		DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", m_pos.x, m_pos.y, m_pos.z);
+		lastX = m_pos.x;
+		lastY = m_pos.y;
+		lastZ = m_pos.z;
+	}
+
+
+
+	if (sendFlag)
+	{
+		const Vec3	 pos{GetPosition()};
+		const Vec3	 rot{0.f, m_rot.y, 0.f};
+		const Vec3	 vel{GetVelocity()};
+		const Vec3	 accel{GetAcceleration()};
+		const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+									 std::chrono::high_resolution_clock::now().time_since_epoch()
+		)
+									 .count();
+
+		//auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(pos, rot, vel, accel, timeStamp);
+		//MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		//sendFlag = false;
+	}
+
+	if (Globals::Input().GetInputDown('R'))
+	{
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+}
+
+void LocalPlayer::UpdateInput(const float deltaTime)
+{
+	// ===== ë§ˆìš°ìŠ¤ë¡œ ì¹´ë©”ë¼ ì´ë™ =====
+	bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
+	// í˜„ìž¬ ë§ˆìš°ìŠ¤ ìœ„ì¹˜
+	auto mousePos = Globals::Input().GetMousePosition();
+
+	if (isLeftButtonPressed)
+	{
+		if (!m_isMouseDragging)
+		{
+			m_isMouseDragging = true;
+			m_lastMouseX = mousePos.x; // ì‹œìž‘ ìœ„ì¹˜ ì €ìž¥
+			m_lastMouseY = mousePos.y;
+			DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
+			sendFlag = true;
+		}
+		else
+		{
+			// ì›€ì§ìž„ ê°ì§€
+			const float deltaX = mousePos.x - m_lastMouseX;
+			const float deltaY = mousePos.y - m_lastMouseY;
+
+			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
+			{
+				// ì¹´ë©”ë¼ íšŒì „ ì—…ë°ì´íŠ¸
+				m_cameraYaw += deltaX * m_mouseSensitivity;
+				m_rot.y = m_cameraYaw;
+				m_cameraPitch += deltaY * m_mouseSensitivity;
+
+				// Pitch ì œí•œ (ìœ„ì•„ëž˜ íšŒì „ ì œí•œ)
+				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
+
+				// ë””ë²„ê¹…
+				DEBUG_LOG_FMT(
+					"Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n", deltaX, deltaY, m_cameraYaw,
+					m_cameraPitch
+				);
+			}
+
+			m_lastMouseX = mousePos.x;
+			m_lastMouseY = mousePos.y;
+			sendFlag = true;
+		}
+	}
+	else
+	{
+		if (m_isMouseDragging)
+		{
+			// ë“œëž˜ê·¸ ì¢…ë£Œ
+			m_isMouseDragging = false;
+			DEBUG_LOG_FMT("Camera drag ended\n");
+			sendFlag = true;
+		}
+	}
+	// í”Œë ˆì´ì–´ ì •ë©´ ë²¡í„°
+	const float forwardX = sinf(m_cameraYaw);
+	const float forwardZ = cosf(m_cameraYaw);
+
+	// í”Œë ˆì´ì–´ ìš°ì¸¡ ë²¡í„°
+	const float rightX = sinf(m_cameraYaw + XM_PIDIV2);
+	const float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
+
+	// í‚¤ë¥¼ ì²˜ìŒ ëˆŒë €ì„ ë•Œ
+	if (Globals::Input().GetInputDown('W'))
+	{
+		m_velocity.x = forwardX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = forwardZ * m_playerSpeed;
+		sendFlag = true;
+	}
+	if(Globals::Input().GetInputDown('S')) {
+		m_velocity.x = -forwardX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = -forwardZ * m_playerSpeed;
+		sendFlag = true;
+	}
+	if(Globals::Input().GetInputDown('A')) {
+		m_velocity.x = -rightX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = -rightZ * m_playerSpeed;
+		sendFlag = true;
+	}
+
+	if(Globals::Input().GetInputDown('D')) {
+		m_velocity.x = rightX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = rightZ * m_playerSpeed;
+		sendFlag = true;
+	}
+
+	if(Globals::Input().GetInput('W')) {
+		m_velocity.x = forwardX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = forwardZ * m_playerSpeed;
+	}
+	if (Globals::Input().GetInput('S')) {
+		m_velocity.x = -forwardX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = -forwardZ * m_playerSpeed;
+	}
+	if (Globals::Input().GetInput('A')) {
+		m_velocity.x = -rightX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = -rightZ * m_playerSpeed;
+	}
+	if (Globals::Input().GetInput('D')) {
+		m_velocity.x = rightX * m_playerSpeed;
+		m_velocity.y = 0.f;
+		m_velocity.z = rightZ * m_playerSpeed;
+	}
+	// í‚¤ë¥¼ ë—ì„ ë•Œ
+	if (Globals::Input().GetInputUp('W') || Globals::Input().GetInputUp('S') || Globals::Input().GetInputUp('A') ||
+		Globals::Input().GetInputUp('D'))
+	{
+		m_velocity.x = 0.f;
+		m_velocity.y = 0.f;
+		m_velocity.z = 0.f;
+		sendFlag = true;
+	}
+
+	if (Globals::Input().GetInputDown('R')) {
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+
+	m_pos.x += m_velocity.x * deltaTime;
+	m_pos.y += m_velocity.y * deltaTime;
+	m_pos.z += m_velocity.z * deltaTime;
+	auto now = std::chrono::high_resolution_clock::now();
+	auto elapsed = now - lastSend;
+	if (elapsed >= std::chrono::milliseconds(100) || sendFlag)
+	{
+		lastSend = now;
+		const Vec3	 pos{GetPosition()};
+		const Vec3	 rot{0.f, m_rot.y, 0.f};
+		const Vec3	 vel{GetVelocity()};
+		const Vec3	 accel{GetAcceleration()};
+		const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+									 std::chrono::high_resolution_clock::now().time_since_epoch()
+		)
+									 .count();
+
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		sendFlag = false;
+	}
+
 }

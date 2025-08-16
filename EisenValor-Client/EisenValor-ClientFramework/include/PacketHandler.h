@@ -4,150 +4,196 @@
 #include <numeric>
 #include "PacketBuffer.h"
 
-using PacketHandlerFunc = bool(*)(const SOCKET&, const char* const, const PacketHeader&);
+using PacketHandlerFunc = bool (*)(const SOCKET&, const char* const, const PacketHeader&);
 
 extern std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;
 
-enum class PACKET_TYPE : uint16 {
-	CS_LOGIN = 1,
-	SC_LOGIN = 2,
+enum class PACKET_TYPE : uint16
+{
+	CS_LOGIN_PKT = 1,
+	SC_LOGIN_PKT = 2,
 
-	CS_CHAT = 3,
-	SC_CHAT = 4,
+	CS_ENTER_WORLD_PKT = 3,
+	SC_ENTER_WORLD_PKT = 4,
 
-	CS_ENTER_MATCH = 5,
-	SC_ENTER_MATCH = 6,
+	SC_LOCAL_PLAYER_PKT = 5,
 
-	SC_ADD_PLAYER_INFO = 7,
-	SC_REMOVE_PLAYER_INFO = 8,
+	SC_ADD_OBJ_PKT = 6,
+	SC_REMOVE_OBJ_PKT = 7,
 
-	CS_PLAYER_MOVE = 9,
-	SC_PLAYER_MOVE = 10,
+	CS_CHAT_PKT = 8,
+	SC_CHAT_PKT = 9,
+
+	CS_MOVE_PKT = 10,
+	SC_MOVE_PKT = 11,
+
+	CS_SUMMON_NPC_PKT = 12,
+
+	CS_KEY_UP_PKT = 13,
+	SC_KEY_UP_PKT = 14,
+
+	CS_MOVE_START = 15,
+	SC_MOVE_START = 16,
+
+	CS_MOVE_FINISH = 17,
+	SC_MOVE_FINISH = 18,
 
 	END
 };
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
+bool Handle_SC_ENTER_WORLD_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_WORLD_PACKET& recvPkt);
+bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
+bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);
+bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
-bool Handle_SC_ENTER_MATCH_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_MATCH_PACKET& recvPkt);
-bool Handle_SC_ADD_PLAYER_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_PLAYER_INFO_PACKET& recvPkt);
-bool Handle_SC_REMOVE_PLAYER_INFO(const SOCKET& socket, const FB_TABLES::SC_REMOVE_PLAYER_INFO_PACKET& recvPkt);
-bool Handle_SC_PLAYER_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_MOVE_PACKET& recvPkt);
+bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
+namespace NetBridge
+{
+class PacketBuffer;
 
-namespace NetBridge {
-	class PacketBuffer;
+class ServerPacketHandler
+{
+private:
+	ServerPacketHandler() = delete;
+	~ServerPacketHandler() = delete;
+	ServerPacketHandler(const ServerPacketHandler&) = delete;
+	ServerPacketHandler& operator=(const ServerPacketHandler&) = delete;
+	ServerPacketHandler(ServerPacketHandler&&) noexcept = delete;
+	ServerPacketHandler& operator=(ServerPacketHandler&&) noexcept = delete;
 
-	class ServerPacketHandler {
-	private:
-		ServerPacketHandler() = delete;
-		~ServerPacketHandler() = delete;
-		ServerPacketHandler(const ServerPacketHandler&) = delete;
-		ServerPacketHandler& operator= (const ServerPacketHandler&) = delete;
-		ServerPacketHandler(ServerPacketHandler&&) noexcept = delete;
-		ServerPacketHandler& operator= (ServerPacketHandler&&) noexcept = delete;
+public:
+	static void Init() noexcept
+	{
+		for (auto& packetHandlerFunc : PacketHandlerFuncs)
+			packetHandlerFunc = Handle_Invalid;
 
-	public:
-		static void Init() noexcept
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOGIN_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_LOGIN_PACKET>(Handle_SC_LOGIN_PACKET, socket, buffer, header); };
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_WORLD_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{
-			for(auto& packetHandlerFunc : PacketHandlerFuncs)
-				packetHandlerFunc = Handle_Invalid;
+			return HandlePacket<FB_TABLES::SC_ENTER_WORLD_PACKET>(Handle_SC_ENTER_WORLD_PACKET, socket, buffer, header);
+		};
 
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOGIN)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_LOGIN_PACKET>(Handle_SC_LOGIN_PACKET, socket, buffer, header); };
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHAT)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_CHAT_PACKET>(Handle_SC_CHAT_PACKET, socket, buffer, header); };
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_MATCH)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_ENTER_MATCH_PACKET>(Handle_SC_ENTER_MATCH_PACKET, socket, buffer, header); };
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ADD_PLAYER_INFO)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_ADD_PLAYER_INFO_PACKET>(Handle_SC_ADD_PLAYER_INFO_PACKET, socket, buffer, header); };
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMOVE_PLAYER_INFO)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_REMOVE_PLAYER_INFO_PACKET>(Handle_SC_REMOVE_PLAYER_INFO, socket, buffer, header); };
-			PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PLAYER_MOVE)] = [](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::SC_PLAYER_MOVE_PACKET>(Handle_SC_PLAYER_MOVE_PACKET, socket, buffer, header); };
-		}
-
-		static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{
-			return std::invoke(PacketHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
-		}
+			return HandlePacket<FB_TABLES::SC_LOCAL_PLAYER_PACKET>(
+				Handle_SC_LOCAL_PLAYER_PACKET, socket, buffer, header
+			);
+		};
 
-		template<typename PacketType, typename HandleFunc>
-		static bool HandlePacket(HandleFunc handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
-		{
-			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
-			return handleFunc(socket, *packet);
-		}
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ADD_OBJ_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_ADD_OBJ_PACKET>(Handle_SC_ADD_OBJ_PACKET, socket, buffer, header); };
 
-		template<typename T>
-		struct PacketArgTraits;
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMOVE_OBJ_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_REMOVE_OBJ_PACKET>(Handle_SC_REMOVE_OBJ_PACKET, socket, buffer, header); };
 
-		// ÆÐÅ¶ ¸¸µå´Â ºÎºÐ
-		template<typename PacketFunc, typename... Args>
-		static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args)
-		{
-			flatbuffers::FlatBufferBuilder builder;
-			auto offset = func(builder, std::forward<Args>(args)...);
-			builder.Finish(offset);
-			return builder.Release();
-		}
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHAT_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_CHAT_PACKET>(Handle_SC_CHAT_PACKET, socket, buffer, header); };
 
-		static std::shared_ptr<NetBridge::PacketBuffer> MakeSendBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
-		{
-			const uint32 packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
-			auto sendBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
-			PacketHeader* header = reinterpret_cast<PacketHeader*>(sendBuffer->GetBuffer());
-			header->packetType = static_cast<uint16>(packetType);
-			header->packetSize = packetSize;
-			memcpy_s(&header[1], sendBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
-			return sendBuffer;
-		}
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_MOVE_PACKET>(Handle_SC_MOVE_PACKET, socket, buffer, header); };
+	}
 
+	static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
+	{
+		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
+	}
+
+	template <typename PacketType, typename HandleFunc>
+	static bool HandlePacket(
+		HandleFunc handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader
+	)
+	{
+		const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
+		return handleFunc(socket, *packet);
+	}
+
+	// íŒ¨í‚· ë§Œë“œëŠ” ë¶€ë¶„
+	template <typename PacketFunc, typename... Args>
+	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		auto						   offset = func(builder, std::forward<Args>(args)...);
+		builder.Finish(offset);
+		return builder.Release();
+	}
+
+	static std::shared_ptr<NetBridge::PacketBuffer> MakePacketBuffer(
+		const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
+	)
+	{
+		const uint32  packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
+		auto		  packetBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
+		PacketHeader* header = reinterpret_cast<PacketHeader*>(packetBuffer->GetBuffer());
+		header->packetType = static_cast<uint16>(packetType);
+		header->packetSize = packetSize;
+		memcpy_s(&header[1], packetBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
+		return packetBuffer;
+	}
+
+public:
 #pragma region CS_LOGIN_PACKET
-		template<typename... Args>
-		[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
-		static flatbuffers::DetachedBuffer Make_CS_LOGIN_PACKET(Args&&... args)
-		{
-			//static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly one std::string_view argument");
-			//static_assert(sizeof...(Args) == 1, "CS_CHAT_PACKET expects exactly 1 argument");
-			//static_assert((std::convertible_to<Args, std::string_view> && ...), "All arguments must be convertible to std::string_view");
-			return MakePacket(FB_TABLES::CreateCS_LOGIN_PACKETDirect, std::forward<Args>(args)...);
-		}
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_LOGIN_PACKET(
+		const std::string_view id, const std::string_view pw
+	)
+	{
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_LOGIN_PKT, MakePacket(FB_TABLES::CreateCS_LOGIN_PACKETDirect, id.data(), pw.data())
+		);
+	}
+#pragma endregion
+
+#pragma region CS_ENTER_WORLD_PACKET
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_ENTER_WORLD_PACKET(const uint32 id)
+	{
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_ENTER_WORLD_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_WORLD_PACKET, id)
+		);
+	}
 #pragma endregion
 
 #pragma region CS_CHAT_PACKET
-		//template<>
-		//struct PacketArgTraits<struct FB_TABLES::CS_CHAT_PACKET> {
-		//	using ArgTypes = std::tuple<std::string_view>;
-		//	template<typename... Args>
-		//	static constexpr bool ValidArgs = sizeof...(Args) == 1 && (std::convertible_to<Args, std::string_view> && ...);
-		//};
-
-		//template<typename PacketTag, typename... Args>
-		//static constexpr bool is_valid_packet_args_v = PacketArgTraits<PacketTag>::template ValidArgs<Args...>;
-
-		template<typename... Args>
-		[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
-		static flatbuffers::DetachedBuffer Make_CS_CHAT_PACKET(Args&&... args)
-		{
-			//static_assert(is_valid_packet_args_v<FB_TABLES::CS_CHAT_PACKET, Args...>, "CS_CHAT_PACKET requires exactly one std::string_view argument");
-			//static_assert(sizeof...(Args) == 1, "CS_CHAT_PACKET expects exactly 1 argument");
-			//static_assert((std::convertible_to<Args, std::string_view> && ...), "All arguments must be convertible to std::string_view");
-			return MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, std::forward<Args>(args)...);
-		}
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_CHAT_PACKET(const std::string_view msg)
+	{
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_CHAT_PKT, MakePacket(FB_TABLES::CreateCS_CHAT_PACKETDirect, msg.data())
+		);
+	}
 #pragma endregion
 
-#pragma region CS_ENTER_MATCH_PACKET
-		template<typename... Args>
-		[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
-		static flatbuffers::DetachedBuffer Make_CS_ENTER_MATCH_PACKET(Args&&... args)
-		{
-			return MakePacket(FB_TABLES::CreateCS_ENTER_MATCH_PACKET, std::forward<Args>(args)...);
-		}
+#pragma region CS_MOVE_PACKET
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_MOVE_PACKET(
+		const bool isRun, const bool isRotate, const Vec3& pos, const Vec3& rot, const Vec3& vel, const Vec3& accel, const uint64 timeStamp
+	)
+	{
+
+		const FB_STRUCTS::Vec3 p{pos.x, pos.y, pos.z};
+		const FB_STRUCTS::Vec3 r{rot.x, rot.y, rot.z};
+		const FB_STRUCTS::Vec3 v{vel.x, vel.y, vel.z};
+		const FB_STRUCTS::Vec3 a{accel.x, accel.y, accel.z};
+
+		const FB_STRUCTS::KinematicInfo kInfo{p, r, v, a, timeStamp};
+
+		return MakePacketBuffer(PACKET_TYPE::CS_MOVE_PKT, MakePacket(FB_TABLES::CreateCS_MOVE_PACKET, isRun, isRotate, &kInfo));
+	}
 #pragma endregion
 
-#pragma region CS_PLAYER_MOVE_PACKET
-		template<typename... Args>
-		[[nodiscard("¹ÝÈ¯°ª Àý´ë ¹«½ÃÇÏÁö ¸¶¼¼¿ä.")]]
-		static flatbuffers::DetachedBuffer Make_CS_PLAYER_MOVE_PACKET(Args&&... args)
-		{
-			return MakePacket(FB_TABLES::CreateCS_PLAYER_MOVE_PACKET, std::forward<Args>(args)...);
-		}
+#pragma region CS_SUMMON_NPC_PACKET
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_SUMMON_NPC_PACKET()
+	{
+		return MakePacketBuffer(PACKET_TYPE::CS_SUMMON_NPC_PKT, MakePacket(FB_TABLES::CreateCS_SUMMON_NPC));
+	}
 #pragma endregion
 
-	};
-}
+};
+} // namespace NetBridge

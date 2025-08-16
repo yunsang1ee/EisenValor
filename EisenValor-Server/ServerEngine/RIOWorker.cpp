@@ -22,7 +22,8 @@ ServerEngine::RIOWorker::~RIOWorker()
 
 bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 {
-	m_cq = RIO_EXT_FUNC_TB.RIOCreateCompletionQueue(MAX_CQ_SIZE_PER_RIO_THREAD, nullptr);
+	// SEND/RECV CQ 따로 만들 수 있다. 지금은 공용
+	m_cq = RIO_EXT_FUNC_TB.RIOCreateCompletionQueue(MAX_CQ_SIZE, nullptr);
 
 	if(m_cq == RIO_INVALID_CQ) {
 		ServerEngine::LogManager::PrintLastError();
@@ -37,21 +38,21 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 
 void ServerEngine::RIOWorker::Work()
 {
-	TLS_END_TICK = high_resolution_clock::now() + 128ms;
-
-	FlushPacketQueue();
+	TLS_END_TICK = high_resolution_clock::now() + 64ms;
+	FlushSessionPacketQueue();
 	DequeueCompletion();
 	DistributeReservedTask();
 	DoTask();
 }
 
-void ServerEngine::RIOWorker::FlushPacketQueue()
+void ServerEngine::RIOWorker::FlushSessionPacketQueue()
 {
 	std::lock_guard<std::mutex> lk{ m_mutex };
 	auto iter = m_connectedSession.begin();
 	for(; iter != m_connectedSession.end();) {
 		if(SESSION_STATE::FREE != (*iter)->GetState()) {
 			(*iter)->FlushPacketQueue();
+			// (*iter)->FlushPacketQueueSecond();
 			++iter;
 		}
 		else
@@ -59,7 +60,7 @@ void ServerEngine::RIOWorker::FlushPacketQueue()
 	}
 }
 
-void ServerEngine::RIOWorker::DequeueCompletion()
+void ServerEngine::RIOWorker::DequeueCompletion() const
 {
 	assert(TLS_THREAD_ID == m_id);
 
@@ -78,13 +79,11 @@ void ServerEngine::RIOWorker::DequeueCompletion()
 			break;
 		}
 		else {
-			std::println("Worker ID ={}, has results!", m_id);
 			for(uint32 i = 0; i < numResults; ++i) {
 				RIOContext* const context = reinterpret_cast<RIOContext*>(ioResults[i].RequestContext);
 				auto session = context->GetSession();
 				assert(context && session);
 				const uint32 bytesTransferred = ioResults[i].BytesTransferred;
-				std::println("BytesTransferred = {}", bytesTransferred);
 				session->Dispatch(context, bytesTransferred);
 			}
 		}

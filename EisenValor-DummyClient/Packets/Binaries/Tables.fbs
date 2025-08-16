@@ -3,6 +3,9 @@ include "Structs.fbs";
 
 namespace FB_TABLES;
 
+// ================================================
+//						LOGIN
+// ================================================
 table CS_LOGIN_PACKET {
 	id: string;
 	pw: string;
@@ -12,24 +15,42 @@ table SC_LOGIN_PACKET {
 	player_id : uint;
 }
 
-table CS_ENTER_MATCH_PACKET {
+
+// ================================================
+//					ENTER WORLD
+// ================================================
+table CS_ENTER_WORLD_PACKET {
 	player_id : uint;
 }
 
-table SC_ENTER_MATCH_PACKET {
-	match_id: ushort;
+table SC_ENTER_WORLD_PACKET {
+	world_id: ushort;
 }
 
-table SC_ADD_PLAYER_INFO_PACKET {
-	player_id : uint;
-	pos: FB_STRUCTS.Vec3;
-	rot: FB_STRUCTS.Vec3;
+// ================================================
+//					MY_PLAYER
+// ================================================
+table SC_LOCAL_PLAYER_PACKET {
+	player_id: uint;
+	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
-table SC_REMOVE_PLAYER_INFO_PACKET {
-	player_id : uint;
+// ================================================
+//					ADD/REMOVE OBJ
+// ================================================
+table SC_ADD_OBJ_PACKET {
+	obj_id: uint;
+	obj_type: ubyte;
+	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
+table SC_REMOVE_OBJ_PACKET {
+	obj_id: uint;
+}
+
+// ================================================
+//						CHAT
+// ================================================
 table CS_CHAT_PACKET {
 	msg: string;				
 }
@@ -38,17 +59,32 @@ table SC_CHAT_PACKET {
 	msg: string;
 }
 
-table CS_PLAYER_MOVE_PACKET {
-	pos: FB_STRUCTS.Vec3;
-	rot: FB_STRUCTS.Vec3;
+
+// ================================================
+//						MOVE
+// ================================================
+table CS_MOVE_PACKET {
+	is_move: bool;
+	is_rotate: bool;
+	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
-table SC_PLAYER_MOVE_PACKET {
-	player_id : uint;
-	pos: FB_STRUCTS.Vec3;
-	rot: FB_STRUCTS.Vec3;
+table SC_MOVE_PACKET {
+	obj_id: uint;
+	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
-table SC_SOLDIER_INFO_PACKET {
-	info: [FB_STRUCTS.SoldierInfo];
+// ================================================
+//					  SUMMON_NPC
+// ================================================
+table CS_SUMMON_NPC {
+
+}
+
+
+table CS_KEY_UP{
+}
+
+table SC_KEY_UP {
+player_id: uint;
 }

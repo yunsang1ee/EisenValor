@@ -6,15 +6,15 @@
 
 namespace Globals
 {
-    void InitializeGlobalRegistry();
+void InitializeGlobalRegistry();
 
-    inline auto& Input() noexcept
-    {
-        return GlobalRegistry::Get<IInputGlobal>();
-    }
-
-    inline auto& Timer() noexcept
-    {
-        return GlobalRegistry::Get<ITimerGlobal>();
-    }
+inline auto& Input() noexcept
+{
+	return GlobalRegistry::Get<IInputGlobal>();
 }
+
+inline auto& Timer() noexcept
+{
+	return GlobalRegistry::Get<ITimerGlobal>();
+}
+} // namespace Globals

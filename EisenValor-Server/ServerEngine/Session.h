@@ -30,6 +30,12 @@ namespace ServerEngine {
 		std::atomic<SESSION_STATE>						m_state;
 		std::chrono::high_resolution_clock::time_point	m_lastSendTime{};
 		static constexpr auto COMMIT_MS = 20ms;
+
+		std::mutex										m_sendBufferlk;
+
+		std::shared_mutex								m_sendPktInfoslk;
+		std::vector<std::pair<int32, int32>>			m_sendPktInfos;
+
 	public:
 		Session();
 		virtual ~Session();
@@ -43,8 +49,10 @@ namespace ServerEngine {
 		void Connect(const SOCKET& socket, const SOCKADDR_IN& addr);
 		void Disconnect(const std::string_view reason);
 
+		void FlushPacketQueueSecond();
 		void FlushPacketQueue();
 		void Send(std::shared_ptr<PacketBuffer> packetBuffer);
+		void Send(const PacketInfo& info);
 
 	public:
 		void SetOwner(std::weak_ptr<RIOWorker> owner) noexcept { m_owner = owner; }
@@ -69,6 +77,7 @@ namespace ServerEngine {
 		void CloseSocket();
 
 	private:
+		bool DeferSend();
 		// flags: RIO_MSG_DEFER
 		bool DeferSend(const uint32 offset, const uint32 size);	
 		// flags: RIO_MSG_COMMIT_ONLY

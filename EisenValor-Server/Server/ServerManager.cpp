@@ -4,16 +4,15 @@
 #include "RioCore.h"
 #include "ClientSession.h"
 #include "GameObjectFactory.h"
-#include "GameMatchManager.h"
-
+#include "GameRoomManager.h"
+ 
 void Server::ServerManager::Init() noexcept
 {
 	std::wcout.imbue(std::locale("korean"));
 
 	ClientPacketHandler::Init();
-	MANAGER(Server::Contents::GameMatchManager)->Init();
-	// Server::Contents::GameObjectFactory::Init();
-
+	MANAGER(Server::Contents::GameRoomManager)->Init();
+	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
 		exit(1);
 	}
@@ -22,7 +21,7 @@ void Server::ServerManager::Init() noexcept
 		Shutdown();
 		exit(1);
 	}
-}
+}	
 
 void Server::ServerManager::Run() noexcept
 {
