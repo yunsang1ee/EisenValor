@@ -145,7 +145,10 @@ constexpr size_t kExplosionDebrises = 240;
 enum class ObjectType
 {
 	Player,
-	NPC
+	NPC,
+	NPC1,
+	NPC2,
+	NPC3
 };
 
 // #define DEAD_RECKONING

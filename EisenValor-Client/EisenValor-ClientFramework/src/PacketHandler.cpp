@@ -97,7 +97,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		player->Initialize(device);
 		player->m_id = id;
 		player->SetPosition(pos);
-		player->SetRotation(pos);
+		player->SetRotation(rot);
 		player->SetVelocity(vel);
 		player->SetAccelration(accel);
 		player->lastServerPosition = pos;
@@ -110,8 +110,13 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		auto npc = std::make_shared<NPC>();
 		npc->Initialize(device);
 		npc->m_id = id;
+
+		//DEFAULT ALLY SOLDIER
+		npc->SetTeam(NPC::Team::ALLY);
+		npc->SetUnitType(NPC::UnitType::SOLDIER);
+
 		npc->SetPosition(pos);
-		npc->SetRotation(pos);
+		npc->SetRotation(rot);
 		npc->SetVelocity(vel);
 		npc->SetAccelration(accel);
 		npc->lastServerPosition = pos;
