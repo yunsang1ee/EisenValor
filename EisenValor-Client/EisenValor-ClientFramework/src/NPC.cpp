@@ -8,21 +8,21 @@ using namespace DirectX;
 
 void NPC::Initialize(ID3D12Device* device)
 {
-    // NPC 전용 버텍스 데이터 (플레이어보다 작고 다른 색깔)
-    Vertex vertices[] = {
-        // 전면
-        { DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-        { DirectX::XMFLOAT3(-0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-        { DirectX::XMFLOAT3(0.5f,  0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-        { DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-        // 후면
-        { DirectX::XMFLOAT3(-0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-        { DirectX::XMFLOAT3(-0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-        { DirectX::XMFLOAT3(0.5f,  0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-        { DirectX::XMFLOAT3(0.5f, -0.5f,  0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) }
-    };
+	DirectX::XMFLOAT4 color = GetTeamColor();
 
-    // 인덱스 데이터 (큐브와 동일)
+	Vertex vertices[] = {// 전면
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), color},
+						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), color},
+						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), color},
+						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), color},
+						 // 후면
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), color},
+						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), color},
+						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), color},
+						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), color}
+	};
+
+    // 인덱스 데이터
     UINT indices[] = {
         // 앞면
         0, 1, 2,  0, 2, 3,
@@ -174,8 +174,10 @@ void NPC::Render(ID3D12GraphicsCommandList* cmdList,
     cmdList->IASetIndexBuffer(&m_indexBufferView);
     cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	DirectX::XMFLOAT3 scale = GetUnitScale();
+
     // NPC 변환 행렬 계산
-    DirectX::XMMATRIX npcScale = DirectX::XMMatrixScaling(0.2f, 0.5f, 0.2f);
+	DirectX::XMMATRIX npcScale = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
     DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rotation);
     DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
     DirectX::XMMATRIX npcWorld = npcScale * npcRotation * npcTranslation;
@@ -196,4 +198,67 @@ void NPC::SetTarget(std::shared_ptr<GameObject> target)
     if (target) {
         m_baseY = target->GetPosition().y;  // 기준 높이 설정
     }
+}
+
+void NPC::UpdateUnitProperties()
+{
+	// 유닛 타입별 기본 속성 설정
+	switch (m_unitType)
+	{
+	case UnitType::GENERAL:
+		m_moveSpeed = 5.0f;
+		break;
+	case UnitType::SOLDIER:
+		m_moveSpeed = 4.0f;
+		break;
+	case UnitType::BATTLE_RAM:
+		m_moveSpeed = 3.0f;
+		break;
+	}
+}
+
+DirectX::XMFLOAT4 NPC::GetTeamColor() const
+{
+	if (m_team == Team::ALLY)
+	{
+		//아군
+		switch (m_unitType)
+		{
+		case UnitType::GENERAL:
+			return DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
+		case UnitType::SOLDIER:
+			return DirectX::XMFLOAT4(0.3f, 0.3f, 1.0f, 1.0f); // 연파랑
+		case UnitType::BATTLE_RAM:
+			return DirectX::XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f); // 하늘색
+		}
+	}
+	else
+	{
+		// 적군
+		switch (m_unitType)
+		{
+		case UnitType::GENERAL:
+			return DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
+		case UnitType::SOLDIER:
+			return DirectX::XMFLOAT4(1.0f, 0.3f, 0.3f, 1.0f); // 연빨강
+		case UnitType::BATTLE_RAM:
+			return DirectX::XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f); // 주황
+		}
+	}
+	return DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f); // 기본 회색
+}
+
+DirectX::XMFLOAT3 NPC::GetUnitScale() const
+{
+	switch (m_unitType)
+	{
+	case UnitType::GENERAL:
+		return DirectX::XMFLOAT3(0.4f, 1.0f, 0.4f); // 장수
+	case UnitType::SOLDIER:
+		return DirectX::XMFLOAT3(0.2f, 0.5f, 0.2f); // 병사
+	case UnitType::BATTLE_RAM:
+		return DirectX::XMFLOAT3(0.8f, 0.5f, 1.2f); // 배틀램
+	default:
+		return DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f);
+	}
 }
