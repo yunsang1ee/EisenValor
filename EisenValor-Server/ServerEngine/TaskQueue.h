@@ -7,7 +7,7 @@ namespace ServerEngine {
 	class Task;
 	class TaskQueue : public std::enable_shared_from_this<ServerEngine::TaskQueue> {
 	protected:
-		ServerEngine::LockQueue<std::shared_ptr<Task>>	m_tasks;
+		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
 		std::atomic_int									m_taskCount{};
 	
 	public:
@@ -41,9 +41,6 @@ namespace ServerEngine {
 		}
 
 		void Flush() noexcept;
-	
-	private:
-		void ClearTasks() noexcept { m_tasks.Clear(); }
 	};
 }
 

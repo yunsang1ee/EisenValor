@@ -5,19 +5,23 @@
 #include "GameRoom.h"
 
 Server::Contents::Player::Player()
-	:GameObject(GAME_OBJECT_TYPE::PLAYER)
+	:Creature(GAME_OBJECT_TYPE::PLAYER, TEAM_TYPE::ALLY)
 {
 }
 
-void Server::Contents::Player::AddNpcs(std::shared_ptr<Server::Contents::NPC> npc)
+void Server::Contents::Player::AddSoldier(std::shared_ptr<Server::Contents::NPC> soldier, const Vec3& localOffset)
 {
-	m_npcs.push_back(npc);
+	const std::lock_guard<std::shared_mutex> lk(m_soldierlk);
+	m_soldiers.emplace_back(SoldierFormationData{ soldier, localOffset });
+}
+
+const std::vector<Server::Contents::SoldierFormationData>& Server::Contents::Player::GetNpcs() noexcept
+{
+	const std::shared_lock<std::shared_mutex> lk( m_soldierlk );
+	return m_soldiers;
 }
 
 void Server::Contents::Player::Update(const float dt)
 {
-	std::cout << "Player Update!" << std::endl;
-	m_kinematicInfo.position += m_kinematicInfo.velocity * dt;
-	//auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(GetID(), m_kinematicInfo);
-	//m_room.lock()->BroadcastInMatch(std::move(pb));	
+
 }

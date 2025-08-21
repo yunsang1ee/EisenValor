@@ -14,10 +14,12 @@ void Server::ServerManager::Init() noexcept
 	MANAGER(Server::Contents::GameRoomManager)->Init();
 	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
+		std::cout << "ThreadManager Init Failed" << std::endl;
 		exit(1);
 	}
 	
 	if(false == MANAGER(ServerEngine::RIOCore)->Init(MakeClientSessionFunc)) {
+		std::cout << "RIOCore Init Fail" << std::endl;
 		Shutdown();
 		exit(1);
 	}
@@ -33,11 +35,13 @@ void Server::ServerManager::Run() noexcept
 	MANAGER(ServerEngine::RIOCore)->StartIO();
 	
 	char ch;
+	 
+	constexpr int8 ESC = 27;
 
 	while(true) {
 		if(!_kbhit()) continue;      
 		ch = _getch();
-		if(ch == 27) {
+		if(ch == ESC) {
 			LOOP_EXIT = true;
 			std::cout << "Server Finish" << std::endl;
 			break;
@@ -45,7 +49,7 @@ void Server::ServerManager::Run() noexcept
 	}
 }
 
-void Server::ServerManager::Shutdown() noexcept
+void Server::ServerManager::Shutdown()  noexcept
 {
 	MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();

@@ -25,7 +25,7 @@ enum RIO_FIGURE {
 };
 
 enum class SESSION_STATE : uint8 {
-	FREE,		// Session 생성 소멸
-	ALLOC,		// Accept 직후 
-	IN_WORLD,	// 클라로부터 로그인 패킷 받고, Match 입장 시
+	FREE,			// Session 생성 소멸
+	ALLOC,			// Accept 직후 
+	IN_GAME_ROOM,	// 클라로부터 로그인 패킷 받고, Room 입장 시
 };

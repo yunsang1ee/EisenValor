@@ -13,18 +13,19 @@ namespace ServerEngine {
 
 	class Session : public std::enable_shared_from_this<Session> {
 	private:
-		uint32										m_id;
-		SOCKET										m_socket;
-		std::weak_ptr<RIOWorker>					m_owner;
+		uint32											m_id;
+		SOCKET											m_socket;
+		std::weak_ptr<RIOWorker>						m_owner;
 
-		std::atomic_bool							m_connected;
-		SOCKADDR_IN									m_clientAddr{};
-		RIO_RQ										m_rq;
+		std::atomic_bool								m_connected;
+		SOCKADDR_IN										m_clientAddr{};
+		RIO_RQ											m_rq;
 		
-		RecvBuffer									m_recvBuffer;
-		RecvContext									m_recvContext;
-		uint32										m_deferCount;
+		RecvBuffer										m_recvBuffer;
+		RecvContext										m_recvContext;
+		uint32											m_deferCount;
 
+		// TOOD: 성능을 올리기 위해 Lock-Free Queue로 수정해야함.
 		LockQueue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
 		SendBuffer										m_sendBuffer;
 		std::atomic<SESSION_STATE>						m_state;
@@ -80,7 +81,7 @@ namespace ServerEngine {
 		bool DeferSend();
 		// flags: RIO_MSG_DEFER
 		bool DeferSend(const uint32 offset, const uint32 size);	
-		// flags: RIO_MSG_COMMIT_ONLY
+		// flags: RIO_MSG_COMMIT_ONLY(System Call)
 		void CommitSend();										
 	};
 }

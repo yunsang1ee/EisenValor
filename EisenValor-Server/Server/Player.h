@@ -1,16 +1,26 @@
 #pragma once
 
-#include "GameObject.h"
+#include "Creature.h"
 
 namespace Server {
 	class ClientSession;
 
 	namespace Contents {
 		class NPC;
-		class Player : public GameObject {
+
+		struct SoldierFormationData {
+			std::shared_ptr<Server::Contents::NPC> soldier;
+			Vec3 localOffset;  
+		};
+
+		class Player : public Creature {
 		private:
 			std::weak_ptr<ClientSession>			m_session;
-			std::vector<std::shared_ptr<NPC>>		m_npcs;
+
+			std::shared_mutex						m_soldierlk;
+			std::vector<SoldierFormationData>		m_soldiers;
+
+			SOLDIER_FORMATION						m_form;
 
 		public:
 			std::atomic_bool						m_moveStart{ false };
@@ -21,13 +31,14 @@ namespace Server {
 
 		public:
 			void SetSession(std::weak_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
-
+			void SetForm(const SOLDIER_FORMATION form) noexcept { m_form = form; }
+			SOLDIER_FORMATION GetForm() const noexcept { return m_form; }
 		public:
-			void AddNpcs(std::shared_ptr<NPC> npc);
+			void AddSoldier(std::shared_ptr<Server::Contents::NPC> soldier, const Vec3& localOffset);
 
 		public:
 			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
-			const auto& GetNpcs() const noexcept { return m_npcs; }
+			const std::vector<Server::Contents::SoldierFormationData>& GetNpcs() noexcept;
 
 		public:
 			virtual void Update(const float dt) override;

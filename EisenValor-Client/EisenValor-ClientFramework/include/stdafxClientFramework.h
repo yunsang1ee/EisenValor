@@ -56,6 +56,16 @@ struct PacketHeader
 };
 #pragma pack(pop)
 
+enum class SOLDIER_FORMATION
+{
+	FORMATION_1,
+	FORMATION_2,
+	FORMATION_3,
+
+	END
+};
+
+
 #pragma region Header
 // Windows 헤더 파일:
 #include <windows.h>
@@ -90,8 +100,16 @@ struct PacketHeader
 
 // My
 #include "DxCommon.h"
-#include "DxMath.h"
+// #include "DxMath.h"
 #include <Global.h>
+
+#include "SimpleMath.h"
+using Vec2 = DirectX::SimpleMath::Vector2;
+using Vec3 = DirectX::SimpleMath::Vector3;
+using Vec4 = DirectX::SimpleMath::Vector4;
+using Matrix = DirectX::SimpleMath::Matrix;
+using Quaternion = DirectX::SimpleMath::Quaternion;
+using Ray = DirectX::SimpleMath::Ray;
 
 #pragma endregion
 
@@ -116,6 +134,7 @@ struct PacketHeader
 
 #include "NetworkManager.h"
 #include "PacketHandler.h"
+
 
 #pragma region DebugHelpers
 std::string GetTimestamp();
@@ -144,11 +163,14 @@ constexpr size_t kExplosionDebrises = 240;
     // 오브젝트 타입 구분용
 enum class ObjectType
 {
-	Player,
+	PLAYER,
 	NPC,
-	NPC1,
-	NPC2,
-	NPC3
+	SPAWN_BASE,
+	
+
+	END
 };
+
+
 
 // #define DEAD_RECKONING

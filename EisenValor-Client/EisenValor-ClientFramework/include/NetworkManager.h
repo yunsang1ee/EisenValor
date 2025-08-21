@@ -48,16 +48,12 @@ public:
 				return;
 			}
 		}
-#ifdef _DEBUG
-		std::println("Send!, sendBytes = {}", sendBytes);
-#endif
 	}
 
 	void Send(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 	{
 	retry:
-		const int32 sendBytes =
-			send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
+		const int32 sendBytes = send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
 		if (SOCKET_ERROR == sendBytes)
 		{
 			const int32 errCode = WSAGetLastError();
@@ -65,18 +61,17 @@ public:
 			{
 				// 내부 송신 버퍼가 가득 찼을 경우
 				goto retry;
+				static_assert("WSAEWOULDBLOCK");
 				std::cout << "WSAEWOULDBLOCK" << std::endl;
 				return;
 			}
 			else
 			{
+				static_assert("SENDERROR");
 				std::println("Send Error = {}", errCode);
 				return;
 			}
 		}
-#ifdef _DEBUG
-		std::println("Send!, sendBytes = {}", sendBytes);
-#endif
 	}
 
 	uint32 AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept;

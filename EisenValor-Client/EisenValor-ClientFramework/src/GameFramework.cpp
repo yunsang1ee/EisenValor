@@ -154,46 +154,45 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	// Objects들 추가
 	//  m_gameObjects.push_back(std::move(player));
 
-	
 	// 적군 장수 생성
-	auto enemyGeneral = std::make_shared<NPC>();
-	enemyGeneral->SetTeam(NPC::Team::ENEMY);
-	enemyGeneral->SetUnitType(NPC::UnitType::GENERAL);
-	enemyGeneral->Initialize(device.GetDevice());
-	Vec3 generalPos(0.0f, 0.0f, 8.0f);
-	enemyGeneral->SetPosition(generalPos);
-	enemyGeneral->lastServerPosition = generalPos;
-	MANAGER(GameObjectManager)->AddObject(enemyGeneral);
+	//auto enemyGeneral = std::make_shared<NPC>();
+	//enemyGeneral->SetTeam(NPC::Team::ENEMY);
+	//enemyGeneral->SetUnitType(NPC::UnitType::GENERAL);
+	//enemyGeneral->Initialize(device.GetDevice());
+	//Vec3 generalPos(0.0f, 0.0f, 8.0f);
+	//enemyGeneral->SetPosition(generalPos);
+	//enemyGeneral->lastServerPosition = generalPos;
+	//MANAGER(GameObjectManager)->AddObject(enemyGeneral);
 
 	// 적군 병사 생성 (장수 바로 옆에)
-	auto enemySoldier = std::make_shared<NPC>();
-	enemySoldier->SetTeam(NPC::Team::ENEMY);
-	enemySoldier->SetUnitType(NPC::UnitType::SOLDIER);
-	enemySoldier->Initialize(device.GetDevice());
-	Vec3 soldierPos(1.5f, 0.0f, 8.0f);
-	enemySoldier->SetPosition(soldierPos);
-	enemySoldier->lastServerPosition = soldierPos;
-	MANAGER(GameObjectManager)->AddObject(enemySoldier);
+	//auto enemySoldier = std::make_shared<NPC>();
+	//enemySoldier->SetTeam(NPC::Team::ENEMY);
+	//enemySoldier->SetUnitType(NPC::UnitType::SOLDIER);
+	//enemySoldier->Initialize(device.GetDevice());
+	//Vec3 soldierPos(1.5f, 0.0f, 8.0f);
+	//enemySoldier->SetPosition(soldierPos);
+	//enemySoldier->lastServerPosition = soldierPos;
+	//MANAGER(GameObjectManager)->AddObject(enemySoldier);
 
 	// 아군 배틀램 생성
-	auto battleram = std::make_shared<NPC>();
-	battleram->SetTeam(NPC::Team::ALLY);
-	battleram->SetUnitType(NPC::UnitType::BATTLE_RAM);
-	battleram->Initialize(device.GetDevice());
-	Vec3 battleramPos(-3.0f, 0.0f, 2.0f);
-	battleram->SetPosition(battleramPos);
-	battleram->lastServerPosition = battleramPos;
-	MANAGER(GameObjectManager)->AddObject(battleram);
+	//auto battleram = std::make_shared<NPC>();
+	//battleram->SetTeam(NPC::Team::ALLY);
+	//battleram->SetUnitType(NPC::UnitType::BATTLE_RAM);
+	//battleram->Initialize(device.GetDevice());
+	//Vec3 battleramPos(-3.0f, 0.0f, 2.0f);
+	//battleram->SetPosition(battleramPos);
+	//battleram->lastServerPosition = battleramPos;
+	//MANAGER(GameObjectManager)->AddObject(battleram);
 
 	// 아군 스폰 기지 생성
-	auto allyspawnbase = std::make_shared<NPC>();
-	allyspawnbase->SetTeam(NPC::Team::ALLY);
-	allyspawnbase->SetUnitType(NPC::UnitType::SPAWN_BASE);
-	allyspawnbase->Initialize(device.GetDevice());
-	Vec3 spawnbasePos(-8.0f, 0.0f, 0.0f);
-	allyspawnbase->SetPosition(spawnbasePos);
-	allyspawnbase->lastServerPosition = spawnbasePos;
-	MANAGER(GameObjectManager)->AddObject(allyspawnbase);
+	//auto allyspawnbase = std::make_shared<NPC>();
+	//allyspawnbase->SetTeam(NPC::Team::ALLY);
+	//allyspawnbase->SetUnitType(NPC::UnitType::SPAWN_BASE);
+	//allyspawnbase->Initialize(device.GetDevice());
+	//Vec3 spawnbasePos(-8.0f, 0.0f, 0.0f);
+	//allyspawnbase->SetPosition(spawnbasePos);
+	//allyspawnbase->lastServerPosition = spawnbasePos;
+	//MANAGER(GameObjectManager)->AddObject(allyspawnbase);
 
 	return true;
 }

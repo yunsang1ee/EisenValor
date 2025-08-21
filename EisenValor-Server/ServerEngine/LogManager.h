@@ -36,7 +36,7 @@ namespace ServerEngine {
 				FOREGROUND_INTENSITY };
 
 			SetConsoleTextAttribute(consoleHandle, arrLevelColor[static_cast<int>(level)]);
-			print("{}", oss.str());
+			std::cout << std::format("{}", oss.str());
 			SetConsoleTextAttribute(consoleHandle, FOREGROUND_INTENSITY);
 
 			const std::string fileName = std::format("LOG/{:%Y-%m-%d %H-%M}.txt", localTime).c_str();

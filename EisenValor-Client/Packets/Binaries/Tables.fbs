@@ -28,7 +28,7 @@ table SC_ENTER_WORLD_PACKET {
 }
 
 // ================================================
-//					MY_PLAYER
+//					LOCAL_PLAYER
 // ================================================
 table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
@@ -41,6 +41,8 @@ table SC_LOCAL_PLAYER_PACKET {
 table SC_ADD_OBJ_PACKET {
 	obj_id: uint;
 	obj_type: ubyte;
+	team_type : ubyte;
+	npc_type: ubyte;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
@@ -82,9 +84,9 @@ table CS_SUMMON_NPC {
 }
 
 
-table CS_KEY_UP{
-}
-
-table SC_KEY_UP {
-player_id: uint;
+// ================================================
+//					  SOLDIER_FORMATION
+// ================================================
+table CS_SOLDIER_FORMATION {
+	formation: ubyte;
 }

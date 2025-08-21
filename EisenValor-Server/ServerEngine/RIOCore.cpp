@@ -3,6 +3,8 @@
 
 #include "ThreadManager.h"
 #include "RIOWorker.h"
+#include "TaskQueueManager.h"
+#include "TaskQueue.h"
 
 bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 {
@@ -22,12 +24,12 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 		return false;
 	}
 
-	int opt = 1;
+	constexpr int opt = 1;
 	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
 
 	GUID functionTableId = WSAID_MULTIPLE_RIO;
 	DWORD bytes = 0;
-	
+
 	if(0 != WSAIoctl(m_listenSocket, SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER, &functionTableId, sizeof(GUID), (void**)&m_rioExtfuncTable, sizeof(m_rioExtfuncTable), &bytes, NULL, NULL)) {
 		ServerEngine::LogManager::PrintLastError();
 		return false;
@@ -45,12 +47,24 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 	}
 
 	// 5. Create RIOWorker
-	m_rioWorkerCnt = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
-	m_rioWorkers.reserve(m_rioWorkerCnt);
+	const int32 coreCount = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
 
-	for(uint16 i = 1; i <= m_rioWorkerCnt; ++i) {
+	// 전체 쓰레드 = 코어 개수
+	// 일감 처리 쓰레드 1개
+	// IO 워커 쓰레드 = 전체쓰레드 - 일감 처리 쓰레드
+
+	// RIO 같은 경우, IO 워커 쓰레드마다 세션을 관리하고 있고 해당 쓰레드가 해당 세션에 대한 입출력 완료 통지를
+	// 처리해야 하기 때문에 패킷을 받은 후 처리 해야 하는 일이 있으면 일감 큐에 일감을 넣고 바로 빠져 나온다.
+	// 만약, IO 워커 쓰레드가 일감까지 처리한다고 할 떄, 그 일감이 너무 오래 걸리는 작업이라면 입출력 완료 통지를 늦게 할 수 밖에 없다.
+	// 따라서, 일감 처리 쓰레드는 따로 뺀다.
+
+	m_rioCompletionWorker = coreCount - m_taskExecuterCnt;
+	m_rioWorkers.reserve(m_rioCompletionWorker);
+
+	for(uint16 i = 1; i <= m_rioCompletionWorker; ++i) {
 		auto rioWorker = std::make_shared<RIOWorker>(i);
-		rioWorker->Init(sessionFunc);
+		if(false == rioWorker->Init(sessionFunc))
+			return false;
 		m_rioWorkers.emplace_back(std::move(rioWorker));
 	}
 	return true;
@@ -65,9 +79,10 @@ bool ServerEngine::RIOCore::StartAccept() noexcept
 	}
 
 	// 2. Accept
-	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this]() {
-		TLS_THREAD_ID = LISTEN_THREAD_ID;
-		DoAcceptLoop();
+	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this]()
+		{
+			TLS_THREAD_ID = LISTEN_THREAD_ID;
+			DoAcceptLoop();
 		});
 
 	return true;
@@ -75,22 +90,35 @@ bool ServerEngine::RIOCore::StartAccept() noexcept
 
 void ServerEngine::RIOCore::StartIO() noexcept
 {
-	for(int i = 0; i < m_rioWorkerCnt; ++i) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i]() {
-			TLS_THREAD_ID = i+1;
-			while(LOOP_EXIT == false)
-				m_rioWorkers[i]->Work();
-		});
+	// IO 워커 쓰레드 
+	for(int i = 0; i < m_rioCompletionWorker; ++i) {
+		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i]()
+			{
+				TLS_THREAD_ID = i + 1;
+				while(LOOP_EXIT == false)
+					m_rioWorkers[i]->Work();
+			});
+	}
+
+	// 일감 처리 쓰레드
+	for(int i = 0; i < m_taskExecuterCnt; ++i) {
+		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this]()
+			{
+				while(true) {
+					TLS_END_TICK = high_resolution_clock::now() + 64ms;
+					DistributeReservedTask();
+					DoTask();
+				}
+			});
 	}
 }
 
 void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 {
 	while(false == LOOP_EXIT) {
-		
 		// Non-Blocking Accept
 		const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
-		
+
 		if(clientSocket == SOCKET_ERROR) {
 			std::cout << "Accept Loop Break" << std::endl;
 			break;
@@ -101,14 +129,14 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 		getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
 
 		std::cout << "Client Accept Success!" << std::endl;
-		
+
 		std::wstring ipAddress;
 		ipAddress.resize(100);
 		InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
 		std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
-		
+
 		m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
-		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
+		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioCompletionWorker;
 	}
 }
 
@@ -116,4 +144,26 @@ void ServerEngine::RIOCore::Shutdown()
 {
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
+}
+
+void ServerEngine::RIOCore::DistributeReservedTask()
+{
+	const auto now = high_resolution_clock::now();
+	MANAGER(ServerEngine::TaskTimer)->DistributeReservedTask(now);
+}
+
+void ServerEngine::RIOCore::DoTask()
+{
+	while(true) {
+		const auto now = high_resolution_clock::now();
+
+		if(now > TLS_END_TICK) {
+			break;
+		}
+
+		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->Pop();
+		if(nullptr == taskQueue)
+			break;
+		taskQueue->Flush();
+	}
 }

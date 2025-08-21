@@ -22,182 +22,168 @@ void NPC::Initialize(ID3D12Device* device)
 						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), color}
 	};
 
-    // 인덱스 데이터
-    UINT indices[] = {
-        // 앞면
-        0, 1, 2,  0, 2, 3,
-        // 뒷면  
-        4, 6, 5,  4, 7, 6,
-        // 왼쪽면
-        0, 5, 1,  0, 4, 5,
-        // 오른쪽면
-        3, 2, 6,  3, 6, 7,
-        // 위쪽
-        1, 5, 6,  1, 6, 2,
-        // 아래쪽
-        0, 3, 7,  0, 7, 4
-    };
+	// 인덱스 데이터
+	UINT indices[] = {// 앞면
+					  0, 1, 2, 0, 2, 3,
+					  // 뒷면
+					  4, 6, 5, 4, 7, 6,
+					  // 왼쪽면
+					  0, 5, 1, 0, 4, 5,
+					  // 오른쪽면
+					  3, 2, 6, 3, 6, 7,
+					  // 위쪽
+					  1, 5, 6, 1, 6, 2,
+					  // 아래쪽
+					  0, 3, 7, 0, 7, 4
+	};
 
-    // 버텍스 버퍼 생성
-    const UINT vertexBufferSize = sizeof(vertices);
-    D3D12_HEAP_PROPERTIES heapProps = {};
-    heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+	// 버텍스 버퍼 생성
+	const UINT			  vertexBufferSize = sizeof(vertices);
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-    D3D12_RESOURCE_DESC bufferDesc = {};
-    bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    bufferDesc.Width = vertexBufferSize;
-    bufferDesc.Height = 1;
-    bufferDesc.DepthOrArraySize = 1;
-    bufferDesc.MipLevels = 1;
-    bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-    bufferDesc.SampleDesc.Count = 1;
-    bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	D3D12_RESOURCE_DESC bufferDesc = {};
+	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	bufferDesc.Width = vertexBufferSize;
+	bufferDesc.Height = 1;
+	bufferDesc.DepthOrArraySize = 1;
+	bufferDesc.MipLevels = 1;
+	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+	bufferDesc.SampleDesc.Count = 1;
+	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-    ThrowIfFailed(device->CreateCommittedResource(
-        &heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &bufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&m_vertexBuffer)
-    ));
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_vertexBuffer)
+	));
 
-    // 버텍스 데이터 복사
-    UINT8* pVertexDataBegin;
-    D3D12_RANGE readRange = { 0, 0 };
-    ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-    memcpy(pVertexDataBegin, vertices, sizeof(vertices));
-    m_vertexBuffer->Unmap(0, nullptr);
+	// 버텍스 데이터 복사
+	UINT8*		pVertexDataBegin;
+	D3D12_RANGE readRange = {0, 0};
+	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, vertices, sizeof(vertices));
+	m_vertexBuffer->Unmap(0, nullptr);
 
-    // 버텍스 버퍼 뷰 설정
-    m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-    m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-    m_vertexBufferView.SizeInBytes = vertexBufferSize;
+	// 버텍스 버퍼 뷰 설정
+	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
-    // 인덱스 버퍼 생성
-    const UINT indexBufferSize = sizeof(indices);
-    bufferDesc.Width = indexBufferSize;
+	// 인덱스 버퍼 생성
+	const UINT indexBufferSize = sizeof(indices);
+	bufferDesc.Width = indexBufferSize;
 
-    ThrowIfFailed(device->CreateCommittedResource(
-        &heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &bufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&m_indexBuffer)
-    ));
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_indexBuffer)
+	));
 
-    // 인덱스 데이터 복사
-    UINT8* pIndexDataBegin;
-    ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-    memcpy(pIndexDataBegin, indices, sizeof(indices));
-    m_indexBuffer->Unmap(0, nullptr);
+	// 인덱스 데이터 복사
+	UINT8* pIndexDataBegin;
+	ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, indices, sizeof(indices));
+	m_indexBuffer->Unmap(0, nullptr);
 
-    // 인덱스 버퍼 뷰 설정
-    m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-    m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    m_indexBufferView.SizeInBytes = indexBufferSize;
+	// 인덱스 버퍼 뷰 설정
+	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_indexBufferView.SizeInBytes = indexBufferSize;
 
-    // 상수 버퍼 생성
-    const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
-    bufferDesc.Width = constantBufferSize;
+	// 상수 버퍼 생성
+	const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
+	bufferDesc.Width = constantBufferSize;
 
-    ThrowIfFailed(device->CreateCommittedResource(
-        &heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &bufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&m_constantBuffer)
-    ));
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_constantBuffer)
+	));
 
-    ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
 }
 
 void NPC::Update(float deltaTime)
 {
- //   if (!m_target) return;
+	//   if (!m_target) return;
 
- //   // 플레이어 위치 가져오기
- //   DirectX::XMFLOAT3 targetPos = m_target->GetPosition();
- //   DirectX::XMFLOAT3 currentPos = GetPosition();
+	//   // 플레이어 위치 가져오기
+	//   DirectX::XMFLOAT3 targetPos = m_target->GetPosition();
+	//   DirectX::XMFLOAT3 currentPos = GetPosition();
 
- //   // 거리 계산
- //   float dx = targetPos.x - currentPos.x;
- //   float dy = targetPos.y - currentPos.y;
- //   float dz = targetPos.z - currentPos.z;
- //   float distance = sqrt(dx * dx + dy * dy + dz * dz);
+	//   // 거리 계산
+	//   float dx = targetPos.x - currentPos.x;
+	//   float dy = targetPos.y - currentPos.y;
+	//   float dz = targetPos.z - currentPos.z;
+	//   float distance = sqrt(dx * dx + dy * dy + dz * dz);
 
- //   // 일정 거리 이상이면 따라가기
- //   if (distance > m_followDistance) {
- //       // 방향 벡터 정규화
- //       dx /= distance;
- //       dy /= distance;
- //       dz /= distance;
+	//   // 일정 거리 이상이면 따라가기
+	//   if (distance > m_followDistance) {
+	//       // 방향 벡터 정규화
+	//       dx /= distance;
+	//       dy /= distance;
+	//       dz /= distance;
 
- //       // 새 위치 계산 (살짝 부드럽게 이동)
- //       float moveX = currentPos.x + dx * m_moveSpeed * deltaTime;
- //       float moveY = currentPos.y + dy * m_moveSpeed * deltaTime;
- //       float moveZ = currentPos.z + dz * m_moveSpeed * deltaTime;
+	//       // 새 위치 계산 (살짝 부드럽게 이동)
+	//       float moveX = currentPos.x + dx * m_moveSpeed * deltaTime;
+	//       float moveY = currentPos.y + dy * m_moveSpeed * deltaTime;
+	//       float moveZ = currentPos.z + dz * m_moveSpeed * deltaTime;
 
- //       SetPosition(Vec3{moveX, moveY, moveZ});
- //   }
+	//       SetPosition(Vec3{moveX, moveY, moveZ});
+	//   }
 
- //   DirectX::XMFLOAT3 pos = GetPosition();
-	//SetPosition(Vec3{pos.x, m_baseY, pos.z});
+	//   DirectX::XMFLOAT3 pos = GetPosition();
+	// SetPosition(Vec3{pos.x, m_baseY, pos.z});
 
-    	// TOOD: 현재 위치에서 서버 위치로 보간.
- Vec3 curPos{GetPosition()};
- Vec3 destPos{lastServerPosition};
+	// TOOD: 현재 위치에서 서버 위치로 보간.
+	Vec3 curPos{GetPosition()};
+	Vec3 destPos{lastServerPosition};
 
- if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
-	 return;
+	if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+		return;
 
- float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
- if (lerpFactor > 1.0f)
-	 lerpFactor = 1.0f; // 목적지 overshoot 방지
+	float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
+	if (lerpFactor > 1.0f)
+		lerpFactor = 1.0f; // 목적지 overshoot 방지
 
- Vec3 newPos;
- newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
- newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
- newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+	Vec3 newPos;
+	newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
+	newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
+	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
 
- SetPosition(newPos);
+	SetPosition(newPos);
 }
 
-void NPC::Render(ID3D12GraphicsCommandList* cmdList,
-    DirectX::XMMATRIX view,
-    DirectX::XMMATRIX projection)
+void NPC::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
-    // 버텍스 및 인덱스 버퍼 설정
-    cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    cmdList->IASetIndexBuffer(&m_indexBufferView);
-    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// 버텍스 및 인덱스 버퍼 설정
+	cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	cmdList->IASetIndexBuffer(&m_indexBufferView);
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	DirectX::XMFLOAT3 scale = GetUnitScale();
 
-    // NPC 변환 행렬 계산
+	// NPC 변환 행렬 계산
 	DirectX::XMMATRIX npcScale = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-    DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rotation);
-    DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
-    DirectX::XMMATRIX npcWorld = npcScale * npcRotation * npcTranslation;
-    DirectX::XMMATRIX npcMVP = npcWorld * view * projection;
+	DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rotation);
+	DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
+	DirectX::XMMATRIX npcWorld = npcScale * npcRotation * npcTranslation;
+	DirectX::XMMATRIX npcMVP = npcWorld * view * projection;
 
-    // 상수 버퍼에 데이터 복사
-    DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(npcMVP));
-    memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+	// 상수 버퍼에 데이터 복사
+	DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(npcMVP));
+	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 
-    // NPC 그리기
-    cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
-    cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+	// NPC 그리기
+	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
+	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 }
 
 void NPC::SetTarget(std::shared_ptr<GameObject> target)
 {
-    m_target = target;
-    if (target) {
-        m_baseY = target->GetPosition().y;  // 기준 높이 설정
-    }
+	m_target = target;
+	if (target)
+	{
+		m_baseY = target->GetPosition().y; // 기준 높이 설정
+	}
 }
 
 void NPC::UpdateUnitProperties()
@@ -205,13 +191,13 @@ void NPC::UpdateUnitProperties()
 	// 유닛 타입별 기본 속성 설정
 	switch (m_unitType)
 	{
-	case UnitType::GENERAL:
+	case NPC_TYPE::GENERAL:
 		m_moveSpeed = 5.0f;
 		break;
-	case UnitType::SOLDIER:
+	case NPC_TYPE::SOLDIER:
 		m_moveSpeed = 4.0f;
 		break;
-	case UnitType::BATTLE_RAM:
+	case NPC_TYPE::BATTLE_RAM:
 		m_moveSpeed = 3.0f;
 		break;
 	}
@@ -221,14 +207,14 @@ DirectX::XMFLOAT4 NPC::GetTeamColor() const
 {
 	if (m_team == Team::ALLY)
 	{
-		//아군
+		// 아군
 		switch (m_unitType)
 		{
-		case UnitType::GENERAL:
+		case NPC_TYPE::GENERAL:
 			return DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
-		case UnitType::SOLDIER:
-			return DirectX::XMFLOAT4(0.3f, 0.3f, 1.0f, 1.0f); // 연파랑
-		case UnitType::BATTLE_RAM:
+		case NPC_TYPE::SOLDIER:
+			return DirectX::XMFLOAT4(0.3f	, 0.3f, 1.0f, 1.0f); // 연파랑
+		case NPC_TYPE::BATTLE_RAM:
 			return DirectX::XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f); // 하늘색
 		}
 	}
@@ -237,11 +223,11 @@ DirectX::XMFLOAT4 NPC::GetTeamColor() const
 		// 적군
 		switch (m_unitType)
 		{
-		case UnitType::GENERAL:
+		case NPC_TYPE::GENERAL:
 			return DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
-		case UnitType::SOLDIER:
+		case NPC_TYPE::SOLDIER:
 			return DirectX::XMFLOAT4(1.0f, 0.3f, 0.3f, 1.0f); // 연빨강
-		case UnitType::BATTLE_RAM:
+		case NPC_TYPE::BATTLE_RAM:
 			return DirectX::XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f); // 주황
 		}
 	}
@@ -252,11 +238,11 @@ DirectX::XMFLOAT3 NPC::GetUnitScale() const
 {
 	switch (m_unitType)
 	{
-	case UnitType::GENERAL:
+	case NPC_TYPE::GENERAL:
 		return DirectX::XMFLOAT3(0.4f, 1.0f, 0.4f); // 장수
-	case UnitType::SOLDIER:
+	case NPC_TYPE::SOLDIER:
 		return DirectX::XMFLOAT3(0.2f, 0.5f, 0.2f); // 병사
-	case UnitType::BATTLE_RAM:
+	case NPC_TYPE::BATTLE_RAM:
 		return DirectX::XMFLOAT3(0.8f, 0.5f, 1.2f); // 배틀램
 	default:
 		return DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f);

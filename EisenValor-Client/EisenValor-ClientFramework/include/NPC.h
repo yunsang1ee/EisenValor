@@ -13,12 +13,17 @@ public:
 	};
 
 	// 유닛 타입 구분용
-	enum class UnitType
+	enum class NPC_TYPE : uint8
 	{
-        GENERAL,     // 장수
-		SOLDIER,	// 병사
-		BATTLE_RAM, // 배틀램
-		SPAWN_BASE	// 스폰 기지
+		NONE,
+		GENERAL,
+		SOLDIER,
+		ARCHER,
+		MEDIC,
+		BATTLE_RAM,
+		BOSS,
+
+		END
 	};
 
     NPC() = default;
@@ -39,12 +44,12 @@ public:
 	void SetTeam(Team team) { m_team = team; }
 	Team GetTeam() const { return m_team; }
 
-	void SetUnitType(UnitType type)
+	void SetUnitType(NPC_TYPE type)
 	{
 		m_unitType = type;
 		UpdateUnitProperties(); // 타입 변경시 속성 업데이트
 	}
-	UnitType GetUnitType() const { return m_unitType; }
+	NPC_TYPE GetUnitType() const { return m_unitType; }
 
 
 private:
@@ -56,7 +61,7 @@ private:
 
     //Team and Unit
 	Team	 m_team = Team::ALLY;			 
-	UnitType m_unitType = UnitType::SOLDIER; 
+	NPC_TYPE m_unitType = NPC_TYPE::SOLDIER; 
 
     // DirectX 렌더링 리소스들
     ComPtr<ID3D12Resource> m_vertexBuffer;

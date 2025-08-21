@@ -153,13 +153,18 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="ClientSessionManager.cpp" />
+    <ClCompile Include="Component.cpp" />
+    <ClCompile Include="Creature.cpp" />
+    <ClCompile Include="FSM.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
+    <ClCompile Include="IdleState.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -167,26 +172,41 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Script.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="NPC.cpp" />
+    <ClCompile Include="SoldierIdleState.cpp" />
+    <ClCompile Include="SoldierWalkState.cpp" />
+    <ClCompile Include="State.cpp" />
+    <ClCompile Include="WalkState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="ClientSessionManager.h" />
+    <ClInclude Include="Component.h" />
+    <ClInclude Include="Creature.h" />
+    <ClInclude Include="FSM.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
+    <ClInclude Include="IdleState.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Script.h" />
     <ClInclude Include="ServerEnums.h" />
     <ClInclude Include="ServerManager.h" />
     <ClInclude Include="ServerStructs.h" />
     <ClInclude Include="ServerTypes.h" />
     <ClInclude Include="NPC.h" />
+    <ClInclude Include="SoldierIdleState.h" />
+    <ClInclude Include="SoldierWalkState.h" />
+    <ClInclude Include="State.h" />
+    <ClInclude Include="WalkState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />
