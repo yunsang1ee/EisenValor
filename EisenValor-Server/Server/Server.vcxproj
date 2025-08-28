@@ -153,6 +153,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BehaviorNode.cpp" />
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
@@ -160,11 +161,15 @@
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="FSM.cpp" />
+    <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
+    <ClCompile Include="GeneralIdleState.cpp" />
+    <ClCompile Include="GeneralTraceState.cpp" />
     <ClCompile Include="IdleState.cpp" />
+    <ClCompile Include="IsPlayerInNearNode.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -179,10 +184,12 @@
     <ClCompile Include="SoldierIdleState.cpp" />
     <ClCompile Include="SoldierWalkState.cpp" />
     <ClCompile Include="State.cpp" />
+    <ClCompile Include="TargetTraceNode.cpp" />
     <ClCompile Include="WalkState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="BehaviorNode.h" />
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
@@ -190,11 +197,15 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="FSM.h" />
+    <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
+    <ClInclude Include="GeneralIdleState.h" />
+    <ClInclude Include="GeneralTraceState.h" />
     <ClInclude Include="IdleState.h" />
+    <ClInclude Include="IsPlayerInNearNode.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Script.h" />
@@ -206,6 +217,7 @@
     <ClInclude Include="SoldierIdleState.h" />
     <ClInclude Include="SoldierWalkState.h" />
     <ClInclude Include="State.h" />
+    <ClInclude Include="TargetTraceNode.h" />
     <ClInclude Include="WalkState.h" />
   </ItemGroup>
   <ItemGroup>

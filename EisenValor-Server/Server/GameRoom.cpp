@@ -10,7 +10,15 @@ void Server::Contents::GameRoom::Init()
 {
 	// TODO: 맵 데이터 로딩
 	// TODO: NPC 초기화
-	
+
+	GeneralTemplate t;
+	t.npcType = NPC_TYPE::GENERAL;
+	t.objType = GAME_OBJECT_TYPE::NPC;
+	t.pos = Vec3{ -10.f, 0.f, -10.f };
+	t.rot = Vec3{ 0.f, 0.f, 0.f };
+	t.teamType = TEAM_TYPE::ENEMY;
+	auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
+	AddNpc(std::move(sentinelNPC));
 	
 	// Update 함수 등록
 	ExecuteAsyncronously(&GameRoom::Update);
@@ -134,7 +142,6 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	Broadcast(packetBuffer);
 
-
 	//// 2. 병사 이동 처리
 	auto& soldiers = player->GetNpcs();
 	if(soldiers.size() == 0) return;
@@ -168,8 +175,6 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 			walkState->SetTargetPos(targetPos);
 		}
 	}
-
-
 }
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)

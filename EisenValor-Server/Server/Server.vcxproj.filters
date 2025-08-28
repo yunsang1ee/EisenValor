@@ -53,10 +53,10 @@
       <Filter>02. Contents\04. Component\00. FSM\00. State\01. Walk</Filter>
     </ClCompile>
     <ClCompile Include="SoldierIdleState.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. IDLE</Filter>
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State\00. IDLE</Filter>
     </ClCompile>
     <ClCompile Include="SoldierWalkState.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\01. WALK</Filter>
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State\01. WALK</Filter>
     </ClCompile>
     <ClCompile Include="Script.cpp">
       <Filter>02. Contents\04. Component\99. Scripts</Filter>
@@ -66,6 +66,24 @@
     </ClCompile>
     <ClCompile Include="GameRoom.cpp">
       <Filter>02. Contents\00. Room\01. GameRoom</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLobby.cpp">
+      <Filter>02. Contents\00. Room\00. GameLobby</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralIdleState.cpp">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\00. IDLE</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralTraceState.cpp">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\01. Trace</Filter>
+    </ClCompile>
+    <ClCompile Include="BehaviorNode.cpp">
+      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode</Filter>
+    </ClCompile>
+    <ClCompile Include="IsPlayerInNearNode.cpp">
+      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
+    </ClCompile>
+    <ClCompile Include="TargetTraceNode.cpp">
+      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -126,12 +144,6 @@
     <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier">
       <UniqueIdentifier>{7027c05f-9aa7-4c46-985a-089f18d6b6a4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. IDLE">
-      <UniqueIdentifier>{9b34cf29-c1e0-4e5f-b044-5928b3bd2b2b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\01. WALK">
-      <UniqueIdentifier>{bcada93e-bb8f-47b6-a82b-400c98aa92b5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General">
       <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
     </Filter>
@@ -191,6 +203,39 @@
     </Filter>
     <Filter Include="02. Contents\00. Room\00. GameLobby">
       <UniqueIdentifier>{8c083446-4032-4450-9ec2-1be3a1e66f03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode">
+      <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State">
+      <UniqueIdentifier>{ed2dfafc-cb9b-4dcc-a35e-3920e277d50b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\00. IDLE">
+      <UniqueIdentifier>{d5df54c8-9d31-4d74-ba90-86d2a28fbbc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\01. Trace">
+      <UniqueIdentifier>{be1bd7ec-6559-4dd1-b523-9993d48bb25d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\02. Attack">
+      <UniqueIdentifier>{066cd92b-7725-4db0-9f1d-e16e58231fd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\01. LeafNode">
+      <UniqueIdentifier>{10f4a73a-4bdc-41e8-aa65-9bf685bae526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State">
+      <UniqueIdentifier>{c7011f14-058b-45b6-a67f-204400f62173}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State\01. WALK">
+      <UniqueIdentifier>{bcada93e-bb8f-47b6-a82b-400c98aa92b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State\00. IDLE">
+      <UniqueIdentifier>{9b34cf29-c1e0-4e5f-b044-5928b3bd2b2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\04. Boss\00. LeafNode">
+      <UniqueIdentifier>{b8be4da6-702b-4f9c-b0ee-2b66977d1652}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode">
+      <UniqueIdentifier>{78ab9b19-e408-4466-b80d-0f7d82c9a817}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -255,10 +300,10 @@
       <Filter>02. Contents\04. Component\00. FSM\00. State\01. Walk</Filter>
     </ClInclude>
     <ClInclude Include="SoldierIdleState.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. IDLE</Filter>
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State\00. IDLE</Filter>
     </ClInclude>
     <ClInclude Include="SoldierWalkState.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\01. WALK</Filter>
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State\01. WALK</Filter>
     </ClInclude>
     <ClInclude Include="Script.h">
       <Filter>02. Contents\04. Component\99. Scripts</Filter>
@@ -268,6 +313,24 @@
     </ClInclude>
     <ClInclude Include="GameRoom.h">
       <Filter>02. Contents\00. Room\01. GameRoom</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLobby.h">
+      <Filter>02. Contents\00. Room\00. GameLobby</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralIdleState.h">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\00. IDLE</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralTraceState.h">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State\01. Trace</Filter>
+    </ClInclude>
+    <ClInclude Include="BehaviorNode.h">
+      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode</Filter>
+    </ClInclude>
+    <ClInclude Include="IsPlayerInNearNode.h">
+      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
+    </ClInclude>
+    <ClInclude Include="TargetTraceNode.h">
+      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,14 @@
 
 #include "SoldierIdleState.h"
 
+#include "GeneralIdleState.h"
+#include "GeneralTraceState.h"
+
+#include "BehaviorNode.h"
+#include "BehaviorTree.h"
+#include "IsPlayerInNearNode.h"
+#include "TargetTraceNode.h"
+
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared();
@@ -21,6 +29,24 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	auto general = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
+	
+	const auto bt = general->AddComponent<BehaviorTree>();
+	bt->SetOwner(general);
+	auto root = std::make_unique<Server::Contents::SequenceNode>();
+	root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
+	root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
+	bt->SetRoot(std::move(root));
+
+	/*const auto fsm = general->AddComponent<Server::Contents::FSM>();
+	fsm->SetOwner(general);
+	auto idle = std::make_shared<Server::Contents::GeneralIdleState>();
+	auto trace = std::make_shared<Server::Contents::GeneralTraceState>();
+	idle->SetFSM(fsm);
+	trace->SetFSM(fsm);
+	fsm->AddState(std::move(idle));
+	fsm->AddState(std::move(trace));
+	fsm->SetCurState(STATE_TYPE::IDLE);*/
+
 	return general;
 }
 

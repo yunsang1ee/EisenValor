@@ -200,7 +200,9 @@ public:
 	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_SOLDIER_FORMATION(const SOLDIER_FORMATION f)
 	{
 		const uint8 form{static_cast<uint8>(f)};
-		return MakePacketBuffer(PACKET_TYPE::CS_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_FORMATION, form));
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_FORMATION, form)
+		);
 	}
 #pragma endregion
 };

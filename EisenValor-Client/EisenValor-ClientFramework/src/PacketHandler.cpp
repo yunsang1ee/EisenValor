@@ -114,7 +114,6 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 
 		npc->Initialize(device);
 		npc->m_id = id;
-
 		npc->SetPosition(pos);
 		npc->SetRotation(rot);
 		npc->SetVelocity(vel);
@@ -126,12 +125,6 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	default:
 		break;
 	}
-
-	//std::println("----------------------------------------------------");
-	//std::println("Hello! ADD_OBJ, ID:{}", id);
-	//std::println("Pos X:{}, Y:{}, Z:{}, ", pos.x, pos.y, pos.z);
-	//std::println("Rot X:{}, Y:{}, Z:{}, ", rot.x, rot.y, rot.z);
-	//std::println("----------------------------------------------------\n");
 
 	return true;
 }
@@ -151,10 +144,6 @@ bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOV
 		if (obj)
 			obj->alive = false;
 	}
-
-	std::println("----------------------------------------------------");
-	std::println("BYE! REMOVE_PLAYER, ID:{}", id);
-	std::println("----------------------------------------------------\n");
 
 	return true;
 }

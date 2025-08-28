@@ -11,8 +11,8 @@ void Server::ServerManager::Init() noexcept
 	std::wcout.imbue(std::locale("korean"));
 
 	ClientPacketHandler::Init();
-	MANAGER(Server::Contents::GameRoomManager)->Init();
-	
+	ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
+
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
 		std::cout << "ThreadManager Init Failed" << std::endl;
 		exit(1);
@@ -23,6 +23,8 @@ void Server::ServerManager::Init() noexcept
 		Shutdown();
 		exit(1);
 	}
+
+	MANAGER(Server::Contents::GameRoomManager)->Init();
 }	
 
 void Server::ServerManager::Run() noexcept

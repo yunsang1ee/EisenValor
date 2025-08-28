@@ -95,7 +95,7 @@ void ServerEngine::RIOCore::StartIO() noexcept
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i]()
 			{
 				TLS_THREAD_ID = i + 1;
-				while(LOOP_EXIT == false)
+				while(false == LOOP_EXIT)
 					m_rioWorkers[i]->Work();
 			});
 	}
@@ -104,7 +104,7 @@ void ServerEngine::RIOCore::StartIO() noexcept
 	for(int i = 0; i < m_taskExecuterCnt; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this]()
 			{
-				while(true) {
+				while(false == LOOP_EXIT) {
 					TLS_END_TICK = high_resolution_clock::now() + 64ms;
 					DistributeReservedTask();
 					DoTask();

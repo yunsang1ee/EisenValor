@@ -34,6 +34,7 @@ namespace Server {
 			void LeaveMatch(std::shared_ptr<ClientSession> clientSession) noexcept;
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			std::shared_ptr<Player> GetPlayer(uint32 id) noexcept;
+			const auto& GetPlayers() { return m_players; }
 
 		public:
 			void Update();

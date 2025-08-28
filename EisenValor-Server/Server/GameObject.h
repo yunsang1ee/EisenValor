@@ -68,7 +68,7 @@ namespace Server {
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
 					m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::make_shared<T>();
 
-					return std::static_pointer_cast<FSM>(m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)]);
+					return std::static_pointer_cast<BehaviorTree>(m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)]);
 				}
 			}
 

@@ -41,6 +41,7 @@
 #include <mutex>
 #include <atomic>
 #include <shared_mutex>
+#include <syncstream>
 
 // functinal
 #include <limits>
