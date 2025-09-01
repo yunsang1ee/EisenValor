@@ -3,6 +3,8 @@
 #include "Singleton.hpp"
 
 namespace ServerEngine {
+	class TaskQueue;
+
 	class ThreadManager : public Singleton<ThreadManager> {
 		SINGLETON(ThreadManager)
 	private:
@@ -17,10 +19,11 @@ namespace ServerEngine {
 
 	public:
 		uint16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
-
+	
 	private:
 		static void InitTLS();
 		static void DestroyTLS();
+
 	};
 }
 

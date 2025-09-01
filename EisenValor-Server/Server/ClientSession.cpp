@@ -29,7 +29,7 @@ void Server::ClientSession::OnDisconnected()
 	std::cout << "ClientSession OnDisconnected!" << std::endl;
 
 	if(m_player) {
-		auto match = m_player->GetGameWorld();
+		auto match = m_player->GetGameRoom();
 		if(match)
 			match->ExecuteAsyncronously(&Server::Contents::GameRoom::LeaveMatch, clientSession);
 	}
@@ -39,11 +39,11 @@ void Server::ClientSession::ProcessPacket(const std::span<const char>& buffer)
 {
 	const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer.data());
 	const char* const packetData = buffer.data() + sizeof(PacketHeader);
-	ClientPacketHandler::HandlePacket(shared_from_this(), packetData, packetHeader);
+	if(false == ClientPacketHandler::HandlePacket(shared_from_this(), packetData, packetHeader))
+		assert(nullptr);
 }
 
 void Server::ClientSession::OnSend(const uint32 bytesTransferred)
 {
 	// std::println("OnSend, Len = {}", bytesTransferred);
 }
- 

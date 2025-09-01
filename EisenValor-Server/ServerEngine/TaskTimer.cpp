@@ -5,8 +5,8 @@
 
 void ServerEngine::TaskTimer::Reserve(const std::chrono::milliseconds ms, std::weak_ptr<ServerEngine::TaskQueue> owner, std::shared_ptr<Task> task)
 {
-	auto now = (high_resolution_clock::now());
-	auto next = ms;
+	const auto now = (high_resolution_clock::now());
+	const auto next = ms;
 	const auto executeTick = now + next;
 	TaskData* taskData{ ObjectPool<TaskData>::Pop(owner, task) };
 

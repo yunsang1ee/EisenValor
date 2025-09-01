@@ -75,6 +75,7 @@ void NetBridge::NetworkManager::ProcessIO()
 
 	if (recvLen == 0)
 	{
+		static_assert("Recv Zero");
 		std::cout << "Recv Zero" << std::endl;
 		exit(-1);
 	}
@@ -83,6 +84,7 @@ void NetBridge::NetworkManager::ProcessIO()
 		const int32 errCode = ::WSAGetLastError();
 		if (WSAEWOULDBLOCK != errCode)
 		{
+			static_assert("Recv Error");
 			std::println("Recv Error = {}", errCode);
 			exit(-1);
 		}
@@ -92,6 +94,7 @@ void NetBridge::NetworkManager::ProcessIO()
 	{
 		if (false == recvBuffer->OnWrite(recvLen))
 		{
+			static_assert("RecvBuffer Write OverFlow");
 			std::println("RecvBuffer Write OverFlow = {}", WSAGetLastError());
 			return;
 		}

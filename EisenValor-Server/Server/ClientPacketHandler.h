@@ -38,6 +38,8 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_SUMMON_NPC_PKT = 12,
 
+	CS_SOLDIER_FORMATION_PKT = 13,
+
 	END
 };
 
@@ -50,6 +52,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 bool Handle_CS_ENTER_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_WORLD_PACKET& recvPkt) noexcept;
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt);
 bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt);
+bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt);
 
 class ClientPacketHandler {
 private:
@@ -72,6 +75,7 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_WORLD_PACKET>(Handle_CS_ENTER_WORLD_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_FORMATION>(Handle_CS_SOLDIER_FORMATION_PACKET, session, buffer, header); };
 	}
 
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader)
@@ -148,7 +152,7 @@ public:
 #pragma endregion
 
 #pragma region SC_ADD_OBJ
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const KinematicInfo& transform)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const TEAM_TYPE teamType, const KinematicInfo& transform, const NPC_TYPE npcType = NPC_TYPE::NONE)
 	{
 		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
 		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
@@ -158,7 +162,7 @@ public:
 
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 
-		return MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, &info));
+		return MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, static_cast<uint8>(teamType), static_cast<uint8>(npcType), &info));
 	}
 #pragma endregion
 

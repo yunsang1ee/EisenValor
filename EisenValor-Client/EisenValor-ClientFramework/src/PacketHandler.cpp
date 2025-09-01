@@ -91,9 +91,10 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 
 	switch (auto type = static_cast<ObjectType>(recvPkt.obj_type()))
 	{
-	case ObjectType::Player:
+	case ObjectType::PLAYER:
 	{
 		auto player = std::make_shared<Player>();
+		
 		player->Initialize(device);
 		player->m_id = id;
 		player->SetPosition(pos);
@@ -108,13 +109,11 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	case ObjectType::NPC:
 	{
 		auto npc = std::make_shared<NPC>();
+		npc->SetTeam(static_cast<NPC::Team>(recvPkt.team_type()));
+		npc->SetUnitType(static_cast<NPC::NPC_TYPE>(recvPkt.npc_type()));
+
 		npc->Initialize(device);
 		npc->m_id = id;
-
-		//DEFAULT ALLY SOLDIER
-		npc->SetTeam(NPC::Team::ALLY);
-		npc->SetUnitType(NPC::UnitType::SOLDIER);
-
 		npc->SetPosition(pos);
 		npc->SetRotation(rot);
 		npc->SetVelocity(vel);
@@ -126,12 +125,6 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	default:
 		break;
 	}
-
-	std::println("----------------------------------------------------");
-	std::println("Hello! ADD_OBJ, ID:{}", id);
-	std::println("Pos X:{}, Y:{}, Z:{}, ", pos.x, pos.y, pos.z);
-	std::println("Rot X:{}, Y:{}, Z:{}, ", rot.x, rot.y, rot.z);
-	std::println("----------------------------------------------------\n");
 
 	return true;
 }
@@ -152,10 +145,6 @@ bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOV
 			obj->alive = false;
 	}
 
-	std::println("----------------------------------------------------");
-	std::println("BYE! REMOVE_PLAYER, ID:{}", id);
-	std::println("----------------------------------------------------\n");
-
 	return true;
 }
 
@@ -171,7 +160,10 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 	const uint32 localID = MANAGER(GameObjectManager)->GetLocalID();
 
 	if (id == localID)
+	{
+		// 만약, 나에게 온 정보라면 서버로부터 받은 좌표로 이동해야 함.
 		return false;
+	}
 
 	auto obj = MANAGER(GameObjectManager)->FindObject(id);
 	if (obj)

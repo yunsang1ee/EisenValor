@@ -30,8 +30,6 @@ namespace ServerEngine {
 	private:
 		void			FlushSessionPacketQueue();
 		void			DequeueCompletion() const;
-		void			DistributeReservedTask();
-		void			DoTask();
 	};
 }
 

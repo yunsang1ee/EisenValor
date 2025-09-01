@@ -9,7 +9,7 @@ void Server::ClientSessionManager::AddSession(std::shared_ptr<ClientSession>&& c
 	if(false == m_sessions.contains(clientSession))
 		m_sessions.insert(std::move(clientSession));
 }
-	
+
 void Server::ClientSessionManager::RemoveSession(std::shared_ptr<ClientSession> clientSession)
 {
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
@@ -21,7 +21,7 @@ void Server::ClientSessionManager::Broadcast(std::shared_ptr<ClientSession> clie
 {
 	 std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	for(const auto& session : m_sessions) {
-		if( session != clientSession && SESSION_STATE::IN_WORLD !=  session->GetState()) {
+		if( session != clientSession && SESSION_STATE::IN_GAME_ROOM !=  session->GetState()) {
 			session->Send(buffer);
 		}
 	}

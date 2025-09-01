@@ -51,6 +51,6 @@ void ServerEngine::ThreadManager::InitTLS()
 
 void ServerEngine::ThreadManager::DestroyTLS()
 {
-	std::println("{}th Thread DestroyTLS", TLS_THREAD_ID);
+	std::cout << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID);
 }
 

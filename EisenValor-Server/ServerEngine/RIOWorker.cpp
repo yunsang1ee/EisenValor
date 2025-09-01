@@ -5,19 +5,16 @@
 #include "SessionPool.h"
 #include "Session.h"
 #include "RIOContext.h"
-#include "TaskTimer.h"
-#include "TaskQueueManager.h"
-#include "TaskQueue.h"
 
 ServerEngine::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
-	std::println("RioWorker, ID = {}", m_id);
+	std::cout << std::format("RioWorker, ID = {}", m_id) << std::endl;
 }
 
 ServerEngine::RIOWorker::~RIOWorker()
 {
-	std::println("~RioWorker, ID = {}", m_id);
+	std::cout << std::format("~RioWorker, ID = {}", m_id);
 }
 
 bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
@@ -38,11 +35,8 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 
 void ServerEngine::RIOWorker::Work()
 {
-	TLS_END_TICK = high_resolution_clock::now() + 64ms;
 	FlushSessionPacketQueue();
 	DequeueCompletion();
-	DistributeReservedTask();
-	DoTask();
 }
 
 void ServerEngine::RIOWorker::FlushSessionPacketQueue()
@@ -90,33 +84,10 @@ void ServerEngine::RIOWorker::DequeueCompletion() const
 	}
 }
 
-void ServerEngine::RIOWorker::DistributeReservedTask()
-{
-	const auto now = high_resolution_clock::now();
-	MANAGER(ServerEngine::TaskTimer)->DistributeReservedTask(now);
-}
-
-void ServerEngine::RIOWorker::DoTask()
-{
-	while(true) {
-		const auto now = high_resolution_clock::now();
-
-		if(now > TLS_END_TICK) {
-			std::println("End");
-			break;
-		}
-		
-		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->Pop();
-		if(nullptr == taskQueue)
-			break;
-		taskQueue->Flush();
-	}
-}
-
 void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr)
 {
 	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
-	std::println("Session Accept!, RioWorker ID ={}", m_id);
+	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
 	auto session = m_sessionPool.get()->DeqSession();
 	session->SetOwner(shared_from_this());
 	session->Connect(socket, clientAddr);

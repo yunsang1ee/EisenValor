@@ -20,4 +20,7 @@ private:
 
 	private:
 	void UpdateInput(const float deltaTime);
+	void UpdatePos(const float deltaTime);
+	void SendMovePacket();
+
 };
