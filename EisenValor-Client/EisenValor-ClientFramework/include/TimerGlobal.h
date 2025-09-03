@@ -53,7 +53,7 @@ private:
 	time_point m_prevTime;
 	time_point m_curTime;
 
-	float m_runTime = 0.0f;
+	double m_runTime = 0.0f;
 	float m_accumulator = 0.0f;
 
 	float	 m_deltaTime = 0.0f;

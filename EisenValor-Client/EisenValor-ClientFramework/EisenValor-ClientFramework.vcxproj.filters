@@ -52,9 +52,6 @@
     <Filter Include="Graphics\Renderer">
       <UniqueIdentifier>{0ae04057-4f25-4ac2-8e3e-7f138947ff4a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Device\Command">
-      <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="NetBridge">
       <UniqueIdentifier>{757ff512-363e-4b4b-9995-e514033e6060}</UniqueIdentifier>
     </Filter>
@@ -90,6 +87,9 @@
     </Filter>
     <Filter Include="Graphics\Resource\Heap">
       <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Device\Command">
+      <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -139,9 +139,6 @@
     <ClInclude Include="include\DxDeviceGlobal.h">
       <Filter>Graphics\Device</Filter>
     </ClInclude>
-    <ClInclude Include="include\DxCommandQueueGlobal.h">
-      <Filter>Graphics\Device</Filter>
-    </ClInclude>
     <ClInclude Include="include\DxCommandContext.h">
       <Filter>Graphics\Device\Command</Filter>
     </ClInclude>
@@ -185,6 +182,10 @@
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="include\DxUtils.h" />
+    <ClInclude Include="include\DxCommandQueueGlobal.h">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxFeatureCaps.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -207,9 +208,6 @@
       <Filter>Graphics\DxCommon</Filter>
     </ClCompile>
     <ClCompile Include="src\DxDeviceGlobal.cpp">
-      <Filter>Graphics\Device</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DxCommandQueueGlobal.cpp">
       <Filter>Graphics\Device</Filter>
     </ClCompile>
     <ClCompile Include="src\DxCommandContext.cpp">
@@ -252,6 +250,10 @@
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="src\DxUtils.cpp" />
+    <ClCompile Include="src\DxCommandQueueGlobal.cpp">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxFeatureCaps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs">

@@ -25,10 +25,10 @@ public: // Local Maker idiom
 		return std::make_unique<Maker>(std::forward<Args>(args)...);
 	}
 
-protected:
-	GlobalMakerBase() = default;
 	~GlobalMakerBase() = default;
 
+protected:
+	GlobalMakerBase() = default;
 	GlobalMakerBase(const GlobalMakerBase&) = delete;
 	GlobalMakerBase(GlobalMakerBase&&) = delete;
 	GlobalMakerBase& operator=(const GlobalMakerBase&) = delete;
