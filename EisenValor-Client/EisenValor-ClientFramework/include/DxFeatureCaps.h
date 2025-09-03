@@ -1,7 +1,7 @@
 #pragma once
 struct DxFeatureCaps
 {
-	static DxFeatureCaps				   Query(ID3D12Device* device, IDXGIAdapter1* adapter);
+	static DxFeatureCaps				   Query(ID3D12Device* device, IDXGIAdapter4* adapter);
 	static D3D12_FEATURE_DATA_SHADER_MODEL QueryHighestShaderModel(ID3D12Device* device);
 
 	void LogCapabilities() const;
@@ -9,7 +9,7 @@ struct DxFeatureCaps
 	void LogMemoryInfo() const;
 	void LogAdvancedFeatures() const;
 
-	std::string GetShaderModelString() const;
+	static std::string GetShaderModelString(D3D_SHADER_MODEL model);
 	std::string GetRaytracingTierString() const;
 
 

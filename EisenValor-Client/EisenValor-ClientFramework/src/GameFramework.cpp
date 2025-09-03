@@ -4,6 +4,7 @@
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxUtils.h"
+#include "DxFeatureCaps.h"
 #include "Vertex.h"
 #include "GameObjectManager.h"
 #include "LocalPlayer.h"
@@ -32,6 +33,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	// 1. 스왑체인 생성 코드 추가 25.07.19
 	// RTV 디스크립터 힙 생성
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
+	auto caps = DxFeatureCaps::Query(device.GetDevice(), device.GetAdapter());
+	caps.LogCapabilities();
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;

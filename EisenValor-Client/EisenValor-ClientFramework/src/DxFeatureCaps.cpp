@@ -8,7 +8,7 @@ constexpr D3D_SHADER_MODEL SHADER_MODELS[] = {
 	D3D_SHADER_MODEL_5_1 // 최소 지원
 };
 
-DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter1* adapter)
+DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 {
 	DxFeatureCaps caps = {};
 
@@ -102,7 +102,7 @@ D3D12_FEATURE_DATA_SHADER_MODEL DxFeatureCaps::QueryHighestShaderModel(ID3D12Dev
 
 		if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
 		{
-			DEBUG_LOG_FMT("[DxFeatureCaps] Highest Shader Model: {}\n", model);
+			DEBUG_LOG_FMT("[DxFeatureCaps] Highest Shader Model: {}\n", GetShaderModelString(model));
 			return shaderModel;
 		}
 	}
@@ -130,7 +130,7 @@ void DxFeatureCaps::LogBasicInfo() const
 	DEBUG_LOG_FMT("Vendor ID: 0x{:04X}\n", vendorId);
 	DEBUG_LOG_FMT("Device ID: 0x{:04X}\n", deviceId);
 
-	DEBUG_LOG_FMT("Shader Model: {}\n", GetShaderModelString());
+	DEBUG_LOG_FMT("Shader Model: {}\n", GetShaderModelString(shaderModel.HighestShaderModel));
 	DEBUG_LOG_FMT(
 		"Root Signature: {}\n", rootSignature.HighestVersion == D3D_ROOT_SIGNATURE_VERSION_1_1 ? "1.1" : "1.0"
 	);
@@ -157,9 +157,9 @@ void DxFeatureCaps::LogMemoryInfo() const
 	DEBUG_LOG_FMT("Shared System Memory: {:.1f} MB\n", sharedSystemMemory / (1024.0f * 1024.0f));
 }
 
-std::string DxFeatureCaps::GetShaderModelString() const
+std::string DxFeatureCaps::GetShaderModelString(D3D_SHADER_MODEL model)
 {
-	switch (shaderModel.HighestShaderModel)
+	switch (model)
 	{
 	case D3D_SHADER_MODEL_6_9:
 		return "6.9";
