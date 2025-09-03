@@ -16,7 +16,7 @@ public:
 		override;
 
 	// GameObject의 ObjectType 반환
-	virtual ObjectType GetObjectType() const override { return ObjectType::Player; }
+	virtual ObjectType GetObjectType() const override { return ObjectType::PLAYER; }
 
 	// Player 전용 함수들
 	void  SetSpeed(float speed) { m_playerSpeed = speed; }

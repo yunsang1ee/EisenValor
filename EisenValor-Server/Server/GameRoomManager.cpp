@@ -5,19 +5,19 @@
 
 void Server::Contents::GameRoomManager::Init()
 {
-	for(int i = 0; i < 10; ++i) {
-		const uint16 id = i + 1;
-		auto match = ServerEngine::ObjectPool<GameRoom>::MakeShared(id);
-		match->ExecuteAsyncronously(&Server::Contents::GameRoom::Update);
-		m_matches.insert(std::make_pair(id, match));
+	for(uint16 i = 0; i < MAX_ROOM; ++i) {
+		const uint16 roomID = i + 1;
+		const auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(roomID);
+		room->Init();
+		m_rooms.insert(std::make_pair(roomID, room));
 	}
 }
 
-std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameRoomManager::GetMatch(const uint16 id)
+std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameRoomManager::GetRoom(const uint16 id)
 {
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
-	if(m_matches.find(id) != m_matches.end())
-		return m_matches[id];
+	if(m_rooms.find(id) != m_rooms.end())
+		return m_rooms[id];
 
 	return nullptr;
 }

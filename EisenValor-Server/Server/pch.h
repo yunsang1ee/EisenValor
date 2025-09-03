@@ -18,6 +18,8 @@
 
 #include "ClientPacketHandler.h"
 
+#include "GameObjectFactory.h"
+
 namespace Server {
 	class ClientSession;
 }

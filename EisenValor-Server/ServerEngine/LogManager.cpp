@@ -13,7 +13,7 @@ void ServerEngine::LogManager::PrintLastError(const std::source_location& loc) n
 {
 	const fs::path file_path = loc.file_name();
 
-	std::print("{}:{} | ", file_path.filename().string(), loc.line());
+	std::cout << std::format("{}:{} | ", file_path.filename().string(), loc.line());
 
 	const int32 errCode = WSAGetLastError();	
 	WCHAR* lpMsgBuf;

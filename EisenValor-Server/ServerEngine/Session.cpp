@@ -16,7 +16,7 @@ ServerEngine::Session::Session()
 
 ServerEngine::Session::~Session()
 {
-	std::println("~Session, ID = {}", m_id);
+	std::cout << std::format("~Session, ID = {}", m_id);
 	CloseSocket();
 }
 
@@ -50,7 +50,7 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 	lingerOption.l_linger = 0;
 
 	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
-		std::println("setsockopt linger option error: {}", GetLastError());
+		std::cout << std::format("setsockopt linger option error: {}", GetLastError());
 
 	m_connected = false;
 
@@ -60,7 +60,7 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 
 	m_state = SESSION_STATE::FREE;
 
-	std::cout << reason << std::endl;
+	std::cout << reason.data() << std::endl;
 
 	// m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
 	// m_owner.lock()->ReleaseSession(shared_from_this());
@@ -74,7 +74,7 @@ void ServerEngine::Session::FlushPacketQueueSecond()
 	int deferCount{};
 	{
 		std::shared_lock<std::shared_mutex> lk{ m_sendPktInfoslk };
-		deferCount = m_sendPktInfos.size();
+		deferCount = static_cast<int32>(m_sendPktInfos.size());
 	}
 
 	if(deferCount > 0)
@@ -86,10 +86,11 @@ void ServerEngine::Session::FlushPacketQueueSecond()
 
 void ServerEngine::Session::FlushPacketQueue()
 {
+	// RQ의 접근은 세션을 관리하고 있는 쓰레드에서만 접근을 허락함.
+
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
-	// 싱글쓰레드 
 	if(IsConnected() == false)
 		return;
 
@@ -111,13 +112,13 @@ void ServerEngine::Session::FlushPacketQueue()
 			deferCount++;
 
 			if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION){
-				std::println("DeferCount:{}", deferCount);
+				std::cout << std::format("DeferCount:{}", deferCount);
 				break;
 			}
 		}
 
 		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
-			std::println("DeferCount:{}", deferCount);
+			std::cout << std::format("DeferCount:{}", deferCount);
 			break;
 		}
 	}
@@ -176,6 +177,8 @@ bool ServerEngine::Session::DeferSend()
 			return false;
 		}*/
 	}
+
+	return true;
 }
 
 bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
@@ -284,8 +287,6 @@ void ServerEngine::Session::PostRecv()
 
 void ServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 {
-	// std::cout << "ProcessRecv" << std::endl;
-
 	m_recvContext.ReleaseSession();
 
 	if(0 == bytesTransferred) {

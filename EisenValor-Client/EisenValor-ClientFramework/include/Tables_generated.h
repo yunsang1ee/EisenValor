@@ -54,11 +54,8 @@ struct SC_MOVE_PACKETBuilder;
 struct CS_SUMMON_NPC;
 struct CS_SUMMON_NPCBuilder;
 
-struct CS_KEY_UP;
-struct CS_KEY_UPBuilder;
-
-struct SC_KEY_UP;
-struct SC_KEY_UPBuilder;
+struct CS_SOLDIER_FORMATION;
+struct CS_SOLDIER_FORMATIONBuilder;
 
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
@@ -304,13 +301,21 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_OBJ_TYPE = 6,
-    VT_KINEMATIC_INFO = 8
+    VT_TEAM_TYPE = 8,
+    VT_NPC_TYPE = 10,
+    VT_KINEMATIC_INFO = 12
   };
   uint32_t obj_id() const {
     return GetField<uint32_t>(VT_OBJ_ID, 0);
   }
   uint8_t obj_type() const {
     return GetField<uint8_t>(VT_OBJ_TYPE, 0);
+  }
+  uint8_t team_type() const {
+    return GetField<uint8_t>(VT_TEAM_TYPE, 0);
+  }
+  uint8_t npc_type() const {
+    return GetField<uint8_t>(VT_NPC_TYPE, 0);
   }
   const FB_STRUCTS::KinematicInfo *kinematic_info() const {
     return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
@@ -319,6 +324,8 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_OBJ_TYPE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_NPC_TYPE, 1) &&
            VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            verifier.EndTable();
   }
@@ -333,6 +340,12 @@ struct SC_ADD_OBJ_PACKETBuilder {
   }
   void add_obj_type(uint8_t obj_type) {
     fbb_.AddElement<uint8_t>(SC_ADD_OBJ_PACKET::VT_OBJ_TYPE, obj_type, 0);
+  }
+  void add_team_type(uint8_t team_type) {
+    fbb_.AddElement<uint8_t>(SC_ADD_OBJ_PACKET::VT_TEAM_TYPE, team_type, 0);
+  }
+  void add_npc_type(uint8_t npc_type) {
+    fbb_.AddElement<uint8_t>(SC_ADD_OBJ_PACKET::VT_NPC_TYPE, npc_type, 0);
   }
   void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
     fbb_.AddStruct(SC_ADD_OBJ_PACKET::VT_KINEMATIC_INFO, kinematic_info);
@@ -352,10 +365,14 @@ inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
     uint8_t obj_type = 0,
+    uint8_t team_type = 0,
+    uint8_t npc_type = 0,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
   SC_ADD_OBJ_PACKETBuilder builder_(_fbb);
   builder_.add_kinematic_info(kinematic_info);
   builder_.add_obj_id(obj_id);
+  builder_.add_npc_type(npc_type);
+  builder_.add_team_type(team_type);
   builder_.add_obj_type(obj_type);
   return builder_.Finish();
 }
@@ -644,73 +661,44 @@ inline ::flatbuffers::Offset<CS_SUMMON_NPC> CreateCS_SUMMON_NPC(
   return builder_.Finish();
 }
 
-struct CS_KEY_UP FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_KEY_UPBuilder Builder;
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_KEY_UPBuilder {
-  typedef CS_KEY_UP Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  explicit CS_KEY_UPBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_KEY_UP> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_KEY_UP>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_KEY_UP> CreateCS_KEY_UP(
-    ::flatbuffers::FlatBufferBuilder &_fbb) {
-  CS_KEY_UPBuilder builder_(_fbb);
-  return builder_.Finish();
-}
-
-struct SC_KEY_UP FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_KEY_UPBuilder Builder;
+struct CS_SOLDIER_FORMATION FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_SOLDIER_FORMATIONBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PLAYER_ID = 4
+    VT_FORMATION = 4
   };
-  uint32_t player_id() const {
-    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  uint8_t formation() const {
+    return GetField<uint8_t>(VT_FORMATION, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           VerifyField<uint8_t>(verifier, VT_FORMATION, 1) &&
            verifier.EndTable();
   }
 };
 
-struct SC_KEY_UPBuilder {
-  typedef SC_KEY_UP Table;
+struct CS_SOLDIER_FORMATIONBuilder {
+  typedef CS_SOLDIER_FORMATION Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(SC_KEY_UP::VT_PLAYER_ID, player_id, 0);
+  void add_formation(uint8_t formation) {
+    fbb_.AddElement<uint8_t>(CS_SOLDIER_FORMATION::VT_FORMATION, formation, 0);
   }
-  explicit SC_KEY_UPBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_SOLDIER_FORMATIONBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_KEY_UP> Finish() {
+  ::flatbuffers::Offset<CS_SOLDIER_FORMATION> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_KEY_UP>(end);
+    auto o = ::flatbuffers::Offset<CS_SOLDIER_FORMATION>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_KEY_UP> CreateSC_KEY_UP(
+inline ::flatbuffers::Offset<CS_SOLDIER_FORMATION> CreateCS_SOLDIER_FORMATION(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t player_id = 0) {
-  SC_KEY_UPBuilder builder_(_fbb);
-  builder_.add_player_id(player_id);
+    uint8_t formation = 0) {
+  CS_SOLDIER_FORMATIONBuilder builder_(_fbb);
+  builder_.add_formation(formation);
   return builder_.Finish();
 }
 

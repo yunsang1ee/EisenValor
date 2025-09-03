@@ -16,25 +16,6 @@ void LocalPlayer::Update(float deltaTime)
 
 void LocalPlayer::UniformVelocity(const float deltaTime)
 {
-	// CS_MOVE_START
-	// - 키를 처음 눌렀거나 뗏을때 || 마우스를 움직이고 있을 때
-	// - 보내줘야 하는 내용
-	//	  - Vec3 pos
-	//    - Vec3 velocity(속력 + 방향)
-	//	  - Vec3 acceleration
-	//	  - Vec3 rot
-
-	// 서버는 pos += dir * speed * server DT
-	//		  m_rot.y += DT * mouse_move;
-
-	// SC_MOVE
-	// - Vec3 serverPos;
-	// - Vec3 serverVelocity;
-	// - Vec3 serverRot;
-	// -
-
-
-	// 마우스 휠로 줌인아웃
 	int wheelDelta = Globals::Input().GetWheelScroll();
 	if (wheelDelta != 0)
 	{
@@ -298,8 +279,6 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		lastZ = m_pos.z;
 	}
 
-
-
 	if (sendFlag)
 	{
 		const Vec3	 pos{GetPosition()};
@@ -311,9 +290,9 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		)
 									 .count();
 
-		//auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(pos, rot, vel, accel, timeStamp);
-		//MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-		//sendFlag = false;
+		// auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(pos, rot, vel, accel, timeStamp);
+		// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		// sendFlag = false;
 	}
 
 	if (Globals::Input().GetInputDown('R'))
@@ -325,10 +304,10 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 
 void LocalPlayer::UpdateInput(const float deltaTime)
 {
-	// ===== 마우스로 카메라 이동 =====
-	bool isLeftButtonPressed = Globals::Input().GetInput(VK_LBUTTON);
+	const auto& input = Globals::Input();
+	const bool	isLeftButtonPressed = input.GetInput(VK_LBUTTON);
 	// 현재 마우스 위치
-	auto mousePos = Globals::Input().GetMousePosition();
+	const auto mousePos = input.GetMousePosition();
 
 	if (isLeftButtonPressed)
 	{
@@ -338,7 +317,6 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 			m_lastMouseX = mousePos.x; // 시작 위치 저장
 			m_lastMouseY = mousePos.y;
 			DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
-			sendFlag = true;
 		}
 		else
 		{
@@ -365,7 +343,6 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 			m_lastMouseX = mousePos.x;
 			m_lastMouseY = mousePos.y;
-			sendFlag = true;
 		}
 	}
 	else
@@ -375,7 +352,6 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 			// 드래그 종료
 			m_isMouseDragging = false;
 			DEBUG_LOG_FMT("Camera drag ended\n");
-			sendFlag = true;
 		}
 	}
 	// 플레이어 정면 벡터
@@ -386,50 +362,26 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	const float rightX = sinf(m_cameraYaw + XM_PIDIV2);
 	const float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
 
-	// 키를 처음 눌렀을 때
-	if (Globals::Input().GetInputDown('W'))
+	if (input.GetInput('W'))
 	{
 		m_velocity.x = forwardX * m_playerSpeed;
 		m_velocity.y = 0.f;
 		m_velocity.z = forwardZ * m_playerSpeed;
-		sendFlag = true;
 	}
-	if(Globals::Input().GetInputDown('S')) {
-		m_velocity.x = -forwardX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = -forwardZ * m_playerSpeed;
-		sendFlag = true;
-	}
-	if(Globals::Input().GetInputDown('A')) {
-		m_velocity.x = -rightX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = -rightZ * m_playerSpeed;
-		sendFlag = true;
-	}
-
-	if(Globals::Input().GetInputDown('D')) {
-		m_velocity.x = rightX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = rightZ * m_playerSpeed;
-		sendFlag = true;
-	}
-
-	if(Globals::Input().GetInput('W')) {
-		m_velocity.x = forwardX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = forwardZ * m_playerSpeed;
-	}
-	if (Globals::Input().GetInput('S')) {
+	if (input.GetInput('S'))
+	{
 		m_velocity.x = -forwardX * m_playerSpeed;
 		m_velocity.y = 0.f;
 		m_velocity.z = -forwardZ * m_playerSpeed;
 	}
-	if (Globals::Input().GetInput('A')) {
+	if (input.GetInput('A'))
+	{
 		m_velocity.x = -rightX * m_playerSpeed;
 		m_velocity.y = 0.f;
 		m_velocity.z = -rightZ * m_playerSpeed;
 	}
-	if (Globals::Input().GetInput('D')) {
+	if (input.GetInput('D'))
+	{
 		m_velocity.x = rightX * m_playerSpeed;
 		m_velocity.y = 0.f;
 		m_velocity.z = rightZ * m_playerSpeed;
@@ -444,17 +396,41 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		sendFlag = true;
 	}
 
-	if (Globals::Input().GetInputDown('R')) {
+	if (Globals::Input().GetInputDown('R'))
+	{
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
+	//if(input.GetInputDown(VK_F1)) {
+	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_1);
+	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	//}
+	//else if(input.GetInputDown(VK_F2)) {
+	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_2);
+	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	//}
+	//else if (input.GetInputDown(VK_F3))
+	//{
+	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_3);
+	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	//}
+	UpdatePos(deltaTime);
+	SendMovePacket();
+}
+
+void LocalPlayer::UpdatePos(const float deltaTime)
+{
 	m_pos.x += m_velocity.x * deltaTime;
 	m_pos.y += m_velocity.y * deltaTime;
 	m_pos.z += m_velocity.z * deltaTime;
+}
+
+void LocalPlayer::SendMovePacket()
+{
 	auto now = std::chrono::high_resolution_clock::now();
 	auto elapsed = now - lastSend;
-	if (elapsed >= std::chrono::milliseconds(100) || sendFlag)
+	if (elapsed >= std::chrono::milliseconds(200) || sendFlag)
 	{
 		lastSend = now;
 		const Vec3	 pos{GetPosition()};
@@ -470,5 +446,4 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 		sendFlag = false;
 	}
-
 }

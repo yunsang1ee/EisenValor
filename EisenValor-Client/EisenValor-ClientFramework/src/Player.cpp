@@ -171,35 +171,35 @@ void Player::Update(float deltaTime)
 	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
 	SetPosition(newPos);
 
-	{
-		Vec3 curEuler = GetRotation();		 // 현재 회전 (deg)
-		Vec3 destEuler = lastServerRotation; // 목표 회전 (deg)
+	//{
+	//	Vec3 curEuler = GetRotation();		 // 현재 회전 (deg)
+	//	Vec3 destEuler = lastServerRotation; // 목표 회전 (deg)
 
-		float t = deltaTime * 8.f;
-		if (t > 1.f)
-			t = 1.f;
+	//	float t = deltaTime * 8.f;
+	//	if (t > 1.f)
+	//		t = 1.f;
 
-		// 1. 오일러(deg) → 쿼터니언
-		XMVECTOR curQuat = XMQuaternionRotationRollPitchYaw(
-			XMConvertToRadians(curEuler.x), XMConvertToRadians(curEuler.y), XMConvertToRadians(curEuler.z)
-		);
-		XMVECTOR destQuat = XMQuaternionRotationRollPitchYaw(
-			XMConvertToRadians(destEuler.x), XMConvertToRadians(destEuler.y), XMConvertToRadians(destEuler.z)
-		);
+	//	// 1. 오일러(deg) → 쿼터니언
+	//	XMVECTOR curQuat = XMQuaternionRotationRollPitchYaw(
+	//		XMConvertToRadians(curEuler.x), XMConvertToRadians(curEuler.y), XMConvertToRadians(curEuler.z)
+	//	);
+	//	XMVECTOR destQuat = XMQuaternionRotationRollPitchYaw(
+	//		XMConvertToRadians(destEuler.x), XMConvertToRadians(destEuler.y), XMConvertToRadians(destEuler.z)
+	//	);
 
-		// 2. 쿼터니언 보간
-		XMVECTOR newQuat = XMQuaternionSlerp(curQuat, destQuat, t);
+	//	// 2. 쿼터니언 보간
+	//	XMVECTOR newQuat = XMQuaternionSlerp(curQuat, destQuat, t);
 
-		// 3. 쿼터니언 → 행렬
-		XMMATRIX rotMat = XMMatrixRotationQuaternion(newQuat);
+	//	// 3. 쿼터니언 → 행렬
+	//	XMMATRIX rotMat = XMMatrixRotationQuaternion(newQuat);
 
-		// 4. 행렬 → 오일러(deg)
-		Vec3 newEuler;
-		newEuler.y = XMConvertToDegrees(atan2f(rotMat.r[0].m128_f32[2], rotMat.r[2].m128_f32[2])); // yaw
-		newEuler.x = XMConvertToDegrees(asinf(-rotMat.r[1].m128_f32[2]));						   // pitch
-		newEuler.z = XMConvertToDegrees(atan2f(rotMat.r[1].m128_f32[0], rotMat.r[1].m128_f32[1])); // roll
-		SetRotation(newEuler);
-	}
+	//	// 4. 행렬 → 오일러(deg)
+	//	Vec3 newEuler;
+	//	newEuler.y = XMConvertToDegrees(atan2f(rotMat.r[0].m128_f32[2], rotMat.r[2].m128_f32[2])); // yaw
+	//	newEuler.x = XMConvertToDegrees(asinf(-rotMat.r[1].m128_f32[2]));						   // pitch
+	//	newEuler.z = XMConvertToDegrees(atan2f(rotMat.r[1].m128_f32[0], rotMat.r[1].m128_f32[1])); // roll
+	//	SetRotation(newEuler);
+	//}
 }
 
 void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)

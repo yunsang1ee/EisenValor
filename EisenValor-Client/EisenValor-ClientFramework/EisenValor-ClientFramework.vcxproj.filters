@@ -181,6 +181,9 @@
     <ClInclude Include="include\NPC.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="..\Libraries\inc\SimpleMath.h">
+      <Filter>Common\Math</Filter>
+    </ClInclude>
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h">
       <Filter>Graphics\Device\Command</Filter>
@@ -264,6 +267,9 @@
     </None>
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>NetBridge\02. Packets\00. FBS</Filter>
+    </None>
+    <None Include="..\Libraries\inc\SimpleMath.inl">
+      <Filter>Common\Math</Filter>
     </None>
   </ItemGroup>
 </Project>

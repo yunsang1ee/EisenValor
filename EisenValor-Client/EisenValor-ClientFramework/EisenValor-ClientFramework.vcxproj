@@ -161,6 +161,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\DxCommandContext.h" />
     <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
@@ -225,6 +226,7 @@
     <ClCompile Include="src\TimerGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />

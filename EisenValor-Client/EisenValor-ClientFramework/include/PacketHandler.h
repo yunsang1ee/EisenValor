@@ -29,14 +29,7 @@ enum class PACKET_TYPE : uint16
 
 	CS_SUMMON_NPC_PKT = 12,
 
-	CS_KEY_UP_PKT = 13,
-	SC_KEY_UP_PKT = 14,
-
-	CS_MOVE_START = 15,
-	SC_MOVE_START = 16,
-
-	CS_MOVE_FINISH = 17,
-	SC_MOVE_FINISH = 18,
+	CS_SOLDIER_FORMATION_PKT = 13,
 
 	END
 };
@@ -49,6 +42,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
+
 namespace NetBridge
 {
 class PacketBuffer;
@@ -173,10 +167,15 @@ public:
 
 #pragma region CS_MOVE_PACKET
 	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_MOVE_PACKET(
-		const bool isRun, const bool isRotate, const Vec3& pos, const Vec3& rot, const Vec3& vel, const Vec3& accel, const uint64 timeStamp
+		const bool	 isRun,
+		const bool	 isRotate,
+		const Vec3&	 pos,
+		const Vec3&	 rot,
+		const Vec3&	 vel,
+		const Vec3&	 accel,
+		const uint64 timeStamp
 	)
 	{
-
 		const FB_STRUCTS::Vec3 p{pos.x, pos.y, pos.z};
 		const FB_STRUCTS::Vec3 r{rot.x, rot.y, rot.z};
 		const FB_STRUCTS::Vec3 v{vel.x, vel.y, vel.z};
@@ -184,7 +183,9 @@ public:
 
 		const FB_STRUCTS::KinematicInfo kInfo{p, r, v, a, timeStamp};
 
-		return MakePacketBuffer(PACKET_TYPE::CS_MOVE_PKT, MakePacket(FB_TABLES::CreateCS_MOVE_PACKET, isRun, isRotate, &kInfo));
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_MOVE_PKT, MakePacket(FB_TABLES::CreateCS_MOVE_PACKET, isRun, isRotate, &kInfo)
+		);
 	}
 #pragma endregion
 
@@ -195,5 +196,14 @@ public:
 	}
 #pragma endregion
 
+#pragma region CS_SOLDIER_FORMATION
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_SOLDIER_FORMATION(const SOLDIER_FORMATION f)
+	{
+		const uint8 form{static_cast<uint8>(f)};
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_FORMATION, form)
+		);
+	}
+#pragma endregion
 };
 } // namespace NetBridge
