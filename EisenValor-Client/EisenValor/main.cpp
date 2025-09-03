@@ -77,7 +77,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	}
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	_CrtSetBreakAlloc(1739);
+	// _CrtSetBreakAlloc(1739);
  #endif  _DEBUG
 
 	// TODO: 여기에 코드를 입력합니다.
