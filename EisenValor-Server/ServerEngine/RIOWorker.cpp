@@ -9,7 +9,6 @@
 ServerEngine::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
-	std::cout << std::format("RioWorker, ID = {}", m_id) << std::endl;
 }
 
 ServerEngine::RIOWorker::~RIOWorker()
@@ -41,7 +40,10 @@ void ServerEngine::RIOWorker::Work()
 
 void ServerEngine::RIOWorker::FlushSessionPacketQueue()
 {
-	std::lock_guard<std::mutex> lk{ m_mutex };
+	// TODO: 매번 락을 잡고 하는게 좋진 않아보임
+	// 1. LockFreeSet으로 바꾼다
+	// 2. 다른 방법을 찾아본다.
+	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	auto iter = m_connectedSession.begin();
 	for(; iter != m_connectedSession.end();) {
 		if(SESSION_STATE::FREE != (*iter)->GetState()) {
@@ -91,7 +93,6 @@ void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 	auto session = m_sessionPool.get()->DeqSession();
 	session->SetOwner(shared_from_this());
 	session->Connect(socket, clientAddr);
-
-	std::lock_guard<std::mutex> lk{ m_mutex };
+	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	m_connectedSession.push_back(std::move(session));
 }

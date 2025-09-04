@@ -192,10 +192,8 @@ void Server::Contents::GameRoom::AddNpc(std::shared_ptr<NPC> npc)
 	const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(npc->GetObjType()), npc->GetTeamType(), kInfo, npc->GetNpcType());
 	Broadcast(pb);
 
-	{
-		if(m_npcs.find(genID) == m_npcs.end())
-			m_npcs.insert(std::make_pair(genID, std::move(npc)));
-	}
+	if(m_npcs.find(genID) == m_npcs.end())
+		m_npcs.insert(std::make_pair(genID, std::move(npc)));
 }
 
 void Server::Contents::GameRoom::RemoveNPC(std::shared_ptr<NPC> npc)

@@ -7,6 +7,7 @@ namespace ServerEngine {
 	class Task;
 	class TaskQueue : public std::enable_shared_from_this<ServerEngine::TaskQueue> {
 	protected:
+		// TODO: LF_QUEUE·Î ¼öÁ¤
 		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
 		std::atomic_int									m_taskCount{};
 	

@@ -5,7 +5,7 @@ namespace ServerEngine {
 	template<typename T>
 	class LockQueue {
 	private:
-		std::queue<T>			m_queue;
+		std::queue<T>				m_queue;
 		std::recursive_mutex		m_mutex;
 	
 	public:
