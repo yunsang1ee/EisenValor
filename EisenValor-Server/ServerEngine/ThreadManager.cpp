@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "ThreadManager.h"
 
-bool ServerEngine::ThreadManager::Init()
+bool ServerEngine::ThreadManager::Init() noexcept
 {
 #ifdef  ENABLE_HYPER_THREADING
 	m_workerThreadCount = std::thread::hardware_concurrency();
@@ -17,7 +17,7 @@ bool ServerEngine::ThreadManager::Init()
 	return true;
 }
 
-void ServerEngine::ThreadManager::EnqueueTask(std::function<void()> task)
+void ServerEngine::ThreadManager::EnqueueTask(std::function<void()> task) noexcept
 {
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	// InitTLS() 시점과 EnqueueTask() 호출 시점이 동일하지 않음.
@@ -44,12 +44,12 @@ void ServerEngine::ThreadManager::Join()
 	DestroyTLS();
 }
 
-void ServerEngine::ThreadManager::InitTLS()
+void ServerEngine::ThreadManager::InitTLS() noexcept
 {
 	// TODO: InitTLS
 }
-
-void ServerEngine::ThreadManager::DestroyTLS()
+ 
+void ServerEngine::ThreadManager::DestroyTLS() noexcept
 {
 	std::cout << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID);
 }

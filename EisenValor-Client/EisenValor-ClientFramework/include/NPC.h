@@ -57,7 +57,7 @@ private:
     float m_followDistance = 1.0f;
     float m_moveSpeed = 4.5f;
     float m_baseY = 0.0f;        // 기준 높이
-    float m_rotation = 0.0f;     // NPC 회전
+    // float m_rotation = 0.0f;     // NPC 회전
 
     //Team and Unit
 	Team	 m_team = Team::ALLY;			 

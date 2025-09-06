@@ -163,7 +163,7 @@ void NPC::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, Dir
 
 	// NPC 변환 행렬 계산
 	DirectX::XMMATRIX npcScale = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-	DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rotation);
+	DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rot.y);
 	DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
 	DirectX::XMMATRIX npcWorld = npcScale * npcRotation * npcTranslation;
 	DirectX::XMMATRIX npcMVP = npcWorld * view * projection;

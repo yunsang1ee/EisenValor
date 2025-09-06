@@ -90,3 +90,11 @@ table CS_SUMMON_NPC {
 table CS_SOLDIER_FORMATION {
 	formation: ubyte;
 }
+
+
+// ================================================
+//				PLAYER_ATTACK
+// ================================================
+table CS_PLAYER_ATTACK {
+	
+}

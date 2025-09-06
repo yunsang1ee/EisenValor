@@ -6,7 +6,7 @@ class LocalPlayer : public Player
 {
 private:
 	bool sendFlag{false};
-	std::chrono::high_resolution_clock::time_point lastSend;
+	std::chrono::high_resolution_clock::time_point lastSend = std::chrono::high_resolution_clock::now();
 
 public:
 	virtual void Update(float deltaTime) override;

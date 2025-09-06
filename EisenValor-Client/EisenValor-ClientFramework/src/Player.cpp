@@ -154,11 +154,28 @@ void Player::Update(float deltaTime)
 
 		m_pos = Lerp(m_pos, predictedPosition, alpha);
 	}
-#endif
+	#else
+
+	
+	{
+		if (m_rot.y == lastServerRotation.y)
+			return;
+		const Vec3	now = m_rot;				 // 현재 오일러 회전 (deg)
+		const Vec3	future = lastServerRotation; // 목표 오일러 회전 (deg)
+		const float t = 1.0f - std::exp(-10.f * deltaTime);
+
+		Vec3 result;
+		result.x = now.x + (future.x - now.x) * t;
+		result.y = now.y + (future.y - now.y) * t;
+		result.z = now.z + (future.z - now.z) * t;
+
+		SetRotation(result);
+	}
+
 	Vec3 curPos{GetPosition()};
 	Vec3 destPos{lastServerPosition};
 
-	if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+	if ((curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z))
 		return;
 
 	float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
@@ -171,35 +188,7 @@ void Player::Update(float deltaTime)
 	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
 	SetPosition(newPos);
 
-	//{
-	//	Vec3 curEuler = GetRotation();		 // 현재 회전 (deg)
-	//	Vec3 destEuler = lastServerRotation; // 목표 회전 (deg)
-
-	//	float t = deltaTime * 8.f;
-	//	if (t > 1.f)
-	//		t = 1.f;
-
-	//	// 1. 오일러(deg) → 쿼터니언
-	//	XMVECTOR curQuat = XMQuaternionRotationRollPitchYaw(
-	//		XMConvertToRadians(curEuler.x), XMConvertToRadians(curEuler.y), XMConvertToRadians(curEuler.z)
-	//	);
-	//	XMVECTOR destQuat = XMQuaternionRotationRollPitchYaw(
-	//		XMConvertToRadians(destEuler.x), XMConvertToRadians(destEuler.y), XMConvertToRadians(destEuler.z)
-	//	);
-
-	//	// 2. 쿼터니언 보간
-	//	XMVECTOR newQuat = XMQuaternionSlerp(curQuat, destQuat, t);
-
-	//	// 3. 쿼터니언 → 행렬
-	//	XMMATRIX rotMat = XMMatrixRotationQuaternion(newQuat);
-
-	//	// 4. 행렬 → 오일러(deg)
-	//	Vec3 newEuler;
-	//	newEuler.y = XMConvertToDegrees(atan2f(rotMat.r[0].m128_f32[2], rotMat.r[2].m128_f32[2])); // yaw
-	//	newEuler.x = XMConvertToDegrees(asinf(-rotMat.r[1].m128_f32[2]));						   // pitch
-	//	newEuler.z = XMConvertToDegrees(atan2f(rotMat.r[1].m128_f32[0], rotMat.r[1].m128_f32[1])); // roll
-	//	SetRotation(newEuler);
-	//}
+#endif
 }
 
 void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)

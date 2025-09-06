@@ -91,6 +91,9 @@
     <Filter Include="Graphics\Resource\Heap">
       <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Player\00. Local">
+      <UniqueIdentifier>{fc462d4a-e1e5-4748-9b86-a6404f727631}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -172,9 +175,6 @@
     <ClInclude Include="include\Player.h">
       <Filter>Player</Filter>
     </ClInclude>
-    <ClInclude Include="include\LocalPlayer.h">
-      <Filter>Player</Filter>
-    </ClInclude>
     <ClInclude Include="include\GameObjectManager.h">
       <Filter>Manager</Filter>
     </ClInclude>
@@ -186,6 +186,9 @@
     </ClInclude>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>Common\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LocalPlayer.h">
+      <Filter>Player\00. Local</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -241,9 +244,6 @@
     <ClCompile Include="src\Player.cpp">
       <Filter>Player</Filter>
     </ClCompile>
-    <ClCompile Include="src\LocalPlayer.cpp">
-      <Filter>Player</Filter>
-    </ClCompile>
     <ClCompile Include="src\GameObjectManager.cpp">
       <Filter>Manager</Filter>
     </ClCompile>
@@ -252,6 +252,9 @@
     </ClCompile>
     <ClCompile Include="src\NPC.cpp">
       <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LocalPlayer.cpp">
+      <Filter>Player\00. Local</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

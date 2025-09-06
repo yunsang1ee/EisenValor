@@ -122,19 +122,19 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 	}
 }
 
-void ServerEngine::RIOCore::Shutdown()
+void ServerEngine::RIOCore::Shutdown() noexcept
 {
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
 }
 
-void ServerEngine::RIOCore::DistributeReservedTask()
+void ServerEngine::RIOCore::DistributeReservedTask() noexcept
 {
 	const auto now = high_resolution_clock::now();
 	MANAGER(ServerEngine::TaskTimer)->DistributeReservedTask(now);
 }
 
-void ServerEngine::RIOCore::DoTask()
+void ServerEngine::RIOCore::DoTask() noexcept
 {
 	while(true) {
 		const auto now = high_resolution_clock::now();

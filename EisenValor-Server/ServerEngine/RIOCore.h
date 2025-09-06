@@ -23,13 +23,13 @@ namespace ServerEngine {
 	
 	public:
 		const auto&		GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
-		void			Shutdown();
+		void			Shutdown() noexcept;
 
 	private:
 		void			DoAcceptLoop() noexcept;
 
 	private:
-		void			DistributeReservedTask();
-		void			DoTask();
+		void			DistributeReservedTask() noexcept;
+		void			DoTask() noexcept;
 	};
 }

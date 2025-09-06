@@ -16,7 +16,7 @@ ServerEngine::RIOWorker::~RIOWorker()
 	std::cout << std::format("~RioWorker, ID = {}", m_id);
 }
 
-bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
+bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 {
 	// SEND/RECV CQ 따로 만들 수 있다. 지금은 공용
 	m_cq = RIO_EXT_FUNC_TB.RIOCreateCompletionQueue(MAX_CQ_SIZE, nullptr);
@@ -32,13 +32,13 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 	return true;
 }
 
-void ServerEngine::RIOWorker::Work()
+void ServerEngine::RIOWorker::Work() noexcept
 {
 	FlushSessionPacketQueue();
 	DequeueCompletion();
 }
 
-void ServerEngine::RIOWorker::FlushSessionPacketQueue()
+void ServerEngine::RIOWorker::FlushSessionPacketQueue() noexcept
 {
 	// TODO: 매번 락을 잡고 하는게 좋진 않아보임
 	// 1. LockFreeSet으로 바꾼다
@@ -56,7 +56,7 @@ void ServerEngine::RIOWorker::FlushSessionPacketQueue()
 	}
 }
 
-void ServerEngine::RIOWorker::DequeueCompletion() const
+void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 {
 	assert(TLS_THREAD_ID == m_id);
 
@@ -86,7 +86,7 @@ void ServerEngine::RIOWorker::DequeueCompletion() const
 	}
 }
 
-void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr)
+void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
 	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);

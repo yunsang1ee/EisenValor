@@ -111,13 +111,13 @@ void ServerEngine::Session::FlushPacketQueue()
 			deferCount++;
 
 			if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION){
-				std::cout << std::format("DeferCount:{}", deferCount);
+				// std::cout << std::format("DeferCount:{}", deferCount);
 				break;
 			}
 		}
 
 		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
-			std::cout << std::format("DeferCount:{}", deferCount);
+			// std::cout << std::format("DeferCount:{}", deferCount);
 			break;
 		}
 	}

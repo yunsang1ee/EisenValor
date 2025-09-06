@@ -40,6 +40,8 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_SOLDIER_FORMATION_PKT = 13,
 
+	CS_PLAYER_ATTACK_PKT = 14,
+
 	END
 };
 
@@ -47,12 +49,13 @@ using PacketHandlerFunc = bool(*)(const std::shared_ptr<ServerEngine::Session>&,
 extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs{};
 
 bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>&, const char* const, const PacketHeader&) noexcept;
-bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt);
-bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt);
+bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt) noexcept;
+bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept;
 bool Handle_CS_ENTER_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_WORLD_PACKET& recvPkt) noexcept;
-bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt);
-bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt);
-bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt);
+bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept;
+bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt) noexcept;
+bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt) noexcept;
+bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept;
 
 class ClientPacketHandler {
 private:
@@ -76,24 +79,25 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_FORMATION>(Handle_CS_SOLDIER_FORMATION_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer, header); };
 
 		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
 	}
 
-	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader)
+	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader) noexcept
 	{
 		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], session, buffer, packetHeader);
 	}
 
 	template<typename PacketType, typename HandleFunc>
-	static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader)
+	static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader) noexcept
 	{
 		const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
 		return handleFunc(session, *packet);
 	}
 
 	template<typename PacketFunc, typename... Args>
-	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args)
+	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		auto offset = func(builder, std::forward<Args>(args)...);
@@ -102,7 +106,7 @@ public:
 	}
 
 	// TODO: 이 부분 삭제해야 함.
-	static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
+	static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData) noexcept
 	{
 		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
@@ -120,7 +124,7 @@ public:
 	
 public:
 #pragma region SC_LOGIN_PACKET
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id) noexcept
 	{
 		return MakePacketBuffer(PACKET_TYPE::SC_LOGIN_PKT, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
 	}
@@ -132,14 +136,14 @@ public:
 #pragma endregion
 
 #pragma region SC_CHAT_PACKET
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept
 	{
 		return MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
 	}
 #pragma endregion
 
 #pragma region SC_LOCAL_PLAYER
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& transform)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& transform) noexcept
 	{
 		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
 		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
@@ -154,7 +158,7 @@ public:
 #pragma endregion
 
 #pragma region SC_ADD_OBJ
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const TEAM_TYPE teamType, const KinematicInfo& transform, const NPC_TYPE npcType = NPC_TYPE::NONE)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const TEAM_TYPE teamType, const KinematicInfo& transform, const NPC_TYPE npcType = NPC_TYPE::NONE) noexcept
 	{
 		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
 		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };
@@ -169,14 +173,14 @@ public:
 #pragma endregion
 
 #pragma region SC_REMOVE_OBJ
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id) noexcept
 	{
 		return MakePacketBuffer(PACKET_TYPE::SC_REMOVE_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 #pragma endregion
 
 #pragma region MOVE
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const KinematicInfo& transform)
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const KinematicInfo& transform) noexcept
 	{
 		const FB_STRUCTS::Vec3 pos{ transform.position.x, transform.position.y, transform.position.z };
 		const FB_STRUCTS::Vec3 rot{ transform.rotation.x, transform.rotation.y, transform.rotation.z };

@@ -10,17 +10,19 @@ void Server::Contents::GameRoom::Init()
 {
 	// TODO: 맵 데이터 로딩
 	// TODO: NPC 초기화
+	static constexpr uint16 MAX_GENERAL_NPC = 1;
 
-	GeneralTemplate t;
-	t.npcType = NPC_TYPE::GENERAL;
-	t.objType = GAME_OBJECT_TYPE::NPC;
-	t.pos = Vec3{ -10.f, 0.f, -10.f };
-	t.rot = Vec3{ 0.f, 0.f, 0.f };
-	t.teamType = TEAM_TYPE::ENEMY;
-	auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
-	AddNpc(std::move(sentinelNPC));
+	for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
+		GeneralTemplate t;
+		t.npcType = NPC_TYPE::GENERAL;
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.pos = Vec3{ -10.f + (i * 1.f), 0.f, -10.f + (i * 1.f) };
+		t.rot = Vec3{ 0.f, 0.f, 0.f };
+		t.teamType = TEAM_TYPE::ENEMY;
+		auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
+		AddNpc(std::move(sentinelNPC));
+	}
 	
-	// Update 함수 등록
 	ExecuteAsyncronously(&GameRoom::Update);
 }
 
@@ -137,10 +139,9 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	player->SetVelocity(kinematicInfo.velocity);
 	player->SetAcceleration(kinematicInfo.acceleration);
 	player->SetTimeStamp(kinematicInfo.timeStamp);
-	player->m_moveStart = !player->m_moveStart;
 
-	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	Broadcast(packetBuffer);
+	const auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
+	ExecuteAsyncronously(&GameRoom::Broadcast, packetBuffer);
 
 	//// 2. 병사 이동 처리
 	auto& soldiers = player->GetNpcs();
@@ -170,7 +171,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 		auto fsm = soldier->GetComponent<Server::Contents::FSM>();
 		fsm->ChangeState(STATE_TYPE::WALK);
 
-		auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
+		const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
 		if(walkState) {
 			walkState->SetTargetPos(targetPos);
 		}

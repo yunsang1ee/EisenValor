@@ -3,7 +3,7 @@
 
 #include "GameRoom.h"
 
-void Server::Contents::GameRoomManager::Init()
+void Server::Contents::GameRoomManager::Init() noexcept
 {
 	for(uint16 i = 0; i < MAX_ROOM; ++i) {
 		const uint16 roomID = i + 1;
@@ -15,7 +15,7 @@ void Server::Contents::GameRoomManager::Init()
 	ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "GameRoomManager Init");
 }
 
-std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameRoomManager::GetRoom(const uint16 id)
+std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameRoomManager::GetRoom(const uint16 id) noexcept
 {
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	if(m_rooms.find(id) != m_rooms.end())
