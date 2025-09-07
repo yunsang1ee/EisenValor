@@ -398,25 +398,33 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('R'))
 	{
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		const auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
-	//if(input.GetInputDown(VK_F1)) {
+	// if(input.GetInputDown(VK_F1)) {
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_1);
 	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-	//}
-	//else if(input.GetInputDown(VK_F2)) {
+	// }
+	// else if(input.GetInputDown(VK_F2)) {
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_2);
 	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-	//}
-	//else if (input.GetInputDown(VK_F3))
+	// }
+	// else if (input.GetInputDown(VK_F3))
 	//{
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_3);
 	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-	//}
+	// }
 	UpdatePos(deltaTime);
-	SendMovePacket();
+
+	const auto now = std::chrono::high_resolution_clock::now();
+	const auto elapsed = now - lastSend;
+	if (sendFlag || elapsed >= std::chrono::milliseconds(100))
+	{
+		SendMovePacket();
+		lastSend = now;
+	}
+
 }
 
 void LocalPlayer::UpdatePos(const float deltaTime)
@@ -428,22 +436,16 @@ void LocalPlayer::UpdatePos(const float deltaTime)
 
 void LocalPlayer::SendMovePacket()
 {
-	auto now = std::chrono::high_resolution_clock::now();
-	auto elapsed = now - lastSend;
-	if (elapsed >= std::chrono::milliseconds(200) || sendFlag)
-	{
-		lastSend = now;
-		const Vec3	 pos{GetPosition()};
-		const Vec3	 rot{0.f, m_rot.y, 0.f};
-		const Vec3	 vel{GetVelocity()};
-		const Vec3	 accel{GetAcceleration()};
-		const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-									 std::chrono::high_resolution_clock::now().time_since_epoch()
-		)
-									 .count();
+	const Vec3	 pos{GetPosition()};
+	const Vec3	 rot{GetRotation()};
+	const Vec3	 vel{GetVelocity()};
+	const Vec3	 accel{GetAcceleration()};
+	const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+								 std::chrono::high_resolution_clock::now().time_since_epoch()
+	)
+								 .count();
 
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-		sendFlag = false;
-	}
+	auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
+	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	sendFlag = false;
 }

@@ -17,8 +17,7 @@ void GameObject::Handle_SC_MOVE(
 #else
 	lastServerPosition = pos;
 	lastServerVelocity = velocity;
-	// lastServerRotation = rot;
-	m_rot = rot;
+	lastServerRotation = rot;
 	// std::cout << "Handle_SC_MOVE" << std::endl;
 #endif
 }

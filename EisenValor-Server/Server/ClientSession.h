@@ -8,7 +8,7 @@ namespace Server {
 
 	class ClientSession : public ServerEngine::Session {
 	private:
-		// 처음 등록하고 Read만 
+		// 처음 등록하고 Read만 할거니 일반 쉐어드 써도 상관 없음
 		std::shared_ptr<Server::Contents::Player> m_player;
 
 	public:

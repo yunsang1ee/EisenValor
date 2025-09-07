@@ -17,7 +17,7 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 {
 	const uint32 id{recvPkt.player_id()};
 
-	std::println("Player ID: {}", id);
+	// std::println("Player ID: {}", id);
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 
 	MANAGER(GameObjectManager)->SetLocalID(id);

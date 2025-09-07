@@ -23,9 +23,6 @@ namespace Server {
 			SOLDIER_FORMATION						m_form;
 
 		public:
-			std::atomic_bool						m_moveStart{ false };
-
-		public:
 			Player();
 			virtual ~Player() = default;
 

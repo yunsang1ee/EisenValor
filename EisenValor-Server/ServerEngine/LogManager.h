@@ -40,10 +40,7 @@ namespace ServerEngine {
 				FOREGROUND_INTENSITY };
 
 			SetConsoleTextAttribute(consoleHandle, arrLevelColor[static_cast<int>(level)]);
-			std::osyncstream syncStream{ std::cout };
 			std::cout << std::format("{}", oss.str());
-			// syncStream << std::format("{}", oss.str());
-			// syncStream.clear();
 			SetConsoleTextAttribute(consoleHandle, oldColor);
 		}
 

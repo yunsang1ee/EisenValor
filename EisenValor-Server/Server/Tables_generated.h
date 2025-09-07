@@ -57,6 +57,9 @@ struct CS_SUMMON_NPCBuilder;
 struct CS_SOLDIER_FORMATION;
 struct CS_SOLDIER_FORMATIONBuilder;
 
+struct CS_PLAYER_ATTACK;
+struct CS_PLAYER_ATTACKBuilder;
+
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -699,6 +702,35 @@ inline ::flatbuffers::Offset<CS_SOLDIER_FORMATION> CreateCS_SOLDIER_FORMATION(
     uint8_t formation = 0) {
   CS_SOLDIER_FORMATIONBuilder builder_(_fbb);
   builder_.add_formation(formation);
+  return builder_.Finish();
+}
+
+struct CS_PLAYER_ATTACK FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_PLAYER_ATTACKBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_PLAYER_ATTACKBuilder {
+  typedef CS_PLAYER_ATTACK Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_PLAYER_ATTACKBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_PLAYER_ATTACK> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_PLAYER_ATTACK>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_PLAYER_ATTACK> CreateCS_PLAYER_ATTACK(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_PLAYER_ATTACKBuilder builder_(_fbb);
   return builder_.Finish();
 }
 

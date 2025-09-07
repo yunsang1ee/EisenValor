@@ -17,7 +17,7 @@ namespace Server {
 			std::map<uint32, std::shared_ptr<Creature>>		m_spawnBase;
 
 			bool											m_firstUpdate = true;
-			static constexpr auto							UPDATE_MS = 20ms;
+			static constexpr auto							UPDATE_MS = 100ms;
 			std::chrono::high_resolution_clock::time_point	m_lastUpdate;
 
 		public:

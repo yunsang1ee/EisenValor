@@ -10,7 +10,7 @@
 ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_deferCount{}
 {
-	static int16 idGen = 1;
+	static std::atomic_uint32_t idGen = 1;
 	m_id = idGen++;
 }
 
@@ -87,7 +87,6 @@ void ServerEngine::Session::FlushPacketQueueSecond()
 void ServerEngine::Session::FlushPacketQueue()
 {
 	// RQ의 접근은 세션을 관리하고 있는 쓰레드에서만 접근을 허락함.
-
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
@@ -112,13 +111,13 @@ void ServerEngine::Session::FlushPacketQueue()
 			deferCount++;
 
 			if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION){
-				std::cout << std::format("DeferCount:{}", deferCount);
+				// std::cout << std::format("DeferCount:{}", deferCount);
 				break;
 			}
 		}
 
 		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
-			std::cout << std::format("DeferCount:{}", deferCount);
+			// std::cout << std::format("DeferCount:{}", deferCount);
 			break;
 		}
 	}

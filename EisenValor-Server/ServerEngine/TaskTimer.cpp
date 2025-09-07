@@ -33,8 +33,8 @@ void ServerEngine::TaskTimer::DistributeReservedTask(high_resolution_clock::time
 	}
 
 	for(TimerItem& item : items) {
-		if(std::shared_ptr<TaskQueue> owner = item.taskData->owner.lock()) {
-			owner->Push(item.taskData->task);
+		if(std::shared_ptr<TaskQueue> taskOwner = item.taskData->owner.lock()) {
+			taskOwner->Push(item.taskData->task);
 
 			ObjectPool<TaskData>::Push(item.taskData);
 		}

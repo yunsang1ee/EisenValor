@@ -10,17 +10,19 @@ void Server::Contents::GameRoom::Init()
 {
 	// TODO: 맵 데이터 로딩
 	// TODO: NPC 초기화
+	static constexpr uint16 MAX_GENERAL_NPC = 1;
 
-	GeneralTemplate t;
-	t.npcType = NPC_TYPE::GENERAL;
-	t.objType = GAME_OBJECT_TYPE::NPC;
-	t.pos = Vec3{ -10.f, 0.f, -10.f };
-	t.rot = Vec3{ 0.f, 0.f, 0.f };
-	t.teamType = TEAM_TYPE::ENEMY;
-	auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
-	AddNpc(std::move(sentinelNPC));
+	for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
+		GeneralTemplate t;
+		t.npcType = NPC_TYPE::GENERAL;
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.pos = Vec3{ -10.f + (i * 1.f), 0.f, -10.f + (i * 1.f) };
+		t.rot = Vec3{ 0.f, 0.f, 0.f };
+		t.teamType = TEAM_TYPE::ENEMY;
+		auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
+		AddNpc(std::move(sentinelNPC));
+	}
 	
-	// Update 함수 등록
 	ExecuteAsyncronously(&GameRoom::Update);
 }
 
@@ -46,8 +48,8 @@ void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clien
 
 	// 내 정보 나에게 전송
 	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
-	const auto pb = ClientPacketHandler::Make_SC_MY_PLAYER(player->GetID(), kInfo);
-	clientSession->Send(pb);
+	auto pb = ClientPacketHandler::Make_SC_MY_PLAYER(player->GetID(), kInfo);
+	clientSession->Send(std::move(pb));
 
 	// 맵 안에 있는 플레이어들의 정보 나에게 전송
 	{
@@ -55,8 +57,8 @@ void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clien
 			const Vec3 pos{ gen->GetPos() };
 			const Vec3 rot{ gen->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), player->GetTeamType(), kInfo);
-			clientSession->Send(pb);
+			auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), player->GetTeamType(), kInfo);
+			clientSession->Send(std::move(pb));
 		}
 	}
 
@@ -65,8 +67,8 @@ void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clien
 			const Vec3 pos{ gen->GetPos() };
 			const Vec3 rot{ gen->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), gen->GetTeamType(), kInfo, gen->GetNpcType());
-			clientSession->Send(pb);
+			auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), gen->GetTeamType(), kInfo, gen->GetNpcType());
+			clientSession->Send(std::move(pb));
 		}
 
 	}
@@ -85,7 +87,7 @@ void Server::Contents::GameRoom::LeaveMatch(std::shared_ptr<ClientSession> clien
 	}
 
 	auto pb = ClientPacketHandler::Make_SC_REMOVE_OBJ(leaveID);
-	Broadcast(pb);
+	Broadcast(std::move(pb));
 }
 
 void Server::Contents::GameRoom::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
@@ -113,8 +115,8 @@ void Server::Contents::GameRoom::AddPlayer(std::shared_ptr<Player>&& player) noe
 	const Vec3 rot{ player->GetRotation() };
 	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
 
-	const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(player->GetObjType()), player->GetTeamType(), kInfo);
-	Broadcast(pb);
+	auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(player->GetObjType()), player->GetTeamType(), kInfo);
+	Broadcast(std::move(pb));
 
 	{
 		if(m_players.find(genID) == m_players.end())
@@ -137,10 +139,9 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	player->SetVelocity(kinematicInfo.velocity);
 	player->SetAcceleration(kinematicInfo.acceleration);
 	player->SetTimeStamp(kinematicInfo.timeStamp);
-	player->m_moveStart = !player->m_moveStart;
 
-	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	Broadcast(packetBuffer);
+	const auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
+	ExecuteAsyncronously(&GameRoom::Broadcast, packetBuffer);
 
 	//// 2. 병사 이동 처리
 	auto& soldiers = player->GetNpcs();
@@ -170,7 +171,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 		auto fsm = soldier->GetComponent<Server::Contents::FSM>();
 		fsm->ChangeState(STATE_TYPE::WALK);
 
-		auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
+		const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
 		if(walkState) {
 			walkState->SetTargetPos(targetPos);
 		}
@@ -192,20 +193,18 @@ void Server::Contents::GameRoom::AddNpc(std::shared_ptr<NPC> npc)
 	const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(npc->GetObjType()), npc->GetTeamType(), kInfo, npc->GetNpcType());
 	Broadcast(pb);
 
-	{
-		if(m_npcs.find(genID) == m_npcs.end())
-			m_npcs.insert(std::make_pair(genID, std::move(npc)));
-	}
+	if(m_npcs.find(genID) == m_npcs.end())
+		m_npcs.insert(std::make_pair(genID, std::move(npc)));
 }
 
 void Server::Contents::GameRoom::RemoveNPC(std::shared_ptr<NPC> npc)
 {
-
+	// TODO: 
 }
 
 void Server::Contents::GameRoom::Update()
 {
-	auto now = std::chrono::high_resolution_clock::now();
+	const auto now = std::chrono::high_resolution_clock::now();
 	float DT = 0.f;
 	if(m_firstUpdate) m_firstUpdate = false;
 	else {
