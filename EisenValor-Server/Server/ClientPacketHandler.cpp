@@ -144,9 +144,12 @@ bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Sess
 
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
 {
-	// TODO: Player 공격 패킷
 	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	const auto player = clientSession->GetPlayer();
-
-	return true;
+	
+	if(auto room = player->GetGameRoom()) {
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK, player);
+		return true;
+	}
+	return false;
 }

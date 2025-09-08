@@ -180,6 +180,49 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
 {
+	// TODO: CS_SUMMON_NPC
+}
+
+void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
+{
+	// TODO: 로직 최적화				
+	// TODO: 회전정보 쿼터니언으로 관리 
+	// TODO: 전투 관련 기능들 구현
+	// TODO: 시야처리는 무조건 해야함.
+
+	constexpr float attackRadius = 3.f;
+	constexpr float attackDegree = 90.f;
+	constexpr float radiusSq = attackRadius * attackRadius;
+
+	const Vec3& playerPos = player->GetPos();
+	Vec3 playerDir{sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y)};
+	playerDir.Normalize();
+
+	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
+
+	for(const auto& [id, npc] : m_npcs) {
+		const Vec3& pos = npc->GetPos();
+
+		Vec3 toTargetDir = pos - playerPos;
+		const float distToTargetSq = toTargetDir.x * toTargetDir.x  + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
+
+		// 반지름 길이와 타겟까지의 거리 비교
+		if(distToTargetSq >= radiusSq) continue;
+
+		const float dotValue{ playerDir.Dot(toTargetDir) };
+
+		float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+		
+		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
+		if(dotValue <= 0) continue;
+		
+		if(dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)
+			std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
+
+		// a * b = |a| |b| cos	
+		// cos = a * b / |a| |b|
+		// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
+	}
 }
 
 void Server::Contents::GameRoom::AddNpc(std::shared_ptr<NPC> npc)

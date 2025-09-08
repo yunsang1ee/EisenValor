@@ -30,6 +30,6 @@ namespace ServerEngine {
 
 	private:
 		void			DistributeReservedTask() noexcept;
-		void			DoTask() noexcept;
+		void			FlushTaskQueue() noexcept;
 	};
 }

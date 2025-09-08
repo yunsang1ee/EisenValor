@@ -30,12 +30,12 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
 	
-	const auto bt = general->AddComponent<BehaviorTree>();
-	bt->SetOwner(general);
-	auto root = std::make_unique<Server::Contents::SequenceNode>();
-	root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
-	root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
-	bt->SetRoot(std::move(root));
+	// const auto bt = general->AddComponent<BehaviorTree>();
+	// bt->SetOwner(general);
+	// auto root = std::make_unique<Server::Contents::SequenceNode>();
+	// root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
+	// root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
+	// bt->SetRoot(std::move(root));
 
 	/*const auto fsm = general->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(general);

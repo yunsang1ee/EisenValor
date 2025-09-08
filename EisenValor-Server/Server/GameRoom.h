@@ -48,8 +48,10 @@ namespace Server {
 			void RemovePlayer(std::shared_ptr<Player> player);
 
 		public:
+			// By Single
 			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo kinematicInfo);
 			void Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player);
+			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player);
 		};
 	}
 }

@@ -7,9 +7,9 @@ void Server::Contents::GameRoomManager::Init() noexcept
 {
 	for(uint16 i = 0; i < MAX_ROOM; ++i) {
 		const uint16 roomID = i + 1;
-		const auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(roomID);
+		auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(roomID);
 		room->Init();
-		m_rooms.insert(std::make_pair(roomID, room));
+		m_rooms.insert(std::make_pair(roomID, std::move(room)));
 	}
 
 	ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "GameRoomManager Init");

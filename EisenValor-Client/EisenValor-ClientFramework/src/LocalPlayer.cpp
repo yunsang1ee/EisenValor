@@ -398,7 +398,13 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('R'))
 	{
-		const auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+
+	if (Globals::Input().GetInputDown('Q'))
+	{
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_PLAYER_ATTACK_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
@@ -415,6 +421,7 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_3);
 	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	// }
+
 	UpdatePos(deltaTime);
 
 	const auto now = std::chrono::high_resolution_clock::now();
@@ -424,7 +431,6 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		SendMovePacket();
 		lastSend = now;
 	}
-
 }
 
 void LocalPlayer::UpdatePos(const float deltaTime)

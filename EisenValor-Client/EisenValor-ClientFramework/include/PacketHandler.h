@@ -31,6 +31,8 @@ enum class PACKET_TYPE : uint16
 
 	CS_SOLDIER_FORMATION_PKT = 13,
 
+	CS_PLAYER_ATTACK_PKT = 14,
+
 	END
 };
 
@@ -203,6 +205,13 @@ public:
 		return MakePacketBuffer(
 			PACKET_TYPE::CS_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_FORMATION, form)
 		);
+	}
+#pragma endregion
+
+#pragma region CS_PLAYER_ATTACK
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_PLAYER_ATTACK_PACKET()
+	{
+		return MakePacketBuffer(PACKET_TYPE::CS_PLAYER_ATTACK_PKT, MakePacket(FB_TABLES::CreateCS_PLAYER_ATTACK));
 	}
 #pragma endregion
 };

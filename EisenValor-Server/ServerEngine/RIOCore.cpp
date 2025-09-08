@@ -86,10 +86,10 @@ void ServerEngine::RIOCore::Run() noexcept
 			{
 				TLS_THREAD_ID = i + 1;
 				while(false == LOOP_EXIT) {
-					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_TIME;
+					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_WORK_TIME;
 					m_rioWorkers[i]->Work();
 					DistributeReservedTask();
-					DoTask();
+					FlushTaskQueue();
 				}
 			});
 	}
@@ -134,7 +134,7 @@ void ServerEngine::RIOCore::DistributeReservedTask() noexcept
 	MANAGER(ServerEngine::TaskTimer)->DistributeReservedTask(now);
 }
 
-void ServerEngine::RIOCore::DoTask() noexcept
+void ServerEngine::RIOCore::FlushTaskQueue() noexcept
 {
 	while(true) {
 		const auto now = high_resolution_clock::now();

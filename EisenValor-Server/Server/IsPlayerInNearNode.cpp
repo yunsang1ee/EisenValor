@@ -16,7 +16,7 @@ bool Server::Contents::IsPlayerInNearNode::Check()
 
 		if(dist <= m_detectionRange) {
 			std::static_pointer_cast<Server::Contents::NPC>(GetTree()->GetOwner())->SetTarget(player);
-			std::cout << "dist In Range!" << std::endl;
+			// std::cout << "dist In Range!" << std::endl;
 			return true;
 		}
 	}
