@@ -11,13 +11,14 @@ namespace Server {
 
 		struct CreatureTemplate  : public GameObjectTemplate {
 			// Ã¼·Â
+			StatInfo stat;
 		};
 
 		struct PlayerTemplate : public CreatureTemplate {
 
 		};
 
-		struct SpawnBaseTemplate : public CreatureTemplate {
+		struct SpawnBaseTemplate : public CreatureTemplate { 
 
 		};
 
@@ -37,6 +38,7 @@ namespace Server {
 		class Creature;
 		class Player;
 		class Soldier;
+		class General;
 		class NPC;
 
 		class GameObjectFactory {

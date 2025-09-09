@@ -8,12 +8,6 @@ struct KinematicInfo {
 	uint64 timeStamp;
 };
 
-struct GeneralInfo {
-	uint32		id;
-	KinematicInfo	transform;
-};
-
-struct SoldierInfo {
-	uint32		id;
-	KinematicInfo	transform;
+struct StatInfo {
+	uint32 hp;	// Ã¼·Â
 };

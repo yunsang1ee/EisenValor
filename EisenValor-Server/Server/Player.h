@@ -24,7 +24,7 @@ namespace Server {
 
 		public:
 			Player();
-			virtual ~Player() = default;
+			virtual ~Player();
 
 		public:
 			void SetSession(std::weak_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }

@@ -29,6 +29,7 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	auto general = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
+	general->SetStatInfo(t.stat);
 	
 	// const auto bt = general->AddComponent<BehaviorTree>();
 	// bt->SetOwner(general);
