@@ -10,20 +10,22 @@ void Server::Contents::GameRoom::Init()
 {
 	// TODO: 맵 데이터 로딩
 	// TODO: NPC 초기화
-	static constexpr uint16 MAX_GENERAL_NPC = 1;
+	static constexpr uint16 MAX_GENERAL_NPC = 5;
 
 	for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
 		GeneralTemplate t;
 		t.npcType = NPC_TYPE::GENERAL;
 		t.objType = GAME_OBJECT_TYPE::NPC;
-		t.pos = Vec3{ -10.f + (i * 1.f), 0.f, -10.f + (i * 1.f) };
+		t.pos = Vec3{ -10.f + (i * 5.f), 0.f, 0.f };
 		t.rot = Vec3{ 0.f, 0.f, 0.f };
 		t.teamType = TEAM_TYPE::ENEMY;
+		t.stat.hp = 100;
 		auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
 		AddNpc(std::move(sentinelNPC));
 	}
-	
+
 	ExecuteAsyncronously(&GameRoom::Update);
+	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
 
 void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clientSession) noexcept
@@ -128,8 +130,10 @@ void Server::Contents::GameRoom::RemovePlayer(std::shared_ptr<Player> player)
 {
 	const uint16 id = player->GetID();
 
-	if(m_players.find(id) != m_players.end())
+	if(m_players.find(id) != m_players.end()) {
 		m_players.erase(id);
+		std::cout << "RemovePlayer!" << std::endl;
+	}
 }
 
 void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo kinematicInfo)
@@ -216,8 +220,13 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
 		if(dotValue <= 0) continue;
 		
-		if(dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)
+		if(dotValue * dotValue >= distToTargetSq * cosHalfAngleSq) {
 			std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
+			int hp{ npc->GetHP() };
+			hp -= 50;
+			std::cout << std::format("NPC HP: {}", hp) << std::endl;
+			npc->SetHp(hp);
+		}
 
 		// a * b = |a| |b| cos	
 		// cos = a * b / |a| |b|
@@ -266,4 +275,18 @@ void Server::Contents::GameRoom::Update()
 	}
 
 	ExecuteAfterTime(UPDATE_MS, &Server::Contents::GameRoom::Update);
+}
+
+void Server::Contents::GameRoom::CheckHeartBeat()
+{
+	for(auto& [id, player] : m_players) {
+		const auto now = std::chrono::high_resolution_clock::now();
+		const auto hbTimeStamp = player->GetOwner()->GetHeartbeatTimestamp();
+		if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
+			RemovePlayer(player);
+			player->GetOwner()->Disconnect("HEART_BEAT");
+		}
+	}
+
+	ExecuteAfterTime(1s, &Server::Contents::GameRoom::CheckHeartBeat);
 }

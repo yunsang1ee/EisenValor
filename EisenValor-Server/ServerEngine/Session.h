@@ -37,6 +37,9 @@ namespace ServerEngine {
 		std::shared_mutex								m_sendPktInfoslk;
 		std::vector<std::pair<int32, int32>>			m_sendPktInfos;
 
+		// TODO: 아토믹 하는게 오히려 손해같은데...
+		std::chrono::high_resolution_clock::time_point	m_heartbeatTimestamp;
+
 	public:
 		Session();
 		virtual ~Session();
@@ -62,7 +65,9 @@ namespace ServerEngine {
 		uint32 GetID() const noexcept { return m_id; }
 		SESSION_STATE GetState() const noexcept { return m_state; }
 		bool IsConnected() noexcept { return m_connected; }
-		
+		void UpdateHeartbeatTimestamp();
+		std::chrono::high_resolution_clock::time_point GetHeartbeatTimestamp() const noexcept { return m_heartbeatTimestamp; }
+
 	private:
 		void Init();
 		void PostRecv();

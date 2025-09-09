@@ -86,6 +86,7 @@ void ServerEngine::Session::FlushPacketQueueSecond()
 
 void ServerEngine::Session::FlushPacketQueue()
 {
+	// TODO: 수정 필요
 	// RQ의 접근은 세션을 관리하고 있는 쓰레드에서만 접근을 허락함.
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
@@ -236,6 +237,8 @@ void ServerEngine::Session::Connect(const SOCKET& socket, const SOCKADDR_IN& add
 
 	m_state = SESSION_STATE::ALLOC;
 
+	m_heartbeatTimestamp = std::chrono::high_resolution_clock::now();
+
 	PostRecv();
 }
 
@@ -340,6 +343,11 @@ uint32 ServerEngine::Session::AssembleReceivedData(std::span<const char> buf)
 	}
 
 	return processed;
+}
+
+void ServerEngine::Session::UpdateHeartbeatTimestamp()
+{
+	m_heartbeatTimestamp = std::chrono::high_resolution_clock::now();
 }
 
 void ServerEngine::Session::CloseSocket()

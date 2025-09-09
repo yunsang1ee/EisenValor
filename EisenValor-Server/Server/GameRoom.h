@@ -18,6 +18,8 @@ namespace Server {
 
 			bool											m_firstUpdate = true;
 			static constexpr auto							UPDATE_MS = 100ms;
+			static constexpr auto							MAX_HEART_BEAT_TIME_STAMP = 10000ms;
+
 			std::chrono::high_resolution_clock::time_point	m_lastUpdate;
 
 		public:
@@ -38,6 +40,7 @@ namespace Server {
 
 		public:
 			void Update();
+			void CheckHeartBeat();
 
 		public:
 			void AddNpc(std::shared_ptr<NPC> npc);

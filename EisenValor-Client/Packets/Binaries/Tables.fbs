@@ -77,7 +77,7 @@ table SC_MOVE_PACKET {
 }
 
 // ================================================
-//					  SUMMON_NPC
+//					SUMMON_NPC
 // ================================================
 table CS_SUMMON_NPC {
 
@@ -85,7 +85,7 @@ table CS_SUMMON_NPC {
 
 
 // ================================================
-//					  SOLDIER_FORMATION
+//					SOLDIER_FORMATION
 // ================================================
 table CS_SOLDIER_FORMATION {
 	formation: ubyte;
@@ -93,7 +93,7 @@ table CS_SOLDIER_FORMATION {
 
 
 // ================================================
-//				PLAYER_ATTACK
+//					PLAYER_ATTACK
 // ================================================
 table CS_PLAYER_ATTACK {
 	

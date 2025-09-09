@@ -34,6 +34,8 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept
 {
 	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
 	std::cout << recvPkt.msg()->c_str() << std::endl;
 	auto packetBuffer = ClientPacketHandler::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
 	auto match = MANAGER(Server::Contents::GameRoomManager)->GetRoom(1);
@@ -46,6 +48,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 bool Handle_CS_ENTER_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_WORLD_PACKET& recvPkt) noexcept
 {
 	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
 
 	// TODO: 방을 선택할 수 있게 해야 함.
 	// 우선 전부 1번방으로
@@ -59,6 +62,8 @@ bool Handle_CS_ENTER_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& 
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept
 {
 	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
 	auto player = clientSession->GetPlayer();
 	const uint32 id = clientSession->GetID();
 	const Vec3 pos{ recvPkt.kinematic_info()->pos().x(), recvPkt.kinematic_info()->pos().y(), recvPkt.kinematic_info()->pos().z() };
@@ -76,6 +81,8 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt) noexcept
 {
 	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
 	const auto player = clientSession->GetPlayer();
 
 	constexpr int kMaxSoldierCount = 20;
@@ -145,6 +152,8 @@ bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Sess
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
 {
 	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
 	const auto player = clientSession->GetPlayer();
 	
 	if(auto room = player->GetGameRoom()) {
