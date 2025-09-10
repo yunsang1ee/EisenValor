@@ -1,8 +1,159 @@
 #include "stdafxClientFramework.h"
 #include "LocalPlayer.h"
 #include "GlobalInterfaces.h"
+#include "Vertex.h"
 
 using namespace DirectX;
+
+void LocalPlayer::Initialize(ID3D12Device* device)
+{
+	// 부모 클래스 초기화
+	Player::Initialize(device);
+
+	// 부채꼴 초기화
+	InitializeFan(device);
+}
+
+void LocalPlayer::InitializeFan(ID3D12Device* device)
+{
+	// 부채꼴 정점 데이터 생성
+	std::vector<Vertex> fanVertices;
+	std::vector<UINT>	fanIndices;
+
+	// 중심점 (부채꼴의 꼭짓점)
+	fanVertices.push_back({XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)}); // 노란색
+
+	// 부채꼴 호의 정점들 생성
+	for (int i = 0; i <= m_fanSegments; i++)
+	{
+		// -m_fanAngle/2 부터 +m_fanAngle/2 까지의 각도 계산
+		float theta = -m_fanAngle * 0.5f + (m_fanAngle * i) / m_fanSegments;
+
+		// X-Z 평면에서 부채꼴 생성 (Y는 0.01f로 살짝 위에)
+		float x = m_fanRadius * sinf(theta);
+		float z = m_fanRadius * cosf(theta);
+
+		fanVertices.push_back({XMFLOAT3(x, 0.01f, z), XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f)}); // 주황색
+	}
+
+	// 인덱스 생성 (삼각형들로 부채꼴 구성)
+	for (int i = 0; i < m_fanSegments; i++)
+	{
+		fanIndices.push_back(0);	 // 중심점
+		fanIndices.push_back(i + 1); // 현재 호 점
+		fanIndices.push_back(i + 2); // 다음 호 점
+	}
+
+	m_fanIndexCount = static_cast<UINT>(fanIndices.size());
+
+	// 힙 속성 설정
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RANGE readRange = {0, 0};
+
+	// 부채꼴 정점 버퍼 생성
+	const UINT			fanVertexBufferSize = static_cast<UINT>(fanVertices.size() * sizeof(Vertex));
+	D3D12_RESOURCE_DESC bufferDesc = {};
+	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	bufferDesc.Width = fanVertexBufferSize;
+	bufferDesc.Height = 1;
+	bufferDesc.DepthOrArraySize = 1;
+	bufferDesc.MipLevels = 1;
+	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+	bufferDesc.SampleDesc.Count = 1;
+	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_fanVertexBuffer)
+	));
+
+	// 부채꼴 정점 데이터 복사
+	UINT8* pFanVertexDataBegin;
+	ThrowIfFailed(m_fanVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pFanVertexDataBegin)));
+	memcpy(pFanVertexDataBegin, fanVertices.data(), fanVertexBufferSize);
+	m_fanVertexBuffer->Unmap(0, nullptr);
+
+	// 부채꼴 정점 버퍼 뷰 설정
+	m_fanVertexBufferView.BufferLocation = m_fanVertexBuffer->GetGPUVirtualAddress();
+	m_fanVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_fanVertexBufferView.SizeInBytes = fanVertexBufferSize;
+
+	// 부채꼴 인덱스 버퍼 생성
+	const UINT fanIndexBufferSize = static_cast<UINT>(fanIndices.size() * sizeof(UINT));
+	bufferDesc.Width = fanIndexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_fanIndexBuffer)
+	));
+
+	// 부채꼴 인덱스 데이터 복사
+	UINT8* pFanIndexDataBegin;
+	ThrowIfFailed(m_fanIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pFanIndexDataBegin)));
+	memcpy(pFanIndexDataBegin, fanIndices.data(), fanIndexBufferSize);
+	m_fanIndexBuffer->Unmap(0, nullptr);
+
+	// 부채꼴 인덱스 버퍼 뷰 설정
+	m_fanIndexBufferView.BufferLocation = m_fanIndexBuffer->GetGPUVirtualAddress();
+	m_fanIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_fanIndexBufferView.SizeInBytes = fanIndexBufferSize;
+
+	// 부채꼴 상수 버퍼 생성
+	const UINT fanConstantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
+	bufferDesc.Width = fanConstantBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_fanConstantBuffer)
+	));
+
+	ThrowIfFailed(m_fanConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pFanCbvDataBegin)));
+}
+
+void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
+{
+	// 플레이어 자체 렌더링
+	Player::Render(cmdList, view, projection);
+
+	// 부채꼴 렌더링
+	RenderFan(cmdList, view, projection);
+}
+
+void LocalPlayer::RenderFan(
+	ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
+)
+{
+	// 부채꼴 월드 행렬 계산
+	XMMATRIX fanWorld = XMMatrixIdentity();
+
+	// 플레이어의 Y축 회전(Yaw) 적용 - 플레이어가 바라보는 방향으로 부채꼴 향하게 함
+	fanWorld *= XMMatrixRotationY(m_cameraYaw);
+
+	// 플레이어 위치로 이동
+	fanWorld *= XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
+
+	// MVP 행렬 계산
+	XMMATRIX fanMvp = fanWorld * view * projection;
+
+	// 부채꼴 상수 버퍼 업데이트
+	ConstantBuffer fanCbData;
+	XMStoreFloat4x4(&fanCbData.mvp, XMMatrixTranspose(fanMvp));
+	memcpy(m_pFanCbvDataBegin, &fanCbData, sizeof(fanCbData));
+
+	// 부채꼴 상수 버퍼 바인딩
+	cmdList->SetGraphicsRootConstantBufferView(0, m_fanConstantBuffer->GetGPUVirtualAddress());
+
+	// 부채꼴 정점 및 인덱스 버퍼 설정
+	cmdList->IASetVertexBuffers(0, 1, &m_fanVertexBufferView);
+	cmdList->IASetIndexBuffer(&m_fanIndexBufferView);
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// 부채꼴 그리기
+	cmdList->DrawIndexedInstanced(m_fanIndexCount, 1, 0, 0, 0);
+}
+
 
 void LocalPlayer::Update(float deltaTime)
 {
@@ -424,7 +575,6 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		SendMovePacket();
 		lastSend = now;
 	}
-
 }
 
 void LocalPlayer::UpdatePos(const float deltaTime)
