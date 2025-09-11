@@ -353,7 +353,7 @@ void GameFramework::Render()
 	// 렌더 타겟 설정
 	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 	// 화면을 파란색으로 클리어
-	float clearColor[] = {0.0f, 0.0f, 1.0f, 1.0f}; // 파란색
+	float clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f}; // 검은색
 	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 	// 뷰포트 설정

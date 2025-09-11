@@ -51,4 +51,7 @@ public:
 
 public:
 	bool keyup{false};
+
+	public:
+	Vec3 SmoothLerp(const Vec3& curPos, const Vec3& destPos, const float lerpFactor);
 };

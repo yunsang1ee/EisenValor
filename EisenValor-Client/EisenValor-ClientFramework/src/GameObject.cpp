@@ -21,3 +21,13 @@ void GameObject::Handle_SC_MOVE(
 	// std::cout << "Handle_SC_MOVE" << std::endl;
 #endif
 }
+
+Vec3 GameObject::SmoothLerp(const Vec3& curPos, const Vec3& destPos, const float lerpFactor)
+{
+	Vec3 pos;
+	pos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
+	pos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
+	pos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+
+	return pos;
+}

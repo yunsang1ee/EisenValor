@@ -103,51 +103,18 @@ void NPC::Initialize(ID3D12Device* device)
 
 void NPC::Update(float deltaTime)
 {
-	//   if (!m_target) return;
+	const Vec3& curPos{GetPosition()};
+	const Vec3& destPos{lastServerPosition};
 
-	//   // 플레이어 위치 가져오기
-	//   DirectX::XMFLOAT3 targetPos = m_target->GetPosition();
-	//   DirectX::XMFLOAT3 currentPos = GetPosition();
-
-	//   // 거리 계산
-	//   float dx = targetPos.x - currentPos.x;
-	//   float dy = targetPos.y - currentPos.y;
-	//   float dz = targetPos.z - currentPos.z;
-	//   float distance = sqrt(dx * dx + dy * dy + dz * dz);
-
-	//   // 일정 거리 이상이면 따라가기
-	//   if (distance > m_followDistance) {
-	//       // 방향 벡터 정규화
-	//       dx /= distance;
-	//       dy /= distance;
-	//       dz /= distance;
-
-	//       // 새 위치 계산 (살짝 부드럽게 이동)
-	//       float moveX = currentPos.x + dx * m_moveSpeed * deltaTime;
-	//       float moveY = currentPos.y + dy * m_moveSpeed * deltaTime;
-	//       float moveZ = currentPos.z + dz * m_moveSpeed * deltaTime;
-
-	//       SetPosition(Vec3{moveX, moveY, moveZ});
-	//   }
-
-	//   DirectX::XMFLOAT3 pos = GetPosition();
-	// SetPosition(Vec3{pos.x, m_baseY, pos.z});
-
-	// TOOD: 현재 위치에서 서버 위치로 보간.
-	Vec3 curPos{GetPosition()};
-	Vec3 destPos{lastServerPosition};
-
-	if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+	constexpr float epsilon{1e-6f};
+	
+	if ((fabs(curPos.x - destPos.x) <= epsilon) && (fabs(curPos.y - destPos.y) <= epsilon) &&
+		(fabs(curPos.z - destPos.z) <= epsilon))
 		return;
 
-	float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
-	if (lerpFactor > 1.0f)
-		lerpFactor = 1.0f; // 목적지 overshoot 방지
+	float lerpFactor = std::min(deltaTime * 5.f, 1.f); // 현재 위치와 목적지 사이 거리의 비율
 
-	Vec3 newPos;
-	newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
-	newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
-	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+	Vec3 newPos{SmoothLerp(curPos, destPos, lerpFactor)};
 
 	SetPosition(newPos);
 }

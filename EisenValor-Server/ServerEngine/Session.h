@@ -38,7 +38,7 @@ namespace ServerEngine {
 		std::vector<std::pair<int32, int32>>			m_sendPktInfos;
 
 		// TODO: 아토믹 하는게 오히려 손해같은데...
-		std::chrono::high_resolution_clock::time_point	m_heartbeatTimestamp;
+		std::atomic<std::chrono::high_resolution_clock::time_point>	m_heartbeatTimestamp;
 
 	public:
 		Session();
