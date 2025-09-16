@@ -13,6 +13,7 @@ enum class STATE_TYPE : uint8 {
 	IDLE,
 	WALK,
 	RUN,
+	TRACE,
 	ATTACK,
 	
 	END,

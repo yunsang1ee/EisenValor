@@ -21,20 +21,22 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 
 	MANAGER(GameObjectManager)->SetLocalID(id);
-	auto pb = NetBridge::ServerPacketHandler::Make_CS_ENTER_WORLD_PACKET(id);
+	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
+	const uint16 roomID{1};
+	auto pb = NetBridge::ServerPacketHandler::Make_CS_ENTER_ROOM_PACKET(id, roomID);
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	return true;
 }
 
-bool Handle_SC_ENTER_WORLD_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_WORLD_PACKET& recvPkt)
+bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt)
 {
 	return false;
 }
 
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt)
 {
-	auto		 device = GlobalRegistry::Get<IDxDeviceGlobal>().GetDevice();
+	auto device = GlobalRegistry::Get<IDxDeviceGlobal>().GetDevice();
 	const uint32 id = recvPkt.player_id();
 	const uint32 localID = MANAGER(GameObjectManager)->GetLocalID();
 	if (id == localID)
@@ -140,6 +142,7 @@ bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOV
 	}
 	else
 	{
+		// TODO: 오브젝트 삭제처리 
 		auto obj = MANAGER(GameObjectManager)->FindObject(id);
 		if (obj)
 			obj->alive = false;
@@ -186,5 +189,21 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 		};
 		obj->Handle_SC_MOVE(pos, rot, vel, accel, recvPkt.kinematic_info()->time_stamp());
 	}
+	return true;
+}
+
+bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt)
+{
+	const uint32 objID{recvPkt.obj_id()};
+	auto obj = MANAGER(GameObjectManager)->FindObject(objID);
+
+	if(obj) {
+		const uint32 hp{recvPkt.current_hp()};
+		// TODO: 받은 HP 설정
+		if(hp <= 0) {
+			obj->alive = false;
+		}
+	}
+	
 	return true;
 }

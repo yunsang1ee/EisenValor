@@ -19,12 +19,13 @@ table SC_LOGIN_PACKET {
 // ================================================
 //					ENTER WORLD
 // ================================================
-table CS_ENTER_WORLD_PACKET {
+table CS_ENTER_ROOM_PACKET {
 	player_id : uint;
+	room_id: ushort;
 }
 
-table SC_ENTER_WORLD_PACKET {
-	world_id: ushort;
+table SC_ENTER_ROOM_PACKET {
+	room_id: ushort;
 }
 
 // ================================================
@@ -97,4 +98,12 @@ table CS_SOLDIER_FORMATION {
 // ================================================
 table CS_PLAYER_ATTACK {
 	
+}
+
+// ================================================
+//						HIT
+// ================================================
+table SC_HIT_PACKET {
+	obj_id: uint;
+	current_hp: uint;
 }

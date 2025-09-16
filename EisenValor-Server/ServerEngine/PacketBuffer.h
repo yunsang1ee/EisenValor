@@ -8,7 +8,7 @@ namespace ServerEngine {
 		std::vector<char>	m_buffer;
 		uint32				m_capacity;
 		uint32				m_dataSize;
-
+		
 	public:
 		explicit PacketBuffer(const PacketHeader& header);
 		~PacketBuffer();

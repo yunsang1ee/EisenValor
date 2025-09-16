@@ -33,17 +33,20 @@ enum class PACKET_TYPE : uint16
 
 	CS_PLAYER_ATTACK_PKT = 14,
 
+	SC_HIT_PKT = 15,
+
 	END
 };
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
-bool Handle_SC_ENTER_WORLD_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_WORLD_PACKET& recvPkt);
+bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt);
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
+bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt);
 
 namespace NetBridge
 {
@@ -72,7 +75,7 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_WORLD_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{
-			return HandlePacket<FB_TABLES::SC_ENTER_WORLD_PACKET>(Handle_SC_ENTER_WORLD_PACKET, socket, buffer, header);
+			return HandlePacket<FB_TABLES::SC_ENTER_ROOM_PACKET>(Handle_SC_ENTER_ROOM_PACKET, socket, buffer, header);
 		};
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
@@ -98,6 +101,10 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{ return HandlePacket<FB_TABLES::SC_MOVE_PACKET>(Handle_SC_MOVE_PACKET, socket, buffer, header); };
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_HIT_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_HIT_PACKET>(Handle_SC_HIT_PACKET, socket, buffer, header); };
 	}
 
 	static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
@@ -150,10 +157,10 @@ public:
 #pragma endregion
 
 #pragma region CS_ENTER_WORLD_PACKET
-	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_ENTER_WORLD_PACKET(const uint32 id)
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_ENTER_ROOM_PACKET(const uint32 id, const uint16 roomID)
 	{
 		return MakePacketBuffer(
-			PACKET_TYPE::CS_ENTER_WORLD_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_WORLD_PACKET, id)
+			PACKET_TYPE::CS_ENTER_WORLD_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_ROOM_PACKET, id, roomID)
 		);
 	}
 #pragma endregion
