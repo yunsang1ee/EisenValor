@@ -5,10 +5,8 @@
 #include "NPC.h"
 #include "FSM.h"
 
-#include "SoldierIdleState.h"
-
-#include "GeneralIdleState.h"
-#include "GeneralTraceState.h"
+#include "SoldierState.h"
+#include "GeneralState.h"
 
 #include "BehaviorNode.h"
 #include "BehaviorTree.h"

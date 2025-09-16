@@ -8,6 +8,7 @@ namespace Server {
 	namespace Contents {
 		class Player;
 		class NPC;
+		class Creature;
 
 		class GameRoom : public ServerEngine::TaskQueue {
 		private:
@@ -32,11 +33,12 @@ namespace Server {
 			void Init();
 
 		public:
-			void EnterMatch(std::shared_ptr<ClientSession> clientSession) noexcept;
-			void LeaveMatch(std::shared_ptr<ClientSession> clientSession) noexcept;
+			void EnterRoom(std::shared_ptr<ClientSession> clientSession) noexcept;
+			void LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept;
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			std::shared_ptr<Player> GetPlayer(uint32 id) noexcept;
 			const auto& GetPlayers() { return m_players; }
+			const auto& GetNpcs() { return m_npcs; }
 
 		public:
 			void Update();
@@ -52,7 +54,7 @@ namespace Server {
 
 		public:
 			// By Single
-			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo kinematicInfo);
+			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo);
 			void Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player);
 			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player);
 		};

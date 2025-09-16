@@ -4,7 +4,7 @@
 #include "Player.h"
 #include "NPC.h"
 #include "ClientSession.h"
-#include "SoldierWalkState.h"
+#include "SoldierState.h"
 
 void Server::Contents::GameRoom::Init()
 {
@@ -28,7 +28,7 @@ void Server::Contents::GameRoom::Init()
 	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
 
-void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::EnterRoom(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	std::cout << "Enter Match" << std::endl;
 	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
@@ -64,6 +64,7 @@ void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clien
 		}
 	}
 
+	// 맵 안에 있는 NPC 정보 전송
 	{
 		for(const auto& [id, gen] : m_npcs) {
 			const Vec3 pos{ gen->GetPos() };
@@ -78,7 +79,7 @@ void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clien
 	AddPlayer(std::move(player));
 }
 
-void Server::Contents::GameRoom::LeaveMatch(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	const uint32 leaveID = clientSession->GetID();
 	{
@@ -136,7 +137,7 @@ void Server::Contents::GameRoom::RemovePlayer(std::shared_ptr<Player> player)
 	}
 }
 
-void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo kinematicInfo)
+void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo)
 {
 	player->SetPos(kinematicInfo.position);
 	player->SetRotation(kinematicInfo.rotation);
@@ -144,14 +145,14 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	player->SetAcceleration(kinematicInfo.acceleration);
 	player->SetTimeStamp(kinematicInfo.timeStamp);
 
-	const auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	ExecuteAsyncronously(&GameRoom::Broadcast, packetBuffer);
+	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
+	ExecuteAsyncronously(&GameRoom::Broadcast, std::move(packetBuffer));
 
-	//// 2. 병사 이동 처리
+	// 2. 병사 이동 처리
 	auto& soldiers = player->GetNpcs();
 	if(soldiers.size() == 0) return;
 	const Vec3 playerPos = player->GetPos();
-	float rotY = player->GetRotation().y; // y축 회전값 (라디안/도 단위 확인 필요)
+	float rotY = player->GetRotation().y;
 
 	for(auto& soldierData : soldiers) {
 		auto offset = soldierData.localOffset;
@@ -170,6 +171,10 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 			playerPos.y + rotatedOffset.y,
 			playerPos.z + rotatedOffset.z
 		};
+
+		if((soldier->GetPos() - targetPos).Length()< 0.01f)
+			continue;
+		
 
 		// --- 병사 FSM 상태 전환 및 목표 위치 지정 ---
 		auto fsm = soldier->GetComponent<Server::Contents::FSM>();
@@ -193,7 +198,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 	// TODO: 회전정보 쿼터니언으로 관리 
 	// TODO: 전투 관련 기능들 구현
 	// TODO: 시야처리는 무조건 해야함.
-
+		
 	constexpr float attackRadius = 3.f;
 	constexpr float attackDegree = 90.f;
 	constexpr float radiusSq = attackRadius * attackRadius;
@@ -203,7 +208,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 	playerDir.Normalize();
 
 	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
-
+	 
 	for(const auto& [id, npc] : m_npcs) {
 		const Vec3& pos = npc->GetPos();
 
@@ -220,12 +225,19 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
 		if(dotValue <= 0) continue;
 		
-		if(dotValue * dotValue >= distToTargetSq * cosHalfAngleSq) {
+		if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq) && npc->GetTeamType() == TEAM_TYPE::ENEMY) {
 			std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
 			int hp{ npc->GetHP() };
 			hp -= 50;
 			std::cout << std::format("NPC HP: {}", hp) << std::endl;
 			npc->SetHp(hp);
+
+			if(hp <= 0) {
+				ExecuteAsyncronously(&GameRoom::RemoveNPC, npc);
+			}
+
+			auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(npc->GetID(), npc->GetHP());
+			ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
 		}
 
 		// a * b = |a| |b| cos	
@@ -251,7 +263,12 @@ void Server::Contents::GameRoom::AddNpc(std::shared_ptr<NPC> npc)
 
 void Server::Contents::GameRoom::RemoveNPC(std::shared_ptr<NPC> npc)
 {
-	// TODO: 
+	const uint16 id = npc->GetID();
+
+	if(m_npcs.find(id) != m_npcs.end()) {
+		m_npcs.erase(id);
+		std::cout << "RemoveNPC!" << std::endl;
+	}
 }
 
 void Server::Contents::GameRoom::Update()
@@ -263,11 +280,6 @@ void Server::Contents::GameRoom::Update()
 		DT = std::chrono::duration<float>(now - m_lastUpdate).count();
 	}
 	m_lastUpdate = now;
-
-	{
-		for(auto& [id, player] : m_players)
-			player->Update(DT);
-	}
 
 	{
 		for(auto& [id, npc] : m_npcs)

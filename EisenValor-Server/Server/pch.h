@@ -15,6 +15,7 @@
 #include "ServerTypes.h"
 #include "ServerEnums.h"
 #include "ServerStructs.h"
+#include "ServerGlobalFunc.h"
 
 #include "ClientPacketHandler.h"
 

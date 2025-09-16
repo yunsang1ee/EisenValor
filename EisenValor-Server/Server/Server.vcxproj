@@ -166,9 +166,8 @@
     <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
-    <ClCompile Include="GeneralIdleState.cpp" />
-    <ClCompile Include="GeneralTraceState.cpp" />
-    <ClCompile Include="IdleState.cpp" />
+    <ClCompile Include="GeneralState.cpp" />
+    <ClCompile Include="ServerGlobalFunc.cpp" />
     <ClCompile Include="IsPlayerInNearNode.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="pch.cpp">
@@ -181,11 +180,9 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="NPC.cpp" />
-    <ClCompile Include="SoldierIdleState.cpp" />
-    <ClCompile Include="SoldierWalkState.cpp" />
+    <ClCompile Include="SoldierState.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TargetTraceNode.cpp" />
-    <ClCompile Include="WalkState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
@@ -202,9 +199,8 @@
     <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
-    <ClInclude Include="GeneralIdleState.h" />
-    <ClInclude Include="GeneralTraceState.h" />
-    <ClInclude Include="IdleState.h" />
+    <ClInclude Include="GeneralState.h" />
+    <ClInclude Include="ServerGlobalFunc.h" />
     <ClInclude Include="IsPlayerInNearNode.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="pch.h" />
@@ -214,11 +210,9 @@
     <ClInclude Include="ServerStructs.h" />
     <ClInclude Include="ServerTypes.h" />
     <ClInclude Include="NPC.h" />
-    <ClInclude Include="SoldierIdleState.h" />
-    <ClInclude Include="SoldierWalkState.h" />
+    <ClInclude Include="SoldierState.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TargetTraceNode.h" />
-    <ClInclude Include="WalkState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />

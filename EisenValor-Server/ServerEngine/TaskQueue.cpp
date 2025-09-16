@@ -11,14 +11,14 @@ void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, boo
 
 	if(0 == prevCount) {
 		if(nullptr == TLS_CURRENT_TASK_QUEUE && false == pushOnly)
-			Flush();
+			Execute();
 		else {
 			MANAGER(TaskQueueManager)->EnqueTaskQueue(shared_from_this());
 		}
 	}
 }
 
-void ServerEngine::TaskQueue::Flush() noexcept
+void ServerEngine::TaskQueue::Execute() noexcept
 {
 	TLS_CURRENT_TASK_QUEUE = this;
 

@@ -8,17 +8,20 @@ namespace ServerEngine {
 		TaskFuncCB m_cbFunc;
 
 	public:
-		explicit Task(TaskFuncCB&& cbFunc) :m_cbFunc(std::move(cbFunc)) {}
-
-		template<class T, typename RetType, typename... Args>
-		explicit Task(std::shared_ptr<T> owner, RetType(T::*memFunc)(Args...), Args&&... args)
+		explicit Task(TaskFuncCB&& cbFunc)
+			: m_cbFunc(std::move(cbFunc))
 		{
-			m_cbFunc = [owner, memFunc, args...]()
+		}
+
+		template<class T, typename MemFn, typename... Args>
+		explicit Task(std::shared_ptr<T> owner, MemFn memFunc, Args&&... args)
+		{
+			m_cbFunc = [owner = std::move(owner),memFunc, ...args = std::forward<Args>(args)]() mutable
 				{
-					(owner.get()->*memFunc)(args...);
+					std::invoke(memFunc, owner.get(), std::move(args)...);
 				};
 		}
-	
+
 		void Execute()
 		{
 			if(m_cbFunc)
