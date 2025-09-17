@@ -25,6 +25,7 @@ public:
 
 	virtual ObjectType GetObjectType() const = 0;
 
+
 public:
 	void Handle_SC_MOVE(
 		const Vec3& pos, const Vec3& rot, const Vec3& velocity, const Vec3& accel, const uint64 timeStamp
@@ -35,12 +36,21 @@ public:
 	bool   alive{true};
 
 protected:
+	// 팀 구분용
+	enum class Team
+	{
+		ALLY,
+		ENEMY
+	};
+
 	// 기본 Transform 데이터
 	Vec3 m_pos{0.f, 0.f, 0.f};
 	Vec3 m_rot{0.f, 0.f, 0.f};
 
 	Vec3 m_velocity{0.f, 0.f, 0.f};
 	Vec3 m_acceleration{0.f, 0.f, 0.f};
+	    //Team and Unit
+	Team	 m_team = Team::ALLY;	
 
 public:
 	Vec3	lastServerPosition;

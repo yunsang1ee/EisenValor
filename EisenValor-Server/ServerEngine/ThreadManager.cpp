@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "ThreadManager.h"
 
 bool ServerEngine::ThreadManager::Init() noexcept

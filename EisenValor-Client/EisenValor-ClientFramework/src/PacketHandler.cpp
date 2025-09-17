@@ -97,7 +97,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	{
 		auto player = std::make_shared<Player>();
 		
-		player->Initialize(device);
+		player->Initialize(device); 
 		player->m_id = id;
 		player->SetPosition(pos);
 		player->SetRotation(rot);

@@ -140,6 +140,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	UINT compileFlags = 0;
 #endif
 
+	// TODO: .exe로 실행하면 경로 버그나서 프로그램 실행 안됨
+	// TOOD: .exe로 실행하던 비쥬얼 스튜디오로 실행하던 리소스 경로 맞춰줘야 함.
+
 	// 셰이더 파일에서 컴파일
 	ThrowIfFailed(D3DCompileFromFile(
 		L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0,
@@ -191,6 +194,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	std::cout << "Input PW(any):";
 	// std::cin >> pw;
 	pw = "PW";
+
+	Sleep(100);
 
 	auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));

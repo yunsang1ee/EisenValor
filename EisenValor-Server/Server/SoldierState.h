@@ -48,19 +48,20 @@ namespace Server {
 			std::shared_ptr<GameObject> GetOwner() noexcept { return m_ownerGeneral.lock(); }
 
 			inline Vec3 Lerp(const Vec3& a, const Vec3& b, float t)
-{
-    // t ¡ô [0,1]
-    return a * (1.0f - t) + b * t;
-
-
-}
-
+			{
+				// t ¡ô [0,1]
+				return a * (1.0f - t) + b * t;
+			}
 
 			inline float LerpAngle(float a, float b, float t)
 			{
 				float diff = fmodf(b - a + 540.0f, 360.0f) - 180.0f;
 				return a + diff * t;
 			}
+
+		private:
+			void Move(const float dt);
+			void MoveByForce(const float dt);
 		};
 	}
 }

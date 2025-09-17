@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "NPC.h"
 #include "FSM.h"
+#include "TroopController.h"
 
 #include "SoldierState.h"
 #include "GeneralState.h"
@@ -19,6 +20,9 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	player->SetPos(t.pos);
 	player->SetRotation(t.rot);
 
+	auto troopController = player->AddComponent<Server::Contents::TroopController>();
+	troopController->SetOwner(player);
+
 	return player;
 }
 
@@ -28,13 +32,16 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
 	general->SetStatInfo(t.stat);
+
+	auto troopController = general->AddComponent<Server::Contents::TroopController>();
+	troopController->SetOwner(general);
 	
-	// const auto bt = general->AddComponent<BehaviorTree>();
-	// bt->SetOwner(general);
-	// auto root = std::make_unique<Server::Contents::SequenceNode>();
-	// root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
-	// root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
-	// bt->SetRoot(std::move(root));
+	const auto bt = general->AddComponent<BehaviorTree>();
+	bt->SetOwner(general);
+	auto root = std::make_unique<Server::Contents::SequenceNode>();
+	root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
+	root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
+	bt->SetRoot(std::move(root));
 
 	/*const auto fsm = general->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(general);
@@ -54,6 +61,7 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	auto soldier = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
 	soldier->SetPos(t.pos);
 	soldier->SetRotation(t.rot);
+	soldier->SetStatInfo(t.stat);
 	
 	auto fsm = soldier->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(soldier);

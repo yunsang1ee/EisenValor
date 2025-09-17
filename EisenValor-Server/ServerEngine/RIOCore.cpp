@@ -22,7 +22,7 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 	if(m_listenSocket == INVALID_SOCKET) {
 		ServerEngine::LogManager::PrintLastError();
 		return false;
-	}
+	}	
 
 	constexpr int opt = 1;
 	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));

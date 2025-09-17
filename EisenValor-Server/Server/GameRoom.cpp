@@ -6,24 +6,56 @@
 #include "ClientSession.h"
 #include "SoldierState.h"
 
+#include "TroopController.h"
+
 void Server::Contents::GameRoom::Init()
 {
 	// TODO: 맵 데이터 로딩
 	// TODO: NPC 초기화
-	static constexpr uint16 MAX_GENERAL_NPC = 5;
+	// static constexpr uint16 MAX_GENERAL_NPC = 1;
+	// Sstatic constexpr uint16 MAX_SOLDIER_NPC = 1;
 
-	for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
-		GeneralTemplate t;
-		t.npcType = NPC_TYPE::GENERAL;
-		t.objType = GAME_OBJECT_TYPE::NPC;
-		t.pos = Vec3{ -10.f + (i * 5.f), 0.f, 0.f };
-		t.rot = Vec3{ 0.f, 0.f, 0.f };
-		t.teamType = TEAM_TYPE::ENEMY;
-		t.stat.hp = 100;
-		auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
-		AddNpc(std::move(sentinelNPC));
-	}
+	//for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
+	//	GeneralTemplate t;
+	//	t.npcType = NPC_TYPE::GENERAL;
+	//	t.objType = GAME_OBJECT_TYPE::NPC;
+	//	t.pos = Vec3{ -10.f + (i * 5.f), 0.f, 0.f };
+	//	t.rot = Vec3{ 0.f, 0.f, 0.f };
+	//	t.teamType = TEAM_TYPE::ENEMY;
+	//	t.stat.hp = 100;
+	//	auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
 
+	//	// TODO: 적 장수를 따라다니는 병사들 생성
+	//	for(int j = 0; j < MAX_SOLDIER_NPC; ++j) {
+	//		SoldierTemplate s;
+	//		s.npcType = NPC_TYPE::SOLDIER;
+	//		s.objType = GAME_OBJECT_TYPE::NPC;
+	//		t.pos = Vec3{ -10.f + (i * 5.f), 0.f, -2.f	 };
+	//		t.rot = Vec3{ 0.f, 0.f, 0.f };
+	//		t.teamType = TEAM_TYPE::ENEMY;
+	//		t.stat.hp = 100;
+
+	//		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
+	//		const auto& fsm = soldier->GetComponent<Server::Contents::FSM>();
+
+	//		auto idleState = std::make_shared<Server::Contents::SoldierIdleState>();
+	//		auto walkState = std::make_shared<Server::Contents::SoldierWalkState>();
+
+	//		idleState->SetFSM(fsm);
+	//		walkState->SetFSM(fsm);
+	//		walkState->SetOwnerGeneral(general);
+
+	//		fsm->AddState(idleState);
+	//		fsm->AddState(walkState);
+	//		fsm->SetCurState(STATE_TYPE::IDLE);
+
+
+	//		AddNpc(std::move(soldier));
+	//	}
+
+	//	AddNpc(std::move(general));
+	//}
+	
 	ExecuteAsyncronously(&GameRoom::Update);
 	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
@@ -148,48 +180,107 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	ExecuteAsyncronously(&GameRoom::Broadcast, std::move(packetBuffer));
 
+	// TODO: 수정
+
 	// 2. 병사 이동 처리
-	auto& soldiers = player->GetNpcs();
-	if(soldiers.size() == 0) return;
-	const Vec3 playerPos = player->GetPos();
-	float rotY = player->GetRotation().y;
+	//auto& soldiers = player->GetNpcs();
+	//if(soldiers.size() == 0) return;
+	//const Vec3 playerPos = player->GetPos();
+	//float rotY = player->GetRotation().y;
 
-	for(auto& soldierData : soldiers) {
-		auto offset = soldierData.localOffset;
-		auto soldier = soldierData.soldier;
-		if(!soldier) continue;
+	//for(auto& soldierData : soldiers) {
+	//	auto offset = soldierData.localOffset;
+	//	auto soldier = soldierData.soldier;
+	//	if(!soldier) continue;
 
-		// --- offset을 플레이어 회전에 맞춰 회전 변환 ---
-		Vec3 rotatedOffset;
-		rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
-		rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
-		rotatedOffset.y = offset.y;
+	//	// --- offset을 플레이어 회전에 맞춰 회전 변환 ---
+	//	Vec3 rotatedOffset;
+	//	rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
+	//	rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
+	//	rotatedOffset.y = offset.y;
 
-		// --- 최종 목표 위치 ---
-		Vec3 targetPos = {
-			playerPos.x + rotatedOffset.x,
-			playerPos.y + rotatedOffset.y,
-			playerPos.z + rotatedOffset.z
-		};
+	//	// --- 최종 목표 위치 ---
+	//	Vec3 targetPos = {
+	//		playerPos.x + rotatedOffset.x,
+	//		playerPos.y + rotatedOffset.y,
+	//		playerPos.z + rotatedOffset.z
+	//	};
 
-		if((soldier->GetPos() - targetPos).Length()< 0.01f)
-			continue;
-		
+	//	if((soldier->GetPos() - targetPos).Length()< 0.01f)
+	//		continue;
+	//	
 
-		// --- 병사 FSM 상태 전환 및 목표 위치 지정 ---
-		auto fsm = soldier->GetComponent<Server::Contents::FSM>();
-		fsm->ChangeState(STATE_TYPE::WALK);
+	//	// --- 병사 FSM 상태 전환 및 목표 위치 지정 ---
+	//	auto fsm = soldier->GetComponent<Server::Contents::FSM>();
+	//	fsm->ChangeState(STATE_TYPE::WALK);
 
-		const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
-		if(walkState) {
-			walkState->SetTargetPos(targetPos);
-		}
-	}
+	//	const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
+	//	if(walkState) {
+	//		walkState->SetTargetPos(targetPos);
+	//	}
+	//}
 }
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
 {
-	// TODO: CS_SUMMON_NPC
+	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+
+	constexpr int kMaxSoldierCount = 20;
+	constexpr int kRowSize = 5;
+	constexpr float kSpacing = 3.f;
+
+	const int currentCount = static_cast<int>(troopController->GetSoldiers().size());
+	if(currentCount >= kMaxSoldierCount)
+		return;
+
+	const int soldiersToSummon = kMaxSoldierCount - currentCount;
+
+	const Vec3 playerPos = player->GetPos();
+	const Vec3 playerRot = player->GetRotation();
+
+	for(int i = 0; i < soldiersToSummon; ++i) {
+		int soldierIndex = currentCount + i;
+
+		int row = soldierIndex / kRowSize;
+		int col = soldierIndex % kRowSize;
+
+		Vec3 offset;
+		offset.x = (static_cast<float>(col) - 2.0f) * kSpacing;  // 중앙 정렬
+		offset.y = 0.0f;
+		offset.z = (row + 1) * kSpacing;  // 뒤로 정렬
+
+		const Vec3 spawnPos = {
+			playerPos.x + offset.x,
+			playerPos.y + offset.y,
+			playerPos.z + offset.z
+		};
+
+		Server::Contents::SoldierTemplate t;
+		t.pos = spawnPos;
+		t.rot = playerRot;
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.npcType = NPC_TYPE::SOLDIER;
+		t.teamType = TEAM_TYPE::ALLY;
+
+		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+		const auto& fsm = soldier->GetComponent<Server::Contents::FSM>();
+
+		auto idleState = std::make_shared<Server::Contents::SoldierIdleState>();
+		auto walkState = std::make_shared<Server::Contents::SoldierWalkState>();
+
+		idleState->SetFSM(fsm);
+		walkState->SetFSM(fsm);
+		walkState->SetOwnerGeneral(player);
+
+		fsm->AddState(idleState);
+		fsm->AddState(walkState);
+		fsm->SetCurState(STATE_TYPE::IDLE);
+
+		troopController->AddSoldier(soldier);
+
+		auto gameWorld = player->GetGameRoom();
+		gameWorld->ExecuteAsyncronously(&Server::Contents::GameRoom::AddNpc, std::static_pointer_cast<Server::Contents::NPC>(soldier));
+	}
 }
 
 void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
@@ -220,7 +311,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 
 		const float dotValue{ playerDir.Dot(toTargetDir) };
 
-		float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+		const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
 		
 		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
 		if(dotValue <= 0) continue;

@@ -60,41 +60,58 @@ float DistanceSquared(const Vec3& a, const Vec3& b)
 
 void Server::Contents::SoldierWalkState::Update(const float dt)
 {
-	//auto owner = GetFSM()->GetOwner();
-	//if(!owner) return;
+	Move(dt);
+	// MoveByForce(dt);
 
-	//Vec3 curPos = owner->GetPos();
-	//Vec3 target = m_targetPos;  // SetTargetPos()에서 지정한 목적지
+	const uint32 id{ GetFSM()->GetOwner()->GetID() };
+	const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
+	const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
 
-	//Vec3 toTarget = target - curPos;
-	//float distance = toTarget.Length();
+	auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
+	GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
+}
 
-	//// 병사 이동 속도 (초당 몇 m 이동할지)
-	//constexpr float moveSpeed = 3.0f;
+void Server::Contents::SoldierWalkState::Move(const float dt)
+{
+	auto owner = GetFSM()->GetOwner();
+	if(!owner) return;
 
-	//if(distance < 0.05f) {
-	//    // 거의 도착하면 위치를 타겟에 고정하고 IDLE로 전환
-	//    owner->SetPos(target);
-	//    GetFSM()->ChangeState(STATE_TYPE::IDLE);
-	//    return;
-	//}
+	Vec3 curPos = owner->GetPos();
+	Vec3 target = m_targetPos;  // SetTargetPos()에서 지정한 목적지
 
-	//// 방향 벡터 정규화
-	//Vec3 dir = toTarget / distance;
+	Vec3 toTarget = target - curPos;
+	float distance = toTarget.Length();
 
-	//// 이동할 거리 = 속도 * 시간
-	//float moveDist = moveSpeed * dt;
-	//if(moveDist > distance) moveDist = distance; // overshoot 방지
+	// 병사 이동 속도 (초당 몇 m 이동할지)
+	constexpr float moveSpeed = 3.0f;
 
-	//// 최종 위치
-	//Vec3 newPos = curPos + dir * moveDist;
-	//owner->SetPos(newPos);
+	if(distance < 0.05f) {
+		// 거의 도착하면 위치를 타겟에 고정하고 IDLE로 전환
+		owner->SetPos(target);
+		GetFSM()->ChangeState(STATE_TYPE::IDLE);
+		return;
+	}
 
-	//// 회전도 목표 방향으로 보정 (y축 기준)
-	//float newRotY = atan2(dir.x, dir.z);
-	//Vec3 newRot = owner->GetRotation();
-	//newRot.y = newRotY;
-	//owner->SetRotation(newRot);
+	// 방향 벡터 정규화
+	Vec3 dir = toTarget / distance;
+
+	// 이동할 거리 = 속도 * 시간
+	float moveDist = moveSpeed * dt;
+	if(moveDist > distance) moveDist = distance; // overshoot 방지
+
+	// 최종 위치
+	Vec3 newPos = curPos + dir * moveDist;
+	owner->SetPos(newPos);
+
+	// 회전도 목표 방향으로 보정 (y축 기준)
+	float newRotY = atan2(dir.x, dir.z);
+	Vec3 newRot = owner->GetRotation();
+	newRot.y = newRotY;
+	owner->SetRotation(newRot);
+}
+
+void Server::Contents::SoldierWalkState::MoveByForce(const float dt)
+{
 	auto owner = GetFSM()->GetOwner();
 	if(!owner) return;
 
@@ -147,11 +164,4 @@ void Server::Contents::SoldierWalkState::Update(const float dt)
 	Vec3 newRot = owner->GetRotation();
 	newRot.y = newRotY;
 	owner->SetRotation(newRot);
-
-	const uint32 id{ GetFSM()->GetOwner()->GetID() };
-	const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
-	const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
-
-	auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
-	GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
 }
