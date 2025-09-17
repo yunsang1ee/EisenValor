@@ -49,6 +49,11 @@ private:
 	uint32_t							  m_rtvDescriptorSize = 0;
 	std::unique_ptr<DxCommandContextPool> m_commandContextPool;
 
+	// 깊이 버퍼 관련 멤버 추가
+	ComPtr<ID3D12Resource>		 m_depthStencilBuffer;
+	ComPtr<ID3D12DescriptorHeap> m_dsvDescriptorHeap;
+	uint32_t					 m_dsvDescriptorSize = 0;
+
 	// 렌더링 리소스 추가 25.07.20
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12PipelineState> m_pipelineState;

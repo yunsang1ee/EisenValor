@@ -27,5 +27,5 @@ private:
 	float			  m_width = 20.0f;
 	float			  m_height = 0.2f;
 	float			  m_depth = 20.0f;
-	DirectX::XMFLOAT3 m_position = {0.0f, 0.0f, 0.0f};
+	DirectX::XMFLOAT3 m_position = {0.0f, -0.6f, 0.0f};
 };

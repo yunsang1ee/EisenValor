@@ -54,12 +54,58 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
 
+	//-------------------------- 깊이 버퍼용 ------------
+	// DSV 디스크립터 힙 생성 (깊이 버퍼용)
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvDescriptorHeap)));
+	m_dsvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+	// 깊이 버퍼 생성
+	D3D12_RESOURCE_DESC depthStencilDesc = {};
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Width = width;
+	depthStencilDesc.Height = height;
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이 + 8비트 스텐실
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+	depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+	D3D12_HEAP_PROPERTIES depthHeapProps = {};
+	depthHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthOptimizedClearValue, IID_PPV_ARGS(&m_depthStencilBuffer)
+	));
+
+	// 깊이 스텐실 뷰 생성
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	device.GetDevice()->CreateDepthStencilView(
+		m_depthStencilBuffer.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
+	);
+
+	//-------------------------- 깊이 버퍼용 ------------
+
 	// 커맨드 컨텍스트 풀 생성
 	m_commandContextPool = std::make_unique<DxCommandContextPool>(
 		device.GetDevice(), commandQueue,
 		3 // 백버퍼 개수
 	);
-
 
 	// 루트 파라미터 정의 (상수 버퍼용)
 	D3D12_ROOT_PARAMETER rootParameter = {};
@@ -119,14 +165,22 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-	psoDesc.DepthStencilState.DepthEnable = FALSE;
+	
+	psoDesc.DepthStencilState.DepthEnable = TRUE;
+
+	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;	//깊이 정보를 쓸 것인가
+	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;		//깊이 비교
+
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
+
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.NumRenderTargets = 1;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc.Count = 1;
 
+	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; // 깊이 버퍼 포맷 설정
+	
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
 	std::string id, pw;
@@ -340,6 +394,10 @@ void GameFramework::Render()
 	// 현재 백버퍼 가져오기
 	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
+
+	// 깊이 스텐실 핸들 가져오기
+	auto dsvHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	
 	// 백버퍼를 렌더 타겟으로 전환(Resource barrier)
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -350,11 +408,15 @@ void GameFramework::Render()
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	context.CommandList()->ResourceBarrier(1, &barrier);
 
-	// 렌더 타겟 설정
-	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-	// 화면을 파란색으로 클리어
+	// 렌더 타겟과 깊이 버퍼 동시 설정
+	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	
+	// 화면을 파란색으로 클리어 (깊이 버퍼 추가 - 25.09.16)
 	float clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f}; // 검은색
 	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	context.CommandList()->ClearDepthStencilView(
+		dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr
+	);
 
 	// 뷰포트 설정
 	D3D12_VIEWPORT viewport = {};
