@@ -9,12 +9,116 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 {
 	// 부모 클래스 초기화
 	Player::Initialize(device);
+
+	// 와이어프레임 박스 초기화
+	InitializeWireFrame(device);
+}
+
+void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
+{
+	//와이어프레임 박스 크기
+	float halfW = 1.6f;
+	float halfH = 1.0f;
+	float halfD = 1.6f;
+
+	// 8개 꼭짓점 (초록색 와이어프레임)
+	Vertex vertices[] = {
+		
+						 {DirectX::XMFLOAT3(-halfW, -halfH, -halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(-halfW, halfH, -halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(halfW, halfH, -halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(halfW, -halfH, -halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(-halfW, -halfH, halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(-halfW, halfH, halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(halfW, halfH, halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(halfW, -halfH, halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)}
+	};
+
+	// 버텍스 버퍼 생성
+	const UINT			  vertexBufferSize = sizeof(vertices);
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RESOURCE_DESC bufferDesc = {};
+	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	bufferDesc.Width = vertexBufferSize;
+	bufferDesc.Height = 1;
+	bufferDesc.DepthOrArraySize = 1;
+	bufferDesc.MipLevels = 1;
+	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+	bufferDesc.SampleDesc.Count = 1;
+	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_wireFrameVertexBuffer)
+	));
+
+	UINT8*		pVertexDataBegin;
+	D3D12_RANGE readRange = {0, 0};
+	ThrowIfFailed(m_wireFrameVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, vertices, sizeof(vertices));
+	m_wireFrameVertexBuffer->Unmap(0, nullptr);
+
+	m_wireFrameVertexBufferView.BufferLocation = m_wireFrameVertexBuffer->GetGPUVirtualAddress();
+	m_wireFrameVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_wireFrameVertexBufferView.SizeInBytes = vertexBufferSize;
+
+	// 와이어프레임 인덱스 (12개 모서리)
+	UINT indices[] = {
+		0, 1, 1, 2, 2, 3, 3, 0, // 앞면
+		4, 5, 5, 6, 6, 7, 7, 4, // 뒷면
+		0, 4, 1, 5, 2, 6, 3, 7	// 연결
+	};
+
+	const UINT indexBufferSize = sizeof(indices);
+	bufferDesc.Width = indexBufferSize;
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_wireFrameIndexBuffer)
+	));
+
+	UINT8* pIndexDataBegin;
+	ThrowIfFailed(m_wireFrameIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, indices, sizeof(indices));
+	m_wireFrameIndexBuffer->Unmap(0, nullptr);
+
+	m_wireFrameIndexBufferView.BufferLocation = m_wireFrameIndexBuffer->GetGPUVirtualAddress();
+	m_wireFrameIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_wireFrameIndexBufferView.SizeInBytes = indexBufferSize;
+
+	// 상수 버퍼 생성
+	const UINT constantBufferSize = sizeof(ConstantBuffer);
+	bufferDesc.Width = constantBufferSize;
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_wireFrameConstantBuffer)
+	));
+
+	ThrowIfFailed(m_wireFrameConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pWireFrameCbvDataBegin)));
 }
 
 void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
 	// 플레이어 자체 렌더링
 	Player::Render(cmdList, view, projection);
+
+	// 와이어프레임 박스 렌더링
+	cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
+	cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
+
+	// 플레이어와 같은 위치, 회전
+	DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
+	DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
+	DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
+	DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
+
+	DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
+	memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
+
+	cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
+	cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
 }
 
 void LocalPlayer::Update(float deltaTime)
