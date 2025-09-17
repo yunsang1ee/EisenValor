@@ -18,6 +18,7 @@ void Player::Initialize(ID3D12Device* device)
 						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)},
 						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)}
 	};
+	m_vertices.assign_range(vertices);
 
 	// 인덱스 데이터
 	UINT indices[] = {// 전면
@@ -33,6 +34,7 @@ void Player::Initialize(ID3D12Device* device)
 					  // 하단
 					  0, 3, 7, 0, 7, 4
 	};
+	m_indices.assign_range(indices);
 
 	// 버텍스 버퍼 생성
 	const UINT			  vertexBufferSize = sizeof(vertices);

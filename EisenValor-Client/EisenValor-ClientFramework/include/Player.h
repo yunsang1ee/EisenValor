@@ -2,6 +2,7 @@
 #include "stdafxClientFramework.h"
 #include "GameObject.h"
 #include "DxCommon.h"
+#include "Vertex.h"
 
 class Player : public GameObject
 {
@@ -14,6 +15,15 @@ public:
 	virtual void Update(float deltaTime) override;
 	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 		override;
+
+	void			BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList);
+	ID3D12Resource* GetBottomLevelAS() const { return m_bottomLevelAS.Get(); }
+
+	// Geometry 데이터 접근용
+	const std::vector<Vertex>&	 GetVertices() const { return m_vertices; }
+	const std::vector<uint16_t>& GetIndices() const { return m_indices; }
+	ID3D12Resource*				 GetVertexBuffer() const { return m_vertexBuffer.Get(); }
+	ID3D12Resource*				 GetIndexBuffer() const { return m_indexBuffer.Get(); }
 
 	// GameObject의 ObjectType 반환
 	virtual ObjectType GetObjectType() const override { return ObjectType::PLAYER; }
@@ -34,7 +44,11 @@ public:
 	// 카메라 관련 함수 추가
 	DirectX::XMMATRIX GetViewMatrix() const;
 
-	private:
+	DirectX::XMMATRIX GetTransform() const;
+
+	virtual RaytracingInstanceType GetRaytracingInstanceType() const override { return RaytracingInstanceType::Player; }
+
+private:
 	Vec3 PredictPosition(const Vec3& pos, const Vec3& vel, const Vec3& acc, double t)
 	{
 		float tf = static_cast<float>(t);
@@ -46,7 +60,8 @@ public:
 		};
 	}
 
-	Vec3 Lerp(const Vec3& a, const Vec3& b, float t) {
+	Vec3 Lerp(const Vec3& a, const Vec3& b, float t)
+	{
 		return Vec3{a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t};
 	}
 
@@ -78,4 +93,10 @@ protected:
 	ComPtr<ID3D12Resource> m_constantBuffer3; // 표시등
 	ConstantBuffer		   m_constantBufferData3;
 	UINT8*				   m_pCbvDataBegin3 = nullptr;
+
+	ComPtr<ID3D12Resource> m_bottomLevelAS;
+	ComPtr<ID3D12Resource> m_scratchBuffer;
+
+	std::vector<Vertex>	  m_vertices;
+	std::vector<uint16_t> m_indices;
 };

@@ -35,4 +35,5 @@ public:
 	std::shared_ptr<LocalPlayer> GetLocalPlayer() { return m_localPlayer; }
 	uint32						 GetLocalID() { return m_localID; }
 	std::shared_ptr<GameObject>	 FindObject(const uint32 id);
+	std::vector<std::shared_ptr<GameObject>>& GetAllObjects() { return m_gameObjects; }
 };

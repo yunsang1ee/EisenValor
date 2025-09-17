@@ -27,12 +27,23 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 	}
 
 	// Root Signature 버전
-	caps.rootSignature.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	if (FAILED(
-			device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &caps.rootSignature, sizeof(caps.rootSignature))
-		))
+	D3D_ROOT_SIGNATURE_VERSION rootSignatureVersions[] = {
+		D3D_ROOT_SIGNATURE_VERSION_1_2, D3D_ROOT_SIGNATURE_VERSION_1_1, D3D_ROOT_SIGNATURE_VERSION_1_0
+	};
+
+	caps.rootSignature.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+
+	for (auto version : rootSignatureVersions)
 	{
-		caps.rootSignature.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+		D3D12_FEATURE_DATA_ROOT_SIGNATURE tempRootSig = {};
+		tempRootSig.HighestVersion = version;
+
+		if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &tempRootSig, sizeof(tempRootSig))))
+		{
+			caps.rootSignature.HighestVersion = tempRootSig.HighestVersion;
+			DEBUG_LOG_FMT("[DxFeatureCaps] Root Signature Version: 1.{}\n", static_cast<int>(version));
+			break;
+		}
 	}
 
 	// ===== 셰이더 모델 쿼리 =====
@@ -131,9 +142,7 @@ void DxFeatureCaps::LogBasicInfo() const
 	DEBUG_LOG_FMT("Device ID: 0x{:04X}\n", deviceId);
 
 	DEBUG_LOG_FMT("Shader Model: {}\n", GetShaderModelString(shaderModel.HighestShaderModel));
-	DEBUG_LOG_FMT(
-		"Root Signature: {}\n", rootSignature.HighestVersion == D3D_ROOT_SIGNATURE_VERSION_1_1 ? "1.1" : "1.0"
-	);
+	DEBUG_LOG_FMT("Root Signature: 1.{}\n", std::to_string(static_cast<int>(rootSignature.HighestVersion)));
 
 	DEBUG_LOG_FMT("Resource Binding Tier: {}\n", static_cast<int>(options.ResourceBindingTier));
 	DEBUG_LOG_FMT("Resource Heap Tier: {}\n", static_cast<int>(options.ResourceHeapTier));

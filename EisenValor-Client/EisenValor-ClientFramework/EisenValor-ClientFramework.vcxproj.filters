@@ -271,5 +271,6 @@
     <None Include="..\Libraries\inc\SimpleMath.inl">
       <Filter>Common\Math</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

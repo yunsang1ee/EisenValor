@@ -2,6 +2,7 @@
 #include "stdafxClientFramework.h"
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <dxcapi.h>
 #include <D3Dcompiler.h>
 #include <wrl/client.h>
 #include <DirectXMath.h>
@@ -10,6 +11,7 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 #pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxcompiler.lib")
 
 namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;
@@ -38,6 +40,74 @@ private:
 	int			m_line;
 	std::string m_expression;
 };
+
+//===============================================================
+
+enum class RaytracingInstanceType : uint32_t
+{
+	Ground = 0,
+	Player = 1,
+	NPC = 2
+};
+
+namespace RaytracingInstanceID
+{
+constexpr uint32_t kGround = 0;
+constexpr uint32_t kLocalPlayer = 1;
+constexpr uint32_t kPlayer = 100;
+constexpr uint32_t kNPC = 200;
+} // namespace RaytracingInstanceID
+
+enum class ERTGlobalRootSignatureSlot : uint32_t
+{
+	AccelerationStructureSlot = 0,
+	OutputViewSlot,
+	CameraConstantSlot,
+	Count
+};
+
+struct CameraConstants
+{
+	DirectX::XMFLOAT4X4 viewMatrix;
+	DirectX::XMFLOAT4X4 projMatrix;
+	DirectX::XMFLOAT4X4 viewProjInverse;
+	DirectX::XMFLOAT3	cameraPosition;
+	float				_padding0;
+	DirectX::XMFLOAT3	cameraDirection;
+	float				_padding1;
+};
+
+/// <materialMask>
+/// HasAlbedoTexture    = 1 << 0,
+/// HasNormalTexture    = 1 << 1,
+/// HasMetallicTexture  = 1 << 2,
+/// HasRoughnessTexture = 1 << 3,
+/// HasEmissiveTexture  = 1 << 4,
+/// IsTransparent       = 1 << 5,
+/// </materialMask>
+struct RTConstantBuffer
+{
+	DirectX::XMFLOAT3X4 mvp;		   // 12 dwords
+	DWORD				materialIndex; // 1 dword
+	DWORD				materialMask;  // 1 dword
+	DWORD				padding[2];	   // 2 dwords (16-byte 정렬 맞춤)
+}; // 총 16 dwords (64 bytes)
+
+enum class ERTLocalRootSignatureSlot : uint32_t
+{
+	ConstatntSlot,
+	VertexBufferSlot,
+	IndexBufferSlot,
+	MaterialDataSlot,
+	Count
+};
+struct LocalRootArgument
+{
+	RTConstantBuffer		  cb;			// 16 dwords
+	D3D12_GPU_VIRTUAL_ADDRESS vbGPUAddress; // 2 dwords
+	D3D12_GPU_VIRTUAL_ADDRESS ibGPUAddress; // 2 dwords
+	DWORD					  padding[4];	// 4 dwords (16-byte 정렬 맞춤)
+}; // 총 24 dwords (96 bytes)
 
 // MVP 행렬 추가(상수버퍼) 25.07.20
 struct ConstantBuffer

@@ -14,6 +14,7 @@ void Ground::Initialize(ID3D12Device* device)
 		{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.4f, 0.2f, 0.0f, 1.0f)},
 		{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(0.4f, 0.2f, 0.0f, 1.0f)}
 	};
+	m_vertices.assign_range(vertices);
 
 	uint16_t indices[] = {
 		0, 1, 2, 0, 2, 3, // 전면
@@ -23,6 +24,7 @@ void Ground::Initialize(ID3D12Device* device)
 		1, 5, 6, 1, 6, 2, // 상단
 		0, 3, 7, 0, 7, 4  // 하단
 	};
+	m_indices.assign_range(indices);
 
 	// 정점 버퍼 생성
 	const UINT			  vertexBufferSize = sizeof(vertices);

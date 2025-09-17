@@ -213,7 +213,7 @@ DirectX::XMFLOAT4 NPC::GetTeamColor() const
 		case NPC_TYPE::GENERAL:
 			return DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
 		case NPC_TYPE::SOLDIER:
-			return DirectX::XMFLOAT4(0.3f	, 0.3f, 1.0f, 1.0f); // 연파랑
+			return DirectX::XMFLOAT4(0.3f, 0.3f, 1.0f, 1.0f); // 연파랑
 		case NPC_TYPE::BATTLE_RAM:
 			return DirectX::XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f); // 하늘색
 		}

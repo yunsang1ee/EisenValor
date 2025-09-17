@@ -25,6 +25,8 @@ public:
 
 	virtual ObjectType GetObjectType() const = 0;
 
+	virtual RaytracingInstanceType GetRaytracingInstanceType() const = 0;
+
 public:
 	void Handle_SC_MOVE(
 		const Vec3& pos, const Vec3& rot, const Vec3& velocity, const Vec3& accel, const uint64 timeStamp
@@ -42,12 +44,12 @@ protected:
 	Vec3 m_velocity{0.f, 0.f, 0.f};
 	Vec3 m_acceleration{0.f, 0.f, 0.f};
 
-	public:
-   Vec3		lastServerPosition;
-	Vec3	lastServerVelocity;
-	Vec3	lastServerAcceleration;
-	Vec3	lastServerRotation;
-	uint64	lastServerTimestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+public:
+	Vec3   lastServerPosition;
+	Vec3   lastServerVelocity;
+	Vec3   lastServerAcceleration;
+	Vec3   lastServerRotation;
+	uint64 lastServerTimestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
 public:
 	bool keyup{false};
