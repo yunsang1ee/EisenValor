@@ -1,7 +1,7 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++에서 생성한 포함 파일입니다.
 // 다음에서 사용 EisenValor.rc
-
+//
 #define IDS_APP_TITLE 103
 
 #define IDR_MAINFRAME 128
