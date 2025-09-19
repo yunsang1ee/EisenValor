@@ -16,8 +16,9 @@ namespace Server {
 		};
 
 		struct  PlayerTemplate: public CreatureTemplate {
-			// TODO: PlayerTemplate
+			// TODO: PlayerTemplate, 플레이어 만들 때 필요한 모든 것 전부...
 			uint32 id;
+			uint32 attackRange;
 		};
 
 		struct SpawnBaseTemplate : public CreatureTemplate { 

@@ -4,6 +4,13 @@
 
 namespace Server {
 	namespace Contents {
+		enum class GENERAL_STATE_TYPE : uint8 {
+			IDLE,
+			TRACE,
+
+			END
+		};
+
 		class GeneralIdleState : public State {
 		private:
 			static constexpr float detectRange{ 3.f };
@@ -13,11 +20,11 @@ namespace Server {
 			virtual ~GeneralIdleState();
 
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
 		public:
-			virtual void Update(const float dt) override;
+			virtual uint8 Update(const float dt) override;
 		};
 
 		class GeneralTraceState : public State {
@@ -29,11 +36,15 @@ namespace Server {
 			virtual ~GeneralTraceState();
 
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
 		public:
-			virtual void Update(const float dt) override;
+			virtual uint8 Update(const float dt) override;
+		};
+
+		class GeneralAttackState : public State {
+
 		};
 
 	}

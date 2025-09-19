@@ -9,7 +9,7 @@
 #include "SoldierState.h"
 
 Server::Contents::GeneralIdleState::GeneralIdleState()
-	:State(STATE_TYPE::IDLE)
+	:State(etou8(GENERAL_STATE_TYPE::IDLE))
 {
 }
 
@@ -17,17 +17,17 @@ Server::Contents::GeneralIdleState::~GeneralIdleState()
 {
 }
 
-void Server::Contents::GeneralIdleState::Enter()
+void Server::Contents::GeneralIdleState::Enter(const float dt)
 {
 	std::cout << "GENERAL IDLE ENTER" << std::endl;
 }
 
-void Server::Contents::GeneralIdleState::Exit()
+void Server::Contents::GeneralIdleState::Exit(const float dt)
 {
 	std::cout << "GENERAL IDLE EXIT" << std::endl;
 }
 
-void Server::Contents::GeneralIdleState::Update(const float dt)
+uint8 Server::Contents::GeneralIdleState::Update(const float dt)
 {
 	const auto room = GetFSM()->GetOwner()->GetGameRoom();
 	if(room) {
@@ -41,15 +41,17 @@ void Server::Contents::GeneralIdleState::Update(const float dt)
 
 				if(dist <= detectRange) {
 					std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner())->SetTarget(player);
-					GetFSM()->ChangeState(STATE_TYPE::WALK);
+					return etou8(GENERAL_STATE_TYPE::TRACE);
 				}
 			}
 		}
 	}
+
+	return GetType();
 }
 
 Server::Contents::GeneralTraceState::GeneralTraceState()
-	:State(STATE_TYPE::WALK)
+	:State(etou8(GENERAL_STATE_TYPE::TRACE))
 {
 }
 
@@ -57,17 +59,17 @@ Server::Contents::GeneralTraceState::~GeneralTraceState()
 {
 }
 
-void Server::Contents::GeneralTraceState::Enter()
+void Server::Contents::GeneralTraceState::Enter(const float dt)
 {
 	std::cout << "GENERAL TRACE ENTER" << std::endl;
 }
 
-void Server::Contents::GeneralTraceState::Exit()
+void Server::Contents::GeneralTraceState::Exit(const float dt)
 {
 	std::cout << "GENERAL TRACE EXIT" << std::endl;
 }
 
-void Server::Contents::GeneralTraceState::Update(const float dt)
+uint8 Server::Contents::GeneralTraceState::Update(const float dt)
 {
 	const auto owner = std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner());
 
@@ -78,7 +80,7 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 		Vec3 dist = targetPos - myPos;
 
 		if(dist.Length() <= attackRange || dist.Length() >= 5.f) {
-			GetFSM()->ChangeState(STATE_TYPE::IDLE);
+			return etou8(GENERAL_STATE_TYPE::IDLE);
 		}
 
 		dist.Normalize();
@@ -96,7 +98,7 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 			gameRoom->ExecuteAsyncronously(&Server::Contents::GameRoom::Broadcast, std::move(pb));
 		}
 
-		const auto troopController = owner->GetComponent<Server::Contents::TroopController>();
+		/*const auto troopController = owner->GetComponent<Server::Contents::TroopController>();
 		const auto& soldiers = troopController->GetSoldiers();
 
 		for(const auto& [id, soldier] : soldiers) {
@@ -105,11 +107,9 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 				if(fsm->GetCurState()->GetType() != STATE_TYPE::WALK) {
 					s->GetComponent<Server::Contents::FSM>()->ChangeState(STATE_TYPE::WALK);
 				}
-				const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
-				if(walkState) {
-					walkState->SetTargetPos(targetPos);
-				}
 			}
-		}
+		}*/
 	}
+
+	return GetType();
 }

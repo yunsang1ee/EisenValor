@@ -48,13 +48,14 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 
 	const auto fsm = general->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(general);
-	auto idle = std::make_shared<Server::Contents::GeneralIdleState>();
-	auto trace = std::make_shared<Server::Contents::GeneralTraceState>();
-	idle->SetFSM(fsm);
-	trace->SetFSM(fsm);
+	// TODO: 굳이 shared_ptr? 할 필요 없음, unique로 관리해도 충분함.
+
+	auto idle = std::make_unique<Server::Contents::GeneralIdleState>();
+	auto trace = std::make_unique<Server::Contents::GeneralTraceState>();
 	fsm->AddState(std::move(idle));
 	fsm->AddState(std::move(trace));
-	fsm->SetCurState(STATE_TYPE::IDLE);
+	
+	// fsm->SetCurState(STATE_TYPE::IDLE);
 
 	return general;
 }
@@ -69,16 +70,14 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	auto fsm = soldier->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(soldier);
 
-	auto idleState = std::make_shared<Server::Contents::SoldierIdleState>();
-	auto walkState = std::make_shared<Server::Contents::SoldierWalkState>();
+	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
+	auto walkState = std::make_unique<Server::Contents::SoldierTraceState>();
 
-	idleState->SetFSM(fsm);
-	walkState->SetFSM(fsm);
 	walkState->SetOwnerGeneral(t.ownerGeneral);
 
-	fsm->AddState(idleState);
-	fsm->AddState(walkState);
-	fsm->SetCurState(STATE_TYPE::IDLE);
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(walkState));
+	// fsm->SetCurState(STATE_TYPE::IDLE);
 
 	return soldier;
 }

@@ -6,6 +6,11 @@ namespace Server {
 	namespace Contents {
 		class GameObject;
 
+		enum class SOLDIER_STATE_TYPE : uint8 {
+			IDLE,
+			TRACE,
+
+		};
 		class SoldierIdleState : public State {
 		private:
 
@@ -14,14 +19,14 @@ namespace Server {
 			virtual ~SoldierIdleState();
 
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
 		public:
-			virtual void Update(const float dt) override;
+			virtual uint8 Update(const float dt) override;
 		};
 
-		class SoldierWalkState : public State {
+		class SoldierTraceState : public State {
 		private:
 			Vec3						m_targetPos;
 			bool						m_hasTarget;
@@ -31,15 +36,15 @@ namespace Server {
 			std::weak_ptr<GameObject>	m_ownerGeneral;
 
 		public:
-			SoldierWalkState();
-			virtual ~SoldierWalkState();
+			SoldierTraceState();
+			virtual ~SoldierTraceState();
 
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
 		public:
-			virtual void Update(const float dt) override;
+			virtual uint8 Update(const float dt) override;
 
 		public:
 			void SetTargetPos(const Vec3& targetPos) { m_hasTarget = true;  m_targetPos = targetPos; }
