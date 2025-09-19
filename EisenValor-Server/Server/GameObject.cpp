@@ -9,7 +9,7 @@ Server::Contents::GameObject::GameObject(const GAME_OBJECT_TYPE type, const TEAM
 void Server::Contents::GameObject::Update(const float dt)
 {
 	for(const auto& comp : m_components) {
-		if(comp)
+		if(comp && comp->IsActive())
 			comp->Update(dt);
 	}
 }

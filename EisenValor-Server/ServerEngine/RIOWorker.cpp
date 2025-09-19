@@ -89,7 +89,7 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
-	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
+	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id) << std::endl;
 	auto session = m_sessionPool.get()->DeqSession();
 	session->SetOwner(shared_from_this());
 	session->Connect(socket, clientAddr);

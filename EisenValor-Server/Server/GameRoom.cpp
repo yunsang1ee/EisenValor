@@ -5,57 +5,12 @@
 #include "NPC.h"
 #include "ClientSession.h"
 #include "SoldierState.h"
-
 #include "TroopController.h"
 
 void Server::Contents::GameRoom::Init()
 {
 	// TODO: 맵 데이터 로딩
-	// TODO: NPC 초기화
-	// static constexpr uint16 MAX_GENERAL_NPC = 1;
-	// Sstatic constexpr uint16 MAX_SOLDIER_NPC = 1;
-
-	//for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
-	//	GeneralTemplate t;
-	//	t.npcType = NPC_TYPE::GENERAL;
-	//	t.objType = GAME_OBJECT_TYPE::NPC;
-	//	t.pos = Vec3{ -10.f + (i * 5.f), 0.f, 0.f };
-	//	t.rot = Vec3{ 0.f, 0.f, 0.f };
-	//	t.teamType = TEAM_TYPE::ENEMY;
-	//	t.stat.hp = 100;
-	//	auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
-
-	//	// TODO: 적 장수를 따라다니는 병사들 생성
-	//	for(int j = 0; j < MAX_SOLDIER_NPC; ++j) {
-	//		SoldierTemplate s;
-	//		s.npcType = NPC_TYPE::SOLDIER;
-	//		s.objType = GAME_OBJECT_TYPE::NPC;
-	//		t.pos = Vec3{ -10.f + (i * 5.f), 0.f, -2.f	 };
-	//		t.rot = Vec3{ 0.f, 0.f, 0.f };
-	//		t.teamType = TEAM_TYPE::ENEMY;
-	//		t.stat.hp = 100;
-
-	//		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
-	//		const auto& fsm = soldier->GetComponent<Server::Contents::FSM>();
-
-	//		auto idleState = std::make_shared<Server::Contents::SoldierIdleState>();
-	//		auto walkState = std::make_shared<Server::Contents::SoldierWalkState>();
-
-	//		idleState->SetFSM(fsm);
-	//		walkState->SetFSM(fsm);
-	//		walkState->SetOwnerGeneral(general);
-
-	//		fsm->AddState(idleState);
-	//		fsm->AddState(walkState);
-	//		fsm->SetCurState(STATE_TYPE::IDLE);
-
-
-	//		AddNpc(std::move(soldier));
-	//	}
-
-	//	AddNpc(std::move(general));
-	//}
-	
+	InitNPCS();
 	ExecuteAsyncronously(&GameRoom::Update);
 	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
@@ -71,6 +26,7 @@ void Server::Contents::GameRoom::EnterRoom(std::shared_ptr<ClientSession> client
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 
 	PlayerTemplate t;
+	t.id = clientSession->GetID();
 	t.pos = startPos;
 	t.teamType = TEAM_TYPE::ALLY;
 	t.objType = GAME_OBJECT_TYPE::PLAYER;
@@ -169,6 +125,41 @@ void Server::Contents::GameRoom::RemovePlayer(std::shared_ptr<Player> player)
 	}
 }
 
+void Server::Contents::GameRoom::InitNPCS()
+{
+	static constexpr uint16 MAX_GENERAL_NPC = 1;
+	static constexpr uint16 MAX_SOLDIER_NPC = 3;
+
+	for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
+		GeneralTemplate g;
+		g.npcType = NPC_TYPE::GENERAL;
+		g.objType = GAME_OBJECT_TYPE::NPC;
+		g.pos = Vec3{ -10.f + (i * 5.f), 0.f, 0.f };
+		g.rot = Vec3{ 0.f, 0.f, 0.f };
+		g.teamType = TEAM_TYPE::ENEMY;
+		g.stat.hp = 100;
+		auto general = Server::Contents::GameObjectFactory::CreateGeneral(g);
+
+		for(int j = 0; j < MAX_SOLDIER_NPC; ++j) {
+			SoldierTemplate s;
+			s.npcType = NPC_TYPE::SOLDIER;
+			s.objType = GAME_OBJECT_TYPE::NPC;
+			s.pos = g.pos + Vec3{ (j * 2.f), 0.f, -3.f };
+			s.rot = Vec3{ 0.f, 0.f, 0.f };
+			s.teamType = TEAM_TYPE::ENEMY;
+			s.stat.hp = 100;
+			s.ownerGeneral = general;
+
+			auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
+			general->GetComponent<Server::Contents::TroopController>()->AddSoldier(soldier);
+
+			AddNpc(std::move(soldier));
+		}
+
+		AddNpc(std::move(general));
+	}
+}
+
 void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo)
 {
 	player->SetPos(kinematicInfo.position);
@@ -180,7 +171,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	ExecuteAsyncronously(&GameRoom::Broadcast, std::move(packetBuffer));
 
-	// TODO: 수정
+	// TODO: 플레이어를 따라다니는 병사들의 이동 수정
 
 	// 2. 병사 이동 처리
 	//auto& soldiers = player->GetNpcs();
@@ -223,64 +214,55 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
 {
-	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+	// TODO: 병사 소환 수정
+	// TODO: 플레이어가 병사 스폰지에 있으면 병사 받도록.
+	// TODO: 병사 대열 수정
 
-	constexpr int kMaxSoldierCount = 20;
-	constexpr int kRowSize = 5;
-	constexpr float kSpacing = 3.f;
+	//const auto troopController = player->GetComponent<Server::Contents::TroopController>();
 
-	const int currentCount = static_cast<int>(troopController->GetSoldiers().size());
-	if(currentCount >= kMaxSoldierCount)
-		return;
+	//constexpr int kMaxSoldierCount = 20;
+	//constexpr int kRowSize = 5;
+	//constexpr float kSpacing = 3.f;
 
-	const int soldiersToSummon = kMaxSoldierCount - currentCount;
+	//const int currentCount = static_cast<int>(troopController->GetSoldiers().size());
+	//if(currentCount >= kMaxSoldierCount)
+	//	return;
 
-	const Vec3 playerPos = player->GetPos();
-	const Vec3 playerRot = player->GetRotation();
+	//const int soldiersToSummon = kMaxSoldierCount - currentCount;
 
-	for(int i = 0; i < soldiersToSummon; ++i) {
-		int soldierIndex = currentCount + i;
+	//const Vec3 playerPos = player->GetPos();
+	//const Vec3 playerRot = player->GetRotation();
 
-		int row = soldierIndex / kRowSize;
-		int col = soldierIndex % kRowSize;
+	//for(int i = 0; i < soldiersToSummon; ++i) {
+	//	int soldierIndex = currentCount + i;
 
-		Vec3 offset;
-		offset.x = (static_cast<float>(col) - 2.0f) * kSpacing;  // 중앙 정렬
-		offset.y = 0.0f;
-		offset.z = (row + 1) * kSpacing;  // 뒤로 정렬
+	//	int row = soldierIndex / kRowSize;
+	//	int col = soldierIndex % kRowSize;
 
-		const Vec3 spawnPos = {
-			playerPos.x + offset.x,
-			playerPos.y + offset.y,
-			playerPos.z + offset.z
-		};
+	//	Vec3 offset;
+	//	offset.x = (static_cast<float>(col) - 2.0f) * kSpacing;  // 중앙 정렬
+	//	offset.y = 0.0f;
+	//	offset.z = (row + 1) * kSpacing;  // 뒤로 정렬
 
-		Server::Contents::SoldierTemplate t;
-		t.pos = spawnPos;
-		t.rot = playerRot;
-		t.objType = GAME_OBJECT_TYPE::NPC;
-		t.npcType = NPC_TYPE::SOLDIER;
-		t.teamType = TEAM_TYPE::ALLY;
+	//	const Vec3 spawnPos = {
+	//		playerPos.x + offset.x,
+	//		playerPos.y + offset.y,
+	//		playerPos.z + offset.z
+	//	};
 
-		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
-		const auto& fsm = soldier->GetComponent<Server::Contents::FSM>();
+	//	Server::Contents::SoldierTemplate t;
+	//	t.pos = spawnPos;
+	//	t.rot = playerRot;
+	//	t.objType = GAME_OBJECT_TYPE::NPC;
+	//	t.npcType = NPC_TYPE::SOLDIER;
+	//	t.teamType = TEAM_TYPE::ALLY;
 
-		auto idleState = std::make_shared<Server::Contents::SoldierIdleState>();
-		auto walkState = std::make_shared<Server::Contents::SoldierWalkState>();
+	//	auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+	//	troopController->AddSoldier(soldier);
 
-		idleState->SetFSM(fsm);
-		walkState->SetFSM(fsm);
-		walkState->SetOwnerGeneral(player);
-
-		fsm->AddState(idleState);
-		fsm->AddState(walkState);
-		fsm->SetCurState(STATE_TYPE::IDLE);
-
-		troopController->AddSoldier(soldier);
-
-		auto gameWorld = player->GetGameRoom();
-		gameWorld->ExecuteAsyncronously(&Server::Contents::GameRoom::AddNpc, std::static_pointer_cast<Server::Contents::NPC>(soldier));
-	}
+	//	auto gameWorld = player->GetGameRoom();
+	//	gameWorld->ExecuteAsyncronously(&Server::Contents::GameRoom::AddNpc, std::static_pointer_cast<Server::Contents::NPC>(soldier));
+	//}
 }
 
 void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)

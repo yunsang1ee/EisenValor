@@ -7,7 +7,6 @@
 Server::Contents::Player::Player()
 	:Creature(GAME_OBJECT_TYPE::PLAYER, TEAM_TYPE::ALLY)
 {
-	std::cout << std::format("Player! ID = {}", GetID()) << std::endl;
 }
 
 Server::Contents::Player::~Player()

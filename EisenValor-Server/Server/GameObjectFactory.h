@@ -2,6 +2,8 @@
 
 namespace Server {
 	namespace Contents {
+		class NPC;
+
 		struct GameObjectTemplate {
 			Vec3				pos;
 			Vec3				rot;
@@ -13,8 +15,9 @@ namespace Server {
 			StatInfo stat;
 		};
 
-		struct PlayerTemplate : public CreatureTemplate {
+		struct  PlayerTemplate: public CreatureTemplate {
 			// TODO: PlayerTemplate
+			uint32 id;
 		};
 
 		struct SpawnBaseTemplate : public CreatureTemplate { 
@@ -30,7 +33,8 @@ namespace Server {
 		};
 
 		struct SoldierTemplate : public NPCTemplate {
-			// TODO: SoldierTemplate
+			// TODO: SoldierTemplat
+			std::weak_ptr<NPC> ownerGeneral;
 		};
 		
 		class Player;

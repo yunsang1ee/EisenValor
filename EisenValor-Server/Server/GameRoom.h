@@ -47,15 +47,18 @@ namespace Server {
 			void AddNpc(std::shared_ptr<NPC> npc);
 			void RemoveNPC(std::shared_ptr<NPC> npc);
 
-		private:
-			void AddPlayer(std::shared_ptr<Player>&& player) noexcept;
-			void RemovePlayer(std::shared_ptr<Player> player);
-
 		public:
 			// By Single
 			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo);
 			void Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player);
 			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player);
+
+		private:
+			void AddPlayer(std::shared_ptr<Player>&& player) noexcept;
+			void RemovePlayer(std::shared_ptr<Player> player);
+
+		private:
+			void InitNPCS();
 		};
 	}
 }

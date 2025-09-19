@@ -21,7 +21,6 @@ namespace Server {
 			virtual void Update(const float dt) override;
 		};
 
-
 		class SoldierWalkState : public State {
 		private:
 			Vec3						m_targetPos;

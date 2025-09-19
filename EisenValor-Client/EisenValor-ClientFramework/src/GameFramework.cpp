@@ -187,15 +187,13 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
 	std::string id, pw;
-	std::cout << "Input ID(any):";
+	// std::cout << "Input ID(any):";
+	// std::cout << "\n";
 	// std::cin >> id;
 	id = "ID";
-	std::cout << "\n";
-	std::cout << "Input PW(any):";
+	// std::cout << "Input PW(any):";
 	// std::cin >> pw;
 	pw = "PW";
-
-	Sleep(100);
 
 	auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));

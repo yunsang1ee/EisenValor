@@ -20,12 +20,11 @@ namespace Server {
 			virtual void Update(const float dt) override;
 		};
 
-
 		class GeneralTraceState : public State {
 		public:
 			static constexpr float attackRange{ 1.f };
 
-		private:
+		public:
 			GeneralTraceState();
 			virtual ~GeneralTraceState();
 
@@ -36,6 +35,7 @@ namespace Server {
 		public:
 			virtual void Update(const float dt) override;
 		};
+
 	}
 }
 

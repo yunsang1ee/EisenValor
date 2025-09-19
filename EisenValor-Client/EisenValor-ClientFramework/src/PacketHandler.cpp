@@ -91,7 +91,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		recvPkt.kinematic_info()->accel().z()
 	};
 
-	switch (auto type = static_cast<ObjectType>(recvPkt.obj_type()))
+	switch (const auto type = static_cast<ObjectType>(recvPkt.obj_type()))
 	{
 	case ObjectType::PLAYER:
 	{

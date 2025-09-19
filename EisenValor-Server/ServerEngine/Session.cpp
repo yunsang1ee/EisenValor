@@ -16,7 +16,7 @@ ServerEngine::Session::Session()
 
 ServerEngine::Session::~Session()
 {
-	std::cout << std::format("~Session, ID = {}", m_id);
+	std::cout << std::format("~Session, ID = {}", m_id)<< std::endl;
 	CloseSocket();
 }
 
@@ -62,8 +62,7 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 
 	std::cout << reason.data() << std::endl;
 
-	// m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
-	// m_owner.lock()->ReleaseSession(shared_from_this());
+	m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
 }
 
 void ServerEngine::Session::FlushPacketQueueSecond()

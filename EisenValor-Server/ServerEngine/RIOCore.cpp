@@ -48,6 +48,7 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 
 	// 5. Create RIOWorker
 	m_rioWorkerCnt = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
+	// m_rioWorkerCnt = 2;
 	m_rioWorkers.reserve(m_rioWorkerCnt);
 
 	for(uint16 i = 1; i <= m_rioWorkerCnt; ++i) {

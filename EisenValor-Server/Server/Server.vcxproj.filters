@@ -67,17 +67,17 @@
     <ClCompile Include="TargetTraceNode.cpp">
       <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
-    <ClCompile Include="SoldierState.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneralState.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State</Filter>
-    </ClCompile>
     <ClCompile Include="ServerGlobalFunc.cpp">
       <Filter>05. Global\00. Func</Filter>
     </ClCompile>
     <ClCompile Include="TroopController.cpp">
       <Filter>02. Contents\04. Component\02. TroopController</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralState.cpp">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General</Filter>
+    </ClCompile>
+    <ClCompile Include="SoldierState.cpp">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -167,12 +167,6 @@
     </Filter>
     <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode">
       <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State">
-      <UniqueIdentifier>{ed2dfafc-cb9b-4dcc-a35e-3920e277d50b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State">
-      <UniqueIdentifier>{c7011f14-058b-45b6-a67f-204400f62173}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode">
       <UniqueIdentifier>{78ab9b19-e408-4466-b80d-0f7d82c9a817}</UniqueIdentifier>
@@ -281,17 +275,17 @@
     <ClInclude Include="TargetTraceNode.h">
       <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
     </ClInclude>
-    <ClInclude Include="SoldierState.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneralState.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State</Filter>
-    </ClInclude>
     <ClInclude Include="ServerGlobalFunc.h">
       <Filter>05. Global\00. Func</Filter>
     </ClInclude>
     <ClInclude Include="TroopController.h">
       <Filter>02. Contents\04. Component\02. TroopController</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralState.h">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierState.h">
+      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

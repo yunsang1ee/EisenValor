@@ -14,15 +14,19 @@ Server::Contents::SoldierIdleState::SoldierIdleState()
 Server::Contents::SoldierIdleState::~SoldierIdleState()
 {
 }
-
+ 
 void Server::Contents::SoldierIdleState::Enter()
 {
-	// std::cout << "SoldierIdleEnter" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
 }
 
 void Server::Contents::SoldierIdleState::Exit()
 {
-	// std::cout << "SoldierIdleExit" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
 }
 
 void Server::Contents::SoldierIdleState::Update(const float dt)
@@ -41,12 +45,16 @@ Server::Contents::SoldierWalkState::~SoldierWalkState()
 
 void Server::Contents::SoldierWalkState::Enter()
 {
-	// std::cout << "SoldierWalkEnter" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter Soldier Walk", id) << std::endl;
 }
 
 void Server::Contents::SoldierWalkState::Exit()
 {
-	// std::cout << "SoldierWalkExit" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Exit Soldier Walk", id) << std::endl;
 }
 
 float DistanceSquared(const Vec3& a, const Vec3& b)
