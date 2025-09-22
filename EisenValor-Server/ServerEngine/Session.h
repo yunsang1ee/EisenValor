@@ -15,7 +15,7 @@ namespace ServerEngine {
 	private:
 		uint32											m_id;
 		SOCKET											m_socket;
-		std::weak_ptr<RIOWorker>						m_owner;
+		RIOWorker*										m_owner;
 
 		std::atomic_bool								m_connected;
 		SOCKADDR_IN										m_clientAddr{};
@@ -59,7 +59,7 @@ namespace ServerEngine {
 		void Send(const PacketInfo& info);
 
 	public:
-		void SetOwner(std::weak_ptr<RIOWorker> owner) noexcept { m_owner = owner; }
+		void SetOwner(RIOWorker* owner) noexcept { m_owner = owner; }
 		void SetState(const SESSION_STATE state) noexcept { m_state = state; }
 		
 		uint32 GetID() const noexcept { return m_id; }

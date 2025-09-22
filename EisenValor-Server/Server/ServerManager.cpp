@@ -48,6 +48,7 @@ void Server::ServerManager::Run() noexcept
 		ch = _getch();
 		if(ch == ESC) {
 			ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Serve Finish");
+			break;
 		}
 		else {
 			std::this_thread::sleep_for(100ms);

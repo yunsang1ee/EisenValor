@@ -13,7 +13,7 @@ Server::ClientSession::ClientSession()
 
 Server::ClientSession::~ClientSession()
 {
-	std::cout << "~ClientSesion" << std::endl;
+	// std::cout << "~ClientSesion" << std::endl;
 }
 
 void Server::ClientSession::OnConnected()

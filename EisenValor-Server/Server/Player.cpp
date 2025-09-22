@@ -12,7 +12,7 @@ Server::Contents::Player::Player()
 
 Server::Contents::Player::~Player()
 {
-	std::cout << std::format("~Player! ID = {}", GetID()) << std::endl;
+	// std::cout << std::format("~Player! ID = {}", GetID()) << std::endl;
 }
 
 void Server::Contents::Player::Update(const float dt)

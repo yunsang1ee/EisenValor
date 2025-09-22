@@ -50,6 +50,7 @@ void ServerEngine::ThreadManager::InitTLS() noexcept
 
 void ServerEngine::ThreadManager::DestroyTLS() noexcept
 {
-	std::cout << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
+	std::osyncstream oss{ std::cout };
+	oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
 }
 

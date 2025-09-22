@@ -9,8 +9,6 @@ namespace Server {
 		enum class SOLDIER_STATE_TYPE : uint8 {
 			IDLE,
 			TRACE,
-			ATTACK,
-
 
 		};
 		class SoldierIdleState : public State {

@@ -9,5 +9,5 @@ Server::Contents::Creature::Creature(const GAME_OBJECT_TYPE type, const TEAM_TYP
 
 Server::Contents::Creature::~Creature()
 {
-	std::cout << std::format("~CREATURE! ID = {}", GetID()) << std::endl;
+	// std::cout << std::format("~CREATURE! ID = {}", GetID()) << std::endl;
 }

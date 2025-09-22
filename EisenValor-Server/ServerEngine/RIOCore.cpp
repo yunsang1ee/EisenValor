@@ -51,7 +51,7 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 	m_rioWorkers.reserve(m_rioWorkerCnt);
 
 	for(uint16 i = 1; i <= m_rioWorkerCnt; ++i) {
-		auto rioWorker = std::make_shared<RIOWorker>(i);
+		auto rioWorker = std::make_unique<RIOWorker>(i);
 		if(false == rioWorker->Init(sessionFunc))
 			return false;
 		m_rioWorkers.emplace_back(std::move(rioWorker));

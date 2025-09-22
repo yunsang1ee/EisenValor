@@ -5,7 +5,7 @@ namespace ServerEngine {
 	class SessionPool;
 	class Session;
 
-	class RIOWorker : public std::enable_shared_from_this<RIOWorker> {
+	class RIOWorker {
 	private:
 		RIO_CQ											m_cq;
 		std::unique_ptr<SessionPool>					m_sessionPool;

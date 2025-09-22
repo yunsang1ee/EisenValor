@@ -13,7 +13,7 @@ ServerEngine::RIOWorker::RIOWorker(const uint16 id)
 
 ServerEngine::RIOWorker::~RIOWorker()
 {
-	std::cout << std::format("~RioWorker, ID = {}", m_id);
+	std::cout << std::format("~RioWorker, ID = {}", m_id) << std::endl;;
 }
 
 bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
@@ -91,7 +91,7 @@ void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
 	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
 	auto session = m_sessionPool.get()->DeqSession();
-	session->SetOwner(shared_from_this());
+	session->SetOwner(this);
 	session->Connect(socket, clientAddr);
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	m_connectedSession.push_back(std::move(session));

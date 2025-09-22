@@ -16,7 +16,8 @@ ServerEngine::Session::Session()
 
 ServerEngine::Session::~Session()
 {
-	std::cout << std::format("~Session, ID = {}", m_id);
+	std::osyncstream oss{ std::cout };
+	oss << std::format("~Session, ID = {}", m_id) << std::endl;
 	CloseSocket();
 }
 
@@ -248,7 +249,7 @@ void ServerEngine::Session::Connect(const SOCKET& socket, const SOCKADDR_IN& add
 
 void ServerEngine::Session::Init()
 {
-	const auto& cq = m_owner.lock()->GetCQ();
+	const auto& cq = m_owner->GetCQ();
 
 	// CQ�� ũ�Ⱑ RQ�� ũ�⺸�� ������ ����� ����
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);

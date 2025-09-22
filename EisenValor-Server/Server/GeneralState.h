@@ -9,7 +9,6 @@ namespace Server {
 			TRACE,
 			ATTACK,
 
-
 			END
 		};
 

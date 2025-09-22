@@ -30,15 +30,17 @@ uint8 Server::Contents::GeneralIdleState::Update(const float dt)
 	const auto& players = GetFSM()->GetOwner()->GetGameRoom()->GetPlayers();
 	const Vec3 myPos = GetFSM()->GetOwner()->GetPos();
 
-		for(const auto& [id, player] : players) {
-			const Vec3 playerPos = player->GetPos();
-			const float dist = (playerPos - myPos).Length();
+	for(const auto& [id, player] : players) {
+		const Vec3 playerPos = player->GetPos();
+		const float dist = (playerPos - myPos).Length();
 
-			if(dist <= detectRange) {
-				std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner())->SetTarget(player);
-				return etou8(GENERAL_STATE_TYPE::TRACE);
-			}
+		if(dist <= detectRange) {
+			std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner())->SetTarget(player);
+			return etou8(GENERAL_STATE_TYPE::TRACE);
 		}
+	}
+
+	return GetStateType();
 }
 
 Server::Contents::GeneralTraceState::GeneralTraceState()
