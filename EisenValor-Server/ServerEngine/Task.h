@@ -16,7 +16,7 @@ namespace ServerEngine {
 		template<class T, typename MemFn, typename... Args>
 		explicit Task(std::shared_ptr<T> owner, MemFn memFunc, Args&&... args)
 		{
-			m_cbFunc = [owner = std::move(owner),memFunc, ...args = std::forward<Args>(args)]() mutable
+			m_cbFunc = [owner = std::move(owner), memFunc, ...args = std::forward<Args>(args)]() mutable
 				{
 					std::invoke(memFunc, owner.get(), std::move(args)...);
 				};

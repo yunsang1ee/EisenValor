@@ -250,7 +250,7 @@ DirectX::XMMATRIX Player::GetViewMatrix() const
 	);
 }
 
-void Player::InitializeFan(ID3D12Device* device)
+void Player::InitializeFan(ID3D12Device* device)	
 {
 	// 부채꼴 정점 데이터 생성
 	std::vector<Vertex> fanVertices;

@@ -36,15 +36,14 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	// root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
 	// bt->SetRoot(std::move(root));
 
-	/*const auto fsm = general->AddComponent<Server::Contents::FSM>();
+	const auto fsm = general->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(general);
-	auto idle = std::make_shared<Server::Contents::GeneralIdleState>();
-	auto trace = std::make_shared<Server::Contents::GeneralTraceState>();
-	idle->SetFSM(fsm);
-	trace->SetFSM(fsm);
+
+	auto idle = std::make_unique<Server::Contents::GeneralIdleState>();
+	auto trace = std::make_unique<Server::Contents::GeneralTraceState>();
 	fsm->AddState(std::move(idle));
 	fsm->AddState(std::move(trace));
-	fsm->SetCurState(STATE_TYPE::IDLE);*/
+	fsm->InitStartState(etou8(GENERAL_STATE_TYPE::IDLE));
 
 	return general;
 }
@@ -54,9 +53,19 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	auto soldier = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
 	soldier->SetPos(t.pos);
 	soldier->SetRotation(t.rot);
-	
+	soldier->SetStatInfo(t.stat);
+
 	auto fsm = soldier->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(soldier);
+
+	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
+	auto walkState = std::make_unique<Server::Contents::SoldierTraceState>();
+
+	walkState->SetOwnerGeneral(t.ownerGeneral);
+
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(walkState));
+	fsm->InitStartState(etou8(SOLDIER_STATE_TYPE::IDLE));
 
 	return soldier;
 }

@@ -4,6 +4,15 @@
 
 namespace Server {
 	namespace Contents {
+		enum class GENERAL_STATE_TYPE : uint8 {
+			IDLE,
+			TRACE,
+			ATTACK,
+
+
+			END
+		};
+
 		class GeneralIdleState : public State {
 		private:
 			static constexpr float detectRange{ 3.f };

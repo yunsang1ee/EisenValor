@@ -108,16 +108,18 @@ public:
 		return builder.Release();
 	}
 
-	// TODO: 이 부분 삭제해야 함.
 	static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData) noexcept
 	{
 		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
+		
+		// TODO: PacketBufferPool을 만들어서 여기서 꺼내써야함.
 		auto packetBuffer = std::make_shared<ServerEngine::PacketBuffer>(header);
 		packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 		return packetBuffer;
 	}
 
+	// TODO: 이 부분 삭제해야 함.
 	//static PacketInfo MakePacketInfo(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
 	//{
 	//	const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
@@ -129,6 +131,7 @@ public:
 #pragma region SC_LOGIN_PACKET
 	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id) noexcept
 	{
+		std::cout << "SC_LOGIN_PACKET" << std::endl;
 		return MakePacketBuffer(PACKET_TYPE::SC_LOGIN_PKT, MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
 	}
 
@@ -155,7 +158,7 @@ public:
 		const uint64 timeStamp{ transform.timeStamp };
 
 		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel, accel, timeStamp };
-
+		std::cout << "SC_MY_PLAYER" << std::endl;
 		return MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo));
 	}
 #pragma endregion
@@ -170,7 +173,7 @@ public:
 		const uint64 timeStamp{ transform.timeStamp };
 
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
-
+		std::cout << "SC_ADD_OBJ" << std::endl;
 		return MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, static_cast<uint8>(teamType), static_cast<uint8>(npcType), &info));
 	}
 #pragma endregion

@@ -30,13 +30,14 @@ void Server::Contents::GeneralIdleState::Update(const float dt)
 	const auto& players = GetFSM()->GetOwner()->GetGameRoom()->GetPlayers();
 	const Vec3 myPos = GetFSM()->GetOwner()->GetPos();
 
-	for(const auto& [id, player] : players) {
-		const Vec3 playerPos = player->GetPos();
-		const float dist = (playerPos - myPos).Length();
+		for(const auto& [id, player] : players) {
+			const Vec3 playerPos = player->GetPos();
+			const float dist = (playerPos - myPos).Length();
 
-		if(dist <= detectRange) {
-			std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner())->SetTarget(player);
-			GetFSM()->ChangeState(STATE_TYPE::WALK);
+			if(dist <= detectRange) {
+				std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner())->SetTarget(player);
+				return etou8(GENERAL_STATE_TYPE::TRACE);
+			}
 		}
 	}
 }
@@ -82,6 +83,11 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 		const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
 
 		auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
-		GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
+		const auto gameRoom = GetFSM()->GetOwner()->GetGameRoom();
+		if(gameRoom) {
+			gameRoom->ExecuteAsyncronously(&Server::Contents::GameRoom::Broadcast, std::move(pb));
+		}
 	}
+
+	return GetType();
 }

@@ -7,46 +7,54 @@
 #include "FSM.h"
 
 Server::Contents::SoldierIdleState::SoldierIdleState()
-	:State(STATE_TYPE::IDLE)
+	:State(etou8(SOLDIER_STATE_TYPE::IDLE))
 {
 }
 
 Server::Contents::SoldierIdleState::~SoldierIdleState()
 {
 }
-
+ 
 void Server::Contents::SoldierIdleState::Enter()
 {
-	// std::cout << "SoldierIdleEnter" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
 }
 
 void Server::Contents::SoldierIdleState::Exit()
 {
-	// std::cout << "SoldierIdleExit" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
 }
 
-void Server::Contents::SoldierIdleState::Update(const float dt)
+uint8 Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	// TOOD: 
+	return GetType();
 }
 
-Server::Contents::SoldierWalkState::SoldierWalkState()
-	:State(STATE_TYPE::WALK)
-{
-}
-
-Server::Contents::SoldierWalkState::~SoldierWalkState()
+Server::Contents::SoldierTraceState::SoldierTraceState()
+	:State(etou8(SOLDIER_STATE_TYPE::TRACE))
 {
 }
 
-void Server::Contents::SoldierWalkState::Enter()
+Server::Contents::SoldierTraceState::~SoldierTraceState()
 {
-	// std::cout << "SoldierWalkEnter" << std::endl;
 }
 
-void Server::Contents::SoldierWalkState::Exit()
+void Server::Contents::SoldierTraceState::Enter()
 {
-	// std::cout << "SoldierWalkExit" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter Soldier Walk", id) << std::endl;
+}
+
+void Server::Contents::SoldierTraceState::Exit()
+{
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Exit Soldier Walk", id) << std::endl;
 }
 
 float DistanceSquared(const Vec3& a, const Vec3& b)
@@ -58,11 +66,12 @@ float DistanceSquared(const Vec3& a, const Vec3& b)
 	return dx * dx + dy * dy + dz * dz;
 }
 
-void Server::Contents::SoldierWalkState::Update(const float dt)
+uint8 Server::Contents::SoldierTraceState::Update(const float dt)
 {
-	//auto owner = GetFSM()->GetOwner();
-	//if(!owner) return;
+	// TODO:수정 필요
 
+	//auto owner = GetFSM()->GetOwner();
+	//
 	//Vec3 curPos = owner->GetPos();
 	//Vec3 target = m_targetPos;  // SetTargetPos()에서 지정한 목적지
 
@@ -73,10 +82,9 @@ void Server::Contents::SoldierWalkState::Update(const float dt)
 	//constexpr float moveSpeed = 3.0f;
 
 	//if(distance < 0.05f) {
-	//    // 거의 도착하면 위치를 타겟에 고정하고 IDLE로 전환
-	//    owner->SetPos(target);
-	//    GetFSM()->ChangeState(STATE_TYPE::IDLE);
-	//    return;
+	//	// 거의 도착하면 위치를 타겟에 고정하고 IDLE로 전환
+	//	owner->SetPos(target);
+	//	return etou8(SOLDIER_STATE_TYPE::IDLE);
 	//}
 
 	//// 방향 벡터 정규화
@@ -95,6 +103,24 @@ void Server::Contents::SoldierWalkState::Update(const float dt)
 	//Vec3 newRot = owner->GetRotation();
 	//newRot.y = newRotY;
 	//owner->SetRotation(newRot);
+
+	//const uint32 id{ GetFSM()->GetOwner()->GetID() };
+	//const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
+	//const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
+
+	//auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
+	//GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
+
+	return GetType();
+}
+
+void Server::Contents::SoldierTraceState::Move(const float dt)
+{
+
+}
+
+void Server::Contents::SoldierTraceState::MoveByForce(const float dt)
+{
 	auto owner = GetFSM()->GetOwner();
 	if(!owner) return;
 
@@ -147,11 +173,4 @@ void Server::Contents::SoldierWalkState::Update(const float dt)
 	Vec3 newRot = owner->GetRotation();
 	newRot.y = newRotY;
 	owner->SetRotation(newRot);
-
-	const uint32 id{ GetFSM()->GetOwner()->GetID() };
-	const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
-	const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
-
-	auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
-	GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
 }

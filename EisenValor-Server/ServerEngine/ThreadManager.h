@@ -14,7 +14,7 @@ namespace ServerEngine {
 
 	public:
 		bool Init() noexcept;
-		void EnqueueTask(std::function<void()> task) noexcept;
+		void EnqueueTask(std::function<void(const std::stop_token&)> task) noexcept;
 		void Join();
 
 	public:

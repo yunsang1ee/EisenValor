@@ -28,7 +28,7 @@ void ServerEngine::TaskQueue::Execute() noexcept
 			task->Execute();
 		}
 		
-		auto now = high_resolution_clock::now();
+		const auto now = high_resolution_clock::now();
 
 		if(now > TLS_WORK_END_TIME) {
 			TLS_CURRENT_TASK_QUEUE = nullptr;

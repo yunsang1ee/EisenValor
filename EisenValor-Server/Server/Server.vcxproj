@@ -161,7 +161,6 @@
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="FSM.cpp" />
-    <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -194,7 +193,6 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="FSM.h" />
-    <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />

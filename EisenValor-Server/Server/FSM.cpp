@@ -3,17 +3,24 @@
 
 #include "State.h"
 
+void Server::Contents::FSM::InitStartState(const uint8 state)
+{
+	m_curState = m_states.find(state)->second.get();
+	m_curState->Enter();
+}
+
 void Server::Contents::FSM::Update(const float dt)
 {
 	if(m_curState)
 		m_curState->Update(dt);
 }
 
-void Server::Contents::FSM::AddState(std::shared_ptr<State> state)
-{
-	const STATE_TYPE type = state->GetType();
-	if(nullptr == GetState(type)) {
-		m_states.insert(std::make_pair(type,state));
+		if(curState != nextState) {
+			m_curState->Exit();
+			auto next = m_states.find(nextState);
+			m_curState = next->second.get();
+			m_curState->Enter();
+		}
 	}
 }
 

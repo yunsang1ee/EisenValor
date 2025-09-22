@@ -10,7 +10,7 @@ namespace Server {
 
 		public:
 			Creature(const GAME_OBJECT_TYPE type, const TEAM_TYPE team);
-			virtual ~Creature() = default;
+			virtual ~Creature();
 
 		public:
 			void	SetStatInfo(const StatInfo& stat) noexcept { m_stat = stat; }

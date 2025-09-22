@@ -8,7 +8,7 @@ namespace Server {
 		private:
 
 		public:
-
+			virtual ~Script() = default;
 		};
 	}
 }

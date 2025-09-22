@@ -55,9 +55,6 @@
     <ClCompile Include="GameRoom.cpp">
       <Filter>02. Contents\00. Room\01. GameRoom</Filter>
     </ClCompile>
-    <ClCompile Include="GameLobby.cpp">
-      <Filter>02. Contents\00. Room\00. GameLobby</Filter>
-    </ClCompile>
     <ClCompile Include="BehaviorNode.cpp">
       <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode</Filter>
     </ClCompile>
@@ -108,20 +105,11 @@
     <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC">
       <UniqueIdentifier>{a3c6f62a-55d7-4f07-9cab-0acbac186255}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\02. Archer">
-      <UniqueIdentifier>{477910b0-96ab-4adf-ba79-0366dcd33568}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\03. Medic">
-      <UniqueIdentifier>{56564db5-8b36-4ee0-9047-7758d19fad11}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier">
       <UniqueIdentifier>{7027c05f-9aa7-4c46-985a-089f18d6b6a4}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General">
       <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\04. Boss">
-      <UniqueIdentifier>{350f2507-d88f-426c-9c61-e855387813b5}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\02. GameObject\00. Creature\00. Player">
       <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
@@ -158,9 +146,6 @@
     </Filter>
     <Filter Include="02. Contents\00. Room\01. GameRoom">
       <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\00. Room\00. GameLobby">
-      <UniqueIdentifier>{8c083446-4032-4450-9ec2-1be3a1e66f03}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode">
       <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
@@ -259,9 +244,6 @@
     </ClInclude>
     <ClInclude Include="GameRoom.h">
       <Filter>02. Contents\00. Room\01. GameRoom</Filter>
-    </ClInclude>
-    <ClInclude Include="GameLobby.h">
-      <Filter>02. Contents\00. Room\00. GameLobby</Filter>
     </ClInclude>
     <ClInclude Include="BehaviorNode.h">
       <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode</Filter>

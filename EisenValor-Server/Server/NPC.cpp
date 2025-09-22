@@ -10,4 +10,11 @@ Server::Contents::NPC::NPC(const NPC_TYPE type, const TEAM_TYPE team)
 	static uint32 idGen{ 10000 };
 	SetID(idGen);
 	idGen++;
+	std::cout << std::format("NPC! ID = {}", GetID()) << std::endl;
+}
+
+Server::Contents::NPC::~NPC()
+{
+	std::cout << std::format("~NPC! ID = {}", GetID()) << std::endl;
+
 }

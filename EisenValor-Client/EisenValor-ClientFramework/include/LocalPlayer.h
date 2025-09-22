@@ -17,7 +17,6 @@ private:
 	ConstantBuffer			 m_wireFrameConstantBufferData;
 	UINT8*					 m_pWireFrameCbvDataBegin = nullptr;
 	
-
 public:
 	// 부채꼴 관련 함수들
 	virtual void Initialize(ID3D12Device* device) override;
