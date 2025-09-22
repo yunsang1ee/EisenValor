@@ -5,14 +5,14 @@ namespace ServerEngine {
 	class SessionPool;
 	class Session;
 
-	class RIOWorker {
+	class RIOWorker : public std::enable_shared_from_this<RIOWorker> {
 	private:
 		RIO_CQ											m_cq;
 		std::unique_ptr<SessionPool>					m_sessionPool;
 		int32											m_id;
 		std::vector<std::shared_ptr<Session>>			m_connectedSession;
+		
 		tbb::spin_mutex									m_mutex;
-
 
 	public:
 		explicit RIOWorker(const uint16 id);

@@ -18,7 +18,7 @@ namespace Server {
 			virtual ~BehaviorNode() = default;
 
 		public:
-			virtual void SetTree(std::shared_ptr<BehaviorTree> tree) { m_tree = tree; }
+			virtual void SetTree(std::weak_ptr<BehaviorTree> tree) { m_tree = tree; }
 			std::shared_ptr<BehaviorTree> GetTree() const { return m_tree.lock(); }
 		public:
 			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) abstract;
@@ -36,11 +36,11 @@ namespace Server {
 				m_children.emplace_back(std::move(child));
 				if(auto tree = m_tree.lock()) {
 					// 트리가 이미 세팅된 상태라면 자식에게도 전달
-					m_children.back()->SetTree(tree);
+					m_children.back()->SetTree(m_tree);
 				}
 			}
 
-			virtual void SetTree(std::shared_ptr<BehaviorTree> tree) override
+			virtual void SetTree(std::weak_ptr<BehaviorTree> tree) override
 			{
 				BehaviorNode::SetTree(tree);
 				for(auto& child : m_children) {
@@ -71,7 +71,7 @@ namespace Server {
 				}
 			}
 
-			void SetTree(std::shared_ptr<BehaviorTree> tree) override
+			void SetTree(std::weak_ptr<BehaviorTree> tree) override
 			{
 				BehaviorNode::SetTree(tree);
 				if(m_child) {

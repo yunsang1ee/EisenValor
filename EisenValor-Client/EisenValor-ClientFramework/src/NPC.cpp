@@ -4,7 +4,7 @@
 #include "Vertex.h"
 #include "GlobalInterfaces.h"
 
-using namespace DirectX; 
+using namespace DirectX;
 
 void NPC::Initialize(ID3D12Device* device)
 {
@@ -177,7 +177,7 @@ DirectX::XMFLOAT4 NPC::GetTeamColor() const
 		// 아군
 		switch (m_unitType)
 		{
-		case NPC_TYPE::NONE:
+		case NPC_TYPE::GENERAL:
 			return DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
 		case NPC_TYPE::SOLDIER:
 			return DirectX::XMFLOAT4(0.3f	, 0.3f, 1.0f, 1.0f); // 연파랑

@@ -6,11 +6,9 @@ namespace Server {
 
 		class Component {
 		private:
-			bool						m_active;
-			std::weak_ptr<GameObject>	m_owner;
+			std::weak_ptr<GameObject> m_owner;
 
 		public:
-			Component();
 			virtual ~Component()noexcept = default;
 
 		public:
@@ -19,10 +17,6 @@ namespace Server {
 
 		public:
 			virtual void Update(const float dt) {}
-
-		public:
-			void SetActive(const bool active) noexcept { m_active = active; }
-			bool IsActive() const noexcept { return m_active; }
 		};
 	}
 }

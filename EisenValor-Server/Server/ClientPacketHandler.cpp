@@ -7,10 +7,9 @@
 #include "GameRoom.h"
 #include "GameRoomManager.h"
 
-#include "GameObjectFactory.h"	
+#include "GameObjectFactory.h"
 #include "Player.h"
 #include "NPC.h"
-#include "TroopController.h"
 
 #include "SoldierState.h"
 
@@ -22,7 +21,7 @@ bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession>& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	std::cout << std::format("ID:{} , PW:{} ", recvPkt.id()->c_str(), recvPkt.pw()->c_str());
 
 	const uint32 id = clientSession->GetID();
@@ -33,7 +32,7 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 
 bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession>& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();
 
 	std::cout << recvPkt.msg()->c_str() << std::endl;
@@ -49,7 +48,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_ENTER_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_ROOM_PACKET& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession>& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();
 
 	// TODO: 우선 전부 1번방으로
@@ -65,7 +64,7 @@ bool Handle_CS_ENTER_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession>& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();
 
 	auto player = clientSession->GetPlayer();
@@ -87,18 +86,71 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession>& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();
 
-	const auto& player = clientSession->GetPlayer();
-	const auto& gameRoom = player->GetGameRoom();
-	
-	if(gameRoom) {
-		gameRoom->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_SUMMON_NPC, player);
-		return true;
-	}
+	// TODO: 플레이어가 병사 스폰지에 있으면 병사 받도록.
+	// TODO: 병사 대열 수정
 
-	return false;
+	const auto player = clientSession->GetPlayer();
+
+	constexpr int kMaxSoldierCount = 20;
+	constexpr int kRowSize = 5;
+	constexpr float kSpacing = 3.f;
+
+	const int currentCount = static_cast<int>(player->GetNpcs().size());
+	if(currentCount >= kMaxSoldierCount)
+		return true;
+
+	int soldiersToSummon = kMaxSoldierCount - currentCount;
+
+	const Vec3 playerPos = player->GetPos();
+	const Vec3 playerRot = player->GetRotation();
+
+	for(int i = 0; i < soldiersToSummon; ++i) {
+		int soldierIndex = currentCount + i;
+
+		int row = soldierIndex / kRowSize;
+		int col = soldierIndex % kRowSize;
+
+		Vec3 offset;
+		offset.x = (static_cast<float>(col) - 2.0f) * kSpacing;  // 중앙 정렬
+		offset.y = 0.0f;
+		offset.z = (row + 1) * kSpacing;  // 뒤로 정렬
+
+		const Vec3 spawnPos = {
+			playerPos.x + offset.x,
+			playerPos.y + offset.y,
+			playerPos.z + offset.z
+		};
+
+		Server::Contents::SoldierTemplate t;
+		t.pos = spawnPos;
+		t.rot = playerRot;
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.npcType = NPC_TYPE::SOLDIER;
+		t.teamType = TEAM_TYPE::ALLY;
+
+		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+		const auto& fsm = soldier->GetComponent<Server::Contents::FSM>();
+
+		auto idleState = std::make_shared<Server::Contents::SoldierIdleState>();
+		auto walkState = std::make_shared<Server::Contents::SoldierWalkState>();
+
+		idleState->SetFSM(fsm);
+		walkState->SetFSM(fsm);
+		walkState->SetOwnerGeneral(player);
+
+		fsm->AddState(idleState);
+		fsm->AddState(walkState);
+		fsm->SetCurState(STATE_TYPE::IDLE);
+
+		player->AddSoldier(soldier, offset);
+
+		auto gameWorld = player->GetGameRoom();
+		gameWorld->ExecuteAsyncronously(&Server::Contents::GameRoom::AddNpc, std::static_pointer_cast<Server::Contents::NPC>(soldier));
+	}
+	return true;
 }
 
 bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt) noexcept
@@ -108,7 +160,7 @@ bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Sess
 
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession>& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();
 
 	const auto player = clientSession->GetPlayer();
@@ -117,6 +169,5 @@ bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>
 		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK, player);
 		return true;
 	}
-
 	return false;
 }

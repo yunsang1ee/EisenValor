@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Component.h"
+#include "State.h"
 
 namespace Server {
 	namespace Contents {
@@ -8,16 +9,18 @@ namespace Server {
 
 		class FSM : public Component {
 		private:
-			std::map<uint8, std::unique_ptr<State>>						m_states;
-			State*														m_curState;
+			std::map<STATE_TYPE, std::shared_ptr<State>>				m_states;
+			std::shared_ptr<State>										m_curState;
 
 		public:
-			void Init(const uint8 state);
-			virtual void	Update(const float dt) override;
+			virtual void Update(const float dt) override;
 
 		public:
-			void			AddState(std::unique_ptr<State> state);
-			const State*	GetCurState() const { return m_curState; }
+			void	AddState(std::shared_ptr<State> state);
+			std::shared_ptr<State>	GetState(const STATE_TYPE type);
+			void	SetCurState(const STATE_TYPE type);
+			void	ChangeState(const STATE_TYPE type);
+			std::shared_ptr<State> GetCurState() const { return m_curState; }
 		};
 	}
 }

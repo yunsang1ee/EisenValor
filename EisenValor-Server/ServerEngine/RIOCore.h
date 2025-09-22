@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Singleton.hpp"
-#include "RIOWorker.h"
 
 namespace ServerEngine {
 	class RIOWorker;
@@ -15,7 +14,7 @@ namespace ServerEngine {
 		uint16									m_rioWorkerCnt;
 		uint16									m_acceptThreadNum;
 
-		std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
+		std::vector<std::shared_ptr<RIOWorker>>	m_rioWorkers;
 	
 	public:
 		[[nodiscard("DO NOT IGNORE RETURN VALUE")]] bool Init(SessionFactoryFunc sessionFunc) noexcept;

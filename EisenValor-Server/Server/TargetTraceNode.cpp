@@ -28,10 +28,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::TargetTraceNode::DoActi
 		const Vec3 rot{ GetTree()->GetOwner()->GetRotation() };
 
 		auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
-		const auto  gameRoom = GetTree()->GetOwner()->GetGameRoom();
-		if(gameRoom) {
-			gameRoom->ExecuteAsyncronously(&Server::Contents::GameRoom::Broadcast, std::move(pb));
-		}
+		GetTree()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
 		return Server::Contents::BEHAVIOR_NODE_STATUS::RUNNING;
 	}
 
