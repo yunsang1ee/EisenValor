@@ -411,7 +411,7 @@ void GameFramework::Render()
 	// 렌더 타겟과 깊이 버퍼 동시 설정
 	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	
-	// 화면을 파란색으로 클리어 (깊이 버퍼 추가 - 25.09.16)
+	// 화면을 검은색으로 클리어 (깊이 버퍼 추가 - 25.09.16)
 	float clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f}; // 검은색
 	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 	context.CommandList()->ClearDepthStencilView(
