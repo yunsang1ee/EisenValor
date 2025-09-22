@@ -31,7 +31,7 @@ void Server::Contents::SoldierIdleState::Exit()
 
 uint8 Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	return GetType();
+	return GetStateType();
 }
 
 Server::Contents::SoldierTraceState::SoldierTraceState()
@@ -111,7 +111,7 @@ uint8 Server::Contents::SoldierTraceState::Update(const float dt)
 	//auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
 	//GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
 
-	return GetType();
+	return GetStateType();
 }
 
 void Server::Contents::SoldierTraceState::Move(const float dt)

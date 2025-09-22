@@ -9,16 +9,6 @@ enum class GAME_OBJECT_TYPE : uint8 {
 	END
 };
 
-enum class STATE_TYPE : uint8 {
-	IDLE,
-	WALK,
-	RUN,
-	TRACE,
-	ATTACK,
-	
-	END,
-};
-
 enum class NPC_TYPE : uint8 {
 	NONE, 
 	GENERAL,

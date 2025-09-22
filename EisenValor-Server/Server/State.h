@@ -7,11 +7,11 @@ namespace Server {
 
 		class State {
 		private:
-			std::weak_ptr<FSM>				m_fsm;
-			STATE_TYPE						m_type;
+			FSM*							m_fsm;
+			uint8							m_type;
 
 		protected:
-			explicit State(const STATE_TYPE type);
+			explicit State(const uint8 type);
 
 		public:
 			virtual ~State();
@@ -21,14 +21,14 @@ namespace Server {
 			virtual void Exit() abstract;
 
 		public:
-			virtual void Update(const float dt) {}
+			virtual uint8 Update(const float dt) abstract;
 
 		public:
-			STATE_TYPE GetType() const noexcept { return m_type; }
+			uint8 GetStateType() const noexcept { return m_type; }
 
 		public:
-			void SetFSM(std::weak_ptr<FSM> fsm) { m_fsm = fsm; }
-			std::shared_ptr<FSM> GetFSM() const { return m_fsm.lock(); }
+			void SetFSM(FSM* fsm) { m_fsm = fsm; }
+			FSM* GetFSM() const { return m_fsm; }
 
 		};
 	}

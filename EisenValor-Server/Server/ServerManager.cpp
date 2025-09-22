@@ -39,13 +39,18 @@ void Server::ServerManager::Run() noexcept
 	 
 	constexpr int8 ESC = 27;
 
+	// Main-Thread
 	while(true) {
-		if(!_kbhit()) continue;      
+		if(!_kbhit()) {
+			std::this_thread::sleep_for(100ms);
+			continue;
+		}
 		ch = _getch();
 		if(ch == ESC) {
-			LOOP_EXIT = true;
 			ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Serve Finish");
-			break;
+		}
+		else {
+			std::this_thread::sleep_for(100ms);
 		}
 	}
 }

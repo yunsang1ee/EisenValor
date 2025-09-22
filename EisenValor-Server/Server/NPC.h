@@ -14,7 +14,7 @@ namespace Server {
 
 		public:
 			explicit NPC(const NPC_TYPE type, const TEAM_TYPE team);
-			virtual ~NPC() = default;
+			virtual ~NPC();
 
 		public:
 			const NPC_TYPE GetNpcType() const noexcept { return m_type; }

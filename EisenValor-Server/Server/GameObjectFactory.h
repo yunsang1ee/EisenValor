@@ -31,6 +31,7 @@ namespace Server {
 
 		struct SoldierTemplate : public NPCTemplate {
 			// TODO: SoldierTemplate
+			std::weak_ptr<NPC> ownerGeneral;
 		};
 		
 		class Player;

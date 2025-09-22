@@ -26,7 +26,7 @@ namespace Server {
 			virtual void Exit() override;
 
 		public:
-			virtual void Update(const float dt) override;
+			virtual uint8 Update(const float dt) override;
 		};
 
 
@@ -34,7 +34,7 @@ namespace Server {
 		public:
 			static constexpr float attackRange{ 1.f };
 
-		private:
+		public:
 			GeneralTraceState();
 			virtual ~GeneralTraceState();
 
@@ -43,7 +43,7 @@ namespace Server {
 			virtual void Exit() override;
 
 		public:
-			virtual void Update(const float dt) override;
+			virtual uint8 Update(const float dt) override;
 		};
 	}
 }

@@ -7,7 +7,7 @@
 #include "NPC.h"
 
 Server::Contents::GeneralIdleState::GeneralIdleState()
-	:State(STATE_TYPE::IDLE)
+	:State(etou8(GENERAL_STATE_TYPE::IDLE))
 {
 }
 
@@ -25,7 +25,7 @@ void Server::Contents::GeneralIdleState::Exit()
 	std::cout << "GENERAL IDLE EXIT" << std::endl;
 }
 
-void Server::Contents::GeneralIdleState::Update(const float dt)
+uint8 Server::Contents::GeneralIdleState::Update(const float dt)
 {
 	const auto& players = GetFSM()->GetOwner()->GetGameRoom()->GetPlayers();
 	const Vec3 myPos = GetFSM()->GetOwner()->GetPos();
@@ -39,11 +39,10 @@ void Server::Contents::GeneralIdleState::Update(const float dt)
 				return etou8(GENERAL_STATE_TYPE::TRACE);
 			}
 		}
-	}
 }
 
 Server::Contents::GeneralTraceState::GeneralTraceState()
-	:State(STATE_TYPE::TRACE)
+	:State(etou8(GENERAL_STATE_TYPE::TRACE))
 {
 }
 
@@ -61,7 +60,7 @@ void Server::Contents::GeneralTraceState::Exit()
 	std::cout << "GENERAL TRACE EXIT" << std::endl;
 }
 
-void Server::Contents::GeneralTraceState::Update(const float dt)
+uint8 Server::Contents::GeneralTraceState::Update(const float dt)
 {
 	if(auto target = std::static_pointer_cast<Server::Contents::NPC>(GetFSM()->GetOwner())->GetTarget()) {
 		const Vec3 targetPos = target->GetPos();
@@ -70,7 +69,8 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 		Vec3 dist = targetPos - myPos;
 
 		if(dist.Length() <= attackRange || dist.Length() >= 5.f) {
-			GetFSM()->ChangeState(STATE_TYPE::IDLE);
+			// GetFSM()->ChangeState(STATE_TYPE::IDLE);
+			return etou8(GENERAL_STATE_TYPE::IDLE);
 		}
 
 		dist.Normalize();
@@ -89,5 +89,5 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 		}
 	}
 
-	return GetType();
+	return GetStateType();
 }

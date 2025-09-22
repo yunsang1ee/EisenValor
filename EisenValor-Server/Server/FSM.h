@@ -10,7 +10,7 @@ namespace Server {
 		class FSM : public Component {
 		private:
 			std::map<uint8, std::shared_ptr<State>>				m_states;
-			State*								m_curState;
+			State*												m_curState;
 
 		public:
 			void InitStartState(const uint8 state);

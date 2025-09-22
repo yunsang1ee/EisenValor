@@ -164,43 +164,43 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	ExecuteAsyncronously(&GameRoom::Broadcast, std::move(packetBuffer));
 
-	//// 2. ���� �̵� ó��
-	//auto& soldiers = player->GetNpcs();
-	//if(soldiers.size() == 0) return;
-	//const Vec3 playerPos = player->GetPos();
-	//float rotY = player->GetRotation().y;
+	////// 2. ���� �̵� ó��
+	////auto& soldiers = player->GetNpcs();
+	////if(soldiers.size() == 0) return;
+	////const Vec3 playerPos = player->GetPos();
+	////float rotY = player->GetRotation().y;
 
-	for(auto& soldierData : soldiers) {
-		auto offset = soldierData.localOffset;
-		auto soldier = soldierData.soldier;
-		if(!soldier) continue;
+	//for(auto& soldierData : soldiers) {
+	//	auto offset = soldierData.localOffset;
+	//	auto soldier = soldierData.soldier;
+	//	if(!soldier) continue;
 
-	//	// --- offset�� �÷��̾� ȸ���� ���� ȸ�� ��ȯ ---
-	//	Vec3 rotatedOffset;
-	//	rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
-	//	rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
-	//	rotatedOffset.y = offset.y;
+	////	// --- offset�� �÷��̾� ȸ���� ���� ȸ�� ��ȯ ---
+	////	Vec3 rotatedOffset;
+	////	rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
+	////	rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
+	////	rotatedOffset.y = offset.y;
 
-	//	// --- ���� ��ǥ ��ġ ---
-	//	Vec3 targetPos = {
-	//		playerPos.x + rotatedOffset.x,
-	//		playerPos.y + rotatedOffset.y,
-	//		playerPos.z + rotatedOffset.z
-	//	};
+	////	// --- ���� ��ǥ ��ġ ---
+	////	Vec3 targetPos = {
+	////		playerPos.x + rotatedOffset.x,
+	////		playerPos.y + rotatedOffset.y,
+	////		playerPos.z + rotatedOffset.z
+	////	};
 
-		if((soldier->GetPos() - targetPos).Length()< 0.01f)
-			continue;
-		
+	//	if((soldier->GetPos() - targetPos).Length()< 0.01f)
+	//		continue;
+	//	
 
-	//	// --- ���� FSM ���� ��ȯ �� ��ǥ ��ġ ���� ---
-	//	auto fsm = soldier->GetComponent<Server::Contents::FSM>();
-	//	fsm->ChangeState(STATE_TYPE::WALK);
+	////	// --- ���� FSM ���� ��ȯ �� ��ǥ ��ġ ���� ---
+	////	auto fsm = soldier->GetComponent<Server::Contents::FSM>();
+	////	fsm->ChangeState(STATE_TYPE::WALK);
 
-		const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
-		if(walkState) {
-			walkState->SetTargetPos(targetPos);
-		}
-	}
+	//	const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
+	//	if(walkState) {
+	//		walkState->SetTargetPos(targetPos);
+	//	}
+	//}
 }
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
