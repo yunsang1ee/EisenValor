@@ -9,6 +9,8 @@ namespace Server {
 		class Component;
 		class FSM;
 		class BehaviorTree;
+		class TroopController;
+
 		class Script;
 
 		class GameObject {
@@ -62,13 +64,15 @@ namespace Server {
 			{
 				if constexpr(std::is_same_v<FSM, T>) {
 					m_components[static_cast<int32>(COMPONENT_TYPE::FSM)] = std::make_shared<T>();
-
 					return std::static_pointer_cast<FSM>(m_components[static_cast<int32>(COMPONENT_TYPE::FSM)]);
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
 					m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::make_shared<T>();
-
 					return std::static_pointer_cast<BehaviorTree>(m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)]);
+				}
+				else if constexpr(std::is_same_v<TroopController, T>) {
+					m_components[static_cast<int32>(COMPONENT_TYPE::TROOP_CONTROLLER)] = std::make_shared<T>();
+					return std::static_pointer_cast<BehaviorTree>(m_components[static_cast<int32>(COMPONENT_TYPE::TROOP_CONTROLLER)]);
 				}
 			}
 
@@ -80,6 +84,9 @@ namespace Server {
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
 					return std::static_pointer_cast<BehaviorTree>(m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)]);
+				}
+				else if constexpr(std::is_same_v<TroopController, T>) {
+					return std::static_pointer_cast<TroopController>(m_components[static_cast<int32>(COMPONENT_TYPE::TROOP_CONTROLLER)]);
 				}
 			}
 

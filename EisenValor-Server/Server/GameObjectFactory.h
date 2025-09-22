@@ -2,6 +2,8 @@
 
 namespace Server {
 	namespace Contents {
+		class NPC;
+
 		struct GameObjectTemplate {
 			Vec3				pos;
 			Vec3				rot;
@@ -13,8 +15,10 @@ namespace Server {
 			StatInfo stat;
 		};
 
-		struct PlayerTemplate : public CreatureTemplate {
-			// TODO: PlayerTemplate
+		struct  PlayerTemplate: public CreatureTemplate {
+			// TODO: PlayerTemplate, 플레이어 만들 때 필요한 모든 것 전부...
+			uint32 id;
+			uint32 attackRange;
 		};
 
 		struct SpawnBaseTemplate : public CreatureTemplate { 
@@ -30,7 +34,8 @@ namespace Server {
 		};
 
 		struct SoldierTemplate : public NPCTemplate {
-			// TODO: SoldierTemplate
+			// TODO: SoldierTemplat
+			std::weak_ptr<NPC> ownerGeneral;
 		};
 		
 		class Player;

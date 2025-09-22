@@ -11,3 +11,8 @@ Server::Contents::NPC::NPC(const NPC_TYPE type, const TEAM_TYPE team)
 	SetID(idGen);
 	idGen++;
 }
+
+Server::Contents::NPC::~NPC()
+{
+	std::cout << "~Npc" << std::endl;
+}

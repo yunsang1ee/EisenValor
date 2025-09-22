@@ -140,6 +140,9 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	UINT compileFlags = 0;
 #endif
 
+	// TODO: .exe로 실행하면 경로 버그나서 프로그램 실행 안됨
+	// TOOD: .exe로 실행하던 비쥬얼 스튜디오로 실행하던 리소스 경로 맞춰줘야 함.
+
 	// 셰이더 파일에서 컴파일
 	ThrowIfFailed(D3DCompileFromFile(
 		L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0,
@@ -184,11 +187,11 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 
 	std::string id, pw;
-	std::cout << "Input ID(any):";
+	// std::cout << "Input ID(any):";
+	// std::cout << "\n";
 	// std::cin >> id;
 	id = "ID";
-	std::cout << "\n";
-	std::cout << "Input PW(any):";
+	// std::cout << "Input PW(any):";
 	// std::cin >> pw;
 	pw = "PW";
 

@@ -63,7 +63,7 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 	std::array<RIORESULT, MAX_RIO_RESULT> ioResults;
 
 	while(true) {
-		memset(ioResults.data(), 0, sizeof(ioResults));
+		// memset(ioResults.data(), 0, sizeof(ioResults));
 
 		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, ioResults.data(), static_cast<uint32>(ioResults.size()));
 		if(0 == numResults) {
@@ -89,9 +89,9 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
-	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
+	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id) << std::endl;
 	auto session = m_sessionPool.get()->DeqSession();
-	session->SetOwner(shared_from_this());
+	session->SetOwner(this);
 	session->Connect(socket, clientAddr);
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	m_connectedSession.push_back(std::move(session));

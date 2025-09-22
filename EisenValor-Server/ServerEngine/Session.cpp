@@ -16,7 +16,7 @@ ServerEngine::Session::Session()
 
 ServerEngine::Session::~Session()
 {
-	std::cout << std::format("~Session, ID = {}", m_id);
+	std::cout << std::format("~Session, ID = {}", m_id)<< std::endl;
 	CloseSocket();
 }
 
@@ -62,8 +62,7 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 
 	std::cout << reason.data() << std::endl;
 
-	// m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
-	// m_owner.lock()->ReleaseSession(shared_from_this());
+	m_owner->GetSessionPool()->EnqSession(shared_from_this());
 }
 
 void ServerEngine::Session::FlushPacketQueueSecond()
@@ -104,6 +103,10 @@ void ServerEngine::Session::FlushPacketQueue()
 
 			if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
 				Disconnect("SendBuffer Append");
+
+			// std::cout << "packetBuffer Pop" << std::endl;
+			// 여기서 ~PacketBuffer 불린다.
+			std::cout << "PacketBuffer Pop" << std::endl;
 		}
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
@@ -244,7 +247,7 @@ void ServerEngine::Session::Connect(const SOCKET& socket, const SOCKADDR_IN& add
 
 void ServerEngine::Session::Init()
 {
-	const auto& cq = m_owner.lock()->GetCQ();
+	const auto& cq = m_owner->GetCQ();
 
 	// CQ의 크기가 RQ의 크기보다 작으면 만들기 실패
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);

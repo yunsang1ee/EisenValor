@@ -11,7 +11,7 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 	Player::Initialize(device);
 
 	// 와이어프레임 박스 초기화
-	InitializeWireFrame(device);
+	// InitializeWireFrame(device);
 }
 
 void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
@@ -104,21 +104,21 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 	Player::Render(cmdList, view, projection);
 
 	// 와이어프레임 박스 렌더링
-	cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
-	cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
-	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
-
-	// 플레이어와 같은 위치, 회전
-	DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
-	DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
-	DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
-	DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
-
-	DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
-	memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
-
-	cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
-	cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
+	// cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
+	// cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
+	// cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
+	// 
+	// // 플레이어와 같은 위치, 회전
+	// DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
+	// DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
+	// DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
+	// DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
+	// 
+	// DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
+	// memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
+	// 
+	// cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
+	// cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
 }
 
 void LocalPlayer::Update(float deltaTime)

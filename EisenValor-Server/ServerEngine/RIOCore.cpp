@@ -22,7 +22,7 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 	if(m_listenSocket == INVALID_SOCKET) {
 		ServerEngine::LogManager::PrintLastError();
 		return false;
-	}
+	}	
 
 	constexpr int opt = 1;
 	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
@@ -48,10 +48,11 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 
 	// 5. Create RIOWorker
 	m_rioWorkerCnt = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
+	// m_rioWorkerCnt = 2;
 	m_rioWorkers.reserve(m_rioWorkerCnt);
 
 	for(uint16 i = 1; i <= m_rioWorkerCnt; ++i) {
-		auto rioWorker = std::make_shared<RIOWorker>(i);
+		auto rioWorker = std::make_unique<RIOWorker>(i);
 		if(false == rioWorker->Init(sessionFunc))
 			return false;
 		m_rioWorkers.emplace_back(std::move(rioWorker));
@@ -70,10 +71,11 @@ bool ServerEngine::RIOCore::StartAccept() noexcept
 	}
 
 	// 2. Accept
-	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this]()
+	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token& st)
 		{
 			TLS_THREAD_ID = LISTEN_THREAD_ID;
-			DoAcceptLoop();
+			while(false == st.stop_requested())
+				DoAcceptLoop();
 		});
 
 	return true;
@@ -82,10 +84,10 @@ bool ServerEngine::RIOCore::StartAccept() noexcept
 void ServerEngine::RIOCore::Run() noexcept
 {
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i]()
+		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
 			{
 				TLS_THREAD_ID = i + 1;
-				while(false == LOOP_EXIT) {
+				while(false == st.stop_requested()) {
 					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_WORK_TIME;
 					m_rioWorkers[i]->Work();
 					DistributeReservedTask();
@@ -97,29 +99,27 @@ void ServerEngine::RIOCore::Run() noexcept
 
 void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 {
-	while(false == LOOP_EXIT) {
-		// Non-Blocking Accept
-		const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
+	// Non-Blocking Accept
+	const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
 
-		if(clientSocket == SOCKET_ERROR) {
-			std::cout << "Accept Loop Break" << std::endl;
-			break;
-		}
-
-		SOCKADDR_IN clientaddr;
-		int addrlen = sizeof(clientaddr);
-		getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
-
-		std::cout << "Client Accept Success!" << std::endl;
-
-		std::wstring ipAddress;
-		ipAddress.resize(100);
-		InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
-		std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
-
-		m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
-		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
+	if(clientSocket == SOCKET_ERROR) {
+		std::cout << "Accept Loop Break" << std::endl;
+		return;
 	}
+
+	SOCKADDR_IN clientaddr;
+	int addrlen = sizeof(clientaddr);
+	getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
+
+	std::cout << "Client Accept Success!" << std::endl;
+
+	std::wstring ipAddress;
+	ipAddress.resize(100);
+	InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
+	std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
+
+	m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
+	m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
 }
 
 void ServerEngine::RIOCore::Shutdown() noexcept
@@ -143,8 +143,10 @@ void ServerEngine::RIOCore::FlushTaskQueue() noexcept
 			break; 
 
 		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->DequeTaskQueue();
+		
 		if(nullptr == taskQueue)
 			break;
+		
 		taskQueue->Execute();
 	}
 }
