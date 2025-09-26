@@ -16,7 +16,7 @@ namespace Server {
 			std::shared_ptr<GameObject> GetOwner() noexcept { return m_owner.lock(); }
 
 		public:
-			virtual void Update(const float dt) {}
+			virtual void Update(const float dt) abstract;
 		};
 	}
 }

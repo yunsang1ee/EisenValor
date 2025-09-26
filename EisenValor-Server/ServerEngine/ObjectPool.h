@@ -7,7 +7,7 @@ namespace ServerEngine {
     template<typename Type>
     class ObjectPool {
     private:
-        using Pool = oneapi::tbb::memory_pool<oneapi::tbb::scalable_allocator<char>>;
+        using Pool = oneapi::tbb::memory_pool<oneapi::tbb::scalable_allocator<Type>>;
         static Pool m_pool;
 
     public:
@@ -45,5 +45,5 @@ namespace ServerEngine {
     };
 
     template<typename Type>
-    tbb::memory_pool<oneapi::tbb::scalable_allocator<char>> ObjectPool<Type>::m_pool;
+    tbb::memory_pool<oneapi::tbb::scalable_allocator<Type>> ObjectPool<Type>::m_pool;
 }

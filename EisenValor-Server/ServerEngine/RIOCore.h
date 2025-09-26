@@ -24,7 +24,7 @@ namespace ServerEngine {
 	
 	public:
 		const auto&		GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
-		void			Shutdown() noexcept;
+		void			Shutdown() const noexcept;
 
 	private:
 		void			DoAcceptLoop() noexcept;

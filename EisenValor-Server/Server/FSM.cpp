@@ -2,7 +2,7 @@
 #include "FSM.h"
 
 #include "State.h"
-
+	
 void Server::Contents::FSM::InitStartState(const uint8 state)
 {
 	m_curState = m_states.find(state)->second.get();
@@ -27,4 +27,11 @@ void Server::Contents::FSM::AddState(std::unique_ptr<State> state)
 {
 	state->SetFSM(this);
 	m_states.try_emplace(state->GetStateType(), std::move(state));
+}
+
+void Server::Contents::FSM::ChangeState(uint8 nextState)
+{
+	m_curState->Exit();
+	m_curState = m_states.find(nextState)->second.get();
+	m_curState->Enter();
 }
