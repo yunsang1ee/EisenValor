@@ -39,6 +39,7 @@ enum class SOLDIER_FORMATION : uint8 {
 enum class COMPONENT_TYPE : uint8 {
 	FSM,
 	BEHAVIOR_TREE,
+	TROOP_CONTROLLER,
 
 	END
 };

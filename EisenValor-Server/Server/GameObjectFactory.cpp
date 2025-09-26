@@ -12,12 +12,16 @@
 #include "BehaviorTree.h"
 #include "IsPlayerInNearNode.h"
 #include "TargetTraceNode.h"
+#include "TroopController.h"
 
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared();
 	player->SetPos(t.pos);
 	player->SetRotation(t.rot);
+	player->AddComponent<Server::Contents::TroopController>();
+	player->GetComponent<Server::Contents::TroopController>()->SetOwner(player);
+	player->GetComponent<Server::Contents::TroopController>()->Init();
 
 	return player;
 }
@@ -28,7 +32,9 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
 	general->SetStatInfo(t.stat);
-	
+	general->AddComponent<Server::Contents::TroopController>();
+	general->GetComponent<Server::Contents::TroopController>()->Init();
+
 	// const auto bt = general->AddComponent<BehaviorTree>();
 	// bt->SetOwner(general);
 	// auto root = std::make_unique<Server::Contents::SequenceNode>();
@@ -55,17 +61,15 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	soldier->SetRotation(t.rot);
 	soldier->SetStatInfo(t.stat);
 
-	//auto fsm = soldier->AddComponent<Server::Contents::FSM>();
-	//fsm->SetOwner(soldier);
+	auto fsm = soldier->AddComponent<Server::Contents::FSM>();
+	fsm->SetOwner(soldier);
 
-	//auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
-	//auto walkState = std::make_unique<Server::Contents::SoldierTraceState>();
-
-	//walkState->SetOwnerGeneral(t.ownerGeneral);
-
-	//fsm->AddState(std::move(idleState));
-	//fsm->AddState(std::move(walkState));
-	//fsm->InitStartState(etou8(SOLDIER_STATE_TYPE::IDLE));
+	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
+	auto runState = std::make_unique<Server::Contents::SoldierRunState>();
+	
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(runState));
+	fsm->InitStartState(etou8(SOLDIER_STATE_TYPE::IDLE));
 
 	return soldier;
 }

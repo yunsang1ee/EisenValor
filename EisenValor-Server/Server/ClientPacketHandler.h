@@ -5,8 +5,8 @@
 #include "Tables_generated.h"
 
 #include "PacketHeader.h"
-#include "PacketBuffer.h"
 #include "ServerGlobalFunc.h"
+
 
 namespace ServerEngine {
 	class Session;
@@ -114,7 +114,9 @@ public:
 		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
 		
 		// TODO: PacketBufferPool을 만들어서 여기서 꺼내써야함.
-		auto packetBuffer = std::make_shared<ServerEngine::PacketBuffer>(header);
+
+		// Sauto packetBuffer = std::make_shared<ServerEngine::PacketBuffer>(header);
+		auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
 		packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 		return packetBuffer;
 	}

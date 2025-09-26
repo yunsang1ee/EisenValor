@@ -182,6 +182,7 @@
     <ClCompile Include="SoldierState.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TargetTraceNode.cpp" />
+    <ClCompile Include="TroopController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
@@ -211,6 +212,7 @@
     <ClInclude Include="SoldierState.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TargetTraceNode.h" />
+    <ClInclude Include="TroopController.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />

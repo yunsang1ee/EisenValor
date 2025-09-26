@@ -73,6 +73,9 @@
     <ClCompile Include="GeneralState.cpp">
       <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State</Filter>
     </ClCompile>
+    <ClCompile Include="TroopController.cpp">
+      <Filter>02. Contents\04. Component\02. TroopController</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="00. Server">
@@ -180,6 +183,9 @@
     <Filter Include="01. ClientSessionManager\00. ClientSession">
       <UniqueIdentifier>{cbaaff46-38ff-49d6-afed-319281533012}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\04. Component\02. TroopController">
+      <UniqueIdentifier>{a60df6e2-692f-42b6-b8cd-8d0cc7286b81}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -262,6 +268,9 @@
     </ClInclude>
     <ClInclude Include="GeneralState.h">
       <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. State</Filter>
+    </ClInclude>
+    <ClInclude Include="TroopController.h">
+      <Filter>02. Contents\04. Component\02. TroopController</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

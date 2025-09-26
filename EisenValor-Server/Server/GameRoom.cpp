@@ -5,6 +5,7 @@
 #include "NPC.h"
 #include "ClientSession.h"
 #include "SoldierState.h"
+#include "TroopController.h"
 
 void Server::Contents::GameRoom::Init()
 {
@@ -145,7 +146,7 @@ void Server::Contents::GameRoom::InitNPCS()
 			s.ownerGeneral = general;
 
 			auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
-			// general->GetComponent<Server::Contents::TroopController>()->AddSoldier(soldier);
+			general->GetComponent<Server::Contents::TroopController>()->AddSoldier(soldier);
 			AddNpc(std::move(soldier));
 		}
 
@@ -205,7 +206,23 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
 {
-	// TODO: CS_SUMMON_NPC
+	// TODO: 주변에 SPAWN 기지가 있는지 확인
+	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+
+	for(int i = 0; i < 20; ++i) {
+		 Server::Contents::SoldierTemplate t;
+		 t.pos = Vec3{ 0.f, 0.f, 0.f };			// 스폰기지 위치
+		 t.rot = Vec3{ 0.f, 0.f, 0.f };
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.npcType = NPC_TYPE::SOLDIER;
+		t.teamType = TEAM_TYPE::ALLY;
+
+		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+		troopController->AddSoldier(soldier);
+		AddNpc(std::move(soldier));
+	}
+
+	troopController->SetFormation(Server::Contents::TROOP_FORMATION_TYPE::LINE);
 }
 
 void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
@@ -226,14 +243,14 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 		Vec3 toTargetDir = pos - playerPos;
 		const float distToTargetSq = toTargetDir.x * toTargetDir.x  + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
 
-		// ������ ���̿� Ÿ�ٱ����� �Ÿ� ��
+		// 반지름 길이와 타겟까지의 거리 비교
 		if(distToTargetSq >= radiusSq) continue;
 
 		const float dotValue{ playerDir.Dot(toTargetDir) };
 
 		float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
 		
-		// dotValue < 0 -> (��, �÷��̾ �ٶ󺸴� �ݴ���)�� ��쿡��, �����ϸ� ����� �ȴ� -> ���� NPC�� ���� ������ó�� ������ �� ����.
+		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
 		if(dotValue <= 0) continue;
 		
 		if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq) && npc->GetTeamType() == TEAM_TYPE::ENEMY) {
@@ -253,7 +270,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 
 		// a * b = |a| |b| cos	
 		// cos = a * b / |a| |b|
-		// ���� ���� -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
+		// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
 	}
 }
 

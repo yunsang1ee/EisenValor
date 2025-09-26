@@ -87,8 +87,7 @@ void ServerEngine::Session::FlushPacketQueueSecond()
 
 void ServerEngine::Session::FlushPacketQueue()
 {
-	// TODO: ���� �ʿ�
-	// RQ�� ������ ������ �����ϰ� �ִ� �����忡���� ������ �����.
+	// RQ의 접근은, 오직 이 세션을 관리하고 있는 RioWorker에 한함.
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
@@ -107,8 +106,6 @@ void ServerEngine::Session::FlushPacketQueue()
 				Disconnect("SendBuffer Append");
 
 			// std::cout << "packetBuffer Pop" << std::endl;
-			// ���⼭ ~PacketBuffer �Ҹ���.
-			// std::cout << "PacketBuffer Pop" << std::endl;
 		}
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
@@ -264,7 +261,7 @@ void ServerEngine::Session::Init()
 
 void ServerEngine::Session::PostRecv()
 {
-	// �� ó�� PostRecv�� AcceptThread�� ����.
+	// 맨 처음은 Accept Thread가 수행, 그 이후 RioWorker가 수행.
 
 	if(false == IsConnected()) {
 		Disconnect("IsConnected False");

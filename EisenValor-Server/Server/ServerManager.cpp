@@ -56,7 +56,7 @@ void Server::ServerManager::Run() noexcept
 	}
 }
 
-void Server::ServerManager::Shutdown()  noexcept
+void Server::ServerManager::Shutdown() noexcept
 {
 	MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();

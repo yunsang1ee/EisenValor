@@ -121,7 +121,7 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 
 }
 
-void ServerEngine::RIOCore::Shutdown() noexcept
+void ServerEngine::RIOCore::Shutdown() const noexcept
 {
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
