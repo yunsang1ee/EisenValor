@@ -4,14 +4,6 @@
 
 class NPC : public GameObject {
 public:
-
-	// 팀 구분용
-	enum class Team
-	{
-		ALLY,
-		ENEMY
-	};
-
 	// 유닛 타입 구분용
 	enum class NPC_TYPE : uint8
 	{
@@ -40,17 +32,12 @@ public:
     void SetTarget(std::shared_ptr<GameObject> target);
     void SetFollowDistance(float distance) { m_followDistance = distance; }
 
-    // 타입 설정 및 확인
-	void SetTeam(Team team) { m_team = team; }
-	Team GetTeam() const { return m_team; }
-
 	void SetUnitType(NPC_TYPE type)
 	{
 		m_unitType = type;
-		UpdateUnitProperties(); // 타입 변경시 속성 업데이트
 	}
+	virtual void SetTeamColor() override;
 	NPC_TYPE GetUnitType() const { return m_unitType; }
-
 
 private:
     std::shared_ptr<GameObject> m_target;
@@ -58,9 +45,7 @@ private:
     float m_moveSpeed = 4.5f;
     float m_baseY = 0.0f;        // 기준 높이
     // float m_rotation = 0.0f;     // NPC 회전
-
-    //Team and Unit
-	Team	 m_team = Team::ALLY;			 
+    // 
 	NPC_TYPE m_unitType = NPC_TYPE::SOLDIER; 
 
     // DirectX 렌더링 리소스들
@@ -76,6 +61,5 @@ private:
 
 private:
 	void			  UpdateUnitProperties();
-	DirectX::XMFLOAT4 GetTeamColor() const;
 	DirectX::XMFLOAT3 GetUnitScale() const;
 };

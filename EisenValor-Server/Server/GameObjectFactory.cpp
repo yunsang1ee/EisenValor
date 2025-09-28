@@ -16,7 +16,7 @@
 
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared();
+	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
 	player->SetPos(t.pos);
 	player->SetRotation(t.rot);
 	player->AddComponent<Server::Contents::TroopController>();
@@ -33,7 +33,9 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetRotation(t.rot);
 	general->SetStatInfo(t.stat);
 	general->AddComponent<Server::Contents::TroopController>();
+	general->AddComponent<Server::Contents::TroopController>()->SetOwner(general);
 	general->GetComponent<Server::Contents::TroopController>()->Init();
+	general->GetComponent<Server::Contents::TroopController>()->SetFormation(TROOP_FORMATION_TYPE::LINE);
 
 	// const auto bt = general->AddComponent<BehaviorTree>();
 	// bt->SetOwner(general);
@@ -56,19 +58,21 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 
 std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
-	auto soldier = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
+	const auto soldier = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
 	soldier->SetPos(t.pos);
 	soldier->SetRotation(t.rot);
 	soldier->SetStatInfo(t.stat);
 
-	auto fsm = soldier->AddComponent<Server::Contents::FSM>();
+	const auto fsm = soldier->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(soldier);
 
 	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
 	auto runState = std::make_unique<Server::Contents::SoldierRunState>();
+	auto attackState = std::make_unique<Server::Contents::SoldierAttackState>();
 	
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(runState));
+	fsm->AddState(std::move(attackState));
 	fsm->InitStartState(etou8(SOLDIER_STATE_TYPE::IDLE));
 
 	return soldier;

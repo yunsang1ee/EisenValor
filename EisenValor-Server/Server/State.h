@@ -21,7 +21,7 @@ namespace Server {
 			virtual void Exit() abstract;
 
 		public:
-			virtual uint8 Update(const float dt) abstract;
+			virtual void Update(const float dt) abstract;
 
 		public:
 			uint8 GetStateType() const noexcept { return m_type; }

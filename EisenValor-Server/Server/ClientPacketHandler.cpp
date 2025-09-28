@@ -115,3 +115,17 @@ bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>
 	}
 	return false;
 }
+
+bool Handle_CS_SOLDIER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_MOVE& recvPkt) noexcept
+{
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
+	const auto player = clientSession->GetPlayer();
+	const Vec3 pos{ FlatVec3ToVec3(recvPkt.pos()) };
+	if(auto room = player->GetGameRoom()) {
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE, player, FlatVec3ToVec3(recvPkt.pos()));
+		return true;
+	}
+	return false;
+}

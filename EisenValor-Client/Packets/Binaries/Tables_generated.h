@@ -63,6 +63,12 @@ struct CS_PLAYER_ATTACKBuilder;
 struct SC_HIT_PACKET;
 struct SC_HIT_PACKETBuilder;
 
+struct CS_SOLDIER_MOVE;
+struct CS_SOLDIER_MOVEBuilder;
+
+struct SC_REMAINING_GAME_TIME;
+struct SC_REMAINING_GAME_TIMEBuilder;
+
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -265,7 +271,8 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   typedef SC_LOCAL_PLAYER_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PLAYER_ID = 4,
-    VT_KINEMATIC_INFO = 6
+    VT_KINEMATIC_INFO = 6,
+    VT_TEAM_TYPE = 8
   };
   uint32_t player_id() const {
     return GetField<uint32_t>(VT_PLAYER_ID, 0);
@@ -273,10 +280,14 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   const FB_STRUCTS::KinematicInfo *kinematic_info() const {
     return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
+  uint8_t team_type() const {
+    return GetField<uint8_t>(VT_TEAM_TYPE, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
+           VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            verifier.EndTable();
   }
 };
@@ -290,6 +301,9 @@ struct SC_LOCAL_PLAYER_PACKETBuilder {
   }
   void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
     fbb_.AddStruct(SC_LOCAL_PLAYER_PACKET::VT_KINEMATIC_INFO, kinematic_info);
+  }
+  void add_team_type(uint8_t team_type) {
+    fbb_.AddElement<uint8_t>(SC_LOCAL_PLAYER_PACKET::VT_TEAM_TYPE, team_type, 0);
   }
   explicit SC_LOCAL_PLAYER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -305,10 +319,12 @@ struct SC_LOCAL_PLAYER_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t player_id = 0,
-    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
+    uint8_t team_type = 0) {
   SC_LOCAL_PLAYER_PACKETBuilder builder_(_fbb);
   builder_.add_kinematic_info(kinematic_info);
   builder_.add_player_id(player_id);
+  builder_.add_team_type(team_type);
   return builder_.Finish();
 }
 
@@ -795,6 +811,88 @@ inline ::flatbuffers::Offset<SC_HIT_PACKET> CreateSC_HIT_PACKET(
   SC_HIT_PACKETBuilder builder_(_fbb);
   builder_.add_current_hp(current_hp);
   builder_.add_obj_id(obj_id);
+  return builder_.Finish();
+}
+
+struct CS_SOLDIER_MOVE FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_SOLDIER_MOVEBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_POS = 4
+  };
+  const FB_STRUCTS::Vec3 *pos() const {
+    return GetStruct<const FB_STRUCTS::Vec3 *>(VT_POS);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<FB_STRUCTS::Vec3>(verifier, VT_POS, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_SOLDIER_MOVEBuilder {
+  typedef CS_SOLDIER_MOVE Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_pos(const FB_STRUCTS::Vec3 *pos) {
+    fbb_.AddStruct(CS_SOLDIER_MOVE::VT_POS, pos);
+  }
+  explicit CS_SOLDIER_MOVEBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_SOLDIER_MOVE> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_SOLDIER_MOVE>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_SOLDIER_MOVE> CreateCS_SOLDIER_MOVE(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const FB_STRUCTS::Vec3 *pos = nullptr) {
+  CS_SOLDIER_MOVEBuilder builder_(_fbb);
+  builder_.add_pos(pos);
+  return builder_.Finish();
+}
+
+struct SC_REMAINING_GAME_TIME FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_REMAINING_GAME_TIMEBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_REMAINING_TIME = 4
+  };
+  uint32_t remaining_time() const {
+    return GetField<uint32_t>(VT_REMAINING_TIME, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_REMAINING_TIME, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_REMAINING_GAME_TIMEBuilder {
+  typedef SC_REMAINING_GAME_TIME Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_remaining_time(uint32_t remaining_time) {
+    fbb_.AddElement<uint32_t>(SC_REMAINING_GAME_TIME::VT_REMAINING_TIME, remaining_time, 0);
+  }
+  explicit SC_REMAINING_GAME_TIMEBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_REMAINING_GAME_TIME> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_REMAINING_GAME_TIME>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_REMAINING_GAME_TIME> CreateSC_REMAINING_GAME_TIME(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t remaining_time = 0) {
+  SC_REMAINING_GAME_TIMEBuilder builder_(_fbb);
+  builder_.add_remaining_time(remaining_time);
   return builder_.Finish();
 }
 

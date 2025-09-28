@@ -25,9 +25,8 @@ namespace Server {
 			virtual void Exit() override;
 
 		public:
-			virtual uint8 Update(const float dt) override;
+			virtual void Update(const float dt) override;
 		};
-
 
 		class GeneralTraceState : public State {
 		public:
@@ -42,7 +41,7 @@ namespace Server {
 			virtual void Exit() override;
 
 		public:
-			virtual uint8 Update(const float dt) override;
+			virtual void Update(const float dt) override;
 		};
 	}
 }

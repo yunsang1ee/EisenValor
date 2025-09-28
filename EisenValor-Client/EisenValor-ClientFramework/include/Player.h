@@ -34,7 +34,7 @@ public:
 	// 카메라 관련 함수 추가
 	DirectX::XMMATRIX GetViewMatrix() const;
 
-	private:
+private:
 	Vec3 PredictPosition(const Vec3& pos, const Vec3& vel, const Vec3& acc, double t)
 	{
 		float tf = static_cast<float>(t);
@@ -46,15 +46,14 @@ public:
 		};
 	}
 
-	Vec3 Lerp(const Vec3& a, const Vec3& b, float t) {
+	Vec3 Lerp(const Vec3& a, const Vec3& b, float t)
+	{
 		return Vec3{a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t};
 	}
 
-	public:
-	void RenderFan(
-		ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
-	);
-	void InitializeFan(ID3D12Device* device);
+
+public:
+	virtual void SetTeamColor() override;
 
 protected:
 	// 플레이어 속성
@@ -84,19 +83,4 @@ protected:
 	ComPtr<ID3D12Resource> m_constantBuffer3; // 표시등
 	ConstantBuffer		   m_constantBufferData3;
 	UINT8*				   m_pCbvDataBegin3 = nullptr;
-
-	// 부채꼴 관련 멤버 변수들
-	ComPtr<ID3D12Resource>	 m_fanVertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_fanVertexBufferView;
-	ComPtr<ID3D12Resource>	 m_fanIndexBuffer;
-	D3D12_INDEX_BUFFER_VIEW	 m_fanIndexBufferView;
-	ComPtr<ID3D12Resource>	 m_fanConstantBuffer;		   // 부채꼴용 상수 버퍼 추가
-	UINT8*					 m_pFanCbvDataBegin = nullptr; // 부채꼴 상수 버퍼 데이터 포인터
-	UINT					 m_fanIndexCount = 0;		   // 부채꼴 인덱스 개수
-
-	// 부채꼴 설정 값들
-	float m_fanAngle = (2.0f * DirectX::XM_PI) / 4.0f; // 120도 부채꼴
-	float m_fanRadius = 3.0f;
-	int	  m_fanSegments = 15;	
-
 };

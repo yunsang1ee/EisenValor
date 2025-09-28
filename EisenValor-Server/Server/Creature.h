@@ -9,7 +9,7 @@ namespace Server {
 			bool		m_alive;
 
 		public:
-			Creature(const GAME_OBJECT_TYPE type, const TEAM_TYPE team);
+			Creature(const GAME_OBJECT_TYPE type, const TEAM_TYPE teamType);
 			virtual ~Creature();
 
 		public:
@@ -20,4 +20,4 @@ namespace Server {
 			bool	IsAlive() const noexcept { return m_alive; }
 		};
 	}
-}
+}	

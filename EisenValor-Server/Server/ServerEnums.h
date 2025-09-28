@@ -10,7 +10,7 @@ enum class GAME_OBJECT_TYPE : uint8 {
 };
 
 enum class NPC_TYPE : uint8 {
-	NONE, 
+	NONE,
 	GENERAL,
 	SOLDIER,
 	ARCHER,
@@ -22,10 +22,10 @@ enum class NPC_TYPE : uint8 {
 };
 
 enum class TEAM_TYPE : uint8 {
-	ALLY,
-	ENEMY,
+	BLUE,
+	RED,
 
-	END
+	COUNT
 };
 
 enum class SOLDIER_FORMATION : uint8 {
