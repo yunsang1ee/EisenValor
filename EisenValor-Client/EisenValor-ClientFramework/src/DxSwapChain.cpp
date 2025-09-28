@@ -119,10 +119,10 @@ void DxSwapChain::PresentMaxPerformance()
 
 	if (m_frameCount % 1000 == 0)
 	{
-		DEBUG_LOG_FMT(
+	/*	DEBUG_LOG_FMT(
 			"[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", m_frameCount, m_supportsTearing,
 			!m_isFullscreen && !m_isBorderlessFullscreen
-		);
+		);*/
 	}
 }
 

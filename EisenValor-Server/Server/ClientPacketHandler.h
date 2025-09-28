@@ -45,6 +45,10 @@ enum class PACKET_TYPE : uint16 {
 
 	SC_HIT_PKT = 15,
 
+	CS_SOLDIER_MOVE_PKT = 16,
+
+	SC_REMAINING_GAME_TIME_PKT = 17,
+
 	END
 };
 
@@ -59,6 +63,7 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt) noexcept;
 bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt) noexcept;
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept;
+bool Handle_CS_SOLDIER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_MOVE& recvPkt) noexcept;
 
 class ClientPacketHandler {
 private:
@@ -83,6 +88,7 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_FORMATION>(Handle_CS_SOLDIER_FORMATION_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_MOVE>(Handle_CS_SOLDIER_MOVE_PACKET, session, buffer, header); };
 
 		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
 	}
@@ -151,7 +157,7 @@ public:
 #pragma endregion
 
 #pragma region SC_LOCAL_PLAYER
-	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& transform) noexcept
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& transform, const TEAM_TYPE teamType) noexcept
 	{
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
@@ -161,7 +167,7 @@ public:
 
 		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel, accel, timeStamp };
 		std::cout << "SC_MY_PLAYER" << std::endl;
-		return MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo));
+		return MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo, static_cast<uint8>(teamType)));
 	}
 #pragma endregion
 
@@ -206,6 +212,13 @@ public:
 	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_HIT_PACKET(const uint32 id, const uint32 hp) noexcept
 	{
 		return MakePacketBuffer(PACKET_TYPE::SC_HIT_PKT, MakePacket(FB_TABLES::CreateSC_HIT_PACKET, id, hp));
+	}
+#pragma endregion
+
+#pragma region SC_REMAINING_GAME_TIME
+	static std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMANING_GAME_TIME_PACKET(const uint32 remainTime)
+	{
+		return MakePacketBuffer(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT, MakePacket(FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
 	}
 #pragma endregion
 

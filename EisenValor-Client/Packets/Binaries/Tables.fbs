@@ -34,6 +34,7 @@ table SC_ENTER_ROOM_PACKET {
 table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
+	team_type: ubyte;
 }
 
 // ================================================
@@ -106,4 +107,18 @@ table CS_PLAYER_ATTACK {
 table SC_HIT_PACKET {
 	obj_id: uint;
 	current_hp: uint;
+}
+
+// ================================================
+//					SOLDIER_MOVE
+// ================================================
+table CS_SOLDIER_MOVE {
+	pos : FB_STRUCTS.Vec3;
+}
+
+// ================================================
+//					REMAINING_GAME_TIME
+// ================================================
+table SC_REMAINING_GAME_TIME {
+	remaining_time : uint;
 }

@@ -8,15 +8,15 @@ using namespace DirectX;
 void Player::Initialize(ID3D12Device* device)
 {						 // 큐브 버텍스 데이터 (GameFramework에서 사용하던 것과 동일)
 	Vertex vertices[] = {// 전면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f),m_teamColor},
+						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), m_teamColor},
 						 // 후면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)}
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), m_teamColor}
 	};
 
 	// 인덱스 데이터
@@ -104,9 +104,6 @@ void Player::Initialize(ID3D12Device* device)
 	));
 
 	ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
-
-	// 부채꼴 초기화
-	InitializeFan(device);
 }
 
 void Player::Update(float deltaTime)
@@ -202,7 +199,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// 플레이어 큐브 렌더링
-	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
+	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.5f, 1.2f, 0.5f);
 	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
 	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
 	DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
@@ -217,8 +214,8 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 	// 표시등 큐브 렌더링
-	DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.2f, 0.2f);
-	DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f);
+	DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.4f, 0.3f);
+	DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f);
 	DirectX::XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
 	DirectX::XMMATRIX markerMVP = markerWorld * view * projection;
 
@@ -230,8 +227,6 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
-	// 부채꼴 렌더링
-	RenderFan(cmdList, view, projection);
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
@@ -250,133 +245,22 @@ DirectX::XMMATRIX Player::GetViewMatrix() const
 	);
 }
 
-void Player::InitializeFan(ID3D12Device* device)	
+void Player::SetTeamColor() 
 {
-	// 부채꼴 정점 데이터 생성
-	std::vector<Vertex> fanVertices;
-	std::vector<UINT>	fanIndices;
-
-	// 중심점 (부채꼴의 꼭짓점)
-	fanVertices.push_back({XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)}); // 노란색
-
-	// 부채꼴 호의 정점들 생성
-	for (int i = 0; i <= m_fanSegments; i++)
+	switch (m_team)
 	{
-		// -m_fanAngle/2 부터 +m_fanAngle/2 까지의 각도 계산
-		float theta = -m_fanAngle * 0.5f + (m_fanAngle * i) / m_fanSegments;
-
-		// X-Z 평면에서 부채꼴 생성 (Y는 0.01f로 살짝 위에)
-		float x = m_fanRadius * sinf(theta);
-		float z = m_fanRadius * cosf(theta);
-
-		fanVertices.push_back({XMFLOAT3(x, 0.01f, z), XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f)}); // 주황색
-	}
-
-	// 인덱스 생성 (삼각형들로 부채꼴 구성)
-	for (int i = 0; i < m_fanSegments; i++)
+	case GameObject::Team::BLUE:
 	{
-		fanIndices.push_back(0);	 // 중심점
-		fanIndices.push_back(i + 1); // 현재 호 점
-		fanIndices.push_back(i + 2); // 다음 호 점
+		m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
+		break;
 	}
-
-	m_fanIndexCount = static_cast<UINT>(fanIndices.size());
-
-	// 힙 속성 설정
-	D3D12_HEAP_PROPERTIES heapProps = {};
-	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	D3D12_RANGE readRange = {0, 0};
-
-	// 부채꼴 정점 버퍼 생성
-	const UINT			fanVertexBufferSize = static_cast<UINT>(fanVertices.size() * sizeof(Vertex));
-	D3D12_RESOURCE_DESC bufferDesc = {};
-	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	bufferDesc.Width = fanVertexBufferSize;
-	bufferDesc.Height = 1;
-	bufferDesc.DepthOrArraySize = 1;
-	bufferDesc.MipLevels = 1;
-	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-	bufferDesc.SampleDesc.Count = 1;
-	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_fanVertexBuffer)
-	));
-
-	// 부채꼴 정점 데이터 복사
-	UINT8* pFanVertexDataBegin;
-	ThrowIfFailed(m_fanVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pFanVertexDataBegin)));
-	memcpy(pFanVertexDataBegin, fanVertices.data(), fanVertexBufferSize);
-	m_fanVertexBuffer->Unmap(0, nullptr);
-
-	// 부채꼴 정점 버퍼 뷰 설정
-	m_fanVertexBufferView.BufferLocation = m_fanVertexBuffer->GetGPUVirtualAddress();
-	m_fanVertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_fanVertexBufferView.SizeInBytes = fanVertexBufferSize;
-
-	// 부채꼴 인덱스 버퍼 생성
-	const UINT fanIndexBufferSize = static_cast<UINT>(fanIndices.size() * sizeof(UINT));
-	bufferDesc.Width = fanIndexBufferSize;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_fanIndexBuffer)
-	));
-
-	// 부채꼴 인덱스 데이터 복사
-	UINT8* pFanIndexDataBegin;
-	ThrowIfFailed(m_fanIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pFanIndexDataBegin)));
-	memcpy(pFanIndexDataBegin, fanIndices.data(), fanIndexBufferSize);
-	m_fanIndexBuffer->Unmap(0, nullptr);
-
-	// 부채꼴 인덱스 버퍼 뷰 설정
-	m_fanIndexBufferView.BufferLocation = m_fanIndexBuffer->GetGPUVirtualAddress();
-	m_fanIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_fanIndexBufferView.SizeInBytes = fanIndexBufferSize;
-
-	// 부채꼴 상수 버퍼 생성
-	const UINT fanConstantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
-	bufferDesc.Width = fanConstantBufferSize;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_fanConstantBuffer)
-	));
-
-	ThrowIfFailed(m_fanConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pFanCbvDataBegin)));
+	case GameObject::Team::RED:
+	{
+		m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
+		break;
+	}
+	default:
+		break;
+	}
 }
 
-void Player::RenderFan(
-	ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
-)
-{
-	// 부채꼴 월드 행렬 계산
-	XMMATRIX fanWorld = XMMatrixIdentity();
-
-	// 플레이어의 Y축 회전(Yaw) 적용 - 플레이어가 바라보는 방향으로 부채꼴 향하게 함
-	fanWorld *= XMMatrixRotationY(m_rot.y);
-
-	// 플레이어 위치로 이동
-	fanWorld *= XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
-
-	// MVP 행렬 계산
-	XMMATRIX fanMvp = fanWorld * view * projection;
-
-	// 부채꼴 상수 버퍼 업데이트
-	ConstantBuffer fanCbData;
-	XMStoreFloat4x4(&fanCbData.mvp, XMMatrixTranspose(fanMvp));
-	memcpy(m_pFanCbvDataBegin, &fanCbData, sizeof(fanCbData));
-
-	// 부채꼴 상수 버퍼 바인딩
-	cmdList->SetGraphicsRootConstantBufferView(0, m_fanConstantBuffer->GetGPUVirtualAddress());
-
-	// 부채꼴 정점 및 인덱스 버퍼 설정
-	cmdList->IASetVertexBuffers(0, 1, &m_fanVertexBufferView);
-	cmdList->IASetIndexBuffer(&m_fanIndexBufferView);
-	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// 부채꼴 그리기
-	cmdList->DrawIndexedInstanced(m_fanIndexCount, 1, 0, 0, 0);
-}

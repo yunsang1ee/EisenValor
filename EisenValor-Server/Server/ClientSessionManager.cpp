@@ -14,7 +14,7 @@ void Server::ClientSessionManager::RemoveSession(std::shared_ptr<ClientSession> 
 {
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	if(m_sessions.contains(clientSession))
-		m_sessions.erase(clientSession);
+		m_sessions.erase(clientSession);	
 }
 
 void Server::ClientSessionManager::Broadcast(std::shared_ptr<ClientSession> clientSession, std::shared_ptr<ServerEngine::PacketBuffer> buffer)

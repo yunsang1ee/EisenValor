@@ -13,7 +13,7 @@ namespace Server {
 			std::weak_ptr<ClientSession>			m_session;
 
 		public:
-			Player();
+			Player(const TEAM_TYPE teamType);
 			virtual ~Player();
 
 		public:

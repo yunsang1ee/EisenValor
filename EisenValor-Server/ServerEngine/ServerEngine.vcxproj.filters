@@ -56,7 +56,7 @@
       <Filter>02. RIOBuffer</Filter>
     </ClInclude>
     <ClInclude Include="PacketBuffer.h">
-      <Filter>06. MemoryPool\02. PacketBuffer</Filter>
+      <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
     </ClInclude>
     <ClInclude Include="PacketHeader.h">
       <Filter>97. Headers</Filter>
@@ -124,7 +124,7 @@
       <Filter>02. RIOBuffer</Filter>
     </ClCompile>
     <ClCompile Include="PacketBuffer.cpp">
-      <Filter>06. MemoryPool\02. PacketBuffer</Filter>
+      <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="ObjectPool.cpp">
       <Filter>04. ObjectPool</Filter>
@@ -218,10 +218,7 @@
     <Filter Include="05. TaskQueue\00. Task">
       <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="06. MemoryPool">
-      <UniqueIdentifier>{6100b368-1704-40ed-af17-b6dbe65cc32b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="06. MemoryPool\02. PacketBuffer">
+    <Filter Include="02. RIOBuffer\02. PacketBuffer">
       <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

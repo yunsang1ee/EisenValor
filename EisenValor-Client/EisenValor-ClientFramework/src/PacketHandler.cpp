@@ -42,7 +42,11 @@ bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOC
 	if (id == localID)
 	{
 		auto localPlayer = std::make_shared<LocalPlayer>();
+		localPlayer->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		localPlayer->SetTeamColor();
 		localPlayer->Initialize(device);
+				
+		// TODO: 팀 설정
 		localPlayer->m_id = recvPkt.player_id();
 
 		const Vec3 pos{
@@ -96,7 +100,8 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	case ObjectType::PLAYER:
 	{
 		auto player = std::make_shared<Player>();
-		
+		player->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		player->SetTeamColor();
 		player->Initialize(device);
 		player->m_id = id;
 		player->SetPosition(pos);
@@ -111,8 +116,9 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	case ObjectType::NPC:
 	{
 		auto npc = std::make_shared<NPC>();
-		npc->SetTeam(static_cast<NPC::Team>(recvPkt.team_type()));
+		npc->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
 		npc->SetUnitType(static_cast<NPC::NPC_TYPE>(recvPkt.npc_type()));
+		npc->SetTeamColor();
 
 		npc->Initialize(device);
 		npc->m_id = id;
@@ -205,5 +211,15 @@ bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& 
 		}
 	}
 	
+	return true;
+}
+
+bool Handle_SC_REMANING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt)
+{
+	const uint32 remainingTime{recvPkt.remaining_time()};
+	const uint32_t totalSeconds = remainingTime / 1000;
+	const uint32_t minutes = totalSeconds / 60;
+	const uint32_t seconds = totalSeconds % 60;
+	std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
 	return true;
 }

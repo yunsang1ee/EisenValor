@@ -76,6 +76,9 @@
     <ClCompile Include="TroopController.cpp">
       <Filter>02. Contents\04. Component\02. TroopController</Filter>
     </ClCompile>
+    <ClCompile Include="Team.cpp">
+      <Filter>02. Contents\00. Room\01. GameRoom\00. Team</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="00. Server">
@@ -186,6 +189,9 @@
     <Filter Include="02. Contents\04. Component\02. TroopController">
       <UniqueIdentifier>{a60df6e2-692f-42b6-b8cd-8d0cc7286b81}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\00. Room\01. GameRoom\00. Team">
+      <UniqueIdentifier>{dfc424e8-922b-4926-bce1-3f236a43e906}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -271,6 +277,9 @@
     </ClInclude>
     <ClInclude Include="TroopController.h">
       <Filter>02. Contents\04. Component\02. TroopController</Filter>
+    </ClInclude>
+    <ClInclude Include="Team.h">
+      <Filter>02. Contents\00. Room\01. GameRoom\00. Team</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

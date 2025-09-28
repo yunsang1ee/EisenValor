@@ -1,7 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "GameObject.h"
 
-
 void GameObject::Handle_SC_MOVE(
 	const Vec3& pos, const Vec3& rot, const Vec3& velocity, const Vec3& accel, const uint64 timeStamp
 )
@@ -20,6 +19,11 @@ void GameObject::Handle_SC_MOVE(
 	lastServerRotation = rot;
 	// std::cout << "Handle_SC_MOVE" << std::endl;
 #endif
+}
+
+void GameObject::SetTeam(Team team) 
+{
+	m_team = team;
 }
 
 Vec3 GameObject::SmoothLerp(const Vec3& curPos, const Vec3& destPos, const float lerpFactor)

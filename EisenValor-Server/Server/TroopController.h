@@ -7,7 +7,13 @@ namespace Server {
 		class NPC;
 		class TroopController;
 
+		struct SoldierData {
+			Vec3 offset;
+			std::shared_ptr<NPC> soldier;
+		};
+
 		enum class TROOP_FORMATION_TYPE : uint8 {
+			NONE,
 			LINE,
 			VSHAPE,
 			CIRCLE,
@@ -25,21 +31,22 @@ namespace Server {
 			TroopController*									m_controller;
 			TROOP_FORMATION_TYPE								m_formationType;
 			TROOP_STATE_TYPE									m_stateType;
-			virtual void Arrange(std::unordered_map<uint32, std::shared_ptr<NPC>>& soldiers) noexcept abstract;
+			Vec3												m_centerPos;			// 대열 중심 위치
+			virtual void Arrange(std::unordered_map<uint32, SoldierData>& soldiers) noexcept abstract;
 		};
 
 		class LineFormation : public IFormation {
 		public:
-			virtual void Arrange(std::unordered_map<uint32, std::shared_ptr<NPC>>& soldiers) noexcept;
+			virtual void Arrange(std::unordered_map<uint32, SoldierData>& soldiers) noexcept;
 		};
 
 		// 병사들을 관리하는 컴포넌트
 		class TroopController : public Component {
 		private:
-			IFormation*													m_curFormation;
+			IFormation*													m_curFormation{ nullptr };
 			std::map<TROOP_FORMATION_TYPE, std::unique_ptr<IFormation>> m_formations;
-			std::unordered_map<uint32, std::shared_ptr<NPC>>			m_soldiers;
-
+			std::unordered_map<uint32, SoldierData>						m_soldiers;
+		
 		public:
 			void Init();
 
@@ -51,6 +58,7 @@ namespace Server {
 			virtual void Update(const float dt) override;
 			
 		public:
+			void SetTargetPos(const Vec3& targetPos);
 			void SetFormation(const TROOP_FORMATION_TYPE type) noexcept;
 
 		};

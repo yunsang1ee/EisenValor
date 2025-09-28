@@ -36,7 +36,6 @@ void Server::ServerManager::Run() noexcept
 	MANAGER(ServerEngine::RIOCore)->Run();
 	
 	char ch;
-	 
 	constexpr int8 ESC = 27;
 
 	// Main-Thread

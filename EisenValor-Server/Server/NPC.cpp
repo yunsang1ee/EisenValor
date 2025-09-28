@@ -16,5 +16,4 @@ Server::Contents::NPC::NPC(const NPC_TYPE type, const TEAM_TYPE team)
 Server::Contents::NPC::~NPC()
 {
 	std::cout << std::format("~NPC! ID = {}", GetID()) << std::endl;
-
 }

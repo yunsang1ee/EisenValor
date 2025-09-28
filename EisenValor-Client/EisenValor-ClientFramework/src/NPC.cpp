@@ -8,7 +8,7 @@ using namespace DirectX;
 
 void NPC::Initialize(ID3D12Device* device)
 {
-	DirectX::XMFLOAT4 color = GetTeamColor();
+	DirectX::XMFLOAT4 color = m_teamColor;
 
 	Vertex vertices[] = {// 전면
 						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), color},
@@ -33,7 +33,7 @@ void NPC::Initialize(ID3D12Device* device)
 					  3, 2, 6, 3, 6, 7,
 					  // 위쪽
 					  1, 5, 6, 1, 6, 2,
-					  // 아래쪽
+					  // 아래쪽r
 					  0, 3, 7, 0, 7, 4
 	};
 
@@ -153,6 +153,65 @@ void NPC::SetTarget(std::shared_ptr<GameObject> target)
 	}
 }
 
+void NPC::SetTeamColor() 
+{
+	switch (m_team)
+	{
+	case GameObject::Team::BLUE:
+		switch (m_unitType)
+		{
+		case NPC::NPC_TYPE::GENERAL:
+		{
+			m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		}
+			break;
+		case NPC::NPC_TYPE::SOLDIER:
+		{
+			m_teamColor = Vec4(0.3f, 0.3f, 1.0f, 1.0f);
+			break;
+		}
+		case NPC::NPC_TYPE::ARCHER:
+			break;
+		case NPC::NPC_TYPE::MEDIC:
+			break;
+		case NPC::NPC_TYPE::BATTLE_RAM:
+			break;
+		case NPC::NPC_TYPE::BOSS:
+			break;
+		default:
+			break;
+		}
+		break;
+	case GameObject::Team::RED:
+		switch (m_unitType)
+		{
+		case NPC::NPC_TYPE::GENERAL:
+		{
+			m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		}
+		break;
+		case NPC::NPC_TYPE::SOLDIER:
+		{
+			m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			break;
+		}
+		case NPC::NPC_TYPE::ARCHER:
+			break;
+		case NPC::NPC_TYPE::MEDIC:
+			break;
+		case NPC::NPC_TYPE::BATTLE_RAM:
+			break;
+		case NPC::NPC_TYPE::BOSS:
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void NPC::UpdateUnitProperties()
 {
 	// 유닛 타입별 기본 속성 설정
@@ -168,37 +227,6 @@ void NPC::UpdateUnitProperties()
 		m_moveSpeed = 3.0f;
 		break;
 	}
-}
-
-DirectX::XMFLOAT4 NPC::GetTeamColor() const
-{
-	if (m_team == Team::ALLY)
-	{
-		// 아군
-		switch (m_unitType)
-		{
-		case NPC_TYPE::GENERAL:
-			return DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
-		case NPC_TYPE::SOLDIER:
-			return DirectX::XMFLOAT4(0.3f	, 0.3f, 1.0f, 1.0f); // 연파랑
-		case NPC_TYPE::BATTLE_RAM:
-			return DirectX::XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f); // 하늘색
-		}
-	}
-	else
-	{
-		// 적군
-		switch (m_unitType)
-		{
-		case NPC_TYPE::GENERAL:
-			return DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
-		case NPC_TYPE::SOLDIER:
-			return DirectX::XMFLOAT4(1.0f, 0.3f, 0.3f, 1.0f); // 연빨강
-		case NPC_TYPE::BATTLE_RAM:
-			return DirectX::XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f); // 주황
-		}
-	}
-	return DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f); // 기본 회색
 }
 
 DirectX::XMFLOAT3 NPC::GetUnitScale() const

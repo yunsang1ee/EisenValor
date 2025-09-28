@@ -18,9 +18,8 @@ namespace Server {
 
 		public:
 			void		AddState(std::unique_ptr<State> state);
-			State*		GetCurState() { return m_curState; }
 			void		ChangeState(uint8 nextState);
-			// State* GetCurState() const { return m_curState.get(); }
+			State*		GetCurState() const { return m_curState; }
 		};
 	}
 }

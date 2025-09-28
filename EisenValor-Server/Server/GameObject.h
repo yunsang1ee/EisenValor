@@ -17,9 +17,9 @@ namespace Server {
 			std::wstring							m_name;
 			uint32									m_id;
 			const GAME_OBJECT_TYPE					m_type;
-			const TEAM_TYPE							m_teamType;
 			std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)> m_components;
 			std::vector<std::unique_ptr<Script>>	m_scripts;
+			TEAM_TYPE								m_teamType;
 
 		protected:
 			KinematicInfo							m_kinematicInfo;
@@ -52,10 +52,10 @@ namespace Server {
 			const Vec3& GetAcceleration() const noexcept { return m_kinematicInfo.acceleration; }
 			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
+			TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 
 		public:
 			virtual void Update(const float dt);
-			const TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 
 		public:
 			template<typename T> requires std::derived_from<T, Component>

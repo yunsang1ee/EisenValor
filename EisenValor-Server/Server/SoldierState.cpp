@@ -7,7 +7,7 @@
 #include "FSM.h"
 
 Server::Contents::SoldierIdleState::SoldierIdleState()
-	:State(etou8(SOLDIER_STATE_TYPE::IDLE))
+	:State{ etou8(SOLDIER_STATE_TYPE::IDLE) }
 {
 }
 
@@ -29,13 +29,34 @@ void Server::Contents::SoldierIdleState::Exit()
 	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
 }
 
-uint8 Server::Contents::SoldierIdleState::Update(const float dt)
+void Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	return GetStateType();
+	static constexpr float ATTACK_DISTANCE{ 1.f };
+
+	const auto fsm = GetFSM();
+	const auto& owner = fsm->GetOwner();
+	const auto& room = owner->GetGameRoom();
+	
+	const Vec3& ownerPos = owner->GetPos();
+
+	//if(room) {
+	//	const auto& npcs = room->GetNpcs();
+	//	for(const auto& [id, npc] : npcs) {
+	//		if(owner->GetID() == id) continue;
+
+	//		const Vec3& targetPos = npc->GetPos();
+
+	//		const Vec3& distToTarget = targetPos - ownerPos;
+	//		
+	//		if(distToTarget.Length() <= ATTACK_DISTANCE) {
+	//			fsm->ChangeState(etou8(SOLDIER_STATE_TYPE::ATTACK));
+	//		}
+	//	}
+	//}
 }
 
 Server::Contents::SoldierRunState::SoldierRunState()
-	:State(etou8(SOLDIER_STATE_TYPE::RUN))
+	:State{ etou8(SOLDIER_STATE_TYPE::RUN) }
 {
 }
 
@@ -45,15 +66,19 @@ Server::Contents::SoldierRunState::~SoldierRunState()
 
 void Server::Contents::SoldierRunState::Enter()
 {
-
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter SoldierRunState", id) << std::endl;
 }
 
 void Server::Contents::SoldierRunState::Exit()
 {
-	std::cout << " SOLDIER_RUN_STATE_EXIT" << std::endl;
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Exit SoldierRunState", id) << std::endl;
 }
 
-uint8 Server::Contents::SoldierRunState::Update(const float dt)
+void Server::Contents::SoldierRunState::Update(const float dt)
 {
 	auto owner = GetFSM()->GetOwner();
 	
@@ -69,7 +94,7 @@ uint8 Server::Contents::SoldierRunState::Update(const float dt)
 	if(distance < 0.05f) {
 		// 거의 도착하면 위치를 타겟에 고정하고 IDLE로 전환
 		owner->SetPos(target);
-		return etou8(SOLDIER_STATE_TYPE::IDLE);
+		GetFSM()->ChangeState(etou8(SOLDIER_STATE_TYPE::IDLE));
 	}
 
 	// 방향 벡터 정규화
@@ -95,8 +120,6 @@ uint8 Server::Contents::SoldierRunState::Update(const float dt)
 
 	auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
 	GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
-
-	return GetStateType();
 }
 
 
@@ -240,3 +263,30 @@ uint8 Server::Contents::SoldierRunState::Update(const float dt)
 //	newRot.y = newRotY;
 //	owner->SetRotation(newRot);
 //}
+
+Server::Contents::SoldierAttackState::SoldierAttackState()
+	:State{etou8(SOLDIER_STATE_TYPE::ATTACK)}
+{
+}
+
+Server::Contents::SoldierAttackState::~SoldierAttackState()
+{
+}
+
+void Server::Contents::SoldierAttackState::Enter()
+{
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Enter SoldierAttackState", id) << std::endl;
+}
+
+void Server::Contents::SoldierAttackState::Exit()
+{
+	const auto& owner = GetFSM()->GetOwner();
+	const uint32 id{ owner->GetID() };
+	std::cout << std::format("ID = {}, Exit SoldierAttackState", id) << std::endl;
+}
+
+void Server::Contents::SoldierAttackState::Update(const float dt)
+{
+}

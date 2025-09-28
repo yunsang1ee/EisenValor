@@ -24,11 +24,23 @@ public:
 	virtual Vec3 GetAcceleration() const { return m_acceleration; }
 
 	virtual ObjectType GetObjectType() const = 0;
+	
+	// 팀 구분용
+	enum class Team
+	{
+		BLUE,
+		RED
+	};
 
 public:
 	void Handle_SC_MOVE(
 		const Vec3& pos, const Vec3& rot, const Vec3& velocity, const Vec3& accel, const uint64 timeStamp
 	);
+	// 타입 설정 및 확인
+	void SetTeam(Team team);
+	Team GetTeam() const { return m_team; }
+
+	virtual void SetTeamColor() {}
 
 public:
 	uint32 m_id;
@@ -41,6 +53,8 @@ protected:
 
 	Vec3 m_velocity{0.f, 0.f, 0.f};
 	Vec3 m_acceleration{0.f, 0.f, 0.f};
+	Team m_team = Team::BLUE;
+	Vec4 m_teamColor;
 
 public:
 	Vec3	lastServerPosition;

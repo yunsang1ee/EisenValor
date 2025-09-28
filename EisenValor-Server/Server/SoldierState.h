@@ -25,7 +25,7 @@ namespace Server {
 			virtual void Exit() override;
 
 		public:
-			virtual uint8 Update(const float dt) override;
+			virtual void Update(const float dt) override;
 		};
 
 		class SoldierRunState : public State {
@@ -44,8 +44,21 @@ namespace Server {
 			void SetTargetPos(const Vec3& pos) { m_targetPos = pos; }
 
 		public:
-			virtual uint8 Update(const float dt) override;
+			virtual void Update(const float dt) override;
 
+		};
+
+		class SoldierAttackState : public State {
+		public:
+			SoldierAttackState();
+			virtual ~SoldierAttackState();
+
+		public:
+			virtual void Enter() override;
+			virtual void Exit() override;
+
+		public:
+			virtual void Update(const float dt) override;
 		};
 
 		//class SoldierTraceState : public State {
