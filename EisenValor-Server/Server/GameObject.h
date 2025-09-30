@@ -53,6 +53,7 @@ namespace Server {
 			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
+			const Vec3 GetForward();
 
 		public:
 			virtual void Update(const float dt);

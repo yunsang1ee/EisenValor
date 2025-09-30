@@ -117,8 +117,8 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	{
 		auto npc = std::make_shared<NPC>();
 		npc->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
-		npc->SetUnitType(static_cast<NPC::NPC_TYPE>(recvPkt.npc_type()));
 		npc->SetTeamColor();
+		npc->SetUnitType(static_cast<NPC::NPC_TYPE>(recvPkt.npc_type()));
 
 		npc->Initialize(device);
 		npc->m_id = id;

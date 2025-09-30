@@ -23,6 +23,7 @@ namespace Server {
 			void SetTarget(std::weak_ptr<Player> target) noexcept { m_target = target; }
 			std::shared_ptr<Player> GetTarget() noexcept { return m_target.lock(); }
 			void SetTargetPos(const Vec3& targetPos) noexcept { m_targetPos = targetPos; }
+			const Vec3& GetTargetPos() const noexcept { return m_targetPos; }
 		};
 	}
 }

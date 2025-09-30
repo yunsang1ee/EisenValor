@@ -69,6 +69,9 @@ struct CS_SOLDIER_MOVEBuilder;
 struct SC_REMAINING_GAME_TIME;
 struct SC_REMAINING_GAME_TIMEBuilder;
 
+struct CS_CHANGE_SOLDIER_FORMATION;
+struct CS_CHANGE_SOLDIER_FORMATIONBuilder;
+
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -893,6 +896,35 @@ inline ::flatbuffers::Offset<SC_REMAINING_GAME_TIME> CreateSC_REMAINING_GAME_TIM
     uint32_t remaining_time = 0) {
   SC_REMAINING_GAME_TIMEBuilder builder_(_fbb);
   builder_.add_remaining_time(remaining_time);
+  return builder_.Finish();
+}
+
+struct CS_CHANGE_SOLDIER_FORMATION FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_CHANGE_SOLDIER_FORMATIONBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_CHANGE_SOLDIER_FORMATIONBuilder {
+  typedef CS_CHANGE_SOLDIER_FORMATION Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_CHANGE_SOLDIER_FORMATIONBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_CHANGE_SOLDIER_FORMATION> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_CHANGE_SOLDIER_FORMATION>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_CHANGE_SOLDIER_FORMATION> CreateCS_CHANGE_SOLDIER_FORMATION(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_CHANGE_SOLDIER_FORMATIONBuilder builder_(_fbb);
   return builder_.Finish();
 }
 

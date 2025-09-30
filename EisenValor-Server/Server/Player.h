@@ -21,9 +21,6 @@ namespace Server {
 		
 		public:
 			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
-
-		public:
-			virtual void Update(const float dt) override;
 		
 		};
 	}

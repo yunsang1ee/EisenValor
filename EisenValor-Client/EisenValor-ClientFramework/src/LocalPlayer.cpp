@@ -14,7 +14,7 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 	InitializeFan(device);
 
 	// 와이어프레임 박스 초기화
-	InitializeWireFrame(device);
+	// InitializeWireFrame(device);
 }
 
 void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
@@ -110,21 +110,21 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 	RenderFan(cmdList, view, projection);
 
 	// 와이어프레임 박스 렌더링
-	cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
-	cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
-	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
+	//cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
+	//cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
+	//cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
 
-	// 플레이어와 같은 위치, 회전
-	DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
-	DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
-	DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
-	DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
+	//// 플레이어와 같은 위치, 회전
+	//DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
+	//DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
+	//DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
+	//DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
 
-	DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
-	memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
+	//DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
+	//memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
 
-	cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
-	cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
+	//cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
+	//cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
 }
 
 void LocalPlayer::Update(float deltaTime)
@@ -494,6 +494,12 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		m_playerSpeed -= 10.f;
 	}
 
+	if(input.GetInputDown('U'))
+	{
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_CHANGE_SOLDIER_FORMATION();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+
 	if (input.GetInput('W'))
 	{
 		m_velocity.x = forwardX * m_playerSpeed;
@@ -544,16 +550,16 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('T'))
 	{
-		auto pos = GetPosition();
+		//auto pos = GetPosition();
 
-		// 플레이어가 바라보는 방향 벡터 (XZ 평면)
-		const float forwardX = sinf(m_cameraYaw);
-		const float forwardZ = cosf(m_cameraYaw);
+		//// 플레이어가 바라보는 방향 벡터 (XZ 평면)
+		//const float forwardX = sinf(m_cameraYaw);
+		//const float forwardZ = cosf(m_cameraYaw);
 
-		// 5.f 만큼 떨어진 위치
-		pos.x += forwardX * 5.f;
-		pos.z += forwardZ * 5.f;
-
+		//// 5.f 만큼 떨어진 위치
+		//pos.x += forwardX * 5.f;
+		//pos.z += forwardZ * 5.f;
+		Vec3 pos;
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_MOVE_PACKET(pos);
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}

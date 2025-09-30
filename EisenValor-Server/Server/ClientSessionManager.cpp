@@ -5,7 +5,7 @@
 
 void Server::ClientSessionManager::AddSession(std::shared_ptr<ClientSession>&& clientSession)
 {
-	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
+	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };	
 	if(false == m_sessions.contains(clientSession))
 		m_sessions.insert(std::move(clientSession));
 }

@@ -160,6 +160,7 @@
     <ClCompile Include="ClientSessionManager.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
+    <ClCompile Include="Formation.cpp" />
     <ClCompile Include="FSM.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="GameRoomManager.cpp" />
@@ -194,6 +195,7 @@
     <ClInclude Include="ClientSessionManager.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
+    <ClInclude Include="Formation.h" />
     <ClInclude Include="FSM.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="GameRoomManager.h" />

@@ -84,7 +84,7 @@ void Server::Contents::GeneralTraceState::Update(const float dt)
 		auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
 		const auto gameRoom = GetFSM()->GetOwner()->GetGameRoom();
 		if(gameRoom) {
-			gameRoom->ExecuteAsyncronously(&Server::Contents::GameRoom::Broadcast, std::move(pb));
+			gameRoom->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 		}
 	}
 }

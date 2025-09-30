@@ -162,12 +162,12 @@ void NPC::SetTeamColor()
 		{
 		case NPC::NPC_TYPE::GENERAL:
 		{
-			m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f);
+			m_teamColor = Vec4(0.3f, 0.3f, 1.0f, 1.0f);
 		}
 			break;
 		case NPC::NPC_TYPE::SOLDIER:
 		{
-			m_teamColor = Vec4(0.3f, 0.3f, 1.0f, 1.0f);
+			m_teamColor = Vec4(0.5f, 0.5f, 1.0f, 1.0f);
 			break;
 		}
 		case NPC::NPC_TYPE::ARCHER:
@@ -187,12 +187,12 @@ void NPC::SetTeamColor()
 		{
 		case NPC::NPC_TYPE::GENERAL:
 		{
-			m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			m_teamColor = Vec4(1.0f, 0.3f, 0.3f, 1.0f);
 		}
 		break;
 		case NPC::NPC_TYPE::SOLDIER:
 		{
-			m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			m_teamColor = Vec4(1.0f, 0.5f, 0.5f, 1.0f);
 			break;
 		}
 		case NPC::NPC_TYPE::ARCHER:

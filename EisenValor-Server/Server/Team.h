@@ -6,19 +6,19 @@ namespace Server {
 		class Player;
 		class NPC;
 		class Creature;
-		
+		class GameRoom;
+
 		class Team {
 		private:
-			TEAM_TYPE									m_type;
-			// Sstd::map<uint32, std::shared_ptr<Player>>	m_players;
-			// std::map<uint32, std::shared_ptr<NPC>>		m_npcs;
+			TEAM_TYPE																				m_type;
+			std::shared_ptr<GameRoom>																m_room;
 			std::array<std::map<uint32, std::shared_ptr<GameObject>>, etou8(GAME_OBJECT_TYPE::END)> m_objects;
 
 		public:
 			explicit	Team(const TEAM_TYPE type);
 
 		public:
-			void		Init();
+			void		Init(std::shared_ptr<GameRoom> room);
 			void		AddObject(std::shared_ptr<GameObject> object);
 			void		RemoveObject(std::shared_ptr<GameObject> object);
 			auto&		GetPlayers() noexcept { return reinterpret_cast<std::map<uint32, std::shared_ptr<Player>>&>(m_objects[etou8(GAME_OBJECT_TYPE::PLAYER)]); }

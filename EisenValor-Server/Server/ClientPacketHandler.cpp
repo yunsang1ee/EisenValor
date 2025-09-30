@@ -39,7 +39,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	auto packetBuffer = ClientPacketHandler::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
 
 	if(auto room = clientSession->GetPlayer()->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Broadcast, std::move(packetBuffer));
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(packetBuffer));
 		return true;
 	}
 
@@ -122,9 +122,25 @@ bool Handle_CS_SOLDIER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>&
 	clientSession->UpdateHeartbeatTimestamp();
 
 	const auto player = clientSession->GetPlayer();
-	const Vec3 pos{ FlatVec3ToVec3(recvPkt.pos()) };
+	const Vec3& ownerPos = player->GetPos();
+
+	const Vec3 targetPos = ownerPos + player->GetForward() * 5.f;
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE, player, FlatVec3ToVec3(recvPkt.pos()));
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE, player, targetPos);
+		return true;
+	}
+	return false;
+}
+
+bool Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_SOLDIER_FORMATION& recvPkt) noexcept
+{
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
+	const auto player = clientSession->GetPlayer();
+
+	if(auto room = player->GetGameRoom()) {
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION, player);
 		return true;
 	}
 	return false;
