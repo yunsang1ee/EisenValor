@@ -122,3 +122,10 @@ table CS_SOLDIER_MOVE {
 table SC_REMAINING_GAME_TIME {
 	remaining_time : uint;
 }
+
+// ================================================
+//					CHANGE_SOLDIER_FORMATION
+// ================================================
+table CS_CHANGE_SOLDIER_FORMATION {
+
+}

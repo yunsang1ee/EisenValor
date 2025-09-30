@@ -38,6 +38,7 @@ enum class PACKET_TYPE : uint16
 	CS_MOVE_SOLDIER_PKT = 16,
 
 	SC_REMAINING_GAME_TIME_PKT = 17,
+	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
 
 	END
 };
@@ -111,7 +112,11 @@ public:
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-		{ return HandlePacket<FB_TABLES::SC_REMAINING_GAME_TIME>(Handle_SC_REMANING_GAME_TIME_PACKET, socket, buffer, header); };
+		{
+			return HandlePacket<FB_TABLES::SC_REMAINING_GAME_TIME>(
+				Handle_SC_REMANING_GAME_TIME_PACKET, socket, buffer, header
+			);
+		};
 	}
 
 	static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
@@ -234,6 +239,13 @@ public:
 	{
 		const FB_STRUCTS::Vec3 p{pos.x, pos.y, pos.z};
 		return MakePacketBuffer(PACKET_TYPE::CS_MOVE_SOLDIER_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_MOVE, &p));
+	}
+#pragma endregion
+
+#pragma region CS_CHANGE_SOLDIER_FORMATION
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_CHANGE_SOLDIER_FORMATION()
+	{
+		return MakePacketBuffer(PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_CHANGE_SOLDIER_FORMATION));
 	}
 #pragma endregion
 };

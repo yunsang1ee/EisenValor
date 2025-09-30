@@ -11,6 +11,17 @@ Server::Contents::GameObject::~GameObject()
 	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;
 }
 
+const Vec3 Server::Contents::GameObject::GetForward()
+{
+	Vec3 forward;
+	forward.x = sinf(m_kinematicInfo.rotation.y);
+	forward.y = 0.f;             // 수평면만 고려
+	forward.z = cosf(m_kinematicInfo.rotation.y);
+	forward.Normalize();
+
+	return forward;
+}
+
 void Server::Contents::GameObject::Update(const float dt)
 {
 	for(const auto& comp : m_components) {

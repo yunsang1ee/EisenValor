@@ -20,6 +20,7 @@ void Server::Contents::SoldierIdleState::Enter()
 	const auto& owner = GetFSM()->GetOwner();
 	const uint32 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
+	m_prevTargetPos = std::static_pointer_cast<NPC>(owner)->GetTargetPos();
 }
 
 void Server::Contents::SoldierIdleState::Exit()
@@ -31,28 +32,20 @@ void Server::Contents::SoldierIdleState::Exit()
 
 void Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	static constexpr float ATTACK_DISTANCE{ 1.f };
-
 	const auto fsm = GetFSM();
 	const auto& owner = fsm->GetOwner();
-	const auto& room = owner->GetGameRoom();
-	
-	const Vec3& ownerPos = owner->GetPos();
+	const auto& onwerPos = owner->GetPos();
+	const Vec3& targetPos = std::static_pointer_cast<NPC>(owner)->GetTargetPos();
 
-	//if(room) {
-	//	const auto& npcs = room->GetNpcs();
-	//	for(const auto& [id, npc] : npcs) {
-	//		if(owner->GetID() == id) continue;
+	const Vec3 diff = targetPos - m_prevTargetPos;
 
-	//		const Vec3& targetPos = npc->GetPos();
-
-	//		const Vec3& distToTarget = targetPos - ownerPos;
-	//		
-	//		if(distToTarget.Length() <= ATTACK_DISTANCE) {
-	//			fsm->ChangeState(etou8(SOLDIER_STATE_TYPE::ATTACK));
-	//		}
-	//	}
-	//}
+	if(diff.LengthSquared() >= 0.001f) {
+		// 주변에 적이 있으면 Attack, 아니면 RUN
+		fsm->ChangeState(etou8(SOLDIER_STATE_TYPE::RUN));
+	}
+	else {
+		
+	}
 }
 
 Server::Contents::SoldierRunState::SoldierRunState()
@@ -83,7 +76,7 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 	auto owner = GetFSM()->GetOwner();
 	
 	Vec3 curPos = owner->GetPos();
-	Vec3 target = m_targetPos;  // SetTargetPos()에서 지정한 목적지
+	Vec3 target = std::static_pointer_cast<NPC>(owner)->GetTargetPos();  // SetTargetPos()에서 지정한 목적지
 
 	Vec3 toTarget = target - curPos;
 	float distance = toTarget.Length();
@@ -91,10 +84,17 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 	// 병사 이동 속도 (초당 몇 m 이동할지)
 	constexpr float moveSpeed = 3.0f;
 
-	if(distance < 0.05f) {
+	if(distance < 0.01f) {
 		// 거의 도착하면 위치를 타겟에 고정하고 IDLE로 전환
 		owner->SetPos(target);
 		GetFSM()->ChangeState(etou8(SOLDIER_STATE_TYPE::IDLE));
+		const uint32 id{ GetFSM()->GetOwner()->GetID() };
+		const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
+		const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
+
+		auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
+		GetFSM()->GetOwner()->GetGameRoom()->BroadcastToAll(std::move(pb));
+		return;
 	}
 
 	// 방향 벡터 정규화
@@ -119,9 +119,8 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 	const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
 
 	auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
-	GetFSM()->GetOwner()->GetGameRoom()->Broadcast(std::move(pb));
+	GetFSM()->GetOwner()->GetGameRoom()->BroadcastToAll(std::move(pb));
 }
-
 
 //Server::Contents::SoldierTraceState::SoldierTraceState()
 //	:State(etou8(SOLDIER_STATE_TYPE::TRACE))

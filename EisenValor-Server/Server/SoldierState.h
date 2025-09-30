@@ -15,6 +15,7 @@ namespace Server {
 
 		class SoldierIdleState : public State {
 		private:
+			Vec3 m_prevTargetPos;
 
 		public:
 			SoldierIdleState();
@@ -29,9 +30,6 @@ namespace Server {
 		};
 
 		class SoldierRunState : public State {
-		private:
-			Vec3 m_targetPos;
-
 		public:
 			SoldierRunState();
 			virtual ~SoldierRunState();
@@ -39,10 +37,7 @@ namespace Server {
 		public:
 			virtual void Enter() override;
 			virtual void Exit() override;
-
-		public:
-			void SetTargetPos(const Vec3& pos) { m_targetPos = pos; }
-
+	
 		public:
 			virtual void Update(const float dt) override;
 

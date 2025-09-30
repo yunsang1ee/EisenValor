@@ -10,8 +10,11 @@
 
 void Server::Contents::GameRoom::Init()
 {
-	// InitNPCS();
+	for(auto& team : m_teams)
+		team.Init(std::static_pointer_cast<GameRoom>(shared_from_this()));
+
 	ExecuteAsyncronously(&GameRoom::Update);
+
 	// TODO: CheckHeartBeat Update로 갈 수 있음.
 	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
@@ -61,132 +64,33 @@ void Server::Contents::GameRoom::EnterRoom(std::shared_ptr<ClientSession> client
 	}
 
 	m_teams[etou8(t.teamType)].AddObject(std::move(player));
-	// auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(player->GetID(), static_cast<uint8>(player->GetObjType()), player->GetTeamType(), kInfo);
-	// ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
-
-	//{
-	//	for(const auto& [id, gen] : m_players) {
-	//		const Vec3 pos{ gen->GetPos() };
-	//		const Vec3 rot{ gen->GetRotation() };
-	//		const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-	//		auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), player->GetTeamType(), kInfo);
-	//		clientSession->Send(std::move(pb));
-	//	}
-	//}
-	//{
-	//	for(const auto& [id, gen] : m_npcs) {
-	//		const Vec3 pos{ gen->GetPos() };
-	//		const Vec3 rot{ gen->GetRotation() };
-	//		const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-	//		auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), gen->GetTeamType(), kInfo, gen->GetNpcType());
-	//		clientSession->Send(std::move(pb));
-	//	}
-
-	//}
-
-	// AddPlayer(std::move(player));
 }
 
 void Server::Contents::GameRoom::LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	const auto player = clientSession->GetPlayer();
-
-	{
-		{
-			/*if(m_players.find(leaveID) != m_players.end())
-				m_players.erase(leaveID);*/
-		}
-	}
 	const auto teamType = player->GetTeamType();
 	m_teams[etou8(teamType)].RemoveObject(player);
-	// auto pb = ClientPacketHandler::Make_SC_REMOVE_OBJ(leaveID);
-	// ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
 }
 
-void Server::Contents::GameRoom::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
+void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
 {
-	//for(const auto& [id, gen] : m_players) {
-	//	const auto& session = gen->GetOwner();
-	//	if(session->GetState() == SESSION_STATE::IN_GAME_ROOM)
-	//		gen->GetOwner()->Send(packetBuffer);
-	//}	
-
-	for(auto& team : m_teams) {
-		for(auto& [id, player] : team.GetPlayers()) {
-			const auto& session = player->GetOwner();
-			if(session->GetState() == SESSION_STATE::IN_GAME_ROOM)
-				session->Send(packetBuffer);
-		}
+	for(auto& [id, player] : players) {
+		const auto& session = player->GetOwner();
+		if(session->GetState() == SESSION_STATE::IN_GAME_ROOM)
+			session->Send(packetBuffer);
 	}
 }
 
-//std::shared_ptr<Server::Contents::Player> Server::Contents::GameRoom::GetPlayer(uint32 id) noexcept
-//{
-//	if(m_players.find(id) != m_players.end())
-//		return m_players[id];
-//
-//	return nullptr;
-//}
-
-//void Server::Contents::GameRoom::AddPlayer(std::shared_ptr<Player>&& player) noexcept
-//{
-//	const uint16 genID = player->GetID();
-//	player->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-//	const Vec3 pos{ player->GetPos() };
-//	const Vec3 rot{ player->GetRotation() };
-//	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-//
-//	auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(player->GetObjType()), player->GetTeamType(), kInfo);
-//	Broadcast(std::move(pb));
-//
-//	{
-//		if(m_players.find(genID) == m_players.end())
-//			m_players.insert(std::make_pair(genID, std::move(player)));
-//	}
-//}
-
-//void Server::Contents::GameRoom::RemovePlayer(std::shared_ptr<Player> player)
-//{
-//	const uint16 id = player->GetID();
-//
-//	if(m_players.find(id) != m_players.end()) {
-//		m_players.erase(id);
-//		std::cout << "RemovePlayer!" << std::endl;
-//	}
-//}
-
-void Server::Contents::GameRoom::InitNPCS()
+void Server::Contents::GameRoom::BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
 {
-	//static constexpr uint16 MAX_GENERAL_NPC = 1;
-	//static constexpr uint16 MAX_SOLDIER_NPC = 3;
+	for(auto& team : m_teams)
+		BroadcastToPlayers(team.GetPlayers(), packetBuffer);
+}
 
-	//for(int i = 0; i < MAX_GENERAL_NPC; ++i) {
-	//	GeneralTemplate g;
-	//	g.npcType = NPC_TYPE::GENERAL;
-	//	g.objType = GAME_OBJECT_TYPE::NPC;
-	//	g.pos = Vec3{ -10.f + (i * 5.f), 0.f, 0.f };
-	//	g.rot = Vec3{ 0.f, 0.f, 0.f };
-	//	g.teamType = TEAM_TYPE::ENEMY;
-	//	g.stat.hp = 100;
-	//	auto general = Server::Contents::GameObjectFactory::CreateGeneral(g);
-
-	//	for(int j = 0; j < MAX_SOLDIER_NPC; ++j) {
-	//		SoldierTemplate s;
-	//		s.npcType = NPC_TYPE::SOLDIER;
-	//		s.objType = GAME_OBJECT_TYPE::NPC;
-	//		s.pos = g.pos + Vec3{ (j * 2.f), 0.f, -3.f };
-	//		s.rot = Vec3{ 0.f, 0.f, 0.f };
-	//		s.teamType = TEAM_TYPE::ENEMY;
-	//		s.stat.hp = 100;
-	//		s.ownerGeneral = general;
-
-	//		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
-	//		AddNpc(soldier);
-	//		general->GetComponent<Server::Contents::TroopController>()->AddSoldier(soldier);
-	//	}
-
-	//	AddNpc(std::move(general));
-	//}
+void Server::Contents::GameRoom::BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const TEAM_TYPE teamType)
+{
+	BroadcastToPlayers(m_teams[etou8(teamType)].GetPlayers(), packetBuffer);
 }
 
 void Server::Contents::GameRoom::CheckGameTime(const float dt)
@@ -208,7 +112,7 @@ void Server::Contents::GameRoom::CheckGameTime(const float dt)
 
 			// std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
 			auto pb = ClientPacketHandler::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
-			ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
+			ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
 		}
 		else {
 			// TODO: 게임 종료
@@ -225,7 +129,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	player->SetTimeStamp(kinematicInfo.timeStamp);
 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	ExecuteAsyncronously(&GameRoom::Broadcast, std::move(packetBuffer));
+	ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(packetBuffer));
 
 	////// 2. ���� �̵� ó��
 	////auto& soldiers = player->GetNpcs();
@@ -270,21 +174,25 @@ void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> pl
 {
 	// TODO: 주변에 SPAWN 기지가 있는지 확인
 	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+	const Vec3& ownerPos = player->GetPos();
 
-	//for(int i = 0; i < 20; ++i) {
-	//	Server::Contents::SoldierTemplate t;
-	//	t.pos = Vec3{ 0.f, 0.f, 0.f };			// 스폰기지 위치
-	//	t.rot = Vec3{ 0.f, 0.f, 0.f };
-	//	t.objType = GAME_OBJECT_TYPE::NPC;
-	//	t.npcType = NPC_TYPE::SOLDIER;
-	//	t.teamType = TEAM_TYPE::ALLY;
+	const Vec3 spawnPos = ownerPos + player->GetForward() * 5.f;
+	troopController->GetCurFormation()->m_centerPos = spawnPos;
 
-	//	auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
-	//	troopController->AddSoldier(soldier);
-	//	AddNpc(std::move(soldier));
-	//}
+	for(int i = 0; i < 25; ++i) {
+		Server::Contents::SoldierTemplate t;
+		t.pos = Vec3{0.f, 0.f, 0.f};		// 스폰기지 위치
+		t.rot = Vec3{ 0.f, 0.f, 0.f };
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.npcType = NPC_TYPE::SOLDIER;
+		t.teamType = player->GetTeamType();
+		t.stat.hp = 100;
 
-	troopController->SetFormation(Server::Contents::TROOP_FORMATION_TYPE::LINE);
+		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+		troopController->AddSoldier(soldier);
+		m_teams[etou8(player->GetTeamType())].AddObject(std::move(soldier));
+	}
+	troopController->Arrange();
 }
 
 void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
@@ -346,30 +254,14 @@ bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> 
 	return false;
 }
 
-//void Server::Contents::GameRoom::AddNpc(std::shared_ptr<NPC> npc)
-//{
-//	const uint32 genID = npc->GetID();
-//	npc->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-//	const Vec3 pos{ npc->GetPos() };
-//	const Vec3 rot{ npc->GetRotation() };
-//	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-//
-//	auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(npc->GetObjType()), npc->GetTeamType(), kInfo, npc->GetNpcType());
-//	ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
-//
-//	if(m_npcs.find(genID) == m_npcs.end())
-//		m_npcs.insert(std::make_pair(genID, std::move(npc)));
-//}
-//
-//void Server::Contents::GameRoom::RemoveNPC(std::shared_ptr<NPC> npc)
-//{
-//	const uint16 id = npc->GetID();
-//
-//	if(m_npcs.find(id) != m_npcs.end()) {
-//		m_npcs.erase(id);
-//		std::cout << "RemoveNPC!" << std::endl;
-//	}
-//}
+void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player)
+{
+	// TODO:
+	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+	uint8  type = static_cast<uint8>(troopController->GetCurFormation()->m_formationType);
+	type = (type + 1) % static_cast<uint8>(TROOP_FORMATION_TYPE::END);
+	troopController->SetFormation(static_cast<TROOP_FORMATION_TYPE>(type));
+}
 
 void Server::Contents::GameRoom::Update()
 {
@@ -389,12 +281,6 @@ void Server::Contents::GameRoom::Update()
 			npc->Update(DT);
 	}
 
-	//for(auto& [id, player] : m_players)
-	//	player->Update(DT);
-
-	//for(auto& [id, npc] : m_npcs)
-	//	npc->Update(DT);
-
 	CheckGameTime(DT);
 	ExecuteAfterTime(UPDATE_MS, &Server::Contents::GameRoom::Update);
 }
@@ -412,14 +298,5 @@ void Server::Contents::GameRoom::CheckHeartBeat()
 			}
 		}
 	}
-	/*	for(auto& [id, player] : m_players) {
-			const auto now = std::chrono::high_resolution_clock::now();
-			const auto hbTimeStamp = player->GetOwner()->GetHeartbeatTimestamp();
-			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
-				RemovePlayer(player);
-				player->GetOwner()->Disconnect("HEART_BEAT");
-			}
-		}*/
-
 	ExecuteAfterTime(1s, &Server::Contents::GameRoom::CheckHeartBeat);
 }
