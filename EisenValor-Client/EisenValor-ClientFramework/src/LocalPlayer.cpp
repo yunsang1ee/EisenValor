@@ -15,6 +15,9 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 
 	// 와이어프레임 박스 초기화
 	// InitializeWireFrame(device);
+
+	// 지휘 영역 초기화
+	InitializeCommandArea(device);
 }
 
 void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
@@ -101,6 +104,129 @@ void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
 	ThrowIfFailed(m_wireFrameConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pWireFrameCbvDataBegin)));
 }
 
+void LocalPlayer::InitializeCommandArea(ID3D12Device* device)
+{
+	// 빨간 직사각형 버텍스 (바닥에 평평하게 놓인 사각형)
+	float halfW = m_commandAreaWidth * 0.5f;
+	float halfH = m_commandAreaHeight * 0.5f;
+
+	Vertex vertices[] = {
+		// 바닥에 평평한 사각형 (Y=0)
+		{DirectX::XMFLOAT3(-halfW, 0.01f, -halfH), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.7f)}, // 빨간색, 약간 투명
+		{DirectX::XMFLOAT3(halfW, 0.01f, -halfH), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.7f)},
+		{DirectX::XMFLOAT3(halfW, 0.01f, halfH), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.7f)},
+		{DirectX::XMFLOAT3(-halfW, 0.01f, halfH), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.7f)}
+	};
+
+	// 버텍스 버퍼 생성
+	const UINT			  vertexBufferSize = sizeof(vertices);
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RESOURCE_DESC bufferDesc = {};
+	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	bufferDesc.Width = vertexBufferSize;
+	bufferDesc.Height = 1;
+	bufferDesc.DepthOrArraySize = 1;
+	bufferDesc.MipLevels = 1;
+	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+	bufferDesc.SampleDesc.Count = 1;
+	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_commandAreaVertexBuffer)
+	));
+
+	UINT8*		pVertexDataBegin;
+	D3D12_RANGE readRange = {0, 0};
+	ThrowIfFailed(m_commandAreaVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, vertices, sizeof(vertices));
+	m_commandAreaVertexBuffer->Unmap(0, nullptr);
+
+	m_commandAreaVertexBufferView.BufferLocation = m_commandAreaVertexBuffer->GetGPUVirtualAddress();
+	m_commandAreaVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_commandAreaVertexBufferView.SizeInBytes = vertexBufferSize;
+
+	// 인덱스 (두 개의 삼각형으로 사각형 만들기)
+	UINT indices[] = {
+		0, 2, 1, // 첫 번째 삼각형
+		0, 3, 2	 // 두 번째 삼각형
+	};
+
+	const UINT indexBufferSize = sizeof(indices);
+	bufferDesc.Width = indexBufferSize;
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_commandAreaIndexBuffer)
+	));
+
+	UINT8* pIndexDataBegin;
+	ThrowIfFailed(m_commandAreaIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, indices, sizeof(indices));
+	m_commandAreaIndexBuffer->Unmap(0, nullptr);
+
+	m_commandAreaIndexBufferView.BufferLocation = m_commandAreaIndexBuffer->GetGPUVirtualAddress();
+	m_commandAreaIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_commandAreaIndexBufferView.SizeInBytes = indexBufferSize;
+
+	// 상수 버퍼 생성
+	const UINT constantBufferSize = sizeof(ConstantBuffer);
+	bufferDesc.Width = constantBufferSize;
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_commandAreaConstantBuffer)
+	));
+
+	ThrowIfFailed(m_commandAreaConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCommandAreaCbvDataBegin))
+	);
+}
+
+DirectX::XMFLOAT3 LocalPlayer::CalculateGroundTargetPosition() const
+{
+	// 플레이어가 바라보는 방향 벡터 계산
+	float forwardX = sinf(m_cameraYaw);
+	float forwardZ = cosf(m_cameraYaw);
+
+	// 플레이어 위치에서 바라보는 방향으로 일정 거리만큼 떨어진 바닥 위치
+	DirectX::XMFLOAT3 targetPos;
+	targetPos.x = m_pos.x + forwardX * m_commandAreaDistance;
+	targetPos.y = -0.5f; // 바닥 높이
+	targetPos.z = m_pos.z + forwardZ * m_commandAreaDistance;
+
+	return targetPos;
+}
+
+void LocalPlayer::RenderCommandArea(
+	ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
+)
+{
+	// 버텍스/인덱스 버퍼 설정
+	cmdList->IASetVertexBuffers(0, 1, &m_commandAreaVertexBufferView);
+	cmdList->IASetIndexBuffer(&m_commandAreaIndexBufferView);
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// 지휘 영역 위치 계산
+	DirectX::XMFLOAT3 targetPos = CalculateGroundTargetPosition();
+
+	// 월드 변환 행렬 (위치만 적용, 회전은 플레이어 방향에 맞춤)
+	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(m_cameraYaw);
+	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(targetPos.x, targetPos.y, targetPos.z);
+	DirectX::XMMATRIX world = rotation * translation;
+
+	// MVP 행렬 계산
+	DirectX::XMMATRIX mvp = world * view * projection;
+	DirectX::XMStoreFloat4x4(&m_commandAreaConstantBufferData.mvp, DirectX::XMMatrixTranspose(mvp));
+
+	// 상수 버퍼 업데이트
+	memcpy(m_pCommandAreaCbvDataBegin, &m_commandAreaConstantBufferData, sizeof(m_commandAreaConstantBufferData));
+
+	// 렌더링
+	cmdList->SetGraphicsRootConstantBufferView(0, m_commandAreaConstantBuffer->GetGPUVirtualAddress());
+	cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0); // 6개 인덱스 (2개 삼각형)
+}
+
+
 void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
 	// 플레이어 자체 렌더링
@@ -108,6 +234,9 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 
 	// 부채꼴 렌더링
 	RenderFan(cmdList, view, projection);
+
+	// 지휘 영역 렌더링
+	RenderCommandArea(cmdList, view, projection);
 
 	// 와이어프레임 박스 렌더링
 	//cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
