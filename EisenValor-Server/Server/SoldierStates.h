@@ -1,6 +1,6 @@
 #pragma once
 
-#include "State.h"
+#include "CommonStates.h"
 
 namespace Server {
 	namespace Contents {
@@ -10,13 +10,11 @@ namespace Server {
 			IDLE,
 			RUN,
 			ATTACK,
-
+			DEFENSE,
+			DEAD,
 		};
 
-		class SoldierIdleState : public State {
-		private:
-			Vec3 m_prevTargetPos;
-
+		class SoldierIdleState : public IdleState {
 		public:
 			SoldierIdleState();
 			virtual ~SoldierIdleState();
@@ -29,7 +27,7 @@ namespace Server {
 			virtual void Update(const float dt) override;
 		};
 
-		class SoldierRunState : public State {
+		class SoldierRunState : public RunState {
 		public:
 			SoldierRunState();
 			virtual ~SoldierRunState();
@@ -43,7 +41,9 @@ namespace Server {
 
 		};
 
-		class SoldierAttackState : public State {
+		class SoldierAttackState : public AttackState {
+		public:
+
 		public:
 			SoldierAttackState();
 			virtual ~SoldierAttackState();

@@ -33,8 +33,15 @@ namespace Server {
 			void Init();
 
 		public:
-			void EnterRoom(std::shared_ptr<ClientSession> clientSession) noexcept;
-			void LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept;
+			TEAM_TYPE GetOtherTeam(const TEAM_TYPE type){ return (TEAM_TYPE::BLUE == type) ? TEAM_TYPE::RED : TEAM_TYPE::BLUE; }
+			auto& GetTeam(const TEAM_TYPE type) { return m_teams[etou8(type)]; }
+		public:
+			// TODO: 나중에 방장이 게임 시작한다는 패킷을 보내면 실행되어야 함.
+			void Start();
+
+			void EnterGame(std::shared_ptr<ClientSession> clientSession) noexcept;
+			void LeaveGame(std::shared_ptr<ClientSession> clientSession) noexcept;
+			
 			void BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			void BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const TEAM_TYPE teamType);
 
@@ -52,6 +59,8 @@ namespace Server {
 
 		private:
 			void BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
+			
+			// TODO: 모든 유저가 게임에 들어오고 나서 게임이 시작될 때 불려야 함.
 			void CheckGameTime(const float dt);
 
 		};

@@ -3,7 +3,7 @@
 enum class GAME_OBJECT_TYPE : uint8 {
 	PLAYER,
 	NPC,
-	SPAWN_BASE,	// Creature,	별도	Component 장착
+	VALLISTAR,
 	PROJECTILE, // GameObject,	별도	Component 제작
 
 	END

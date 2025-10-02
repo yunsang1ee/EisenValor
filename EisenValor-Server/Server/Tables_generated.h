@@ -24,11 +24,11 @@ struct CS_LOGIN_PACKETBuilder;
 struct SC_LOGIN_PACKET;
 struct SC_LOGIN_PACKETBuilder;
 
-struct CS_ENTER_ROOM_PACKET;
-struct CS_ENTER_ROOM_PACKETBuilder;
+struct CS_ENTER_GAME_PACKET;
+struct CS_ENTER_GAME_PACKETBuilder;
 
-struct SC_ENTER_ROOM_PACKET;
-struct SC_ENTER_ROOM_PACKETBuilder;
+struct SC_ENTER_GAME_PACKET;
+struct SC_ENTER_GAME_PACKETBuilder;
 
 struct SC_LOCAL_PLAYER_PACKET;
 struct SC_LOCAL_PLAYER_PACKETBuilder;
@@ -178,8 +178,8 @@ inline ::flatbuffers::Offset<SC_LOGIN_PACKET> CreateSC_LOGIN_PACKET(
   return builder_.Finish();
 }
 
-struct CS_ENTER_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_ENTER_ROOM_PACKETBuilder Builder;
+struct CS_ENTER_GAME_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_ENTER_GAME_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PLAYER_ID = 4,
     VT_ROOM_ID = 6
@@ -198,39 +198,39 @@ struct CS_ENTER_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Tab
   }
 };
 
-struct CS_ENTER_ROOM_PACKETBuilder {
-  typedef CS_ENTER_ROOM_PACKET Table;
+struct CS_ENTER_GAME_PACKETBuilder {
+  typedef CS_ENTER_GAME_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(CS_ENTER_ROOM_PACKET::VT_PLAYER_ID, player_id, 0);
+    fbb_.AddElement<uint32_t>(CS_ENTER_GAME_PACKET::VT_PLAYER_ID, player_id, 0);
   }
   void add_room_id(uint16_t room_id) {
-    fbb_.AddElement<uint16_t>(CS_ENTER_ROOM_PACKET::VT_ROOM_ID, room_id, 0);
+    fbb_.AddElement<uint16_t>(CS_ENTER_GAME_PACKET::VT_ROOM_ID, room_id, 0);
   }
-  explicit CS_ENTER_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_ENTER_GAME_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_ENTER_ROOM_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_ENTER_GAME_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_ENTER_ROOM_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_ENTER_GAME_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_ENTER_ROOM_PACKET> CreateCS_ENTER_ROOM_PACKET(
+inline ::flatbuffers::Offset<CS_ENTER_GAME_PACKET> CreateCS_ENTER_GAME_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t player_id = 0,
     uint16_t room_id = 0) {
-  CS_ENTER_ROOM_PACKETBuilder builder_(_fbb);
+  CS_ENTER_GAME_PACKETBuilder builder_(_fbb);
   builder_.add_player_id(player_id);
   builder_.add_room_id(room_id);
   return builder_.Finish();
 }
 
-struct SC_ENTER_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_ENTER_ROOM_PACKETBuilder Builder;
+struct SC_ENTER_GAME_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_GAME_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ROOM_ID = 4
   };
@@ -244,28 +244,28 @@ struct SC_ENTER_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Tab
   }
 };
 
-struct SC_ENTER_ROOM_PACKETBuilder {
-  typedef SC_ENTER_ROOM_PACKET Table;
+struct SC_ENTER_GAME_PACKETBuilder {
+  typedef SC_ENTER_GAME_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_room_id(uint16_t room_id) {
-    fbb_.AddElement<uint16_t>(SC_ENTER_ROOM_PACKET::VT_ROOM_ID, room_id, 0);
+    fbb_.AddElement<uint16_t>(SC_ENTER_GAME_PACKET::VT_ROOM_ID, room_id, 0);
   }
-  explicit SC_ENTER_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_ENTER_GAME_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_ENTER_ROOM_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_ENTER_GAME_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_ENTER_ROOM_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_ENTER_GAME_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_ENTER_ROOM_PACKET> CreateSC_ENTER_ROOM_PACKET(
+inline ::flatbuffers::Offset<SC_ENTER_GAME_PACKET> CreateSC_ENTER_GAME_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint16_t room_id = 0) {
-  SC_ENTER_ROOM_PACKETBuilder builder_(_fbb);
+  SC_ENTER_GAME_PACKETBuilder builder_(_fbb);
   builder_.add_room_id(room_id);
   return builder_.Finish();
 }

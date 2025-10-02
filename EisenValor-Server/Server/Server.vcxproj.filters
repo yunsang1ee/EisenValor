@@ -67,7 +67,7 @@
     <ClCompile Include="ServerGlobalFunc.cpp">
       <Filter>05. Global</Filter>
     </ClCompile>
-    <ClCompile Include="SoldierState.cpp">
+    <ClCompile Include="SoldierStates.cpp">
       <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State</Filter>
     </ClCompile>
     <ClCompile Include="GeneralState.cpp">
@@ -81,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="Formation.cpp">
       <Filter>02. Contents\04. Component\02. TroopController\00. Formation</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonStates.cpp">
+      <Filter>02. Contents\04. Component\00. FSM\00. State\00. Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +201,9 @@
     <Filter Include="02. Contents\04. Component\02. TroopController\00. Formation">
       <UniqueIdentifier>{fef2ee7e-b562-449b-beb8-69009ea62ab6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\04. Component\00. FSM\00. State\00. Common">
+      <UniqueIdentifier>{7418d246-b49a-4e2e-9ec1-ee80a0614959}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -275,7 +281,7 @@
     <ClInclude Include="ServerGlobalFunc.h">
       <Filter>05. Global</Filter>
     </ClInclude>
-    <ClInclude Include="SoldierState.h">
+    <ClInclude Include="SoldierStates.h">
       <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State</Filter>
     </ClInclude>
     <ClInclude Include="GeneralState.h">
@@ -289,6 +295,9 @@
     </ClInclude>
     <ClInclude Include="Formation.h">
       <Filter>02. Contents\04. Component\02. TroopController\00. Formation</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonStates.h">
+      <Filter>02. Contents\04. Component\00. FSM\00. State\00. Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

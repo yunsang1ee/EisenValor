@@ -4,11 +4,16 @@
 #include "Player.h"
 #include "NPC.h"
 #include "ClientSession.h"
-#include "SoldierState.h"
+#include "SoldierStates.h"
 #include "TroopController.h"
 #include "Team.h"
 
 void Server::Contents::GameRoom::Init()
+{
+	Start();
+}
+
+void Server::Contents::GameRoom::Start()
 {
 	for(auto& team : m_teams)
 		team.Init(std::static_pointer_cast<GameRoom>(shared_from_this()));
@@ -19,10 +24,10 @@ void Server::Contents::GameRoom::Init()
 	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
 
-void Server::Contents::GameRoom::EnterRoom(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	std::cout << "Enter Match" << std::endl;
-	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
+	clientSession->SetState(SESSION_STATE::IN_GAME);
 
 	static const Vec3 offset{ 3.f, 0.f, 3.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
@@ -66,7 +71,7 @@ void Server::Contents::GameRoom::EnterRoom(std::shared_ptr<ClientSession> client
 	m_teams[etou8(t.teamType)].AddObject(std::move(player));
 }
 
-void Server::Contents::GameRoom::LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::LeaveGame(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	const auto player = clientSession->GetPlayer();
 	const auto teamType = player->GetTeamType();
@@ -77,7 +82,7 @@ void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::
 {
 	for(auto& [id, player] : players) {
 		const auto& session = player->GetOwner();
-		if(session->GetState() == SESSION_STATE::IN_GAME_ROOM)
+		if(session->GetState() == SESSION_STATE::IN_GAME)
 			session->Send(packetBuffer);
 	}
 }
@@ -130,44 +135,6 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(packetBuffer));
-
-	////// 2. ���� �̵� ó��
-	////auto& soldiers = player->GetNpcs();
-	////if(soldiers.size() == 0) return;
-	////const Vec3 playerPos = player->GetPos();
-	////float rotY = player->GetRotation().y;
-
-	//for(auto& soldierData : soldiers) {
-	//	auto offset = soldierData.localOffset;
-	//	auto soldier = soldierData.soldier;
-	//	if(!soldier) continue;
-
-	////	// --- offset�� �÷��̾� ȸ���� ���� ȸ�� ��ȯ ---
-	////	Vec3 rotatedOffset;
-	////	rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
-	////	rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
-	////	rotatedOffset.y = offset.y;
-
-	////	// --- ���� ��ǥ ��ġ ---
-	////	Vec3 targetPos = {
-	////		playerPos.x + rotatedOffset.x,
-	////		playerPos.y + rotatedOffset.y,
-	////		playerPos.z + rotatedOffset.z
-	////	};
-
-	//	if((soldier->GetPos() - targetPos).Length()< 0.01f)
-	//		continue;
-	//	
-
-	////	// --- ���� FSM ���� ��ȯ �� ��ǥ ��ġ ���� ---
-	////	auto fsm = soldier->GetComponent<Server::Contents::FSM>();
-	////	fsm->ChangeState(STATE_TYPE::WALK);
-
-	//	const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
-	//	if(walkState) {
-	//		walkState->SetTargetPos(targetPos);
-	//	}
-	//}
 }
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
@@ -207,41 +174,45 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 
 	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
 
-	//for(const auto& [id, npc] : m_npcs) {
-	//	const Vec3& pos = npc->GetPos();
+	const auto teamType = player->GetTeamType();
+	const auto otherTeam = etou8(GetOtherTeam(teamType));
 
-	//	Vec3 toTargetDir = pos - playerPos;
-	//	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
+	for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
+		for(const auto& [id, object] : objectGroup) {
+			
+			const Vec3& pos = object->GetPos();
+			Vec3 toTargetDir = pos - playerPos;
+			const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
 
-	//	// 반지름 길이와 타겟까지의 거리 비교
-	//	if(distToTargetSq >= radiusSq) continue;
+			// 반지름 길이와 타겟까지의 거리 비교
+			if(distToTargetSq >= radiusSq) continue;
 
-	//	const float dotValue{ playerDir.Dot(toTargetDir) };
+			const float dotValue{ playerDir.Dot(toTargetDir) };
 
-	//	float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+			float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
 
-	//	// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
-	//	if(dotValue <= 0) continue;
+			// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
+			if(dotValue <= 0) continue;
 
-	//	if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq) && npc->GetTeamType() == TEAM_TYPE::ENEMY) {
-	//		std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
-	//		int hp{ npc->GetHP() };
-	//		hp -= 50;
-	//		std::cout << std::format("NPC HP: {}", hp) << std::endl;
-	//		npc->SetHp(hp);
+			if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
+				std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
+				int hp{ std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP() };
+				hp -= 50;
+				std::cout << std::format("NPC HP: {}", hp) << std::endl;
+				std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
 
-	//		if(hp <= 0) {
-	//			ExecuteAsyncronously(&GameRoom::RemoveNPC, npc);
-	//		}
+				auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
+				ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
+				if(hp <= 0) {
+					m_teams[otherTeam].RemoveObject(object);
+				}
+			}
 
-	//		auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(npc->GetID(), npc->GetHP());
-	//		ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
-	//	}
-
-	//	// a * b = |a| |b| cos	
-	//	// cos = a * b / |a| |b|
-	//	// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
-	//}
+			// a * b = |a| |b| cos	
+			// cos = a * b / |a| |b|
+			// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
+		}
+	}
 }
 
 bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos)

@@ -13,8 +13,8 @@ enum class PACKET_TYPE : uint16
 	CS_LOGIN_PKT = 1,
 	SC_LOGIN_PKT = 2,
 
-	CS_ENTER_WORLD_PKT = 3,
-	SC_ENTER_WORLD_PKT = 4,
+	CS_ENTER_GAME_PKT = 3,
+	SC_ENTER_GAME_PKT = 4,
 
 	SC_LOCAL_PLAYER_PKT = 5,
 
@@ -45,7 +45,7 @@ enum class PACKET_TYPE : uint16
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
-bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt);
+bool Handle_SC_ENTER_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt);
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
@@ -78,9 +78,9 @@ public:
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{ return HandlePacket<FB_TABLES::SC_LOGIN_PACKET>(Handle_SC_LOGIN_PACKET, socket, buffer, header); };
 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_WORLD_PKT)] =
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-		{ return HandlePacket<FB_TABLES::SC_ENTER_ROOM_PACKET>(Handle_SC_ENTER_ROOM_PACKET, socket, buffer, header); };
+		{ return HandlePacket<FB_TABLES::SC_ENTER_ROOM_PACKET>(Handle_SC_ENTER_GAME_PACKET, socket, buffer, header); };
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -172,7 +172,7 @@ public:
 	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_ENTER_ROOM_PACKET(const uint32 id, const uint16 roomID)
 	{
 		return MakePacketBuffer(
-			PACKET_TYPE::CS_ENTER_WORLD_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_ROOM_PACKET, id, roomID)
+			PACKET_TYPE::CS_ENTER_GAME_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_ROOM_PACKET, id, roomID)
 		);
 	}
 #pragma endregion

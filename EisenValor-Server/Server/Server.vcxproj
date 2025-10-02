@@ -158,6 +158,7 @@
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="ClientSessionManager.cpp" />
+    <ClCompile Include="CommonStates.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="Formation.cpp" />
@@ -180,7 +181,7 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="NPC.cpp" />
-    <ClCompile Include="SoldierState.cpp" />
+    <ClCompile Include="SoldierStates.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TargetTraceNode.cpp" />
     <ClCompile Include="Team.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="ClientSessionManager.h" />
+    <ClInclude Include="CommonStates.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="Formation.h" />
@@ -212,7 +214,7 @@
     <ClInclude Include="ServerStructs.h" />
     <ClInclude Include="ServerTypes.h" />
     <ClInclude Include="NPC.h" />
-    <ClInclude Include="SoldierState.h" />
+    <ClInclude Include="SoldierStates.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TargetTraceNode.h" />
     <ClInclude Include="Team.h" />

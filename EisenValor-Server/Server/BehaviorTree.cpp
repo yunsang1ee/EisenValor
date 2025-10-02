@@ -7,7 +7,7 @@ void Server::Contents::BehaviorTree::SetRoot(std::unique_ptr<BehaviorNode> root)
 {
 	m_root = std::move(root);
 	if(m_root) {
-		m_root->SetTree(shared_from_this());
+		m_root->SetTree(this);
 	}
 }
 

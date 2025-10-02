@@ -23,8 +23,8 @@ enum class PACKET_TYPE : uint16 {
 	CS_LOGIN_PKT = 1,
 	SC_LOGIN_PKT = 2,
 
-	CS_ENTER_WORLD_PKT = 3,
-	SC_ENTER_WORLD_PKT = 4,
+	CS_ENTER_GAME_PKT = 3,
+	SC_ENTER_GAME_PKT = 4,
 	
 	SC_LOCAL_PLAYER_PKT = 5,
 
@@ -60,7 +60,7 @@ extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16
 bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>&, const char* const, const PacketHeader&) noexcept;
 bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt) noexcept;
 bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept;
-bool Handle_CS_ENTER_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_ROOM_PACKET& recvPkt) noexcept;
+bool Handle_CS_ENTER_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_PACKET& recvPkt) noexcept;
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept;
 bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt) noexcept;
 bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt) noexcept;
@@ -86,7 +86,7 @@ public:
 		// 패킷 받는 부분 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(Handle_CS_LOGIN_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHAT_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_CHAT_PACKET>(Handle_CS_CHAT_PACKET, session, buffer, header); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_ROOM_PACKET>(Handle_CS_ENTER_ROOM_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_PACKET>(Handle_CS_ENTER_GAME_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_FORMATION>(Handle_CS_SOLDIER_FORMATION_PACKET, session, buffer, header); };

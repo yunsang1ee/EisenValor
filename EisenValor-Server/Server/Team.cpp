@@ -16,30 +16,45 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 {
 	m_room = room;
 
-	static Vec3 offset{ 1.f, 0.f, 1.f };
-	GeneralTemplate g;
-	g.npcType = NPC_TYPE::GENERAL;
-	g.objType = GAME_OBJECT_TYPE::NPC;
-	g.pos = offset;
-	g.rot = Vec3{ 0.f, 0.f, 0.f };
-	offset.x += 1.f;
-	offset.z += 1.f;
-	g.teamType = m_type;
-	g.stat.hp = 100;
+	//static Vec3 offset{ 1.f, 0.f, 1.f };
+	//GeneralTemplate g;
+	//g.npcType = NPC_TYPE::GENERAL;
+	//g.objType = GAME_OBJECT_TYPE::NPC;
+	//g.pos = offset;
+	//g.rot = Vec3{ 0.f, 0.f, 0.f };
+	//offset.x += 1.f;
+	//offset.z += 1.f;
+	//g.teamType = m_type;
+	//g.stat.hp = 100;
+	//
+	//auto general = Server::Contents::GameObjectFactory::CreateGeneral(g);
+	//AddObject(std::move(general));
 	
-	auto general = Server::Contents::GameObjectFactory::CreateGeneral(g);
-	AddObject(std::move(general));
+	for(int i = 0; i < 5; ++i) {
+		SoldierTemplate s;
+		s.npcType = NPC_TYPE::SOLDIER;
+		s.objType = GAME_OBJECT_TYPE::NPC;
+		s.teamType = m_type;
+		s.stat = StatInfo{ 100, 10, 100 };
 
-	SoldierTemplate s;
-	s.npcType = NPC_TYPE::SOLDIER;
-	s.objType = GAME_OBJECT_TYPE::NPC;
-	s.pos = offset;
-	s.pos.z += 1.f;
-	s.teamType = m_type;
-	s.stat.hp = 100;
+		switch(m_type) {
+			case TEAM_TYPE::BLUE:
+			{
+				s.pos = Vec3{ 0.f + i * 0.5f, 0.f, -5.f };
+				break;
+			}
+			case TEAM_TYPE::RED:
+			{
+				s.pos = Vec3{ 0.f +  i * 0.5f, 0.f, 5.f };
+				break;
+			}
+			default:
+				break;
+		}
 
-	auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
-	AddObject(std::move(soldier));
+		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(s);
+		AddObject(std::move(soldier));
+	}
 }
 
 void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
