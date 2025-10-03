@@ -4,9 +4,6 @@
     <Filter Include="Mocks">
       <UniqueIdentifier>{64fef551-cd17-4168-9fe2-3733a116bb6f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interfaces">
-      <UniqueIdentifier>{2f57a574-05c3-47ea-a62d-bbf8e9e3d534}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{ca6b70a2-a43a-42cb-a7e8-3c52dbe9e939}</UniqueIdentifier>
     </Filter>
@@ -30,9 +27,6 @@
     </Filter>
     <Filter Include="Object">
       <UniqueIdentifier>{64dd2a36-df34-4eac-9a5a-de0ab2c2bb63}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Interfaces\Globals">
-      <UniqueIdentifier>{93850fdb-a298-4cb5-aaab-aaca79afd46f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Graphics">
       <UniqueIdentifier>{c5a1ad20-20ac-4ecf-8e41-100dd36b9cc7}</UniqueIdentifier>
@@ -79,14 +73,23 @@
     <Filter Include="Player">
       <UniqueIdentifier>{ff0db68e-268e-4bf6-811b-bbf50f9d5b5a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Manager">
-      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Ground">
       <UniqueIdentifier>{d1d2085e-dcd5-4ecd-89a1-adcb07148799}</UniqueIdentifier>
     </Filter>
     <Filter Include="Graphics\Resource\Heap">
       <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Player\00. Local">
+      <UniqueIdentifier>{fc462d4a-e1e5-4748-9b86-a6404f727631}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces">
+      <UniqueIdentifier>{2f57a574-05c3-47ea-a62d-bbf8e9e3d534}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces\Globals">
+      <UniqueIdentifier>{93850fdb-a298-4cb5-aaab-aaca79afd46f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces\Manager">
+      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Graphics\Device\Command">
       <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
@@ -169,11 +172,8 @@
     <ClInclude Include="include\Player.h">
       <Filter>Player</Filter>
     </ClInclude>
-    <ClInclude Include="include\LocalPlayer.h">
-      <Filter>Player</Filter>
-    </ClInclude>
     <ClInclude Include="include\GameObjectManager.h">
-      <Filter>Manager</Filter>
+      <Filter>Interfaces\Manager</Filter>
     </ClInclude>
     <ClInclude Include="include\Ground.h">
       <Filter>Ground</Filter>
@@ -183,6 +183,9 @@
     </ClInclude>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>Common\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LocalPlayer.h">
+      <Filter>Player\00. Local</Filter>
     </ClInclude>
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h">
@@ -240,17 +243,17 @@
     <ClCompile Include="src\Player.cpp">
       <Filter>Player</Filter>
     </ClCompile>
-    <ClCompile Include="src\LocalPlayer.cpp">
-      <Filter>Player</Filter>
-    </ClCompile>
     <ClCompile Include="src\GameObjectManager.cpp">
-      <Filter>Manager</Filter>
+      <Filter>Interfaces\Manager</Filter>
     </ClCompile>
     <ClCompile Include="src\Ground.cpp">
       <Filter>Ground</Filter>
     </ClCompile>
     <ClCompile Include="src\NPC.cpp">
       <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LocalPlayer.cpp">
+      <Filter>Player\00. Local</Filter>
     </ClCompile>
     <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp">

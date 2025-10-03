@@ -2,6 +2,15 @@
 #include "FSM.h"
 
 #include "State.h"
+	
+void Server::Contents::FSM::InitStartState(const uint8 state)
+{
+	auto iter = m_states.find(state);
+	if(iter != m_states.end()) {
+		m_curState = iter->second.get();
+		m_curState->Enter();
+	}
+}
 
 void Server::Contents::FSM::Update(const float dt)
 {
@@ -9,38 +18,19 @@ void Server::Contents::FSM::Update(const float dt)
 		m_curState->Update(dt);
 }
 
-void Server::Contents::FSM::AddState(std::shared_ptr<State> state)
+void Server::Contents::FSM::AddState(std::unique_ptr<State> state)
 {
-	const STATE_TYPE type = state->GetType();
-	if(nullptr == GetState(type)) {
-		m_states.insert(std::make_pair(type,state));
-	}
+	state->SetFSM(this);
+	if(m_states.find(state->GetStateType()) == m_states.end())
+		m_states.try_emplace(state->GetStateType(), std::move(state));
 }
 
-std::shared_ptr<Server::Contents::State> Server::Contents::FSM::GetState(const STATE_TYPE type)
+void Server::Contents::FSM::ChangeState(uint8 nextState)
 {
-	auto iter = m_states.find(type);
-
-	if(iter == m_states.end())
-		return nullptr;
-
-	return iter->second;
-}
-
-void Server::Contents::FSM::SetCurState(const STATE_TYPE type)
-{
-	m_curState = GetState(type);
-	assert(nullptr != m_curState);
-	m_curState->Enter();
-}
-
-void Server::Contents::FSM::ChangeState(const STATE_TYPE type)
-{
-	auto nextState = GetState(type);
-	if(nullptr != nextState) {
-		m_curState->Exit();
-		m_curState = nextState;
+	m_curState->Exit();
+	auto iter = m_states.find(nextState);
+	if(iter != m_states.end()) {
+		m_curState = iter->second.get();
 		m_curState->Enter();
 	}
 }
-

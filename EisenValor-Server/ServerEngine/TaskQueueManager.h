@@ -10,7 +10,7 @@ namespace ServerEngine {
 		LockQueue<std::shared_ptr<ServerEngine::TaskQueue>> m_taskQueues;
 
 	public:
-		void Push(std::shared_ptr<ServerEngine::TaskQueue> taskQueue);
-		std::shared_ptr<ServerEngine::TaskQueue> Pop();
+		void EnqueTaskQueue(std::shared_ptr<ServerEngine::TaskQueue> taskQueue);
+		std::shared_ptr<ServerEngine::TaskQueue> DequeTaskQueue();
 	};
 }

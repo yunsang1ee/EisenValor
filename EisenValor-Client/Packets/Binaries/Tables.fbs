@@ -19,12 +19,13 @@ table SC_LOGIN_PACKET {
 // ================================================
 //					ENTER WORLD
 // ================================================
-table CS_ENTER_WORLD_PACKET {
+table CS_ENTER_ROOM_PACKET {
 	player_id : uint;
+	room_id: ushort;
 }
 
-table SC_ENTER_WORLD_PACKET {
-	world_id: ushort;
+table SC_ENTER_ROOM_PACKET {
+	room_id: ushort;
 }
 
 // ================================================
@@ -33,6 +34,7 @@ table SC_ENTER_WORLD_PACKET {
 table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
+	team_type: ubyte;
 }
 
 // ================================================
@@ -77,7 +79,7 @@ table SC_MOVE_PACKET {
 }
 
 // ================================================
-//					  SUMMON_NPC
+//					SUMMON_NPC
 // ================================================
 table CS_SUMMON_NPC {
 
@@ -85,8 +87,45 @@ table CS_SUMMON_NPC {
 
 
 // ================================================
-//					  SOLDIER_FORMATION
+//					SOLDIER_FORMATION
 // ================================================
 table CS_SOLDIER_FORMATION {
 	formation: ubyte;
+}
+
+
+// ================================================
+//					PLAYER_ATTACK
+// ================================================
+table CS_PLAYER_ATTACK {
+	
+}
+
+// ================================================
+//						HIT
+// ================================================
+table SC_HIT_PACKET {
+	obj_id: uint;
+	current_hp: uint;
+}
+
+// ================================================
+//					SOLDIER_MOVE
+// ================================================
+table CS_SOLDIER_MOVE {
+	pos : FB_STRUCTS.Vec3;
+}
+
+// ================================================
+//					REMAINING_GAME_TIME
+// ================================================
+table SC_REMAINING_GAME_TIME {
+	remaining_time : uint;
+}
+
+// ================================================
+//					CHANGE_SOLDIER_FORMATION
+// ================================================
+table CS_CHANGE_SOLDIER_FORMATION {
+
 }

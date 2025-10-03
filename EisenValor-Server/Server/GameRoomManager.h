@@ -12,8 +12,8 @@ namespace Server {
 			static constexpr uint16 MAX_ROOM = 1;
 		
 		public:
-			void Init();
-			std::shared_ptr<GameRoom> GetRoom(const uint16 id);
+			void Init() noexcept;
+			std::shared_ptr<GameRoom> GetRoom(const uint16 id) noexcept;
 		};
 	}
 }

@@ -56,7 +56,7 @@
     <FxCompile Include="Resource\Shader\PixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="RaytracingLibrary.hlsl">
+    <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

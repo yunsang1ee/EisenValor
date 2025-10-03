@@ -31,17 +31,28 @@ enum class PACKET_TYPE : uint16
 
 	CS_SOLDIER_FORMATION_PKT = 13,
 
+	CS_PLAYER_ATTACK_PKT = 14,
+
+	SC_HIT_PKT = 15,
+
+	CS_MOVE_SOLDIER_PKT = 16,
+
+	SC_REMAINING_GAME_TIME_PKT = 17,
+	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
+
 	END
 };
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
-bool Handle_SC_ENTER_WORLD_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_WORLD_PACKET& recvPkt);
+bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt);
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
+bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt);
+bool Handle_SC_REMANING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt);
 
 namespace NetBridge
 {
@@ -69,9 +80,7 @@ public:
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_WORLD_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-		{
-			return HandlePacket<FB_TABLES::SC_ENTER_WORLD_PACKET>(Handle_SC_ENTER_WORLD_PACKET, socket, buffer, header);
-		};
+		{ return HandlePacket<FB_TABLES::SC_ENTER_ROOM_PACKET>(Handle_SC_ENTER_ROOM_PACKET, socket, buffer, header); };
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -96,6 +105,18 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{ return HandlePacket<FB_TABLES::SC_MOVE_PACKET>(Handle_SC_MOVE_PACKET, socket, buffer, header); };
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_HIT_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_HIT_PACKET>(Handle_SC_HIT_PACKET, socket, buffer, header); };
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{
+			return HandlePacket<FB_TABLES::SC_REMAINING_GAME_TIME>(
+				Handle_SC_REMANING_GAME_TIME_PACKET, socket, buffer, header
+			);
+		};
 	}
 
 	static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
@@ -148,10 +169,10 @@ public:
 #pragma endregion
 
 #pragma region CS_ENTER_WORLD_PACKET
-	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_ENTER_WORLD_PACKET(const uint32 id)
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_ENTER_ROOM_PACKET(const uint32 id, const uint16 roomID)
 	{
 		return MakePacketBuffer(
-			PACKET_TYPE::CS_ENTER_WORLD_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_WORLD_PACKET, id)
+			PACKET_TYPE::CS_ENTER_WORLD_PKT, MakePacket(FB_TABLES::CreateCS_ENTER_ROOM_PACKET, id, roomID)
 		);
 	}
 #pragma endregion
@@ -203,6 +224,28 @@ public:
 		return MakePacketBuffer(
 			PACKET_TYPE::CS_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_FORMATION, form)
 		);
+	}
+#pragma endregion
+
+#pragma region CS_PLAYER_ATTACK
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_PLAYER_ATTACK_PACKET()
+	{
+		return MakePacketBuffer(PACKET_TYPE::CS_PLAYER_ATTACK_PKT, MakePacket(FB_TABLES::CreateCS_PLAYER_ATTACK));
+	}
+#pragma endregion
+
+#pragma region CS_SOLDIER_MOVE
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_SOLDIER_MOVE_PACKET(const Vec3& pos)
+	{
+		const FB_STRUCTS::Vec3 p{pos.x, pos.y, pos.z};
+		return MakePacketBuffer(PACKET_TYPE::CS_MOVE_SOLDIER_PKT, MakePacket(FB_TABLES::CreateCS_SOLDIER_MOVE, &p));
+	}
+#pragma endregion
+
+#pragma region CS_CHANGE_SOLDIER_FORMATION
+	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_CHANGE_SOLDIER_FORMATION()
+	{
+		return MakePacketBuffer(PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_CHANGE_SOLDIER_FORMATION));
 	}
 #pragma endregion
 };

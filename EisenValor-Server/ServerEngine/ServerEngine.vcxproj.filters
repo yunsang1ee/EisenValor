@@ -71,10 +71,10 @@
       <Filter>95. Managers\02. TaskQueueManager</Filter>
     </ClInclude>
     <ClInclude Include="Task.h">
-      <Filter>05. Task\00. TaskQueue\00. Task</Filter>
+      <Filter>05. TaskQueue\00. Task</Filter>
     </ClInclude>
     <ClInclude Include="TaskQueue.h">
-      <Filter>05. Task\00. TaskQueue</Filter>
+      <Filter>05. TaskQueue</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>96. Utils\00. Timer</Filter>
@@ -133,10 +133,10 @@
       <Filter>95. Managers\02. TaskQueueManager</Filter>
     </ClCompile>
     <ClCompile Include="Task.cpp">
-      <Filter>05. Task\00. TaskQueue\00. Task</Filter>
+      <Filter>05. TaskQueue\00. Task</Filter>
     </ClCompile>
     <ClCompile Include="TaskQueue.cpp">
-      <Filter>05. Task\00. TaskQueue</Filter>
+      <Filter>05. TaskQueue</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>96. Utils\00. Timer</Filter>
@@ -185,9 +185,6 @@
     <Filter Include="02. RIOBuffer\01. SendBuffer">
       <UniqueIdentifier>{94f86bd4-6f19-4e31-869a-241dd17ea156}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. RIOBuffer\02. PacketBuffer">
-      <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="95. Managers">
       <UniqueIdentifier>{7c7af7e4-cec0-40df-91c6-d41042cc9d8f}</UniqueIdentifier>
     </Filter>
@@ -203,17 +200,8 @@
     <Filter Include="96. Utils">
       <UniqueIdentifier>{855f9310-39d4-4a17-a7d6-7ae7c8fe2037}</UniqueIdentifier>
     </Filter>
-    <Filter Include="05. Task">
-      <UniqueIdentifier>{7dc49616-dce0-4960-9bdb-c9031956520d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="05. Task\00. TaskQueue">
-      <UniqueIdentifier>{d5ccbc04-1854-4dbb-8a22-cb8ebcd7be04}</UniqueIdentifier>
-    </Filter>
     <Filter Include="95. Managers\02. TaskQueueManager">
       <UniqueIdentifier>{23b44939-13d9-4f85-af07-d221aabddd14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="05. Task\00. TaskQueue\00. Task">
-      <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
     </Filter>
     <Filter Include="96. Utils\00. Timer">
       <UniqueIdentifier>{69cdb712-faaa-4fa1-9059-8073e90ec835}</UniqueIdentifier>
@@ -223,6 +211,15 @@
     </Filter>
     <Filter Include="95. Managers\03. TaskTimer">
       <UniqueIdentifier>{54ba449c-e187-47d0-9401-817fa3e8204c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. TaskQueue">
+      <UniqueIdentifier>{d5ccbc04-1854-4dbb-8a22-cb8ebcd7be04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. TaskQueue\00. Task">
+      <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. RIOBuffer\02. PacketBuffer">
+      <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

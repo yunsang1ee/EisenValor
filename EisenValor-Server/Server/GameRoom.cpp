@@ -4,27 +4,22 @@
 #include "Player.h"
 #include "NPC.h"
 #include "ClientSession.h"
-#include "SoldierWalkState.h"
+#include "SoldierState.h"
+#include "TroopController.h"
+#include "Team.h"
 
 void Server::Contents::GameRoom::Init()
 {
-	// TODO: ∏  µ•¿Ã≈Õ ∑Œµ˘
-	// TODO: NPC √ ±‚»≠
+	for(auto& team : m_teams)
+		team.Init(std::static_pointer_cast<GameRoom>(shared_from_this()));
 
-	GeneralTemplate t;
-	t.npcType = NPC_TYPE::GENERAL;
-	t.objType = GAME_OBJECT_TYPE::NPC;
-	t.pos = Vec3{ -10.f, 0.f, -10.f };
-	t.rot = Vec3{ 0.f, 0.f, 0.f };
-	t.teamType = TEAM_TYPE::ENEMY;
-	auto sentinelNPC = Server::Contents::GameObjectFactory::CreateGeneral(t);
-	AddNpc(std::move(sentinelNPC));
-	
-	// Update «‘ºˆ µÓ∑œ
 	ExecuteAsyncronously(&GameRoom::Update);
+
+	// TODO: CheckHeartBeat UpdateÎ°ú Í∞à Ïàò ÏûàÏùå.
+	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
 
-void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::EnterRoom(std::shared_ptr<ClientSession> clientSession) noexcept
 {
 	std::cout << "Enter Match" << std::endl;
 	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
@@ -33,179 +28,244 @@ void Server::Contents::GameRoom::EnterMatch(std::shared_ptr<ClientSession> clien
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
-
+	static bool flag{ false };
 	PlayerTemplate t;
 	t.pos = startPos;
-	t.teamType = TEAM_TYPE::ALLY;
+	t.teamType = static_cast<TEAM_TYPE>(flag);
+	flag = !flag;
 	t.objType = GAME_OBJECT_TYPE::PLAYER;
 
 	auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
 	player->SetID(clientSession->GetID());
 	clientSession->SetPlayer(player);
 	player->SetSession(clientSession);
-
-	// ≥ª ¡§∫∏ ≥™ø°∞‘ ¿¸º€
-	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
-	const auto pb = ClientPacketHandler::Make_SC_MY_PLAYER(player->GetID(), kInfo);
-	clientSession->Send(pb);
-
-	// ∏  æ»ø° ¿÷¥¬ «√∑π¿ÃæÓµÈ¿« ¡§∫∏ ≥™ø°∞‘ ¿¸º€
-	{
-		for(const auto& [id, gen] : m_players) {
-			const Vec3 pos{ gen->GetPos() };
-			const Vec3 rot{ gen->GetRotation() };
-			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), player->GetTeamType(), kInfo);
-			clientSession->Send(pb);
-		}
-	}
-
-	{
-		for(const auto& [id, gen] : m_npcs) {
-			const Vec3 pos{ gen->GetPos() };
-			const Vec3 rot{ gen->GetRotation() };
-			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(gen->GetObjType()), gen->GetTeamType(), kInfo, gen->GetNpcType());
-			clientSession->Send(pb);
-		}
-
-	}
-
-	AddPlayer(std::move(player));
-}
-
-void Server::Contents::GameRoom::LeaveMatch(std::shared_ptr<ClientSession> clientSession) noexcept
-{
-	const uint32 leaveID = clientSession->GetID();
-	{
-		{
-			if(m_players.find(leaveID) != m_players.end())
-				m_players.erase(leaveID);
-		}
-	}
-
-	auto pb = ClientPacketHandler::Make_SC_REMOVE_OBJ(leaveID);
-	Broadcast(pb);
-}
-
-void Server::Contents::GameRoom::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
-{
-	for(const auto& [id, gen] : m_players) {
-		const auto& session = gen->GetOwner();
-		if(session->GetState() == SESSION_STATE::IN_GAME_ROOM)
-			gen->GetOwner()->Send(packetBuffer);
-	}
-}
-
-std::shared_ptr<Server::Contents::Player> Server::Contents::GameRoom::GetPlayer(uint32 id) noexcept
-{
-	if(m_players.find(id) != m_players.end())
-		return m_players[id];
-
-	return nullptr;
-}
-
-void Server::Contents::GameRoom::AddPlayer(std::shared_ptr<Player>&& player) noexcept
-{
-	const uint16 genID = player->GetID();
 	player->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-	const Vec3 pos{ player->GetPos() };
-	const Vec3 rot{ player->GetRotation() };
-	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
 
-	const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(player->GetObjType()), player->GetTeamType(), kInfo);
-	Broadcast(pb);
+	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
+	auto pb = ClientPacketHandler::Make_SC_MY_PLAYER(player->GetID(), kInfo, player->GetTeamType());
+	clientSession->Send(std::move(pb));
 
-	{
-		if(m_players.find(genID) == m_players.end())
-			m_players.insert(std::make_pair(genID, std::move(player)));
+	for(auto& team : m_teams) {
+		for(const auto& [id, p] : team.GetPlayers()) {
+			const Vec3 pos{ p->GetPos() };
+			const Vec3 rot{ p->GetRotation() };
+			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
+			auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(p->GetObjType()), p->GetTeamType(), kInfo);
+			clientSession->Send(std::move(pb));
+		}
+
+		for(auto& [id, n] : team.GetNpcs()) {
+			const Vec3 pos{ n->GetPos() };
+			const Vec3 rot{ n->GetRotation() };
+			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
+			auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(n->GetObjType()), n->GetTeamType(), kInfo, std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType());
+			clientSession->Send(std::move(pb));
+		}
+	}
+
+	m_teams[etou8(t.teamType)].AddObject(std::move(player));
+}
+
+void Server::Contents::GameRoom::LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept
+{
+	const auto player = clientSession->GetPlayer();
+	const auto teamType = player->GetTeamType();
+	m_teams[etou8(teamType)].RemoveObject(player);
+}
+
+void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
+{
+	for(auto& [id, player] : players) {
+		const auto& session = player->GetOwner();
+		if(session->GetState() == SESSION_STATE::IN_GAME_ROOM)
+			session->Send(packetBuffer);
 	}
 }
 
-void Server::Contents::GameRoom::RemovePlayer(std::shared_ptr<Player> player)
+void Server::Contents::GameRoom::BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
 {
-	const uint16 id = player->GetID();
-
-	if(m_players.find(id) != m_players.end())
-		m_players.erase(id);
+	for(auto& team : m_teams)
+		BroadcastToPlayers(team.GetPlayers(), packetBuffer);
 }
 
-void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo kinematicInfo)
+void Server::Contents::GameRoom::BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const TEAM_TYPE teamType)
+{
+	BroadcastToPlayers(m_teams[etou8(teamType)].GetPlayers(), packetBuffer);
+}
+
+void Server::Contents::GameRoom::CheckGameTime(const float dt)
+{
+	m_accGameTime += dt;
+
+	while(m_accGameTime >= 1.f) {
+		m_accGameTime = 0.f;
+
+		if(m_remainingTime.count() > 0) {
+			m_remainingTime -= std::chrono::seconds(1);
+
+			const auto remainTime = static_cast<uint32>(m_remainingTime.count());
+			const uint32_t totalSeconds = remainTime / 1000;
+
+			// Î∂Ñ, Ï¥à Í≥ÑÏÇ∞
+			const uint32_t minutes = totalSeconds / 60;
+			const uint32_t seconds = totalSeconds % 60;
+
+			// std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
+			auto pb = ClientPacketHandler::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
+			ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
+		}
+		else {
+			// TODO: Í≤åÏûÑ Ï¢ÖÎ£å
+		}
+	}
+}
+
+void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo)
 {
 	player->SetPos(kinematicInfo.position);
 	player->SetRotation(kinematicInfo.rotation);
 	player->SetVelocity(kinematicInfo.velocity);
 	player->SetAcceleration(kinematicInfo.acceleration);
 	player->SetTimeStamp(kinematicInfo.timeStamp);
-	player->m_moveStart = !player->m_moveStart;
 
 	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	Broadcast(packetBuffer);
+	ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(packetBuffer));
 
-	//// 2. ∫¥ªÁ ¿Ãµø √≥∏Æ
-	auto& soldiers = player->GetNpcs();
-	if(soldiers.size() == 0) return;
-	const Vec3 playerPos = player->GetPos();
-	float rotY = player->GetRotation().y; // y√‡ »∏¿¸∞™ (∂Ûµæ»/µµ ¥‹¿ß »Æ¿Œ « ø‰)
+	////// 2. ÔøΩÔøΩÔøΩÔøΩ ÔøΩÃµÔøΩ √≥ÔøΩÔøΩ
+	////auto& soldiers = player->GetNpcs();
+	////if(soldiers.size() == 0) return;
+	////const Vec3 playerPos = player->GetPos();
+	////float rotY = player->GetRotation().y;
 
-	for(auto& soldierData : soldiers) {
-		auto offset = soldierData.localOffset;
-		auto soldier = soldierData.soldier;
-		if(!soldier) continue;
+	//for(auto& soldierData : soldiers) {
+	//	auto offset = soldierData.localOffset;
+	//	auto soldier = soldierData.soldier;
+	//	if(!soldier) continue;
 
-		// --- offset¿ª «√∑π¿ÃæÓ »∏¿¸ø° ∏¬√Á »∏¿¸ ∫Ø»Ø ---
-		Vec3 rotatedOffset;
-		rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
-		rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
-		rotatedOffset.y = offset.y;
+	////	// --- offsetÔøΩÔøΩ ÔøΩ√∑ÔøΩÔøΩÃæÔøΩ »∏ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ »∏ÔøΩÔøΩ ÔøΩÔøΩ»Ø ---
+	////	Vec3 rotatedOffset;
+	////	rotatedOffset.x = offset.x * cos(rotY) + offset.z * sin(rotY);
+	////	rotatedOffset.z = -offset.x * sin(rotY) + offset.z * cos(rotY);
+	////	rotatedOffset.y = offset.y;
 
-		// --- √÷¡æ ∏Ò«• ¿ßƒ° ---
-		Vec3 targetPos = {
-			playerPos.x + rotatedOffset.x,
-			playerPos.y + rotatedOffset.y,
-			playerPos.z + rotatedOffset.z
-		};
+	////	// --- ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩ«• ÔøΩÔøΩƒ° ---
+	////	Vec3 targetPos = {
+	////		playerPos.x + rotatedOffset.x,
+	////		playerPos.y + rotatedOffset.y,
+	////		playerPos.z + rotatedOffset.z
+	////	};
 
-		// --- ∫¥ªÁ FSM ªÛ≈¬ ¿¸»Ø π◊ ∏Ò«• ¿ßƒ° ¡ˆ¡§ ---
-		auto fsm = soldier->GetComponent<Server::Contents::FSM>();
-		fsm->ChangeState(STATE_TYPE::WALK);
+	//	if((soldier->GetPos() - targetPos).Length()< 0.01f)
+	//		continue;
+	//	
 
-		auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
-		if(walkState) {
-			walkState->SetTargetPos(targetPos);
-		}
-	}
+	////	// --- ÔøΩÔøΩÔøΩÔøΩ FSM ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩ»Ø ÔøΩÔøΩ ÔøΩÔøΩ«• ÔøΩÔøΩƒ° ÔøΩÔøΩÔøΩÔøΩ ---
+	////	auto fsm = soldier->GetComponent<Server::Contents::FSM>();
+	////	fsm->ChangeState(STATE_TYPE::WALK);
+
+	//	const auto walkState = std::static_pointer_cast<Server::Contents::SoldierWalkState>(fsm->GetCurState());
+	//	if(walkState) {
+	//		walkState->SetTargetPos(targetPos);
+	//	}
+	//}
 }
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
 {
-}
+	// TODO: Ï£ºÎ≥ÄÏóê SPAWN Í∏∞ÏßÄÍ∞Ä ÏûàÎäîÏßÄ ÌôïÏù∏
+	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+	const Vec3& ownerPos = player->GetPos();
 
-void Server::Contents::GameRoom::AddNpc(std::shared_ptr<NPC> npc)
-{
-	const uint32 genID = npc->GetID();
-	npc->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-	const Vec3 pos{ npc->GetPos() };
-	const Vec3 rot{ npc->GetRotation() };
-	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
+	const Vec3 spawnPos = ownerPos + player->GetForward() * 5.f;
+	troopController->GetCurFormation()->m_centerPos = spawnPos;
 
-	const auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(npc->GetObjType()), npc->GetTeamType(), kInfo, npc->GetNpcType());
-	Broadcast(pb);
+	for(int i = 0; i < 25; ++i) {
+		Server::Contents::SoldierTemplate t;
+		t.pos = Vec3{0.f, 0.f, 0.f};		// Ïä§Ìè∞Í∏∞ÏßÄ ÏúÑÏπò
+		t.rot = Vec3{ 0.f, 0.f, 0.f };
+		t.objType = GAME_OBJECT_TYPE::NPC;
+		t.npcType = NPC_TYPE::SOLDIER;
+		t.teamType = player->GetTeamType();
+		t.stat.hp = 100;
 
-	{
-		if(m_npcs.find(genID) == m_npcs.end())
-			m_npcs.insert(std::make_pair(genID, std::move(npc)));
+		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+		troopController->AddSoldier(soldier);
+		m_teams[etou8(player->GetTeamType())].AddObject(std::move(soldier));
 	}
+	troopController->Arrange();
 }
 
-void Server::Contents::GameRoom::RemoveNPC(std::shared_ptr<NPC> npc)
+void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
 {
+	constexpr float attackRadius = 3.f;
+	constexpr float attackDegree = 90.f;
+	constexpr float radiusSq = attackRadius * attackRadius;
 
+	const Vec3& playerPos = player->GetPos();
+	Vec3 playerDir{ sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y) };
+	playerDir.Normalize();
+
+	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
+
+	//for(const auto& [id, npc] : m_npcs) {
+	//	const Vec3& pos = npc->GetPos();
+
+	//	Vec3 toTargetDir = pos - playerPos;
+	//	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
+
+	//	// Î∞òÏßÄÎ¶Ñ Í∏∏Ïù¥ÏôÄ ÌÉÄÍ≤üÍπåÏßÄÏùò Í±∞Î¶¨ ÎπÑÍµê
+	//	if(distToTargetSq >= radiusSq) continue;
+
+	//	const float dotValue{ playerDir.Dot(toTargetDir) };
+
+	//	float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+
+	//	// dotValue < 0 -> (Ï¶â, ÌîåÎ†àÏù¥Ïñ¥Í∞Ä Î∞îÎùºÎ≥¥Îäî Î∞òÎåÄÌé∏)Ïù∏ Í≤ΩÏö∞ÏóêÎèÑ, Ï†úÍ≥±ÌïòÎ©¥ ÏñëÏàòÍ∞Ä ÎêúÎã§ -> Îí§Ï™Ω NPCÍ∞Ä Í≥µÍ≤© ÎßûÏùÄÍ≤ÉÏ≤òÎüº ÌåêÏ†ïÎê† Ïàò ÏûàÏùå.
+	//	if(dotValue <= 0) continue;
+
+	//	if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq) && npc->GetTeamType() == TEAM_TYPE::ENEMY) {
+	//		std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
+	//		int hp{ npc->GetHP() };
+	//		hp -= 50;
+	//		std::cout << std::format("NPC HP: {}", hp) << std::endl;
+	//		npc->SetHp(hp);
+
+	//		if(hp <= 0) {
+	//			ExecuteAsyncronously(&GameRoom::RemoveNPC, npc);
+	//		}
+
+	//		auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(npc->GetID(), npc->GetHP());
+	//		ExecuteAsyncronously(&GameRoom::Broadcast, std::move(pb));
+	//	}
+
+	//	// a * b = |a| |b| cos	
+	//	// cos = a * b / |a| |b|
+	//	// Í≥µÍ≤© ÌåêÏ†ï -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
+	//}
+}
+
+bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos)
+{
+	if(player) {
+		player->GetComponent<Server::Contents::TroopController>()->SetTargetPos(targetPos);
+		return true;
+	}
+
+	return false;
+}
+
+void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player)
+{
+	// TODO:
+	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+	uint8  type = static_cast<uint8>(troopController->GetCurFormation()->m_formationType);
+	type = (type + 1) % static_cast<uint8>(TROOP_FORMATION_TYPE::END);
+	troopController->SetFormation(static_cast<TROOP_FORMATION_TYPE>(type));
 }
 
 void Server::Contents::GameRoom::Update()
 {
-	auto now = std::chrono::high_resolution_clock::now();
+	const auto now = std::chrono::high_resolution_clock::now();
 	float DT = 0.f;
 	if(m_firstUpdate) m_firstUpdate = false;
 	else {
@@ -213,15 +273,30 @@ void Server::Contents::GameRoom::Update()
 	}
 	m_lastUpdate = now;
 
-	{
-		for(auto& [id, player] : m_players)
+	for(auto& team : m_teams) {
+		for(auto& [id, player] : team.GetPlayers())
 			player->Update(DT);
-	}
 
-	{
-		for(auto& [id, npc] : m_npcs)
+		for(auto& [id, npc] : team.GetNpcs())
 			npc->Update(DT);
 	}
 
+	CheckGameTime(DT);
 	ExecuteAfterTime(UPDATE_MS, &Server::Contents::GameRoom::Update);
+}
+
+void Server::Contents::GameRoom::CheckHeartBeat()
+{
+	for(auto& team : m_teams) {
+		for(auto& [id, player] : team.GetPlayers()) {
+			const auto now = std::chrono::high_resolution_clock::now();
+			const auto& session = player->GetOwner();
+			const auto hbTimeStamp = session->GetHeartbeatTimestamp();
+			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
+				team.RemoveObject(player);
+				player->GetOwner()->Disconnect("HEART_BEAT");
+			}
+		}
+	}
+	ExecuteAfterTime(1s, &Server::Contents::GameRoom::CheckHeartBeat);
 }

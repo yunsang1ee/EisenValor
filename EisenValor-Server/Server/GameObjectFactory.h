@@ -10,15 +10,15 @@ namespace Server {
 		};
 
 		struct CreatureTemplate  : public GameObjectTemplate {
-			// Ã¼·Â
+			StatInfo stat;
 		};
 
 		struct PlayerTemplate : public CreatureTemplate {
-
+			// TODO: PlayerTemplate
 		};
 
-		struct SpawnBaseTemplate : public CreatureTemplate {
-
+		struct SpawnBaseTemplate : public CreatureTemplate { 
+			// TODO: SpawnBasTemplate
 		};
 
 		struct NPCTemplate : public CreatureTemplate {
@@ -26,17 +26,15 @@ namespace Server {
 		};
 
 		struct GeneralTemplate : public NPCTemplate {
-			
+			// TODO: GeneralTemplate
 		};
 
 		struct SoldierTemplate : public NPCTemplate {
-	
+			// TODO: SoldierTemplate
+			std::weak_ptr<NPC> ownerGeneral;
 		};
 		
-		class GameObject;
-		class Creature;
 		class Player;
-		class Soldier;
 		class NPC;
 
 		class GameObjectFactory {

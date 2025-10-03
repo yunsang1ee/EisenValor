@@ -4,6 +4,7 @@ namespace Server {
 	namespace Contents {
 		class GameLobby {
 		private:
+
 		};
 	}
 }

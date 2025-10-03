@@ -15,7 +15,7 @@ namespace ServerEngine {
 	private:
 		uint32											m_id;
 		SOCKET											m_socket;
-		std::weak_ptr<RIOWorker>						m_owner;
+		RIOWorker*										m_owner;
 
 		std::atomic_bool								m_connected;
 		SOCKADDR_IN										m_clientAddr{};
@@ -37,6 +37,8 @@ namespace ServerEngine {
 		std::shared_mutex								m_sendPktInfoslk;
 		std::vector<std::pair<int32, int32>>			m_sendPktInfos;
 
+		std::atomic<std::chrono::high_resolution_clock::time_point>	m_heartbeatTimestamp;
+
 	public:
 		Session();
 		virtual ~Session();
@@ -56,13 +58,15 @@ namespace ServerEngine {
 		void Send(const PacketInfo& info);
 
 	public:
-		void SetOwner(std::weak_ptr<RIOWorker> owner) noexcept { m_owner = owner; }
+		void SetOwner(RIOWorker* owner) noexcept { m_owner = owner; }
 		void SetState(const SESSION_STATE state) noexcept { m_state = state; }
 		
 		uint32 GetID() const noexcept { return m_id; }
 		SESSION_STATE GetState() const noexcept { return m_state; }
 		bool IsConnected() noexcept { return m_connected; }
-		
+		void UpdateHeartbeatTimestamp();
+		std::chrono::high_resolution_clock::time_point GetHeartbeatTimestamp() const noexcept { return m_heartbeatTimestamp; }
+
 	private:
 		void Init();
 		void PostRecv();

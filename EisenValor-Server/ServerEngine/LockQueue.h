@@ -5,7 +5,7 @@ namespace ServerEngine {
 	template<typename T>
 	class LockQueue {
 	private:
-		std::queue<T>			m_queue;
+		std::queue<T>				m_queue;
 		std::recursive_mutex		m_mutex;
 	
 	public:
@@ -18,8 +18,7 @@ namespace ServerEngine {
 		T Pop()
 		{
 			std::lock_guard<std::recursive_mutex> lk{ m_mutex };
-			if(Empty())
-				return T{};
+			if(m_queue.empty()) return T{};
 			T item = m_queue.front();
 			m_queue.pop();
 			return item;

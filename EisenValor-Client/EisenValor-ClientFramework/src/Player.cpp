@@ -8,17 +8,16 @@ using namespace DirectX;
 void Player::Initialize(ID3D12Device* device)
 {						 // 큐브 버텍스 데이터 (GameFramework에서 사용하던 것과 동일)
 	Vertex vertices[] = {// 전면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f)},
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f),m_teamColor},
+						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), m_teamColor},
 						 // 후면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f)},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)}
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), m_teamColor},
+						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), m_teamColor}
 	};
-	m_vertices.assign_range(vertices);
 
 	// 인덱스 데이터
 	UINT indices[] = {// 전면
@@ -34,7 +33,6 @@ void Player::Initialize(ID3D12Device* device)
 					  // 하단
 					  0, 3, 7, 0, 7, 4
 	};
-	m_indices.assign_range(indices);
 
 	// 버텍스 버퍼 생성
 	const UINT			  vertexBufferSize = sizeof(vertices);
@@ -156,11 +154,28 @@ void Player::Update(float deltaTime)
 
 		m_pos = Lerp(m_pos, predictedPosition, alpha);
 	}
-#endif
+	#else
+
+	
+	{
+		if (m_rot.y == lastServerRotation.y)
+			return;
+		const Vec3	now = m_rot;				 // 현재 오일러 회전 (deg)
+		const Vec3	future = lastServerRotation; // 목표 오일러 회전 (deg)
+		const float t = 1.0f - std::exp(-10.f * deltaTime);
+
+		Vec3 result;
+		result.x = now.x + (future.x - now.x) * t;
+		result.y = now.y + (future.y - now.y) * t;
+		result.z = now.z + (future.z - now.z) * t;
+
+		SetRotation(result);
+	}
+
 	Vec3 curPos{GetPosition()};
 	Vec3 destPos{lastServerPosition};
 
-	if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+	if ((curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z))
 		return;
 
 	float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
@@ -173,35 +188,7 @@ void Player::Update(float deltaTime)
 	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
 	SetPosition(newPos);
 
-	//{
-	//	Vec3 curEuler = GetRotation();		 // 현재 회전 (deg)
-	//	Vec3 destEuler = lastServerRotation; // 목표 회전 (deg)
-
-	//	float t = deltaTime * 8.f;
-	//	if (t > 1.f)
-	//		t = 1.f;
-
-	//	// 1. 오일러(deg) → 쿼터니언
-	//	XMVECTOR curQuat = XMQuaternionRotationRollPitchYaw(
-	//		XMConvertToRadians(curEuler.x), XMConvertToRadians(curEuler.y), XMConvertToRadians(curEuler.z)
-	//	);
-	//	XMVECTOR destQuat = XMQuaternionRotationRollPitchYaw(
-	//		XMConvertToRadians(destEuler.x), XMConvertToRadians(destEuler.y), XMConvertToRadians(destEuler.z)
-	//	);
-
-	//	// 2. 쿼터니언 보간
-	//	XMVECTOR newQuat = XMQuaternionSlerp(curQuat, destQuat, t);
-
-	//	// 3. 쿼터니언 → 행렬
-	//	XMMATRIX rotMat = XMMatrixRotationQuaternion(newQuat);
-
-	//	// 4. 행렬 → 오일러(deg)
-	//	Vec3 newEuler;
-	//	newEuler.y = XMConvertToDegrees(atan2f(rotMat.r[0].m128_f32[2], rotMat.r[2].m128_f32[2])); // yaw
-	//	newEuler.x = XMConvertToDegrees(asinf(-rotMat.r[1].m128_f32[2]));						   // pitch
-	//	newEuler.z = XMConvertToDegrees(atan2f(rotMat.r[1].m128_f32[0], rotMat.r[1].m128_f32[1])); // roll
-	//	SetRotation(newEuler);
-	//}
+#endif
 }
 
 void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
@@ -212,7 +199,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// 플레이어 큐브 렌더링
-	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.3f, 0.8f, 0.3f);
+	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.5f, 1.2f, 0.5f);
 	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
 	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
 	DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
@@ -227,8 +214,8 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 	// 표시등 큐브 렌더링
-	DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.2f, 0.2f);
-	DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.1f, 0.1f, 0.1f);
+	DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.4f, 0.3f);
+	DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f);
 	DirectX::XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
 	DirectX::XMMATRIX markerMVP = markerWorld * view * projection;
 
@@ -239,6 +226,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	// 표시등 큐브 그리기
 	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
@@ -256,3 +244,23 @@ DirectX::XMMATRIX Player::GetViewMatrix() const
 		DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
 	);
 }
+
+void Player::SetTeamColor() 
+{
+	switch (m_team)
+	{
+	case GameObject::Team::BLUE:
+	{
+		m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
+		break;
+	}
+	case GameObject::Team::RED:
+	{
+		m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
+		break;
+	}
+	default:
+		break;
+	}
+}
+

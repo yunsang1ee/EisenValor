@@ -8,7 +8,7 @@ using namespace DirectX;
 
 void NPC::Initialize(ID3D12Device* device)
 {
-	DirectX::XMFLOAT4 color = GetTeamColor();
+	DirectX::XMFLOAT4 color = m_teamColor;
 
 	Vertex vertices[] = {// 전면
 						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), color},
@@ -33,7 +33,7 @@ void NPC::Initialize(ID3D12Device* device)
 					  3, 2, 6, 3, 6, 7,
 					  // 위쪽
 					  1, 5, 6, 1, 6, 2,
-					  // 아래쪽
+					  // 아래쪽r
 					  0, 3, 7, 0, 7, 4
 	};
 
@@ -103,51 +103,18 @@ void NPC::Initialize(ID3D12Device* device)
 
 void NPC::Update(float deltaTime)
 {
-	//   if (!m_target) return;
+	const Vec3& curPos{GetPosition()};
+	const Vec3& destPos{lastServerPosition};
 
-	//   // 플레이어 위치 가져오기
-	//   DirectX::XMFLOAT3 targetPos = m_target->GetPosition();
-	//   DirectX::XMFLOAT3 currentPos = GetPosition();
-
-	//   // 거리 계산
-	//   float dx = targetPos.x - currentPos.x;
-	//   float dy = targetPos.y - currentPos.y;
-	//   float dz = targetPos.z - currentPos.z;
-	//   float distance = sqrt(dx * dx + dy * dy + dz * dz);
-
-	//   // 일정 거리 이상이면 따라가기
-	//   if (distance > m_followDistance) {
-	//       // 방향 벡터 정규화
-	//       dx /= distance;
-	//       dy /= distance;
-	//       dz /= distance;
-
-	//       // 새 위치 계산 (살짝 부드럽게 이동)
-	//       float moveX = currentPos.x + dx * m_moveSpeed * deltaTime;
-	//       float moveY = currentPos.y + dy * m_moveSpeed * deltaTime;
-	//       float moveZ = currentPos.z + dz * m_moveSpeed * deltaTime;
-
-	//       SetPosition(Vec3{moveX, moveY, moveZ});
-	//   }
-
-	//   DirectX::XMFLOAT3 pos = GetPosition();
-	// SetPosition(Vec3{pos.x, m_baseY, pos.z});
-
-	// TOOD: 현재 위치에서 서버 위치로 보간.
-	Vec3 curPos{GetPosition()};
-	Vec3 destPos{lastServerPosition};
-
-	if (curPos.x == destPos.x && curPos.y == destPos.y && curPos.z == destPos.z)
+	constexpr float epsilon{1e-6f};
+	
+	if ((fabs(curPos.x - destPos.x) <= epsilon) && (fabs(curPos.y - destPos.y) <= epsilon) &&
+		(fabs(curPos.z - destPos.z) <= epsilon))
 		return;
 
-	float lerpFactor = deltaTime * 5.f; // speed: 초당 이동 비율 (0~1 이상 가능)
-	if (lerpFactor > 1.0f)
-		lerpFactor = 1.0f; // 목적지 overshoot 방지
+	float lerpFactor = std::min(deltaTime * 5.f, 1.f); // 현재 위치와 목적지 사이 거리의 비율
 
-	Vec3 newPos;
-	newPos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
-	newPos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
-	newPos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+	Vec3 newPos{SmoothLerp(curPos, destPos, lerpFactor)};
 
 	SetPosition(newPos);
 }
@@ -163,7 +130,7 @@ void NPC::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, Dir
 
 	// NPC 변환 행렬 계산
 	DirectX::XMMATRIX npcScale = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-	DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rotation);
+	DirectX::XMMATRIX npcRotation = DirectX::XMMatrixRotationY(m_rot.y);
 	DirectX::XMMATRIX npcTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
 	DirectX::XMMATRIX npcWorld = npcScale * npcRotation * npcTranslation;
 	DirectX::XMMATRIX npcMVP = npcWorld * view * projection;
@@ -186,6 +153,65 @@ void NPC::SetTarget(std::shared_ptr<GameObject> target)
 	}
 }
 
+void NPC::SetTeamColor() 
+{
+	switch (m_team)
+	{
+	case GameObject::Team::BLUE:
+		switch (m_unitType)
+		{
+		case NPC::NPC_TYPE::GENERAL:
+		{
+			m_teamColor = Vec4(0.3f, 0.3f, 1.0f, 1.0f);
+		}
+			break;
+		case NPC::NPC_TYPE::SOLDIER:
+		{
+			m_teamColor = Vec4(0.5f, 0.5f, 1.0f, 1.0f);
+			break;
+		}
+		case NPC::NPC_TYPE::ARCHER:
+			break;
+		case NPC::NPC_TYPE::MEDIC:
+			break;
+		case NPC::NPC_TYPE::BATTLE_RAM:
+			break;
+		case NPC::NPC_TYPE::BOSS:
+			break;
+		default:
+			break;
+		}
+		break;
+	case GameObject::Team::RED:
+		switch (m_unitType)
+		{
+		case NPC::NPC_TYPE::GENERAL:
+		{
+			m_teamColor = Vec4(1.0f, 0.3f, 0.3f, 1.0f);
+		}
+		break;
+		case NPC::NPC_TYPE::SOLDIER:
+		{
+			m_teamColor = Vec4(1.0f, 0.5f, 0.5f, 1.0f);
+			break;
+		}
+		case NPC::NPC_TYPE::ARCHER:
+			break;
+		case NPC::NPC_TYPE::MEDIC:
+			break;
+		case NPC::NPC_TYPE::BATTLE_RAM:
+			break;
+		case NPC::NPC_TYPE::BOSS:
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void NPC::UpdateUnitProperties()
 {
 	// 유닛 타입별 기본 속성 설정
@@ -201,37 +227,6 @@ void NPC::UpdateUnitProperties()
 		m_moveSpeed = 3.0f;
 		break;
 	}
-}
-
-DirectX::XMFLOAT4 NPC::GetTeamColor() const
-{
-	if (m_team == Team::ALLY)
-	{
-		// 아군
-		switch (m_unitType)
-		{
-		case NPC_TYPE::GENERAL:
-			return DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
-		case NPC_TYPE::SOLDIER:
-			return DirectX::XMFLOAT4(0.3f, 0.3f, 1.0f, 1.0f); // 연파랑
-		case NPC_TYPE::BATTLE_RAM:
-			return DirectX::XMFLOAT4(0.0f, 0.5f, 1.0f, 1.0f); // 하늘색
-		}
-	}
-	else
-	{
-		// 적군
-		switch (m_unitType)
-		{
-		case NPC_TYPE::GENERAL:
-			return DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
-		case NPC_TYPE::SOLDIER:
-			return DirectX::XMFLOAT4(1.0f, 0.3f, 0.3f, 1.0f); // 연빨강
-		case NPC_TYPE::BATTLE_RAM:
-			return DirectX::XMFLOAT4(1.0f, 0.5f, 0.0f, 1.0f); // 주황
-		}
-	}
-	return DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f); // 기본 회색
 }
 
 DirectX::XMFLOAT3 NPC::GetUnitScale() const

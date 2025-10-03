@@ -1,25 +1,28 @@
 #pragma once
 #include "TaskQueue.h"
 class ClientPacketHandler;
+#include "Team.h"
 
 namespace Server {
 	class ClientSession;
 
 	namespace Contents {
 		class Player;
-		class NPC;
+		class Team;
 
 		class GameRoom : public ServerEngine::TaskQueue {
 		private:
-			uint16											m_id;
-			std::map<uint32, std::shared_ptr<Player>>		m_players;
-			std::map<uint32, std::shared_ptr<NPC>>			m_npcs;
-			std::map<uint32, std::shared_ptr<Creature>>		m_spawnBase;
-
-			bool											m_firstUpdate = true;
-			static constexpr auto							UPDATE_MS = 20ms;
-			std::chrono::high_resolution_clock::time_point	m_lastUpdate;
-
+			uint16												m_id;
+			std::array<Team, etou8(TEAM_TYPE::COUNT)>			m_teams{ Team{TEAM_TYPE::BLUE}, Team{TEAM_TYPE::RED} };
+			
+			bool												m_firstUpdate = true;
+			static constexpr auto								UPDATE_MS = 100ms;
+			static constexpr auto								MAX_HEART_BEAT_TIME_STAMP = 10s;
+			static constexpr auto								GAME_TIME = 20min;
+			std::chrono::high_resolution_clock::time_point		m_lastUpdate;
+			std::chrono::milliseconds							m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME);
+			float												m_accGameTime = 0.f;
+		
 		public:
 			explicit GameRoom(const uint16 roomID) :m_id{ roomID } {}
 
@@ -30,26 +33,27 @@ namespace Server {
 			void Init();
 
 		public:
-			void EnterMatch(std::shared_ptr<ClientSession> clientSession) noexcept;
-			void LeaveMatch(std::shared_ptr<ClientSession> clientSession) noexcept;
-			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
-			std::shared_ptr<Player> GetPlayer(uint32 id) noexcept;
-			const auto& GetPlayers() { return m_players; }
+			void EnterRoom(std::shared_ptr<ClientSession> clientSession) noexcept;
+			void LeaveRoom(std::shared_ptr<ClientSession> clientSession) noexcept;
+			void BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
+			void BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const TEAM_TYPE teamType);
 
 		public:
 			void Update();
+			void CheckHeartBeat();
 
 		public:
-			void AddNpc(std::shared_ptr<NPC> npc);
-			void RemoveNPC(std::shared_ptr<NPC> npc);
+			// By Single
+			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo);
+			void Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player);
+			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player);
+			bool Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos);
+			void Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player);
 
 		private:
-			void AddPlayer(std::shared_ptr<Player>&& player) noexcept;
-			void RemovePlayer(std::shared_ptr<Player> player);
+			void BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
+			void CheckGameTime(const float dt);
 
-		public:
-			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo kinematicInfo);
-			void Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player);
 		};
 	}
 }

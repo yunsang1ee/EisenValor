@@ -1,7 +1,7 @@
 #pragma once
 #include "TaskQueue.h"
-#include "Component.h"
 #include "FSM.h"
+#include "Script.h"
 
 namespace Server {
 	namespace Contents {
@@ -10,15 +10,16 @@ namespace Server {
 		class FSM;
 		class BehaviorTree;
 		class Script;
+		class TroopController;
 
 		class GameObject {
 		private:
 			std::wstring							m_name;
 			uint32									m_id;
 			const GAME_OBJECT_TYPE					m_type;
-			const TEAM_TYPE							m_teamType;
-			std::array<std::shared_ptr<Component>, static_cast<int32>(COMPONENT_TYPE::END)> m_components;
-			std::vector<std::shared_ptr<Script>>	m_scripts;
+			std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)> m_components;
+			std::vector<std::unique_ptr<Script>>	m_scripts;
+			TEAM_TYPE								m_teamType;
 
 		protected:
 			KinematicInfo							m_kinematicInfo;
@@ -28,7 +29,7 @@ namespace Server {
 
 		public:
 			explicit GameObject(const GAME_OBJECT_TYPE type, const TEAM_TYPE teamType);
-			virtual ~GameObject() = default;
+			virtual ~GameObject();
 
 		public:
 			void SetID(const uint32 id) noexcept { m_id = id; }
@@ -51,40 +52,46 @@ namespace Server {
 			const Vec3& GetAcceleration() const noexcept { return m_kinematicInfo.acceleration; }
 			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
+			TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
+			const Vec3 GetForward();
 
 		public:
 			virtual void Update(const float dt);
-			const TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 
 		public:
+			template<typename T> requires std::derived_from<T, Component>
+			T* GetComponent()
+			{
+				if constexpr(std::is_same_v<FSM, T>) {
+					return static_cast<FSM*>(m_components[etou8(COMPONENT_TYPE::FSM)].get());
+				}
+				else if constexpr(std::is_same_v<BehaviorTree, T>) {
+					return static_cast<BehaviorTree*>(m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)].get());
+				}
+				else if constexpr(std::is_same_v<TroopController, T>) {
+					return static_cast<TroopController*>(m_components[etou8(COMPONENT_TYPE::TROOP_CONTROLLER)].get());
+				}
+			}
+
 			template<typename T> requires std::derived_from<T, Component>
 			auto AddComponent()
 			{
 				if constexpr(std::is_same_v<FSM, T>) {
-					m_components[static_cast<int32>(COMPONENT_TYPE::FSM)] = std::make_shared<T>();
-
-					return std::static_pointer_cast<FSM>(m_components[static_cast<int32>(COMPONENT_TYPE::FSM)]);
+					m_components[etou8(COMPONENT_TYPE::FSM)] = std::make_unique<T>();
+					return GetComponent<T>();
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
-					m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::make_shared<T>();
-
-					return std::static_pointer_cast<BehaviorTree>(m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)]);
+					m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::make_unique<T>();
+					return GetComponent<T>();
 				}
-			}
-
-			template<typename T> requires std::derived_from<T, Component>
-			std::shared_ptr<T> GetComponent()
-			{
-				if constexpr(std::is_same_v<FSM, T>) {
-					return std::static_pointer_cast<FSM>(m_components[static_cast<int32>(COMPONENT_TYPE::FSM)]);
-				}
-				else if constexpr(std::is_same_v<BehaviorTree, T>) {
-					return std::static_pointer_cast<BehaviorTree>(m_components[static_cast<int32>(COMPONENT_TYPE::BEHAVIOR_TREE)]);
+				else if constexpr(std::is_same_v<TroopController, T>) {
+					m_components[etou8(COMPONENT_TYPE::TROOP_CONTROLLER)] = std::make_unique<T>();
+					return GetComponent<T>();
 				}
 			}
 
 			template<typename T> requires std::derived_from<T, Script>
-			void AddScript(std::shared_ptr<Script> script) { m_scripts.emplace_back(std::move(script)); }
+			void AddScript(std::unique_ptr<Script> script) { m_scripts.emplace_back(std::move(script)); }
 		};
 	}
 }

@@ -9,17 +9,8 @@ enum class GAME_OBJECT_TYPE : uint8 {
 	END
 };
 
-enum class STATE_TYPE : uint8 {
-	IDLE,
-	WALK,
-	RUN,
-	ATTACK,
-	
-	END,
-};
-
 enum class NPC_TYPE : uint8 {
-	NONE, 
+	NONE,
 	GENERAL,
 	SOLDIER,
 	ARCHER,
@@ -31,10 +22,10 @@ enum class NPC_TYPE : uint8 {
 };
 
 enum class TEAM_TYPE : uint8 {
-	ALLY,
-	ENEMY,
+	BLUE,
+	RED,
 
-	END
+	COUNT
 };
 
 enum class SOLDIER_FORMATION : uint8 {
@@ -48,6 +39,7 @@ enum class SOLDIER_FORMATION : uint8 {
 enum class COMPONENT_TYPE : uint8 {
 	FSM,
 	BEHAVIOR_TREE,
+	TROOP_CONTROLLER,
 
 	END
 };

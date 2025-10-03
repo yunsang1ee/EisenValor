@@ -11,14 +11,14 @@ void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, boo
 
 	if(0 == prevCount) {
 		if(nullptr == TLS_CURRENT_TASK_QUEUE && false == pushOnly)
-			Flush();
+			Execute();
 		else {
-			MANAGER(TaskQueueManager)->Push(shared_from_this());
+			MANAGER(TaskQueueManager)->EnqueTaskQueue(shared_from_this());
 		}
 	}
 }
 
-void ServerEngine::TaskQueue::Flush() noexcept
+void ServerEngine::TaskQueue::Execute() noexcept
 {
 	TLS_CURRENT_TASK_QUEUE = this;
 
@@ -27,12 +27,13 @@ void ServerEngine::TaskQueue::Flush() noexcept
 		if(m_tasks.try_pop(task)) {
 			task->Execute();
 		}
-		auto now = high_resolution_clock::now();
+		
+		const auto now = high_resolution_clock::now();
 
-		if(now > TLS_END_TICK) {
+		if(now > TLS_WORK_END_TIME) {
 			TLS_CURRENT_TASK_QUEUE = nullptr;
-			MANAGER(TaskQueueManager)->Push(shared_from_this());
-			return;
+			MANAGER(TaskQueueManager)->EnqueTaskQueue(shared_from_this());
+			break;
 		}
 	}
 }

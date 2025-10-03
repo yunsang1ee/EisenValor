@@ -13,7 +13,7 @@ Server::ClientSession::ClientSession()
 
 Server::ClientSession::~ClientSession()
 {
-	std::cout << "~ClientSesion" << std::endl;
+	// std::cout << "~ClientSesion" << std::endl;
 }
 
 void Server::ClientSession::OnConnected()
@@ -31,7 +31,7 @@ void Server::ClientSession::OnDisconnected()
 	if(m_player) {
 		auto match = m_player->GetGameRoom();
 		if(match)
-			match->ExecuteAsyncronously(&Server::Contents::GameRoom::LeaveMatch, clientSession);
+			match->ExecuteAsyncronously(&Server::Contents::GameRoom::LeaveRoom, clientSession);
 	}
 }
 

@@ -43,29 +43,6 @@ private:
 
 //===============================================================
 
-enum class RaytracingInstanceType : uint32_t
-{
-	Ground = 0,
-	Player = 1,
-	NPC = 2
-};
-
-namespace RaytracingInstanceID
-{
-constexpr uint32_t kGround = 0;
-constexpr uint32_t kLocalPlayer = 1;
-constexpr uint32_t kPlayer = 100;
-constexpr uint32_t kNPC = 200;
-} // namespace RaytracingInstanceID
-
-enum class ERTGlobalRootSignatureSlot : uint32_t
-{
-	AccelerationStructureSlot = 0,
-	OutputViewSlot,
-	CameraConstantSlot,
-	Count
-};
-
 struct CameraConstants
 {
 	DirectX::XMFLOAT4X4 viewMatrix;

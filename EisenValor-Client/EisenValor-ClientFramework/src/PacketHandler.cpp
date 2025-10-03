@@ -17,30 +17,36 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 {
 	const uint32 id{recvPkt.player_id()};
 
-	std::println("Player ID: {}", id);
+	// std::println("Player ID: {}", id);
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 
 	MANAGER(GameObjectManager)->SetLocalID(id);
-	auto pb = NetBridge::ServerPacketHandler::Make_CS_ENTER_WORLD_PACKET(id);
+	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
+	const uint16 roomID{1};
+	auto pb = NetBridge::ServerPacketHandler::Make_CS_ENTER_ROOM_PACKET(id, roomID);
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	return true;
 }
 
-bool Handle_SC_ENTER_WORLD_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_WORLD_PACKET& recvPkt)
+bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt)
 {
 	return false;
 }
 
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt)
 {
-	auto		 device = GlobalRegistry::Get<IDxDeviceGlobal>().GetDevice();
+	auto device = GlobalRegistry::Get<IDxDeviceGlobal>().GetDevice();
 	const uint32 id = recvPkt.player_id();
 	const uint32 localID = MANAGER(GameObjectManager)->GetLocalID();
 	if (id == localID)
 	{
 		auto localPlayer = std::make_shared<LocalPlayer>();
+		localPlayer->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		localPlayer->SetTeamColor();
 		localPlayer->Initialize(device);
+				
+		// TODO: 팀 설정
 		localPlayer->m_id = recvPkt.player_id();
 
 		const Vec3 pos{
@@ -94,7 +100,8 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	case ObjectType::PLAYER:
 	{
 		auto player = std::make_shared<Player>();
-		
+		player->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		player->SetTeamColor();
 		player->Initialize(device);
 		player->m_id = id;
 		player->SetPosition(pos);
@@ -109,7 +116,8 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 	case ObjectType::NPC:
 	{
 		auto npc = std::make_shared<NPC>();
-		npc->SetTeam(static_cast<NPC::Team>(recvPkt.team_type()));
+		npc->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		npc->SetTeamColor();
 		npc->SetUnitType(static_cast<NPC::NPC_TYPE>(recvPkt.npc_type()));
 
 		npc->Initialize(device);
@@ -140,6 +148,7 @@ bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOV
 	}
 	else
 	{
+		// TODO: 오브젝트 삭제처리 
 		auto obj = MANAGER(GameObjectManager)->FindObject(id);
 		if (obj)
 			obj->alive = false;
@@ -186,5 +195,31 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 		};
 		obj->Handle_SC_MOVE(pos, rot, vel, accel, recvPkt.kinematic_info()->time_stamp());
 	}
+	return true;
+}
+
+bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt)
+{
+	const uint32 objID{recvPkt.obj_id()};
+	auto obj = MANAGER(GameObjectManager)->FindObject(objID);
+
+	if(obj) {
+		const uint32 hp{recvPkt.current_hp()};
+		// TODO: 받은 HP 설정
+		if(hp <= 0) {
+			obj->alive = false;
+		}
+	}
+	
+	return true;
+}
+
+bool Handle_SC_REMANING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt)
+{
+	const uint32 remainingTime{recvPkt.remaining_time()};
+	const uint32_t totalSeconds = remainingTime / 1000;
+	const uint32_t minutes = totalSeconds / 60;
+	const uint32_t seconds = totalSeconds % 60;
+	std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
 	return true;
 }

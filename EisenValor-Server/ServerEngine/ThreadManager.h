@@ -13,16 +13,16 @@ namespace ServerEngine {
 		std::vector<std::jthread>	m_threads;
 
 	public:
-		bool Init();
-		void EnqueueTask(std::function<void()> task);
+		bool Init() noexcept;
+		void EnqueueTask(std::function<void(const std::stop_token&)> task) noexcept;
 		void Join();
 
 	public:
 		uint16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
 	
 	private:
-		static void InitTLS();
-		static void DestroyTLS();
+		static void InitTLS() noexcept;
+		static void DestroyTLS() noexcept;
 
 	};
 }

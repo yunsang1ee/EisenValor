@@ -26,7 +26,7 @@ class Player;
 class GameFramework
 {
 public:
-	GameFramework() = default;
+	GameFramework() = default; 
 	~GameFramework() = default;
 
 	bool Initialize(HINSTANCE hInstance, HWND hwnd);
@@ -43,25 +43,6 @@ private:
 	void LateUpdate();
 	void Render();
 
-	void InitializeRaytracing();
-	void CreateRaytracingOutputTexture();
-	void CreateRaytracingRootSignatures();
-	void CreateRaytracingPipelineStateObject();
-	void CreateShaderTable();
-	void BuildAccelerationStructures();
-	void BuildTopLevelAS(
-		ID3D12GraphicsCommandList4* commandList, const std::vector<D3D12_RAYTRACING_INSTANCE_DESC>& instances
-	);
-	void RenderRaytracing();
-
-	ComPtr<IDxcBlob> CompileShader(
-		IDxcUtils*			dxcUtils,
-		IDxcCompiler3*		dxcCompiler,
-		IDxcIncludeHandler* includeHandler,
-		LPCWSTR				fileName,
-		LPCWSTR				entryPoint,
-		LPCWSTR				target
-	);
 
 private:
 	DxFeatureCaps m_featureCaps;
@@ -70,6 +51,11 @@ private:
 	ComPtr<ID3D12DescriptorHeap>		  m_rtvDescriptorHeap;
 	uint32_t							  m_rtvDescriptorSize = 0;
 	std::unique_ptr<DxCommandContextPool> m_commandContextPool;
+
+	// 깊이 버퍼 관련 멤버 추가
+	ComPtr<ID3D12Resource>		 m_depthStencilBuffer;
+	ComPtr<ID3D12DescriptorHeap> m_dsvDescriptorHeap;
+	uint32_t					 m_dsvDescriptorSize = 0;
 
 	// 렌더링 리소스 추가 25.07.20
 	ComPtr<ID3D12RootSignature> m_rootSignature;
@@ -86,32 +72,6 @@ private:
 	ConstantBuffer		   m_constantBufferData2;
 	UINT8*				   m_pCbvDataBegin2 = nullptr;
 
-
-	ComPtr<ID3D12Device5>			   m_dxrDevice;
-
-	ComPtr<ID3D12StateObject>			m_rtStateObject;
-	ComPtr<ID3D12StateObjectProperties> m_rtStateObjectProps;
-
-	ComPtr<ID3D12RootSignature> m_rtGlobalRootSignature;
-	ComPtr<ID3D12RootSignature> m_rtLocalRootSignature;
-
-	ComPtr<ID3D12Resource> m_topLevelAS;
-	ComPtr<ID3D12Resource> m_bottomLevelAS;
-	ComPtr<ID3D12Resource> m_tlasInstancesBuffer;
-
-	ComPtr<ID3D12Resource> m_shaderTable;
-	struct ShaderTableLayout
-	{
-		uint32_t rayGenOffset = 0;
-		uint32_t rayGenSize = 0;
-		uint32_t missOffset = 0;
-		uint32_t missSize = 0;
-		uint32_t hitGroupOffset = 0;
-		uint32_t hitGroupSize = 0;
-	} m_shaderTableLayout;
-
-	ComPtr<ID3D12Resource>		 m_raytracingOutput;
-	ComPtr<ID3D12DescriptorHeap> m_raytracingDescriptorHeap;
 
 	// Ground 객체 추가
 	std::unique_ptr<Ground> m_ground;
