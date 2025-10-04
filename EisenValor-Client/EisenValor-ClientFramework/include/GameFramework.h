@@ -43,6 +43,7 @@ private:
 	void LateUpdate();
 	void Render();
 
+	void RecreateDepthStencilBuffer(uint32_t width, uint32_t height);
 
 private:
 	DxFeatureCaps m_featureCaps;

@@ -1,6 +1,12 @@
 # EisenValor EditorConfig
 root = true
 
+[*.{hlsl,hlsli,fx}]
+charset = utf-8
+indent_style = space
+indent_size = 4
+tab_width = 4
+
 [*.{cpp,h}]
 charset = utf-8
 

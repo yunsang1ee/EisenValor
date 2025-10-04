@@ -48,6 +48,10 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 
 	// ===== 셰이더 모델 쿼리 =====
 	caps.shaderModel = QueryHighestShaderModel(device);
+	if (caps.shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6)
+	{
+		DEBUG_LOG_FMT("[DxFeatureCaps] Warning: Unsupported shader model detected. Please update your drivers.\n");
+	}
 
 	// ===== 레이트레이싱 쿼리 =====
 	D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
@@ -118,7 +122,6 @@ D3D12_FEATURE_DATA_SHADER_MODEL DxFeatureCaps::QueryHighestShaderModel(ID3D12Dev
 		}
 	}
 
-	// 모든 검사가 실패한 경우 (매우 드문 경우)
 	DEBUG_LOG_FMT("[DxFeatureCaps] Warning: No shader model supported, defaulting to 5.1\n");
 	shaderModel.HighestShaderModel = D3D_SHADER_MODEL_5_1;
 	return shaderModel;

@@ -120,10 +120,10 @@ void DxSwapChain::PresentMaxPerformance()
 
 	if (m_frameCount % 1000 == 0)
 	{
-	/*	DEBUG_LOG_FMT(
-			"[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", m_frameCount, m_supportsTearing,
-			!m_isFullscreen && !m_isBorderlessFullscreen
-		);*/
+		/*	DEBUG_LOG_FMT(
+				"[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", m_frameCount,
+		   m_supportsTearing, !m_isFullscreen && !m_isBorderlessFullscreen
+			);*/
 	}
 }
 
@@ -151,6 +151,11 @@ void DxSwapChain::OnResize(
 	m_height = newHeight;
 
 	CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
+
+	if (m_resizeCallback)
+	{
+		m_resizeCallback(m_width, m_height);
+	}
 
 	DEBUG_LOG_FMT("[DxSwapChain] SwapChain resized to {}x{}. BackBuffers recreated.\n", m_width, m_height);
 }

@@ -7,190 +7,192 @@
 #include "RaytracingCommon.hlsli"
 
 // Global Root Signature
-// Slot 0: Acceleration Structure (TLAS)
+// Slot 0: Acceleration Structure (TLAS, Vertex, VertexOffset, Material)
 // Slot 1: Output UAV 
 // Slot 2: Camera Constants
 
-// Camera constants structure
 cbuffer CameraConstants : register(b0)
 {
-    float4x4 viewMatrix;
-    float4x4 projMatrix;
-    float4x4 viewProjInverse;
-    float3 cameraPosition;
-    float _padding0;
-    float3 cameraDirection;
-    float _padding1;
+	float4x4 viewMatrix;
+	float4x4 projMatrix;
+	float4x4 viewProjInverse;
+	float3 cameraPosition;
+	float _padding0;
+	float3 cameraDirection;
+	float _padding1;
 };
 
-// Global resources
+struct MaterialConstants
+{
+	float3 albedo;
+	float metallic;
+	float roughness;
+	float emissiveStrength;
+	float3 emissive;
+	uint flags;
+	uint _padding[2];
+};
+
+struct Vertex
+{
+	float3 position;
+	float3 normal;
+	float4 color;
+};
+
 RaytracingAccelerationStructure g_scene : register(t0);
+StructuredBuffer<Vertex> g_vertices : register(t1);
+StructuredBuffer<uint> g_indices : register(t2);
+StructuredBuffer<uint> g_vertexOffsets : register(t3);
+StructuredBuffer<uint> g_indexOffsets : register(t4);
+StructuredBuffer<MaterialConstants> g_materials : register(t5);
 RWTexture2D<float4> g_output : register(u0);
 
-// Ray payload for primary rays
 struct RayPayload
 {
-    float3 color;
-    float3 reflectionColor;
-    bool hitGround;
-    int depth;
+	float3 color;
+	uint recursionDepth;
 };
 
-// Ray payload for reflection rays
-struct ReflectionPayload
-{
-    float3 color;
-    bool hit;
-};
-
-// Ray generation shader
 [shader("raygeneration")]
 void RayGenMain()
 {
-    uint2 pixelCoord = DispatchRaysIndex().xy;
-    uint2 screenSize = DispatchRaysDimensions().xy;
-    
-    // Calculate normalized device coordinates
-    float2 ndc = (float2(pixelCoord) + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
-    ndc.y = -ndc.y;
-    
-    // Generate camera ray
-    float4 worldPos = mul(float4(ndc, 0.0f, 1.0f), viewProjInverse);
-    worldPos /= worldPos.w;
-    
-    float3 rayDir = normalize(worldPos.xyz - cameraPosition);
-    
-    // Setup ray descriptor
-    RayDesc ray;
-    ray.Origin = cameraPosition;
-    ray.Direction = rayDir;
-    ray.TMin = 0.01f;
-    ray.TMax = 100.0f;
-    
-    // Initialize payload
-    RayPayload payload;
-    payload.color = float3(0.8f, 0.8f, 0.8f); // Background color
-    payload.reflectionColor = float3(0.0f, 0.0f, 0.0f);
-    payload.hitGround = false;
-    payload.depth = 0;
-    
-    // Trace primary ray
-    TraceRay(g_scene,
-             RAY_FLAG_NONE,
-             0xFF, // Instance mask
-             0, // Hit group index
-             1, // Multiplier for geometry contribution to hit group index
-             0, // Miss shader index
-             ray,
-             payload);
-    
-    // Write result to output texture
-    g_output[pixelCoord] = float4(payload.color + payload.reflectionColor, 1.0f);
+	uint2 pixelCoord = DispatchRaysIndex().xy;
+	uint2 screenSize = DispatchRaysDimensions().xy;
+	
+	float2 ndc = (float2(pixelCoord) + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+	ndc.y = -ndc.y;
+	float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), viewProjInverse);
+	worldPos /= worldPos.w;
+	
+	RayDesc ray;
+	ray.Origin = cameraPosition;
+	ray.Direction = normalize(worldPos.xyz - cameraPosition);
+	ray.TMin = 0.001f;
+	ray.TMax = 1000.0f;
+
+	RayPayload payload;
+	payload.color = 0.0f.xxx;
+	payload.recursionDepth = 0;
+
+	TraceRay(g_scene,
+			 RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+			 0xFF,
+			 0, 0, 0,
+			 ray,
+			 payload);
+	float3 finalColor = payload.color.rgb;
+	finalColor *= 1.2f;
+	
+	// ACES 톤매핑 근사
+	float3 a = finalColor * 2.51f;
+	float3 b = finalColor * 0.03f + 0.59f;
+	float3 c = finalColor * 2.43f + 0.14f;
+	finalColor = saturate((a) / (b + c));
+	
+	// 감마 보정
+	finalColor = pow(finalColor, float3(1.0f / 2.2f, 1.0f / 2.2f, 1.0f / 2.2f));
+	
+	g_output[pixelCoord.xy] = float4(finalColor, 1.0f);
 }
 
-// Miss shader - background
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    // Keep background color (already set in ray gen)
-    if (payload.depth == 0)
-    {
-        // Primary ray miss - keep blue background
-        payload.color = float3(0.0f, 0.0f, 1.0f);
-    }
-    else
-    {
-        // Reflection ray miss - contribute some ambient
-        payload.reflectionColor = float3(0.1f, 0.1f, 0.2f);
-    }
+	float3 rayDir = WorldRayDirection();
+	float t = 0.5f * (rayDir.y + 1.0f);
+	float starField = 0.0f;
+	for (int i = 0; i < 3; i++)
+	{
+		float2 starCoord = rayDir.xz * (10.0f + float(i) * 5.0f) + float(i) * 100.0f;
+		float star = pow(max(0.0f,
+			sin(starCoord.x * 20.0f) *
+			cos(starCoord.y * 15.0f)), 20.0f);
+		starField += star * (1.0f - t) * 0.3f;
+	}
+	
+	float3 stars = float3(1, 1, 1) * starField;
+	payload.color += 0.05f.xxx + stars;
 }
 
-// Miss shader for reflection rays
-[shader("miss")]
-void ReflectionMissMain(inout ReflectionPayload payload)
-{
-    payload.color = float3(0.1f, 0.1f, 0.2f); // Ambient sky color
-    payload.hit = false;
-}
-
-// Closest hit shader
 [shader("closesthit")]
 void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    // Get hit information
-    uint instanceID = InstanceID();
-    uint primitiveIndex = PrimitiveIndex();
-    float3 barycentrics = float3(1.0f - attribs.barycentrics.x - attribs.barycentrics.y,
-                                attribs.barycentrics.x,
-                                attribs.barycentrics.y);
-    
-    float3 worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-    
-    float3 normal = float3(0.0f, 1.0f, 0.0f);
-    
-    if (instanceID == 0) // Ground instance
-    {
-        payload.hitGround = true;
-        
-        float3 albedo = float3(0.3f, 0.3f, 0.3f);
-        payload.color = albedo;
-        
-        if (payload.depth < 2)
-        {
-            // Calculate reflection ray
-            float3 reflectDir = reflect(WorldRayDirection(), normal);
-            
-            RayDesc reflectionRay;
-            reflectionRay.Origin = worldPos + normal * 0.01f; // Offset to avoid self-intersection
-            reflectionRay.Direction = reflectDir;
-            reflectionRay.TMin = 0.01f;
-            reflectionRay.TMax = 100.0f;
-            
-            ReflectionPayload reflPayload;
-            reflPayload.color = float3(0.0f, 0.0f, 0.0f);
-            reflPayload.hit = false;
-            
-            // Trace reflection ray
-            TraceRay(g_scene,
-                     RAY_FLAG_NONE,
-                     0xFF,
-                     0,
-                     1,
-                     1, // Use reflection miss shader
-                     reflectionRay,
-                     reflPayload);
-            
-            // Add reflection contribution (50% reflection strength)
-            payload.reflectionColor = reflPayload.color * 0.5f;
-        }
-    }
-    else // Player or other objects
-    {
-        // Player gets emissive glow
-        float3 emissive = float3(1.0f, 0.8f, 0.4f); // Warm orange glow
-        float emissiveStrength = 2.0f;
-        
-        payload.color = emissive * emissiveStrength;
-        payload.reflectionColor = float3(0.0f, 0.0f, 0.0f); // No reflection for player
-    }
-}
+	uint instanceID = InstanceID();
+	const uint primIndex = PrimitiveIndex();
+	const uint vertexOffset = g_vertexOffsets[instanceID];
+	const uint indexOffset = g_indexOffsets[instanceID];
+	const uint3 indices = uint3(g_indices[indexOffset + 3 * primIndex + 0],
+									g_indices[indexOffset + 3 * primIndex + 1],
+									g_indices[indexOffset + 3 * primIndex + 2]
+	);
+	
+	const Vertex v0 = g_vertices[vertexOffset + indices.x];
+	const Vertex v1 = g_vertices[vertexOffset + indices.y];
+	const Vertex v2 = g_vertices[vertexOffset + indices.z];
+	const MaterialConstants material = g_materials[instanceID];
+	float3 barycentrics;
+	barycentrics.yz = attribs.barycentrics.xy;
+	barycentrics.x = 1.0f - barycentrics.y - barycentrics.z;
 
-// Closest hit for reflection rays
-[shader("closesthit")]
-void ReflectionClosestHitMain(inout ReflectionPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
-{
-    uint instanceID = InstanceID();
-    
-    if (instanceID == 0) // Hit ground
-    {
-        payload.color = float3(0.3f, 0.3f, 0.3f);
-    }
-    else // Hit player in reflection
-    {
-        // Player emissive reflection
-        float3 emissive = float3(1.0f, 0.8f, 0.4f);
-        payload.color = emissive * 1.5f;
-    }
-    
-    payload.hit = true;
+	float3 normal = normalize(barycentrics.x * v0.normal +
+	barycentrics.y * v1.normal + barycentrics.z * v2.normal);
+
+	float3 worldPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+	float3 viewDir = -normalize(WorldRayDirection());
+	float3 baseColor = material.albedo;
+	float metallic = material.metallic;
+	float roughness = material.roughness;
+	
+	float3 lightDir = normalize(float3(0.5f, 1.0f, 0.3f));
+	float3 lightColor = float3(1.0f, 0.95f, 0.8f) * 2.0f;
+	
+	float NdotL = max(0.0f, dot(normal, lightDir));
+	float3 diffuse = baseColor * lightColor * NdotL;
+	
+	float3 ambient = baseColor * float3(0.1f, 0.15f, 0.2f);
+	float3 reflectedColor = float3(0, 0, 0);
+	
+	float3 specular = float3(0, 0, 0);
+	float3 halfVector = normalize(lightDir + viewDir);
+	float NdotH = max(0.0f, dot(normal, halfVector));
+	float specPower = lerp(128.0f, 8.0f, roughness);
+	specular = lightColor * pow(NdotH, specPower) * (1.0f - roughness) * 0.3f;
+	
+	if (metallic > 0.1f && payload.recursionDepth < 2)
+	{
+		float3 reflectDir = reflect(-viewDir, normal);
+		
+		RayDesc reflectRay;
+		reflectRay.Origin = worldPos + normal * 0.001f;
+		reflectRay.Direction = reflectDir;
+		reflectRay.TMin = 0.001f;
+		reflectRay.TMax = 1000.0f;
+		
+		RayPayload reflectPayload;
+		reflectPayload.color = 0.0f.xxx;
+		reflectPayload.recursionDepth = payload.recursionDepth + 1;
+		
+		TraceRay(g_scene,
+		RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+		0xFF,
+		0, 0, 0,
+		reflectRay,
+		reflectPayload);
+		
+		reflectedColor = reflectPayload.color.rgb * metallic * (1.0f - roughness);
+	}
+	float fresnel = pow(1.0f - max(0.0f, dot(viewDir, normal)), 3.0f);
+	float3 fresnelColor = lerp(float3(0.04f, 0.04f, 0.04f), baseColor, metallic);
+	
+	float3 dielectric = diffuse + specular * fresnelColor;
+	float3 conductor = baseColor * specular + reflectedColor;
+	
+	
+	float3 finalColor = 0.0f.xxx;
+	finalColor = lerp(dielectric, conductor, metallic) + ambient;
+	float edgeGlow = pow(1.0f - abs(dot(viewDir, normal)), 2.0f);
+	finalColor += baseColor * edgeGlow * 0.1f;
+	finalColor += material.emissive * material.emissiveStrength;
+	payload.color += finalColor;
 }

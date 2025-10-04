@@ -14,6 +14,9 @@
 using namespace DirectX;
 #define SERVER
 
+// 삼중 버퍼링
+constinit size_t kBackBufferCount = 3;
+
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
 #ifdef SERVER
@@ -54,9 +57,13 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	m_swapChain = std::make_unique<DxSwapChain>(
 		device.GetDevice(), device.GetFactory(), commandQueue, m_hWnd, width, height,
-		3, // 백버퍼 개수
+		kBackBufferCount,
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
+	
+    m_swapChain->SetResizeCallback([this](uint32_t w, uint32_t h) {
+        RecreateDepthStencilBuffer(w, h);
+    });
 
 	//-------------------------- 깊이 버퍼용 ------------
 	// DSV 디스크립터 힙 생성 (깊이 버퍼용)
@@ -68,47 +75,14 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_dsvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 	// 깊이 버퍼 생성
-	D3D12_RESOURCE_DESC depthStencilDesc = {};
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Width = width;
-	depthStencilDesc.Height = height;
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이 + 8비트 스텐실
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	RecreateDepthStencilBuffer(width, height);
 
-	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-	depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-	depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-	D3D12_HEAP_PROPERTIES depthHeapProps = {};
-	depthHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&depthOptimizedClearValue, IID_PPV_ARGS(&m_depthStencilBuffer)
-	));
-
-	// 깊이 스텐실 뷰 생성
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	device.GetDevice()->CreateDepthStencilView(
-		m_depthStencilBuffer.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
-	);
-
-	//-------------------------- 깊이 버퍼용 ------------
+	//---------------------------------------------------
 
 	// 커맨드 컨텍스트 풀 생성
 	m_commandContextPool = std::make_unique<DxCommandContextPool>(
 		device.GetDevice(), commandQueue,
-		3 // 백버퍼 개수
+		kBackBufferCount
 	);
 
 	// 루트 파라미터 정의 (상수 버퍼용)
@@ -230,56 +204,104 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_ground = std::make_unique<Ground>();
 	m_ground->Initialize(device.GetDevice());
 
-	// Player 객체 생성 및 초기화 추가
-	// auto player = std::make_unique<Player>();
-	// player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
-	// player->Initialize(device.GetDevice());
-	// m_player = player.get();
+	/*
+	//Player 객체 생성 및 초기화 추가
+	auto player = std::make_unique<Player>();
+	player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
+	player->Initialize(device.GetDevice());
+	m_player = player.get();
 
-	// Objects들 추가
-	//  m_gameObjects.push_back(std::move(player));
+	Objects들 추가
+	 m_gameObjects.push_back(std::move(player));
 
-	// 적군 장수 생성
-	// auto enemyGeneral = std::make_shared<NPC>();
-	// enemyGeneral->SetTeam(NPC::Team::ENEMY);
-	// enemyGeneral->SetUnitType(NPC::UnitType::GENERAL);
-	// enemyGeneral->Initialize(device.GetDevice());
-	// Vec3 generalPos(0.0f, 0.0f, 8.0f);
-	// enemyGeneral->SetPosition(generalPos);
-	// enemyGeneral->lastServerPosition = generalPos;
-	// MANAGER(GameObjectManager)->AddObject(enemyGeneral);
+	적군 장수 생성
+	auto enemyGeneral = std::make_shared<NPC>();
+	enemyGeneral->SetTeam(NPC::Team::ENEMY);
+	enemyGeneral->SetUnitType(NPC::UnitType::GENERAL);
+	enemyGeneral->Initialize(device.GetDevice());
+	Vec3 generalPos(0.0f, 0.0f, 8.0f);
+	enemyGeneral->SetPosition(generalPos);
+	enemyGeneral->lastServerPosition = generalPos;
+	MANAGER(GameObjectManager)->AddObject(enemyGeneral);
 
-	// 적군 병사 생성 (장수 바로 옆에)
-	// auto enemySoldier = std::make_shared<NPC>();
-	// enemySoldier->SetTeam(NPC::Team::ENEMY);
-	// enemySoldier->SetUnitType(NPC::UnitType::SOLDIER);
-	// enemySoldier->Initialize(device.GetDevice());
-	// Vec3 soldierPos(1.5f, 0.0f, 8.0f);
-	// enemySoldier->SetPosition(soldierPos);
-	// enemySoldier->lastServerPosition = soldierPos;
-	// MANAGER(GameObjectManager)->AddObject(enemySoldier);
+	적군 병사 생성 (장수 바로 옆에)
+	auto enemySoldier = std::make_shared<NPC>();
+	enemySoldier->SetTeam(NPC::Team::ENEMY);
+	enemySoldier->SetUnitType(NPC::UnitType::SOLDIER);
+	enemySoldier->Initialize(device.GetDevice());
+	Vec3 soldierPos(1.5f, 0.0f, 8.0f);
+	enemySoldier->SetPosition(soldierPos);
+	enemySoldier->lastServerPosition = soldierPos;
+	MANAGER(GameObjectManager)->AddObject(enemySoldier);
 
-	// 아군 배틀램 생성
-	// auto battleram = std::make_shared<NPC>();
-	// battleram->SetTeam(NPC::Team::ALLY);
-	// battleram->SetUnitType(NPC::UnitType::BATTLE_RAM);
-	// battleram->Initialize(device.GetDevice());
-	// Vec3 battleramPos(-3.0f, 0.0f, 2.0f);
-	// battleram->SetPosition(battleramPos);
-	// battleram->lastServerPosition = battleramPos;
-	// MANAGER(GameObjectManager)->AddObject(battleram);
+	아군 배틀램 생성
+	auto battleram = std::make_shared<NPC>();
+	battleram->SetTeam(NPC::Team::ALLY);
+	battleram->SetUnitType(NPC::UnitType::BATTLE_RAM);
+	battleram->Initialize(device.GetDevice());
+	Vec3 battleramPos(-3.0f, 0.0f, 2.0f);
+	battleram->SetPosition(battleramPos);
+	battleram->lastServerPosition = battleramPos;
+	MANAGER(GameObjectManager)->AddObject(battleram);
 
-	// 아군 스폰 기지 생성
-	// auto allyspawnbase = std::make_shared<NPC>();
-	// allyspawnbase->SetTeam(NPC::Team::ALLY);
-	// allyspawnbase->SetUnitType(NPC::UnitType::SPAWN_BASE);
-	// allyspawnbase->Initialize(device.GetDevice());
-	// Vec3 spawnbasePos(-8.0f, 0.0f, 0.0f);
-	// allyspawnbase->SetPosition(spawnbasePos);
-	// allyspawnbase->lastServerPosition = spawnbasePos;
-	// MANAGER(GameObjectManager)->AddObject(allyspawnbase);
+	아군 스폰 기지 생성
+	auto allyspawnbase = std::make_shared<NPC>();
+	allyspawnbase->SetTeam(NPC::Team::ALLY);
+	allyspawnbase->SetUnitType(NPC::UnitType::SPAWN_BASE);
+	allyspawnbase->Initialize(device.GetDevice());
+	Vec3 spawnbasePos(-8.0f, 0.0f, 0.0f);
+	allyspawnbase->SetPosition(spawnbasePos);
+	allyspawnbase->lastServerPosition = spawnbasePos;
+	MANAGER(GameObjectManager)->AddObject(allyspawnbase);
+	*/
 
 	return true;
+}
+
+void GameFramework::RecreateDepthStencilBuffer(uint32_t width, uint32_t height)
+{
+	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
+	auto& commandQueue = GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>();
+
+	commandQueue.WaitForIdle();
+	m_depthStencilBuffer.Reset();
+
+	D3D12_RESOURCE_DESC depthStencilDesc = {};
+	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Width = width;
+	depthStencilDesc.Height = height;
+	depthStencilDesc.DepthOrArraySize = 1;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이 + 8비트 스텐실
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+	depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+	D3D12_HEAP_PROPERTIES depthHeapProps = {};
+	depthHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthOptimizedClearValue, IID_PPV_ARGS(&m_depthStencilBuffer)
+	));
+
+	// 깊이 스텐실 뷰 생성
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+	device.GetDevice()->CreateDepthStencilView(
+		m_depthStencilBuffer.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
+	);
+
+	DEBUG_LOG_FMT("[GameFramework] Depth stencil buffer recreated: {}x{}\n", width, height);
 }
 
 void GameFramework::Run()

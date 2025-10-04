@@ -41,9 +41,17 @@ public:
 	template <IsRegisterable Interface>
 	static void Reset(RegistryType id)
 	{
-		registryMap<Interface>().erase(id);
+		auto& map = registryMap<Interface>();
+		map.erase(id);
 		if (active<Interface>() == id)
-			active<Interface>() = {};
+		{
+			active<Interface>() = RegistryType::Main;
+
+			if (!map.empty())
+			{
+				active<Interface>() = map.begin()->first;
+			}
+		}
 	}
 
 private:
