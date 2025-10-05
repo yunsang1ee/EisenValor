@@ -30,7 +30,7 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 	//auto general = Server::Contents::GameObjectFactory::CreateGeneral(g);
 	//AddObject(std::move(general));
 	
-	for(int i = 0; i < 5; ++i) {
+	for(int i = 0; i < 1; ++i) {
 		SoldierTemplate s;
 		s.npcType = NPC_TYPE::SOLDIER;
 		s.objType = GAME_OBJECT_TYPE::NPC;
@@ -82,6 +82,17 @@ void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)
 	const GAME_OBJECT_TYPE objType{ object->GetObjType() };
 	auto pb = ClientPacketHandler::Make_SC_REMOVE_OBJ(id);
 	m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
-	if(m_objects[etou8(objType)].find(id) != m_objects[etou8(objType)].end())
+	if(m_objects[etou8(objType)].find(id) != m_objects[etou8(objType)].end()) {
 		m_objects[etou8(objType)].erase(id);
+		std::cout << std::format("ID: {} 게임에서 삭제!", id) << std::endl;;
+	}
+}
+
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::Team::GetObj(const uint32 id)
+{
+	for(auto& group : m_objects) {
+		auto iter = group.find(id);
+		if(iter != group.end()) return iter->second;
+	}
+	return nullptr;
 }

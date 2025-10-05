@@ -693,6 +693,11 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
+	if(Globals::Input().GetInputDown('K')) {
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_REQ_ATTACK();
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+
 	// if(input.GetInputDown(VK_F1)) {
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_1);
 	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));

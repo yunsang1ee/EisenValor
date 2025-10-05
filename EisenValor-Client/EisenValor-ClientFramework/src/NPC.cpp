@@ -108,8 +108,7 @@ void NPC::Update(float deltaTime)
 
 	constexpr float epsilon{1e-6f};
 	
-	if ((fabs(curPos.x - destPos.x) <= epsilon) && (fabs(curPos.y - destPos.y) <= epsilon) &&
-		(fabs(curPos.z - destPos.z) <= epsilon))
+	if ((fabs(curPos.x - destPos.x) <= epsilon) && (fabs(curPos.y - destPos.y) <= epsilon) && (fabs(curPos.z - destPos.z) <= epsilon))
 		return;
 
 	float lerpFactor = std::min(deltaTime * 5.f, 1.f); // 현재 위치와 목적지 사이 거리의 비율

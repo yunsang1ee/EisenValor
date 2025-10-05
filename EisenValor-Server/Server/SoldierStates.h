@@ -43,10 +43,24 @@ namespace Server {
 
 		class SoldierAttackState : public AttackState {
 		public:
-
+			static constexpr auto	ATTACK_TIME = 1s;
+			float					m_accDt;
 		public:
 			SoldierAttackState();
 			virtual ~SoldierAttackState();
+
+		public:
+			virtual void Enter() override;
+			virtual void Exit() override;
+
+		public:
+			virtual void Update(const float dt) override;
+		};
+
+		class SoldierDefenseState : public DefenseState {
+		public:
+			SoldierDefenseState();
+			virtual ~SoldierDefenseState();
 
 		public:
 			virtual void Enter() override;

@@ -25,11 +25,11 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_ENTER_GAME_PKT = 3,
 	SC_ENTER_GAME_PKT = 4,
-	
+
 	SC_LOCAL_PLAYER_PKT = 5,
 
 	SC_ADD_OBJ_PKT = 6,
-	SC_REMOVE_OBJ_PKT = 7,	
+	SC_REMOVE_OBJ_PKT = 7,
 
 	CS_CHAT_PKT = 8,
 	SC_CHAT_PKT = 9,
@@ -51,6 +51,8 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
 
+	CS_REQ_ATTACK = 19,
+
 	END
 };
 
@@ -67,7 +69,7 @@ bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Sess
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept;
 bool Handle_CS_SOLDIER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_MOVE& recvPkt) noexcept;
 bool Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_SOLDIER_FORMATION& recvPkt) noexcept;
-
+bool Handle_CS_REQ_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_REQ_ATTACK& recvPkt) noexcept;
 class ClientPacketHandler {
 private:
 	ClientPacketHandler() = delete;
@@ -93,8 +95,9 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_MOVE>(Handle_CS_SOLDIER_MOVE_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_SOLDIER_FORMATION>(Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_REQ_ATTACK)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_REQ_ATTACK>(Handle_CS_REQ_ATTACK_PACKET, session, buffer, header); };
 
-		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
+		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
 	}
 
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader) noexcept

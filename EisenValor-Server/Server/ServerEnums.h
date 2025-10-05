@@ -4,7 +4,7 @@ enum class GAME_OBJECT_TYPE : uint8 {
 	PLAYER,
 	NPC,
 	VALLISTAR,
-	PROJECTILE, // GameObject,	별도	Component 제작
+	PROJECTILE,
 
 	END
 };

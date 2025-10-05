@@ -24,6 +24,12 @@ namespace Server {
 			int		GetHP() const noexcept { return m_stat.hp; }
 			int32	GetAtk() const noexcept { return m_stat.atk; }
 			int32	GetStamina() const noexcept { return m_stat.stamina; }
+
+			int32 incHP(const int32 amount) { m_stat.hp += amount; }
+			int32 decHP(const int32 amount) { m_stat.hp -= amount; }
+			int32 incStamina(const int32 amount) { m_stat.stamina += amount; }
+			int32 decStamina(const int32 amount) { m_stat.stamina -= amount; }
+
 			bool	IsAlive() const noexcept { return m_alive; }
 		};
 	}

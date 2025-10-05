@@ -22,6 +22,9 @@ namespace Server {
 			std::chrono::high_resolution_clock::time_point		m_lastUpdate;
 			std::chrono::milliseconds							m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME);
 			float												m_accGameTime = 0.f;
+
+		private:
+			std::queue<std::function<void()>>					m_eventQueue;
 		
 		public:
 			explicit GameRoom(const uint16 roomID) :m_id{ roomID } {}
@@ -33,7 +36,7 @@ namespace Server {
 			void Init();
 
 		public:
-			TEAM_TYPE GetOtherTeam(const TEAM_TYPE type){ return (TEAM_TYPE::BLUE == type) ? TEAM_TYPE::RED : TEAM_TYPE::BLUE; }
+			TEAM_TYPE GetOtherTeamType(const TEAM_TYPE type){ return (TEAM_TYPE::BLUE == type) ? TEAM_TYPE::RED : TEAM_TYPE::BLUE; }
 			auto& GetTeam(const TEAM_TYPE type) { return m_teams[etou8(type)]; }
 		public:
 			// TODO: 나중에 방장이 게임 시작한다는 패킷을 보내면 실행되어야 함.
@@ -49,6 +52,8 @@ namespace Server {
 			void Update();
 			void CheckHeartBeat();
 
+			void AddEvent(std::function<void()> eve) { m_eventQueue.push(eve); }
+
 		public:
 			// By Single
 			void Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo);
@@ -56,12 +61,14 @@ namespace Server {
 			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player);
 			bool Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos);
 			void Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player);
+			void Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player);
 
 		private:
 			void BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			
 			// TODO: 모든 유저가 게임에 들어오고 나서 게임이 시작될 때 불려야 함.
 			void CheckGameTime(const float dt);
+
 
 		};
 	}

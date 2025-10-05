@@ -129,3 +129,10 @@ table SC_REMAINING_GAME_TIME {
 table CS_CHANGE_SOLDIER_FORMATION {
 
 }
+
+// ================================================
+//				REQ_ATTACK
+// ================================================
+table CS_REQ_ATTACK {
+
+}

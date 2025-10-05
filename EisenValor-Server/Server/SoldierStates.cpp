@@ -27,36 +27,16 @@ void Server::Contents::SoldierIdleState::Exit()
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint32 id{ owner->GetID() };
-	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
+	std::cout << std::format("ID = {}, Exit Soldier Idle", id) << std::endl;
 }
 
 void Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	//const auto fsm = GetFSM();
-	//const auto& owner = fsm->GetOwner();
-	//const auto& onwerPos = owner->GetPos();
-	//const Vec3& targetPos = std::static_pointer_cast<NPC>(owner)->GetTargetPos();
-
-	//const Vec3 diff = targetPos - m_prevTargetPos;
-
-	//if(diff.LengthSquared() >= 0.001f) {
-	//	// 주변에 적이 있으면 Attack, 아니면 RUN
-	//	fsm->ChangeState(etou8(SOLDIER_STATE_TYPE::RUN));
-	//}
-	//else {
-	//	
-	//}
-
-
-	// 1. 모든 상대방을 탐색한다.
-	// 2. 
 	const auto fsm = GetFSM();
 	const auto owner = fsm->GetOwner();
 	const auto room = owner->GetGameRoom();
-	const auto otherTeam = room->GetOtherTeam(owner->GetTeamType());
-
+	const auto otherTeam = room->GetOtherTeamType(owner->GetTeamType());
 	const auto& ownerPos = owner->GetPos();
-
 	auto& otherTeamObjectGroup = room->GetTeam(otherTeam).GetAllObjectGroups();
 
 	for(int i = 0; i < otherTeamObjectGroup.size(); ++i) {
@@ -104,7 +84,7 @@ void Server::Contents::SoldierRunState::Exit()
 void Server::Contents::SoldierRunState::Update(const float dt)
 {
 	const auto fsm = GetFSM();
-	const auto owner = fsm->GetOwner();
+	const auto owner = std::static_pointer_cast<NPC>(fsm->GetOwner());
 	const Vec3& ownerPos = owner->GetPos();
 
 	const auto target = std::static_pointer_cast<Creature>(owner)->GetTarget();
@@ -127,12 +107,35 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 			const Vec3 dir = toTarget / distToTarget;
 
 			if(moveDist > distToTarget) moveDist = distToTarget;
+			
 			Vec3 newPos{ ownerPos + dir * moveDist };
+
 			owner->SetPos(newPos);
 		}
 	}
 	else {
+		// 타겟이 없으면 현재 보고있는 방향으로 달려감
+		// 달려가다가 주변에 적이 있으면 맨 처음 본 적을 Target으로 설정
+		const float moveDist = 1.f * dt;
+		const Vec3 dir = owner->GetForward();
+		Vec3 newPos{ ownerPos + dir * moveDist };
+		owner->SetPos(newPos);
+
+		auto otherTeamType = owner->GetGameRoom()->GetOtherTeamType(owner->GetTeamType());
+		auto& otherTeam = owner->GetGameRoom()->GetTeam(otherTeamType);
 		
+		for(auto& [id, obj] : otherTeam.GetNpcs()) {
+			const auto npc = std::static_pointer_cast<NPC>(obj);
+			const auto npcPos = npc->GetPos();
+
+			if(obj->GetNpcType() == NPC_TYPE::SOLDIER) {
+				const Vec3 toNpc= (npcPos - ownerPos);
+				const float distToNpc = toNpc.Length();
+				if(distToNpc < 0.5f) {
+					owner->SetTarget(npc);
+				}
+			}
+		}
 	}
 
 	//auto owner = GetFSM()->GetOwner();
@@ -350,5 +353,59 @@ void Server::Contents::SoldierAttackState::Exit()
 
 void Server::Contents::SoldierAttackState::Update(const float dt)
 {
-	// TODO: 
+	m_accDt += dt;
+	const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
+	const uint32 id = owner->GetID();
+
+	if(m_accDt >= static_cast<float>(ATTACK_TIME.count())) {
+		std::cout << std::format("ID = {}, Attack!", id) << std::endl;
+		const auto target = owner->GetTarget();
+		if(target) {
+			int32 targetHp = owner->GetTarget()->GetHP();
+			targetHp -= owner->GetAtk();
+			owner->GetTarget()->SetHp(targetHp);
+			int32 ownerStamina = owner->GetStamina();
+			ownerStamina -= 5;
+			owner->SetStamina(ownerStamina);
+
+			auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(target)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(target)->GetHP());
+			owner->GetGameRoom()->ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
+			if(targetHp <= 0) {
+				target->GetGameRoom()->AddEvent([t = std::move(target)]()
+					{
+						t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
+					});
+			}
+			m_accDt = 0.f;
+		}
+		else {
+			GetFSM()->ChangeState(etou8(SOLDIER_STATE_TYPE::IDLE));
+		}
+	}
+}
+
+Server::Contents::SoldierDefenseState::SoldierDefenseState()
+	:DefenseState{ etou8(SOLDIER_STATE_TYPE::DEFENSE) }
+{
+
+}
+
+Server::Contents::SoldierDefenseState::~SoldierDefenseState()
+{
+
+}
+
+void Server::Contents::SoldierDefenseState::Enter()
+{
+
+}
+
+void Server::Contents::SoldierDefenseState::Exit()
+{
+
+}
+
+void Server::Contents::SoldierDefenseState::Update(const float dt)
+{
+	// TODO: Soldier Attack State Update
 }

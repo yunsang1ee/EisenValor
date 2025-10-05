@@ -7,7 +7,7 @@
 #include "SoldierStates.h"
 #include "TroopController.h"
 #include "Team.h"
-
+#include "FSM.h"
 void Server::Contents::GameRoom::Init()
 {
 	Start();
@@ -68,7 +68,9 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 		}
 	}
 
-	m_teams[etou8(t.teamType)].AddObject(std::move(player));
+	AddEvent([this, t, p = std::move(player)]() {
+		m_teams[etou8(t.teamType)].AddObject(std::move(p));
+	});
 }
 
 void Server::Contents::GameRoom::LeaveGame(std::shared_ptr<ClientSession> clientSession) noexcept
@@ -175,7 +177,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
 
 	const auto teamType = player->GetTeamType();
-	const auto otherTeam = etou8(GetOtherTeam(teamType));
+	const auto otherTeam = etou8(GetOtherTeamType(teamType));
 
 	for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
 		for(const auto& [id, object] : objectGroup) {
@@ -204,7 +206,9 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 				auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
 				ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
 				if(hp <= 0) {
-					m_teams[otherTeam].RemoveObject(object);
+					object->GetGameRoom()->AddEvent([this, otherTeam, object]() {
+						m_teams[otherTeam].RemoveObject(object);
+					});
 				}
 			}
 
@@ -234,6 +238,20 @@ void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_
 	troopController->SetFormation(static_cast<TROOP_FORMATION_TYPE>(type));
 }
 
+void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player)
+{
+	const auto teamType = player->GetTeamType();
+	auto& team = m_teams[etou8(teamType)];
+
+	for(auto& [id, n] : team.GetNpcs()) {
+		const auto npc = std::static_pointer_cast<Server::Contents::NPC>(n);
+		const auto type = std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType();
+		if(type == NPC_TYPE::SOLDIER) {
+			npc->GetComponent<FSM>()->ChangeState(etou8(SOLDIER_STATE_TYPE::RUN));
+		}
+	}
+}
+
 void Server::Contents::GameRoom::Update()
 {
 	const auto now = std::chrono::high_resolution_clock::now();
@@ -242,14 +260,21 @@ void Server::Contents::GameRoom::Update()
 	else {
 		DT = std::chrono::duration<float>(now - m_lastUpdate).count();
 	}
+	
 	m_lastUpdate = now;
 
-	for(auto& team : m_teams) {
-		for(auto& [id, player] : team.GetPlayers())
-			player->Update(DT);
+	while(false == m_eventQueue.empty()) {
+		auto eve = m_eventQueue.front();
+		eve();
+		m_eventQueue.pop();
+	}
 
-		for(auto& [id, npc] : team.GetNpcs())
-			npc->Update(DT);
+	for(auto& team : m_teams) {
+		for(auto& objGroup : team.GetAllObjectGroups()) {
+			for(auto& [id, obj] : objGroup) {
+				obj->Update(DT);
+			}
+		}
 	}
 
 	CheckGameTime(DT);
@@ -264,7 +289,11 @@ void Server::Contents::GameRoom::CheckHeartBeat()
 			const auto& session = player->GetOwner();
 			const auto hbTimeStamp = session->GetHeartbeatTimestamp();
 			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
-				team.RemoveObject(player);
+				
+				AddEvent([this, p = std::move(player)]() {
+					m_teams[etou8(p->GetTeamType())].RemoveObject(p);
+				});
+
 				player->GetOwner()->Disconnect("HEART_BEAT");
 			}
 		}

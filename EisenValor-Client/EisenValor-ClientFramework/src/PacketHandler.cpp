@@ -29,7 +29,7 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 	return true;
 }
 
-bool Handle_SC_ENTER_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt)
+bool Handle_SC_ENTER_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_PACKET& recvPkt)
 {
 	return false;
 }

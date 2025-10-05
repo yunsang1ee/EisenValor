@@ -72,6 +72,9 @@ struct SC_REMAINING_GAME_TIMEBuilder;
 struct CS_CHANGE_SOLDIER_FORMATION;
 struct CS_CHANGE_SOLDIER_FORMATIONBuilder;
 
+struct CS_REQ_ATTACK;
+struct CS_REQ_ATTACKBuilder;
+
 struct CS_LOGIN_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LOGIN_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -925,6 +928,35 @@ struct CS_CHANGE_SOLDIER_FORMATIONBuilder {
 inline ::flatbuffers::Offset<CS_CHANGE_SOLDIER_FORMATION> CreateCS_CHANGE_SOLDIER_FORMATION(
     ::flatbuffers::FlatBufferBuilder &_fbb) {
   CS_CHANGE_SOLDIER_FORMATIONBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CS_REQ_ATTACK FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_REQ_ATTACKBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_REQ_ATTACKBuilder {
+  typedef CS_REQ_ATTACK Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_REQ_ATTACKBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_REQ_ATTACK> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_REQ_ATTACK>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_REQ_ATTACK> CreateCS_REQ_ATTACK(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_REQ_ATTACKBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
