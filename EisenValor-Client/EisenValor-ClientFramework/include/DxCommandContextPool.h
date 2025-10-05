@@ -6,7 +6,7 @@ class DxCommandContextPool
 public:
 	DxCommandContextPool(
 		ID3D12Device*						 device,
-		class IDxGraphicsCommandQueueGlobal& queue,
+		class IDxGfxCommandQueueGlobal& queue,
 		uint32_t							 numFrames = 3,
 		D3D12_COMMAND_LIST_TYPE				 type = D3D12_COMMAND_LIST_TYPE_DIRECT
 	);
@@ -33,6 +33,6 @@ private:
 	std::vector<FrameEntry>		   m_entries;
 	uint32_t					   m_frameIndex = 0;
 	HANDLE						   m_fenceEvent;
-	IDxGraphicsCommandQueueGlobal& m_queue;
+	IDxGfxCommandQueueGlobal& m_queue;
 	D3D12_COMMAND_LIST_TYPE		   m_type;
 };

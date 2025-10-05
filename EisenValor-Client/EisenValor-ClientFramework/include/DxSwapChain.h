@@ -1,6 +1,6 @@
 #pragma once
 
-class IDxGraphicsCommandQueueGlobal;
+class IDxGfxCommandQueueGlobal;
 
 class DxSwapChain
 {
@@ -35,7 +35,7 @@ public:
 	DxSwapChain(
 		ID3D12Device*				   device,
 		IDXGIFactory6*				   factory,
-		IDxGraphicsCommandQueueGlobal& commandQueue,
+		IDxGfxCommandQueueGlobal& commandQueue,
 		HWND						   hwnd,
 		uint32_t					   width,
 		uint32_t					   height,
@@ -108,7 +108,7 @@ private:
 	ID3D12Device*				   m_device = nullptr;
 	IDXGIFactory6*				   m_factory = nullptr;
 	HWND						   m_hwnd = nullptr;
-	IDxGraphicsCommandQueueGlobal& m_graphicsCommandQueueGlobal;
+	IDxGfxCommandQueueGlobal& m_gfxCommandQueueGlobal;
 
 	ComPtr<IDXGISwapChain4> m_swapChain;
 

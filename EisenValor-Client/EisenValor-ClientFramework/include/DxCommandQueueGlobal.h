@@ -1,7 +1,7 @@
 #pragma once
 
 #pragma region Interfaces
-class IDxGraphicsCommandQueueGlobal : public IGlobal
+class IDxGfxCommandQueueGlobal : public IGlobal
 {
 public:
 	virtual void Initialize(ID3D12Device* device) = 0;
@@ -17,20 +17,20 @@ public:
 
 class IDxComputeCommandQueueGlobal : public IGlobal
 {
-	// This class would be similar to DxGraphicsCommandQueueGlobal but for compute operations.
+	// This class would be similar to DxGfxCommandQueueGlobal but for compute operations.
 };
 
 class IDxCopyCommandQueueGlobal : public IGlobal
 {
-	// This class would be similar to DxGraphicsCommandQueueGlobal but for copy operations.
+	// This class would be similar to DxGfxCommandQueueGlobal but for copy operations.
 };
 #pragma endregion
 
 #pragma region Implementations
-class DxGraphicsCommandQueueGlobal : public GlobalMakerBase<DxGraphicsCommandQueueGlobal, IDxGraphicsCommandQueueGlobal>
+class DxGfxCommandQueueGlobal : public GlobalMakerBase<DxGfxCommandQueueGlobal, IDxGfxCommandQueueGlobal>
 {
 public:
-	~DxGraphicsCommandQueueGlobal();
+	~DxGfxCommandQueueGlobal();
 
 	void Initialize(ID3D12Device* device) override;
 	void Release() override;
@@ -42,6 +42,8 @@ public:
 	void WaitForIdle() override;
 
 	ID3D12CommandQueue* GetQueue() const override { return m_commandQueue.Get(); }
+	uint64_t			GetCompletedFenceValue() const { return m_idleFence->GetCompletedValue(); }
+	uint64_t			GetCurrentFenceValue() const { return m_idleValue; }
 
 private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
@@ -54,12 +56,12 @@ private:
 
 class DxComputeCommandQueueGlobal : public GlobalMakerBase<DxComputeCommandQueueGlobal, IDxComputeCommandQueueGlobal>
 {
-	// This class would be similar to DxGraphicsCommandQueueGlobal but for compute operations.
+	// This class would be similar to DxGfxCommandQueueGlobal but for compute operations.
 };
 
 class DxCopyCommandQueueGlobal : public GlobalMakerBase<DxCopyCommandQueueGlobal, IDxCopyCommandQueueGlobal>
 {
-	// This class would be similar to DxGraphicsCommandQueueGlobal but for copy operations.
+	// This class would be similar to DxGfxCommandQueueGlobal but for copy operations.
 };
 
 #pragma endregion

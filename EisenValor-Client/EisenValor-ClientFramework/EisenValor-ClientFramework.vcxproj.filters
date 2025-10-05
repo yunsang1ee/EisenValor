@@ -22,9 +22,6 @@
     <Filter Include="Graphics">
       <UniqueIdentifier>{c5a1ad20-20ac-4ecf-8e41-100dd36b9cc7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\DxCommon">
-      <UniqueIdentifier>{c298625d-7cb6-4ec9-a006-ebbbf1ecc396}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Device">
       <UniqueIdentifier>{4ea4859c-a0dd-4b49-b8ee-4435bc18d9ed}</UniqueIdentifier>
     </Filter>
@@ -79,9 +76,6 @@
     <Filter Include="Interfaces\Globals">
       <UniqueIdentifier>{93850fdb-a298-4cb5-aaab-aaca79afd46f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interfaces\Manager">
-      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Device\Command">
       <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
     </Filter>
@@ -105,6 +99,15 @@
     </Filter>
     <Filter Include="Common\Global\Graphics\DxCommandQueue">
       <UniqueIdentifier>{8ad01d64-3860-4729-9fd0-52468f8c4bd2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Common">
+      <UniqueIdentifier>{c298625d-7cb6-4ec9-a006-ebbbf1ecc396}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Raytracing">
+      <UniqueIdentifier>{a64a1ac2-f831-4e59-b951-98694f00ad2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Global\Object">
+      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -137,7 +140,7 @@
       <Filter>Interfaces\Globals</Filter>
     </ClInclude>
     <ClInclude Include="include\DxCommon.h">
-      <Filter>Graphics\DxCommon</Filter>
+      <Filter>Graphics\Common</Filter>
     </ClInclude>
     <ClInclude Include="include\DxCommandContext.h">
       <Filter>Graphics\Device\Command</Filter>
@@ -170,7 +173,7 @@
       <Filter>Player</Filter>
     </ClInclude>
     <ClInclude Include="include\GameObjectManager.h">
-      <Filter>Interfaces\Manager</Filter>
+      <Filter>Common\Global\Object</Filter>
     </ClInclude>
     <ClInclude Include="include\Ground.h">
       <Filter>Ground</Filter>
@@ -203,10 +206,13 @@
       <Filter>Common\Global\Graphics\DxCommandQueue</Filter>
     </ClInclude>
     <ClInclude Include="include\DxFeatureCaps.h">
-      <Filter>Graphics\DxCommon</Filter>
+      <Filter>Graphics\Common</Filter>
     </ClInclude>
     <ClInclude Include="include\DxUtils.h">
-      <Filter>Graphics\DxCommon</Filter>
+      <Filter>Graphics\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxShaderCompiler.h">
+      <Filter>Graphics\Pipeline</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -248,7 +254,7 @@
       <Filter>Player</Filter>
     </ClCompile>
     <ClCompile Include="src\GameObjectManager.cpp">
-      <Filter>Interfaces\Manager</Filter>
+      <Filter>Common\Global\Object</Filter>
     </ClCompile>
     <ClCompile Include="src\Ground.cpp">
       <Filter>Ground</Filter>
@@ -275,10 +281,13 @@
       <Filter>Common\Global\Graphics\DxCommandQueue</Filter>
     </ClCompile>
     <ClCompile Include="src\DxFeatureCaps.cpp">
-      <Filter>Graphics\DxCommon</Filter>
+      <Filter>Graphics\Common</Filter>
     </ClCompile>
     <ClCompile Include="src\DxUtils.cpp">
-      <Filter>Graphics\DxCommon</Filter>
+      <Filter>Graphics\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxShaderCompiler.cpp">
+      <Filter>Graphics\Pipeline</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -6,7 +6,7 @@
 DxSwapChain::DxSwapChain(
 	ID3D12Device*				   device,
 	IDXGIFactory6*				   factory,
-	IDxGraphicsCommandQueueGlobal& commandQueue,
+	IDxGfxCommandQueueGlobal& commandQueue,
 	HWND						   hwnd,
 	uint32_t					   width,
 	uint32_t					   height,
@@ -15,7 +15,7 @@ DxSwapChain::DxSwapChain(
 	D3D12_CPU_DESCRIPTOR_HANDLE	   rtvDescriptorStart,
 	uint32_t					   rtvDescriptorSize
 )
-	: m_device(device), m_factory(factory), m_graphicsCommandQueueGlobal(commandQueue), m_hwnd(hwnd), m_width(width),
+	: m_device(device), m_factory(factory), m_gfxCommandQueueGlobal(commandQueue), m_hwnd(hwnd), m_width(width),
 	  m_height(height), m_backBufferCount(backBufferCount), m_format(format), m_rtvDescriptorStart(rtvDescriptorStart),
 	  m_rtvDescriptorSize(rtvDescriptorSize)
 {
@@ -52,7 +52,7 @@ DxSwapChain::DxSwapChain(
 
 	ComPtr<IDXGISwapChain1> swapChain1;
 	ThrowIfFailed(m_factory->CreateSwapChainForHwnd(
-		m_graphicsCommandQueueGlobal.GetQueue(), m_hwnd, &swapChainDesc,
+		m_gfxCommandQueueGlobal.GetQueue(), m_hwnd, &swapChainDesc,
 		nullptr, // Fullscreen Optimizations
 		nullptr, &swapChain1
 	));
@@ -61,7 +61,7 @@ DxSwapChain::DxSwapChain(
 	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)
 	); // TODO: Alt+Enter Input Processing in InputGlobal
 
-	CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
+	CreateResources(device, m_gfxCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
 	EnumerateDisplayModes();
 	m_currentDisplayMode = GetNativeDisplayMode();
@@ -82,7 +82,7 @@ DxSwapChain::~DxSwapChain()
 
 void DxSwapChain::ReleaseBackBuffers()
 {
-	m_graphicsCommandQueueGlobal.WaitForIdle(); // Ensure all GPU operations are complete before releasing resources
+	m_gfxCommandQueueGlobal.WaitForIdle(); // Ensure all GPU operations are complete before releasing resources
 	for (auto& backBuffer : m_backBuffers)
 	{
 		if (backBuffer)
@@ -150,7 +150,7 @@ void DxSwapChain::OnResize(
 	m_width = newWidth;
 	m_height = newHeight;
 
-	CreateResources(device, m_graphicsCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
+	CreateResources(device, m_gfxCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
 	if (m_resizeCallback)
 	{

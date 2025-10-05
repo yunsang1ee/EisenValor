@@ -2,19 +2,19 @@
 #include "DxCommandQueueGlobal.h"
 #include "DxDeviceGlobal.h"
 
-DxGraphicsCommandQueueGlobal::~DxGraphicsCommandQueueGlobal()
+DxGfxCommandQueueGlobal::~DxGfxCommandQueueGlobal()
 {
 	if (m_idleEvent)
 	{
 		CloseHandle(m_idleEvent);
 		m_idleEvent = nullptr;
 	}
-	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Destroyed DxGraphicsCommandQueueGlobal.\n");
+	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] Destroyed DxGfxCommandQueueGlobal.\n");
 }
 
-void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
+void DxGfxCommandQueueGlobal::Initialize(ID3D12Device* device)
 {
-	assert(device && "[DxGraphicsCommandQueueGlobal] device is null");
+	assert(device && "[DxGfxCommandQueueGlobal] device is null");
 	m_device = device;
 
 	D3D12_COMMAND_QUEUE_DESC desc = {
@@ -29,10 +29,10 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 	m_idleEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	assert(m_idleEvent && "Failed to create fence event");
 
-	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Initialized DxGraphicsCommandQueueGlobal.\n");
+	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] Initialized DxGfxCommandQueueGlobal.\n");
 }
 
-void DxGraphicsCommandQueueGlobal::Release()
+void DxGfxCommandQueueGlobal::Release()
 {
 	if (m_idleEvent)
 	{
@@ -45,29 +45,29 @@ void DxGraphicsCommandQueueGlobal::Release()
 	m_idleValue = 0;
 }
 
-void DxGraphicsCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
+void DxGfxCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
 {
 	if (!commandList)
 	{
-		DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
+		DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
 		return;
 	}
 	m_commandQueue->ExecuteCommandLists(1, &commandList);
 }
 
-void DxGraphicsCommandQueueGlobal::Signal(ID3D12Fence* fence, uint64_t fenceValue)
+void DxGfxCommandQueueGlobal::Signal(ID3D12Fence* fence, uint64_t fenceValue)
 {
-	assert(fence && "[DxGraphicsCommandQueueGlobal] fence is null");
+	assert(fence && "[DxGfxCommandQueueGlobal] fence is null");
 	ThrowIfFailed(m_commandQueue->Signal(fence, fenceValue));
 }
 
-void DxGraphicsCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
+void DxGfxCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
 {
-	assert(fence && "[DxGraphicsCommandQueueGlobal] fence is null");
+	assert(fence && "[DxGfxCommandQueueGlobal] fence is null");
 	ThrowIfFailed(m_commandQueue->Wait(fence, fenceValue));
 }
 
-void DxGraphicsCommandQueueGlobal::WaitForIdle()
+void DxGfxCommandQueueGlobal::WaitForIdle()
 {
 	const uint64_t waitValue = ++m_idleValue;
 	ThrowIfFailed(m_commandQueue->Signal(m_idleFence.Get(), waitValue));

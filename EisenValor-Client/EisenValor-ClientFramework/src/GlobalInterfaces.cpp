@@ -28,9 +28,9 @@ void Globals::InitializeGlobalRegistry()
 			auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
 			device.Initialize();
 
-			GR::Register<IDxGraphicsCommandQueueGlobal>(GR::RegistryType::Main, DxGraphicsCommandQueueGlobal::Create());
+			GR::Register<IDxGfxCommandQueueGlobal>(GR::RegistryType::Main, DxGfxCommandQueueGlobal::Create());
 
-			GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().Initialize(device.GetDevice());
+			GlobalRegistry::Get<IDxGfxCommandQueueGlobal>().Initialize(device.GetDevice());
 
 			// GR::Register<IRendererGlobal>                (GR::RegistryType::Main, RendererGlobal::Create());
 			// GR::Register<ISwapchainGlobal>            (GR::RegistryType::Main, SwapchainGlobal::Create());

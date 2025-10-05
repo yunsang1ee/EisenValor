@@ -53,7 +53,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	uint32_t height = clientRect.bottom - clientRect.top;
 
 	// 스왑체인 생성
-	auto& commandQueue = GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>();
+	auto& commandQueue = GlobalRegistry::Get<IDxGfxCommandQueueGlobal>();
 
 	m_swapChain = std::make_unique<DxSwapChain>(
 		device.GetDevice(), device.GetFactory(), commandQueue, m_hWnd, width, height,
@@ -261,7 +261,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 void GameFramework::RecreateDepthStencilBuffer(uint32_t width, uint32_t height)
 {
 	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
-	auto& commandQueue = GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>();
+	auto& commandQueue = GlobalRegistry::Get<IDxGfxCommandQueueGlobal>();
 
 	commandQueue.WaitForIdle();
 	m_depthStencilBuffer.Reset();
@@ -327,7 +327,7 @@ void GameFramework::Run()
 void GameFramework::Release()
 {
 	DEBUG_LOG_FMT("WaitForIdle....\n");
-	GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().WaitForIdle();
+	GlobalRegistry::Get<IDxGfxCommandQueueGlobal>().WaitForIdle();
 }
 
 LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
