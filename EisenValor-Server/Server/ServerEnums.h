@@ -13,10 +13,6 @@ enum class NPC_TYPE : uint8 {
 	NONE,
 	GENERAL,
 	SOLDIER,
-	ARCHER,
-	MEDIC,
-	BATTLE_RAM,
-	BOSS,
 
 	END
 };

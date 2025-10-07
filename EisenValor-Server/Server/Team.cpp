@@ -69,7 +69,7 @@ void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
 	const Vec3 rot{ object->GetRotation() };
 	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
 
-	auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(object->GetObjType()), object->GetTeamType(), kInfo, std::static_pointer_cast<NPC>(object)->GetNpcType());
+	auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(object->GetObjType()), object->GetTeamType(), kInfo, std::static_pointer_cast<NPC>(object)->GetNpcType());
 	m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 
 	if(m_objects[type].find(id) == m_objects[type].end())
@@ -80,7 +80,7 @@ void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)
 {
 	const uint32 id{ object->GetID() };
 	const GAME_OBJECT_TYPE objType{ object->GetObjType() };
-	auto pb = ClientPacketHandler::Make_SC_REMOVE_OBJ(id);
+	auto pb = ServerPackets::Make_SC_REMOVE_OBJ(id);
 	m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 	if(m_objects[etou8(objType)].find(id) != m_objects[etou8(objType)].end()) {
 		m_objects[etou8(objType)].erase(id);

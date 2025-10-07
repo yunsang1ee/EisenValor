@@ -19,6 +19,9 @@ namespace Server {
 			const NPC_TYPE GetNpcType() const noexcept { return m_type; }
 
 		public:
+			virtual void Update(const float dt) override;
+
+		public:
 			void SetTargetPos(const Vec3& targetPos) noexcept { m_targetPos = targetPos; }
 			const Vec3& GetTargetPos() const noexcept { return m_targetPos; }
 		};

@@ -179,12 +179,12 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 	//newRot.y = newRotY;
 	//owner->SetRotation(newRot);
 
-	const uint32 id{ GetFSM()->GetOwner()->GetID() };
-	const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
-	const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
+	//const uint32 id{ GetFSM()->GetOwner()->GetID() };
+	//const Vec3 pos{ GetFSM()->GetOwner()->GetPos() };
+	//const Vec3 rot{ GetFSM()->GetOwner()->GetRotation() };
 
-	auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
-	GetFSM()->GetOwner()->GetGameRoom()->BroadcastToAll(std::move(pb));
+	//auto pb = ClientPacketHandler::Make_SC_MOVE_PACKET(id, KinematicInfo{ pos, rot });
+	//GetFSM()->GetOwner()->GetGameRoom()->BroadcastToAll(std::move(pb));
 }
 
 //Server::Contents::SoldierTraceState::SoldierTraceState()
@@ -359,7 +359,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 
 	if(m_accDt >= static_cast<float>(ATTACK_TIME.count())) {
 		std::cout << std::format("ID = {}, Attack!", id) << std::endl;
-		const auto target = owner->GetTarget();
+		auto target = owner->GetTarget();
 		if(target) {
 			int32 targetHp = owner->GetTarget()->GetHP();
 			targetHp -= owner->GetAtk();
@@ -368,11 +368,13 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 			ownerStamina -= 5;
 			owner->SetStamina(ownerStamina);
 
-			auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(target)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(target)->GetHP());
+			auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(target)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(target)->GetHP());
 			owner->GetGameRoom()->ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
 			if(targetHp <= 0) {
+				target->SetAlive(false);
 				target->GetGameRoom()->AddEvent([t = std::move(target)]()
 					{
+						// t->SetAlive(false);
 						t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
 					});
 			}

@@ -47,7 +47,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 	player->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
 
 	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
-	auto pb = ClientPacketHandler::Make_SC_MY_PLAYER(player->GetID(), kInfo, player->GetTeamType());
+	auto pb = ServerPackets::Make_SC_MY_PLAYER(player->GetID(), kInfo, player->GetTeamType());
 	clientSession->Send(std::move(pb));
 
 	for(auto& team : m_teams) {
@@ -55,7 +55,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 			const Vec3 pos{ p->GetPos() };
 			const Vec3 rot{ p->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(p->GetObjType()), p->GetTeamType(), kInfo);
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(p->GetObjType()), p->GetTeamType(), kInfo);
 			clientSession->Send(std::move(pb));
 		}
 
@@ -63,14 +63,15 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 			const Vec3 pos{ n->GetPos() };
 			const Vec3 rot{ n->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ClientPacketHandler::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(n->GetObjType()), n->GetTeamType(), kInfo, std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType());
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(n->GetObjType()), n->GetTeamType(), kInfo, std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType());
 			clientSession->Send(std::move(pb));
 		}
 	}
 
-	AddEvent([this, t, p = std::move(player)]() {
-		m_teams[etou8(t.teamType)].AddObject(std::move(p));
-	});
+	AddEvent([this, t, p = std::move(player)]()
+		{
+			m_teams[etou8(t.teamType)].AddObject(std::move(p));
+		});
 }
 
 void Server::Contents::GameRoom::LeaveGame(std::shared_ptr<ClientSession> clientSession) noexcept
@@ -118,7 +119,7 @@ void Server::Contents::GameRoom::CheckGameTime(const float dt)
 			const uint32_t seconds = totalSeconds % 60;
 
 			// std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
-			auto pb = ClientPacketHandler::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
+			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
 			ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
 		}
 		else {
@@ -135,7 +136,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	player->SetAcceleration(kinematicInfo.acceleration);
 	player->SetTimeStamp(kinematicInfo.timeStamp);
 
-	auto packetBuffer = ClientPacketHandler::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
+	auto packetBuffer = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(packetBuffer));
 }
 
@@ -150,7 +151,7 @@ void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> pl
 
 	for(int i = 0; i < 25; ++i) {
 		Server::Contents::SoldierTemplate t;
-		t.pos = Vec3{0.f, 0.f, 0.f};		// 스폰기지 위치
+		t.pos = Vec3{ 0.f, 0.f, 0.f };		// 스폰기지 위치
 		t.rot = Vec3{ 0.f, 0.f, 0.f };
 		t.objType = GAME_OBJECT_TYPE::NPC;
 		t.npcType = NPC_TYPE::SOLDIER;
@@ -181,7 +182,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 
 	for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
 		for(const auto& [id, object] : objectGroup) {
-			
+
 			const Vec3& pos = object->GetPos();
 			Vec3 toTargetDir = pos - playerPos;
 			const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
@@ -203,12 +204,15 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 				std::cout << std::format("NPC HP: {}", hp) << std::endl;
 				std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
 
-				auto pb = ClientPacketHandler::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
+				// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
+
+				auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
 				ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
 				if(hp <= 0) {
-					object->GetGameRoom()->AddEvent([this, otherTeam, object]() {
-						m_teams[otherTeam].RemoveObject(object);
-					});
+					object->GetGameRoom()->AddEvent([this, otherTeam, object]()
+						{
+							m_teams[otherTeam].RemoveObject(object);
+						});
 				}
 			}
 
@@ -260,7 +264,7 @@ void Server::Contents::GameRoom::Update()
 	else {
 		DT = std::chrono::duration<float>(now - m_lastUpdate).count();
 	}
-	
+
 	m_lastUpdate = now;
 
 	while(false == m_eventQueue.empty()) {
@@ -269,13 +273,10 @@ void Server::Contents::GameRoom::Update()
 		m_eventQueue.pop();
 	}
 
-	for(auto& team : m_teams) {
-		for(auto& objGroup : team.GetAllObjectGroups()) {
-			for(auto& [id, obj] : objGroup) {
-				obj->Update(DT);
-			}
-		}
-	}
+	for(auto& team : m_teams)
+		for(auto& objGroup : team.GetAllObjectGroups()) 
+			for(auto& [id, obj] : objGroup) 
+					obj->Update(DT);
 
 	CheckGameTime(DT);
 	ExecuteAfterTime(UPDATE_MS, &Server::Contents::GameRoom::Update);
@@ -289,12 +290,15 @@ void Server::Contents::GameRoom::CheckHeartBeat()
 			const auto& session = player->GetOwner();
 			const auto hbTimeStamp = session->GetHeartbeatTimestamp();
 			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
-				
-				AddEvent([this, p = std::move(player)]() {
-					m_teams[etou8(p->GetTeamType())].RemoveObject(p);
-				});
 
-				player->GetOwner()->Disconnect("HEART_BEAT");
+				if(player)
+					player->GetOwner()->Disconnect("HEART_BEAT");
+
+				AddEvent([this, p = std::move(player)]()
+					{
+						m_teams[etou8(p->GetTeamType())].RemoveObject(p);
+					});
+
 			}
 		}
 	}

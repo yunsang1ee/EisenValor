@@ -168,6 +168,7 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
     <ClCompile Include="GeneralState.cpp" />
+    <ClCompile Include="ServerPackets.cpp" />
     <ClCompile Include="ServerGlobalFunc.cpp" />
     <ClCompile Include="IsPlayerInNearNode.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -204,6 +205,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
     <ClInclude Include="GeneralState.h" />
+    <ClInclude Include="ServerPackets.h" />
     <ClInclude Include="ServerGlobalFunc.h" />
     <ClInclude Include="IsPlayerInNearNode.h" />
     <ClInclude Include="Player.h" />

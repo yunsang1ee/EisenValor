@@ -68,8 +68,6 @@ table SC_CHAT_PACKET {
 //						MOVE
 // ================================================
 table CS_MOVE_PACKET {
-	is_move: bool;
-	is_rotate: bool;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
@@ -136,3 +134,28 @@ table CS_CHANGE_SOLDIER_FORMATION {
 table CS_REQ_ATTACK {
 
 }
+
+// ================================================
+//					OBJECT_INFO
+// ================================================
+table SC_NPC_INFO {
+	obj_id: uint;
+	obj_type: ubyte;
+	team_type : ubyte;
+	npc_type: ubyte;
+	kinematic_info: FB_STRUCTS.KinematicInfo;
+	hp: uint;
+	obj_state : byte;
+}
+
+
+// 아이디
+// 오브젝트 타입
+// 
+// 위치
+// 회전값
+// 속도
+// 가속도
+// 타임스탬프
+// 체력
+// state

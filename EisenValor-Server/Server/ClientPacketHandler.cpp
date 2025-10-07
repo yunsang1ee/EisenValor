@@ -24,7 +24,7 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	std::cout << std::format("ID:{} , PW:{} ", recvPkt.id()->c_str(), recvPkt.pw()->c_str());
 	const uint32 id = clientSession->GetID();
-	auto pb = ClientPacketHandler::Make_SC_LOGIN_PACKET(id);
+	auto pb = ServerPackets::Make_SC_LOGIN_PACKET(id);
 	session->Send(std::move(pb));
 	return true;
 }
@@ -35,7 +35,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	clientSession->UpdateHeartbeatTimestamp();
 
 	std::cout << recvPkt.msg()->c_str() << std::endl;
-	auto packetBuffer = ClientPacketHandler::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
+	auto packetBuffer = ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
 
 	if(auto room = clientSession->GetPlayer()->GetGameRoom()) {
 		room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(packetBuffer));

@@ -134,7 +134,7 @@ using Ray = DirectX::SimpleMath::Ray;
 
 #include "NetworkManager.h"
 #include "PacketHandler.h"
-
+#include "ClientPackets.h"
 
 #pragma region DebugHelpers
 std::string GetTimestamp();
