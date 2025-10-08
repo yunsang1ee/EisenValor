@@ -10,7 +10,7 @@ namespace Server {
 			std::weak_ptr<Creature>		m_target;
 
 		public:
-			Creature(const GAME_OBJECT_TYPE type, const TEAM_TYPE teamType);
+			Creature(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
 			virtual ~Creature();
 
 		public:

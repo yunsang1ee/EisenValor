@@ -6,7 +6,7 @@
 #include "GameRoom.h"
 #include "GameObjectFactory.h"
 
-Server::Contents::Team::Team(const TEAM_TYPE type)
+Server::Contents::Team::Team(const FB_ENUMS::TEAM_TYPE type)
 	:m_type{ type }
 {
 
@@ -32,18 +32,17 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 	
 	for(int i = 0; i < 1; ++i) {
 		SoldierTemplate s;
-		s.npcType = NPC_TYPE::SOLDIER;
-		s.objType = GAME_OBJECT_TYPE::NPC;
+		s.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
 		s.teamType = m_type;
 		s.stat = StatInfo{ 100, 10, 100 };
 
 		switch(m_type) {
-			case TEAM_TYPE::BLUE:
+			case FB_ENUMS::TEAM_TYPE_BLUE:
 			{
 				s.pos = Vec3{ 0.f + i * 0.5f, 0.f, -5.f };
 				break;
 			}
-			case TEAM_TYPE::RED:
+			case FB_ENUMS::TEAM_TYPE_RED:
 			{
 				s.pos = Vec3{ 0.f +  i * 0.5f, 0.f, 5.f };
 				break;
@@ -69,8 +68,14 @@ void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
 	const Vec3 rot{ object->GetRotation() };
 	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
 
-	auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, static_cast<uint8>(object->GetObjType()), object->GetTeamType(), kInfo, std::static_pointer_cast<NPC>(object)->GetNpcType());
-	m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+	if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
+		auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, object->GetObjType(), object->GetTeamType(), std::static_pointer_cast<NPC>(object)->GetNpcType(), kInfo);
+		m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+	}
+	else {
+		auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, object->GetObjType(), object->GetTeamType(), kInfo);
+		m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+	}
 
 	if(m_objects[type].find(id) == m_objects[type].end())
 		m_objects[type].try_emplace(id, std::move(object));
@@ -79,7 +84,7 @@ void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
 void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)
 {
 	const uint32 id{ object->GetID() };
-	const GAME_OBJECT_TYPE objType{ object->GetObjType() };
+	const FB_ENUMS::GAME_OBJECT_TYPE objType{ object->GetObjType() };
 	auto pb = ServerPackets::Make_SC_REMOVE_OBJ(id);
 	m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 	if(m_objects[etou8(objType)].find(id) != m_objects[etou8(objType)].end()) {

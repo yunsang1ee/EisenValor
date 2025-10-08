@@ -3,8 +3,8 @@
 
 #include "GameRoom.h"
 
-Server::Contents::NPC::NPC(const NPC_TYPE type, const TEAM_TYPE team)
-	:Creature{ GAME_OBJECT_TYPE::NPC, team }, m_type{ type }
+Server::Contents::NPC::NPC(const FB_ENUMS::NPC_TYPE type, const FB_ENUMS::TEAM_TYPE team)
+	:Creature{ FB_ENUMS::GAME_OBJECT_TYPE_NPC, team }, m_type{ type }
 {
 	static uint32 idGen{ 10000 };
 	SetID(idGen);
@@ -23,18 +23,15 @@ void Server::Contents::NPC::Update(const float dt)
 	GameObject::Update(dt);
 
 	const uint32 id{ GetID() };
-	const uint8 objType{ etou8(GetObjType()) };
-	const uint8 teamType{ etou8(GetTeamType()) };
-	const uint8 npcType{ etou8(GetNpcType()) };
 	const Vec3 pos{ GetPos() };
 	const Vec3 rot{ GetRotation() };
 	KinematicInfo kInfo{ pos, rot };
 	const int32 hp{ GetHP() };
 	uint8 state{};
-	if(npcType == etou8(NPC_TYPE::SOLDIER)) {
+	if(GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) {
 		state = { GetComponent<FSM>()->GetCurState()->GetStateType() };
 	}
-	auto pb = ServerPackets::Make_SC_NPC_INFO_PACKET(id, objType, teamType, npcType, kInfo, hp, state);
+	auto pb = ServerPackets::Make_SC_NPC_INFO_PACKET(id, GetObjType(), GetTeamType(), GetNpcType(), kInfo, hp, state);
 	GetGameRoom()->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 	// std::cout << std::format("ID: {} HP: {}, Update!", id, hp) << std::endl;
 }

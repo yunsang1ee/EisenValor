@@ -249,12 +249,12 @@ void Player::SetTeamColor()
 {
 	switch (m_team)
 	{
-	case GameObject::Team::BLUE:
+	case FB_ENUMS::TEAM_TYPE_BLUE:
 	{
 		m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
 		break;
 	}
-	case GameObject::Team::RED:
+	case FB_ENUMS::TEAM_TYPE_RED:
 	{
 		m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
 		break;

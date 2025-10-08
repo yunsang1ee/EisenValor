@@ -13,7 +13,7 @@ namespace Server {
 		class GameRoom : public ServerEngine::TaskQueue {
 		private:
 			uint16												m_id;
-			std::array<Team, etou8(TEAM_TYPE::COUNT)>			m_teams{ Team{TEAM_TYPE::BLUE}, Team{TEAM_TYPE::RED} };
+			std::array<Team, FB_ENUMS::TEAM_TYPE_MAX>			m_teams{ Team{FB_ENUMS::TEAM_TYPE_BLUE}, Team{FB_ENUMS::TEAM_TYPE_RED} };
 			
 			bool												m_firstUpdate = true;
 			static constexpr auto								UPDATE_MS = 100ms;
@@ -36,8 +36,8 @@ namespace Server {
 			void Init();
 
 		public:
-			TEAM_TYPE GetOtherTeamType(const TEAM_TYPE type){ return (TEAM_TYPE::BLUE == type) ? TEAM_TYPE::RED : TEAM_TYPE::BLUE; }
-			auto& GetTeam(const TEAM_TYPE type) { return m_teams[etou8(type)]; }
+			FB_ENUMS::TEAM_TYPE GetOtherTeamType(const FB_ENUMS::TEAM_TYPE type){ return (FB_ENUMS::TEAM_TYPE_BLUE == type) ? FB_ENUMS::TEAM_TYPE_RED : FB_ENUMS::TEAM_TYPE_BLUE; }
+			auto& GetTeam(const FB_ENUMS::TEAM_TYPE type) { return m_teams[type]; }
 		public:
 			// TODO: 나중에 방장이 게임 시작한다는 패킷을 보내면 실행되어야 함.
 			void Start();
@@ -46,7 +46,7 @@ namespace Server {
 			void LeaveGame(std::shared_ptr<ClientSession> clientSession) noexcept;
 			
 			void BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
-			void BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const TEAM_TYPE teamType);
+			void BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const FB_ENUMS::TEAM_TYPE teamType);
 
 		public:
 			void Update();

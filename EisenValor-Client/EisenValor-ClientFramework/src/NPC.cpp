@@ -156,52 +156,36 @@ void NPC::SetTeamColor()
 {
 	switch (m_team)
 	{
-	case GameObject::Team::BLUE:
+	case FB_ENUMS::TEAM_TYPE_BLUE:
 		switch (m_unitType)
 		{
-		case NPC::NPC_TYPE::GENERAL:
+		case FB_ENUMS::NPC_TYPE_GENERAL:
 		{
 			m_teamColor = Vec4(0.3f, 0.3f, 1.0f, 1.0f);
 		}
 			break;
-		case NPC::NPC_TYPE::SOLDIER:
+		case FB_ENUMS::NPC_TYPE_SOLDIER:
 		{
 			m_teamColor = Vec4(0.5f, 0.5f, 1.0f, 1.0f);
 			break;
 		}
-		case NPC::NPC_TYPE::ARCHER:
-			break;
-		case NPC::NPC_TYPE::MEDIC:
-			break;
-		case NPC::NPC_TYPE::BATTLE_RAM:
-			break;
-		case NPC::NPC_TYPE::BOSS:
-			break;
 		default:
 			break;
 		}
 		break;
-	case GameObject::Team::RED:
+	case FB_ENUMS::TEAM_TYPE_RED:
 		switch (m_unitType)
 		{
-		case NPC::NPC_TYPE::GENERAL:
+		case FB_ENUMS::NPC_TYPE_GENERAL:
 		{
 			m_teamColor = Vec4(1.0f, 0.3f, 0.3f, 1.0f);
 		}
 		break;
-		case NPC::NPC_TYPE::SOLDIER:
+		case FB_ENUMS::NPC_TYPE_SOLDIER:
 		{
 			m_teamColor = Vec4(1.0f, 0.5f, 0.5f, 1.0f);
 			break;
 		}
-		case NPC::NPC_TYPE::ARCHER:
-			break;
-		case NPC::NPC_TYPE::MEDIC:
-			break;
-		case NPC::NPC_TYPE::BATTLE_RAM:
-			break;
-		case NPC::NPC_TYPE::BOSS:
-			break;
 		default:
 			break;
 		}
@@ -216,14 +200,12 @@ void NPC::UpdateUnitProperties()
 	// 유닛 타입별 기본 속성 설정
 	switch (m_unitType)
 	{
-	case NPC_TYPE::GENERAL:
+	case FB_ENUMS::NPC_TYPE_GENERAL:
 		m_moveSpeed = 5.0f;
 		break;
-	case NPC_TYPE::SOLDIER:
+	case FB_ENUMS::NPC_TYPE_SOLDIER:
 		m_moveSpeed = 4.0f;
 		break;
-	case NPC_TYPE::BATTLE_RAM:
-		m_moveSpeed = 3.0f;
 		break;
 	}
 }
@@ -232,12 +214,10 @@ DirectX::XMFLOAT3 NPC::GetUnitScale() const
 {
 	switch (m_unitType)
 	{
-	case NPC_TYPE::GENERAL:
+	case FB_ENUMS::NPC_TYPE_GENERAL:
 		return DirectX::XMFLOAT3(0.4f, 1.0f, 0.4f); // 장수
-	case NPC_TYPE::SOLDIER:
+	case FB_ENUMS::NPC_TYPE_SOLDIER:
 		return DirectX::XMFLOAT3(0.2f, 0.5f, 0.2f); // 병사
-	case NPC_TYPE::BATTLE_RAM:
-		return DirectX::XMFLOAT3(0.8f, 0.5f, 1.2f); // 배틀램
 	default:
 		return DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f);
 	}

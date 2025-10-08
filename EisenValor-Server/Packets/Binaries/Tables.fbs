@@ -34,7 +34,7 @@ table SC_ENTER_GAME_PACKET {
 table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
-	team_type: ubyte;
+	team_type: FB_ENUMS.TEAM_TYPE;
 }
 
 // ================================================
@@ -42,9 +42,19 @@ table SC_LOCAL_PLAYER_PACKET {
 // ================================================
 table SC_ADD_OBJ_PACKET {
 	obj_id: uint;
-	obj_type: ubyte;
-	team_type : ubyte;
-	npc_type: ubyte;
+	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
+	team_type : FB_ENUMS.TEAM_TYPE;
+	kinematic_info: FB_STRUCTS.KinematicInfo;
+}
+
+// ================================================
+//					ADD/REMOVE NPC
+// ================================================
+table SC_ADD_NPC_PACKET {
+	obj_id: uint;
+	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
+	team_type : FB_ENUMS.TEAM_TYPE;
+	npc_type: FB_ENUMS.NPC_TYPE;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 }
 
@@ -136,13 +146,13 @@ table CS_REQ_ATTACK {
 }
 
 // ================================================
-//					OBJECT_INFO
+//					NPC_INFO
 // ================================================
 table SC_NPC_INFO {
 	obj_id: uint;
-	obj_type: ubyte;
-	team_type : ubyte;
-	npc_type: ubyte;
+	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
+	team_type : FB_ENUMS.TEAM_TYPE;
+	npc_type: FB_ENUMS.NPC_TYPE;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 	hp: uint;
 	obj_state : byte;

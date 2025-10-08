@@ -42,7 +42,7 @@ bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOC
 	if (id == localID)
 	{
 		auto localPlayer = std::make_shared<LocalPlayer>();
-		localPlayer->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		localPlayer->SetTeam(recvPkt.team_type());
 		localPlayer->SetTeamColor();
 		localPlayer->Initialize(device);
 				
@@ -95,12 +95,12 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		recvPkt.kinematic_info()->accel().z()
 	};
 
-	switch (auto type = static_cast<ObjectType>(recvPkt.obj_type()))
+	switch (auto type = (recvPkt.obj_type()))
 	{
-	case ObjectType::PLAYER:
+	case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
 	{
 		auto player = std::make_shared<Player>();
-		player->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
+		player->SetTeam(recvPkt.team_type());
 		player->SetTeamColor();
 		player->Initialize(device);
 		player->m_id = id;
@@ -111,23 +111,6 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		player->lastServerPosition = pos;
 
 		MANAGER(GameObjectManager)->AddObject(player);
-		break;
-	}
-	case ObjectType::NPC:
-	{
-		auto npc = std::make_shared<NPC>();
-		npc->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
-		npc->SetTeamColor();
-		npc->SetUnitType(static_cast<NPC::NPC_TYPE>(recvPkt.npc_type()));
-
-		npc->Initialize(device);
-		npc->m_id = id;
-		npc->SetPosition(pos);
-		npc->SetRotation(rot);
-		npc->SetVelocity(vel);
-		npc->SetAccelration(accel);
-		npc->lastServerPosition = pos;
-		MANAGER(GameObjectManager)->AddObject(npc);
 		break;
 	}
 	default:
@@ -231,6 +214,7 @@ bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INF
 {
 	const uint32 id = recvPkt.obj_id();
 	auto		 obj = MANAGER(GameObjectManager)->FindObject(id);
+	// TODO: State 적용해야함.
 	if (obj)
 	{
 		const Vec3 pos{
@@ -255,6 +239,48 @@ bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INF
 			std::cout << std::format("{}th NPC DEAD", id) << std::endl;
 		}
 	}
+
+	return true;
+}
+
+bool Handle_SC_ADD_NPC_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_NPC_PACKET& recvPkt)
+{
+	const uint32 id = recvPkt.obj_id();
+	const uint32 localID = MANAGER(GameObjectManager)->GetLocalID();
+
+	if (id == localID)
+		return false;
+
+	auto device = GlobalRegistry::Get<IDxDeviceGlobal>().GetDevice();
+
+	const Vec3 pos{
+		recvPkt.kinematic_info()->pos().x(), recvPkt.kinematic_info()->pos().y(), recvPkt.kinematic_info()->pos().z()
+	};
+	const Vec3 rot{
+		recvPkt.kinematic_info()->rot().x(), recvPkt.kinematic_info()->rot().y(), recvPkt.kinematic_info()->rot().z()
+	};
+	const Vec3 vel{
+		recvPkt.kinematic_info()->vel().x(), recvPkt.kinematic_info()->vel().y(), recvPkt.kinematic_info()->vel().z()
+	};
+
+	const Vec3 accel{
+		recvPkt.kinematic_info()->accel().x(), recvPkt.kinematic_info()->accel().y(),
+		recvPkt.kinematic_info()->accel().z()
+	};
+
+	auto npc = std::make_shared<NPC>();
+	npc->SetTeam(recvPkt.team_type());
+	npc->SetTeamColor();
+	npc->SetUnitType((recvPkt.npc_type()));
+
+	npc->Initialize(device);
+	npc->m_id = id;
+	npc->SetPosition(pos);
+	npc->SetRotation(rot);
+	npc->SetVelocity(vel);
+	npc->SetAccelration(accel);
+	npc->lastServerPosition = pos;
+	MANAGER(GameObjectManager)->AddObject(npc);
 
 	return true;
 }

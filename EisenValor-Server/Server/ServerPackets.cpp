@@ -15,7 +15,7 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MY_PLAYER(const uint32 id, const KinematicInfo& transform, const TEAM_TYPE teamType) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const KinematicInfo& transform, const FB_ENUMS::TEAM_TYPE teamType) noexcept
 	{
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
@@ -25,10 +25,10 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel, accel, timeStamp };
 		std::cout << "SC_MY_PLAYER" << std::endl;
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo, static_cast<uint8>(teamType)));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo, teamType));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const uint8 type, const TEAM_TYPE teamType, const KinematicInfo& transform, const NPC_TYPE npcType) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const KinematicInfo& transform) noexcept
 	{
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
@@ -38,7 +38,20 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 		std::cout << "SC_ADD_OBJ" << std::endl;
-		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, type, static_cast<uint8>(teamType), static_cast<uint8>(npcType), &info));
+		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &info));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_NPC_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::NPC_TYPE npcType, const KinematicInfo& transform) noexcept
+	{
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
+		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
+		const FB_STRUCTS::Vec3 accel{ Vec3ToFlatVec3(transform.acceleration) };
+		const uint64 timeStamp{ transform.timeStamp };
+
+		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
+		std::cout << "SC_ADD_NPC" << std::endl;
+		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_NPC_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_ADD_NPC_PACKET, id, objType, teamType, npcType, &info));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id) noexcept
@@ -53,7 +66,6 @@ namespace ServerPackets {
 		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
 		const FB_STRUCTS::Vec3 accel{ Vec3ToFlatVec3(transform.acceleration) };
 		const uint64 timeStamp{ transform.timeStamp };
-
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_MOVE_PACKET, id, &info));
@@ -69,7 +81,7 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_NPC_INFO_PACKET(const uint32 id, const uint8 objType, const uint8 teamType, const uint8 npcType, const KinematicInfo& transform, const int hp, const uint8 objState)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_NPC_INFO_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::NPC_TYPE npcType, const KinematicInfo& transform, const int hp, const uint8 objState)
 	{
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
@@ -80,6 +92,5 @@ namespace ServerPackets {
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_NPC_INFO_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_NPC_INFO, id, objType, teamType, npcType, &info, hp, objState));
 	}
-
 
 }

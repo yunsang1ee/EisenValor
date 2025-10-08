@@ -35,12 +35,17 @@ enum class PACKET_TYPE : uint16
 
 	SC_HIT_PKT = 15,
 
-	CS_MOVE_SOLDIER_PKT = 16,
+	CS_SOLDIER_MOVE_PKT = 16,
 
 	SC_REMAINING_GAME_TIME_PKT = 17,
+
 	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
-	CS_REQ_ATTACK = 19,
+
+	CS_REQ_ATTACK_PKT = 19,
+
 	SC_NPC_INFO_PKT = 20,
+
+	SC_ADD_NPC_PKT = 21,
 
 	END
 };
@@ -56,6 +61,7 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt);
 bool Handle_SC_REMANING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt);
 bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INFO& recvPkt);
+bool Handle_SC_ADD_NPC_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_NPC_PACKET& recvPkt);
 
 namespace NetBridge
 {
@@ -124,6 +130,11 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_NPC_INFO_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{ return HandlePacket<FB_TABLES::SC_NPC_INFO>(Handle_SC_NPC_INFO_PACKET, socket, buffer, header); };
+
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ADD_NPC_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_ADD_NPC_PACKET>(Handle_SC_ADD_NPC_PACKET, socket, buffer, header); };
 	}
 
 	static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)

@@ -50,9 +50,11 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
 
-	CS_REQ_ATTACK = 19,
+	CS_REQ_ATTACK_PKT = 19,
 
 	SC_NPC_INFO_PKT = 20,
+
+	SC_ADD_NPC_PKT = 21,
 
 	END
 };
@@ -97,7 +99,7 @@ public:
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_MOVE>(Handle_CS_SOLDIER_MOVE_PACKET, session, buffer, header); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_SOLDIER_FORMATION>(Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET, session, buffer, header); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_REQ_ATTACK)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_REQ_ATTACK>(Handle_CS_REQ_ATTACK_PACKET, session, buffer, header); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_REQ_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) -> bool { return HandlePacket<FB_TABLES::CS_REQ_ATTACK>(Handle_CS_REQ_ATTACK_PACKET, session, buffer, header); };
 
 		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
 	}
@@ -128,10 +130,7 @@ public:
 		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
 		
-		// TODO: PacketBufferPool을 만들어서 여기서 꺼내써야함.
-
-		// Sauto packetBuffer = std::make_shared<ServerEngine::PacketBuffer>(header);
-		auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
+		const auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
 		packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 		return packetBuffer;
 	}

@@ -8,6 +8,7 @@
 #include "TroopController.h"
 #include "Team.h"
 #include "FSM.h"
+
 void Server::Contents::GameRoom::Init()
 {
 	Start();
@@ -36,9 +37,8 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 	static bool flag{ false };
 	PlayerTemplate t;
 	t.pos = startPos;
-	t.teamType = static_cast<TEAM_TYPE>(flag);
+	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 	flag = !flag;
-	t.objType = GAME_OBJECT_TYPE::PLAYER;
 
 	auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
 	player->SetID(clientSession->GetID());
@@ -47,7 +47,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 	player->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
 
 	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
-	auto pb = ServerPackets::Make_SC_MY_PLAYER(player->GetID(), kInfo, player->GetTeamType());
+	auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(player->GetID(), kInfo, player->GetTeamType());
 	clientSession->Send(std::move(pb));
 
 	for(auto& team : m_teams) {
@@ -55,7 +55,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 			const Vec3 pos{ p->GetPos() };
 			const Vec3 rot{ p->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(p->GetObjType()), p->GetTeamType(), kInfo);
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, (p->GetObjType()), p->GetTeamType(), kInfo);
 			clientSession->Send(std::move(pb));
 		}
 
@@ -63,7 +63,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 			const Vec3 pos{ n->GetPos() };
 			const Vec3 rot{ n->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, static_cast<uint8>(n->GetObjType()), n->GetTeamType(), kInfo, std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType());
+			auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(id, (n->GetObjType()), n->GetTeamType(), n->GetNpcType(), kInfo);
 			clientSession->Send(std::move(pb));
 		}
 	}
@@ -96,7 +96,7 @@ void Server::Contents::GameRoom::BroadcastToAll(std::shared_ptr<ServerEngine::Pa
 		BroadcastToPlayers(team.GetPlayers(), packetBuffer);
 }
 
-void Server::Contents::GameRoom::BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const TEAM_TYPE teamType)
+void Server::Contents::GameRoom::BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const FB_ENUMS::TEAM_TYPE teamType)
 {
 	BroadcastToPlayers(m_teams[etou8(teamType)].GetPlayers(), packetBuffer);
 }
@@ -153,8 +153,7 @@ void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> pl
 		Server::Contents::SoldierTemplate t;
 		t.pos = Vec3{ 0.f, 0.f, 0.f };		// 스폰기지 위치
 		t.rot = Vec3{ 0.f, 0.f, 0.f };
-		t.objType = GAME_OBJECT_TYPE::NPC;
-		t.npcType = NPC_TYPE::SOLDIER;
+		t.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
 		t.teamType = player->GetTeamType();
 		t.stat.hp = 100;
 
@@ -250,7 +249,7 @@ void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> pl
 	for(auto& [id, n] : team.GetNpcs()) {
 		const auto npc = std::static_pointer_cast<Server::Contents::NPC>(n);
 		const auto type = std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType();
-		if(type == NPC_TYPE::SOLDIER) {
+		if(type == FB_ENUMS::NPC_TYPE_SOLDIER) {
 			npc->GetComponent<FSM>()->ChangeState(etou8(SOLDIER_STATE_TYPE::RUN));
 		}
 	}

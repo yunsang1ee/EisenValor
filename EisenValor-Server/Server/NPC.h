@@ -8,15 +8,15 @@ namespace Server {
 			
 		class NPC : public Creature {
 		private:
-			const NPC_TYPE			m_type;
-			Vec3					m_targetPos;
+			const FB_ENUMS::NPC_TYPE			m_type;
+			Vec3								m_targetPos;
 
 		public:
-			explicit NPC(const NPC_TYPE type, const TEAM_TYPE team);
+			explicit NPC(const FB_ENUMS::NPC_TYPE type, const FB_ENUMS::TEAM_TYPE team);
 			virtual ~NPC();
 
 		public:
-			const NPC_TYPE GetNpcType() const noexcept { return m_type; }
+			const FB_ENUMS::NPC_TYPE GetNpcType() const noexcept { return m_type; }
 
 		public:
 			virtual void Update(const float dt) override;

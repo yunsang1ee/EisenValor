@@ -160,17 +160,4 @@ constexpr size_t kExplosionDebrises = 240;
 
 #pragma endregion
 
-    // 오브젝트 타입 구분용
-enum class ObjectType
-{
-	PLAYER,
-	NPC,
-	SPAWN_BASE,
-	
-
-	END
-};
-
-
-
 // #define DEAD_RECKONING

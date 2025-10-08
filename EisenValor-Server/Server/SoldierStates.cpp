@@ -40,7 +40,7 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 	auto& otherTeamObjectGroup = room->GetTeam(otherTeam).GetAllObjectGroups();
 
 	for(int i = 0; i < otherTeamObjectGroup.size(); ++i) {
-		if(i == etou8(GAME_OBJECT_TYPE::PROJECTILE) || i == etou8(GAME_OBJECT_TYPE::VALLISTAR)) continue;
+		if(i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE || i == FB_ENUMS::GAME_OBJECT_TYPE_VALLISTAR) continue;
 		
 		for(auto& [id, object] : otherTeamObjectGroup[i]) {
 
@@ -128,7 +128,7 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 			const auto npc = std::static_pointer_cast<NPC>(obj);
 			const auto npcPos = npc->GetPos();
 
-			if(obj->GetNpcType() == NPC_TYPE::SOLDIER) {
+			if(obj->GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) {
 				const Vec3 toNpc= (npcPos - ownerPos);
 				const float distToNpc = toNpc.Length();
 				if(distToNpc < 0.5f) {

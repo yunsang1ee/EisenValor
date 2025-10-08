@@ -74,7 +74,7 @@ std::shared_ptr<NetBridge::PacketBuffer> ClientPackets::Make_CS_SOLDIER_MOVE_PAC
 {
 	const FB_STRUCTS::Vec3 p{pos.x, pos.y, pos.z};
 	return NetBridge::ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_MOVE_SOLDIER_PKT,
+		PACKET_TYPE::CS_SOLDIER_MOVE_PKT,
 		NetBridge::ServerPacketHandler::MakePacket(FB_TABLES::CreateCS_SOLDIER_MOVE, &p)
 	);
 }
@@ -86,11 +86,11 @@ std::shared_ptr<NetBridge::PacketBuffer> ClientPackets::Make_CS_CHANGE_SOLDIER_F
 		NetBridge::ServerPacketHandler::MakePacket(FB_TABLES::CreateCS_CHANGE_SOLDIER_FORMATION)
 	);
 }
-
+	
 std::shared_ptr<NetBridge::PacketBuffer> ClientPackets::Make_CS_REQ_ATTACK() noexcept
 {
 	return NetBridge::ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_REQ_ATTACK, NetBridge::ServerPacketHandler::MakePacket(FB_TABLES::CreateCS_REQ_ATTACK)
+		PACKET_TYPE::CS_REQ_ATTACK_PKT, NetBridge::ServerPacketHandler::MakePacket(FB_TABLES::CreateCS_REQ_ATTACK)
 	);
 }
 

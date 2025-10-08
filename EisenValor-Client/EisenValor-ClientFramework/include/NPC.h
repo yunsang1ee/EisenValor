@@ -4,19 +4,6 @@
 
 class NPC : public GameObject {
 public:
-	// 유닛 타입 구분용
-	enum class NPC_TYPE : uint8
-	{
-		NONE,
-		GENERAL,
-		SOLDIER,
-		ARCHER,
-		MEDIC,
-		BATTLE_RAM,
-		BOSS,
-
-		END
-	};
 
     NPC() = default;
     virtual ~NPC() = default;
@@ -27,17 +14,17 @@ public:
         DirectX::XMMATRIX view,
         DirectX::XMMATRIX projection) override;
 
-    virtual ObjectType GetObjectType() const override { return ObjectType::NPC; }
+    virtual FB_ENUMS::GAME_OBJECT_TYPE GetObjectType() const override { return FB_ENUMS::GAME_OBJECT_TYPE_NPC; }
 
     void SetTarget(std::shared_ptr<GameObject> target);
     void SetFollowDistance(float distance) { m_followDistance = distance; }
 
-	void SetUnitType(NPC_TYPE type)
+	void		 SetUnitType(FB_ENUMS::NPC_TYPE type)
 	{
 		m_unitType = type;
 	}
 	virtual void SetTeamColor() override;
-	NPC_TYPE GetUnitType() const { return m_unitType; }
+	FB_ENUMS::NPC_TYPE GetUnitType() const { return m_unitType; }
 
 private:
     std::shared_ptr<GameObject> m_target;
@@ -46,7 +33,7 @@ private:
     float m_baseY = 0.0f;        // 기준 높이
     // float m_rotation = 0.0f;     // NPC 회전
     // 
-	NPC_TYPE m_unitType = NPC_TYPE::SOLDIER; 
+	FB_ENUMS::NPC_TYPE m_unitType = FB_ENUMS::NPC_TYPE_SOLDIER; 
 
     // DirectX 렌더링 리소스들
     ComPtr<ID3D12Resource> m_vertexBuffer;

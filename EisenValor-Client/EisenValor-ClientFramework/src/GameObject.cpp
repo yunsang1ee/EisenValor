@@ -21,7 +21,7 @@ void GameObject::Handle_SC_MOVE(
 #endif
 }
 
-void GameObject::SetTeam(Team team) 
+void GameObject::SetTeam(FB_ENUMS::TEAM_TYPE team)
 {
 	m_team = team;
 }
