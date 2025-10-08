@@ -4,7 +4,7 @@
 namespace Server {
 	namespace Contents {
 		class BehaviorNode;
-		class BehaviorTree : public Component, public std::enable_shared_from_this<BehaviorTree> {
+		class BehaviorTree : public Component {
 		private:
 			std::unique_ptr<BehaviorNode> m_root;
 

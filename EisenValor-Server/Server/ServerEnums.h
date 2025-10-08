@@ -1,33 +1,5 @@
 #pragma once
 
-enum class GAME_OBJECT_TYPE : uint8 {
-	PLAYER,
-	NPC,
-	SPAWN_BASE,	// Creature,	별도	Component 장착
-	PROJECTILE, // GameObject,	별도	Component 제작
-
-	END
-};
-
-enum class NPC_TYPE : uint8 {
-	NONE,
-	GENERAL,
-	SOLDIER,
-	ARCHER,
-	MEDIC,
-	BATTLE_RAM,
-	BOSS,
-
-	END
-};
-
-enum class TEAM_TYPE : uint8 {
-	BLUE,
-	RED,
-
-	COUNT
-};
-
 enum class SOLDIER_FORMATION : uint8 {
 	FORMATION_1,
 	FORMATION_2,

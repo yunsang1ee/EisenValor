@@ -4,7 +4,7 @@
 #include "TroopController.h"
 #include "GameObject.h"
 #include "NPC.h"
-#include "SoldierState.h"
+#include "SoldierStates.h"
 
 void Server::Contents::LineFormation::Init()
 {

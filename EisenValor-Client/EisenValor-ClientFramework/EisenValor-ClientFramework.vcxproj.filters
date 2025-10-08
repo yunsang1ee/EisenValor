@@ -190,6 +190,9 @@
     <ClInclude Include="include\LocalPlayer.h">
       <Filter>Player\00. Local</Filter>
     </ClInclude>
+    <ClInclude Include="include\ClientPackets.h">
+      <Filter>NetBridge\02. Packets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">
@@ -255,6 +258,9 @@
     </ClCompile>
     <ClCompile Include="src\LocalPlayer.cpp">
       <Filter>Player\00. Local</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ClientPackets.cpp">
+      <Filter>NetBridge\02. Packets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

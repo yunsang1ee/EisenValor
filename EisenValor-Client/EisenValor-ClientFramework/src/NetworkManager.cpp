@@ -77,6 +77,7 @@ void NetBridge::NetworkManager::ProcessIO()
 	{
 		static_assert("Recv Zero");
 		std::cout << "Recv Zero" << std::endl;
+		// TODO: 서버 강제 종료 시 자연스럽게 꺼지게.
 		exit(-1);
 	}
 	else if (recvLen < 0)
@@ -86,6 +87,7 @@ void NetBridge::NetworkManager::ProcessIO()
 		{
 			static_assert("Recv Error");
 			std::println("Recv Error = {}", errCode);
+			// TODO: 서버 강제 종료 시 자연스럽게 꺼지게.
 			exit(-1);
 		}
 		return;
