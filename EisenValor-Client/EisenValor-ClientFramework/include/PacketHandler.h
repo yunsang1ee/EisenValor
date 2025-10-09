@@ -245,7 +245,9 @@ public:
 #pragma region CS_CHANGE_SOLDIER_FORMATION
 	static std::shared_ptr<NetBridge::PacketBuffer> Make_CS_CHANGE_SOLDIER_FORMATION()
 	{
-		return MakePacketBuffer(PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_CHANGE_SOLDIER_FORMATION));
+		return MakePacketBuffer(
+			PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT, MakePacket(FB_TABLES::CreateCS_CHANGE_SOLDIER_FORMATION)
+		);
 	}
 #pragma endregion
 };

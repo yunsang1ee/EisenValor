@@ -1,20 +1,18 @@
 #pragma once
 
-#include "Global.h"
-#include "IInputGlobal.h"
-#include "ITimerGlobal.h"
+class InputGlobal;
+class TimerGlobal;
+class DxDeviceGlobal;
+class DxGfxCommandQueueGlobal;
+
+#ifdef _DEBUG
+class DxDebugGlobal;
+#endif
 
 namespace Globals
 {
-void InitializeGlobalRegistry();
 
-inline auto& Input() noexcept
-{
-	return GlobalRegistry::Get<IInputGlobal>();
-}
+void Initialize();
+void Shutdown();
 
-inline auto& Timer() noexcept
-{
-	return GlobalRegistry::Get<ITimerGlobal>();
-}
 } // namespace Globals

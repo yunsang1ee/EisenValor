@@ -11,20 +11,20 @@ void InputGlobal::BeforeUpdate()
 	{
 		uint8_t mask = 0;
 		if (not isPressed && not isUp)
-			mask = DInputBits::Down | DInputBits::Pressed;
+			mask = InputBits::Down | InputBits::Pressed;
 		else if (isPressed && not isUp)
-			mask = DInputBits::Pressed;
+			mask = InputBits::Pressed;
 		else if (isUp)
-			mask = DInputBits::Up;
+			mask = InputBits::Up;
 
-		m_InputState[keyIndex] = (m_InputState[keyIndex] & ~(DInputBits::Down | DInputBits::Up)) | mask;
+		m_InputState[keyIndex] = (m_InputState[keyIndex] & ~(InputBits::Down | InputBits::Up)) | mask;
 
 		DEBUG_LOG_FMT(
 			"{:#X}\t{:#} | {:}\n", keyIndex, keyIndex,
-			(m_InputState[keyIndex] & DInputBits::Down)		 ? "Down"
-			: (m_InputState[keyIndex] & DInputBits::Up)		 ? "Up"
-			: (m_InputState[keyIndex] & DInputBits::Pressed) ? "Pressed"
-															 : ""
+			(m_InputState[keyIndex] & InputBits::Down)		? "Down"
+			: (m_InputState[keyIndex] & InputBits::Up)		? "Up"
+			: (m_InputState[keyIndex] & InputBits::Pressed) ? "Pressed"
+															: ""
 		);
 	}
 }
@@ -34,9 +34,9 @@ void InputGlobal::AfterUpdate()
 	for (const auto& [keyIndex, isPressed, isUp] : m_InputEventsFront)
 	{
 		if (isUp)
-			m_InputState[keyIndex] &= ~(DInputBits::Pressed | DInputBits::Up);
+			m_InputState[keyIndex] &= ~(InputBits::Pressed | InputBits::Up);
 		else if (GetInputDown(keyIndex))
-			m_InputState[keyIndex] &= ~DInputBits::Down;
+			m_InputState[keyIndex] &= ~InputBits::Down;
 	}
 	m_MouseState.wheelDelta = 0;
 	m_MouseState.deltaX = 0;

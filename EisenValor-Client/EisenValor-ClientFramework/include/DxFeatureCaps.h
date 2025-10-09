@@ -10,7 +10,7 @@ struct DxFeatureCaps
 	void LogAdvancedFeatures() const;
 
 	static std::string GetShaderModelString(D3D_SHADER_MODEL model);
-	std::string GetRaytracingTierString() const;
+	std::string		   GetRaytracingTierString() const;
 
 
 	// ==== General Features ====

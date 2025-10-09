@@ -24,7 +24,7 @@ public:
 	virtual Vec3 GetAcceleration() const { return m_acceleration; }
 
 	virtual ObjectType GetObjectType() const = 0;
-	
+
 	// 팀 구분용
 	enum class Team
 	{
@@ -57,15 +57,15 @@ protected:
 	Vec4 m_teamColor;
 
 public:
-	Vec3	lastServerPosition;
-	Vec3	lastServerVelocity;
-	Vec3	lastServerAcceleration;
-	Vec3	lastServerRotation;
-	uint64	lastServerTimestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	Vec3   lastServerPosition;
+	Vec3   lastServerVelocity;
+	Vec3   lastServerAcceleration;
+	Vec3   lastServerRotation;
+	uint64 lastServerTimestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
 public:
 	bool keyup{false};
 
-	public:
+public:
 	Vec3 SmoothLerp(const Vec3& curPos, const Vec3& destPos, const float lerpFactor);
 };

@@ -1,16 +1,16 @@
 #pragma once
+#include "Singleton.h"
 
-class IDxDebugGlobal : public IGlobal
+class DxDebugGlobal : public Singleton<DxDebugGlobal>
 {
-public:
-	virtual void EnableDebug() = 0;
-	virtual void SetupDebugMessages(ID3D12Device* device) = 0;
-};
+private:
+	friend class Singleton<DxDebugGlobal>;
 
-class DxDebugGlobal : public GlobalMakerBase<DxDebugGlobal, IDxDebugGlobal>
-{
-public:
-	void EnableDebug() override;
+	DxDebugGlobal() = default;
+	virtual ~DxDebugGlobal() = default;
 
-	void SetupDebugMessages(ID3D12Device* device) override;
+public:
+	void Initialize() override;
+
+	void SetupDebugMessages(ID3D12Device* device);
 };

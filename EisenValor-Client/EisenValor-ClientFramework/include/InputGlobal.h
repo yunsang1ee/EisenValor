@@ -1,34 +1,57 @@
 #pragma once
-#include "IInputGlobal.h"
+#include "Singleton.h"
+#include <vector>
 
-class InputGlobal : public GlobalMakerBase<InputGlobal, IInputGlobal>
+inline constexpr size_t kMaxInputCode = 256;
+
+namespace InputBits
 {
-	struct DInputEvent
-	{
-		InputCode code;
-		bool	  isPressed;
-		bool	  isUp;
-	};
+inline constexpr uint8_t None = 0x00;
+inline constexpr uint8_t Down = 0x01;
+inline constexpr uint8_t Pressed = 0x02;
+inline constexpr uint8_t Up = 0x04;
+} // namespace InputBits
 
-protected:
+struct DMouseState
+{
+	int	  x = 0;
+	int	  y = 0;
+	float deltaX = 0.0f;
+	float deltaY = 0.0f;
+	float wheelDelta = 0.0f;
+};
+
+using InputCode = uint8_t;
+
+class InputGlobal : public Singleton<InputGlobal>
+{
+private:
+	friend class Singleton<InputGlobal>;
+
 	InputGlobal()
 	{
-		m_InputEventsFront.reserve(DInputState::kMaxInputCode);
-		m_InputEventsBack.reserve(DInputState::kMaxInputCode);
+		m_InputEventsFront.reserve(kMaxInputCode);
+		m_InputEventsBack.reserve(kMaxInputCode);
 	}
 
-public:
-	void Initialize() final;
-	void BeforeUpdate() final;
-	void AfterUpdate() final;
+	virtual ~InputGlobal() = default;
 
-#pragma region OnEvent
-	inline void OnInputState(InputCode code, bool isPressed, bool isUp) noexcept final
+public:
+	void Initialize();
+	void BeforeUpdate();
+	void AfterUpdate();
+
+	inline void OnInputState(InputCode code, bool isPressed, bool isUp) noexcept
 	{
+		if (code >= kMaxInputCode)
+		{
+			DEBUG_LOG_FMT("Invalid InputCode: {}\n", code);
+			return;
+		}
 		m_InputEventsBack.emplace_back(code, isPressed, isUp);
 	}
 
-	inline void OnMouseMove(int x, int y) noexcept final
+	inline void OnMouseMove(int x, int y) noexcept
 	{
 		m_MouseState.deltaX = static_cast<float>(x - m_MouseState.x);
 		m_MouseState.deltaY = static_cast<float>(y - m_MouseState.y);
@@ -36,37 +59,40 @@ public:
 		m_MouseState.y = y;
 	}
 
-	inline void OnWheelScroll(int delta) noexcept final { m_MouseState.wheelDelta = static_cast<float>(delta); }
-#pragma endregion
+	inline void OnWheelScroll(int delta) noexcept { m_MouseState.wheelDelta = static_cast<float>(delta); }
 
-#pragma region Getter
-	[[nodiscard]] inline bool GetInputDown(InputCode code) const noexcept final
+	[[nodiscard]] inline bool GetInputDown(InputCode code) const noexcept
 	{
-		return (m_InputState[code] & DInputBits::Down) != 0;
+		return (m_InputState[code] & InputBits::Down) != 0;
 	}
 
-	[[nodiscard]] inline bool GetInput(InputCode code) const noexcept final
+	[[nodiscard]] inline bool GetInput(InputCode code) const noexcept
 	{
-		return (m_InputState[code] & DInputBits::Pressed) != 0;
+		return (m_InputState[code] & InputBits::Pressed) != 0;
 	}
 
-	[[nodiscard]] inline bool GetInputUp(InputCode code) const noexcept final
+	[[nodiscard]] inline bool GetInputUp(InputCode code) const noexcept
 	{
-		return (m_InputState[code] & DInputBits::Up) != 0;
+		return (m_InputState[code] & InputBits::Up) != 0;
 	}
 
-	[[nodiscard]] inline int GetWheelScroll() const noexcept final { return static_cast<int>(m_MouseState.wheelDelta); }
+	[[nodiscard]] inline int GetWheelScroll() const noexcept { return static_cast<int>(m_MouseState.wheelDelta); }
 
-	[[nodiscard]] inline DX::XMFLOAT2 GetMousePosition() const noexcept final
+	[[nodiscard]] inline DX::XMFLOAT2 GetMousePosition() const noexcept
 	{
 		return {float(m_MouseState.x), float(m_MouseState.y)};
 	}
-#pragma endregion
 
 private:
-	DInputState m_InputState{};
-	DMouseState m_MouseState{};
+	struct DInputEvent
+	{
+		InputCode code;
+		bool	  isPressed;
+		bool	  isUp;
+	};
 
+	uint8_t					 m_InputState[kMaxInputCode] = {};
+	DMouseState				 m_MouseState{};
 	std::vector<DInputEvent> m_InputEventsFront;
 	std::vector<DInputEvent> m_InputEventsBack;
 };

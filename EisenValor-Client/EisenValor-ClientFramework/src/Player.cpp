@@ -8,7 +8,7 @@ using namespace DirectX;
 void Player::Initialize(ID3D12Device* device)
 {						 // 큐브 버텍스 데이터 (GameFramework에서 사용하던 것과 동일)
 	Vertex vertices[] = {// 전면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f),m_teamColor},
+						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), m_teamColor},
 						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), m_teamColor},
 						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), m_teamColor},
 						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), m_teamColor},
@@ -154,9 +154,9 @@ void Player::Update(float deltaTime)
 
 		m_pos = Lerp(m_pos, predictedPosition, alpha);
 	}
-	#else
+#else
 
-	
+
 	{
 		if (m_rot.y == lastServerRotation.y)
 			return;
@@ -226,7 +226,6 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	// 표시등 큐브 그리기
 	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
@@ -245,7 +244,7 @@ DirectX::XMMATRIX Player::GetViewMatrix() const
 	);
 }
 
-void Player::SetTeamColor() 
+void Player::SetTeamColor()
 {
 	switch (m_team)
 	{
@@ -263,4 +262,3 @@ void Player::SetTeamColor()
 		break;
 	}
 }
-

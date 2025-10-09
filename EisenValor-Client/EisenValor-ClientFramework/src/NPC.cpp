@@ -107,7 +107,7 @@ void NPC::Update(float deltaTime)
 	const Vec3& destPos{lastServerPosition};
 
 	constexpr float epsilon{1e-6f};
-	
+
 	if ((fabs(curPos.x - destPos.x) <= epsilon) && (fabs(curPos.y - destPos.y) <= epsilon) &&
 		(fabs(curPos.z - destPos.z) <= epsilon))
 		return;
@@ -153,7 +153,7 @@ void NPC::SetTarget(std::shared_ptr<GameObject> target)
 	}
 }
 
-void NPC::SetTeamColor() 
+void NPC::SetTeamColor()
 {
 	switch (m_team)
 	{
@@ -164,7 +164,7 @@ void NPC::SetTeamColor()
 		{
 			m_teamColor = Vec4(0.3f, 0.3f, 1.0f, 1.0f);
 		}
-			break;
+		break;
 		case NPC::NPC_TYPE::SOLDIER:
 		{
 			m_teamColor = Vec4(0.5f, 0.5f, 1.0f, 1.0f);

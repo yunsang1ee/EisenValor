@@ -70,35 +70,8 @@
     <Filter Include="Player\00. Local">
       <UniqueIdentifier>{fc462d4a-e1e5-4748-9b86-a6404f727631}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interfaces">
-      <UniqueIdentifier>{2f57a574-05c3-47ea-a62d-bbf8e9e3d534}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Interfaces\Globals">
-      <UniqueIdentifier>{93850fdb-a298-4cb5-aaab-aaca79afd46f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Device\Command">
       <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Graphics">
-      <UniqueIdentifier>{dfd8820c-2fe4-48e8-aa9b-35b5bb4a046d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Core">
-      <UniqueIdentifier>{5b7d7db7-c2c7-4457-8d5f-941c8623dc0f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Core\Input">
-      <UniqueIdentifier>{af564647-90d4-4e9c-9ca1-071a7e59ba49}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Core\Time">
-      <UniqueIdentifier>{865c3a9f-276f-4cca-931a-a0dc9e9e1f20}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Graphics\DxDebug">
-      <UniqueIdentifier>{aa179670-8977-4b3d-95de-79e244eff52e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Graphics\DxDevice">
-      <UniqueIdentifier>{c9431da0-8987-4c69-b8f5-4f9aef2502cf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Global\Graphics\DxCommandQueue">
-      <UniqueIdentifier>{8ad01d64-3860-4729-9fd0-52468f8c4bd2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Graphics\Common">
       <UniqueIdentifier>{c298625d-7cb6-4ec9-a006-ebbbf1ecc396}</UniqueIdentifier>
@@ -106,7 +79,16 @@
     <Filter Include="Graphics\Raytracing">
       <UniqueIdentifier>{a64a1ac2-f831-4e59-b951-98694f00ad2c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Global\Object">
+    <Filter Include="Common\Core">
+      <UniqueIdentifier>{5b7d7db7-c2c7-4457-8d5f-941c8623dc0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Core\Input">
+      <UniqueIdentifier>{af564647-90d4-4e9c-9ca1-071a7e59ba49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Core\Time">
+      <UniqueIdentifier>{865c3a9f-276f-4cca-931a-a0dc9e9e1f20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Object">
       <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -117,27 +99,12 @@
     <ClInclude Include="include\DxMath.h">
       <Filter>Common\Math</Filter>
     </ClInclude>
-    <ClInclude Include="include\Global.h">
-      <Filter>Common\Global</Filter>
-    </ClInclude>
     <ClInclude Include="include\GlobalInterfaces.h">
       <Filter>Common\Global</Filter>
     </ClInclude>
     <ClInclude Include="include\stdafxClientFramework.h" />
-    <ClInclude Include="include\IComponent.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="include\GameObject.h">
       <Filter>Object</Filter>
-    </ClInclude>
-    <ClInclude Include="include\IGlobal.h">
-      <Filter>Interfaces\Globals</Filter>
-    </ClInclude>
-    <ClInclude Include="include\IInputGlobal.h">
-      <Filter>Interfaces\Globals</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ITimerGlobal.h">
-      <Filter>Interfaces\Globals</Filter>
     </ClInclude>
     <ClInclude Include="include\DxCommon.h">
       <Filter>Graphics\Common</Filter>
@@ -173,7 +140,7 @@
       <Filter>Player</Filter>
     </ClInclude>
     <ClInclude Include="include\GameObjectManager.h">
-      <Filter>Common\Global\Object</Filter>
+      <Filter>Common\Object</Filter>
     </ClInclude>
     <ClInclude Include="include\Ground.h">
       <Filter>Ground</Filter>
@@ -187,23 +154,11 @@
     <ClInclude Include="include\LocalPlayer.h">
       <Filter>Player\00. Local</Filter>
     </ClInclude>
-    <ClInclude Include="include\InputDef.h">
-      <Filter>Common\Global\Core\Input</Filter>
-    </ClInclude>
     <ClInclude Include="include\InputGlobal.h">
-      <Filter>Common\Global\Core\Input</Filter>
+      <Filter>Common\Core\Input</Filter>
     </ClInclude>
     <ClInclude Include="include\TimerGlobal.h">
-      <Filter>Common\Global\Core\Time</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DxDebugGlobal.h">
-      <Filter>Common\Global\Graphics\DxDebug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DxDeviceGlobal.h">
-      <Filter>Common\Global\Graphics\DxDevice</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DxCommandQueueGlobal.h">
-      <Filter>Common\Global\Graphics\DxCommandQueue</Filter>
+      <Filter>Common\Core\Time</Filter>
     </ClInclude>
     <ClInclude Include="include\DxFeatureCaps.h">
       <Filter>Graphics\Common</Filter>
@@ -211,8 +166,23 @@
     <ClInclude Include="include\DxUtils.h">
       <Filter>Graphics\Common</Filter>
     </ClInclude>
-    <ClInclude Include="include\DxShaderCompiler.h">
+    <ClInclude Include="include\Singleton.h">
+      <Filter>Common\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxShaderCompilerGlobal.h">
       <Filter>Graphics\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxCommandQueueGlobal.h">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxDebugGlobal.h">
+      <Filter>Graphics\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxDeviceGlobal.h">
+      <Filter>Graphics\Device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IComponent.h">
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -254,7 +224,7 @@
       <Filter>Player</Filter>
     </ClCompile>
     <ClCompile Include="src\GameObjectManager.cpp">
-      <Filter>Common\Global\Object</Filter>
+      <Filter>Common\Object</Filter>
     </ClCompile>
     <ClCompile Include="src\Ground.cpp">
       <Filter>Ground</Filter>
@@ -266,19 +236,10 @@
       <Filter>Player\00. Local</Filter>
     </ClCompile>
     <ClCompile Include="src\InputGlobal.cpp">
-      <Filter>Common\Global\Core\Input</Filter>
+      <Filter>Common\Core\Input</Filter>
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp">
-      <Filter>Common\Global\Core\Time</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DxDebugGlobal.cpp">
-      <Filter>Common\Global\Graphics\DxDebug</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DxDeviceGlobal.cpp">
-      <Filter>Common\Global\Graphics\DxDevice</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DxCommandQueueGlobal.cpp">
-      <Filter>Common\Global\Graphics\DxCommandQueue</Filter>
+      <Filter>Common\Core\Time</Filter>
     </ClCompile>
     <ClCompile Include="src\DxFeatureCaps.cpp">
       <Filter>Graphics\Common</Filter>
@@ -286,8 +247,17 @@
     <ClCompile Include="src\DxUtils.cpp">
       <Filter>Graphics\Common</Filter>
     </ClCompile>
-    <ClCompile Include="src\DxShaderCompiler.cpp">
+    <ClCompile Include="src\DxShaderCompilerGlobal.cpp">
       <Filter>Graphics\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxCommandQueueGlobal.cpp">
+      <Filter>Graphics\Device\Command</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxDebugGlobal.cpp">
+      <Filter>Graphics\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxDeviceGlobal.cpp">
+      <Filter>Graphics\Device</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

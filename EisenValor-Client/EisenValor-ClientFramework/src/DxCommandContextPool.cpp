@@ -11,7 +11,7 @@ DxCommandContextPool::FrameEntry::FrameEntry(ID3D12Device* device, D3D12_COMMAND
 }
 
 DxCommandContextPool::DxCommandContextPool(
-	ID3D12Device* device, IDxGfxCommandQueueGlobal& queue, uint32_t numFrames, D3D12_COMMAND_LIST_TYPE type
+	ID3D12Device* device, DxGfxCommandQueueGlobal& queue, uint32_t numFrames, D3D12_COMMAND_LIST_TYPE type
 )
 	: m_queue(queue), m_type(type)
 {

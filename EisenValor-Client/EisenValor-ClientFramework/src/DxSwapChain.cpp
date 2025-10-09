@@ -4,16 +4,16 @@
 #include <DxCommandQueueGlobal.h>
 
 DxSwapChain::DxSwapChain(
-	ID3D12Device*				   device,
-	IDXGIFactory6*				   factory,
-	IDxGfxCommandQueueGlobal& commandQueue,
-	HWND						   hwnd,
-	uint32_t					   width,
-	uint32_t					   height,
-	uint32_t					   backBufferCount,
-	DXGI_FORMAT					   format,
-	D3D12_CPU_DESCRIPTOR_HANDLE	   rtvDescriptorStart,
-	uint32_t					   rtvDescriptorSize
+	ID3D12Device*				device,
+	IDXGIFactory6*				factory,
+	DxGfxCommandQueueGlobal&	commandQueue,
+	HWND						hwnd,
+	uint32_t					width,
+	uint32_t					height,
+	uint32_t					backBufferCount,
+	DXGI_FORMAT					format,
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart,
+	uint32_t					rtvDescriptorSize
 )
 	: m_device(device), m_factory(factory), m_gfxCommandQueueGlobal(commandQueue), m_hwnd(hwnd), m_width(width),
 	  m_height(height), m_backBufferCount(backBufferCount), m_format(format), m_rtvDescriptorStart(rtvDescriptorStart),

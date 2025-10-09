@@ -21,7 +21,7 @@ void GameObject::Handle_SC_MOVE(
 #endif
 }
 
-void GameObject::SetTeam(Team team) 
+void GameObject::SetTeam(Team team)
 {
 	m_team = team;
 }

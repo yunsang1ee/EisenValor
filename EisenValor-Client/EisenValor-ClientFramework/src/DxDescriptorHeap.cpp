@@ -32,9 +32,9 @@ DxDescriptorHeap::DxDescriptorHeap(
 
 	std::wstring heapName = L"DxDescriptorHeap_Type" + std::to_wstring(static_cast<int>(type)) + L"_Count" +
 							std::to_wstring(descriptorCount);
-	
+
 	DxUtils::SetDebugName(m_heap.Get(), heapName);
-	
+
 	DEBUG_LOG_FMT(
 		"[DxDescriptorHeap] Created heap: Type={}, Count={}, ShaderVisible={}, Name={}\n", (int)type, descriptorCount,
 		shaderVisible, std::string(heapName.begin(), heapName.end())

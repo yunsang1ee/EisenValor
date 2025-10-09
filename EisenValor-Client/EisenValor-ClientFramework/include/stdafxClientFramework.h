@@ -26,10 +26,10 @@ public:                                                                         
 		return &instance;                                                                                              \
 	}
 
-#define MANAGER(classname) (classname::GetInstance())
 
 #pragma endregion
 
+#define MANAGER(classname) (classname::GetInstance())
 // Types
 using BYTE = unsigned char;
 using int8 = __int8;
@@ -101,7 +101,6 @@ enum class SOLDIER_FORMATION
 // My
 #include "DxCommon.h"
 // #include "DxMath.h"
-#include <Global.h>
 
 #include "SimpleMath.h"
 using Vec2 = DirectX::SimpleMath::Vector2;
@@ -160,17 +159,16 @@ constexpr size_t kExplosionDebrises = 240;
 
 #pragma endregion
 
-    // 오브젝트 타입 구분용
+// 오브젝트 타입 구분용
 enum class ObjectType
 {
 	PLAYER,
 	NPC,
 	SPAWN_BASE,
-	
+
 
 	END
 };
-
 
 
 // #define DEAD_RECKONING

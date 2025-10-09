@@ -1,6 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "LocalPlayer.h"
-#include "GlobalInterfaces.h"
+#include "InputGlobal.h"
 #include "Vertex.h"
 
 using namespace DirectX;
@@ -239,21 +239,21 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 	RenderCommandArea(cmdList, view, projection);
 
 	// 와이어프레임 박스 렌더링
-	//cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
-	//cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
-	//cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
+	// cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
+	// cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
+	// cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
 
 	//// 플레이어와 같은 위치, 회전
-	//DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
-	//DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
-	//DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
-	//DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
+	// DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
+	// DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
+	// DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
+	// DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
 
-	//DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
-	//memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
+	// DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
+	// memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
 
-	//cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
-	//cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
+	// cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
+	// cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
 }
 
 void LocalPlayer::Update(float deltaTime)
@@ -268,7 +268,7 @@ void LocalPlayer::Update(float deltaTime)
 
 void LocalPlayer::UniformVelocity(const float deltaTime)
 {
-	int wheelDelta = Globals::Input().GetWheelScroll();
+	int wheelDelta = MANAGER(InputGlobal).GetWheelScroll();
 	if (wheelDelta != 0)
 	{
 		m_cameraDistance -= wheelDelta * 0.001f;
@@ -286,30 +286,30 @@ void LocalPlayer::UniformVelocity(const float deltaTime)
 	const float moveSpeed = m_playerSpeed * deltaTime;
 
 
-	if (Globals::Input().GetInputUp('W') || Globals::Input().GetInputUp('S') || Globals::Input().GetInputUp('A') ||
-		Globals::Input().GetInputUp('D'))
+	if (MANAGER(InputGlobal).GetInputUp('W') || MANAGER(InputGlobal).GetInputUp('S') ||
+		MANAGER(InputGlobal).GetInputUp('A') || MANAGER(InputGlobal).GetInputUp('D'))
 	{
 	}
 
-	if (Globals::Input().GetInput('W')) // 전진
+	if (MANAGER(InputGlobal).GetInput('W')) // 전진
 	{
 		m_pos.x += forwardX * moveSpeed;
 		m_pos.z += forwardZ * moveSpeed;
 		// sendFlag = true;
 	}
-	else if (Globals::Input().GetInput('S')) // 후진
+	else if (MANAGER(InputGlobal).GetInput('S')) // 후진
 	{
 		m_pos.x -= forwardX * moveSpeed;
 		m_pos.z -= forwardZ * moveSpeed;
 		// sendFlag = true;
 	}
-	else if (Globals::Input().GetInput('A')) // 좌측 이동
+	else if (MANAGER(InputGlobal).GetInput('A')) // 좌측 이동
 	{
 		m_pos.x -= rightX * moveSpeed;
 		m_pos.z -= rightZ * moveSpeed;
 		//	sendFlag = true;
 	}
-	else if (Globals::Input().GetInput('D')) // 우측 이동
+	else if (MANAGER(InputGlobal).GetInput('D')) // 우측 이동
 	{
 		m_pos.x += rightX * moveSpeed;
 		m_pos.z += rightZ * moveSpeed;
@@ -317,12 +317,12 @@ void LocalPlayer::UniformVelocity(const float deltaTime)
 	}
 
 	//// 수직 이동 (H/L 키)
-	if (Globals::Input().GetInput('H'))
+	if (MANAGER(InputGlobal).GetInput('H'))
 	{
 		m_pos.y -= moveSpeed; // 아래로
 							  //		sendFlag = true;
 	}
-	if (Globals::Input().GetInput('L'))
+	if (MANAGER(InputGlobal).GetInput('L'))
 	{
 		m_pos.y += moveSpeed; // 위로
 							  //		sendFlag = true;
@@ -351,7 +351,7 @@ void LocalPlayer::UniformVelocity(const float deltaTime)
 									 .count();
 
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 		sendFlag = false;
 	}
 }
@@ -364,7 +364,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 
 	constexpr float accelValue = 5.f;
 
-	if (Globals::Input().GetInputDown('W'))
+	if (MANAGER(InputGlobal).GetInputDown('W'))
 	{
 		m_acceleration.x += forwardDir.x * accelValue;
 		m_acceleration.y += forwardDir.y * accelValue;
@@ -376,7 +376,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		sendFlag = true;
 	}
 
-	else if (Globals::Input().GetInputDown('S'))
+	else if (MANAGER(InputGlobal).GetInputDown('S'))
 	{
 		m_acceleration.x -= forwardDir.x * accelValue;
 		m_acceleration.y -= forwardDir.y * accelValue;
@@ -387,23 +387,23 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		m_velocity.z += m_acceleration.z * deltaTime;
 		sendFlag = true;
 	}
-	else if (Globals::Input().GetInputUp('W'))
+	else if (MANAGER(InputGlobal).GetInputUp('W'))
 	{
 		sendFlag = false;
 	}
-	else if (Globals::Input().GetInputUp('S'))
+	else if (MANAGER(InputGlobal).GetInputUp('S'))
 	{
 		sendFlag = false;
 	}
-	else if (Globals::Input().GetInputUp('A'))
+	else if (MANAGER(InputGlobal).GetInputUp('A'))
 	{
 		sendFlag = false;
 	}
-	else if (Globals::Input().GetInputUp('D'))
+	else if (MANAGER(InputGlobal).GetInputUp('D'))
 	{
 		sendFlag = false;
 	}
-	else if (Globals::Input().GetInputDown('A'))
+	else if (MANAGER(InputGlobal).GetInputDown('A'))
 	{
 		m_acceleration.x -= rightDir.x * accelValue;
 		m_acceleration.y -= rightDir.y * accelValue;
@@ -414,7 +414,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		m_velocity.z += m_acceleration.z * deltaTime;
 		sendFlag = true;
 	}
-	else if (Globals::Input().GetInputDown('D'))
+	else if (MANAGER(InputGlobal).GetInputDown('D'))
 	{
 		m_acceleration.x += rightDir.x * accelValue;
 		m_acceleration.y += rightDir.y * accelValue;
@@ -427,7 +427,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 	}
 
 
-	else if (Globals::Input().GetInput('W'))
+	else if (MANAGER(InputGlobal).GetInput('W'))
 	{
 		m_acceleration.x += forwardDir.x * accelValue;
 		m_acceleration.y += forwardDir.y * accelValue;
@@ -439,7 +439,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		// sendFlag = true;
 	}
 
-	else if (Globals::Input().GetInput('S'))
+	else if (MANAGER(InputGlobal).GetInput('S'))
 	{
 		m_acceleration.x -= forwardDir.x * accelValue;
 		m_acceleration.y -= forwardDir.y * accelValue;
@@ -455,7 +455,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		// sendFlag = true;
 	}
 
-	else if (Globals::Input().GetInput('A'))
+	else if (MANAGER(InputGlobal).GetInput('A'))
 	{
 		m_acceleration.x -= rightDir.x * accelValue;
 		m_acceleration.y -= rightDir.y * accelValue;
@@ -468,7 +468,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		// sendFlag = true;
 	}
 
-	else if (Globals::Input().GetInput('D'))
+	else if (MANAGER(InputGlobal).GetInput('D'))
 	{
 		m_acceleration.x += rightDir.x * accelValue;
 		m_acceleration.y += rightDir.y * accelValue;
@@ -482,7 +482,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 	}
 
 	// 수직 이동도 추가 가능
-	else if (Globals::Input().GetInput('L'))
+	else if (MANAGER(InputGlobal).GetInput('L'))
 	{
 		m_acceleration.y += accelValue;
 
@@ -492,7 +492,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 
 		//	sendFlag = true;
 	}
-	else if (Globals::Input().GetInput('H'))
+	else if (MANAGER(InputGlobal).GetInput('H'))
 	{
 		m_acceleration.y -= accelValue;
 
@@ -511,10 +511,10 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		m_velocity.z *= dampingFactor;
 	}
 
-	if (Globals::Input().GetInputDown('R'))
+	if (MANAGER(InputGlobal).GetInputDown('R'))
 	{
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	}
 
 	m_pos.x += m_velocity.x * deltaTime;
@@ -543,20 +543,20 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 									 .count();
 
 		// auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(pos, rot, vel, accel, timeStamp);
-		// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		// MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 		// sendFlag = false;
 	}
 
-	if (Globals::Input().GetInputDown('R'))
+	if (MANAGER(InputGlobal).GetInputDown('R'))
 	{
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	}
 }
 
 void LocalPlayer::UpdateInput(const float deltaTime)
 {
-	const auto& input = Globals::Input();
+	const auto& input = MANAGER(InputGlobal);
 	const bool	isLeftButtonPressed = input.GetInput(VK_LBUTTON);
 	// 현재 마우스 위치
 	const auto mousePos = input.GetMousePosition();
@@ -587,7 +587,7 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
 
 				// 디버깅
-				//DEBUG_LOG_FMT(
+				// DEBUG_LOG_FMT(
 				//	"Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n", deltaX, deltaY, m_cameraYaw,
 				//	m_cameraPitch
 				//);
@@ -617,16 +617,16 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	{
 		m_playerSpeed += 10.f;
 	}
-	
+
 	if (input.GetInputUp('E'))
 	{
 		m_playerSpeed -= 10.f;
 	}
 
-	if(input.GetInputDown('U'))
+	if (input.GetInputDown('U'))
 	{
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_CHANGE_SOLDIER_FORMATION();
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	}
 
 	if (input.GetInput('W'))
@@ -654,8 +654,8 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		m_velocity.z = rightZ * m_playerSpeed;
 	}
 	// 키를 뗏을 때
-	if (Globals::Input().GetInputUp('W') || Globals::Input().GetInputUp('S') || Globals::Input().GetInputUp('A') ||
-		Globals::Input().GetInputUp('D'))
+	if (MANAGER(InputGlobal).GetInputUp('W') || MANAGER(InputGlobal).GetInputUp('S') ||
+		MANAGER(InputGlobal).GetInputUp('A') || MANAGER(InputGlobal).GetInputUp('D'))
 	{
 		m_velocity.x = 0.f;
 		m_velocity.y = 0.f;
@@ -664,47 +664,46 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	}
 
 
-
-	if (Globals::Input().GetInputDown('R'))
+	if (MANAGER(InputGlobal).GetInputDown('R'))
 	{
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	}
 
-	if (Globals::Input().GetInputDown('Q'))
+	if (MANAGER(InputGlobal).GetInputDown('Q'))
 	{
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_PLAYER_ATTACK_PACKET();
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	}
 
-	if (Globals::Input().GetInputDown('T'))
+	if (MANAGER(InputGlobal).GetInputDown('T'))
 	{
-		//auto pos = GetPosition();
+		// auto pos = GetPosition();
 
 		//// 플레이어가 바라보는 방향 벡터 (XZ 평면)
-		//const float forwardX = sinf(m_cameraYaw);
-		//const float forwardZ = cosf(m_cameraYaw);
+		// const float forwardX = sinf(m_cameraYaw);
+		// const float forwardZ = cosf(m_cameraYaw);
 
 		//// 5.f 만큼 떨어진 위치
-		//pos.x += forwardX * 5.f;
-		//pos.z += forwardZ * 5.f;
+		// pos.x += forwardX * 5.f;
+		// pos.z += forwardZ * 5.f;
 		Vec3 pos;
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_MOVE_PACKET(pos);
-		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+		MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	}
 
 	// if(input.GetInputDown(VK_F1)) {
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_1);
-	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	//	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	// }
 	// else if(input.GetInputDown(VK_F2)) {
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_2);
-	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	//	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	// }
 	// else if (input.GetInputDown(VK_F3))
 	//{
 	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_3);
-	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	//	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	// }
 
 	UpdatePos(deltaTime);
@@ -737,7 +736,7 @@ void LocalPlayer::SendMovePacket()
 								 .count();
 
 	auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
-	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 	sendFlag = false;
 }
 

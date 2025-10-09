@@ -57,7 +57,7 @@ void DxCommandContext::Close()
 	m_state = DxCommandContextState::Closed;
 }
 
-void DxCommandContext::Execute(IDxGfxCommandQueueGlobal& queue)
+void DxCommandContext::Execute(DxGfxCommandQueueGlobal& queue)
 {
 	if (m_state == DxCommandContextState::Recording)
 	{

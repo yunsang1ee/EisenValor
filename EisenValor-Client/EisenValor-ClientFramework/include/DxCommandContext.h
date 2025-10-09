@@ -16,7 +16,7 @@ public:
 
 	void Reset();
 	void Close();
-	void Execute(class IDxGfxCommandQueueGlobal& queue);
+	void Execute(class DxGfxCommandQueueGlobal& queue);
 	void MarkAsCompleted();
 
 	ID3D12GraphicsCommandList* CommandList() { return m_commandList.Get(); }

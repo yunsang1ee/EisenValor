@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../EisenValor-Server/ServerEngine/Singleton.hpp"
+#include "Singleton.h"
 
 class GameObject;
 class LocalPlayer;
@@ -32,8 +32,8 @@ public:
 public:
 	void SetLocalID(const uint32 id) { m_localID = id; }
 	void SetLocalPlayer(std::shared_ptr<LocalPlayer> localPlayer) { m_localPlayer = localPlayer; }
-	std::shared_ptr<LocalPlayer> GetLocalPlayer() { return m_localPlayer; }
-	uint32						 GetLocalID() { return m_localID; }
-	std::shared_ptr<GameObject>	 FindObject(const uint32 id);
+	std::shared_ptr<LocalPlayer>			  GetLocalPlayer() { return m_localPlayer; }
+	uint32									  GetLocalID() { return m_localID; }
+	std::shared_ptr<GameObject>				  FindObject(const uint32 id);
 	std::vector<std::shared_ptr<GameObject>>& GetAllObjects() { return m_gameObjects; }
 };

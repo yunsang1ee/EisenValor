@@ -1,7 +1,7 @@
 #include "stdafxClientFramework.h"
 #include "DxDebugGlobal.h"
 
-void DxDebugGlobal::EnableDebug()
+void DxDebugGlobal::Initialize()
 {
 #ifdef _DEBUG
 	ComPtr<ID3D12Debug> debugController;

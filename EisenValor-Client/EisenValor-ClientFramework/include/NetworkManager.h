@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../EisenValor-Server/ServerEngine/Singleton.hpp"
+#include "Singleton.h"
 #include "PacketBuffer.h"
 
 namespace NetBridge
@@ -53,7 +53,8 @@ public:
 	void Send(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 	{
 	retry:
-		const int32 sendBytes = send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
+		const int32 sendBytes =
+			send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
 		if (SOCKET_ERROR == sendBytes)
 		{
 			const int32 errCode = WSAGetLastError();
@@ -82,10 +83,10 @@ public:
 template <typename Packet>
 static inline void SendPacket(Packet&& sendPkt) noexcept
 {
-	MANAGER(NetBridge::NetworkManager)->Send(std::forward<Packet>(sendPkt));
+	MANAGER(NetBridge::NetworkManager).Send(std::forward<Packet>(sendPkt));
 }
 
 static inline void SendPacket(std::shared_ptr<NetBridge::PacketBuffer>&& sendBuffer) noexcept
 {
-	MANAGER(NetBridge::NetworkManager)->Send(std::move(sendBuffer));
+	MANAGER(NetBridge::NetworkManager).Send(std::move(sendBuffer));
 }

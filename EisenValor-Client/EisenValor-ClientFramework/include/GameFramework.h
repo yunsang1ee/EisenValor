@@ -26,7 +26,7 @@ class Player;
 class GameFramework
 {
 public:
-	GameFramework() = default; 
+	GameFramework() = default;
 	~GameFramework() = default;
 
 	bool Initialize(HINSTANCE hInstance, HWND hwnd);

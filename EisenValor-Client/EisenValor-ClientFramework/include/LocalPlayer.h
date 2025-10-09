@@ -5,8 +5,8 @@
 class LocalPlayer : public Player
 {
 private:
-	bool sendFlag{false};
-	std::chrono::high_resolution_clock::time_point lastSend = std::chrono::high_resolution_clock::now();			 	  
+	bool										   sendFlag{false};
+	std::chrono::high_resolution_clock::time_point lastSend = std::chrono::high_resolution_clock::now();
 
 	// 와이어프레임 박스 관련 멤버 변수들
 	ComPtr<ID3D12Resource>	 m_wireFrameVertexBuffer;
@@ -41,24 +41,24 @@ private:
 	UINT8*					 m_pCommandAreaCbvDataBegin = nullptr;
 
 	// 지휘 영역 설정 값들
-	float m_commandAreaWidth = 4.0f;	// 직사각형 가로 크기
-	float m_commandAreaHeight = 3.0f;	// 직사각형 세로 크기
+	float m_commandAreaWidth = 4.0f;	 // 직사각형 가로 크기
+	float m_commandAreaHeight = 3.0f;	 // 직사각형 세로 크기
 	float m_commandAreaDistance = 10.0f; // 플레이어로부터의 거리
-	
+
 public:
 	virtual void Initialize(ID3D12Device* device) override;
 	virtual void Update(float deltaTime) override;
 	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 		override;
 
-	public:
+public:
 	// 부채꼴 관련 함수들
 	void RenderFan(
 		ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
 	);
 	void InitializeFan(ID3D12Device* device);
 
-	
+
 	// 지휘 영역 관련 함수들
 	void RenderCommandArea(
 		ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
@@ -69,11 +69,11 @@ public:
 private:
 	// 등속도 운동
 	void UniformVelocity(const float deltaTime);
-	
+
 	// 등가속도 운동
 	void UniformAcceleration(const float deltaTime);
 
-	private:
+private:
 	void UpdateInput(const float deltaTime);
 	void UpdatePos(const float deltaTime);
 	void SendMovePacket();
@@ -83,5 +83,4 @@ private:
 
 	// 플레이어가 바라보는 방향의 바닥 위치 계산
 	DirectX::XMFLOAT3 CalculateGroundTargetPosition() const;
-
 };

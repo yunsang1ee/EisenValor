@@ -103,7 +103,7 @@ struct ConstantBuffer
 			const char* file = __FILE__;                                                                               \
 			int			line = __LINE__;                                                                               \
 			const char* expr = #x;                                                                                     \
-																													   \
+                                                                                                                       \
 			DEBUG_LOG_FMT(                                                                                             \
 				"HRESULT FAILED: {}({}): {} (Code: {:#x})\n", file, line, expr, static_cast<unsigned int>(hr)          \
 			);                                                                                                         \

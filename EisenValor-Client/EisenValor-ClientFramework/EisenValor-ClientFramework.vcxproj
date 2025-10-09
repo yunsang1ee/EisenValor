@@ -127,6 +127,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -150,6 +151,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -171,20 +173,16 @@
     <ClInclude Include="include\DxDescriptorHeap.h" />
     <ClInclude Include="include\DxDeviceGlobal.h" />
     <ClInclude Include="include\DxFeatureCaps.h" />
+    <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GameObjectManager.h" />
-    <ClInclude Include="include\Global.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
     <ClInclude Include="include\Ground.h" />
     <ClInclude Include="include\IComponent.h" />
-    <ClInclude Include="include\IGlobal.h" />
-    <ClInclude Include="include\IInputGlobal.h" />
-    <ClInclude Include="include\InputDef.h" />
     <ClInclude Include="include\InputGlobal.h" />
-    <ClInclude Include="include\ITimerGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\LocalPlayer.h" />
     <ClInclude Include="include\NetworkManager.h" />
@@ -193,6 +191,7 @@
     <ClInclude Include="include\PacketHandler.h" />
     <ClInclude Include="include\Player.h" />
     <ClInclude Include="include\RecvBuffer.h" />
+    <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Vec3.h" />
@@ -205,6 +204,7 @@
     <ClCompile Include="src\DxDescriptorHeap.cpp" />
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
     <ClCompile Include="src\DxFeatureCaps.cpp" />
+    <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
