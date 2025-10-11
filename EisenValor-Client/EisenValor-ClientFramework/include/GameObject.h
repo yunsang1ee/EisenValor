@@ -42,6 +42,14 @@ public:
 
 	virtual void SetTeamColor() {}
 
+	 // HP 관련 함수들
+	void   SetCurrentHP(uint32 hp) { m_currentHP = hp; }
+	void   SetMaxHP(uint32 hp) { m_maxHP = hp; }
+	uint32 GetCurrentHP() const { return m_currentHP; }
+	uint32 GetMaxHP() const { return m_maxHP; }
+	float  GetHPRatio() const { return static_cast<float>(m_currentHP) 
+		/ static_cast<float>(m_maxHP); }
+
 public:
 	uint32 m_id;
 	bool   alive{true};
@@ -55,6 +63,10 @@ protected:
 	Vec3 m_acceleration{0.f, 0.f, 0.f};
 	Team m_team = Team::BLUE;
 	Vec4 m_teamColor;
+
+	// HP 관련 변수 추가 (HP 수정용)
+	uint32 m_currentHP = 100;
+	uint32 m_maxHP = 100;
 
 public:
 	Vec3	lastServerPosition;

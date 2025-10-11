@@ -80,7 +80,20 @@ protected:
 	ConstantBuffer		   m_constantBufferData;
 	UINT8*				   m_pCbvDataBegin = nullptr; // 시작 주소
 
-	ComPtr<ID3D12Resource> m_constantBuffer3; // 표시등
+	// 표시등
+	ComPtr<ID3D12Resource> m_constantBuffer3; 
 	ConstantBuffer		   m_constantBufferData3;
 	UINT8*				   m_pCbvDataBegin3 = nullptr;
+
+	// HP바 렌더링 리소스
+	//ComPtr<ID3D12Resource> m_hpBarBackgroundBuffer; // 배경
+	//ConstantBuffer		   m_hpBarBackgroundData;
+	//UINT8*				   m_pHpBarBackgroundDataBegin = nullptr;
+
+	ComPtr<ID3D12Resource> m_hpBarForegroundBuffer; // HP바 상수 버퍼
+	ConstantBuffer		   m_hpBarForegroundData;
+	UINT8*				   m_pHpBarForegroundDataBegin = nullptr;
+
+	ComPtr<ID3D12Resource> m_hpBarVertexBuffer;        // HP바 전용 버텍스 버퍼
+	D3D12_VERTEX_BUFFER_VIEW m_hpBarVertexBufferView;  // HP바 전용 버텍스 버퍼 뷰
 };

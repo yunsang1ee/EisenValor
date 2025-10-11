@@ -59,6 +59,13 @@ private:
     ConstantBuffer m_constantBufferData;
     UINT8* m_pCbvDataBegin = nullptr;
 
+    // HP바 관련 리소스 추가
+	ComPtr<ID3D12Resource>	 m_hpBarVertexBuffer;	  // HP바 전용 버텍스 버퍼
+	D3D12_VERTEX_BUFFER_VIEW m_hpBarVertexBufferView; // HP바 전용 버텍스 버퍼 뷰
+	ComPtr<ID3D12Resource>	 m_hpBarForegroundBuffer; // HP바 상수 버퍼
+	ConstantBuffer			 m_hpBarForegroundData;
+	UINT8*					 m_pHpBarForegroundDataBegin = nullptr;
+
 private:
 	void			  UpdateUnitProperties();
 	DirectX::XMFLOAT3 GetUnitScale() const;

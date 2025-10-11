@@ -188,6 +188,7 @@ DirectX::XMFLOAT3 LocalPlayer::CalculateGroundTargetPosition() const
 	float forwardX = sinf(m_cameraYaw);
 	float forwardZ = cosf(m_cameraYaw);
 
+	
 	// 플레이어 위치에서 바라보는 방향으로 일정 거리만큼 떨어진 바닥 위치
 	DirectX::XMFLOAT3 targetPos;
 	targetPos.x = m_pos.x + forwardX * m_commandAreaDistance;

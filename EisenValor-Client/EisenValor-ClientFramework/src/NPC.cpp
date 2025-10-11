@@ -99,6 +99,48 @@ void NPC::Initialize(ID3D12Device* device)
 	));
 
 	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+
+	// HP바 수치용 버텍스 데이터
+	Vec4   hpBarForegroundColor(0.54f, 0.03f, 0.03f, 1.0f); // 빨간색
+	Vertex hpBarForegroundVertices[] = {					
+										// 전면
+										{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarForegroundColor},
+										// 후면
+										{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarForegroundColor}
+	};
+
+	// HP바 수치 상수 버퍼 생성 (MVP 행렬용)
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_hpBarForegroundBuffer)
+	));
+	ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarForegroundDataBegin)));
+
+	// HP바 전용 버텍스 버퍼 생성
+	const UINT hpBarVertexBufferSize = sizeof(hpBarForegroundVertices);
+	bufferDesc.Width = hpBarVertexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_hpBarVertexBuffer)
+	));
+
+	// HP바 버텍스 데이터 복사
+	UINT8* pHpBarVertexDataBegin;
+	ThrowIfFailed(m_hpBarVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pHpBarVertexDataBegin)));
+	memcpy(pHpBarVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
+	m_hpBarVertexBuffer->Unmap(0, nullptr);
+
+	// HP바 버텍스 버퍼 뷰 설정
+	m_hpBarVertexBufferView.BufferLocation = m_hpBarVertexBuffer->GetGPUVirtualAddress();
+	m_hpBarVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_hpBarVertexBufferView.SizeInBytes = hpBarVertexBufferSize;
 }
 
 void NPC::Update(float deltaTime)
@@ -142,6 +184,51 @@ void NPC::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, Dir
 	// NPC 그리기
 	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+	// HP바 렌더링 추가
+	float hpRatio = GetHPRatio();
+	if (hpRatio > 0.0f)
+	{
+		// 빌보드 행렬 계산
+		DirectX::XMMATRIX billboardMatrix = DirectX::XMMatrixIdentity();
+
+		billboardMatrix.r[0] = DirectX::XMVectorSet(
+			DirectX::XMVectorGetX(view.r[0]), DirectX::XMVectorGetX(view.r[1]), DirectX::XMVectorGetX(view.r[2]), 0.0f
+		);
+		billboardMatrix.r[1] = DirectX::XMVectorSet(
+			DirectX::XMVectorGetY(view.r[0]), DirectX::XMVectorGetY(view.r[1]), DirectX::XMVectorGetY(view.r[2]), 0.0f
+		);
+		billboardMatrix.r[2] = DirectX::XMVectorSet(
+			DirectX::XMVectorGetZ(view.r[0]), DirectX::XMVectorGetZ(view.r[1]), DirectX::XMVectorGetZ(view.r[2]), 0.0f
+		);
+
+		// HP바 전용 버텍스 버퍼로 변경
+		cmdList->IASetVertexBuffers(0, 1, &m_hpBarVertexBufferView);
+
+		float hpBarWidth = 0.8f * hpRatio; // NPC는 플레이어보다 작게
+
+		// NPC 크기에 맞춰 HP바 위치 조정
+		DirectX::XMFLOAT3 scale = GetUnitScale();
+		float			  yOffset = scale.y + 0.3f; // NPC 높이 + 여유공간
+
+		DirectX::XMMATRIX hpBarForegroundOffset = DirectX::XMMatrixTranslation(0.0f, yOffset, 0.01f);
+		DirectX::XMMATRIX hpBarForegroundScale = DirectX::XMMatrixScaling(hpBarWidth, 0.2f, 0.02f);
+		DirectX::XMMATRIX hpBarForegroundWorld =
+			hpBarForegroundScale * billboardMatrix * hpBarForegroundOffset * npcTranslation;
+		DirectX::XMMATRIX hpBarForegroundMVP = hpBarForegroundWorld * view * projection;
+
+		// HP바 수치 상수 버퍼에 업데이트
+		DirectX::XMStoreFloat4x4(&m_hpBarForegroundData.mvp, DirectX::XMMatrixTranspose(hpBarForegroundMVP));
+		memcpy(m_pHpBarForegroundDataBegin, &m_hpBarForegroundData, sizeof(m_hpBarForegroundData));
+
+		// HP바 수치 그리기
+		cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarForegroundBuffer->GetGPUVirtualAddress());
+		cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+		// 원래 NPC 버텍스 버퍼로 복원
+		cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	}
+
 }
 
 void NPC::SetTarget(std::shared_ptr<GameObject> target)

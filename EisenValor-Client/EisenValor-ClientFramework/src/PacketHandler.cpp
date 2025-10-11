@@ -205,6 +205,8 @@ bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& 
 
 	if(obj) {
 		const uint32 hp{recvPkt.current_hp()};
+		obj->SetCurrentHP(hp);	// HP 설정
+		
 		// TODO: 받은 HP 설정
 		if(hp <= 0) {
 			obj->alive = false;
