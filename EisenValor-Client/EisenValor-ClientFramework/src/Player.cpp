@@ -6,7 +6,7 @@
 using namespace DirectX;
 
 void Player::Initialize(ID3D12Device* device)
-{						 // 큐브 버텍스 데이터 (GameFramework에서 사용하던 것과 동일)
+{						 // 큐브 버텍스 데이터 
 	Vertex vertices[] = {// 전면
 						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f),m_teamColor},
 						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), m_teamColor},
@@ -32,6 +32,35 @@ void Player::Initialize(ID3D12Device* device)
 					  1, 5, 6, 1, 6, 2,
 					  // 하단
 					  0, 3, 7, 0, 7, 4
+	}; 
+
+
+    // HP바 배경용 버텍스 데이터
+	Vec4   hpBarBackgroundColor(0.0f, 0.0f, 1.0f, 1.0f);
+	Vertex hpBarBackgroundVertices[] = {				 // 전면
+										{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarBackgroundColor},
+										{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarBackgroundColor},
+										{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarBackgroundColor},
+										{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarBackgroundColor},
+										// 후면
+										{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarBackgroundColor},
+										{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarBackgroundColor},
+										{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarBackgroundColor},
+										{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarBackgroundColor}
+	};
+
+	// HP바 수치용 버텍스 데이터
+	Vec4   hpBarForegroundColor(0.54f, 0.03f, 0.03f, 1.0f); //
+	Vertex hpBarForegroundVertices[] = {				 // 전면
+										{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarForegroundColor},
+										// 후면
+										{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarForegroundColor},
+										{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarForegroundColor}
 	};
 
 	// 버텍스 버퍼 생성
@@ -104,6 +133,45 @@ void Player::Initialize(ID3D12Device* device)
 	));
 
 	ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
+
+	// // HP바 배경 상수 버퍼 생성
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_hpBarBackgroundBuffer)
+	//));
+	//ThrowIfFailed(m_hpBarBackgroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarBackgroundDataBegin)));
+	// HP바 전경 상수 버퍼 생성 (MVP 행렬용)
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_hpBarForegroundBuffer)
+	));
+	ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarForegroundDataBegin)));
+
+	// HP바 전용 버텍스 버퍼 생성
+	const UINT hpBarVertexBufferSize = sizeof(hpBarForegroundVertices);
+	bufferDesc.Width = hpBarVertexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_hpBarVertexBuffer)
+	));
+
+	// HP바 버텍스 데이터 복사
+	UINT8* pHpBarVertexDataBegin;
+	ThrowIfFailed(m_hpBarVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pHpBarVertexDataBegin)));
+	memcpy(pHpBarVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
+	m_hpBarVertexBuffer->Unmap(0, nullptr);
+
+	// HP바 버텍스 버퍼 뷰 설정
+	m_hpBarVertexBufferView.BufferLocation = m_hpBarVertexBuffer->GetGPUVirtualAddress();
+	m_hpBarVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_hpBarVertexBufferView.SizeInBytes = hpBarVertexBufferSize;
+
+	// HP바 전경 버텍스 데이터 복사
+	ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
+	m_hpBarForegroundBuffer->Unmap(0, nullptr);
+
 }
 
 void Player::Update(float deltaTime)
@@ -227,6 +295,65 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
+	// HP바 배경 렌더링
+	//DirectX::XMMATRIX hpBarBackgroundOffset = DirectX::XMMatrixTranslation(0.0f, 1.8f, 0.0f);
+	//DirectX::XMMATRIX hpBarBackgroundScale = DirectX::XMMatrixScaling(1.0f, 0.1f, 0.05f);
+	// 
+	//// 빌보드 행렬: 뷰 행렬의 회전 부분을 역으로 적용
+	DirectX::XMMATRIX billboardMatrix = DirectX::XMMatrixIdentity();
+	
+	// 뷰 행렬의 회전 부분만 추출해서 전치
+	// XMMATRIX는 r[0], r[1], r[2], r[3] 형태
+	billboardMatrix.r[0] = DirectX::XMVectorSet(
+		DirectX::XMVectorGetX(view.r[0]), DirectX::XMVectorGetX(view.r[1]), DirectX::XMVectorGetX(view.r[2]), 0.0f
+	);
+	billboardMatrix.r[1] = DirectX::XMVectorSet(
+		DirectX::XMVectorGetY(view.r[0]), DirectX::XMVectorGetY(view.r[1]), DirectX::XMVectorGetY(view.r[2]), 0.0f
+	);
+	billboardMatrix.r[2] = DirectX::XMVectorSet(
+		DirectX::XMVectorGetZ(view.r[0]), DirectX::XMVectorGetZ(view.r[1]), DirectX::XMVectorGetZ(view.r[2]), 0.0f
+	);
+	//// 빌보드 행렬을 적용
+	//DirectX::XMMATRIX hpBarBackgroundWorld =
+	//	hpBarBackgroundScale * billboardMatrix * hpBarBackgroundOffset * playerTranslation;
+	//DirectX::XMMATRIX hpBarBackgroundMVP = hpBarBackgroundWorld * view * projection;
+
+	//// HP바 배경 상수 버퍼에 업데이트
+	//DirectX::XMStoreFloat4x4(&m_hpBarBackgroundData.mvp, DirectX::XMMatrixTranspose(hpBarBackgroundMVP));
+	//memcpy(m_pHpBarBackgroundDataBegin, &m_hpBarBackgroundData, sizeof(m_hpBarBackgroundData));
+
+	//// HP바 배경 그리기
+	//cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarBackgroundBuffer->GetGPUVirtualAddress());
+	//cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+	// HP 수치 렌더링
+	float hpRatio = GetHPRatio();
+	if (hpRatio > 0.0f)
+	{
+		// HP바 전용 버텍스 버퍼로 변경
+		cmdList->IASetVertexBuffers(0, 1, &m_hpBarVertexBufferView);
+		
+		float hpBarWidth = 2.0f * hpRatio;
+		float hpBarOffsetX = -0.5f * (1.0f - hpRatio);
+		
+		DirectX::XMMATRIX hpBarForegroundOffset = DirectX::XMMatrixTranslation(hpBarOffsetX, 1.8f, 0.01f);
+		DirectX::XMMATRIX hpBarForegroundScale = DirectX::XMMatrixScaling(hpBarWidth, 0.5f, 0.05f);
+		DirectX::XMMATRIX hpBarForegroundWorld =
+			hpBarForegroundScale * billboardMatrix * hpBarForegroundOffset * playerTranslation;
+		DirectX::XMMATRIX hpBarForegroundMVP = hpBarForegroundWorld * view * projection;
+
+		// HP바 수치 상수 버퍼에 업데이트
+		DirectX::XMStoreFloat4x4(&m_hpBarForegroundData.mvp, DirectX::XMMatrixTranspose(hpBarForegroundMVP));
+		memcpy(m_pHpBarForegroundDataBegin, &m_hpBarForegroundData, sizeof(m_hpBarForegroundData));
+
+		// HP바 수치 그리기
+		cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarForegroundBuffer->GetGPUVirtualAddress());
+		cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+		
+		// 원래 플레이어 버텍스 버퍼로 복원
+		cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	}
+
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
@@ -251,12 +378,12 @@ void Player::SetTeamColor()
 	{
 	case FB_ENUMS::TEAM_TYPE_BLUE:
 	{
-		m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f); // 한파랑
+		m_teamColor = Vec4(0.0f, 0.0f, 1.0f, 1.0f); // 파랑
 		break;
 	}
 	case FB_ENUMS::TEAM_TYPE_RED:
 	{
-		m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f); // 진빨강
+		m_teamColor = Vec4(1.0f, 0.0f, 0.0f, 1.0f); // 빨강
 		break;
 	}
 	default:
