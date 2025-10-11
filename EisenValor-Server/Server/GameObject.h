@@ -16,19 +16,19 @@ namespace Server {
 		private:
 			std::wstring							m_name;
 			uint32									m_id;
-			const GAME_OBJECT_TYPE					m_type;
+			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
 			std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)> m_components;
 			std::vector<std::unique_ptr<Script>>	m_scripts;
-			TEAM_TYPE								m_teamType;
+			const FB_ENUMS::TEAM_TYPE				m_teamType;
 
 		protected:
 			KinematicInfo							m_kinematicInfo;
-			
+
 		public:
 			std::weak_ptr<GameRoom>					m_room;
 
 		public:
-			explicit GameObject(const GAME_OBJECT_TYPE type, const TEAM_TYPE teamType);
+			explicit GameObject(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
 			virtual ~GameObject();
 
 		public:
@@ -44,7 +44,7 @@ namespace Server {
 
 			const std::wstring& GetName() const noexcept { return m_name; }
 			uint32 GetID() const noexcept { return m_id; }
-			GAME_OBJECT_TYPE GetObjType() const noexcept { return m_type; }
+			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const noexcept { return m_type; }
 			const KinematicInfo& GetKinematicInfo() const noexcept { return m_kinematicInfo; }
 			const Vec3& GetPos() const noexcept { return m_kinematicInfo.position; }
 			const Vec3& GetRotation() const noexcept { return m_kinematicInfo.rotation; }
@@ -52,7 +52,7 @@ namespace Server {
 			const Vec3& GetAcceleration() const noexcept { return m_kinematicInfo.acceleration; }
 			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
-			TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
+			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 			const Vec3 GetForward();
 
 		public:

@@ -351,7 +351,7 @@ void LocalPlayer::UniformVelocity(const float deltaTime)
 		)
 									 .count();
 
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
+		auto pb = NetBridge::ClientPackets::Make_CS_MOVE_PACKET(pos, rot, vel, accel, timeStamp);
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 		sendFlag = false;
 	}
@@ -514,7 +514,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('R'))
 	{
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		auto pb = NetBridge::ClientPackets::Make_CS_SUMMON_NPC_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
@@ -550,7 +550,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('R'))
 	{
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		auto pb = NetBridge::ClientPackets::Make_CS_SUMMON_NPC_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 }
@@ -626,7 +626,7 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 	if(input.GetInputDown('U'))
 	{
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_CHANGE_SOLDIER_FORMATION();
+		auto pb = NetBridge::ClientPackets::Make_CS_CHANGE_SOLDIER_FORMATION();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
@@ -668,13 +668,13 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('R'))
 	{
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_SUMMON_NPC_PACKET();
+		auto pb = NetBridge::ClientPackets::Make_CS_SUMMON_NPC_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
 	if (Globals::Input().GetInputDown('Q'))
 	{
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_PLAYER_ATTACK_PACKET();
+		auto pb = NetBridge::ClientPackets::Make_CS_PLAYER_ATTACK_PACKET();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
@@ -690,7 +690,12 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 		//pos.x += forwardX * 5.f;
 		//pos.z += forwardZ * 5.f;
 		Vec3 pos;
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_MOVE_PACKET(pos);
+		auto pb = NetBridge::ClientPackets::Make_CS_SOLDIER_MOVE_PACKET(pos);
+		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	}
+
+	if(Globals::Input().GetInputDown('K')) {
+		auto pb = NetBridge::ClientPackets::Make_CS_REQ_ATTACK();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
@@ -737,7 +742,7 @@ void LocalPlayer::SendMovePacket()
 	)
 								 .count();
 
-	auto pb = NetBridge::ServerPacketHandler::Make_CS_MOVE_PACKET(true, true, pos, rot, vel, accel, timeStamp);
+	auto pb = NetBridge::ClientPackets::Make_CS_MOVE_PACKET(pos, rot, vel, accel, timeStamp);
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	sendFlag = false;
 }

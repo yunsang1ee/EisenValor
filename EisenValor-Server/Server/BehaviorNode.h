@@ -12,14 +12,14 @@ namespace Server {
 
 		class BehaviorNode {
 		protected:
-			std::weak_ptr<BehaviorTree> m_tree;
+			BehaviorTree* m_tree;
 
 		public:
 			virtual ~BehaviorNode() = default;
 
 		public:
-			virtual void SetTree(std::weak_ptr<BehaviorTree> tree) { m_tree = tree; }
-			std::shared_ptr<BehaviorTree> GetTree() const { return m_tree.lock(); }
+			virtual void SetTree(BehaviorTree* const tree) { m_tree = tree; }
+			BehaviorTree* GetTree() const { return m_tree; }
 		public:
 			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) abstract;
 			virtual void Reset() {}
@@ -34,13 +34,13 @@ namespace Server {
 			void AddChild(std::unique_ptr<BehaviorNode> child)
 			{
 				m_children.emplace_back(std::move(child));
-				if(auto tree = m_tree.lock()) {
+				if(m_tree) {
 					// 트리가 이미 세팅된 상태라면 자식에게도 전달
 					m_children.back()->SetTree(m_tree);
 				}
 			}
 
-			virtual void SetTree(std::weak_ptr<BehaviorTree> tree) override
+			virtual void SetTree(BehaviorTree* const tree) override
 			{
 				BehaviorNode::SetTree(tree);
 				for(auto& child : m_children) {
@@ -66,12 +66,12 @@ namespace Server {
 			void SetChild(std::unique_ptr<BehaviorNode> child)
 			{
 				m_child = std::move(child);
-				if(auto tree = m_tree.lock()) {
-					m_child->SetTree(tree);
+				if(m_tree) {
+					m_child->SetTree(m_tree);
 				}
 			}
 
-			void SetTree(std::weak_ptr<BehaviorTree> tree) override
+			void SetTree(BehaviorTree* const tree) override
 			{
 				BehaviorNode::SetTree(tree);
 				if(m_child) {

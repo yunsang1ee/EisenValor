@@ -13,12 +13,12 @@ void Server::ServerManager::Init() noexcept
 	ClientPacketHandler::Init();
 	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
-		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "ThreadManager Init Failed");
+		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "ThreadManager Init Failed");
 		exit(-1);
 	}
 
 	if(false == MANAGER(ServerEngine::RIOCore)->Init(MakeClientSessionFunc)) {
-		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "RIOCore Init Fail");
+		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "RIOCore Init Fail");
 		Shutdown();
 		exit(-1);
 	}
@@ -41,16 +41,16 @@ void Server::ServerManager::Run() noexcept
 	// Main-Thread
 	while(true) {
 		if(!_kbhit()) {
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(0.1s);
 			continue;
 		}
 		ch = _getch();
 		if(ch == ESC) {
-			ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Serve Finish");
+			ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Serve Finish");
 			break;
 		}
 		else {
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(0.1s);
 		}
 	}
 }

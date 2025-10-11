@@ -4,45 +4,45 @@
 
 namespace Server {
 	namespace Contents {
-		enum class GENERAL_STATE_TYPE : uint8 {
-			IDLE,
-			TRACE,
-			ATTACK,
+		//enum class GENERAL_STATE_TYPE : uint8 {
+		//	IDLE,
+		//	TRACE,
+		//	ATTACK,
 
-			END
-		};
+		//	END
+		//};
 
-		class GeneralIdleState : public State {
-		private:
-			static constexpr float detectRange{ 3.f };
+		//class GeneralIdleState : public State {
+		//private:
+		//	static constexpr float detectRange{ 3.f };
 
-		public:
-			GeneralIdleState();
-			virtual ~GeneralIdleState();
+		//public:
+		//	GeneralIdleState();
+		//	virtual ~GeneralIdleState();
 
-		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+		//public:
+		//	virtual void Enter() override;
+		//	virtual void Exit() override;
 
-		public:
-			virtual void Update(const float dt) override;
-		};
+		//public:
+		//	virtual void Update(const float dt) override;
+		//};
 
-		class GeneralTraceState : public State {
-		public:
-			static constexpr float attackRange{ 1.f };
+		//class GeneralTraceState : public State {
+		//public:
+		//	static constexpr float attackRange{ 1.f };
 
-		public:
-			GeneralTraceState();
-			virtual ~GeneralTraceState();
+		//public:
+		//	GeneralTraceState();
+		//	virtual ~GeneralTraceState();
 
-		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+		//public:
+		//	virtual void Enter() override;
+		//	virtual void Exit() override;
 
-		public:
-			virtual void Update(const float dt) override;
-		};
+		//public:
+		//	virtual void Update(const float dt) override;
+		//};
 	}
 }
 

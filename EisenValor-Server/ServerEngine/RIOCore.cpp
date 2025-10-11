@@ -57,7 +57,7 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 		m_rioWorkers.emplace_back(std::move(rioWorker));
 	}
 
-	ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, std::format("RioCore Init, Core Count = {}", m_rioWorkerCnt));
+	ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, std::format("RioCore Init, Core Count = {}", m_rioWorkerCnt));
 	return true;
 }
 

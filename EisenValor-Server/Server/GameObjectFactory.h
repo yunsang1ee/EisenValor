@@ -5,8 +5,8 @@ namespace Server {
 		struct GameObjectTemplate {
 			Vec3				pos;
 			Vec3				rot;
-			TEAM_TYPE			teamType;
-			GAME_OBJECT_TYPE	objType;
+			FB_ENUMS::TEAM_TYPE			teamType;
+			FB_ENUMS::GAME_OBJECT_TYPE	objType;
 		};
 
 		struct CreatureTemplate  : public GameObjectTemplate {
@@ -22,7 +22,7 @@ namespace Server {
 		};
 
 		struct NPCTemplate : public CreatureTemplate {
-			NPC_TYPE npcType;
+			FB_ENUMS::NPC_TYPE npcType;
 		};
 
 		struct GeneralTemplate : public NPCTemplate {

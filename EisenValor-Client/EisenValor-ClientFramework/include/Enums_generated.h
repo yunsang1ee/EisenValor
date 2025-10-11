@@ -13,4 +13,119 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
               FLATBUFFERS_VERSION_REVISION == 10,
              "Non-compatible flatbuffers version included");
 
+namespace FB_ENUMS {
+
+enum GAME_OBJECT_TYPE : uint8_t {
+  GAME_OBJECT_TYPE_NONE = 0,
+  GAME_OBJECT_TYPE_PLAYER = 1,
+  GAME_OBJECT_TYPE_NPC = 2,
+  GAME_OBJECT_TYPE_VALLISTAR = 3,
+  GAME_OBJECT_TYPE_PROJECTILE = 4,
+  GAME_OBJECT_TYPE_END = 5,
+  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NONE,
+  GAME_OBJECT_TYPE_MAX = GAME_OBJECT_TYPE_END
+};
+
+inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
+  static const GAME_OBJECT_TYPE values[] = {
+    GAME_OBJECT_TYPE_NONE,
+    GAME_OBJECT_TYPE_PLAYER,
+    GAME_OBJECT_TYPE_NPC,
+    GAME_OBJECT_TYPE_VALLISTAR,
+    GAME_OBJECT_TYPE_PROJECTILE,
+    GAME_OBJECT_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
+  static const char * const names[7] = {
+    "NONE",
+    "PLAYER",
+    "NPC",
+    "VALLISTAR",
+    "PROJECTILE",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameGAME_OBJECT_TYPE(GAME_OBJECT_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_NONE, GAME_OBJECT_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesGAME_OBJECT_TYPE()[index];
+}
+
+enum NPC_TYPE : uint8_t {
+  NPC_TYPE_NONE = 0,
+  NPC_TYPE_GENERAL = 1,
+  NPC_TYPE_SOLDIER = 2,
+  NPC_TYPE_END = 3,
+  NPC_TYPE_MIN = NPC_TYPE_NONE,
+  NPC_TYPE_MAX = NPC_TYPE_END
+};
+
+inline const NPC_TYPE (&EnumValuesNPC_TYPE())[4] {
+  static const NPC_TYPE values[] = {
+    NPC_TYPE_NONE,
+    NPC_TYPE_GENERAL,
+    NPC_TYPE_SOLDIER,
+    NPC_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesNPC_TYPE() {
+  static const char * const names[5] = {
+    "NONE",
+    "GENERAL",
+    "SOLDIER",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameNPC_TYPE(NPC_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, NPC_TYPE_NONE, NPC_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesNPC_TYPE()[index];
+}
+
+enum TEAM_TYPE : uint8_t {
+  TEAM_TYPE_BLUE = 0,
+  TEAM_TYPE_RED = 1,
+  TEAM_TYPE_END = 2,
+  TEAM_TYPE_MIN = TEAM_TYPE_BLUE,
+  TEAM_TYPE_MAX = TEAM_TYPE_END
+};
+
+inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[3] {
+  static const TEAM_TYPE values[] = {
+    TEAM_TYPE_BLUE,
+    TEAM_TYPE_RED,
+    TEAM_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesTEAM_TYPE() {
+  static const char * const names[4] = {
+    "BLUE",
+    "RED",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_BLUE, TEAM_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesTEAM_TYPE()[index];
+}
+
+}  // namespace FB_ENUMS
+
 #endif  // FLATBUFFERS_GENERATED_ENUMS_FB_ENUMS_H_

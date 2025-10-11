@@ -5,7 +5,7 @@
 #include "NPC.h"
 #include "FSM.h"
 
-#include "SoldierState.h"
+#include "SoldierStates.h"
 #include "GeneralState.h"
 
 #include "BehaviorNode.h"
@@ -19,9 +19,9 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
 	player->SetPos(t.pos);
 	player->SetRotation(t.rot);
-	player->AddComponent<Server::Contents::TroopController>();
-	player->GetComponent<Server::Contents::TroopController>()->SetOwner(player);
-	player->GetComponent<Server::Contents::TroopController>()->Init();
+	const auto troopController = player->AddComponent<Server::Contents::TroopController>();
+	troopController->SetOwner(player);
+	troopController->Init();
 
 	return player;
 }
@@ -32,26 +32,27 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
 	general->SetStatInfo(t.stat);
-	general->AddComponent<Server::Contents::TroopController>();
-	general->AddComponent<Server::Contents::TroopController>()->SetOwner(general);
-	general->GetComponent<Server::Contents::TroopController>()->Init();
-	general->GetComponent<Server::Contents::TroopController>()->SetFormation(TROOP_FORMATION_TYPE::LINE);
+	const auto troopController = general->AddComponent<Server::Contents::TroopController>();
+	troopController->SetOwner(general);
+	troopController->Init();
+	troopController->SetFormation(TROOP_FORMATION_TYPE::LINE);
 
-	// const auto bt = general->AddComponent<BehaviorTree>();
-	// bt->SetOwner(general);
-	// auto root = std::make_unique<Server::Contents::SequenceNode>();
-	// root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
-	// root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
-	// bt->SetRoot(std::move(root));
+	// TODO: 장수는 행동트리로 움직이도록
+	 const auto bt = general->AddComponent<BehaviorTree>();
+	 bt->SetOwner(general);
+	 auto root = std::make_unique<Server::Contents::SequenceNode>();
+	 root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
+	 root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
+	 bt->SetRoot(std::move(root));
 
-	const auto fsm = general->AddComponent<Server::Contents::FSM>();
-	fsm->SetOwner(general);
+	// const auto fsm = general->AddComponent<Server::Contents::FSM>();
+	// fsm->SetOwner(general);
 
-	auto idle = std::make_unique<Server::Contents::GeneralIdleState>();
-	auto trace = std::make_unique<Server::Contents::GeneralTraceState>();
-	fsm->AddState(std::move(idle));
-	fsm->AddState(std::move(trace));
-	fsm->InitStartState(etou8(GENERAL_STATE_TYPE::IDLE));
+	//auto idle = std::make_unique<Server::Contents::GeneralIdleState>();
+	//auto trace = std::make_unique<Server::Contents::GeneralTraceState>();
+	//fsm->AddState(std::move(idle));
+	//fsm->AddState(std::move(trace));
+	//fsm->InitStartState(etou8(GENERAL_STATE_TYPE::IDLE));
 
 	return general;
 }
@@ -67,6 +68,8 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	fsm->SetOwner(soldier);
 
 	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
+	idleState->detectionEnemyRange = 2.f;
+
 	auto runState = std::make_unique<Server::Contents::SoldierRunState>();
 	auto attackState = std::make_unique<Server::Contents::SoldierAttackState>();
 	

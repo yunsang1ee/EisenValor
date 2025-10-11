@@ -6,6 +6,7 @@
 namespace Server {
 	namespace Contents {
 		class State;
+		class Creature;
 
 		class FSM : public Component {
 		private:
@@ -18,7 +19,7 @@ namespace Server {
 
 		public:
 			void		AddState(std::unique_ptr<State> state);
-			void		ChangeState(uint8 nextState);
+			void		ChangeState(const uint8 nextState);
 			State*		GetCurState() const { return m_curState; }
 		};
 	}

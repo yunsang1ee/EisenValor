@@ -1,1 +1,26 @@
 namespace FB_ENUMS;
+
+enum GAME_OBJECT_TYPE : ubyte{
+	NONE,
+	PLAYER,
+	NPC,
+	VALLISTAR,
+	PROJECTILE,
+
+	END
+}
+
+enum NPC_TYPE: ubyte{
+	NONE,
+	GENERAL,
+	SOLDIER,
+
+	END
+}
+
+enum TEAM_TYPE: ubyte{
+	BLUE = 0,
+	RED,
+
+	END
+}

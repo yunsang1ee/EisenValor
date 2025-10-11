@@ -192,7 +192,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	// std::cin >> pw;
 	pw = "PW";
 
-	auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+	auto pb = NetBridge::ClientPackets::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
 	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	// Ground 객체 생성 및 초기화

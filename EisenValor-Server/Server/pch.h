@@ -18,7 +18,7 @@
 #include "ServerGlobalFunc.h"
 
 #include "ClientPacketHandler.h"
-
+#include "ServerPackets.h"
 #include "GameObjectFactory.h"
 
 namespace Server {

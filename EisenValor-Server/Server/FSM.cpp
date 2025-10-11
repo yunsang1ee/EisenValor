@@ -25,7 +25,7 @@ void Server::Contents::FSM::AddState(std::unique_ptr<State> state)
 		m_states.try_emplace(state->GetStateType(), std::move(state));
 }
 
-void Server::Contents::FSM::ChangeState(uint8 nextState)
+void Server::Contents::FSM::ChangeState(const uint8 nextState)
 {
 	m_curState->Exit();
 	auto iter = m_states.find(nextState);

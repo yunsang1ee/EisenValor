@@ -3,7 +3,7 @@
 
 #include "NPC.h"
 #include "Player.h"
-#include "SoldierState.h"
+#include "SoldierStates.h"
 
 void Server::Contents::TroopController::Init()
 {

@@ -15,7 +15,7 @@ namespace ServerEngine {
 		static void Init() noexcept;
 
 		template<typename... Args>
-		static void WriteLog(const LOG_LEVEL level, const Args... msg) noexcept
+		static void PrintLog(const LOG_LEVEL level, const Args... msg) noexcept
 		{
 			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 			const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);

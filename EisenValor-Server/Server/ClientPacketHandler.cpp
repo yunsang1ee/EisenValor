@@ -11,7 +11,7 @@
 #include "Player.h"
 #include "NPC.h"
 
-#include "SoldierState.h"
+#include "SoldierStates.h"
 
 bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) noexcept
 {
@@ -23,9 +23,8 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 {
 	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	std::cout << std::format("ID:{} , PW:{} ", recvPkt.id()->c_str(), recvPkt.pw()->c_str());
-
 	const uint32 id = clientSession->GetID();
-	auto pb = ClientPacketHandler::Make_SC_LOGIN_PACKET(id);
+	auto pb = ServerPackets::Make_SC_LOGIN_PACKET(id);
 	session->Send(std::move(pb));
 	return true;
 }
@@ -36,7 +35,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	clientSession->UpdateHeartbeatTimestamp();
 
 	std::cout << recvPkt.msg()->c_str() << std::endl;
-	auto packetBuffer = ClientPacketHandler::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
+	auto packetBuffer = ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
 
 	if(auto room = clientSession->GetPlayer()->GetGameRoom()) {
 		room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(packetBuffer));
@@ -46,7 +45,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	return false;
 }
 
-bool Handle_CS_ENTER_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_ROOM_PACKET& recvPkt) noexcept
+bool Handle_CS_ENTER_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_PACKET& recvPkt) noexcept
 {
 	std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();
@@ -55,7 +54,7 @@ bool Handle_CS_ENTER_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 	const uint16 roomID{ recvPkt.room_id() };
 	auto room = MANAGER(Server::Contents::GameRoomManager)->GetRoom(roomID);
 	if(room) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::EnterRoom, clientSession);
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::EnterGame, clientSession);
 		return true;
 	}
 
@@ -141,6 +140,20 @@ bool Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngin
 
 	if(auto room = player->GetGameRoom()) {
 		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION, player);
+		return true;
+	}
+	return false;
+}
+
+bool Handle_CS_REQ_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_REQ_ATTACK& recvPkt) noexcept
+{
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
+	const auto player = clientSession->GetPlayer();
+
+	if(auto room = player->GetGameRoom()) {
+		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_REQ_ATTACK, player);
 		return true;
 	}
 	return false;
