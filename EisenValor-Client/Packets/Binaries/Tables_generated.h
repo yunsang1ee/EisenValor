@@ -284,7 +284,8 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PLAYER_ID = 4,
     VT_KINEMATIC_INFO = 6,
-    VT_TEAM_TYPE = 8
+    VT_TEAM_TYPE = 8,
+    VT_HP = 10
   };
   uint32_t player_id() const {
     return GetField<uint32_t>(VT_PLAYER_ID, 0);
@@ -295,11 +296,15 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   FB_ENUMS::TEAM_TYPE team_type() const {
     return static_cast<FB_ENUMS::TEAM_TYPE>(GetField<uint8_t>(VT_TEAM_TYPE, 0));
   }
+  uint32_t hp() const {
+    return GetField<uint32_t>(VT_HP, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
+           VerifyField<uint32_t>(verifier, VT_HP, 4) &&
            verifier.EndTable();
   }
 };
@@ -317,6 +322,9 @@ struct SC_LOCAL_PLAYER_PACKETBuilder {
   void add_team_type(FB_ENUMS::TEAM_TYPE team_type) {
     fbb_.AddElement<uint8_t>(SC_LOCAL_PLAYER_PACKET::VT_TEAM_TYPE, static_cast<uint8_t>(team_type), 0);
   }
+  void add_hp(uint32_t hp) {
+    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_HP, hp, 0);
+  }
   explicit SC_LOCAL_PLAYER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -332,8 +340,10 @@ inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKE
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t player_id = 0,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
+    uint32_t hp = 0) {
   SC_LOCAL_PLAYER_PACKETBuilder builder_(_fbb);
+  builder_.add_hp(hp);
   builder_.add_kinematic_info(kinematic_info);
   builder_.add_player_id(player_id);
   builder_.add_team_type(team_type);
@@ -346,7 +356,8 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     VT_OBJ_ID = 4,
     VT_OBJ_TYPE = 6,
     VT_TEAM_TYPE = 8,
-    VT_KINEMATIC_INFO = 10
+    VT_KINEMATIC_INFO = 10,
+    VT_HP = 12
   };
   uint32_t obj_id() const {
     return GetField<uint32_t>(VT_OBJ_ID, 0);
@@ -360,12 +371,16 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   const FB_STRUCTS::KinematicInfo *kinematic_info() const {
     return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
+  uint32_t hp() const {
+    return GetField<uint32_t>(VT_HP, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_OBJ_TYPE, 1) &&
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
+           VerifyField<uint32_t>(verifier, VT_HP, 4) &&
            verifier.EndTable();
   }
 };
@@ -386,6 +401,9 @@ struct SC_ADD_OBJ_PACKETBuilder {
   void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
     fbb_.AddStruct(SC_ADD_OBJ_PACKET::VT_KINEMATIC_INFO, kinematic_info);
   }
+  void add_hp(uint32_t hp) {
+    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_HP, hp, 0);
+  }
   explicit SC_ADD_OBJ_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -400,10 +418,12 @@ struct SC_ADD_OBJ_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
-    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
+    uint32_t hp = 0) {
   SC_ADD_OBJ_PACKETBuilder builder_(_fbb);
+  builder_.add_hp(hp);
   builder_.add_kinematic_info(kinematic_info);
   builder_.add_obj_id(obj_id);
   builder_.add_team_type(team_type);
@@ -418,7 +438,8 @@ struct SC_ADD_NPC_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     VT_OBJ_TYPE = 6,
     VT_TEAM_TYPE = 8,
     VT_NPC_TYPE = 10,
-    VT_KINEMATIC_INFO = 12
+    VT_KINEMATIC_INFO = 12,
+    VT_HP = 14
   };
   uint32_t obj_id() const {
     return GetField<uint32_t>(VT_OBJ_ID, 0);
@@ -435,6 +456,9 @@ struct SC_ADD_NPC_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   const FB_STRUCTS::KinematicInfo *kinematic_info() const {
     return GetStruct<const FB_STRUCTS::KinematicInfo *>(VT_KINEMATIC_INFO);
   }
+  uint32_t hp() const {
+    return GetField<uint32_t>(VT_HP, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
@@ -442,6 +466,7 @@ struct SC_ADD_NPC_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            VerifyField<uint8_t>(verifier, VT_NPC_TYPE, 1) &&
            VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
+           VerifyField<uint32_t>(verifier, VT_HP, 4) &&
            verifier.EndTable();
   }
 };
@@ -465,6 +490,9 @@ struct SC_ADD_NPC_PACKETBuilder {
   void add_kinematic_info(const FB_STRUCTS::KinematicInfo *kinematic_info) {
     fbb_.AddStruct(SC_ADD_NPC_PACKET::VT_KINEMATIC_INFO, kinematic_info);
   }
+  void add_hp(uint32_t hp) {
+    fbb_.AddElement<uint32_t>(SC_ADD_NPC_PACKET::VT_HP, hp, 0);
+  }
   explicit SC_ADD_NPC_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -479,11 +507,13 @@ struct SC_ADD_NPC_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_ADD_NPC_PACKET> CreateSC_ADD_NPC_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
-    FB_ENUMS::NPC_TYPE npc_type = FB_ENUMS::NPC_TYPE_NONE,
-    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr) {
+    FB_ENUMS::NPC_TYPE npc_type = FB_ENUMS::NPC_TYPE_GENERAL,
+    const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
+    uint32_t hp = 0) {
   SC_ADD_NPC_PACKETBuilder builder_(_fbb);
+  builder_.add_hp(hp);
   builder_.add_kinematic_info(kinematic_info);
   builder_.add_obj_id(obj_id);
   builder_.add_npc_type(npc_type);
@@ -1046,8 +1076,8 @@ struct SC_NPC_INFO FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t hp() const {
     return GetField<uint32_t>(VT_HP, 0);
   }
-  int8_t obj_state() const {
-    return GetField<int8_t>(VT_OBJ_STATE, 0);
+  uint8_t obj_state() const {
+    return GetField<uint8_t>(VT_OBJ_STATE, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1057,7 +1087,7 @@ struct SC_NPC_INFO FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint8_t>(verifier, VT_NPC_TYPE, 1) &&
            VerifyField<FB_STRUCTS::KinematicInfo>(verifier, VT_KINEMATIC_INFO, 8) &&
            VerifyField<uint32_t>(verifier, VT_HP, 4) &&
-           VerifyField<int8_t>(verifier, VT_OBJ_STATE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_OBJ_STATE, 1) &&
            verifier.EndTable();
   }
 };
@@ -1084,8 +1114,8 @@ struct SC_NPC_INFOBuilder {
   void add_hp(uint32_t hp) {
     fbb_.AddElement<uint32_t>(SC_NPC_INFO::VT_HP, hp, 0);
   }
-  void add_obj_state(int8_t obj_state) {
-    fbb_.AddElement<int8_t>(SC_NPC_INFO::VT_OBJ_STATE, obj_state, 0);
+  void add_obj_state(uint8_t obj_state) {
+    fbb_.AddElement<uint8_t>(SC_NPC_INFO::VT_OBJ_STATE, obj_state, 0);
   }
   explicit SC_NPC_INFOBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1101,12 +1131,12 @@ struct SC_NPC_INFOBuilder {
 inline ::flatbuffers::Offset<SC_NPC_INFO> CreateSC_NPC_INFO(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
-    FB_ENUMS::NPC_TYPE npc_type = FB_ENUMS::NPC_TYPE_NONE,
+    FB_ENUMS::NPC_TYPE npc_type = FB_ENUMS::NPC_TYPE_GENERAL,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
     uint32_t hp = 0,
-    int8_t obj_state = 0) {
+    uint8_t obj_state = 0) {
   SC_NPC_INFOBuilder builder_(_fbb);
   builder_.add_hp(hp);
   builder_.add_kinematic_info(kinematic_info);

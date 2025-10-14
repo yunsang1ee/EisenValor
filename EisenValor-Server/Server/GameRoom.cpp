@@ -25,7 +25,7 @@ void Server::Contents::GameRoom::Start()
 	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
 }
 
-void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
 	std::cout << "Enter Match" << std::endl;
 	clientSession->SetState(SESSION_STATE::IN_GAME);
@@ -35,10 +35,15 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
+	
+	// TODO: 플레이어 수치를 Json이나 XML에서 뽑기	
 	PlayerTemplate t;
 	t.pos = startPos;
 	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 	flag = !flag;
+	t.stat.hp = 100;
+	t.stat.atk = 50;
+	t.stat.stamina = 100;
 
 	auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
 	player->SetID(clientSession->GetID());
@@ -47,7 +52,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 	player->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
 
 	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
-	auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(player->GetID(), kInfo, player->GetTeamType());
+	auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(player->GetID(), kInfo, player->GetTeamType(), player->GetHP());
 	clientSession->Send(std::move(pb));
 
 	for(auto& team : m_teams) {
@@ -55,7 +60,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 			const Vec3 pos{ p->GetPos() };
 			const Vec3 rot{ p->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, (p->GetObjType()), p->GetTeamType(), kInfo);
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, (p->GetObjType()), p->GetTeamType(), kInfo, p->GetHP());
 			clientSession->Send(std::move(pb));
 		}
 
@@ -63,7 +68,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 			const Vec3 pos{ n->GetPos() };
 			const Vec3 rot{ n->GetRotation() };
 			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(id, (n->GetObjType()), n->GetTeamType(), n->GetNpcType(), kInfo);
+			auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(id, (n->GetObjType()), n->GetTeamType(), n->GetNpcType(), kInfo, n->GetHP());
 			clientSession->Send(std::move(pb));
 		}
 	}
@@ -74,7 +79,7 @@ void Server::Contents::GameRoom::EnterGame(std::shared_ptr<ClientSession> client
 		});
 }
 
-void Server::Contents::GameRoom::LeaveGame(std::shared_ptr<ClientSession> clientSession) noexcept
+void Server::Contents::GameRoom::LeaveGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
 	const auto player = clientSession->GetPlayer();
 	const auto teamType = player->GetTeamType();
@@ -128,7 +133,7 @@ void Server::Contents::GameRoom::CheckGameTime(const float dt)
 	}
 }
 
-void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo)
+void Server::Contents::GameRoom::Handle_CS_MOVE(const std::shared_ptr<Player>& player, const KinematicInfo& kinematicInfo)
 {
 	player->SetPos(kinematicInfo.position);
 	player->SetRotation(kinematicInfo.rotation);
@@ -140,7 +145,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, 
 	ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(packetBuffer));
 }
 
-void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> player)
+void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(const std::shared_ptr<Player>& player)
 {
 	// TODO: 주변에 SPAWN 기지가 있는지 확인
 	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
@@ -164,10 +169,10 @@ void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player> pl
 	troopController->Arrange();
 }
 
-void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
+void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<Player>& player)
 {
-	constexpr float attackRadius = 3.f;
-	constexpr float attackDegree = 90.f;
+	static constexpr float attackRadius = 3.f;
+	static constexpr float attackDegree = 90.f;
 	constexpr float radiusSq = attackRadius * attackRadius;
 
 	const Vec3& playerPos = player->GetPos();
@@ -180,7 +185,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 	const auto otherTeam = etou8(GetOtherTeamType(teamType));
 
 	for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
-		for(const auto& [id, object] : objectGroup) {
+		for(const auto& [targetID, object] : objectGroup) {
 
 			const Vec3& pos = object->GetPos();
 			Vec3 toTargetDir = pos - playerPos;
@@ -197,22 +202,31 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 			if(dotValue <= 0) continue;
 
 			if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
-				std::cout << std::format("NPC ID:{}, Attacked!", id) << std::endl;
+				std::cout << std::format("ATTACKER ID: {}, TARGET ID:{}", player->GetID(), targetID) << std::endl;
+				const auto playerAtk = player->GetAtk();
 				int hp{ std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP() };
-				hp -= 50;
-				std::cout << std::format("NPC HP: {}", hp) << std::endl;
-				std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
+				hp -= playerAtk;
+				if(hp <= 0) {
+					std::static_pointer_cast<Server::Contents::Creature>(object)->SetAlive(false);
+					std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = std::move(object)]()
+						{
+							t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
+						});
+				}
+				else {
+					std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
+				}
 
 				// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
 
-				auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
-				ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
-				if(hp <= 0) {
-					object->GetGameRoom()->AddEvent([this, otherTeam, object]()
-						{
-							m_teams[otherTeam].RemoveObject(object);
-						});
-				}
+				//auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
+				//ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
+				//if(hp <= 0) {
+				//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
+				//		{
+				//			m_teams[otherTeam].RemoveObject(object);
+				//		});
+				//}
 			}
 
 			// a * b = |a| |b| cos	
@@ -222,7 +236,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>
 	}
 }
 
-bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos)
+bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(const std::shared_ptr<Player>& player, const Vec3& targetPos)
 {
 	if(player) {
 		player->GetComponent<Server::Contents::TroopController>()->SetTargetPos(targetPos);
@@ -232,7 +246,7 @@ bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> 
 	return false;
 }
 
-void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player)
+void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(const std::shared_ptr<Player>& player)
 {
 	// TODO:
 	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
@@ -241,7 +255,7 @@ void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_
 	troopController->SetFormation(static_cast<TROOP_FORMATION_TYPE>(type));
 }
 
-void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player)
+void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(const std::shared_ptr<Player>& player)
 {
 	const auto teamType = player->GetTeamType();
 	auto& team = m_teams[etou8(teamType)];
@@ -250,7 +264,7 @@ void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> pl
 		const auto npc = std::static_pointer_cast<Server::Contents::NPC>(n);
 		const auto type = std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType();
 		if(type == FB_ENUMS::NPC_TYPE_SOLDIER) {
-			npc->GetComponent<FSM>()->ChangeState(etou8(SOLDIER_STATE_TYPE::RUN));
+			npc->GetComponent<FSM>()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_RUN, m_dt);
 		}
 	}
 }
@@ -258,10 +272,10 @@ void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> pl
 void Server::Contents::GameRoom::Update()
 {
 	const auto now = std::chrono::high_resolution_clock::now();
-	float DT = 0.f;
+	m_dt = 0.f;
 	if(m_firstUpdate) m_firstUpdate = false;
 	else {
-		DT = std::chrono::duration<float>(now - m_lastUpdate).count();
+		m_dt = std::chrono::duration<float>(now - m_lastUpdate).count();
 	}
 
 	m_lastUpdate = now;
@@ -275,9 +289,9 @@ void Server::Contents::GameRoom::Update()
 	for(auto& team : m_teams)
 		for(auto& objGroup : team.GetAllObjectGroups()) 
 			for(auto& [id, obj] : objGroup) 
-					obj->Update(DT);
+					obj->Update(m_dt);
 
-	CheckGameTime(DT);
+	CheckGameTime(m_dt);
 	ExecuteAfterTime(UPDATE_MS, &Server::Contents::GameRoom::Update);
 }
 

@@ -30,7 +30,7 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 	//auto general = Server::Contents::GameObjectFactory::CreateGeneral(g);
 	//AddObject(std::move(general));
 	
-	for(int i = 0; i < 1; ++i) {
+	for(int i = 0; i < 3; ++i) {
 		SoldierTemplate s;
 		s.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
 		s.teamType = m_type;
@@ -45,6 +45,7 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 			case FB_ENUMS::TEAM_TYPE_RED:
 			{
 				s.pos = Vec3{ 0.f +  i * 0.5f, 0.f, 5.f };
+				s.rot = Vec3{ 0.f, 135.f, 0.f };
 				break;
 			}
 			default:
@@ -69,12 +70,19 @@ void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
 	const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
 
 	if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
-		auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, object->GetObjType(), object->GetTeamType(), std::static_pointer_cast<NPC>(object)->GetNpcType(), kInfo);
+		const auto npc = std::static_pointer_cast<NPC>(object);
+		auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, object->GetObjType(), object->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
 		m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 	}
 	else {
-		auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, object->GetObjType(), object->GetTeamType(), kInfo);
-		m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, object->GetObjType(), object->GetTeamType(), kInfo, std::static_pointer_cast<Player>(object)->GetHP());
+			m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+		}
+		else {
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, object->GetObjType(), object->GetTeamType(), kInfo, 0.f);
+			m_room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+		}
 	}
 
 	if(m_objects[type].find(id) == m_objects[type].end())

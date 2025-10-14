@@ -11,7 +11,7 @@ namespace Server {
 		using GameObjectGroup = std::map <uint32, std::shared_ptr<GameObject>>;
 		class Team {
 		private:
-			const FB_ENUMS::TEAM_TYPE																				m_type;
+			const FB_ENUMS::TEAM_TYPE																m_type;
 			std::shared_ptr<GameRoom>																m_room;
 			std::array<GameObjectGroup, FB_ENUMS::GAME_OBJECT_TYPE_END>								m_objects;
 
