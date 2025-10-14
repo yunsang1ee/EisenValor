@@ -15,7 +15,7 @@ namespace Server {
 
 		public:
 			void	SetStatInfo(const StatInfo& stat) noexcept { m_stat = stat; }
-			void	SetHp(const int hp) noexcept { m_stat.hp = hp; }
+			void	SetHp(const int hp) noexcept;
 			void	SetAtk(const int32 atk) noexcept { m_stat.atk = atk; }
 			void	SetStamina(const int32 stamina) noexcept { m_stat.stamina = stamina; }
 			void	SetAlive(const bool alive) noexcept { m_alive = alive; }

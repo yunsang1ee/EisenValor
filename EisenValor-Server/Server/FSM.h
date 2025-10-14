@@ -19,7 +19,7 @@ namespace Server {
 
 		public:
 			void		AddState(std::unique_ptr<State> state);
-			void		ChangeState(const uint8 nextState);
+			void		ChangeState(const uint8 nextState, const float dt);
 			State*		GetCurState() const { return m_curState; }
 		};
 	}
