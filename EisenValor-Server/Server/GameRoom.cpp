@@ -9,6 +9,12 @@
 #include "Team.h"
 #include "FSM.h"
 
+Server::Contents::GameRoom::GameRoom(const uint16 roomID)
+	:m_id{roomID}
+{
+	std::cout << std::format("Room ID:{}", m_id) << std::endl;;
+}
+
 void Server::Contents::GameRoom::Init()
 {
 	Start();
@@ -19,10 +25,10 @@ void Server::Contents::GameRoom::Start()
 	for(auto& team : m_teams)
 		team.Init(std::static_pointer_cast<GameRoom>(shared_from_this()));
 
-	ExecuteAsyncronously(&GameRoom::Update);
+	ExecAsync(&GameRoom::Update);
 
 	// TODO: CheckHeartBeat Update로 갈 수 있음.
-	ExecuteAsyncronously(&GameRoom::CheckHeartBeat);
+	ExecAsync(&GameRoom::CheckHeartBeat);
 }
 
 void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
@@ -125,7 +131,7 @@ void Server::Contents::GameRoom::CheckGameTime(const float dt)
 
 			// std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
 			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
-			ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
+			ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
 		}
 		else {
 			// TODO: 게임 종료
@@ -142,31 +148,33 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(const std::shared_ptr<Player>& p
 	player->SetTimeStamp(kinematicInfo.timeStamp);
 
 	auto packetBuffer = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(packetBuffer));
+	ExecAsync(&GameRoom::BroadcastToAll, std::move(packetBuffer));
 }
 
 void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(const std::shared_ptr<Player>& player)
 {
-	// TODO: 주변에 SPAWN 기지가 있는지 확인
-	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
-	const Vec3& ownerPos = player->GetPos();
+	//// TODO: 주변에 SPAWN 기지가 있는지 확인
+	//const auto troopController = player->GetComponent<Server::Contents::TroopController>();
+	//const Vec3& ownerPos = player->GetPos();
 
-	const Vec3 spawnPos = ownerPos + player->GetForward() * 5.f;
-	troopController->GetCurFormation()->m_centerPos = spawnPos;
+	//const Vec3 spawnPos = ownerPos + player->GetForwardDir() * 5.f;
+	//troopController->GetCurFormation()->m_centerPos = spawnPos;
 
-	for(int i = 0; i < 25; ++i) {
-		Server::Contents::SoldierTemplate t;
-		t.pos = Vec3{ 0.f, 0.f, 0.f };		// 스폰기지 위치
-		t.rot = Vec3{ 0.f, 0.f, 0.f };
-		t.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
-		t.teamType = player->GetTeamType();
-		t.stat.hp = 100;
+	//for(int i = 0; i < 25; ++i) {
+	//	Server::Contents::SoldierTemplate t;
+	//	t.pos = Vec3{ 0.f, 0.f, 0.f };		// 스폰기지 위치
+	//	t.rot = Vec3{ 0.f, 0.f, 0.f };
+	//	t.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
+	//	t.teamType = player->GetTeamType();
+	//	t.stat.hp = 100;
+	//	t.enemyDetectionRange = 2.f;
+	//	t.attackRange = 0.5f;
 
-		auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
-		troopController->AddSoldier(soldier);
-		m_teams[etou8(player->GetTeamType())].AddObject(std::move(soldier));
-	}
-	troopController->Arrange();
+	//	auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
+	//	troopController->AddSoldier(soldier);
+	//	m_teams[etou8(player->GetTeamType())].AddObject(std::move(soldier));
+	//}
+	//troopController->Arrange();
 }
 
 void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<Player>& player)
@@ -219,8 +227,11 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<P
 
 				// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
 
-				//auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
-				//ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
+				if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
+					auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
+					ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
+				}
+				
 				//if(hp <= 0) {
 				//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
 				//		{
@@ -292,7 +303,7 @@ void Server::Contents::GameRoom::Update()
 					obj->Update(m_dt);
 
 	CheckGameTime(m_dt);
-	ExecuteAfterTime(UPDATE_MS, &Server::Contents::GameRoom::Update);
+	ExecTimer(UPDATE_MS, &Server::Contents::GameRoom::Update);
 }
 
 void Server::Contents::GameRoom::CheckHeartBeat()
@@ -315,5 +326,5 @@ void Server::Contents::GameRoom::CheckHeartBeat()
 			}
 		}
 	}
-	ExecuteAfterTime(1s, &Server::Contents::GameRoom::CheckHeartBeat);
+	ExecTimer(1s, &Server::Contents::GameRoom::CheckHeartBeat);
 }

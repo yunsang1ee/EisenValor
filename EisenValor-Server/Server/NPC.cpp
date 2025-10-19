@@ -31,5 +31,5 @@ void Server::Contents::NPC::Update(const float dt)
 		state = { GetComponent<FSM>()->GetCurState()->GetStateType() };
 
 	auto pb = ServerPackets::Make_SC_NPC_INFO_PACKET(id, GetObjType(), GetTeamType(), GetNpcType(), kInfo, hp, state);
-	GetGameRoom()->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+	GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 }

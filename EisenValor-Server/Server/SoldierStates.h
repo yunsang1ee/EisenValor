@@ -21,9 +21,6 @@ namespace Server {
 
 		class SoldierRunState : public RunState {
 		public:
-			float					m_range{ 0.3f };
-
-		public:
 			SoldierRunState();
 			virtual ~SoldierRunState();
 
@@ -38,9 +35,8 @@ namespace Server {
 
 		class SoldierAttackState : public AttackState {
 		public:
-			static constexpr auto	ATTACK_TIME = 1s;
-			float					m_accDt;
-
+			float					m_accDt{ 0.f };
+		
 		public:
 			SoldierAttackState();
 			virtual ~SoldierAttackState();

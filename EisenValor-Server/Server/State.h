@@ -35,7 +35,7 @@ namespace Server {
 
 		class IdleState : public State {
 		public:
-			int32 detectionEnemyRange{};
+			float enemyDetectionRange{};
 
 		public:
 			explicit IdleState(const uint8 type);
@@ -47,6 +47,9 @@ namespace Server {
 
 		class RunState : public State {
 		public:
+			float combatRange;
+
+		public:
 			explicit RunState(const uint8 type);
 			virtual ~RunState() = default;
 
@@ -55,7 +58,8 @@ namespace Server {
 
 		class AttackState : public State {
 		public:
-			int32 attackRange;
+			float combatRange;
+			std::chrono::seconds attackCycleTime;
 
 		public:
 			explicit AttackState(const uint8 type);

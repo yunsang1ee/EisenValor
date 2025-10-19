@@ -53,7 +53,7 @@ namespace Server {
 			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
-			const Vec3 GetForward();
+			const Vec3 GetForwardDir();
 
 		public:
 			virtual void Update(const float dt);
@@ -91,7 +91,12 @@ namespace Server {
 			}
 
 			template<typename T> requires std::derived_from<T, Script>
-			void AddScript(std::unique_ptr<Script> script) { m_scripts.emplace_back(std::move(script)); }
+			Script* AddScript(std::unique_ptr<T> script) 
+			{ 
+				Script* s = script.get();
+				m_scripts.emplace_back(std::move(script));
+				return s;
+			}
 		};
 	}
 }

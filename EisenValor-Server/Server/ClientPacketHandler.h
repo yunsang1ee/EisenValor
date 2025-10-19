@@ -16,6 +16,7 @@ namespace Server {
 	namespace Contents {
 		class NPC;
 	}
+	class ClientSession;
 }
 
 enum class PACKET_TYPE : uint16 {
@@ -104,6 +105,7 @@ public:
 		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
 	}
 
+private:
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader packetHeader) noexcept
 	{
 		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], session, buffer, packetHeader);
@@ -116,6 +118,7 @@ public:
 		return handleFunc(session, *packet);
 	}
 
+public:
 	template<typename PacketFunc, typename... Args>
 	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args) noexcept
 	{
@@ -142,6 +145,5 @@ public:
 	//	const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
 	//	return PacketInfo{ header, packetData.data(), packetSize };
 	//}
-	
-public:
+	friend class Server::ClientSession;
 };

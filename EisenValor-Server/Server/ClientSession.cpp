@@ -31,7 +31,7 @@ void Server::ClientSession::OnDisconnected()
 	if(m_player) {
 		auto match = m_player->GetGameRoom();
 		if(match)
-			match->ExecuteAsyncronously(&Server::Contents::GameRoom::LeaveGame, clientSession);
+			match->ExecAsync(&Server::Contents::GameRoom::LeaveGame, clientSession);
 	}
 }
 

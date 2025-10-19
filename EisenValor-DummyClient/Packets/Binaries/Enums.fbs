@@ -3,6 +3,7 @@ namespace FB_ENUMS;
 enum GAME_OBJECT_TYPE : ubyte{
 	PLAYER = 0,
 	NPC,
+	SPAWNER,
 	VALLISTAR,
 	PROJECTILE,
 

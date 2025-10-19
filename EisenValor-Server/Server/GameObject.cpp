@@ -11,7 +11,7 @@ Server::Contents::GameObject::~GameObject()
 	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;
 }
 
-const Vec3 Server::Contents::GameObject::GetForward()
+const Vec3 Server::Contents::GameObject::GetForwardDir()
 {
 	Vec3 forward;
 	forward.x = sinf(m_kinematicInfo.rotation.y);
@@ -28,4 +28,9 @@ void Server::Contents::GameObject::Update(const float dt)
 		if(comp)
 			comp->Update(dt);
 	}
+
+	for(const auto& script : m_scripts)
+		if(script)
+			script->Update(dt);
+
 }

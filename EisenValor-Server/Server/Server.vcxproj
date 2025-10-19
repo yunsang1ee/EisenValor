@@ -181,6 +181,7 @@
     <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="NPC.cpp" />
     <ClCompile Include="SoldierStates.cpp" />
+    <ClCompile Include="Spawner.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TargetTraceNode.cpp" />
     <ClCompile Include="Team.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="ServerTypes.h" />
     <ClInclude Include="NPC.h" />
     <ClInclude Include="SoldierStates.h" />
+    <ClInclude Include="Spawner.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TargetTraceNode.h" />
     <ClInclude Include="Team.h" />

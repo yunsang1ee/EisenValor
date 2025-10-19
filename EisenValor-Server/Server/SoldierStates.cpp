@@ -41,14 +41,14 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 
 	for(int i = 0; i < otherTeamObjectGroup.size(); ++i) {
 		if(i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE || i == FB_ENUMS::GAME_OBJECT_TYPE_VALLISTAR) continue;
-		
+
 		for(auto& [id, object] : otherTeamObjectGroup[i]) {
 
 			const auto target = std::static_pointer_cast<Creature>(object);
 			const auto& targetPos = object->GetPos();
 
 			const float distSq = (targetPos - ownerPos).LengthSquared();
-			const float detectionEnemyRangeSq = detectionEnemyRange * detectionEnemyRange;
+			const float detectionEnemyRangeSq = enemyDetectionRange * enemyDetectionRange;
 
 			if(distSq <= detectionEnemyRangeSq) {
 				std::static_pointer_cast<Creature>(owner)->SetTarget(target);
@@ -94,16 +94,16 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 		const auto& targetPos = target->GetPos();
 
 		const Vec3 toTarget = (targetPos - ownerPos);
-		
+
 		const float distToTarget = toTarget.Length();
 
-		if(distToTarget < m_range) {
+		if(distToTarget < combatRange) {
 			static constexpr float ATTACK_PROB{ 0.6f };
 			static std::default_random_engine dre{ std::random_device{}() };
 			static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
 			if(dist(dre) <= ATTACK_PROB) {
 				std::cout << "RUN -> ATTACK" << std::endl;
-				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK,dt);
+				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
 			}
 			else {
 				std::cout << "RUN -> DEFENSE" << std::endl;
@@ -117,7 +117,7 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 			const Vec3 dir = toTarget / distToTarget;
 
 			if(moveDist > distToTarget) moveDist = distToTarget;
-			
+
 			Vec3 newPos{ ownerPos + dir * moveDist };
 
 			owner->SetPos(newPos);
@@ -126,20 +126,24 @@ void Server::Contents::SoldierRunState::Update(const float dt)
 	else {
 		// 타겟이 없으면 현재 보고있는 방향으로 달려감
 		// 달려가다가 주변에 적이 있으면 맨 처음 본 적을 Target으로 설정
+
+
+		// FIX: 주변에 적이 있는데도 불구하고 타겟이 없다고 판정되어 직진으로 가는 경우가 존재함.
+
 		const float moveDist = 1.f * dt;
-		const Vec3 dir = owner->GetForward();
+		const Vec3 dir = owner->GetForwardDir();
 		Vec3 newPos{ ownerPos + dir * moveDist };
 		owner->SetPos(newPos);
 
 		auto otherTeamType = owner->GetGameRoom()->GetOtherTeamType(owner->GetTeamType());
 		auto& otherTeam = owner->GetGameRoom()->GetTeam(otherTeamType);
-		
+
 		for(auto& [id, obj] : otherTeam.GetNpcs()) {
 			const auto npc = std::static_pointer_cast<NPC>(obj);
 			const auto npcPos = npc->GetPos();
 
 			if(obj->GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) {
-				const Vec3 toNpc= (npcPos - ownerPos);
+				const Vec3 toNpc = (npcPos - ownerPos);
 				const float distToNpc = toNpc.Length();
 				if(distToNpc < 0.5f) {
 					owner->SetTarget(npc);
@@ -180,11 +184,11 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 	const uint32 id = owner->GetID();
 	m_accDt += dt;
 
-	if(m_accDt >= static_cast<float>(ATTACK_TIME.count())) {
+	if(m_accDt >= static_cast<float>(attackCycleTime.count())) {
 		auto target = owner->GetTarget();
 		if(target) {
 			if(target->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-				
+
 			}
 			else if(target->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
 				if(std::static_pointer_cast<NPC>(target)->GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) {
@@ -219,11 +223,9 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 							std::cout << "ATTACK -> DEFENSE" << std::endl;
 							fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
 						}
-						//auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(target)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(target)->GetHP());
-						//owner->GetGameRoom()->ExecuteAsyncronously(&GameRoom::BroadcastToAll, std::move(pb));
 					}
 				}
-				else if(std::static_pointer_cast<NPC>(target)->GetNpcType() == FB_ENUMS::NPC_TYPE_GENERAL){
+				else if(std::static_pointer_cast<NPC>(target)->GetNpcType() == FB_ENUMS::NPC_TYPE_GENERAL) {
 
 				}
 			}
@@ -262,7 +264,7 @@ void Server::Contents::SoldierDefenseState::Update(const float dt)
 
 	if(m_accDT >= static_cast<float>(DEFENSE_TIME.count())) {
 		const auto fsm = GetFSM();
-		
+
 		static constexpr float ATTACK_PROB{ 0.6f };
 		static std::default_random_engine dre{ std::random_device{}() };
 		static std::uniform_real_distribution<float> dist{ 0.f, 1.f };

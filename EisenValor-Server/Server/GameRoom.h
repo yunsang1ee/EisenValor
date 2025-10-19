@@ -28,7 +28,7 @@ namespace Server {
 			std::queue<std::function<void()>>					m_eventQueue;
 		
 		public:
-			explicit GameRoom(const uint16 roomID) :m_id{ roomID } {}
+			explicit GameRoom(const uint16 roomID);
 
 		public:
 			uint16 GetID() const noexcept { return m_id; }
@@ -69,7 +69,6 @@ namespace Server {
 			
 			// TODO: 모든 유저가 게임에 들어오고 나서 게임이 시작될 때 불려야 함.
 			void CheckGameTime(const float dt);
-
 
 		};
 	}

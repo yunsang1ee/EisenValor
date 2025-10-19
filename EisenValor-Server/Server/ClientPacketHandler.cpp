@@ -38,7 +38,7 @@ bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	auto packetBuffer = ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str());
 
 	if(auto room = clientSession->GetPlayer()->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(packetBuffer));
+		room->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(packetBuffer));
 		return true;
 	}
 
@@ -54,7 +54,7 @@ bool Handle_CS_ENTER_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 	const uint16 roomID{ recvPkt.room_id() };
 	auto room = MANAGER(Server::Contents::GameRoomManager)->GetRoom(roomID);
 	if(room) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::EnterGame, clientSession);
+		room->ExecAsync(&Server::Contents::GameRoom::EnterGame, clientSession);
 		return true;
 	}
 
@@ -76,7 +76,7 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	const KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 	
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_MOVE, player, info);
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_MOVE, player, info);
 		return true;
 	}
 
@@ -90,7 +90,7 @@ bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 	auto player = clientSession->GetPlayer();
 
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_SUMMON_NPC, player);
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_SUMMON_NPC, player);
 		return true;
 	}
 	return true;
@@ -109,7 +109,7 @@ bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>
 	const auto player = clientSession->GetPlayer();
 	
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK, player);
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK, player);
 		return true;
 	}
 	return false;
@@ -123,9 +123,9 @@ bool Handle_CS_SOLDIER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>&
 	const auto player = clientSession->GetPlayer();
 	const Vec3& ownerPos = player->GetPos();
 
-	const Vec3 targetPos = ownerPos + player->GetForward() * 5.f;
+	const Vec3 targetPos = ownerPos + player->GetForwardDir() * 5.f;
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE, player, targetPos);
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE, player, targetPos);
 		return true;
 	}
 	return false;
@@ -139,7 +139,7 @@ bool Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngin
 	const auto player = clientSession->GetPlayer();
 
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION, player);
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION, player);
 		return true;
 	}
 	return false;
@@ -153,7 +153,7 @@ bool Handle_CS_REQ_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 	const auto player = clientSession->GetPlayer();
 
 	if(auto room = player->GetGameRoom()) {
-		room->ExecuteAsyncronously(&Server::Contents::GameRoom::Handle_CS_REQ_ATTACK, player);
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_REQ_ATTACK, player);
 		return true;
 	}
 	return false;

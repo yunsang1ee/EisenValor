@@ -12,6 +12,7 @@
 #include "IsPlayerInNearNode.h"
 #include "TargetTraceNode.h"
 #include "TroopController.h"
+#include "Spawner.h"
 
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
@@ -59,10 +60,15 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	fsm->SetOwner(soldier);
 
 	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
-	idleState->detectionEnemyRange = 2.f;
+	idleState->enemyDetectionRange = t.enemyDetectionRange;
 
 	auto runState = std::make_unique<Server::Contents::SoldierRunState>();
+	runState->combatRange = t.combatRange;
+
 	auto attackState = std::make_unique<Server::Contents::SoldierAttackState>();
+	attackState->combatRange = t.combatRange;
+	attackState->attackCycleTime = t.attackCycleTime;
+
 	auto defenseState = std::make_unique<Server::Contents::SoldierDefenseState>();
 
 	fsm->AddState(std::move(idleState));
@@ -70,7 +76,15 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(defenseState));
 
-	fsm->InitStartState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+	fsm->InitStartState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_RUN));
 
 	return soldier;
+}
+
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawnObj(const SpanwerTemplate& t)
+{
+	auto spawnObj = ServerEngine::ObjectPool<GameObject>::MakeShared(t.objType, t.teamType);
+	const auto spawner = spawnObj->AddScript(std::make_unique<Spawner>());
+	spawner->SetOwner(spawnObj);
+	return spawnObj;
 }
