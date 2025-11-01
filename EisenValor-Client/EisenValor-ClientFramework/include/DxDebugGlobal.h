@@ -7,7 +7,7 @@ private:
 	friend class Singleton<DxDebugGlobal>;
 
 	DxDebugGlobal() = default;
-	virtual ~DxDebugGlobal() = default;
+	~DxDebugGlobal() override = default;
 
 public:
 	void Initialize() override;

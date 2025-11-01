@@ -108,7 +108,7 @@ DXGI_FORMAT GetTypedFormat(DXGI_FORMAT typelessFormat, bool isDepth = false);
 
 // 디버그 이름 설정
 void SetDebugName(ID3D12Object* object, const std::wstring& name);
-void SetDebugName(ID3D12Object* object, const std::string& name);
+void SetDebugName(ID3D12Object* object, std::string_view name);
 
 // 포맷 문자열 변환 (디버그용)
 std::string DXGIFormatToString(DXGI_FORMAT format);

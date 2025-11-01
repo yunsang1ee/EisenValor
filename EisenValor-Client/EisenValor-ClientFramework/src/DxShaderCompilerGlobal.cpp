@@ -14,8 +14,7 @@ void DxShaderCompilerGlobal::Initialize(std::wstring_view cacheDir)
 	std::filesystem::create_directories(m_cacheDirectory);
 
 	DEBUG_LOG_FMT(
-		"[DxShaderCompilerGlobal] Initialized. Cache: {}\n",
-		std::string(m_cacheDirectory.begin(), m_cacheDirectory.end())
+		"[DxShaderCompilerGlobal] Initialized. Cache: {}\n", std::filesystem::path(m_cacheDirectory).string()
 	);
 }
 
@@ -27,48 +26,48 @@ void DxShaderCompilerGlobal::Release()
 	m_compiler.Reset();
 }
 
-ComPtr<ID3DBlob> DxShaderCompilerGlobal::CompileShaderFromFile(
-	std::wstring_view									 shaderName,
-	std::wstring_view									 filename,
-	std::string_view									 entryPoint,
-	std::string_view									 target,
-	std::span<const std::pair<std::string, std::string>> defines
+ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileShaderFromFile(
+	std::wstring_view									   shaderName,
+	std::wstring_view									   filename,
+	std::string_view									   entryPoint,
+	std::string_view									   target,
+	std::span<const std::pair<std::wstring, std::wstring>> defines
 )
 {
-	auto dxcBlob = CompileInternal(shaderName, filename, entryPoint, target, defines, false);
-
-	// IDxcBlob → ID3DBlob 변환
-	ComPtr<ID3DBlob> d3dBlob;
-	ThrowIfFailed(D3DCreateBlob(dxcBlob->GetBufferSize(), &d3dBlob));
-	std::memcpy(d3dBlob->GetBufferPointer(), dxcBlob->GetBufferPointer(), dxcBlob->GetBufferSize());
-
-	return d3dBlob;
+	return CompileInternal(shaderName, filename, entryPoint, target, defines, false);
 }
 
 ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileRTShader(
-	std::wstring_view									 shaderName,
-	std::wstring_view									 filename,
-	std::string_view									 entryPoint,
-	std::span<const std::pair<std::string, std::string>> defines
+	std::wstring_view									   shaderName,
+	std::wstring_view									   filename,
+	std::string_view									   entryPoint,
+	std::span<const std::pair<std::wstring, std::wstring>> defines
 )
 {
 	return CompileInternal(shaderName, filename, entryPoint, "lib_6_6", defines, true);
 }
 
+ComPtr<ID3DBlob> DxShaderCompilerGlobal::AsD3DBlob(IDxcBlob* dxc)
+{
+	ComPtr<ID3DBlob> d3d;
+	ThrowIfFailed(D3DCreateBlob(dxc->GetBufferSize(), &d3d));
+	std::memcpy(d3d->GetBufferPointer(), dxc->GetBufferPointer(), dxc->GetBufferSize());
+	return d3d;
+}
+
 ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
-	std::wstring_view									 shaderName,
-	std::wstring_view									 filename,
-	std::string_view									 entryPoint,
-	std::string_view									 target,
-	std::span<const std::pair<std::string, std::string>> defines,
-	bool												 isRaytracing
+	std::wstring_view									   shaderName,
+	std::wstring_view									   filename,
+	std::string_view									   entryPoint,
+	std::string_view									   target,
+	std::span<const std::pair<std::wstring, std::wstring>> defines,
+	bool												   isRaytracing
 )
 {
-	const std::wstring shaderKey{shaderName};
-	const std::wstring sourceFile{filename};
+	std::wstring sourceFile{filename};
 
 	// 메모리 캐시 확인
-	if (auto it = m_memoryCache.find(shaderKey); it != m_memoryCache.end())
+	if (auto it = m_memoryCache.find(shaderName); it != m_memoryCache.end())
 	{
 		if (!IsSourceModified(sourceFile, it->second.sourceTimestamp))
 		{
@@ -88,7 +87,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	if (LoadFromCache(shaderName, sourceFile, cachedBlob))
 	{
 		auto timestamp = std::filesystem::last_write_time(sourceFile);
-		m_memoryCache[shaderKey] = {cachedBlob, timestamp, sourceFile};
+		m_memoryCache.try_emplace(std::wstring{shaderName}, cachedBlob, timestamp, sourceFile);
 
 		DEBUG_LOG_FMT("[DxShaderCompiler] Cache hit (disk): {}\n", std::string(shaderName.begin(), shaderName.end()));
 		return cachedBlob;
@@ -98,41 +97,49 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	ComPtr<IDxcBlobEncoding> sourceBlob;
 	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), nullptr, &sourceBlob));
 
-	std::vector<std::wstring> argStrings;
-	argStrings.reserve(10 + defines.size() * 2);
+	ComPtr<IDxcBlobUtf8> sourceUtf8;
+	ThrowIfFailed(m_dxcUtils->GetBlobAsUtf8(sourceBlob.Get(), &sourceUtf8));
+
+	std::vector<std::wstring> stringStorage;
+	stringStorage.reserve(2 + defines.size());
+	std::vector<const wchar_t*> args;
+	args.reserve(16 + defines.size() * 2);
 
 	// Entry point
-	argStrings.emplace_back(L"-E");
-	argStrings.emplace_back(entryPoint.begin(), entryPoint.end());
+	args.push_back(L"-E");
+	stringStorage.emplace_back(entryPoint.begin(), entryPoint.end());
+	args.push_back(stringStorage.back().c_str());
 
 	// Target
-	argStrings.emplace_back(L"-T");
-	argStrings.emplace_back(target.begin(), target.end());
+	args.push_back(L"-T");
+	stringStorage.emplace_back(target.begin(), target.end());
+	args.push_back(stringStorage.back().c_str());
 
 	// Defines
 	for (const auto& [name, value] : defines)
 	{
-		argStrings.emplace_back(L"-D");
-		argStrings.emplace_back(
-			std::format(L"{}={}", std::wstring(name.begin(), name.end()), std::wstring(value.begin(), value.end()))
-		);
+		args.push_back(L"-D");
+		std::wstring& defineStr = stringStorage.emplace_back();
+		defineStr.reserve(name.size() + 1 + value.size());
+		defineStr.append(name);
+		defineStr.push_back(L'=');
+		defineStr.append(value);
+		args.push_back(defineStr.c_str());
 	}
 
 #ifdef _DEBUG
-	constexpr std::array debugFlags{L"-Zi", L"-Od", L"-Qembed_debug"};
-	argStrings.insert(argStrings.end(), debugFlags.begin(), debugFlags.end());
+	args.push_back(L"-Zi");
+	args.push_back(L"-Od");
+	args.push_back(L"-Qembed_debug");
 #else
-	argStrings.emplace_back(L"-O3");
+	args.push_back(L"-O3");
 #endif
 
-	constexpr std::array commonFlags{L"-WX", L"-enable-16bit-types"};
-	argStrings.insert(argStrings.end(), commonFlags.begin(), commonFlags.end());
-
-	std::vector<const wchar_t*> args(argStrings.size());
-	std::transform(argStrings.begin(), argStrings.end(), args.begin(), [](const auto& str) { return str.c_str(); });
+	args.push_back(L"-WX");
+	args.push_back(L"-enable-16bit-types");
 
 	const DxcBuffer sourceBuffer{
-		.Ptr = sourceBlob->GetBufferPointer(), .Size = sourceBlob->GetBufferSize(), .Encoding = DXC_CP_UTF8
+		.Ptr = sourceUtf8->GetBufferPointer(), .Size = sourceUtf8->GetBufferSize(), .Encoding = DXC_CP_UTF8
 	};
 
 	ComPtr<IDxcResult> result;
@@ -163,7 +170,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 
 	SaveToCache(shaderName, sourceFile, shader.Get());
 	auto timestamp = std::filesystem::last_write_time(sourceFile);
-	m_memoryCache[shaderKey] = {shader, timestamp, sourceFile};
+	m_memoryCache.try_emplace(std::wstring{shaderName}, shader, timestamp, sourceFile);
 
 	DEBUG_LOG_FMT(
 		"[DxShaderCompiler] Compiled: {} (Entry: {}, Target: {})\n", std::string(shaderName.begin(), shaderName.end()),
@@ -175,8 +182,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 
 void DxShaderCompilerGlobal::InvalidateShader(std::wstring_view shaderName)
 {
-	const std::wstring key{shaderName};
-	m_memoryCache.erase(key);
+	m_memoryCache.erase(shaderName);
 
 	if (auto cachePath = GetCachePath(shaderName); std::filesystem::exists(cachePath))
 	{
@@ -196,7 +202,7 @@ void DxShaderCompilerGlobal::ClearAllCache()
 
 bool DxShaderCompilerGlobal::IsShaderCached(std::wstring_view shaderName) const
 {
-	return m_memoryCache.contains(std::wstring{shaderName});
+	return m_memoryCache.contains(shaderName);
 }
 
 std::wstring DxShaderCompilerGlobal::GetCachePath(std::wstring_view shaderName) const
@@ -207,7 +213,9 @@ std::wstring DxShaderCompilerGlobal::GetCachePath(std::wstring_view shaderName) 
 		safeName.begin(), safeName.end(), [](wchar_t c) { return c == L'/' || c == L'\\' || c == L':'; }, L'_'
 	);
 
-	return std::format(L"{}{}.dxc", m_cacheDirectory, safeName);
+	std::filesystem::path cachePath = m_cacheDirectory;
+	cachePath /= safeName + L".dxc";
+	return cachePath.wstring();
 }
 
 bool DxShaderCompilerGlobal::LoadFromCache(

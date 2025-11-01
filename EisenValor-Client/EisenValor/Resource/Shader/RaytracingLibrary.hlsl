@@ -1,3 +1,50 @@
+#define HLSL
+#include "RaytracingCommon.hlsli"
+
+// Global Root Signature
+// Slot 0: Acceleration Structure (TLAS, Vertex, VertexOffset, Material)
+// Slot 1: Output UAV 
+// Slot 2: Camera Constants
+
+cbuffer CameraConstants : register(b0)
+{
+    float4x4 viewMatrix;
+    float4x4 projMatrix;
+    float4x4 viewProjInverse;
+    float3 cameraPosition;
+    float _padding0;
+    float3 cameraDirection;
+    float _padding1;
+};
+
+RaytracingAccelerationStructure g_scene : register(t0);
+RWTexture2D<float4> g_output : register(u0);
+
+struct RayPayload
+{
+    float3 color;
+};
+
+[shader("raygeneration")]
+void RayGenMain()
+{
+    g_output[DispatchRaysIndex().xy] = float4(1, 0, 0, 1);
+}
+
+[shader("closesthit")]
+void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    payload.color = float3(0, 1, 0);
+}
+
+[shader("miss")]
+void MissMain(inout RayPayload payload)
+{
+    payload.color = float3(0, 0, 1);
+}
+
+
+/*
 // =======================================================================================
 // EisenValor Raytracing Library
 // Ground reflection + Player emissive raytracing
@@ -196,3 +243,4 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	finalColor += material.emissive * material.emissiveStrength;
 	payload.color += finalColor;
 }
+*/

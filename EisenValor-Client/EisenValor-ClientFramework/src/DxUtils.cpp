@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxUtils.h"
+#include <string_view>
 
 
 namespace DxUtils
@@ -76,7 +77,7 @@ void SetDebugName(ID3D12Object* object, const std::wstring& name)
 		object->SetName(name.c_str());
 }
 
-void SetDebugName(ID3D12Object* object, const std::string& name)
+void SetDebugName(ID3D12Object* object, std::string_view name)
 {
 	if (object)
 	{

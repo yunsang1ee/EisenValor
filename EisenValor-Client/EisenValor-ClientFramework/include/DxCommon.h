@@ -17,6 +17,22 @@ namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
 
+enum class EQueueType : uint8_t
+{
+	Graphics = 0,
+	Compute = 1,
+	Copy = 2
+};
+
+struct FenceHandle
+{
+	EQueueType queueType;
+	uint64_t   value;
+
+	FenceHandle() : queueType(EQueueType::Graphics), value(0) {}
+	FenceHandle(EQueueType qt, uint64_t v) : queueType(qt), value(v) {}
+};
+
 class HrException : public std::runtime_error
 {
 public:

@@ -8,7 +8,7 @@ private:
 	friend class Singleton<DxGfxCommandQueueGlobal>;
 
 	DxGfxCommandQueueGlobal() = default;
-	virtual ~DxGfxCommandQueueGlobal();
+	~DxGfxCommandQueueGlobal() override;
 
 public:
 	void Initialize(ID3D12Device* device);
@@ -25,7 +25,6 @@ public:
 
 private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
-	ID3D12Device*			   m_device = nullptr;
 	ComPtr<ID3D12Fence>		   m_idleFence;
 	uint64_t				   m_idleValue = 0;
 	HANDLE					   m_idleEvent = nullptr;

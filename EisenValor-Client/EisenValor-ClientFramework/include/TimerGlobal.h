@@ -8,7 +8,7 @@ private:
 	friend class Singleton<TimerGlobal>;
 
 	TimerGlobal() = default;
-	virtual ~TimerGlobal() = default;
+	~TimerGlobal() override = default;
 
 public:
 	void Initialize();

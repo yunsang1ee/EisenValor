@@ -8,7 +8,7 @@ private:
 	friend class Singleton<DxDeviceGlobal>;
 
 	DxDeviceGlobal() = default;
-	virtual ~DxDeviceGlobal() = default;
+	~DxDeviceGlobal() override = default;
 
 public:
 	void Initialize() override;

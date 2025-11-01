@@ -15,7 +15,6 @@ DxGfxCommandQueueGlobal::~DxGfxCommandQueueGlobal()
 void DxGfxCommandQueueGlobal::Initialize(ID3D12Device* device)
 {
 	assert(device && "[DxGfxCommandQueueGlobal] device is null");
-	m_device = device;
 
 	D3D12_COMMAND_QUEUE_DESC desc = {
 		.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -25,7 +24,7 @@ void DxGfxCommandQueueGlobal::Initialize(ID3D12Device* device)
 	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_commandQueue)));
 	m_commandQueue->SetName(L"GfxQueue");
 
-	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_idleFence)));
+	ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_idleFence)));
 	m_idleEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	assert(m_idleEvent && "Failed to create fence event");
 
@@ -41,7 +40,6 @@ void DxGfxCommandQueueGlobal::Release()
 	}
 	m_commandQueue.Reset();
 	m_idleFence.Reset();
-	m_device = nullptr;
 	m_idleValue = 0;
 }
 

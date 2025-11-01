@@ -34,7 +34,7 @@ private:
 		m_InputEventsBack.reserve(kMaxInputCode);
 	}
 
-	virtual ~InputGlobal() = default;
+	~InputGlobal() override = default;
 
 public:
 	void Initialize();

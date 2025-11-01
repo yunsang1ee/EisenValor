@@ -2,7 +2,6 @@
 #include <dxcapi.h>
 #include <string>
 #include <string_view>
-#include <vector>
 #include <unordered_map>
 #include <filesystem>
 #include <span>
@@ -11,35 +10,52 @@
 
 class DxShaderCompilerGlobal : public Singleton<DxShaderCompilerGlobal>
 {
+private:
+	friend class Singleton<DxShaderCompilerGlobal>;
+
+	DxShaderCompilerGlobal() = default;
+	~DxShaderCompilerGlobal() override = default;
+
 public:
 	void Initialize(std::wstring_view cacheDir = L"Build/ShaderCache/");
 	void Release();
 
 	// 일반 셰이더 컴파일 (VS/PS/CS)
-	ComPtr<ID3DBlob> CompileShaderFromFile(
-		std::wstring_view									 shaderName,
-		std::wstring_view									 filename,
-		std::string_view									 entryPoint,
-		std::string_view									 target,
-		std::span<const std::pair<std::string, std::string>> defines = {}
+	ComPtr<IDxcBlob> CompileShaderFromFile(
+		std::wstring_view									   shaderName,
+		std::wstring_view									   filename,
+		std::string_view									   entryPoint,
+		std::string_view									   target,
+		std::span<const std::pair<std::wstring, std::wstring>> defines = {}
 	);
 
 	// RT 셰이더 컴파일 (RayGen/Miss/ClosestHit/AnyHit)
 	ComPtr<IDxcBlob> CompileRTShader(
-		std::wstring_view									 shaderName,
-		std::wstring_view									 filename,
-		std::string_view									 entryPoint,
-		std::span<const std::pair<std::string, std::string>> defines = {}
+		std::wstring_view									   shaderName,
+		std::wstring_view									   filename,
+		std::string_view									   entryPoint,
+		std::span<const std::pair<std::wstring, std::wstring>> defines = {}
 	);
-
+	ComPtr<ID3DBlob> AsD3DBlob(IDxcBlob* dxc);
 
 	// 캐시 관리
-
 	void			   InvalidateShader(std::wstring_view shaderName);
 	void			   ClearAllCache();
 	[[nodiscard]] bool IsShaderCached(std::wstring_view shaderName) const;
 
 private:
+	struct WStringHash
+	{
+		using is_transparent = void;
+		size_t operator()(std::wstring_view s) const noexcept { return std::hash<std::wstring_view>{}(s); }
+	};
+
+	struct WStringEqual
+	{
+		using is_transparent = void;
+		bool operator()(std::wstring_view a, std::wstring_view b) const noexcept { return a == b; }
+	};
+
 	struct ShaderCacheEntry
 	{
 		ComPtr<IDxcBlob>				blob;
@@ -48,12 +64,12 @@ private:
 	};
 
 	[[nodiscard]] ComPtr<IDxcBlob> CompileInternal(
-		std::wstring_view									 shaderName,
-		std::wstring_view									 filename,
-		std::string_view									 entryPoint,
-		std::string_view									 target,
-		std::span<const std::pair<std::string, std::string>> defines,
-		bool												 isRaytracing
+		std::wstring_view									   shaderName,
+		std::wstring_view									   filename,
+		std::string_view									   entryPoint,
+		std::string_view									   target,
+		std::span<const std::pair<std::wstring, std::wstring>> defines,
+		bool												   isRaytracing
 	);
 
 	[[nodiscard]] std::wstring GetCachePath(std::wstring_view shaderName) const;
@@ -75,5 +91,5 @@ private:
 	ComPtr<IDxcIncludeHandler> m_includeHandler;
 	std::wstring			   m_cacheDirectory;
 
-	std::unordered_map<std::wstring, ShaderCacheEntry> m_memoryCache;
+	std::unordered_map<std::wstring, ShaderCacheEntry, WStringHash, WStringEqual> m_memoryCache;
 };

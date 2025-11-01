@@ -91,6 +91,15 @@
     <Filter Include="Common\Object">
       <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Resource\Low Resource">
+      <UniqueIdentifier>{0866b4f4-037e-4337-918d-7070c172dd98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Resource\Upload/Readback">
+      <UniqueIdentifier>{56190046-016b-4454-be0e-ab19be9728fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Resource\LifeTime/State">
+      <UniqueIdentifier>{efe1ed8e-ed2e-450b-844e-4f0563698af2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -121,7 +130,7 @@
     <ClInclude Include="include\GameFramework.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="include\DxDescriptorHeap.h">
+    <ClInclude Include="include\DxDescriptorHeapGlobal.h">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
     <ClInclude Include="include\PacketHandler.h">
@@ -184,6 +193,18 @@
     <ClInclude Include="include\IComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxResource.h">
+      <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxBuffer.h">
+      <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxGarbageCollectorGlobal.h">
+      <Filter>Graphics\Resource\LifeTime/State</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxTexture.h">
+      <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -205,7 +226,7 @@
     <ClCompile Include="src\DxSwapChain.cpp">
       <Filter>Graphics\Device</Filter>
     </ClCompile>
-    <ClCompile Include="src\DxDescriptorHeap.cpp">
+    <ClCompile Include="src\DxDescriptorHeapGlobal.cpp">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
     <ClCompile Include="src\PacketHandler.cpp">
@@ -258,6 +279,18 @@
     </ClCompile>
     <ClCompile Include="src\DxDeviceGlobal.cpp">
       <Filter>Graphics\Device</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxResource.cpp">
+      <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxBuffer.cpp">
+      <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxGarbageCollectorGlobal.cpp">
+      <Filter>Graphics\Resource\LifeTime/State</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxTexture.cpp">
+      <Filter>Graphics\Resource\Low Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

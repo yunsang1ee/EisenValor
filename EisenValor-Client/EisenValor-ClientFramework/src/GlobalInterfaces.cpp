@@ -4,6 +4,8 @@
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxShaderCompilerGlobal.h"
+#include "DxGarbageCollectorGlobal.h"
+#include "DxDescriptorHeapGlobal.h"
 
 #ifdef _DEBUG
 #include "DxDebugGlobal.h"
@@ -21,14 +23,19 @@ void Initialize()
 	MANAGER(DxDebugGlobal).Initialize();
 #endif
 	MANAGER(DxDeviceGlobal).Initialize();
+	MANAGER(DxGarbageCollectorGlobal).Initialize();
 	MANAGER(DxShaderCompilerGlobal).Initialize();
-	MANAGER(DxGfxCommandQueueGlobal).Initialize(MANAGER(DxDeviceGlobal).GetDevice());
+	auto* device = MANAGER(DxDeviceGlobal).GetDevice();
+	MANAGER(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
+	MANAGER(DxGfxCommandQueueGlobal).Initialize(device);
 }
 
 void Shutdown()
 {
 	MANAGER(DxGfxCommandQueueGlobal).Release();
+	MANAGER(DxDescriptorHeapGlobal).Release();
 	MANAGER(DxShaderCompilerGlobal).Release();
+	MANAGER(DxGarbageCollectorGlobal).Release();
 	MANAGER(DxDeviceGlobal).Release();
 #ifdef _DEBUG
 	MANAGER(DxDebugGlobal).Release();

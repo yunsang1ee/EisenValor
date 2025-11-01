@@ -165,16 +165,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
     <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
     <ClInclude Include="include\DxCommon.h" />
     <ClInclude Include="include\DxDebugGlobal.h" />
-    <ClInclude Include="include\DxDescriptorHeap.h" />
+    <ClInclude Include="include\DxDescriptorHeapGlobal.h" />
     <ClInclude Include="include\DxDeviceGlobal.h" />
     <ClInclude Include="include\DxFeatureCaps.h" />
+    <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
+    <ClInclude Include="include\DxResource.h" />
     <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
+    <ClInclude Include="include\DxTexture.h" />
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
@@ -197,15 +201,19 @@
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
     <ClCompile Include="src\DxCommandContextPool.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
     <ClCompile Include="src\DxDebugGlobal.cpp" />
-    <ClCompile Include="src\DxDescriptorHeap.cpp" />
+    <ClCompile Include="src\DxDescriptorHeapGlobal.cpp" />
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
     <ClCompile Include="src\DxFeatureCaps.cpp" />
+    <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
+    <ClCompile Include="src\DxResource.cpp" />
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
+    <ClCompile Include="src\DxTexture.cpp" />
     <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
