@@ -73,7 +73,7 @@ namespace ServerPackets {
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_HIT_PACKET(const uint32 id, const uint32 hp) noexcept
 	{
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_HIT_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_HIT_PACKET, id, hp));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PLAYER_DAMAGED_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_PLAYER_DAMAGED_PACKET, id, hp));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMANING_GAME_TIME_PACKET(const uint32 remainTime)

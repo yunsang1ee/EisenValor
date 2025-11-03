@@ -16,20 +16,20 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace FB_ENUMS {
 
 enum GAME_OBJECT_TYPE : uint8_t {
-  GAME_OBJECT_TYPE_PLAYER = 0,
-  GAME_OBJECT_TYPE_NPC = 1,
+  GAME_OBJECT_TYPE_NPC = 0,
+  GAME_OBJECT_TYPE_PLAYER = 1,
   GAME_OBJECT_TYPE_SPAWNER = 2,
   GAME_OBJECT_TYPE_VALLISTAR = 3,
   GAME_OBJECT_TYPE_PROJECTILE = 4,
   GAME_OBJECT_TYPE_END = 5,
-  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_PLAYER,
+  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NPC,
   GAME_OBJECT_TYPE_MAX = GAME_OBJECT_TYPE_END
 };
 
 inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
   static const GAME_OBJECT_TYPE values[] = {
-    GAME_OBJECT_TYPE_PLAYER,
     GAME_OBJECT_TYPE_NPC,
+    GAME_OBJECT_TYPE_PLAYER,
     GAME_OBJECT_TYPE_SPAWNER,
     GAME_OBJECT_TYPE_VALLISTAR,
     GAME_OBJECT_TYPE_PROJECTILE,
@@ -40,8 +40,8 @@ inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
 
 inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
   static const char * const names[7] = {
-    "PLAYER",
     "NPC",
+    "PLAYER",
     "SPAWNER",
     "VALLISTAR",
     "PROJECTILE",
@@ -52,7 +52,7 @@ inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
 }
 
 inline const char *EnumNameGAME_OBJECT_TYPE(GAME_OBJECT_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_PLAYER, GAME_OBJECT_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_NPC, GAME_OBJECT_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesGAME_OBJECT_TYPE()[index];
 }
@@ -125,18 +125,20 @@ inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
 
 enum SOLDIER_STATE_TYPE : uint8_t {
   SOLDIER_STATE_TYPE_IDLE = 0,
-  SOLDIER_STATE_TYPE_RUN = 1,
-  SOLDIER_STATE_TYPE_ATTACK = 2,
-  SOLDIER_STATE_TYPE_DEFENSE = 3,
-  SOLDIER_STATE_TYPE_DEAD = 4,
+  SOLDIER_STATE_TYPE_MOVE = 1,
+  SOLDIER_STATE_TYPE_CHASE = 2,
+  SOLDIER_STATE_TYPE_ATTACK = 3,
+  SOLDIER_STATE_TYPE_DEFENSE = 4,
+  SOLDIER_STATE_TYPE_DEAD = 5,
   SOLDIER_STATE_TYPE_MIN = SOLDIER_STATE_TYPE_IDLE,
   SOLDIER_STATE_TYPE_MAX = SOLDIER_STATE_TYPE_DEAD
 };
 
-inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[5] {
+inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[6] {
   static const SOLDIER_STATE_TYPE values[] = {
     SOLDIER_STATE_TYPE_IDLE,
-    SOLDIER_STATE_TYPE_RUN,
+    SOLDIER_STATE_TYPE_MOVE,
+    SOLDIER_STATE_TYPE_CHASE,
     SOLDIER_STATE_TYPE_ATTACK,
     SOLDIER_STATE_TYPE_DEFENSE,
     SOLDIER_STATE_TYPE_DEAD
@@ -145,9 +147,10 @@ inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[5] {
 }
 
 inline const char * const *EnumNamesSOLDIER_STATE_TYPE() {
-  static const char * const names[6] = {
+  static const char * const names[7] = {
     "IDLE",
-    "RUN",
+    "MOVE",
+    "CHASE",
     "ATTACK",
     "DEFENSE",
     "DEAD",

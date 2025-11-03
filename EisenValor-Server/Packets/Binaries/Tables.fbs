@@ -15,7 +15,6 @@ table SC_LOGIN_PACKET {
 	player_id : uint;
 }
 
-
 // ================================================
 //					ENTER GAME
 // ================================================
@@ -115,7 +114,7 @@ table CS_PLAYER_ATTACK {
 // ================================================
 //						HIT
 // ================================================
-table SC_HIT_PACKET {
+table SC_PLAYER_DAMAGED_PACKET {
 	obj_id: uint;
 	current_hp: uint;
 }

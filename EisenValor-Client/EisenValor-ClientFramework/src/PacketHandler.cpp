@@ -186,7 +186,7 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 	return true;
 }
 
-bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt)
+bool Handle_SC_PLAYER_DAMAGED_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_DAMAGED_PACKET& recvPkt)
 {
 	const uint32 objID{recvPkt.obj_id()};
 	auto obj = MANAGER(GameObjectManager)->FindObject(objID);
@@ -242,6 +242,7 @@ bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INF
 
 		if(recvPkt.hp() <= 0) {
 			std::cout << std::format("{}th NPC DEAD", id) << std::endl;
+			obj->alive = false;
 		}
 	}
 

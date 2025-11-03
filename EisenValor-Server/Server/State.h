@@ -32,7 +32,9 @@ namespace Server {
 
 		};
 
-
+		// ============================================
+		//					IDLE
+		// ============================================
 		class IdleState : public State {
 		public:
 			float enemyDetectionRange{};
@@ -45,21 +47,43 @@ namespace Server {
 
 		};
 
-		class RunState : public State {
+
+		// ============================================
+		//					MOVE
+		// ============================================
+		class MoveState : public State {
 		public:
 			float combatRange;
 
 		public:
-			explicit RunState(const uint8 type);
-			virtual ~RunState() = default;
+			explicit MoveState(const uint8 type);
+			virtual ~MoveState() = default;
 
 		public:
 		};
 
+
+		// ============================================
+		//					CHASE
+		// ============================================
+		class ChaseState : public State {
+		public:
+			float chaseSpeed;
+			float combatRange;
+
+		public:
+			explicit ChaseState(const uint8 type);
+			virtual ~ChaseState() = default;
+		};
+
+
+		// ============================================
+		//					ATTACK
+		// ============================================
 		class AttackState : public State {
 		public:
-			float combatRange;
-			std::chrono::seconds attackCycleTime;
+			float					combatRange;
+			std::chrono::seconds	attackCycleTime;
 
 		public:
 			explicit AttackState(const uint8 type);
@@ -68,6 +92,10 @@ namespace Server {
 		public:
 		};
 
+
+		// ============================================
+		//					DEFENSE
+		// ============================================
 		class DefenseState : public State {
 		public:
 			explicit DefenseState(const uint8 type);
@@ -76,6 +104,10 @@ namespace Server {
 		public:
 		};
 
+
+		// ============================================
+		//					DEAD
+		// ============================================
 		class DeadState : public State {
 		public:
 			explicit DeadState(const uint8 type);

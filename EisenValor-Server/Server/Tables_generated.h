@@ -63,8 +63,8 @@ struct CS_SOLDIER_FORMATIONBuilder;
 struct CS_PLAYER_ATTACK;
 struct CS_PLAYER_ATTACKBuilder;
 
-struct SC_HIT_PACKET;
-struct SC_HIT_PACKETBuilder;
+struct SC_PLAYER_DAMAGED_PACKET;
+struct SC_PLAYER_DAMAGED_PACKETBuilder;
 
 struct CS_SOLDIER_MOVE;
 struct CS_SOLDIER_MOVEBuilder;
@@ -418,7 +418,7 @@ struct SC_ADD_OBJ_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NPC,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
     uint32_t hp = 0) {
@@ -507,7 +507,7 @@ struct SC_ADD_NPC_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_ADD_NPC_PACKET> CreateSC_ADD_NPC_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NPC,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
     FB_ENUMS::NPC_TYPE npc_type = FB_ENUMS::NPC_TYPE_GENERAL,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,
@@ -856,8 +856,8 @@ inline ::flatbuffers::Offset<CS_PLAYER_ATTACK> CreateCS_PLAYER_ATTACK(
   return builder_.Finish();
 }
 
-struct SC_HIT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_HIT_PACKETBuilder Builder;
+struct SC_PLAYER_DAMAGED_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_PLAYER_DAMAGED_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_CURRENT_HP = 6
@@ -876,32 +876,32 @@ struct SC_HIT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
 };
 
-struct SC_HIT_PACKETBuilder {
-  typedef SC_HIT_PACKET Table;
+struct SC_PLAYER_DAMAGED_PACKETBuilder {
+  typedef SC_PLAYER_DAMAGED_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_HIT_PACKET::VT_OBJ_ID, obj_id, 0);
+    fbb_.AddElement<uint32_t>(SC_PLAYER_DAMAGED_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_current_hp(uint32_t current_hp) {
-    fbb_.AddElement<uint32_t>(SC_HIT_PACKET::VT_CURRENT_HP, current_hp, 0);
+    fbb_.AddElement<uint32_t>(SC_PLAYER_DAMAGED_PACKET::VT_CURRENT_HP, current_hp, 0);
   }
-  explicit SC_HIT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_PLAYER_DAMAGED_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_HIT_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_PLAYER_DAMAGED_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_HIT_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_PLAYER_DAMAGED_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_HIT_PACKET> CreateSC_HIT_PACKET(
+inline ::flatbuffers::Offset<SC_PLAYER_DAMAGED_PACKET> CreateSC_PLAYER_DAMAGED_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
     uint32_t current_hp = 0) {
-  SC_HIT_PACKETBuilder builder_(_fbb);
+  SC_PLAYER_DAMAGED_PACKETBuilder builder_(_fbb);
   builder_.add_current_hp(current_hp);
   builder_.add_obj_id(obj_id);
   return builder_.Finish();
@@ -1131,7 +1131,7 @@ struct SC_NPC_INFOBuilder {
 inline ::flatbuffers::Offset<SC_NPC_INFO> CreateSC_NPC_INFO(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NPC,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_BLUE,
     FB_ENUMS::NPC_TYPE npc_type = FB_ENUMS::NPC_TYPE_GENERAL,
     const FB_STRUCTS::KinematicInfo *kinematic_info = nullptr,

@@ -3,6 +3,11 @@
 
 #include "State.h"
 	
+Server::Contents::FSM::FSM()
+	:m_curState{nullptr}
+{
+}
+
 void Server::Contents::FSM::InitStartState(const uint8 state)
 {
 	auto iter = m_states.find(state);
@@ -33,4 +38,15 @@ void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt)
 		m_curState = iter->second.get();
 		m_curState->Enter(dt);
 	}
+
+	// Move (전달, A)		Chase
+	// Chase (전달, B)		Attack
+
+	// State*
+	// - Idle (Enter) 
+	// - Move (Enter)
+	// - Chase (Enter)
+	// - Attack (Enter)
+
+	// m_curState->Enter(A | B)
 }

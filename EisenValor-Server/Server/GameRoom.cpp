@@ -195,6 +195,9 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<P
 	for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
 		for(const auto& [targetID, object] : objectGroup) {
 
+			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) continue;
+			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
+
 			const Vec3& pos = object->GetPos();
 			Vec3 toTargetDir = pos - playerPos;
 			const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
@@ -216,7 +219,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<P
 				hp -= playerAtk;
 				if(hp <= 0) {
 					std::static_pointer_cast<Server::Contents::Creature>(object)->SetAlive(false);
-					std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = std::move(object)]()
+					std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = object]()
 						{
 							t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
 						});
@@ -275,7 +278,7 @@ void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(const std::shared_ptr<Play
 		const auto npc = std::static_pointer_cast<Server::Contents::NPC>(n);
 		const auto type = std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType();
 		if(type == FB_ENUMS::NPC_TYPE_SOLDIER) {
-			npc->GetComponent<FSM>()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_RUN, m_dt);
+			npc->GetComponent<FSM>()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, m_dt);
 		}
 	}
 }
@@ -291,7 +294,11 @@ void Server::Contents::GameRoom::Update()
 
 	m_lastUpdate = now;
 
-	while(false == m_eventQueue.empty()) {
+	// 이벤트큐
+
+	// 오브젝트 생성 및 삭제
+	// CHANGE_FSM_EVE
+		while(false == m_eventQueue.empty()) {
 		auto eve = m_eventQueue.front();
 		eve();
 		m_eventQueue.pop();
@@ -300,6 +307,7 @@ void Server::Contents::GameRoom::Update()
 	for(auto& team : m_teams)
 		for(auto& objGroup : team.GetAllObjectGroups()) 
 			for(auto& [id, obj] : objGroup) 
+				if(obj)
 					obj->Update(m_dt);
 
 	CheckGameTime(m_dt);

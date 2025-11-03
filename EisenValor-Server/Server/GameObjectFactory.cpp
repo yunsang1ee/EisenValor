@@ -62,8 +62,12 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
 	idleState->enemyDetectionRange = t.enemyDetectionRange;
 
-	auto runState = std::make_unique<Server::Contents::SoldierRunState>();
+	auto runState = std::make_unique<Server::Contents::SoldierMoveState>();
 	runState->combatRange = t.combatRange;
+
+	auto chaseState = std::make_unique<Server::Contents::SoldierChaseState>();
+	chaseState->combatRange = t.combatRange;
+	chaseState->chaseSpeed = 2.f;
 
 	auto attackState = std::make_unique<Server::Contents::SoldierAttackState>();
 	attackState->combatRange = t.combatRange;
@@ -73,10 +77,11 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(runState));
+	fsm->AddState(std::move(chaseState));
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(defenseState));
 
-	fsm->InitStartState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_RUN));
+	fsm->InitStartState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 
 	return soldier;
 }
