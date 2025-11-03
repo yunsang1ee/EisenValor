@@ -12,6 +12,10 @@ namespace Server {
 		private:
 			std::map<uint8, std::shared_ptr<State>>				m_states;
 			State*												m_curState;
+			
+		public:
+			FSM();
+			virtual ~FSM()=default;
 
 		public:
 			void InitStartState(const uint8 state);

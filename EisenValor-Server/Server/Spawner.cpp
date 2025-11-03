@@ -16,12 +16,12 @@ void Server::Contents::Spawner::Update(const float dt)
 		m_accDT = 0.f;
 		
 		gameRoom->AddEvent([owner = GetOwner(), &team]() {
-			for(int i = 0; i < 3; ++i) {
+			for(int i = 0; i < SPAWN_NPC_COUNT; ++i) {
 				SoldierTemplate s;
 				s.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
 				s.teamType = owner->GetTeamType();
 				s.stat = StatInfo{ 100, 10, 100 };
-				s.enemyDetectionRange = 2.f;
+				s.enemyDetectionRange = 100.f;
 				s.combatRange = 0.3f;
 				s.attackCycleTime = 1s;
 

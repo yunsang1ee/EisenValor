@@ -5,5 +5,5 @@ int main()
 {
 	Server::ServerManager::Init();
 	Server::ServerManager::Run();
-	Server::ServerManager::Shutdown();
+	Server::ServerManager::Shutdown();	
 }

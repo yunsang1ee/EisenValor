@@ -60,8 +60,8 @@ void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
 		}
 	}
 
-	if(m_objects[type].find(id) == m_objects[type].end())
-		m_objects[type].try_emplace(id, std::move(object));
+	if(m_objectGroups[type].find(id) == m_objectGroups[type].end())
+		m_objectGroups[type].try_emplace(id, std::move(object));
 }
 
 void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)
@@ -70,15 +70,15 @@ void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)
 	const FB_ENUMS::GAME_OBJECT_TYPE objType{ object->GetObjType() };
 	auto pb = ServerPackets::Make_SC_REMOVE_OBJ(id);
 	m_room->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
-	if(m_objects[etou8(objType)].find(id) != m_objects[etou8(objType)].end()) {
-		m_objects[etou8(objType)].erase(id);
+	if(m_objectGroups[etou8(objType)].find(id) != m_objectGroups[etou8(objType)].end()) {
+		m_objectGroups[etou8(objType)].erase(id);
 		std::cout << std::format("ID: {} 게임에서 삭제!", id) << std::endl;;
 	}
 }
 
 std::shared_ptr<Server::Contents::GameObject> Server::Contents::Team::GetObj(const uint32 id)
 {
-	for(auto& group : m_objects) {
+	for(auto& group : m_objectGroups) {
 		auto iter = group.find(id);
 		if(iter != group.end()) return iter->second;
 	}

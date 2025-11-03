@@ -15,7 +15,7 @@ Server::Contents::IdleState::IdleState(const uint8 type)
 {
 }
 
-Server::Contents::RunState::RunState(const uint8 type)
+Server::Contents::MoveState::MoveState(const uint8 type)
 	:State{ type }
 {
 }
@@ -33,4 +33,10 @@ Server::Contents::DefenseState::DefenseState(const uint8 type)
 Server::Contents::DeadState::DeadState(const uint8 type)
 	:State{ type }
 {
+}
+
+Server::Contents::ChaseState::ChaseState(const uint8 type)
+	:State{ type }
+{
+
 }
