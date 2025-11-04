@@ -89,3 +89,20 @@ void DxCommandContext::MarkAsCompleted()
 		);
 	}
 }
+
+void DxCommandContext::MarkAsExecuting()
+{
+	if (m_state == DxCommandContextState::Recording)
+	{
+		Close();
+	}
+
+	if (m_state != DxCommandContextState::Closed)
+	{
+		DEBUG_LOG_FMT("[DxCommandContext] Error: Cannot execute context in state {}\n", static_cast<int>(m_state));
+		return;
+	}
+
+	m_state = DxCommandContextState::Executing;
+	// DEBUG_LOG_FMT("[DxCommandContext] Executed successfully (state: Executing).\n");
+}

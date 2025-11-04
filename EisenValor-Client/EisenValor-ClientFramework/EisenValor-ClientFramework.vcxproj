@@ -174,11 +174,13 @@
     <ClInclude Include="include\DxDescriptorHeapGlobal.h" />
     <ClInclude Include="include\DxDeviceGlobal.h" />
     <ClInclude Include="include\DxFeatureCaps.h" />
+    <ClInclude Include="include\DxFrameResource.h" />
     <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
     <ClInclude Include="include\DxResource.h" />
     <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\DxTexture.h" />
+    <ClInclude Include="include\DxUploadHeap.h" />
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
@@ -209,11 +211,13 @@
     <ClCompile Include="src\DxDescriptorHeapGlobal.cpp" />
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
     <ClCompile Include="src\DxFeatureCaps.cpp" />
+    <ClCompile Include="src\DxFrameResource.cpp" />
     <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
     <ClCompile Include="src\DxResource.cpp" />
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\DxTexture.cpp" />
+    <ClCompile Include="src\DxUploadHeap.cpp" />
     <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
     <ClCompile Include="src\GameObject.cpp" />

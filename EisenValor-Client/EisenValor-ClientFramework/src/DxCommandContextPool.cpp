@@ -1,72 +1,110 @@
 #include "stdafxClientFramework.h"
 #include "DxCommandContextPool.h"
 
-#include "DxCommandQueueGlobal.h"
-
-DxCommandContextPool::FrameEntry::FrameEntry(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type, uint32_t frameIndex)
-	: context(device, type)
+void DxCommandContextPool::Initialize(ID3D12Device* device, uint32_t numWorkers, D3D12_COMMAND_LIST_TYPE type)
 {
-	ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
-	fence.Get()->SetName((L"FrameEntryFence_" + std::to_wstring(frameIndex)).c_str());
-}
+	assert(device && "[DxCommandContextPool] Device is null");
+	assert(numWorkers > 0 && numWorkers <= 64 && "[DxCommandContextPool] Invalid worker count");
 
-DxCommandContextPool::DxCommandContextPool(
-	ID3D12Device* device, DxGfxCommandQueueGlobal& queue, uint32_t numFrames, D3D12_COMMAND_LIST_TYPE type
-)
-	: m_queue(queue), m_type(type)
-{
-	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	m_entries.reserve(numFrames);
+	m_type = type;
+	m_workers.resize(numWorkers);
+	m_availableIndices.clear();
+	m_availableIndices.reserve(numWorkers);
 
-	for (uint32_t i = 0; i < numFrames; ++i)
-		m_entries.emplace_back(device, type, i);
-}
-
-DxCommandContextPool::~DxCommandContextPool()
-{
-	CloseHandle(m_fenceEvent);
-}
-
-void DxCommandContextPool::AdvanceFrame()
-{
-	const uint32_t prevIndex = m_frameIndex;
-	m_frameIndex = (m_frameIndex + 1) % m_entries.size();
-
-	// GPU-level synchronization
-	FrameEntry& prevFrame = m_entries[prevIndex];
-	// Wait for the GPU to finish processing the previous frame's commands
-	m_queue.Wait(prevFrame.fence.Get(), prevFrame.fenceValue);
-
-	WaitForGPU(prevIndex);
-
-	if (prevFrame.context.IsExecuting())
+	for (uint32_t i = 0; i < numWorkers; ++i)
 	{
-		prevFrame.context.MarkAsCompleted();
+		m_workers[i].context = std::make_unique<DxCommandContext>(device, type);
+		m_workers[i].state = EState::Free;
+		m_availableIndices.push_back(i);
 	}
 
-	m_entries[m_frameIndex].context.Reset();
+	DEBUG_LOG_FMT("[DxCommandContextPool] Initialized {} workers (Type: {})\n", numWorkers, static_cast<int>(type));
 }
 
-void DxCommandContextPool::WaitForGPU(uint32_t frameIndex)
+void DxCommandContextPool::ResetAll()
 {
-	const FrameEntry& frame = m_entries[frameIndex];
-	if (frame.fence->GetCompletedValue() < frame.fenceValue)
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	for (auto& worker : m_workers)
 	{
-		ThrowIfFailed(frame.fence->SetEventOnCompletion(frame.fenceValue, m_fenceEvent));
-		WaitForSingleObject(m_fenceEvent, INFINITE);
+		worker.context->Reset();
+		worker.state = EState::Free;
 	}
+
+	m_availableIndices.clear();
+	m_availableIndices.reserve(m_workers.size());
+	for (uint32_t i = 0; i < m_workers.size(); ++i)
+	{
+		m_availableIndices.push_back(i);
+	}
+
+	DEBUG_LOG_FMT("[DxCommandContextPool] Reset {} workers\n", m_workers.size());
 }
 
-DxCommandContext& DxCommandContextPool::GetCurrentContext()
+DxCommandContext* DxCommandContextPool::Acquire()
 {
-	return m_entries[m_frameIndex].context;
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	if (m_availableIndices.empty())
+	{
+		DEBUG_LOG_FMT("[DxCommandContextPool] Warning: No available workers\n");
+		return nullptr;
+	}
+
+	uint32_t workerIndex = m_availableIndices.back();
+	m_availableIndices.pop_back();
+	auto& worker = m_workers[workerIndex];
+	assert(worker.state == EState::Free && "[DxCommandContextPool] Acquiring a non-free worker"); 
+	worker.state = EState::Recording;
+
+	return worker.context.get();
 }
 
-void DxCommandContextPool::SignalCurrentFrame()
+void DxCommandContextPool::Release(DxCommandContext* context)
 {
-	FrameEntry& frame = m_entries[m_frameIndex];
+	std::lock_guard<std::mutex> lock(m_mutex);
 
-	frame.context.Execute(m_queue);
+	for (uint32_t i = 0; i < m_workers.size(); ++i)
+	{
+		auto& worker = m_workers[i];
+		if (worker.context.get() == context)
+		{
+			assert(worker.state == EState::Recording && "[DxCommandContextPool] Releasing non-recording worker");
+			if (worker.context->IsRecording())
+			{
+				worker.context->Close();
+			}
+			worker.state = EState::Ready;
+			return;
+		}
+	}
 
-	m_queue.Signal(frame.fence.Get(), ++frame.fenceValue);
+	assert(false && "[DxCommandContextPool] Context not found in pool");
+}
+
+std::vector<ID3D12CommandList*> DxCommandContextPool::GetAllCommandLists()
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	const auto readyCount = std::count_if(
+		m_workers.begin(), m_workers.end(), [](const WorkerEntry& w) { return w.state == EState::Ready; }
+	);
+
+	std::vector<ID3D12CommandList*> lists;
+	lists.reserve(readyCount);
+
+	for (auto& w : m_workers)
+	{
+		if (w.state == EState::Ready)
+		{
+			lists.push_back(w.context->CommandList());
+		}
+	}
+	return lists;
+}
+
+uint32_t DxCommandContextPool::GetAvailableCount() const
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	return static_cast<uint32_t>(m_availableIndices.size());
 }

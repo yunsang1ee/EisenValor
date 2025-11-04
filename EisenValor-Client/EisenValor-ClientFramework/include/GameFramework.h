@@ -1,10 +1,10 @@
 #pragma once
 #include "stdafxClientFramework.h"
 #include "DxSwapChain.h"
-#include "DxCommandContextPool.h"
 #include "DxCommon.h"
 #include "DxFeatureCaps.h"
 #include "GameObject.h"
+#include "DxFrameResource.h"
 #include "Ground.h"
 #include <memory>
 
@@ -45,37 +45,46 @@ private:
 
 	void RecreateDepthStencilBuffer(uint32_t width, uint32_t height);
 
+	void CreateRaytracingResources(uint32_t width, uint32_t height);
+	void ResizeRaytracingResources(uint32_t width, uint32_t height);
+
 private:
 	DxFeatureCaps m_featureCaps;
 	// 새로 추가할 멤버들 25.07.19
 	std::unique_ptr<DxSwapChain>		  m_swapChain;
 	ComPtr<ID3D12DescriptorHeap>		  m_rtvDescriptorHeap;
 	uint32_t							  m_rtvDescriptorSize = 0;
-	std::unique_ptr<DxCommandContextPool> m_commandContextPool;
 
-	// 깊이 버퍼 관련 멤버 추가
-	ComPtr<ID3D12Resource>		 m_depthStencilBuffer;
-	ComPtr<ID3D12DescriptorHeap> m_dsvDescriptorHeap;
-	uint32_t					 m_dsvDescriptorSize = 0;
+	static constexpr uint32_t								  kFrameCount = 3;
+	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
+	uint32_t												  m_currentFrameIndex = 0;
 
-	// 렌더링 리소스 추가 25.07.20
-	ComPtr<ID3D12RootSignature> m_rootSignature;
-	ComPtr<ID3D12PipelineState> m_pipelineState;
-	ComPtr<ID3D12Resource>		m_vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW	m_vertexBufferView;
+	ComPtr<ID3D12Resource> m_raytracingOutput;
+	uint32_t			   m_raytracingOutputUAVIndex = ~0u;
 
-	// 인덱스 버퍼 추가 25.07.20
-	ComPtr<ID3D12Resource>	m_indexBuffer;
-	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+	//// 깊이 버퍼 관련 멤버 추가
+	//ComPtr<ID3D12Resource>		 m_depthStencilBuffer;
+	//ComPtr<ID3D12DescriptorHeap> m_dsvDescriptorHeap;
+	//uint32_t					 m_dsvDescriptorSize = 0;
 
-	// Ground Constant Buffer
-	ComPtr<ID3D12Resource> m_constantBuffer2;
-	ConstantBuffer		   m_constantBufferData2;
-	UINT8*				   m_pCbvDataBegin2 = nullptr;
+	//// 렌더링 리소스 추가 25.07.20
+	//ComPtr<ID3D12RootSignature> m_rootSignature;
+	//ComPtr<ID3D12PipelineState> m_pipelineState;
+	//ComPtr<ID3D12Resource>		m_vertexBuffer;
+	//D3D12_VERTEX_BUFFER_VIEW	m_vertexBufferView;
 
+	//// 인덱스 버퍼 추가 25.07.20
+	//ComPtr<ID3D12Resource>	m_indexBuffer;
+	//D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+
+	//// Ground Constant Buffer
+	//ComPtr<ID3D12Resource> m_constantBuffer2;
+	//ConstantBuffer		   m_constantBufferData2;
+	//UINT8*				   m_pCbvDataBegin2 = nullptr;
 
 	// Ground 객체 추가
 	std::unique_ptr<Ground> m_ground;
+
 
 private:
 	HWND	  m_hWnd = nullptr;

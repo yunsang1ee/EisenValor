@@ -59,6 +59,13 @@ private:
 
 //===============================================================
 
+inline UINT D3D12CalcSubresource(UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize)
+{
+	return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
+}
+
+//===============================================================
+
 struct CameraConstants
 {
 	DirectX::XMFLOAT4X4 viewMatrix;

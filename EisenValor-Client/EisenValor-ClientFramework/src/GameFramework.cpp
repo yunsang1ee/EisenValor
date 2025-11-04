@@ -15,12 +15,11 @@
 #include "LocalPlayer.h"
 #include "Ground.h"
 #include "NPC.h"
+#include "DxDescriptorHeapGlobal.h"
+#include "DxCommandContext.h"
 
 using namespace DirectX;
 #define SERVER
-
-// 삼중 버퍼링
-inline constexpr uint32_t kBackBufferCount = 3;
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
@@ -38,15 +37,19 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	time.SetFixedFPS(60);
 	time.SetTargetFPS(144);
 
-	// 1. 스왑체인 생성 코드 추가 25.07.19
-	// RTV 디스크립터 힙 생성
 	auto& device = MANAGER(DxDeviceGlobal);
 	m_featureCaps = DxFeatureCaps::Query(device.GetDevice(), device.GetAdapter());
 	m_featureCaps.LogCapabilities();
 
+	if (m_featureCaps.rayTracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+	{
+		DEBUG_LOG_FMT("[GameFramework] ERROR: DXR not supported on this device!\n");
+		return false;
+	}
+
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.NumDescriptors = 3; // 백버퍼 3개
+	rtvHeapDesc.NumDescriptors = kFrameCount;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -59,31 +62,47 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	// 스왑체인 생성
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
-
 	m_swapChain = std::make_unique<DxSwapChain>(
-		device.GetDevice(), device.GetFactory(), commandQueue, m_hWnd, width, height, kBackBufferCount,
+		device.GetDevice(), device.GetFactory(), commandQueue, m_hWnd, width, height, kFrameCount,
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
 
-	m_swapChain->SetResizeCallback([this](uint32_t w, uint32_t h) { RecreateDepthStencilBuffer(w, h); });
+	m_swapChain->SetResizeCallback(
+		[this](uint32_t w, uint32_t h)
+		{
+			// RecreateDepthStencilBuffer(w, h);
+			ResizeRaytracingResources(w, h);
+		}
+	);
 
 	//-------------------------- 깊이 버퍼용 ------------
-	// DSV 디스크립터 힙 생성 (깊이 버퍼용)
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvDescriptorHeap)));
-	m_dsvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
-	// 깊이 버퍼 생성
-	RecreateDepthStencilBuffer(width, height);
+	//// DSV 디스크립터 힙 생성 (깊이 버퍼용)
+	// D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	// dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	// dsvHeapDesc.NumDescriptors = 1;
+	// dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	// ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvDescriptorHeap)));
+	// m_dsvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	//
+	//  깊이 버퍼 생성
+	// RecreateDepthStencilBuffer(width, height);
 
 	//---------------------------------------------------
 
-	// 커맨드 컨텍스트 풀 생성
-	m_commandContextPool = std::make_unique<DxCommandContextPool>(device.GetDevice(), commandQueue, kBackBufferCount);
+	for (uint32_t i = 0; i < kFrameCount; ++i)
+	{
+		m_frameResources[i] = std::make_unique<DxFrameResource>();
+		m_frameResources[i]->Initialize(device.GetDevice(), i);
+	}
 
+	CreateRaytracingResources(width, height);
+
+	// TODO: BLAS/TLAS 생성
+	// TODO: RT Pipeline State 생성
+	// TODO: Shader Table 생성
+
+	// Legacy 파이프라인용
+	/*
 	// 루트 파라미터 정의 (상수 버퍼용)
 	D3D_ROOT_SIGNATURE_VERSION targetVersion = std::min(
 		m_featureCaps.rootSignature.HighestVersion,
@@ -186,6 +205,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; // 깊이 버퍼 포맷 설정
 
 	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+	*/
 
 	std::string id, pw;
 	std::cout << "Input ID(any):";
@@ -211,7 +231,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_player = player.get();
 
 	Objects들 추가
-	 m_gameObjects.push_back(std::move(player));
+	m_gameObjects.push_back(std::move(player));
 
 	적군 장수 생성
 	auto enemyGeneral = std::make_shared<NPC>();
@@ -257,51 +277,107 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	return true;
 }
 
-void GameFramework::RecreateDepthStencilBuffer(uint32_t width, uint32_t height)
+//void GameFramework::RecreateDepthStencilBuffer(uint32_t width, uint32_t height)
+//{
+//	auto& device = MANAGER(DxDeviceGlobal);
+//	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+//
+//	commandQueue.WaitForIdle();
+//	m_depthStencilBuffer.Reset();
+//
+//	D3D12_RESOURCE_DESC depthStencilDesc = {};
+//	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+//	depthStencilDesc.Width = width;
+//	depthStencilDesc.Height = height;
+//	depthStencilDesc.DepthOrArraySize = 1;
+//	depthStencilDesc.MipLevels = 1;
+//	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이 + 8비트 스텐실
+//	depthStencilDesc.SampleDesc.Count = 1;
+//	depthStencilDesc.SampleDesc.Quality = 0;
+//	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+//	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+//
+//	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+//	depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+//	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+//	depthOptimizedClearValue.DepthStencil.Stencil = 0;
+//
+//	D3D12_HEAP_PROPERTIES depthHeapProps = {};
+//	depthHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+//
+//	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+//		&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+//		&depthOptimizedClearValue, IID_PPV_ARGS(&m_depthStencilBuffer)
+//	));
+//
+//	// 깊이 스텐실 뷰 생성
+//	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+//	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+//	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+//	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+//
+//	device.GetDevice()->CreateDepthStencilView(
+//		m_depthStencilBuffer.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
+//	);
+//
+//	DEBUG_LOG_FMT("[GameFramework] Depth stencil buffer recreated: {}x{}\n", width, height);
+//}
+
+void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
 {
 	auto& device = MANAGER(DxDeviceGlobal);
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	commandQueue.WaitForIdle();
-	m_depthStencilBuffer.Reset();
+	D3D12_RESOURCE_DESC desc = {
+		.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		.Width = width,
+		.Height = height,
+		.DepthOrArraySize = 1,
+		.MipLevels = 1,
+		.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+		.SampleDesc{.Count = 1, .Quality = 0},
+		.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+	};
 
-	D3D12_RESOURCE_DESC depthStencilDesc = {};
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Width = width;
-	depthStencilDesc.Height = height;
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이 + 8비트 스텐실
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-	depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-	depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-	D3D12_HEAP_PROPERTIES depthHeapProps = {};
-	depthHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
 	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&depthOptimizedClearValue, IID_PPV_ARGS(&m_depthStencilBuffer)
+		&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
+		IID_PPV_ARGS(&m_raytracingOutput)
 	));
 
-	// 깊이 스텐실 뷰 생성
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+	m_raytracingOutput->SetName(L"RaytracingOutput");
 
-	device.GetDevice()->CreateDepthStencilView(
-		m_depthStencilBuffer.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	uavDesc.Texture2D.MipSlice = 0;
+
+	m_raytracingOutputUAVIndex = descHeap.CreateUAV(device.GetDevice(), m_raytracingOutput.Get(), &uavDesc);
+
+	DEBUG_LOG_FMT(
+		"[GameFramework] Raytracing output created: {}x{}, UAV Index={}\n", width, height, m_raytracingOutputUAVIndex
 	);
-
-	DEBUG_LOG_FMT("[GameFramework] Depth stencil buffer recreated: {}x{}\n", width, height);
 }
+
+void GameFramework::ResizeRaytracingResources(uint32_t width, uint32_t height)
+{
+	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+
+	commandQueue.WaitForIdle();
+
+	if (m_raytracingOutputUAVIndex != ~0u)
+	{
+		descHeap.FreeImmediate(m_raytracingOutputUAVIndex);
+	}
+
+	m_raytracingOutput.Reset();
+	CreateRaytracingResources(width, height);
+}
+
 
 void GameFramework::Run()
 {
@@ -426,81 +502,54 @@ void GameFramework::FixedUpdate() {}
 
 void GameFramework::LateUpdate() {}
 
-// Render 코드 생성 25.07.20
 void GameFramework::Render()
 {
 	auto localPlayer = MANAGER(GameObjectManager).GetLocalPlayer();
 	if (localPlayer == nullptr)
 		return;
 
-	// 현재 프레임 준비
-	m_commandContextPool->AdvanceFrame();
-	auto& context = m_commandContextPool->GetCurrentContext();
+	m_currentFrameIndex = m_swapChain->GetCurrentBackBufferIndex();
+	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
-	const XMMATRIX view = localPlayer->GetViewMatrix();
+	frame->BeginFrame();
+	ID3D12GraphicsCommandList* cmdList = frame->GetMainContext()->CommandList();
+	auto*					   uploadHeap = frame->GetUploadHeap();
 
-	//// 투영 행렬
-	XMMATRIX projection = XMMatrixPerspectiveFovLH(
-		XM_PI / 4.0f,											   // 45도 시야각
-		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // 종횡비
-		0.1f,													   // 가까운 클리핑 평면
-		100.0f													   // 먼 클리핑 평면
-	);
+	// TODO: DispatchRays()
 
-	// 현재 백버퍼 가져오기
-	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
+	// RT Output → BackBuffer copy
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
+	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 
-	// 깊이 스텐실 핸들 가져오기
-	auto dsvHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
-	// 백버퍼를 렌더 타겟으로 전환(Resource barrier)
-	auto barrier =
-		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	context.CommandList()->ResourceBarrier(1, &barrier);
-
-	// 렌더 타겟과 깊이 버퍼 동시 설정
-	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-	// 화면을 검은색으로 클리어 (깊이 버퍼 추가 - 25.09.16)
-	float clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f}; // 검은색
-	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	context.CommandList()->ClearDepthStencilView(
-		dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr
+	// RT Output → Copy Source
+	auto barrier1 = DxUtils::CreateTransitionBarrier(
+		m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE
 	);
 
-	// 뷰포트 설정
-	D3D12_VIEWPORT viewport = {};
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-	viewport.Width = static_cast<float>(m_swapChain->GetWidth());
-	viewport.Height = static_cast<float>(m_swapChain->GetHeight());
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	D3D12_RECT scissorRect = {};
-	scissorRect.right = static_cast<LONG>(m_swapChain->GetWidth());
-	scissorRect.bottom = static_cast<LONG>(m_swapChain->GetHeight());
-	context.CommandList()->RSSetViewports(1, &viewport);
-	context.CommandList()->RSSetScissorRects(1, &scissorRect);
+	// BackBuffer → Copy Dest
+	auto barrier2 =
+		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	// 파이프라인 설정
-	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
-	context.CommandList()->SetPipelineState(m_pipelineState.Get());
+	D3D12_RESOURCE_BARRIER barriers[] = {barrier1, barrier2};
+	cmdList->ResourceBarrier(2, barriers);
 
-	// Ground 렌더링 (임시)
-	const auto cmdList = context.CommandList();
-	m_ground->Render(cmdList, view, projection);
+	cmdList->CopyResource(backBuffer, m_raytracingOutput.Get());
 
-	// GameObject 렌더링 (임시)
-	MANAGER(GameObjectManager).Render(cmdList, view, projection);
+	// BackBuffer → Present
+	auto barrier3 =
+		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
-	// 백버퍼를 프레젠트 상태로 전환
-	barrier =
-		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	context.CommandList()->ResourceBarrier(1, &barrier);
+	// RT Output → UAV
+	auto barrier4 = DxUtils::CreateTransitionBarrier(
+		m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	);
+
+	D3D12_RESOURCE_BARRIER restoreBarriers[] = {barrier3, barrier4};
+	cmdList->ResourceBarrier(2, restoreBarriers);
 
 	// 커맨드 실행
-	m_commandContextPool->SignalCurrentFrame();
+	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
 
 	m_swapChain->PresentMaxPerformance();
 }

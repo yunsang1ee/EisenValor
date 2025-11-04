@@ -205,6 +205,12 @@
     <ClInclude Include="include\DxTexture.h">
       <Filter>Graphics\Resource\Low Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxFrameResource.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxUploadHeap.h">
+      <Filter>Graphics\Resource\Heap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -291,6 +297,12 @@
     </ClCompile>
     <ClCompile Include="src\DxTexture.cpp">
       <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxFrameResource.cpp">
+      <Filter>Graphics\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxUploadHeap.cpp">
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
