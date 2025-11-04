@@ -49,7 +49,7 @@ void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
 		auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, object->GetObjType(), object->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
 		m_room->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 	}
-	else {	
+	else {
 		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
 			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, object->GetObjType(), object->GetTeamType(), kInfo, std::static_pointer_cast<Player>(object)->GetHP());
 			m_room->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
