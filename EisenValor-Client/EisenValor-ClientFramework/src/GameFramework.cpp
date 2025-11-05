@@ -7,16 +7,16 @@
 #include "DxShaderCompilerGlobal.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
-
 #include "DxUtils.h"
 #include "DxFeatureCaps.h"
-#include "Vertex.h"
 #include "GameObjectManager.h"
-#include "LocalPlayer.h"
-#include "Ground.h"
-#include "NPC.h"
 #include "DxDescriptorHeapGlobal.h"
 #include "DxCommandContext.h"
+
+#include "Actor.h"
+#include "MeshComponent.h"
+#include "DxBLAS.h"
+
 
 using namespace DirectX;
 #define SERVER
@@ -97,9 +97,12 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	CreateRaytracingResources(width, height);
 
-	// TODO: BLAS/TLAS 생성
-	// TODO: RT Pipeline State 생성
-	// TODO: Shader Table 생성
+	CreateStaticScene();
+	BuildAccelerationStructures();
+	CreateMaterialBuffer();
+	CreateRaytracingPipeline();
+
+	UpdateCameraVectors();
 
 	// Legacy 파이프라인용
 	/*
@@ -220,8 +223,8 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
 
 	// Ground 객체 생성 및 초기화
-	m_ground = std::make_unique<Ground>();
-	m_ground->Initialize(device.GetDevice());
+	// m_ground = std::make_unique<Ground>();
+	// m_ground->Initialize(device.GetDevice());
 
 	/*
 	//Player 객체 생성 및 초기화 추가
@@ -277,7 +280,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	return true;
 }
 
-//void GameFramework::RecreateDepthStencilBuffer(uint32_t width, uint32_t height)
+// void GameFramework::RecreateDepthStencilBuffer(uint32_t width, uint32_t height)
 //{
 //	auto& device = MANAGER(DxDeviceGlobal);
 //	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
@@ -321,7 +324,226 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 //	);
 //
 //	DEBUG_LOG_FMT("[GameFramework] Depth stencil buffer recreated: {}x{}\n", width, height);
-//}
+// }
+
+void GameFramework::CreateStaticScene()
+{
+	auto& device = MANAGER(DxDeviceGlobal);
+
+	auto ground = std::make_unique<Actor>("Ground");
+	ground->SetPosition(0.0f, 0.0f, 0.0f);
+	ground->SetScale(10.0f, 1.0f, 10.0f);
+
+	std::vector<Vertex> groundVertices = {
+		{{-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+		{{1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+		{{1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+		{{-1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}}
+	};
+
+	std::vector<uint32_t> groundIndices = {0, 1, 2, 0, 2, 3};
+
+	auto groundMesh = ground->AddComponent<MeshComponent>();
+	groundMesh->SetMesh(groundVertices, groundIndices);
+	m_sceneActors.push_back(std::move(ground));
+
+	PBRMaterial groundMaterial;
+	groundMaterial.albedo = {0.6f, 0.6f, 0.6f};
+	groundMaterial.metallic = 0.0f;
+	groundMaterial.roughness = 0.8f;
+	groundMaterial.emissive = {0.0f, 0.0f, 0.0f};
+	groundMaterial.emissiveStrength = 0.0f;
+	m_materials.push_back(groundMaterial);
+
+	for (int i = 0; i < 3; ++i)
+	{
+		auto player = std::make_unique<Actor>("Player" + std::to_string(i));
+		player->SetPosition(-2.0f + i * 2.0f, 1.0f, 0.0f);
+		player->SetScale(1.0f, 1.0f, 1.0f);
+
+		// clang-format off
+		std::vector<Vertex> cubeVertices = {
+			{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // 0
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // 1
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // 2
+			{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},  // 3
+	
+			{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},  // 4
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},  // 5
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},  // 6
+			{{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.5f, 0.5f, 1.0f}}   // 7
+		};
+
+		std::vector<uint32_t> cubeIndices = {
+			0, 1, 2, 0, 2, 3,  // Front
+			5, 4, 7, 5, 7, 6,  // Back
+			4, 0, 3, 4, 3, 7,  // Left
+			1, 5, 6, 1, 6, 2,  // Right
+			3, 2, 6, 3, 6, 7,  // Top
+			4, 5, 1, 4, 1, 0   // Bottom
+		};
+		// clang-format on
+
+		auto playerMesh = player->AddComponent<MeshComponent>();
+		playerMesh->SetMesh(cubeVertices, cubeIndices);
+
+		m_sceneActors.push_back(std::move(player));
+		PBRMaterial playerMaterial;
+		if (i == 0)
+		{
+			// 첫 번째: 메탈릭 재질
+			playerMaterial.albedo = {0.9f, 0.3f, 0.3f};
+			playerMaterial.metallic = 0.9f;
+			playerMaterial.roughness = 0.1f;
+			playerMaterial.emissive = {0.0f, 0.0f, 0.0f};
+			playerMaterial.emissiveStrength = 0.0f;
+		}
+		else if (i == 1)
+		{
+			// 두 번째: 발광 재질
+			playerMaterial.albedo = {0.3f, 0.3f, 0.9f};
+			playerMaterial.metallic = 0.2f;
+			playerMaterial.roughness = 0.3f;
+			playerMaterial.emissive = {0.2f, 0.4f, 1.0f};
+			playerMaterial.emissiveStrength = 2.0f;
+		}
+		else
+		{
+			// 세 번째: 거친 표면
+			playerMaterial.albedo = {0.3f, 0.9f, 0.3f};
+			playerMaterial.metallic = 0.0f;
+			playerMaterial.roughness = 0.9f;
+			playerMaterial.emissive = {0.0f, 0.0f, 0.0f};
+			playerMaterial.emissiveStrength = 0.0f;
+		}
+		m_materials.push_back(playerMaterial);
+	}
+
+	DEBUG_LOG_FMT("[GameFramework] Created static scene: {} actors\n", m_sceneActors.size());
+}
+
+void GameFramework::BuildAccelerationStructures()
+{
+	auto& device = MANAGER(DxDeviceGlobal);
+	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+
+	auto* frame = m_frameResources[0].get();
+	frame->BeginFrame();
+
+	auto* cmdList = frame->GetMainContext()->CommandList();
+	auto* uploadHeap = frame->GetUploadHeap();
+
+	auto* device5 = reinterpret_cast<ID3D12Device5*>(device.GetDevice());
+	auto* cmdList4 = reinterpret_cast<ID3D12GraphicsCommandList4*>(cmdList);
+
+	for (auto& actor : m_sceneActors)
+	{
+		auto* mesh = actor->GetComponent<MeshComponent>();
+		if (mesh)
+		{
+			mesh->BuildBLAS(device5, cmdList4, uploadHeap);
+		}
+	}
+
+	std::vector<Actor*> actorPtrs;
+	actorPtrs.reserve(m_sceneActors.size());
+	for (auto& actor : m_sceneActors)
+	{
+		actorPtrs.push_back(actor.get());
+	}
+
+	m_tlas = std::make_unique<DxTLAS>();
+	m_tlas->Build(device5, cmdList4, uploadHeap, actorPtrs);
+
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
+	frame->WaitForCompletion();
+
+	DEBUG_LOG_FMT("[GameFramework] Acceleration structures built\n");
+}
+
+void GameFramework::CreateRaytracingPipeline()
+{
+	auto& device = MANAGER(DxDeviceGlobal);
+	auto* device5 = reinterpret_cast<ID3D12Device5*>(device.GetDevice());
+
+	m_rtPipeline = std::make_unique<DxRtPipelineState>();
+	m_rtPipeline->Create(device5, L"../EisenValor/Resource/Shader/RaytracingLibrary.hlsl", 1);
+
+	m_shaderTable = std::make_unique<DxRtShaderTable>();
+	m_shaderTable->Build(device5, m_rtPipeline.get(), static_cast<uint32_t>(m_sceneActors.size()));
+
+	DEBUG_LOG_FMT("[GameFramework] Raytracing pipeline created\n");
+}
+
+void GameFramework::CreateMaterialBuffer()
+{
+	auto& device = MANAGER(DxDeviceGlobal);
+	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+
+	if (m_materials.empty())
+	{
+		DEBUG_LOG_FMT("[GameFramework] WARNING: No materials to upload\n");
+		return;
+	}
+
+	const uint64_t bufferSize = m_materials.size() * sizeof(PBRMaterial);
+
+	auto* frame = m_frameResources[0].get();
+	frame->BeginFrame();
+
+	auto* uploadHeap = frame->GetUploadHeap();
+	auto  upload = uploadHeap->UploadRawData(m_materials.data(), bufferSize, 256);
+
+	D3D12_RESOURCE_DESC bufferDesc = {
+		.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+		.Width = bufferSize,
+		.Height = 1,
+		.DepthOrArraySize = 1,
+		.MipLevels = 1,
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.SampleDesc{.Count = 1, .Quality = 0},
+		.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+		.Flags = D3D12_RESOURCE_FLAG_NONE
+	};
+
+	D3D12_HEAP_PROPERTIES defaultHeap = {};
+	defaultHeap.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
+		&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+		IID_PPV_ARGS(&m_materialBuffer)
+	));
+
+	m_materialBuffer->SetName(L"MaterialBuffer");
+
+	auto* cmdList = frame->GetMainContext()->CommandList();
+	cmdList->CopyBufferRegion(m_materialBuffer.Get(), 0, uploadHeap->GetResource(), upload.offset, bufferSize);
+
+	auto barrier = DxUtils::CreateTransitionBarrier(
+		m_materialBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+	);
+	cmdList->ResourceBarrier(1, &barrier);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.NumElements = static_cast<UINT>(m_materials.size());
+	srvDesc.Buffer.StructureByteStride = sizeof(PBRMaterial);
+	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+	m_materialBufferSRVIndex = descHeap.CreateSRV(device.GetDevice(), m_materialBuffer.Get(), &srvDesc);
+
+	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
+	frame->WaitForCompletion();
+
+	DEBUG_LOG_FMT(
+		"[GameFramework] Material buffer created: {} materials, SRV Index: {}\n", m_materials.size(),
+		m_materialBufferSRVIndex
+	);
+}
 
 void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
 {
@@ -403,6 +625,11 @@ void GameFramework::Release()
 {
 	DEBUG_LOG_FMT("WaitForIdle....\n");
 	MANAGER(DxGfxCommandQueueGlobal).WaitForIdle();
+	if (m_materialBufferSRVIndex != ~0u)
+	{
+		auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+		descHeap.FreeImmediate(m_materialBufferSRVIndex);
+	}
 }
 
 LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
@@ -495,6 +722,7 @@ void GameFramework::Update()
 
 	const float dt = MANAGER(TimerGlobal).GetDeltaTime();
 
+	UpdateCamera(dt);
 	MANAGER(GameObjectManager).Update(dt);
 }
 
@@ -512,21 +740,18 @@ void GameFramework::Render()
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
 	frame->BeginFrame();
-	ID3D12GraphicsCommandList* cmdList = frame->GetMainContext()->CommandList();
-	auto*					   uploadHeap = frame->GetUploadHeap();
+	auto* cmdList = reinterpret_cast<ID3D12GraphicsCommandList4*>(frame->GetMainContext()->CommandList());
+	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	// TODO: DispatchRays()
+	RenderDXR();
 
 	// RT Output → BackBuffer copy
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
-	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
 
-	// RT Output → Copy Source
 	auto barrier1 = DxUtils::CreateTransitionBarrier(
 		m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE
 	);
 
-	// BackBuffer → Copy Dest
 	auto barrier2 =
 		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -535,11 +760,10 @@ void GameFramework::Render()
 
 	cmdList->CopyResource(backBuffer, m_raytracingOutput.Get());
 
-	// BackBuffer → Present
+	// BackBuffer → Present, RT Output → UAV
 	auto barrier3 =
 		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
-	// RT Output → UAV
 	auto barrier4 = DxUtils::CreateTransitionBarrier(
 		m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 	);
@@ -547,9 +771,164 @@ void GameFramework::Render()
 	D3D12_RESOURCE_BARRIER restoreBarriers[] = {barrier3, barrier4};
 	cmdList->ResourceBarrier(2, restoreBarriers);
 
-	// 커맨드 실행
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 
 	m_swapChain->PresentMaxPerformance();
+}
+
+void GameFramework::RenderDXR()
+{
+	auto* frame = m_frameResources[m_currentFrameIndex].get();
+	auto* cmdList = reinterpret_cast<ID3D12GraphicsCommandList4*>(frame->GetMainContext()->CommandList());
+	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+
+	cmdList->SetPipelineState1(m_rtPipeline->GetStateObject());
+	cmdList->SetComputeRootSignature(m_rtPipeline->GetGlobalRootSignature());
+
+	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap()};
+	cmdList->SetDescriptorHeaps(1, heaps);
+
+	// Param 0: TLAS (SRV)
+	D3D12_GPU_DESCRIPTOR_HANDLE tlasSRV = descHeap.GetGPUHandle(m_tlas->GetSRVIndex());
+	cmdList->SetComputeRootDescriptorTable(0, tlasSRV);
+
+	// Param 1: Output UAV
+	D3D12_GPU_DESCRIPTOR_HANDLE outputUAV = descHeap.GetGPUHandle(m_raytracingOutputUAVIndex);
+	cmdList->SetComputeRootDescriptorTable(1, outputUAV);
+
+	// Param 2: Camera Constants (임시 ViewProjInverse)
+	DirectX::XMVECTOR cameraPos = DirectX::XMLoadFloat3(&m_cameraPosition);
+	DirectX::XMVECTOR forwardVec = DirectX::XMLoadFloat3(&m_cameraForward);
+	DirectX::XMVECTOR upVec = DirectX::XMLoadFloat3(&m_cameraUp);
+	DirectX::XMVECTOR targetVec = DirectX::XMVectorAdd(cameraPos, forwardVec);
+
+	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(cameraPos, targetVec, upVec);
+
+	float			  aspectRatio = static_cast<float>(m_swapChain->GetWidth()) / m_swapChain->GetHeight();
+	DirectX::XMMATRIX proj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, aspectRatio, 0.1f, 1000.0f);
+
+	DirectX::XMMATRIX viewProj = view * proj;
+	DirectX::XMMATRIX viewProjInverse = DirectX::XMMatrixInverse(nullptr, viewProj);
+
+	DirectX::XMFLOAT4X4 viewProjInvFloat;
+	DirectX::XMStoreFloat4x4(&viewProjInvFloat, viewProjInverse);
+
+	cmdList->SetComputeRoot32BitConstants(2, 16, &viewProjInvFloat, 0);
+
+	// Param 3: Materials (SRV)
+	D3D12_GPU_DESCRIPTOR_HANDLE materialsSRV = descHeap.GetGPUHandle(m_materialBufferSRVIndex);
+	cmdList->SetComputeRootDescriptorTable(3, materialsSRV);
+
+	D3D12_DISPATCH_RAYS_DESC desc = {
+		.RayGenerationShaderRecord = m_shaderTable->GetRayGenRecord(),
+		.MissShaderTable = m_shaderTable->GetMissTable(),
+		.HitGroupTable = m_shaderTable->GetHitGroupTable(),
+		.Width = m_swapChain->GetWidth(),
+		.Height = m_swapChain->GetHeight(),
+		.Depth = 1
+	};
+	cmdList->DispatchRays(&desc);
+}
+
+void GameFramework::UpdateCamera(float deltaTime)
+{
+	auto& input = MANAGER(InputGlobal);
+
+	// 우클릭으로 카메라 조작 활성화/비활성화
+	if (input.GetInputDown(VK_RBUTTON))
+	{
+		m_cameraEnabled = true;
+		m_firstMouse = true;
+		ShowCursor(FALSE); // 마우스 커서 숨기기
+	}
+	if (input.GetInputUp(VK_RBUTTON))
+	{
+		m_cameraEnabled = false;
+		ShowCursor(TRUE); // 마우스 커서 보이기
+	}
+
+	if (!m_cameraEnabled)
+		return;
+
+	// 키보드 입력으로 이동
+	float			  velocity = m_cameraSpeed * deltaTime;
+	DirectX::XMVECTOR posVec = DirectX::XMLoadFloat3(&m_cameraPosition);
+	DirectX::XMVECTOR forwardVec = DirectX::XMLoadFloat3(&m_cameraForward);
+	DirectX::XMVECTOR rightVec = DirectX::XMLoadFloat3(&m_cameraRight);
+	DirectX::XMFLOAT3 worldUp = {0.0f, 1.0f, 0.0f};
+	DirectX::XMVECTOR upVec = DirectX::XMLoadFloat3(&worldUp);
+
+	// W/S: 전진/후진
+	if (input.GetInput('W'))
+		posVec = DirectX::XMVectorAdd(posVec, DirectX::XMVectorScale(forwardVec, velocity));
+	if (input.GetInput('S'))
+		posVec = DirectX::XMVectorSubtract(posVec, DirectX::XMVectorScale(forwardVec, velocity));
+
+	// A/D: 좌/우 이동
+	if (input.GetInput('A'))
+		posVec = DirectX::XMVectorSubtract(posVec, DirectX::XMVectorScale(rightVec, velocity));
+	if (input.GetInput('D'))
+		posVec = DirectX::XMVectorAdd(posVec, DirectX::XMVectorScale(rightVec, velocity));
+
+	// SHIFT/SPACE: 상/하 이동
+	if (input.GetInput(VK_SHIFT))
+		posVec = DirectX::XMVectorSubtract(posVec, DirectX::XMVectorScale(upVec, velocity));
+	if (input.GetInput(VK_SPACE))
+		posVec = DirectX::XMVectorAdd(posVec, DirectX::XMVectorScale(upVec, velocity));
+
+	DirectX::XMStoreFloat3(&m_cameraPosition, posVec);
+
+	// 마우스 이동으로 회전 (우클릭 중일 때만)
+	auto mousePosition = input.GetMousePosition();
+
+	if (m_firstMouse)
+	{
+		m_lastMouseX = mousePosition.x;
+		m_lastMouseY = mousePosition.y;
+		m_firstMouse = false;
+	}
+
+	float xOffset = static_cast<float>(mousePosition.x - m_lastMouseX);
+	float yOffset = static_cast<float>(m_lastMouseY - mousePosition.y); // Y는 반대
+
+	m_lastMouseX = mousePosition.x;
+	m_lastMouseY = mousePosition.y;
+
+	xOffset *= m_mouseSensitivity;
+	yOffset *= m_mouseSensitivity;
+
+	m_cameraYaw += xOffset;
+	m_cameraPitch += yOffset;
+
+	// Pitch 제한 (상하 90도 제한)
+	if (m_cameraPitch > 89.0f)
+		m_cameraPitch = 89.0f;
+	if (m_cameraPitch < -89.0f)
+		m_cameraPitch = -89.0f;
+
+	UpdateCameraVectors();
+}
+
+void GameFramework::UpdateCameraVectors()
+{
+	// Forward 벡터 계산
+	DirectX::XMFLOAT3 forward;
+	forward.x = cosf(DirectX::XMConvertToRadians(m_cameraYaw)) * cosf(DirectX::XMConvertToRadians(m_cameraPitch));
+	forward.y = sinf(DirectX::XMConvertToRadians(m_cameraPitch));
+	forward.z = sinf(DirectX::XMConvertToRadians(m_cameraYaw)) * cosf(DirectX::XMConvertToRadians(m_cameraPitch));
+
+	DirectX::XMVECTOR forwardVec = DirectX::XMLoadFloat3(&forward);
+	forwardVec = DirectX::XMVector3Normalize(forwardVec);
+	DirectX::XMStoreFloat3(&m_cameraForward, forwardVec);
+
+	// Right 벡터 계산
+	DirectX::XMFLOAT3 worldUp = {0.0f, 1.0f, 0.0f};
+	DirectX::XMVECTOR worldUpVec = DirectX::XMLoadFloat3(&worldUp);
+	DirectX::XMVECTOR rightVec = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(forwardVec, worldUpVec));
+	DirectX::XMStoreFloat3(&m_cameraRight, rightVec);
+
+	// Up 벡터 계산
+	DirectX::XMVECTOR upVec = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(rightVec, forwardVec));
+	DirectX::XMStoreFloat3(&m_cameraUp, upVec);
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-class GameObject;
+class Actor;
 
 enum class ComponentFlags : uint8_t
 {
@@ -37,11 +37,11 @@ public:
 			OnDisable();
 	}
 
-	std::shared_ptr<GameObject> GetGameObject() const { return m_owner.lock(); }
+	void SetActor(Actor* owner) { m_owner = owner; }
+
+	Actor* GetActor() const { return m_owner; }
 
 protected:
-	void SetGameObject(std::shared_ptr<GameObject> owner) { m_owner = owner; }
-
-	std::weak_ptr<GameObject> m_owner;
-	bool					  m_isActive = true;
+	Actor* m_owner;
+	bool   m_isActive = true;
 };

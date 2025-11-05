@@ -165,6 +165,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="include\Actor.h" />
+    <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
     <ClInclude Include="include\DxCommandContextPool.h" />
@@ -177,9 +179,12 @@
     <ClInclude Include="include\DxFrameResource.h" />
     <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
     <ClInclude Include="include\DxResource.h" />
+    <ClInclude Include="include\DxRtPipelineState.h" />
+    <ClInclude Include="include\DxRtShaderTable.h" />
     <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\DxTexture.h" />
+    <ClInclude Include="include\DxTLAS.h" />
     <ClInclude Include="include\DxUploadHeap.h" />
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\GameFramework.h" />
@@ -191,6 +196,7 @@
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\LocalPlayer.h" />
+    <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\NetworkManager.h" />
     <ClInclude Include="include\NPC.h" />
     <ClInclude Include="include\PacketBuffer.h" />
@@ -203,6 +209,8 @@
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Actor.cpp" />
+    <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
     <ClCompile Include="src\DxCommandContextPool.cpp" />
@@ -214,9 +222,12 @@
     <ClCompile Include="src\DxFrameResource.cpp" />
     <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
     <ClCompile Include="src\DxResource.cpp" />
+    <ClCompile Include="src\DxRtPipelineState.cpp" />
+    <ClCompile Include="src\DxRtShaderTable.cpp" />
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\DxTexture.cpp" />
+    <ClCompile Include="src\DxTLAS.cpp" />
     <ClCompile Include="src\DxUploadHeap.cpp" />
     <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
@@ -226,6 +237,7 @@
     <ClCompile Include="src\Ground.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\LocalPlayer.cpp" />
+    <ClCompile Include="src\MeshComponent.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\NPC.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />

@@ -7,7 +7,7 @@ using namespace DirectX;
 
 void Player::Initialize(ID3D12Device* device)
 {						 // 큐브 버텍스 데이터 (GameFramework에서 사용하던 것과 동일)
-	Vertex vertices[] = {// 전면
+	DVertex vertices[] = {// 전면
 						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), m_teamColor},
 						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), m_teamColor},
 						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), m_teamColor},
@@ -63,7 +63,7 @@ void Player::Initialize(ID3D12Device* device)
 
 	// 버텍스 버퍼 뷰 설정
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_vertexBufferView.StrideInBytes = sizeof(DVertex);
 	m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
 	// 인덱스 버퍼 생성

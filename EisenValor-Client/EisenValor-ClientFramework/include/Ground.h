@@ -27,7 +27,7 @@ private:
 	ComPtr<ID3D12Resource> m_bottomLevelAS;
 	ComPtr<ID3D12Resource> m_scratchBuffer;
 
-	std::vector<Vertex>	  m_vertices;
+	std::vector<DVertex>	  m_vertices;
 	std::vector<uint16_t> m_indices;
 
 	// 크기 및 위치

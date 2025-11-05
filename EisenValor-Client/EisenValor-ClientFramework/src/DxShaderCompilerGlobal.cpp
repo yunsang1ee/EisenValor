@@ -61,7 +61,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	std::string_view									   entryPoint,
 	std::string_view									   target,
 	std::span<const std::pair<std::wstring, std::wstring>> defines,
-	bool												   isRaytracing
+	bool												   isRaytacing
 )
 {
 	std::wstring sourceFile{filename};
@@ -95,7 +95,8 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 
 	// 파일 읽기
 	ComPtr<IDxcBlobEncoding> sourceBlob;
-	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), nullptr, &sourceBlob));
+	UINT32					 codePage = DXC_CP_UTF8;
+	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), &codePage, &sourceBlob));
 
 	ComPtr<IDxcBlobUtf8> sourceUtf8;
 	ThrowIfFailed(m_dxcUtils->GetBlobAsUtf8(sourceBlob.Get(), &sourceUtf8));
@@ -105,10 +106,13 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	std::vector<const wchar_t*> args;
 	args.reserve(16 + defines.size() * 2);
 
-	// Entry point
-	args.push_back(L"-E");
-	stringStorage.emplace_back(entryPoint.begin(), entryPoint.end());
-	args.push_back(stringStorage.back().c_str());
+	if (!isRaytacing)
+	{
+		// Entry point
+		args.push_back(L"-E");
+		stringStorage.emplace_back(entryPoint.begin(), entryPoint.end());
+		args.push_back(stringStorage.back().c_str());
+	}
 
 	// Target
 	args.push_back(L"-T");
@@ -133,10 +137,15 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	args.push_back(L"-Qembed_debug");
 #else
 	args.push_back(L"-O3");
+	args.push_back(L"-Qstrip_debug");
 #endif
-
+	args.push_back(L"-HV");
+	args.push_back(L"2021");
 	args.push_back(L"-WX");
 	args.push_back(L"-enable-16bit-types");
+
+	args.push_back(L"-I");
+	args.push_back(L"Resource/Shader");
 
 	const DxcBuffer sourceBuffer{
 		.Ptr = sourceUtf8->GetBufferPointer(), .Size = sourceUtf8->GetBufferSize(), .Encoding = DXC_CP_UTF8
@@ -156,6 +165,22 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 		{
 			LogCompilationError(errorBlob.Get(), shaderName, filename);
 		}
+		else
+		{
+			DEBUG_LOG_FMT(
+				"[DxShaderCompiler][ERROR] Shader: {} failed with HRESULT: 0x{:08X}, but no error blob available.\n",
+				std::string(shaderName.begin(), shaderName.end()), static_cast<uint32_t>(hrStatus)
+			);
+		}
+		ComPtr<IDxcBlobUtf16> outputText;
+		if (SUCCEEDED(result->GetOutput(DXC_OUT_TEXT, IID_PPV_ARGS(&outputText), nullptr)) && outputText)
+		{
+			DEBUG_LOG_FMT(
+				"[DxShaderCompiler][INFO] Additional output:\n{}\n",
+				std::string(static_cast<const char*>(outputText->GetBufferPointer()), outputText->GetBufferSize())
+			);
+		}
+		
 		ThrowIfFailed(hrStatus);
 	}
 

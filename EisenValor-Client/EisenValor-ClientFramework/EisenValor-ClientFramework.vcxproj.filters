@@ -208,8 +208,26 @@
     <ClInclude Include="include\DxFrameResource.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxBLAS.h">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxTLAS.h">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Actor.h">
+      <Filter>Object</Filter>
+    </ClInclude>
     <ClInclude Include="include\DxUploadHeap.h">
-      <Filter>Graphics\Resource\Heap</Filter>
+      <Filter>Graphics\Resource\Upload/Readback</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxRtPipelineState.h">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxRtShaderTable.h">
+      <Filter>Graphics\Raytracing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -301,8 +319,26 @@
     <ClCompile Include="src\DxFrameResource.cpp">
       <Filter>Graphics\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="src\DxBLAS.cpp">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxTLAS.cpp">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Actor.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
     <ClCompile Include="src\DxUploadHeap.cpp">
-      <Filter>Graphics\Resource\Heap</Filter>
+      <Filter>Graphics\Resource\Upload/Readback</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxRtPipelineState.cpp">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxRtShaderTable.cpp">
+      <Filter>Graphics\Raytracing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

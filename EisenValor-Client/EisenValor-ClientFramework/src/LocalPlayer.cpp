@@ -28,7 +28,7 @@ void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
 	float halfD = 1.6f;
 
 	// 8개 꼭짓점 (초록색 와이어프레임)
-	Vertex vertices[] = {
+	DVertex vertices[] = {
 
 		{DirectX::XMFLOAT3(-halfW, -halfH, -halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
 		{DirectX::XMFLOAT3(-halfW, halfH, -halfD), DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)},
@@ -67,7 +67,7 @@ void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
 	m_wireFrameVertexBuffer->Unmap(0, nullptr);
 
 	m_wireFrameVertexBufferView.BufferLocation = m_wireFrameVertexBuffer->GetGPUVirtualAddress();
-	m_wireFrameVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_wireFrameVertexBufferView.StrideInBytes = sizeof(DVertex);
 	m_wireFrameVertexBufferView.SizeInBytes = vertexBufferSize;
 
 	// 와이어프레임 인덱스 (12개 모서리)
@@ -110,7 +110,7 @@ void LocalPlayer::InitializeCommandArea(ID3D12Device* device)
 	float halfW = m_commandAreaWidth * 0.5f;
 	float halfH = m_commandAreaHeight * 0.5f;
 
-	Vertex vertices[] = {
+	DVertex vertices[] = {
 		// 바닥에 평평한 사각형 (Y=0)
 		{DirectX::XMFLOAT3(-halfW, 0.01f, -halfH), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.7f)}, // 빨간색, 약간 투명
 		{DirectX::XMFLOAT3(halfW, 0.01f, -halfH), DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.7f)},
@@ -145,7 +145,7 @@ void LocalPlayer::InitializeCommandArea(ID3D12Device* device)
 	m_commandAreaVertexBuffer->Unmap(0, nullptr);
 
 	m_commandAreaVertexBufferView.BufferLocation = m_commandAreaVertexBuffer->GetGPUVirtualAddress();
-	m_commandAreaVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_commandAreaVertexBufferView.StrideInBytes = sizeof(DVertex);
 	m_commandAreaVertexBufferView.SizeInBytes = vertexBufferSize;
 
 	// 인덱스 (두 개의 삼각형으로 사각형 만들기)
@@ -743,7 +743,7 @@ void LocalPlayer::SendMovePacket()
 void LocalPlayer::InitializeFan(ID3D12Device* device)
 {
 	// 부채꼴 정점 데이터 생성
-	std::vector<Vertex> fanVertices;
+	std::vector<DVertex> fanVertices;
 	std::vector<UINT>	fanIndices;
 
 	// 중심점 (부채꼴의 꼭짓점)
@@ -779,7 +779,7 @@ void LocalPlayer::InitializeFan(ID3D12Device* device)
 	D3D12_RANGE readRange = {0, 0};
 
 	// 부채꼴 정점 버퍼 생성
-	const UINT			fanVertexBufferSize = static_cast<UINT>(fanVertices.size() * sizeof(Vertex));
+	const UINT			fanVertexBufferSize = static_cast<UINT>(fanVertices.size() * sizeof(DVertex));
 	D3D12_RESOURCE_DESC bufferDesc = {};
 	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	bufferDesc.Width = fanVertexBufferSize;
@@ -803,7 +803,7 @@ void LocalPlayer::InitializeFan(ID3D12Device* device)
 
 	// 부채꼴 정점 버퍼 뷰 설정
 	m_fanVertexBufferView.BufferLocation = m_fanVertexBuffer->GetGPUVirtualAddress();
-	m_fanVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_fanVertexBufferView.StrideInBytes = sizeof(DVertex);
 	m_fanVertexBufferView.SizeInBytes = fanVertexBufferSize;
 
 	// 부채꼴 인덱스 버퍼 생성

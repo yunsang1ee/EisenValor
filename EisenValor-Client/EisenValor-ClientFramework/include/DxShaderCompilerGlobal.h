@@ -8,6 +8,8 @@
 
 #include "Singleton.h"
 
+// FIXME: 파일 변경 감지 범위 -> 루트만 검사하기에 #include 파일도 추적하도록 변경 필요
+
 class DxShaderCompilerGlobal : public Singleton<DxShaderCompilerGlobal>
 {
 private:
@@ -69,7 +71,7 @@ private:
 		std::string_view									   entryPoint,
 		std::string_view									   target,
 		std::span<const std::pair<std::wstring, std::wstring>> defines,
-		bool												   isRaytracing
+		bool												   isRaytacing
 	);
 
 	[[nodiscard]] std::wstring GetCachePath(std::wstring_view shaderName) const;
@@ -89,7 +91,7 @@ private:
 	ComPtr<IDxcCompiler3>	   m_compiler;
 	ComPtr<IDxcUtils>		   m_dxcUtils;
 	ComPtr<IDxcIncludeHandler> m_includeHandler;
-	std::wstring			   m_cacheDirectory;
 
+	std::wstring																  m_cacheDirectory;
 	std::unordered_map<std::wstring, ShaderCacheEntry, WStringHash, WStringEqual> m_memoryCache;
 };

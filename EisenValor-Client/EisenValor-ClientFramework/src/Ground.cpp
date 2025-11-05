@@ -4,7 +4,7 @@
 void Ground::Initialize(ID3D12Device* device)
 {
 	// 땅용 정점 데이터 (갈색)
-	Vertex vertices[] = {
+	DVertex vertices[] = {
 		{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f)},
 		{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f)},
 		{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), DirectX::XMFLOAT4(0.5f, 0.3f, 0.1f, 1.0f)},
@@ -56,7 +56,7 @@ void Ground::Initialize(ID3D12Device* device)
 
 	// 정점 버퍼 뷰 설정
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_vertexBufferView.StrideInBytes = sizeof(DVertex);
 	m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
 	// 인덱스 버퍼 생성
