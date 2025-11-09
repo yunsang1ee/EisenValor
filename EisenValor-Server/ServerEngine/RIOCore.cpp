@@ -47,11 +47,15 @@ bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
 	}
 
 	// 5. Create RIOWorker
+	// m_rioWorkerCnt = 1;
 	m_rioWorkerCnt = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
 	m_rioWorkers.reserve(m_rioWorkerCnt);
 
-	for(uint16 i = 1; i <= m_rioWorkerCnt; ++i) {
-		auto rioWorker = std::make_unique<RIOWorker>(i);
+	LISTEN_THREAD_ID = MANAGER(ThreadManager)->IssueID();
+
+	for(int i = 0; i < m_rioWorkerCnt; ++i) {
+		const uint16 id = MANAGER(ThreadManager)->IssueID();
+		auto rioWorker = std::make_unique<RIOWorker>(id);
 		if(false == rioWorker->Init(sessionFunc))
 			return false;
 		m_rioWorkers.emplace_back(std::move(rioWorker));
@@ -85,10 +89,12 @@ void ServerEngine::RIOCore::Run() noexcept
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
 			{
-				TLS_THREAD_ID = i + 1;
+				TLS_RIO_WORKER = m_rioWorkers[i].get();
+				TLS_THREAD_ID = TLS_RIO_WORKER->GetID();
+
 				while(false == st.stop_requested()) {
 					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_WORK_TIME;
-					m_rioWorkers[i]->Work();
+					TLS_RIO_WORKER->Work();
 					DistributeReservedTask();
 					FlushTaskQueue();
 				}
@@ -98,13 +104,8 @@ void ServerEngine::RIOCore::Run() noexcept
 
 void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 {
-	// Non-Blocking Accept
 	const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
-
-	if(clientSocket == SOCKET_ERROR) {
-		return;
-	}
-
+	if(clientSocket == SOCKET_ERROR) return;
 	SOCKADDR_IN clientaddr;
 	int addrlen = sizeof(clientaddr);
 	getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
@@ -118,7 +119,6 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 
 	m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
 	m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
-
 }
 
 void ServerEngine::RIOCore::Shutdown() const noexcept

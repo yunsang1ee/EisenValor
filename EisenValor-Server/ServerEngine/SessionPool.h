@@ -6,6 +6,9 @@ namespace ServerEngine {
 	class SessionPool {
 	private:
 		SessionFactoryFunc								m_func;
+
+		// TODO: LockFree-Queue·Î ¼öÁ¤
+		std::mutex										m_sessionQueueMutex;
 		std::queue<std::shared_ptr<Session>>			m_freeSessions;
 
 	public:

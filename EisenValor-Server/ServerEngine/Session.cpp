@@ -53,16 +53,16 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
 		std::cout << std::format("setsockopt linger option error: {}", GetLastError());
 
-	m_connected = false;
-
 	CloseSocket();
-
 	OnDisconnected();
 
-	m_state = SESSION_STATE::FREE;
-
 	std::cout << reason.data() << std::endl;
+	
+	Clean();
 
+	// TODO: Owner(RioWorker)에 SessionPool에 내 자신 반납
+	auto& sessionPool = m_owner->GetSessionPool();
+	sessionPool.EnqSession(shared_from_this());
 	// m_owner.lock()->GetSessionPool()->EnqSession(shared_from_this());
 	// m_owner.lock()->ReleaseSession(shared_from_this());
 }
@@ -105,7 +105,7 @@ void ServerEngine::Session::FlushPacketQueue()
 			if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
 				Disconnect("SendBuffer Append");
 
-			// std::cout << "packetBuffer Pop" << std::endl;
+			// TODO: PacketBuffer 메모리가 메모리풀에 반납되는지 확인해야 함. -> 확인 완료
 		}
 
 		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
@@ -125,7 +125,7 @@ void ServerEngine::Session::FlushPacketQueue()
 		}
 	}
 
-	if(deferCount > 0  || lastSendElapsed > COMMIT_MS ) {
+	if(deferCount > 0  || lastSendElapsed > COMMIT_SEND_MS ) {
 		CommitSend();
 		m_lastSendTime = currentTime;
 	}
@@ -219,9 +219,28 @@ void ServerEngine::Session::CommitSend()
 	}
 }
 
+void ServerEngine::Session::Clean()
+{
+	// TODO: SessionPool에 반납 시 호출
+	m_socket = INVALID_SOCKET;
+
+	m_connected = false;
+	memset(&m_clientAddr, 0, sizeof(m_clientAddr));
+	m_rq = RIO_INVALID_RQ;
+	
+	m_recvBuffer.CleanBuffer();
+	m_sendBuffer.CleanBuffer();
+	m_deferCount = 0;
+	
+	m_packetBufferQueue.Clear();
+	m_state = SESSION_STATE::FREE;
+	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
+	m_heartbeatTimestamp = std::chrono::high_resolution_clock::time_point{};
+}
+
 void ServerEngine::Session::Connect(const SOCKET& socket, const SOCKADDR_IN& addr)
 {
-	// Accept Thread�� ������
+	// Accept Thread가 수행중
 	m_socket = socket;
 
 	u_long arg = 1;
@@ -248,15 +267,12 @@ void ServerEngine::Session::Init()
 {
 	const auto& cq = m_owner->GetCQ();
 
-	// CQ�� ũ�Ⱑ RQ�� ũ�⺸�� ������ ����� ����
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);
 
 	if(m_rq == RIO_INVALID_RQ) {
 		ServerEngine::LogManager::PrintLastError();
 		exit(1);
 	}
-
-	// std::cout << "Session Init Success!" << std::endl;
 }
 
 void ServerEngine::Session::PostRecv()

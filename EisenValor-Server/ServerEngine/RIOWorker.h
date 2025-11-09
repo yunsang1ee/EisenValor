@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SessionPool.h"
+
 namespace ServerEngine {
 	class RIOCore;
 	class SessionPool;
@@ -8,11 +10,15 @@ namespace ServerEngine {
 	class RIOWorker {
 	private:
 		RIO_CQ											m_cq;
-		std::unique_ptr<SessionPool>					m_sessionPool;
-		int32											m_id;
+		uint16											m_id;
+
+		// TODO: 이거 vector로 들고있을 이유가 딱히 없음, Set이 적당함
 		std::vector<std::shared_ptr<Session>>			m_connectedSession;
 		
 		tbb::spin_mutex									m_mutex;
+
+		// acceptThread가 접근
+		SessionPool										m_sessionPool;
 
 	public:
 		explicit RIOWorker(const uint16 id);
@@ -26,9 +32,11 @@ namespace ServerEngine {
 
 	public:
 		const RIO_CQ&	GetCQ() const noexcept { return m_cq; }
-		SessionPool*	GetSessionPool() noexcept { return m_sessionPool.get(); }
+		uint16	GetID() const noexcept { return m_id; }
+		auto& GetSessionPool() noexcept { return m_sessionPool; }
 
 	private:
+		// 관리하고 있는 Session들의 각각 보낼 Packet들 처리
 		void			FlushSessionPacketQueue() noexcept;
 		void			DequeueCompletion() const noexcept;
 	};

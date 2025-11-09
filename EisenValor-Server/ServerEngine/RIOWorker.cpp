@@ -26,8 +26,7 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 		return false;
 	}
 
-	m_sessionPool = std::make_unique<SessionPool>();
-	m_sessionPool->Init(sessionFunc);
+	m_sessionPool.Init(sessionFunc);
 
 	return true;
 }
@@ -66,10 +65,7 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 		memset(ioResults.data(), 0, sizeof(ioResults));
 
 		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, ioResults.data(), static_cast<uint32>(ioResults.size()));
-		if(0 == numResults) {
-			std::this_thread::sleep_for(1ms);
-			break;
-		}
+		if(0 == numResults) break;
 		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
 			break;
@@ -90,7 +86,7 @@ void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 {
 	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
 	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
-	auto session = m_sessionPool.get()->DeqSession();
+	auto session = m_sessionPool.DeqSession();
 	session->SetOwner(this);
 	session->Connect(socket, clientAddr);
 	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };

@@ -6,11 +6,11 @@ enum RIO_FIGURE {
 
 	MAX_RIO_BUFFER_CAPACITY = MAX_RIO_BUFFER_SIZE * MAX_RIO_BUFFER_COUNT,	
 	
+	// TODO: 여기서 부턴 성능측정해서, 가장 좋은 수치로...
 	MAX_SEND_RQ_SIZE_PER_SESSION = 32,	 // 세션의 최대 SEND_RQ 크기 
 	MAX_RECV_RQ_SIZE_PER_SESSION = 32,	 // 세션의 최대 RECV_RQ 크기
 	MAX_SESION_PER_RIO_WORKER = 50,		 // 쓰레드 당 최대 담당 세션 개수
 	MAX_CQ_SIZE	 = (MAX_SEND_RQ_SIZE_PER_SESSION  + MAX_RECV_RQ_SIZE_PER_SESSION) * MAX_SESION_PER_RIO_WORKER,
-
 	MAX_RIO_RESULT = 512,		// 한 번에 COMPLETION_QUEUE에서 가져오는 크기
 
 
@@ -21,7 +21,8 @@ enum RIO_FIGURE {
 	// COMMIT_TIME_MS_LIMIT = 20,
 	// MAX_POST_CNT = 256,
 	
-	RIO_WORKER_TICK = 64,
+
+	RIO_WORKER_TICK = 64,	// milliseconds
 };
 
 enum class SESSION_STATE : uint8 {

@@ -30,10 +30,10 @@ namespace ServerEngine {
 		SendBuffer										m_sendBuffer;
 		std::atomic<SESSION_STATE>						m_state;
 		std::chrono::high_resolution_clock::time_point	m_lastSendTime{};
-		static constexpr auto COMMIT_MS = 20ms;
+		static constexpr auto							COMMIT_SEND_MS = 20ms;
 
+		// TODO: 정리 예정
 		std::mutex										m_sendBufferlk;
-
 		std::shared_mutex								m_sendPktInfoslk;
 		std::vector<std::pair<int32, int32>>			m_sendPktInfos;
 
@@ -86,7 +86,10 @@ namespace ServerEngine {
 		// flags: RIO_MSG_DEFER
 		bool DeferSend(const uint32 offset, const uint32 size);	
 		// flags: RIO_MSG_COMMIT_ONLY(System Call)
-		void CommitSend();										
+		void CommitSend();		
+
+		// SessionPool에 반납하기 전 정리
+		void Clean();
 	};
 }
 
