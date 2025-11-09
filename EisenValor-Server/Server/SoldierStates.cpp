@@ -69,8 +69,6 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 	const auto& ownerPos = owner->GetPos();
 	auto& otherTeamObjectGroup = room->GetTeam(otherTeam).GetAllObjectGroups();
 
-	// 주변에 적이 있는지 검사
-	bool findEnemy{ false };
 	for(int i = 0; i < otherTeamObjectGroup.size(); ++i) {
 		if(i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE ||
 			i == FB_ENUMS::GAME_OBJECT_TYPE_VALLISTAR || 
@@ -95,8 +93,14 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 				rot.y = std::atan2(targetDir.x, targetDir.y) * DEG2RAD;
 				owner->SetRotation(rot);
 				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-				findEnemy = true;
 				return;
+			}
+
+			else {
+
+				// 전략지의 일정 범위 내인가?
+				// Y: IDLE 상태로 이동
+				// N: Move
 			}
 		}
 	}
@@ -135,7 +139,8 @@ void Server::Contents::SoldierMoveState::Update(const float dt)
 	// -N: 전략지로 이동한다
 	//	-> 목표위치는 전략지이고, NavGraph상에서 Astar로 길찾기
 
-	// 근데 현재는 전략지를 둘 수가 없다.
+	// TODO: 전략지로 이동
+
 	
 	//const auto fsm = GetFSM();
 	//const auto owner = std::static_pointer_cast<NPC>(fsm->GetOwner());
@@ -207,6 +212,12 @@ void Server::Contents::SoldierMoveState::Update(const float dt)
 	//		}
 	//	}
 	//}
+
+
+
+
+
+
 }
 
 Server::Contents::SoldierChaseState::SoldierChaseState()
@@ -245,9 +256,20 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 			const float distToTargetSq = (targetPos - ownerPos).LengthSquared();
 			
 			// 타겟이 전투범위 안에 들어왔으면
-			// -> 공격 상태로 넘어간다
+			// -> 공격/방어 확률적 선택을 해서 해당 상태로 넘어간다.
 			if(distToTargetSq <= std::pow(combatRange, 2)) {
-				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
+				static constexpr float ATTACK_PROB{ 0.7f };
+				static  std::default_random_engine dre{ std::random_device{}() };
+				static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
+
+				// 공격으로 전환
+				if(dist(dre) <= ATTACK_PROB) {
+					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK,dt);
+				}
+				// 방어로 전환
+				else {
+					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
+				}
 				return;
 			}
 			// 타겟이 아직 전투범위 안에 들어오지 않았으면
@@ -302,96 +324,46 @@ void Server::Contents::SoldierAttackState::Exit(const float dt)
 void Server::Contents::SoldierAttackState::Update(const float dt)
 {
 	const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
+	const auto fsm = owner->GetComponent<FSM>();
 	const uint32 id = owner->GetID();
 	m_accDt += dt;
 
 	// 공격시간이 되었으면
 	if(m_accDt >= static_cast<float>(attackCycleTime.count())) {
 		auto target = owner->GetTarget();
-
+		
 		// 타겟이 존재한다면
 		if(target) {
-			switch(const auto objType = target->GetObjType()) {
-				case FB_ENUMS::GAME_OBJECT_TYPE_NPC:
-				{
-					switch(const auto npcType = std::static_pointer_cast<NPC>(target)->GetNpcType()) {
-						case FB_ENUMS::NPC_TYPE_GENERAL:
-						{
-							break;
-						}
-						case FB_ENUMS::NPC_TYPE_SOLDIER:
-						{
-							const auto targetState = target->GetComponent<FSM>()->GetCurState()->GetStateType();
-							if(targetState == FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE) {
-								std::cout << "상대가 방어 상태라 공격 못했음!" << std::endl;
-								m_accDt = 0.f;
-								return;
-							}
-							else {
-								int32 targetHp = owner->GetTarget()->GetHP();
-								targetHp -= owner->GetAtk();
-								owner->GetTarget()->SetHp(targetHp);
-								std::cout << std::format("ID = {}, Attack!", id) << std::endl;
-								if(targetHp <= 0) {
-									target->SetAlive(false);
-									target->GetGameRoom()->AddEvent([t = target]()
-										{
-											// t->SetAlive(false);
-											t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
-										});
-								}
-								const auto fsm = GetFSM();
+			const Vec3& ownerPos = owner->GetPos();
+			const Vec3& targetPos = target->GetPos();
 
-								static constexpr float ATTACK_PROB{ 0.6f };
-								static std::default_random_engine dre{ std::random_device{}() };
-								static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
-								if(dist(dre) <= ATTACK_PROB) {
-									m_accDt = 0.f;
-								}
-								else {
-									std::cout << "ATTACK -> DEFENSE" << std::endl;
-									fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
-								}
-							}
-							break;
-						}
-						default:
-							break;
-					}
-					break;
-				}
-				case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
-				{
-					int32 targetHp = owner->GetTarget()->GetHP();
-					targetHp -= owner->GetAtk();
-					owner->GetTarget()->SetHp(targetHp);
-					if(targetHp <= 0) {
-						target->SetAlive(false);
-						target->GetGameRoom()->AddEvent([t = target]()
-							{
-								// t->SetAlive(false);
-								t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
-							});
-					}
-					auto pb = ServerPackets::Make_SC_HIT_PACKET(owner->GetTarget()->GetID(), targetHp);
-					owner->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+			const float distToTargetSq = (targetPos - ownerPos).LengthSquared();
+			
+			// 타겟이 전투 범위 내에 있으면
+			if(distToTargetSq <= combatRange * combatRange) {
+				// 타격 중 피격 당했나?
+				// Y: 현재 
+				// N: 적 타격 
 
-					const auto fsm = GetFSM();
+				// TODO: 타격이벤트를 만들어서 등록한다(때릴 애, 맞을 애)
+				// 그럼, 다음 번 프레임에서 해당 이벤트 처리할거임
+				// 해당 이벤트 내에선
+				// 맞을 얘의 공격/방어 유무 보고 공격 성공/실패 정함
+				
+				// 공격 성공인 경우
+				// - 맞은애 입장에선 공격이 들어왔음
+				// --이때, 맞은애 입장에서 나의 state를 확인하고, 만약, 그게 공격일때라면 1초 경직, 공격 상태가 아니라면 0.8초 경직
+				// 그 후 fsm->ChangeState(damaged)
 
-					static constexpr float ATTACK_PROB{ 0.6f };
-					static std::default_random_engine dre{ std::random_device{}() };
-					static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
-					if(dist(dre) <= ATTACK_PROB) {
-						m_accDt = 0.f;
-					}
-					else {
-						std::cout << "ATTACK -> DEFENSE" << std::endl;
-						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
-					}
-					break;
-				}
-				default:
-					break;
+				// 공격 실패인 경우
+				// -> 공격/방어 확률계산에서 0.7 초과면 방어로 전환만 해주면 됨
+			}
+			
+			// 타겟이 전투 범위 내에 없으면
+			// -> 타겟을 쫓아간다.
+			else {
+				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_CHASE, dt);
+				return;
 			}
 		}
 		// 타겟이 사라진 경우
@@ -401,6 +373,91 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 			return;
 		}
 	}
+
+
+	//switch(const auto objType = target->GetObjType()) {
+	//	case FB_ENUMS::GAME_OBJECT_TYPE_NPC:
+	//	{
+	//		switch(const auto npcType = std::static_pointer_cast<NPC>(target)->GetNpcType()) {
+	//			case FB_ENUMS::NPC_TYPE_GENERAL:
+	//			{
+	//				break;
+	//			}
+	//			case FB_ENUMS::NPC_TYPE_SOLDIER:
+	//			{
+	//				const auto targetState = target->GetComponent<FSM>()->GetCurState()->GetStateType();
+	//				if(targetState == FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE) {
+	//					std::cout << "상대가 방어 상태라 공격 못했음!" << std::endl;
+	//					m_accDt = 0.f;
+	//					return;
+	//				}
+	//				else {
+	//					int32 targetHp = owner->GetTarget()->GetHP();
+	//					targetHp -= owner->GetAtk();
+	//					owner->GetTarget()->SetHp(targetHp);
+	//					std::cout << std::format("ID = {}, Attack!", id) << std::endl;
+	//					if(targetHp <= 0) {
+	//						target->SetAlive(false);
+	//						target->GetGameRoom()->AddEvent([t = target]()
+	//							{
+	//								// t->SetAlive(false);
+	//								t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
+	//							});
+	//					}
+	//					const auto fsm = GetFSM();
+
+	//					static constexpr float ATTACK_PROB{ 0.6f };
+	//					static std::default_random_engine dre{ std::random_device{}() };
+	//					static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
+	//					if(dist(dre) <= ATTACK_PROB) {
+	//						m_accDt = 0.f;
+	//					}
+	//					else {
+	//						std::cout << "ATTACK -> DEFENSE" << std::endl;
+	//						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
+	//					}
+	//				}
+	//				break;
+	//			}
+	//			default:
+	//				break;
+	//		}
+	//		break;
+	//	}
+	//	case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
+	//	{
+	//		int32 targetHp = owner->GetTarget()->GetHP();
+	//		targetHp -= owner->GetAtk();
+	//		owner->GetTarget()->SetHp(targetHp);
+	//		if(targetHp <= 0) {
+	//			target->SetAlive(false);
+	//			target->GetGameRoom()->AddEvent([t = target]()
+	//				{
+	//					// t->SetAlive(false);
+	//					t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
+	//				});
+	//		}
+	//		auto pb = ServerPackets::Make_SC_HIT_PACKET(owner->GetTarget()->GetID(), targetHp);
+	//		owner->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+
+	//		const auto fsm = GetFSM();
+
+	//		static constexpr float ATTACK_PROB{ 0.6f };
+	//		static std::default_random_engine dre{ std::random_device{}() };
+	//		static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
+	//		if(dist(dre) <= ATTACK_PROB) {
+	//			m_accDt = 0.f;
+	//		}
+	//		else {
+	//			std::cout << "ATTACK -> DEFENSE" << std::endl;
+	//			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
+	//		}
+	//		break;
+	//	}
+	//	default:
+	//		break;
+	//}
+
 }
 
 Server::Contents::SoldierDefenseState::SoldierDefenseState()
@@ -439,5 +496,38 @@ void Server::Contents::SoldierDefenseState::Update(const float dt)
 			std::cout << "DEFENSE -> ATTACK" << std::endl;
 			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
 		}
+	}
+}
+
+Server::Contents::SoldierDamagedState::SoldierDamagedState()
+	:DamagedState(FB_ENUMS::SOLDIER_STATE_TYPE_DAMAGED)
+{
+}
+
+Server::Contents::SoldierDamagedState::~SoldierDamagedState()
+{
+}
+
+void Server::Contents::SoldierDamagedState::Enter(const float dt)
+{
+
+}
+
+void Server::Contents::SoldierDamagedState::Exit(const float dt)
+{
+
+}
+
+void Server::Contents::SoldierDamagedState::Update(const float dt)
+{
+	const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
+	const auto fsm = owner->GetComponent<FSM>();
+
+	const auto target = owner->GetTarget();
+	if(target) {
+		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
+	}
+	else {
+		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
 	}
 }

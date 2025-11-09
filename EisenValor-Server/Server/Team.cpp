@@ -16,7 +16,7 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 {
 	m_room = room;
 
-	{
+	/*{
 		SpanwerTemplate spawner;
 		spawner.objType = FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER;
 		spawner.teamType = m_type;
@@ -28,7 +28,7 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 
 		auto spawnObj = Server::Contents::GameObjectFactory::CreateSpawnObj(spawner);
 		AddObject(std::move(spawnObj));
-	}
+	}*/
 
 }
 

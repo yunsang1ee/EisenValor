@@ -3,7 +3,7 @@
 
 Server::Contents::GameObject::GameObject(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType)
 	:m_type{type}, m_teamType{teamType}
-{
+{	
 }
 
 Server::Contents::GameObject::~GameObject()

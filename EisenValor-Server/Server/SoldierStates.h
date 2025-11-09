@@ -99,5 +99,24 @@ namespace Server {
 		public:
 			virtual void Update(const float dt) override;
 		};
+
+
+		// ============================================
+		//					DEFENSE
+		// ============================================
+		class SoldierDamagedState : public DamagedState {
+		private:
+
+		public:
+			SoldierDamagedState();
+			virtual ~SoldierDamagedState();
+
+		public:
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
+
+		public:
+			virtual void Update(const float dt) override;
+		};
 	}
 }

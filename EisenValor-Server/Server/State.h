@@ -115,6 +115,14 @@ namespace Server {
 
 		public:
 		};
+
+		class DamagedState : public State {
+		public:
+			explicit DamagedState(const uint8 type);
+			virtual ~DamagedState() = default;
+
+		public:
+		};
 	}
 }
 

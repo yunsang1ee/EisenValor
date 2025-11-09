@@ -40,3 +40,8 @@ Server::Contents::ChaseState::ChaseState(const uint8 type)
 {
 
 }
+
+Server::Contents::DamagedState::DamagedState(const uint8 type)
+	:State{ type }
+{
+}

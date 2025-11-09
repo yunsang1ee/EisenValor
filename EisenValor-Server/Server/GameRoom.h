@@ -25,8 +25,9 @@ namespace Server {
 			float												m_dt{ 0.f };
 
 		private:
-			std::queue<std::function<void()>>					m_eventQueue;
-		
+			std::queue<std::function<void()>>					m_eventFpQueue;
+			// TODO: Event 구조체 등록하는 queue 만들어야 함.
+			
 		public:
 			explicit GameRoom(const uint16 roomID);
 
@@ -53,7 +54,7 @@ namespace Server {
 			void Update();
 			void CheckHeartBeat();
 
-			void AddEvent(std::function<void()> eve) { m_eventQueue.push(eve); }
+			void AddEvent(std::function<void()> eve) { m_eventFpQueue.push(eve); }
 
 		public:
 			// By Single

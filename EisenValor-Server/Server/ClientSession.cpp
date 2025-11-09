@@ -29,9 +29,9 @@ void Server::ClientSession::OnDisconnected()
 	std::cout << "ClientSession OnDisconnected!" << std::endl;
 
 	if(m_player) {
-		auto match = m_player->GetGameRoom();
-		if(match)
-			match->ExecAsync(&Server::Contents::GameRoom::LeaveGame, clientSession);
+		auto room = m_player->GetGameRoom();
+		if(room)
+			room->ExecAsync(&Server::Contents::GameRoom::LeaveGame, clientSession);
 	}
 }
 

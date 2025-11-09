@@ -10,7 +10,7 @@
 #include "FSM.h"
 
 Server::Contents::GameRoom::GameRoom(const uint16 roomID)
-	:m_id{roomID}
+	:m_id{ roomID }
 {
 	std::cout << std::format("Room ID:{}", m_id) << std::endl;;
 }
@@ -41,7 +41,7 @@ void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>&
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
-	
+
 	// TODO: 플레이어 수치를 Json이나 XML에서 뽑기	
 	PlayerTemplate t;
 	t.pos = startPos;
@@ -90,6 +90,7 @@ void Server::Contents::GameRoom::LeaveGame(const std::shared_ptr<ClientSession>&
 	const auto player = clientSession->GetPlayer();
 	const auto teamType = player->GetTeamType();
 	m_teams[etou8(teamType)].RemoveObject(player);
+	clientSession->SetPlayer(nullptr);
 }
 
 void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
@@ -207,7 +208,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<P
 
 			const float dotValue{ playerDir.Dot(toTargetDir) };
 
-			float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+			const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
 
 			// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
 			if(dotValue <= 0) continue;
@@ -234,7 +235,7 @@ void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<P
 					auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
 					ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
 				}
-				
+
 				//if(hp <= 0) {
 				//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
 				//		{
@@ -294,19 +295,18 @@ void Server::Contents::GameRoom::Update()
 
 	m_lastUpdate = now;
 
-	// 이벤트큐
-
-	// 오브젝트 생성 및 삭제
-	// CHANGE_FSM_EVE
-		while(false == m_eventQueue.empty()) {
-		auto eve = m_eventQueue.front();
+	
+	while(false == m_eventFpQueue.empty()) {
+		auto eve = m_eventFpQueue.front();
 		eve();
-		m_eventQueue.pop();
+		m_eventFpQueue.pop();
 	}
 
+	// TODO: EventQueue 처리
+
 	for(auto& team : m_teams)
-		for(auto& objGroup : team.GetAllObjectGroups()) 
-			for(auto& [id, obj] : objGroup) 
+		for(auto& objGroup : team.GetAllObjectGroups())
+			for(auto& [id, obj] : objGroup)
 				if(obj)
 					obj->Update(m_dt);
 

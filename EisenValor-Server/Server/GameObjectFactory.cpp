@@ -75,13 +75,16 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 
 	auto defenseState = std::make_unique<Server::Contents::SoldierDefenseState>();
 
+	auto damagedState = std::make_unique<Server::Contents::SoldierDamagedState>();
+
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(runState));
 	fsm->AddState(std::move(chaseState));
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(defenseState));
+	fsm->AddState(std::move(damagedState));
 
-	fsm->InitStartState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 
 	return soldier;
 }

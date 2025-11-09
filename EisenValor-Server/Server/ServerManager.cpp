@@ -41,7 +41,7 @@ void Server::ServerManager::Run() noexcept
 	// Main-Thread
 	while(true) {
 		if(!_kbhit()) {
-			std::this_thread::sleep_for(0.1s);
+			std::this_thread::sleep_for(100ms);
 			continue;
 		}
 		ch = _getch();
@@ -50,7 +50,7 @@ void Server::ServerManager::Run() noexcept
 			break;
 		}
 		else {
-			std::this_thread::sleep_for(0.1s);
+			std::this_thread::sleep_for(100ms);
 		}
 	}
 }
