@@ -41,16 +41,16 @@ void Server::ServerManager::Run() noexcept
 	// Main-Thread
 	while(true) {
 		if(!_kbhit()) {
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(1000ms);
 			continue;
 		}
 		ch = _getch();
 		if(ch == ESC) {
-			ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Serve Finish");
+			ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Server Finish");
 			break;
 		}
 		else {
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(1000ms);
 		}
 	}
 }

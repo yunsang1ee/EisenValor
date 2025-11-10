@@ -10,6 +10,9 @@ namespace Server {
 		class Player;
 		class Team;
 
+		// JobQueue에는 GameRoom에서 일어나는 모든 일들이 쌓이게 됨
+		//   ex) Update(), EnterRoom(), LeaveRoom(), Broadcast() ...
+		// GameRoom의 JobQueue를 실행하는 쓰레드는 여러 쓰레드 중, 단 하나만
 		class GameRoom : public ServerEngine::TaskQueue {
 		private:
 			uint16												m_id;

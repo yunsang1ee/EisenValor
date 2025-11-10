@@ -21,9 +21,9 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	player->SetRotation(t.rot);
 	player->SetStatInfo(t.stat);
 
-	const auto troopController = player->AddComponent<Server::Contents::TroopController>();
-	troopController->SetOwner(player);
-	troopController->Init();
+	//const auto troopController = player->AddComponent<Server::Contents::TroopController>();
+	//troopController->SetOwner(player);
+	//troopController->Init();
 
 	return player;
 }

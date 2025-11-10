@@ -13,9 +13,8 @@
 
 #include "SoldierStates.h"
 
-bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer, const PacketHeader& header) noexcept
+bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
 {
-	std::cout << std::format("INVALID_PACKET, Packet Type: {}, Packet Size: {}", header.packetType, header.packetSize);
 	return false;
 }
 

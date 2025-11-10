@@ -263,7 +263,6 @@ bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(const std::shared_ptr<Pl
 
 void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(const std::shared_ptr<Player>& player)
 {
-	// TODO:
 	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
 	uint8  type = static_cast<uint8>(troopController->GetCurFormation()->m_formationType);
 	type = (type + 1) % static_cast<uint8>(TROOP_FORMATION_TYPE::END);

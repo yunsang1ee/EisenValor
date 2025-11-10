@@ -16,13 +16,28 @@ void ServerEngine::SessionPool::Init(SessionFactoryFunc sessionFunc)
 void ServerEngine::SessionPool::EnqSession(std::shared_ptr<Session> session)
 {
 	std::cout << "EnqSession!" << std::endl;
-	std::lock_guard<std::mutex> lk{ m_sessionQueueMutex };
+	// std::lock_guard<std::mutex> lk{ m_sessionQueueMutex };
 	m_freeSessions.push(session);
 }
 
 std::shared_ptr<ServerEngine::Session> ServerEngine::SessionPool::DeqSession()
 {
-	std::lock_guard<std::mutex> lk{ m_sessionQueueMutex };
+	std::shared_ptr<Session> session{ nullptr };
+	if(m_freeSessions.empty() == false) {
+		if(m_freeSessions.try_pop(session)) {
+			return session;
+		}
+
+		return session;
+	}
+	else {
+		session = m_func();
+		return session;
+	}
+	
+	return session;
+
+	/*std::lock_guard<std::mutex> lk{ m_sessionQueueMutex };
 	if(m_freeSessions.empty() == false) {
 		auto session = m_freeSessions.front();
 		m_freeSessions.pop();
@@ -31,6 +46,6 @@ std::shared_ptr<ServerEngine::Session> ServerEngine::SessionPool::DeqSession()
 	else {
 		auto newSesion = m_func();
 		return newSesion;
-	}
+	}*/
 }
 

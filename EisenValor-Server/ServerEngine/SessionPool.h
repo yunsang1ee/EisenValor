@@ -2,15 +2,14 @@
 
 namespace ServerEngine {
 	class Session;
-
+	// acceptThread, RioWorker가 접근
 	class SessionPool {
 	private:
-		SessionFactoryFunc								m_func;
-
-		// TODO: LockFree-Queue로 수정
-		std::mutex										m_sessionQueueMutex;
-		std::queue<std::shared_ptr<Session>>			m_freeSessions;
-
+		SessionFactoryFunc										m_func;
+		tbb::concurrent_queue<std::shared_ptr<Session>>			m_freeSessions;
+		// std::mutex										m_sessionQueueMutex;
+		// std::queue<std::shared_ptr<Session>>			m_freeSessions;
+	
 	public:
 		void Init(SessionFactoryFunc sessionFunc);
 		void EnqSession(std::shared_ptr<Session> session);

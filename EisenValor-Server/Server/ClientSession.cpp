@@ -37,9 +37,7 @@ void Server::ClientSession::OnDisconnected()
 
 void Server::ClientSession::ProcessPacket(const std::span<const char>& buffer)
 {
-	const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer.data());
-	const char* const packetData = buffer.data() + sizeof(PacketHeader);
-	if(false == ClientPacketHandler::HandlePacket(shared_from_this(), packetData, packetHeader))
+	if(false == ClientPacketHandler::HandlePacket(shared_from_this(), buffer.data()))
 		assert(nullptr);
 }
 

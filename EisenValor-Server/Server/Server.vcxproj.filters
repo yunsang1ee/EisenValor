@@ -198,9 +198,6 @@
     <Filter Include="02. Contents\00. GameRoomManager\00. Room\01. GameRoom\00. Team">
       <UniqueIdentifier>{dfc424e8-922b-4926-bce1-3f236a43e906}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. Lobby">
-      <UniqueIdentifier>{74620cf5-8104-47b1-b232-96092617320f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="01. ClientSessionManager">
       <UniqueIdentifier>{e7bed467-3e89-4a3b-877a-09b6eba0ec3b}</UniqueIdentifier>
     </Filter>
