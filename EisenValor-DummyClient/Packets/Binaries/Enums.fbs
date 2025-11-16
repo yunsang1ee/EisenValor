@@ -30,5 +30,6 @@ enum SOLDIER_STATE_TYPE : ubyte {
 	CHASE,
 	ATTACK,
 	DEFENSE,
+	DAMAGED,
 	DEAD,
 }

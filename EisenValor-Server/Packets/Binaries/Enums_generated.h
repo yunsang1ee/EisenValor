@@ -129,30 +129,33 @@ enum SOLDIER_STATE_TYPE : uint8_t {
   SOLDIER_STATE_TYPE_CHASE = 2,
   SOLDIER_STATE_TYPE_ATTACK = 3,
   SOLDIER_STATE_TYPE_DEFENSE = 4,
-  SOLDIER_STATE_TYPE_DEAD = 5,
+  SOLDIER_STATE_TYPE_DAMAGED = 5,
+  SOLDIER_STATE_TYPE_DEAD = 6,
   SOLDIER_STATE_TYPE_MIN = SOLDIER_STATE_TYPE_IDLE,
   SOLDIER_STATE_TYPE_MAX = SOLDIER_STATE_TYPE_DEAD
 };
 
-inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[6] {
+inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[7] {
   static const SOLDIER_STATE_TYPE values[] = {
     SOLDIER_STATE_TYPE_IDLE,
     SOLDIER_STATE_TYPE_MOVE,
     SOLDIER_STATE_TYPE_CHASE,
     SOLDIER_STATE_TYPE_ATTACK,
     SOLDIER_STATE_TYPE_DEFENSE,
+    SOLDIER_STATE_TYPE_DAMAGED,
     SOLDIER_STATE_TYPE_DEAD
   };
   return values;
 }
 
 inline const char * const *EnumNamesSOLDIER_STATE_TYPE() {
-  static const char * const names[7] = {
+  static const char * const names[8] = {
     "IDLE",
     "MOVE",
     "CHASE",
     "ATTACK",
     "DEFENSE",
+    "DAMAGED",
     "DEAD",
     nullptr
   };

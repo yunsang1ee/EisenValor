@@ -8,7 +8,7 @@ Server::Contents::FSM::FSM()
 {
 }
 
-void Server::Contents::FSM::InitStartState(const uint8 state)
+void Server::Contents::FSM::SetState(const uint8 state)
 {
 	auto iter = m_states.find(state);
 	if(iter != m_states.end()) {
@@ -38,7 +38,6 @@ void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt)
 		m_curState = iter->second.get();
 		m_curState->Enter(dt);
 	}
-
 	// Move (전달, A)		Chase
 	// Chase (전달, B)		Attack
 

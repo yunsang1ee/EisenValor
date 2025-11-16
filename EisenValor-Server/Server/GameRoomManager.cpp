@@ -1,10 +1,9 @@
 #include "pch.h"
 #include "GameRoomManager.h"
 
-#include "GameRoom.h"
-
 void Server::Contents::GameRoomManager::Init() noexcept
 {
+	// TODO: 나중에 로비가 들어오면 Init을 필요 없음
 	for(uint16 i = 0; i < MAX_ROOM; ++i) {
 		const uint16 roomID = i + 1;
 		auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(roomID);

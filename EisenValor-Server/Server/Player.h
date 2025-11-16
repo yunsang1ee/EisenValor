@@ -17,7 +17,7 @@ namespace Server {
 			virtual ~Player();
 
 		public:
-			void SetSession(std::weak_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
+			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
 		
 		public:
 			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
