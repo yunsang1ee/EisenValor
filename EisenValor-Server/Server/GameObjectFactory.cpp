@@ -14,9 +14,26 @@
 #include "TroopController.h"
 #include "Spawner.h"
 
+//std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+//{
+//	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
+//	
+//	//auto player = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
+//	player->SetPos(t.pos);
+//	player->SetRotation(t.rot);
+//	player->SetStatInfo(t.stat);
+//
+//	//const auto troopController = player->AddComponent<Server::Contents::TroopController>();
+//	//troopController->SetOwner(player);
+//	//troopController->Init();
+//
+//	return player;
+//}
+
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
+	// auto player = new Player{ t.teamType };
 	player->SetPos(t.pos);
 	player->SetRotation(t.rot);
 	player->SetStatInfo(t.stat);
@@ -34,10 +51,11 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
 	general->SetStatInfo(t.stat);
-	const auto troopController = general->AddComponent<Server::Contents::TroopController>();
-	troopController->SetOwner(general);
-	troopController->Init();
-	troopController->SetFormation(TROOP_FORMATION_TYPE::LINE);
+	
+	//const auto troopController = general->AddComponent<Server::Contents::TroopController>();
+	//troopController->SetOwner(general);
+	//troopController->Init();
+	//troopController->SetFormation(TROOP_FORMATION_TYPE::LINE);
 
 	const auto bt = general->AddComponent<BehaviorTree>();
 	bt->SetOwner(general);
@@ -59,26 +77,15 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	const auto fsm = soldier->AddComponent<Server::Contents::FSM>();
 	fsm->SetOwner(soldier);
 
-	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
-	idleState->enemyDetectionRange = t.enemyDetectionRange;
-
-	auto runState = std::make_unique<Server::Contents::SoldierMoveState>();
-	runState->combatRange = t.combatRange;
-
-	auto chaseState = std::make_unique<Server::Contents::SoldierChaseState>();
-	chaseState->combatRange = t.combatRange;
-	chaseState->chaseSpeed = 2.f;
-
-	auto attackState = std::make_unique<Server::Contents::SoldierAttackState>();
-	attackState->combatRange = t.combatRange;
-	attackState->attackCycleTime = t.attackCycleTime;
-
-	auto defenseState = std::make_unique<Server::Contents::SoldierDefenseState>();
-
-	auto damagedState = std::make_unique<Server::Contents::SoldierDamagedState>();
+	auto idleState = Server::Contents::SoldierIdleState::Create(t.enemyDetectionRange);
+	auto moveState = Server::Contents::SoldierMoveState::Create();
+	auto chaseState = Server::Contents::SoldierChaseState::Create(t.combatRange, 2.f);
+	auto attackState = Server::Contents::SoldierAttackState::Create(t.combatRange, t.attackCycleTime);
+	auto defenseState = Server::Contents::SoldierDefenseState::Create();
+	auto damagedState = Server::Contents::SoldierDamagedState::Create();
 
 	fsm->AddState(std::move(idleState));
-	fsm->AddState(std::move(runState));
+	fsm->AddState(std::move(moveState));
 	fsm->AddState(std::move(chaseState));
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(defenseState));

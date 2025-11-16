@@ -5,6 +5,7 @@
 #include "NPC.h"
 #include "GameRoom.h"
 #include "GameObjectFactory.h"
+#include "SoldierStates.h"
 
 Server::Contents::Team::Team(const FB_ENUMS::TEAM_TYPE type)
 	:m_type{ type }
@@ -30,9 +31,10 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 		AddObject(std::move(spawnObj));
 	}*/
 
+	// auto s = Server::Contents::SoldierIdleState::Create();
 }
 
-void Server::Contents::Team::AddObject(std::shared_ptr<GameObject> object)
+void Server::Contents::Team::AddGameObject(std::shared_ptr<GameObject>  object)
 {
 	object->SetRoom(m_room);
 
@@ -72,7 +74,7 @@ void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)
 	m_room->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 	if(m_objectGroups[etou8(objType)].find(id) != m_objectGroups[etou8(objType)].end()) {
 		m_objectGroups[etou8(objType)].erase(id);
-		std::cout << std::format("ID: {} 게임에서 삭제!", id) << std::endl;;
+		std::cout << std::format("ID: {} 팀에서 삭제!", id) << std::endl;;
 	}
 }
 
@@ -80,7 +82,7 @@ std::shared_ptr<Server::Contents::GameObject> Server::Contents::Team::GetObj(con
 {
 	for(auto& group : m_objectGroups) {
 		auto iter = group.find(id);
-		if(iter != group.end()) return iter->second;
+		if(iter != group.end()) return iter->second.lock();
 	}
 	return nullptr;
 }

@@ -6,7 +6,7 @@
 #include "TaskQueueManager.h"
 #include "TaskQueue.h"
 
-bool ServerEngine::RIOCore::Init(SessionFactoryFunc sessionFunc) noexcept
+bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc) noexcept
 {
 	m_acceptThreadNum = 0;
 

@@ -77,9 +77,9 @@ namespace ServerEngine {
 		void CloseSocket();
 
 	private:
-		bool DeferSend();
 		// flags: RIO_MSG_DEFER
 		bool DeferSend(const uint32 offset, const uint32 size);	
+		
 		// flags: RIO_MSG_COMMIT_ONLY(System Call)
 		void CommitSend();		
 

@@ -25,12 +25,16 @@ namespace Server {
 			int32	GetAtk() const noexcept { return m_stat.atk; }
 			int32	GetStamina() const noexcept { return m_stat.stamina; }
 
-			int32 incHP(const int32 amount) { m_stat.hp += amount; }
-			int32 decHP(const int32 amount) { m_stat.hp -= amount; }
-			int32 incStamina(const int32 amount) { m_stat.stamina += amount; }
-			int32 decStamina(const int32 amount) { m_stat.stamina -= amount; }
+			int32	incHP(const int32 amount) { m_stat.hp += amount; }
+			int32	decHP(const int32 amount) { m_stat.hp -= amount; }
+			int32	incStamina(const int32 amount) { m_stat.stamina += amount; }
+			int32	decStamina(const int32 amount) { m_stat.stamina -= amount; }
 
 			bool	IsAlive() const noexcept { return m_alive; }
+
+		public:
+			// TODO: 이 함수를 Event에 넣어서 처리하면 되지 않을까?
+			virtual void OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged) {}
 		};
 	}
 }	

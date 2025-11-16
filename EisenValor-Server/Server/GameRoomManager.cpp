@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "GameRoomManager.h"
 
-#include "GameRoom.h"
-
 void Server::Contents::GameRoomManager::Init() noexcept
 {
 	// TODO: 나중에 로비가 들어오면 Init을 필요 없음

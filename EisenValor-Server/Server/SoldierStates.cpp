@@ -7,8 +7,8 @@
 #include "FSM.h"
 #include "Team.h"
 
-Server::Contents::SoldierIdleState::SoldierIdleState()
-	:IdleState{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }
+Server::Contents::SoldierIdleState::SoldierIdleState(const float enemyDetectionRange)
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }, m_enemyDetectionRange{enemyDetectionRange}
 {
 }
 
@@ -74,40 +74,40 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 			i == FB_ENUMS::GAME_OBJECT_TYPE_VALLISTAR || 
 			i==FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
 
-		for(auto& [id, object] : otherTeamObjectGroup[i]) {
-			const auto target = std::static_pointer_cast<Creature>(object);
-			const auto& targetPos = object->GetPos();
-			Vec3 targetDir = targetPos - ownerPos;
+		//for(auto& [id, object] : otherTeamObjectGroup[i]) {
+		//	const auto target = std::static_pointer_cast<Creature>(object);
+		//	const auto& targetPos = object->GetPos();
+		//	Vec3 targetDir = targetPos - ownerPos;
 
-			const float distSq = (targetPos - ownerPos).LengthSquared();
-			const float detectionEnemyRangeSq = enemyDetectionRange * enemyDetectionRange;
+		//	const float distSq = (targetPos - ownerPos).LengthSquared();
+		//	const float detectionEnemyRangeSq = m_enemyDetectionRange * m_enemyDetectionRange;
 
-			// 탐지 범위 안에 적이 있으면
-			// -> 타겟 설정, Chase로 상태 변화
-			if(distSq <= detectionEnemyRangeSq) {
-				std::cout << "IDLE -> CHASE" << std::endl;
-				std::static_pointer_cast<Creature>(owner)->SetTarget(target);
-				targetDir.Normalize();
+		//	// 탐지 범위 안에 적이 있으면
+		//	// -> 타겟 설정, Chase로 상태 변화
+		//	if(distSq <= detectionEnemyRangeSq) {
+		//		std::cout << "IDLE -> CHASE" << std::endl;
+		//		std::static_pointer_cast<Creature>(owner)->SetTarget(target);
+		//		targetDir.Normalize();
 
-				Vec3 rot{};
-				rot.y = std::atan2(targetDir.x, targetDir.y) * DEG2RAD;
-				owner->SetRotation(rot);
-				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-				return;
-			}
+		//		Vec3 rot{};
+		//		rot.y = std::atan2(targetDir.x, targetDir.y) * DEG2RAD;
+		//		owner->SetRotation(rot);
+		//		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
+		//		return;
+		//	}
 
-			else {
+		//	else {
 
-				// 전략지의 일정 범위 내인가?
-				// Y: IDLE 상태로 이동
-				// N: Move
-			}
-		}
+		//		// 전략지의 일정 범위 내인가?
+		//		// Y: IDLE 상태로 이동
+		//		// N: Move
+		//	}
+		//}
 	}
 }
 
 Server::Contents::SoldierMoveState::SoldierMoveState()
-	:MoveState{ FB_ENUMS::SOLDIER_STATE_TYPE_MOVE }
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_MOVE }
 {
 }
 
@@ -154,7 +154,7 @@ void Server::Contents::SoldierMoveState::Update(const float dt)
 
 	//	const float distToTarget = toTarget.Length();
 
-	//	if(distToTarget < combatRange) {
+	//	if(distToTarget < m_combatRange) {
 	//		static constexpr float ATTACK_PROB{ 0.6f };
 	//		static std::default_random_engine dre{ std::random_device{}() };
 	//		static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
@@ -212,16 +212,10 @@ void Server::Contents::SoldierMoveState::Update(const float dt)
 	//		}
 	//	}
 	//}
-
-
-
-
-
-
 }
 
-Server::Contents::SoldierChaseState::SoldierChaseState()
-	:ChaseState{ FB_ENUMS::SOLDIER_STATE_TYPE_CHASE }
+Server::Contents::SoldierChaseState::SoldierChaseState(const float chaseSpeed, const float combatRange)
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_CHASE }, m_chaseSpeed{chaseSpeed}, m_combatRange{combatRange}
 {
 }
 
@@ -257,7 +251,7 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 			
 			// 타겟이 전투범위 안에 들어왔으면
 			// -> 공격/방어 확률적 선택을 해서 해당 상태로 넘어간다.
-			if(distToTargetSq <= std::pow(combatRange, 2)) {
+			if(distToTargetSq <= std::pow(m_combatRange, 2)) {
 				static constexpr float ATTACK_PROB{ 0.7f };
 				static  std::default_random_engine dre{ std::random_device{}() };
 				static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
@@ -275,7 +269,7 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 			// 타겟이 아직 전투범위 안에 들어오지 않았으면
 			// -> 타겟을 향해 이동한다
 			else {
-				float moveDist = chaseSpeed * dt;
+				float moveDist = m_chaseSpeed * dt;
 				const Vec3 toTarget = targetPos - ownerPos;
 				const float distToTarget = toTarget.Length();
 				const Vec3 dir = toTarget / distToTarget;
@@ -297,8 +291,8 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 }
 
 
-Server::Contents::SoldierAttackState::SoldierAttackState()
-	:AttackState{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }
+Server::Contents::SoldierAttackState::SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime)
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDt{ 0.f }, m_combatRange{combatRange}, m_attackCycleTime{attackCycleTime}
 {
 }
 
@@ -329,7 +323,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 	m_accDt += dt;
 
 	// 공격시간이 되었으면
-	if(m_accDt >= static_cast<float>(attackCycleTime.count())) {
+	if(m_accDt >= static_cast<float>(m_attackCycleTime.count())) {
 		auto target = owner->GetTarget();
 		
 		// 타겟이 존재한다면
@@ -340,7 +334,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 			const float distToTargetSq = (targetPos - ownerPos).LengthSquared();
 			
 			// 타겟이 전투 범위 내에 있으면
-			if(distToTargetSq <= combatRange * combatRange) {
+			if(distToTargetSq <= m_combatRange * m_combatRange) {
 				// 타격 중 피격 당했나?
 				// Y: 현재 
 				// N: 적 타격 
@@ -461,7 +455,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 }
 
 Server::Contents::SoldierDefenseState::SoldierDefenseState()
-	:DefenseState{ FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE }
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE }, m_accDT{0.f}
 {
 
 }
@@ -500,7 +494,7 @@ void Server::Contents::SoldierDefenseState::Update(const float dt)
 }
 
 Server::Contents::SoldierDamagedState::SoldierDamagedState()
-	:DamagedState(FB_ENUMS::SOLDIER_STATE_TYPE_DAMAGED)
+	:State(FB_ENUMS::SOLDIER_STATE_TYPE_DAMAGED)
 {
 }
 
