@@ -18,7 +18,7 @@ namespace Server {
 			virtual ~FSM()=default;
 
 		public:
-			void InitStartState(const uint8 state);
+			void SetState(const uint8 state);
 			virtual void Update(const float dt) override;
 
 		public:

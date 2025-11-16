@@ -1,95 +1,92 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Server.cpp">
-      <Filter>00. Server</Filter>
+    <ClCompile Include="main.cpp">
+      <Filter>00. main</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>99. pch</Filter>
     </ClCompile>
     <ClCompile Include="ServerManager.cpp">
-      <Filter>95. Managers\00. ServerManager</Filter>
+      <Filter>00. main\ServerManager</Filter>
     </ClCompile>
     <ClCompile Include="ClientSession.cpp">
-      <Filter>01. ClientSessionManager\00. ClientSession</Filter>
+      <Filter>01. ClientSessionManager\ClientSession</Filter>
     </ClCompile>
     <ClCompile Include="ClientSessionManager.cpp">
       <Filter>01. ClientSessionManager</Filter>
     </ClCompile>
     <ClCompile Include="ClientPacketHandler.cpp">
-      <Filter>03. Packets\01. PacketHandler</Filter>
+      <Filter>03. Packets\PacketHandler</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>02. Contents\02. GameObject</Filter>
+      <Filter>02. Contents\GameObject</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\00. Player</Filter>
+      <Filter>02. Contents\GameObject\Creature\Player</Filter>
     </ClCompile>
     <ClCompile Include="NPC.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC</Filter>
+      <Filter>02. Contents\GameObject\Creature\NPC</Filter>
     </ClCompile>
     <ClCompile Include="GameObjectFactory.cpp">
-      <Filter>02. Contents\03. Factory</Filter>
+      <Filter>02. Contents\GameObject\Factory</Filter>
     </ClCompile>
     <ClCompile Include="GameRoomManager.cpp">
-      <Filter>02. Contents\00. GameRoomManager</Filter>
+      <Filter>02. Contents\GameRoomManager</Filter>
     </ClCompile>
     <ClCompile Include="Component.cpp">
-      <Filter>02. Contents\04. Component</Filter>
+      <Filter>02. Contents\Component</Filter>
     </ClCompile>
     <ClCompile Include="FSM.cpp">
-      <Filter>02. Contents\04. Component\00. FSM</Filter>
+      <Filter>02. Contents\Component\FSM</Filter>
     </ClCompile>
     <ClCompile Include="State.cpp">
-      <Filter>02. Contents\04. Component\00. FSM\00. State</Filter>
+      <Filter>02. Contents\Component\FSM\State</Filter>
     </ClCompile>
     <ClCompile Include="Creature.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature</Filter>
+      <Filter>02. Contents\GameObject\Creature</Filter>
     </ClCompile>
     <ClCompile Include="Script.cpp">
-      <Filter>02. Contents\04. Component\99. Scripts</Filter>
+      <Filter>02. Contents\Component\Scripts</Filter>
     </ClCompile>
     <ClCompile Include="BehaviorTree.cpp">
-      <Filter>02. Contents\04. Component\01. BehaviorTree</Filter>
+      <Filter>02. Contents\Component\BehaviorTree</Filter>
     </ClCompile>
     <ClCompile Include="GameRoom.cpp">
-      <Filter>02. Contents\00. GameRoomManager\00. Room\01. GameRoom</Filter>
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom</Filter>
     </ClCompile>
     <ClCompile Include="BehaviorNode.cpp">
-      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode</Filter>
+      <Filter>02. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClCompile>
     <ClCompile Include="IsPlayerInNearNode.cpp">
-      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
+      <Filter>02. Contents\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
     <ClCompile Include="TargetTraceNode.cpp">
-      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
+      <Filter>02. Contents\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalFunc.cpp">
       <Filter>05. Global</Filter>
     </ClCompile>
     <ClCompile Include="SoldierStates.cpp">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State</Filter>
+      <Filter>02. Contents\GameObject\Creature\NPC\Soldier\State</Filter>
     </ClCompile>
     <ClCompile Include="TroopController.cpp">
-      <Filter>02. Contents\04. Component\02. TroopController</Filter>
+      <Filter>02. Contents\Component\TroopController</Filter>
     </ClCompile>
     <ClCompile Include="Team.cpp">
-      <Filter>02. Contents\00. GameRoomManager\00. Room\01. GameRoom\00. Team</Filter>
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom\Team</Filter>
     </ClCompile>
     <ClCompile Include="Formation.cpp">
-      <Filter>02. Contents\04. Component\02. TroopController\00. Formation</Filter>
+      <Filter>02. Contents\Component\TroopController\Formation</Filter>
     </ClCompile>
     <ClCompile Include="ServerPackets.cpp">
       <Filter>03. Packets</Filter>
     </ClCompile>
     <ClCompile Include="Spawner.cpp">
-      <Filter>02. Contents\04. Component\99. Scripts\02. Spawner</Filter>
+      <Filter>02. Contents\Component\Scripts\Spawner</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="00. Server">
-      <UniqueIdentifier>{cd2a2db3-f1f0-4a1b-bf92-80e83ed3fdb2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="98. Scripts">
       <UniqueIdentifier>{0fc7fec9-5f24-426c-b3c1-9055ddde20ca}</UniqueIdentifier>
     </Filter>
@@ -102,68 +99,8 @@
     <Filter Include="03. Packets">
       <UniqueIdentifier>{a72fea0a-efab-4482-a77f-c526fc498cbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Packets\01. PacketHandler">
-      <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Packets\00. Schema">
-      <UniqueIdentifier>{2b95e60b-2a18-4e25-8e90-c47c9b9dd645}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject">
-      <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature">
-      <UniqueIdentifier>{a1679b21-ef3b-4ca5-a378-cf378cc19360}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC">
-      <UniqueIdentifier>{a3c6f62a-55d7-4f07-9cab-0acbac186255}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier">
-      <UniqueIdentifier>{7027c05f-9aa7-4c46-985a-089f18d6b6a4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General">
-      <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\00. Player">
-      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\03. Factory">
-      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component">
-      <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\00. FSM">
-      <UniqueIdentifier>{f20ae024-7961-4a6e-8686-68c37a4f8f2c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\00. FSM\00. State">
-      <UniqueIdentifier>{58ad9f7e-1090-4462-93aa-c2cfb4cd20d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\99. Scripts">
-      <UniqueIdentifier>{b2863369-6965-4965-9878-bf03752897d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\99. Scripts\00. Projectile">
-      <UniqueIdentifier>{4b6b9a11-1644-4c5b-863f-a4a32a15e8bc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\99. Scripts\01. BattleRam">
-      <UniqueIdentifier>{69219774-fc37-4a5c-a242-7bd4abed8d9f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\01. BehaviorTree">
-      <UniqueIdentifier>{c7c49975-d6a6-485d-bffc-5b9fcc6f0b6a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode">
-      <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode">
-      <UniqueIdentifier>{78ab9b19-e408-4466-b80d-0f7d82c9a817}</UniqueIdentifier>
-    </Filter>
     <Filter Include="96. Headers">
       <UniqueIdentifier>{1745fc1b-553c-4224-825e-7cefc9cd4c15}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="95. Managers">
-      <UniqueIdentifier>{4fe37554-9a99-4e00-89b3-2ab94c0fb3c0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="95. Managers\00. ServerManager">
-      <UniqueIdentifier>{f1701da0-3397-403e-ba78-5576bbec78d9}</UniqueIdentifier>
     </Filter>
     <Filter Include="05. Global">
       <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
@@ -171,38 +108,89 @@
     <Filter Include="01. ClientSessionManager">
       <UniqueIdentifier>{e7bed467-3e89-4a3b-877a-09b6eba0ec3b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. ClientSessionManager\00. ClientSession">
+    <Filter Include="01. ClientSessionManager\ClientSession">
       <UniqueIdentifier>{cbaaff46-38ff-49d6-afed-319281533012}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\04. Component\02. TroopController">
-      <UniqueIdentifier>{a60df6e2-692f-42b6-b8cd-8d0cc7286b81}</UniqueIdentifier>
+    <Filter Include="03. Packets\PacketHandler">
+      <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\04. Component\02. TroopController\00. Formation">
-      <UniqueIdentifier>{fef2ee7e-b562-449b-beb8-69009ea62ab6}</UniqueIdentifier>
+    <Filter Include="03. Packets\Schema">
+      <UniqueIdentifier>{2b95e60b-2a18-4e25-8e90-c47c9b9dd645}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State">
+    <Filter Include="02. Contents\GameObject">
+      <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameObject\Creature">
+      <UniqueIdentifier>{a1679b21-ef3b-4ca5-a378-cf378cc19360}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameObject\Creature\NPC">
+      <UniqueIdentifier>{a3c6f62a-55d7-4f07-9cab-0acbac186255}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameObject\Creature\NPC\Soldier">
+      <UniqueIdentifier>{7027c05f-9aa7-4c46-985a-089f18d6b6a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameObject\Creature\NPC\Soldier\State">
       <UniqueIdentifier>{c7011f14-058b-45b6-a67f-204400f62173}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\02. GameObject\00. Creature\01. NPC\00. General\00. Behavior">
+    <Filter Include="02. Contents\GameObject\Creature\NPC\General">
+      <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameObject\Creature\NPC\General\Behavior">
       <UniqueIdentifier>{ed2dfafc-cb9b-4dcc-a35e-3920e277d50b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\04. Component\99. Scripts\02. Spawner">
+    <Filter Include="02. Contents\GameObject\Creature\Player">
+      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component">
+      <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\FSM">
+      <UniqueIdentifier>{f20ae024-7961-4a6e-8686-68c37a4f8f2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\FSM\State">
+      <UniqueIdentifier>{58ad9f7e-1090-4462-93aa-c2cfb4cd20d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\Scripts">
+      <UniqueIdentifier>{b2863369-6965-4965-9878-bf03752897d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\Scripts\Spawner">
       <UniqueIdentifier>{8e7cd877-ec7c-4e85-8736-18ea789260b0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\04. Component\99. Scripts\03. Vallista">
-      <UniqueIdentifier>{8e9c47df-4be5-477e-b890-3bb918d888fd}</UniqueIdentifier>
+    <Filter Include="02. Contents\Component\BehaviorTree">
+      <UniqueIdentifier>{c7c49975-d6a6-485d-bffc-5b9fcc6f0b6a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. GameRoomManager">
+    <Filter Include="02. Contents\Component\BehaviorTree\BehaviorNode">
+      <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode">
+      <UniqueIdentifier>{78ab9b19-e408-4466-b80d-0f7d82c9a817}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\TroopController">
+      <UniqueIdentifier>{a60df6e2-692f-42b6-b8cd-8d0cc7286b81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Component\TroopController\Formation">
+      <UniqueIdentifier>{fef2ee7e-b562-449b-beb8-69009ea62ab6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. main">
+      <UniqueIdentifier>{cd2a2db3-f1f0-4a1b-bf92-80e83ed3fdb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoomManager">
       <UniqueIdentifier>{69b99707-0b8a-4adb-88d6-69a279587bcb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. GameRoomManager\00. Room">
+    <Filter Include="02. Contents\GameRoomManager\Room">
       <UniqueIdentifier>{22cf3e7d-4884-4e60-8ba4-1b388524b406}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. GameRoomManager\00. Room\01. GameRoom">
+    <Filter Include="02. Contents\GameRoomManager\Room\GameRoom">
       <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\00. GameRoomManager\00. Room\01. GameRoom\00. Team">
+    <Filter Include="02. Contents\GameRoomManager\Room\GameRoom\Team">
       <UniqueIdentifier>{dfc424e8-922b-4926-bce1-3f236a43e906}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. main\ServerManager">
+      <UniqueIdentifier>{f1701da0-3397-403e-ba78-5576bbec78d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameObject\Factory">
+      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -210,28 +198,28 @@
       <Filter>99. pch</Filter>
     </ClInclude>
     <ClInclude Include="ServerManager.h">
-      <Filter>95. Managers\00. ServerManager</Filter>
+      <Filter>00. main\ServerManager</Filter>
     </ClInclude>
     <ClInclude Include="ClientSession.h">
-      <Filter>01. ClientSessionManager\00. ClientSession</Filter>
+      <Filter>01. ClientSessionManager\ClientSession</Filter>
     </ClInclude>
     <ClInclude Include="ClientSessionManager.h">
       <Filter>01. ClientSessionManager</Filter>
     </ClInclude>
     <ClInclude Include="ClientPacketHandler.h">
-      <Filter>03. Packets\01. PacketHandler</Filter>
+      <Filter>03. Packets\PacketHandler</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>02. Contents\02. GameObject</Filter>
+      <Filter>02. Contents\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\00. Player</Filter>
+      <Filter>02. Contents\GameObject\Creature\Player</Filter>
     </ClInclude>
     <ClInclude Include="ServerEnums.h">
       <Filter>96. Headers</Filter>
     </ClInclude>
     <ClInclude Include="GameObjectFactory.h">
-      <Filter>02. Contents\03. Factory</Filter>
+      <Filter>02. Contents\GameObject\Factory</Filter>
     </ClInclude>
     <ClInclude Include="ServerStructs.h">
       <Filter>96. Headers</Filter>
@@ -243,79 +231,79 @@
       <Filter>96. Headers</Filter>
     </ClInclude>
     <ClInclude Include="GameRoomManager.h">
-      <Filter>02. Contents\00. GameRoomManager</Filter>
+      <Filter>02. Contents\GameRoomManager</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
-      <Filter>02. Contents\04. Component</Filter>
+      <Filter>02. Contents\Component</Filter>
     </ClInclude>
     <ClInclude Include="FSM.h">
-      <Filter>02. Contents\04. Component\00. FSM</Filter>
+      <Filter>02. Contents\Component\FSM</Filter>
     </ClInclude>
     <ClInclude Include="State.h">
-      <Filter>02. Contents\04. Component\00. FSM\00. State</Filter>
+      <Filter>02. Contents\Component\FSM\State</Filter>
     </ClInclude>
     <ClInclude Include="Creature.h">
-      <Filter>02. Contents\02. GameObject\00. Creature</Filter>
+      <Filter>02. Contents\GameObject\Creature</Filter>
     </ClInclude>
     <ClInclude Include="NPC.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC</Filter>
+      <Filter>02. Contents\GameObject\Creature\NPC</Filter>
     </ClInclude>
     <ClInclude Include="Script.h">
-      <Filter>02. Contents\04. Component\99. Scripts</Filter>
+      <Filter>02. Contents\Component\Scripts</Filter>
     </ClInclude>
     <ClInclude Include="BehaviorTree.h">
-      <Filter>02. Contents\04. Component\01. BehaviorTree</Filter>
+      <Filter>02. Contents\Component\BehaviorTree</Filter>
     </ClInclude>
     <ClInclude Include="GameRoom.h">
-      <Filter>02. Contents\00. GameRoomManager\00. Room\01. GameRoom</Filter>
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom</Filter>
     </ClInclude>
     <ClInclude Include="BehaviorNode.h">
-      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode</Filter>
+      <Filter>02. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClInclude>
     <ClInclude Include="IsPlayerInNearNode.h">
-      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
+      <Filter>02. Contents\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClInclude>
     <ClInclude Include="TargetTraceNode.h">
-      <Filter>02. Contents\04. Component\01. BehaviorTree\00. BehaviorNode\00. CommonLeafNode</Filter>
+      <Filter>02. Contents\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalFunc.h">
       <Filter>05. Global</Filter>
     </ClInclude>
     <ClInclude Include="SoldierStates.h">
-      <Filter>02. Contents\02. GameObject\00. Creature\01. NPC\01. Soldier\00. State</Filter>
+      <Filter>02. Contents\GameObject\Creature\NPC\Soldier\State</Filter>
     </ClInclude>
     <ClInclude Include="TroopController.h">
-      <Filter>02. Contents\04. Component\02. TroopController</Filter>
+      <Filter>02. Contents\Component\TroopController</Filter>
     </ClInclude>
     <ClInclude Include="Team.h">
-      <Filter>02. Contents\00. GameRoomManager\00. Room\01. GameRoom\00. Team</Filter>
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom\Team</Filter>
     </ClInclude>
     <ClInclude Include="Formation.h">
-      <Filter>02. Contents\04. Component\02. TroopController\00. Formation</Filter>
+      <Filter>02. Contents\Component\TroopController\Formation</Filter>
     </ClInclude>
     <ClInclude Include="ServerPackets.h">
       <Filter>03. Packets</Filter>
     </ClInclude>
     <ClInclude Include="Spawner.h">
-      <Filter>02. Contents\04. Component\99. Scripts\02. Spawner</Filter>
+      <Filter>02. Contents\Component\Scripts\Spawner</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="..\Packets\Binaries\GenPackets.bat">
-      <Filter>03. Packets\00. Schema</Filter>
+      <Filter>03. Packets\Schema</Filter>
     </None>
     <None Include="..\Packets\Binaries\Enums.fbs">
-      <Filter>03. Packets\00. Schema</Filter>
+      <Filter>03. Packets\Schema</Filter>
     </None>
     <None Include="..\Packets\Binaries\Structs.fbs">
-      <Filter>03. Packets\00. Schema</Filter>
+      <Filter>03. Packets\Schema</Filter>
     </None>
     <None Include="..\Libraries\inc\SimpleMath.inl">
       <Filter>99. pch</Filter>
     </None>
     <None Include="..\Packets\Binaries\Tables.fbs">
-      <Filter>03. Packets\00. Schema</Filter>
+      <Filter>03. Packets\Schema</Filter>
     </None>
   </ItemGroup>
 </Project>

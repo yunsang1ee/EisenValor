@@ -26,8 +26,7 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 		return false;
 	}
 
-	m_sessionPool = std::make_unique<SessionPool>();
-	m_sessionPool->Init(sessionFunc);
+	m_sessionPool.Init(sessionFunc);
 
 	return true;
 }
@@ -40,19 +39,14 @@ void ServerEngine::RIOWorker::Work() noexcept
 
 void ServerEngine::RIOWorker::FlushSessionPacketQueue() noexcept
 {
-	// TODO: 매번 락을 잡고 하는게 좋진 않아보임
-	// 1. LockFreeSet으로 바꾼다
-	// 2. 다른 방법을 찾아본다.
-	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
 	auto iter = m_connectedSession.begin();
 	for(; iter != m_connectedSession.end();) {
 		if(SESSION_STATE::FREE != (*iter)->GetState()) {
 			(*iter)->FlushPacketQueue();
-			// (*iter)->FlushPacketQueueSecond();
 			++iter;
 		}
 		else
-			iter = m_connectedSession.erase(iter);
+			iter = m_connectedSession.unsafe_erase(iter);
 	}
 }
 
@@ -66,10 +60,7 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 		memset(ioResults.data(), 0, sizeof(ioResults));
 
 		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, ioResults.data(), static_cast<uint32>(ioResults.size()));
-		if(0 == numResults) {
-			std::this_thread::sleep_for(1ms);
-			break;
-		}
+		if(0 == numResults) break;
 		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
 			break;
@@ -88,11 +79,9 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 
 void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
-	assert(TLS_THREAD_ID == LISTEN_THREAD_ID);
 	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
-	auto session = m_sessionPool.get()->DeqSession();
+	auto session = m_sessionPool.DeqSession();
 	session->SetOwner(this);
 	session->Connect(socket, clientAddr);
-	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
-	m_connectedSession.push_back(std::move(session));
+	m_connectedSession.insert(std::move(session));
 }

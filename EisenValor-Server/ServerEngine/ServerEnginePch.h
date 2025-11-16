@@ -67,6 +67,8 @@ namespace fs = std::filesystem;
 #include "Timer.h"
 
 #include "ServerEngineContainers.h"
+#include "Allocator.h"
+#include "MemoryPool.h"
 #include "ObjectPool.h"
 #include "LockQueue.h"
 
@@ -75,3 +77,6 @@ struct PacketInfo {
 	const uint8* ptr;
 	uint32 size;
 };
+
+template<typename Type>
+using XVector = std::vector<Type, oneapi::tbb::scalable_allocator<Type>>;

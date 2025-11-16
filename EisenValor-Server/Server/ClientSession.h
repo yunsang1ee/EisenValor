@@ -16,13 +16,13 @@ namespace Server {
 		virtual ~ClientSession();
 
 	public:
-		void SetPlayer(std::shared_ptr<Server::Contents::Player> general) noexcept { m_player = general; }
+		void SetPlayer(std::shared_ptr<Server::Contents::Player> player) noexcept { m_player = player; }
 		std::shared_ptr<Server::Contents::Player> GetPlayer() { return m_player; }
 
 	public:
-		virtual void OnConnected() override;
-		virtual void OnDisconnected() override;
-		virtual void ProcessPacket(const std::span<const char>& buffer) override;
-		virtual void OnSend(const uint32 bytesTransferred) override;
+		virtual void OnConnected() override final;
+		virtual void OnDisconnected() override final;
+		virtual void ProcessPacket(const std::span<const char>& buffer) override final;
+		virtual void OnSend(const uint32 bytesTransferred) override final;
 	};
 }

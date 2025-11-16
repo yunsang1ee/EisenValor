@@ -1,33 +1,52 @@
 #pragma once
 
+#define DECLARE_CREATE_FUNC(StateClass)														\
+    friend class GameObjectFactory;															\
+    friend struct std::default_delete<Server::Contents::StateClass>;						\
+private:																					\
+    template <typename... Args>																\
+    static std::unique_ptr<StateClass> Create(Args&&... args) {								\
+        return std::unique_ptr<StateClass>(new StateClass(std::forward<Args>(args)...));	\
+    }
+
 #include "State.h"
 
 namespace Server {
 	namespace Contents {
+		class GameObjectFactory;
 		class GameObject;
 
 		// ============================================
 		//					IDLE
 		// ============================================
-		class SoldierIdleState : public IdleState {
-		public:
-			SoldierIdleState();
-			virtual ~SoldierIdleState();
+		class SoldierIdleState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierIdleState)
+		
+		private:
+			float m_enemyDetectionRange{};
 
+		private:
+			explicit SoldierIdleState(const float enemyDetectionRange);
+			virtual ~SoldierIdleState();
+		
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
 
 		public:
 			virtual void Update(const float dt) override;
+
 		};
 
 
 		// ============================================
 		//					MOVE
 		// ============================================
-		class SoldierMoveState : public MoveState {
-		public:
+		class SoldierMoveState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierMoveState)
+		private:
 			SoldierMoveState();
 			virtual ~SoldierMoveState();
 
@@ -38,15 +57,23 @@ namespace Server {
 		public:
 			virtual void Update(const float dt) override;
 
+			friend class GameObjectFactory;
 		};
 
 
 		// ============================================
 		//					CHASE
 		// ============================================
-		class SoldierChaseState : public ChaseState {
-		public:
-			SoldierChaseState();
+		class SoldierChaseState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierChaseState)
+
+		private:
+			float m_chaseSpeed;
+			float m_combatRange;
+
+		private:
+			explicit SoldierChaseState(const float chaseSpeed, const float combatRange);
 			virtual ~SoldierChaseState();
 
 		public:
@@ -55,18 +82,27 @@ namespace Server {
 
 		public:
 			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
+
 		};
 
 
 		// ============================================
 		//					ATTACK
 		// ============================================
-		class SoldierAttackState : public AttackState {
-		public:
-			float					m_accDt{ 0.f };
+		class SoldierAttackState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierAttackState)
+		private:
+			float					m_accDt;
+			
+		private:
+			float					m_combatRange;
+			std::chrono::seconds	m_attackCycleTime;
 
-		public:
-			SoldierAttackState();
+		private:
+			explicit SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime);
 			virtual ~SoldierAttackState();
 
 		public:
@@ -76,19 +112,22 @@ namespace Server {
 		public:
 			virtual void Update(const float dt) override;
 
-
+			friend class GameObjectFactory;
 		};
 
 
 		// ============================================
 		//					DEFENSE
 		// ============================================
-		class SoldierDefenseState : public DefenseState {
-		public:
-			float					m_accDT{ 0.f };
+		class SoldierDefenseState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierDefenseState)
+
+		private:
+			float					m_accDT;
 			static constexpr auto	DEFENSE_TIME = 1s;
 
-		public:
+		private:
 			SoldierDefenseState();
 			virtual ~SoldierDefenseState();
 
@@ -98,6 +137,31 @@ namespace Server {
 
 		public:
 			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
+
+		};
+
+
+		// ============================================
+		//					DEFENSE
+		// ============================================
+		class SoldierDamagedState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierDamagedState)
+
+		private:
+			SoldierDamagedState();
+			virtual ~SoldierDamagedState();
+
+		public:
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
+
+		public:
+			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
 		};
 	}
 }

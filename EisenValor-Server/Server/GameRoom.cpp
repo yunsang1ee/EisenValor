@@ -10,7 +10,7 @@
 #include "FSM.h"
 
 Server::Contents::GameRoom::GameRoom(const uint16 roomID)
-	:m_id{roomID}
+	:m_id{ roomID }
 {
 	std::cout << std::format("Room ID:{}", m_id) << std::endl;;
 }
@@ -31,6 +31,17 @@ void Server::Contents::GameRoom::Start()
 	ExecAsync(&GameRoom::CheckHeartBeat);
 }
 
+void Server::Contents::GameRoom::ProcessEvents()
+{
+	while(false == m_eventFpQueue.empty()) {
+		auto eve = m_eventFpQueue.front();
+		eve();
+		m_eventFpQueue.pop();
+	}
+
+	// TODO: EventQueue 처리
+}
+
 void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
 	std::cout << "Enter Match" << std::endl;
@@ -41,8 +52,8 @@ void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>&
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
-	
-	// TODO: 플레이어 수치를 Json이나 XML에서 뽑기	
+
+	//// TODO: 플레이어 수치를 Json이나 XML에서 뽑기	
 	PlayerTemplate t;
 	t.pos = startPos;
 	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
@@ -78,27 +89,58 @@ void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>&
 			clientSession->Send(std::move(pb));
 		}
 	}
-
-	AddEvent([this, t, p = std::move(player)]()
+	AddEvent([this, p = std::move(player)]()
 		{
-			m_teams[etou8(t.teamType)].AddObject(std::move(p));
+			AddGameObject(std::move(p));
 		});
 }
 
 void Server::Contents::GameRoom::LeaveGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
-	const auto player = clientSession->GetPlayer();
+	auto player = clientSession->GetPlayer();
+	const auto id = player->GetID();
 	const auto teamType = player->GetTeamType();
-	m_teams[etou8(teamType)].RemoveObject(player);
+	clientSession->SetPlayer(nullptr);
+
+	AddEvent([this, p =std::move(player)]()
+		{
+			RemoveGameObject(std::move(p));
+		});
+
 }
 
 void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
 {
-	for(auto& [id, player] : players) {
+	for(const auto& [id, player] : players) {
 		const auto& session = player->GetOwner();
 		if(session->GetState() == SESSION_STATE::IN_GAME)
 			session->Send(packetBuffer);
 	}
+}
+
+void Server::Contents::GameRoom::AddGameObject(std::shared_ptr<GameObject> gameObject)
+{
+	const uint32 id{ gameObject->GetID() };
+	const auto teamType = gameObject->GetTeamType();
+
+	if(false == m_gameObjects.contains(id)) {
+		m_gameObjects.try_emplace(id, gameObject);
+		std::cout << "Add in Game" << std::endl;
+	}
+	m_teams[etou8(teamType)].AddGameObject(gameObject);
+}
+
+void Server::Contents::GameRoom::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
+{
+	const uint32 id{ gameObject->GetID() };
+	const auto teamType = gameObject->GetTeamType();
+
+	if(m_gameObjects.contains(id)) {
+		m_gameObjects.erase(id);
+
+		std::cout << "Remove in Game" << std::endl;
+	}
+	m_teams[etou8(teamType)].RemoveObject(gameObject);
 }
 
 void Server::Contents::GameRoom::BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
@@ -139,7 +181,7 @@ void Server::Contents::GameRoom::CheckGameTime(const float dt)
 	}
 }
 
-void Server::Contents::GameRoom::Handle_CS_MOVE(const std::shared_ptr<Player>& player, const KinematicInfo& kinematicInfo)
+void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo)
 {
 	player->SetPos(kinematicInfo.position);
 	player->SetRotation(kinematicInfo.rotation);
@@ -151,7 +193,7 @@ void Server::Contents::GameRoom::Handle_CS_MOVE(const std::shared_ptr<Player>& p
 	ExecAsync(&GameRoom::BroadcastToAll, std::move(packetBuffer));
 }
 
-void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(const std::shared_ptr<Player>& player)
+void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player>  player)
 {
 	//// TODO: 주변에 SPAWN 기지가 있는지 확인
 	//const auto troopController = player->GetComponent<Server::Contents::TroopController>();
@@ -177,80 +219,80 @@ void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(const std::shared_ptr<Play
 	//troopController->Arrange();
 }
 
-void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<Player>& player)
+void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
 {
-	static constexpr float attackRadius = 3.f;
-	static constexpr float attackDegree = 90.f;
-	constexpr float radiusSq = attackRadius * attackRadius;
+	//static constexpr float attackRadius = 3.f;
+	//static constexpr float attackDegree = 90.f;
+	//constexpr float radiusSq = attackRadius * attackRadius;
 
-	const Vec3& playerPos = player->GetPos();
-	Vec3 playerDir{ sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y) };
-	playerDir.Normalize();
+	//const Vec3& playerPos = player->GetPos();
+	//Vec3 playerDir{ sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y) };
+	//playerDir.Normalize();
 
-	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
+	//const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
 
-	const auto teamType = player->GetTeamType();
-	const auto otherTeam = etou8(GetOtherTeamType(teamType));
+	//const auto teamType = player->GetTeamType();
+	//const auto otherTeam = etou8(GetOtherTeamType(teamType));
 
-	for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
-		for(const auto& [targetID, object] : objectGroup) {
+	//for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
+	//	for(const auto& [targetID, object] : objectGroup) {
 
-			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) continue;
-			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
+	//		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) continue;
+	//		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
 
-			const Vec3& pos = object->GetPos();
-			Vec3 toTargetDir = pos - playerPos;
-			const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
+	//		const Vec3& pos = object->GetPos();
+	//		Vec3 toTargetDir = pos - playerPos;
+	//		const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
 
-			// 반지름 길이와 타겟까지의 거리 비교
-			if(distToTargetSq >= radiusSq) continue;
+	//		// 반지름 길이와 타겟까지의 거리 비교
+	//		if(distToTargetSq >= radiusSq) continue;
 
-			const float dotValue{ playerDir.Dot(toTargetDir) };
+	//		const float dotValue{ playerDir.Dot(toTargetDir) };
 
-			float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+	//		const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
 
-			// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
-			if(dotValue <= 0) continue;
+	//		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
+	//		if(dotValue <= 0) continue;
 
-			if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
-				std::cout << std::format("ATTACKER ID: {}, TARGET ID:{}", player->GetID(), targetID) << std::endl;
-				const auto playerAtk = player->GetAtk();
-				int hp{ std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP() };
-				hp -= playerAtk;
-				if(hp <= 0) {
-					std::static_pointer_cast<Server::Contents::Creature>(object)->SetAlive(false);
-					std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = object]()
-						{
-							t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
-						});
-				}
-				else {
-					std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
-				}
+	//		if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
+	//			std::cout << std::format("ATTACKER ID: {}, TARGET ID:{}", player->GetID(), targetID) << std::endl;
+	//			const auto playerAtk = player->GetAtk();
+	//			int hp{ std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP() };
+	//			hp -= playerAtk;
+	//			if(hp <= 0) {
+	//				std::static_pointer_cast<Server::Contents::Creature>(object)->SetAlive(false);
+	//				std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = object]()
+	//					{
+	//						t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
+	//					});
+	//			}
+	//			else {
+	//				std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
+	//			}
 
-				// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
+	//			// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
 
-				if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-					auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
-					ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
-				}
-				
-				//if(hp <= 0) {
-				//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
-				//		{
-				//			m_teams[otherTeam].RemoveObject(object);
-				//		});
-				//}
-			}
+	//			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
+	//				auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
+	//				ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
+	//			}
 
-			// a * b = |a| |b| cos	
-			// cos = a * b / |a| |b|
-			// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
-		}
-	}
+	//			//if(hp <= 0) {
+	//			//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
+	//			//		{
+	//			//			m_teams[otherTeam].RemoveObject(object);
+	//			//		});
+	//			//}
+	//		}
+
+	//		// a * b = |a| |b| cos	
+	//		// cos = a * b / |a| |b|
+	//		// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
+	//	}
+	//}
 }
 
-bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(const std::shared_ptr<Player>& player, const Vec3& targetPos)
+bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos)
 {
 	if(player) {
 		player->GetComponent<Server::Contents::TroopController>()->SetTargetPos(targetPos);
@@ -260,16 +302,15 @@ bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(const std::shared_ptr<Pl
 	return false;
 }
 
-void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(const std::shared_ptr<Player>& player)
+void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player)
 {
-	// TODO:
 	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
 	uint8  type = static_cast<uint8>(troopController->GetCurFormation()->m_formationType);
 	type = (type + 1) % static_cast<uint8>(TROOP_FORMATION_TYPE::END);
 	troopController->SetFormation(static_cast<TROOP_FORMATION_TYPE>(type));
 }
 
-void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(const std::shared_ptr<Player>& player)
+void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player)
 {
 	const auto teamType = player->GetTeamType();
 	auto& team = m_teams[etou8(teamType)];
@@ -294,21 +335,11 @@ void Server::Contents::GameRoom::Update()
 
 	m_lastUpdate = now;
 
-	// 이벤트큐
-
-	// 오브젝트 생성 및 삭제
-	// CHANGE_FSM_EVE
-		while(false == m_eventQueue.empty()) {
-		auto eve = m_eventQueue.front();
-		eve();
-		m_eventQueue.pop();
-	}
-
 	for(auto& team : m_teams)
-		for(auto& objGroup : team.GetAllObjectGroups()) 
-			for(auto& [id, obj] : objGroup) 
-				if(obj)
-					obj->Update(m_dt);
+		for(auto& objGroup : team.GetAllObjectGroups())
+			for(auto& [id, obj] : objGroup)
+				if(obj.lock())
+					obj.lock()->Update(m_dt);
 
 	CheckGameTime(m_dt);
 	ExecTimer(UPDATE_MS, &Server::Contents::GameRoom::Update);
@@ -319,7 +350,7 @@ void Server::Contents::GameRoom::CheckHeartBeat()
 	for(auto& team : m_teams) {
 		for(auto& [id, player] : team.GetPlayers()) {
 			const auto now = std::chrono::high_resolution_clock::now();
-			const auto& session = player->GetOwner();
+			auto session = player->GetOwner();
 			const auto hbTimeStamp = session->GetHeartbeatTimestamp();
 			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
 
