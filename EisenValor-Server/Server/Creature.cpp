@@ -20,8 +20,3 @@ void Server::Contents::Creature::SetHp(const int32 hp) noexcept
 		m_stat.hp = std::max(0, hp);
 	}
 }
-
-void Server::Contents::Creature::OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged)
-{
-
-}
