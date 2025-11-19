@@ -10,13 +10,13 @@ Server::Contents::Creature::~Creature()
 {
 }
 
-void Server::Contents::Creature::SetHp(const int32 hp) noexcept
+void Server::Contents::Creature::SetHp(const uint32 hp) noexcept
 {
 	if(hp > m_stat.hp) {
-		m_stat.hp = std::min(hp, 100);
+		m_stat.hp = std::min(hp, (uint32)100);
 	}
 	// hp <= m_stat.hp
 	else {
-		m_stat.hp = std::max(0, hp);
+		m_stat.hp = std::max((uint32)0, hp);
 	}
 }

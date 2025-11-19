@@ -38,8 +38,6 @@ void Server::Contents::GameRoom::ProcessEvents()
 		eve();
 		m_eventFpQueue.pop();
 	}
-
-	// TODO: EventQueue 처리
 }
 
 void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
@@ -89,10 +87,8 @@ void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>&
 			clientSession->Send(std::move(pb));
 		}
 	}
-	AddEvent([this, p = std::move(player)]()
-		{
-			AddGameObject(std::move(p));
-		});
+
+	AddGameObject(std::move(player));
 }
 
 void Server::Contents::GameRoom::LeaveGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
@@ -101,12 +97,7 @@ void Server::Contents::GameRoom::LeaveGame(const std::shared_ptr<ClientSession>&
 	const auto id = player->GetID();
 	const auto teamType = player->GetTeamType();
 	clientSession->SetPlayer(nullptr);
-
-	AddEvent([this, p =std::move(player)]()
-		{
-			RemoveGameObject(std::move(p));
-		});
-
+	RemoveGameObject(std::move(player));
 }
 
 void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
@@ -120,27 +111,32 @@ void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::
 
 void Server::Contents::GameRoom::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
-	const uint32 id{ gameObject->GetID() };
-	const auto teamType = gameObject->GetTeamType();
+	AddEvent([this, obj = gameObject]() {
+		const uint32 id{ obj->GetID() };
+		const auto teamType = obj->GetTeamType();
 
-	if(false == m_gameObjects.contains(id)) {
-		m_gameObjects.try_emplace(id, gameObject);
-		std::cout << "Add in Game" << std::endl;
-	}
-	m_teams[etou8(teamType)].AddGameObject(gameObject);
+		if(false == m_gameObjects.contains(id)) {
+			m_gameObjects.try_emplace(id, obj);
+			std::cout << "Add in Game" << std::endl;
+		}
+		m_teams[etou8(teamType)].AddGameObject(obj);
+		});
 }
 
 void Server::Contents::GameRoom::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
 {
-	const uint32 id{ gameObject->GetID() };
-	const auto teamType = gameObject->GetTeamType();
+	AddEvent([this, obj = gameObject]() {
+		const uint32 id{ obj->GetID() };
+		const auto teamType = obj->GetTeamType();
 
-	if(m_gameObjects.contains(id)) {
-		m_gameObjects.erase(id);
+		m_teams[etou8(teamType)].RemoveObject(obj);
 
-		std::cout << "Remove in Game" << std::endl;
-	}
-	m_teams[etou8(teamType)].RemoveObject(gameObject);
+		if(m_gameObjects.contains(id)) {
+			m_gameObjects.erase(id);
+
+			std::cout << "Remove in Game" << std::endl;
+		}
+		});
 }
 
 void Server::Contents::GameRoom::BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
@@ -319,6 +315,7 @@ void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> pl
 		const auto npc = std::static_pointer_cast<Server::Contents::NPC>(n);
 		const auto type = std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType();
 		if(type == FB_ENUMS::NPC_TYPE_SOLDIER) {
+			// TODO: ChangeState
 			npc->GetComponent<FSM>()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, m_dt);
 		}
 	}
@@ -334,6 +331,8 @@ void Server::Contents::GameRoom::Update()
 	}
 
 	m_lastUpdate = now;
+
+	ProcessEvents();
 
 	for(auto& team : m_teams)
 		for(auto& objGroup : team.GetAllObjectGroups())
@@ -354,13 +353,10 @@ void Server::Contents::GameRoom::CheckHeartBeat()
 			const auto hbTimeStamp = session->GetHeartbeatTimestamp();
 			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
 
-				if(player)
+				if(player) {
 					player->GetOwner()->Disconnect("HEART_BEAT");
-
-				AddEvent([this, p = std::move(player)]()
-					{
-						m_teams[etou8(p->GetTeamType())].RemoveObject(p);
-					});
+					RemoveGameObject(player);
+				}
 
 			}
 		}

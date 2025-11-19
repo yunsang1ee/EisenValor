@@ -12,7 +12,8 @@ namespace ServerEngine {
 		std::atomic_int									m_taskCount{};
 	
 	public:
-		void Push(std::shared_ptr<Task> task, bool pushOnly = false) noexcept;
+		// CHK: PushOnly = true
+		void Push(std::shared_ptr<Task> task, bool pushOnly = true) noexcept;
 
 	public:
 		template<typename Func>
