@@ -235,16 +235,16 @@ void RayGenMain()
     float2 uv = (float2(pixelCoord) + 0.5f) / float2(screenSize);
     float2 ndc = uv * 2.0f - 1.0f;
     ndc.y = -ndc.y;
-
-    float4 nearPoint = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
-    float4 farPoint = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-	
-    nearPoint /= nearPoint.w;
-    farPoint /= farPoint.w;
+    
+    float4 target = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+    target /= target.w;
+    
+    float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
+    cameraPos /= cameraPos.w;
 		
     RayDesc ray;
-    ray.Origin = nearPoint.xyz;
-    ray.Direction = normalize(farPoint.xyz - nearPoint.xyz);
+    ray.Origin = cameraPos.xyz;
+    ray.Direction = normalize(target.xyz - cameraPos.xyz);
     ray.TMin = RAY_TMIN;
     ray.TMax = RAY_TMAX;
 	
@@ -294,38 +294,41 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 	
 	// 균등 스케일 가정
-    float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
+    float3 normalObj = normalize(
+        v0.normal * bary.x + 
+        v1.normal * bary.y + 
+        v2.normal * bary.z
+    );
     float3x3 objectToWorld = (float3x3) ObjectToWorld3x4();
-    float3 normal = normalize(mul(objectToWorld, normalObj));
+    float3 normal = normalize(mul(normalObj, transpose(objectToWorld)));
     if (dot(normal, WorldRayDirection()) > 0.0f)
         normal = -normal;
-	
+        
     float3 V = -normalize(WorldRayDirection());
     float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
     float3 lightColor = float3(1.0, 0.95, 0.8) * 3.0;
     float3 H = normalize(V + lightDir);
-	
+    
     float3 albedo = material.albedo;
-    float metallic = material.metallic;
-    float roughness = max(material.roughness, 0.04);
-	    
-    float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
-	
-    float NDF = DistributionGGX(normal, H, roughness);
+    float metallic = material.metallic;    
+    float roughness = max(material.roughness, 0.04);    
+    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
+    
+    float NDF = DistributionGGX(normal, H, roughness);    
     float G = GeometrySmith(normal, V, lightDir, roughness);
     float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
-	
-    float3 numerator = NDF * G * F;
-    float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, lightDir), 0.0);
+    
+    float3 numerator = NDF * G * F;    
+    float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, lightDir), 0.0);    
     float3 specular = numerator / max(denominator, EPSILON);
-	
+    
     float3 kS = F;
-    float3 kD = (1.0 - kS) * (1.0 - metallic);
-	
+    float3 kD = (1.0 - kS) * (1.0 - metallic);    
     float NdotL = saturate(dot(normal, lightDir));
+    
     float3 Lo = (kD * albedo / PI + specular) * lightColor * NdotL;
 	
-    float3 shadowOrigin = hitPos + normal * 0.001f;
+    float3 shadowOrigin = hitPos + normal * 0.1f;
     uint rngSeed =
         InstanceID() * 0xc2b2ae35u ^
         PrimitiveIndex() * 0x85ebca6bu ^
@@ -355,7 +358,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         float3 reflectDir = reflect(WorldRayDirection(), normal);
 		
         RayDesc reflectRay;
-        reflectRay.Origin = hitPos + normal * 0.001f;
+        reflectRay.Origin = hitPos + normal * 0.1f;
         reflectRay.Direction = reflectDir;
         reflectRay.TMin = RAY_TMIN;
         reflectRay.TMax = RAY_TMAX;

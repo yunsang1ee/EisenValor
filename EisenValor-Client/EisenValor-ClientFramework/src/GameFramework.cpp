@@ -188,74 +188,96 @@ void GameFramework::CreateStaticScene()
 
 	PBRMaterial groundMaterial;
 	groundMaterial.albedo = {0.6f, 0.6f, 0.6f};
-	groundMaterial.metallic = 0.0f;
+	groundMaterial.metallic = 0.9f;
 	groundMaterial.roughness = 0.8f;
 	groundMaterial.emissive = {0.0f, 0.0f, 0.0f};
 	groundMaterial.emissiveStrength = 0.0f;
 	m_materials.push_back(groundMaterial);
 
+	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
+	PBRMaterial	 playerMaterial[3] = {
+		{
+			.albedo = {0.9f, 0.3f, 0.3f},
+			.metallic = 0.9f,
+			.roughness = 0.1f,
+			.emissive = {0.0f, 0.0f, 0.0f},
+			.emissiveStrength = 0.0f
+		},
+		{.albedo = {0.3f, 0.3f, 0.9f},
+			.metallic = 0.2f,
+			.roughness = 0.3f,
+			.emissive = {0.2f, 0.4f, 1.0f},
+			.emissiveStrength = 2.0f
+		},
+		{.albedo = {0.3f, 0.9f, 0.3f},
+			.metallic = 0.0f,
+			.roughness = 0.9f,
+			.emissive = {0.0f, 0.0f, 0.0f},
+			.emissiveStrength = 0.0f
+		},
+	};
+
 	for (int i = 0; i < 3; ++i)
 	{
 		auto player = std::make_unique<Actor>("Player" + std::to_string(i));
 		player->GetTransform().SetPosition(-2.0f + i * 2.0f, 1.0f, 0.0f);
+		player->GetTransform().SetRotation(rotations[i]);
 		player->GetTransform().SetScale(1.0f);
 
 		// clang-format off
 		std::vector<Vertex> cubeVertices = {
-			{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // 0
-			{{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // 1
-			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // 2
-			{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},  // 3
-	
-			{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},  // 4
-			{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},  // 5
-			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},  // 6
-			{{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.5f, 0.5f, 1.0f}}   // 7
+			// Front face (z = 0.5)
+			{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+			{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+
+			// Back face (z = -0.5)
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+			{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
+			{{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+
+			// Left face (x = -0.5)
+			{{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
+			{{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+			{{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+			{{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+
+			// Right face (x = 0.5)
+			{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+			{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+			{{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+			{{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+
+			// Top face (y = 0.5)
+			{{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+			{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+
+			// Bottom face (y = -0.5)
+			{{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+			{{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}}
 		};
 
 		std::vector<uint32_t> cubeIndices = {
-			0, 1, 2, 0, 2, 3,  // Front
-			5, 4, 7, 5, 7, 6,  // Back
-			4, 0, 3, 4, 3, 7,  // Left
-			1, 5, 6, 1, 6, 2,  // Right
-			3, 2, 6, 3, 6, 7,  // Top
-			4, 5, 1, 4, 1, 0   // Bottom
+			0, 1, 2, 0, 2, 3,      // Front
+			4, 5, 6, 4, 6, 7,      // Back
+			8, 9, 10, 8, 10, 11,   // Left
+			12, 13, 14, 12, 14, 15, // Right
+			16, 17, 18, 16, 18, 19, // Top
+			20, 21, 22, 20, 22, 23  // Bottom
 		};
 		// clang-format on
 
 		auto playerMesh = player->AddComponent<MeshComponent>();
 		playerMesh->SetMesh(cubeVertices, cubeIndices);
 
-		m_sceneActors.push_back(std::move(player));
-		PBRMaterial playerMaterial;
-		if (i == 0)
-		{
-			// 첫 번째: 메탈릭 재질
-			playerMaterial.albedo = {0.9f, 0.3f, 0.3f};
-			playerMaterial.metallic = 0.9f;
-			playerMaterial.roughness = 0.1f;
-			playerMaterial.emissive = {0.0f, 0.0f, 0.0f};
-			playerMaterial.emissiveStrength = 0.0f;
-		}
-		else if (i == 1)
-		{
-			// 두 번째: 발광 재질
-			playerMaterial.albedo = {0.3f, 0.3f, 0.9f};
-			playerMaterial.metallic = 0.2f;
-			playerMaterial.roughness = 0.3f;
-			playerMaterial.emissive = {0.2f, 0.4f, 1.0f};
-			playerMaterial.emissiveStrength = 2.0f;
-		}
-		else
-		{
-			// 세 번째: 거친 표면
-			playerMaterial.albedo = {0.3f, 0.9f, 0.3f};
-			playerMaterial.metallic = 0.0f;
-			playerMaterial.roughness = 0.9f;
-			playerMaterial.emissive = {0.0f, 0.0f, 0.0f};
-			playerMaterial.emissiveStrength = 0.0f;
-		}
-		m_materials.push_back(playerMaterial);
+		m_sceneActors.push_back(std::move(player));		
+		m_materials.push_back(playerMaterial[i]);
 	}
 
 	DEBUG_LOG_FMT("[GameFramework] Created static scene: {} actors\n", m_sceneActors.size());
