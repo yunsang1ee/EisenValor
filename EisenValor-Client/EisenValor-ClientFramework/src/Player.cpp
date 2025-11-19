@@ -563,7 +563,6 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 }
-
 DirectX::XMMATRIX Player::GetViewMatrix() const
 {
 	float camX = m_pos.x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);

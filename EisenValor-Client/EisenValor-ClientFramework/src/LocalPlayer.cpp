@@ -555,76 +555,108 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 	}
 }
 
+// 컨트롤 토글
 void LocalPlayer::UpdateInput(const float deltaTime)
 {
 	const auto& input = Globals::Input();
 
-	    // 화면 중앙 좌표 계산
-	RECT clientRect;
-	HWND hwnd = GetActiveWindow();
-	GetClientRect(hwnd, &clientRect);
+	// Ctrl 키로 카메라 모드 토글
+	if (input.GetInputDown(VK_CONTROL))
+	{
+		if (m_cameraMode == CameraMode::NORMAL)
+		{
+			m_cameraMode = CameraMode::COMBAT;
+			// 전투 모드로 전환 시 마우스 커서 보이기
+			ShowCursor(TRUE);
+		}
+		else
+		{
+			m_cameraMode = CameraMode::NORMAL;
+			// 일반 모드로 전환 시 마우스 커서 숨기기
+			ShowCursor(FALSE);
+		}
+	}
 
-	int centerX = (clientRect.right - clientRect.left) / 2;
-	int centerY = (clientRect.bottom - clientRect.top) / 2;
+	// 카메라 모드에 따라 다른 입력 처리
+	if (m_cameraMode == CameraMode::NORMAL)
+	{
+		UpdateNormalModeInput(deltaTime);
+	}
+	else
+	{
+		UpdateCombatModeInput(deltaTime);
+	}
+}
+
+// 일반 모드 Input
+void LocalPlayer::UpdateNormalModeInput(const float deltaTime)
+{
+	const auto& input = Globals::Input();
+	const bool	isLeftButtonPressed = input.GetInput(VK_LBUTTON);
 
 	// 현재 마우스 위치
 	const auto mousePos = input.GetMousePosition();
 
-	// 중앙에서의 오프셋 계산
-	const float deltaX = mousePos.x - centerX;
-	const float deltaY = mousePos.y - centerY;
-
-	//if (!m_isMouseDragging)
-	//{
-	//	m_isMouseDragging = true;
-	//	m_lastMouseX = mousePos.x; // 시작 위치 저장
-	//	m_lastMouseY = mousePos.y;
-	//	// DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
-	//}
-	//else
-	//{
-	//	// 움직임 감지
-	//	const float deltaX = mousePos.x - m_lastMouseX;
-	//	const float deltaY = mousePos.y - m_lastMouseY;
-
-	//	if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
-	//	{
-	//		// 카메라 회전 업데이트
-	//		m_cameraYaw += deltaX * m_mouseSensitivity;
-	//		m_rot.y = m_cameraYaw;
-	//		m_cameraPitch += deltaY * m_mouseSensitivity;
-
-	//		// Pitch 제한 (위아래 회전 제한)
-	//		m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
-
-	//		// 디버깅
-	//		// DEBUG_LOG_FMT(
-	//		//	"Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n", deltaX, deltaY, m_cameraYaw,
-	//		//	m_cameraPitch
-	//		//);
-	//	}
-
-	//	m_lastMouseX = mousePos.x;
-	//	m_lastMouseY = mousePos.y;
-	//}
-
-	// 일반 모드
-	if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
+	if (isLeftButtonPressed)
 	{
-		// 카메라 회전 업데이트
-		m_cameraYaw += deltaX * m_mouseSensitivity;
-		m_rot.y = m_cameraYaw;
-		m_cameraPitch += deltaY * m_mouseSensitivity;
+		if (!m_isMouseDragging)
+		{
+			m_isMouseDragging = true;
+			m_lastMouseX = mousePos.x; // 시작 위치 저장
+			m_lastMouseY = mousePos.y;
+		}
+		else
+		{
+			// 움직임 감지
+			const float deltaX = mousePos.x - m_lastMouseX;
+			const float deltaY = mousePos.y - m_lastMouseY;
 
-		// Pitch 제한 (위아래 회전 제한)
-		m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
+			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
+			{
+				// 카메라 회전 업데이트
+				m_cameraYaw += deltaX * m_mouseSensitivity;
+				m_rot.y = m_cameraYaw;
+				m_cameraPitch += deltaY * m_mouseSensitivity;
 
-		// 마우스를 화면 중앙으로 다시 이동
-		POINT centerPoint = {centerX, centerY};
-		ClientToScreen(hwnd, &centerPoint);
-		SetCursorPos(centerPoint.x, centerPoint.y);
+				// Pitch 제한 (위아래 회전 제한)
+				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
+			}
+
+			m_lastMouseX = mousePos.x;
+			m_lastMouseY = mousePos.y;
+		}
+	}
+	else
+	{
+		if (m_isMouseDragging)
+		{
+			// 드래그 종료
+			m_isMouseDragging = false;
+		}
 	}
 
+	// 키보드 입력 처리
+	HandleKeyboardInput(deltaTime);
+}
+
+void LocalPlayer::UpdateCombatModeInput(const float deltaTime)
+{
+	const auto& input = Globals::Input();
+
+	// 전투 모드에서는 마우스 입력 무시!
+	// 카메라는 플레이어 뒤에 고정
+
+	// 키보드 입력만 처리
+	HandleKeyboardInput(deltaTime);
+
+	// 전투 모드 전용 카메라 각도 설정
+	m_cameraYaw = m_rot.y; // 플레이어 회전과 동일하게
+	m_cameraPitch = -0.3f; // 약간 아래를 보도록 고정
+}
+
+void LocalPlayer::HandleKeyboardInput(const float deltaTime)
+{
+	const auto& input = Globals::Input();
 
 	// 플레이어 정면 벡터
 	const float forwardX = sinf(m_cameraYaw);
@@ -740,6 +772,32 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	{
 		SendMovePacket();
 		lastSend = now;
+	}
+}
+
+// virtual - override
+DirectX::XMMATRIX LocalPlayer::GetViewMatrix() const
+{
+	if (m_cameraMode == CameraMode::NORMAL)
+	{
+		// 기존 방식
+		return Player::GetViewMatrix();
+	}
+	else
+	{
+		// 전투 모드: 고정 백뷰 카메라
+		float camX = m_pos.x - m_combatCameraDistance * sinf(m_rot.y); // 플레이어 회전 기준
+		float camY = m_pos.y + m_combatCameraHeight;
+		float camZ = m_pos.z - m_combatCameraDistance * cosf(m_rot.y);
+
+		float lookX = m_pos.x + sinf(m_rot.y) * 10.0f; // 플레이어 앞쪽
+		float lookY = m_pos.y + 1.0f;
+		float lookZ = m_pos.z + cosf(m_rot.y) * 10.0f;
+
+		return DirectX::XMMatrixLookAtLH(
+			DirectX::XMVectorSet(camX, camY, camZ, 0.0f), DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),
+			DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+		);
 	}
 }
 
