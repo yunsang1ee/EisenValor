@@ -12,14 +12,18 @@ namespace Server {
 		private:
 			std::map<uint8, std::shared_ptr<State>>				m_states;
 			State*												m_curState;
+			
+		public:
+			FSM();
+			virtual ~FSM()=default;
 
 		public:
-			void InitStartState(const uint8 state);
+			void SetState(const uint8 state);
 			virtual void Update(const float dt) override;
 
 		public:
 			void		AddState(std::unique_ptr<State> state);
-			void		ChangeState(const uint8 nextState);
+			void		ChangeState(const uint8 nextState, const float dt);
 			State*		GetCurState() const { return m_curState; }
 		};
 	}

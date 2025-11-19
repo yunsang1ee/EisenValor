@@ -9,16 +9,14 @@ namespace Server {
 			FB_ENUMS::GAME_OBJECT_TYPE	objType;
 		};
 
+		struct SpanwerTemplate : public GameObjectTemplate {
+		};
+
 		struct CreatureTemplate  : public GameObjectTemplate {
 			StatInfo stat;
 		};
 
 		struct PlayerTemplate : public CreatureTemplate {
-			// TODO: PlayerTemplate
-		};
-
-		struct SpawnBaseTemplate : public CreatureTemplate { 
-			// TODO: SpawnBasTemplate
 		};
 
 		struct NPCTemplate : public CreatureTemplate {
@@ -26,14 +24,17 @@ namespace Server {
 		};
 
 		struct GeneralTemplate : public NPCTemplate {
-			// TODO: GeneralTemplate
 		};
 
 		struct SoldierTemplate : public NPCTemplate {
-			// TODO: SoldierTemplate
 			std::weak_ptr<NPC> ownerGeneral;
+			float enemyDetectionRange;
+			float combatRange;
+			std::chrono::seconds attackCycleTime;
+
 		};
 		
+		class GameObject;
 		class Player;
 		class NPC;
 
@@ -47,9 +48,11 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
+			// static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::shared_ptr<NPC>			CreateGeneral(const GeneralTemplate& t);
 			static std::shared_ptr<NPC>			CreateSoldier(const SoldierTemplate& t);
+			static std::shared_ptr<GameObject>  CreateSpawnObj(const SpanwerTemplate& t);
 			
 		};
 	}

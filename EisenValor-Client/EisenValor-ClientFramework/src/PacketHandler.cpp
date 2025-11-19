@@ -61,6 +61,7 @@ bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOC
 
 		localPlayer->SetPosition(pos);
 		localPlayer->SetRotation(rot);
+		localPlayer->SetCurrentHP(recvPkt.hp());
 
 		MANAGER(GameObjectManager)->SetLocalPlayer(localPlayer);
 		MANAGER(GameObjectManager)->AddObject(localPlayer);
@@ -108,6 +109,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		player->SetRotation(rot);
 		player->SetVelocity(vel);
 		player->SetAccelration(accel);
+		player->SetCurrentHP(recvPkt.hp());
 		player->lastServerPosition = pos;
 
 		MANAGER(GameObjectManager)->AddObject(player);
@@ -184,7 +186,7 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 	return true;
 }
 
-bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt)
+bool Handle_SC_PLAYER_DAMAGED_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_DAMAGED_PACKET& recvPkt)
 {
 	const uint32 objID{recvPkt.obj_id()};
 	auto obj = MANAGER(GameObjectManager)->FindObject(objID);
@@ -219,6 +221,7 @@ bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INF
 	// TODO: State 적용해야함.
 	if (obj)
 	{
+		obj->SetCurrentHP(recvPkt.hp());
 		const Vec3 pos{
 			recvPkt.kinematic_info()->pos().x(), recvPkt.kinematic_info()->pos().y(),
 			recvPkt.kinematic_info()->pos().z()
@@ -239,6 +242,7 @@ bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INF
 
 		if(recvPkt.hp() <= 0) {
 			std::cout << std::format("{}th NPC DEAD", id) << std::endl;
+			obj->alive = false;
 		}
 	}
 
@@ -281,6 +285,8 @@ bool Handle_SC_ADD_NPC_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_NPC_
 	npc->SetRotation(rot);
 	npc->SetVelocity(vel);
 	npc->SetAccelration(accel);
+	npc->SetCurrentHP(recvPkt.hp());
+	
 	npc->lastServerPosition = pos;
 	MANAGER(GameObjectManager)->AddObject(npc);
 

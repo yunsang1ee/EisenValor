@@ -3,12 +3,17 @@
 
 #include "State.h"
 	
-void Server::Contents::FSM::InitStartState(const uint8 state)
+Server::Contents::FSM::FSM()
+	:m_curState{nullptr}
+{
+}
+
+void Server::Contents::FSM::SetState(const uint8 state)
 {
 	auto iter = m_states.find(state);
 	if(iter != m_states.end()) {
 		m_curState = iter->second.get();
-		m_curState->Enter();
+		m_curState->Enter(0.f);
 	}
 }
 
@@ -25,12 +30,22 @@ void Server::Contents::FSM::AddState(std::unique_ptr<State> state)
 		m_states.try_emplace(state->GetStateType(), std::move(state));
 }
 
-void Server::Contents::FSM::ChangeState(const uint8 nextState)
+void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt)
 {
-	m_curState->Exit();
+	m_curState->Exit(dt);
 	auto iter = m_states.find(nextState);
 	if(iter != m_states.end()) {
 		m_curState = iter->second.get();
-		m_curState->Enter();
+		m_curState->Enter(dt);
 	}
+	// Move (전달, A)		Chase
+	// Chase (전달, B)		Attack
+
+	// State*
+	// - Idle (Enter) 
+	// - Move (Enter)
+	// - Chase (Enter)
+	// - Attack (Enter)
+
+	// m_curState->Enter(A | B)
 }

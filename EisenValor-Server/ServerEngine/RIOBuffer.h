@@ -18,9 +18,9 @@ namespace ServerEngine {
 		virtual ~RIOBuffer();
 
 	public:
-		bool OnRead(const uint32 numOfBytes);
-		bool OnWrite(const uint32 numOfBytes);
-		virtual void CleanBuffer() noexcept;
+		bool				OnRead(const uint32 numOfBytes);
+		bool				OnWrite(const uint32 numOfBytes);
+		virtual void		CleanBuffer() noexcept;
 
 	public:
 		RIO_BUFFERID		GetID() const noexcept { return m_id; }

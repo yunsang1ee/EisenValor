@@ -3,10 +3,13 @@
 
 void ServerEngine::TaskQueueManager::EnqueTaskQueue(std::shared_ptr<ServerEngine::TaskQueue> taskQueue)
 {
-	m_taskQueues.Push(taskQueue);
+	m_taskQueues.push(taskQueue);
 }
 
 std::shared_ptr<ServerEngine::TaskQueue> ServerEngine::TaskQueueManager::DequeTaskQueue()
 {
-	return m_taskQueues.Pop();
+	std::shared_ptr<TaskQueue> tq;
+	if(m_taskQueues.try_pop(tq))
+		return tq;
+	else return nullptr;
 }

@@ -9,8 +9,11 @@ bool ServerEngine::ThreadManager::Init() noexcept
 	m_workerThreadCount = std::thread::hardware_concurrency() / 2;
 #endif //  ENABLE_HYPER_THREADING
 
-	TLS_THREAD_ID = 0;
-	LISTEN_THREAD_ID = m_workerThreadCount + 1;
+	TLS_THREAD_ID = IssueID();
+
+	// 0번: 메인 쓰레드
+	// 1번: 리슨 쓰레드
+	// 2번 ~ N번: RioWorker
 
 	InitTLS();
 
@@ -43,9 +46,15 @@ void ServerEngine::ThreadManager::Join()
 	DestroyTLS();
 }
 
+uint16 ServerEngine::ThreadManager::IssueID() noexcept
+{
+	uint16 id = m_threadIDCounter;
+	m_threadIDCounter++;
+	return id;
+}
+
 void ServerEngine::ThreadManager::InitTLS() noexcept
 {
-	// TODO: InitTLS
 }
 
 void ServerEngine::ThreadManager::DestroyTLS() noexcept

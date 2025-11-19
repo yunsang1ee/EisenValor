@@ -2,7 +2,6 @@
 #include "TaskQueue.h"
 #include "FSM.h"
 #include "Script.h"
-
 namespace Server {
 	namespace Contents {
 		class GameRoom;
@@ -14,10 +13,12 @@ namespace Server {
 
 		class GameObject {
 		private:
+			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
+			
 			std::wstring							m_name;
 			uint32									m_id;
 			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
-			std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)> m_components;
+			ComponentGroup							m_components;
 			std::vector<std::unique_ptr<Script>>	m_scripts;
 			const FB_ENUMS::TEAM_TYPE				m_teamType;
 
@@ -28,7 +29,13 @@ namespace Server {
 			std::weak_ptr<GameRoom>					m_room;
 
 		public:
+			GameObject() = default;
 			explicit GameObject(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
+			
+			GameObject(const GameObject&) = delete;
+			GameObject& operator=(const GameObject&) = delete;
+			GameObject (GameObject&&) = default;
+			GameObject& operator=(GameObject&&) = default;
 			virtual ~GameObject();
 
 		public:
@@ -53,7 +60,7 @@ namespace Server {
 			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
-			const Vec3 GetForward();
+			const Vec3 GetForwardDir();
 
 		public:
 			virtual void Update(const float dt);
@@ -91,7 +98,12 @@ namespace Server {
 			}
 
 			template<typename T> requires std::derived_from<T, Script>
-			void AddScript(std::unique_ptr<Script> script) { m_scripts.emplace_back(std::move(script)); }
+			Script* AddScript(std::unique_ptr<T> script) 
+			{ 
+				Script* s = script.get();
+				m_scripts.emplace_back(std::move(script));
+				return s;
+			}
 		};
 	}
 }

@@ -15,9 +15,8 @@ table SC_LOGIN_PACKET {
 	player_id : uint;
 }
 
-
 // ================================================
-//					ENTER WORLD
+//					ENTER GAME
 // ================================================
 table CS_ENTER_GAME_PACKET {
 	player_id : uint;
@@ -35,6 +34,7 @@ table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 	team_type: FB_ENUMS.TEAM_TYPE;
+	hp: uint;
 }
 
 // ================================================
@@ -45,6 +45,7 @@ table SC_ADD_OBJ_PACKET {
 	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
+	hp: uint;
 }
 
 // ================================================
@@ -56,6 +57,7 @@ table SC_ADD_NPC_PACKET {
 	team_type : FB_ENUMS.TEAM_TYPE;
 	npc_type: FB_ENUMS.NPC_TYPE;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
+	hp: uint;
 }
 
 table SC_REMOVE_OBJ_PACKET {
@@ -112,7 +114,7 @@ table CS_PLAYER_ATTACK {
 // ================================================
 //						HIT
 // ================================================
-table SC_HIT_PACKET {
+table SC_PLAYER_DAMAGED_PACKET {
 	obj_id: uint;
 	current_hp: uint;
 }
@@ -155,7 +157,7 @@ table SC_NPC_INFO {
 	npc_type: FB_ENUMS.NPC_TYPE;
 	kinematic_info: FB_STRUCTS.KinematicInfo;
 	hp: uint;
-	obj_state : byte;
+	obj_state : ubyte;
 }
 
 

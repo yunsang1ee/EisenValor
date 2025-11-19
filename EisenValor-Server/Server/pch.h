@@ -1,4 +1,7 @@
 ﻿#pragma once
+
+#define DEG2RAD 180.f / 3.141592f
+
 #pragma warning(disable: 4819)
 #ifdef _DEBUG
 #pragma comment(lib, "ServerEngine\\Debug\\ServerEngine_Debug.lib")

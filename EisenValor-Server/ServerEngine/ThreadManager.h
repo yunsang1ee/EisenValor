@@ -11,6 +11,8 @@ namespace ServerEngine {
 		uint16						m_workerThreadCount;
 		tbb::spin_mutex				m_mutex;
 		std::vector<std::jthread>	m_threads;
+		
+		uint16						m_threadIDCounter=0;
 
 	public:
 		bool Init() noexcept;
@@ -19,7 +21,7 @@ namespace ServerEngine {
 
 	public:
 		uint16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
-	
+		uint16 IssueID() noexcept;
 	private:
 		static void InitTLS() noexcept;
 		static void DestroyTLS() noexcept;

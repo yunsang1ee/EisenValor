@@ -17,8 +17,8 @@ namespace Server {
 			virtual ~State();
 
 		public:
-			virtual void Enter() abstract;
-			virtual void Exit() abstract;
+			virtual void Enter(const float dt) abstract;
+			virtual void Exit(const float dt) abstract;
 
 		public:
 			virtual void Update(const float dt) abstract;
@@ -29,7 +29,6 @@ namespace Server {
 		public:
 			void SetFSM(FSM* fsm) { m_fsm = fsm; }
 			FSM* GetFSM() const { return m_fsm; }
-
 		};
 	}
 }

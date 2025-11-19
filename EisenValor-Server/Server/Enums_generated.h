@@ -16,21 +16,21 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace FB_ENUMS {
 
 enum GAME_OBJECT_TYPE : uint8_t {
-  GAME_OBJECT_TYPE_NONE = 0,
+  GAME_OBJECT_TYPE_NPC = 0,
   GAME_OBJECT_TYPE_PLAYER = 1,
-  GAME_OBJECT_TYPE_NPC = 2,
+  GAME_OBJECT_TYPE_SPAWNER = 2,
   GAME_OBJECT_TYPE_VALLISTAR = 3,
   GAME_OBJECT_TYPE_PROJECTILE = 4,
   GAME_OBJECT_TYPE_END = 5,
-  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NONE,
+  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NPC,
   GAME_OBJECT_TYPE_MAX = GAME_OBJECT_TYPE_END
 };
 
 inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
   static const GAME_OBJECT_TYPE values[] = {
-    GAME_OBJECT_TYPE_NONE,
-    GAME_OBJECT_TYPE_PLAYER,
     GAME_OBJECT_TYPE_NPC,
+    GAME_OBJECT_TYPE_PLAYER,
+    GAME_OBJECT_TYPE_SPAWNER,
     GAME_OBJECT_TYPE_VALLISTAR,
     GAME_OBJECT_TYPE_PROJECTILE,
     GAME_OBJECT_TYPE_END
@@ -40,9 +40,9 @@ inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
 
 inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
   static const char * const names[7] = {
-    "NONE",
-    "PLAYER",
     "NPC",
+    "PLAYER",
+    "SPAWNER",
     "VALLISTAR",
     "PROJECTILE",
     "END",
@@ -52,23 +52,21 @@ inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
 }
 
 inline const char *EnumNameGAME_OBJECT_TYPE(GAME_OBJECT_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_NONE, GAME_OBJECT_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_NPC, GAME_OBJECT_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesGAME_OBJECT_TYPE()[index];
 }
 
 enum NPC_TYPE : uint8_t {
-  NPC_TYPE_NONE = 0,
-  NPC_TYPE_GENERAL = 1,
-  NPC_TYPE_SOLDIER = 2,
-  NPC_TYPE_END = 3,
-  NPC_TYPE_MIN = NPC_TYPE_NONE,
+  NPC_TYPE_GENERAL = 0,
+  NPC_TYPE_SOLDIER = 1,
+  NPC_TYPE_END = 2,
+  NPC_TYPE_MIN = NPC_TYPE_GENERAL,
   NPC_TYPE_MAX = NPC_TYPE_END
 };
 
-inline const NPC_TYPE (&EnumValuesNPC_TYPE())[4] {
+inline const NPC_TYPE (&EnumValuesNPC_TYPE())[3] {
   static const NPC_TYPE values[] = {
-    NPC_TYPE_NONE,
     NPC_TYPE_GENERAL,
     NPC_TYPE_SOLDIER,
     NPC_TYPE_END
@@ -77,8 +75,7 @@ inline const NPC_TYPE (&EnumValuesNPC_TYPE())[4] {
 }
 
 inline const char * const *EnumNamesNPC_TYPE() {
-  static const char * const names[5] = {
-    "NONE",
+  static const char * const names[4] = {
     "GENERAL",
     "SOLDIER",
     "END",
@@ -88,7 +85,7 @@ inline const char * const *EnumNamesNPC_TYPE() {
 }
 
 inline const char *EnumNameNPC_TYPE(NPC_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, NPC_TYPE_NONE, NPC_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, NPC_TYPE_GENERAL, NPC_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesNPC_TYPE()[index];
 }
@@ -124,6 +121,51 @@ inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
   if (::flatbuffers::IsOutRange(e, TEAM_TYPE_BLUE, TEAM_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTEAM_TYPE()[index];
+}
+
+enum SOLDIER_STATE_TYPE : uint8_t {
+  SOLDIER_STATE_TYPE_IDLE = 0,
+  SOLDIER_STATE_TYPE_MOVE = 1,
+  SOLDIER_STATE_TYPE_CHASE = 2,
+  SOLDIER_STATE_TYPE_ATTACK = 3,
+  SOLDIER_STATE_TYPE_DEFENSE = 4,
+  SOLDIER_STATE_TYPE_DAMAGED = 5,
+  SOLDIER_STATE_TYPE_DEAD = 6,
+  SOLDIER_STATE_TYPE_MIN = SOLDIER_STATE_TYPE_IDLE,
+  SOLDIER_STATE_TYPE_MAX = SOLDIER_STATE_TYPE_DEAD
+};
+
+inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[7] {
+  static const SOLDIER_STATE_TYPE values[] = {
+    SOLDIER_STATE_TYPE_IDLE,
+    SOLDIER_STATE_TYPE_MOVE,
+    SOLDIER_STATE_TYPE_CHASE,
+    SOLDIER_STATE_TYPE_ATTACK,
+    SOLDIER_STATE_TYPE_DEFENSE,
+    SOLDIER_STATE_TYPE_DAMAGED,
+    SOLDIER_STATE_TYPE_DEAD
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesSOLDIER_STATE_TYPE() {
+  static const char * const names[8] = {
+    "IDLE",
+    "MOVE",
+    "CHASE",
+    "ATTACK",
+    "DEFENSE",
+    "DAMAGED",
+    "DEAD",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameSOLDIER_STATE_TYPE(SOLDIER_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, SOLDIER_STATE_TYPE_IDLE, SOLDIER_STATE_TYPE_DEAD)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesSOLDIER_STATE_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS

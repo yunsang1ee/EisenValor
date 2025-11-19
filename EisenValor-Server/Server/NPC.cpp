@@ -19,7 +19,6 @@ Server::Contents::NPC::~NPC()
 
 void Server::Contents::NPC::Update(const float dt)
 {
-	// TODO: 여기서 NPC_INFO 보내주기
 	GameObject::Update(dt);
 
 	const uint32 id{ GetID() };
@@ -28,10 +27,9 @@ void Server::Contents::NPC::Update(const float dt)
 	KinematicInfo kInfo{ pos, rot };
 	const int32 hp{ GetHP() };
 	uint8 state{};
-	if(GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) {
+	if(GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) 
 		state = { GetComponent<FSM>()->GetCurState()->GetStateType() };
-	}
+
 	auto pb = ServerPackets::Make_SC_NPC_INFO_PACKET(id, GetObjType(), GetTeamType(), GetNpcType(), kInfo, hp, state);
-	GetGameRoom()->ExecuteAsyncronously(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
-	// std::cout << std::format("ID: {} HP: {}, Update!", id, hp) << std::endl;
+	GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
 }

@@ -1,115 +1,167 @@
 #pragma once
 
-#include "CommonStates.h"
+#define DECLARE_CREATE_FUNC(StateClass)														\
+    friend class GameObjectFactory;															\
+    friend struct std::default_delete<Server::Contents::StateClass>;						\
+private:																					\
+    template <typename... Args>																\
+    static std::unique_ptr<StateClass> Create(Args&&... args) {								\
+        return std::unique_ptr<StateClass>(new StateClass(std::forward<Args>(args)...));	\
+    }
+
+#include "State.h"
 
 namespace Server {
 	namespace Contents {
+		class GameObjectFactory;
 		class GameObject;
 
-		enum class SOLDIER_STATE_TYPE : uint8 {
-			IDLE,
-			RUN,
-			ATTACK,
-			DEFENSE,
-			DEAD,
-		};
+		// ============================================
+		//					IDLE
+		// ============================================
+		class SoldierIdleState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierIdleState)
+		
+		private:
+			float m_enemyDetectionRange{};
 
-		class SoldierIdleState : public IdleState {
-		public:
-			SoldierIdleState();
+		private:
+			explicit SoldierIdleState(const float enemyDetectionRange);
 			virtual ~SoldierIdleState();
-
+		
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
-		public:
-			virtual void Update(const float dt) override;
-		};
-
-		class SoldierRunState : public RunState {
-		public:
-			SoldierRunState();
-			virtual ~SoldierRunState();
-
-		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
-	
 		public:
 			virtual void Update(const float dt) override;
 
 		};
 
-		class SoldierAttackState : public AttackState {
+
+		// ============================================
+		//					MOVE
+		// ============================================
+		class SoldierMoveState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierMoveState)
+		private:
+			SoldierMoveState();
+			virtual ~SoldierMoveState();
+
 		public:
-			static constexpr auto	ATTACK_TIME = 1s;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
+
+		public:
+			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
+		};
+
+
+		// ============================================
+		//					CHASE
+		// ============================================
+		class SoldierChaseState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierChaseState)
+
+		private:
+			float m_chaseSpeed;
+			float m_combatRange;
+
+		private:
+			explicit SoldierChaseState(const float chaseSpeed, const float combatRange);
+			virtual ~SoldierChaseState();
+
+		public:
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
+
+		public:
+			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
+
+		};
+
+
+		// ============================================
+		//					ATTACK
+		// ============================================
+		class SoldierAttackState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierAttackState)
+		private:
 			float					m_accDt;
-		public:
-			SoldierAttackState();
+			
+		private:
+			float					m_combatRange;
+			std::chrono::seconds	m_attackCycleTime;
+
+		private:
+			explicit SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime);
 			virtual ~SoldierAttackState();
 
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
 		public:
 			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
 		};
 
-		class SoldierDefenseState : public DefenseState {
-		public:
+
+		// ============================================
+		//					DEFENSE
+		// ============================================
+		class SoldierDefenseState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierDefenseState)
+
+		private:
+			float					m_accDT;
+			static constexpr auto	DEFENSE_TIME = 1s;
+
+		private:
 			SoldierDefenseState();
 			virtual ~SoldierDefenseState();
 
 		public:
-			virtual void Enter() override;
-			virtual void Exit() override;
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
 		public:
 			virtual void Update(const float dt) override;
+
+			friend class GameObjectFactory;
+
 		};
 
-		//class SoldierTraceState : public State {
-		//private:
-		//	Vec3						m_targetPos;
-		//	bool						m_hasTarget;
-		//	Vec3						m_prevDir{ 0.f, 0.f, 0.f };
 
-		//private:
-		//	std::weak_ptr<GameObject>	m_ownerGeneral;
+		// ============================================
+		//					DEFENSE
+		// ============================================
+		class SoldierDamagedState : public State {
+		private:
+			DECLARE_CREATE_FUNC(SoldierDamagedState)
 
-		//public:
-		//	SoldierTraceState();
-		//	virtual ~SoldierTraceState();
+		private:
+			SoldierDamagedState();
+			virtual ~SoldierDamagedState();
 
-		//public:
-		//	virtual void Enter() override;
-		//	virtual void Exit() override;
+		public:
+			virtual void Enter(const float dt) override;
+			virtual void Exit(const float dt) override;
 
-		//public:
-		//	virtual uint8 Update(const float dt) override;
+		public:
+			virtual void Update(const float dt) override;
 
-		//public:
-		//	void SetTargetPos(const Vec3& targetPos) { m_hasTarget = true;  m_targetPos = targetPos; }
-		//	void SetOwnerGeneral(std::weak_ptr<GameObject> owner) { m_ownerGeneral = owner; }
-		//	std::shared_ptr<GameObject> GetOwner() noexcept { return m_ownerGeneral.lock(); }
-
-		//	inline Vec3 Lerp(const Vec3& a, const Vec3& b, float t)
-		//	{
-		//		// t ¡ô [0,1]
-		//		return a * (1.0f - t) + b * t;
-		//	}
-
-		//	inline float LerpAngle(float a, float b, float t)
-		//	{
-		//		float diff = fmodf(b - a + 540.0f, 360.0f) - 180.0f;
-		//		return a + diff * t;
-		//	}
-
-		//private:
-		//	void Move(const float dt);
-		//	void MoveByForce(const float dt);
-		//};
+			friend class GameObjectFactory;
+		};
 	}
 }

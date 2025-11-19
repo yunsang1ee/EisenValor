@@ -40,8 +40,7 @@ public:
 	void   SetMaxHP(uint32 hp) { m_maxHP = hp; }
 	uint32 GetCurrentHP() const { return m_currentHP; }
 	uint32 GetMaxHP() const { return m_maxHP; }
-	float  GetHPRatio() const { return static_cast<float>(m_currentHP) 
-		/ static_cast<float>(m_maxHP); }
+	float  GetHPRatio() const { return static_cast<float>(m_currentHP) / static_cast<float>(m_maxHP); }
 
 public:
 	uint32 m_id;
@@ -63,7 +62,7 @@ protected:
 
 public:
 	Vec3	lastServerPosition;
-	Vec3	lastServerVelocity;
+	Vec3	lastServerVelocity;	
 	Vec3	lastServerAcceleration;
 	Vec3	lastServerRotation;
 	uint64	lastServerTimestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();

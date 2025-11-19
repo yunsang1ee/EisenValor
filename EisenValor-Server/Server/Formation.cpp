@@ -23,7 +23,7 @@ void Server::Contents::VShapeFormation::Arrange(std::unordered_map<uint32, Soldi
     const Vec3 center = m_centerPos;
 
     // 중심 방향 기준 forward, right 계산
-    Vec3 forward = m_controller->GetOwner()->GetForward();   // 플레이어가 바라보는 방향 (Normalized)
+    Vec3 forward = m_controller->GetOwner()->GetForwardDir();   // 플레이어가 바라보는 방향 (Normalized)
     Vec3 right = Vec3(forward.z, 0.f, -forward.x); // yaw 기준 오른쪽 벡터
     forward.Normalize();
     right.Normalize();

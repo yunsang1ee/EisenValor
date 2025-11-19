@@ -1,5 +1,6 @@
 #pragma once
 #include "Singleton.hpp"
+#include "GameRoom.h"
 
 namespace Server {
 	namespace Contents {
@@ -7,9 +8,10 @@ namespace Server {
 		
 		class GameRoomManager : public Singleton<GameRoomManager> {
 		private:
+			static constexpr uint16							MAX_ROOM = 1;
+
 			tbb::spin_mutex									m_mutex;
 			std::map<uint16, std::shared_ptr<GameRoom>>		m_rooms;
-			static constexpr uint16 MAX_ROOM = 1;
 		
 		public:
 			void Init() noexcept;
