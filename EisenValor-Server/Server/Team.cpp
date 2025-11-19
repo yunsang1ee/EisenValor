@@ -17,7 +17,7 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 {
 	m_room = room;
 
-	/*{
+	{
 		SpanwerTemplate spawner;
 		spawner.objType = FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER;
 		spawner.teamType = m_type;
@@ -28,10 +28,11 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 			spawner.pos = Vec3{ 0.f, 0.f, -7.f };
 
 		auto spawnObj = Server::Contents::GameObjectFactory::CreateSpawnObj(spawner);
-		AddObject(std::move(spawnObj));
-	}*/
-
-	// auto s = Server::Contents::SoldierIdleState::Create();
+		static uint32 idGen{ 20000 };
+		idGen++;
+		spawnObj->SetID(idGen);
+		m_room->AddGameObject(std::move(spawnObj));
+	}
 }
 
 void Server::Contents::Team::AddGameObject(std::shared_ptr<GameObject>  object)
@@ -62,8 +63,10 @@ void Server::Contents::Team::AddGameObject(std::shared_ptr<GameObject>  object)
 		}
 	}
 
-	if(m_objectGroups[type].find(id) == m_objectGroups[type].end())
-		m_objectGroups[type].try_emplace(id, std::move(object));
+	if(m_objectGroups[type].find(id) == m_objectGroups[type].end()) {
+		std::cout << "Add In Team, id = " << id << std::endl;
+		m_objectGroups[type].try_emplace(id, object);
+	}
 }
 
 void Server::Contents::Team::RemoveObject(std::shared_ptr<GameObject> object)

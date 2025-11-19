@@ -7,6 +7,14 @@
 #include "FSM.h"
 #include "Team.h"
 
+static float GetRandomCombatProb() noexcept
+{
+	static  std::default_random_engine dre{ std::random_device{}() };
+	static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
+
+	return dist(dre);
+}
+
 Server::Contents::SoldierIdleState::SoldierIdleState(const float enemyDetectionRange)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }, m_enemyDetectionRange{enemyDetectionRange}
 {
@@ -32,32 +40,6 @@ void Server::Contents::SoldierIdleState::Exit(const float dt)
 
 void Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	//const auto fsm = GetFSM();
-	//const auto owner = fsm->GetOwner();
-	//const auto room = owner->GetGameRoom();
-	//const auto otherTeam = room->GetOtherTeamType(owner->GetTeamType());
-	//const auto& ownerPos = owner->GetPos();
-	//auto& otherTeamObjectGroup = room->GetTeam(otherTeam).GetAllObjectGroups();
-	//for(int i = 0; i < otherTeamObjectGroup.size(); ++i) {
-	//	if(i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE || i == FB_ENUMS::GAME_OBJECT_TYPE_VALLISTAR) continue;
-
-	//	for(auto& [id, object] : otherTeamObjectGroup[i]) {
-
-	//		const auto target = std::static_pointer_cast<Creature>(object);
-	//		const auto& targetPos = object->GetPos();
-
-	//		const float distSq = (targetPos - ownerPos).LengthSquared();
-	//		const float detectionEnemyRangeSq = enemyDetectionRange * enemyDetectionRange;
-
-	//		if(distSq <= detectionEnemyRangeSq) {
-	//			std::cout << "IDLE -> RUN" << std::endl;
-	//			std::static_pointer_cast<Creature>(owner)->SetTarget(target);
-	//			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-	//			return;
-	//		}
-	//	}
-	//}
-
 	// 1. 주변에 적이 있나?
 	// -Y: 타겟을 설정하고 Chase로 전환
 	// -N: Move로 전환
@@ -74,35 +56,39 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 			i == FB_ENUMS::GAME_OBJECT_TYPE_VALLISTAR || 
 			i==FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
 
-		//for(auto& [id, object] : otherTeamObjectGroup[i]) {
-		//	const auto target = std::static_pointer_cast<Creature>(object);
-		//	const auto& targetPos = object->GetPos();
-		//	Vec3 targetDir = targetPos - ownerPos;
+		for(auto& [id, o] : otherTeamObjectGroup[i]) {
+			const auto object = o.lock();
+			const auto target = std::static_pointer_cast<Creature>(object);
+			const auto& targetPos = object->GetPos();
+			Vec3 targetDir = targetPos - ownerPos;
 
-		//	const float distSq = (targetPos - ownerPos).LengthSquared();
-		//	const float detectionEnemyRangeSq = m_enemyDetectionRange * m_enemyDetectionRange;
+			const float distSq = (targetPos - ownerPos).LengthSquared();
+			const float detectionEnemyRangeSq = m_enemyDetectionRange * m_enemyDetectionRange;
 
-		//	// 탐지 범위 안에 적이 있으면
-		//	// -> 타겟 설정, Chase로 상태 변화
-		//	if(distSq <= detectionEnemyRangeSq) {
-		//		std::cout << "IDLE -> CHASE" << std::endl;
-		//		std::static_pointer_cast<Creature>(owner)->SetTarget(target);
-		//		targetDir.Normalize();
+			// 탐지 범위 안에 적이 있으면
+			// -> 타겟 설정, Chase로 상태 변화
+			if(distSq <= detectionEnemyRangeSq) {
+				std::cout << "IDLE -> CHASE" << std::endl;
+				std::static_pointer_cast<Creature>(owner)->SetTarget(target);
+				targetDir.Normalize();
 
-		//		Vec3 rot{};
-		//		rot.y = std::atan2(targetDir.x, targetDir.y) * DEG2RAD;
-		//		owner->SetRotation(rot);
-		//		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-		//		return;
-		//	}
+				Vec3 rot{};
+				rot.y = std::atan2(targetDir.x, targetDir.y) * DEG2RAD;
+				owner->SetRotation(rot);
+				room->AddEvent([fsm, dt]() {
+					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
+					});
 
-		//	else {
+				return;
+			}
 
-		//		// 전략지의 일정 범위 내인가?
-		//		// Y: IDLE 상태로 이동
-		//		// N: Move
-		//	}
-		//}
+			else {
+
+				// 전략지의 일정 범위 내인가?
+				// Y: IDLE 상태로 이동
+				// N: Move
+			}
+		}
 	}
 }
 
@@ -133,85 +119,14 @@ void Server::Contents::SoldierMoveState::Update(const float dt)
 {
 	// 1. 전략지의 일정 범위 내인가? 
 	//	-> 전략지의 일정 범위를 어떻게 판단하는게 좋을까
+	// 추후 네비게이션 메쉬를 쓸 텐데, 이거와 연동을 해야할 것 같다.
 	//	--> 1. 전략지 오브젝트를 따로 두어 검사한다
 
 	// -Y: IDLE 상태로 전환
 	// -N: 전략지로 이동한다
-	//	-> 목표위치는 전략지이고, NavGraph상에서 Astar로 길찾기
+	//	-> 목표위치는 전략지이고, NavMesh상에서 Astar로 길찾기
 
 	// TODO: 전략지로 이동
-
-	
-	//const auto fsm = GetFSM();
-	//const auto owner = std::static_pointer_cast<NPC>(fsm->GetOwner());
-	//const Vec3& ownerPos = owner->GetPos();
-
-	//const auto target = std::static_pointer_cast<Creature>(owner)->GetTarget();
-	//if(target) {
-	//	const auto& targetPos = target->GetPos();
-
-	//	const Vec3 toTarget = (targetPos - ownerPos);
-
-	//	const float distToTarget = toTarget.Length();
-
-	//	if(distToTarget < m_combatRange) {
-	//		static constexpr float ATTACK_PROB{ 0.6f };
-	//		static std::default_random_engine dre{ std::random_device{}() };
-	//		static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
-	//		if(dist(dre) <= ATTACK_PROB) {
-	//			std::cout << "RUN -> ATTACK" << std::endl;
-	//			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
-	//			return;
-	//		}
-	//		else {
-	//			std::cout << "RUN -> DEFENSE" << std::endl;
-	//			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
-	//			return;
-	//		}
-	//	}
-	//	else {
-	//		float moveDist = 3.f * dt;
-
-	//		const Vec3 dir = toTarget / distToTarget;
-
-	//		if(moveDist > distToTarget) moveDist = distToTarget;
-
-	//		Vec3 newPos{ ownerPos + dir * moveDist };
-
-	//		owner->SetPos(newPos);
-	//	}
-	//}
-	//else {
-	//	// std::cout << "RUN -> IDLE" << std::endl;
-	//	// fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_IDLE, dt);
-	//	// return;
-	//	// 타겟이 없으면 현재 보고있는 방향으로 달려감
-	//	// 달려가다가 주변에 적이 있으면 맨 처음 본 적을 Target으로 설정
-
-
-	//	// FIX: 주변에 적이 있는데도 불구하고 타겟이 없다고 판정되어 직진으로 가는 경우가 존재함.
-
-	//	const float moveDist = 1.f * dt;
-	//	const Vec3 dir = owner->GetForwardDir();
-	//	Vec3 newPos{ ownerPos + dir * moveDist };
-	//	owner->SetPos(newPos);
-
-	//	auto otherTeamType = owner->GetGameRoom()->GetOtherTeamType(owner->GetTeamType());
-	//	auto& otherTeam = owner->GetGameRoom()->GetTeam(otherTeamType);
-
-	//	for(auto& [id, obj] : otherTeam.GetNpcs()) {
-	//		const auto npc = std::static_pointer_cast<NPC>(obj);
-	//		const auto npcPos = npc->GetPos();
-
-	//		if(obj->GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER) {
-	//			const Vec3 toNpc = (npcPos - ownerPos);
-	//			const float distToNpc = toNpc.Length();
-	//			if(distToNpc < 0.5f) {
-	//				owner->SetTarget(npc);
-	//			}
-	//		}
-	//	}
-	//}
 }
 
 Server::Contents::SoldierChaseState::SoldierChaseState(const float chaseSpeed, const float combatRange)
@@ -252,17 +167,21 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 			// 타겟이 전투범위 안에 들어왔으면
 			// -> 공격/방어 확률적 선택을 해서 해당 상태로 넘어간다.
 			if(distToTargetSq <= std::pow(m_combatRange, 2)) {
-				static constexpr float ATTACK_PROB{ 0.7f };
-				static  std::default_random_engine dre{ std::random_device{}() };
-				static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
+
+				const float prob = GetRandomCombatProb();
 
 				// 공격으로 전환
-				if(dist(dre) <= ATTACK_PROB) {
-					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK,dt);
+				if(prob <= COMBAT_PROB) {
+					room->AddEvent([fsm, dt]() {
+						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
+						});
 				}
 				// 방어로 전환
 				else {
-					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
+					room->AddEvent([fsm, dt]()
+						{
+							fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEFENSE, dt);
+						});
 				}
 				return;
 			}
@@ -284,12 +203,14 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 		// 타겟이 존재하지 않으면
 		// -> IDLE 상태로 돌아간다
 		else {
-			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+			room->AddEvent([fsm, dt]()
+				{
+					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+				});
 			return;
 		}
 	}
 }
-
 
 Server::Contents::SoldierAttackState::SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDt{ 0.f }, m_combatRange{combatRange}, m_attackCycleTime{attackCycleTime}
@@ -319,6 +240,8 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 {
 	const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
 	const auto fsm = owner->GetComponent<FSM>();
+	const auto room = owner->GetGameRoom();
+
 	const uint32 id = owner->GetID();
 	m_accDt += dt;
 
@@ -335,39 +258,42 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 			
 			// 타겟이 전투 범위 내에 있으면
 			if(distToTargetSq <= m_combatRange * m_combatRange) {
-				// 타격 중 피격 당했나?
-				// Y: 현재 
-				// N: 적 타격 
 
-				// TODO: 타격이벤트를 만들어서 등록한다(때릴 애, 맞을 애)
-				// 그럼, 다음 번 프레임에서 해당 이벤트 처리할거임
-				// 해당 이벤트 내에선
-				// 맞을 얘의 공격/방어 유무 보고 공격 성공/실패 정함
-				
-				// 공격 성공인 경우
-				// - 맞은애 입장에선 공격이 들어왔음
-				// --이때, 맞은애 입장에서 나의 state를 확인하고, 만약, 그게 공격일때라면 1초 경직, 공격 상태가 아니라면 0.8초 경직
-				// 그 후 fsm->ChangeState(damaged)
-
-				// 공격 실패인 경우
-				// -> 공격/방어 확률계산에서 0.7 초과면 방어로 전환만 해주면 됨
+				if(false == target->OnDamaged(owner, 10, dt)) {
+					// 공격 실패
+					const float combatProb = GetRandomCombatProb();
+					if(combatProb < ATTACK_PROB) {
+						room->AddEvent([fsm, dt]() {
+							fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_ATTACK, dt);
+							});
+					}
+					else {
+						room->AddEvent([fsm, dt]() {
+							fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_DEFENSE, dt);
+							});
+					}
+				}
 			}
-			
 			// 타겟이 전투 범위 내에 없으면
 			// -> 타겟을 쫓아간다.
 			else {
-				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_CHASE, dt);
+				room->AddEvent([fsm, dt]()
+					{
+						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_CHASE, dt);
+					});
 				return;
 			}
 		}
 		// 타겟이 사라진 경우
 		// -> 다시 IDLE 상태로 돌아간다.
 		else {
-			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+			room->AddEvent([fsm, dt]()
+				{
+					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_IDLE, dt);
+				});
 			return;
 		}
 	}
-
 
 	//switch(const auto objType = target->GetObjType()) {
 	//	case FB_ENUMS::GAME_OBJECT_TYPE_NPC:
@@ -481,14 +407,16 @@ void Server::Contents::SoldierDefenseState::Update(const float dt)
 	m_accDT += dt;
 
 	if(m_accDT >= static_cast<float>(DEFENSE_TIME.count())) {
+	const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
+	const auto& room = owner->GetGameRoom();
 		const auto fsm = GetFSM();
-
-		static constexpr float ATTACK_PROB{ 0.6f };
-		static std::default_random_engine dre{ std::random_device{}() };
-		static std::uniform_real_distribution<float> dist{ 0.f, 1.f };
-		if(dist(dre) <= ATTACK_PROB) {
+		const float prob = GetRandomCombatProb();
+		
+		if(prob <= ATTACK_PROB) {
 			std::cout << "DEFENSE -> ATTACK" << std::endl;
-			fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
+			room->AddEvent([fsm, dt]() {
+				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt);
+				});
 		}
 	}
 }
@@ -509,19 +437,32 @@ void Server::Contents::SoldierDamagedState::Enter(const float dt)
 
 void Server::Contents::SoldierDamagedState::Exit(const float dt)
 {
-
+	m_stunTime = 0.f;
+	m_accForStun = 0.f;
 }
 
 void Server::Contents::SoldierDamagedState::Update(const float dt)
 {
 	const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
-	const auto fsm = owner->GetComponent<FSM>();
 
-	const auto target = owner->GetTarget();
-	if(target) {
-		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-	}
-	else {
-		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+	m_accForStun += dt;
+
+	if(m_accForStun >= m_stunTime) {
+		const auto& owner = std::static_pointer_cast<NPC>(GetFSM()->GetOwner());
+		const auto room = owner->GetGameRoom();
+		const auto fsm = owner->GetComponent<FSM>();
+
+		const auto target = owner->GetTarget();
+		if(target) {
+			room->AddEvent([fsm, dt]() {
+				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
+				});
+		}
+		else {
+			room->AddEvent([fsm, dt]()
+				{
+					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+				});
+		}
 	}
 }

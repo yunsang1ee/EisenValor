@@ -15,7 +15,7 @@ namespace Server {
 
 		public:
 			void	SetStatInfo(const StatInfo& stat) noexcept { m_stat = stat; }
-			void	SetHp(const int32 hp) noexcept;
+			void	SetHp(const uint32 hp) noexcept;
 			void	SetAtk(const int32 atk) noexcept { m_stat.atk = atk; }
 			void	SetStamina(const int32 stamina) noexcept { m_stat.stamina = stamina; }
 			void	SetAlive(const bool alive) noexcept { m_alive = alive; }
@@ -34,7 +34,7 @@ namespace Server {
 
 		public:
 			// TODO: 이 함수를 Event에 넣어서 처리하면 되지 않을까?
-			virtual void OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged) {}
+			virtual bool OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt) { return true; }
 		};
 	}
 }	

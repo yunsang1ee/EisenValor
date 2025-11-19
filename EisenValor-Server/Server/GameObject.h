@@ -31,12 +31,12 @@ namespace Server {
 		public:
 			GameObject() = default;
 			explicit GameObject(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
+			virtual ~GameObject();
 			
 			GameObject(const GameObject&) = delete;
 			GameObject& operator=(const GameObject&) = delete;
 			GameObject (GameObject&&) = default;
 			GameObject& operator=(GameObject&&) = default;
-			virtual ~GameObject();
 
 		public:
 			void SetID(const uint32 id) noexcept { m_id = id; }
