@@ -32,7 +32,7 @@ public:
 	void SetCameraDistance(float distance) { m_cameraDistance = distance; }
 
 	// 카메라 관련 함수 추가
-	DirectX::XMMATRIX GetViewMatrix() const;
+	virtual DirectX::XMMATRIX GetViewMatrix() const;
 
 private:
 	Vec3 PredictPosition(const Vec3& pos, const Vec3& vel, const Vec3& acc, double t)
