@@ -259,7 +259,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 			// 타겟이 전투 범위 내에 있으면
 			if(distToTargetSq <= m_combatRange * m_combatRange) {
 
-				if(false == target->OnDamaged(owner, 10, dt)) {
+				if(false == target->OnDamaged(owner, owner->GetAtk(), dt)) {
 					// 공격 실패
 					const float combatProb = GetRandomCombatProb();
 					if(combatProb < ATTACK_PROB) {
@@ -293,6 +293,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 				});
 			return;
 		}
+		m_accDt = 0.f;
 	}
 
 	//switch(const auto objType = target->GetObjType()) {
@@ -453,16 +454,19 @@ void Server::Contents::SoldierDamagedState::Update(const float dt)
 		const auto fsm = owner->GetComponent<FSM>();
 
 		const auto target = owner->GetTarget();
-		if(target) {
-			room->AddEvent([fsm, dt]() {
-				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-				});
-		}
-		else {
-			room->AddEvent([fsm, dt]()
-				{
-					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
-				});
+		if(owner) {
+			if(target && target->IsAlive()) {
+				room->AddEvent([fsm, dt]()
+					{
+						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
+					});
+			}
+			else {
+				room->AddEvent([fsm, dt]()
+					{
+						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+					});
+			}
 		}
 	}
 }

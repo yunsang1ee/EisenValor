@@ -3,7 +3,7 @@
 
 namespace Server {
 	namespace Contents {
-		class Creature : public GameObject {
+		class Creature : public GameObject, public std::enable_shared_from_this<GameObject> {
 		private:
 			StatInfo					m_stat;
 			bool						m_alive;

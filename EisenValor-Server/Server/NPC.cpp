@@ -20,19 +20,21 @@ Server::Contents::NPC::~NPC()
 
 void Server::Contents::NPC::Update(const float dt)
 {
-	GameObject::Update(dt);
+	if(IsAlive()) {
+		GameObject::Update(dt);
 
-	const uint32 id{ GetID() };
-	const Vec3 pos{ GetPos() };
-	const Vec3 rot{ GetRotation() };
-	KinematicInfo kInfo{ pos, rot };
-	const int32 hp{ GetHP() };
-	uint8 state{};
-	if(GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER)
-		state = { GetComponent<FSM>()->GetCurState()->GetStateType() };
+		const uint32 id{ GetID() };
+		const Vec3 pos{ GetPos() };
+		const Vec3 rot{ GetRotation() };
+		KinematicInfo kInfo{ pos, rot };
+		const int32 hp{ GetHP() };
+		uint8 state{};
+		if(GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER)
+			state = { GetComponent<FSM>()->GetCurState()->GetStateType() };
 
-	auto pb = ServerPackets::Make_SC_NPC_INFO_PACKET(id, GetObjType(), GetTeamType(), GetNpcType(), kInfo, hp, state);
-	GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+		auto pb = ServerPackets::Make_SC_NPC_INFO_PACKET(id, GetObjType(), GetTeamType(), GetNpcType(), kInfo, hp, state);
+		GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+	}
 }
 
 bool Server::Contents::NPC::OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt)
@@ -58,6 +60,14 @@ bool Server::Contents::NPC::OnDamaged(std::shared_ptr<Creature> attacker, const 
 			return false;
 		}
 		else {
+			int curHp = GetHP();
+			curHp -= damaged;
+			if(curHp < 0) {
+				SetAlive(false);
+				room->RemoveGameObject(shared_from_this());
+				return true;
+			}
+			SetHp(curHp);
 			room->AddEvent([fsm, dt]()
 				{
 					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE::SOLDIER_STATE_TYPE_DAMAGED, dt);
