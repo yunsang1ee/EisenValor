@@ -35,7 +35,7 @@ void TimerGlobal::Update()
 	m_lastFrameTime += m_deltaTime;
 	if (m_lastFrameTime >= 1.0f)
 	{
-		m_curFPS = m_frameCount;
+		m_curFPS = m_frameCount / m_lastFrameTime;
 		m_frameCount = 0;
 		m_lastFrameTime = 0.0f;
 	}

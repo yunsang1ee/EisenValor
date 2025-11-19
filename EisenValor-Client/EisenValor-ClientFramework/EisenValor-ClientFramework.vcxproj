@@ -166,6 +166,7 @@
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\Actor.h" />
+    <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
@@ -206,10 +207,12 @@
     <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
+    <ClInclude Include="include\Transform.h" />
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Actor.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
@@ -249,6 +252,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp" />
+    <ClCompile Include="src\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />

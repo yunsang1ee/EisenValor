@@ -20,13 +20,20 @@ void DxRtPipelineState::Create(ID3D12Device5* device, const std::wstring& shader
 
 void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 {
-	// Global Root Signature (d3dx12.h 없이 수동 구성)
-	// Slot 0: TLAS (SRV, t0)
-	// Slot 1: Output UAV (UAV, u0)
-	// Slot 2: Camera Constants (inline 32-bit values, b0)
-	// Slot 3: Materials (SRV, t1)
+	// Global Root Signature
+	// Slot 0 (Table):
+	//                      TLAS (t0)
+	// Slot 1 (Table):
+	//                      Output UAV (u0)
+	// Slot 2 (Constant):   Camera Constants (b0, inline 16 DWORD)
+	// Slot 3 (Table):
+	//                      Materials           (t1)
+	//                      Vertex Buffer       (t2)
+	//                      Index Buffer        (t3)
+	//                      GeoInfo Buffer      (t4)
+	//                      GeoInstBase Buffer  (t5)
 
-	D3D12_DESCRIPTOR_RANGE1 ranges[3] = {};
+	D3D12_DESCRIPTOR_RANGE1 ranges[7] = {};
 
 	// Range 0: TLAS (t0)
 	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -44,13 +51,18 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	ranges[1].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
 	ranges[1].OffsetInDescriptorsFromTableStart = 0;
 
+	// clang-format off
 	// Range 2: Materials (t1)
-	ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	ranges[2].NumDescriptors = 1;
-	ranges[2].BaseShaderRegister = 1;
-	ranges[2].RegisterSpace = 0;
-	ranges[2].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-	ranges[2].OffsetInDescriptorsFromTableStart = 0;
+	ranges[2] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
+	// Range 3: Vertex Buffer (t2)
+	ranges[3] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
+	// Range 4: Index Buffer (t3)
+	ranges[4] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
+	// Range 5: GeoInfo Buffer (t4)
+	ranges[5] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
+	// Range 6: GeoInstBase Buffer (t5)
+	ranges[6] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
+	// clang-format on
 
 	D3D12_ROOT_PARAMETER1 rootParams[4] = {};
 
@@ -73,9 +85,9 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	rootParams[2].Constants.Num32BitValues = 16;
 	rootParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 3: Materials Descriptor Table (t1)
+	// Param 3: Materials Descriptor Table (t1~t5)
 	rootParams[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[3].DescriptorTable.NumDescriptorRanges = 1;
+	rootParams[3].DescriptorTable.NumDescriptorRanges = 5;
 	rootParams[3].DescriptorTable.pDescriptorRanges = &ranges[2];
 	rootParams[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
@@ -115,7 +127,7 @@ void DxRtPipelineState::CreateStateObject(
 )
 {
 	auto& compiler = MANAGER(DxShaderCompilerGlobal);
-	auto shaderBlob = compiler.CompileRTShader(L"RTLib", L"Resource/Shader/RaytracingLibrary.hlsl", {});
+	auto  shaderBlob = compiler.CompileRTShader(L"RTLib", L"Resource/Shader/RaytracingLibrary.hlsl", {});
 
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
 	subobjects.reserve(5);
@@ -150,7 +162,7 @@ void DxRtPipelineState::CreateStateObject(
 
 	// Shader Config
 	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
-	shaderConfig.MaxPayloadSizeInBytes = 3 * sizeof(float);
+	shaderConfig.MaxPayloadSizeInBytes = 3 * sizeof(float) + sizeof(UINT);
 	shaderConfig.MaxAttributeSizeInBytes = 2 * sizeof(float);
 
 	D3D12_STATE_SUBOBJECT shaderConfigObj = {};

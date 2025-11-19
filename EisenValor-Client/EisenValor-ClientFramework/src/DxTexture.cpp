@@ -16,18 +16,19 @@ DxTexture::~DxTexture()
 
 		ReleaseAllViews(heap, fence);
 
-		DEBUG_LOG_FMT("[DxTexture] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);	
+		DEBUG_LOG_FMT("[DxTexture] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
 	}
 }
 
 void DxTexture::Initialize(
-	ID3D12Device*		 device,
-	uint32_t			 width,
-	uint32_t			 height,
-	DXGI_FORMAT			 format,
-	D3D12_RESOURCE_FLAGS flags,
-	uint16_t			 mipLevels,
-	const std::string&	 name
+	ID3D12Device*		  device,
+	uint32_t			  width,
+	uint32_t			  height,
+	DXGI_FORMAT			  format,
+	D3D12_RESOURCE_FLAGS  flags,
+	uint16_t			  mipLevels,
+	D3D12_RESOURCE_STATES initialState,
+	const std::string&	  name
 )
 {
 	assert(device && "[DxTexture] Device is null");
@@ -57,26 +58,27 @@ void DxTexture::Initialize(
 	D3D12_HEAP_PROPERTIES heapProps = {};
 	heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
-	D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COPY_DEST;
-
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, resourceDesc, initialState, nullptr);
 
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &resourceDesc);
 	m_sizeInBytes = allocInfo.SizeInBytes;
 
-	DEBUG_LOG_FMT("[DxTexture] Texture2D initialized: {}x{}, Format:{}, Mips:{}\n", width, height, (int)format, mipLevels);
+	DEBUG_LOG_FMT(
+		"[DxTexture] Texture2D initialized: {}x{}, Format:{}, Mips:{}\n", width, height, (int)format, mipLevels
+	);
 }
 
 void DxTexture::Initialize3D(
-	ID3D12Device*		 device,
-	uint32_t			 width,
-	uint32_t			 height,
-	uint32_t			 depth,
-	DXGI_FORMAT			 format,
-	D3D12_RESOURCE_FLAGS flags,
-	uint16_t			 mipLevels,
-	const std::string&	 name
+	ID3D12Device*		  device,
+	uint32_t			  width,
+	uint32_t			  height,
+	uint32_t			  depth,
+	DXGI_FORMAT			  format,
+	D3D12_RESOURCE_FLAGS  flags,
+	uint16_t			  mipLevels,
+	D3D12_RESOURCE_STATES initialState,
+	const std::string&	  name
 )
 {
 	assert(device && "[DxTexture] Device is null");
@@ -104,7 +106,7 @@ void DxTexture::Initialize3D(
 	D3D12_HEAP_PROPERTIES heapProps = {};
 	heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
-	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, resourceDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr);
+	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, resourceDesc, initialState, nullptr);
 
 	SetName(name);
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &resourceDesc);
@@ -114,12 +116,13 @@ void DxTexture::Initialize3D(
 }
 
 void DxTexture::InitializeCube(
-	ID3D12Device*		 device,
-	uint32_t			 size,
-	DXGI_FORMAT			 format,
-	D3D12_RESOURCE_FLAGS flags,
-	uint16_t			 mipLevels,
-	const std::string&	 name
+	ID3D12Device*		  device,
+	uint32_t			  size,
+	DXGI_FORMAT			  format,
+	D3D12_RESOURCE_FLAGS  flags,
+	uint16_t			  mipLevels,
+	D3D12_RESOURCE_STATES initialState,
+	const std::string&	  name
 )
 {
 	assert(device && "[DxTexture] Device is null");
@@ -147,7 +150,7 @@ void DxTexture::InitializeCube(
 	D3D12_HEAP_PROPERTIES heapProps = {};
 	heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
-	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, resourceDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr);
+	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, resourceDesc, initialState, nullptr);
 
 	SetName(name);
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &resourceDesc);

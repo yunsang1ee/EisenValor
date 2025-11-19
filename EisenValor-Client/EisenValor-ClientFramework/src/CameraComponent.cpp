@@ -1,2 +1,2 @@
 #include "stdafxClientFramework.h"
-#include "Actor.h"
+#include "CameraComponent.h"

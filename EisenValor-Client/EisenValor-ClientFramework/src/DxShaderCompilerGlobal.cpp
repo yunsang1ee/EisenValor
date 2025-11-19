@@ -96,6 +96,11 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	// 파일 읽기
 	ComPtr<IDxcBlobEncoding> sourceBlob;
 	UINT32					 codePage = DXC_CP_UTF8;
+	auto					 absolutePath = std::filesystem::absolute(sourceFile);
+	DEBUG_LOG_FMT(
+		"[DxShaderCompiler] Loading file:\n  Relative: {}\n  Absolute: {}\n  CWD: {}\n",
+		std::filesystem::path(sourceFile).string(), absolutePath.string(), std::filesystem::current_path().string()
+	);
 	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), &codePage, &sourceBlob));
 
 	ComPtr<IDxcBlobUtf8> sourceUtf8;
@@ -180,7 +185,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 				std::string(static_cast<const char*>(outputText->GetBufferPointer()), outputText->GetBufferSize())
 			);
 		}
-		
+
 		ThrowIfFailed(hrStatus);
 	}
 

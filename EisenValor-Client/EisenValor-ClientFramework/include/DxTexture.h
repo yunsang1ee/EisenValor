@@ -4,7 +4,7 @@
 class DxDescriptorHeapGlobal;
 
 // ===============================================================
-// 
+//
 // ===============================================================
 
 class DxTexture : public DxResource
@@ -15,35 +15,38 @@ public:
 
 	// 2D 텍스처 초기화 (GPU 전용, DEFAULT 힙)
 	void Initialize(
-		ID3D12Device*		 device,
-		uint32_t			 width,
-		uint32_t			 height,
-		DXGI_FORMAT			 format,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
-		uint16_t			 mipLevels = 1,
-		const std::string&	 name = "DxTexture"
+		ID3D12Device*		  device,
+		uint32_t			  width,
+		uint32_t			  height,
+		DXGI_FORMAT			  format,
+		D3D12_RESOURCE_FLAGS  flags = D3D12_RESOURCE_FLAG_NONE,
+		uint16_t			  mipLevels = 1,
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COPY_DEST,
+		const std::string&	  name = "DxTexture"
 	);
 
 	// 3D 텍스처 초기화
 	void Initialize3D(
-		ID3D12Device*		 device,
-		uint32_t			 width,
-		uint32_t			 height,
-		uint32_t			 depth,
-		DXGI_FORMAT			 format,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
-		uint16_t			 mipLevels = 1,
-		const std::string&	 name = "DxTexture3D"
+		ID3D12Device*		  device,
+		uint32_t			  width,
+		uint32_t			  height,
+		uint32_t			  depth,
+		DXGI_FORMAT			  format,
+		D3D12_RESOURCE_FLAGS  flags = D3D12_RESOURCE_FLAG_NONE,
+		uint16_t			  mipLevels = 1,
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COPY_DEST,
+		const std::string&	  name = "DxTexture3D"
 	);
 
 	// Cube map 초기화
 	void InitializeCube(
-		ID3D12Device*		 device,
-		uint32_t			 size,
-		DXGI_FORMAT			 format,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
-		uint16_t			 mipLevels = 1,
-		const std::string&	 name = "DxTextureCube"
+		ID3D12Device*		  device,
+		uint32_t			  size,
+		DXGI_FORMAT			  format,
+		D3D12_RESOURCE_FLAGS  flags = D3D12_RESOURCE_FLAG_NONE,
+		uint16_t			  mipLevels = 1,
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COPY_DEST,
+		const std::string&	  name = "DxTextureCube"
 	);
 
 	void LoadFromFile(ID3D12Device* device, const std::wstring& filePath);

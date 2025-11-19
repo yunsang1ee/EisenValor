@@ -99,6 +99,31 @@ void DxBuffer::Initialize(
 	);
 }
 
+void DxBuffer::CreateSRVInBatch(
+	ID3D12Device*						   device,
+	DxDescriptorHeapGlobal&				   heap,
+	uint32_t							   batchIndex,
+	const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc
+)
+{
+	if (!IsValid())
+	{
+		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create SRV on invalid buffer: {}\n", GetName());
+		return;
+	}
+
+	if (HasSRV())
+	{
+		DEBUG_LOG_FMT("[DxBuffer] WARNING: Overwriting SRV for {}: {} -> {}\n", GetName(), m_srvIndex, batchIndex);
+	}
+
+	heap.CreateSRVAt(device, batchIndex, m_resource.Get(), srvDesc);
+
+	m_srvIndex = batchIndex;
+
+	DEBUG_LOG_FMT("[DxBuffer] SRV created in batch: {}, Index={}\n", GetName(), m_srvIndex);
+}
+
 void DxBuffer::CreateSRV(
 	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride
 )

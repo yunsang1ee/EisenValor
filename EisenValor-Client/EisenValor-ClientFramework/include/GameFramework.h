@@ -8,30 +8,59 @@
 #include "DxRtPipelineState.h"
 #include "DxRtShaderTable.h"
 #include <memory>
+#include "DxTexture.h"
+#include "DxBuffer.h"
+#include "DxDescriptorHeapGlobal.h"
 
 //// 인스턴싱을 위한 구조체
 // struct InstanceData
 //{
-//	DirectX::XMFLOAT4X4 world; // 각 인스턴스의 월드 행렬
-//	DirectX::XMFLOAT4 color;   // 각 인스턴스의 색상
+//	DX::XMFLOAT4X4 world; // 각 인스턴스의 월드 행렬
+//	DX::XMFLOAT4 color;   // 각 인스턴스의 색상
 // };
 //
 // struct PerFrameData
 //{
-//	DirectX::XMFLOAT4X4 view;       // 뷰 행렬
-//	DirectX::XMFLOAT4X4 projection; // 프로젝션 행렬
+//	DX::XMFLOAT4X4 view;       // 뷰 행렬
+//	DX::XMFLOAT4X4 projection; // 프로젝션 행렬
 // };
 
 class Actor;
 
-struct PBRMaterial
+struct alignas(16) VertexPNU
 {
-	DirectX::XMFLOAT3 albedo;
-	float			  metallic;
-	float			  roughness;
-	DirectX::XMFLOAT3 emissive;
-	float			  emissiveStrength;
+	DX::XMFLOAT3 position;
+	float		 pad_0;
+	DX::XMFLOAT3 normal;
+	float		 pad_1;
+	DX::XMFLOAT2 uv;
+	DX::XMFLOAT2 pad_2;
+	VertexPNU(DX::XMFLOAT3 pos, DX::XMFLOAT3 nrm, DX::XMFLOAT2 tex)
+		: position(pos), pad_0(0.0f), normal(nrm), pad_1(0.0f), uv(tex), pad_2{0.0f, 0.0f}
+	{
+	}
 };
+static_assert(sizeof(VertexPNU) % 16 == 0, "VertexPNU size must be multiple of 16 bytes");
+
+struct alignas(16) PBRMaterial
+{
+	DX::XMFLOAT3 albedo;
+	float		 metallic;
+	float		 roughness;
+	DX::XMFLOAT3 pad_0;
+	DX::XMFLOAT3 emissive;
+	float		 emissiveStrength;
+};
+static_assert(sizeof(PBRMaterial) % 16 == 0, "PBRMaterial size must be multiple of 16 bytes");
+
+struct GeoInfo
+{
+	uint32_t vertexBase;
+	uint32_t indexBase;
+	uint32_t vertexCount;
+	uint32_t indexCount;
+};
+static_assert(sizeof(GeoInfo) % 16 == 0, "GeoInfo size must be multiple of 16 bytes");
 
 class GameFramework
 {
@@ -53,15 +82,15 @@ private:
 	void LateUpdate();
 	void Render();
 
-	//void RecreateDepthStencilBuffer(uint32_t width, uint32_t height);
+	// void RecreateDepthStencilBuffer(uint32_t width, uint32_t height);
 
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
 	void ResizeRaytracingResources(uint32_t width, uint32_t height);
 
 	void CreateStaticScene();
 	void BuildAccelerationStructures();
+	void CreateBuffers();
 	void CreateRaytracingPipeline();
-	void CreateMaterialBuffer();
 
 	void RenderDXR();
 
@@ -79,32 +108,40 @@ private:
 	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
 	uint32_t												  m_currentFrameIndex = 0;
 
-	ComPtr<ID3D12Resource> m_raytracingOutput;
-	uint32_t			   m_raytracingOutputUAVIndex = ~0u;
-
 	std::unique_ptr<DxRtPipelineState>	m_rtPipeline;
 	std::unique_ptr<DxRtShaderTable>	m_shaderTable;
 	std::unique_ptr<DxTLAS>				m_tlas;
 	std::vector<std::unique_ptr<Actor>> m_sceneActors;
 
-	ComPtr<ID3D12Resource>	 m_materialBuffer;
-	uint32_t				 m_materialBufferSRVIndex = ~0u;
+	DxTexture m_raytracingOutput;
+	DxBuffer  m_materialBuffer;
+	DxBuffer  m_vertexBuffer;
+	DxBuffer  m_indexBuffer;
+	DxBuffer  m_geoInfoBuffer;
+	DxBuffer  m_instGeoBaseBuffer;
+
+	BatchAllocation m_bufferBatch;
+
+	std::vector<VertexPNU>	 m_allVertices;
+	std::vector<uint32_t>	 m_allIndices;
+	std::vector<GeoInfo>	 m_geoInfoTable;
+	std::vector<uint32_t>	 m_instGeoBase;
 	std::vector<PBRMaterial> m_materials;
 
-	DirectX::XMFLOAT3 m_cameraPosition = {0.0f, 5.0f, -10.0f};
-	DirectX::XMFLOAT3 m_cameraForward = {0.0f, 0.0f, 1.0f};
-	DirectX::XMFLOAT3 m_cameraRight = {1.0f, 0.0f, 0.0f};
-	DirectX::XMFLOAT3 m_cameraUp = {0.0f, 1.0f, 0.0f};
+	DX::XMFLOAT3 m_cameraPosition = {0.0f, 5.0f, -10.0f};
+	DX::XMFLOAT3 m_cameraForward = {0.0f, 0.0f, 1.0f};
+	DX::XMFLOAT3 m_cameraRight = {1.0f, 0.0f, 0.0f};
+	DX::XMFLOAT3 m_cameraUp = {0.0f, 1.0f, 0.0f};
 
-	float m_cameraYaw = -90.0f;
+	float m_cameraYaw = 0.0f;
 	float m_cameraPitch = 0.0f;
-	float m_cameraSpeed = 10.0f; // 이동 속도
+	float m_cameraSpeed = 2.0f; // 이동 속도
 	float m_mouseSensitivity = 0.1f;
 
 	int	 m_lastMouseX = 0;
 	int	 m_lastMouseY = 0;
 	bool m_firstMouse = true;
-	bool m_cameraEnabled = true; // 우클릭시 카메라 조작 활성화
+	bool m_cameraEnabled = false; // 우클릭시 카메라 조작 활성화
 
 
 	//// 깊이 버퍼 관련 멤버 추가
@@ -128,7 +165,7 @@ private:
 	// UINT8*				   m_pCbvDataBegin2 = nullptr;
 
 	// Ground 객체 추가
-	//std::unique_ptr<Ground> m_ground;
+	// std::unique_ptr<Ground> m_ground;
 
 
 private:

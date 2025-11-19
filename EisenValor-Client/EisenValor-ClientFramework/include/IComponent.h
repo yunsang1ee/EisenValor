@@ -6,10 +6,12 @@ class Actor;
 enum class ComponentFlags : uint8_t
 {
 	None = 0,
-	Renderable = 1 << 0,
+	Updatable = 1 << 0,
 	FixedUpdatable = 1 << 1,
-	Animatable = 1 << 2,
-	Scriptable = 1 << 3,
+	LateUpdatable = 1 << 2,
+	Renderable = 1 << 3,
+	Animatable = 1 << 4,
+	Scriptable = 1 << 5,
 };
 
 class IComponent
@@ -39,7 +41,7 @@ public:
 
 	void SetActor(Actor* owner) { m_owner = owner; }
 
-	Actor* GetActor() const { return m_owner; }
+	Actor* GetOwner() const { return m_owner; }
 
 protected:
 	Actor* m_owner;

@@ -1,6 +1,5 @@
 #include "stdafxClientFramework.h"
 #include "DxDeviceGlobal.h"
-#include "DxDebugGlobal.h"
 #include "DxCommon.h"
 
 void DxDeviceGlobal::Initialize()

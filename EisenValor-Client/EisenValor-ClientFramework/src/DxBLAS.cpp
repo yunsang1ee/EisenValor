@@ -15,7 +15,8 @@ void DxBLAS::Build(
 	uint32_t					vertexStride,
 	D3D12_GPU_VIRTUAL_ADDRESS	indexBuffer,
 	uint32_t					indexCount,
-	bool						allowUpdate
+	bool						allowUpdate,
+	const std::string&			name
 )
 {
 	assert(device && cmdList && "[DxBLAS] Device or CommandList is null");
@@ -30,13 +31,13 @@ void DxBLAS::Build(
 	triangles.VertexBuffer.StartAddress = vertexBuffer;
 	triangles.VertexBuffer.StrideInBytes = vertexStride;
 	triangles.VertexCount = vertexCount;
-	triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT; // Position (float3)
+	triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
 	if (indexBuffer && indexCount > 0)
 	{
 		triangles.IndexBuffer = indexBuffer;
 		triangles.IndexCount = indexCount;
-		triangles.IndexFormat = DXGI_FORMAT_R32_UINT; // uint32_t 인덱스
+		triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 	}
 
 	// 2. BLAS 빌드 입력 구성
@@ -81,8 +82,8 @@ void DxBLAS::Build(
 		&defaultHeap, D3D12_HEAP_FLAG_NONE, &blasDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr,
 		IID_PPV_ARGS(&m_blasBuffer)
 	));
-
-	m_blasBuffer->SetName(L"BLAS_Result");
+	auto debugName = "BLAS_Result_ " + name;
+	m_blasBuffer->SetName(std::wstring(debugName.begin(), debugName.end()).c_str());
 
 	// 5. Scratch 버퍼 생성 (임시)
 	D3D12_RESOURCE_DESC scratchDesc = {};
@@ -97,11 +98,17 @@ void DxBLAS::Build(
 	scratchDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
 	ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &scratchDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
+		&defaultHeap, D3D12_HEAP_FLAG_NONE, &scratchDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
 		IID_PPV_ARGS(&m_scratchBuffer)
 	));
 
-	m_scratchBuffer->SetName(L"BLAS_Scratch");
+	auto barrierToCopy = DxUtils::CreateTransitionBarrier(
+		m_scratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	);
+	cmdList->ResourceBarrier(1, &barrierToCopy);
+
+	debugName = "BLAS_Scratch_ " + name;
+	m_scratchBuffer->SetName(std::wstring(debugName.begin(), debugName.end()).c_str());
 
 	// 6. BLAS 빌드
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};

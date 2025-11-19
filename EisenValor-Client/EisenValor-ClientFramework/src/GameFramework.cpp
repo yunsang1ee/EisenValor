@@ -3,6 +3,7 @@
 
 #include "GlobalInterfaces.h"
 #include "DxDeviceGlobal.h"
+#include "DxDebugGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxShaderCompilerGlobal.h"
 #include "InputGlobal.h"
@@ -18,7 +19,6 @@
 #include "DxBLAS.h"
 
 
-using namespace DirectX;
 #define SERVER
 
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
@@ -35,7 +35,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	Globals::Initialize();
 	auto& time = MANAGER(TimerGlobal);
 	time.SetFixedFPS(60);
-	time.SetTargetFPS(144);
+	time.SetTargetFPS(0);
 
 	auto& device = MANAGER(DxDeviceGlobal);
 	m_featureCaps = DxFeatureCaps::Query(device.GetDevice(), device.GetAdapter());
@@ -99,116 +99,10 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	CreateStaticScene();
 	BuildAccelerationStructures();
-	CreateMaterialBuffer();
+	CreateBuffers();
 	CreateRaytracingPipeline();
 
 	UpdateCameraVectors();
-
-	// Legacy 파이프라인용
-	/*
-	// 루트 파라미터 정의 (상수 버퍼용)
-	D3D_ROOT_SIGNATURE_VERSION targetVersion = std::min(
-		m_featureCaps.rootSignature.HighestVersion,
-		D3D_ROOT_SIGNATURE_VERSION_1_1 // 1.1로 제한
-	);
-	// 3. 루트 시그니처 생성 25.07.20 (수정 25.09.17)
-	D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc = {};
-	versionedRootSignatureDesc.Version = targetVersion;
-	if (targetVersion == D3D_ROOT_SIGNATURE_VERSION_1_1)
-	{ // Root Signature 1.1 사용
-		D3D12_ROOT_PARAMETER1 rootParameter = {};
-		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 상수 버퍼 뷰
-		rootParameter.Descriptor.ShaderRegister = 0;				 // register(b0)
-		rootParameter.Descriptor.RegisterSpace = 0;
-		rootParameter.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE;
-		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
-
-		versionedRootSignatureDesc.Desc_1_1.NumParameters = 1;
-		versionedRootSignatureDesc.Desc_1_1.pParameters = &rootParameter;
-		versionedRootSignatureDesc.Desc_1_1.NumStaticSamplers = 0;
-		versionedRootSignatureDesc.Desc_1_1.pStaticSamplers = nullptr;
-		versionedRootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	}
-	else
-	{ // Root Signature 1.0 사용
-		D3D12_ROOT_PARAMETER rootParameter = {};
-		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 상수 버퍼 뷰
-		rootParameter.Descriptor.ShaderRegister = 0;				 // register(b0)
-		rootParameter.Descriptor.RegisterSpace = 0;
-		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
-
-		versionedRootSignatureDesc.Desc_1_0.NumParameters = 1;
-		versionedRootSignatureDesc.Desc_1_0.pParameters = &rootParameter;
-		versionedRootSignatureDesc.Desc_1_0.NumStaticSamplers = 0;
-		versionedRootSignatureDesc.Desc_1_0.pStaticSamplers = nullptr;
-		versionedRootSignatureDesc.Desc_1_0.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	}
-
-	ComPtr<ID3DBlob> signature;
-	ComPtr<ID3DBlob> error;
-
-	ThrowIfFailed(D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, &signature, &error));
-	ThrowIfFailed(device.GetDevice()->CreateRootSignature(
-		0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)
-	));
-	DEBUG_LOG_FMT(
-		"[GameFramework] Using Root Signature Version: 1.{} (optimal choice)\n", static_cast<int>(targetVersion)
-	);
-
-	// 4. 셰이더 컴파일 (Simple)
-	ComPtr<ID3DBlob> vertexShader;
-	ComPtr<ID3DBlob> pixelShader;
-
-
-#ifdef _DEBUG
-	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-	UINT compileFlags = 0;
-#endif
-
-	// 셰이더 파일에서 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0,
-		&vertexShader, nullptr
-	));
-	ThrowIfFailed(D3DCompileFromFile(
-		L"../EisenValor/Resource/Shader/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0,
-		&pixelShader, nullptr
-	));
-
-	// 5. 입력 레이아웃 정의
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-	};
-
-	// PS 생성하기
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
-	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = {reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize()};
-	psoDesc.PS = {reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize()};
-	psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	psoDesc.DepthStencilState.DepthEnable = TRUE;
-
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL; // 깊이 정보를 쓸 것인가
-	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;	   // 깊이 비교
-
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.SampleDesc.Count = 1;
-
-	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; // 깊이 버퍼 포맷 설정
-
-	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
-	*/
 
 	std::string id, pw;
 	std::cout << "Input ID(any):";
@@ -221,61 +115,6 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 	auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
 	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
-
-	// Ground 객체 생성 및 초기화
-	// m_ground = std::make_unique<Ground>();
-	// m_ground->Initialize(device.GetDevice());
-
-	/*
-	//Player 객체 생성 및 초기화 추가
-	auto player = std::make_unique<Player>();
-	player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
-	player->Initialize(device.GetDevice());
-	m_player = player.get();
-
-	Objects들 추가
-	m_gameObjects.push_back(std::move(player));
-
-	적군 장수 생성
-	auto enemyGeneral = std::make_shared<NPC>();
-	enemyGeneral->SetTeam(NPC::Team::ENEMY);
-	enemyGeneral->SetUnitType(NPC::UnitType::GENERAL);
-	enemyGeneral->Initialize(device.GetDevice());
-	Vec3 generalPos(0.0f, 0.0f, 8.0f);
-	enemyGeneral->SetPosition(generalPos);
-	enemyGeneral->lastServerPosition = generalPos;
-	MANAGER(GameObjectManager).AddObject(enemyGeneral);
-
-	적군 병사 생성 (장수 바로 옆에)
-	auto enemySoldier = std::make_shared<NPC>();
-	enemySoldier->SetTeam(NPC::Team::ENEMY);
-	enemySoldier->SetUnitType(NPC::UnitType::SOLDIER);
-	enemySoldier->Initialize(device.GetDevice());
-	Vec3 soldierPos(1.5f, 0.0f, 8.0f);
-	enemySoldier->SetPosition(soldierPos);
-	enemySoldier->lastServerPosition = soldierPos;
-	MANAGER(GameObjectManager).AddObject(enemySoldier);
-
-	아군 배틀램 생성
-	auto battleram = std::make_shared<NPC>();
-	battleram->SetTeam(NPC::Team::ALLY);
-	battleram->SetUnitType(NPC::UnitType::BATTLE_RAM);
-	battleram->Initialize(device.GetDevice());
-	Vec3 battleramPos(-3.0f, 0.0f, 2.0f);
-	battleram->SetPosition(battleramPos);
-	battleram->lastServerPosition = battleramPos;
-	MANAGER(GameObjectManager).AddObject(battleram);
-
-	아군 스폰 기지 생성
-	auto allyspawnbase = std::make_shared<NPC>();
-	allyspawnbase->SetTeam(NPC::Team::ALLY);
-	allyspawnbase->SetUnitType(NPC::UnitType::SPAWN_BASE);
-	allyspawnbase->Initialize(device.GetDevice());
-	Vec3 spawnbasePos(-8.0f, 0.0f, 0.0f);
-	allyspawnbase->SetPosition(spawnbasePos);
-	allyspawnbase->lastServerPosition = spawnbasePos;
-	MANAGER(GameObjectManager).AddObject(allyspawnbase);
-	*/
 
 	return true;
 }
@@ -331,8 +170,8 @@ void GameFramework::CreateStaticScene()
 	auto& device = MANAGER(DxDeviceGlobal);
 
 	auto ground = std::make_unique<Actor>("Ground");
-	ground->SetPosition(0.0f, 0.0f, 0.0f);
-	ground->SetScale(10.0f, 1.0f, 10.0f);
+	ground->GetTransform().SetPosition(0.0f, 0.0f, 0.0f);
+	ground->GetTransform().SetScale(10.0f);
 
 	std::vector<Vertex> groundVertices = {
 		{{-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
@@ -341,7 +180,7 @@ void GameFramework::CreateStaticScene()
 		{{-1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}}
 	};
 
-	std::vector<uint32_t> groundIndices = {0, 1, 2, 0, 2, 3};
+	std::vector<uint32_t> groundIndices = {0, 2, 1, 0, 3, 2};
 
 	auto groundMesh = ground->AddComponent<MeshComponent>();
 	groundMesh->SetMesh(groundVertices, groundIndices);
@@ -358,8 +197,8 @@ void GameFramework::CreateStaticScene()
 	for (int i = 0; i < 3; ++i)
 	{
 		auto player = std::make_unique<Actor>("Player" + std::to_string(i));
-		player->SetPosition(-2.0f + i * 2.0f, 1.0f, 0.0f);
-		player->SetScale(1.0f, 1.0f, 1.0f);
+		player->GetTransform().SetPosition(-2.0f + i * 2.0f, 1.0f, 0.0f);
+		player->GetTransform().SetScale(1.0f);
 
 		// clang-format off
 		std::vector<Vertex> cubeVertices = {
@@ -433,15 +272,18 @@ void GameFramework::BuildAccelerationStructures()
 	auto* cmdList = frame->GetMainContext()->CommandList();
 	auto* uploadHeap = frame->GetUploadHeap();
 
-	auto* device5 = reinterpret_cast<ID3D12Device5*>(device.GetDevice());
-	auto* cmdList4 = reinterpret_cast<ID3D12GraphicsCommandList4*>(cmdList);
+	ComPtr<ID3D12Device5> device5;
+	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+
+	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
 	for (auto& actor : m_sceneActors)
 	{
 		auto* mesh = actor->GetComponent<MeshComponent>();
 		if (mesh)
 		{
-			mesh->BuildBLAS(device5, cmdList4, uploadHeap);
+			mesh->BuildBLAS(device5.Get(), cmdList4.Get(), uploadHeap);
 		}
 	}
 
@@ -453,7 +295,7 @@ void GameFramework::BuildAccelerationStructures()
 	}
 
 	m_tlas = std::make_unique<DxTLAS>();
-	m_tlas->Build(device5, cmdList4, uploadHeap, actorPtrs);
+	m_tlas->Build(device5.Get(), cmdList4.Get(), uploadHeap, actorPtrs);
 
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 	frame->WaitForCompletion();
@@ -463,86 +305,264 @@ void GameFramework::BuildAccelerationStructures()
 
 void GameFramework::CreateRaytracingPipeline()
 {
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto* device5 = reinterpret_cast<ID3D12Device5*>(device.GetDevice());
+	auto&				  device = MANAGER(DxDeviceGlobal);
+	ComPtr<ID3D12Device5> device5;
+	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
 
 	m_rtPipeline = std::make_unique<DxRtPipelineState>();
-	m_rtPipeline->Create(device5, L"../EisenValor/Resource/Shader/RaytracingLibrary.hlsl", 1);
+	m_rtPipeline->Create(device5.Get(), L"/Resource/Shader/RaytracingLibrary.hlsl", 8);
 
 	m_shaderTable = std::make_unique<DxRtShaderTable>();
-	m_shaderTable->Build(device5, m_rtPipeline.get(), static_cast<uint32_t>(m_sceneActors.size()));
+	m_shaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
 
 	DEBUG_LOG_FMT("[GameFramework] Raytracing pipeline created\n");
 }
 
-void GameFramework::CreateMaterialBuffer()
+void GameFramework::CreateBuffers()
 {
 	auto& device = MANAGER(DxDeviceGlobal);
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
+	if (m_sceneActors.empty())
+	{
+		DEBUG_LOG_FMT("[GameFramework] WARNING: No actors for geometry buffers\n");
+		return;
+	}
 	if (m_materials.empty())
 	{
 		DEBUG_LOG_FMT("[GameFramework] WARNING: No materials to upload\n");
-		return;
 	}
 
-	const uint64_t bufferSize = m_materials.size() * sizeof(PBRMaterial);
+	// 1) CPU 데이터 수집
+	m_allVertices.clear();
+	m_allIndices.clear();
+	m_geoInfoTable.clear();
+	m_instGeoBase.clear();
 
+	for (auto& actor : m_sceneActors)
+	{
+		auto* mesh = actor->GetComponent<MeshComponent>();
+		if (!mesh)
+		{
+			continue;
+		}
+		uint32_t geoBase = static_cast<uint32_t>(m_geoInfoTable.size());
+
+		// IDEA: MeshComponent가 여러 개의 서브메시를 가질 수 있도록 확장 가능
+		// for (auto& subMesh : mesh->GetSubMeshes())
+		{
+			uint32_t vertexBase = static_cast<uint32_t>(m_allVertices.size());
+			uint32_t indexBase = static_cast<uint32_t>(m_allIndices.size());
+
+			auto& vertices = mesh->GetVertices();
+			auto& indices = mesh->GetIndices();
+
+			for (auto& v : vertices)
+			{
+				m_allVertices.emplace_back(v.position, v.normal, DX::XMFLOAT2{0.0f, 0.0f});
+			}
+
+			m_allIndices.insert(m_allIndices.end(), indices.begin(), indices.end());
+
+			m_geoInfoTable.emplace_back(
+				vertexBase, indexBase, static_cast<uint32_t>(vertices.size()), static_cast<uint32_t>(indices.size())
+			);
+		}
+
+		m_instGeoBase.push_back(geoBase);
+	}
+
+	DEBUG_LOG_FMT(
+		"[GameFramework] Collected geometry: {} vertices, {} indices, {} geos\n", m_allVertices.size(),
+		m_allIndices.size(), m_geoInfoTable.size()
+	);
+
+	// 2) GPU 버퍼 생성 + 업로드
 	auto* frame = m_frameResources[0].get();
 	frame->BeginFrame();
-
-	auto* uploadHeap = frame->GetUploadHeap();
-	auto  upload = uploadHeap->UploadRawData(m_materials.data(), bufferSize, 256);
-
-	D3D12_RESOURCE_DESC bufferDesc = {
-		.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-		.Width = bufferSize,
-		.Height = 1,
-		.DepthOrArraySize = 1,
-		.MipLevels = 1,
-		.Format = DXGI_FORMAT_UNKNOWN,
-		.SampleDesc{.Count = 1, .Quality = 0},
-		.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-		.Flags = D3D12_RESOURCE_FLAG_NONE
-	};
-
-	D3D12_HEAP_PROPERTIES defaultHeap = {};
-	defaultHeap.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-		IID_PPV_ARGS(&m_materialBuffer)
-	));
-
-	m_materialBuffer->SetName(L"MaterialBuffer");
-
 	auto* cmdList = frame->GetMainContext()->CommandList();
-	cmdList->CopyBufferRegion(m_materialBuffer.Get(), 0, uploadHeap->GetResource(), upload.offset, bufferSize);
+	auto* uploadHeap = frame->GetUploadHeap();
 
-	auto barrier = DxUtils::CreateTransitionBarrier(
-		m_materialBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
-	);
-	cmdList->ResourceBarrier(1, &barrier);
+	// --- Material Buffer (t1) ---
+	{
+		uint64_t bufSize = m_materials.size() * sizeof(PBRMaterial);
+		m_materialBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "MaterialBuffer"
+		);
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Buffer.FirstElement = 0;
-	srvDesc.Buffer.NumElements = static_cast<UINT>(m_materials.size());
-	srvDesc.Buffer.StructureByteStride = sizeof(PBRMaterial);
-	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_materialBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
 
-	m_materialBufferSRVIndex = descHeap.CreateSRV(device.GetDevice(), m_materialBuffer.Get(), &srvDesc);
+		auto upload = uploadHeap->UploadRawData(m_materials.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_materialBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_materialBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- Vertex Buffer (t2) ---
+	{
+		uint64_t bufSize = m_allVertices.size() * sizeof(VertexPNU);
+		m_vertexBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "VertexBuffer_PNU"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_vertexBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_allVertices.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_vertexBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_vertexBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- Index Buffer (t3) ---
+	{
+		uint64_t bufSize = m_allIndices.size() * sizeof(uint32_t);
+		m_indexBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE, "IndexBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_indexBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_allIndices.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_indexBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_indexBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- GeoInfo Buffer (t4) ---
+	{
+		uint64_t bufSize = m_geoInfoTable.size() * sizeof(GeoInfo);
+		m_geoInfoBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "GeoInfoBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_geoInfoBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_geoInfoTable.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_geoInfoBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_geoInfoBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- InstGeoBase Buffer (t5) ---
+	{
+		uint64_t bufSize = m_instGeoBase.size() * sizeof(uint32_t);
+		m_instGeoBaseBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "InstGeoBaseBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_instGeoBaseBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_instGeoBase.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(
+			m_instGeoBaseBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize
+		);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_instGeoBaseBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// 3) 연속 슬롯에 SRV 생성 (t1~t5)
+	m_bufferBatch = descHeap.ReserveBatch(5);
+
+	// t1: Materials
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc1{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_materials.size()),
+			 .StructureByteStride = sizeof(PBRMaterial),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	m_materialBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex, &srvDesc1);
+
+	// t2: VertexBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_allVertices.size()),
+			 .StructureByteStride = sizeof(VertexPNU),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	m_vertexBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 1, &srvDesc2);
+
+	// t3: IndexBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc3{
+		.Format = DXGI_FORMAT_R32_UINT,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_allIndices.size()),
+			 .StructureByteStride = 0,
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	m_indexBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 2, &srvDesc3);
+
+	// t4: GeoInfoBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc4{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_geoInfoTable.size()),
+			 .StructureByteStride = sizeof(GeoInfo),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	m_geoInfoBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 3, &srvDesc4);
+
+	// t5: InstGeoBaseBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc5{
+		.Format = DXGI_FORMAT_R32_UINT,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_instGeoBase.size()),
+			 .StructureByteStride = 0,
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	m_instGeoBaseBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 4, &srvDesc5);
 
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 	frame->WaitForCompletion();
 
-	DEBUG_LOG_FMT(
-		"[GameFramework] Material buffer created: {} materials, SRV Index: {}\n", m_materials.size(),
-		m_materialBufferSRVIndex
-	);
+	DEBUG_LOG_FMT("[GameFramework] Buffers created, SRV batch start: {}\n", m_bufferBatch.startIndex);
 }
 
 void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
@@ -550,37 +570,15 @@ void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
 	auto& device = MANAGER(DxDeviceGlobal);
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	D3D12_RESOURCE_DESC desc = {
-		.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-		.Width = width,
-		.Height = height,
-		.DepthOrArraySize = 1,
-		.MipLevels = 1,
-		.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-		.SampleDesc{.Count = 1, .Quality = 0},
-		.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-		.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
-	};
-
-	D3D12_HEAP_PROPERTIES heapProps = {};
-	heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
-		IID_PPV_ARGS(&m_raytracingOutput)
-	));
-
-	m_raytracingOutput->SetName(L"RaytracingOutput");
-
-	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-	uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	uavDesc.Texture2D.MipSlice = 0;
-
-	m_raytracingOutputUAVIndex = descHeap.CreateUAV(device.GetDevice(), m_raytracingOutput.Get(), &uavDesc);
+	m_raytracingOutput.Initialize(
+		device.GetDevice(), width, height, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, "RaytracingOutput"
+	);
+	m_raytracingOutput.CreateUAV(device.GetDevice(), descHeap, 0);
 
 	DEBUG_LOG_FMT(
-		"[GameFramework] Raytracing output created: {}x{}, UAV Index={}\n", width, height, m_raytracingOutputUAVIndex
+		"[GameFramework] Raytracing output created: {}x{}, UAV Index={}\n", width, height,
+		m_raytracingOutput.GetUAVIndex()
 	);
 }
 
@@ -589,14 +587,8 @@ void GameFramework::ResizeRaytracingResources(uint32_t width, uint32_t height)
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	commandQueue.WaitForIdle();
-
-	if (m_raytracingOutputUAVIndex != ~0u)
-	{
-		descHeap.FreeImmediate(m_raytracingOutputUAVIndex);
-	}
-
-	m_raytracingOutput.Reset();
+	auto fenceValue = m_frameResources[m_currentFrameIndex]->GetFenceValue();
+	m_raytracingOutput.ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
 	CreateRaytracingResources(width, height);
 }
 
@@ -619,17 +611,33 @@ void GameFramework::Run()
 
 	MANAGER(InputGlobal).AfterUpdate();
 	MANAGER(GameObjectManager).FinalUpdate();
+#ifdef _DEBUG
+	MANAGER(DxDebugGlobal).PrintDebugMessages();
+#endif
 }
 
 void GameFramework::Release()
 {
-	DEBUG_LOG_FMT("WaitForIdle....\n");
-	MANAGER(DxGfxCommandQueueGlobal).WaitForIdle();
-	if (m_materialBufferSRVIndex != ~0u)
+	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
+
+	auto& queue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& heap = MANAGER(DxDescriptorHeapGlobal);
+
+	queue.WaitForIdle();
+
+	if (m_raytracingOutput.HasUAV())
 	{
-		auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
-		descHeap.FreeImmediate(m_materialBufferSRVIndex);
+		heap.FreeImmediate(m_raytracingOutput.GetUAVIndex());
+		DEBUG_LOG_FMT("Released UAV: {}\n", m_raytracingOutput.GetUAVIndex());
 	}
+	if (m_bufferBatch.count > 0)
+	{
+		heap.FreeBatchImmediate(m_bufferBatch.startIndex, m_bufferBatch.count);
+		DEBUG_LOG_FMT("  Released SRV batch: start={}, count={}\n", m_bufferBatch.startIndex, m_bufferBatch.count);
+		m_bufferBatch = {0, 0};
+	}
+
+	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
 }
 
 LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
@@ -740,7 +748,8 @@ void GameFramework::Render()
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
 	frame->BeginFrame();
-	auto* cmdList = reinterpret_cast<ID3D12GraphicsCommandList4*>(frame->GetMainContext()->CommandList());
+	ComPtr<ID3D12GraphicsCommandList4> cmdList;
+	ThrowIfFailed(frame->GetMainContext()->CommandList()->QueryInterface(IID_PPV_ARGS(&cmdList)));
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
 	RenderDXR();
@@ -749,7 +758,7 @@ void GameFramework::Render()
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
 
 	auto barrier1 = DxUtils::CreateTransitionBarrier(
-		m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE
+		m_raytracingOutput.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE
 	);
 
 	auto barrier2 =
@@ -758,14 +767,14 @@ void GameFramework::Render()
 	D3D12_RESOURCE_BARRIER barriers[] = {barrier1, barrier2};
 	cmdList->ResourceBarrier(2, barriers);
 
-	cmdList->CopyResource(backBuffer, m_raytracingOutput.Get());
+	cmdList->CopyResource(backBuffer, m_raytracingOutput.GetResource());
 
 	// BackBuffer → Present, RT Output → UAV
 	auto barrier3 =
 		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
 	auto barrier4 = DxUtils::CreateTransitionBarrier(
-		m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+		m_raytracingOutput.GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 	);
 
 	D3D12_RESOURCE_BARRIER restoreBarriers[] = {barrier3, barrier4};
@@ -779,8 +788,9 @@ void GameFramework::Render()
 
 void GameFramework::RenderDXR()
 {
-	auto* frame = m_frameResources[m_currentFrameIndex].get();
-	auto* cmdList = reinterpret_cast<ID3D12GraphicsCommandList4*>(frame->GetMainContext()->CommandList());
+	auto*							   frame = m_frameResources[m_currentFrameIndex].get();
+	ComPtr<ID3D12GraphicsCommandList4> cmdList;
+	ThrowIfFailed(frame->GetMainContext()->CommandList()->QueryInterface(IID_PPV_ARGS(&cmdList)));
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
 	cmdList->SetPipelineState1(m_rtPipeline->GetStateObject());
@@ -794,31 +804,36 @@ void GameFramework::RenderDXR()
 	cmdList->SetComputeRootDescriptorTable(0, tlasSRV);
 
 	// Param 1: Output UAV
-	D3D12_GPU_DESCRIPTOR_HANDLE outputUAV = descHeap.GetGPUHandle(m_raytracingOutputUAVIndex);
+	D3D12_GPU_DESCRIPTOR_HANDLE outputUAV = descHeap.GetGPUHandle(m_raytracingOutput.GetUAVIndex());
 	cmdList->SetComputeRootDescriptorTable(1, outputUAV);
 
 	// Param 2: Camera Constants (임시 ViewProjInverse)
-	DirectX::XMVECTOR cameraPos = DirectX::XMLoadFloat3(&m_cameraPosition);
-	DirectX::XMVECTOR forwardVec = DirectX::XMLoadFloat3(&m_cameraForward);
-	DirectX::XMVECTOR upVec = DirectX::XMLoadFloat3(&m_cameraUp);
-	DirectX::XMVECTOR targetVec = DirectX::XMVectorAdd(cameraPos, forwardVec);
+	DX::XMVECTOR cameraPos = DX::XMLoadFloat3(&m_cameraPosition);
+	DX::XMVECTOR forwardVec = DX::XMLoadFloat3(&m_cameraForward);
+	DX::XMVECTOR upVec = DX::XMLoadFloat3(&m_cameraUp);
+	DX::XMVECTOR targetVec = DX::XMVectorAdd(cameraPos, forwardVec);
 
-	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(cameraPos, targetVec, upVec);
+	DX::XMMATRIX view = DX::XMMatrixLookAtLH(cameraPos, targetVec, upVec);
 
-	float			  aspectRatio = static_cast<float>(m_swapChain->GetWidth()) / m_swapChain->GetHeight();
-	DirectX::XMMATRIX proj = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, aspectRatio, 0.1f, 1000.0f);
+	float aspectRatio = static_cast<float>(m_swapChain->GetWidth()) / static_cast<float>(m_swapChain->GetHeight());
+	DX::XMMATRIX proj = DX::XMMatrixPerspectiveFovLH(DX::XM_PIDIV2, aspectRatio, 0.1f, 1000.0f);
 
-	DirectX::XMMATRIX viewProj = view * proj;
-	DirectX::XMMATRIX viewProjInverse = DirectX::XMMatrixInverse(nullptr, viewProj);
+	DX::XMMATRIX viewProj = view * proj;
+	DX::XMMATRIX viewProjInverse = DX::XMMatrixInverse(nullptr, viewProj);
 
-	DirectX::XMFLOAT4X4 viewProjInvFloat;
-	DirectX::XMStoreFloat4x4(&viewProjInvFloat, viewProjInverse);
-
+	viewProjInverse = DX::XMMatrixTranspose(viewProjInverse);
+	DX::XMFLOAT4X4 viewProjInvFloat;
+	DX::XMStoreFloat4x4(&viewProjInvFloat, viewProjInverse);
 	cmdList->SetComputeRoot32BitConstants(2, 16, &viewProjInvFloat, 0);
 
-	// Param 3: Materials (SRV)
-	D3D12_GPU_DESCRIPTOR_HANDLE materialsSRV = descHeap.GetGPUHandle(m_materialBufferSRVIndex);
-	cmdList->SetComputeRootDescriptorTable(3, materialsSRV);
+	// Param 3: Table SRVs
+	//		Materials           (SRV)
+	//		Vertex Buffer       (SRV)
+	//		Index Buffer        (SRV)
+	//		GeoInfo Buffer      (SRV)
+	//		GeoInstBase Buffer  (SRV)
+	D3D12_GPU_DESCRIPTOR_HANDLE tableStart = descHeap.GetGPUHandle(m_materialBuffer.GetSRVIndex());
+	cmdList->SetComputeRootDescriptorTable(3, tableStart);
 
 	D3D12_DISPATCH_RAYS_DESC desc = {
 		.RayGenerationShaderRecord = m_shaderTable->GetRayGenRecord(),
@@ -842,7 +857,7 @@ void GameFramework::UpdateCamera(float deltaTime)
 		m_firstMouse = true;
 		ShowCursor(FALSE); // 마우스 커서 숨기기
 	}
-	if (input.GetInputUp(VK_RBUTTON))
+	else if (input.GetInputUp(VK_RBUTTON))
 	{
 		m_cameraEnabled = false;
 		ShowCursor(TRUE); // 마우스 커서 보이기
@@ -852,32 +867,31 @@ void GameFramework::UpdateCamera(float deltaTime)
 		return;
 
 	// 키보드 입력으로 이동
-	float			  velocity = m_cameraSpeed * deltaTime;
-	DirectX::XMVECTOR posVec = DirectX::XMLoadFloat3(&m_cameraPosition);
-	DirectX::XMVECTOR forwardVec = DirectX::XMLoadFloat3(&m_cameraForward);
-	DirectX::XMVECTOR rightVec = DirectX::XMLoadFloat3(&m_cameraRight);
-	DirectX::XMFLOAT3 worldUp = {0.0f, 1.0f, 0.0f};
-	DirectX::XMVECTOR upVec = DirectX::XMLoadFloat3(&worldUp);
+	float		 velocity = m_cameraSpeed * deltaTime;
+	DX::XMVECTOR posVec = DX::XMLoadFloat3(&m_cameraPosition);
+	DX::XMVECTOR forwardVec = DX::XMLoadFloat3(&m_cameraForward);
+	DX::XMVECTOR rightVec = DX::XMLoadFloat3(&m_cameraRight);
+	DX::XMVECTOR upVec = DX::XMVectorSet(0.f, 1.f, 0.f, 0.f);
 
 	// W/S: 전진/후진
 	if (input.GetInput('W'))
-		posVec = DirectX::XMVectorAdd(posVec, DirectX::XMVectorScale(forwardVec, velocity));
+		posVec = DX::XMVectorAdd(posVec, DX::XMVectorScale(forwardVec, velocity));
 	if (input.GetInput('S'))
-		posVec = DirectX::XMVectorSubtract(posVec, DirectX::XMVectorScale(forwardVec, velocity));
+		posVec = DX::XMVectorSubtract(posVec, DX::XMVectorScale(forwardVec, velocity));
 
 	// A/D: 좌/우 이동
 	if (input.GetInput('A'))
-		posVec = DirectX::XMVectorSubtract(posVec, DirectX::XMVectorScale(rightVec, velocity));
+		posVec = DX::XMVectorSubtract(posVec, DX::XMVectorScale(rightVec, velocity));
 	if (input.GetInput('D'))
-		posVec = DirectX::XMVectorAdd(posVec, DirectX::XMVectorScale(rightVec, velocity));
+		posVec = DX::XMVectorAdd(posVec, DX::XMVectorScale(rightVec, velocity));
 
-	// SHIFT/SPACE: 상/하 이동
-	if (input.GetInput(VK_SHIFT))
-		posVec = DirectX::XMVectorSubtract(posVec, DirectX::XMVectorScale(upVec, velocity));
+	// SPACE/SHIFT: 상/하 이동
 	if (input.GetInput(VK_SPACE))
-		posVec = DirectX::XMVectorAdd(posVec, DirectX::XMVectorScale(upVec, velocity));
+		posVec = DX::XMVectorAdd(posVec, DX::XMVectorScale(upVec, velocity));
+	if (input.GetInput(VK_SHIFT))
+		posVec = DX::XMVectorSubtract(posVec, DX::XMVectorScale(upVec, velocity));
 
-	DirectX::XMStoreFloat3(&m_cameraPosition, posVec);
+	DX::XMStoreFloat3(&m_cameraPosition, posVec);
 
 	// 마우스 이동으로 회전 (우클릭 중일 때만)
 	auto mousePosition = input.GetMousePosition();
@@ -890,7 +904,7 @@ void GameFramework::UpdateCamera(float deltaTime)
 	}
 
 	float xOffset = static_cast<float>(mousePosition.x - m_lastMouseX);
-	float yOffset = static_cast<float>(m_lastMouseY - mousePosition.y); // Y는 반대
+	float yOffset = static_cast<float>(mousePosition.y - m_lastMouseY);
 
 	m_lastMouseX = mousePosition.x;
 	m_lastMouseY = mousePosition.y;
@@ -899,13 +913,16 @@ void GameFramework::UpdateCamera(float deltaTime)
 	yOffset *= m_mouseSensitivity;
 
 	m_cameraYaw += xOffset;
-	m_cameraPitch += yOffset;
+	m_cameraPitch -= yOffset;
 
-	// Pitch 제한 (상하 90도 제한)
 	if (m_cameraPitch > 89.0f)
 		m_cameraPitch = 89.0f;
 	if (m_cameraPitch < -89.0f)
 		m_cameraPitch = -89.0f;
+	if (m_cameraYaw >= 360.f)
+		m_cameraYaw -= 360.f;
+	if (m_cameraYaw < 0.f)
+		m_cameraYaw += 360.f;
 
 	UpdateCameraVectors();
 }
@@ -913,22 +930,20 @@ void GameFramework::UpdateCamera(float deltaTime)
 void GameFramework::UpdateCameraVectors()
 {
 	// Forward 벡터 계산
-	DirectX::XMFLOAT3 forward;
-	forward.x = cosf(DirectX::XMConvertToRadians(m_cameraYaw)) * cosf(DirectX::XMConvertToRadians(m_cameraPitch));
-	forward.y = sinf(DirectX::XMConvertToRadians(m_cameraPitch));
-	forward.z = sinf(DirectX::XMConvertToRadians(m_cameraYaw)) * cosf(DirectX::XMConvertToRadians(m_cameraPitch));
+	float		 yawR = DX::XMConvertToRadians(m_cameraYaw);
+	float		 pitchR = DX::XMConvertToRadians(m_cameraPitch);
+	DX::XMFLOAT3 forward = {sinf(yawR) * cosf(pitchR), sinf(pitchR), cosf(yawR) * cosf(pitchR)};
+	DX::XMVECTOR forwardVec = DX::XMLoadFloat3(&forward);
+	forwardVec = DX::XMVector3Normalize(forwardVec);
+	DX::XMStoreFloat3(&m_cameraForward, forwardVec);
 
-	DirectX::XMVECTOR forwardVec = DirectX::XMLoadFloat3(&forward);
-	forwardVec = DirectX::XMVector3Normalize(forwardVec);
-	DirectX::XMStoreFloat3(&m_cameraForward, forwardVec);
+	const DX::XMVECTOR worldUpVec = DX::XMVectorSet(0.f, 1.f, 0.f, 0.f);
 
 	// Right 벡터 계산
-	DirectX::XMFLOAT3 worldUp = {0.0f, 1.0f, 0.0f};
-	DirectX::XMVECTOR worldUpVec = DirectX::XMLoadFloat3(&worldUp);
-	DirectX::XMVECTOR rightVec = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(forwardVec, worldUpVec));
-	DirectX::XMStoreFloat3(&m_cameraRight, rightVec);
+	DX::XMVECTOR rightVec = DX::XMVector3Normalize(DX::XMVector3Cross(worldUpVec, forwardVec));
+	DX::XMStoreFloat3(&m_cameraRight, rightVec);
 
 	// Up 벡터 계산
-	DirectX::XMVECTOR upVec = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(rightVec, forwardVec));
-	DirectX::XMStoreFloat3(&m_cameraUp, upVec);
+	DX::XMVECTOR upVec = DX::XMVector3Normalize(DX::XMVector3Cross(forwardVec, rightVec));
+	DX::XMStoreFloat3(&m_cameraUp, upVec);
 }

@@ -28,13 +28,19 @@ public:
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const std::string&  name = ""
     );
-
+	
     // SRV 생성 (i.e. Structured Buffer)
     void CreateSRV(
         ID3D12Device*       device,
         DxDescriptorHeapGlobal&   heap,
         uint32_t            numElements,
         uint32_t            elementSize
+    );
+    void CreateSRVInBatch(
+        ID3D12Device* device,
+        DxDescriptorHeapGlobal& heap,
+        uint32_t batchIndex,
+        const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc
     );
 
     // UAV 생성 (i.e. RWStructuredBuffer)

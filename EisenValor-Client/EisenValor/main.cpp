@@ -69,6 +69,12 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 #ifdef _DEBUG
 	if (AllocConsole())
 	{
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		DWORD  mode = 0;
+		GetConsoleMode(hConsole, &mode);
+		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+		SetConsoleMode(hConsole, mode);
+
 		FILE* fp;
 		freopen_s(&fp, "CONOUT$", "w", stdout);
 		freopen_s(&fp, "CONOUT$", "w", stderr);
@@ -113,5 +119,8 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	}
 
 	gameFramework.Release();
+#ifdef _DEBUG
+	FreeConsole();
+#endif
 	return msg.wParam;
 }

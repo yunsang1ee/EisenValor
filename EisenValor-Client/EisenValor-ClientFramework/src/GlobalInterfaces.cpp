@@ -20,12 +20,18 @@ void Initialize()
 	MANAGER(TimerGlobal).Initialize();
 
 #ifdef _DEBUG
-	MANAGER(DxDebugGlobal).Initialize();
+	auto& debugG = MANAGER(DxDebugGlobal);
+	debugG.Initialize();
 #endif
-	MANAGER(DxDeviceGlobal).Initialize();
+	auto& deviceG = MANAGER(DxDeviceGlobal);
+	deviceG.Initialize();
+#ifdef _DEBUG
+	debugG.SetupDebugMessages(deviceG.GetDevice());
+	debugG.SetBreakOnSeverity(true, true);
+#endif
 	MANAGER(DxGarbageCollectorGlobal).Initialize();
 	MANAGER(DxShaderCompilerGlobal).Initialize();
-	auto* device = MANAGER(DxDeviceGlobal).GetDevice();
+	auto* device = deviceG.GetDevice();
 	MANAGER(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
 	MANAGER(DxGfxCommandQueueGlobal).Initialize(device);
 }
@@ -36,10 +42,12 @@ void Shutdown()
 	MANAGER(DxDescriptorHeapGlobal).Release();
 	MANAGER(DxShaderCompilerGlobal).Release();
 	MANAGER(DxGarbageCollectorGlobal).Release();
-	MANAGER(DxDeviceGlobal).Release();
 #ifdef _DEBUG
-	MANAGER(DxDebugGlobal).Release();
+	auto& debugG = MANAGER(DxDebugGlobal);
+	debugG.PrintDebugMessages();
+	debugG.Release();
 #endif
+	MANAGER(DxDeviceGlobal).Release();
 
 	MANAGER(TimerGlobal).Release();
 	MANAGER(InputGlobal).Release();

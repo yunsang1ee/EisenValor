@@ -49,20 +49,9 @@ void DxTLAS::Build(
 		D3D12_RAYTRACING_INSTANCE_DESC desc = {};
 
 		const XMFLOAT4X4& worldMatrix = obj->GetWorldMatrix();
-		desc.Transform[0][0] = worldMatrix._11;
-		desc.Transform[0][1] = worldMatrix._12;
-		desc.Transform[0][2] = worldMatrix._13;
-		desc.Transform[0][3] = worldMatrix._14;
+		XMMATRIX		  mat = XMLoadFloat4x4(&worldMatrix);
+		XMStoreFloat3x4(reinterpret_cast<XMFLOAT3X4*>(&desc.Transform), mat);
 
-		desc.Transform[1][0] = worldMatrix._21;
-		desc.Transform[1][1] = worldMatrix._22;
-		desc.Transform[1][2] = worldMatrix._23;
-		desc.Transform[1][3] = worldMatrix._24;
-
-		desc.Transform[2][0] = worldMatrix._31;
-		desc.Transform[2][1] = worldMatrix._32;
-		desc.Transform[2][2] = worldMatrix._33;
-		desc.Transform[2][3] = worldMatrix._34;
 		desc.InstanceID = instanceIndex++;
 		desc.InstanceMask = 0xFF;
 		desc.InstanceContributionToHitGroupIndex = 0;
@@ -95,20 +84,23 @@ void DxTLAS::Build(
 	defaultHeap.Type = D3D12_HEAP_TYPE_DEFAULT;
 
 	ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &instanceDescBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+		&defaultHeap, D3D12_HEAP_FLAG_NONE, &instanceDescBufferDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
 		IID_PPV_ARGS(&m_instanceDescBuffer)
 	));
+	auto barrierToCopy = DxUtils::CreateTransitionBarrier(
+		m_instanceDescBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+	);
+	cmdList->ResourceBarrier(1, &barrierToCopy);
 
 	m_instanceDescBuffer->SetName(L"TLAS_InstanceDescs");
 
 	cmdList->CopyBufferRegion(
 		m_instanceDescBuffer.Get(), 0, uploadHeap->GetResource(), instanceUpload.offset, instanceDescSize
 	);
-
-	auto barrier = DxUtils::CreateTransitionBarrier(
+	auto transitionBarrier = DxUtils::CreateTransitionBarrier(
 		m_instanceDescBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
 	);
-	cmdList->ResourceBarrier(1, &barrier);
+	cmdList->ResourceBarrier(1, &transitionBarrier);
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
 	inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
@@ -156,9 +148,13 @@ void DxTLAS::Build(
 		.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 	};
 	ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &scratchDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
+		&defaultHeap, D3D12_HEAP_FLAG_NONE, &scratchDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
 		IID_PPV_ARGS(&m_scratchBuffer)
 	));
+	auto scratchBarrier = DxUtils::CreateTransitionBarrier(
+		m_scratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	);
+	cmdList->ResourceBarrier(1, &scratchBarrier);
 
 	m_scratchBuffer->SetName(L"TLAS_Scratch");
 

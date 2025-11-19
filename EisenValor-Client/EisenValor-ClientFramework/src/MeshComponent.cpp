@@ -2,11 +2,15 @@
 #include "MeshComponent.h"
 #include "DxUploadHeap.h"
 #include "DxUtils.h"
+#include "Actor.h"
 
-void MeshComponent::SetMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
+void MeshComponent::SetMesh(
+	const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::string_view name
+)
 {
 	m_vertices = vertices;
 	m_indices = indices;
+	this->m_name = name.empty() ? GetOwner()->GetName() + "_Mesh" : std::string(name);
 }
 
 void MeshComponent::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, DxUploadHeap* uploadHeap)
@@ -31,11 +35,15 @@ void MeshComponent::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4*
 	defaultHeap.Type = D3D12_HEAP_TYPE_DEFAULT;
 
 	ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &vbDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)
+		&defaultHeap, D3D12_HEAP_FLAG_NONE, &vbDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_vertexBuffer)
 	));
+	auto barrierToCopy = DxUtils::CreateTransitionBarrier(
+		m_vertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+	);
+	cmdList->ResourceBarrier(1, &barrierToCopy);
 
-	m_vertexBuffer->SetName(L"VertexBuffer");
+	auto debugName = "VertexBuffer_" + m_name;
+	m_vertexBuffer->SetName(std::wstring(debugName.begin(), debugName.end()).c_str());
 	cmdList->CopyBufferRegion(m_vertexBuffer.Get(), 0, uploadHeap->GetResource(), vbUpload.offset, vbSize);
 
 	auto barrier = DxUtils::CreateTransitionBarrier(
@@ -54,11 +62,16 @@ void MeshComponent::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4*
 		ibDesc.Width = ibSize;
 
 		ThrowIfFailed(device->CreateCommittedResource(
-			&defaultHeap, D3D12_HEAP_FLAG_NONE, &ibDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+			&defaultHeap, D3D12_HEAP_FLAG_NONE, &ibDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
 			IID_PPV_ARGS(&m_indexBuffer)
 		));
+		auto barrierToCopy = DxUtils::CreateTransitionBarrier(
+			m_indexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrierToCopy);
 
-		m_indexBuffer->SetName(L"IndexBuffer");
+		debugName = "IndexBuffer_" + m_name;
+		m_indexBuffer->SetName(std::wstring(debugName.begin(), debugName.end()).c_str());
 
 		cmdList->CopyBufferRegion(m_indexBuffer.Get(), 0, uploadHeap->GetResource(), ibUpload.offset, ibSize);
 
@@ -72,8 +85,8 @@ void MeshComponent::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4*
 
 	m_blas = std::make_unique<DxBLAS>();
 	m_blas->Build(
-		device, cmdList, m_vertexBufferGPU, GetVertexCount(), sizeof(Vertex), m_indexBufferGPU, GetIndexCount(),
-		false
+		device, cmdList, m_vertexBufferGPU, GetVertexCount(), sizeof(Vertex), m_indexBufferGPU, GetIndexCount(), false,
+		m_name
 	);
 
 	DEBUG_LOG_FMT("[MeshComponent] Built BLAS: {} vertices, {} indices\n", GetVertexCount(), GetIndexCount());

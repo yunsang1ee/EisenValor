@@ -18,7 +18,8 @@ public:
 		uint32_t					vertexStride,
 		D3D12_GPU_VIRTUAL_ADDRESS	indexBuffer = 0,
 		uint32_t					indexCount = 0,
-		bool						allowUpdate = false
+		bool						allowUpdate = false,
+		const std::string&			name = ""
 	);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const { return m_blasBuffer->GetGPUVirtualAddress(); }

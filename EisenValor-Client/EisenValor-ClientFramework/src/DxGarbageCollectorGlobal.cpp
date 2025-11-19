@@ -72,7 +72,7 @@ void DxGarbageCollectorGlobal::DeferRelease(
 
 void DxGarbageCollectorGlobal::ProcessCompleted(const CompletedFences& completedFences)
 {
-	auto consume = [&](std::deque<ReleaseEntry>& q, uint64_t snapshotDone)
+	auto consume = [this](std::deque<ReleaseEntry>& q, uint64_t snapshotDone)
 	{
 		while (!q.empty())
 		{

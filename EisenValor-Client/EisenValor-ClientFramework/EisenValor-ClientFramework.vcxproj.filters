@@ -229,6 +229,12 @@
     <ClInclude Include="include\DxRtShaderTable.h">
       <Filter>Graphics\Raytracing</Filter>
     </ClInclude>
+    <ClInclude Include="include\Transform.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CameraComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -339,6 +345,12 @@
     </ClCompile>
     <ClCompile Include="src\DxRtShaderTable.cpp">
       <Filter>Graphics\Raytracing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Transform.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CameraComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
