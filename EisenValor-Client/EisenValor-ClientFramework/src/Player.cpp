@@ -529,7 +529,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 		DirectX::XMMATRIX pentagonOffset = DirectX::XMMatrixTranslation(0.0f, 3.0f, 0.0f);
-		DirectX::XMMATRIX pentagonScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.25f);
+		//DirectX::XMMATRIX pentagonScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.25f);
 
 		// 회전축 설정
 		DirectX::XMFLOAT3 rotationPivot(0.0f, -0.35f, 0.0f); // 아래쪽 중심
@@ -548,7 +548,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 											  billboardMatrix * pentagonOffset * playerTranslation;
 			DirectX::XMMATRIX pentagonMVP = pentagonWorld * view * projection;
 
-			// 각각의 상수 버퍼에 업데이트 (상수 버퍼 3개 필요)
+			// 각각의 상수 버퍼에 업데이트
 			DirectX::XMStoreFloat4x4(&m_pentagonConstantBufferData[i].mvp, DirectX::XMMatrixTranspose(pentagonMVP));
 			memcpy(m_pPentagonDataBegin[i], &m_pentagonConstantBufferData[i], sizeof(m_pentagonConstantBufferData[i]));
 

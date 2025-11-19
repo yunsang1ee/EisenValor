@@ -188,7 +188,7 @@ DirectX::XMFLOAT3 LocalPlayer::CalculateGroundTargetPosition() const
 	float forwardX = sinf(m_cameraYaw);
 	float forwardZ = cosf(m_cameraYaw);
 
-	
+
 	// 플레이어 위치에서 바라보는 방향으로 일정 거리만큼 떨어진 바닥 위치
 	DirectX::XMFLOAT3 targetPos;
 	targetPos.x = m_pos.x + forwardX * m_commandAreaDistance;
@@ -240,21 +240,21 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 	RenderCommandArea(cmdList, view, projection);
 
 	// 와이어프레임 박스 렌더링
-	//cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
-	//cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
-	//cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
+	// cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
+	// cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
+	// cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
 
 	//// 플레이어와 같은 위치, 회전
-	//DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
-	//DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
-	//DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
-	//DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
+	// DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
+	// DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
+	// DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
+	// DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
 
-	//DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
-	//memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
+	// DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
+	// memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
 
-	//cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
-	//cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
+	// cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
+	// cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
 }
 
 void LocalPlayer::Update(float deltaTime)
@@ -558,55 +558,74 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 void LocalPlayer::UpdateInput(const float deltaTime)
 {
 	const auto& input = Globals::Input();
-	const bool	isLeftButtonPressed = input.GetInput(VK_LBUTTON);
+
+	    // 화면 중앙 좌표 계산
+	RECT clientRect;
+	HWND hwnd = GetActiveWindow();
+	GetClientRect(hwnd, &clientRect);
+
+	int centerX = (clientRect.right - clientRect.left) / 2;
+	int centerY = (clientRect.bottom - clientRect.top) / 2;
+
 	// 현재 마우스 위치
 	const auto mousePos = input.GetMousePosition();
 
-	if (isLeftButtonPressed)
+	// 중앙에서의 오프셋 계산
+	const float deltaX = mousePos.x - centerX;
+	const float deltaY = mousePos.y - centerY;
+
+	//if (!m_isMouseDragging)
+	//{
+	//	m_isMouseDragging = true;
+	//	m_lastMouseX = mousePos.x; // 시작 위치 저장
+	//	m_lastMouseY = mousePos.y;
+	//	// DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
+	//}
+	//else
+	//{
+	//	// 움직임 감지
+	//	const float deltaX = mousePos.x - m_lastMouseX;
+	//	const float deltaY = mousePos.y - m_lastMouseY;
+
+	//	if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
+	//	{
+	//		// 카메라 회전 업데이트
+	//		m_cameraYaw += deltaX * m_mouseSensitivity;
+	//		m_rot.y = m_cameraYaw;
+	//		m_cameraPitch += deltaY * m_mouseSensitivity;
+
+	//		// Pitch 제한 (위아래 회전 제한)
+	//		m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
+
+	//		// 디버깅
+	//		// DEBUG_LOG_FMT(
+	//		//	"Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n", deltaX, deltaY, m_cameraYaw,
+	//		//	m_cameraPitch
+	//		//);
+	//	}
+
+	//	m_lastMouseX = mousePos.x;
+	//	m_lastMouseY = mousePos.y;
+	//}
+
+	// 일반 모드
+	if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
 	{
-		if (!m_isMouseDragging)
-		{
-			m_isMouseDragging = true;
-			m_lastMouseX = mousePos.x; // 시작 위치 저장
-			m_lastMouseY = mousePos.y;
-			// DEBUG_LOG_FMT("Camera drag started at ({:.1f}, {:.1f})\n", mousePos.x, mousePos.y);
-		}
-		else
-		{
-			// 움직임 감지
-			const float deltaX = mousePos.x - m_lastMouseX;
-			const float deltaY = mousePos.y - m_lastMouseY;
+		// 카메라 회전 업데이트
+		m_cameraYaw += deltaX * m_mouseSensitivity;
+		m_rot.y = m_cameraYaw;
+		m_cameraPitch += deltaY * m_mouseSensitivity;
 
-			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
-			{
-				// 카메라 회전 업데이트
-				m_cameraYaw += deltaX * m_mouseSensitivity;
-				m_rot.y = m_cameraYaw;
-				m_cameraPitch += deltaY * m_mouseSensitivity;
+		// Pitch 제한 (위아래 회전 제한)
+		m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
 
-				// Pitch 제한 (위아래 회전 제한)
-				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
-
-				// 디버깅
-				//DEBUG_LOG_FMT(
-				//	"Camera rotating - Delta({:.1f}, {:.1f}) Yaw: {:.2f}, Pitch: {:.2f}\n", deltaX, deltaY, m_cameraYaw,
-				//	m_cameraPitch
-				//);
-			}
-
-			m_lastMouseX = mousePos.x;
-			m_lastMouseY = mousePos.y;
-		}
+		// 마우스를 화면 중앙으로 다시 이동
+		POINT centerPoint = {centerX, centerY};
+		ClientToScreen(hwnd, &centerPoint);
+		SetCursorPos(centerPoint.x, centerPoint.y);
 	}
-	else
-	{
-		if (m_isMouseDragging)
-		{
-			// 드래그 종료
-			m_isMouseDragging = false;
-			// DEBUG_LOG_FMT("Camera drag ended\n");
-		}
-	}
+
+
 	// 플레이어 정면 벡터
 	const float forwardX = sinf(m_cameraYaw);
 	const float forwardZ = cosf(m_cameraYaw);
@@ -618,13 +637,13 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	{
 		m_playerSpeed += 10.f;
 	}
-	
+
 	if (input.GetInputUp('E'))
 	{
 		m_playerSpeed -= 10.f;
 	}
 
-	if(input.GetInputDown('U'))
+	if (input.GetInputDown('U'))
 	{
 		auto pb = NetBridge::ClientPackets::Make_CS_CHANGE_SOLDIER_FORMATION();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
@@ -665,7 +684,6 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 	}
 
 
-
 	if (Globals::Input().GetInputDown('R'))
 	{
 		auto pb = NetBridge::ClientPackets::Make_CS_SUMMON_NPC_PACKET();
@@ -680,21 +698,22 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('T'))
 	{
-		//auto pos = GetPosition();
+		// auto pos = GetPosition();
 
 		//// 플레이어가 바라보는 방향 벡터 (XZ 평면)
-		//const float forwardX = sinf(m_cameraYaw);
-		//const float forwardZ = cosf(m_cameraYaw);
+		// const float forwardX = sinf(m_cameraYaw);
+		// const float forwardZ = cosf(m_cameraYaw);
 
 		//// 5.f 만큼 떨어진 위치
-		//pos.x += forwardX * 5.f;
-		//pos.z += forwardZ * 5.f;
+		// pos.x += forwardX * 5.f;
+		// pos.z += forwardZ * 5.f;
 		Vec3 pos;
 		auto pb = NetBridge::ClientPackets::Make_CS_SOLDIER_MOVE_PACKET(pos);
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
-	if(Globals::Input().GetInputDown('K')) {
+	if (Globals::Input().GetInputDown('K'))
+	{
 		auto pb = NetBridge::ClientPackets::Make_CS_REQ_ATTACK();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
