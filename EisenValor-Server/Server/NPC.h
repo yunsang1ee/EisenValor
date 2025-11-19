@@ -24,6 +24,9 @@ namespace Server {
 		public:
 			void SetTargetPos(const Vec3& targetPos) noexcept { m_targetPos = targetPos; }
 			const Vec3& GetTargetPos() const noexcept { return m_targetPos; }
+			
+		public:
+			virtual bool OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt) override;
 		};
 	}
 }

@@ -35,7 +35,6 @@ namespace Server {
 
 			std::unordered_map<uint32, std::shared_ptr<GameObject>> m_gameObjects;
 			std::queue<std::function<void()>>						m_eventFpQueue;
-			// TODO: Event 구조체 등록하는 queue 만들어야 함.
 		
 		private:
 			GameRoom() = delete;
@@ -70,6 +69,7 @@ namespace Server {
 			bool Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player>, const Vec3& targetPos);
 			void Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player>  player);
 			void Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player);
+			void AddGameObject(std::shared_ptr<GameObject> gameObject);
 
 		private:
 			void Init();
@@ -79,11 +79,13 @@ namespace Server {
 			void CheckHeartBeat();
 			void BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 
-			void AddGameObject(std::shared_ptr<GameObject> gameObject);
 			void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
 
 			// TODO: 모든 유저가 게임에 들어오고 나서 게임이 시작될 때 불려야 함.
 			void CheckGameTime(const float dt);
+
+
+			friend class Team;
 
 		};
 	}

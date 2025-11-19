@@ -79,7 +79,7 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 
 	auto idleState = Server::Contents::SoldierIdleState::Create(t.enemyDetectionRange);
 	auto moveState = Server::Contents::SoldierMoveState::Create();
-	auto chaseState = Server::Contents::SoldierChaseState::Create(t.combatRange, 2.f);
+	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.combatRange);
 	auto attackState = Server::Contents::SoldierAttackState::Create(t.combatRange, t.attackCycleTime);
 	auto defenseState = Server::Contents::SoldierDefenseState::Create();
 	auto damagedState = Server::Contents::SoldierDamagedState::Create();
