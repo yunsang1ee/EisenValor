@@ -93,7 +93,18 @@ protected:
 	ComPtr<ID3D12Resource> m_hpBarForegroundBuffer; // HP바 상수 버퍼
 	ConstantBuffer		   m_hpBarForegroundData;
 	UINT8*				   m_pHpBarForegroundDataBegin = nullptr;
-
 	ComPtr<ID3D12Resource> m_hpBarVertexBuffer;        // HP바 전용 버텍스 버퍼
 	D3D12_VERTEX_BUFFER_VIEW m_hpBarVertexBufferView;  // HP바 전용 버텍스 버퍼 뷰
+
+	// 오각형 와이어프레임 관련 리소스 추가
+	// 3개의 방패용 상수 버퍼들
+	ComPtr<ID3D12Resource>	 m_pentagonConstantBuffer[3];
+	ConstantBuffer			 m_pentagonConstantBufferData[3];
+	UINT8*					 m_pPentagonDataBegin[3];
+	ComPtr<ID3D12Resource>	 m_pentagonVertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_pentagonVertexBufferView;
+	ComPtr<ID3D12Resource>	 m_pentagonIndexBuffer;
+	D3D12_INDEX_BUFFER_VIEW	 m_pentagonIndexBufferView;
+	int m_pentagonIndexCount = 0; // 인덱스 개수를 저장할 멤버 변수
+	
 };

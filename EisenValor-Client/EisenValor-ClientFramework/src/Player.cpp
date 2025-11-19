@@ -5,6 +5,99 @@
 
 using namespace DirectX;
 
+
+// 베지어 곡선 계산 함수 추가
+DirectX::XMFLOAT3 CalculateQuadraticBezier(
+	const DirectX::XMFLOAT3& p0, // 시작점
+	const DirectX::XMFLOAT3& p1, // 제어점
+	const DirectX::XMFLOAT3& p2, // 끝점
+	float					 t	 // 0~1 사이 값
+)
+{
+	float oneMinusT = 1.0f - t;
+	float oneMinusT2 = oneMinusT * oneMinusT;
+	float t2 = t * t;
+
+	return DirectX::XMFLOAT3(
+		oneMinusT2 * p0.x + 2 * oneMinusT * t * p1.x + t2 * p2.x,
+		oneMinusT2 * p0.y + 2 * oneMinusT * t * p1.y + t2 * p2.y,
+		oneMinusT2 * p0.z + 2 * oneMinusT * t * p1.z + t2 * p2.z
+	);
+}
+
+// 오각형 버텍스 생성 함수 추가
+std::vector<Vertex> CreateCustomPentagonVertices(Vec4 color)
+{
+	std::vector<Vertex> vertices;
+
+	DirectX::XMFLOAT3 top(0.0f, 0.15f, 0.0f);		  // 1. 맨 위 꼭짓점
+	DirectX::XMFLOAT3 topLeft(-0.4f, 0.0f, 0.0f);	  // 2. 왼쪽 위
+	DirectX::XMFLOAT3 bottomLeft(-0.4f, -0.1f, 0.0f); // 3. 왼쪽 아래
+	DirectX::XMFLOAT3 bottomRight(0.4f, -0.1f, 0.0f); // 4. 오른쪽 아래
+	DirectX::XMFLOAT3 topRight(0.4f, 0.0f, 0.0f);	  // 5. 오른쪽 위
+
+	const int curveSegments = 15;	// 곡선 변의 세그먼트 수
+	const int straightSegments = 5; // 직선 변의 세그먼트 수 (적게)
+
+	// 1번째 변: top -> topLeft
+	DirectX::XMFLOAT3 control1(-0.2f, 0.02f, 0.0f); // 제어점
+	for (int i = 0; i <= curveSegments; i++)
+	{
+		float			  t = (float)i / curveSegments;
+		DirectX::XMFLOAT3 point = CalculateQuadraticBezier(top, control1, topLeft, t);
+		vertices.push_back({point, color});
+	}
+
+	// 2번째 변: topLeft -> bottomLeft
+	for (int i = 1; i <= straightSegments; i++)
+	{
+		float			  t = (float)i / straightSegments;
+		DirectX::XMFLOAT3 point(
+			topLeft.x + t * (bottomLeft.x - topLeft.x), topLeft.y + t * (bottomLeft.y - topLeft.y),
+			topLeft.z + t * (bottomLeft.z - topLeft.z)
+		);
+		vertices.push_back({point, color});
+	}
+
+	// 3번째 변: bottomLeft -> bottomRight
+	DirectX::XMFLOAT3 control3(0.0f, -0.02f, 0.0f); // 제어점 (안쪽으로 볼록)
+	for (int i = 1; i <= curveSegments; i++)
+	{
+		float			  t = (float)i / curveSegments;
+		DirectX::XMFLOAT3 point = CalculateQuadraticBezier(bottomLeft, control3, bottomRight, t);
+		vertices.push_back({point, color});
+	}
+
+	// 4번째 변: bottomRight -> topRight
+	for (int i = 1; i <= straightSegments; i++)
+	{
+		float			  t = (float)i / straightSegments;
+		DirectX::XMFLOAT3 point(
+			bottomRight.x + t * (topRight.x - bottomRight.x), bottomRight.y + t * (topRight.y - bottomRight.y),
+			bottomRight.z + t * (topRight.z - bottomRight.z)
+		);
+		vertices.push_back({point, color});
+	}
+
+	// 5번째 변: topRight -> top
+	DirectX::XMFLOAT3 control5(0.2f, 0.01f, 0.0f); // 제어점
+	for (int i = 1; i <= curveSegments; i++)
+	{
+		float			  t = (float)i / curveSegments;
+		DirectX::XMFLOAT3 point = CalculateQuadraticBezier(topRight, control5, top, t);
+		vertices.push_back({point, color});
+	}
+
+	return vertices;
+}
+
+// 인스턴스 데이터 구조체
+struct InstanceData
+{
+	DirectX::XMFLOAT4X4 worldMatrix; // 각 인스턴스의 변환 행렬
+//	DirectX::XMFLOAT4	color;		 // 각 인스턴스의 색상
+};
+
 void Player::Initialize(ID3D12Device* device)
 {						 // 큐브 버텍스 데이터 
 	Vertex vertices[] = {// 전면
@@ -172,6 +265,80 @@ void Player::Initialize(ID3D12Device* device)
 	memcpy(pVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
 	m_hpBarForegroundBuffer->Unmap(0, nullptr);
 
+	// === 오각형 와이어프레임 초기화 ===
+	Vec4 pentagonColor(1.0f, 1.0f, 1.0f, 1.0f); // 하얀색
+
+	// 베지어 곡선으로 오각형 버텍스 생성
+	std::vector<Vertex> pentagonVertices = CreateCustomPentagonVertices(pentagonColor);
+
+	// 와이어프레임용 인덱스 생성
+	std::vector<UINT> pentagonIndices;
+	int				  totalVertices = pentagonVertices.size();
+
+	for (int i = 0; i < totalVertices; i++)
+	{
+		pentagonIndices.push_back(i);
+		pentagonIndices.push_back((i + 1) % totalVertices);
+	}
+
+	// 오각형 버텍스 버퍼 생성
+	const UINT pentagonVertexBufferSize = pentagonVertices.size() * sizeof(Vertex);
+	bufferDesc.Width = pentagonVertexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_pentagonVertexBuffer)
+	));
+
+	// 오각형 버텍스 데이터 복사
+	UINT8* pPentagonVertexDataBegin;
+	ThrowIfFailed(m_pentagonVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pPentagonVertexDataBegin)));
+	memcpy(pPentagonVertexDataBegin, pentagonVertices.data(), pentagonVertexBufferSize);
+	m_pentagonVertexBuffer->Unmap(0, nullptr);
+
+	// 오각형 버텍스 버퍼 뷰 설정
+	m_pentagonVertexBufferView.BufferLocation = m_pentagonVertexBuffer->GetGPUVirtualAddress();
+	m_pentagonVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_pentagonVertexBufferView.SizeInBytes = pentagonVertexBufferSize;
+
+	// 오각형 인덱스 버퍼 생성
+	const UINT pentagonIndexBufferSize = pentagonIndices.size() * sizeof(UINT);
+	bufferDesc.Width = pentagonIndexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_pentagonIndexBuffer)
+	));
+
+	// 오각형 인덱스 데이터 복사
+	UINT8* pPentagonIndexDataBegin;
+	ThrowIfFailed(m_pentagonIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pPentagonIndexDataBegin)));
+	memcpy(pPentagonIndexDataBegin, pentagonIndices.data(), pentagonIndexBufferSize);
+	m_pentagonIndexBuffer->Unmap(0, nullptr);
+
+	// 오각형 인덱스 버퍼 뷰 설정
+	m_pentagonIndexBufferView.BufferLocation = m_pentagonIndexBuffer->GetGPUVirtualAddress();
+	m_pentagonIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_pentagonIndexBufferView.SizeInBytes = pentagonIndexBufferSize;
+
+	// 오각형 상수 버퍼 3개 생성
+	for (int i = 0; i < 3; i++)
+	{
+		const UINT pentagonConstantBufferSize = sizeof(ConstantBuffer);
+		bufferDesc.Width = pentagonConstantBufferSize;
+
+		ThrowIfFailed(device->CreateCommittedResource(
+			&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+			IID_PPV_ARGS(&m_pentagonConstantBuffer[i])
+		));
+		ThrowIfFailed(
+			m_pentagonConstantBuffer[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_pPentagonDataBegin[i]))
+		);
+	}
+
+	// 인덱스 개수를 멤버 변수에 저장
+	m_pentagonIndexCount = pentagonIndices.size(); // 이거 추가!
+
 }
 
 void Player::Update(float deltaTime)
@@ -259,6 +426,7 @@ void Player::Update(float deltaTime)
 #endif
 }
 
+//렌더링
 void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
 	// 버텍스 및 인덱스 버퍼 설정
@@ -266,7 +434,7 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 	cmdList->IASetIndexBuffer(&m_indexBufferView);
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// 플레이어 큐브 렌더링
+	// 플레이어 큐브 
 	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.5f, 1.2f, 0.5f);
 	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
 	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
@@ -354,6 +522,46 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 		cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	}
 
+	// 위쪽 전투 UI 렌더링 (3개 오각형)
+	{
+		cmdList->IASetVertexBuffers(0, 1, &m_pentagonVertexBufferView);
+		cmdList->IASetIndexBuffer(&m_pentagonIndexBufferView);
+		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+		DirectX::XMMATRIX pentagonOffset = DirectX::XMMatrixTranslation(0.0f, 3.0f, 0.0f);
+		//DirectX::XMMATRIX pentagonScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.25f);
+
+		// 회전축 설정
+		DirectX::XMFLOAT3 rotationPivot(0.0f, -0.35f, 0.0f); // 아래쪽 중심
+		DirectX::XMMATRIX pivotToOrigin =
+			DirectX::XMMatrixTranslation(-rotationPivot.x, -rotationPivot.y, -rotationPivot.z);
+		DirectX::XMMATRIX originToPivot =
+			DirectX::XMMatrixTranslation(rotationPivot.x, rotationPivot.y, rotationPivot.z);
+
+		for (int i = 0; i < 3; i++)
+		{
+			float			  rotationAngle = i * (2.0f * XM_PI / 3.0f); // 120도씩 회전
+			DirectX::XMMATRIX pentagonRotation = DirectX::XMMatrixRotationZ(rotationAngle);
+
+			// 변환 순서: Scale -> 피벗으로 이동 -> 회전 -> 피벗에서 복귀 -> Billboard -> Translation
+			DirectX::XMMATRIX pentagonWorld = pivotToOrigin * pentagonRotation * originToPivot *
+											  billboardMatrix * pentagonOffset * playerTranslation;
+			DirectX::XMMATRIX pentagonMVP = pentagonWorld * view * projection;
+
+			// 각각의 상수 버퍼에 업데이트
+			DirectX::XMStoreFloat4x4(&m_pentagonConstantBufferData[i].mvp, DirectX::XMMatrixTranspose(pentagonMVP));
+			memcpy(m_pPentagonDataBegin[i], &m_pentagonConstantBufferData[i], sizeof(m_pentagonConstantBufferData[i]));
+
+			// 해당 상수 버퍼로 그리기
+			cmdList->SetGraphicsRootConstantBufferView(0, m_pentagonConstantBuffer[i]->GetGPUVirtualAddress());
+			cmdList->DrawIndexedInstanced(m_pentagonIndexCount, 1, 0, 0, 0);
+		}
+
+		// 원래 설정으로 복원
+		cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+		cmdList->IASetIndexBuffer(&m_indexBufferView);
+		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	}
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
