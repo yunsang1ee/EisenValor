@@ -66,7 +66,7 @@ static const float PI = 3.14159265359f;
 static const float EPSILON = 0.0000001f;
 static const float RAY_TMIN = 0.001f;
 static const float RAY_TMAX = 10000.0f;
-static const uint MAX_RECURSION_DEPTH = 7;
+static const uint MAX_RECURSION_DEPTH = 3;
 
 // RNG (PCG)
 float RandomValue(inout uint seed)
@@ -84,6 +84,26 @@ float2 RandomPointInCircle(inout uint seed)
     float2 circle = float2(cos(angle), sin(angle));
     float r = sqrt(RandomValue(seed));
     return circle * r;
+}
+
+// 코사인 분포 반구 샘플링
+float3 CosineHemisphere(float3 normal, inout uint seed)
+{
+    float u1 = RandomValue(seed);
+    float u2 = RandomValue(seed);
+
+    float r = sqrt(u1);
+    float theta = 2.0f * PI * u2;
+    
+    float x = r * cos(theta);
+    float z = r * sin(theta);
+    float y = sqrt(max(0.0f, 1.0f - u1));
+    
+    float3 w = normal;
+    float3 u = normalize(cross(abs(w.x) > 0.1f ? float3(0, 1, 0) : float3(1, 0, 0), w));
+    float3 v = cross(w, u);
+    
+    return normalize(u * x + v * z + w * y);
 }
 
 // 직교 좌표계 생성
@@ -151,6 +171,28 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
     float ggx1 = GeometrySchlickGGX(NdotL, roughness);
 	
     return ggx1 * ggx2;
+}
+
+float3 SampleGGXReflection(float3 V, float3 N, float roughness, inout uint seed)
+{
+    float a = roughness * roughness;
+    float u1 = RandomValue(seed);
+    float u2 = RandomValue(seed);
+    
+    float theta = atan(a * sqrt(u1) / sqrt(1.0f - u1 + EPSILON));
+    float phi = 2.0f * PI * u2;
+    
+    float3 H_local;
+    H_local.x = sin(theta) * cos(phi);
+    H_local.y = cos(theta);
+    H_local.z = sin(theta) * sin(phi);
+    
+    float3 up = abs(N.y) < 0.999 ? float3(0, 1, 0) : float3(1, 0, 0);
+    float3 tangent = normalize(cross(up, N));
+    float3 bitangent = cross(N, tangent);
+    
+    float3 H = normalize(tangent * H_local.x + N * H_local.y + bitangent * H_local.z);
+    return reflect(-V, H);
 }
 
 inline float ShadowVisibility(
@@ -270,10 +312,18 @@ void RayGenMain()
 [shader("closesthit")]
 void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
+    float3 lightColor = float3(1.0, 0.95, 0.8) * 3.0;
+    
     uint instanceID = InstanceID();
     Material material = g_materials[instanceID];
     uint geoBase = g_instGeoBase[instanceID];
-
+    
+    float3 albedo = material.albedo;
+    float metallic = material.metallic;
+    float roughness = max(material.roughness, 0.04);
+    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
+    
     float3 bary;
     bary.x = 1.0f - attribs.barycentrics.x - attribs.barycentrics.y;
     bary.y = attribs.barycentrics.x;
@@ -292,7 +342,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     VertexPNU v2 = g_vertices[gi.vertexBase + i2];
 	
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-	
+	    
 	// 균등 스케일 가정
     float3 normalObj = normalize(
         v0.normal * bary.x + 
@@ -302,33 +352,26 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3x3 objectToWorld = (float3x3) ObjectToWorld3x4();
     float3 normal = normalize(mul(normalObj, transpose(objectToWorld)));
     if (dot(normal, WorldRayDirection()) > 0.0f)
-        normal = -normal;
-        
+        normal = -normal;        
     float3 V = -normalize(WorldRayDirection());
-    float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
-    float3 lightColor = float3(1.0, 0.95, 0.8) * 3.0;
+    float NdotL = saturate(dot(normal, lightDir));
+    float NdotV = saturate(dot(normal, V));
+    
     float3 H = normalize(V + lightDir);
-    
-    float3 albedo = material.albedo;
-    float metallic = material.metallic;    
-    float roughness = max(material.roughness, 0.04);    
-    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
-    
+        
     float NDF = DistributionGGX(normal, H, roughness);    
     float G = GeometrySmith(normal, V, lightDir, roughness);
     float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
-    
-    float3 numerator = NDF * G * F;    
-    float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, lightDir), 0.0);    
+
+    float3 numerator = NDF * G * F;
+    float denominator = 4.0 * NdotL * NdotV;
     float3 specular = numerator / max(denominator, EPSILON);
     
     float3 kS = F;
-    float3 kD = (1.0 - kS) * (1.0 - metallic);    
-    float NdotL = saturate(dot(normal, lightDir));
+    float3 kD = (1.0 - kS) * (1.0 - metallic);
     
     float3 Lo = (kD * albedo / PI + specular) * lightColor * NdotL;
 	
-    float3 shadowOrigin = hitPos + normal * 0.1f;
     uint rngSeed =
         InstanceID() * 0xc2b2ae35u ^
         PrimitiveIndex() * 0x85ebca6bu ^
@@ -339,6 +382,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     rngSeed ^= rngSeed >> 15;
     rngSeed *= 0x846ca68b;
     rngSeed ^= rngSeed >> 16;
+    
+    float3 shadowOrigin = hitPos + normal * 0.1f;
     float angularRadius = 0.1f;
     
     float visibility = SoftShadowVisibilityDirLight(
@@ -355,7 +400,15 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 reflectedColor = 0.0f.xxx;
     if (metallic > 0.1f && payload.recursionDepth < MAX_RECURSION_DEPTH)
     {
-        float3 reflectDir = reflect(WorldRayDirection(), normal);
+        float3 reflectDir;
+        if (roughness < 0.15f)
+        {
+            reflectDir = reflect(WorldRayDirection(), normal);
+        }
+        else
+        {
+            reflectDir = SampleGGXReflection(V, normal, roughness, rngSeed);
+        }
 		
         RayDesc reflectRay;
         reflectRay.Origin = hitPos + normal * 0.1f;
@@ -378,7 +431,10 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 			reflectPayload
 		);
 		
-        reflectedColor = reflectPayload.color * metallic * (1.0f - roughness);
+        float3 reflectF = FresnelSchlick(NdotV, F0);
+        float reflectWeight = dot(reflectF, float3(0.333, 0.333, 0.333));
+        
+        reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness * 0.8f);
     }
 	
     float ao = bary.x * 0.3f + 0.7f;

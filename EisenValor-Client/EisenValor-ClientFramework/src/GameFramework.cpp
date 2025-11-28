@@ -187,42 +187,38 @@ void GameFramework::CreateStaticScene()
 	m_sceneActors.push_back(std::move(ground));
 
 	PBRMaterial groundMaterial;
-	groundMaterial.albedo = {0.6f, 0.6f, 0.6f};
-	groundMaterial.metallic = 0.9f;
-	groundMaterial.roughness = 0.8f;
+	groundMaterial.albedo = {0.9f, 0.9f, 0.9f};
+	groundMaterial.metallic = 0.98f;
+	groundMaterial.roughness = 0.01;
 	groundMaterial.emissive = {0.0f, 0.0f, 0.0f};
 	groundMaterial.emissiveStrength = 0.0f;
 	m_materials.push_back(groundMaterial);
 
 	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
 	PBRMaterial	 playerMaterial[3] = {
-		{
-			.albedo = {0.9f, 0.3f, 0.3f},
-			.metallic = 0.9f,
-			.roughness = 0.1f,
-			.emissive = {0.0f, 0.0f, 0.0f},
-			.emissiveStrength = 0.0f
-		},
-		{.albedo = {0.3f, 0.3f, 0.9f},
-			.metallic = 0.2f,
-			.roughness = 0.3f,
-			.emissive = {0.2f, 0.4f, 1.0f},
-			.emissiveStrength = 2.0f
-		},
-		{.albedo = {0.3f, 0.9f, 0.3f},
-			.metallic = 0.0f,
-			.roughness = 0.9f,
-			.emissive = {0.0f, 0.0f, 0.0f},
-			.emissiveStrength = 0.0f
-		},
-	};
+		 {.albedo = {0.9f, 0.3f, 0.3f},
+		  .metallic = 0.98f,
+		  .roughness = 0.01f,
+		  .emissive = {1.0f, 0.4f, 0.2f},
+		  .emissiveStrength = 0.0f},
+		 {.albedo = {0.3f, 0.3f, 0.9f},
+		  .metallic = 0.98f,
+		  .roughness = 0.01f,
+		  .emissive = {0.0f, 0.0f, 0.0f},
+		  .emissiveStrength = 0.0f},
+		 {.albedo = {0.3f, 0.9f, 0.3f},
+		  .metallic = 0.98f,
+		  .roughness = 0.01f,
+		  .emissive = {0.2f, 0.4f, 1.0f},
+		  .emissiveStrength = 0.0f},
+	 };
 
 	for (int i = 0; i < 3; ++i)
 	{
 		auto player = std::make_unique<Actor>("Player" + std::to_string(i));
-		player->GetTransform().SetPosition(-2.0f + i * 2.0f, 1.0f, 0.0f);
+		player->GetTransform().SetPosition(4.0f * (i - 1), (i != 1 ? 3.0f : 1.0f), 0.0f);
 		player->GetTransform().SetRotation(rotations[i]);
-		player->GetTransform().SetScale(1.0f);
+		player->GetTransform().SetScale((i != 1 ? 4.0f : 1.0f));
 
 		// clang-format off
 		std::vector<Vertex> cubeVertices = {
@@ -276,7 +272,7 @@ void GameFramework::CreateStaticScene()
 		auto playerMesh = player->AddComponent<MeshComponent>();
 		playerMesh->SetMesh(cubeVertices, cubeIndices);
 
-		m_sceneActors.push_back(std::move(player));		
+		m_sceneActors.push_back(std::move(player));
 		m_materials.push_back(playerMaterial[i]);
 	}
 
@@ -332,7 +328,7 @@ void GameFramework::CreateRaytracingPipeline()
 	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
 
 	m_rtPipeline = std::make_unique<DxRtPipelineState>();
-	m_rtPipeline->Create(device5.Get(), L"/Resource/Shader/RaytracingLibrary.hlsl", 8);
+	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
 
 	m_shaderTable = std::make_unique<DxRtShaderTable>();
 	m_shaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
@@ -750,7 +746,14 @@ void GameFramework::Update()
 		m_swapChain->ToggleFullscreen();
 	}
 
-	const float dt = MANAGER(TimerGlobal).GetDeltaTime();
+	static float runTime{};
+	const float	 dt = MANAGER(TimerGlobal).GetDeltaTime();
+
+	if ((runTime += dt) > 0.2f)
+	{
+		runTime = 0.0f;
+		DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
+	}
 
 	UpdateCamera(dt);
 	MANAGER(GameObjectManager).Update(dt);

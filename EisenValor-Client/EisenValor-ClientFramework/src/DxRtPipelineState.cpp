@@ -127,7 +127,20 @@ void DxRtPipelineState::CreateStateObject(
 )
 {
 	auto& compiler = MANAGER(DxShaderCompilerGlobal);
-	auto  shaderBlob = compiler.CompileRTShader(L"RTLib", L"Resource/Shader/RaytracingLibrary.hlsl", {});
+
+	std::wstring shaderName = shaderPath;
+	size_t		 lastSlash = shaderName.find_last_of(L"/\\");
+	if (lastSlash != std::wstring::npos)
+	{
+		shaderName = shaderName.substr(lastSlash + 1);
+	}
+	size_t dotPos = shaderName.find_last_of(L'.');
+	if (dotPos != std::wstring::npos)
+	{
+		shaderName = shaderName.substr(0, dotPos);
+	}
+
+	auto shaderBlob = compiler.CompileRTShader(shaderName, shaderPath, {});
 
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
 	subobjects.reserve(5);
