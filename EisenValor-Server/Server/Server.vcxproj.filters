@@ -25,9 +25,6 @@
     <ClCompile Include="Player.cpp">
       <Filter>02. Contents\GameObject\Creature\Player</Filter>
     </ClCompile>
-    <ClCompile Include="NPC.cpp">
-      <Filter>02. Contents\GameObject\Creature\NPC</Filter>
-    </ClCompile>
     <ClCompile Include="GameObjectFactory.cpp">
       <Filter>02. Contents\GameObject\Factory</Filter>
     </ClCompile>
@@ -84,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="Spawner.cpp">
       <Filter>02. Contents\Component\Scripts\Spawner</Filter>
+    </ClCompile>
+    <ClCompile Include="NPC.cpp">
+      <Filter>02. Contents\GameObject\Creature\NPC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -8,7 +8,7 @@ namespace Server {
 		class Creature;
 		class GameRoom;
 
-		using GameObjectGroup = std::map <uint32, std::weak_ptr<GameObject>>;
+		using GameObjectGroup = std::map <uint32, std::shared_ptr<GameObject>>;
 		class Team {
 		private:
 			const FB_ENUMS::TEAM_TYPE																m_type;
