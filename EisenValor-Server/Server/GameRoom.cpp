@@ -337,8 +337,8 @@ void Server::Contents::GameRoom::Update()
 	for(auto& team : m_teams)
 		for(auto& objGroup : team.GetAllObjectGroups())
 			for(auto& [id, obj] : objGroup)
-				if(obj.lock())
-					obj.lock()->Update(m_dt);
+				if(obj)
+					obj->Update(m_dt);
 
 	CheckGameTime(m_dt);
 	ExecTimer(UPDATE_MS, &Server::Contents::GameRoom::Update);

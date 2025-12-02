@@ -96,8 +96,7 @@ namespace Server {
 			DECLARE_CREATE_FUNC(SoldierAttackState)
 		private:
 			float					m_accDt;
-			
-		private:
+		
 		private:
 			float					m_combatRange;
 			std::chrono::seconds	m_attackCycleTime;
@@ -128,7 +127,7 @@ namespace Server {
 		private:
 			float					m_accDT;
 			static constexpr auto	DEFENSE_TIME = 1s;
-			static constexpr float ATTACK_PROB{ 0.7f };
+			static constexpr float	ATTACK_PROB{ 0.7f };
 
 		private:
 			SoldierDefenseState();
@@ -147,15 +146,18 @@ namespace Server {
 
 
 		// ============================================
-		//					DEFENSE
+		//					DAMAGED
 		// ============================================
 		class SoldierDamagedState : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierDamagedState)
+			
+		private:
 			float m_stunTime;
 			float m_accForStun;
+
 		private:
-			SoldierDamagedState();
+			explicit SoldierDamagedState(const float stunTime);
 			virtual ~SoldierDamagedState();
 
 		public:

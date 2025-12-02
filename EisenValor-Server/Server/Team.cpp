@@ -85,7 +85,7 @@ std::shared_ptr<Server::Contents::GameObject> Server::Contents::Team::GetObj(con
 {
 	for(auto& group : m_objectGroups) {
 		auto iter = group.find(id);
-		if(iter != group.end()) return iter->second.lock();
+		if(iter != group.end()) return iter->second;
 	}
 	return nullptr;
 }
