@@ -167,6 +167,7 @@
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\Actor.h" />
     <ClInclude Include="include\CameraComponent.h" />
+    <ClInclude Include="include\DenseList.h" />
     <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />

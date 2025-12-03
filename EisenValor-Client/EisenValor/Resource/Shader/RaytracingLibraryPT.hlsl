@@ -67,6 +67,7 @@ static const float EPSILON = 0.0000001f;
 static const float RAY_TMIN = 0.001f;
 static const float RAY_TMAX = 10000.0f;
 static const uint MAX_RECURSION_DEPTH = 18;
+static const uint SPP = 4;
 
 // RNG (PCG)
 float RandomValue(inout uint seed)
@@ -267,11 +268,10 @@ void RayGenMain()
                      ^ screenSize.x * 7919u + 124623u;
     
     float3 finalColor = 0.0f.xxx;
-    const uint SPP = 4;
     
     for (uint bounce = 0; bounce < SPP; ++bounce)
     {
-        float2 jit = RandomPointInCircle(rngSeed) * 1.5f;
+        float2 jit = RandomPointInCircle(rngSeed) * 0.5f;
         float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
         float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);

@@ -269,26 +269,116 @@ float SoftShadowVisibilityDirLight(
     return (NUM_SAMPLES > 0) ? visibility / NUM_SAMPLES : 0.0f;
 }
 
+// 배경을 위한
+float3 AtmosphereGradient(float3 rayDir, float3 sunDir)
+{
+    float height = rayDir.y;
+    float sunHeight = sunDir.y;
+  
+    float horizonFade = smoothstep(-0.02, 0.05, height);
+  
+    float3 zenithColor = lerp(float3(0.3, 0.4, 0.6), float3(0.5, 0.7, 1.0), smoothstep(-0.2, 0.5, sunHeight));
+    float3 horizonColor = lerp(float3(0.8, 0.4, 0.2), float3(0.9, 0.8, 0.7), smoothstep(-0.2, 0.2, sunHeight));
+  
+    float3 skyColor = lerp(horizonColor, zenithColor, smoothstep(0.0, 0.4, height));
+  
+    float sunInfluence = max(0.0, dot(rayDir, sunDir));
+    float3 sunTint = float3(1.0, 0.8, 0.6) * pow(sunInfluence, 8.0) * 0.3;
+  
+    return skyColor * horizonFade + sunTint;
+}
+
+float3 RayleighScattering(float3 rayDir, float3 sunDir)
+{
+    float cosTheta = dot(rayDir, sunDir);
+    float rayleighPhase = 3.0 / (16.0 * 3.14159) * (1.0 + cosTheta * cosTheta);
+  
+    float3 wavelengths = float3(0.65, 0.57, 0.475);
+    float3 scatterCoeff = 1.0 / pow(wavelengths, 4.0f.xxx);
+  
+    return scatterCoeff * rayleighPhase * 0.3;
+}
+
+float3 MieScattering(float3 rayDir, float3 sunDir)
+{
+    float cosTheta = dot(rayDir, sunDir);
+    float g = 0.76;
+    float g2 = g * g;
+  
+    float miePhase = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2)) *
+                   (1.0 + cosTheta * cosTheta) / pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5);
+  
+    return 1.0f.xxx * miePhase * 0.1;
+}
+
+float3 SunHalo(float3 rayDir, float3 sunDir)
+{
+    float sunDot = max(0.0, dot(rayDir, sunDir));
+  
+    float sunCore = pow(sunDot, 2000.0) * 2.0;
+  
+    float halo1 = pow(sunDot, 200.0) * 0.8;
+    float halo2 = pow(sunDot, 50.0) * 0.4;
+    float halo3 = pow(sunDot, 20.0) * 0.2;
+  
+    float corona = pow(sunDot, 10.0) * 0.1;
+  
+    float3 sunColor = float3(1.0, 0.95, 0.8);
+    float3 haloColor1 = float3(1.0, 0.9, 0.7);
+    float3 haloColor2 = float3(1.0, 0.8, 0.6);
+    float3 coronaColor = float3(0.9, 0.7, 0.5);
+  
+    return sunCore * sunColor +
+         halo1 * haloColor1 +
+         halo2 * haloColor2 +
+         halo3 * haloColor1 * 0.5 +
+         corona * coronaColor;
+}
+
+float CloudNoise(float3 rayDir)
+{
+    float3 p = rayDir * 5.0;
+    return frac(sin(dot(p, float3(12.9898, 78.233, 45.164))) * 43758.5453) * 0.5 + 0.5;
+}
+
 [shader("raygeneration")]
 void RayGenMain()
 {
     uint2 pixelCoord = DispatchRaysIndex().xy;
-    uint2 screenSize = DispatchRaysDimensions().xy;
-    float2 uv = (float2(pixelCoord) + 0.5f) / float2(screenSize);
-    float2 ndc = uv * 2.0f - 1.0f;
+    uint2 screenSize = DispatchRaysDimensions().xy;    
+    uint pixelIndex = pixelCoord.y * screenSize.x + pixelCoord.x;	
+    uint rngSeed = pixelIndex * 9781u
+                     ^ pixelCoord.y * 6271u
+                     ^ screenSize.x * 7919u + 124623u;
+        
+    float2 jit = RandomPointInCircle(rngSeed) * 0.5f;
+    float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
     ndc.y = -ndc.y;
-    
-    float4 target = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-    target /= target.w;
-    
+    float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+    worldPos /= worldPos.w;
     float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
     cameraPos /= cameraPos.w;
-		
+	
     RayDesc ray;
     ray.Origin = cameraPos.xyz;
-    ray.Direction = normalize(target.xyz - cameraPos.xyz);
+    ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
     ray.TMin = RAY_TMIN;
     ray.TMax = RAY_TMAX;
+        
+    //float2 ndc = uv * 2.0f - 1.0f;
+    //ndc.y = -ndc.y;
+    
+    //float4 target = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+    //target /= target.w;
+    
+    //float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
+    //cameraPos /= cameraPos.w;
+		
+    //RayDesc ray;
+    //ray.Origin = cameraPos.xyz;
+    //ray.Direction = normalize(target.xyz - cameraPos.xyz);
+    //ray.TMin = RAY_TMIN;
+    //ray.TMax = RAY_TMAX;
 	
     RayPayload payload;
     payload.color = float3(0, 0, 0);
@@ -306,6 +396,17 @@ void RayGenMain()
 	);
 	
     float3 finalColor = payload.color;
+    
+    float3 bloom = max(0.0f.xxx, finalColor - 0.75f.xxx) * 0.7f;
+    finalColor += bloom;
+    
+    finalColor = pow(finalColor, (1.0f / 1.8f).xxx);
+  
+    float luminance = dot(finalColor, float3(0.299f, 0.587f, 0.114f));
+    finalColor = lerp(luminance.xxx, finalColor, 1.4f);
+    finalColor += float3(0.05f, 0.03f, 0.01f);
+    finalColor = clamp(finalColor, 0.0f, 1.0f);
+    
     g_output[pixelCoord] = float4(finalColor, 1.0f);
 }
 
@@ -447,8 +548,27 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-	//payload.color = 0.0f.xxx;
+    //payload.color = 0.0f.xxx;
+    //return;
     float3 rayDir = WorldRayDirection();
-    float t = 0.5f * (rayDir.y + 1.0f);
-    payload.color = lerp(1.0f.xxx, float3(0.5f, 0.7f, 1.0f), t);
+    float3 sunDir = normalize(float3(0.5, 1.0, 0.3));
+    
+    float3 atmosphere = AtmosphereGradient(rayDir, sunDir);
+    atmosphere += RayleighScattering(rayDir, sunDir);
+    atmosphere += MieScattering(rayDir, sunDir);
+    atmosphere += SunHalo(rayDir, sunDir);
+  
+    if (rayDir.y > 0.1)
+    {
+        float clouds = CloudNoise(rayDir);
+        clouds = smoothstep(0.6, 0.8, clouds) * 0.3;
+        atmosphere = lerp(atmosphere, float3(0.9, 0.9, 0.95), clouds);
+    }
+
+    float3 groundColor = lerp(float3(0.3, 0.2, 0.1), float3(0.4, 0.3, 0.2),
+                        smoothstep(-0.5, 0.0, sunDir.y));
+  
+    float groundToSkyT = smoothstep(-0.01, 0.0, rayDir.y);
+  
+    payload.color = lerp(groundColor, atmosphere, groundToSkyT);
 }

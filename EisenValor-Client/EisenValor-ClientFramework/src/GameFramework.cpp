@@ -188,8 +188,8 @@ void GameFramework::CreateStaticScene()
 
 	PBRMaterial groundMaterial;
 	groundMaterial.albedo = {0.9f, 0.9f, 0.9f};
-	groundMaterial.metallic = 0.98f;
-	groundMaterial.roughness = 0.01;
+	groundMaterial.metallic = 0.08f;
+	groundMaterial.roughness = 0.98f;
 	groundMaterial.emissive = {0.0f, 0.0f, 0.0f};
 	groundMaterial.emissiveStrength = 0.0f;
 	m_materials.push_back(groundMaterial);
@@ -328,10 +328,14 @@ void GameFramework::CreateRaytracingPipeline()
 	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
 
 	m_rtPipeline = std::make_unique<DxRtPipelineState>();
-	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
+	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
+	m_rtShaderTable = std::make_unique<DxRtShaderTable>();
+	m_rtShaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
 
-	m_shaderTable = std::make_unique<DxRtShaderTable>();
-	m_shaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
+	m_ptPipeline = std::make_unique<DxRtPipelineState>();
+	m_ptPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);	
+	m_ptShaderTable = std::make_unique<DxRtShaderTable>();
+	m_ptShaderTable->Build(device5.Get(), m_ptPipeline.get(), 1);
 
 	DEBUG_LOG_FMT("[GameFramework] Raytracing pipeline created\n");
 }
@@ -737,6 +741,11 @@ void GameFramework::Update()
 	{
 		// FUTURE: Runtime Shader Compilation
 	}
+	if (input.GetInputDown(VK_F6))
+	{
+		m_usePathTracing = !m_usePathTracing;
+		DEBUG_LOG_FMT("[GameFramework] Switched to {}\n", m_usePathTracing ? "Path Tracing" : "Ray Tracing");
+	}
 	if (input.GetInputDown(VK_F11))
 	{
 		m_swapChain->ToggleBorderlessFullscreen();
@@ -818,9 +827,16 @@ void GameFramework::RenderDXR()
 	ThrowIfFailed(frame->GetMainContext()->CommandList()->QueryInterface(IID_PPV_ARGS(&cmdList)));
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	cmdList->SetPipelineState1(m_rtPipeline->GetStateObject());
-	cmdList->SetComputeRootSignature(m_rtPipeline->GetGlobalRootSignature());
-
+	if (m_usePathTracing)
+	{
+		cmdList->SetPipelineState1(m_ptPipeline->GetStateObject());
+		cmdList->SetComputeRootSignature(m_ptPipeline->GetGlobalRootSignature());
+	}
+	else
+	{
+		cmdList->SetPipelineState1(m_rtPipeline->GetStateObject());
+		cmdList->SetComputeRootSignature(m_rtPipeline->GetGlobalRootSignature());
+	}
 	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap()};
 	cmdList->SetDescriptorHeaps(1, heaps);
 
@@ -860,10 +876,24 @@ void GameFramework::RenderDXR()
 	D3D12_GPU_DESCRIPTOR_HANDLE tableStart = descHeap.GetGPUHandle(m_materialBuffer.GetSRVIndex());
 	cmdList->SetComputeRootDescriptorTable(3, tableStart);
 
+	if (m_usePathTracing)
+	{
+		D3D12_DISPATCH_RAYS_DESC desc = {
+			.RayGenerationShaderRecord = m_ptShaderTable->GetRayGenRecord(),
+			.MissShaderTable = m_ptShaderTable->GetMissTable(),
+			.HitGroupTable = m_ptShaderTable->GetHitGroupTable(),
+			.Width = m_swapChain->GetWidth(),
+			.Height = m_swapChain->GetHeight(),
+			.Depth = 1
+		};
+		cmdList->DispatchRays(&desc);
+		return;
+	}
+
 	D3D12_DISPATCH_RAYS_DESC desc = {
-		.RayGenerationShaderRecord = m_shaderTable->GetRayGenRecord(),
-		.MissShaderTable = m_shaderTable->GetMissTable(),
-		.HitGroupTable = m_shaderTable->GetHitGroupTable(),
+		.RayGenerationShaderRecord = m_rtShaderTable->GetRayGenRecord(),
+		.MissShaderTable = m_rtShaderTable->GetMissTable(),
+		.HitGroupTable = m_rtShaderTable->GetHitGroupTable(),
 		.Width = m_swapChain->GetWidth(),
 		.Height = m_swapChain->GetHeight(),
 		.Depth = 1
@@ -875,17 +905,29 @@ void GameFramework::UpdateCamera(float deltaTime)
 {
 	auto& input = MANAGER(InputGlobal);
 
-	// 우클릭으로 카메라 조작 활성화/비활성화
-	if (input.GetInputDown(VK_RBUTTON))
+	// 좌클릭으로 카메라 조작 활성화/비활성화
+	if (input.GetInputDown(VK_LBUTTON))
 	{
 		m_cameraEnabled = true;
 		m_firstMouse = true;
-		ShowCursor(FALSE); // 마우스 커서 숨기기
+		ShowCursor(FALSE);
+
+		RECT clientRect;
+		GetClientRect(m_hWnd, &clientRect);
+		POINT center = {
+			(clientRect.right - clientRect.left) / 2,
+			(clientRect.bottom - clientRect.top) / 2
+		};
+		input.OnMouseMove(center.x, center.y);
+		m_lastMouseX = center.x;
+		m_lastMouseY = center.y;
+		ClientToScreen(m_hWnd, &center);
+		SetCursorPos(center.x, center.y);
 	}
-	else if (input.GetInputUp(VK_RBUTTON))
+	else if (input.GetInputUp(VK_LBUTTON))
 	{
 		m_cameraEnabled = false;
-		ShowCursor(TRUE); // 마우스 커서 보이기
+		ShowCursor(TRUE);
 	}
 
 	if (!m_cameraEnabled)
@@ -917,22 +959,33 @@ void GameFramework::UpdateCamera(float deltaTime)
 		posVec = DX::XMVectorSubtract(posVec, DX::XMVectorScale(upVec, velocity));
 
 	DX::XMStoreFloat3(&m_cameraPosition, posVec);
-
-	// 마우스 이동으로 회전 (우클릭 중일 때만)
-	auto mousePosition = input.GetMousePosition();
-
+	
 	if (m_firstMouse)
 	{
-		m_lastMouseX = mousePosition.x;
-		m_lastMouseY = mousePosition.y;
 		m_firstMouse = false;
+		return;
 	}
+
+	auto mousePosition = input.GetMousePosition();
 
 	float xOffset = static_cast<float>(mousePosition.x - m_lastMouseX);
 	float yOffset = static_cast<float>(mousePosition.y - m_lastMouseY);
 
-	m_lastMouseX = mousePosition.x;
-	m_lastMouseY = mousePosition.y;
+	RECT clientRect;
+	GetClientRect(m_hWnd, &clientRect);
+	POINT center = {
+		(clientRect.right - clientRect.left) / 2,
+		(clientRect.bottom - clientRect.top) / 2
+	};
+	ClientToScreen(m_hWnd, &center);
+	SetCursorPos(center.x, center.y);
+
+	POINT clientCenter = {
+		(clientRect.right - clientRect.left) / 2,
+		(clientRect.bottom - clientRect.top) / 2
+	};
+	m_lastMouseX = clientCenter.x;
+	m_lastMouseY = clientCenter.y;
 
 	xOffset *= m_mouseSensitivity;
 	yOffset *= m_mouseSensitivity;

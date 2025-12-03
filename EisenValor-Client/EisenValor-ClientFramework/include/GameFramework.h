@@ -109,7 +109,11 @@ private:
 	uint32_t												  m_currentFrameIndex = 0;
 
 	std::unique_ptr<DxRtPipelineState>	m_rtPipeline;
-	std::unique_ptr<DxRtShaderTable>	m_shaderTable;
+	std::unique_ptr<DxRtPipelineState>	m_ptPipeline;
+	std::unique_ptr<DxRtShaderTable>	m_rtShaderTable;
+	std::unique_ptr<DxRtShaderTable>	m_ptShaderTable;
+	bool								m_usePathTracing = false;
+
 	std::unique_ptr<DxTLAS>				m_tlas;
 	std::vector<std::unique_ptr<Actor>> m_sceneActors;
 

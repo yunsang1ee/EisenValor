@@ -98,7 +98,10 @@ enum class SOLDIER_FORMATION
 #include <WS2tcpip.h>
 #include <MSWSock.h>
 
-// My
+// Container
+#include "DenseList.h"
+
+// DirectX
 #include "DxCommon.h"
 // #include "DxMath.h"
 

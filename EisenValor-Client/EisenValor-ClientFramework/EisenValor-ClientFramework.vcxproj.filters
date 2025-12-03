@@ -100,6 +100,9 @@
     <Filter Include="Graphics\Resource\LifeTime/State">
       <UniqueIdentifier>{efe1ed8e-ed2e-450b-844e-4f0563698af2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Container">
+      <UniqueIdentifier>{540c4765-a220-4970-b8f3-6ed4e3446803}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -234,6 +237,9 @@
     </ClInclude>
     <ClInclude Include="include\CameraComponent.h">
       <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DenseList.h">
+      <Filter>Common\Container</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
