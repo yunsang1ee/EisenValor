@@ -193,6 +193,8 @@
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
+    <ClInclude Include="include\UIComponent.h" />
+    <ClInclude Include="include\UIManager.h" />
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>

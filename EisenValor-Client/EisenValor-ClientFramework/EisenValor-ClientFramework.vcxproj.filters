@@ -94,6 +94,9 @@
     <Filter Include="Interfaces\Manager">
       <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{3e091240-2900-4ab9-a480-49e423a57267}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -192,6 +195,12 @@
     </ClInclude>
     <ClInclude Include="include\ClientPackets.h">
       <Filter>NetBridge\02. Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UIComponent.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UIManager.h">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

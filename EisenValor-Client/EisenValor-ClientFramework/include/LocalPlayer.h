@@ -37,6 +37,9 @@ private:
 	float m_fanAngle = (2.0f * DirectX::XM_PI) / 4.0f; // 120도 부채꼴
 	float m_fanRadius = 3.0f;
 	int	  m_fanSegments = 15;
+	
+	// HWND 핸들
+	HWND m_hWnd = nullptr;
 
 	// 지휘 영역 표시 멤버 변수들
 	ComPtr<ID3D12Resource>	 m_commandAreaVertexBuffer;
@@ -58,7 +61,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 		override;
 
-	public:
+
 	// 부채꼴 관련 함수들
 	void RenderFan(
 		ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
@@ -74,6 +77,9 @@ public:
 
 	// GetViewMatrix
 	DirectX::XMMATRIX GetViewMatrix() const;
+
+	// 윈도우 핸들 설정
+	void SetWindowHandle(HWND hWnd) { m_hWnd = hWnd; }
 
 
 private:
@@ -106,6 +112,29 @@ private:
 	float m_combatCameraHeight = 2.0f;	 
 	float m_combatCameraAngle = 0.0f;
 
+	// 디버그 원 렌더링용 리소스
+	ComPtr<ID3D12Resource>	 m_debugCircleVertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_debugCircleVertexBufferView;
+	ComPtr<ID3D12Resource>	 m_debugCircleIndexBuffer;
+	D3D12_INDEX_BUFFER_VIEW	 m_debugCircleIndexBufferView;
+	ComPtr<ID3D12Resource>	 m_debugCircleConstantBuffer;
+	ConstantBuffer			 m_debugCircleConstantBufferData;
+	UINT8*					 m_pDebugCircleCbvDataBegin = nullptr;
+	int						 m_debugCircleIndexCount = 0;
+
+	// 디버그 선(삼등분선) 렌더링용 리소스
+	ComPtr<ID3D12Resource>	 m_debugLinesVertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW m_debugLinesVertexBufferView;
+	ComPtr<ID3D12Resource>	 m_debugLinesIndexBuffer;
+	D3D12_INDEX_BUFFER_VIEW	 m_debugLinesIndexBufferView;
+	ComPtr<ID3D12Resource>	 m_debugLinesConstantBuffer;
+	ConstantBuffer			 m_debugLinesConstantBufferData;
+	UINT8*					 m_pDebugLinesCbvDataBegin = nullptr;
+	int						 m_debugLinesIndexCount = 0;
+
+	// 함수 선언 추가
+	void InitializeDebugCircle(ID3D12Device* device);
+	void RenderDebugCircle(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection);
 };
 
 

@@ -18,6 +18,9 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 
 	// 지휘 영역 초기화
 	InitializeCommandArea(device);
+
+	 // 디버그 원 초기화
+	InitializeDebugCircle(device);
 }
 
 void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
@@ -238,6 +241,9 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 
 	// 지휘 영역 렌더링
 	RenderCommandArea(cmdList, view, projection);
+
+	// 디버그 원 렌더링 (전투 모드일 때만)
+	RenderDebugCircle(cmdList, view, projection);
 
 	// 와이어프레임 박스 렌더링
 	// cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
@@ -574,6 +580,9 @@ void LocalPlayer::UpdateInput(const float deltaTime)
 			m_cameraMode = CameraMode::NORMAL;
 			// 일반 모드로 전환 시 마우스 커서 숨기기
 			ShowCursor(FALSE);
+
+			// UI 선택 해제
+			SetUISelection(UISelection::NONE);
 		}
 	}
 
@@ -643,15 +652,147 @@ void LocalPlayer::UpdateCombatModeInput(const float deltaTime)
 {
 	const auto& input = Globals::Input();
 
-	// 전투 모드에서는 마우스 입력 무시!
-	// 카메라는 플레이어 뒤에 고정
+	// 마우스의 현재 절대 위치 가져오기 (화면 좌표)
+	auto  mousePos = input.GetMousePosition();
+	float mouseX = mousePos.x;
+	float mouseY = mousePos.y;
 
-	// 키보드 입력만 처리
+	// 화면 중앙 좌표 계산
+	if (m_hWnd != nullptr)
+	{
+		RECT clientRect;
+		GetClientRect(m_hWnd, &clientRect);
+
+		float centerX = (clientRect.left + clientRect.right) / 2.0f;
+		float centerY = (clientRect.top + clientRect.bottom) / 2.0f;
+
+		// 마우스 위치를 중앙 기준으로 변환
+		float relativeX = mouseX - centerX;
+		float relativeY = mouseY - centerY;
+
+		// 화면 크기
+		float width = static_cast<float>(clientRect.right - clientRect.left);
+		float height = static_cast<float>(clientRect.bottom - clientRect.top);
+		float aspectRatio = width / height;
+
+		// NDC 좌표로 변환 (종횡비 보정 적용)
+		// 화면의 작은 쪽을 기준으로 스케일
+		float scale = (width < height) ? width : height;
+		float ndcX = (relativeX / scale) * 2.0f * aspectRatio; // 종횡비 보정
+		float ndcY = -(relativeY / scale) * 2.0f;			   // Y축 반전
+
+		// 종횡비 보정된 NDC X 좌표
+		float ndcXScaled = ndcX / aspectRatio;
+
+		// 거리 계산 (원 안에 있는지 확인)
+		float		distance = sqrtf(ndcXScaled * ndcXScaled + ndcY * ndcY);
+		const float circleRadius = 0.6f; // InitializeDebugCircle에서 설정한 반지름과 동일
+										 
+		//////////////////////////////// 각도 계산 (항상 계산) //////////////////
+		float angle = atan2f(ndcY, ndcXScaled);
+		if (angle < 0.0f)
+			angle += 2.0f * XM_PI;
+		float angleDeg = angle * 180.0f / XM_PI;
+
+		///////////////////// 실시간 디버그 출력 (매 프레임)
+		//static int frameCount = 0;
+		//frameCount++;
+
+		//if (frameCount % 1 == 0) // 매 프레임 출력 (너무 많으면 % 10 등으로 조정)
+		//{
+		//	std::cout << std::format(
+		//		"Angle: {:.1f}° | Inside: {}\n", angleDeg, (distance <= circleRadius ? "YES" : "NO")
+		//	);
+		//}
+		///////////////////////////////////////////////////////////////////////
+		static UISelection lastSelection = UISelection::NONE;
+		
+		// 원 안에 마우스가 있는지 확인
+		if (distance <= circleRadius)
+		{
+			// 각도 계산 (라디안)
+			float angle = atan2f(ndcY, ndcX);
+
+			// 각도를 0 ~ 2π 범위로 변환
+			if (angle < 0.0f)
+				angle += 2.0f * XM_PI;
+
+			// 각도를 도(degree)로 변환
+			float angleDeg = angle * 180.0f / XM_PI;
+
+			// 원을 삼등분
+			const float PI_OVER_6 = XM_PI / 6.0f;			   // 30도
+			const float FIVE_PI_OVER_6 = 5.0f * XM_PI / 6.0f;  // 150도
+			const float THREE_PI_OVER_2 = 3.0f * XM_PI / 2.0f; // 270도
+
+			UISelection newSelection = UISelection::NONE;
+
+			if (angle >= PI_OVER_6 && angle < FIVE_PI_OVER_6)
+			{
+				// 위쪽 영역 (30도 ~ 150도) -> UP
+				newSelection = UISelection::UP;
+			}
+			else if (angle >= FIVE_PI_OVER_6 && angle < THREE_PI_OVER_2)
+			{
+				// 왼쪽 영역 (150도 ~ 270도) -> LEFT
+				newSelection = UISelection::LEFT;
+			}
+			else
+			{
+				// 오른쪽 영역 (270도 ~ 30도) -> RIGHT
+				newSelection = UISelection::RIGHT;
+			}
+
+			// UI 선택 상태가 변경되었을 때만 처리
+			
+			if (newSelection != lastSelection)
+			{
+				SetUISelection(newSelection);
+
+				const char* selectionName = "";
+				switch (newSelection)
+				{
+				case UISelection::UP:
+					selectionName = "UP";
+					break;
+				case UISelection::LEFT:
+					selectionName = "LEFT";
+					break;
+				case UISelection::RIGHT:
+					selectionName = "RIGHT";
+					break;
+				case UISelection::NONE:
+					selectionName = "NONE";
+					break;
+				}
+
+				std::cout << std::format(
+					"UI Selection: {} | Angle: {:.1f}° | Mouse: ({:.1f}, {:.1f}) | NDC: ({:.3f}, {:.3f}) | Distance: "
+					"{:.3f}\n",
+					selectionName, angleDeg, mouseX, mouseY, ndcX, ndcY, distance
+				);
+
+				lastSelection = newSelection;
+			}
+		}
+		else
+		{
+			// 원 밖에 있으면 선택 해제
+			if (lastSelection != UISelection::NONE)
+			{
+				SetUISelection(UISelection::NONE);
+				std::cout << "UI Selection: NONE (mouse outside circle)\n";
+				lastSelection = UISelection::NONE;
+			}
+		}
+	}
+
+	// 키보드 입력 처리
 	HandleKeyboardInput(deltaTime);
 
 	// 전투 모드 전용 카메라 각도 설정
-	m_cameraYaw = m_rot.y; // 플레이어 회전과 동일하게
-	m_cameraPitch = -0.3f; // 약간 아래를 보도록 고정
+	m_cameraYaw = m_rot.y;
+	m_cameraPitch = -0.3f;
 }
 
 void LocalPlayer::HandleKeyboardInput(const float deltaTime)
@@ -953,4 +1094,231 @@ void LocalPlayer::RenderFan(
 
 	// 부채꼴 그리기
 	cmdList->DrawIndexedInstanced(m_fanIndexCount, 1, 0, 0, 0);
+}
+
+// 디버깅 원을 위한 초기화
+void LocalPlayer::InitializeDebugCircle(ID3D12Device* device)
+{
+	// 원의 반지름 (NDC 좌표계: -1 ~ 1 범위)
+	// 화면 크기에 상관없이 일정한 비율로 보이도록
+	const float radius = 0.6f;		 // NDC 좌표계에서의 반지름
+	const int	circleSegments = 64; // 원의 세밀도
+
+	// 원의 버텍스 생성 (NDC 좌표계: 중심이 0,0)
+	std::vector<Vertex> circleVertices;
+	Vec4				circleColor(1.0f, 1.0f, 0.0f, 1.0f); // 노란색
+
+	for (int i = 0; i <= circleSegments; i++)
+	{
+		float angle = 2.0f * XM_PI * i / circleSegments;
+		float x = cosf(angle) * radius;
+		float y = sinf(angle) * radius;
+		// NDC 좌표계: Y축은 위가 양수
+		circleVertices.push_back({{x, y, 0.0f}, circleColor});
+	}
+
+	// 원의 인덱스 (와이어프레임)
+	std::vector<UINT> circleIndices;
+	for (int i = 0; i < circleSegments; i++)
+	{
+		circleIndices.push_back(i);
+		circleIndices.push_back(i + 1);
+	}
+
+	// 버텍스 버퍼 생성
+	const UINT			  vertexBufferSize = circleVertices.size() * sizeof(Vertex);
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RESOURCE_DESC bufferDesc = {};
+	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	bufferDesc.Width = vertexBufferSize;
+	bufferDesc.Height = 1;
+	bufferDesc.DepthOrArraySize = 1;
+	bufferDesc.MipLevels = 1;
+	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+	bufferDesc.SampleDesc.Count = 1;
+	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_debugCircleVertexBuffer)
+	));
+
+	UINT8*		pVertexDataBegin;
+	D3D12_RANGE readRange = {0, 0};
+	ThrowIfFailed(m_debugCircleVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, circleVertices.data(), vertexBufferSize);
+	m_debugCircleVertexBuffer->Unmap(0, nullptr);
+
+	m_debugCircleVertexBufferView.BufferLocation = m_debugCircleVertexBuffer->GetGPUVirtualAddress();
+	m_debugCircleVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_debugCircleVertexBufferView.SizeInBytes = vertexBufferSize;
+
+	// 인덱스 버퍼 생성
+	const UINT indexBufferSize = circleIndices.size() * sizeof(UINT);
+	bufferDesc.Width = indexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_debugCircleIndexBuffer)
+	));
+
+	UINT8* pIndexDataBegin;
+	ThrowIfFailed(m_debugCircleIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, circleIndices.data(), indexBufferSize);
+	m_debugCircleIndexBuffer->Unmap(0, nullptr);
+
+	m_debugCircleIndexBufferView.BufferLocation = m_debugCircleIndexBuffer->GetGPUVirtualAddress();
+	m_debugCircleIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_debugCircleIndexBufferView.SizeInBytes = indexBufferSize;
+	m_debugCircleIndexCount = circleIndices.size();
+
+	// 상수 버퍼 생성
+	const UINT constantBufferSize = sizeof(ConstantBuffer);
+	bufferDesc.Width = constantBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_debugCircleConstantBuffer)
+	));
+
+	ThrowIfFailed(m_debugCircleConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pDebugCircleCbvDataBegin))
+	);
+
+	// 삼등분선 생성 (30도, 150도, 270도)
+	std::vector<Vertex> lineVertices;
+	Vec4				lineColor(0.0f, 1.0f, 1.0f, 1.0f); // 청록색
+
+	// 중심점
+	lineVertices.push_back({{0.0f, 0.0f, 0.0f}, lineColor});
+
+	// 30도 선
+	float angle30 = 30.0f * XM_PI / 180.0f;
+	lineVertices.push_back({{cosf(angle30) * radius * 1.1f, sinf(angle30) * radius * 1.1f, 0.0f}, lineColor});
+
+	// 150도 선
+	float angle150 = 150.0f * XM_PI / 180.0f;
+	lineVertices.push_back({{cosf(angle150) * radius * 1.1f, sinf(angle150) * radius * 1.1f, 0.0f}, lineColor});
+
+	// 270도 선
+	float angle270 = 270.0f * XM_PI / 180.0f;
+	lineVertices.push_back({{cosf(angle270) * radius * 1.1f, sinf(angle270) * radius * 1.1f, 0.0f}, lineColor});
+
+	// 선택 해제 영역 표시 (250도, 290도)
+	Vec4  resetColor(1.0f, 0.0f, 0.0f, 1.0f); // 빨간색
+	float angle250 = 250.0f * XM_PI / 180.0f;
+	lineVertices.push_back({{cosf(angle250) * radius * 1.1f, sinf(angle250) * radius * 1.1f, 0.0f}, resetColor});
+	float angle290 = 290.0f * XM_PI / 180.0f;
+	lineVertices.push_back({{cosf(angle290) * radius * 1.1f, sinf(angle290) * radius * 1.1f, 0.0f}, resetColor});
+
+	// 선 인덱스 (중심에서 각도로)
+	std::vector<UINT> lineIndices;
+	lineIndices.push_back(0);
+	lineIndices.push_back(1); // 30도
+	lineIndices.push_back(0);
+	lineIndices.push_back(2); // 150도
+	lineIndices.push_back(0);
+	lineIndices.push_back(3); // 270도
+	lineIndices.push_back(0);
+	lineIndices.push_back(4); // 250도
+	lineIndices.push_back(0);
+	lineIndices.push_back(5); // 290도
+
+	// 선 버텍스 버퍼 생성
+	const UINT lineVertexBufferSize = lineVertices.size() * sizeof(Vertex);
+	bufferDesc.Width = lineVertexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_debugLinesVertexBuffer)
+	));
+
+	ThrowIfFailed(m_debugLinesVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	memcpy(pVertexDataBegin, lineVertices.data(), lineVertexBufferSize);
+	m_debugLinesVertexBuffer->Unmap(0, nullptr);
+
+	m_debugLinesVertexBufferView.BufferLocation = m_debugLinesVertexBuffer->GetGPUVirtualAddress();
+	m_debugLinesVertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_debugLinesVertexBufferView.SizeInBytes = lineVertexBufferSize;
+
+	// 선 인덱스 버퍼 생성
+	const UINT lineIndexBufferSize = lineIndices.size() * sizeof(UINT);
+	bufferDesc.Width = lineIndexBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_debugLinesIndexBuffer)
+	));
+
+	ThrowIfFailed(m_debugLinesIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	memcpy(pIndexDataBegin, lineIndices.data(), lineIndexBufferSize);
+	m_debugLinesIndexBuffer->Unmap(0, nullptr);
+
+	m_debugLinesIndexBufferView.BufferLocation = m_debugLinesIndexBuffer->GetGPUVirtualAddress();
+	m_debugLinesIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_debugLinesIndexBufferView.SizeInBytes = lineIndexBufferSize;
+	m_debugLinesIndexCount = lineIndices.size();
+
+	// 선 상수 버퍼 생성
+	bufferDesc.Width = constantBufferSize;
+
+	ThrowIfFailed(device->CreateCommittedResource(
+		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&m_debugLinesConstantBuffer)
+	));
+
+	ThrowIfFailed(m_debugLinesConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pDebugLinesCbvDataBegin)));
+}
+
+void LocalPlayer::RenderDebugCircle(
+	ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection
+)
+{
+	// 전투 모드일 때만 렌더링
+	if (m_cameraMode != CameraMode::COMBAT)
+		return;
+
+	// 화면 종횡비 계산
+	float aspectRatio = 1.0f;
+	if (m_hWnd != nullptr)
+	{
+		RECT clientRect;
+		GetClientRect(m_hWnd, &clientRect);
+		float width = static_cast<float>(clientRect.right - clientRect.left);
+		float height = static_cast<float>(clientRect.bottom - clientRect.top);
+		aspectRatio = width / height;
+	}
+
+	// 종횡비를 고려한 스케일 행렬 (X축을 종횡비로 나눠서 원을 원형으로 유지)
+	DirectX::XMMATRIX aspectScale = DirectX::XMMatrixScaling(1.0f / aspectRatio, 1.0f, 1.0f);
+
+	// 화면 좌표계로 렌더링
+	DirectX::XMMATRIX screenView = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX screenProjection = DirectX::XMMatrixIdentity();
+	DirectX::XMMATRIX screenWorld = DirectX::XMMatrixIdentity();
+
+	// 종횡비 보정 적용
+	DirectX::XMMATRIX screenMVP = screenWorld * aspectScale * screenView * screenProjection;
+
+	// 원 렌더링
+	cmdList->IASetVertexBuffers(0, 1, &m_debugCircleVertexBufferView);
+	cmdList->IASetIndexBuffer(&m_debugCircleIndexBufferView);
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	DirectX::XMStoreFloat4x4(&m_debugCircleConstantBufferData.mvp, DirectX::XMMatrixTranspose(screenMVP));
+	memcpy(m_pDebugCircleCbvDataBegin, &m_debugCircleConstantBufferData, sizeof(m_debugCircleConstantBufferData));
+
+	cmdList->SetGraphicsRootConstantBufferView(0, m_debugCircleConstantBuffer->GetGPUVirtualAddress());
+	cmdList->DrawIndexedInstanced(m_debugCircleIndexCount, 1, 0, 0, 0);
+
+	// 삼등분선 렌더링
+	cmdList->IASetVertexBuffers(0, 1, &m_debugLinesVertexBufferView);
+	cmdList->IASetIndexBuffer(&m_debugLinesIndexBufferView);
+
+	DirectX::XMStoreFloat4x4(&m_debugLinesConstantBufferData.mvp, DirectX::XMMatrixTranspose(screenMVP));
+	memcpy(m_pDebugLinesCbvDataBegin, &m_debugLinesConstantBufferData, sizeof(m_debugLinesConstantBufferData));
+
+	cmdList->SetGraphicsRootConstantBufferView(0, m_debugLinesConstantBuffer->GetGPUVirtualAddress());
+	cmdList->DrawIndexedInstanced(m_debugLinesIndexCount, 1, 0, 0, 0);
 }

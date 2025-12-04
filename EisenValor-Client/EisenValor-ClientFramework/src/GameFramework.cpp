@@ -363,6 +363,13 @@ void GameFramework::Update()
 
 	const float dt = Globals::Timer().GetDeltaTime();
 
+	// LocalPlayer에 윈도우 핸들 전달
+	auto localPlayer = MANAGER(GameObjectManager)->GetLocalPlayer();
+	if (localPlayer)
+	{
+		localPlayer->SetWindowHandle(m_hWnd);
+	}
+
 	MANAGER(GameObjectManager)->Update(dt);
 }
 

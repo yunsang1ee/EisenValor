@@ -19,4 +19,7 @@ public:
 	virtual int			 GetWheelScroll() const noexcept = 0;
 	virtual DX::XMFLOAT2 GetMousePosition() const noexcept = 0;
 	// virtual int GetMousePosition() const noexcept = 0;
+
+	// 마우스 델타 값 반환
+	virtual DX::XMFLOAT2 GetMouseDelta() const noexcept = 0;
 };

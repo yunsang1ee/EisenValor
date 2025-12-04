@@ -3,6 +3,14 @@
 #include "GameObject.h"
 #include "DxCommon.h"
 
+enum class UISelection
+{
+	NONE, // 선택 없음
+	UP,	  // 위쪽
+	LEFT, // 왼쪽
+	RIGHT // 오른쪽
+};
+
 class Player : public GameObject
 {
 public:
@@ -33,6 +41,10 @@ public:
 
 	// 카메라 관련 함수 추가
 	virtual DirectX::XMMATRIX GetViewMatrix() const;
+
+	// UI 선택 상태 설정 및 가져오기(Getter/Setter)
+	void		SetUISelection(UISelection selection) { m_selectedUI = selection; }
+	UISelection GetUISelection() const { return m_selectedUI; }
 
 private:
 	Vec3 PredictPosition(const Vec3& pos, const Vec3& vel, const Vec3& acc, double t)
@@ -107,4 +119,6 @@ protected:
 	D3D12_INDEX_BUFFER_VIEW	 m_pentagonIndexBufferView;
 	int m_pentagonIndexCount = 0; // 인덱스 개수를 저장할 멤버 변수
 	
+	// UI 선택 상태
+	UISelection m_selectedUI = UISelection::NONE;
 };

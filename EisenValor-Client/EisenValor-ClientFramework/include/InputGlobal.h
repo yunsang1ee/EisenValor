@@ -61,6 +61,11 @@ public:
 	{
 		return {float(m_MouseState.x), float(m_MouseState.y)};
 	}
+	[[nodiscard]] inline DX::XMFLOAT2 GetMouseDelta() const noexcept final
+	{
+		return {m_MouseState.deltaX, m_MouseState.deltaY};
+	}
+
 #pragma endregion
 
 private:
