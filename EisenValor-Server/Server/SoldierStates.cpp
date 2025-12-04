@@ -15,6 +15,85 @@ static float GetRandomCombatProb() noexcept
 	return dist(dre);
 }
 
+void ApplySeparation(std::shared_ptr<Server::Contents::NPC> self, const std::map < uint32, std::shared_ptr<Server::Contents::GameObject>> &neighbors)
+{
+	const float minDist = 0.15f; // 겹침 방지 반지름
+	Vec3 push{};
+
+	for(auto& [id,n] : neighbors) {
+		if(!n || n == self) continue;
+
+		Vec3 diff = self->GetPos() - n->GetPos();
+		float dist = diff.Length();
+
+		if(dist < minDist && dist > 0.001f) {
+			diff.Normalize();
+			push += diff* (minDist - dist);
+		}
+	}
+
+	self->SetPos(self->GetPos() + push);
+}
+
+void ApplySeparationAndCollision(const std::shared_ptr<Server::Contents::NPC>& self)
+{
+	const auto room = self->GetGameRoom();
+
+	const float sameTeamRadius = 1.f;  // 아군과의 군집/간격
+	const float enemyMinRadius = 0.75f;  // 적군과의 최소 충돌 반경
+	Vec3 push{};
+
+	const auto selfTeam = self->GetTeamType();
+	const auto& selfPos = self->GetPos();
+
+	// 1) 같은 팀 전체
+	auto&   sameTeamGroups = room->GetTeam(selfTeam).GetAllObjectGroups();
+
+	for(int i = 0; i < sameTeamGroups.size(); ++i) {
+		if((i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) ||(i== FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER)) continue;
+
+		for(auto& [id, obj] : sameTeamGroups[i]) {
+			if(!obj || obj == self) continue;
+
+			auto other = std::static_pointer_cast<Server::Contents::NPC > (obj);
+			Vec3 diff = selfPos - other->GetPos();
+			float dist = diff.Length();
+
+			if(dist < sameTeamRadius && dist > 0.001f) {
+				diff.Normalize();
+				
+				push += diff * (sameTeamRadius - dist);
+			}
+		}
+	}
+
+	// 2) 상대 팀 전체
+	auto otherTeamType = room->GetOtherTeamType(selfTeam);
+	auto& enemyGroups = room->GetTeam(otherTeamType).GetAllObjectGroups();
+
+	for(int i = 0; i < enemyGroups.size(); ++i) {
+	
+		if((i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) || (i == FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER)) continue;
+
+		for(auto& [id, obj] : enemyGroups[i]) {
+			if(!obj) continue;
+
+			auto enemy = std::static_pointer_cast<Server::Contents::NPC>(obj);
+			Vec3 diff = selfPos - enemy->GetPos();
+			float dist = diff.Length();
+
+			// 적은 "군집"이 아니라 "충돌만" 방지
+			if(dist < enemyMinRadius && dist > 0.001f) {
+				diff.Normalize();
+				push += diff * (enemyMinRadius - dist);
+			}
+		}
+	}
+
+	self->SetPos(selfPos + push);
+
+}
+
 Server::Contents::SoldierIdleState::SoldierIdleState(const float enemyDetectionRange)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }, m_enemyDetectionRange{enemyDetectionRange}
 {
@@ -57,7 +136,7 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 			i==FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
 
 		for(auto& [id, o] : otherTeamObjectGroup[i]) {
-			const auto object = o.lock();
+			const auto object = o;
 			const auto target = std::static_pointer_cast<Creature>(object);
 			const auto& targetPos = object->GetPos();
 			Vec3 targetDir = targetPos - ownerPos;
@@ -198,6 +277,10 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 				Vec3 newPos{ ownerPos + dir * moveDist };
 				
 				owner->SetPos(newPos);
+				//auto& sameTeam = room->GetTeam(owner->GetTeamType()).GetAllObjectGroups();
+				//ApplySeparation(owner, sameTeam[FB_ENUMS::GAME_OBJECT_TYPE_NPC]);
+
+				ApplySeparationAndCollision(owner);
 			}
 		}
 		// 타겟이 존재하지 않으면
@@ -259,7 +342,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 			// 타겟이 전투 범위 내에 있으면
 			if(distToTargetSq <= m_combatRange * m_combatRange) {
 
-				if(false == target->OnDamaged(owner, 10, dt)) {
+				if(false == target->OnDamaged(owner, owner->GetAtk(), dt)) {
 					// 공격 실패
 					const float combatProb = GetRandomCombatProb();
 					if(combatProb < ATTACK_PROB) {
@@ -293,6 +376,7 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 				});
 			return;
 		}
+		m_accDt = 0.f;
 	}
 
 	//switch(const auto objType = target->GetObjType()) {
@@ -421,8 +505,8 @@ void Server::Contents::SoldierDefenseState::Update(const float dt)
 	}
 }
 
-Server::Contents::SoldierDamagedState::SoldierDamagedState()
-	:State(FB_ENUMS::SOLDIER_STATE_TYPE_DAMAGED)
+Server::Contents::SoldierDamagedState::SoldierDamagedState(const float stunTime)
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_DAMAGED }, m_stunTime{ stunTime }, m_accForStun{ 0.f }
 {
 }
 
@@ -437,7 +521,6 @@ void Server::Contents::SoldierDamagedState::Enter(const float dt)
 
 void Server::Contents::SoldierDamagedState::Exit(const float dt)
 {
-	m_stunTime = 0.f;
 	m_accForStun = 0.f;
 }
 
@@ -453,16 +536,19 @@ void Server::Contents::SoldierDamagedState::Update(const float dt)
 		const auto fsm = owner->GetComponent<FSM>();
 
 		const auto target = owner->GetTarget();
-		if(target) {
-			room->AddEvent([fsm, dt]() {
-				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
-				});
-		}
-		else {
-			room->AddEvent([fsm, dt]()
-				{
-					fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
-				});
+		if(owner) {
+			if(target && target->IsAlive()) {
+				room->AddEvent([fsm, dt]()
+					{
+						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt);
+					});
+			}
+			else {
+				room->AddEvent([fsm, dt]()
+					{
+						fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt);
+					});
+			}
 		}
 	}
 }

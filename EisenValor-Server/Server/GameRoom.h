@@ -70,6 +70,7 @@ namespace Server {
 			void Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player>  player);
 			void Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player);
 			void AddGameObject(std::shared_ptr<GameObject> gameObject);
+			void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
 
 		private:
 			void Init();
@@ -79,7 +80,6 @@ namespace Server {
 			void CheckHeartBeat();
 			void BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 
-			void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
 
 			// TODO: 모든 유저가 게임에 들어오고 나서 게임이 시작될 때 불려야 함.
 			void CheckGameTime(const float dt);

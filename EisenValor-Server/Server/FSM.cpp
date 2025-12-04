@@ -32,20 +32,11 @@ void Server::Contents::FSM::AddState(std::unique_ptr<State> state)
 
 void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt)
 {
-	m_curState->Exit(dt);
+	if(m_curState)
+		m_curState->Exit(dt);
 	auto iter = m_states.find(nextState);
 	if(iter != m_states.end()) {
 		m_curState = iter->second.get();
 		m_curState->Enter(dt);
 	}
-	// Move (전달, A)		Chase
-	// Chase (전달, B)		Attack
-
-	// State*
-	// - Idle (Enter) 
-	// - Move (Enter)
-	// - Chase (Enter)
-	// - Attack (Enter)
-
-	// m_curState->Enter(A | B)
 }

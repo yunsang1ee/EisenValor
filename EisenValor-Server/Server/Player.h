@@ -22,6 +22,9 @@ namespace Server {
 		public:
 			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
 		
+		public:
+			virtual bool OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt) override;
+
 		};
 	}
 }
