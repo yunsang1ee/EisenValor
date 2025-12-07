@@ -367,7 +367,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     
     float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
-    float3 lightColor = float3(1.0, 0.95, 0.8) * 3.0;
+    float3 lightColor = float3(1.0, 1.0, 1.0) * 3.0;
     
     uint rngSeed =
     InstanceID() * 0xc2b2ae35u ^

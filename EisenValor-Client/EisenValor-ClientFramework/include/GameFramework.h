@@ -66,7 +66,7 @@ class GameFramework
 {
 public:
 	GameFramework() = default;
-	~GameFramework() = default;
+	~GameFramework() { Release(); }
 
 	bool Initialize(HINSTANCE hInstance, HWND hwnd);
 	void Run();
@@ -124,7 +124,7 @@ private:
 	DxBuffer  m_geoInfoBuffer;
 	DxBuffer  m_instGeoBaseBuffer;
 
-	BatchAllocation m_bufferBatch;
+	DxDescriptorRange m_bufferRange;
 
 	std::vector<VertexPNU>	 m_allVertices;
 	std::vector<uint32_t>	 m_allIndices;

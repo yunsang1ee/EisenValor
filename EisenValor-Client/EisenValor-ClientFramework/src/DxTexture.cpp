@@ -7,7 +7,7 @@
 
 DxTexture::~DxTexture()
 {
-	if (HasSRV() || HasUAV())
+	if (HasSRV() || HasAnyUAV())
 	{
 		auto& queue = MANAGER(DxGfxCommandQueueGlobal);
 
@@ -63,6 +63,7 @@ void DxTexture::Initialize(
 
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &resourceDesc);
 	m_sizeInBytes = allocInfo.SizeInBytes;
+	m_uavHandles.resize(m_mipLevels);
 
 	DEBUG_LOG_FMT(
 		"[DxTexture] Texture2D initialized: {}x{}, Format:{}, Mips:{}\n", width, height, (int)format, mipLevels
@@ -111,6 +112,7 @@ void DxTexture::Initialize3D(
 	SetName(name);
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &resourceDesc);
 	m_sizeInBytes = allocInfo.SizeInBytes;
+	m_uavHandles.resize(m_mipLevels);
 
 	DEBUG_LOG_FMT("[DxTexture] Texture3D initialized: {}x{}x{}, Format:{}\n", width, height, depth, (int)format);
 }
@@ -155,6 +157,7 @@ void DxTexture::InitializeCube(
 	SetName(name);
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &resourceDesc);
 	m_sizeInBytes = allocInfo.SizeInBytes;
+	m_uavHandles.resize(m_mipLevels);
 
 	DEBUG_LOG_FMT("[DxTexture] TextureCube initialized: {}x{}, Mips:{}\n", size, size, mipLevels);
 }
@@ -202,18 +205,24 @@ void DxTexture::CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 	}
 
-	m_srvIndex = heap.CreateSRV(device, GetResource(), &srvDesc);
+	m_srvHandle = heap.CreateSRV(device, GetResource(), &srvDesc);
 
-	DEBUG_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvIndex, GetName());
+	DEBUG_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvHandle.GetIndex(), GetName());
 }
 
 void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel)
 {
 	assert(device && IsValid() && "[DxTexture] Invalid resource for UAV");
 
-	if (HasUAV())
+	if (mipLevel >= m_mipLevels)
 	{
-		DEBUG_LOG_FMT("[DxTexture] Warning: UAV already exists for texture '{}'\n", GetName());
+		DEBUG_LOG_FMT("[DxTexture] Error: UAV MipLevel {} is out of range (Max: {})\n", mipLevel, m_mipLevels);
+		return;
+	}
+
+	if (HasUAV(mipLevel))
+	{
+		DEBUG_LOG_FMT("[DxTexture] Warning: UAV already exists for texture '{}', MipLevel={}\n", GetName(), mipLevel);
 		return;
 	}
 
@@ -225,7 +234,15 @@ void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, ui
 		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
 		uavDesc.Texture3D.MipSlice = mipLevel;
 		uavDesc.Texture3D.FirstWSlice = 0;
-		uavDesc.Texture3D.WSize = m_depth;
+		uavDesc.Texture3D.WSize = std::max(1u, m_depth >> mipLevel);
+	}
+	else if (m_isCubeMap)
+	{
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+		uavDesc.Texture2DArray.MipSlice = mipLevel;
+		uavDesc.Texture2DArray.FirstArraySlice = 0;
+		uavDesc.Texture2DArray.ArraySize = 6;
+		uavDesc.Texture2DArray.PlaneSlice = 0;
 	}
 	else
 	{
@@ -234,31 +251,58 @@ void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, ui
 		uavDesc.Texture2D.PlaneSlice = 0;
 	}
 
-	m_uavIndex = heap.CreateUAV(device, GetResource(), &uavDesc);
+	m_uavHandles[mipLevel] = heap.CreateUAV(device, GetResource(), &uavDesc);
 
-	DEBUG_LOG_FMT("[DxTexture] UAV created: Index={}, MipLevel={}, Name='{}'\n", m_uavIndex, mipLevel, GetName());
+	DEBUG_LOG_FMT(
+		"[DxTexture] UAV created: Index={}, MipLevel={}, Name='{}'\n", m_uavHandles[mipLevel].GetIndex(), mipLevel,
+		GetName()
+	);
 }
 
 void DxTexture::ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
-	if (HasSRV())
-	{
-		heap.Free(m_srvIndex, fenceHandle, std::string(GetName()) + "_SRV");
-		m_srvIndex = kInvalidIndex;
-	}
+	m_srvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_SRV");
 }
 
-void DxTexture::ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxTexture::ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, const uint32_t mipLevel)
 {
-	if (HasUAV())
+	m_uavHandles[mipLevel].Free(heap, fenceHandle, std::string(GetName()) + "_UAV");
+}
+
+void DxTexture::ReleaseAllUAVs(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+{
+	for (uint32_t i = 0; i < m_uavHandles.size(); ++i)
 	{
-		heap.Free(m_uavIndex, fenceHandle, std::string(GetName()) + "_UAV");
-		m_uavIndex = kInvalidIndex;
+		if (m_uavHandles[i].IsValid())
+		{
+			ReleaseUAV(heap, fenceHandle, i);
+		}
 	}
 }
 
 void DxTexture::ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
 	ReleaseSRV(heap, fenceHandle);
-	ReleaseUAV(heap, fenceHandle);
+	ReleaseAllUAVs(heap, fenceHandle);
+}
+
+uint32_t DxTexture::GetUAVIndex(uint32_t mipLevel) const
+{
+	if (mipLevel >= m_uavHandles.size() || !m_uavHandles[mipLevel].IsValid())
+	{
+		return kInvalidIndex;
+	}
+	return m_uavHandles[mipLevel].GetIndex();
+}
+
+bool DxTexture::HasAnyUAV() const
+{
+	for (const auto& uav : m_uavHandles)
+	{
+		if (uav.IsValid())
+		{
+			return true;
+		}
+	}
+	return false;
 }

@@ -4,11 +4,115 @@
 #include "DxUtils.h"
 #include <string>
 
+void DxDescriptorHandles::Free(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, std::string_view debugName)
+{
+	if (IsValid())
+	{
+		heap.Free(m_index, fenceHandle, debugName);
+		Invalidate();
+	}
+}
+
+void DxDescriptorHandles::FreeImmediate(DxDescriptorHeapGlobal& heap)
+{
+	if (IsValid())
+	{
+		heap.FreeImmediate(m_index);
+		Invalidate();
+	}
+}
+
+void DxDescriptorTableBuilder::AddSRV(
+	ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, DxDescriptorHandles* outputHandle
+)
+{
+	bool							hasDesc = (desc != nullptr);
+	D3D12_SHADER_RESOURCE_VIEW_DESC descCopy = hasDesc ? *desc : D3D12_SHADER_RESOURCE_VIEW_DESC{};
+
+	m_creators.emplace_back(
+		[=](ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t index)
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = heap.GetCPUHandle(index);
+
+			device->CreateShaderResourceView(resource, hasDesc ? &descCopy : nullptr, cpuHandle);
+
+			if (outputHandle)
+			{
+				*outputHandle = DxDescriptorHandles(cpuHandle, heap.GetGPUHandle(index), index);
+			}
+		}
+	);
+}
+
+void DxDescriptorTableBuilder::AddUAV(
+	ID3D12Resource*							resource,
+	const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc,
+	ID3D12Resource*							counterRes,
+	DxDescriptorHandles*					outputHandle
+)
+{
+	bool							 hasDesc = (desc != nullptr);
+	D3D12_UNORDERED_ACCESS_VIEW_DESC descCopy = hasDesc ? *desc : D3D12_UNORDERED_ACCESS_VIEW_DESC{};
+
+	m_creators.emplace_back(
+		[=](ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t index)
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = heap.GetCPUHandle(index);
+
+			device->CreateUnorderedAccessView(resource, counterRes, hasDesc ? &descCopy : nullptr, cpuHandle);
+
+			if (outputHandle)
+			{
+				*outputHandle = DxDescriptorHandles(cpuHandle, heap.GetGPUHandle(index), index);
+			}
+		}
+	);
+}
+
+void DxDescriptorTableBuilder::AddCBV(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, DxDescriptorHandles* outputHandle)
+{
+	if (desc)
+	{
+		D3D12_CONSTANT_BUFFER_VIEW_DESC descCopy = *desc;
+		m_creators.emplace_back(
+			[=](ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t index)
+			{
+				D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = heap.GetCPUHandle(index);
+
+				device->CreateConstantBufferView(&descCopy, cpuHandle);
+
+				if (outputHandle)
+				{
+					*outputHandle = DxDescriptorHandles(cpuHandle, heap.GetGPUHandle(index), index);
+				}
+			}
+		);
+	}
+}
+
+DxDescriptorRange DxDescriptorTableBuilder::Commit(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
+{
+	if (m_creators.empty())
+		return {0, 0};
+
+	uint32_t		  count = static_cast<uint32_t>(m_creators.size());
+	DxDescriptorRange allocation = heap.ReserveRange(count);
+
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		uint32_t currentIndex = allocation.startIndex + i;
+		m_creators[i](device, heap, currentIndex);
+	}
+	m_creators.clear();
+
+	return allocation;
+}
+
+
 void DxDescriptorHeapGlobal::Initialize()
 {
-	DEBUG_LOG_FMT(
-		"[DxDescriptorHeapGlobal] WARNING: Initialize() called without parameters. Call Initialize(device, count) instead.\n"
-	);
+	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] WARNING: Initialize() called without parameters. Call Initialize(device, "
+				  "count) instead.\n");
 }
 
 void DxDescriptorHeapGlobal::Initialize(ID3D12Device* device, uint32_t maxDescriptorCount)
@@ -64,7 +168,7 @@ void DxDescriptorHeapGlobal::Release()
 #endif
 }
 
-DescriptorHandles DxDescriptorHeapGlobal::Allocate()
+DxDescriptorHandles DxDescriptorHeapGlobal::Allocate()
 {
 	uint32_t idx;
 	if (!m_freeSlots.empty())
@@ -97,16 +201,16 @@ DescriptorHandles DxDescriptorHeapGlobal::Allocate()
 	m_liveMarkers[idx] = 1;
 #endif
 
-	DescriptorHandles handles;
-	handles.cpuHandle = GetCPUHandle(idx);
-	handles.gpuHandle = GetGPUHandle(idx);
-	handles.index = idx;
-
-	return handles;
+	return {GetCPUHandle(idx), GetGPUHandle(idx), idx};
 }
 
 void DxDescriptorHeapGlobal::FreeImmediate(uint32_t index)
 {
+	if (index == kInvalidIndex)
+	{
+		return;
+	}
+
 	if (index >= m_capacity)
 	{
 		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Invalid index {} (capacity: {})\n", index, m_capacity);
@@ -129,27 +233,32 @@ void DxDescriptorHeapGlobal::FreeImmediate(uint32_t index)
 
 void DxDescriptorHeapGlobal::Free(uint32_t index, const FenceHandle& fenceHandle, std::string_view debugName)
 {
+	if (index == kInvalidIndex)
+	{
+		return;
+	}
 	auto& gc = MANAGER(DxGarbageCollectorGlobal);
 	gc.DeferDescriptorFree(this, index, fenceHandle, debugName);
 }
 
-BatchAllocation DxDescriptorHeapGlobal::ReserveBatch(uint32_t count)
+DxDescriptorRange DxDescriptorHeapGlobal::ReserveRange(uint32_t count)
 {
 	if (count == 0)
 		return {0, 0};
-	if (auto fromFR = ReserveBatchFromFreeRanges(count); fromFR.count == count)
+	if (auto fromFR = ReserveRangeFromFreeRanges(count); fromFR.count == count)
 	{
 		DEBUG_LOG_FMT(
-			"[DxDescriptorHeapGlobal] Reserved batch from freeRanges: StartIndex={}, Count={}\n", fromFR.startIndex, count
+			"[DxDescriptorHeapGlobal] Reserved range from freeRanges: StartIndex={}, Count={}\n", fromFR.startIndex,
+			count
 		);
 		return fromFR;
 	}
 
 	SweepFreeSlotsIntoRanges();
-	if (auto fromFR2 = ReserveBatchFromFreeRanges(count); fromFR2.count == count)
+	if (auto fromFR2 = ReserveRangeFromFreeRanges(count); fromFR2.count == count)
 	{
 		DEBUG_LOG_FMT(
-			"[DxDescriptorHeapGlobal] Reserved batch after sweep: StartIndex={}, Count={}\n", fromFR2.startIndex, count
+			"[DxDescriptorHeapGlobal] Reserved range after sweep: StartIndex={}, Count={}\n", fromFR2.startIndex, count
 		);
 		return fromFR2;
 	}
@@ -157,7 +266,7 @@ BatchAllocation DxDescriptorHeapGlobal::ReserveBatch(uint32_t count)
 	if (m_allocIndex + count > m_capacity)
 	{
 		DEBUG_LOG_FMT(
-			"[DxDescriptorHeapGlobal] Not enough space for batch! Required={}, Available={}\n", count,
+			"[DxDescriptorHeapGlobal] Not enough space for range! Required={}, Available={}\n", count,
 			m_capacity - m_allocIndex
 		);
 		std::abort();
@@ -173,19 +282,19 @@ BatchAllocation DxDescriptorHeapGlobal::ReserveBatch(uint32_t count)
 		m_liveMarkers[i] = 1;
 #endif
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Reserved batch: StartIndex={}, Count={}\n", startIndex, count);
+	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Reserved range: StartIndex={}, Count={}\n", startIndex, count);
 
 	return {startIndex, count};
 }
 
-void DxDescriptorHeapGlobal::FreeBatchImmediate(uint32_t startIndex, uint32_t count)
+void DxDescriptorHeapGlobal::FreeRangeImmediate(uint32_t startIndex, uint32_t count)
 {
 	if (count == 0)
 		return;
 	const uint32_t end = startIndex + count;
 	if (end > m_capacity)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: FreeBatchImmediate out of range: [{} , {})\n", startIndex, end);
+		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: FreeRangeImmediate out of range: [{} , {})\n", startIndex, end);
 		return;
 	}
 
@@ -194,7 +303,7 @@ void DxDescriptorHeapGlobal::FreeBatchImmediate(uint32_t startIndex, uint32_t co
 	{
 		if (i >= m_liveMarkers.size() || m_liveMarkers[i] == 0)
 		{
-			DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Freeing non-allocated index {} in batch\n", i);
+			DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Freeing non-allocated m_index {} in range\n", i);
 			std::abort();
 		}
 		m_liveMarkers[i] = 0;
@@ -204,50 +313,51 @@ void DxDescriptorHeapGlobal::FreeBatchImmediate(uint32_t startIndex, uint32_t co
 	InsertFreeRangeAndMerge(startIndex, end);
 
 	DEBUG_LOG_FMT(
-		"[DxDescriptorHeapGlobal] Freed batch: Start={}, Count={}, freeRanges={}\n", startIndex, count, m_freeRanges.size()
+		"[DxDescriptorHeapGlobal] Freed range: Start={}, Count={}, freeRanges={}\n", startIndex, count,
+		m_freeRanges.size()
 	);
 }
 
-void DxDescriptorHeapGlobal::FreeBatch(
+void DxDescriptorHeapGlobal::FreeRange(
 	uint32_t startIndex, uint32_t count, const FenceHandle& fenceHandle, std::string_view debugName
 )
 {
 	auto& gc = MANAGER(DxGarbageCollectorGlobal);
-	gc.DeferRelease([this, startIndex, count] { this->FreeBatchImmediate(startIndex, count); }, fenceHandle, debugName);
+	gc.DeferRelease([this, startIndex, count] { this->FreeRangeImmediate(startIndex, count); }, fenceHandle, debugName);
 }
 
-uint32_t DxDescriptorHeapGlobal::CreateSRV(
+DxDescriptorHandles DxDescriptorHeapGlobal::CreateSRV(
 	ID3D12Device* device, ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc
 )
 {
 	auto handles = Allocate();
-	device->CreateShaderResourceView(resource, desc, handles.cpuHandle);
+	device->CreateShaderResourceView(resource, desc, handles.GetCPUHandle());
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] SRV created: GlobalIndex={}\n", handles.index);
+	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] SRV created: GlobalIndex={}\n", handles.GetIndex());
 
-	return handles.index;
+	return handles;
 }
 
-uint32_t DxDescriptorHeapGlobal::CreateUAV(
+DxDescriptorHandles DxDescriptorHeapGlobal::CreateUAV(
 	ID3D12Device* device, ID3D12Resource* resource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc
 )
 {
 	auto handles = Allocate();
-	device->CreateUnorderedAccessView(resource, nullptr, desc, handles.cpuHandle);
+	device->CreateUnorderedAccessView(resource, nullptr, desc, handles.GetCPUHandle());
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] UAV created: GlobalIndex={}\n", handles.index);
+	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] UAV created: GlobalIndex={}\n", handles.GetIndex());
 
-	return handles.index;
+	return handles;
 }
 
-uint32_t DxDescriptorHeapGlobal::CreateCBV(ID3D12Device* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc)
+DxDescriptorHandles DxDescriptorHeapGlobal::CreateCBV(ID3D12Device* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc)
 {
 	auto handles = Allocate();
-	device->CreateConstantBufferView(desc, handles.cpuHandle);
+	device->CreateConstantBufferView(desc, handles.GetCPUHandle());
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] CBV created: GlobalIndex={}\n", handles.index);
+	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] CBV created: GlobalIndex={}\n", handles.GetIndex());
 
-	return handles.index;
+	return handles;
 }
 
 void DxDescriptorHeapGlobal::CreateSRVAt(
@@ -257,7 +367,7 @@ void DxDescriptorHeapGlobal::CreateSRVAt(
 	if (globalIndex >= m_allocIndex)
 	{
 		DEBUG_LOG_FMT(
-			"[DxDescriptorHeapGlobal] ERROR: Invalid index {} (current allocIndex: {})\n", globalIndex, m_allocIndex
+			"[DxDescriptorHeapGlobal] ERROR: Invalid m_index {} (current allocIndex: {})\n", globalIndex, m_allocIndex
 		);
 		std::abort();
 	}
@@ -276,26 +386,26 @@ void DxDescriptorHeapGlobal::CreateSRVAt(
 	device->CreateShaderResourceView(resource, desc, cpuHandle);
 }
 
-BatchAllocation DxDescriptorHeapGlobal::CreateSRVBatch(
+DxDescriptorRange DxDescriptorHeapGlobal::CreateSRVRange(
 	ID3D12Device* device, const std::vector<ID3D12Resource*>& resources, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc
 )
 {
 	uint32_t count = static_cast<uint32_t>(resources.size());
 
-	auto batch = ReserveBatch(count);
+	auto range = ReserveRange(count);
 
 	for (uint32_t i = 0; i < count; ++i)
 	{
-		auto cpuHandle = GetCPUHandle(batch.startIndex + i);
+		auto cpuHandle = GetCPUHandle(range.startIndex + i);
 		device->CreateShaderResourceView(resources[i], desc, cpuHandle);
 	}
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] SRV Batch created: Start={}, Count={}\n", batch.startIndex, count);
+	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] SRV Range created: Start={}, Count={}\n", range.startIndex, count);
 
-	return batch;
+	return range;
 }
 
-BatchAllocation DxDescriptorHeapGlobal::CreateSRVBatch(
+DxDescriptorRange DxDescriptorHeapGlobal::CreateSRVRange(
 	ID3D12Device*										device,
 	const std::vector<ID3D12Resource*>&					resources,
 	const std::vector<D3D12_SHADER_RESOURCE_VIEW_DESC>& descs
@@ -310,19 +420,20 @@ BatchAllocation DxDescriptorHeapGlobal::CreateSRVBatch(
 	}
 
 	const uint32_t count = static_cast<uint32_t>(resources.size());
-	auto		   batch = ReserveBatch(count);
+	auto		   range = ReserveRange(count);
 
 	for (uint32_t i = 0; i < count; ++i)
 	{
-		auto cpuHandle = GetCPUHandle(batch.startIndex + i);
+		auto cpuHandle = GetCPUHandle(range.startIndex + i);
 		device->CreateShaderResourceView(resources[i], &descs[i], cpuHandle);
 	}
 
 	DEBUG_LOG_FMT(
-		"[DxDescriptorHeapGlobal] SRV Batch (individual descs) created: StartIndex={}, Count={}\n", batch.startIndex, count
+		"[DxDescriptorHeapGlobal] SRV Range (individual descs) created: StartIndex={}, Count={}\n", range.startIndex,
+		count
 	);
 
-	return batch;
+	return range;
 }
 
 uint32_t DxDescriptorHeapGlobal::GetAllocatedCount() const
@@ -402,7 +513,7 @@ uint32_t DxDescriptorHeapGlobal::AllocateOneFromFreeRanges()
 	return ~0u;
 }
 
-BatchAllocation DxDescriptorHeapGlobal::ReserveBatchFromFreeRanges(uint32_t n)
+DxDescriptorRange DxDescriptorHeapGlobal::ReserveRangeFromFreeRanges(uint32_t n)
 {
 	auto	 bestIt = m_freeRanges.end();
 	uint32_t minWaste = ~0u;
@@ -444,8 +555,8 @@ void DxDescriptorHeapGlobal::InsertFreeRangeAndMerge(uint32_t begin, uint32_t en
 #endif
 
 	auto pos = std::lower_bound(
-		m_freeRanges.begin(), m_freeRanges.end(), FreeRange{begin, end},
-		[](const FreeRange& a, const FreeRange& b) { return a.begin < b.begin; }
+		m_freeRanges.begin(), m_freeRanges.end(), FreeRangeEntry{begin, end},
+		[](const FreeRangeEntry& a, const FreeRangeEntry& b) { return a.begin < b.begin; }
 	);
 
 	if (pos != m_freeRanges.begin())
@@ -463,7 +574,7 @@ void DxDescriptorHeapGlobal::InsertFreeRangeAndMerge(uint32_t begin, uint32_t en
 		end = pos->end;
 		pos = m_freeRanges.erase(pos);
 	}
-	m_freeRanges.insert(pos, FreeRange{begin, end});
+	m_freeRanges.insert(pos, FreeRangeEntry{begin, end});
 
 #ifdef _DEBUG
 	for (size_t i = 1; i < m_freeRanges.size(); ++i)

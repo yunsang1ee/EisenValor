@@ -414,7 +414,7 @@ void RayGenMain()
 void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
-    float3 lightColor = float3(1.0, 0.95, 0.8) * 3.0;
+    float3 lightColor = float3(1.0, 1.0, 1.0) * 3.0;
     
     uint instanceID = InstanceID();
     Material material = g_materials[instanceID];
@@ -499,7 +499,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     Lo *= visibility;
 	
     float3 reflectedColor = 0.0f.xxx;
-    if (metallic > 0.1f && payload.recursionDepth < MAX_RECURSION_DEPTH)
+    if (payload.recursionDepth < MAX_RECURSION_DEPTH)
     {
         float3 reflectDir;
         if (roughness < 0.15f)
@@ -533,16 +533,20 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		);
 		
         float3 reflectF = FresnelSchlick(NdotV, F0);
-        float reflectWeight = dot(reflectF, float3(0.333, 0.333, 0.333));
-        
-        reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness * 0.8f);
+        reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
     }
 	
     float ao = bary.x * 0.3f + 0.7f;
-    float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * (1.0f + metallic * 0.5f);
+    float3 ambientLight = 0.15f.xxx;
+    float3 ambient = kD * albedo * ambientLight * ao;    
     float3 emissive = material.emissive * material.emissiveStrength;
 	
-    payload.color = ambient * ao + Lo + reflectedColor + emissive;
+    payload.color = ambient + Lo + reflectedColor + emissive;
+    //float ao = bary.x * 0.3f + 0.7f;
+    //float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * kD * (1.0f + metallic * 0.5f);
+    //float3 emissive = material.emissive * material.emissiveStrength;
+	
+    //payload.color = ambient * ao + Lo + reflectedColor + emissive;
 }
 
 [shader("miss")]

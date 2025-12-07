@@ -59,7 +59,7 @@ DxSwapChain::DxSwapChain(
 
 	ThrowIfFailed(swapChain1.As(&m_swapChain));
 	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)
-	); // TODO: Alt+Enter Input Processing in InputGlobal
+	);
 
 	CreateResources(device, m_gfxCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 

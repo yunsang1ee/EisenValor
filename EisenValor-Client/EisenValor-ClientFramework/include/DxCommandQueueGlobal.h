@@ -20,12 +20,20 @@ public:
 	void WaitForIdle();
 
 	ID3D12CommandQueue* GetQueue() const { return m_commandQueue.Get(); }
-	uint64_t			GetCompletedFenceValue() const { return m_idleFence->GetCompletedValue(); }
-	uint64_t			GetCurrentFenceValue() const { return m_idleValue; }
+	uint64_t			GetCompletedFenceValue() const { return m_fence->GetCompletedValue(); }
+	uint64_t			GetCurrentFenceValue() const { return m_fenceValue; }
+
+	uint64_t SignalFence()
+	{
+		++m_fenceValue;
+		ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValue));
+		return m_fenceValue;
+	}
 
 private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
-	ComPtr<ID3D12Fence>		   m_idleFence;
-	uint64_t				   m_idleValue = 0;
-	HANDLE					   m_idleEvent = nullptr;
+
+	ComPtr<ID3D12Fence>		   m_fence;
+	uint64_t				   m_fenceValue = 0;
+	HANDLE					   m_fenceEvent = nullptr;
 };

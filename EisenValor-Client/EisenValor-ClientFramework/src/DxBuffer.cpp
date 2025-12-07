@@ -99,31 +99,6 @@ void DxBuffer::Initialize(
 	);
 }
 
-void DxBuffer::CreateSRVInBatch(
-	ID3D12Device*						   device,
-	DxDescriptorHeapGlobal&				   heap,
-	uint32_t							   batchIndex,
-	const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc
-)
-{
-	if (!IsValid())
-	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create SRV on invalid buffer: {}\n", GetName());
-		return;
-	}
-
-	if (HasSRV())
-	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: Overwriting SRV for {}: {} -> {}\n", GetName(), m_srvIndex, batchIndex);
-	}
-
-	heap.CreateSRVAt(device, batchIndex, m_resource.Get(), srvDesc);
-
-	m_srvIndex = batchIndex;
-
-	DEBUG_LOG_FMT("[DxBuffer] SRV created in batch: {}, Index={}\n", GetName(), m_srvIndex);
-}
-
 void DxBuffer::CreateSRV(
 	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride
 )
@@ -136,7 +111,9 @@ void DxBuffer::CreateSRV(
 
 	if (HasSRV())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: SRV already exists for buffer: {} (Index={})\n", GetName(), m_srvIndex);
+		DEBUG_LOG_FMT(
+			"[DxBuffer] WARNING: SRV already exists for buffer: {} (Index={})\n", GetName(), m_srvHandle.GetIndex()
+		);
 		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseSRV() first to avoid leaks\n");
 		return;
 	}
@@ -152,10 +129,11 @@ void DxBuffer::CreateSRV(
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
 
-	m_srvIndex = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
+	m_srvHandle = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
 
 	DEBUG_LOG_FMT(
-		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes\n", GetName(), m_srvIndex, numElements, elementStride
+		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes\n", GetName(), m_srvHandle.GetIndex(), numElements,
+		elementStride
 	);
 }
 
@@ -171,7 +149,9 @@ void DxBuffer::CreateUAV(
 
 	if (HasUAV())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: UAV already exists for buffer: {} (Index={})\n", GetName(), m_uavIndex);
+		DEBUG_LOG_FMT(
+			"[DxBuffer] WARNING: UAV already exists for buffer: {} (Index={})\n", GetName(), m_uavHandle.GetIndex()
+		);
 		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseUAV() first to avoid leaks\n");
 		return;
 	}
@@ -194,10 +174,11 @@ void DxBuffer::CreateUAV(
 			 .Flags = D3D12_BUFFER_UAV_FLAG_NONE}
 	};
 
-	m_uavIndex = heap.CreateUAV(device, m_resource.Get(), &uavDesc);
+	m_uavHandle = heap.CreateUAV(device, m_resource.Get(), &uavDesc);
 
 	DEBUG_LOG_FMT(
-		"[DxBuffer] UAV created: {}, Index={}, {}x{} bytes\n", GetName(), m_uavIndex, numElements, elementStride
+		"[DxBuffer] UAV created: {}, Index={}, {}x{} bytes\n", GetName(), m_uavHandle.GetIndex(), numElements,
+		elementStride
 	);
 }
 
@@ -211,7 +192,9 @@ void DxBuffer::CreateCBV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 
 	if (HasCBV())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: CBV already exists for buffer: {} (Index={})\n", GetName(), m_cbvIndex);
+		DEBUG_LOG_FMT(
+			"[DxBuffer] WARNING: CBV already exists for buffer: {} (Index={})\n", GetName(), m_cbvHandle.GetIndex()
+		);
 		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseCBV() first to avoid leaks\n");
 		return;
 	}
@@ -227,50 +210,28 @@ void DxBuffer::CreateCBV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 		.BufferLocation = m_resource->GetGPUVirtualAddress(), .SizeInBytes = alignedSize
 	};
 
-	m_cbvIndex = heap.CreateCBV(device, &cbvDesc);
+	m_cbvHandle = heap.CreateCBV(device, &cbvDesc);
 
-	DEBUG_LOG_FMT("[DxBuffer] CBV created: {}, Index={}, {} bytes (aligned)\n", GetName(), m_cbvIndex, alignedSize);
+	DEBUG_LOG_FMT(
+		"[DxBuffer] CBV created: {}, Index={}, {} bytes (aligned)\n", GetName(), m_cbvHandle.GetIndex(), alignedSize
+	);
 }
 
 void DxBuffer::ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
-	if (!HasSRV())
-	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: No SRV to release for buffer: {}\n", GetName());
-		return;
-	}
-
-	heap.Free(m_srvIndex, fenceHandle, std::string(GetName()) + "_SRV");
-	m_srvIndex = kInvalidIndex;
-
+	m_srvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_SRV");
 	DEBUG_LOG_FMT("[DxBuffer] SRV released: {} (Fence={})\n", GetName(), fenceHandle.value);
 }
 
 void DxBuffer::ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
-	if (!HasUAV())
-	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: No UAV to release for buffer: {}\n", GetName());
-		return;
-	}
-
-	heap.Free(m_uavIndex, fenceHandle, std::string(GetName()) + "_UAV");
-	m_uavIndex = kInvalidIndex;
-
+	m_uavHandle.Free(heap, fenceHandle, std::string(GetName()) + "_UAV");
 	DEBUG_LOG_FMT("[DxBuffer] UAV released: {} (Fence={})\n", GetName(), fenceHandle.value);
 }
 
 void DxBuffer::ReleaseCBV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
-	if (!HasCBV())
-	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: No CBV to release for buffer: {}\n", GetName());
-		return;
-	}
-
-	heap.Free(m_cbvIndex, fenceHandle, std::string(GetName()) + "_CBV");
-	m_cbvIndex = kInvalidIndex;
-
+	m_cbvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_CBV");
 	DEBUG_LOG_FMT("[DxBuffer] CBV released: {} (Fence={})\n", GetName(), fenceHandle.value);
 }
 

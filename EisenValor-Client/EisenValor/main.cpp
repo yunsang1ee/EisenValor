@@ -5,6 +5,8 @@
 // #include "Vec3.h"
 #include "DxMath.h"
 #include <chrono>
+#include <GlobalInterfaces.h>
+#include <DxCommandQueueGlobal.h>
 
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR			 szTitle[MAX_LOADSTRING];
@@ -86,39 +88,38 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	// _CrtSetBreakAlloc(1739);
 #endif _DEBUG
 
-	// TODO: 여기에 코드를 입력합니다.
-	GameFramework gameFramework;
-	g_Framework = &gameFramework;
-	// 애플리케이션 초기화를 수행합니다:
-
-	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadStringW(hInstance, IDC_EISENVALOR, szWindowClass, MAX_LOADSTRING);
-
-	if (!RegisterWindowClass(hInstance))
-		return FALSE;
-	if (!CreateAppWindow(hInstance, nCmdShow))
-		return FALSE;
-
 	MSG	 msg;
 	bool quit = false;
-
-	while (not quit)
 	{
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-		{ // event
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-			if (msg.message == WM_QUIT)
-			{
-				quit = true;
-				break;
-			}
-		}
-		if (not quit)
-			gameFramework.Run();
-	}
+		GameFramework gameFramework;
+		g_Framework = &gameFramework;
 
-	gameFramework.Release();
+		LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+		LoadStringW(hInstance, IDC_EISENVALOR, szWindowClass, MAX_LOADSTRING);
+
+		if (!RegisterWindowClass(hInstance))
+			return FALSE;
+		if (!CreateAppWindow(hInstance, nCmdShow))
+			return FALSE;
+
+
+		while (not quit)
+		{
+			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+			{ // event
+				::TranslateMessage(&msg);
+				::DispatchMessage(&msg);
+				if (msg.message == WM_QUIT)
+				{
+					quit = true;
+					break;
+				}
+			}
+			if (not quit)
+				gameFramework.Run();
+		}
+	}
+	Globals::Shutdown();
 #ifdef _DEBUG
 	FreeConsole();
 #endif

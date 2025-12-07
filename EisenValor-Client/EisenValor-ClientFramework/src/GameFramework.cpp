@@ -12,6 +12,7 @@
 #include "DxFeatureCaps.h"
 #include "GameObjectManager.h"
 #include "DxDescriptorHeapGlobal.h"
+#include "DxGarbageCollectorGlobal.h"
 #include "DxCommandContext.h"
 
 #include "Actor.h"
@@ -187,7 +188,7 @@ void GameFramework::CreateStaticScene()
 	m_sceneActors.push_back(std::move(ground));
 
 	PBRMaterial groundMaterial;
-	groundMaterial.albedo = {0.9f, 0.9f, 0.9f};
+	groundMaterial.albedo = {1.0f, 0.95f, 0.8f};
 	groundMaterial.metallic = 0.08f;
 	groundMaterial.roughness = 0.98f;
 	groundMaterial.emissive = {0.0f, 0.0f, 0.0f};
@@ -333,7 +334,7 @@ void GameFramework::CreateRaytracingPipeline()
 	m_rtShaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
 
 	m_ptPipeline = std::make_unique<DxRtPipelineState>();
-	m_ptPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);	
+	m_ptPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
 	m_ptShaderTable = std::make_unique<DxRtShaderTable>();
 	m_ptShaderTable->Build(device5.Get(), m_ptPipeline.get(), 1);
 
@@ -513,8 +514,7 @@ void GameFramework::CreateBuffers()
 	}
 
 	// 3) 연속 슬롯에 SRV 생성 (t1~t5)
-	m_bufferBatch = descHeap.ReserveBatch(5);
-
+	DxDescriptorTableBuilder tableBuilder;
 	// t1: Materials
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc1{
 		.Format = DXGI_FORMAT_UNKNOWN,
@@ -526,7 +526,7 @@ void GameFramework::CreateBuffers()
 			 .StructureByteStride = sizeof(PBRMaterial),
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
-	m_materialBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex, &srvDesc1);
+	tableBuilder.AddSRV(m_materialBuffer.GetResource(), &srvDesc1, m_materialBuffer.GetSRVHandle());
 
 	// t2: VertexBuffer
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{
@@ -539,7 +539,7 @@ void GameFramework::CreateBuffers()
 			 .StructureByteStride = sizeof(VertexPNU),
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
-	m_vertexBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 1, &srvDesc2);
+	tableBuilder.AddSRV(m_vertexBuffer.GetResource(), &srvDesc2, m_vertexBuffer.GetSRVHandle());
 
 	// t3: IndexBuffer
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc3{
@@ -552,7 +552,7 @@ void GameFramework::CreateBuffers()
 			 .StructureByteStride = 0,
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
-	m_indexBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 2, &srvDesc3);
+	tableBuilder.AddSRV(m_indexBuffer.GetResource(), &srvDesc3, m_indexBuffer.GetSRVHandle());
 
 	// t4: GeoInfoBuffer
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc4{
@@ -565,7 +565,7 @@ void GameFramework::CreateBuffers()
 			 .StructureByteStride = sizeof(GeoInfo),
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
-	m_geoInfoBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 3, &srvDesc4);
+	tableBuilder.AddSRV(m_geoInfoBuffer.GetResource(), &srvDesc4, m_geoInfoBuffer.GetSRVHandle());
 
 	// t5: InstGeoBaseBuffer
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc5{
@@ -578,13 +578,15 @@ void GameFramework::CreateBuffers()
 			 .StructureByteStride = 0,
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
-	m_instGeoBaseBuffer.CreateSRVInBatch(device.GetDevice(), descHeap, m_bufferBatch.startIndex + 4, &srvDesc5);
+	tableBuilder.AddSRV(m_instGeoBaseBuffer.GetResource(), &srvDesc5, m_instGeoBaseBuffer.GetSRVHandle());
+
+	m_bufferRange = tableBuilder.Commit(device.GetDevice(), descHeap);
 
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 	frame->WaitForCompletion();
 
-	DEBUG_LOG_FMT("[GameFramework] Buffers created, SRV batch start: {}\n", m_bufferBatch.startIndex);
+	DEBUG_LOG_FMT("[GameFramework] Buffers created, SRV range start: {}\n", m_bufferRange.startIndex);
 }
 
 void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
@@ -600,7 +602,7 @@ void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 	DEBUG_LOG_FMT(
 		"[GameFramework] Raytracing output created: {}x{}, UAV Index={}\n", width, height,
-		m_raytracingOutput.GetUAVIndex()
+		m_raytracingOutput.GetUAVIndex(0)
 	);
 }
 
@@ -609,11 +611,10 @@ void GameFramework::ResizeRaytracingResources(uint32_t width, uint32_t height)
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	auto fenceValue = m_frameResources[m_currentFrameIndex]->GetFenceValue();
+	auto fenceValue = commandQueue.GetCurrentFenceValue();
 	m_raytracingOutput.ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
 	CreateRaytracingResources(width, height);
 }
-
 
 void GameFramework::Run()
 {
@@ -647,16 +648,16 @@ void GameFramework::Release()
 
 	queue.WaitForIdle();
 
-	if (m_raytracingOutput.HasUAV())
+	if (m_raytracingOutput.HasUAV(0))
 	{
-		heap.FreeImmediate(m_raytracingOutput.GetUAVIndex());
-		DEBUG_LOG_FMT("Released UAV: {}\n", m_raytracingOutput.GetUAVIndex());
+		m_raytracingOutput.GetUAVHandle(0)->FreeImmediate(heap);
+		DEBUG_LOG_FMT("Released UAV: {}\n", m_raytracingOutput.GetUAVIndex(0));
 	}
-	if (m_bufferBatch.count > 0)
+	if (m_bufferRange.count > 0)
 	{
-		heap.FreeBatchImmediate(m_bufferBatch.startIndex, m_bufferBatch.count);
-		DEBUG_LOG_FMT("  Released SRV batch: start={}, count={}\n", m_bufferBatch.startIndex, m_bufferBatch.count);
-		m_bufferBatch = {0, 0};
+		heap.FreeRangeImmediate(m_bufferRange.startIndex, m_bufferRange.count);
+		DEBUG_LOG_FMT("  Released SRV range: start={}, count={}\n", m_bufferRange.startIndex, m_bufferRange.count);
+		m_bufferRange = {0, 0};
 	}
 
 	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
@@ -817,6 +818,11 @@ void GameFramework::Render()
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 
+	commandQueue.SignalFence();
+
+	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
+
 	m_swapChain->PresentMaxPerformance();
 }
 
@@ -845,7 +851,7 @@ void GameFramework::RenderDXR()
 	cmdList->SetComputeRootDescriptorTable(0, tlasSRV);
 
 	// Param 1: Output UAV
-	D3D12_GPU_DESCRIPTOR_HANDLE outputUAV = descHeap.GetGPUHandle(m_raytracingOutput.GetUAVIndex());
+	D3D12_GPU_DESCRIPTOR_HANDLE outputUAV = descHeap.GetGPUHandle(m_raytracingOutput.GetUAVIndex(0));
 	cmdList->SetComputeRootDescriptorTable(1, outputUAV);
 
 	// Param 2: Camera Constants (임시 ViewProjInverse)
@@ -873,7 +879,7 @@ void GameFramework::RenderDXR()
 	//		Index Buffer        (SRV)
 	//		GeoInfo Buffer      (SRV)
 	//		GeoInstBase Buffer  (SRV)
-	D3D12_GPU_DESCRIPTOR_HANDLE tableStart = descHeap.GetGPUHandle(m_materialBuffer.GetSRVIndex());
+	D3D12_GPU_DESCRIPTOR_HANDLE tableStart = descHeap.GetGPUHandle(m_materialBuffer.GetSRVHandle()->GetIndex());
 	cmdList->SetComputeRootDescriptorTable(3, tableStart);
 
 	if (m_usePathTracing)
@@ -914,10 +920,7 @@ void GameFramework::UpdateCamera(float deltaTime)
 
 		RECT clientRect;
 		GetClientRect(m_hWnd, &clientRect);
-		POINT center = {
-			(clientRect.right - clientRect.left) / 2,
-			(clientRect.bottom - clientRect.top) / 2
-		};
+		POINT center = {(clientRect.right - clientRect.left) / 2, (clientRect.bottom - clientRect.top) / 2};
 		input.OnMouseMove(center.x, center.y);
 		m_lastMouseX = center.x;
 		m_lastMouseY = center.y;
@@ -959,7 +962,7 @@ void GameFramework::UpdateCamera(float deltaTime)
 		posVec = DX::XMVectorSubtract(posVec, DX::XMVectorScale(upVec, velocity));
 
 	DX::XMStoreFloat3(&m_cameraPosition, posVec);
-	
+
 	if (m_firstMouse)
 	{
 		m_firstMouse = false;
@@ -973,17 +976,11 @@ void GameFramework::UpdateCamera(float deltaTime)
 
 	RECT clientRect;
 	GetClientRect(m_hWnd, &clientRect);
-	POINT center = {
-		(clientRect.right - clientRect.left) / 2,
-		(clientRect.bottom - clientRect.top) / 2
-	};
+	POINT center = {(clientRect.right - clientRect.left) / 2, (clientRect.bottom - clientRect.top) / 2};
 	ClientToScreen(m_hWnd, &center);
 	SetCursorPos(center.x, center.y);
 
-	POINT clientCenter = {
-		(clientRect.right - clientRect.left) / 2,
-		(clientRect.bottom - clientRect.top) / 2
-	};
+	POINT clientCenter = {(clientRect.right - clientRect.left) / 2, (clientRect.bottom - clientRect.top) / 2};
 	m_lastMouseX = clientCenter.x;
 	m_lastMouseY = clientCenter.y;
 

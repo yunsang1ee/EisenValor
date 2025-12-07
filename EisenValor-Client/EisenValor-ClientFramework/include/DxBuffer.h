@@ -1,7 +1,6 @@
 #pragma once
 #include "DxResource.h"
-
-class DxDescriptorHeapGlobal;
+#include "DxDescriptorHeapGlobal.h"
 
 enum class EBufferUsage : uint8_t
 {
@@ -36,12 +35,6 @@ public:
         uint32_t            numElements,
         uint32_t            elementSize
     );
-    void CreateSRVInBatch(
-        ID3D12Device* device,
-        DxDescriptorHeapGlobal& heap,
-        uint32_t batchIndex,
-        const D3D12_SHADER_RESOURCE_VIEW_DESC* srvDesc
-    );
 
     // UAV 생성 (i.e. RWStructuredBuffer)
     void CreateUAV(
@@ -63,25 +56,25 @@ public:
 	void ReleaseCBV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
 	void ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
 
-	uint32_t GetSRVIndex() const { return m_srvIndex; }
-	uint32_t GetUAVIndex() const { return m_uavIndex; }
-	uint32_t GetCBVIndex() const { return m_cbvIndex; }
+	[[nodiscard]] DxDescriptorHandles* GetSRVHandle() { return &m_srvHandle; }
+	[[nodiscard]] DxDescriptorHandles* GetUAVHandle() { return &m_uavHandle; }
+	[[nodiscard]] DxDescriptorHandles* GetCBVHandle() { return &m_cbvHandle; }
 
-	bool HasSRV() const { return m_srvIndex != kInvalidIndex; }
-	bool HasUAV() const { return m_uavIndex != kInvalidIndex; }
-	bool HasCBV() const { return m_cbvIndex != kInvalidIndex; }
+	[[nodiscard]] bool HasSRV() const { return m_srvHandle.IsValid(); }
+	[[nodiscard]] bool HasUAV() const { return m_uavHandle.IsValid(); }
+	[[nodiscard]] bool HasCBV() const { return m_cbvHandle.IsValid(); }
 
-	EBufferUsage GetUsage() const { return m_usage; }
+	[[nodiscard]] EBufferUsage GetUsage() const { return m_usage; }
 
-	D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView(uint32_t stride) const;
-	D3D12_INDEX_BUFFER_VIEW	 GetIndexBufferView(DXGI_FORMAT format = DXGI_FORMAT_R32_UINT) const;
+	[[nodiscard]] D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView(uint32_t stride) const;
+	[[nodiscard]] D3D12_INDEX_BUFFER_VIEW  GetIndexBufferView(DXGI_FORMAT format = DXGI_FORMAT_R32_UINT) const;
 
 private:
 	static constexpr uint32_t kInvalidIndex = ~0u;
 
 	EBufferUsage m_usage = EBufferUsage::RawBuffer;
 
-	uint32_t m_srvIndex = kInvalidIndex;
-	uint32_t m_uavIndex = kInvalidIndex;
-	uint32_t m_cbvIndex = kInvalidIndex;
+	DxDescriptorHandles m_srvHandle;
+	DxDescriptorHandles m_uavHandle;
+	DxDescriptorHandles m_cbvHandle;
 };

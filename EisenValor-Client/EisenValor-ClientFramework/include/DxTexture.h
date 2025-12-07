@@ -1,17 +1,18 @@
 #pragma once
 #include "DxResource.h"
-
-class DxDescriptorHeapGlobal;
-
-// ===============================================================
-//
-// ===============================================================
+#include "DxDescriptorHeapGlobal.h"
 
 class DxTexture : public DxResource
 {
 public:
 	DxTexture() = default;
 	~DxTexture() override;
+
+	DxTexture(const DxTexture&) = delete;
+	DxTexture& operator=(const DxTexture&) = delete;
+
+	DxTexture(DxTexture&& other) noexcept = default;
+	DxTexture& operator=(DxTexture&& other) noexcept = default;
 
 	// 2D 텍스처 초기화 (GPU 전용, DEFAULT 힙)
 	void Initialize(
@@ -52,35 +53,59 @@ public:
 	void LoadFromFile(ID3D12Device* device, const std::wstring& filePath);
 	// TODO: DirectXTex 통합
 
-	void CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap);
 
+	void CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap);
 	void CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel = 0);
 
 	void ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
-	void ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
+	void ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, const uint32_t mipLevel);
+	void ReleaseAllUAVs(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
 	void ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
 
 	// Getters
-	uint32_t GetSRVIndex() const { return m_srvIndex; }
-	uint32_t GetUAVIndex() const { return m_uavIndex; }
-	bool	 HasSRV() const { return m_srvIndex != kInvalidIndex; }
-	bool	 HasUAV() const { return m_uavIndex != kInvalidIndex; }
+	[[nodiscard]] DxDescriptorHandles* GetSRVHandle() { return &m_srvHandle; }
+	[[nodiscard]] DxDescriptorHandles* GetUAVHandle(uint32_t mipLevel)
+	{
+		if (mipLevel >= m_uavHandles.size() || !m_uavHandles[mipLevel].IsValid())
+		{
+			return nullptr;
+		}
+		return &m_uavHandles[mipLevel];
+	}
 
-	uint32_t	GetWidth() const { return m_width; }
-	uint32_t	GetHeight() const { return m_height; }
-	uint32_t	GetDepth() const { return m_depth; }
-	uint16_t	GetMipLevels() const { return m_mipLevels; }
-	uint16_t	GetArraySize() const { return m_arraySize; }
-	DXGI_FORMAT GetFormat() const { return m_format; }
+	[[nodiscard]] uint32_t GetSRVIndex() const { return m_srvHandle.GetIndex(); }
+	[[nodiscard]] uint32_t GetUAVIndex(uint32_t mipLevel) const;
 
-	bool IsCubeMap() const { return m_isCubeMap; }
-	bool Is3D() const { return m_depth > 1; }
+	[[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetSRVCPUHandle() const { return m_srvHandle.GetCPUHandle(); }
+	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetSRVGPUHandle() const { return m_srvHandle.GetGPUHandle(); }
+	[[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetUAVCPUHandle(uint32_t mipLevel) const
+	{
+		return m_uavHandles[mipLevel].GetCPUHandle();
+	}
+	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetUAVGPUHandle(uint32_t mipLevel) const
+	{
+		return m_uavHandles[mipLevel].GetGPUHandle();
+	}
+
+	[[nodiscard]] bool HasSRV() const { return m_srvHandle.IsValid(); }
+	[[nodiscard]] bool HasUAV(uint32_t mipLevel) const { return m_uavHandles[mipLevel].IsValid(); }
+	[[nodiscard]] bool HasAnyUAV() const;
+
+	[[nodiscard]] uint32_t	  GetWidth() const { return m_width; }
+	[[nodiscard]] uint32_t	  GetHeight() const { return m_height; }
+	[[nodiscard]] uint32_t	  GetDepth() const { return m_depth; }
+	[[nodiscard]] uint16_t	  GetMipLevels() const { return m_mipLevels; }
+	[[nodiscard]] uint16_t	  GetArraySize() const { return m_arraySize; }
+	[[nodiscard]] DXGI_FORMAT GetFormat() const { return m_format; }
+
+	[[nodiscard]] bool IsCubeMap() const { return m_isCubeMap; }
+	[[nodiscard]] bool Is3D() const { return m_depth > 1; }
 
 private:
 	static constexpr uint32_t kInvalidIndex = ~0u;
 
-	uint32_t m_srvIndex = kInvalidIndex;
-	uint32_t m_uavIndex = kInvalidIndex;
+	DxDescriptorHandles				 m_srvHandle;
+	std::vector<DxDescriptorHandles> m_uavHandles;
 
 	uint32_t	m_width = 0;
 	uint32_t	m_height = 0;
