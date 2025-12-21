@@ -205,6 +205,9 @@
     <ClInclude Include="include\Transform.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="include\ComponentTypes.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">

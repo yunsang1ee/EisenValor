@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\ClientPackets.h" />
+    <ClInclude Include="include\ComponentTypes.h" />
     <ClInclude Include="include\DxCommandContext.h" />
     <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />

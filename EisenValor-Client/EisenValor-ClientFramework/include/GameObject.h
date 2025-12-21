@@ -1,9 +1,13 @@
 #pragma once
 #include "stdafxClientFramework.h"
 #include "DxCommon.h"
-#include "Transform.h" 
+#include "Transform.h"
+#include "IComponent.h"        
+#include "ComponentTypes.h"   
+#include <array>            
+#include <vector>              
 
-class GameObject
+class GameObject : public std::enable_shared_from_this<GameObject>
 {
 public:
 	GameObject() = default;
@@ -42,6 +46,75 @@ public:
 	Transform&		 GetTransform() { return m_transform; }
 	const Transform& GetTransform() const { return m_transform; }
 
+	// 핵심 컴포넌트 접근 함수들
+	template <typename T>
+	T* GetCoreComponent(CoreComponentType type)
+	{
+		auto& component = m_coreComponents[static_cast<size_t>(type)];
+		return static_cast<T*>(component.get());
+	}
+
+	template <typename T>
+	const T* GetCoreComponent(CoreComponentType type) const
+	{
+		const auto& component = m_coreComponents[static_cast<size_t>(type)];
+		return static_cast<const T*>(component.get());
+	}
+
+	template <typename T>
+	void AddCoreComponent(CoreComponentType type, std::unique_ptr<T> component)
+	{
+		component->SetGameObject(shared_from_this());
+		m_coreComponents[static_cast<size_t>(type)] = std::move(component);
+	}
+
+	// 기타 컴포넌트 접근 함수들
+	template <typename T>
+	T* GetComponent()
+	{
+		for (auto& comp : m_additionalComponents)
+		{
+			if (auto* result = dynamic_cast<T*>(comp.get()))
+				return result;
+		}
+		return nullptr;
+	}
+
+	template <typename T>
+	const T* GetComponent() const
+	{
+		for (const auto& comp : m_additionalComponents)
+		{
+			if (const auto* result = dynamic_cast<const T*>(comp.get()))
+				return result;
+		}
+		return nullptr;
+	}
+
+	template <typename T>
+	void AddComponent(std::unique_ptr<T> component)
+	{
+		component->SetGameObject(shared_from_this());
+		m_additionalComponents.push_back(std::move(component));
+	}
+
+	// 컴포넌트 업데이트 함수
+	void UpdateComponents(float deltaTime)
+	{
+		// 핵심 컴포넌트 업데이트
+		for (auto& comp : m_coreComponents)
+		{
+			if (comp && comp->IsActive())
+				comp->Update(deltaTime);
+		}
+
+		// 기타 컴포넌트 업데이트
+		for (auto& comp : m_additionalComponents)
+		{
+			if (comp->IsActive())
+				comp->Update(deltaTime);
+		}
+	}
 
 public:
 	void Handle_SC_MOVE(
@@ -69,7 +142,13 @@ protected:
 	Vec3 m_acceleration{0.f, 0.f, 0.f};
 	
 	// Transform 컴포넌트
-	Transform			m_transform;
+	Transform m_transform;
+
+	// 핵심 컴포넌트들 (array)
+	std::array<std::unique_ptr<IComponent>, CORE_COMPONENT_COUNT> m_coreComponents;
+
+	// 기타 컴포넌트들 (vector)
+	std::vector<std::unique_ptr<IComponent>> m_additionalComponents;
 
 	FB_ENUMS::TEAM_TYPE m_team = FB_ENUMS::TEAM_TYPE_BLUE;
 	Vec4 m_teamColor;
