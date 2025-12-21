@@ -7,11 +7,14 @@
 #include "SendBuffer.h"
 #include "SessionPool.h"	
 
+#include "ServerEngineConfigureManager.h"
+
 ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_deferCount{}
 {
 	static std::atomic_uint32_t idGen = 1;
 	m_id = idGen++;
+	COMMIT_SEND_MS = std::chrono::milliseconds(MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().COMMIT_SEND_MS);
 }
 
 ServerEngine::Session::~Session()
@@ -70,12 +73,15 @@ void ServerEngine::Session::FlushPacketQueue()
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
+
 	if(IsConnected() == false)
 		return;
 
 	int deferCount{};
 
 	std::shared_ptr<PacketBuffer> packetBuffer{ nullptr };
+
+	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_SEND_RQ_SIZE_PER_SESSION;
 
 	while(m_packetBufferQueue.empty() == false) {
 		if(m_packetBufferQueue.try_pop(packetBuffer)) {
@@ -89,6 +95,7 @@ void ServerEngine::Session::FlushPacketQueue()
 			if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
 				break;
 			deferCount++;
+
 
 			if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
 				// std::cout << std::format("DeferCount:{}", deferCount);
@@ -228,12 +235,20 @@ void ServerEngine::Session::Init()
 {
 	const auto& cq = m_owner->GetCQ();
 
+	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RECV_RQ_SIZE_PER_SESSION;
+	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_SEND_RQ_SIZE_PER_SESSION;
+
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);
 
 	if(m_rq == RIO_INVALID_RQ) {
 		ServerEngine::LogManager::PrintLastError();
 		exit(1);
 	}
+
+	const uint32 bufferSize = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RIO_BUFFER_SIZE;
+	
+	m_recvBuffer.Init(bufferSize);
+	m_sendBuffer.Init(bufferSize * 10);
 }
 
 void ServerEngine::Session::PostRecv()

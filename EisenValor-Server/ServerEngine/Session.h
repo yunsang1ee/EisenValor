@@ -13,26 +13,23 @@ namespace ServerEngine {
 
 	class Session : public std::enable_shared_from_this<Session> {
 	private:
-		uint32											m_id;
-		SOCKET											m_socket;
-		RIOWorker*										m_owner;
+		uint32														m_id;
+		SOCKET														m_socket;
+		RIOWorker*													m_owner;
 
-		std::atomic_bool								m_connected;
-		SOCKADDR_IN										m_clientAddr{};
-		RIO_RQ											m_rq;
+		std::atomic_bool											m_connected;
+		SOCKADDR_IN													m_clientAddr{};
+		RIO_RQ														m_rq;
 		
-		RecvBuffer										m_recvBuffer;
-		RecvContext										m_recvContext;
-		uint32											m_deferCount;
-
-		// TOOD: 성능을 올리기 위해 Lock-Free Queue로 수정해야함.
-		// LockQueue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+		RecvBuffer													m_recvBuffer;
+		RecvContext													m_recvContext;
+		uint32														m_deferCount;
 
 		tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
-		SendBuffer										m_sendBuffer;
-		std::atomic<SESSION_STATE>						m_state;
-		std::chrono::high_resolution_clock::time_point	m_lastSendTime{};
-		static constexpr auto							COMMIT_SEND_MS = 20ms;
+		SendBuffer													m_sendBuffer;
+		std::atomic<SESSION_STATE>									m_state;
+		std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
+		std::chrono::milliseconds									COMMIT_SEND_MS;
 
 		std::atomic<std::chrono::high_resolution_clock::time_point>	m_heartbeatTimestamp;
 

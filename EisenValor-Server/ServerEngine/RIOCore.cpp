@@ -5,6 +5,7 @@
 #include "RIOWorker.h"
 #include "TaskQueueManager.h"
 #include "TaskQueue.h"
+#include "ServerEngineConfigureManager.h"
 
 bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc) noexcept
 {
@@ -35,6 +36,7 @@ bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc) noexcept
 		return false;
 	}
 
+	const uint16 PORT_NUM = MANAGER(ServerEngineConfigureManager)->GetNetworkConfigure().port;
 	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
 	m_serverAddress.sin_family = AF_INET;
 	m_serverAddress.sin_port = htons(PORT_NUM);
@@ -47,7 +49,6 @@ bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc) noexcept
 	}
 
 	// 5. Create RIOWorker
-	// m_rioWorkerCnt = 1;
 	m_rioWorkerCnt = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
 	m_rioWorkers.reserve(m_rioWorkerCnt);
 

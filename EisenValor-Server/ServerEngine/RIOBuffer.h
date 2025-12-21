@@ -14,8 +14,11 @@ namespace ServerEngine {
 		uint32			m_writePos;
 
 	public:
-		explicit RIOBuffer(const uint32 bufferSize);
+		explicit RIOBuffer();
 		virtual ~RIOBuffer();
+
+	public:
+		void Init(const uint32 bufferSize);
 
 	public:
 		bool				OnRead(const uint32 numOfBytes);

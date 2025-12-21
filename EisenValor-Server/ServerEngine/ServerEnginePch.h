@@ -72,6 +72,12 @@ namespace fs = std::filesystem;
 #include "ObjectPool.h"
 #include "LockQueue.h"
 
+// inc
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 struct PacketInfo {
 	PacketHeader header;
 	const uint8* ptr;

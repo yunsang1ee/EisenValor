@@ -3,8 +3,6 @@
 
 void ServerEngine::LogManager::Init() noexcept
 {
-	const auto path = std::filesystem::current_path();
-
 	if(false == std::filesystem::exists("LOG"))
 		std::filesystem::create_directory("LOG");
 }

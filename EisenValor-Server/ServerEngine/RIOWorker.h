@@ -15,6 +15,8 @@ namespace ServerEngine {
 		tbb::concurrent_unordered_set<std::shared_ptr<Session>>		m_connectedSession;
 
 		SessionPool													m_sessionPool;
+		std::vector<RIORESULT>										m_ioResults;
+	
 	public:
 		explicit RIOWorker(const uint16 id);
 		~RIOWorker();
@@ -34,7 +36,7 @@ namespace ServerEngine {
 		// 관리하고 있는 Session들의 각각 보낼 Packet들 처리
 		void			FlushSessionPacketQueue() noexcept;
 		
-		void			DequeueCompletion() const noexcept;
+		void			DequeueCompletion() noexcept;
 	};
 }
 
