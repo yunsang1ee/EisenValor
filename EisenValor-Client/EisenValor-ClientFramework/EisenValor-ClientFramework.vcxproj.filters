@@ -202,6 +202,9 @@
     <ClInclude Include="include\UIManager.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="include\Transform.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InputGlobal.cpp">

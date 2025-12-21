@@ -364,10 +364,11 @@ void Player::Update(float deltaTime)
 			m_velocity.z = 0.f;
 		}
 
-		// 위치 이동 적용
-		m_pos.x = m_pos.x + m_velocity.x * deltaTime;
-		m_pos.y = m_pos.y + m_velocity.y * deltaTime;
-		m_pos.z = m_pos.z + m_velocity.z * deltaTime;
+		Vec3 currentPos = GetPosition();
+		currentPos.x = currentPos.x + m_velocity.x * deltaTime;
+		currentPos.y = currentPos.y + m_velocity.y * deltaTime;
+		currentPos.z = currentPos.z + m_velocity.z * deltaTime;
+		SetPosition(currentPos); 
 	}
 	else
 	{
@@ -380,22 +381,28 @@ void Player::Update(float deltaTime)
 		const Vec3 predictedPosition =
 			PredictPosition(lastServerPosition, lastServerVelocity, lastServerAcceleration, serverDT);
 
-		if (m_pos.x == predictedPosition.x && m_pos.y == predictedPosition.y && m_pos.z == predictedPosition.z)
+		Vec3 currentPos2 = GetPosition();
+		if (currentPos2.x == predictedPosition.x && currentPos2.y == predictedPosition.y &&
+			currentPos2.z == predictedPosition.z)
 			return;
 
 		// 보간 계수 계산 (deltaTime 기반)
 		const float smoothingSpeed = 10.0f; // 높을수록 빠르게 수렴
 		const float alpha = 1.0f - std::exp(-smoothingSpeed * deltaTime);
 
-		m_pos = Lerp(m_pos, predictedPosition, alpha);
+    // 수정
+		Vec3 currentPos = GetPosition();
+		Vec3 newPos = Lerp(currentPos, predictedPosition, alpha);
+		SetPosition(newPos);
 	}
 	#else
 
 	
 	{
-		if (m_rot.y == lastServerRotation.y)
+		Vec3 currentRot = GetRotation(); // GameObject의 GetRotation() 사용
+		if (currentRot.y == lastServerRotation.y)
 			return;
-		const Vec3	now = m_rot;				 // 현재 오일러 회전 (deg)
+		const Vec3	now = currentRot;			 // 현재 오일러 회전 (deg)
 		const Vec3	future = lastServerRotation; // 목표 오일러 회전 (deg)
 		const float t = 1.0f - std::exp(-10.f * deltaTime);
 
@@ -436,8 +443,11 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 
 	// 플레이어 큐브 
 	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.5f, 1.2f, 0.5f);
-	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(m_rot.y);
-	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
+	// 수정
+	Vec3			  pos = GetPosition();
+	Vec3			  rot = GetRotation();
+	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(rot.y);
+	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
 	DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
 	DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
 
@@ -566,16 +576,20 @@ void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, 
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
 {
-	float camX = m_pos.x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
-	float camY = m_pos.y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
-	float camZ = m_pos.z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
+	// 수정:
+	Vec3  pos = GetPosition();
+	float camX = pos.x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
+	float camY = pos.y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
+	float camZ = pos.z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
 
-	float lookX = m_pos.x + 2.0f * sinf(m_cameraYaw);
-	float lookY = m_pos.y + 1.0f + 2.0f * sinf(m_cameraPitch);
-	float lookZ = m_pos.z + 2.0f * cosf(m_cameraYaw);
+	float lookX = pos.x + 2.0f * sinf(m_cameraYaw);
+	float lookY = pos.y + 1.0f + 2.0f * sinf(m_cameraPitch);
+	float lookZ = pos.z + 2.0f * cosf(m_cameraYaw);
 
-	return DirectX::XMMatrixLookAtLH(
-		DirectX::XMVectorSet(camX, camY, camZ, 0.0f), DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),
+
+    return DirectX::XMMatrixLookAtLH(
+		DirectX::XMVectorSet(camX, camY, camZ, 1.0f), 
+		DirectX::XMVectorSet(lookX, lookY, lookZ, 1.0f),
 		DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
 	);
 }

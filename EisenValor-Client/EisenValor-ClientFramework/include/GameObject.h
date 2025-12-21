@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafxClientFramework.h"
 #include "DxCommon.h"
+#include "Transform.h" 
 
 class GameObject
 {
@@ -14,10 +15,22 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection) = 0;
 
 	// 공통 기능들
-	virtual void SetPosition(const Vec3& pos) { m_pos = pos; }
-	virtual Vec3 GetPosition() const { return m_pos; }
-	virtual void SetRotation(const Vec3& rot) { m_rot = rot; }
-	virtual Vec3 GetRotation() const { return m_rot; }
+	virtual void SetPosition(const Vec3& pos)
+	{
+		m_transform.SetPosition(pos); // Transform 업데이트
+	}
+	virtual Vec3 GetPosition() const
+	{
+		return m_transform.GetPosition(); // Transform에서 반환
+	}
+	virtual void SetRotation(const Vec3& rot)
+	{
+		m_transform.SetRotation(rot); // Transform
+	}
+	virtual Vec3 GetRotation() const
+	{
+		return m_transform.GetRotation(); // Transform에서 반환
+	}
 	virtual void SetVelocity(const Vec3& velocity) { m_velocity = velocity; }
 	virtual Vec3 GetVelocity() const { return m_velocity; }
 	virtual void SetAccelration(const Vec3& acceleration) { m_acceleration = acceleration; }
@@ -25,6 +38,11 @@ public:
 
 	virtual FB_ENUMS::GAME_OBJECT_TYPE GetObjectType() const = 0;
 	
+	// Transform 접근자
+	Transform&		 GetTransform() { return m_transform; }
+	const Transform& GetTransform() const { return m_transform; }
+
+
 public:
 	void Handle_SC_MOVE(
 		const Vec3& pos, const Vec3& rot, const Vec3& velocity, const Vec3& accel, const uint64 timeStamp
@@ -47,12 +65,12 @@ public:
 	bool   alive{true};
 
 protected:
-	// 기본 Transform 데이터
-	Vec3 m_pos{0.f, 0.f, 0.f};
-	Vec3 m_rot{0.f, 0.f, 0.f};
-
 	Vec3 m_velocity{0.f, 0.f, 0.f};
 	Vec3 m_acceleration{0.f, 0.f, 0.f};
+	
+	// Transform 컴포넌트
+	Transform			m_transform;
+
 	FB_ENUMS::TEAM_TYPE m_team = FB_ENUMS::TEAM_TYPE_BLUE;
 	Vec4 m_teamColor;
 

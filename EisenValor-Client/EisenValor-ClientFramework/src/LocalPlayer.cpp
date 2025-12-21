@@ -194,9 +194,10 @@ DirectX::XMFLOAT3 LocalPlayer::CalculateGroundTargetPosition() const
 
 	// 플레이어 위치에서 바라보는 방향으로 일정 거리만큼 떨어진 바닥 위치
 	DirectX::XMFLOAT3 targetPos;
-	targetPos.x = m_pos.x + forwardX * m_commandAreaDistance;
+	Vec3			  pos = GetPosition();
+	targetPos.x = pos.x + forwardX * m_commandAreaDistance;
 	targetPos.y = -0.5f; // 바닥 높이
-	targetPos.z = m_pos.z + forwardZ * m_commandAreaDistance;
+	targetPos.z = pos.z + forwardZ * m_commandAreaDistance;
 
 	return targetPos;
 }
@@ -244,23 +245,6 @@ void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX v
 
 	// 디버그 원 렌더링 (전투 모드일 때만)
 	RenderDebugCircle(cmdList, view, projection);
-
-	// 와이어프레임 박스 렌더링
-	// cmdList->IASetVertexBuffers(0, 1, &m_wireFrameVertexBufferView);
-	// cmdList->IASetIndexBuffer(&m_wireFrameIndexBufferView);
-	// cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // 라인!
-
-	//// 플레이어와 같은 위치, 회전
-	// DirectX::XMMATRIX wireFrameRotation = DirectX::XMMatrixRotationY(m_rot.y);
-	// DirectX::XMMATRIX wireFrameTranslation = DirectX::XMMatrixTranslation(m_pos.x, m_pos.y + 0.5f, m_pos.z);
-	// DirectX::XMMATRIX wireFrameWorld = wireFrameRotation * wireFrameTranslation;
-	// DirectX::XMMATRIX wireFrameMVP = wireFrameWorld * view * projection;
-
-	// DirectX::XMStoreFloat4x4(&m_wireFrameConstantBufferData.mvp, DirectX::XMMatrixTranspose(wireFrameMVP));
-	// memcpy(m_pWireFrameCbvDataBegin, &m_wireFrameConstantBufferData, sizeof(m_wireFrameConstantBufferData));
-
-	// cmdList->SetGraphicsRootConstantBufferView(0, m_wireFrameConstantBuffer->GetGPUVirtualAddress());
-	// cmdList->DrawIndexedInstanced(24, 1, 0, 0, 0); // 24개 인덱스 (12개 라인)
 }
 
 void LocalPlayer::Update(float deltaTime)
@@ -300,56 +284,70 @@ void LocalPlayer::UniformVelocity(const float deltaTime)
 
 	if (Globals::Input().GetInput('W')) // 전진
 	{
-		m_pos.x += forwardX * moveSpeed;
-		m_pos.z += forwardZ * moveSpeed;
+		Vec3 currentPos = GetPosition();
+		currentPos.x += forwardX * moveSpeed;
+		currentPos.z += forwardZ * moveSpeed;
+		SetPosition(currentPos);
 		// sendFlag = true;
 	}
 	else if (Globals::Input().GetInput('S')) // 후진
 	{
-		m_pos.x -= forwardX * moveSpeed;
-		m_pos.z -= forwardZ * moveSpeed;
+		Vec3 currentPos = GetPosition();
+		currentPos.x -= forwardX * moveSpeed;
+		currentPos.z -= forwardZ * moveSpeed;
+		SetPosition(currentPos);
 		// sendFlag = true;
 	}
 	else if (Globals::Input().GetInput('A')) // 좌측 이동
 	{
-		m_pos.x -= rightX * moveSpeed;
-		m_pos.z -= rightZ * moveSpeed;
+		Vec3 currentPos = GetPosition();
+		currentPos.x -= rightX * moveSpeed;
+		currentPos.z -= rightZ * moveSpeed;
+		SetPosition(currentPos);
 		//	sendFlag = true;
 	}
 	else if (Globals::Input().GetInput('D')) // 우측 이동
 	{
-		m_pos.x += rightX * moveSpeed;
-		m_pos.z += rightZ * moveSpeed;
+		Vec3 currentPos = GetPosition();
+		currentPos.x += rightX * moveSpeed;
+		currentPos.z += rightZ * moveSpeed;
+		SetPosition(currentPos);
 		//	sendFlag = true;
 	}
 
 	//// 수직 이동 (H/L 키)
 	if (Globals::Input().GetInput('H'))
 	{
-		m_pos.y -= moveSpeed; // 아래로
-							  //		sendFlag = true;
+		Vec3 currentPos = GetPosition();
+		currentPos.y -= moveSpeed;
+		SetPosition(currentPos); // 아래로
+		 //		sendFlag = true;
 	}
 	if (Globals::Input().GetInput('L'))
 	{
-		m_pos.y += moveSpeed; // 위로
+		Vec3 currentPos = GetPosition();
+		currentPos.y += moveSpeed;
+		SetPosition(currentPos); // 위로
 							  //		sendFlag = true;
 	}
 
 
 	// 위치 디버깅
 	static float lastX = 0, lastY = 1, lastZ = 0;
-	if (m_pos.x != lastX || m_pos.z != lastZ)
+	Vec3 pos = GetPosition();
+	if (pos.x != lastX || pos.z != lastZ)
 	{
-		// DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", m_pos.x, m_pos.y, m_pos.z);
-		lastX = m_pos.x;
-		lastY = m_pos.y;
-		lastZ = m_pos.z;
+		// DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", pos.x, pos.y, pos.z);
+		lastX = pos.x;
+		lastY = pos.y;
+		lastZ = pos.z;
 	}
 
 	if (sendFlag)
 	{
 		const Vec3	 pos{GetPosition()};
-		const Vec3	 rot{0.f, m_rot.y, 0.f};
+		Vec3 currentRot = GetRotation();
+		const Vec3	 rot{0.f, currentRot.y, 0.f};
 		const Vec3	 vel{GetVelocity()};
 		const Vec3	 accel{GetAcceleration()};
 		const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -488,7 +486,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		// sendFlag = true;
 	}
 
-	// 수직 이동도 추가 가능
+	// 수직 이동
 	else if (Globals::Input().GetInput('L'))
 	{
 		m_acceleration.y += accelValue;
@@ -524,24 +522,28 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
-	m_pos.x += m_velocity.x * deltaTime;
-	m_pos.y += m_velocity.y * deltaTime;
-	m_pos.z += m_velocity.z * deltaTime;
+    Vec3 currentPos = GetPosition();
+	currentPos.x += m_velocity.x * deltaTime;
+	currentPos.y += m_velocity.y * deltaTime;
+	currentPos.z += m_velocity.z * deltaTime;
+	SetPosition(currentPos);
 
 	// 위치 디버깅
 	static float lastX = 0, lastY = 1, lastZ = 0;
-	if (m_pos.x != lastX || m_pos.z != lastZ)
+	Vec3 pos = GetPosition();
+	if (pos.x != lastX || pos.z != lastZ)
 	{
-		// DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", m_pos.x, m_pos.y, m_pos.z);
-		lastX = m_pos.x;
-		lastY = m_pos.y;
-		lastZ = m_pos.z;
+		// DEBUG_LOG_FMT("Player Position: ({:.2f}, {:.2f}, {:.2f})\n", pos.x, pos.y, pos.z);
+		lastX = pos.x;
+		lastY = pos.y;
+		lastZ = pos.z;
 	}
 
 	if (sendFlag)
 	{
 		const Vec3	 pos{GetPosition()};
-		const Vec3	 rot{0.f, m_rot.y, 0.f};
+		Vec3		 currentRot = GetRotation();
+		const Vec3	 rot{0.f, currentRot.y, 0.f};
 		const Vec3	 vel{GetVelocity()};
 		const Vec3	 accel{GetAcceleration()};
 		const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -624,7 +626,9 @@ void LocalPlayer::UpdateNormalModeInput(const float deltaTime)
 			{
 				// 카메라 회전 업데이트
 				m_cameraYaw += deltaX * m_mouseSensitivity;
-				m_rot.y = m_cameraYaw;
+				Vec3 currentRot = GetRotation();
+				currentRot.y = m_cameraYaw;
+				SetRotation(currentRot);
 				m_cameraPitch += deltaY * m_mouseSensitivity;
 
 				// Pitch 제한 (위아래 회전 제한)
@@ -791,7 +795,8 @@ void LocalPlayer::UpdateCombatModeInput(const float deltaTime)
 	HandleKeyboardInput(deltaTime);
 
 	// 전투 모드 전용 카메라 각도 설정
-	m_cameraYaw = m_rot.y;
+	Vec3 currentRot = GetRotation();
+	m_cameraYaw = currentRot.y;
 	m_cameraPitch = -0.3f;
 }
 
@@ -926,14 +931,15 @@ DirectX::XMMATRIX LocalPlayer::GetViewMatrix() const
 	}
 	else
 	{
-		// 전투 모드: 고정 백뷰 카메라
-		float camX = m_pos.x - m_combatCameraDistance * sinf(m_rot.y); // 플레이어 회전 기준
-		float camY = m_pos.y + m_combatCameraHeight;
-		float camZ = m_pos.z - m_combatCameraDistance * cosf(m_rot.y);
+		Vec3  pos = GetPosition();
+		Vec3  rot = GetRotation();
+		float camX = pos.x - m_combatCameraDistance * sinf(rot.y);
+		float camY = pos.y + m_combatCameraHeight;
+		float camZ = pos.z - m_combatCameraDistance * cosf(rot.y);
 
-		float lookX = m_pos.x + sinf(m_rot.y) * 10.0f; // 플레이어 앞쪽
-		float lookY = m_pos.y + 1.0f;
-		float lookZ = m_pos.z + cosf(m_rot.y) * 10.0f;
+		float lookX = pos.x + sinf(rot.y) * 10.0f;
+		float lookY = pos.y + 1.0f;
+		float lookZ = pos.z + cosf(rot.y) * 10.0f;
 
 		return DirectX::XMMatrixLookAtLH(
 			DirectX::XMVectorSet(camX, camY, camZ, 0.0f), DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),
@@ -944,9 +950,11 @@ DirectX::XMMATRIX LocalPlayer::GetViewMatrix() const
 
 void LocalPlayer::UpdatePos(const float deltaTime)
 {
-	m_pos.x += m_velocity.x * deltaTime;
-	m_pos.y += m_velocity.y * deltaTime;
-	m_pos.z += m_velocity.z * deltaTime;
+	Vec3 currentPos = GetPosition();
+	currentPos.x += m_velocity.x * deltaTime;
+	currentPos.y += m_velocity.y * deltaTime;
+	currentPos.z += m_velocity.z * deltaTime;
+	SetPosition(currentPos);
 }
 
 void LocalPlayer::SendMovePacket()
@@ -1070,12 +1078,11 @@ void LocalPlayer::RenderFan(
 	// 부채꼴 월드 행렬 계산
 	XMMATRIX fanWorld = XMMatrixIdentity();
 
-	// 플레이어의 Y축 회전(Yaw) 적용 - 플레이어가 바라보는 방향으로 부채꼴 향하게 함
-	fanWorld *= XMMatrixRotationY(m_rot.y);
-
-	// 플레이어 위치로 이동
-	fanWorld *= XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
-
+	Vec3 pos = GetPosition();
+	Vec3 rot = GetRotation();
+	fanWorld *= XMMatrixRotationY(rot.y);
+	fanWorld *= XMMatrixTranslation(pos.x, pos.y, pos.z);
+	
 	// MVP 행렬 계산
 	XMMATRIX fanMvp = fanWorld * view * projection;
 
