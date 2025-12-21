@@ -99,245 +99,224 @@ struct InstanceData
 };
 
 void Player::Initialize(ID3D12Device* device)
-{						 // 큐브 버텍스 데이터 
-	Vertex vertices[] = {// 전면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f),m_teamColor},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), m_teamColor},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), m_teamColor},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), m_teamColor},
-						 // 후면
-						 {DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), m_teamColor},
-						 {DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), m_teamColor},
-						 {DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), m_teamColor},
-						 {DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), m_teamColor}
-	};
+{						
+ //   // HP바 배경용 버텍스 데이터
+	//Vec4   hpBarBackgroundColor(0.0f, 0.0f, 1.0f, 1.0f);
+	//Vertex hpBarBackgroundVertices[] = {				 // 전면
+	//									{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarBackgroundColor},
+	//									{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarBackgroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarBackgroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarBackgroundColor},
+	//									// 후면
+	//									{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarBackgroundColor},
+	//									{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarBackgroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarBackgroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarBackgroundColor}
+	//};
 
-	// 인덱스 데이터
-	UINT indices[] = {// 전면
-					  0, 1, 2, 0, 2, 3,
-					  // 후면
-					  4, 6, 5, 4, 7, 6,
-					  // 좌측면
-					  0, 5, 1, 0, 4, 5,
-					  // 우측면
-					  3, 2, 6, 3, 6, 7,
-					  // 상단
-					  1, 5, 6, 1, 6, 2,
-					  // 하단
-					  0, 3, 7, 0, 7, 4
-	}; 
+	//// HP바 수치용 버텍스 데이터
+	//Vec4   hpBarForegroundColor(0.54f, 0.03f, 0.03f, 1.0f); //
+	//Vertex hpBarForegroundVertices[] = {				 // 전면
+	//									{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarForegroundColor},
+	//									{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarForegroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarForegroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarForegroundColor},
+	//									// 후면
+	//									{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarForegroundColor},
+	//									{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarForegroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarForegroundColor},
+	//									{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarForegroundColor}
+	//};
 
+	//// 버텍스 버퍼 생성
+	//const UINT			  vertexBufferSize = sizeof(vertices);
+	//D3D12_HEAP_PROPERTIES heapProps = {};
+	//heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-    // HP바 배경용 버텍스 데이터
-	Vec4   hpBarBackgroundColor(0.0f, 0.0f, 1.0f, 1.0f);
-	Vertex hpBarBackgroundVertices[] = {				 // 전면
-										{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarBackgroundColor},
-										{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarBackgroundColor},
-										{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarBackgroundColor},
-										{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarBackgroundColor},
-										// 후면
-										{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarBackgroundColor},
-										{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarBackgroundColor},
-										{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarBackgroundColor},
-										{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarBackgroundColor}
-	};
+	//D3D12_RESOURCE_DESC bufferDesc = {};
+	//bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	//bufferDesc.Width = vertexBufferSize;
+	//bufferDesc.Height = 1;
+	//bufferDesc.DepthOrArraySize = 1;
+	//bufferDesc.MipLevels = 1;
+	//bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+	//bufferDesc.SampleDesc.Count = 1;
+	//bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-	// HP바 수치용 버텍스 데이터
-	Vec4   hpBarForegroundColor(0.54f, 0.03f, 0.03f, 1.0f); //
-	Vertex hpBarForegroundVertices[] = {				 // 전면
-										{DirectX::XMFLOAT3(-0.5f, -0.5f, -0.5f), hpBarForegroundColor},
-										{DirectX::XMFLOAT3(-0.5f, 0.5f, -0.5f), hpBarForegroundColor},
-										{DirectX::XMFLOAT3(0.5f, 0.5f, -0.5f), hpBarForegroundColor},
-										{DirectX::XMFLOAT3(0.5f, -0.5f, -0.5f), hpBarForegroundColor},
-										// 후면
-										{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.5f), hpBarForegroundColor},
-										{DirectX::XMFLOAT3(-0.5f, 0.5f, 0.5f), hpBarForegroundColor},
-										{DirectX::XMFLOAT3(0.5f, 0.5f, 0.5f), hpBarForegroundColor},
-										{DirectX::XMFLOAT3(0.5f, -0.5f, 0.5f), hpBarForegroundColor}
-	};
-
-	// 버텍스 버퍼 생성
-	const UINT			  vertexBufferSize = sizeof(vertices);
-	D3D12_HEAP_PROPERTIES heapProps = {};
-	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-	D3D12_RESOURCE_DESC bufferDesc = {};
-	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	bufferDesc.Width = vertexBufferSize;
-	bufferDesc.Height = 1;
-	bufferDesc.DepthOrArraySize = 1;
-	bufferDesc.MipLevels = 1;
-	bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-	bufferDesc.SampleDesc.Count = 1;
-	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_vertexBuffer)
-	));
-
-	// 버텍스 데이터 복사
-	UINT8*		pVertexDataBegin;
-	D3D12_RANGE readRange = {0, 0};
-	ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, vertices, sizeof(vertices));
-	m_vertexBuffer->Unmap(0, nullptr);
-
-	// 버텍스 버퍼 뷰 설정
-	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_vertexBufferView.SizeInBytes = vertexBufferSize;
-
-	// 인덱스 버퍼 생성
-	const UINT indexBufferSize = sizeof(indices);
-	bufferDesc.Width = indexBufferSize;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_indexBuffer)
-	));
-
-	// 인덱스 데이터 복사
-	UINT8* pIndexDataBegin;
-	ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-	memcpy(pIndexDataBegin, indices, sizeof(indices));
-	m_indexBuffer->Unmap(0, nullptr);
-
-	// 인덱스 버퍼 뷰 설정
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_indexBufferView.SizeInBytes = indexBufferSize;
-
-	// 플레이어 상수 버퍼 생성
-	const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
-	bufferDesc.Width = constantBufferSize;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_constantBuffer)
-	));
-
-	ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
-
-	// 표시등 상수 버퍼 생성
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_constantBuffer3)
-	));
-
-	ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
-
-	// // HP바 배경 상수 버퍼 생성
 	//ThrowIfFailed(device->CreateCommittedResource(
 	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-	//	IID_PPV_ARGS(&m_hpBarBackgroundBuffer)
+	//	IID_PPV_ARGS(&m_vertexBuffer)
 	//));
-	//ThrowIfFailed(m_hpBarBackgroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarBackgroundDataBegin)));
-	// HP바 전경 상수 버퍼 생성 (MVP 행렬용)
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_hpBarForegroundBuffer)
-	));
-	ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarForegroundDataBegin)));
 
-	// HP바 전용 버텍스 버퍼 생성
-	const UINT hpBarVertexBufferSize = sizeof(hpBarForegroundVertices);
-	bufferDesc.Width = hpBarVertexBufferSize;
+	//// 버텍스 데이터 복사
+	//UINT8*		pVertexDataBegin;
+	//D3D12_RANGE readRange = {0, 0};
+	//ThrowIfFailed(m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	//memcpy(pVertexDataBegin, vertices, sizeof(vertices));
+	//m_vertexBuffer->Unmap(0, nullptr);
 
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_hpBarVertexBuffer)
-	));
+	//// 버텍스 버퍼 뷰 설정
+	//m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+	//m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	//m_vertexBufferView.SizeInBytes = vertexBufferSize;
 
-	// HP바 버텍스 데이터 복사
-	UINT8* pHpBarVertexDataBegin;
-	ThrowIfFailed(m_hpBarVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pHpBarVertexDataBegin)));
-	memcpy(pHpBarVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
-	m_hpBarVertexBuffer->Unmap(0, nullptr);
+	//// 인덱스 버퍼 생성
+	//const UINT indexBufferSize = sizeof(indices);
+	//bufferDesc.Width = indexBufferSize;
 
-	// HP바 버텍스 버퍼 뷰 설정
-	m_hpBarVertexBufferView.BufferLocation = m_hpBarVertexBuffer->GetGPUVirtualAddress();
-	m_hpBarVertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_hpBarVertexBufferView.SizeInBytes = hpBarVertexBufferSize;
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_indexBuffer)
+	//));
 
-	// HP바 전경 버텍스 데이터 복사
-	ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-	memcpy(pVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
-	m_hpBarForegroundBuffer->Unmap(0, nullptr);
+	//// 인덱스 데이터 복사
+	//UINT8* pIndexDataBegin;
+	//ThrowIfFailed(m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+	//memcpy(pIndexDataBegin, indices, sizeof(indices));
+	//m_indexBuffer->Unmap(0, nullptr);
 
-	// === 오각형 와이어프레임 초기화 ===
-	Vec4 pentagonColor(1.0f, 1.0f, 1.0f, 1.0f); // 하얀색
+	//// 인덱스 버퍼 뷰 설정
+	//m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+	//m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	//m_indexBufferView.SizeInBytes = indexBufferSize;
 
-	// 베지어 곡선으로 오각형 버텍스 생성
-	std::vector<Vertex> pentagonVertices = CreateCustomPentagonVertices(pentagonColor);
+	//// 플레이어 상수 버퍼 생성
+	//const UINT constantBufferSize = (sizeof(ConstantBuffer) + 255) & ~255;
+	//bufferDesc.Width = constantBufferSize;
 
-	// 와이어프레임용 인덱스 생성
-	std::vector<UINT> pentagonIndices;
-	int				  totalVertices = pentagonVertices.size();
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_constantBuffer)
+	//));
 
-	for (int i = 0; i < totalVertices; i++)
-	{
-		pentagonIndices.push_back(i);
-		pentagonIndices.push_back((i + 1) % totalVertices);
-	}
+	//ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
 
-	// 오각형 버텍스 버퍼 생성
-	const UINT pentagonVertexBufferSize = pentagonVertices.size() * sizeof(Vertex);
-	bufferDesc.Width = pentagonVertexBufferSize;
+	//// 표시등 상수 버퍼 생성
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_constantBuffer3)
+	//));
 
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_pentagonVertexBuffer)
-	));
+	//ThrowIfFailed(m_constantBuffer3->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin3)));
 
-	// 오각형 버텍스 데이터 복사
-	UINT8* pPentagonVertexDataBegin;
-	ThrowIfFailed(m_pentagonVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pPentagonVertexDataBegin)));
-	memcpy(pPentagonVertexDataBegin, pentagonVertices.data(), pentagonVertexBufferSize);
-	m_pentagonVertexBuffer->Unmap(0, nullptr);
+	//// // HP바 배경 상수 버퍼 생성
+	////ThrowIfFailed(device->CreateCommittedResource(
+	////	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	////	IID_PPV_ARGS(&m_hpBarBackgroundBuffer)
+	////));
+	////ThrowIfFailed(m_hpBarBackgroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarBackgroundDataBegin)));
+	//// HP바 전경 상수 버퍼 생성 (MVP 행렬용)
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_hpBarForegroundBuffer)
+	//));
+	//ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pHpBarForegroundDataBegin)));
 
-	// 오각형 버텍스 버퍼 뷰 설정
-	m_pentagonVertexBufferView.BufferLocation = m_pentagonVertexBuffer->GetGPUVirtualAddress();
-	m_pentagonVertexBufferView.StrideInBytes = sizeof(Vertex);
-	m_pentagonVertexBufferView.SizeInBytes = pentagonVertexBufferSize;
+	//// HP바 전용 버텍스 버퍼 생성
+	//const UINT hpBarVertexBufferSize = sizeof(hpBarForegroundVertices);
+	//bufferDesc.Width = hpBarVertexBufferSize;
 
-	// 오각형 인덱스 버퍼 생성
-	const UINT pentagonIndexBufferSize = pentagonIndices.size() * sizeof(UINT);
-	bufferDesc.Width = pentagonIndexBufferSize;
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_hpBarVertexBuffer)
+	//));
 
-	ThrowIfFailed(device->CreateCommittedResource(
-		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&m_pentagonIndexBuffer)
-	));
+	//// HP바 버텍스 데이터 복사
+	//UINT8* pHpBarVertexDataBegin;
+	//ThrowIfFailed(m_hpBarVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pHpBarVertexDataBegin)));
+	//memcpy(pHpBarVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
+	//m_hpBarVertexBuffer->Unmap(0, nullptr);
 
-	// 오각형 인덱스 데이터 복사
-	UINT8* pPentagonIndexDataBegin;
-	ThrowIfFailed(m_pentagonIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pPentagonIndexDataBegin)));
-	memcpy(pPentagonIndexDataBegin, pentagonIndices.data(), pentagonIndexBufferSize);
-	m_pentagonIndexBuffer->Unmap(0, nullptr);
+	//// HP바 버텍스 버퍼 뷰 설정
+	//m_hpBarVertexBufferView.BufferLocation = m_hpBarVertexBuffer->GetGPUVirtualAddress();
+	//m_hpBarVertexBufferView.StrideInBytes = sizeof(Vertex);
+	//m_hpBarVertexBufferView.SizeInBytes = hpBarVertexBufferSize;
 
-	// 오각형 인덱스 버퍼 뷰 설정
-	m_pentagonIndexBufferView.BufferLocation = m_pentagonIndexBuffer->GetGPUVirtualAddress();
-	m_pentagonIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_pentagonIndexBufferView.SizeInBytes = pentagonIndexBufferSize;
+	//// HP바 전경 버텍스 데이터 복사
+	//ThrowIfFailed(m_hpBarForegroundBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+	//memcpy(pVertexDataBegin, hpBarForegroundVertices, sizeof(hpBarForegroundVertices));
+	//m_hpBarForegroundBuffer->Unmap(0, nullptr);
 
-	// 오각형 상수 버퍼 3개 생성
-	for (int i = 0; i < 3; i++)
-	{
-		const UINT pentagonConstantBufferSize = sizeof(ConstantBuffer);
-		bufferDesc.Width = pentagonConstantBufferSize;
+	//// === 오각형 와이어프레임 초기화 ===
+	//Vec4 pentagonColor(1.0f, 1.0f, 1.0f, 1.0f); // 하얀색
 
-		ThrowIfFailed(device->CreateCommittedResource(
-			&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-			IID_PPV_ARGS(&m_pentagonConstantBuffer[i])
-		));
-		ThrowIfFailed(
-			m_pentagonConstantBuffer[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_pPentagonDataBegin[i]))
-		);
-	}
+	//// 베지어 곡선으로 오각형 버텍스 생성
+	//std::vector<Vertex> pentagonVertices = CreateCustomPentagonVertices(pentagonColor);
 
-	// 인덱스 개수를 멤버 변수에 저장
-	m_pentagonIndexCount = pentagonIndices.size(); // 이거 추가!
+	//// 와이어프레임용 인덱스 생성
+	//std::vector<UINT> pentagonIndices;
+	//int				  totalVertices = pentagonVertices.size();
+
+	//for (int i = 0; i < totalVertices; i++)
+	//{
+	//	pentagonIndices.push_back(i);
+	//	pentagonIndices.push_back((i + 1) % totalVertices);
+	//}
+
+	//// 오각형 버텍스 버퍼 생성
+	//const UINT pentagonVertexBufferSize = pentagonVertices.size() * sizeof(Vertex);
+	//bufferDesc.Width = pentagonVertexBufferSize;
+
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_pentagonVertexBuffer)
+	//));
+
+	//// 오각형 버텍스 데이터 복사
+	//UINT8* pPentagonVertexDataBegin;
+	//ThrowIfFailed(m_pentagonVertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pPentagonVertexDataBegin)));
+	//memcpy(pPentagonVertexDataBegin, pentagonVertices.data(), pentagonVertexBufferSize);
+	//m_pentagonVertexBuffer->Unmap(0, nullptr);
+
+	//// 오각형 버텍스 버퍼 뷰 설정
+	//m_pentagonVertexBufferView.BufferLocation = m_pentagonVertexBuffer->GetGPUVirtualAddress();
+	//m_pentagonVertexBufferView.StrideInBytes = sizeof(Vertex);
+	//m_pentagonVertexBufferView.SizeInBytes = pentagonVertexBufferSize;
+
+	//// 오각형 인덱스 버퍼 생성
+	//const UINT pentagonIndexBufferSize = pentagonIndices.size() * sizeof(UINT);
+	//bufferDesc.Width = pentagonIndexBufferSize;
+
+	//ThrowIfFailed(device->CreateCommittedResource(
+	//	&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//	IID_PPV_ARGS(&m_pentagonIndexBuffer)
+	//));
+
+	//// 오각형 인덱스 데이터 복사
+	//UINT8* pPentagonIndexDataBegin;
+	//ThrowIfFailed(m_pentagonIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pPentagonIndexDataBegin)));
+	//memcpy(pPentagonIndexDataBegin, pentagonIndices.data(), pentagonIndexBufferSize);
+	//m_pentagonIndexBuffer->Unmap(0, nullptr);
+
+	//// 오각형 인덱스 버퍼 뷰 설정
+	//m_pentagonIndexBufferView.BufferLocation = m_pentagonIndexBuffer->GetGPUVirtualAddress();
+	//m_pentagonIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	//m_pentagonIndexBufferView.SizeInBytes = pentagonIndexBufferSize;
+
+	//// 오각형 상수 버퍼 3개 생성
+	//for (int i = 0; i < 3; i++)
+	//{
+	//	const UINT pentagonConstantBufferSize = sizeof(ConstantBuffer);
+	//	bufferDesc.Width = pentagonConstantBufferSize;
+
+	//	ThrowIfFailed(device->CreateCommittedResource(
+	//		&heapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+	//		IID_PPV_ARGS(&m_pentagonConstantBuffer[i])
+	//	));
+	//	ThrowIfFailed(
+	//		m_pentagonConstantBuffer[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_pPentagonDataBegin[i]))
+	//	);
+	//}
+
+	//// 인덱스 개수를 멤버 변수에 저장
+	//m_pentagonIndexCount = pentagonIndices.size(); // 이거 추가!
+
+	// MeshRenderer 컴포넌트 추가
+	auto meshRenderer = std::make_unique<MeshRenderer>();
+	meshRenderer->SetColor(1.0f, 0.0f, 0.0f);
+	meshRenderer->SetUniformScale(1.0f);
+	meshRenderer->Initialize(device);
+	AddCoreComponent<MeshRenderer>(CoreComponentType::MeshRenderer, std::move(meshRenderer));
 
 }
 
@@ -348,27 +327,31 @@ void Player::Update(float deltaTime)
 	{
 		const float dampingFactor = 0.95f;
 
+		Vec3 currentVel = GetVelocity();
+
 		// 직접 곱해줌 (operator *= 없이)
-		m_velocity.x = m_velocity.x * dampingFactor;
-		m_velocity.y = m_velocity.y * dampingFactor;
-		m_velocity.z = m_velocity.z * dampingFactor;
+		currentVel.x = currentVel.x * dampingFactor;
+		currentVel.y = currentVel.y * dampingFactor;
+		currentVel.z = currentVel.z * dampingFactor;
 
 		// 속도 크기 제곱 직접 계산 (LengthSquared)
-		float speedSq = m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y + m_velocity.z * m_velocity.z;
+		float speedSq = currentVel.x * currentVel.x + currentVel.y * currentVel.y + currentVel.z * currentVel.z;
 
 		// 아주 느려지면 스냅 (멈춘 걸로 처리)
 		if (speedSq < 0.001f)
 		{
-			m_velocity.x = 0.f;
-			m_velocity.y = 0.f;
-			m_velocity.z = 0.f;
+			currentVel.x = 0.f;
+			currentVel.y = 0.f;
+			currentVel.z = 0.f;
 		}
 
+		SetVelocity(currentVel);
+
 		Vec3 currentPos = GetPosition();
-		currentPos.x = currentPos.x + m_velocity.x * deltaTime;
-		currentPos.y = currentPos.y + m_velocity.y * deltaTime;
-		currentPos.z = currentPos.z + m_velocity.z * deltaTime;
-		SetPosition(currentPos); 
+		currentPos.x = currentPos.x + currentVel.x * deltaTime;
+		currentPos.y = currentPos.y + currentVel.y * deltaTime;
+		currentPos.z = currentPos.z + currentVel.z * deltaTime;
+		SetPosition(currentPos);
 	}
 	else
 	{
@@ -436,162 +419,138 @@ void Player::Update(float deltaTime)
 //렌더링
 void Player::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
-	// 버텍스 및 인덱스 버퍼 설정
-	cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	cmdList->IASetIndexBuffer(&m_indexBufferView);
-	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//// 표시등 큐브 렌더링
+	//DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.4f, 0.3f);
+	//DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f);
+	//DirectX::XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
+	//DirectX::XMMATRIX markerMVP = markerWorld * view * projection;
 
-	// 플레이어 큐브 
-	DirectX::XMMATRIX playerScale = DirectX::XMMatrixScaling(0.5f, 1.2f, 0.5f);
-	// 수정
-	Vec3			  pos = GetPosition();
-	Vec3			  rot = GetRotation();
-	DirectX::XMMATRIX playerRotation = DirectX::XMMatrixRotationY(rot.y);
-	DirectX::XMMATRIX playerTranslation = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
-	DirectX::XMMATRIX playerWorld = playerScale * playerRotation * playerTranslation;
-	DirectX::XMMATRIX playerMVP = playerWorld * view * projection;
+	//// 표시등 상수 버퍼에 업데이트
+	//DirectX::XMStoreFloat4x4(&m_constantBufferData3.mvp, DirectX::XMMatrixTranspose(markerMVP));
+	//memcpy(m_pCbvDataBegin3, &m_constantBufferData3, sizeof(m_constantBufferData3));
 
-	// 플레이어 상수 버퍼에 복사
-	DirectX::XMStoreFloat4x4(&m_constantBufferData.mvp, DirectX::XMMatrixTranspose(playerMVP));
-	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
-
-	// 플레이어 큐브 그리기
-	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
-	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-
-	// 표시등 큐브 렌더링
-	DirectX::XMMATRIX markerOffset = DirectX::XMMatrixTranslation(0.0f, 0.4f, 0.3f);
-	DirectX::XMMATRIX markerScale = DirectX::XMMatrixScaling(0.2f, 0.2f, 0.2f);
-	DirectX::XMMATRIX markerWorld = markerScale * markerOffset * playerRotation * playerTranslation;
-	DirectX::XMMATRIX markerMVP = markerWorld * view * projection;
-
-	// 표시등 상수 버퍼에 업데이트
-	DirectX::XMStoreFloat4x4(&m_constantBufferData3.mvp, DirectX::XMMatrixTranspose(markerMVP));
-	memcpy(m_pCbvDataBegin3, &m_constantBufferData3, sizeof(m_constantBufferData3));
-
-	// 표시등 큐브 그리기
-	cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
-	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-
-	// HP바 배경 렌더링
-	//DirectX::XMMATRIX hpBarBackgroundOffset = DirectX::XMMatrixTranslation(0.0f, 1.8f, 0.0f);
-	//DirectX::XMMATRIX hpBarBackgroundScale = DirectX::XMMatrixScaling(1.0f, 0.1f, 0.05f);
-	// 
-	//// 빌보드 행렬: 뷰 행렬의 회전 부분을 역으로 적용
-	DirectX::XMMATRIX billboardMatrix = DirectX::XMMatrixIdentity();
-	
-	// 뷰 행렬의 회전 부분만 추출해서 전치
-	// XMMATRIX는 r[0], r[1], r[2], r[3] 형태
-	billboardMatrix.r[0] = DirectX::XMVectorSet(
-		DirectX::XMVectorGetX(view.r[0]), DirectX::XMVectorGetX(view.r[1]), DirectX::XMVectorGetX(view.r[2]), 0.0f
-	);
-	billboardMatrix.r[1] = DirectX::XMVectorSet(
-		DirectX::XMVectorGetY(view.r[0]), DirectX::XMVectorGetY(view.r[1]), DirectX::XMVectorGetY(view.r[2]), 0.0f
-	);
-	billboardMatrix.r[2] = DirectX::XMVectorSet(
-		DirectX::XMVectorGetZ(view.r[0]), DirectX::XMVectorGetZ(view.r[1]), DirectX::XMVectorGetZ(view.r[2]), 0.0f
-	);
-	//// 빌보드 행렬을 적용
-	//DirectX::XMMATRIX hpBarBackgroundWorld =
-	//	hpBarBackgroundScale * billboardMatrix * hpBarBackgroundOffset * playerTranslation;
-	//DirectX::XMMATRIX hpBarBackgroundMVP = hpBarBackgroundWorld * view * projection;
-
-	//// HP바 배경 상수 버퍼에 업데이트
-	//DirectX::XMStoreFloat4x4(&m_hpBarBackgroundData.mvp, DirectX::XMMatrixTranspose(hpBarBackgroundMVP));
-	//memcpy(m_pHpBarBackgroundDataBegin, &m_hpBarBackgroundData, sizeof(m_hpBarBackgroundData));
-
-	//// HP바 배경 그리기
-	//cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarBackgroundBuffer->GetGPUVirtualAddress());
+	//// 표시등 큐브 그리기
+	//cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer3->GetGPUVirtualAddress());
 	//cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
-	// HP 수치 렌더링
-	float hpRatio = GetHPRatio();
-	if (hpRatio > 0.0f)
+	//// HP바 배경 렌더링
+	////DirectX::XMMATRIX hpBarBackgroundOffset = DirectX::XMMatrixTranslation(0.0f, 1.8f, 0.0f);
+	////DirectX::XMMATRIX hpBarBackgroundScale = DirectX::XMMatrixScaling(1.0f, 0.1f, 0.05f);
+	//// 
+	////// 빌보드 행렬: 뷰 행렬의 회전 부분을 역으로 적용
+	//DirectX::XMMATRIX billboardMatrix = DirectX::XMMatrixIdentity();
+	//
+	//// 뷰 행렬의 회전 부분만 추출해서 전치
+	//// XMMATRIX는 r[0], r[1], r[2], r[3] 형태
+	//billboardMatrix.r[0] = DirectX::XMVectorSet(
+	//	DirectX::XMVectorGetX(view.r[0]), DirectX::XMVectorGetX(view.r[1]), DirectX::XMVectorGetX(view.r[2]), 0.0f
+	//);
+	//billboardMatrix.r[1] = DirectX::XMVectorSet(
+	//	DirectX::XMVectorGetY(view.r[0]), DirectX::XMVectorGetY(view.r[1]), DirectX::XMVectorGetY(view.r[2]), 0.0f
+	//);
+	//billboardMatrix.r[2] = DirectX::XMVectorSet(
+	//	DirectX::XMVectorGetZ(view.r[0]), DirectX::XMVectorGetZ(view.r[1]), DirectX::XMVectorGetZ(view.r[2]), 0.0f
+	//);
+	////// 빌보드 행렬을 적용
+	////DirectX::XMMATRIX hpBarBackgroundWorld =
+	////	hpBarBackgroundScale * billboardMatrix * hpBarBackgroundOffset * playerTranslation;
+	////DirectX::XMMATRIX hpBarBackgroundMVP = hpBarBackgroundWorld * view * projection;
+
+	////// HP바 배경 상수 버퍼에 업데이트
+	////DirectX::XMStoreFloat4x4(&m_hpBarBackgroundData.mvp, DirectX::XMMatrixTranspose(hpBarBackgroundMVP));
+	////memcpy(m_pHpBarBackgroundDataBegin, &m_hpBarBackgroundData, sizeof(m_hpBarBackgroundData));
+
+	////// HP바 배경 그리기
+	////cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarBackgroundBuffer->GetGPUVirtualAddress());
+	////cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+	//// HP 수치 렌더링
+	//float hpRatio = GetHPRatio();
+	//if (hpRatio > 0.0f)
+	//{
+	//	// HP바 전용 버텍스 버퍼로 변경
+	//	cmdList->IASetVertexBuffers(0, 1, &m_hpBarVertexBufferView);
+	//	
+	//	float hpBarWidth = 2.0f * hpRatio;
+	//	float hpBarOffsetX = -0.5f * (1.0f - hpRatio);
+	//	
+	//	DirectX::XMMATRIX hpBarForegroundOffset = DirectX::XMMatrixTranslation(hpBarOffsetX, 1.8f, 0.01f);
+	//	DirectX::XMMATRIX hpBarForegroundScale = DirectX::XMMatrixScaling(hpBarWidth, 0.5f, 0.05f);
+	//	DirectX::XMMATRIX hpBarForegroundWorld =
+	//		hpBarForegroundScale * billboardMatrix * hpBarForegroundOffset * playerTranslation;
+	//	DirectX::XMMATRIX hpBarForegroundMVP = hpBarForegroundWorld * view * projection;
+
+	//	// HP바 수치 상수 버퍼에 업데이트
+	//	DirectX::XMStoreFloat4x4(&m_hpBarForegroundData.mvp, DirectX::XMMatrixTranspose(hpBarForegroundMVP));
+	//	memcpy(m_pHpBarForegroundDataBegin, &m_hpBarForegroundData, sizeof(m_hpBarForegroundData));
+
+	//	// HP바 수치 그리기
+	//	cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarForegroundBuffer->GetGPUVirtualAddress());
+	//	cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+	//	
+	//	// 원래 플레이어 버텍스 버퍼로 복원
+	//	cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	//}
+
+	//// 위쪽 전투 UI 렌더링 (3개 오각형)
+	//{
+	//	cmdList->IASetVertexBuffers(0, 1, &m_pentagonVertexBufferView);
+	//	cmdList->IASetIndexBuffer(&m_pentagonIndexBufferView);
+	//	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	//	DirectX::XMMATRIX pentagonOffset = DirectX::XMMatrixTranslation(0.0f, 3.0f, 0.0f);
+	//	//DirectX::XMMATRIX pentagonScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.25f);
+
+	//	// 회전축 설정
+	//	DirectX::XMFLOAT3 rotationPivot(0.0f, -0.35f, 0.0f); // 아래쪽 중심
+	//	DirectX::XMMATRIX pivotToOrigin =
+	//		DirectX::XMMatrixTranslation(-rotationPivot.x, -rotationPivot.y, -rotationPivot.z);
+	//	DirectX::XMMATRIX originToPivot =
+	//		DirectX::XMMatrixTranslation(rotationPivot.x, rotationPivot.y, rotationPivot.z);
+
+	//	for (int i = 0; i < 3; i++)
+	//	{
+	//		float			  rotationAngle = i * (2.0f * XM_PI / 3.0f); // 120도씩 회전
+	//		DirectX::XMMATRIX pentagonRotation = DirectX::XMMatrixRotationZ(rotationAngle);
+
+	//		// 변환 순서: Scale -> 피벗으로 이동 -> 회전 -> 피벗에서 복귀 -> Billboard -> Translation
+	//		DirectX::XMMATRIX pentagonWorld = pivotToOrigin * pentagonRotation * originToPivot *
+	//										  billboardMatrix * pentagonOffset * playerTranslation;
+	//		DirectX::XMMATRIX pentagonMVP = pentagonWorld * view * projection;
+
+	//		// 각각의 상수 버퍼에 업데이트
+	//		DirectX::XMStoreFloat4x4(&m_pentagonConstantBufferData[i].mvp, DirectX::XMMatrixTranspose(pentagonMVP));
+	//		memcpy(m_pPentagonDataBegin[i], &m_pentagonConstantBufferData[i], sizeof(m_pentagonConstantBufferData[i]));
+
+	//		// 해당 상수 버퍼로 그리기
+	//		cmdList->SetGraphicsRootConstantBufferView(0, m_pentagonConstantBuffer[i]->GetGPUVirtualAddress());
+	//		cmdList->DrawIndexedInstanced(m_pentagonIndexCount, 1, 0, 0, 0);
+	//	}
+
+	//	// 원래 설정으로 복원
+	//	cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	//	cmdList->IASetIndexBuffer(&m_indexBufferView);
+	//	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//}
+
+    // MeshRenderer 컴포넌트 사용
+	auto* meshRenderer = GetCoreComponent<MeshRenderer>(CoreComponentType::MeshRenderer);
+	if (meshRenderer)
 	{
-		// HP바 전용 버텍스 버퍼로 변경
-		cmdList->IASetVertexBuffers(0, 1, &m_hpBarVertexBufferView);
-		
-		float hpBarWidth = 2.0f * hpRatio;
-		float hpBarOffsetX = -0.5f * (1.0f - hpRatio);
-		
-		DirectX::XMMATRIX hpBarForegroundOffset = DirectX::XMMatrixTranslation(hpBarOffsetX, 1.8f, 0.01f);
-		DirectX::XMMATRIX hpBarForegroundScale = DirectX::XMMatrixScaling(hpBarWidth, 0.5f, 0.05f);
-		DirectX::XMMATRIX hpBarForegroundWorld =
-			hpBarForegroundScale * billboardMatrix * hpBarForegroundOffset * playerTranslation;
-		DirectX::XMMATRIX hpBarForegroundMVP = hpBarForegroundWorld * view * projection;
-
-		// HP바 수치 상수 버퍼에 업데이트
-		DirectX::XMStoreFloat4x4(&m_hpBarForegroundData.mvp, DirectX::XMMatrixTranspose(hpBarForegroundMVP));
-		memcpy(m_pHpBarForegroundDataBegin, &m_hpBarForegroundData, sizeof(m_hpBarForegroundData));
-
-		// HP바 수치 그리기
-		cmdList->SetGraphicsRootConstantBufferView(0, m_hpBarForegroundBuffer->GetGPUVirtualAddress());
-		cmdList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-		
-		// 원래 플레이어 버텍스 버퍼로 복원
-		cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	}
-
-	// 위쪽 전투 UI 렌더링 (3개 오각형)
-	{
-		cmdList->IASetVertexBuffers(0, 1, &m_pentagonVertexBufferView);
-		cmdList->IASetIndexBuffer(&m_pentagonIndexBufferView);
-		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-		DirectX::XMMATRIX pentagonOffset = DirectX::XMMatrixTranslation(0.0f, 3.0f, 0.0f);
-		//DirectX::XMMATRIX pentagonScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.25f);
-
-		// 회전축 설정
-		DirectX::XMFLOAT3 rotationPivot(0.0f, -0.35f, 0.0f); // 아래쪽 중심
-		DirectX::XMMATRIX pivotToOrigin =
-			DirectX::XMMatrixTranslation(-rotationPivot.x, -rotationPivot.y, -rotationPivot.z);
-		DirectX::XMMATRIX originToPivot =
-			DirectX::XMMatrixTranslation(rotationPivot.x, rotationPivot.y, rotationPivot.z);
-
-		for (int i = 0; i < 3; i++)
-		{
-			float			  rotationAngle = i * (2.0f * XM_PI / 3.0f); // 120도씩 회전
-			DirectX::XMMATRIX pentagonRotation = DirectX::XMMatrixRotationZ(rotationAngle);
-
-			// 변환 순서: Scale -> 피벗으로 이동 -> 회전 -> 피벗에서 복귀 -> Billboard -> Translation
-			DirectX::XMMATRIX pentagonWorld = pivotToOrigin * pentagonRotation * originToPivot *
-											  billboardMatrix * pentagonOffset * playerTranslation;
-			DirectX::XMMATRIX pentagonMVP = pentagonWorld * view * projection;
-
-			// 각각의 상수 버퍼에 업데이트
-			DirectX::XMStoreFloat4x4(&m_pentagonConstantBufferData[i].mvp, DirectX::XMMatrixTranspose(pentagonMVP));
-			memcpy(m_pPentagonDataBegin[i], &m_pentagonConstantBufferData[i], sizeof(m_pentagonConstantBufferData[i]));
-
-			// 해당 상수 버퍼로 그리기
-			cmdList->SetGraphicsRootConstantBufferView(0, m_pentagonConstantBuffer[i]->GetGPUVirtualAddress());
-			cmdList->DrawIndexedInstanced(m_pentagonIndexCount, 1, 0, 0, 0);
-		}
-
-		// 원래 설정으로 복원
-		cmdList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-		cmdList->IASetIndexBuffer(&m_indexBufferView);
-		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		meshRenderer->Render(cmdList, view, projection);
 	}
 }
 
 DirectX::XMMATRIX Player::GetViewMatrix() const
 {
-	// 수정:
-	Vec3  pos = GetPosition();
-	float camX = pos.x - m_cameraDistance * sinf(m_cameraYaw) * cosf(m_cameraPitch);
-	float camY = pos.y + 3.0f + m_cameraDistance * sinf(m_cameraPitch);
-	float camZ = pos.z - m_cameraDistance * cosf(m_cameraYaw) * cosf(m_cameraPitch);
-
-	float lookX = pos.x + 2.0f * sinf(m_cameraYaw);
-	float lookY = pos.y + 1.0f + 2.0f * sinf(m_cameraPitch);
-	float lookZ = pos.z + 2.0f * cosf(m_cameraYaw);
-
-
-    return DirectX::XMMatrixLookAtLH(
-		DirectX::XMVectorSet(camX, camY, camZ, 1.0f), 
-		DirectX::XMVectorSet(lookX, lookY, lookZ, 1.0f),
-		DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-	);
+    Vec3 pos = GetPosition();
+    
+    // 기본 3인칭 카메라
+    DirectX::XMVECTOR cameraPos = DirectX::XMVectorSet(pos.x, pos.y + 2.0f, pos.z - 10.0f, 1.0f);
+    DirectX::XMVECTOR target = DirectX::XMVectorSet(pos.x, pos.y, pos.z, 1.0f);
+    DirectX::XMVECTOR up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    
+    return DirectX::XMMatrixLookAtLH(cameraPos, target, up);
 }
 
 void Player::SetTeamColor() 

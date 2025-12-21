@@ -1,6 +1,7 @@
 // NPC.h
 #pragma once
 #include "GameObject.h"
+#include "MeshRenderer.h"
 
 class NPC : public GameObject {
 public:

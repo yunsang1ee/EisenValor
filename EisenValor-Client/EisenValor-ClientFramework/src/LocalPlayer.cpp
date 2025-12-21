@@ -10,6 +10,22 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 	// 부모 클래스 초기화
 	Player::Initialize(device);
 
+	 // 기존 MeshRenderer 추가
+	auto meshRenderer = std::make_unique<MeshRenderer>();
+	meshRenderer->SetColor(0.0f, 0.0f, 1.0f); // 파란색
+	meshRenderer->Initialize(device);
+	AddCoreComponent<MeshRenderer>(CoreComponentType::MeshRenderer, std::move(meshRenderer));
+
+	// CameraComponent 추가
+	auto cameraComponent = std::make_unique<CameraComponent>();
+	cameraComponent->SetCameraMode(CameraMode::NORMAL); // 기본: 일반 모드
+	AddCoreComponent<CameraComponent>(CoreComponentType::Camera, std::move(cameraComponent));
+
+	// MovementComponent 추가
+	auto movementComponent = std::make_unique<MovementComponent>();
+	movementComponent->SetMoveSpeed(m_playerSpeed); // 기존 속도 설정
+	AddCoreComponent<MovementComponent>(CoreComponentType::Movement, std::move(movementComponent));
+
 	// 부채꼴 초기화
 	InitializeFan(device);
 
@@ -21,6 +37,29 @@ void LocalPlayer::Initialize(ID3D12Device* device)
 
 	 // 디버그 원 초기화
 	InitializeDebugCircle(device);
+}
+
+DirectX::XMMATRIX LocalPlayer::GetViewMatrix() const
+{
+	auto* camera = GetCoreComponent<CameraComponent>(CoreComponentType::Camera);
+	if (camera)
+	{
+		return camera->GetViewMatrix();
+	}
+
+	// 폴백: 기본 뷰 매트릭스
+	return DirectX::XMMatrixLookAtLH(
+		DirectX::XMVectorSet(0, 2, -5, 1), DirectX::XMVectorSet(0, 0, 0, 1), DirectX::XMVectorSet(0, 1, 0, 0)
+	);
+}
+
+void LocalPlayer::ToggleCameraMode()
+{
+	auto* camera = GetCoreComponent<CameraComponent>(CoreComponentType::Camera);
+	if (camera)
+	{
+		camera->ToggleCameraMode();
+	}
 }
 
 void LocalPlayer::InitializeWireFrame(ID3D12Device* device)
@@ -188,13 +227,17 @@ void LocalPlayer::InitializeCommandArea(ID3D12Device* device)
 DirectX::XMFLOAT3 LocalPlayer::CalculateGroundTargetPosition() const
 {
 	// 플레이어가 바라보는 방향 벡터 계산
-	float forwardX = sinf(m_cameraYaw);
-	float forwardZ = cosf(m_cameraYaw);
+	Vec3  playerRot = GetRotation();
+	float playerYaw = playerRot.y;
+
+	// 플레이어가 바라보는 방향 벡터 계산
+	float forwardX = sinf(playerYaw);
+	float forwardZ = cosf(playerYaw);
 
 
 	// 플레이어 위치에서 바라보는 방향으로 일정 거리만큼 떨어진 바닥 위치
 	DirectX::XMFLOAT3 targetPos;
-	Vec3			  pos = GetPosition();
+	Vec3 pos = GetPosition();
 	targetPos.x = pos.x + forwardX * m_commandAreaDistance;
 	targetPos.y = -0.5f; // 바닥 높이
 	targetPos.z = pos.z + forwardZ * m_commandAreaDistance;
@@ -215,7 +258,9 @@ void LocalPlayer::RenderCommandArea(
 	DirectX::XMFLOAT3 targetPos = CalculateGroundTargetPosition();
 
 	// 월드 변환 행렬 (위치만 적용, 회전은 플레이어 방향에 맞춤)
-	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(m_cameraYaw);
+	Vec3  playerRot = GetRotation();
+	float playerYaw = playerRot.y;
+	DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(playerYaw);
 	DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(targetPos.x, targetPos.y, targetPos.z);
 	DirectX::XMMATRIX world = rotation * translation;
 
@@ -234,8 +279,11 @@ void LocalPlayer::RenderCommandArea(
 
 void LocalPlayer::Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
 {
-	// 플레이어 자체 렌더링
-	Player::Render(cmdList, view, projection);
+	auto* meshRenderer = GetCoreComponent<MeshRenderer>(CoreComponentType::MeshRenderer);
+	if (meshRenderer)
+	{
+		meshRenderer->Render(cmdList, view, projection);
+	}
 
 	// 부채꼴 렌더링
 	RenderFan(cmdList, view, projection);
@@ -252,27 +300,26 @@ void LocalPlayer::Update(float deltaTime)
 #ifdef DEAD_RECKONING
 	UniformAcceleration(deltaTime);
 #else
-	// UniformVelocity(deltaTime);
+	// 모든 컴포넌트를 자동으로 업데이트
+	UpdateComponents(deltaTime);
+
+	// 기존 UpdateInput은 카메라/UI 입력만 처리
 	UpdateInput(deltaTime);
-#endif // DEAD_RECKONING
+#endif
 }
 
 void LocalPlayer::UniformVelocity(const float deltaTime)
 {
-	int wheelDelta = Globals::Input().GetWheelScroll();
-	if (wheelDelta != 0)
-	{
-		m_cameraDistance -= wheelDelta * 0.001f;
-		m_cameraDistance = std::clamp(m_cameraDistance, 5.0f, 30.0f);
-	}
+	Vec3  playerRot = GetRotation();
+	float playerYaw = playerRot.y;
 
 	// 플레이어 정면 벡터
-	const float forwardX = sinf(m_cameraYaw);
-	const float forwardZ = cosf(m_cameraYaw);
+	const float forwardX = sinf(playerYaw);
+	const float forwardZ = cosf(playerYaw);
 
 	// 플레이어 우측 벡터
-	const float rightX = sinf(m_cameraYaw + XM_PIDIV2);
-	const float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
+	const float rightX = sinf(playerYaw + XM_PIDIV2);
+	const float rightZ = cosf(playerYaw + XM_PIDIV2);
 
 	const float moveSpeed = m_playerSpeed * deltaTime;
 
@@ -363,33 +410,46 @@ void LocalPlayer::UniformVelocity(const float deltaTime)
 
 void LocalPlayer::UniformAcceleration(const float deltaTime)
 {
-	m_acceleration = Vec3{0, 0, 0}; // 매 프레임 초기화
-	Vec3 forwardDir{sinf(m_cameraYaw), 0.f, cosf(m_cameraYaw)};
-	Vec3 rightDir{sinf(m_cameraYaw + XM_PIDIV2), 0.f, cosf(m_cameraYaw + XM_PIDIV2)};
+	Vec3 currentAccel = GetAcceleration();
+	currentAccel = Vec3{0, 0, 0}; // 매 프레임 초기화
+	SetAccelration(currentAccel);
+
+	Vec3  playerRot = GetRotation();
+	float playerYaw = playerRot.y;
+
+	Vec3 forwardDir{sinf(playerYaw), 0.f, cosf(playerYaw)};
+	Vec3 rightDir{sinf(playerYaw + XM_PIDIV2), 0.f, cosf(playerYaw + XM_PIDIV2)};
 
 	constexpr float accelValue = 5.f;
 
 	if (Globals::Input().GetInputDown('W'))
 	{
-		m_acceleration.x += forwardDir.x * accelValue;
-		m_acceleration.y += forwardDir.y * accelValue;
-		m_acceleration.z += forwardDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x += forwardDir.x * accelValue;
+		accel.y += forwardDir.y * accelValue;
+		accel.z += forwardDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
-		sendFlag = true;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 	}
 
 	else if (Globals::Input().GetInputDown('S'))
 	{
-		m_acceleration.x -= forwardDir.x * accelValue;
-		m_acceleration.y -= forwardDir.y * accelValue;
-		m_acceleration.z -= forwardDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x -= forwardDir.x * accelValue;
+		accel.y -= forwardDir.y * accelValue;
+		accel.z -= forwardDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 		sendFlag = true;
 	}
 	else if (Globals::Input().GetInputUp('W'))
@@ -410,78 +470,98 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 	}
 	else if (Globals::Input().GetInputDown('A'))
 	{
-		m_acceleration.x -= rightDir.x * accelValue;
-		m_acceleration.y -= rightDir.y * accelValue;
-		m_acceleration.z -= rightDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x -= rightDir.x * accelValue;
+		accel.y -= rightDir.y * accelValue;
+		accel.z -= rightDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 		sendFlag = true;
 	}
 	else if (Globals::Input().GetInputDown('D'))
 	{
-		m_acceleration.x += rightDir.x * accelValue;
-		m_acceleration.y += rightDir.y * accelValue;
-		m_acceleration.z += rightDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x += rightDir.x * accelValue;
+		accel.y += rightDir.y * accelValue;
+		accel.z += rightDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 		sendFlag = true;
 	}
 
 
 	else if (Globals::Input().GetInput('W'))
 	{
-		m_acceleration.x += forwardDir.x * accelValue;
-		m_acceleration.y += forwardDir.y * accelValue;
-		m_acceleration.z += forwardDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x += forwardDir.x * accelValue;
+		accel.y += forwardDir.y * accelValue;
+		accel.z += forwardDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 		// sendFlag = true;
 	}
 
 	else if (Globals::Input().GetInput('S'))
 	{
-		m_acceleration.x -= forwardDir.x * accelValue;
-		m_acceleration.y -= forwardDir.y * accelValue;
-		m_acceleration.z -= forwardDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x -= forwardDir.x * accelValue;
+		accel.y -= forwardDir.y * accelValue;
+		accel.z -= forwardDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
-
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 		// sendFlag = true;
 	}
 
 	else if (Globals::Input().GetInput('A'))
 	{
-		m_acceleration.x -= rightDir.x * accelValue;
-		m_acceleration.y -= rightDir.y * accelValue;
-		m_acceleration.z -= rightDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x -= rightDir.x * accelValue;
+		accel.y -= rightDir.y * accelValue;
+		accel.z -= rightDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 
 		// sendFlag = true;
 	}
 
 	else if (Globals::Input().GetInput('D'))
 	{
-		m_acceleration.x += rightDir.x * accelValue;
-		m_acceleration.y += rightDir.y * accelValue;
-		m_acceleration.z += rightDir.z * accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.x += rightDir.x * accelValue;
+		accel.y += rightDir.y * accelValue;
+		accel.z += rightDir.z * accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 
 		// sendFlag = true;
 	}
@@ -489,31 +569,40 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 	// 수직 이동
 	else if (Globals::Input().GetInput('L'))
 	{
-		m_acceleration.y += accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.y += accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 
 		//	sendFlag = true;
 	}
 	else if (Globals::Input().GetInput('H'))
 	{
-		m_acceleration.y -= accelValue;
+		Vec3 accel = GetAcceleration();
+		accel.y -= accelValue;
+		SetAccelration(accel);
 
-		m_velocity.x += m_acceleration.x * deltaTime;
-		m_velocity.y += m_acceleration.y * deltaTime;
-		m_velocity.z += m_acceleration.z * deltaTime;
-
+		Vec3 vel = GetVelocity();
+		vel.x += accel.x * deltaTime;
+		vel.y += accel.y * deltaTime;
+		vel.z += accel.z * deltaTime;
+		SetVelocity(vel);
 		//		sendFlag = true;
 	}
 	else
 	{
 		const float dampingFactor = 0.95f; // 예: 0.9 ~ 0.95 정도로 시작
 
-		m_velocity.x *= dampingFactor;
-		m_velocity.y *= dampingFactor;
-		m_velocity.z *= dampingFactor;
+		Vec3 vel = GetVelocity();
+		vel.x *= dampingFactor;
+		vel.y *= dampingFactor;
+		vel.z *= dampingFactor;
+		SetVelocity(vel);
 	}
 
 	if (Globals::Input().GetInputDown('R'))
@@ -522,10 +611,11 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
-    Vec3 currentPos = GetPosition();
-	currentPos.x += m_velocity.x * deltaTime;
-	currentPos.y += m_velocity.y * deltaTime;
-	currentPos.z += m_velocity.z * deltaTime;
+	Vec3 currentPos = GetPosition();
+	Vec3 vel = GetVelocity();
+	currentPos.x += vel.x * deltaTime;
+	currentPos.y += vel.y * deltaTime;
+	currentPos.z += vel.z * deltaTime;
 	SetPosition(currentPos);
 
 	// 위치 디버깅
@@ -567,29 +657,29 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 void LocalPlayer::UpdateInput(const float deltaTime)
 {
 	const auto& input = Globals::Input();
-
-	// Ctrl 키로 카메라 모드 토글
+	// Ctrl 키로 카메라 모드 토글 - CameraComponent 사용
 	if (input.GetInputDown(VK_CONTROL))
 	{
-		if (m_cameraMode == CameraMode::NORMAL)
+		auto* camera = GetCoreComponent<CameraComponent>(CoreComponentType::Camera);
+		if (camera)
 		{
-			m_cameraMode = CameraMode::COMBAT;
-			// 전투 모드로 전환 시 마우스 커서 보이기
-			ShowCursor(TRUE);
-		}
-		else
-		{
-			m_cameraMode = CameraMode::NORMAL;
-			// 일반 모드로 전환 시 마우스 커서 숨기기
-			ShowCursor(FALSE);
+			camera->ToggleCameraMode();
 
-			// UI 선택 해제
-			SetUISelection(UISelection::NONE);
+			// 모드에 따라 마우스 커서 설정
+			if (camera->GetCameraMode() == CameraMode::COMBAT)
+			{
+				ShowCursor(TRUE); // 전투 모드: 커서 보이기
+			}
+			else
+			{
+				ShowCursor(FALSE); // 일반 모드: 커서 숨기기
+			}
 		}
 	}
 
-	// 카메라 모드에 따라 다른 입력 처리
-	if (m_cameraMode == CameraMode::NORMAL)
+	    // 카메라 모드에 따라 다른 입력 처리 - CameraComponent 사용
+	auto* camera = GetCoreComponent<CameraComponent>(CoreComponentType::Camera);
+	if (camera && camera->GetCameraMode() == CameraMode::NORMAL)
 	{
 		UpdateNormalModeInput(deltaTime);
 	}
@@ -605,48 +695,23 @@ void LocalPlayer::UpdateNormalModeInput(const float deltaTime)
 	const auto& input = Globals::Input();
 	const bool	isLeftButtonPressed = input.GetInput(VK_LBUTTON);
 
-	// 현재 마우스 위치
+	auto* camera = GetCoreComponent<CameraComponent>(CoreComponentType::Camera);
+	if (!camera)
+		return;
+
+	// CameraComponent 에 마우스 입력 전달
 	const auto mousePos = input.GetMousePosition();
+	camera->ProcessMouseInput(mousePos.x, mousePos.y, isLeftButtonPressed);
 
-	if (isLeftButtonPressed)
-	{
-		if (!m_isMouseDragging)
-		{
-			m_isMouseDragging = true;
-			m_lastMouseX = mousePos.x; // 시작 위치 저장
-			m_lastMouseY = mousePos.y;
-		}
-		else
-		{
-			// 움직임 감지
-			const float deltaX = mousePos.x - m_lastMouseX;
-			const float deltaY = mousePos.y - m_lastMouseY;
+	// 플레이어 회전 동기화
+	Vec3  currentRot = GetRotation();
+	float totalYaw = currentRot.y + camera->GetNormalModeYaw();
 
-			if (abs(deltaX) > 0.1f || abs(deltaY) > 0.1f)
-			{
-				// 카메라 회전 업데이트
-				m_cameraYaw += deltaX * m_mouseSensitivity;
-				Vec3 currentRot = GetRotation();
-				currentRot.y = m_cameraYaw;
-				SetRotation(currentRot);
-				m_cameraPitch += deltaY * m_mouseSensitivity;
+	Vec3 newRot = currentRot;
+	newRot.y = totalYaw;
+	SetRotation(newRot);
 
-				// Pitch 제한 (위아래 회전 제한)
-				m_cameraPitch = std::clamp(m_cameraPitch, -1.5f, 1.5f);
-			}
-
-			m_lastMouseX = mousePos.x;
-			m_lastMouseY = mousePos.y;
-		}
-	}
-	else
-	{
-		if (m_isMouseDragging)
-		{
-			// 드래그 종료
-			m_isMouseDragging = false;
-		}
-	}
+	camera->SetNormalModeYaw(0.0f);
 
 	// 키보드 입력 처리
 	HandleKeyboardInput(deltaTime);
@@ -793,32 +858,32 @@ void LocalPlayer::UpdateCombatModeInput(const float deltaTime)
 
 	// 키보드 입력 처리
 	HandleKeyboardInput(deltaTime);
-
-	// 전투 모드 전용 카메라 각도 설정
-	Vec3 currentRot = GetRotation();
-	m_cameraYaw = currentRot.y;
-	m_cameraPitch = -0.3f;
 }
 
 void LocalPlayer::HandleKeyboardInput(const float deltaTime)
 {
 	const auto& input = Globals::Input();
 
-	// 플레이어 정면 벡터
-	const float forwardX = sinf(m_cameraYaw);
-	const float forwardZ = cosf(m_cameraYaw);
+	auto* movement = GetCoreComponent<MovementComponent>(CoreComponentType::Movement);
+	if (!movement)
+		return;
 
-	// 플레이어 우측 벡터
-	const float rightX = sinf(m_cameraYaw + XM_PIDIV2);
-	const float rightZ = cosf(m_cameraYaw + XM_PIDIV2);
-	if (input.GetInputDown('E'))
+	movement->SetInputForward(input.GetInput('W'));
+	movement->SetInputBackward(input.GetInput('S'));
+	movement->SetInputLeft(input.GetInput('A'));
+	movement->SetInputRight(input.GetInput('D'));
+
+
+    if (input.GetInputDown('E'))
 	{
 		m_playerSpeed += 10.f;
+		movement->SetMoveSpeed(m_playerSpeed); // ← 추가
 	}
 
 	if (input.GetInputUp('E'))
 	{
 		m_playerSpeed -= 10.f;
+		movement->SetMoveSpeed(m_playerSpeed); // ← 추가
 	}
 
 	if (input.GetInputDown('U'))
@@ -826,41 +891,6 @@ void LocalPlayer::HandleKeyboardInput(const float deltaTime)
 		auto pb = NetBridge::ClientPackets::Make_CS_CHANGE_SOLDIER_FORMATION();
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
-
-	if (input.GetInput('W'))
-	{
-		m_velocity.x = forwardX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = forwardZ * m_playerSpeed;
-	}
-	if (input.GetInput('S'))
-	{
-		m_velocity.x = -forwardX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = -forwardZ * m_playerSpeed;
-	}
-	if (input.GetInput('A'))
-	{
-		m_velocity.x = -rightX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = -rightZ * m_playerSpeed;
-	}
-	if (input.GetInput('D'))
-	{
-		m_velocity.x = rightX * m_playerSpeed;
-		m_velocity.y = 0.f;
-		m_velocity.z = rightZ * m_playerSpeed;
-	}
-	// 키를 뗏을 때
-	if (Globals::Input().GetInputUp('W') || Globals::Input().GetInputUp('S') || Globals::Input().GetInputUp('A') ||
-		Globals::Input().GetInputUp('D'))
-	{
-		m_velocity.x = 0.f;
-		m_velocity.y = 0.f;
-		m_velocity.z = 0.f;
-		sendFlag = true;
-	}
-
 
 	if (Globals::Input().GetInputDown('R'))
 	{
@@ -876,15 +906,6 @@ void LocalPlayer::HandleKeyboardInput(const float deltaTime)
 
 	if (Globals::Input().GetInputDown('T'))
 	{
-		// auto pos = GetPosition();
-
-		//// 플레이어가 바라보는 방향 벡터 (XZ 평면)
-		// const float forwardX = sinf(m_cameraYaw);
-		// const float forwardZ = cosf(m_cameraYaw);
-
-		//// 5.f 만큼 떨어진 위치
-		// pos.x += forwardX * 5.f;
-		// pos.z += forwardZ * 5.f;
 		Vec3 pos;
 		auto pb = NetBridge::ClientPackets::Make_CS_SOLDIER_MOVE_PACKET(pos);
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
@@ -896,22 +917,6 @@ void LocalPlayer::HandleKeyboardInput(const float deltaTime)
 		MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 	}
 
-	// if(input.GetInputDown(VK_F1)) {
-	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_1);
-	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-	// }
-	// else if(input.GetInputDown(VK_F2)) {
-	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_2);
-	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-	// }
-	// else if (input.GetInputDown(VK_F3))
-	//{
-	//	auto pb = NetBridge::ServerPacketHandler::Make_CS_SOLDIER_FORMATION(SOLDIER_FORMATION::FORMATION_3);
-	//	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-	// }
-
-	UpdatePos(deltaTime);
-
 	const auto now = std::chrono::high_resolution_clock::now();
 	const auto elapsed = now - lastSend;
 	if (sendFlag || elapsed >= std::chrono::milliseconds(100))
@@ -921,48 +926,23 @@ void LocalPlayer::HandleKeyboardInput(const float deltaTime)
 	}
 }
 
-// virtual - override
-DirectX::XMMATRIX LocalPlayer::GetViewMatrix() const
-{
-	if (m_cameraMode == CameraMode::NORMAL)
-	{
-		// 기존 방식
-		return Player::GetViewMatrix();
-	}
-	else
-	{
-		Vec3  pos = GetPosition();
-		Vec3  rot = GetRotation();
-		float camX = pos.x - m_combatCameraDistance * sinf(rot.y);
-		float camY = pos.y + m_combatCameraHeight;
-		float camZ = pos.z - m_combatCameraDistance * cosf(rot.y);
-
-		float lookX = pos.x + sinf(rot.y) * 10.0f;
-		float lookY = pos.y + 1.0f;
-		float lookZ = pos.z + cosf(rot.y) * 10.0f;
-
-		return DirectX::XMMatrixLookAtLH(
-			DirectX::XMVectorSet(camX, camY, camZ, 0.0f), DirectX::XMVectorSet(lookX, lookY, lookZ, 0.0f),
-			DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-		);
-	}
-}
-
-void LocalPlayer::UpdatePos(const float deltaTime)
-{
-	Vec3 currentPos = GetPosition();
-	currentPos.x += m_velocity.x * deltaTime;
-	currentPos.y += m_velocity.y * deltaTime;
-	currentPos.z += m_velocity.z * deltaTime;
-	SetPosition(currentPos);
-}
-
 void LocalPlayer::SendMovePacket()
 {
-	const Vec3	 pos{GetPosition()};
-	const Vec3	 rot{GetRotation()};
-	const Vec3	 vel{GetVelocity()};
-	const Vec3	 accel{GetAcceleration()};
+	const Vec3 pos{GetPosition()};
+	Vec3 currentRot = GetRotation();
+	const Vec3 rot{0.f, currentRot.y, 0.f};
+
+	auto* movement = GetCoreComponent<MovementComponent>(CoreComponentType::Movement);
+	Vec3  vel{0.0f, 0.0f, 0.0f};
+	Vec3  accel{0.0f, 0.0f, 0.0f};
+
+	if (movement)
+	{
+		vel = movement->GetVelocity();
+		accel = movement->GetAcceleration();
+	}
+
+
 	const uint64 timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 								 std::chrono::high_resolution_clock::now().time_since_epoch()
 	)
@@ -1283,7 +1263,8 @@ void LocalPlayer::RenderDebugCircle(
 )
 {
 	// 전투 모드일 때만 렌더링
-	if (m_cameraMode != CameraMode::COMBAT)
+	auto* camera = GetCoreComponent<CameraComponent>(CoreComponentType::Camera);
+	if (!camera || camera->GetCameraMode() != CameraMode::COMBAT)
 		return;
 
 	// 화면 종횡비 계산

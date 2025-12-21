@@ -4,6 +4,7 @@
 #include "Transform.h"
 #include "IComponent.h"        
 #include "ComponentTypes.h"   
+#include "MovementComponent.h"
 #include <array>            
 #include <vector>              
 
@@ -25,7 +26,7 @@ public:
 	}
 	virtual Vec3 GetPosition() const
 	{
-		return m_transform.GetPosition(); // Transform에서 반환
+		return m_transform.GetPosition();
 	}
 	virtual void SetRotation(const Vec3& rot)
 	{
@@ -33,12 +34,49 @@ public:
 	}
 	virtual Vec3 GetRotation() const
 	{
-		return m_transform.GetRotation(); // Transform에서 반환
+		return m_transform.GetRotation();
 	}
-	virtual void SetVelocity(const Vec3& velocity) { m_velocity = velocity; }
-	virtual Vec3 GetVelocity() const { return m_velocity; }
-	virtual void SetAccelration(const Vec3& acceleration) { m_acceleration = acceleration; }
-	virtual Vec3 GetAcceleration() const { return m_acceleration; }
+	virtual void SetVelocity(const Vec3& velocity)
+	{
+		// MovementComponent가 있으면 우선 사용
+		auto* movement = GetCoreComponent<MovementComponent>(CoreComponentType::Movement);
+		if (movement)
+		{
+			movement->SetVelocity(velocity);
+			return;
+		}
+	}
+
+	virtual Vec3 GetVelocity() const
+	{
+		const auto* movement = GetCoreComponent<MovementComponent>(CoreComponentType::Movement);
+		if (movement)
+		{
+			return movement->GetVelocity();
+		}
+		return Vec3{0.0f, 0.0f, 0.0f};
+	}
+
+	virtual void SetAccelration(const Vec3& acceleration)
+	{
+		// MovementComponent가 있으면 우선 사용
+		auto* movement = GetCoreComponent<MovementComponent>(CoreComponentType::Movement);
+		if (movement)
+		{
+			movement->SetAcceleration(acceleration); 
+			return;
+		}
+	}
+
+	virtual Vec3 GetAcceleration() const
+	{
+		const auto* movement = GetCoreComponent<MovementComponent>(CoreComponentType::Movement);
+		if (movement)
+		{
+			return movement->GetAcceleration();
+		}
+		return Vec3{0.0f, 0.0f, 0.0f};
+	}
 
 	virtual FB_ENUMS::GAME_OBJECT_TYPE GetObjectType() const = 0;
 	
@@ -138,9 +176,6 @@ public:
 	bool   alive{true};
 
 protected:
-	Vec3 m_velocity{0.f, 0.f, 0.f};
-	Vec3 m_acceleration{0.f, 0.f, 0.f};
-	
 	// Transform 컴포넌트
 	Transform m_transform;
 

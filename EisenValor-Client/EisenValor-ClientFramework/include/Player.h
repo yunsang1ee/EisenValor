@@ -2,6 +2,7 @@
 #include "stdafxClientFramework.h"
 #include "GameObject.h"
 #include "DxCommon.h"
+#include "MeshRenderer.h"
 
 enum class UISelection
 {
@@ -29,15 +30,6 @@ public:
 	// Player 전용 함수들
 	void  SetSpeed(float speed) { m_playerSpeed = speed; }
 	float GetSpeed() const { return m_playerSpeed; }
-
-	// 카메라 관련 함수들 추가
-	float GetCameraYaw() const { return m_cameraYaw; }
-	float GetCameraPitch() const { return m_cameraPitch; }
-	float GetCameraDistance() const { return m_cameraDistance; }
-
-	void SetCameraYaw(float yaw) { m_cameraYaw = yaw; }
-	void SetCameraPitch(float pitch) { m_cameraPitch = pitch; }
-	void SetCameraDistance(float distance) { m_cameraDistance = distance; }
 
 	// 카메라 관련 함수 추가
 	virtual DirectX::XMMATRIX GetViewMatrix() const;
@@ -70,15 +62,6 @@ public:
 protected:
 	// 플레이어 속성
 	float m_playerSpeed = 5.0f; // 이동 속도
-
-	// 카메라 관련 변수들 추가
-	bool  m_isMouseDragging = false;
-	float m_cameraYaw = 0.0f;	// 좌우
-	float m_cameraPitch = 0.0f; // 위아래
-	float m_cameraDistance = 15.0f;
-	float m_mouseSensitivity = 0.005f;
-	float m_lastMouseX = 0.0f;
-	float m_lastMouseY = 0.0f;
 
 	// 렌더링 리소스들
 	ComPtr<ID3D12Resource>	 m_vertexBuffer;

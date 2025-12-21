@@ -14,6 +14,8 @@ enum class ComponentFlags : uint8_t
 
 class IComponent
 {
+	friend class GameObject;
+
 public:
 	virtual ~IComponent() = default;
 

@@ -1,13 +1,9 @@
 #pragma once
 
 #include "Player.h"
-
-// 모드 변경
-enum class CameraMode
-{
-	NORMAL, // 일반 모드
-	COMBAT	// 전투 모드
-};
+#include "MeshRenderer.h" 
+#include "CameraComponent.h"
+#include "MovementComponent.h"
 
 class LocalPlayer : public Player
 {
@@ -58,9 +54,11 @@ private:
 public:
 	virtual void Initialize(ID3D12Device* device) override;
 	virtual void Update(float deltaTime) override;
-	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection)
-		override;
+	virtual void Render(ID3D12GraphicsCommandList* cmdList, DirectX::XMMATRIX view, DirectX::XMMATRIX projection) override;
 
+	// 카메라 관련 함수들
+	DirectX::XMMATRIX GetViewMatrix() const;     
+	void			  ToggleCameraMode(); 
 
 	// 부채꼴 관련 함수들
 	void RenderFan(
@@ -74,9 +72,6 @@ public:
 		ID3D12GraphicsCommandList* cmdList, const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& projection
 	);
 	void InitializeCommandArea(ID3D12Device* device);
-
-	// GetViewMatrix
-	DirectX::XMMATRIX GetViewMatrix() const;
 
 	// 윈도우 핸들 설정
 	void SetWindowHandle(HWND hWnd) { m_hWnd = hWnd; }
@@ -94,7 +89,6 @@ private:
 	void UpdateNormalModeInput(const float deltaTime);
 	void UpdateCombatModeInput(const float deltaTime);
 	void HandleKeyboardInput(const float deltaTime);
-	void UpdatePos(const float deltaTime);
 	void SendMovePacket();
 
 	// 와이어프레임 초기화
@@ -102,15 +96,6 @@ private:
 
 	// 플레이어가 바라보는 방향의 바닥 위치 계산
 	DirectX::XMFLOAT3 CalculateGroundTargetPosition() const;
-
-
-
-	CameraMode m_cameraMode = CameraMode::NORMAL;
-
-	// 전투 모드용 카메라 설정
-	float m_combatCameraDistance = 5.0f; // 플레이어 뒤 거리
-	float m_combatCameraHeight = 2.0f;	 
-	float m_combatCameraAngle = 0.0f;
 
 	// 디버그 원 렌더링용 리소스
 	ComPtr<ID3D12Resource>	 m_debugCircleVertexBuffer;

@@ -121,9 +121,6 @@
       <Filter>Common\Global\Globals\TimerGlobal</Filter>
     </ClInclude>
     <ClInclude Include="include\stdafxClientFramework.h" />
-    <ClInclude Include="include\IComponent.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="include\GameObject.h">
       <Filter>Object</Filter>
     </ClInclude>
@@ -205,8 +202,20 @@
     <ClInclude Include="include\Transform.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="include\MeshRenderer.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CameraComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MovementComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IComponent.h">
+      <Filter>Interfaces\Globals</Filter>
+    </ClInclude>
     <ClInclude Include="include\ComponentTypes.h">
-      <Filter>Interfaces</Filter>
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -276,6 +285,15 @@
     </ClCompile>
     <ClCompile Include="src\ClientPackets.cpp">
       <Filter>NetBridge\02. Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshRenderer.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CameraComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MovementComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -162,6 +162,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\ClientPackets.h" />
     <ClInclude Include="include\ComponentTypes.h" />
     <ClInclude Include="include\DxCommandContext.h" />
@@ -186,6 +187,8 @@
     <ClInclude Include="include\ITimerGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\LocalPlayer.h" />
+    <ClInclude Include="include\MeshRenderer.h" />
+    <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkManager.h" />
     <ClInclude Include="include\NPC.h" />
     <ClInclude Include="include\PacketBuffer.h" />
@@ -200,6 +203,7 @@
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\ClientPackets.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
     <ClCompile Include="src\DxCommandContextPool.cpp" />
@@ -215,6 +219,8 @@
     <ClCompile Include="src\Ground.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\LocalPlayer.cpp" />
+    <ClCompile Include="src\MeshRenderer.cpp" />
+    <ClCompile Include="src\MovementComponent.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\NPC.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
