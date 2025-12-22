@@ -1,19 +1,17 @@
 #include "pch.h"
 #include "ThreadManager.h"
 
+#include "ServerEngineConfigureManager.h"
+
 bool ServerEngine::ThreadManager::Init() noexcept
 {
-#ifdef  ENABLE_HYPER_THREADING
-	m_workerThreadCount = std::thread::hardware_concurrency();
-#else
-	m_workerThreadCount = std::thread::hardware_concurrency() / 2;
-#endif //  ENABLE_HYPER_THREADING
+	m_workerThreadCount = MANAGER(ServerEngineConfigureManager)->GetThreadConfigure().MAX_WORKER_THREAD_COUNT;
 
 	TLS_THREAD_ID = IssueID();
 
-	// 0번: 메인 쓰레드
-	// 1번: 리슨 쓰레드
-	// 2번 ~ N번: RioWorker
+	// 0th: Main Thread
+	// 1st: Listen Thread
+	// 2nd ~ Nth: RioWorker
 
 	InitTLS();
 

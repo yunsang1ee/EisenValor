@@ -91,6 +91,9 @@
     <ClInclude Include="MemoryPool.h">
       <Filter>04. MemoryPool</Filter>
     </ClInclude>
+    <ClInclude Include="ServerEngineConfigureManager.h">
+      <Filter>95. Managers\ServerEngineConfigureManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -161,6 +164,9 @@
     </ClCompile>
     <ClCompile Include="MemoryPool.cpp">
       <Filter>04. MemoryPool</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerEngineConfigureManager.cpp">
+      <Filter>95. Managers\ServerEngineConfigureManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,8 +242,14 @@
     <Filter Include="04. MemoryPool\Allocator">
       <UniqueIdentifier>{7b6adc9b-32a3-4c18-81e7-e0f49db5c8d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="95. Managers\ServerEngineConfigureManager">
+      <UniqueIdentifier>{06908acf-c435-4d20-ac06-5b95ff8faf20}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="figure.json">
+      <Filter>96. Utils</Filter>
+    </None>
   </ItemGroup>
 </Project>

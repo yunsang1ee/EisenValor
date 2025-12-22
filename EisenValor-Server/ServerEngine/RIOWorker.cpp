@@ -5,6 +5,7 @@
 #include "SessionPool.h"
 #include "Session.h"
 #include "RIOContext.h"
+#include "ServerEngineConfigureManager.h"
 
 ServerEngine::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
@@ -18,14 +19,18 @@ ServerEngine::RIOWorker::~RIOWorker()
 
 bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 {
+	const auto& rioConfig = MANAGER(ServerEngineConfigureManager)->GetRIOWorkerConfigure();
+	
+	m_ioResults.resize(rioConfig.MAX_RIO_RESULT);
+
 	// SEND/RECV CQ 따로 만들 수 있다. 지금은 공용
+	const int MAX_CQ_SIZE = rioConfig.MAX_CQ_SIZE;
 	m_cq = RIO_EXT_FUNC_TB.RIOCreateCompletionQueue(MAX_CQ_SIZE, nullptr);
 
 	if(m_cq == RIO_INVALID_CQ) {
 		ServerEngine::LogManager::PrintLastError();
 		return false;
 	}
-
 	m_sessionPool.Init(sessionFunc);
 
 	return true;
@@ -50,16 +55,13 @@ void ServerEngine::RIOWorker::FlushSessionPacketQueue() noexcept
 	}
 }
 
-void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
+void ServerEngine::RIOWorker::DequeueCompletion() noexcept
 {
 	assert(TLS_THREAD_ID == m_id);
 
-	std::array<RIORESULT, MAX_RIO_RESULT> ioResults;
-
 	while(true) {
-		memset(ioResults.data(), 0, sizeof(ioResults));
-
-		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, ioResults.data(), static_cast<uint32>(ioResults.size()));
+		m_ioResults.clear();
+		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size()));
 		if(0 == numResults) break;
 		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
@@ -67,10 +69,10 @@ void ServerEngine::RIOWorker::DequeueCompletion() const noexcept
 		}
 		else {
 			for(uint32 i = 0; i < numResults; ++i) {
-				RIOContext* const context = reinterpret_cast<RIOContext*>(ioResults[i].RequestContext);
+				RIOContext* const context = reinterpret_cast<RIOContext*>(m_ioResults[i].RequestContext);
 				auto session = context->GetSession();
 				assert(context && session);
-				const uint32 bytesTransferred = ioResults[i].BytesTransferred;
+				const uint32 bytesTransferred = m_ioResults[i].BytesTransferred;
 				session->Dispatch(context, bytesTransferred);
 			}
 		}

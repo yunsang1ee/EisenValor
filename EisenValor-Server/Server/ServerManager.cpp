@@ -5,11 +5,27 @@
 #include "ClientSession.h"
 #include "GameObjectFactory.h"
 #include "GameRoomManager.h"
+#include "ServerEngineConfigureManager.h"
 
 void Server::ServerManager::Init() noexcept
 {
 	std::wcout.imbue(std::locale("korean"));
+	
+	ServerEngine::LogManager::Init();
+	
+	fs::path configPath =
+		fs::current_path()
+		.parent_path()
+		.parent_path()
+		.parent_path()
+		/ "ServerEngine"
+		/ "figure.json";
 
+	if(false == MANAGER(ServerEngineConfigureManager)->LoadDataFromFile(configPath.string())) {
+		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "ServerEngineConFigureManager Load Failed");
+		exit(-1);
+	}
+		
 	ClientPacketHandler::Init();
 	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
