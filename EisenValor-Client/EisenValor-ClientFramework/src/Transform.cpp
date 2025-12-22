@@ -1,6 +1,8 @@
 #include "stdafxClientFramework.h"
 #include "Transform.h"
-#include <IComponent.h>
+#include "IComponent.h"
+#include "Scene.h"
+#include "SceneGlobal.h"
 
 using namespace DirectX;
 
@@ -12,16 +14,35 @@ Transform::Transform()
 
 Transform::~Transform()
 {
+	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	if (!scene)
+		return;
+
+	auto* storage = scene->GetStorage<Transform>();
+	if (!storage)
+		return;
+
+	// 부모와의 연결 끊기
 	if (m_parent.IsValid())
 	{
-		m_parent->RemoveChild(m_handle);
+		auto* parentTransform = storage->Get(m_parent);
+		if (parentTransform)
+		{
+			parentTransform->RemoveChild(m_handle);
+		}
 	}
 
-	for (auto* child : m_children)
+	// 자식들과의 연결 끊기
+	for (auto& childHandle : m_children)
 	{
-		if (child)
+		if (childHandle.IsValid())
 		{
-			child->m_parent = nullptr;
+			auto* childTransform = storage->Get(childHandle);
+			if (childTransform)
+			{
+				childTransform->m_parent = Handle::Invalid();
+				childTransform->MarkDirty();
+			}
 		}
 	}
 	m_children.clear();
@@ -139,37 +160,50 @@ void Transform::UpdateLocalMatrix()
 void Transform::UpdateWorldMatrix()
 {
 	UpdateLocalMatrix();
-
 	XMMATRIX localMtx = XMLoadFloat4x4(&m_localMatrix);
 
-	if (m_parent)
+	if (m_parent.IsValid())
 	{
-		XMFLOAT4X4 temp = m_parent->GetWorldMatrix();
-		XMMATRIX   parentWorldMtx = XMLoadFloat4x4(&temp);
-		XMMATRIX   worldMtx = localMtx * parentWorldMtx;
-		XMStoreFloat4x4(&m_worldMatrix, worldMtx);
-	}
-	else
-	{
-		m_worldMatrix = m_localMatrix;
+		auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+		auto* parentTransform = storage ? storage->Get(m_parent) : nullptr;
+
+		if (parentTransform)
+		{
+			XMFLOAT4X4 parentWorldMtx4x4 = parentTransform->GetWorldMatrix();
+			XMMATRIX   parentWorldMtx = XMLoadFloat4x4(&parentWorldMtx4x4);
+
+			XMStoreFloat4x4(&m_worldMatrix, localMtx * parentWorldMtx);
+			m_isDirty = false;
+			return;
+		}
 	}
 
+	m_worldMatrix = m_localMatrix;
 	m_isDirty = false;
 }
 
-
-void Transform::SetParent(Handle parent)
+void Transform::SetParent(Handle parentHandle)
 {
-	if (m_parent)
+	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+
+	// 1. 기존 부모에서 제거
+	if (m_parent.IsValid() && storage)
 	{
-		m_parent->RemoveChild(this);
+		auto* oldParent = storage->Get(m_parent);
+		if (oldParent)
+			oldParent->RemoveChild(m_handle);
 	}
 
-	m_parent = parent;
+	m_parent = parentHandle;
 
-	if (m_parent)
+	// 2. 새 부모에 추가
+	if (m_parent.IsValid() && storage)
 	{
-		m_parent->AddChild(this);
+		auto* newParent = storage->Get(m_parent);
+		if (newParent)
+			newParent->AddChild(m_handle);
 	}
 
 	MarkDirtyRecursive();
@@ -209,12 +243,19 @@ Transform::Handle Transform::GetChild(size_t index) const
 
 void Transform::DetachChildren()
 {
-	for (auto* child : m_children)
+	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+
+	if (storage)
 	{
-		if (child)
+		for (auto& childHandle : m_children)
 		{
-			child->m_parent = nullptr;
-			child->MarkDirtyRecursive();
+			auto* childTransform = storage->Get(childHandle);
+			if (childTransform)
+			{
+				childTransform->m_parent = Handle::Invalid();
+				childTransform->MarkDirty();
+			}
 		}
 	}
 	m_children.clear();
@@ -232,17 +273,23 @@ void Transform::MarkDirty()
 
 void Transform::MarkDirtyRecursive()
 {
+	if (m_isDirty)
+		return;
+
 	m_isDirty = true;
 
-	for (auto& child : m_children)
+	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+	if (!storage)
+		return;
+
+	for (auto& childHandle : m_children)
 	{
-		if (child.IsValid())
-		{
-			// child의 MarkDirtyRecursive()
-		}
+		auto* childTransform = storage->Get(childHandle);
+		if (childTransform)
+			childTransform->MarkDirty();
 	}
 }
-
 
 XMFLOAT3 Transform::GetForward()
 {
