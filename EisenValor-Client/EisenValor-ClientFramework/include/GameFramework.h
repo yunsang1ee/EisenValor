@@ -25,7 +25,7 @@
 //	DX::XMFLOAT4X4 projection; // 프로젝션 행렬
 // };
 
-class Actor;
+class GameObject;
 
 struct alignas(16) VertexPNU
 {
@@ -53,7 +53,7 @@ struct alignas(16) PBRMaterial
 };
 static_assert(sizeof(PBRMaterial) % 16 == 0, "PBRMaterial size must be multiple of 16 bytes");
 
-struct GeoInfo
+struct alignas(16) GeoInfo
 {
 	uint32_t vertexBase;
 	uint32_t indexBase;
@@ -61,6 +61,17 @@ struct GeoInfo
 	uint32_t indexCount;
 };
 static_assert(sizeof(GeoInfo) % 16 == 0, "GeoInfo size must be multiple of 16 bytes");
+
+struct alignas(16) InstanceData
+{
+	DX::XMFLOAT4X4 worldMatrix;
+	DX::XMFLOAT4X4 worldIT;
+	uint32_t	   materialIndex;
+	uint32_t	   geoIndex;
+	uint32_t	   pad0;
+	uint32_t	   pad1;
+};
+static_assert(sizeof(GeoInfo) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
 
 class GameFramework
 {
@@ -115,7 +126,7 @@ private:
 	bool								m_usePathTracing = false;
 
 	std::unique_ptr<DxTLAS>				m_tlas;
-	std::vector<std::unique_ptr<Actor>> m_sceneActors;
+	std::vector<std::unique_ptr<GameObject>> m_sceneObjects;
 
 	DxTexture m_raytracingOutput;
 	DxBuffer  m_materialBuffer;

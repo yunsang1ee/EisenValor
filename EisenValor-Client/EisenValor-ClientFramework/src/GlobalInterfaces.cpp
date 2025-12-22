@@ -1,6 +1,7 @@
 #include "stdafxClientFramework.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
+#include "SceneGlobal.h"
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxShaderCompilerGlobal.h"
@@ -34,10 +35,14 @@ void Initialize()
 	auto* device = deviceG.GetDevice();
 	MANAGER(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
 	MANAGER(DxGfxCommandQueueGlobal).Initialize(device);
+
+	MANAGER(SceneGlobal).Initialize();
 }
 
 void Shutdown()
 {
+	MANAGER(SceneGlobal).Release();
+
 	MANAGER(DxGfxCommandQueueGlobal).Release();
 	MANAGER(DxDescriptorHeapGlobal).Release();
 	MANAGER(DxShaderCompilerGlobal).Release();

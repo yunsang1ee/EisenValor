@@ -1,7 +1,7 @@
 #pragma once
 #include "IComponent.h"
 
-class CameraComponent : public IComponent
+class CameraComponent : public ComponentBase<CameraComponent>
 {
 public:
 	CameraComponent();

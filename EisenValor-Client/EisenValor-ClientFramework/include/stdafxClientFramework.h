@@ -100,6 +100,8 @@ enum class SOLDIER_FORMATION
 
 // Container
 #include "DenseList.h"
+template <typename T>
+using HandleOf = DenseListHandle<T>;
 
 // DirectX
 #include "DxCommon.h"
@@ -136,7 +138,7 @@ using Ray = DirectX::SimpleMath::Ray;
 
 #include "NetworkManager.h"
 #include "PacketHandler.h"
-
+#pragma endregion
 
 #pragma region DebugHelpers
 std::string GetTimestamp();
@@ -154,7 +156,26 @@ std::string GetTimestamp();
 
 #pragma endregion
 
+#pragma region Utils
+namespace Utils
+{
+// FNV-1a Hash https://share.google/trFAqACv1zHhll7h8
+constexpr uint64_t HashString(std::string_view str)
+{
+	uint64_t hash = 14695981039346656037ULL;
+	for (char c : str)
+	{
+		hash ^= static_cast<uint8_t>(c);
+		hash *= 1099511628211ULL;
+	}
+	return hash;
+}
+} // namespace Utils
+#pragma endregion
+
 #pragma region Variable
+constexpr uint32 kInvalidServerID = 0;
+
 constexpr size_t kFrameBufferWidth = 1920;
 constexpr size_t kFrameBufferHeight = 1080;
 

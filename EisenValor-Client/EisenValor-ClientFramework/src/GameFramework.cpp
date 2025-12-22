@@ -15,7 +15,7 @@
 #include "DxGarbageCollectorGlobal.h"
 #include "DxCommandContext.h"
 
-#include "Actor.h"
+#include "GameObject.h"
 #include "MeshComponent.h"
 #include "DxBLAS.h"
 
@@ -170,7 +170,7 @@ void GameFramework::CreateStaticScene()
 {
 	auto& device = MANAGER(DxDeviceGlobal);
 
-	auto ground = std::make_unique<Actor>("Ground");
+	auto ground = std::make_unique<GameObject>("Ground");
 	ground->GetTransform().SetPosition(0.0f, 0.0f, 0.0f);
 	ground->GetTransform().SetScale(10.0f);
 
@@ -185,7 +185,7 @@ void GameFramework::CreateStaticScene()
 
 	auto groundMesh = ground->AddComponent<MeshComponent>();
 	groundMesh->SetMesh(groundVertices, groundIndices);
-	m_sceneActors.push_back(std::move(ground));
+	m_sceneObjects.push_back(std::move(ground));
 
 	PBRMaterial groundMaterial;
 	groundMaterial.albedo = {1.0f, 0.95f, 0.8f};
@@ -216,7 +216,7 @@ void GameFramework::CreateStaticScene()
 
 	for (int i = 0; i < 3; ++i)
 	{
-		auto player = std::make_unique<Actor>("Player" + std::to_string(i));
+		auto player = std::make_unique<GameObject>("Player" + std::to_string(i));
 		player->GetTransform().SetPosition(4.0f * (i - 1), (i != 1 ? 3.0f : 1.0f), 0.0f);
 		player->GetTransform().SetRotation(rotations[i]);
 		player->GetTransform().SetScale((i != 1 ? 4.0f : 1.0f));
@@ -273,11 +273,11 @@ void GameFramework::CreateStaticScene()
 		auto playerMesh = player->AddComponent<MeshComponent>();
 		playerMesh->SetMesh(cubeVertices, cubeIndices);
 
-		m_sceneActors.push_back(std::move(player));
+		m_sceneObjects.push_back(std::move(player));
 		m_materials.push_back(playerMaterial[i]);
 	}
 
-	DEBUG_LOG_FMT("[GameFramework] Created static scene: {} actors\n", m_sceneActors.size());
+	DEBUG_LOG_FMT("[GameFramework] Created static scene: {} objects\n", m_sceneObjects.size());
 }
 
 void GameFramework::BuildAccelerationStructures()
@@ -297,24 +297,24 @@ void GameFramework::BuildAccelerationStructures()
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
-	for (auto& actor : m_sceneActors)
+	for (auto& obj : m_sceneObjects)
 	{
-		auto* mesh = actor->GetComponent<MeshComponent>();
+		auto* mesh = obj->GetComponent<MeshComponent>();
 		if (mesh)
 		{
 			mesh->BuildBLAS(device5.Get(), cmdList4.Get(), uploadHeap);
 		}
 	}
 
-	std::vector<Actor*> actorPtrs;
-	actorPtrs.reserve(m_sceneActors.size());
-	for (auto& actor : m_sceneActors)
+	std::vector<GameObject*> objPtrs;
+	objPtrs.reserve(m_sceneObjects.size());
+	for (auto& obj : m_sceneObjects)
 	{
-		actorPtrs.push_back(actor.get());
+		objPtrs.push_back(obj.get());
 	}
 
 	m_tlas = std::make_unique<DxTLAS>();
-	m_tlas->Build(device5.Get(), cmdList4.Get(), uploadHeap, actorPtrs);
+	m_tlas->Build(device5.Get(), cmdList4.Get(), uploadHeap, objPtrs);
 
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 	frame->WaitForCompletion();
@@ -346,9 +346,9 @@ void GameFramework::CreateBuffers()
 	auto& device = MANAGER(DxDeviceGlobal);
 	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
 
-	if (m_sceneActors.empty())
+	if (m_sceneObjects.empty())
 	{
-		DEBUG_LOG_FMT("[GameFramework] WARNING: No actors for geometry buffers\n");
+		DEBUG_LOG_FMT("[GameFramework] WARNING: No objects for geometry buffers\n");
 		return;
 	}
 	if (m_materials.empty())
@@ -362,9 +362,9 @@ void GameFramework::CreateBuffers()
 	m_geoInfoTable.clear();
 	m_instGeoBase.clear();
 
-	for (auto& actor : m_sceneActors)
+	for (auto& obj : m_sceneObjects)
 	{
-		auto* mesh = actor->GetComponent<MeshComponent>();
+		auto* mesh = obj->GetComponent<MeshComponent>();
 		if (!mesh)
 		{
 			continue;
@@ -789,7 +789,7 @@ void GameFramework::Render()
 
 	RenderDXR();
 
-	// RT Output → BackBuffer copy
+	// RT Output -> BackBuffer copy
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
 
 	auto barrier1 = DxUtils::CreateTransitionBarrier(
@@ -804,7 +804,7 @@ void GameFramework::Render()
 
 	cmdList->CopyResource(backBuffer, m_raytracingOutput.GetResource());
 
-	// BackBuffer → Present, RT Output → UAV
+	// BackBuffer -> Present, RT Output -> UAV
 	auto barrier3 =
 		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 

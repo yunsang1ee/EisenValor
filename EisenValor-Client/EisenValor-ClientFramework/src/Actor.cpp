@@ -1,2 +1,0 @@
-#include "stdafxClientFramework.h"
-#include "Actor.h"

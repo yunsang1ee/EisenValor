@@ -4,25 +4,44 @@
 #include <cassert>
 #include <cstdint>
 #include <span>
-#include <utility>
+#include <limits>
+#include <algorithm>
+
+// DenseList
+// - 장기 식별자는 Handle만 사용.
+// - pointer/reference/iterator/span은 컨테이너 변경(Emplace/Remove/Clear/Reserve 등)
+//	 이후 무효화될 수 있으므로 프레임/루프를 넘어 저장 금지.
+// - 순회 중 임시 사용은 허용.
 
 template <typename T>
-	requires std::movable<T>
+struct DenseListHandle
+{
+	uint32_t id = 0;
+	uint32_t generation = 0;
+
+	DenseListHandle() = default;
+	DenseListHandle(uint32_t _id, uint32_t _gen) : id(_id), generation(_gen) {}
+
+	static DenseListHandle Invalid() { return DenseListHandle{0, 0}; }
+
+	bool IsValid() const { return generation != 0; }
+
+	static DenseListHandle FromValue(uint64_t value) noexcept
+	{
+		return DenseListHandle{static_cast<uint32_t>(value & 0xFFFFFFFF), static_cast<uint32_t>(value >> 32)};
+	}
+
+	uint64_t GetValue() const noexcept { return (static_cast<uint64_t>(generation) << 32) | id; }
+
+	auto operator<=>(const DenseListHandle&) const = default;
+};
+
+template <typename T>
+	requires std::movable<T> && std::destructible<T>
 class DenseList
 {
 public:
-	struct Handle
-	{
-		uint32_t id = 0;
-		uint32_t generation = 0;
-
-		static Handle Invalid() { return Handle{0, 0}; }
-
-		bool	 operator==(const Handle& other) const = default;
-		explicit operator bool() const noexcept { return generation != 0; }
-
-		uint64_t GetValue() const { return (static_cast<uint64_t>(generation) << 32) | id; }
-	};
+	using Handle = DenseListHandle<T>;
 
 	using value_type = T;
 	using size_type = std::size_t;
@@ -37,8 +56,18 @@ public:
 	using reverse_iterator = typename std::vector<T>::reverse_iterator;
 	using const_reverse_iterator = typename std::vector<T>::const_reverse_iterator;
 
+private:
+	static constexpr uint32_t kInvalidIndex = std::numeric_limits<uint32_t>::max();
+
+	static void BumpGeneration(uint32_t& gen) noexcept
+	{
+		++gen;
+		if (gen == 0)
+			gen = 1;
+	}
+
 public:
-	DenseList() = default;
+	DenseList() : m_baseGeneration(1) {}
 	~DenseList() = default;
 
 	DenseList(const DenseList&) = delete;
@@ -50,43 +79,83 @@ public:
 public:
 	[[nodiscard]] bool IsValid(Handle handle) const noexcept
 	{
-		return handle.generation != 0 && handle.id < m_generation.size() &&
-			   m_generation[handle.id] == handle.generation;
+		// clang-format off
+		return handle.generation != 0 && 
+			handle.id < m_generation.size() && 
+			handle.id < m_idToIndex.size() &&
+			m_generation[handle.id] == handle.generation&&
+			m_idToIndex[handle.id] != kInvalidIndex;
+		// clang-format on
 	}
 
 	template <typename... Args>
+		requires std::constructible_from<T, Args...>
 	[[nodiscard]] Handle Emplace(Args&&... args)
 	{
-		uint32_t id;
-		if (!m_freeIds.empty())
+		const bool reuse = !m_freeIds.empty();
+		uint32_t   id{};
+
+		if (reuse)
 		{
 			id = m_freeIds.back();
-			m_freeIds.pop_back();
 		}
 		else
 		{
+			assert(m_generation.size() < static_cast<size_type>(std::numeric_limits<uint32_t>::max()));
 			id = static_cast<uint32_t>(m_generation.size());
-			m_generation.push_back(1);
-			m_idToIndex.push_back(0);
-			m_indexToId.push_back(0);
 		}
 
-		uint32_t index = static_cast<uint32_t>(m_data.size());
+		struct Guard
+		{
+			DenseList* self = nullptr;
+			bool	   genAdded = false;
+			bool	   mapAdded = false;
+			bool	   dataAdded = false;
+			bool	   indexAdded = false;
+			bool	   committed = false;
+
+			~Guard()
+			{
+				if (committed)
+					return;
+				if (indexAdded)
+					self->m_indexToId.pop_back();
+				if (dataAdded)
+					self->m_data.pop_back();
+				if (mapAdded)
+					self->m_idToIndex.pop_back();
+				if (genAdded)
+					self->m_generation.pop_back();
+			}
+		} g{this};
+
+		if (!reuse)
+		{
+			m_generation.push_back(m_baseGeneration);
+			g.genAdded = true;
+			m_idToIndex.push_back(kInvalidIndex);
+			g.mapAdded = true;
+		}
+
+		const uint32_t index = static_cast<uint32_t>(m_data.size());
 		m_data.emplace_back(std::forward<Args>(args)...);
+		g.dataAdded = true;
+
+		m_indexToId.push_back(id);
+		g.indexAdded = true;
 
 		m_idToIndex[id] = index;
-		if (index >= m_indexToId.size())
+		if (reuse)
 		{
-			m_indexToId.push_back(id);
+			m_freeIds.pop_back();
 		}
-		else
-		{
-			m_indexToId[index] = id;
-		}
+
+		g.committed = true;
 		return Handle{id, m_generation[id]};
 	}
 
 	template <typename... Args>
+		requires std::constructible_from<T, Args...>
 	[[nodiscard]] Handle Add(Args&&... args)
 	{
 		return Emplace(std::forward<Args>(args)...);
@@ -98,20 +167,79 @@ public:
 		{
 			return;
 		}
-		uint32_t index = m_idToIndex[handle.id];
-		uint32_t lastIndex = static_cast<uint32_t>(m_data.size() - 1);
+		const uint32_t id = handle.id;
+		const uint32_t index = m_idToIndex[id];
+		const uint32_t lastIndex = static_cast<uint32_t>(m_data.size() - 1);
+		const uint32_t lastId = m_indexToId[lastIndex];
+
 		if (index != lastIndex)
 		{
 			m_data[index] = std::move(m_data[lastIndex]);
-			uint32_t lastId = m_indexToId[lastIndex];
+
 			m_idToIndex[lastId] = index;
 			m_indexToId[index] = lastId;
 		}
 		m_data.pop_back();
 		m_indexToId.pop_back();
 
-		m_generation[handle.id]++;
+		m_idToIndex[id] = kInvalidIndex;
+		BumpGeneration(m_generation[handle.id]);
 		m_freeIds.push_back(handle.id);
+	}
+
+	[[nodiscard]] Handle ReserveHandle()
+	{
+		uint32_t   id{};
+
+		if (!m_freeIds.empty())
+		{
+			id = m_freeIds.back();
+			m_freeIds.pop_back();
+		}
+		else
+		{
+			assert(m_generation.size() < static_cast<size_type>(std::numeric_limits<uint32_t>::max()));
+			id = static_cast<uint32_t>(m_generation.size());
+			m_generation.push_back(m_baseGeneration);
+			m_idToIndex.push_back(kInvalidIndex);
+		}
+
+		return Handle{id, m_generation[id]};
+	}
+
+	template <typename... Args>
+		requires std::constructible_from<T, Args...>
+	void FulfillReservation(Handle handle, Args&&... args)
+	{
+		if (!IsValid(handle))
+		{
+			DEBUG_LOG_FMT(
+				"[DenseList] ERROR: Invalid reservation handle (id={}, gen={})\n", handle.id, handle.generation
+			);
+			assert(false && "[DenseList] FulfillReservation - Invalid handle passed");
+			return;
+		}
+
+		if (m_idToIndex[handle.id] != kInvalidIndex)
+		{
+			DEBUG_LOG_FMT(
+				"[DenseList] ERROR: Reservation handle already fulfilled (id={}, gen={})\n", handle.id, handle.generation
+			);
+			assert(false && "[DenseList] FulfillReservation - Handle already fulfilled");
+			return;
+		}
+
+		const uint32_t index = static_cast<uint32_t>(m_data.size());
+		m_data.emplace_back(std::forward<Args>(args)...);
+		m_indexToId.push_back(handle.id);
+		m_idToIndex[handle.id] = index;
+	}
+
+	[[nodiscard]] bool IsReserved(Handle handle) const noexcept
+	{
+		return handle.generation != 0 && handle.id < m_generation.size() &&
+			   m_generation[handle.id] == handle.generation &&
+			   m_idToIndex[handle.id] == kInvalidIndex;
 	}
 
 	[[nodiscard]] pointer TryGet(Handle handle) noexcept
@@ -174,19 +302,50 @@ public:
 		m_generation.reserve(cap);
 		m_freeIds.reserve(cap);
 	}
+
 	void Clear()
 	{
 		m_data.clear();
 		m_indexToId.clear();
-		m_idToIndex.clear();
-		m_generation.clear();
 		m_freeIds.clear();
+
+		const size_t genSize = m_generation.size();
+		m_freeIds.reserve(genSize);
+		for (uint32_t id = 0; id < static_cast<uint32_t>(genSize); ++id)
+		{
+			m_idToIndex[id] = kInvalidIndex;
+			BumpGeneration(m_generation[id]);
+			m_freeIds.push_back(id);
+		}
 	}
+
+	void Reset()
+	{
+		uint32_t maxGen = m_baseGeneration;
+		if (!m_generation.empty())
+		{
+			uint32_t currentMax = *std::max_element(m_generation.begin(), m_generation.end());
+			if (currentMax > maxGen)
+			{
+				maxGen = currentMax;
+			}
+		}
+		m_baseGeneration = maxGen;
+		BumpGeneration(m_baseGeneration);
+
+		std::vector<T>().swap(m_data);
+		std::vector<uint32_t>().swap(m_indexToId);
+		std::vector<uint32_t>().swap(m_idToIndex);
+		std::vector<uint32_t>().swap(m_generation);
+		std::vector<uint32_t>().swap(m_freeIds);
+	}
+
 	std::span<const T> GetSpan() const { return {m_data.data(), m_data.size()}; }
 
 private:
 	std::vector<T> m_data;
 
+	uint32_t			  m_baseGeneration = 1;
 	std::vector<uint32_t> m_indexToId;
 	std::vector<uint32_t> m_idToIndex;
 	std::vector<uint32_t> m_generation;

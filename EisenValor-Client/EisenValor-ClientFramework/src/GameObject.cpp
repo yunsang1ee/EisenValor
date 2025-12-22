@@ -1,37 +1,29 @@
 #include "stdafxClientFramework.h"
 #include "GameObject.h"
+#include "Scene.h"
+#include "Transform.h"
+#include "ComponentStorage.h"
 
-void GameObject::Handle_SC_MOVE(
-	const Vec3& pos, const Vec3& rot, const Vec3& velocity, const Vec3& accel, const uint64 timeStamp
-)
+GameObject::GameObject(Scene* scene, HandleOf<Transform> trHd, std::string name)
+	: m_scene(scene), m_transform(trHd), m_name(std::move(name)), m_handle(Handle::Invalid()), m_serverID(kInvalidServerID)
 {
-#ifdef DEAD_RECKONING
-	lastServerPosition = pos;
-	lastServerVelocity = velocity;
-	lastServerAcceleration = accel;
-	lastServerTimestamp = timeStamp;
-	m_rot = rot;
-	m_velocity = velocity;
-	keyup = false;
-#else
-	lastServerPosition = pos;
-	lastServerVelocity = velocity;
-	lastServerRotation = rot;
-	// std::cout << "Handle_SC_MOVE" << std::endl;
-#endif
 }
 
-void GameObject::SetTeam(Team team)
+inline Transform& GameObject::GetTransform()
 {
-	m_team = team;
+	auto* trStorage = m_scene->GetStorage<Transform>();
+	assert(trStorage && "Transform storage not registered!");
+	return *trStorage->Get(m_transform);
 }
 
-Vec3 GameObject::SmoothLerp(const Vec3& curPos, const Vec3& destPos, const float lerpFactor)
+const Transform& GameObject::GetTransform() const
 {
-	Vec3 pos;
-	pos.x = curPos.x + (destPos.x - curPos.x) * lerpFactor;
-	pos.y = curPos.y + (destPos.y - curPos.y) * lerpFactor;
-	pos.z = curPos.z + (destPos.z - curPos.z) * lerpFactor;
+	auto* trStorage = m_scene->GetStorage<Transform>();
+	assert(trStorage && "Transform storage not registered!");
+	return *trStorage->Get(m_transform);
+}
 
-	return pos;
+DX::XMFLOAT4X4 GameObject::GetWorldMatrix()
+{
+	return GetTransform().GetWorldMatrix();
 }

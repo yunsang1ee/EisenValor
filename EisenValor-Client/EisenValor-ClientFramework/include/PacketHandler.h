@@ -43,6 +43,13 @@ enum class PACKET_TYPE : uint16
 	END
 };
 
+struct ISceneNetReceiver
+{
+	virtual void OnNet_AddObj(const FB_TABLES::SC_ADD_OBJ_PACKET&) = 0;
+	virtual void OnNet_RemoveObj(const FB_TABLES::SC_REMOVE_OBJ_PACKET&) = 0;
+	virtual void OnNet_Move(const FB_TABLES::SC_MOVE_PACKET&) = 0;
+};
+
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
 bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt);

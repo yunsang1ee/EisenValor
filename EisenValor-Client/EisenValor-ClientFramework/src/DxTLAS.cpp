@@ -1,6 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxTLAS.h"
-#include "Actor.h"
+#include "GameObject.h"
 #include "MeshComponent.h"
 #include "DxUploadHeap.h"
 #include "DxUtils.h"
@@ -23,19 +23,19 @@ void DxTLAS::Build(
 	ID3D12Device5*				device,
 	ID3D12GraphicsCommandList4* cmdList,
 	DxUploadHeap*				uploadHeap,
-	const std::vector<Actor*>&	actors
+	const std::vector<GameObject*>&	objects
 )
 {
 	assert(device && cmdList && uploadHeap && "[DxTLAS] Invalid parameters");
-	assert(!actors.empty() && "[DxTLAS] No Actors provided");
+	assert(!objects.empty() && "[DxTLAS] No Objects provided");
 
 	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDescs;
-	instanceDescs.reserve(actors.size());
+	instanceDescs.reserve(objects.size());
 	uint32_t instanceIndex = 0;
 
-	for (uint32_t i = 0; i < actors.size(); ++i)
+	for (uint32_t i = 0; i < objects.size(); ++i)
 	{
-		auto* obj = actors[i];
+		auto* obj = objects[i];
 		auto* mesh = obj->GetComponent<MeshComponent>();
 
 		if (!mesh || !mesh->GetBLAS())

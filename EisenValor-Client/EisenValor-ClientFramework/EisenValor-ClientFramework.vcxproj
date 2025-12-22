@@ -165,8 +165,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
-    <ClInclude Include="include\Actor.h" />
     <ClInclude Include="include\CameraComponent.h" />
+    <ClInclude Include="include\ComponentStorage.h" />
     <ClInclude Include="include\DenseList.h" />
     <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
@@ -189,6 +189,7 @@
     <ClInclude Include="include\DxTLAS.h" />
     <ClInclude Include="include\DxUploadHeap.h" />
     <ClInclude Include="include\DxUtils.h" />
+    <ClInclude Include="include\EngineComponents.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GameObjectManager.h" />
@@ -205,6 +206,9 @@
     <ClInclude Include="include\PacketHandler.h" />
     <ClInclude Include="include\Player.h" />
     <ClInclude Include="include\RecvBuffer.h" />
+    <ClInclude Include="include\RenderDataSync.h" />
+    <ClInclude Include="include\Scene.h" />
+    <ClInclude Include="include\SceneGlobal.h" />
     <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
@@ -212,7 +216,6 @@
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Actor.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
@@ -248,6 +251,8 @@
     <ClCompile Include="src\PacketHandler.cpp" />
     <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneGlobal.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -260,6 +265,7 @@
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
+    <None Include="include\GameObject.inl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

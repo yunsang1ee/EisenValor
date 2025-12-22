@@ -504,7 +504,7 @@ void LocalPlayer::UniformAcceleration(const float deltaTime)
 	}
 	else
 	{
-		const float dampingFactor = 0.95f; // 예: 0.9 ~ 0.95 정도로 시작
+		const float dampingFobject = 0.95f; // 예: 0.9 ~ 0.95 정도로 시작
 
 		m_velocity.x *= dampingFactor;
 		m_velocity.y *= dampingFactor;

@@ -1,7 +1,11 @@
 #pragma once
-class Transform
+#include "IComponent.h"
+
+class Transform : public ComponentBase<Transform>
 {
 public:
+	using Handle = HandleOf<Transform>;
+
 	Transform();
 	~Transform();
 
@@ -22,14 +26,14 @@ public:
 	DX::XMFLOAT4X4 GetLocalMatrix();
 	DX::XMFLOAT4X4 GetWorldMatrix();
 
-	void	   SetParent(Transform* parent);
-	Transform* GetParent() const { return m_parent; }
+	void   SetParent(Handle parent);
+	Handle GetParent() const { return m_parent; }
 
-	const std::vector<Transform*>& GetChildren() const { return m_children; }
-	size_t						   GetChildCount() const { return m_children.size(); }
-	Transform*					   GetChild(size_t index) const;
+	const std::vector<Handle>& GetChildren() const { return m_children; }
+	size_t					   GetChildCount() const { return m_children.size(); }
+	Handle					   GetChild(size_t index) const;
 
-	void RemoveChild(Transform* child);
+	void RemoveChild(Handle child);
 	void DetachChildren();
 
 	DX::XMFLOAT3 GetForward();
@@ -37,7 +41,7 @@ public:
 	DX::XMFLOAT3 GetUp();
 
 private:
-	void AddChild(Transform* child);
+	void AddChild(Handle child);
 	void MarkDirty();
 	void MarkDirtyRecursive();
 	void UpdateLocalMatrix();
@@ -52,6 +56,6 @@ private:
 
 	bool m_isDirty = true;
 
-	Transform*				m_parent = nullptr;
-	std::vector<Transform*> m_children;
+	Handle				m_parent = Handle::Invalid();
+	std::vector<Handle> m_children;
 };

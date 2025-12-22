@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "Transform.h"
+#include <IComponent.h>
 
 using namespace DirectX;
 
@@ -11,9 +12,9 @@ Transform::Transform()
 
 Transform::~Transform()
 {
-	if (m_parent)
+	if (m_parent.IsValid())
 	{
-		m_parent->RemoveChild(this);
+		m_parent->RemoveChild(m_handle);
 	}
 
 	for (auto* child : m_children)
@@ -157,7 +158,7 @@ void Transform::UpdateWorldMatrix()
 }
 
 
-void Transform::SetParent(Transform* parent)
+void Transform::SetParent(Handle parent)
 {
 	if (m_parent)
 	{
@@ -174,12 +175,12 @@ void Transform::SetParent(Transform* parent)
 	MarkDirtyRecursive();
 }
 
-void Transform::AddChild(Transform* child)
+void Transform::AddChild(Handle child)
 {
-	if (!child || child == this)
+	if (!child.IsValid() || child == m_handle)
 		return;
 
-	for (auto* existingChild : m_children)
+	for (auto& existingChild : m_children)
 	{
 		if (existingChild == child)
 			return;
@@ -188,7 +189,7 @@ void Transform::AddChild(Transform* child)
 	m_children.push_back(child);
 }
 
-void Transform::RemoveChild(Transform* child)
+void Transform::RemoveChild(Handle child)
 {
 	auto it = std::find(m_children.begin(), m_children.end(), child);
 	if (it != m_children.end())
@@ -197,13 +198,13 @@ void Transform::RemoveChild(Transform* child)
 	}
 }
 
-Transform* Transform::GetChild(size_t index) const
+Transform::Handle Transform::GetChild(size_t index) const
 {
 	if (index < m_children.size())
 	{
 		return m_children[index];
 	}
-	return nullptr;
+	return Transform::Handle::Invalid();
 }
 
 void Transform::DetachChildren()
@@ -233,11 +234,11 @@ void Transform::MarkDirtyRecursive()
 {
 	m_isDirty = true;
 
-	for (auto* child : m_children)
+	for (auto& child : m_children)
 	{
-		if (child)
+		if (child.IsValid())
 		{
-			child->MarkDirtyRecursive();
+			// child의 MarkDirtyRecursive()
 		}
 	}
 }

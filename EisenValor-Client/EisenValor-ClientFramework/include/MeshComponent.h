@@ -9,7 +9,7 @@ struct Vertex
 	DirectX::XMFLOAT4 color;
 };
 
-class MeshComponent : public IComponent
+class MeshComponent : public ComponentBase<MeshComponent>
 {
 public:
 	MeshComponent() = default;

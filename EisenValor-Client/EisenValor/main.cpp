@@ -2,6 +2,7 @@
 #define _CRTDBG_MAP_ALLOC
 #include "EisenValor.h"
 #include "GameFramework.h"
+#include "SceneGlobal.h"
 // #include "Vec3.h"
 #include "DxMath.h"
 #include <chrono>

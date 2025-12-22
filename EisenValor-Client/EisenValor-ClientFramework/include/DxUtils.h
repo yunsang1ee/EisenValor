@@ -98,7 +98,7 @@ size_t GetFormatSizeInBytes(DXGI_FORMAT format);
 // 깊이 포맷 확인
 bool IsDepthFormat(DXGI_FORMAT format);
 
-// Typeless → Typed 포맷 변환
+// Typeless -> Typed 포맷 변환
 DXGI_FORMAT GetTypedFormat(DXGI_FORMAT typelessFormat, bool isDepth = false);
 
 #pragma endregion

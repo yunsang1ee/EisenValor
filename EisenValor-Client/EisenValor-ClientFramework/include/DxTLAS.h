@@ -1,6 +1,7 @@
 #pragma once
 #include "DxCommon.h"
-#include "Actor.h"
+
+class GameObject;
 
 class DxTLAS
 {
@@ -15,7 +16,7 @@ public:
 		ID3D12Device5*				device,
 		ID3D12GraphicsCommandList4* cmdList,
 		class DxUploadHeap*			uploadHeap,
-		const std::vector<Actor*>&	actors
+		const std::vector<GameObject*>&	objects
 	);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const { return m_tlasBuffer->GetGPUVirtualAddress(); }
