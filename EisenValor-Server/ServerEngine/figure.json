@@ -6,7 +6,7 @@
   "RIOWorkerConfigure": {
     "MAX_SESSION_PER_RIO_WORKER": 50,
     "MAX_RIO_RESULT": 512,
-    "RIO_WORKER_TICK": 64
+    "RIO_WORKER_TICK_MS": 64
   },
 
   "ThreadConfigure": {

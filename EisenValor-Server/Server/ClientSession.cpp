@@ -31,7 +31,7 @@ void Server::ClientSession::OnDisconnected()
 	if(m_player) {
 		auto room = m_player->GetGameRoom();
 		if(room)
-			room->ExecAsync(&Server::Contents::GameRoom::LeaveGame, clientSession);
+			room->ExecAsync(&Server::Contents::GameRoom::LeaveRoom, clientSession);
 	}
 }
 

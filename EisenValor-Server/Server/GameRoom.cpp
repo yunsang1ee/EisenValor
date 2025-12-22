@@ -10,9 +10,10 @@
 #include "FSM.h"
 
 Server::Contents::GameRoom::GameRoom(const uint16 roomID)
-	:m_id{ roomID }
+	:m_id{ roomID }, m_stateType{FB_ENUMS::ROOM_STATE_TYPE_WATING}
 {
 	std::cout << std::format("Room ID:{}", m_id) << std::endl;;
+	m_participants.reserve(6/*촤대 방 인원*/);
 }
 
 void Server::Contents::GameRoom::Init()
@@ -40,10 +41,16 @@ void Server::Contents::GameRoom::ProcessEvents()
 	}
 }
 
-void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
+void Server::Contents::GameRoom::EnterRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
 	std::cout << "Enter Match" << std::endl;
 	clientSession->SetState(SESSION_STATE::IN_GAME);
+
+	// TODO: Room최대 정원을 넘기면 입장 불가
+
+	// TODO: GameRoom::EnterRoom
+	// - 나에게 방에 있는 참여자 정보 보내줌
+	// - 방에 있는 참여자에게 내 정보 보내줌
 
 	static const Vec3 offset{ 3.f, 0.f, 3.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
@@ -91,7 +98,7 @@ void Server::Contents::GameRoom::EnterGame(const std::shared_ptr<ClientSession>&
 	AddGameObject(std::move(player));
 }
 
-void Server::Contents::GameRoom::LeaveGame(const std::shared_ptr<ClientSession>& clientSession) noexcept
+void Server::Contents::GameRoom::LeaveRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
 	auto player = clientSession->GetPlayer();
 	const auto id = player->GetID();
@@ -321,8 +328,17 @@ void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> pl
 	}
 }
 
+void Server::Contents::GameRoom::Handle_CS_GAME_START(std::shared_ptr<Player> player)
+{
+	// TOOD: 게임 시작 검사
+	// - 검사 조건 만족 시 m_gameWorld 초기화
+	// - Participant들이 가지고 있는 Character들을 gameWorld안에 집어넣어야 함.
+	m_stateType = FB_ENUMS::ROOM_STATE_TYPE_PLAYING;
+}
+
 void Server::Contents::GameRoom::Update()
 {
+	// TODO: 방이 게임중 상태일때만 Update
 	const auto now = std::chrono::high_resolution_clock::now();
 	m_dt = 0.f;
 	if(m_firstUpdate) m_firstUpdate = false;
@@ -332,13 +348,18 @@ void Server::Contents::GameRoom::Update()
 
 	m_lastUpdate = now;
 
-	ProcessEvents();
+	// GameWorld Update
+	m_gameWorld.Update(m_dt);
 
+	// ---------------------------------------------------------
+	ProcessEvents();
 	for(auto& team : m_teams)
 		for(auto& objGroup : team.GetAllObjectGroups())
 			for(auto& [id, obj] : objGroup)
 				if(obj)
 					obj->Update(m_dt);
+	// ---------------------------------------------------------
+	// -> GameWorld로 옮기기
 
 	CheckGameTime(m_dt);
 	ExecTimer(UPDATE_MS, &Server::Contents::GameRoom::Update);

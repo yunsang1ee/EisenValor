@@ -13,9 +13,6 @@
     <ClCompile Include="ClientSession.cpp">
       <Filter>01. ClientSessionManager\ClientSession</Filter>
     </ClCompile>
-    <ClCompile Include="ClientSessionManager.cpp">
-      <Filter>01. ClientSessionManager</Filter>
-    </ClCompile>
     <ClCompile Include="ClientPacketHandler.cpp">
       <Filter>03. Packets\PacketHandler</Filter>
     </ClCompile>
@@ -71,19 +68,25 @@
       <Filter>02. Contents\Component\TroopController</Filter>
     </ClCompile>
     <ClCompile Include="Team.cpp">
-      <Filter>02. Contents\GameRoomManager\Room\GameRoom\Team</Filter>
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom\GameWorld\Team</Filter>
     </ClCompile>
     <ClCompile Include="Formation.cpp">
       <Filter>02. Contents\Component\TroopController\Formation</Filter>
-    </ClCompile>
-    <ClCompile Include="ServerPackets.cpp">
-      <Filter>03. Packets</Filter>
     </ClCompile>
     <ClCompile Include="Spawner.cpp">
       <Filter>02. Contents\Component\Scripts\Spawner</Filter>
     </ClCompile>
     <ClCompile Include="NPC.cpp">
       <Filter>02. Contents\GameObject\Creature\NPC</Filter>
+    </ClCompile>
+    <ClCompile Include="GameWorld.cpp">
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom\GameWorld</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSessionManager.cpp">
+      <Filter>01. ClientSessionManager\ClientSession</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerPackets.cpp">
+      <Filter>03. Packets\ServerPackets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -183,14 +186,20 @@
     <Filter Include="02. Contents\GameRoomManager\Room\GameRoom">
       <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameRoomManager\Room\GameRoom\Team">
-      <UniqueIdentifier>{dfc424e8-922b-4926-bce1-3f236a43e906}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameObject\Factory">
       <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
     <Filter Include="00. main\ServerManager">
       <UniqueIdentifier>{f1701da0-3397-403e-ba78-5576bbec78d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoomManager\Room\GameRoom\GameWorld">
+      <UniqueIdentifier>{2176b3bb-d56a-43f0-b9f6-c43bb61eef63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoomManager\Room\GameRoom\GameWorld\Team">
+      <UniqueIdentifier>{dfc424e8-922b-4926-bce1-3f236a43e906}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\ServerPackets">
+      <UniqueIdentifier>{910abdf7-2458-4bb2-9644-8eaa1c718eda}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -276,16 +285,19 @@
       <Filter>02. Contents\Component\TroopController</Filter>
     </ClInclude>
     <ClInclude Include="Team.h">
-      <Filter>02. Contents\GameRoomManager\Room\GameRoom\Team</Filter>
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom\GameWorld\Team</Filter>
     </ClInclude>
     <ClInclude Include="Formation.h">
       <Filter>02. Contents\Component\TroopController\Formation</Filter>
     </ClInclude>
-    <ClInclude Include="ServerPackets.h">
-      <Filter>03. Packets</Filter>
-    </ClInclude>
     <ClInclude Include="Spawner.h">
       <Filter>02. Contents\Component\Scripts\Spawner</Filter>
+    </ClInclude>
+    <ClInclude Include="GameWorld.h">
+      <Filter>02. Contents\GameRoomManager\Room\GameRoom\GameWorld</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerPackets.h">
+      <Filter>03. Packets\ServerPackets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

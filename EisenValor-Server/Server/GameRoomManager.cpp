@@ -11,7 +11,7 @@ void Server::Contents::GameRoomManager::Init() noexcept
 		m_rooms.insert(std::make_pair(roomID, std::move(room)));
 	}
 
-	ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "GameRoomManager Init");
+	LOG_INFO("GameRoomManager Init");
 }
 
 std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameRoomManager::GetRoom(const uint16 id) noexcept

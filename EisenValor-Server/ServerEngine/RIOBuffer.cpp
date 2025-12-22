@@ -10,10 +10,12 @@ ServerEngine::RIOBuffer::RIOBuffer()
 
 ServerEngine::RIOBuffer::~RIOBuffer()
 {
-	RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
+	if(nullptr != m_buffer) {
+		RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
 
-	if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
-		ServerEngine::LogManager::PrintLastError();
+		if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
+			ServerEngine::LogManager::PrintLastError();
+	}
 }
 
 void ServerEngine::RIOBuffer::Init(const uint32 bufferSize)

@@ -13,9 +13,9 @@ namespace Server {
 		ServerManager& operator=(ServerManager&&) noexcept = delete;
 
 	public:
-		static void Init() noexcept;
-		static void Run() noexcept;
-		static void Shutdown() noexcept;
+		static void Init();
+		static void Run();
+		static void Shutdown();
 	};
 }
 

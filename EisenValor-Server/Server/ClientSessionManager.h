@@ -9,6 +9,7 @@ namespace Server {
 		SINGLETON(ClientSessionManager)
 	
 	private:
+		// QST: spin_mutex ¿Ã¿Ø?
 		tbb::spin_mutex m_mutex;
 		std::unordered_set<std::shared_ptr<ClientSession>> m_sessions;
 	

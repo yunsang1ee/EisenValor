@@ -53,7 +53,7 @@ bool Handle_CS_ENTER_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 	const uint16 roomID{ recvPkt.room_id() };
 	auto room = MANAGER(Server::Contents::GameRoomManager)->GetRoom(roomID);
 	if(room) {
-		room->ExecAsync(&Server::Contents::GameRoom::EnterGame, clientSession);
+		room->ExecAsync(&Server::Contents::GameRoom::EnterRoom, clientSession);
 		return true;
 	}
 
@@ -145,6 +145,20 @@ bool Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngin
 }
 
 bool Handle_CS_REQ_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_REQ_ATTACK& recvPkt) noexcept
+{
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->UpdateHeartbeatTimestamp();
+
+	const auto player = clientSession->GetPlayer();
+
+	if(auto room = player->GetGameRoom()) {
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_REQ_ATTACK, player);
+		return true;
+	}
+	return false;
+}
+
+bool Handle_CS_GAME_START_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_REQ_ATTACK& recvPkt) noexcept
 {
 	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	clientSession->UpdateHeartbeatTimestamp();

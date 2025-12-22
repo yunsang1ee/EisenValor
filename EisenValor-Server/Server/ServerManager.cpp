@@ -7,46 +7,39 @@
 #include "GameRoomManager.h"
 #include "ServerEngineConfigureManager.h"
 
-void Server::ServerManager::Init() noexcept
+void Server::ServerManager::Init()
 {
 	std::wcout.imbue(std::locale("korean"));
 	
 	ServerEngine::LogManager::Init();
-	
-	fs::path configPath =
-		fs::current_path()
-		.parent_path()
-		.parent_path()
-		.parent_path()
-		/ "ServerEngine"
-		/ "figure.json";
 
-	if(false == MANAGER(ServerEngineConfigureManager)->LoadDataFromFile(configPath.string())) {
-		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "ServerEngineConFigureManager Load Failed");
-		exit(-1);
+	if(false == MANAGER(ServerEngine::ServerEngineConfigureManager)->LoadDataFromFile("../../../ServerEngine/figure.json")) {
+		LOG_ERROR("ServerEngineConFigureManager Load Failed");
+		exit(EXIT_FAILURE);
 	}
 		
 	ClientPacketHandler::Init();
 	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
-		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "ThreadManager Init Failed");
-		exit(-1);
+		LOG_ERROR("ThreadManager Init Failed");
+		exit(EXIT_FAILURE);
 	}
 
 	if(false == MANAGER(ServerEngine::RIOCore)->Init(MakeClientSessionFunc)) {
-		ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "RIOCore Init Fail");
+		LOG_ERROR("RIOCore Init Failed");
 		Shutdown();
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
+	// TODO: DataTable ·Îµù
 	MANAGER(Server::Contents::GameRoomManager)->Init();
 }	
 
-void Server::ServerManager::Run() noexcept
+void Server::ServerManager::Run()
 {
 	if(false == MANAGER(ServerEngine::RIOCore)->StartAccept()) {
 		Shutdown();
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
 	MANAGER(ServerEngine::RIOCore)->Run();
@@ -62,7 +55,7 @@ void Server::ServerManager::Run() noexcept
 		}
 		ch = _getch();
 		if(ch == ESC) {
-			ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Server Finish");
+			LOG_INFO("server Finish");
 			break;
 		}
 		else {
@@ -71,7 +64,7 @@ void Server::ServerManager::Run() noexcept
 	}
 }
 
-void Server::ServerManager::Shutdown() noexcept
+void Server::ServerManager::Shutdown()
 {
 	MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
