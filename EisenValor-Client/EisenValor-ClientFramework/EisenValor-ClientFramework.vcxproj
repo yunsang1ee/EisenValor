@@ -200,6 +200,7 @@
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\LocalPlayer.h" />
     <ClInclude Include="include\MeshComponent.h" />
+    <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkManager.h" />
     <ClInclude Include="include\NPC.h" />
     <ClInclude Include="include\PacketBuffer.h" />
@@ -245,6 +246,7 @@
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\LocalPlayer.cpp" />
     <ClCompile Include="src\MeshComponent.cpp" />
+    <ClCompile Include="src\MovementComponent.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\NPC.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
