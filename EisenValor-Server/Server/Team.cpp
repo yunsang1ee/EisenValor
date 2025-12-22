@@ -17,22 +17,22 @@ void Server::Contents::Team::Init(std::shared_ptr<GameRoom> room)
 {
 	m_room = room;
 
-	{
-		SpanwerTemplate spawner;
-		spawner.objType = FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER;
-		spawner.teamType = m_type;
-		if(m_type == FB_ENUMS::TEAM_TYPE_RED) {
-			spawner.pos = Vec3{ 0.f, 0.f, 7.f };
-		}
-		else
-			spawner.pos = Vec3{ 0.f, 0.f, -7.f };
+	//{
+	//	SpanwerTemplate spawner;
+	//	spawner.objType = FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER;
+	//	spawner.teamType = m_type;
+	//	if(m_type == FB_ENUMS::TEAM_TYPE_RED) {
+	//		spawner.pos = Vec3{ 0.f, 0.f, 7.f };
+	//	}
+	//	else
+	//		spawner.pos = Vec3{ 0.f, 0.f, -7.f };
 
-		auto spawnObj = Server::Contents::GameObjectFactory::CreateSpawnObj(spawner);
-		static uint32 idGen{ 20000 };
-		idGen++;
-		spawnObj->SetID(idGen);
-		m_room->AddGameObject(std::move(spawnObj));
-	}
+	//	auto spawnObj = Server::Contents::GameObjectFactory::CreateSpawnObj(spawner);
+	//	static uint32 idGen{ 20000 };
+	//	idGen++;
+	//	spawnObj->SetID(idGen);
+	//	m_room->AddGameObject(std::move(spawnObj));
+	//}
 }
 
 void Server::Contents::Team::AddGameObject(std::shared_ptr<GameObject>  object)

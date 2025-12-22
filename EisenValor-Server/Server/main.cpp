@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 #include "ServerManager.h"
-#include "Team.h"
 
 int main()
 {

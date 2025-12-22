@@ -30,6 +30,9 @@ struct CS_ENTER_GAME_PACKETBuilder;
 struct SC_ENTER_GAME_PACKET;
 struct SC_ENTER_GAME_PACKETBuilder;
 
+struct CS_GAME_START_PACKET;
+struct CS_GAME_START_PACKETBuilder;
+
 struct SC_LOCAL_PLAYER_PACKET;
 struct SC_LOCAL_PLAYER_PACKETBuilder;
 
@@ -276,6 +279,35 @@ inline ::flatbuffers::Offset<SC_ENTER_GAME_PACKET> CreateSC_ENTER_GAME_PACKET(
     uint16_t room_id = 0) {
   SC_ENTER_GAME_PACKETBuilder builder_(_fbb);
   builder_.add_room_id(room_id);
+  return builder_.Finish();
+}
+
+struct CS_GAME_START_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GAME_START_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_GAME_START_PACKETBuilder {
+  typedef CS_GAME_START_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_GAME_START_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_GAME_START_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_GAME_START_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_GAME_START_PACKET> CreateCS_GAME_START_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_GAME_START_PACKETBuilder builder_(_fbb);
   return builder_.Finish();
 }
 

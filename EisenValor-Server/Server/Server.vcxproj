@@ -166,6 +166,7 @@
     <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
+    <ClCompile Include="GameWorld.cpp" />
     <ClCompile Include="ServerPackets.cpp" />
     <ClCompile Include="ServerGlobalFunc.cpp" />
     <ClCompile Include="IsPlayerInNearNode.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
+    <ClInclude Include="GameWorld.h" />
     <ClInclude Include="ServerPackets.h" />
     <ClInclude Include="ServerGlobalFunc.h" />
     <ClInclude Include="IsPlayerInNearNode.h" />

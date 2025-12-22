@@ -33,3 +33,13 @@ enum SOLDIER_STATE_TYPE : ubyte {
 	DAMAGED,
 	DEAD,
 }
+
+enum ROOM_STATE_TYPE: ubyte{
+	WATING,
+	PLAYING,
+}
+
+enum PARTICIPANT_TYPE :ubyte{
+	USER,
+	BOT
+}
