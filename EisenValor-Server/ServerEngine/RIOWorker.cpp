@@ -60,7 +60,8 @@ void ServerEngine::RIOWorker::DequeueCompletion() noexcept
 	assert(TLS_THREAD_ID == m_id);
 
 	while(true) {
-		m_ioResults.clear();
+		memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
+		
 		const uint32 numResults = RIO_EXT_FUNC_TB.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size()));
 		if(0 == numResults) break;
 		else if(RIO_CORRUPT_CQ == numResults) {

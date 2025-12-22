@@ -242,7 +242,7 @@ void ServerEngine::Session::Init()
 
 	if(m_rq == RIO_INVALID_RQ) {
 		ServerEngine::LogManager::PrintLastError();
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	const uint32 bufferSize = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RIO_BUFFER_SIZE;

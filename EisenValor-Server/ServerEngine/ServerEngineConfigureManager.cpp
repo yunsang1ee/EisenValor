@@ -4,12 +4,12 @@
 
 using namespace rapidjson;
 
-bool ServerEngineConfigureManager::LoadDataFromFile(const std::string_view filePath)
+bool ServerEngine::ServerEngineConfigureManager::LoadDataFromFile(const std::string_view filePath)
 {
 	std::ifstream ifs{ filePath.data() };
 	
 	if(!ifs) {
-        ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "File Load Failed");
+        ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "File Load Failed");
 		return false;
 	}
 
@@ -19,7 +19,7 @@ bool ServerEngineConfigureManager::LoadDataFromFile(const std::string_view fileP
 	doc.ParseStream(isw);
 
     if(doc.HasParseError()) {
-        ServerEngine::LogManager::PrintLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "Json Parse Failed");
+        ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "Json Parse Failed");
         return false;
     }
 
@@ -50,9 +50,9 @@ bool ServerEngineConfigureManager::LoadDataFromFile(const std::string_view fileP
         }
         else return false;
 
-        if(rio.HasMember("RIO_WORKER_TICK")) {
-			m_rioWorkerConfigure.RIO_WORKER_TICK = rio["RIO_WORKER_TICK"].GetInt();
-			std::cout << " - RIO Worker Tick (ms): " << m_rioWorkerConfigure.RIO_WORKER_TICK << std::endl;
+        if(rio.HasMember("RIO_WORKER_TICK_MS")) {
+			m_rioWorkerConfigure.RIO_WORKER_TICK_MS = rio["RIO_WORKER_TICK_MS"].GetInt();
+			std::cout << " - RIO Worker Tick (ms): " << m_rioWorkerConfigure.RIO_WORKER_TICK_MS << std::endl;
         }
         else return false;
     }

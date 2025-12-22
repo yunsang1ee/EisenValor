@@ -11,7 +11,7 @@ namespace ServerEngine {
 
 			END
 		};
-
+				
 	private:
 		LogManager() = delete;
 		~LogManager() = delete;
@@ -26,7 +26,7 @@ namespace ServerEngine {
 		static void Init() noexcept;
 
 		template<typename... Args>
-		static void PrintLog(const LOG_LEVEL level, const Args... msg) noexcept
+		static void WriteLog(const LOG_LEVEL level, const Args... msg) noexcept
 		{
 			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 			const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);
@@ -61,9 +61,9 @@ namespace ServerEngine {
 			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 			const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);
 #ifdef _DEBUG
-			const std::string fileName = std::format("LOG/[DEBUG] {:%Y-%m-%d %H%M}.txt", localTime).c_str();
+			const std::string fileName = std::format("LOG/[DEBUG] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
 #else
-			const std::string fileName = std::format("LOG/[RELEASE] {:%Y-%m-%d %H%M}.txt", localTime).c_str();
+			const std::string fileName = std::format("LOG/[RELEASE] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
 #endif // _DEBUG
 
 			std::ofstream ofs{ fileName,  std::ios::out | std::ios::app };
