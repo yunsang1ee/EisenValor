@@ -1,10 +1,10 @@
 #pragma once
 #include "IComponent.h"
 
-enum class CameraMode
+enum class ProjectionType
 {
-	NORMAL, // 일반 모드
-	COMBAT	// 전투 모드
+	Perspective,
+	Orthographic
 };
 
 class CameraComponent : public ComponentBase<CameraComponent>
@@ -12,61 +12,98 @@ class CameraComponent : public ComponentBase<CameraComponent>
 public:
 	static constexpr const char* GetStaticTypeName() { return "CameraComponent"; }
 
-	CameraComponent() = default;
+	CameraComponent();
 	~CameraComponent() override = default;
 
-private:
-	CameraMode m_cameraMode = CameraMode::NORMAL;
+	// Static 멤버
+	static DirectX::XMMATRIX GetMainViewMatrix() { return s_mainViewMatrix; }
+	static DirectX::XMMATRIX GetMainProjectionMatrix() { return s_mainProjectionMatrix; }
+	static void				 SetMainViewMatrix(const DirectX::XMMATRIX& matrix) { s_mainViewMatrix = matrix; }
+	static void SetMainProjectionMatrix(const DirectX::XMMATRIX& matrix) { s_mainProjectionMatrix = matrix; }
 
-	// 카메라 설정값들
-	float m_normalModeDistance = 10.0f; // 일반 모드 거리
-	float m_normalModeHeight = 2.0f;	// 일반 모드 높이
-	float m_combatModeDistance = 5.0f;	// 전투 모드 거리
-	float m_combatModeHeight = 1.5f;	// 전투 모드 높이
+	// View Matrix (매 프레임 업데이트)
+	DirectX::XMMATRIX GetViewMatrix() const { return m_viewMatrix; }
+	void SetViewMatrix(const DirectX::XMMATRIX& matrix) { m_viewMatrix = matrix; }
 
-	// 일반 모드 카메라 회전 각도
-	float m_normalModeYaw = 0.0f;	// 좌우 회전
-	float m_normalModePitch = 0.3f; // 상하 회전
+	// View Matrix 생성용 데이터
+	DirectX::XMFLOAT3 GetEyePosition() const { return m_eye; }
+	DirectX::XMFLOAT3 GetAtPosition() const { return m_at; }
+	DirectX::XMFLOAT3 GetUpVector() const { return m_up; }
 
-	// 전투 모드 카메라 각도
-	float m_pitch = 0.0f;
-	float m_yaw = 0.0f;
+	void SetEyePosition(const DirectX::XMFLOAT3& eye) { m_eye = eye; }
+	void SetAtPosition(const DirectX::XMFLOAT3& at) { m_at = at; }
+	void SetUpVector(const DirectX::XMFLOAT3& up) { m_up = up; }
 
-	// 카메라 회전 속도
-	float m_rotationSpeed = 0.01f; // 마우스 드래그 감도
-
-	bool  m_isMouseDragging = false;
-	float m_lastMouseX = 0.0f;
-	float m_lastMouseY = 0.0f;
-
-public:
-	// 카메라 모드 설정
-	void	   SetCameraMode(CameraMode mode) { m_cameraMode = mode; }
-	CameraMode GetCameraMode() const { return m_cameraMode; }
-	void	   ToggleCameraMode()
+	// View Matrix 업데이트
+	void UpdateViewMatrix()
 	{
-		m_cameraMode = (m_cameraMode == CameraMode::NORMAL) ? CameraMode::COMBAT : CameraMode::NORMAL;
+		DirectX::XMVECTOR eyeVec = DirectX::XMLoadFloat3(&m_eye);
+		DirectX::XMVECTOR atVec = DirectX::XMLoadFloat3(&m_at);
+		DirectX::XMVECTOR upVec = DirectX::XMLoadFloat3(&m_up);
+		m_viewMatrix = DirectX::XMMatrixLookAtLH(eyeVec, atVec, upVec);
 	}
 
-	// 일반 모드 카메라 회전 각도 설정
-	void  SetNormalModeYaw(float yaw) { m_normalModeYaw = yaw; }
-	void  SetNormalModePitch(float pitch) { m_normalModePitch = pitch; }
-	void  AddNormalModeYaw(float deltaYaw) { m_normalModeYaw += deltaYaw; }
-	void  AddNormalModePitch(float deltaPitch) { m_normalModePitch += deltaPitch; }
-	float GetNormalModeYaw() const { return m_normalModeYaw; }
-	float GetNormalModePitch() const { return m_normalModePitch; }
+	// Projection Matrix (초기화 시에만)
+	DirectX::XMMATRIX GetProjectionMatrix() const { return m_projectionMatrix; }
+	void			  SetProjectionMatrix(const DirectX::XMMATRIX& matrix) { m_projectionMatrix = matrix; }
 
-	// 카메라 설정값들
-	void SetNormalModeDistance(float distance) { m_normalModeDistance = distance; }
-	void SetNormalModeHeight(float height) { m_normalModeHeight = height; }
-	void SetCombatModeDistance(float distance) { m_combatModeDistance = distance; }
-	void SetCombatModeHeight(float height) { m_combatModeHeight = height; }
-	void SetRotationSpeed(float speed) { m_rotationSpeed = speed; }
+	// Projection Matrix 생성용 데이터
+	ProjectionType GetProjectionType() const { return m_projectionType; }
+	float		   GetFOV() const { return m_fov; }
+	float		   GetNearZ() const { return m_nearZ; }
+	float		   GetFarZ() const { return m_farZ; }
+	float		   GetSize() const { return m_size; }
 
-	// 뷰 매트릭스 계산
-	DirectX::XMMATRIX GetViewMatrix() const;
+	void SetProjectionType(ProjectionType type) { m_projectionType = type; }
+	void SetFOV(float fov) { m_fov = fov; }
+	void SetNearFar(float nearZ, float farZ)
+	{
+		m_nearZ = nearZ;
+		m_farZ = farZ;
+	}
+	void SetSize(float size) { m_size = size; }
 
-	// 입력 처리 (마우스 드래그)
-	void ProcessMouseDrag(float deltaX, float deltaY);
-	void ProcessMouseInput(float mouseX, float mouseY, bool isLeftButtonPressed);
+	// Projection Matrix 생성 (초기화 시에만 호출)
+	void CreateProjectionMatrix(float aspectRatio)
+	{
+		switch (m_projectionType)
+		{
+		case ProjectionType::Perspective:
+			m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(m_fov, aspectRatio, m_nearZ, m_farZ);
+			break;
+		case ProjectionType::Orthographic:
+		{
+			float width = m_size * aspectRatio;
+			float height = m_size;
+			m_projectionMatrix = DirectX::XMMatrixOrthographicLH(width, height, m_nearZ, m_farZ);
+		}
+		break;
+		}
+	}
+
+	// 메인 카메라 설정
+	void SetAsMainCamera()
+	{
+		s_mainViewMatrix = m_viewMatrix;
+		s_mainProjectionMatrix = m_projectionMatrix;
+	}
+
+private:
+	// Static 멤버
+	static DirectX::XMMATRIX s_mainViewMatrix;
+	static DirectX::XMMATRIX s_mainProjectionMatrix;
+
+	// View Matrix
+	DirectX::XMMATRIX m_viewMatrix;
+	DirectX::XMFLOAT3 m_eye = {0.0f, 0.0f, -10.0f};
+	DirectX::XMFLOAT3 m_at = {0.0f, 0.0f, 0.0f};
+	DirectX::XMFLOAT3 m_up = {0.0f, 1.0f, 0.0f};
+
+	// Projection Matrix
+	DirectX::XMMATRIX m_projectionMatrix;
+	ProjectionType	  m_projectionType = ProjectionType::Perspective;
+	float			  m_fov = DirectX::XM_PIDIV4;
+	float			  m_nearZ = 0.1f;
+	float			  m_farZ = 1000.0f;
+	float			  m_size = 1.0f;
 };
