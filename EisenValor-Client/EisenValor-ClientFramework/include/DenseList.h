@@ -213,18 +213,12 @@ public:
 	{
 		if (!IsValid(handle))
 		{
-			DEBUG_LOG_FMT(
-				"[DenseList] ERROR: Invalid reservation handle (id={}, gen={})\n", handle.id, handle.generation
-			);
 			assert(false && "[DenseList] FulfillReservation - Invalid handle passed");
 			return;
 		}
 
 		if (m_idToIndex[handle.id] != kInvalidIndex)
 		{
-			DEBUG_LOG_FMT(
-				"[DenseList] ERROR: Reservation handle already fulfilled (id={}, gen={})\n", handle.id, handle.generation
-			);
 			assert(false && "[DenseList] FulfillReservation - Handle already fulfilled");
 			return;
 		}

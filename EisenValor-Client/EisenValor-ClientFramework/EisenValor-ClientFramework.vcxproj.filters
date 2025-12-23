@@ -391,6 +391,7 @@
     <ClCompile Include="src\DxRendererGlobal.cpp">
       <Filter>Graphics\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="src\IComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs">

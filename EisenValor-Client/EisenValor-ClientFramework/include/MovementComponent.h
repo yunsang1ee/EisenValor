@@ -1,7 +1,5 @@
 #pragma once
-#pragma once
 #include "IComponent.h"
-#include "stdafxClientFramework.h"
 
 class MovementComponent : public ComponentBase<MovementComponent>
 {

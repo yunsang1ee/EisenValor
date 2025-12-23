@@ -36,7 +36,7 @@ public:
 		requires std::constructible_from<T, Args...>
 	Handle Create(Args&&... args)
 	{
-		Handle& handle = m_data.Emplace(std::forward<Args>(args)...);
+		Handle handle = m_data.Emplace(std::forward<Args>(args)...);
 		m_data[handle].SetHandle(handle);
 		return handle;
 	}

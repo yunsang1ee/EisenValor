@@ -245,6 +245,7 @@
     <ClCompile Include="src\GameObjectManager.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\Ground.cpp" />
+    <ClCompile Include="src\IComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\LocalPlayer.cpp" />
     <ClCompile Include="src\MeshComponent.cpp" />
