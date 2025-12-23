@@ -3,6 +3,7 @@
 #define NOMINMAX
 #include <numeric>
 #include "PacketBuffer.h"
+#include "IPacketHandler.h"
 
 using PacketHandlerFunc = bool (*)(const SOCKET&, const char* const, const PacketHeader&);
 
@@ -65,18 +66,18 @@ namespace NetBridge
 {
 class PacketBuffer;
 
-class ServerPacketHandler
+class ServerPacketHandler : public IPacketHandler
 {
 private:
-	ServerPacketHandler() = delete;
-	~ServerPacketHandler() = delete;
+	ServerPacketHandler() = default;
+	~ServerPacketHandler() = default;
 	ServerPacketHandler(const ServerPacketHandler&) = delete;
 	ServerPacketHandler& operator=(const ServerPacketHandler&) = delete;
-	ServerPacketHandler(ServerPacketHandler&&) noexcept = delete;
-	ServerPacketHandler& operator=(ServerPacketHandler&&) noexcept = delete;
+	ServerPacketHandler(ServerPacketHandler&&) noexcept = default;
+	ServerPacketHandler& operator=(ServerPacketHandler&&) noexcept = default;
 
 public:
-	static void Init() noexcept
+	virtual void Init() noexcept final
 	{
 		for (auto& packetHandlerFunc : PacketHandlerFuncs)
 			packetHandlerFunc = Handle_Invalid;
@@ -126,7 +127,7 @@ public:
 		};
 	}
 
-	static inline bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader)
+	virtual bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader) final
 	{
 		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
 	}

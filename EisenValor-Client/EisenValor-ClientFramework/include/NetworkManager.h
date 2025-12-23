@@ -2,6 +2,7 @@
 
 #include "Singleton.h"
 #include "PacketBuffer.h"
+#include "IPacketHandler.h"
 
 namespace NetBridge
 {
@@ -21,8 +22,15 @@ private:
 private:
 	SOCKET							  m_socket;
 	const std::unique_ptr<RecvBuffer> m_recvBuffer;
+	std::unique_ptr<IPacketHandler>	  m_packetHandler;
 
 public:
+	void SetPacketHandler(std::unique_ptr<IPacketHandler>&& handler)
+	{
+		m_packetHandler = std::move(handler);
+		m_packetHandler->Init();
+	}
+
 	[[nodiscard("DO NOT IGNORE RETURN VALUE.")]]
 	bool Init(const std::string_view ip = "127.0.0.1", const uint16 port = 7777);
 

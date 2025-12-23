@@ -137,7 +137,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)EisenValor-ClientFramework\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)EisenValor-ClientFramework\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -162,7 +162,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)EisenValor-ClientFramework\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)EisenValor-ClientFramework\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -179,22 +179,24 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CopyToBackBufferPass.h" />
-    <ClInclude Include="DxrRenderPass.h" />
     <ClInclude Include="EisenValor.h" />
+    <ClInclude Include="Packets\PacketHandler.h" />
+    <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
+    <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="SampleScene.h" />
+    <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CopyToBackBufferPass.cpp" />
-    <ClCompile Include="DxrRenderPass.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="SampleScene.cpp" />
+    <ClCompile Include="Packets\PacketHandler.cpp" />
+    <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
+    <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="Scene\SampleScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -236,6 +238,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs" />
+    <None Include="..\Packets\Binaries\Structs.fbs" />
+    <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="Resource\Shader\RaytracingCommon.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

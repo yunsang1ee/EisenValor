@@ -10,9 +10,11 @@
 #include <DxCommandQueueGlobal.h>
 #include <DxRendererGlobal.h>
 
-#include "SampleScene.h"
-#include "DxrRenderPass.h"
-#include "CopyToBackBufferPass.h"
+
+#include "Scene/SampleScene.h"
+#include "RenderPass/DxrRenderPass.h"
+#include "RenderPass/CopyToBackBufferPass.h"
+#include <Packets/PacketHandler.h>
 
 
 constexpr size_t MAX_LOADSTRING = 100;
@@ -109,6 +111,24 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			return FALSE;
 		if (!CreateAppWindow(hInstance, nCmdShow))
 			return FALSE;
+
+		// PacketHandler 등록
+		{
+			std::unique_ptr<NetBridge::IPacketHandler> packetHandler =
+				std::make_unique<NetBridge::ServerPacketHandler>();
+			MANAGER(NetBridge::NetworkManager).SetPacketHandler(std::move(packetHandler));
+			std::string id, pw;
+			std::cout << "Input ID(any):";
+			std::cin >> id;
+			id = "ID";
+			std::cout << "\n";
+			std::cout << "Input PW(any):";
+			std::cin >> pw;
+			pw = "PW";
+
+			auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+			MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
+		}
 
 		// RenderPass 등록
 		{

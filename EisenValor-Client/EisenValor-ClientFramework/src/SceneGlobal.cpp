@@ -29,6 +29,7 @@ void SceneGlobal::LoadScene(const std::string& sceneName)
 	}
 
 	m_activeScene = iter->second.get();
+	m_activeScene->SetLocalID(m_localNetworkID);
 	m_activeSceneName = sceneName;
 
 	DEBUG_LOG_FMT("[SceneGlobal] Scene loaded: {}\n", sceneName);

@@ -2,7 +2,6 @@
 #include "NetworkManager.h"
 
 #include "RecvBuffer.h"
-#include "PacketHandler.h"
 
 NetBridge::NetworkManager::NetworkManager()
 	: m_socket{INVALID_SOCKET}, m_recvBuffer{std::make_unique<RecvBuffer>(NW_BUFFER_CAPACITY) /*64kb*/}
@@ -145,5 +144,5 @@ void NetBridge::NetworkManager::ProcessPacket(const char* const buffer) noexcept
 {
 	const PacketHeader header = *reinterpret_cast<const PacketHeader*>(buffer);
 	const char* const  packetData = buffer + sizeof(PacketHeader);
-	ServerPacketHandler::HandlePacket(m_socket, packetData, header);
+	m_packetHandler->HandlePacket(m_socket, packetData, header);
 }

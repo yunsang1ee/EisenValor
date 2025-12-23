@@ -32,10 +32,13 @@ public:
 		DEBUG_LOG_FMT("[SceneGlobal] Scene registered: {}\n", sceneName);
 	}
 
-	void					 LoadScene(const std::string& sceneName);
-	void					 UnloadScene(const std::string& sceneName);
-	Scene*					 GetActiveScene() const { return m_activeScene; }
-	Scene*					 GetScene(const std::string& sceneName) const;
+	void   LoadScene(const std::string& sceneName);
+	void   UnloadScene(const std::string& sceneName);
+	Scene* GetActiveScene() const { return m_activeScene; }
+	Scene* GetScene(const std::string& sceneName) const;
+
+	void SetLocalNetworkID(uint32_t networkID) { m_localNetworkID = networkID; }
+	uint32_t GetLocalNetworkID() const { return m_localNetworkID; }
 
 	void					 ClearAllScenes();
 	void					 RemoveScene(const std::string& sceneName);
@@ -54,6 +57,7 @@ public:
 private:
 	std::unordered_map<std::string, std::unique_ptr<Scene>> m_scenes;
 
+	uint32_t	m_localNetworkID;
 	Scene*		m_activeScene = nullptr;
 	std::string m_activeSceneName;
 };

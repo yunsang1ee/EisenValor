@@ -192,17 +192,16 @@
     <ClInclude Include="include\EngineComponents.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
-    <ClInclude Include="include\GameObjectManager.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
     <ClInclude Include="include\IComponent.h" />
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
+    <ClInclude Include="include\IPacketHandler.h" />
     <ClInclude Include="include\IRenderPass.h" />
     <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkManager.h" />
     <ClInclude Include="include\PacketBuffer.h" />
-    <ClInclude Include="include\PacketHandler.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderDataSync.h" />
     <ClInclude Include="include\DxRendererGlobal.h" />
@@ -238,7 +237,6 @@
     <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
-    <ClCompile Include="src\GameObjectManager.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\IComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
@@ -246,7 +244,6 @@
     <ClCompile Include="src\MovementComponent.cpp" />
     <ClCompile Include="src\NetworkManager.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
-    <ClCompile Include="src\PacketHandler.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
     <ClCompile Include="src\DxRendererGlobal.cpp" />
     <ClCompile Include="src\Scene.cpp" />
@@ -260,9 +257,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />
-    <None Include="..\Packets\Binaries\Enums.fbs" />
-    <None Include="..\Packets\Binaries\Structs.fbs" />
-    <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="include\GameObject.inl" />
     <None Include="packages.config" />
   </ItemGroup>

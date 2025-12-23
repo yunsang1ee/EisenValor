@@ -1,10 +1,8 @@
 #include "stdafxClientFramework.h"
 #include "PacketHandler.h"
 #include "NetworkManager.h"
-#include "LocalPlayer.h"
-#include "GameObjectManager.h"
 #include "DxDeviceGlobal.h"
-#include "NPC.h"
+#include "SceneGlobal.h"
 
 std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;
 
@@ -20,7 +18,7 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 	// std::println("Player ID: {}", id);
 	auto device = MANAGER(DxDeviceGlobal).GetDevice();
 
-	MANAGER(GameObjectManager).SetLocalID(id);
+	MANAGER(SceneGlobal).SetLocalNetworkID(id);
 	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
 	const uint16 roomID{1};
 
@@ -38,11 +36,16 @@ bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt)
 {
 	auto		 device = MANAGER(DxDeviceGlobal).GetDevice();
+	auto&		 sceneGlobal = MANAGER(SceneGlobal);
+	auto*		 scene = sceneGlobal.GetActiveScene();
+
 	const uint32 id = recvPkt.player_id();
-	const uint32 localID = MANAGER(GameObjectManager).GetLocalID();
+	const uint32 localID = sceneGlobal.GetLocalNetworkID();
+
 	if (id == localID)
 	{
-		auto localPlayer = std::make_shared<LocalPlayer>();
+		// TODO: 로컬
+		auto localPlayer;
 		localPlayer->SetTeam(static_cast<GameObject::Team>(recvPkt.team_type()));
 		localPlayer->SetTeamColor();
 		localPlayer->Initialize(device);

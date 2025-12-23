@@ -40,15 +40,6 @@
     <Filter Include="NetBridge\01. NWBuffer">
       <UniqueIdentifier>{e76c6816-d432-4b93-89cd-3c016a7a8e3e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NetBridge\02. Packets">
-      <UniqueIdentifier>{b1245d74-3102-4148-9f18-5dce752394e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NetBridge\02. Packets\00. FBS">
-      <UniqueIdentifier>{28de1129-6935-4ce6-be39-c8943084330f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NetBridge\02. Packets\01. PacketHandler">
-      <UniqueIdentifier>{acb9ba7b-a3b1-4ba5-a521-58020aa3f206}</UniqueIdentifier>
-    </Filter>
     <Filter Include="NetBridge\01. NWBuffer\00. RecvBuffer">
       <UniqueIdentifier>{a3109b9e-f30d-47f1-a469-c2e290563598}</UniqueIdentifier>
     </Filter>
@@ -76,9 +67,6 @@
     <Filter Include="Common\Core\Time">
       <UniqueIdentifier>{865c3a9f-276f-4cca-931a-a0dc9e9e1f20}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Object">
-      <UniqueIdentifier>{ccdde6af-b321-4e89-be97-a5dfad5c6ce5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Resource\Low Resource">
       <UniqueIdentifier>{0866b4f4-037e-4337-918d-7070c172dd98}</UniqueIdentifier>
     </Filter>
@@ -91,11 +79,14 @@
     <Filter Include="Common\Container">
       <UniqueIdentifier>{540c4765-a220-4970-b8f3-6ed4e3446803}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Object">
-      <UniqueIdentifier>{64dd2a36-df34-4eac-9a5a-de0ab2c2bb63}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common\Core\Scene">
       <UniqueIdentifier>{62d55f6b-6a71-4962-af92-5b4a52607360}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Object">
+      <UniqueIdentifier>{64dd2a36-df34-4eac-9a5a-de0ab2c2bb63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\Packets">
+      <UniqueIdentifier>{f28137fc-8b52-4c41-9d11-ff570634a8c6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -127,9 +118,6 @@
     <ClInclude Include="include\DxDescriptorHeapGlobal.h">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
-    <ClInclude Include="include\PacketHandler.h">
-      <Filter>NetBridge\02. Packets\01. PacketHandler</Filter>
-    </ClInclude>
     <ClInclude Include="include\NetworkManager.h">
       <Filter>NetBridge\00. NetworkManager</Filter>
     </ClInclude>
@@ -138,9 +126,6 @@
     </ClInclude>
     <ClInclude Include="include\PacketBuffer.h">
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\GameObjectManager.h">
-      <Filter>Common\Object</Filter>
     </ClInclude>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>Common\Math</Filter>
@@ -215,7 +200,7 @@
       <Filter>Common\Container</Filter>
     </ClInclude>
     <ClInclude Include="include\GameObject.h">
-      <Filter>Object</Filter>
+      <Filter>Common\Object</Filter>
     </ClInclude>
     <ClInclude Include="include\RenderDataSync.h">
       <Filter>Common\Container</Filter>
@@ -244,6 +229,9 @@
     <ClInclude Include="include\MovementComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="include\IPacketHandler.h">
+      <Filter>NetBridge\Packets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -265,9 +253,6 @@
     <ClCompile Include="src\DxDescriptorHeapGlobal.cpp">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
-    <ClCompile Include="src\PacketHandler.cpp">
-      <Filter>NetBridge\02. Packets\01. PacketHandler</Filter>
-    </ClCompile>
     <ClCompile Include="src\NetworkManager.cpp">
       <Filter>NetBridge\00. NetworkManager</Filter>
     </ClCompile>
@@ -276,9 +261,6 @@
     </ClCompile>
     <ClCompile Include="src\PacketBuffer.cpp">
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\GameObjectManager.cpp">
-      <Filter>Common\Object</Filter>
     </ClCompile>
     <ClCompile Include="src\InputGlobal.cpp">
       <Filter>Common\Core\Input</Filter>
@@ -341,7 +323,7 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="src\GameObject.cpp">
-      <Filter>Object</Filter>
+      <Filter>Common\Object</Filter>
     </ClCompile>
     <ClCompile Include="src\Transform.cpp">
       <Filter>Component</Filter>
@@ -358,24 +340,17 @@
     <ClCompile Include="src\DxRendererGlobal.cpp">
       <Filter>Graphics\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="src\IComponent.cpp" />
+    <ClCompile Include="src\IComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Packets\Binaries\Enums.fbs">
-      <Filter>NetBridge\02. Packets\00. FBS</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Structs.fbs">
-      <Filter>NetBridge\02. Packets\00. FBS</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Tables.fbs">
-      <Filter>NetBridge\02. Packets\00. FBS</Filter>
-    </None>
     <None Include="..\Libraries\inc\SimpleMath.inl">
       <Filter>Common\Math</Filter>
     </None>
     <None Include="packages.config" />
     <None Include="include\GameObject.inl">
-      <Filter>Object</Filter>
+      <Filter>Common\Object</Filter>
     </None>
   </ItemGroup>
 </Project>

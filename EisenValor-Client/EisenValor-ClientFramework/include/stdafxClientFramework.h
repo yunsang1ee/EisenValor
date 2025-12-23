@@ -48,13 +48,7 @@ enum
 };
 
 // Structs
-#pragma pack(push, 1)
-struct PacketHeader
-{
-	uint16 packetType;
-	uint16 packetSize; // PacketHeader 크기 포함
-};
-#pragma pack(pop)
+
 
 enum class SOLDIER_FORMATION
 {
@@ -137,7 +131,7 @@ using Ray = DirectX::SimpleMath::Ray;
 #include "Tables_generated.h"
 
 #include "NetworkManager.h"
-#include "PacketHandler.h"
+#include "IPacketHandler.h"
 #pragma endregion
 
 #pragma region DebugHelpers
