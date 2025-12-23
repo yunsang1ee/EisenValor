@@ -55,17 +55,8 @@
     <Filter Include="NetBridge\01. NWBuffer\01. PacketBuffer">
       <UniqueIdentifier>{b76b1070-81c6-43fa-a4ab-97758300ab18}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Player">
-      <UniqueIdentifier>{ff0db68e-268e-4bf6-811b-bbf50f9d5b5a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Ground">
-      <UniqueIdentifier>{d1d2085e-dcd5-4ecd-89a1-adcb07148799}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Resource\Heap">
       <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Player\00. Local">
-      <UniqueIdentifier>{fc462d4a-e1e5-4748-9b86-a6404f727631}</UniqueIdentifier>
     </Filter>
     <Filter Include="Graphics\Device\Command">
       <UniqueIdentifier>{db65bae8-3c6e-4ca4-89fa-f9c2fbc5c2d6}</UniqueIdentifier>
@@ -148,23 +139,11 @@
     <ClInclude Include="include\PacketBuffer.h">
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClInclude>
-    <ClInclude Include="include\Player.h">
-      <Filter>Player</Filter>
-    </ClInclude>
     <ClInclude Include="include\GameObjectManager.h">
       <Filter>Common\Object</Filter>
     </ClInclude>
-    <ClInclude Include="include\Ground.h">
-      <Filter>Ground</Filter>
-    </ClInclude>
-    <ClInclude Include="include\NPC.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>Common\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\LocalPlayer.h">
-      <Filter>Player\00. Local</Filter>
     </ClInclude>
     <ClInclude Include="include\InputGlobal.h">
       <Filter>Common\Core\Input</Filter>
@@ -298,20 +277,8 @@
     <ClCompile Include="src\PacketBuffer.cpp">
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClCompile>
-    <ClCompile Include="src\Player.cpp">
-      <Filter>Player</Filter>
-    </ClCompile>
     <ClCompile Include="src\GameObjectManager.cpp">
       <Filter>Common\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Ground.cpp">
-      <Filter>Ground</Filter>
-    </ClCompile>
-    <ClCompile Include="src\NPC.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
-    <ClCompile Include="src\LocalPlayer.cpp">
-      <Filter>Player\00. Local</Filter>
     </ClCompile>
     <ClCompile Include="src\InputGlobal.cpp">
       <Filter>Common\Core\Input</Filter>
