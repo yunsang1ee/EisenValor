@@ -70,8 +70,4 @@ public:
 	// 입력 처리 (마우스 드래그)
 	void ProcessMouseDrag(float deltaX, float deltaY);
 	void ProcessMouseInput(float mouseX, float mouseY, bool isLeftButtonPressed);
-
-private:
-	// 헬퍼 함수: GameObject 포인터 얻기
-	class GameObject* GetGameObject() const;
 };

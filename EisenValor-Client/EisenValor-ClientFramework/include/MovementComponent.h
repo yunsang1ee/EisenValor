@@ -53,8 +53,4 @@ public:
 
 	// 속도 초기화
 	void ResetVelocity() { m_velocity = Vec3{0.0f, 0.0f, 0.0f}; }
-
-private:
-	// 헬퍼 함수: GameObject 포인터 얻기
-	class GameObject* GetGameObject() const;
 };

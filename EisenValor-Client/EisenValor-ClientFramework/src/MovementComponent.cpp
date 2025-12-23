@@ -5,24 +5,9 @@
 #include "SceneGlobal.h" 
 #include "Transform.h"
 
-// 헬퍼 함수: GameObject 포인터 얻기
-GameObject* MovementComponent::GetGameObject() const
-{
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
-	if (!scene)
-		return nullptr;
-	
-	auto* myGameObject = scene->TryGetGameObject(GetOwner());
-	return myGameObject;
-}
-
 void MovementComponent::ProcessInput(float deltaTime)
 {
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
-	if (!scene)
-		return;
-	
-	auto* myGameObject = scene->TryGetGameObject(GetOwner());
+	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
 		return;
 
@@ -67,11 +52,7 @@ void MovementComponent::ProcessInput(float deltaTime)
 
 void MovementComponent::OnUpdate(float deltaTime)
 {
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
-	if (!scene)
-		return;
-	
-	auto* myGameObject = scene->TryGetGameObject(GetOwner());
+	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
 		return;
 

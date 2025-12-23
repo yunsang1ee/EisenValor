@@ -5,17 +5,6 @@
 #include "SceneGlobal.h"
 #include "Transform.h"
 
-// 헬퍼 함수: GameObject 포인터 얻기
-GameObject* CameraComponent::GetGameObject() const
-{
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
-	if (!scene)
-		return nullptr;
-
-	auto* myGameObject = scene->TryGetGameObject(GetOwner());
-	return myGameObject;
-}
-
 DirectX::XMMATRIX CameraComponent::GetViewMatrix() const
 {
 	auto* myGameObject = GetGameObject();
