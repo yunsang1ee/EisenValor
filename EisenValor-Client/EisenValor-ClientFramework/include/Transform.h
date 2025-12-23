@@ -4,6 +4,8 @@
 class Transform : public ComponentBase<Transform>
 {
 public:
+	static constexpr const char* GetStaticTypeName() { return "Transform"; }
+
 	using Handle = HandleOf<Transform>;
 
 	Transform();

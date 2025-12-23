@@ -4,6 +4,7 @@
 #include "Transform.h"
 #include "CameraComponent.h"
 #include "MeshComponent.h"
+#include "MovementComponent.h" 
 //.. Add other engine component includes here
 
 template <typename T>
@@ -21,6 +22,7 @@ concept ComponentTuple = is_valid_component_tuple<T>();
 using EngineComponents = std::tuple<
 	Transform,
 	CameraComponent,
-	MeshComponent
+	MeshComponent,
+	MovementComponent
 	//.. Add other engine components here
 	>;
