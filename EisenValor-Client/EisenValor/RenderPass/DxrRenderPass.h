@@ -84,7 +84,6 @@ private:
 
 	DxTexture m_raytracingOutput;
 
-
 	struct MeshRenderData
 	{
 		RenderDataSync<VertexPNU>::Handle verticesHandle;

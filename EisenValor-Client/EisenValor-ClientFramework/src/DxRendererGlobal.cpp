@@ -131,7 +131,20 @@ IRenderPass* DxRendererGlobal::GetRenderPass(const std::string& name) const
 	return nullptr;
 }
 
-void DxRendererGlobal::Render(DxFrameResource* frame, Scene* scene, DxSwapChain* swapChain)
+void DxRendererGlobal::BeginFrame()
+{
+	if (!m_swapChain)
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
+		return;
+	}
+
+	m_currentFrameIndex = m_swapChain->GetCurrentBackBufferIndex();
+	auto* frame = m_frameResources[m_currentFrameIndex].get();
+	frame->BeginFrame();
+}
+
+void DxRendererGlobal::Render(Scene* scene)
 {
 	if (!scene)
 	{
@@ -139,17 +152,76 @@ void DxRendererGlobal::Render(DxFrameResource* frame, Scene* scene, DxSwapChain*
 		return;
 	}
 
+	auto* frame = m_frameResources[m_currentFrameIndex].get();
+
 	for (auto& entry : m_renderPasses)
 	{
 		entry.pass->Execute(frame, scene);
 	}
 }
 
+void DxRendererGlobal::EndFrame()
+{
+	if (!m_swapChain)
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
+		return;
+	}
+
+	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto* frame = m_frameResources[m_currentFrameIndex].get();
+
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
+
+	m_swapChain->PresentMaxPerformance();
+
+	frame->WaitForCompletion();
+}
+
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 {
+	if (!m_swapChain)
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
+		return;
+	}
+
+	if (width == 0 || height == 0)
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] Warning: Resize called with zero dimension: {}x{}\n", width, height);
+		return;
+	}
+
+	auto& device = MANAGER(DxDeviceGlobal);
+	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+
+	commandQueue.WaitForIdle();
+		
+	m_swapChain->OnResize(
+		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+		m_rtvDescriptorSize
+	);	
+
 	for (auto& entry : m_renderPasses)
 	{
 		entry.pass->OnResize(width, height);
+	}
+	DEBUG_LOG_FMT("[DxRendererGlobal] Resize handled: {}x{}\n", width, height);
+}
+
+void DxRendererGlobal::ToggleBorderlessFullscreen()
+{
+	if (m_swapChain)
+	{
+		m_swapChain->ToggleBorderlessFullscreen();
+	}
+}
+
+void DxRendererGlobal::ToggleFullscreen()
+{
+	if (m_swapChain)
+	{
+		m_swapChain->ToggleFullscreen();
 	}
 }
 
@@ -161,4 +233,9 @@ void DxRendererGlobal::ClearAllPasses()
 	}
 	m_renderPasses.clear();
 	DEBUG_LOG_FMT("[DxRendererGlobal] All passes cleared\n");
+}
+
+DxFrameResource* DxRendererGlobal::GetCurrentFrame() const
+{
+	return m_frameResources[m_currentFrameIndex].get();
 }

@@ -1,5 +1,7 @@
 #pragma once
 #include "Singleton.h"
+#include "DxFeatureCaps.h"
+
 
 class Scene;
 class DxFrameResource;
@@ -18,22 +20,26 @@ public:
 	void Initialize() override;
 	void Release() override;
 
-	void AddRenderPass(const std::string& name, std::unique_ptr<IRenderPass> pass);
-	void RemoveRenderPass(const std::string& name);
+	void		 AddRenderPass(const std::string& name, std::unique_ptr<IRenderPass> pass);
+	void		 RemoveRenderPass(const std::string& name);
 	IRenderPass* GetRenderPass(const std::string& name) const;
 
-	void Render(DxFrameResource* frame, Scene* scene, DxSwapChain* swapChain);
+	void BeginFrame();
+	void Render(Scene* scene);
+	void EndFrame();
 
-	void CreateSwapChain(HWND hwnd, uint32_t width, uint32_t height);
-
-
+	void		 CreateSwapChain(HWND hwnd, uint32_t width, uint32_t height);
 	DxSwapChain* GetSwapChain() const { return m_swapChain.get(); }
+	void		 ToggleBorderlessFullscreen();
+	void		 ToggleFullscreen();
 
 	uint32_t GetWidth() const { return m_swapChain->GetWidth(); }
 	uint32_t GetHeight() const { return m_swapChain->GetHeight(); }
 	void	 OnResize(uint32_t width, uint32_t height);
 
 	void ClearAllPasses();
+
+	DxFrameResource* GetCurrentFrame() const;
 
 private:
 	DxFeatureCaps				 m_featureCaps;

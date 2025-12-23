@@ -1,16 +1,5 @@
 #pragma once
 #include "stdafxClientFramework.h"
-#include "DxSwapChain.h"
-#include "DxCommon.h"
-#include "DxFeatureCaps.h"
-#include "DxFrameResource.h"
-#include "DxTLAS.h"
-#include "DxRtPipelineState.h"
-#include "DxRtShaderTable.h"
-#include <memory>
-#include "DxTexture.h"
-#include "DxBuffer.h"
-#include "DxDescriptorHeapGlobal.h"
 
 class GameFramework
 {
@@ -40,12 +29,6 @@ private:
 	void BuildAccelerationStructures();
 	void CreateBuffers();
 	void CreateRaytracingPipeline();
-
-	void RenderDXR();
-
-	void UpdateCamera(float deltaTime);
-	void UpdateCameraVectors();
-
 
 private:
 	HWND	  m_hWnd = nullptr;
