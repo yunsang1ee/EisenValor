@@ -2,10 +2,6 @@
 #include "Singleton.h"
 #include "Scene.h"
 
-class MyScene : public Scene
-{
-};
-
 class SceneGlobal : public Singleton<SceneGlobal>
 {
 private:

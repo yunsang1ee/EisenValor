@@ -8,6 +8,13 @@
 #include <chrono>
 #include <GlobalInterfaces.h>
 #include <DxCommandQueueGlobal.h>
+#include <DxRendererGlobal.h>
+
+
+#include "SampleScene.h"
+#include "DxrRenderPass.h"
+#include "CopyToBackBufferPass.h"
+
 
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR			 szTitle[MAX_LOADSTRING];
@@ -45,7 +52,8 @@ bool RegisterWindowClass(HINSTANCE hInstance)
 bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd = CreateWindowW(
-		szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL
+		szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, kDefaultWindowHeight, kDefaultWindowWidth, NULL,
+		NULL, hInstance, NULL
 	);
 
 	if (!hWnd)
@@ -103,6 +111,28 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		if (!CreateAppWindow(hInstance, nCmdShow))
 			return FALSE;
 
+		// RenderPass 등록
+		{
+			auto& renderer = MANAGER(DxRendererGlobal);
+
+			uint32_t width = gameFramework.GetWidth();
+			uint32_t height = gameFramework.GetHeight();
+
+			// DXR Pass 생성
+			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
+			auto* outputTexture = dxrPass->GetOutputTexture();
+			renderer.AddRenderPass("DXR", std::move(dxrPass));
+
+			// CopyToBackBuffer Pass 생성
+			auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, gameFramework.GetSwapChain());
+			renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
+		}
+
+		// Scene 등록
+		{
+			MANAGER(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
+			MANAGER(SceneGlobal).LoadScene("SampleScene");
+		}
 
 		while (not quit)
 		{

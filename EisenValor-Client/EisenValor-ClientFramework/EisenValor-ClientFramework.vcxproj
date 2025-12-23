@@ -198,6 +198,7 @@
     <ClInclude Include="include\IComponent.h" />
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
+    <ClInclude Include="include\IRenderPass.h" />
     <ClInclude Include="include\LocalPlayer.h" />
     <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\NetworkManager.h" />
@@ -207,6 +208,7 @@
     <ClInclude Include="include\Player.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderDataSync.h" />
+    <ClInclude Include="include\DxRendererGlobal.h" />
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\SceneGlobal.h" />
     <ClInclude Include="include\Singleton.h" />
@@ -251,6 +253,7 @@
     <ClCompile Include="src\PacketHandler.cpp" />
     <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
+    <ClCompile Include="src\DxRendererGlobal.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneGlobal.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">

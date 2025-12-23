@@ -4,7 +4,9 @@
 #include "GlobalInterfaces.h"
 #include "DxDeviceGlobal.h"
 #include "DxDebugGlobal.h"
+#include "SceneGlobal.h"
 #include "DxCommandQueueGlobal.h"
+#include "DxRendererGlobal.h"
 #include "DxShaderCompilerGlobal.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
@@ -104,7 +106,6 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	CreateRaytracingPipeline();
 
 	UpdateCameraVectors();
-
 	std::string id, pw;
 	std::cout << "Input ID(any):";
 	// std::cin >> id;

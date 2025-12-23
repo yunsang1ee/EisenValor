@@ -16,6 +16,15 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{99e1086d-2675-4837-bbf4-511fdd0d0603}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderPass">
+      <UniqueIdentifier>{c60e310a-9a7a-433c-8fa8-e607c81fdd65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{38e8648f-026b-47d2-a991-c96122ed006b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{99f2ac79-69d0-41c3-9f93-f4e84ec9a503}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -27,6 +36,15 @@
     <ClInclude Include="stdafxClient.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="SampleScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="DxrRenderPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="CopyToBackBufferPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -34,6 +52,15 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="DxrRenderPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyToBackBufferPass.cpp">
+      <Filter>RenderPass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,6 +84,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

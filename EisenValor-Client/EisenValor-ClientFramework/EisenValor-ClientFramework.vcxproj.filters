@@ -256,6 +256,12 @@
     <ClInclude Include="include\SceneGlobal.h">
       <Filter>Common\Core\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxRendererGlobal.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IRenderPass.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -375,6 +381,9 @@
     </ClCompile>
     <ClCompile Include="src\SceneGlobal.cpp">
       <Filter>Common\Core\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxRendererGlobal.cpp">
+      <Filter>Graphics\Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

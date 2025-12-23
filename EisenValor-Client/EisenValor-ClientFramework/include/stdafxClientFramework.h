@@ -176,10 +176,8 @@ constexpr uint64_t HashString(std::string_view str)
 #pragma region Variable
 constexpr uint32 kInvalidServerID = 0;
 
-constexpr size_t kFrameBufferWidth = 1920;
-constexpr size_t kFrameBufferHeight = 1080;
-
-constexpr size_t kExplosionDebrises = 240;
+constexpr size_t kDefaultWindowWidth = 1920;
+constexpr size_t kDefaultWindowHeight = 1080;
 
 #pragma endregion
 
