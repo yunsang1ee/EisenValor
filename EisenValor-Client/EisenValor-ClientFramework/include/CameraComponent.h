@@ -1,6 +1,5 @@
 #pragma once
 #include "IComponent.h"
-#include "stdafxClientFramework.h"
 
 enum class CameraMode
 {

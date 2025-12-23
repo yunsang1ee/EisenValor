@@ -10,7 +10,6 @@
 #include <DxCommandQueueGlobal.h>
 #include <DxRendererGlobal.h>
 
-
 #include "SampleScene.h"
 #include "DxrRenderPass.h"
 #include "CopyToBackBufferPass.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include "DenseList.h"
-#include "SceneGlobal.h"
 
 class GameObject;
 
@@ -107,15 +106,6 @@ public:
 
 	void   SetHandle(Handle handle) { m_handle = handle; }
 	Handle GetHandle() const { return m_handle; }
-
-protected:
-	GameObject* GetGameObject() const
-	{
-		auto* scene = MANAGER(SceneGlobal).GetActiveScene();
-		if (!scene)
-			return nullptr;
-		return scene->TryGetGameObject(GetOwner());
-	}
 
 protected:
 	Handle m_handle;
