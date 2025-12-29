@@ -12,7 +12,7 @@ private:
 
 public:
 	void Initialize();
-	void Update();
+	float Update();
 
 	inline bool ShouldFixedUpdate() noexcept
 	{

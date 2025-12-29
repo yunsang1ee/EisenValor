@@ -9,12 +9,14 @@
 #include <GlobalInterfaces.h>
 #include <DxCommandQueueGlobal.h>
 #include <DxRendererGlobal.h>
+#include <DxSwapChain.h>
 
 
 #include "Scene/SampleScene.h"
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
-#include <Packets/PacketHandler.h>
+#include "Packets/PacketHandler.h"
+#include <TimerGlobal.h>
 
 
 constexpr size_t MAX_LOADSTRING = 100;
@@ -100,74 +102,79 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 	MSG	 msg;
 	bool quit = false;
+
+	GameFramework gameFramework;
+	g_Framework = &gameFramework;
+
+	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	LoadStringW(hInstance, IDC_EISENVALOR, szWindowClass, MAX_LOADSTRING);
+
+	if (!RegisterWindowClass(hInstance))
+		return FALSE;
+	if (!CreateAppWindow(hInstance, nCmdShow)) // g_Framework->Initialize(hInstance, hWnd)
+		return FALSE;
+
+	// Timer 초기화
 	{
-		GameFramework gameFramework;
-		g_Framework = &gameFramework;
+		auto& timer = MANAGER(TimerGlobal);
+		timer.SetFixedFPS(60);
+		timer.SetTargetFPS(0);
+	}
 
-		LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-		LoadStringW(hInstance, IDC_EISENVALOR, szWindowClass, MAX_LOADSTRING);
+	// PacketHandler 등록
+	{
+		std::unique_ptr<NetBridge::IPacketHandler> packetHandler = std::make_unique<NetBridge::ServerPacketHandler>();
+		MANAGER(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
+		std::string id, pw;
+		std::cout << "Input ID(any):";
+		std::cin >> id;
+		id = "ID";
+		std::cout << "\n";
+		std::cout << "Input PW(any):";
+		std::cin >> pw;
+		pw = "PW";
 
-		if (!RegisterWindowClass(hInstance))
-			return FALSE;
-		if (!CreateAppWindow(hInstance, nCmdShow))
-			return FALSE;
+		auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+		MANAGER(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
 
-		// PacketHandler 등록
-		{
-			std::unique_ptr<NetBridge::IPacketHandler> packetHandler =
-				std::make_unique<NetBridge::ServerPacketHandler>();
-			MANAGER(NetBridge::NetworkManager).SetPacketHandler(std::move(packetHandler));
-			std::string id, pw;
-			std::cout << "Input ID(any):";
-			std::cin >> id;
-			id = "ID";
-			std::cout << "\n";
-			std::cout << "Input PW(any):";
-			std::cin >> pw;
-			pw = "PW";
+	// RenderPass 등록
+	{
+		auto& renderer = MANAGER(DxRendererGlobal);
+		
+		// DXR Pass 생성
+		auto  dxrPass = std::make_unique<DxrRenderPass>(kDefaultWindowWidth, kDefaultWindowHeight);
+		auto* outputTexture = dxrPass->GetOutputTexture();
+		renderer.AddRenderPass("DXR", std::move(dxrPass));
 
-			auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-			MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
-		}
+		// CopyToBackBuffer Pass 생성
+		auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
+		renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
 
-		// RenderPass 등록
-		{
-			auto& renderer = MANAGER(DxRendererGlobal);
+		// SwapChain 생성
+		renderer.CreateSwapChain(gameFramework.GetHWND(), kDefaultWindowWidth, kDefaultWindowHeight);
+	}
 
-			uint32_t width = gameFramework.GetWidth();
-			uint32_t height = gameFramework.GetHeight();
+	// Scene 등록
+	{
+		MANAGER(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
+		MANAGER(SceneGlobal).LoadScene("SampleScene");
+	}
 
-			// DXR Pass 생성
-			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
-			auto* outputTexture = dxrPass->GetOutputTexture();
-			renderer.AddRenderPass("DXR", std::move(dxrPass));
-
-			// CopyToBackBuffer Pass 생성
-			auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, gameFramework.GetSwapChain());
-			renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
-		}
-
-		// Scene 등록
-		{
-			MANAGER(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
-			MANAGER(SceneGlobal).LoadScene("SampleScene");
-		}
-
-		while (not quit)
-		{
-			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-			{ // event
-				::TranslateMessage(&msg);
-				::DispatchMessage(&msg);
-				if (msg.message == WM_QUIT)
-				{
-					quit = true;
-					break;
-				}
+	while (not quit)
+	{
+		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{ // event
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+			if (msg.message == WM_QUIT)
+			{
+				quit = true;
+				break;
 			}
-			if (not quit)
-				gameFramework.Run();
 		}
+		if (not quit)
+			gameFramework.Run();
 	}
 	Globals::Shutdown();
 #ifdef _DEBUG

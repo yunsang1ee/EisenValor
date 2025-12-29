@@ -200,7 +200,7 @@
     <ClInclude Include="include\IRenderPass.h" />
     <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\MovementComponent.h" />
-    <ClInclude Include="include\NetworkManager.h" />
+    <ClInclude Include="include\NetworkGlobal.h" />
     <ClInclude Include="include\PacketBuffer.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderDataSync.h" />
@@ -242,7 +242,7 @@
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\MeshComponent.cpp" />
     <ClCompile Include="src\MovementComponent.cpp" />
-    <ClCompile Include="src\NetworkManager.cpp" />
+    <ClCompile Include="src\NetworkGlobal.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
     <ClCompile Include="src\DxRendererGlobal.cpp" />

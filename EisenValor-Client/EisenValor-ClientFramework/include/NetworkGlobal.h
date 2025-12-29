@@ -12,11 +12,11 @@ class PacketBuffer;
 // ===========================================
 // * Non-Blockig I/O Model
 // ===========================================
-class NetworkManager : public Singleton<NetworkManager>
+class NetworkGlobal : public Singleton<NetworkGlobal>
 {
 private:
-	NetworkManager();
-	virtual ~NetworkManager();
+	NetworkGlobal();
+	virtual ~NetworkGlobal();
 	friend class Singleton;
 
 private:
@@ -91,10 +91,10 @@ public:
 template <typename Packet>
 static inline void SendPacket(Packet&& sendPkt) noexcept
 {
-	MANAGER(NetBridge::NetworkManager).Send(std::forward<Packet>(sendPkt));
+	MANAGER(NetBridge::NetworkGlobal).Send(std::forward<Packet>(sendPkt));
 }
 
 static inline void SendPacket(std::shared_ptr<NetBridge::PacketBuffer>&& sendBuffer) noexcept
 {
-	MANAGER(NetBridge::NetworkManager).Send(std::move(sendBuffer));
+	MANAGER(NetBridge::NetworkGlobal).Send(std::move(sendBuffer));
 }

@@ -34,9 +34,6 @@
     <Filter Include="NetBridge">
       <UniqueIdentifier>{757ff512-363e-4b4b-9995-e514033e6060}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NetBridge\00. NetworkManager">
-      <UniqueIdentifier>{b75b3135-5ffe-448c-ae59-f676b9c0c512}</UniqueIdentifier>
-    </Filter>
     <Filter Include="NetBridge\01. NWBuffer">
       <UniqueIdentifier>{e76c6816-d432-4b93-89cd-3c016a7a8e3e}</UniqueIdentifier>
     </Filter>
@@ -88,6 +85,9 @@
     <Filter Include="NetBridge\Packets">
       <UniqueIdentifier>{f28137fc-8b52-4c41-9d11-ff570634a8c6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NetBridge\00. Network">
+      <UniqueIdentifier>{b75b3135-5ffe-448c-ae59-f676b9c0c512}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -118,8 +118,8 @@
     <ClInclude Include="include\DxDescriptorHeapGlobal.h">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
-    <ClInclude Include="include\NetworkManager.h">
-      <Filter>NetBridge\00. NetworkManager</Filter>
+    <ClInclude Include="include\NetworkGlobal.h">
+      <Filter>NetBridge\00. Network</Filter>
     </ClInclude>
     <ClInclude Include="include\RecvBuffer.h">
       <Filter>NetBridge\01. NWBuffer\00. RecvBuffer</Filter>
@@ -253,8 +253,8 @@
     <ClCompile Include="src\DxDescriptorHeapGlobal.cpp">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
-    <ClCompile Include="src\NetworkManager.cpp">
-      <Filter>NetBridge\00. NetworkManager</Filter>
+    <ClCompile Include="src\NetworkGlobal.cpp">
+      <Filter>NetBridge\00. Network</Filter>
     </ClCompile>
     <ClCompile Include="src\RecvBuffer.cpp">
       <Filter>NetBridge\01. NWBuffer\00. RecvBuffer</Filter>

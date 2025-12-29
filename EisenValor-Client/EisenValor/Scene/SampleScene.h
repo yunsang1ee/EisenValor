@@ -6,5 +6,7 @@ protected:
 	void OnRegisterCustomComponents() override;
 
 public:
+	void OnStart() override;
 	void CreateSceneObjects();
+	void OnEnd() override;
 };

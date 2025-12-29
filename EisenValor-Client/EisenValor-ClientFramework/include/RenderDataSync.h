@@ -84,7 +84,7 @@ private:
 
 		m_gpuBuffer = std::make_unique<DxBuffer>();
 		m_gpuBuffer->Initialize(
-			device, sizeInBytes, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, L"RenderDataSync_Buffer"
+			device, sizeInBytes, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "RenderDataSync_Buffer"
 		);
 
 		m_gpuBuffer->CreateSRV(device, MANAGER(DxDescriptorHeapGlobal), (uint32_t)newCapacity, (uint32_t)sizeof(T));

@@ -30,26 +30,22 @@ public:
 
 	void		 CreateSwapChain(HWND hwnd, uint32_t width, uint32_t height);
 	DxSwapChain* GetSwapChain() const { return m_swapChain.get(); }
-	void		 ToggleBorderlessFullscreen();
-	void		 ToggleFullscreen();
-
-	uint32_t GetWidth() const { return m_swapChain->GetWidth(); }
-	uint32_t GetHeight() const { return m_swapChain->GetHeight(); }
-	void	 OnResize(uint32_t width, uint32_t height);
+	void		 OnResize(uint32_t width, uint32_t height);
 
 	void ClearAllPasses();
 
 	DxFrameResource* GetCurrentFrame() const;
 
 private:
+	bool						 m_isInitialized = false;
 	DxFeatureCaps				 m_featureCaps;
 	std::unique_ptr<DxSwapChain> m_swapChain;
 	ComPtr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
 	uint32_t					 m_rtvDescriptorSize = 0;
 
 	static constexpr uint32_t								  kFrameCount = 3;
-	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
 	uint32_t												  m_currentFrameIndex = 0;
+	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
 
 	struct RenderPassEntry
 	{

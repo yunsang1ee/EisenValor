@@ -117,14 +117,15 @@ void DxSwapChain::PresentMaxPerformance()
 	ThrowIfFailed(m_swapChain->Present(0, presentFlags));
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	++m_frameCount;
-
+	/*
 	if (m_frameCount % 1000 == 0)
 	{
-		/*	DEBUG_LOG_FMT(
+			DEBUG_LOG_FMT(
 				"[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", m_frameCount,
 		   m_supportsTearing, !m_isFullscreen && !m_isBorderlessFullscreen
-			);*/
+			);
 	}
+	*/
 }
 
 void DxSwapChain::OnResize(

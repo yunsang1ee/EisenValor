@@ -1,9 +1,10 @@
 #include "stdafxClientFramework.h"
 #include "IComponent.h"
 #include "SceneGlobal.h"
+#include "Scene.h"
+#include "GameObject.h"
 
-template <typename Derived>
-GameObject* ComponentBase<Derived>::GetGameObject() const
+GameObject* IComponent::GetGameObject() const
 {
 	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
 	if (!scene)

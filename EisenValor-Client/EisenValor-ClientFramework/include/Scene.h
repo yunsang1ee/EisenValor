@@ -9,35 +9,24 @@
 class Scene
 {
 public:
+	using ServerID = uint32_t;
+	using ComponentRawHandle = uint64_t;
+
+public:
 	Scene() = default;
 	virtual ~Scene() { ResetAll(); }
 
-	void Initialize()
-	{
-		if (!m_componentsStorage.empty())
-		{
-			DEBUG_LOG_FMT("[Scene] Initialize called multiple times!\n");
-			return;
-		}
-
-		RegisterGroupFromType<EngineComponents>();
-		OnRegisterCustomComponents();
-		SortComponentsByPriority();
-
-		m_updateList.shrink_to_fit();
-		m_fixedList.shrink_to_fit();
-		m_lateList.shrink_to_fit();
-
-		m_gameObjects.Reserve(512);
-	}
+	void Initialize();
 
 	//========================================================================
 	// GameObject Lifecycle
 	//========================================================================
 
-	GameObject::Handle CreateGameObject(std::string name = "GameObject", std::optional<uint32> serverID = std::nullopt);
-	void			   DestroyGameObject(GameObject::Handle handle);
-	GameObject*		   TryGetGameObject(GameObject::Handle handle) { return m_gameObjects.TryGet(handle); }
+	GameObject::Handle CreateGameObject(
+		std::string name = "GameObject", std::optional<ServerID> serverID = std::nullopt
+	);
+	void		DestroyGameObject(GameObject::Handle handle);
+	GameObject* TryGetGameObject(GameObject::Handle handle) { return m_gameObjects.TryGet(handle); }
 
 	//========================================================================
 	// Component Lifecycle
@@ -119,8 +108,8 @@ public:
 	template <IsValidComponent Component>
 	ComponentStorage<Component>* RegisterComponent(int priority = Component::kPriority)
 	{
-		const ComponentTypeID	typeID = Component::StaticRuntimeTypeID();
-		const ComponentTypeHash typeHash = Component::StaticStableTypeHash();
+		const ComponentTypeID		typeID = Component::StaticRuntimeTypeID();
+		constexpr ComponentTypeHash typeHash = Component::StaticStableTypeHash();
 
 		if (typeID < m_componentsStorage.size() && nullptr != m_componentsStorage[typeID])
 		{
@@ -176,10 +165,10 @@ public:
 	// Network
 	//========================================================================
 
-	void   SetLocalID(uint32 id) { m_localNetworkID = id; }
-	uint32 GetLocalID() const { return m_localNetworkID; }
+	void	 SetLocalID(ServerID id) { m_localNetworkID = id; }
+	ServerID GetLocalID() const { return m_localNetworkID; }
 
-	GameObject* FindGameObjectByServerID(uint32 serverID)
+	GameObject* FindGameObjectByServerID(ServerID serverID)
 	{
 		auto iter = m_serverIDToHandle.find(serverID);
 		if (iter != m_serverIDToHandle.end())
@@ -188,8 +177,8 @@ public:
 		}
 		return nullptr;
 	}
-	void RegisterNetworkObject(uint32 serverID, GameObject::Handle handle) { m_serverIDToHandle[serverID] = handle; }
-	void UnregisterNetworkObject(uint32 serverID) { m_serverIDToHandle.erase(serverID); }
+	void RegisterNetworkObject(ServerID serverID, GameObject::Handle handle) { m_serverIDToHandle[serverID] = handle; }
+	void UnregisterNetworkObject(ServerID serverID) { m_serverIDToHandle.erase(serverID); }
 
 	//========================================================================
 	// Serialization
@@ -222,6 +211,8 @@ public:
 protected:
 	// Add user-defined components in derived Scene classes
 	virtual void OnRegisterCustomComponents() = 0;
+	virtual void OnStart() {}
+	virtual void OnEnd() { ClearSceneData(); }
 
 	template <IsValidComponent... Ts>
 	void RegisterComponents()
@@ -244,28 +235,28 @@ protected:
 private:
 	struct CreateRequest
 	{
-		std::string			  name;
-		GameObject::Handle	  handle;
-		std::optional<uint32> serverID;
+		std::string				name;
+		GameObject::Handle		handle;
+		std::optional<ServerID> serverID;
 	};
 
 	struct ComponentCreateRequest
 	{
 		ComponentTypeID		  typeID;
 		GameObject::Handle	  ownerHandle;
-		uint64_t			  componentHandle;
+		ComponentRawHandle	  componentHandle;
 		std::function<void()> createFunc;
 	};
 
 	struct ComponentDestroyRequest
 	{
-		ComponentTypeID typeID;
-		uint64_t		componentHandleValue;
+		ComponentTypeID	   typeID;
+		ComponentRawHandle componentHandleValue;
 	};
 
 	std::queue<CreateRequest>	   m_pendingCreates;
 	std::queue<GameObject::Handle> m_pendingDestroys;
-	// std::unordered_set<uint64_t>   m_pendingDestroySet; // MAYBE: 성능 향상이 필요할 때 사용
+	// std::unordered_set<ComponentRawHandle>   m_pendingDestroySet; // MAYBE: 성능 향상이 필요할 때 사용
 	std::queue<ComponentCreateRequest>	m_pendingComponentCreates;
 	std::queue<ComponentDestroyRequest> m_pendingComponentDestroys;
 	bool								m_isProcessingDeferred = false;
@@ -290,9 +281,9 @@ private:
 
 private:
 	// Object
-	uint32_t									   m_localNetworkID;
-	std::unordered_map<uint32, GameObject::Handle> m_serverIDToHandle;
-	DenseList<GameObject>						   m_gameObjects;
+	ServerID										 m_localNetworkID;
+	std::unordered_map<ServerID, GameObject::Handle> m_serverIDToHandle;
+	DenseList<GameObject>							 m_gameObjects;
 
 	// Component
 	std::vector<std::unique_ptr<IComponentStorage>>			  m_componentsStorage;

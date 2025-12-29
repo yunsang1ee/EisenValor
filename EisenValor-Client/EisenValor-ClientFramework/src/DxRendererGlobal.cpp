@@ -5,6 +5,7 @@
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxFeatureCaps.h"
+#include "DxGarbageCollectorGlobal.h"
 #include "DxFrameResource.h"
 #include "DxSwapChain.h"
 
@@ -17,10 +18,14 @@ void DxRendererGlobal::Initialize()
 	if (m_featureCaps.rayTracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
 	{
 		DEBUG_LOG_FMT("[GameFramework] ERROR: DXR not supported on this device!\n");
+		m_isInitialized = false;
 		return;
 	}
 
-	// RTV Descriptor Heap 积己
+	m_isInitialized = true;
+	m_currentFrameIndex = 0;
+
+	// RTV Descriptor Heap 靸濎劚
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.NumDescriptors = kFrameCount;
@@ -28,7 +33,7 @@ void DxRendererGlobal::Initialize()
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-	// Frame Resources 积己
+	// Frame Resources 靸濎劚
 	for (uint32_t i = 0; i < kFrameCount; ++i)
 	{
 		m_frameResources[i] = std::make_unique<DxFrameResource>();
@@ -46,6 +51,12 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		return;
 	}
 
+	if (!m_rtvDescriptorHeap)
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: Renderer not initialized (RTV heap is null)\n");
+		return;
+	}
+
 	auto& device = MANAGER(DxDeviceGlobal);
 	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
 
@@ -54,7 +65,15 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
 
-	m_swapChain->SetResizeCallback([this](uint32_t w, uint32_t h) { OnResize(w, h); });
+	m_swapChain->SetResizeCallback(
+		[this](uint32_t w, uint32_t h)
+		{
+			for (auto& entry : m_renderPasses)
+			{
+				entry.pass->OnResize(w, h);
+			}
+		}
+	);
 
 	DEBUG_LOG_FMT("[DxRendererGlobal] SwapChain created: {}x{}\n", width, height);
 }
@@ -133,9 +152,11 @@ IRenderPass* DxRendererGlobal::GetRenderPass(const std::string& name) const
 
 void DxRendererGlobal::BeginFrame()
 {
-	if (!m_swapChain)
+	if (!m_isInitialized || !m_swapChain)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
+		DEBUG_LOG_FMT(
+			"[DxRendererGlobal] ERROR: Not ready (init:{}, swapChain:{})\n", m_isInitialized, nullptr != m_swapChain 
+		);
 		return;
 	}
 
@@ -172,10 +193,14 @@ void DxRendererGlobal::EndFrame()
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
+	const uint64_t signaledFence = commandQueue.SignalFence();
 
 	m_swapChain->PresentMaxPerformance();
-
 	frame->WaitForCompletion();
+
+	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
+	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
 }
 
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
@@ -201,28 +226,7 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
 	);	
-
-	for (auto& entry : m_renderPasses)
-	{
-		entry.pass->OnResize(width, height);
-	}
 	DEBUG_LOG_FMT("[DxRendererGlobal] Resize handled: {}x{}\n", width, height);
-}
-
-void DxRendererGlobal::ToggleBorderlessFullscreen()
-{
-	if (m_swapChain)
-	{
-		m_swapChain->ToggleBorderlessFullscreen();
-	}
-}
-
-void DxRendererGlobal::ToggleFullscreen()
-{
-	if (m_swapChain)
-	{
-		m_swapChain->ToggleFullscreen();
-	}
 }
 
 void DxRendererGlobal::ClearAllPasses()
@@ -237,5 +241,10 @@ void DxRendererGlobal::ClearAllPasses()
 
 DxFrameResource* DxRendererGlobal::GetCurrentFrame() const
 {
+	if (!m_isInitialized)
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: Not initialized!\n");
+		return nullptr;
+	}
 	return m_frameResources[m_currentFrameIndex].get();
 }

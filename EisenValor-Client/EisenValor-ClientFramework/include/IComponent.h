@@ -42,7 +42,7 @@ public:
 	virtual void OnEnable() {}
 	virtual void OnDisable() {}
 	virtual void OnDestroy() {}
-	
+
 	bool IsActive() const { return m_isActive; }
 	void SetActive(bool active)
 	{
@@ -53,12 +53,14 @@ public:
 		active ? OnEnable() : OnDisable();
 	}
 
-	void				 SetOwner(HandleOf<GameObject> owner) { m_owner = owner; }
-	HandleOf<GameObject> GetOwner() const { return m_owner; }
+	void						SetOwner(DenseListHandle<GameObject> owner) { m_owner = owner; }
+	DenseListHandle<GameObject> GetOwner() const { return m_owner; }
+
+	GameObject* GetGameObject() const;
 
 protected:
-	HandleOf<GameObject> m_owner = DenseListHandle<GameObject>::Invalid();
-	bool		m_isActive = true;
+	DenseListHandle<GameObject> m_owner = DenseListHandle<GameObject>::Invalid();
+	bool						m_isActive = true;
 };
 
 
@@ -94,11 +96,8 @@ public:
 
 	ComponentBase() : m_handle(Handle::Invalid()) {}
 
-	static constexpr ComponentTypeHash StaticStableTypeHash()
-	{
-		return Utils::HashString(GetStaticTypeName());
-	}
-	static constexpr const char* GetStaticTypeName() { return "UnknownComponent"; }
+	static constexpr ComponentTypeHash StaticStableTypeHash() { return Utils::HashString(GetStaticTypeName()); }
+	static constexpr const char*	   GetStaticTypeName() { return "UnknownComponent"; }
 
 	ComponentTypeID		   GetRuntimeTypeID() const override { return Internal::GetComponentTypeID<Derived>(); }
 	const char*			   GetTypeName() const override { return typeid(Derived).name(); }
@@ -106,9 +105,6 @@ public:
 
 	void   SetHandle(Handle handle) { m_handle = handle; }
 	Handle GetHandle() const { return m_handle; }
-
-protected:
-	GameObject* GetGameObject() const;
 
 protected:
 	Handle m_handle;

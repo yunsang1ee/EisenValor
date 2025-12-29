@@ -130,7 +130,7 @@ using Ray = DirectX::SimpleMath::Ray;
 #include "Structs_generated.h"
 #include "Tables_generated.h"
 
-#include "NetworkManager.h"
+#include "NetworkGlobal.h"
 #include "IPacketHandler.h"
 #pragma endregion
 

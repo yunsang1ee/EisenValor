@@ -1,6 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "PacketHandler.h"
-#include "NetworkManager.h"
+#include "NetworkGlobal.h"
 #include "DxDeviceGlobal.h"
 #include "SceneGlobal.h"
 
@@ -23,7 +23,7 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 	const uint16 roomID{1};
 
 	auto pb = NetBridge::ServerPacketHandler::Make_CS_ENTER_ROOM_PACKET(id, roomID);
-	MANAGER(NetBridge::NetworkManager).Send(std::move(pb));
+	MANAGER(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 	return true;
 }

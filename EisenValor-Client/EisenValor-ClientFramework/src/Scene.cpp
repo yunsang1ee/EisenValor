@@ -1,6 +1,26 @@
 #include "stdafxClientFramework.h"
 #include "Scene.h"
 
+void Scene::Initialize()
+{
+	if (!m_componentsStorage.empty())
+	{
+		DEBUG_LOG_FMT("[Scene] Initialize called multiple times!\n");
+		return;
+	}
+
+	RegisterGroupFromType<EngineComponents>();
+	OnRegisterCustomComponents();
+	SortComponentsByPriority();
+
+	m_updateList.shrink_to_fit();
+	m_fixedList.shrink_to_fit();
+	m_lateList.shrink_to_fit();
+
+	m_gameObjects.Reserve(512);
+	OnStart();
+}
+
 GameObject::Handle Scene::CreateGameObject(std::string name, std::optional<uint32> serverID)
 {
 	GameObject::Handle handle = m_gameObjects.ReserveHandle();

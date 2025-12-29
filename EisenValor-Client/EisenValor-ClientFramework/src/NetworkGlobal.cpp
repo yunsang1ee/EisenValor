@@ -1,16 +1,16 @@
 #include "stdafxClientFramework.h"
-#include "NetworkManager.h"
+#include "NetworkGlobal.h"
 
 #include "RecvBuffer.h"
 
-NetBridge::NetworkManager::NetworkManager()
+NetBridge::NetworkGlobal::NetworkGlobal()
 	: m_socket{INVALID_SOCKET}, m_recvBuffer{std::make_unique<RecvBuffer>(NW_BUFFER_CAPACITY) /*64kb*/}
 {
 }
 
-NetBridge::NetworkManager::~NetworkManager() {}
+NetBridge::NetworkGlobal::~NetworkGlobal() {}
 
-bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 port)
+bool NetBridge::NetworkGlobal::Init(const std::string_view ip, const uint16 port)
 {
 	std::wcout.imbue(std::locale("korean"));
 
@@ -66,7 +66,7 @@ bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 por
 	return true;
 }
 
-void NetBridge::NetworkManager::ProcessIO()
+void NetBridge::NetworkGlobal::ProcessIO()
 {
 	RecvBuffer* const recvBuffer = m_recvBuffer.get();
 
@@ -105,15 +105,15 @@ void NetBridge::NetworkManager::ProcessIO()
 	}
 }
 
-void NetBridge::NetworkManager::Terminate()
+void NetBridge::NetworkGlobal::Terminate()
 {
 	shutdown(m_socket, SD_BOTH);
 	closesocket(m_socket);
 	WSACleanup();
-	std::cout << "NetworkManager Terminate!" << std::endl;
+	std::cout << "NetworkGlobal Terminate!" << std::endl;
 }
 
-uint32 NetBridge::NetworkManager::AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept
+uint32 NetBridge::NetworkGlobal::AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept
 {
 	uint32 processLen = 0;
 
@@ -140,7 +140,7 @@ uint32 NetBridge::NetworkManager::AssembleReceivedData(const char* const buffer,
 	return processLen;
 }
 
-void NetBridge::NetworkManager::ProcessPacket(const char* const buffer) noexcept
+void NetBridge::NetworkGlobal::ProcessPacket(const char* const buffer) noexcept
 {
 	const PacketHeader header = *reinterpret_cast<const PacketHeader*>(buffer);
 	const char* const  packetData = buffer + sizeof(PacketHeader);

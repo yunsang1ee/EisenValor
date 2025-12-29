@@ -8,6 +8,7 @@ class GameObject
 {
 public:
 	using Handle = HandleOf<GameObject>;
+	using ComponentRawHandle = uint64_t;
 
 	GameObject(Scene* scene, HandleOf<Transform> trHd, std::string name = "GameObject");
 	virtual ~GameObject() = default;
@@ -24,7 +25,7 @@ public:
 
 	Transform&		 GetTransform();
 	const Transform& GetTransform() const;
-	DX::XMFLOAT4X4 GetWorldMatrix();
+	DX::XMFLOAT4X4	 GetWorldMatrix();
 
 	template <IsValidComponent T>
 	void AddComponentHandle(HandleOf<T> handle)
@@ -61,7 +62,7 @@ public:
 		}
 	}
 
-	const std::vector<uint64_t>& GetAllComponentHandles() const { return m_components; }
+	const std::vector<ComponentRawHandle>& GetAllComponentHandles() const { return m_components; }
 
 	void			   SetName(std::string name) { m_name = std::move(name); }
 	const std::string& GetName() const { return m_name; }
@@ -73,7 +74,7 @@ private:
 	std::string m_name;
 	uint32_t	m_serverID = 0;
 
-	Scene*				  m_scene;
-	HandleOf<Transform>	  m_transform;
-	std::vector<uint64_t> m_components;
+	Scene*							m_scene;
+	HandleOf<Transform>				m_transform;
+	std::vector<ComponentRawHandle>	m_components;
 };
