@@ -19,64 +19,167 @@ namespace Server {
 	class ClientSession;
 }
 
+/*
+	세션: 0 ~ 9
+	로그인: 10 ~ 99
+	로비: 100 ~ 999
+	룸: 1000 ~ 9999
+	월드: 10000 ~ 19999
+	테스트: 20000 ~ 65535
+*/
+
 enum class PACKET_TYPE : uint16 {
-	CS_LOGIN_PKT = 1,
-	SC_LOGIN_PKT = 2,
+	// ==================
+	//		세션
+	// ==================
+	CS_PONG_PKT = 0,
+	SC_PING_PKT = 1,
 
-	CS_ENTER_GAME_PKT = 3,
-	SC_ENTER_GAME_PKT = 4,
+	// ==================
+	//		로그인
+	// ==================
+	CS_LOGIN_PKT = 10,
+	SC_LOGIN_FAIL_PKT = 11,
+	SC_LOGIN_SUCCESS_PKT = 12,
 
-	SC_LOCAL_PLAYER_PKT = 5,
+	// TODO: 회원가입
+	CS_SIGN_UP_PKT = 13,
+	SC_SIGN_UP_FAIL_PKT = 14,
+	SC_SIGN_UP_SUCCESS_PKT = 15,
 
-	SC_ADD_OBJ_PKT = 6,
-	SC_REMOVE_OBJ_PKT = 7,
+	// ==================
+	//		로비
+	// ==================
+	CS_ENTER_GAME_LOBBY_PKT = 100,
+	SC_ENTER_GAME_LOBBY_PKT = 101,			// To me
+	
+	CS_LEAVE_GAME_LOBBY_PKT = 102,
+	SC_LEAVE_GAME_LOBBY_PKT = 103,			// To me
 
-	CS_CHAT_PKT = 8,
-	SC_CHAT_PKT = 9,
+	SC_ADD_USER_IN_GAME_LOBBY_PKT = 104,
+	SC_REMOVE_USER_IN_GAME_LOBBY_PKT = 105,
+	
+	// ==================
+	//		룸
+	// ==================
+	CS_JOIN_GAME_ROOM_PKT = 1000,
+	SC_JOIN_GAME_ROOM_FAIL_PKT = 1001,		// To me
+	SC_JOIN_GAME_ROOM_SUCCESS_PKT = 1002,	// To me
+	
+	CS_LEAVE_GAME_ROOM_PKT = 1003,
+	SC_LEAVE_GAME_ROOM_PKT = 1004,			// To me
 
-	CS_MOVE_PKT = 10,
-	SC_MOVE_PKT = 11,
+	SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT = 1005,		
+	SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT = 1006,	
 
-	CS_SUMMON_NPC_PKT = 12,
+	CS_CHANGE_TEAM_PKT = 1007,
+	SC_CHANGE_TEAM_PKT = 1008,
 
-	CS_SOLDIER_FORMATION_PKT = 13,
+	CS_ADD_BOT_PKT = 1009,
+	CS_REMOVE_BOT_PKT = 1010,
 
-	CS_PLAYER_ATTACK_PKT = 14,
+	CS_READY_GAME_PKT = 1011,
+	SC_READY_GAME_PKT = 1012,
 
-	SC_PLAYER_DAMAGED_PKT = 15,
+	CS_START_GAME_PKT = 1013,
+	SC_LOADING_GAME_WORLD_PKT = 1014,
 
-	CS_SOLDIER_MOVE_PKT = 16,
+	CS_COMPLETE_LOADING_GAME_WORLD_PKT = 1015,
+	SC_START_GAME_FAIL_PKT = 1016,
+	SC_START_GAME_SUCCESS_PKT = 1017,
 
-	SC_REMAINING_GAME_TIME_PKT = 17,
 
-	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
+	// ==================
+	//		월드
+	// ==================
+	SC_LOCAL_PLAYER_PKT = 10000,
 
-	CS_REQ_ATTACK_PKT = 19,
+	SC_ADD_OBJ_PKT = 10001,
+	SC_REMOVE_OBJ_PKT = 10002,
 
-	SC_NPC_INFO_PKT = 20,
+	CS_MOVE_PKT = 10003,
+	SC_MOVE_PKT = 10004,
 
-	SC_ADD_NPC_PKT = 21,
+	CS_PLAYER_ATTACK_PKT = 10005,
 
-	CS_GAME_START_PKT = 22,
+	SC_PLAYER_DAMAGED_PKT = 10006,
 
-	END
+	CS_SOLDIER_MOVE_PKT = 10007,
+
+	SC_REMAINING_GAME_TIME_PKT = 10008,
+
+	CS_CHANGE_SOLDIER_FORMATION_PKT = 10009,
+
+	CS_REQ_ATTACK_PKT = 10010,
+
+	SC_NPC_INFO_PKT = 10011,
+
+	SC_ADD_NPC_PKT = 10012,
+
+	K_CS_GAME_START_PKT = 10013,
+
+
+	// 테스트
+#ifdef DEVELOP
+	CS_ENTER_GAME_WORLD_PACKET = 20000,
+	SC_ENTER_GAME_WORLD_PACKET = 20001,
+#endif // DEVELOP
+
+	END= 65535,
 };
 
 using PacketHandlerFunc = bool(*)(const std::shared_ptr<ServerEngine::Session>&, const char* const);
 extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs{};
 
 bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>&, const char* const) noexcept;
+
+// =================
+//		로그인
+// =================
 bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt) noexcept;
-bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept;
-bool Handle_CS_ENTER_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_PACKET& recvPkt) noexcept;
+
+// =================
+//		로비
+// =================
+bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt) noexcept;
+bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt) noexcept;
+
+
+// =================
+//		룸
+// =================
+bool Handle_CS_JOIN_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_JOIN_GAME_ROOM_PACKET& recvPkt) noexcept;
+bool Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET& recvPkt) noexcept;
+bool Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_TEAM_PACKET& recvPkt) noexcept;
+bool Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ADD_BOT_PACKET& recvPkt) noexcept;
+bool Handle_CS_READY_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_READY_GAME_PACKET& recvPkt) noexcept;
+bool Handle_CS_START_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_START_GAME_PACKET& recvPkt) noexcept;
+bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET& recvPkt) noexcept;
+
+
+
+// =================
+//		월드
+// =================
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept;
-bool Handle_CS_SUMMON_NPC_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SUMMON_NPC& recvPkt) noexcept;
-bool Handle_CS_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_FORMATION& recvPkt) noexcept;
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept;
-bool Handle_CS_SOLDIER_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SOLDIER_MOVE& recvPkt) noexcept;
-bool Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_SOLDIER_FORMATION& recvPkt) noexcept;
-bool Handle_CS_REQ_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_REQ_ATTACK& recvPkt) noexcept;
-bool Handle_CS_GAME_START_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_REQ_ATTACK& recvPkt) noexcept;
+
+
+
+// =================
+//		세션
+// =================
+bool Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt) noexcept;
+
+
+// =================
+//		테스트
+// =================
+#ifdef DEVELOP
+bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt);
+#endif // DEVELOP
+
+
 
 class ClientPacketHandler {
 private:
@@ -86,33 +189,64 @@ private:
 	ClientPacketHandler& operator= (const ClientPacketHandler&) = delete;
 	ClientPacketHandler(ClientPacketHandler&&) noexcept = delete;
 	ClientPacketHandler& operator= (ClientPacketHandler&&) noexcept = delete;
-		 
+
 public:
 	static void Init() noexcept
 	{
 		for(auto& packetHandlerFunc : PacketHandlerFuncs)
 			packetHandlerFunc = Handle_INVALID_PACKET;
 
-		// 패킷 받는 부분 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(Handle_CS_LOGIN_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHAT_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHAT_PACKET>(Handle_CS_CHAT_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_PACKET>(Handle_CS_ENTER_GAME_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SUMMON_NPC_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SUMMON_NPC>(Handle_CS_SUMMON_NPC_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_FORMATION>(Handle_CS_SOLDIER_FORMATION_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SOLDIER_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SOLDIER_MOVE>(Handle_CS_SOLDIER_MOVE_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_SOLDIER_FORMATION_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_SOLDIER_FORMATION>(Handle_CS_CHANGE_SOLDIER_FORMATION_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_REQ_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_REQ_ATTACK>(Handle_CS_REQ_ATTACK_PACKET, session, buffer); };
+		// =================
+		//		세션
+		// =================
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PONG_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PONG_PACKET>(Handle_CS_PONG_PACKET, session, buffer); };
 
-		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "ClientPacketHandler Init");
+
+		// =================
+		//		로그인
+		// =================
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(Handle_CS_LOGIN_PACKET, session, buffer); };
+
+		// =================
+		//		로비
+		// =================
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET>(Handle_CS_ENTER_GAME_LOBBY_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LEAVE_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET>(Handle_CS_LEAVE_GAME_LOBBY_PACKET, session, buffer); };
+
+		// =================
+		//		룸
+		// =================
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_JOIN_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_JOIN_GAME_ROOM_PACKET>(Handle_CS_JOIN_GAME_ROOM_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LEAVE_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET>(Handle_CS_LEAVE_GAME_ROOM_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_TEAM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_TEAM_PACKET>(Handle_CS_CHANGE_TEAM_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ADD_BOT_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ADD_BOT_PACKET>(Handle_CS_ADD_BOT_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_READY_GAME_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_READY_GAME_PACKET>(Handle_CS_READY_GAME_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_START_GAME_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_START_GAME_PACKET>(Handle_CS_START_GAME_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_COMPLETE_LOADING_GAME_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET>(Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET, session, buffer); };
+
+		// =================
+		//		월드
+		// =================
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
+
+
+		// =================
+		//		테스트
+		// =================
+#ifdef DEVELOP
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_WORLD_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_WORLD_PACKET>(Handle_CS_ENTER_GAME_WORLD_PACKET, session, buffer); };
+#endif // DEVELOP
+
+
+		LOG_INFO("ClientPacketHandler Init");
 	}
 
 private:
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
 	{
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer);
-		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], session, buffer+ sizeof(PacketHeader));
+		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], session, buffer + sizeof(PacketHeader));
 	}
 
 	template<typename PacketType, typename HandleFunc>
@@ -124,9 +258,8 @@ private:
 
 public:
 	template<typename PacketFunc, typename... Args>
-	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args) noexcept
+	static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args) noexcept
 	{
-		flatbuffers::FlatBufferBuilder builder;
 		auto offset = func(builder, std::forward<Args>(args)...);
 		builder.Finish(offset);
 		return builder.Release();
@@ -136,7 +269,7 @@ public:
 	{
 		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
-		
+
 		const auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
 		packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 		return packetBuffer;

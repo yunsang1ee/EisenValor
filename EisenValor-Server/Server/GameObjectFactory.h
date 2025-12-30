@@ -48,7 +48,6 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			// static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::shared_ptr<NPC>			CreateGeneral(const GeneralTemplate& t);
 			static std::shared_ptr<NPC>			CreateSoldier(const SoldierTemplate& t);

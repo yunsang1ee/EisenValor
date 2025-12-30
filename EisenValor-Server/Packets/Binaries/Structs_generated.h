@@ -21,6 +21,10 @@ struct Vec3;
 
 struct KinematicInfo;
 
+struct RoomInfo;
+
+struct ParticipantInfo;
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
   float x_;
@@ -90,6 +94,86 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) KinematicInfo FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(KinematicInfo, 56);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(2) RoomInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint16_t id_;
+  uint8_t state_;
+  uint8_t current_participants_;
+  uint8_t max_marticipants_;
+  int8_t padding0__;
+
+ public:
+  RoomInfo()
+      : id_(0),
+        state_(0),
+        current_participants_(0),
+        max_marticipants_(0),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  RoomInfo(uint16_t _id, FB_ENUMS::ROOM_STATE_TYPE _state, uint8_t _current_participants, uint8_t _max_marticipants)
+      : id_(::flatbuffers::EndianScalar(_id)),
+        state_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_state))),
+        current_participants_(::flatbuffers::EndianScalar(_current_participants)),
+        max_marticipants_(::flatbuffers::EndianScalar(_max_marticipants)),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  uint16_t id() const {
+    return ::flatbuffers::EndianScalar(id_);
+  }
+  FB_ENUMS::ROOM_STATE_TYPE state() const {
+    return static_cast<FB_ENUMS::ROOM_STATE_TYPE>(::flatbuffers::EndianScalar(state_));
+  }
+  uint8_t current_participants() const {
+    return ::flatbuffers::EndianScalar(current_participants_);
+  }
+  uint8_t max_marticipants() const {
+    return ::flatbuffers::EndianScalar(max_marticipants_);
+  }
+};
+FLATBUFFERS_STRUCT_END(RoomInfo, 6);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ParticipantInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t id_;
+  uint8_t type_;
+  uint8_t state_type_;
+  uint8_t team_type_;
+  int8_t padding0__;
+
+ public:
+  ParticipantInfo()
+      : id_(0),
+        type_(0),
+        state_type_(0),
+        team_type_(0),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  ParticipantInfo(uint32_t _id, FB_ENUMS::PARTICIPANT_TYPE _type, FB_ENUMS::PARTICIPANT_STATE_TYPE _state_type, FB_ENUMS::TEAM_TYPE _team_type)
+      : id_(::flatbuffers::EndianScalar(_id)),
+        type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_type))),
+        state_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_state_type))),
+        team_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_team_type))),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  uint32_t id() const {
+    return ::flatbuffers::EndianScalar(id_);
+  }
+  FB_ENUMS::PARTICIPANT_TYPE type() const {
+    return static_cast<FB_ENUMS::PARTICIPANT_TYPE>(::flatbuffers::EndianScalar(type_));
+  }
+  FB_ENUMS::PARTICIPANT_STATE_TYPE state_type() const {
+    return static_cast<FB_ENUMS::PARTICIPANT_STATE_TYPE>(::flatbuffers::EndianScalar(state_type_));
+  }
+  FB_ENUMS::TEAM_TYPE team_type() const {
+    return static_cast<FB_ENUMS::TEAM_TYPE>(::flatbuffers::EndianScalar(team_type_));
+  }
+};
+FLATBUFFERS_STRUCT_END(ParticipantInfo, 8);
 
 }  // namespace FB_STRUCTS
 

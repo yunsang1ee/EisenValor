@@ -54,6 +54,11 @@ namespace ServerEngine {
 			return ObjectPool<Task>::MakeShared(owner, memFunc, std::forward<CallArgs>(args)...);
 		}
 
+	protected:
+		void ClearTaskQueue() noexcept;
+	
+	private:
+
 		void Execute() noexcept;
 		friend class RIOCore;
 	};

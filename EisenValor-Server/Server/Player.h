@@ -20,7 +20,7 @@ namespace Server {
 			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
 		
 		public:
-			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
+			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
 		
 		public:
 			virtual bool OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt) override;

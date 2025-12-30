@@ -11,36 +11,14 @@
 #include "BehaviorTree.h"
 #include "IsPlayerInNearNode.h"
 #include "TargetTraceNode.h"
-#include "TroopController.h"
 #include "Spawner.h"
-
-//std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
-//{
-//	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
-//	
-//	//auto player = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
-//	player->SetPos(t.pos);
-//	player->SetRotation(t.rot);
-//	player->SetStatInfo(t.stat);
-//
-//	//const auto troopController = player->AddComponent<Server::Contents::TroopController>();
-//	//troopController->SetOwner(player);
-//	//troopController->Init();
-//
-//	return player;
-//}
 
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
-	// auto player = new Player{ t.teamType };
 	player->SetPos(t.pos);
 	player->SetRotation(t.rot);
 	player->SetStatInfo(t.stat);
-
-	//const auto troopController = player->AddComponent<Server::Contents::TroopController>();
-	//troopController->SetOwner(player);
-	//troopController->Init();
 
 	return player;
 }
@@ -51,11 +29,6 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 	general->SetPos(t.pos);
 	general->SetRotation(t.rot);
 	general->SetStatInfo(t.stat);
-	
-	//const auto troopController = general->AddComponent<Server::Contents::TroopController>();
-	//troopController->SetOwner(general);
-	//troopController->Init();
-	//troopController->SetFormation(TROOP_FORMATION_TYPE::LINE);
 
 	const auto bt = general->AddComponent<BehaviorTree>();
 	bt->SetOwner(general);

@@ -18,7 +18,7 @@ const Vec3 Server::Contents::GameObject::GetForwardDir()
 		forward.y = 0.f;             // 수평면만 고려
 		forward.z = cosf(m_kinematicInfo.rotation.y);
 	forward.Normalize();
-
+	
 	return forward;
 }
 
