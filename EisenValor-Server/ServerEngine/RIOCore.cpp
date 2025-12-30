@@ -7,7 +7,7 @@
 #include "TaskQueue.h"
 #include "ServerEngineConfigureManager.h"
 
-bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc) noexcept
+bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
 	m_acceptThreadNum = 0;
 
@@ -66,11 +66,11 @@ bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc) noexcept
 	return true;
 }
 
-bool ServerEngine::RIOCore::StartAccept() noexcept
+bool ServerEngine::RIOCore::StartAccept()
 {
 	// 1. Listen
 	if(SOCKET_ERROR == ::listen(m_listenSocket, SOMAXCONN)) {
-		ServerEngine::LogManager::PrintLastError();
+		LOG_LAST_ERROR
 		return false;
 	}
 
@@ -85,7 +85,7 @@ bool ServerEngine::RIOCore::StartAccept() noexcept
 	return true;
 }
 
-void ServerEngine::RIOCore::Run() noexcept
+void ServerEngine::RIOCore::Run()
 {
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
@@ -103,12 +103,12 @@ void ServerEngine::RIOCore::Run() noexcept
 	}
 }
 
-void ServerEngine::RIOCore::DoAcceptLoop() noexcept
+void ServerEngine::RIOCore::DoAcceptLoop()
 {
 	const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
 	if(clientSocket == SOCKET_ERROR) return;
 	SOCKADDR_IN clientaddr;
-	int addrlen = sizeof(clientaddr);
+	int32 addrlen = sizeof(clientaddr);
 	getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
 
 	std::cout << "Client Accept Success!" << std::endl;
@@ -118,8 +118,9 @@ void ServerEngine::RIOCore::DoAcceptLoop() noexcept
 	InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
 	std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
 
-	m_rioWorkers[m_acceptThreadNum]->ProcessAccept(clientSocket, clientaddr);
-	m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
+	ServerEngine::RIOWorker* const rioWorker = m_rioWorkers[m_acceptThreadNum].get();
+	if(rioWorker->ProcessAccept(clientSocket, clientaddr))
+		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
 }
 
 void ServerEngine::RIOCore::Shutdown() const noexcept
@@ -134,7 +135,7 @@ void ServerEngine::RIOCore::DistributeReservedTask() noexcept
 	MANAGER(ServerEngine::TaskTimer)->DistributeReservedTask(now);
 }
 
-void ServerEngine::RIOCore::FlushTaskQueue() noexcept
+void ServerEngine::RIOCore::FlushTaskQueue()
 {
 	while(true) {
 		const auto now = high_resolution_clock::now();

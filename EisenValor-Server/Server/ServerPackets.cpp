@@ -4,19 +4,123 @@
 #include "ClientPacketHandler.h"
 
 namespace ServerPackets {
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_PACKET(const uint32 id) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_SUCCESS_PACKET(const uint32 id, const std::string_view nickName) noexcept
 	{
-		std::cout << "SC_LOGIN_PACKET" << std::endl;
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOGIN_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_LOGIN_PACKET, id));
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOGIN_SUCCESS_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOGIN_SUCCESS_PACKETDirect, id, nickName.data()));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_FAIL_PACKET() noexcept
 	{
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOGIN_FAIL_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOGIN_FAIL_PACKET));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ENTER_GAME_LOBBY_PACKET(const std::vector<RoomInfo>& rooms, const std::vector<std::string_view>& users, const std::vector<uint32>& vecUserID) noexcept
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		std::vector<FB_STRUCTS::RoomInfo> fbVecRooms;
+		fbVecRooms.reserve(rooms.size());
+		for(const auto& room : rooms)
+			fbVecRooms.emplace_back(FB_STRUCTS::RoomInfo{ room.id, room.stateType, room.currentParticipants, room.maxParticipants });
+
+		std::vector<flatbuffers::Offset<flatbuffers::String>> fbVecPlayers;
+		fbVecPlayers.reserve(users.size());
+		for(const auto& sv : users)
+			fbVecPlayers.emplace_back(builder.CreateString(sv.data(), sv.size()));
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ENTER_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ENTER_GAME_LOBBY_PACKETDirect, &fbVecRooms, &fbVecPlayers, &vecUserID));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LEAVE_GAME_LOBBY_PACKET()
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LEAVE_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LEAVE_GAME_LOBBY_PACKET));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(const uint32 id)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_USER_IN_GAME_LOBBY_PACKET, id));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_JOIN_GAME_ROOM_FAIL_PACKET(const std::string_view msg)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_JOIN_GAME_ROOM_FAIL_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_JOIN_GAME_ROOM_FAIL_PACKETDirect, msg.data()));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_JOIN_GAME_SUCCESS_PACKET(const ParticipantInfo& user, const std::vector<ParticipantInfo>& participants)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		FB_STRUCTS::ParticipantInfo userInfo{ user.id, user.type, user.stateType, user.teamType };
+		std::vector<FB_STRUCTS::ParticipantInfo> participantsInfo;
+		participantsInfo.reserve(participants.size());
+
+		for(const auto& participant : participants)
+			participantsInfo.emplace_back(FB_STRUCTS::ParticipantInfo{ participant.id, participant.type, participant.stateType, participant.teamType });
+		
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_JOIN_GAME_ROOM_SUCCESS_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_JOIN_GAME_ROOM_SUCCESS_PACKETDirect,&userInfo , &participantsInfo));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LEAVE_GAME_ROOM_PACKET()
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LEAVE_GAME_ROOM_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LEAVE_GAME_ROOM_PACKET));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(const ParticipantInfo& participant)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		FB_STRUCTS::ParticipantInfo participantInfo{ participant.id, participant.type, participant.stateType, participant.teamType };
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT, &participantInfo));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(const uint32 id)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT, id));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_TEAM_PACKET(const uint32 id, const FB_ENUMS::TEAM_TYPE teamType)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_TEAM_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_TEAM_PACKET, id, teamType));
+
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_READY_GAME_PACKET(const uint32 id, const FB_ENUMS::PARTICIPANT_STATE_TYPE stateType)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_READY_GAME_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_READY_GAME_PACKET, id, stateType));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOADING_GAME_WORLD_PACKET()
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOADING_GAME_WORLD_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOADING_GAME_WORLD_PACKET));
+
+	}
+
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_USER_IN_GAME_LOBBY_PACKET(const std::string_view user, const uint32 id)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_USER_IN_GAME_LOBBY_PACKETDirect, user.data(), id));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const KinematicInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 hp) noexcept
 	{
+		flatbuffers::FlatBufferBuilder builder;
+
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
 		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
@@ -25,11 +129,13 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::KinematicInfo kinematicInfo{ pos, rot, vel, accel, timeStamp };
 		std::cout << "SC_MY_PLAYER" << std::endl;
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo, teamType, hp));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &kinematicInfo, teamType, hp));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const KinematicInfo& transform, const uint32 hp) noexcept
 	{
+		flatbuffers::FlatBufferBuilder builder;
+
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
 		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
@@ -38,11 +144,13 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 		std::cout << "SC_ADD_OBJ" << std::endl;
-		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &info, hp));
+		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &info, hp));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_NPC_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::NPC_TYPE npcType, const KinematicInfo& transform, const uint32 hp) noexcept
 	{
+		flatbuffers::FlatBufferBuilder builder;
+
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
 		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
@@ -51,16 +159,20 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 		std::cout << "SC_ADD_NPC" << std::endl;
-		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_NPC_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_ADD_NPC_PACKET, id, objType, teamType, npcType, &info, hp));
+		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_NPC_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_NPC_PACKET, id, objType, teamType, npcType, &info, hp));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id) noexcept
 	{
-		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_OBJ_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
+		flatbuffers::FlatBufferBuilder builder;
+
+		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_OBJ_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const KinematicInfo& transform) noexcept
 	{
+		flatbuffers::FlatBufferBuilder builder;
+
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
 		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
@@ -68,21 +180,27 @@ namespace ServerPackets {
 		const uint64 timeStamp{ transform.timeStamp };
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
 
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_MOVE_PACKET, id, &info));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &info));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_HIT_PACKET(const uint32 id, const uint32 hp) noexcept
 	{
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PLAYER_DAMAGED_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_PLAYER_DAMAGED_PACKET, id, hp));
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PLAYER_DAMAGED_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PLAYER_DAMAGED_PACKET, id, hp));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMANING_GAME_TIME_PACKET(const uint32 remainTime)
 	{
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_NPC_INFO_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::NPC_TYPE npcType, const KinematicInfo& transform, const int hp, const uint8 objState)
 	{
+		flatbuffers::FlatBufferBuilder builder;
+
 		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
 		const FB_STRUCTS::Vec3 vel{ Vec3ToFlatVec3(transform.velocity) };
@@ -90,7 +208,14 @@ namespace ServerPackets {
 		const uint64 timeStamp{ transform.timeStamp };
 
 		const FB_STRUCTS::KinematicInfo info{ pos, rot, vel, accel, timeStamp };
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_NPC_INFO_PKT, ClientPacketHandler::MakePacket(FB_TABLES::CreateSC_NPC_INFO, id, objType, teamType, npcType, &info, hp, objState));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_NPC_INFO_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_NPC_INFO, id, objType, teamType, npcType, &info, hp, objState));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PING_PACKET()
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PING_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PING_PACKET));
 	}
 
 }

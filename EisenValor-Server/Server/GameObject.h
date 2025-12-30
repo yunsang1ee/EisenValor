@@ -9,7 +9,7 @@ namespace Server {
 		class FSM;
 		class BehaviorTree;
 		class Script;
-		class TroopController;
+		class GameWorld;
 
 		class GameObject {
 		private:
@@ -26,7 +26,10 @@ namespace Server {
 			KinematicInfo							m_kinematicInfo;
 
 		public:
+			// TODO: World를 들고있어야...
 			std::weak_ptr<GameRoom>					m_room;
+
+			GameWorld* m_gameWorld;
 
 		public:
 			GameObject() = default;
@@ -48,6 +51,7 @@ namespace Server {
 			void SetAcceleration(const Vec3& acceleration) noexcept { m_kinematicInfo.acceleration = acceleration; }
 			void SetTimeStamp(const uint64 timeStamp) noexcept { m_kinematicInfo.timeStamp = timeStamp; }
 			void SetRoom(std::weak_ptr<GameRoom> match) noexcept { m_room = match; }
+			void SetGameWorld(GameWorld* const gameWorld) noexcept { m_gameWorld = gameWorld; }
 
 			const std::wstring& GetName() const noexcept { return m_name; }
 			uint32 GetID() const noexcept { return m_id; }
@@ -61,6 +65,7 @@ namespace Server {
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 			const Vec3 GetForwardDir();
+			GameWorld* GetGameWorld() { return m_gameWorld; }
 
 		public:
 			virtual void Update(const float dt);
@@ -75,9 +80,6 @@ namespace Server {
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
 					return static_cast<BehaviorTree*>(m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)].get());
 				}
-				else if constexpr(std::is_same_v<TroopController, T>) {
-					return static_cast<TroopController*>(m_components[etou8(COMPONENT_TYPE::TROOP_CONTROLLER)].get());
-				}
 			}
 
 			template<typename T> requires std::derived_from<T, Component>
@@ -89,10 +91,6 @@ namespace Server {
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
 					m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::make_unique<T>();
-					return GetComponent<T>();
-				}
-				else if constexpr(std::is_same_v<TroopController, T>) {
-					m_components[etou8(COMPONENT_TYPE::TROOP_CONTROLLER)] = std::make_unique<T>();
 					return GetComponent<T>();
 				}
 			}

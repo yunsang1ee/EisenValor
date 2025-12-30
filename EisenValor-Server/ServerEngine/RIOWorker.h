@@ -25,10 +25,10 @@ namespace ServerEngine {
 		bool			Init(SessionFactoryFunc sessionFunc) noexcept;
 		void			Work() noexcept;
 
-		void			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept;
+		bool			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept;
 
 	public:
-		const RIO_CQ&	GetCQ() const noexcept { return m_cq; }
+		const RIO_CQ	GetCQ() const noexcept { return m_cq; }
 		uint16			GetID() const noexcept { return m_id; }
 		auto&			GetSessionPool() noexcept { return m_sessionPool; }
 

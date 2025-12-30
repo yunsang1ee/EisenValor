@@ -4,16 +4,30 @@
 #include "RioCore.h"
 #include "ClientSession.h"
 #include "GameObjectFactory.h"
-#include "GameRoomManager.h"
+#include "GameLobby.h"
 #include "ServerEngineConfigureManager.h"
+
+BOOL __stdcall ConsoleHandler(DWORD signal)
+{
+	if(signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT) {
+		ServerEngine::LogManager::Save();
+		return TRUE;
+	}
+	return FALSE;
+}
 
 void Server::ServerManager::Init()
 {
+	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
+		std::cerr << "핸들러 등록 실패!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 	std::wcout.imbue(std::locale("korean"));
 	
 	ServerEngine::LogManager::Init();
 
-	if(false == MANAGER(ServerEngine::ServerEngineConfigureManager)->LoadDataFromFile("../../../ServerEngine/figure.json")) {
+	if(false == MANAGER(ServerEngine::ServerEngineConfigureManager)->LoadConfigFromFile("../../../ServerEngine/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		exit(EXIT_FAILURE);
 	}
@@ -31,8 +45,11 @@ void Server::ServerManager::Init()
 		exit(EXIT_FAILURE);
 	}
 
-	// TODO: DataTable 로딩
-	MANAGER(Server::Contents::GameRoomManager)->Init();
+	// TODO: 지형 로딩
+	// TODO: 데이터 테이블 로딩
+	
+	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
+	G_GAME_LOBBY->Init();
 }	
 
 void Server::ServerManager::Run()
@@ -55,7 +72,7 @@ void Server::ServerManager::Run()
 		}
 		ch = _getch();
 		if(ch == ESC) {
-			LOG_INFO("server Finish");
+			LOG_INFO("Server Finish");
 			break;
 		}
 		else {
@@ -69,4 +86,6 @@ void Server::ServerManager::Shutdown()
 	MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
+
+	ServerEngine::LogManager::Save();
 }

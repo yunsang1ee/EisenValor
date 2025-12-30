@@ -1,32 +1,83 @@
 #pragma once
+#include "TaskQueue.h"
 
 namespace Server {
+	class ClientSession;
 	namespace Contents {
 		class GameRoom;
 		class GameObject;
-
+			
 		class Participant;
+		class User;
+		class Bot;
+		class PacketBuffer;
 
 		using Participants = std::unordered_map<uint32, std::shared_ptr<Participant>>;
-		using GameObjectMap = std::map<uint32, std::shared_ptr<GameObject>>;
-
-		class GameWorld {
+		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
+		using Bots = std::unordered_map<uint32, std::shared_ptr<Bot>>;
+		using GameObjects = std::map<uint32, std::shared_ptr<GameObject>>;
+		
+		class GameWorld : public ServerEngine::TaskQueue {
 		private:
+			std::weak_ptr<GameRoom>												m_gameRoom;
+			Users																m_users;
+			
 			/* 모든 게임오브젝트들 */
-			std::array<GameObjectMap, FB_ENUMS::GAME_OBJECT_TYPE_END>			m_gameObjectsGroups;
+			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>				m_gameObjectsGroups;
 			std::queue<std::function<void()>>									m_eventFpQueue;
 
+			// UPDATE & TIME
+			bool																m_firstUpdate = true;
+			static constexpr auto												UPDATE_MS = 10ms;
+			static constexpr auto												MAX_HEART_BEAT_TIME_STAMP = 10s;
+			static constexpr auto												GAME_TIME = 20min;
+			std::chrono::high_resolution_clock::time_point						m_lastUpdate;
+			std::chrono::milliseconds											m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME);
+			float																m_accGameTime = 0.f;
+			float																m_dt{ 0.f };
+
 		public:
-			void Init(const Participants& participants);
-			void Update(const float dt);
+			GameWorld() = default;
+			~GameWorld() = default;
+			GameWorld(const GameWorld&) = delete;
+			GameWorld& operator=(const GameWorld&) = delete;
+			GameWorld(GameWorld&&) = delete;
+			GameWorld& operator=(GameWorld&&) = delete;
+		
+		public:
+		#ifdef DEVELOP
+			void EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession);
+		#endif // DEVELOP
+
+		public:
+			void Start(const Users& users, const Bots& bots);
+
+		public:
+			void SetRoom(std::shared_ptr<GameRoom> room) { m_gameRoom = room; }
+			std::shared_ptr<GameRoom> GetGameRoom() { return m_gameRoom.lock(); }
+
+		public:
+			void LeaveGameWorld(const std::shared_ptr<ClientSession>& clientSession);
+
+		public:
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const KinematicInfo& kinematicInfo);
+			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>  player);
 
 		private:
-			void AddGameObject(std::shared_ptr<GameObject> gameObject);
-			void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
+			void Update();
+			void Finish();
+
+		private:
+			void AddGameObject(std::shared_ptr<GameObject> newGameObject);
 			void AddEvent(const std::function<void()>& eve) { m_eventFpQueue.push(eve); }
+			
+			void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
 
 		private:
 			void ProcessEvents();
+			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
+			void CheckGameTime(const float dt);
+	
 			friend class GameRoom; 
 		};
 	}

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #define DEG2RAD 180.f / 3.141592f
+#define DEVELOP
 
 #pragma warning(disable: 4819)
 #ifdef _DEBUG
@@ -26,6 +27,13 @@
 
 namespace Server {
 	class ClientSession;
+
+	namespace Contents {
+		class GameLobby;
+	}
 }
 
+
 std::shared_ptr<Server::ClientSession> MakeClientSessionFunc();
+
+extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;

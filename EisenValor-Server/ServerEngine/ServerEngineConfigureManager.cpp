@@ -4,7 +4,7 @@
 
 using namespace rapidjson;
 
-bool ServerEngine::ServerEngineConfigureManager::LoadDataFromFile(const std::string_view filePath)
+bool ServerEngine::ServerEngineConfigureManager::LoadConfigFromFile(const std::string_view filePath)
 {
 	std::ifstream ifs{ filePath.data() };
 	

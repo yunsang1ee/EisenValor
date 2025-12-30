@@ -80,11 +80,13 @@ void ServerEngine::RIOWorker::DequeueCompletion() noexcept
 	}
 }
 
-void ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
+bool ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
-	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id);
+	std::cout << std::format("Session Accept!, RioWorker ID ={}", m_id) << std::endl;
 	auto session = m_sessionPool.DeqSession();
 	session->SetOwner(this);
-	session->Connect(socket, clientAddr);
+	if(false == session->AcceptCompleted(socket, clientAddr)) return false;
 	m_connectedSession.insert(std::move(session));
+
+	return true;
 }

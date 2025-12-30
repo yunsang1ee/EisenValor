@@ -4,6 +4,8 @@
 #include "RecvBuffer.h"
 #include "SendBuffer.h"
 
+#include "TaskQueue.h"
+
 namespace ServerEngine {
 	class RIOWorker;
 	class RecvBuffer;
@@ -11,7 +13,7 @@ namespace ServerEngine {
 	class PacketBuffer;
 	class SendBuffer;
 
-	class Session : public std::enable_shared_from_this<Session> {
+	class Session : public TaskQueue {
 	private:
 		uint32														m_id;
 		SOCKET														m_socket;
@@ -31,8 +33,6 @@ namespace ServerEngine {
 		std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
 		std::chrono::milliseconds									COMMIT_SEND_MS;
 
-		std::atomic<std::chrono::high_resolution_clock::time_point>	m_heartbeatTimestamp;
-
 	public:
 		Session();
 		virtual ~Session();
@@ -43,7 +43,7 @@ namespace ServerEngine {
 
 	public:
 		void Dispatch(RIOContext* const context, const uint32 bytesTransferred);
-		void Connect(const SOCKET& socket, const SOCKADDR_IN& addr);
+		bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr);
 		void Disconnect(const std::string_view reason);
 
 		void FlushPacketQueue();
@@ -56,11 +56,9 @@ namespace ServerEngine {
 		uint32 GetID() const noexcept { return m_id; }
 		SESSION_STATE GetState() const noexcept { return m_state; }
 		bool IsConnected() noexcept { return m_connected; }
-		void UpdateHeartbeatTimestamp();
-		std::chrono::high_resolution_clock::time_point GetHeartbeatTimestamp() const noexcept { return m_heartbeatTimestamp; }
 
 	private:
-		void Init();
+		bool Init();
 		void PostRecv();
 		void ProcessRecv(const uint32 bytesTransferred);
 		void ProcessSend(const uint32 bytesTransferred);

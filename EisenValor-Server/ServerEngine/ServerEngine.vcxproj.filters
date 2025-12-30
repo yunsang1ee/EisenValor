@@ -251,7 +251,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="figure.json">
+    <None Include="config.json">
       <Filter>94. Config</Filter>
     </None>
   </ItemGroup>

@@ -21,3 +21,4 @@ friend class Singleton;
 #define LOG_INFO(fmt, ...) ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, fmt, ##__VA_ARGS__)
 #define LOG_WARNING(fmt, ...) ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::WARNING, fmt, ##__VA_ARGS__)
 #define LOG_TRACE(fmt, ...) ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::TRACE, fmt, ##__VA_ARGS__)
+#define LOG_LAST_ERROR 		ServerEngine::LogManager::PrintLastError();

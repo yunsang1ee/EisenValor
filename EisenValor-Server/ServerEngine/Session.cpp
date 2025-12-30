@@ -64,15 +64,14 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 	Clean();
 
 	auto& sessionPool = m_owner->GetSessionPool();
-	sessionPool.EnqSession(shared_from_this());
+	sessionPool.EnqSession(std::static_pointer_cast<Session>(shared_from_this()));
 }
 
 void ServerEngine::Session::FlushPacketQueue()
 {
-	// RQ의 접근은, 오직 이 세션을 관리하고 있는 RioWorker에 한함.
+	// RQ의 접근은 오직 RIO Worker Thread에서만 이루어져야 함
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
-
 
 	if(IsConnected() == false)
 		return;
@@ -109,35 +108,6 @@ void ServerEngine::Session::FlushPacketQueue()
 		}
 	}
 
-	//while(m_packetBufferQueue.Empty() == false) {
-	//	{
-	//		auto packetBuffer = m_packetBufferQueue.Pop();
-
-	//		if(packetBuffer == nullptr) break;
-
-	//		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
-	//			Disconnect("SendBuffer Append");
-
-	//		// TODO: PacketBuffer 메모리가 메모리풀에 반납되는지 확인해야 함. -> 확인 완료
-	//	}
-
-	//	while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
-	//		if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
-	//			break;
-	//		deferCount++;
-
-	//		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION){
-	//			// std::cout << std::format("DeferCount:{}", deferCount);
-	//			break;
-	//		}
-	//	}
-
-	//	if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
-	//		// std::cout << std::format("DeferCount:{}", deferCount);
-	//		break;
-	//	}
-	//}
-
 	if(deferCount > 0 || lastSendElapsed > COMMIT_SEND_MS) {
 		CommitSend();
 		m_lastSendTime = currentTime;
@@ -146,7 +116,6 @@ void ServerEngine::Session::FlushPacketQueue()
 
 void ServerEngine::Session::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
-	// m_packetBufferQueue.Push(packetBuffer);
 	m_packetBufferQueue.push(packetBuffer);
 }
 
@@ -154,7 +123,7 @@ bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
 {
 	SendContext* sendContext = ObjectPool<SendContext>::Pop();
 	sendContext->Init();
-	sendContext->HoldSession(shared_from_this());
+	sendContext->HoldSession(std::static_pointer_cast<Session>(shared_from_this()));
 
 	sendContext->BufferId = m_sendBuffer.GetID();
 	sendContext->Offset = offset;
@@ -203,10 +172,9 @@ void ServerEngine::Session::Clean()
 	m_packetBufferQueue.clear();
 	m_state = SESSION_STATE::FREE;
 	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
-	m_heartbeatTimestamp = std::chrono::high_resolution_clock::time_point{};
 }
 
-void ServerEngine::Session::Connect(const SOCKET& socket, const SOCKADDR_IN& addr)
+bool ServerEngine::Session::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
 {
 	// Accept Thread가 수행중
 	m_socket = socket;
@@ -218,42 +186,45 @@ void ServerEngine::Session::Connect(const SOCKET& socket, const SOCKADDR_IN& add
 	int opt = 1;
 	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int));
 
-	Init();
+	if(false == Init()) {
+		LOG_ERROR("Session Init Failed");
+		return false;
+	}
 
 	m_connected = true;
 
+	m_state = SESSION_STATE::ACCEPTED;
+	
 	OnConnected();
 
-	m_state = SESSION_STATE::ALLOC;
-
-	m_heartbeatTimestamp = std::chrono::high_resolution_clock::now();
-
 	PostRecv();
+
+	return true;
 }
 
-void ServerEngine::Session::Init()
+bool ServerEngine::Session::Init()
 {
-	const auto& cq = m_owner->GetCQ();
+	const RIO_CQ cq = m_owner->GetCQ();
 
 	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RECV_RQ_SIZE_PER_SESSION;
 	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_SEND_RQ_SIZE_PER_SESSION;
 
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);
 
-	if(m_rq == RIO_INVALID_RQ) {
-		ServerEngine::LogManager::PrintLastError();
-		exit(EXIT_FAILURE);
-	}
-
+	if(m_rq == RIO_INVALID_RQ)
+		return false;
+	
 	const uint32 bufferSize = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RIO_BUFFER_SIZE;
 	
 	m_recvBuffer.Init(bufferSize);
 	m_sendBuffer.Init(bufferSize * 10);
+
+	return true;
 }
 
 void ServerEngine::Session::PostRecv()
 {
-	// 맨 처음은 Accept Thread가 수행, 그 이후 RioWorker가 수행.
+	// 맨 처음은 Accept Thread가 수행중, 이후로는 RioWorker가 수행중
 
 	if(false == IsConnected()) {
 		Disconnect("IsConnected False");
@@ -266,7 +237,7 @@ void ServerEngine::Session::PostRecv()
 	}
 
 	m_recvContext.Init();
-	m_recvContext.HoldSession(shared_from_this());
+	m_recvContext.HoldSession(std::static_pointer_cast<ServerEngine::Session>(shared_from_this()));
 
 	m_recvContext.BufferId = m_recvBuffer.GetID();
 	m_recvContext.Offset = m_recvBuffer.GetReadOffset();
@@ -312,8 +283,6 @@ void ServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 
 void ServerEngine::Session::ProcessSend(const uint32 bytesTransferred)
 {
-	// std::cout << "ProcessSend" << std::endl;
-
 	m_sendBuffer.OnRead(bytesTransferred);
 
 	OnSend(bytesTransferred);
@@ -337,11 +306,6 @@ uint32 ServerEngine::Session::AssembleReceivedData(std::span<const char> buf)
 	}
 
 	return processed;
-}
-
-void ServerEngine::Session::UpdateHeartbeatTimestamp()
-{
-	m_heartbeatTimestamp = std::chrono::high_resolution_clock::now();
 }
 
 void ServerEngine::Session::CloseSocket()

@@ -27,6 +27,7 @@ std::shared_ptr<ServerEngine::Session> ServerEngine::SessionPool::DeqSession()
 	std::shared_ptr<Session> session{ nullptr };
 	if(m_freeSessions.empty() == false) {
 		if(m_freeSessions.try_pop(session)) {
+			std::cout << "DeqSession!" << std::endl;
 			return session;
 		}
 

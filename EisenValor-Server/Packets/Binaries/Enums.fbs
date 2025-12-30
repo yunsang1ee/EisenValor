@@ -18,8 +18,8 @@ enum NPC_TYPE: ubyte{
 }
 
 enum TEAM_TYPE: ubyte{
-	BLUE = 0,
-	RED,
+	OFFENSE = 0,
+	DEFENSE,
 
 	END
 }
@@ -40,6 +40,12 @@ enum ROOM_STATE_TYPE: ubyte{
 }
 
 enum PARTICIPANT_TYPE :ubyte{
+	HOST,
 	USER,
 	BOT
+}
+
+enum PARTICIPANT_STATE_TYPE :ubyte{
+	NOT_READY,
+	READY,
 }

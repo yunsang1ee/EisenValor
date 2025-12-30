@@ -91,17 +91,17 @@ inline const char *EnumNameNPC_TYPE(NPC_TYPE e) {
 }
 
 enum TEAM_TYPE : uint8_t {
-  TEAM_TYPE_BLUE = 0,
-  TEAM_TYPE_RED = 1,
+  TEAM_TYPE_OFFENSE = 0,
+  TEAM_TYPE_DEFENSE = 1,
   TEAM_TYPE_END = 2,
-  TEAM_TYPE_MIN = TEAM_TYPE_BLUE,
+  TEAM_TYPE_MIN = TEAM_TYPE_OFFENSE,
   TEAM_TYPE_MAX = TEAM_TYPE_END
 };
 
 inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[3] {
   static const TEAM_TYPE values[] = {
-    TEAM_TYPE_BLUE,
-    TEAM_TYPE_RED,
+    TEAM_TYPE_OFFENSE,
+    TEAM_TYPE_DEFENSE,
     TEAM_TYPE_END
   };
   return values;
@@ -109,8 +109,8 @@ inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[3] {
 
 inline const char * const *EnumNamesTEAM_TYPE() {
   static const char * const names[4] = {
-    "BLUE",
-    "RED",
+    "OFFENSE",
+    "DEFENSE",
     "END",
     nullptr
   };
@@ -118,7 +118,7 @@ inline const char * const *EnumNamesTEAM_TYPE() {
 }
 
 inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_BLUE, TEAM_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_OFFENSE, TEAM_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTEAM_TYPE()[index];
 }
@@ -199,14 +199,16 @@ inline const char *EnumNameROOM_STATE_TYPE(ROOM_STATE_TYPE e) {
 }
 
 enum PARTICIPANT_TYPE : uint8_t {
-  PARTICIPANT_TYPE_USER = 0,
-  PARTICIPANT_TYPE_BOT = 1,
-  PARTICIPANT_TYPE_MIN = PARTICIPANT_TYPE_USER,
+  PARTICIPANT_TYPE_HOST = 0,
+  PARTICIPANT_TYPE_USER = 1,
+  PARTICIPANT_TYPE_BOT = 2,
+  PARTICIPANT_TYPE_MIN = PARTICIPANT_TYPE_HOST,
   PARTICIPANT_TYPE_MAX = PARTICIPANT_TYPE_BOT
 };
 
-inline const PARTICIPANT_TYPE (&EnumValuesPARTICIPANT_TYPE())[2] {
+inline const PARTICIPANT_TYPE (&EnumValuesPARTICIPANT_TYPE())[3] {
   static const PARTICIPANT_TYPE values[] = {
+    PARTICIPANT_TYPE_HOST,
     PARTICIPANT_TYPE_USER,
     PARTICIPANT_TYPE_BOT
   };
@@ -214,7 +216,8 @@ inline const PARTICIPANT_TYPE (&EnumValuesPARTICIPANT_TYPE())[2] {
 }
 
 inline const char * const *EnumNamesPARTICIPANT_TYPE() {
-  static const char * const names[3] = {
+  static const char * const names[4] = {
+    "HOST",
     "USER",
     "BOT",
     nullptr
@@ -223,9 +226,39 @@ inline const char * const *EnumNamesPARTICIPANT_TYPE() {
 }
 
 inline const char *EnumNamePARTICIPANT_TYPE(PARTICIPANT_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, PARTICIPANT_TYPE_USER, PARTICIPANT_TYPE_BOT)) return "";
+  if (::flatbuffers::IsOutRange(e, PARTICIPANT_TYPE_HOST, PARTICIPANT_TYPE_BOT)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesPARTICIPANT_TYPE()[index];
+}
+
+enum PARTICIPANT_STATE_TYPE : uint8_t {
+  PARTICIPANT_STATE_TYPE_NOT_READY = 0,
+  PARTICIPANT_STATE_TYPE_READY = 1,
+  PARTICIPANT_STATE_TYPE_MIN = PARTICIPANT_STATE_TYPE_NOT_READY,
+  PARTICIPANT_STATE_TYPE_MAX = PARTICIPANT_STATE_TYPE_READY
+};
+
+inline const PARTICIPANT_STATE_TYPE (&EnumValuesPARTICIPANT_STATE_TYPE())[2] {
+  static const PARTICIPANT_STATE_TYPE values[] = {
+    PARTICIPANT_STATE_TYPE_NOT_READY,
+    PARTICIPANT_STATE_TYPE_READY
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesPARTICIPANT_STATE_TYPE() {
+  static const char * const names[3] = {
+    "NOT_READY",
+    "READY",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNamePARTICIPANT_STATE_TYPE(PARTICIPANT_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, PARTICIPANT_STATE_TYPE_NOT_READY, PARTICIPANT_STATE_TYPE_READY)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesPARTICIPANT_STATE_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS
