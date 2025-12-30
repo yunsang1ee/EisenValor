@@ -150,9 +150,13 @@ public:
 	//========================================================================
 	// Frame Lifecycle & Clear
 	//========================================================================
+	// Usage:
+	//   - Override OnStart() and OnEnd() for scene-specific initialization/cleanup
+	//========================================================================
 
+	void OnStart();
+	void OnEnd();
 	void ClearSceneData();
-
 	void ResetAll();
 
 	void OnBeginFrame();
@@ -211,8 +215,8 @@ public:
 protected:
 	// Add user-defined components in derived Scene classes
 	virtual void OnRegisterCustomComponents() = 0;
-	virtual void OnStart() {}
-	virtual void OnEnd() { ClearSceneData(); }
+	virtual void OnStartImpl() {}
+	virtual void OnEndImpl() {}
 
 	template <IsValidComponent... Ts>
 	void RegisterComponents()
@@ -260,7 +264,9 @@ private:
 	std::queue<ComponentCreateRequest>	m_pendingComponentCreates;
 	std::queue<ComponentDestroyRequest> m_pendingComponentDestroys;
 	bool								m_isProcessingDeferred = false;
+	bool								m_isStarted = false;
 
+private:
 	void ProcessDeferredCreates();
 	void ProcessDeferredDestroys();
 	void CreateGameObjectInternal(const CreateRequest& req);
@@ -268,13 +274,6 @@ private:
 
 	void ProcessDeferredComponentCreates();
 	void ProcessDeferredComponentDestroys();
-
-	struct ComponentEntry
-	{
-		int				   priority;
-		ComponentTypeID	   runtimeID;
-		IComponentStorage* storage;
-	};
 
 	void SortComponentsByPriority();
 
@@ -289,6 +288,12 @@ private:
 	std::vector<std::unique_ptr<IComponentStorage>>			  m_componentsStorage;
 	std::unordered_map<ComponentTypeHash, IComponentStorage*> m_compHashToStorage;
 
+	struct ComponentEntry
+	{
+		int				   priority;
+		ComponentTypeID	   runtimeID;
+		IComponentStorage* storage;
+	};
 	std::vector<ComponentEntry> m_updateList;
 	std::vector<ComponentEntry> m_fixedList;
 	std::vector<ComponentEntry> m_lateList;

@@ -15,10 +15,9 @@ public:
 	void Release() override;
 
 	template <typename SceneType>
+		requires std::derived_from<SceneType, Scene>
 	void RegisterScene(const std::string& sceneName)
 	{
-		static_assert(std::derived_from<SceneType, Scene>, "SceneType must derive from Scene");
-
 		if (m_scenes.contains(sceneName))
 		{
 			DEBUG_LOG_FMT("[SceneGlobal] Scene already registered: {}\n", sceneName);
@@ -33,7 +32,6 @@ public:
 	}
 
 	void   LoadScene(const std::string& sceneName);
-	void   UnloadScene(const std::string& sceneName);
 	Scene* GetActiveScene() const { return m_activeScene; }
 	Scene* GetScene(const std::string& sceneName) const;
 
@@ -41,7 +39,6 @@ public:
 	uint32_t GetLocalNetworkID() const { return m_localNetworkID; }
 
 	void					 ClearAllScenes();
-	void					 RemoveScene(const std::string& sceneName);
 	std::vector<std::string> GetSceneNames() const;
 
 	//========================================================================

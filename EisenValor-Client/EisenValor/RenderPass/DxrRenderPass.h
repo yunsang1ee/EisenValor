@@ -90,7 +90,7 @@ private:
 		RenderDataSync<uint32_t>::Handle  indicesHandle;
 		RenderDataSync<GeoInfo>::Handle	  geoInfoHandle;
 		RenderDataSync<uint32_t>::Handle  instGeoBaseHandle;
-		uint32_t						  materialIndex;
+		uint32_t						  materialIndex = 0;
 
 		size_t vertexCount = 0;
 		size_t indexCount = 0;

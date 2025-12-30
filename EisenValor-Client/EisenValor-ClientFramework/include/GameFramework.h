@@ -5,7 +5,7 @@ class GameFramework
 {
 public:
 	GameFramework() = default;
-	~GameFramework() { Release(); }
+	~GameFramework() = default;
 
 	bool Initialize(HINSTANCE hInstance, HWND hwnd);
 	void Run();
@@ -15,22 +15,13 @@ public:
 	LRESULT OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam);
 
 private:
-	void Update();
+	void Update(float delta);
 	void FixedUpdate();
-	void LateUpdate();
+	void LateUpdate(float delta);
 	void Render();
-
-	// void RecreateDepthStencilBuffer(uint32_t width, uint32_t height);
-
-	void CreateRaytracingResources(uint32_t width, uint32_t height);
-	void ResizeRaytracingResources(uint32_t width, uint32_t height);
-
-	void CreateStaticScene();
-	void BuildAccelerationStructures();
-	void CreateBuffers();
-	void CreateRaytracingPipeline();
 
 private:
 	HWND	  m_hWnd = nullptr;
 	HINSTANCE m_hInstance = nullptr;
+	bool	  m_released = false;
 };

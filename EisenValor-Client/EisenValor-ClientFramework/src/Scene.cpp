@@ -18,7 +18,7 @@ void Scene::Initialize()
 	m_lateList.shrink_to_fit();
 
 	m_gameObjects.Reserve(512);
-	OnStart();
+	DEBUG_LOG_FMT("[Scene] Initialized (Components registered, waiting for LoadScene)\n");
 }
 
 GameObject::Handle Scene::CreateGameObject(std::string name, std::optional<uint32> serverID)
@@ -38,6 +38,29 @@ void Scene::DestroyGameObject(GameObject::Handle handle)
 
 	m_pendingDestroys.push(handle);
 	DEBUG_LOG_FMT("[Scene] GameObject destruction queued (Handle={})\n", handle.GetValue());
+}
+
+void Scene::OnStart()
+{
+	if (m_isStarted)
+	{
+		DEBUG_LOG_FMT("[Scene] OnStart() called multiple times!\n");
+		return;
+	}
+	m_isStarted = true;
+	OnStartImpl();
+}
+
+void Scene::OnEnd()
+{
+	if (!m_isStarted)
+	{
+		DEBUG_LOG_FMT("[Scene] OnEnd() called without OnStart()\n");
+		return;
+	}
+	OnEndImpl();
+	ClearSceneData();
+	m_isStarted = false;
 }
 
 void Scene::ClearSceneData()

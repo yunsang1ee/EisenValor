@@ -9,10 +9,9 @@ void SampleScene::OnRegisterCustomComponents()
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
-void SampleScene::OnStart() 
+void SampleScene::OnStartImpl() 
 {
 	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");
-	OnRegisterCustomComponents();
 	CreateSceneObjects();
 }
 
@@ -65,4 +64,4 @@ void SampleScene::CreateSceneObjects()
 	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 4);
 }
 
-void SampleScene::OnEnd() {}
+void SampleScene::OnEndImpl() {}

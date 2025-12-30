@@ -1,12 +1,12 @@
 #pragma once
 #include <Scene.h>
-class SampleScene : public Scene
+class SampleScene final : public Scene
 {
 protected:
-	void OnRegisterCustomComponents() override;
+	void OnRegisterCustomComponents();
 
 public:
-	void OnStart() override;
+	void OnStartImpl() override;
 	void CreateSceneObjects();
-	void OnEnd() override;
+	void OnEndImpl() override;
 };

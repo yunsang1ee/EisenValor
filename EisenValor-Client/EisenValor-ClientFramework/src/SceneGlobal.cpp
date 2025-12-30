@@ -14,6 +14,12 @@ void SceneGlobal::Release()
 
 void SceneGlobal::LoadScene(const std::string& sceneName)
 {
+	if (m_activeScene && m_activeSceneName == sceneName)
+	{
+		DEBUG_LOG_FMT("[SceneGlobal] Scene already active: {}\n", sceneName);
+		return;
+	}
+
 	auto iter = m_scenes.find(sceneName);
 	if (iter == m_scenes.end())
 	{
@@ -22,29 +28,19 @@ void SceneGlobal::LoadScene(const std::string& sceneName)
 		return;
 	}
 
-	if (m_activeScene && m_activeSceneName != sceneName)
+	if (m_activeScene)
 	{
 		DEBUG_LOG_FMT("[SceneGlobal] Unloading previous scene: {}\n", m_activeSceneName);
-		m_activeScene->ClearSceneData(); 	
+		m_activeScene->OnEnd();
 	}
 
 	m_activeScene = iter->second.get();
 	m_activeScene->SetLocalID(m_localNetworkID);
 	m_activeSceneName = sceneName;
 
+	m_activeScene->OnStart();
+
 	DEBUG_LOG_FMT("[SceneGlobal] Scene loaded: {}\n", sceneName);
-}
-
-void SceneGlobal::UnloadScene(const std::string& sceneName)
-{
-	if (m_activeSceneName == sceneName)
-	{
-		DEBUG_LOG_FMT("[SceneGlobal] Scene unloaded: {}\n", sceneName);
-		m_activeScene->ClearSceneData();
-
-		m_activeScene = nullptr;
-		m_activeSceneName.clear();
-	}
 }
 
 Scene* SceneGlobal::GetScene(const std::string& sceneName) const
@@ -64,38 +60,13 @@ void SceneGlobal::ClearAllScenes()
 		if (scene)
 		{
 			DEBUG_LOG_FMT("[SceneGlobal] Clearing scene: {}\n", name);
-			scene->ClearSceneData();
+			scene->OnEnd();
 		}
 	}
 	m_activeScene = nullptr;
 	m_activeSceneName.clear();
 	m_scenes.clear();
 	DEBUG_LOG_FMT("[SceneGlobal] All scenes cleared\n");
-}
-
-void SceneGlobal::RemoveScene(const std::string& sceneName)
-{
-	auto iter = m_scenes.find(sceneName);
-	if (iter == m_scenes.end())
-		return;
-
-	if (m_activeSceneName == sceneName)
-	{
-		if (m_activeScene)
-		{
-			m_activeScene->ClearSceneData();
-		}
-		m_activeScene = nullptr;
-		m_activeSceneName.clear();
-	}
-
-	if (iter->second)
-	{
-		iter->second->ClearSceneData();
-	}
-
-	m_scenes.erase(sceneName);
-	DEBUG_LOG_FMT("[SceneGlobal] Scene removed: {}\n", sceneName);
 }
 
 std::vector<std::string> SceneGlobal::GetSceneNames() const

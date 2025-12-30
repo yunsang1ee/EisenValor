@@ -150,9 +150,6 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		// CopyToBackBuffer Pass 생성
 		auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
 		renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
-
-		// SwapChain 생성
-		renderer.CreateSwapChain(gameFramework.GetHWND(), kDefaultWindowWidth, kDefaultWindowHeight);
 	}
 
 	// Scene 등록
@@ -176,7 +173,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		if (not quit)
 			gameFramework.Run();
 	}
-	Globals::Shutdown();
+	gameFramework.Release();
 #ifdef _DEBUG
 	FreeConsole();
 #endif

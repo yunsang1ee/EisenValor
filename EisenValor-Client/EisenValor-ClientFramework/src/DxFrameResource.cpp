@@ -6,6 +6,8 @@
 #include "DxDescriptorHeapGlobal.h"
 #include "DxGarbageCollectorGlobal.h"
 
+DxFrameResource::DxFrameResource() = default;
+
 DxFrameResource::~DxFrameResource()
 {
 	if (m_fence && m_fenceEvent)

@@ -8,11 +8,14 @@ class DxCommandContext;
 class DxFrameResource
 {
 public:
-	DxFrameResource() = default;
+	DxFrameResource();
 	~DxFrameResource();
 
 	DxFrameResource(const DxFrameResource&) = delete;
 	DxFrameResource& operator=(const DxFrameResource&) = delete;
+
+	DxFrameResource(DxFrameResource&&) = delete;
+	DxFrameResource& operator=(DxFrameResource&&) = delete;
 
 	void Initialize(
 		ID3D12Device*			device,

@@ -9,6 +9,10 @@
 #include "DxFrameResource.h"
 #include "DxSwapChain.h"
 
+DxRendererGlobal::DxRendererGlobal() = default;
+
+DxRendererGlobal::~DxRendererGlobal() = default;
+
 void DxRendererGlobal::Initialize()
 {
 	auto& device = MANAGER(DxDeviceGlobal);

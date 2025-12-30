@@ -2,7 +2,6 @@
 #include "Singleton.h"
 #include "DxFeatureCaps.h"
 
-
 class Scene;
 class DxFrameResource;
 class DxSwapChain;
@@ -13,8 +12,8 @@ class DxRendererGlobal : public Singleton<DxRendererGlobal>
 private:
 	friend class Singleton<DxRendererGlobal>;
 
-	DxRendererGlobal() = default;
-	~DxRendererGlobal() override = default;
+	DxRendererGlobal();
+	~DxRendererGlobal() override;
 
 public:
 	void Initialize() override;
