@@ -37,7 +37,7 @@ namespace ServerEngine {
 		SessionConfigure	m_sessionConfigure;
 
 	public:
-		bool LoadDataFromFile(const std::string_view filePath);
+		bool LoadConfigFromFile(const std::string_view filePath);
 
 	public:
 		const NetworkConfigure& GetNetworkConfigure() const { return m_networkConfigure; }
