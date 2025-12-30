@@ -4,13 +4,13 @@
   },
 
   "RIOWorkerConfigure": {
-    "MAX_SESSION_PER_RIO_WORKER": 50,
+    "MAX_SESSION_PER_RIO_WORKER": 50, 
     "MAX_RIO_RESULT": 512,
     "RIO_WORKER_TICK_MS": 64
   },
 
   "ThreadConfigure": {
-    "MAX_WORKER_THREAD_COUNT": 16
+    "MAX_WORKER_THREAD_COUNT": 8
   },
 
   "SessionConfigure": {
