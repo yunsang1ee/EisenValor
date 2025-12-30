@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "LogManager.h"
 
+std::ostringstream ServerEngine::LogManager::s_oss;
+
 void ServerEngine::LogManager::Init() noexcept
 {
 	if(false == std::filesystem::exists("LOG"))
