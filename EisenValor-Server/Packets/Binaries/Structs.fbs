@@ -15,3 +15,18 @@ struct KinematicInfo {
 	accel: Vec3;
 	time_stamp: uint64;
 }
+
+
+struct RoomInfo {
+	id: uint16;
+	state: FB_ENUMS.ROOM_STATE_TYPE;
+	current_participants: ubyte;
+	max_marticipants: ubyte;
+}
+
+struct ParticipantInfo {
+	id: uint;
+	type: FB_ENUMS.PARTICIPANT_TYPE;
+	state_type: FB_ENUMS.PARTICIPANT_STATE_TYPE;
+	team_type: FB_ENUMS.TEAM_TYPE;
+}

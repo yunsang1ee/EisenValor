@@ -5,382 +5,254 @@
 #include "NPC.h"
 #include "ClientSession.h"
 #include "SoldierStates.h"
-#include "TroopController.h"
-#include "Team.h"
 #include "FSM.h"
+#include "GameWorld.h"
+#include "Participant.h"
 
 Server::Contents::GameRoom::GameRoom(const uint16 roomID)
-	:m_id{ roomID }, m_stateType{FB_ENUMS::ROOM_STATE_TYPE_WATING}
 {
-	std::cout << std::format("Room ID:{}", m_id) << std::endl;;
-	m_participants.reserve(6/*촤대 방 인원*/);
+	m_info.id = roomID;
+	// TODO: 나중에 Waiting으로...
+	m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_WATING;
+}
+
+Server::Contents::GameRoom::~GameRoom()
+{
 }
 
 void Server::Contents::GameRoom::Init()
 {
-	Start();
+#ifdef DEVELOP
+	CreateWorld();
+#endif // DEVELOP
 }
 
-void Server::Contents::GameRoom::Start()
+bool Server::Contents::GameRoom::CanStart()
 {
-	for(auto& team : m_teams)
-		team.Init(std::static_pointer_cast<GameRoom>(shared_from_this()));
+	int32 redCount{}, blueCount{};
 
-	ExecAsync(&GameRoom::Update);
+	for(const auto& [id, user] : m_users) {
+		if(user != m_host && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY == user->GetStateType()) {
+			// TODO: UserName가져온 후, UserName이 준비 안 했다고 Broadcast
+			return false;
+		}
 
-	// TODO: CheckHeartBeat Update로 갈 수 있음.
-	ExecAsync(&GameRoom::CheckHeartBeat);
-}
-
-void Server::Contents::GameRoom::ProcessEvents()
-{
-	while(false == m_eventFpQueue.empty()) {
-		auto eve = m_eventFpQueue.front();
-		eve();
-		m_eventFpQueue.pop();
+		if(FB_ENUMS::TEAM_TYPE_OFFENSE == user->GetTeamType()) blueCount++; else redCount++;
 	}
+
+	if(blueCount < 1 || redCount < 1) {
+		// TODO: 인원이 맞지 않다고 Broadcast
+		return false;
+	}
+
+	return true;
 }
 
-void Server::Contents::GameRoom::EnterRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
+void Server::Contents::GameRoom::CreateWorld()
 {
-	std::cout << "Enter Match" << std::endl;
-	clientSession->SetState(SESSION_STATE::IN_GAME);
+	m_gameWorld = std::make_shared<GameWorld>();
+	m_gameWorld->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
+	m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_PLAYING;
+	m_gameWorld->ExecAsync(&GameWorld::Start, m_users, m_bots);
+}
+
+void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
+{
+	// TODO: 현재 게임방 상태가 플레이 중이면 입장 불가
+	if(m_info.stateType == FB_ENUMS::ROOM_STATE_TYPE_PLAYING) {
+		auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_FAIL_PACKET("Already Playing") };
+		clientSession->Send(std::move(pb));
+		return;
+	}
 
 	// TODO: Room최대 정원을 넘기면 입장 불가
-
-	// TODO: GameRoom::EnterRoom
-	// - 나에게 방에 있는 참여자 정보 보내줌
-	// - 방에 있는 참여자에게 내 정보 보내줌
-
-	static const Vec3 offset{ 3.f, 0.f, 3.f };
-	static Vec3 startPos{ 0.f, 0.f, 0.f };
-	startPos += offset;
-	const Vec3 rot{ 0.f, 0.f, 0.f };
-	static bool flag{ false };
-
-	//// TODO: 플레이어 수치를 Json이나 XML에서 뽑기	
-	PlayerTemplate t;
-	t.pos = startPos;
-	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-	flag = !flag;
-	t.stat.hp = 100;
-	t.stat.atk = 50;
-	t.stat.stamina = 100;
-
-	auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
-	player->SetID(clientSession->GetID());
-	clientSession->SetPlayer(player);
-	player->SetSession(clientSession);
-	player->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-
-	const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
-	auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(player->GetID(), kInfo, player->GetTeamType(), player->GetHP());
-	clientSession->Send(std::move(pb));
-
-	for(auto& team : m_teams) {
-		for(const auto& [id, p] : team.GetPlayers()) {
-			const Vec3 pos{ p->GetPos() };
-			const Vec3 rot{ p->GetRotation() };
-			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, (p->GetObjType()), p->GetTeamType(), kInfo, p->GetHP());
-			clientSession->Send(std::move(pb));
-		}
-
-		for(auto& [id, n] : team.GetNpcs()) {
-			const Vec3 pos{ n->GetPos() };
-			const Vec3 rot{ n->GetRotation() };
-			const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
-			auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(id, (n->GetObjType()), n->GetTeamType(), n->GetNpcType(), kInfo, n->GetHP());
-			clientSession->Send(std::move(pb));
-		}
+	if(m_info.currentParticipants >= MAX_PARTICIPANTS) {
+		auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_FAIL_PACKET("MAX PARTICIPANTS") };
+		clientSession->Send(std::move(pb));
+		return;
 	}
 
-	AddGameObject(std::move(player));
+	// 입장 성공!
+	clientSession->SetGameRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
+	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
+
+	// 참여자 생성
+	const uint32 id{ clientSession->GetID() };
+
+	FB_ENUMS::PARTICIPANT_TYPE participantType;
+	if(m_info.currentParticipants == 0) participantType = FB_ENUMS::PARTICIPANT_TYPE_HOST;
+	else participantType = FB_ENUMS::PARTICIPANT_TYPE_USER;
+
+	FB_ENUMS::TEAM_TYPE teamType{ FB_ENUMS::TEAM_TYPE_DEFENSE };
+
+	if(teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) {
+		if(m_offenseCount >= MAX_PARTICIPANTS / 2)
+			teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+	}
+	else {
+		if(m_defenseCount >= MAX_PARTICIPANTS / 2)
+			teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+	}
+
+	auto newUser = ServerEngine::ObjectPool<User>::MakeShared(id, participantType, teamType, clientSession);
+	if(newUser->GetType() == FB_ENUMS::PARTICIPANT_TYPE_HOST) m_host = newUser;
+
+	// - 내 정보와 방에 있는 사람들 정보를 나에게 보냄
+	// - 방에 있는 참여자에게 내 정보 보내줌
+
+	std::vector<ParticipantInfo> particinpants;
+
+	for(const auto& [id, user] : m_users)
+		particinpants.emplace_back(user->GetInfo());
+
+	for(const auto& [id, bot] : m_bots)
+		particinpants.emplace_back(bot->GetInfo());
+
+	auto pb{ ServerPackets::Make_SC_JOIN_GAME_SUCCESS_PACKET(newUser->GetInfo(), particinpants) };
+	clientSession->Send(std::move(pb));
+
+	{
+		auto pb{ ServerPackets::Make_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(newUser->GetInfo()) };
+		Broadcast(std::move(pb));
+	}
+
+	AddParticipant(std::move(newUser));
 }
 
-void Server::Contents::GameRoom::LeaveRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
+void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
-	auto player = clientSession->GetPlayer();
-	const auto id = player->GetID();
-	const auto teamType = player->GetTeamType();
-	clientSession->SetPlayer(nullptr);
-	RemoveGameObject(std::move(player));
+	// TODO: GameRoom::LeaveRoom
+	// - 퇴장 사실을 퇴장하는 유저에게 알림
+	// - 퇴장 사실을 Room 안에 있는 유저들에게 알림
+
+	auto pb{ ServerPackets::Make_SC_LEAVE_GAME_ROOM_PACKET() };
+	clientSession->Send(std::move(pb));
+
+
+	const auto id = clientSession->GetID();
+	// 만약, 현재 ROOM 상태가 PLAYING 중이라면 World에서도 게임 오브젝트 삭제해야함.
+	// 일단 Room 먼저 삭제, 그 후 World 삭제하면 됨
+
+	if(m_users.find(id) != m_users.end()) {
+		m_users.erase(id);
+		m_info.currentParticipants--;
+	}
+
+	{
+		auto pb{ ServerPackets::Make_SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(id) };
+		Broadcast(std::move(pb));
+	}
 }
 
-void Server::Contents::GameRoom::BroadcastToPlayers(const std::map<uint32, std::shared_ptr<Player>>& players, std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
+void Server::Contents::GameRoom::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
 {
-	for(const auto& [id, player] : players) {
-		const auto& session = player->GetOwner();
-		if(session->GetState() == SESSION_STATE::IN_GAME)
+	for(const auto& [id, user] : m_users) {
+		const auto session = user->GetSession();
+		const SESSION_STATE sessionState = session->GetState();
+		if(SESSION_STATE::IN_GAME_ROOM == sessionState)
 			session->Send(packetBuffer);
 	}
 }
 
-void Server::Contents::GameRoom::AddGameObject(std::shared_ptr<GameObject> gameObject)
+void Server::Contents::GameRoom::AddParticipant(std::shared_ptr<Server::Contents::Participant> participant)
 {
-	AddEvent([this, obj = gameObject]() {
-		const uint32 id{ obj->GetID() };
-		const auto teamType = obj->GetTeamType();
-
-		if(false == m_gameObjects.contains(id)) {
-			m_gameObjects.try_emplace(id, obj);
-			std::cout << "Add in Game" << std::endl;
-		}
-		m_teams[etou8(teamType)].AddGameObject(obj);
-		});
-}
-
-void Server::Contents::GameRoom::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
-{
-	AddEvent([this, obj = gameObject]() {
-		const uint32 id{ obj->GetID() };
-		const auto teamType = obj->GetTeamType();
-
-		m_teams[etou8(teamType)].RemoveObject(obj);
-
-		if(m_gameObjects.contains(id)) {
-			m_gameObjects.erase(id);
-
-			std::cout << "Remove in Game" << std::endl;
-		}
-		});
-}
-
-void Server::Contents::GameRoom::BroadcastToAll(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
-{
-	for(auto& team : m_teams)
-		BroadcastToPlayers(team.GetPlayers(), packetBuffer);
-}
-
-void Server::Contents::GameRoom::BroadcastToTeam(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer, const FB_ENUMS::TEAM_TYPE teamType)
-{
-	BroadcastToPlayers(m_teams[etou8(teamType)].GetPlayers(), packetBuffer);
-}
-
-void Server::Contents::GameRoom::CheckGameTime(const float dt)
-{
-	m_accGameTime += dt;
-
-	while(m_accGameTime >= 1.f) {
-		m_accGameTime = 0.f;
-
-		if(m_remainingTime.count() > 0) {
-			m_remainingTime -= std::chrono::seconds(1);
-
-			const auto remainTime = static_cast<uint32>(m_remainingTime.count());
-			const uint32_t totalSeconds = remainTime / 1000;
-
-			// 분, 초 계산
-			const uint32_t minutes = totalSeconds / 60;
-			const uint32_t seconds = totalSeconds % 60;
-
-			// std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
-			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
-			ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
-		}
-		else {
-			// TODO: 게임 종료
+	const uint32 id{ participant->GetID() };
+	if(FB_ENUMS::PARTICIPANT_TYPE_BOT == participant->GetType()) {
+		if(false == m_bots.contains(id)) {
+			m_bots.insert(std::make_pair(id, std::move(std::static_pointer_cast<Server::Contents::Bot>(participant))));
 		}
 	}
-}
-
-void Server::Contents::GameRoom::Handle_CS_MOVE(std::shared_ptr<Player> player, const KinematicInfo& kinematicInfo)
-{
-	player->SetPos(kinematicInfo.position);
-	player->SetRotation(kinematicInfo.rotation);
-	player->SetVelocity(kinematicInfo.velocity);
-	player->SetAcceleration(kinematicInfo.acceleration);
-	player->SetTimeStamp(kinematicInfo.timeStamp);
-
-	auto packetBuffer = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
-	ExecAsync(&GameRoom::BroadcastToAll, std::move(packetBuffer));
-}
-
-void Server::Contents::GameRoom::Handle_CS_SUMMON_NPC(std::shared_ptr<Player>  player)
-{
-	//// TODO: 주변에 SPAWN 기지가 있는지 확인
-	//const auto troopController = player->GetComponent<Server::Contents::TroopController>();
-	//const Vec3& ownerPos = player->GetPos();
-
-	//const Vec3 spawnPos = ownerPos + player->GetForwardDir() * 5.f;
-	//troopController->GetCurFormation()->m_centerPos = spawnPos;
-
-	//for(int i = 0; i < 25; ++i) {
-	//	Server::Contents::SoldierTemplate t;
-	//	t.pos = Vec3{ 0.f, 0.f, 0.f };		// 스폰기지 위치
-	//	t.rot = Vec3{ 0.f, 0.f, 0.f };
-	//	t.npcType = FB_ENUMS::NPC_TYPE_SOLDIER;
-	//	t.teamType = player->GetTeamType();
-	//	t.stat.hp = 100;
-	//	t.enemyDetectionRange = 2.f;
-	//	t.attackRange = 0.5f;
-
-	//	auto soldier = Server::Contents::GameObjectFactory::CreateSoldier(t);
-	//	troopController->AddSoldier(soldier);
-	//	m_teams[etou8(player->GetTeamType())].AddObject(std::move(soldier));
-	//}
-	//troopController->Arrange();
-}
-
-void Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
-{
-	//static constexpr float attackRadius = 3.f;
-	//static constexpr float attackDegree = 90.f;
-	//constexpr float radiusSq = attackRadius * attackRadius;
-
-	//const Vec3& playerPos = player->GetPos();
-	//Vec3 playerDir{ sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y) };
-	//playerDir.Normalize();
-
-	//const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
-
-	//const auto teamType = player->GetTeamType();
-	//const auto otherTeam = etou8(GetOtherTeamType(teamType));
-
-	//for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
-	//	for(const auto& [targetID, object] : objectGroup) {
-
-	//		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) continue;
-	//		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
-
-	//		const Vec3& pos = object->GetPos();
-	//		Vec3 toTargetDir = pos - playerPos;
-	//		const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
-
-	//		// 반지름 길이와 타겟까지의 거리 비교
-	//		if(distToTargetSq >= radiusSq) continue;
-
-	//		const float dotValue{ playerDir.Dot(toTargetDir) };
-
-	//		const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
-
-	//		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
-	//		if(dotValue <= 0) continue;
-
-	//		if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
-	//			std::cout << std::format("ATTACKER ID: {}, TARGET ID:{}", player->GetID(), targetID) << std::endl;
-	//			const auto playerAtk = player->GetAtk();
-	//			int hp{ std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP() };
-	//			hp -= playerAtk;
-	//			if(hp <= 0) {
-	//				std::static_pointer_cast<Server::Contents::Creature>(object)->SetAlive(false);
-	//				std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = object]()
-	//					{
-	//						t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
-	//					});
-	//			}
-	//			else {
-	//				std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
-	//			}
-
-	//			// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
-
-	//			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-	//				auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
-	//				ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
-	//			}
-
-	//			//if(hp <= 0) {
-	//			//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
-	//			//		{
-	//			//			m_teams[otherTeam].RemoveObject(object);
-	//			//		});
-	//			//}
-	//		}
-
-	//		// a * b = |a| |b| cos	
-	//		// cos = a * b / |a| |b|
-	//		// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
-	//	}
-	//}
-}
-
-bool Server::Contents::GameRoom::Handle_CS_SOLDIER_MOVE(std::shared_ptr<Player> player, const Vec3& targetPos)
-{
-	if(player) {
-		player->GetComponent<Server::Contents::TroopController>()->SetTargetPos(targetPos);
-		return true;
-	}
-
-	return false;
-}
-
-void Server::Contents::GameRoom::Handle_CS_CHANGE_SOLDIER_FORMATION(std::shared_ptr<Player> player)
-{
-	const auto troopController = player->GetComponent<Server::Contents::TroopController>();
-	uint8  type = static_cast<uint8>(troopController->GetCurFormation()->m_formationType);
-	type = (type + 1) % static_cast<uint8>(TROOP_FORMATION_TYPE::END);
-	troopController->SetFormation(static_cast<TROOP_FORMATION_TYPE>(type));
-}
-
-void Server::Contents::GameRoom::Handle_CS_REQ_ATTACK(std::shared_ptr<Player> player)
-{
-	const auto teamType = player->GetTeamType();
-	auto& team = m_teams[etou8(teamType)];
-
-	for(auto& [id, n] : team.GetNpcs()) {
-		const auto npc = std::static_pointer_cast<Server::Contents::NPC>(n);
-		const auto type = std::static_pointer_cast<Server::Contents::NPC>(n)->GetNpcType();
-		if(type == FB_ENUMS::NPC_TYPE_SOLDIER) {
-			// TODO: ChangeState
-			npc->GetComponent<FSM>()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, m_dt);
-		}
-	}
-}
-
-void Server::Contents::GameRoom::Handle_CS_GAME_START(std::shared_ptr<Player> player)
-{
-	// TOOD: 게임 시작 검사
-	// - 검사 조건 만족 시 m_gameWorld 초기화
-	// - Participant들이 가지고 있는 Character들을 gameWorld안에 집어넣어야 함.
-	m_stateType = FB_ENUMS::ROOM_STATE_TYPE_PLAYING;
-}
-
-void Server::Contents::GameRoom::Update()
-{
-	// TODO: 방이 게임중 상태일때만 Update
-	const auto now = std::chrono::high_resolution_clock::now();
-	m_dt = 0.f;
-	if(m_firstUpdate) m_firstUpdate = false;
 	else {
-		m_dt = std::chrono::duration<float>(now - m_lastUpdate).count();
+		if(false == m_users.contains(id)) {
+			m_users.insert(std::make_pair(id, std::move(std::static_pointer_cast<Server::Contents::User>(participant))));
+		}
 	}
 
-	m_lastUpdate = now;
-
-	// GameWorld Update
-	m_gameWorld.Update(m_dt);
-
-	// ---------------------------------------------------------
-	ProcessEvents();
-	for(auto& team : m_teams)
-		for(auto& objGroup : team.GetAllObjectGroups())
-			for(auto& [id, obj] : objGroup)
-				if(obj)
-					obj->Update(m_dt);
-	// ---------------------------------------------------------
-	// -> GameWorld로 옮기기
-
-	CheckGameTime(m_dt);
-	ExecTimer(UPDATE_MS, &Server::Contents::GameRoom::Update);
+	m_info.currentParticipants++;
 }
 
-void Server::Contents::GameRoom::CheckHeartBeat()
+void Server::Contents::GameRoom::Handle_CS_CHANGE_TEAM(const std::shared_ptr<ClientSession>& clientSession)
 {
-	for(auto& team : m_teams) {
-		for(auto& [id, player] : team.GetPlayers()) {
-			const auto now = std::chrono::high_resolution_clock::now();
-			auto session = player->GetOwner();
-			const auto hbTimeStamp = session->GetHeartbeatTimestamp();
-			if(now - hbTimeStamp >= MAX_HEART_BEAT_TIME_STAMP) {
+	const uint32 id{ clientSession->GetID() };
 
-				if(player) {
-					player->GetOwner()->Disconnect("HEART_BEAT");
-					RemoveGameObject(player);
-				}
+	if(m_users.contains(id)) {
+		auto& user = m_users[id];
+		if(FB_ENUMS::TEAM_TYPE_OFFENSE == user->GetTeamType())
+			user->SetTeamType(FB_ENUMS::TEAM_TYPE_DEFENSE);
+		else
+			user->SetTeamType(FB_ENUMS::TEAM_TYPE_OFFENSE);
 
+		auto pb{ ServerPackets::Make_SC_CHANGE_TEAM_PACKET(id, user->GetTeamType()) };
+		Broadcast(std::move(pb));
+	}
+}
+
+void Server::Contents::GameRoom::Handle_CS_ADD_BOT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE teamType)
+{
+	const uint32 id{ clientSession->GetID() };
+	if(m_users.contains(id)) {
+		if(id == m_host->GetID()) {
+
+			// Bot 추가
+			static uint32 idGen{ 10000 };
+			auto bot = ServerEngine::ObjectPool<Bot>::MakeShared(idGen, teamType);
+			idGen++;
+
+			if(false == m_bots.contains(bot->GetID())) {
+				auto pb{ ServerPackets::Make_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(bot->GetInfo()) };
+				AddParticipant(std::move(bot));
+				Broadcast(std::move(pb));
 			}
 		}
 	}
-	ExecTimer(1s, &Server::Contents::GameRoom::CheckHeartBeat);
 }
+
+void Server::Contents::GameRoom::Handle_CS_READY_GAME(const std::shared_ptr<ClientSession>& clientSession)
+{
+	const uint32 id{ clientSession->GetID() };
+	if(m_users.contains(id)) {
+		if(id != m_host->GetID()) {
+
+			auto& user = m_users[id];
+
+			if(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY == user->GetStateType())
+				user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_READY);
+			else
+				user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
+
+			auto pb{ ServerPackets::Make_SC_READY_GAME_PACKET(id, user->GetStateType()) };
+			Broadcast(std::move(pb));
+		}
+	}
+}
+
+void Server::Contents::GameRoom::Handle_CS_GAME_START(const std::shared_ptr<ClientSession>& clientSession)
+{
+	// TODO: 게임 시작 조건 검사
+	const uint32 id{ clientSession->GetID() };
+
+	if(id == m_host->GetID()) {
+		auto pb{ ServerPackets::Make_SC_LOADING_GAME_WORLD_PACKET() };
+		Broadcast(std::move(pb));
+	}
+}
+
+void Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
+{
+	m_loadingCompletedUserCount++;
+
+	if(m_loadingCompletedUserCount >= 1) {
+		CreateWorld();
+	}
+}
+
+#ifdef DEVELOP
+void Server::Contents::GameRoom::EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession)
+{
+	if(m_gameWorld) {
+		clientSession->SetGameWorld(m_gameWorld);
+		m_gameWorld->EnterGameWorld(clientSession);
+	}
+}
+#endif // DEVELOP
+
