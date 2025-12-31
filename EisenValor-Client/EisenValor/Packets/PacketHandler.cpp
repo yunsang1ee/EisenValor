@@ -16,14 +16,14 @@ bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACK
 	const uint32 id{recvPkt.player_id()};
 
 	// std::println("Player ID: {}", id);
-	auto device = MANAGER(DxDeviceGlobal).GetDevice();
+	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 
-	MANAGER(SceneGlobal).SetLocalNetworkID(id);
+	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
 	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
 	const uint16 roomID{1};
 
 	auto pb = NetBridge::ServerPacketHandler::Make_CS_ENTER_ROOM_PACKET(id, roomID);
-	MANAGER(NetBridge::NetworkGlobal).Send(std::move(pb));
+	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 	return true;
 }
@@ -35,8 +35,8 @@ bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER
 
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt)
 {
-	auto		 device = MANAGER(DxDeviceGlobal).GetDevice();
-	auto&		 sceneGlobal = MANAGER(SceneGlobal);
+	auto		 device = GLOBAL(DxDeviceGlobal).GetDevice();
+	auto&		 sceneGlobal = GLOBAL(SceneGlobal);
 	auto*		 scene = sceneGlobal.GetActiveScene();
 
 	const uint32 id = recvPkt.player_id();
@@ -66,8 +66,8 @@ bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOC
 		localPlayer->SetPosition(pos);
 		localPlayer->SetRotation(rot);
 
-		MANAGER(GameObjectManager).SetLocalPlayer(localPlayer);
-		MANAGER(GameObjectManager).AddObject(localPlayer);
+		GLOBAL(GameObjectManager).SetLocalPlayer(localPlayer);
+		GLOBAL(GameObjectManager).AddObject(localPlayer);
 		return true;
 	}
 
@@ -77,12 +77,12 @@ bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOC
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt)
 {
 	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = MANAGER(GameObjectManager).GetLocalID();
+	const uint32 localID = GLOBAL(GameObjectManager).GetLocalID();
 
 	if (id == localID)
 		return false;
 
-	auto device = MANAGER(DxDeviceGlobal).GetDevice();
+	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 
 	const Vec3 pos{
 		recvPkt.kinematic_info()->pos().x(), recvPkt.kinematic_info()->pos().y(), recvPkt.kinematic_info()->pos().z()
@@ -114,7 +114,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		player->SetAccelration(accel);
 		player->lastServerPosition = pos;
 
-		MANAGER(GameObjectManager).AddObject(player);
+		GLOBAL(GameObjectManager).AddObject(player);
 		break;
 	}
 	case ObjectType::NPC:
@@ -131,7 +131,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 		npc->SetVelocity(vel);
 		npc->SetAccelration(accel);
 		npc->lastServerPosition = pos;
-		MANAGER(GameObjectManager).AddObject(npc);
+		GLOBAL(GameObjectManager).AddObject(npc);
 		break;
 	}
 	default:
@@ -144,7 +144,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt)
 {
 	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = MANAGER(GameObjectManager).GetLocalID();
+	const uint32 localID = GLOBAL(GameObjectManager).GetLocalID();
 
 	if (id == localID)
 	{
@@ -153,7 +153,7 @@ bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOV
 	else
 	{
 		// TODO: 오브젝트 삭제처리
-		auto obj = MANAGER(GameObjectManager).FindObject(id);
+		auto obj = GLOBAL(GameObjectManager).FindObject(id);
 		if (obj)
 			obj->alive = false;
 	}
@@ -170,7 +170,7 @@ bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt)
 {
 	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = MANAGER(GameObjectManager).GetLocalID();
+	const uint32 localID = GLOBAL(GameObjectManager).GetLocalID();
 
 	if (id == localID)
 	{
@@ -178,7 +178,7 @@ bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET
 		return false;
 	}
 
-	auto obj = MANAGER(GameObjectManager).FindObject(id);
+	auto obj = GLOBAL(GameObjectManager).FindObject(id);
 	if (obj)
 	{
 		const Vec3 pos{
@@ -206,7 +206,7 @@ bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& 
 {
 	const uint32 objID{recvPkt.obj_id()};
 
-	auto obj = MANAGER(GameObjectManager).FindObject(objID);
+	auto obj = GLOBAL(GameObjectManager).FindObject(objID);
 	if (obj)
 	{
 		const uint32 hp{recvPkt.current_hp()};

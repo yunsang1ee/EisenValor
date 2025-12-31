@@ -18,47 +18,47 @@ namespace Globals
 
 void Initialize()
 {
-	MANAGER(InputGlobal).Initialize();
-	MANAGER(TimerGlobal).Initialize();
+	GLOBAL(InputGlobal).Initialize();
+	GLOBAL(TimerGlobal).Initialize();
 
 #ifdef _DEBUG
-	auto& debugG = MANAGER(DxDebugGlobal);
+	auto& debugG = GLOBAL(DxDebugGlobal);
 	debugG.Initialize();
 #endif
-	auto& deviceG = MANAGER(DxDeviceGlobal);
+	auto& deviceG = GLOBAL(DxDeviceGlobal);
 	deviceG.Initialize();
 #ifdef _DEBUG
 	debugG.SetupDebugMessages(deviceG.GetDevice());
 	debugG.SetBreakOnSeverity(true, true);
 #endif
-	MANAGER(DxGarbageCollectorGlobal).Initialize();
-	MANAGER(DxShaderCompilerGlobal).Initialize();
+	GLOBAL(DxGarbageCollectorGlobal).Initialize();
+	GLOBAL(DxShaderCompilerGlobal).Initialize();
 	auto* device = deviceG.GetDevice();
-	MANAGER(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
-	MANAGER(DxGfxCommandQueueGlobal).Initialize(device);
-	MANAGER(DxRendererGlobal).Initialize();
+	GLOBAL(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
+	GLOBAL(DxGfxCommandQueueGlobal).Initialize(device);
+	GLOBAL(DxRendererGlobal).Initialize();
 
-	MANAGER(SceneGlobal).Initialize();
+	GLOBAL(SceneGlobal).Initialize();
 }
 
 void Shutdown()
 {
-	MANAGER(SceneGlobal).Release();
+	GLOBAL(SceneGlobal).Release();
 
-	MANAGER(DxRendererGlobal).Release();
-	MANAGER(DxGfxCommandQueueGlobal).Release();
-	MANAGER(DxDescriptorHeapGlobal).Release();
-	MANAGER(DxShaderCompilerGlobal).Release();
-	MANAGER(DxGarbageCollectorGlobal).Release();
+	GLOBAL(DxRendererGlobal).Release();
+	GLOBAL(DxGfxCommandQueueGlobal).Release();
+	GLOBAL(DxDescriptorHeapGlobal).Release();
+	GLOBAL(DxShaderCompilerGlobal).Release();
+	GLOBAL(DxGarbageCollectorGlobal).Release();
 #ifdef _DEBUG
-	auto& debugG = MANAGER(DxDebugGlobal);
+	auto& debugG = GLOBAL(DxDebugGlobal);
 	debugG.PrintDebugMessages();
 	debugG.Release();
 #endif
-	MANAGER(DxDeviceGlobal).Release();
+	GLOBAL(DxDeviceGlobal).Release();
 
-	MANAGER(TimerGlobal).Release();
-	MANAGER(InputGlobal).Release();
+	GLOBAL(TimerGlobal).Release();
+	GLOBAL(InputGlobal).Release();
 }
 
 } // namespace Globals

@@ -116,7 +116,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 	// Timer 초기화
 	{
-		auto& timer = MANAGER(TimerGlobal);
+		auto& timer = GLOBAL(TimerGlobal);
 		timer.SetFixedFPS(60);
 		timer.SetTargetFPS(0);
 	}
@@ -124,7 +124,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	// PacketHandler 등록
 	{
 		std::unique_ptr<NetBridge::IPacketHandler> packetHandler = std::make_unique<NetBridge::ServerPacketHandler>();
-		MANAGER(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
+		GLOBAL(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
 		std::string id, pw;
 		std::cout << "Input ID(any):";
 		std::cin >> id;
@@ -135,12 +135,12 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		pw = "PW";
 
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-		MANAGER(NetBridge::NetworkGlobal).Send(std::move(pb));
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	// RenderPass 등록
 	{
-		auto& renderer = MANAGER(DxRendererGlobal);
+		auto& renderer = GLOBAL(DxRendererGlobal);
 		
 		// DXR Pass 생성
 		auto  dxrPass = std::make_unique<DxrRenderPass>(kDefaultWindowWidth, kDefaultWindowHeight);
@@ -154,8 +154,8 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 	// Scene 등록
 	{
-		MANAGER(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
-		MANAGER(SceneGlobal).LoadScene("SampleScene");
+		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
+		GLOBAL(SceneGlobal).LoadScene("SampleScene");
 	}
 
 	while (not quit)

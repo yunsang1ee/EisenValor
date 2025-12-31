@@ -15,7 +15,7 @@ DxRendererGlobal::~DxRendererGlobal() = default;
 
 void DxRendererGlobal::Initialize()
 {
-	auto& device = MANAGER(DxDeviceGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
 	m_featureCaps = DxFeatureCaps::Query(device.GetDevice(), device.GetAdapter());
 	m_featureCaps.LogCapabilities();
 
@@ -61,8 +61,8 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		return;
 	}
 
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 
 	m_swapChain = std::make_unique<DxSwapChain>(
 		device.GetDevice(), device.GetFactory(), commandQueue, hwnd, width, height, kFrameCount,
@@ -86,7 +86,7 @@ void DxRendererGlobal::Release()
 {
 	if (m_swapChain)
 	{
-		auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+		auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 		commandQueue.WaitForIdle();
 	}
 
@@ -193,7 +193,7 @@ void DxRendererGlobal::EndFrame()
 		return;
 	}
 
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
@@ -202,7 +202,7 @@ void DxRendererGlobal::EndFrame()
 	m_swapChain->PresentMaxPerformance();
 	frame->WaitForCompletion();
 
-	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
 	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
 }
@@ -221,8 +221,8 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 		return;
 	}
 
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 
 	commandQueue.WaitForIdle();
 		

@@ -29,7 +29,7 @@ public:                                                                         
 
 #pragma endregion
 
-#define MANAGER(classname) (classname::GetInstance())
+#define GLOBAL(classname) (classname::GetInstance())
 // Types
 using BYTE = unsigned char;
 using int8 = __int8;

@@ -12,7 +12,7 @@ DxTLAS::~DxTLAS()
 {
 	if (m_srvIndex != ~0u)
 	{
-		auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+		auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 		descHeap.FreeImmediate(m_srvIndex);
 	}
 
@@ -170,7 +170,7 @@ void DxTLAS::Build(
 	uavBarrier.UAV.pResource = m_tlasBuffer.Get();
 	cmdList->ResourceBarrier(1, &uavBarrier);
 
-	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;

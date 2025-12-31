@@ -91,10 +91,10 @@ public:
 template <typename Packet>
 static inline void SendPacket(Packet&& sendPkt) noexcept
 {
-	MANAGER(NetBridge::NetworkGlobal).Send(std::forward<Packet>(sendPkt));
+	GLOBAL(NetBridge::NetworkGlobal).Send(std::forward<Packet>(sendPkt));
 }
 
 static inline void SendPacket(std::shared_ptr<NetBridge::PacketBuffer>&& sendBuffer) noexcept
 {
-	MANAGER(NetBridge::NetworkGlobal).Send(std::move(sendBuffer));
+	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(sendBuffer));
 }

@@ -17,14 +17,14 @@
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
 #ifdef SERVER
-	if (false == MANAGER(NetBridge::NetworkGlobal).Init())
+	if (false == GLOBAL(NetBridge::NetworkGlobal).Init())
 		return false;
 #endif
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
 	Globals::Initialize();
-	auto& time = MANAGER(TimerGlobal);
+	auto& time = GLOBAL(TimerGlobal);
 	time.SetFixedFPS(60);
 	time.SetTargetFPS(0);
 
@@ -45,7 +45,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 
 void GameFramework::CreateStaticScene()
 {
-	auto& device = MANAGER(DxDeviceGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
 
 	auto ground = std::make_unique<GameObject>("Ground");
 	ground->GetTransform().SetPosition(0.0f, 0.0f, 0.0f);
@@ -159,8 +159,8 @@ void GameFramework::CreateStaticScene()
 
 void GameFramework::BuildAccelerationStructures()
 {
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 
 	auto* frame = m_frameResources[0].get();
 	frame->BeginFrame();
@@ -201,7 +201,7 @@ void GameFramework::BuildAccelerationStructures()
 
 void GameFramework::CreateRaytracingPipeline()
 {
-	auto&				  device = MANAGER(DxDeviceGlobal);
+	auto&				  device = GLOBAL(DxDeviceGlobal);
 	ComPtr<ID3D12Device5> device5;
 	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
 
@@ -220,8 +220,8 @@ void GameFramework::CreateRaytracingPipeline()
 
 void GameFramework::CreateBuffers()
 {
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 
 	if (m_sceneObjects.empty())
 	{
@@ -459,7 +459,7 @@ void GameFramework::CreateBuffers()
 
 	m_bufferRange = tableBuilder.Commit(device.GetDevice(), descHeap);
 
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 	frame->WaitForCompletion();
 
@@ -468,8 +468,8 @@ void GameFramework::CreateBuffers()
 
 void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
 {
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 
 	m_raytracingOutput.Initialize(
 		device.GetDevice(), width, height, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1,
@@ -485,8 +485,8 @@ void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 void GameFramework::ResizeRaytracingResources(uint32_t width, uint32_t height)
 {
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
-	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 
 	auto fenceValue = commandQueue.GetCurrentFenceValue();
 	m_raytracingOutput.ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
@@ -496,22 +496,22 @@ void GameFramework::ResizeRaytracingResources(uint32_t width, uint32_t height)
 void GameFramework::Run()
 {
 #ifdef SERVER
-	MANAGER(NetBridge::NetworkGlobal).ProcessIO();
+	GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
 #endif
 
-	MANAGER(InputGlobal).BeforeUpdate();
+	GLOBAL(InputGlobal).BeforeUpdate();
 
 	static float runTime{};
-	const float	 dt = MANAGER(TimerGlobal).Update();
+	const float	 dt = GLOBAL(TimerGlobal).Update();
 
 	if ((runTime += dt) > 0.2f)
 	{
 		runTime = 0.0f;
 		DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
 	}
-	MANAGER(SceneGlobal).OnBeginFrame();
+	GLOBAL(SceneGlobal).OnBeginFrame();
 
-	if (MANAGER(TimerGlobal).ShouldFixedUpdate())
+	if (GLOBAL(TimerGlobal).ShouldFixedUpdate())
 		FixedUpdate();
 
 	Update(dt);
@@ -519,11 +519,11 @@ void GameFramework::Run()
 
 	Render();
 
-	MANAGER(SceneGlobal).OnEndFrame();
+	GLOBAL(SceneGlobal).OnEndFrame();
 
-	MANAGER(InputGlobal).AfterUpdate();
+	GLOBAL(InputGlobal).AfterUpdate();
 #ifdef _DEBUG
-	MANAGER(DxDebugGlobal).PrintDebugMessages();
+	GLOBAL(DxDebugGlobal).PrintDebugMessages();
 #endif
 }
 
@@ -531,7 +531,7 @@ void GameFramework::Release()
 {
 	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
 
-	auto& queue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
 	queue.WaitForIdle();
 	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
 }
@@ -559,35 +559,35 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		isUp = (keyflags & KF_UP) == KF_UP;
 		code = static_cast<InputCode>(wParam);
 		if (code)
-			MANAGER(InputGlobal).OnInputState(code, isPressed, isUp);
+			GLOBAL(InputGlobal).OnInputState(code, isPressed, isUp);
 	}
 	break;
 	case WM_MOUSEMOVE:
-		MANAGER(InputGlobal).OnMouseMove(LOWORD(lParam), HIWORD(lParam));
+		GLOBAL(InputGlobal).OnMouseMove(LOWORD(lParam), HIWORD(lParam));
 		break;
 	case WM_LBUTTONDOWN:
 	{
-		MANAGER(InputGlobal).OnInputState(VK_LBUTTON, FALSE, FALSE);
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, FALSE);
 		break;
 	}
 	case WM_RBUTTONDOWN:
 	{
-		MANAGER(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
 		break;
 	}
 	case WM_LBUTTONUP:
 	{
-		MANAGER(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
 		break;
 	}
 	case WM_RBUTTONUP:
 	{
-		MANAGER(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
 		break;
 	}
 	case WM_MOUSEWHEEL:
 	{
-		MANAGER(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
+		GLOBAL(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 	}
 	case WM_DESTROY:
@@ -605,7 +605,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 
 void GameFramework::Update(float delta)
 {
-	auto& input = MANAGER(InputGlobal);
+	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_ESCAPE))
 	{
 		DEBUG_LOG_FMT("close\n");
@@ -617,30 +617,30 @@ void GameFramework::Update(float delta)
 	}
 	if (input.GetInputDown(VK_F11))
 	{
-		MANAGER(DxRendererGlobal).ToggleBorderlessFullscreen();
+		GLOBAL(DxRendererGlobal).ToggleBorderlessFullscreen();
 	}
 	if (input.GetInput(VK_MENU) && input.GetInputDown(VK_RETURN))
 	{
-		MANAGER(DxRendererGlobal).ToggleFullscreen();
+		GLOBAL(DxRendererGlobal).ToggleFullscreen();
 	}
 
-	MANAGER(SceneGlobal).OnUpdate(delta);
+	GLOBAL(SceneGlobal).OnUpdate(delta);
 }
 
 void GameFramework::FixedUpdate()
 {
-	MANAGER(SceneGlobal).OnFixedUpdate(MANAGER(TimerGlobal).GetFixedDeltaTime());
+	GLOBAL(SceneGlobal).OnFixedUpdate(GLOBAL(TimerGlobal).GetFixedDeltaTime());
 }
 
 void GameFramework::LateUpdate(float delta)
 {
-	MANAGER(SceneGlobal).OnLateUpdate(delta);
+	GLOBAL(SceneGlobal).OnLateUpdate(delta);
 }
 
 void GameFramework::Render()
 {
-	auto& scene = MANAGER(SceneGlobal);
-	auto& renderer = MANAGER(DxRendererGlobal);
+	auto& scene = GLOBAL(SceneGlobal);
+	auto& renderer = GLOBAL(DxRendererGlobal);
 	renderer.BeginFrame();
 
 	renderer.Render(scene.GetActiveScene());
@@ -675,12 +675,12 @@ void GameFramework::Render()
 	D3D12_RESOURCE_BARRIER restoreBarriers[] = {barrier3, barrier4};
 	cmdList->ResourceBarrier(2, restoreBarriers);
 
-	auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 	frame->ExecuteAndSignal(commandQueue.GetQueue());
 
 	commandQueue.SignalFence();
 
-	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
 
 	m_swapChain->PresentMaxPerformance();
@@ -690,7 +690,7 @@ void GameFramework::Render()
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
 #ifdef SERVER
-	if (false == MANAGER(NetBridge::NetworkGlobal).Init())
+	if (false == GLOBAL(NetBridge::NetworkGlobal).Init())
 		return false;
 #endif
 
@@ -704,7 +704,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	uint32_t width = clientRect.right - clientRect.left;
 	uint32_t height = clientRect.bottom - clientRect.top;
 
-	auto& renderer = MANAGER(DxRendererGlobal);
+	auto& renderer = GLOBAL(DxRendererGlobal);
 	renderer.CreateSwapChain(m_hWnd, width, height);
 
 	DEBUG_LOG_FMT("[GameFramework] Initialized: {}x{}\n", width, height);
@@ -714,13 +714,13 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 void GameFramework::Run()
 {
 #ifdef SERVER
-	MANAGER(NetBridge::NetworkGlobal).ProcessIO();
+	GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
 #endif
 
-	MANAGER(InputGlobal).BeforeUpdate();
+	GLOBAL(InputGlobal).BeforeUpdate();
 
 	static float runTime{};
-	const float	 dt = MANAGER(TimerGlobal).Update();
+	const float	 dt = GLOBAL(TimerGlobal).Update();
 
 	if ((runTime += dt) > 0.2f)
 	{
@@ -728,19 +728,19 @@ void GameFramework::Run()
 		DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
 	}
 
-	MANAGER(SceneGlobal).OnBeginFrame();
+	GLOBAL(SceneGlobal).OnBeginFrame();
 
-	if (MANAGER(TimerGlobal).ShouldFixedUpdate())
+	if (GLOBAL(TimerGlobal).ShouldFixedUpdate())
 		FixedUpdate();
 
 	Update(dt);
 	Render();
 
-	MANAGER(SceneGlobal).OnEndFrame();
-	MANAGER(InputGlobal).AfterUpdate();
+	GLOBAL(SceneGlobal).OnEndFrame();
+	GLOBAL(InputGlobal).AfterUpdate();
 
 #ifdef _DEBUG
-	MANAGER(DxDebugGlobal).PrintDebugMessages();
+	GLOBAL(DxDebugGlobal).PrintDebugMessages();
 #endif
 }
 
@@ -750,12 +750,12 @@ void GameFramework::Release()
 		return;
 	m_released = true;
 
-	auto* queue = MANAGER(DxGfxCommandQueueGlobal).GetQueue();
+	auto* queue = GLOBAL(DxGfxCommandQueueGlobal).GetQueue();
 	if (!queue)
 		return;
 
 	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
-	MANAGER(DxGfxCommandQueueGlobal).WaitForIdle();
+	GLOBAL(DxGfxCommandQueueGlobal).WaitForIdle();
 	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
 
 	Globals::Shutdown();
@@ -783,7 +783,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		const uint32_t width = static_cast<uint32_t>(LOWORD(lParam));
 		const uint32_t height = static_cast<uint32_t>(HIWORD(lParam));
 
-		auto& renderer = MANAGER(DxRendererGlobal);
+		auto& renderer = GLOBAL(DxRendererGlobal);
 		if (renderer.GetSwapChain())
 		{
 			renderer.OnResize(width, height);
@@ -801,32 +801,32 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		isUp = (keyflags & KF_UP) == KF_UP;
 		code = static_cast<InputCode>(wParam);
 		if (code)
-			MANAGER(InputGlobal).OnInputState(code, isPressed, isUp);
+			GLOBAL(InputGlobal).OnInputState(code, isPressed, isUp);
 	}
 	break;
 
 	case WM_MOUSEMOVE:
-		MANAGER(InputGlobal).OnMouseMove(LOWORD(lParam), HIWORD(lParam));
+		GLOBAL(InputGlobal).OnMouseMove(LOWORD(lParam), HIWORD(lParam));
 		break;
 
 	case WM_LBUTTONDOWN:
-		MANAGER(InputGlobal).OnInputState(VK_LBUTTON, FALSE, FALSE);
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, FALSE);
 		break;
 
 	case WM_RBUTTONDOWN:
-		MANAGER(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
 		break;
 
 	case WM_LBUTTONUP:
-		MANAGER(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
 		break;
 
 	case WM_RBUTTONUP:
-		MANAGER(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
 		break;
 
 	case WM_MOUSEWHEEL:
-		MANAGER(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
+		GLOBAL(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 
 	case WM_DESTROY:
@@ -843,7 +843,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 
 void GameFramework::Update(float delta)
 {
-	auto& input = MANAGER(InputGlobal);
+	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_ESCAPE))
 	{
 		DEBUG_LOG_FMT("close\n");
@@ -854,7 +854,7 @@ void GameFramework::Update(float delta)
 		// FUTURE: Runtime Shader Compilation
 	}
 
-	if (auto* swapChain = MANAGER(DxRendererGlobal).GetSwapChain())
+	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain())
 	{
 		if (input.GetInputDown(VK_F11))
 		{
@@ -866,23 +866,23 @@ void GameFramework::Update(float delta)
 		}
 	}
 
-	MANAGER(SceneGlobal).OnUpdate(delta);
+	GLOBAL(SceneGlobal).OnUpdate(delta);
 }
 
 void GameFramework::FixedUpdate()
 {
-	MANAGER(SceneGlobal).OnFixedUpdate(MANAGER(TimerGlobal).GetFixedDeltaTime());
+	GLOBAL(SceneGlobal).OnFixedUpdate(GLOBAL(TimerGlobal).GetFixedDeltaTime());
 }
 
 void GameFramework::LateUpdate(float delta)
 {
-	MANAGER(SceneGlobal).OnLateUpdate(delta);
+	GLOBAL(SceneGlobal).OnLateUpdate(delta);
 }
 
 void GameFramework::Render()
 {
-	auto& scene = MANAGER(SceneGlobal);
-	auto& renderer = MANAGER(DxRendererGlobal);
+	auto& scene = GLOBAL(SceneGlobal);
+	auto& renderer = GLOBAL(DxRendererGlobal);
 
 	renderer.BeginFrame();
 	renderer.Render(scene.GetActiveScene());

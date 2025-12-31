@@ -237,7 +237,7 @@ void DxDescriptorHeapGlobal::Free(uint32_t index, const FenceHandle& fenceHandle
 	{
 		return;
 	}
-	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.DeferDescriptorFree(this, index, fenceHandle, debugName);
 }
 
@@ -322,7 +322,7 @@ void DxDescriptorHeapGlobal::FreeRange(
 	uint32_t startIndex, uint32_t count, const FenceHandle& fenceHandle, std::string_view debugName
 )
 {
-	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.DeferRelease([this, startIndex, count] { this->FreeRangeImmediate(startIndex, count); }, fenceHandle, debugName);
 }
 

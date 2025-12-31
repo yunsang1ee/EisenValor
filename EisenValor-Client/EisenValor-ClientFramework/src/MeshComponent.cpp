@@ -11,7 +11,7 @@ void MeshComponent::SetMesh(
 	m_vertices = vertices;
 	m_indices = indices;
 
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (scene)
 	{
 		auto* myGameObject = scene->TryGetGameObject(GetOwner());

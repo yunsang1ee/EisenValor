@@ -101,20 +101,20 @@ void DxResource::ReleaseResource()
 	if (!m_resource)
 		return;
 
-	auto& gc = MANAGER(DxGarbageCollectorGlobal);
+	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 
 	// TODO: 멀티큐 이후에 수정 필요
 	uint64_t fenceValue = 0;
 	switch (m_lastUsedQueue)
 	{
 	case EQueueType::Graphics:
-		fenceValue = MANAGER(DxGfxCommandQueueGlobal).GetCurrentFenceValue();
+		fenceValue = GLOBAL(DxGfxCommandQueueGlobal).GetCurrentFenceValue();
 		break;
 		// case EQueueType::Compute:
-		//	fenceValue = MANAGER(DxComputeCommandQueueGlobal).GetCurrentFenceValue();
+		//	fenceValue = GLOBAL(DxComputeCommandQueueGlobal).GetCurrentFenceValue();
 		//	break;
 		// case EQueueType::Copy:
-		//	fenceValue = MANAGER(DxCopyCommandQueueGlobal).GetCurrentFenceValue();
+		//	fenceValue = GLOBAL(DxCopyCommandQueueGlobal).GetCurrentFenceValue();
 		//	break;
 	}
 

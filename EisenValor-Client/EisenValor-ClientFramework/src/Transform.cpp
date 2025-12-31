@@ -14,7 +14,7 @@ Transform::Transform()
 
 Transform::~Transform()
 {
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
 		return;
 
@@ -164,7 +164,7 @@ void Transform::UpdateWorldMatrix()
 
 	if (m_parent.IsValid())
 	{
-		auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 		auto* parentTransform = storage ? storage->Get(m_parent) : nullptr;
 
@@ -185,7 +185,7 @@ void Transform::UpdateWorldMatrix()
 
 void Transform::SetParent(Handle parentHandle)
 {
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 
 	// 1. 기존 부모에서 제거
@@ -243,7 +243,7 @@ Transform::Handle Transform::GetChild(size_t index) const
 
 void Transform::DetachChildren()
 {
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 
 	if (storage)
@@ -278,7 +278,7 @@ void Transform::MarkDirtyRecursive()
 
 	m_isDirty = true;
 
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 	if (!storage)
 		return;

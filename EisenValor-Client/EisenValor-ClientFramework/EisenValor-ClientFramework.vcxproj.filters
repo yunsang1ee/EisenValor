@@ -232,6 +232,15 @@
     <ClInclude Include="include\IPacketHandler.h">
       <Filter>NetBridge\Packets</Filter>
     </ClInclude>
+    <ClInclude Include="include\RenderContext.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IRenderData.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RenderDataPool.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">

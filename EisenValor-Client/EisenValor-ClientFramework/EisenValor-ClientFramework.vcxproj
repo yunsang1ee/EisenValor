@@ -197,12 +197,15 @@
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\IPacketHandler.h" />
+    <ClInclude Include="include\IRenderData.h" />
     <ClInclude Include="include\IRenderPass.h" />
     <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkGlobal.h" />
     <ClInclude Include="include\PacketBuffer.h" />
     <ClInclude Include="include\RecvBuffer.h" />
+    <ClInclude Include="include\RenderContext.h" />
+    <ClInclude Include="include\RenderDataPool.h" />
     <ClInclude Include="include\RenderDataSync.h" />
     <ClInclude Include="include\DxRendererGlobal.h" />
     <ClInclude Include="include\Scene.h" />

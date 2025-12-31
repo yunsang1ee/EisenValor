@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafxClientFramework.h"
 
 class Scene;
 class DxFrameResource;

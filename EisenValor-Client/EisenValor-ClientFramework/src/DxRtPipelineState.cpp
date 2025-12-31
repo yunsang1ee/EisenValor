@@ -126,7 +126,7 @@ void DxRtPipelineState::CreateStateObject(
 	ID3D12Device5* device, const std::wstring& shaderPath, uint32_t maxRecursionDepth
 )
 {
-	auto& compiler = MANAGER(DxShaderCompilerGlobal);
+	auto& compiler = GLOBAL(DxShaderCompilerGlobal);
 
 	std::wstring shaderName = shaderPath;
 	size_t		 lastSlash = shaderName.find_last_of(L"/\\");

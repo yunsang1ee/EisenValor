@@ -6,7 +6,7 @@
 
 GameObject* IComponent::GetGameObject() const
 {
-	auto* scene = MANAGER(SceneGlobal).GetActiveScene();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
 		return nullptr;
 	return scene->TryGetGameObject(GetOwner());

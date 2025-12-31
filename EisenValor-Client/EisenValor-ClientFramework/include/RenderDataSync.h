@@ -87,7 +87,7 @@ private:
 			device, sizeInBytes, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "RenderDataSync_Buffer"
 		);
 
-		m_gpuBuffer->CreateSRV(device, MANAGER(DxDescriptorHeapGlobal), (uint32_t)newCapacity, (uint32_t)sizeof(T));
+		m_gpuBuffer->CreateSRV(device, GLOBAL(DxDescriptorHeapGlobal), (uint32_t)newCapacity, (uint32_t)sizeof(T));
 
 		m_currentCapacity = newCapacity;
 

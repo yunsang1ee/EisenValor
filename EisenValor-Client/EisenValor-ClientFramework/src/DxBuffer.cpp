@@ -9,10 +9,10 @@ DxBuffer::~DxBuffer()
 {
 	if (HasSRV() || HasUAV() || HasCBV())
 	{
-		auto& queue = MANAGER(DxGfxCommandQueueGlobal);
+		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
 
 		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue());
-		auto&		heap = MANAGER(DxDescriptorHeapGlobal);
+		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
 
 		ReleaseAllViews(heap, fence);
 

@@ -49,12 +49,12 @@ void DxrRenderPass::OnResize(uint32_t width, uint32_t height)
 
 void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 {
-	auto& device = MANAGER(DxDeviceGlobal);
-	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 
 	if (m_raytracingOutput.HasUAV(0))
 	{
-		auto& commandQueue = MANAGER(DxGfxCommandQueueGlobal);
+		auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 		auto  fenceValue = commandQueue.GetCurrentFenceValue();
 		m_raytracingOutput.ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
 	}
@@ -105,7 +105,7 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 
 void DxrRenderPass::CreateRaytracingPipeline()
 {
-	auto&				  device = MANAGER(DxDeviceGlobal);
+	auto&				  device = GLOBAL(DxDeviceGlobal);
 	ComPtr<ID3D12Device5> device5;
 	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
 
@@ -128,7 +128,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 		return;
 
 	// 전처리
-	auto& input = MANAGER(InputGlobal);
+	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_F6))
 	{
 		m_usePathTracing = !m_usePathTracing;
@@ -136,7 +136,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	}
 
 	// 데이터 동기화
-	auto& device = MANAGER(DxDeviceGlobal);
+	auto& device = GLOBAL(DxDeviceGlobal);
 	auto* context = frame->GetMainContext();
 	auto* uploadHeap = frame->GetUploadHeap();
 
@@ -158,7 +158,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	auto*							   cmdList = context->CommandList();
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
-	auto& descHeap = MANAGER(DxDescriptorHeapGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 
 	if (m_usePathTracing)
 	{
