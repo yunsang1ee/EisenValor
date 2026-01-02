@@ -2,13 +2,13 @@
 #include "SessionPool.h"
 
 #include "Session.h"
-#include "ServerEngineConfigureManager.h"
+#include "ServerEngineConfigManager.h"
 
 void ServerEngine::SessionPool::Init(SessionFactoryFunc sessionFunc)
 {
 	m_func = sessionFunc;
 
-	const int MAX_SESION_PER_RIO_WORKER = MANAGER(ServerEngineConfigureManager)->GetRIOWorkerConfigure().MAX_SESSION_PER_RIO_WORKER;
+	const int MAX_SESION_PER_RIO_WORKER = MANAGER(ServerEngineConfigManager)->GetRIOWorkerConfig().MAX_SESSION_PER_RIO_WORKER;
 	
 	for(int i = 0; i < MAX_SESION_PER_RIO_WORKER; ++i) {
 		std::shared_ptr<Session> session = m_func();	// ClientSession

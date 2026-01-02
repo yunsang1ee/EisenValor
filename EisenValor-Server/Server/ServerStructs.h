@@ -1,19 +1,5 @@
 #pragma once
 
-struct KinematicInfo {
-	Vec3 position;
-	Vec3 rotation;
-	Vec3 velocity;
-	Vec3 acceleration;
-	uint64 timeStamp;
-};
-
-struct StatInfo {
-	uint32 hp;			// 체력
-	uint32 atk;			// 공격력
-	uint32 stamina;		// 스태미나
-};
-
 struct RoomInfo {
 	uint16 id;
 	FB_ENUMS::ROOM_STATE_TYPE stateType;
@@ -27,3 +13,15 @@ struct ParticipantInfo {
 	FB_ENUMS::PARTICIPANT_STATE_TYPE	stateType;
 	FB_ENUMS::TEAM_TYPE					teamType;
 };
+
+struct PosInfo {
+	Vec3 position;
+	Vec3 rotation;
+};
+
+struct StatInfo {
+	uint32 hp;			// 체력
+	uint32 atk;			// 공격력
+	uint32 stamina;		// 스태미나
+};
+

@@ -7,14 +7,14 @@
 #include "SendBuffer.h"
 #include "SessionPool.h"	
 
-#include "ServerEngineConfigureManager.h"
+#include "ServerEngineConfigManager.h"
 
 ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_deferCount{}
 {
-	static std::atomic_uint32_t idGen = 1;
+	static std::atomic_uint32_t idGen{ 1 };
 	m_id = idGen++;
-	COMMIT_SEND_MS = std::chrono::milliseconds(MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().COMMIT_SEND_MS);
+	COMMIT_SEND_MS = std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS);
 }
 
 ServerEngine::Session::~Session()
@@ -26,7 +26,7 @@ ServerEngine::Session::~Session()
 
 void ServerEngine::Session::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
 {
-	switch(const auto type = context->GetType()) {
+	switch(const auto type{ context->GetType() }) {
 		case ServerEngine::RIO_CONTEXT_TYPE::RECV:
 		{
 			ProcessRecv(bytesTransferred);
@@ -63,24 +63,23 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 
 	Clean();
 
-	auto& sessionPool = m_owner->GetSessionPool();
+	auto& sessionPool =  m_owner->GetSessionPool() ;
 	sessionPool.EnqSession(std::static_pointer_cast<Session>(shared_from_this()));
 }
 
 void ServerEngine::Session::FlushPacketQueue()
 {
-	// RQ의 접근은 오직 RIO Worker Thread에서만 이루어져야 함
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
 	if(IsConnected() == false)
 		return;
 
-	int deferCount{};
+	uint32 deferCount{};
 
 	std::shared_ptr<PacketBuffer> packetBuffer{ nullptr };
 
-	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_SEND_RQ_SIZE_PER_SESSION;
+	const uint32 MAX_SEND_RQ_SIZE_PER_SESSION{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION };
 
 	while(m_packetBufferQueue.empty() == false) {
 		if(m_packetBufferQueue.try_pop(packetBuffer)) {
@@ -121,7 +120,7 @@ void ServerEngine::Session::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 
 bool ServerEngine::Session::DeferSend(const uint32 offset, const uint32 size)
 {
-	SendContext* sendContext = ObjectPool<SendContext>::Pop();
+	SendContext* sendContext{ ObjectPool<SendContext>::Pop() };
 	sendContext->Init();
 	sendContext->HoldSession(std::static_pointer_cast<Session>(shared_from_this()));
 
@@ -157,7 +156,6 @@ void ServerEngine::Session::CommitSend()
 
 void ServerEngine::Session::Clean()
 {
-	// TODO: SessionPool에 반납 시 호출
 	m_socket = INVALID_SOCKET;
 
 	m_connected = false;
@@ -176,14 +174,13 @@ void ServerEngine::Session::Clean()
 
 bool ServerEngine::Session::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
 {
-	// Accept Thread가 수행중
 	m_socket = socket;
 
-	u_long arg = 1;
+	u_long arg{ 1 };
 	ioctlsocket(m_socket, FIONBIO, &arg);
 
 	// NAGLE Algorithm off
-	int opt = 1;
+	int opt{ 1 };
 	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int));
 
 	if(false == Init()) {
@@ -206,15 +203,15 @@ bool ServerEngine::Session::Init()
 {
 	const RIO_CQ cq = m_owner->GetCQ();
 
-	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RECV_RQ_SIZE_PER_SESSION;
-	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_SEND_RQ_SIZE_PER_SESSION;
+	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RECV_RQ_SIZE_PER_SESSION;
+	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION;
 
 	m_rq = RIO_EXT_FUNC_TB.RIOCreateRequestQueue(m_socket, MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, cq, cq, 0);
 
 	if(m_rq == RIO_INVALID_RQ)
 		return false;
 	
-	const uint32 bufferSize = MANAGER(ServerEngineConfigureManager)->GetSessionConfigure().MAX_RIO_BUFFER_SIZE;
+	const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
 	
 	m_recvBuffer.Init(bufferSize);
 	m_sendBuffer.Init(bufferSize * 10);
@@ -224,8 +221,6 @@ bool ServerEngine::Session::Init()
 
 void ServerEngine::Session::PostRecv()
 {
-	// 맨 처음은 Accept Thread가 수행중, 이후로는 RioWorker가 수행중
-
 	if(false == IsConnected()) {
 		Disconnect("IsConnected False");
 		return;
@@ -243,10 +238,10 @@ void ServerEngine::Session::PostRecv()
 	m_recvContext.Offset = m_recvBuffer.GetReadOffset();
 	m_recvContext.Length = m_recvBuffer.GetFreeSize();
 
-	const DWORD flags = 0;
+	const DWORD flags{};
 
 	if(false == RIO_EXT_FUNC_TB.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
-		ServerEngine::LogManager::PrintLastError();
+		LOG_WSA_GET_LAST_ERROR();
 		m_recvContext.ReleaseSession();
 		Disconnect("RioReceive Fail");
 	}
@@ -266,9 +261,9 @@ void ServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 			return;
 		}
 
-		const uint32 remainDataSize = m_recvBuffer.GetDataSize();
+		const uint32 remainDataSize{ m_recvBuffer.GetDataSize() };
 
-		const uint32 processLen = AssembleReceivedData({ m_recvBuffer.GetReadCursor(), remainDataSize });
+		const uint32 processLen{ AssembleReceivedData({ m_recvBuffer.GetReadCursor(), remainDataSize }) };
 
 		if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
 			Disconnect("OnRead Overflow");
@@ -292,10 +287,10 @@ void ServerEngine::Session::ProcessSend(const uint32 bytesTransferred)
 
 uint32 ServerEngine::Session::AssembleReceivedData(std::span<const char> buf)
 {
-	uint32 processed = 0;
+	uint32 processed{};
 
 	while(buf.size() >= sizeof(PacketHeader)) {
-		const auto& header = *reinterpret_cast<const PacketHeader*>(buf.data());
+		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
 		if(buf.size() < header.packetSize)
 			break;
 

@@ -4,9 +4,9 @@ namespace ServerEngine {
 	class LogManager {
 	public:
 		static std::ostringstream s_oss;
-	
+
 	public:
-		enum class LOG_LEVEL {
+		enum class LOG_LEVEL : uint8 {
 			INFO,
 			WARNING,
 			ERR,
@@ -14,7 +14,7 @@ namespace ServerEngine {
 
 			END
 		};
-				
+
 	private:
 		LogManager() = delete;
 		~LogManager() = delete;
@@ -28,16 +28,23 @@ namespace ServerEngine {
 	public:
 		static void Init() noexcept;
 
+		using LogLevel = std::pair<std::string_view, WORD>;
+
 		template<typename... Args>
-		static void WriteLog(const LOG_LEVEL level, std::format_string<Args...> fmtStr, Args&&... args) noexcept
+		static void WriteLog(const LOG_LEVEL level, const std::format_string<Args...> fmtStr, Args&&... args) noexcept
 		{
 			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 			const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);
 
-			static const std::array<std::string, static_cast<uint8>(LOG_LEVEL::END)> arrLevel{ "[INFO]", "[WARNING]", "[ERROR]", "[TRACE]" };
+			static const std::array<LogLevel, static_cast<uint8>(LOG_LEVEL::END)> arrLevelToColor = { {
+				{ "[INFO]", static_cast<WORD>(FOREGROUND_GREEN)},
+				{ "[WARNING]", static_cast<WORD>(FOREGROUND_GREEN | FOREGROUND_RED) },
+				{ "[ERROR]", static_cast<WORD>(FOREGROUND_RED) },
+				{ "[TRACE]", static_cast<WORD>(FOREGROUND_INTENSITY) }
+			} };
 
 			std::stringstream oss;
-			oss << std::format("{:%Y-%m-%d %H:%M:%S} {}: ", localTime, arrLevel[static_cast<int>(level)]);
+			oss << std::format("{:%Y-%m-%d %H:%M:%S} {}: ", localTime, arrLevelToColor[static_cast<int>(level)].first.data());
 			oss << std::format(fmtStr, std::forward<Args>(args)...);
 			oss << "\n";
 
@@ -47,9 +54,7 @@ namespace ServerEngine {
 			GetConsoleScreenBufferInfo(consoleHandle, &csbi);
 			WORD oldColor = csbi.wAttributes;
 
-			static const std::array<BYTE, 4> arrLevelColor { FOREGROUND_GREEN, FOREGROUND_GREEN | FOREGROUND_RED, FOREGROUND_RED,FOREGROUND_INTENSITY };
-
-			SetConsoleTextAttribute(consoleHandle, arrLevelColor[static_cast<int>(level)]);
+			SetConsoleTextAttribute(consoleHandle, arrLevelToColor[static_cast<int>(level)].second);
 			std::cout << std::format("{}", oss.str());
 			SetConsoleTextAttribute(consoleHandle, oldColor);
 
@@ -64,7 +69,7 @@ namespace ServerEngine {
 			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 			const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);
 #ifdef _DEBUG
-			const std::string fileName = std::format("LOG/[DEBUG] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
+			const std::string fileName = std::format("../Debug/LOG/[DEBUG] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
 #else
 			const std::string fileName = std::format("LOG/[RELEASE] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
 #endif // _DEBUG

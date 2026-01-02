@@ -19,7 +19,7 @@ namespace FB_STRUCTS {
 
 struct Vec3;
 
-struct KinematicInfo;
+struct PosInfo;
 
 struct RoomInfo;
 
@@ -54,28 +54,19 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(Vec3, 12);
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) KinematicInfo FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) PosInfo FLATBUFFERS_FINAL_CLASS {
  private:
   FB_STRUCTS::Vec3 pos_;
   FB_STRUCTS::Vec3 rot_;
-  FB_STRUCTS::Vec3 vel_;
-  FB_STRUCTS::Vec3 accel_;
-  uint64_t time_stamp_;
 
  public:
-  KinematicInfo()
+  PosInfo()
       : pos_(),
-        rot_(),
-        vel_(),
-        accel_(),
-        time_stamp_(0) {
+        rot_() {
   }
-  KinematicInfo(const FB_STRUCTS::Vec3 &_pos, const FB_STRUCTS::Vec3 &_rot, const FB_STRUCTS::Vec3 &_vel, const FB_STRUCTS::Vec3 &_accel, uint64_t _time_stamp)
+  PosInfo(const FB_STRUCTS::Vec3 &_pos, const FB_STRUCTS::Vec3 &_rot)
       : pos_(_pos),
-        rot_(_rot),
-        vel_(_vel),
-        accel_(_accel),
-        time_stamp_(::flatbuffers::EndianScalar(_time_stamp)) {
+        rot_(_rot) {
   }
   const FB_STRUCTS::Vec3 &pos() const {
     return pos_;
@@ -83,17 +74,8 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) KinematicInfo FLATBUFFERS_FINAL_CLASS {
   const FB_STRUCTS::Vec3 &rot() const {
     return rot_;
   }
-  const FB_STRUCTS::Vec3 &vel() const {
-    return vel_;
-  }
-  const FB_STRUCTS::Vec3 &accel() const {
-    return accel_;
-  }
-  uint64_t time_stamp() const {
-    return ::flatbuffers::EndianScalar(time_stamp_);
-  }
 };
-FLATBUFFERS_STRUCT_END(KinematicInfo, 56);
+FLATBUFFERS_STRUCT_END(PosInfo, 24);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(2) RoomInfo FLATBUFFERS_FINAL_CLASS {
  private:

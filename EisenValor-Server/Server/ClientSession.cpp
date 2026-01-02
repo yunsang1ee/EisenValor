@@ -21,8 +21,8 @@ void Server::ClientSession::Ping()
 {
 	if(GetState() != SESSION_STATE::FREE) {
 
-		const auto now{ std::chrono::high_resolution_clock::now() };
-		const auto dt{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+		const auto now =  std::chrono::high_resolution_clock::now() ;
+		const auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) ;
 
 		if(dt >= 30'000ms) {
 			Disconnect("Disconnected By PingCheck");
@@ -39,7 +39,7 @@ void Server::ClientSession::Ping()
 void Server::ClientSession::OnConnected()
 {
 	std::cout << "ClientSession OnConnected!" << std::endl;
-	MANAGER(Server::ClientSessionManager)->AddSession(std::move(std::static_pointer_cast<Server::ClientSession>(shared_from_this())));
+	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<Server::ClientSession>(shared_from_this()));
 	m_lastPong = std::chrono::high_resolution_clock::now();
 	Ping();
 }
@@ -60,7 +60,7 @@ void Server::ClientSession::OnDisconnected()
 		}
 		case SESSION_STATE::IN_LOBBY:
 		{
-			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::LeaveGameLobby, clientSession);
+			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
 			break;
 		}
 		case SESSION_STATE::IN_GAME_ROOM:

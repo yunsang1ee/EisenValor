@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "GameRoom.h"
 
 #include "Player.h"
@@ -22,9 +22,9 @@ Server::Contents::GameRoom::~GameRoom()
 
 void Server::Contents::GameRoom::Init()
 {
-#ifdef DEVELOP
-	CreateWorld();
-#endif // DEVELOP
+//#ifdef DEVELOP
+//	CreateWorld();
+//#endif // DEVELOP
 }
 
 bool Server::Contents::GameRoom::CanStart()
@@ -86,12 +86,19 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	FB_ENUMS::TEAM_TYPE teamType{ FB_ENUMS::TEAM_TYPE_DEFENSE };
 
 	if(teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) {
-		if(m_offenseCount >= MAX_PARTICIPANTS / 2)
+		if(m_offenseCount >= MAX_PARTICIPANTS / 2) {
 			teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+			m_defenseCount++;
+		}
+		else
+			m_offenseCount++;
 	}
 	else {
-		if(m_defenseCount >= MAX_PARTICIPANTS / 2)
+		if(m_defenseCount >= MAX_PARTICIPANTS / 2) {
 			teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+			m_offenseCount++;
+		}
+		else m_defenseCount++;
 	}
 
 	auto newUser = ServerEngine::ObjectPool<User>::MakeShared(id, participantType, teamType, clientSession);
@@ -121,7 +128,6 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 
 void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
-	// TODO: GameRoom::LeaveRoom
 	// - 퇴장 사실을 퇴장하는 유저에게 알림
 	// - 퇴장 사실을 Room 안에 있는 유저들에게 알림
 
@@ -193,15 +199,22 @@ void Server::Contents::GameRoom::Handle_CS_ADD_BOT(const std::shared_ptr<ClientS
 	if(m_users.contains(id)) {
 		if(id == m_host->GetID()) {
 
-			// Bot 추가
-			static uint32 idGen{ 10000 };
-			auto bot = ServerEngine::ObjectPool<Bot>::MakeShared(idGen, teamType);
-			idGen++;
+			if(((teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) && (m_offenseCount < (MAX_PARTICIPANTS / FB_ENUMS::TEAM_TYPE_MAX))) ||
+				((teamType == FB_ENUMS::TEAM_TYPE_DEFENSE) && (m_defenseCount < (MAX_PARTICIPANTS / FB_ENUMS::TEAM_TYPE_MAX)))) {
+				// Bot 추가
+				static uint32 idGen{ 10000 };
+				auto bot = ServerEngine::ObjectPool<Bot>::MakeShared(idGen, teamType);
+				idGen++;
 
-			if(false == m_bots.contains(bot->GetID())) {
-				auto pb{ ServerPackets::Make_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(bot->GetInfo()) };
-				AddParticipant(std::move(bot));
-				Broadcast(std::move(pb));
+				if(false == m_bots.contains(bot->GetID())) {
+					if(teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) m_offenseCount++; else m_defenseCount++;
+					auto pb{ ServerPackets::Make_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(bot->GetInfo()) };
+					AddParticipant(std::move(bot));
+					Broadcast(std::move(pb));
+				}
+			}
+			else {
+				// 인원 초과
 			}
 		}
 	}
@@ -228,20 +241,31 @@ void Server::Contents::GameRoom::Handle_CS_READY_GAME(const std::shared_ptr<Clie
 
 void Server::Contents::GameRoom::Handle_CS_GAME_START(const std::shared_ptr<ClientSession>& clientSession)
 {
+	if(FB_ENUMS::ROOM_STATE_TYPE_PLAYING == m_info.stateType) return;
+
 	// TODO: 게임 시작 조건 검사
 	const uint32 id{ clientSession->GetID() };
 
-	if(id == m_host->GetID()) {
-		auto pb{ ServerPackets::Make_SC_LOADING_GAME_WORLD_PACKET() };
-		Broadcast(std::move(pb));
+	if(id != m_host->GetID()) return;
+
+	bool allReady{ true };
+
+	for(const auto& [id, user] : m_users) {
+		if(user->GetStateType() != FB_ENUMS::PARTICIPANT_STATE_TYPE_READY) {
+			allReady = false;
+			break;
+		}
 	}
+
+	auto pb{ ServerPackets::Make_SC_LOADING_GAME_WORLD_PACKET() };
+	Broadcast(std::move(pb));
 }
 
 void Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
 {
 	m_loadingCompletedUserCount++;
 
-	if(m_loadingCompletedUserCount >= 1) {
+	if(m_loadingCompletedUserCount = m_users.size()) {
 		CreateWorld();
 	}
 }

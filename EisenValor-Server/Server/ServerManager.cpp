@@ -5,59 +5,63 @@
 #include "ClientSession.h"
 #include "GameObjectFactory.h"
 #include "GameLobby.h"
-#include "ServerEngineConfigureManager.h"
+#include "ServerEngineConfigManager.h"
+#include "GameDataManager.h"
 
 BOOL __stdcall ConsoleHandler(DWORD signal)
 {
 	if(signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT) {
-		ServerEngine::LogManager::Save();
+		LOG_SAVE();
 		return TRUE;
 	}
 	return FALSE;
 }
 
-void Server::ServerManager::Init()
+bool Server::ServerManager::Init()
 {
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
-		std::cerr << "핸들러 등록 실패!" << std::endl;
-		exit(EXIT_FAILURE);
+		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
+		return false;
 	}
 
 	std::wcout.imbue(std::locale("korean"));
 	
 	ServerEngine::LogManager::Init();
 
-	if(false == MANAGER(ServerEngine::ServerEngineConfigureManager)->LoadConfigFromFile("../../../ServerEngine/config.json")) {
+	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
-		exit(EXIT_FAILURE);
+		return false;
 	}
 		
+	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("GameData/GameData.json")) {
+		LOG_ERROR("GameDataManager Load Failed");
+		return false;
+	}
+
 	ClientPacketHandler::Init();
 	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
-		exit(EXIT_FAILURE);
+		return false;
 	}
 
 	if(false == MANAGER(ServerEngine::RIOCore)->Init(MakeClientSessionFunc)) {
 		LOG_ERROR("RIOCore Init Failed");
-		Shutdown();
-		exit(EXIT_FAILURE);
+		MANAGER(ServerEngine::RIOCore)->Shutdown();
+		::WSACleanup();
+		return false;
 	}
 
-	// TODO: 지형 로딩
-	// TODO: 데이터 테이블 로딩
-	
 	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
 	G_GAME_LOBBY->Init();
+
+	return true;
 }	
 
-void Server::ServerManager::Run()
+bool Server::ServerManager::Run()
 {
-	if(false == MANAGER(ServerEngine::RIOCore)->StartAccept()) {
-		Shutdown();
-		exit(EXIT_FAILURE);
-	}
+	if(false == MANAGER(ServerEngine::RIOCore)->StartAccept())
+		return false;
 
 	MANAGER(ServerEngine::RIOCore)->Run();
 	
@@ -79,6 +83,8 @@ void Server::ServerManager::Run()
 			std::this_thread::sleep_for(1000ms);
 		}
 	}
+
+	return true;
 }
 
 void Server::ServerManager::Shutdown()
@@ -87,5 +93,5 @@ void Server::ServerManager::Shutdown()
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
 
-	ServerEngine::LogManager::Save();
+	LOG_SAVE();
 }

@@ -41,7 +41,7 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 		LOG_INFO("Success Login!, Session ID = {}, NickName={}", id, nickName.data());
 	}
 	else {
-		auto pb = ServerPackets::Make_SC_LOGIN_FAIL_PACKET();
+		auto pb = ServerPackets::Make_SC_LOGIN_FAIL_PACKET("LOGIN_FAIL");
 		clientSession->Send(std::move(pb));
 	}
 
@@ -54,14 +54,21 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::EnterGameLobby, clientSession);
+	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY, clientSession);
 	return true;
 }
 
 bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::LeaveGameLobby, clientSession);
+	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
+	return true;
+}
+
+bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt)
+{
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM, clientSession);
 	return true;
 }
 
@@ -79,42 +86,59 @@ bool Handle_CS_JOIN_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session
 bool Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::LeaveGameRoom, clientSession);
+	auto room = clientSession->GetGameRoom();
+	
+	if(room)
+		room->ExecAsync(&Server::Contents::GameRoom::LeaveGameRoom, clientSession);
+	
 	return true;
 }
 
 bool Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_TEAM_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::Handle_CS_CHANGE_TEAM, clientSession);
+	auto room = clientSession->GetGameRoom();
+	if(room)
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_CHANGE_TEAM, clientSession);
+
 	return true;
 }
 
 bool Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ADD_BOT_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::Handle_CS_ADD_BOT, clientSession, recvPkt.team_type());
+	auto room = clientSession->GetGameRoom();
+	if(room)
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_ADD_BOT, clientSession, recvPkt.team_type());
+
 	return true;
 }
 
 bool Handle_CS_READY_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_READY_GAME_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::Handle_CS_READY_GAME, clientSession);
+	auto room = clientSession->GetGameRoom();
+	if(room)
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_READY_GAME, clientSession);
 	return true;
 }
 
 bool Handle_CS_START_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_START_GAME_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::Handle_CS_GAME_START, clientSession);
+	auto room = clientSession->GetGameRoom();
+	if(room)
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_GAME_START, clientSession);
+
 	return true;
 }
 
 bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD , clientSession);
+	auto room = clientSession->GetGameRoom();
+	if(room)
+		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD , clientSession);
 
 	return true;
 }
@@ -126,14 +150,13 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 
-	const Vec3 pos{ FlatVec3ToVec3(recvPkt.kinematic_info()->pos()) };
-	const Vec3 rot{ FlatVec3ToVec3(recvPkt.kinematic_info()->rot()) };
-	const Vec3 vel{ FlatVec3ToVec3(recvPkt.kinematic_info()->vel()) };
-	const Vec3 accel{ FlatVec3ToVec3(recvPkt.kinematic_info()->accel()) };
-	const uint64 timeStamp{ recvPkt.kinematic_info()->time_stamp() };
-	const KinematicInfo info{ pos, rot, vel, accel, timeStamp };
+	const Vec3 pos{ FlatVec3ToVec3(recvPkt.pos_info()->pos()) };
+	const Vec3 rot{ FlatVec3ToVec3(recvPkt.pos_info()->rot()) };
+	const PosInfo info{ pos, rot };
 
-	clientSession->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Handle_CS_MOVE, clientSession, info);
+	auto world = clientSession->GetGameWorld();
+	if(world)
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_MOVE, clientSession, info);
 
 	return true;
 }
@@ -162,7 +185,6 @@ bool Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 	clientSession->Handle_CS_PONG();
 	return true;
 }
-
 
 // =================
 //		Å×½ºÆ®

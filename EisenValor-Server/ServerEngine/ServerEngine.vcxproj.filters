@@ -91,8 +91,8 @@
     <ClInclude Include="MemoryPool.h">
       <Filter>04. MemoryPool</Filter>
     </ClInclude>
-    <ClInclude Include="ServerEngineConfigureManager.h">
-      <Filter>95. Managers\ServerEngineConfigureManager</Filter>
+    <ClInclude Include="ServerEngineConfigManager.h">
+      <Filter>95. Managers\ServerEngineConfigManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -162,8 +162,8 @@
     <ClCompile Include="MemoryPool.cpp">
       <Filter>04. MemoryPool</Filter>
     </ClCompile>
-    <ClCompile Include="ServerEngineConfigureManager.cpp">
-      <Filter>95. Managers\ServerEngineConfigureManager</Filter>
+    <ClCompile Include="ServerEngineConfigManager.cpp">
+      <Filter>95. Managers\ServerEngineConfigManager</Filter>
     </ClCompile>
     <ClCompile Include="SessionPool.cpp">
       <Filter>03. SessionPool</Filter>
@@ -242,16 +242,16 @@
     <Filter Include="04. MemoryPool\Allocator">
       <UniqueIdentifier>{7b6adc9b-32a3-4c18-81e7-e0f49db5c8d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="95. Managers\ServerEngineConfigureManager">
-      <UniqueIdentifier>{06908acf-c435-4d20-ac06-5b95ff8faf20}</UniqueIdentifier>
-    </Filter>
     <Filter Include="94. Config">
       <UniqueIdentifier>{3c6df255-502a-4eeb-a1b6-80377ca64c18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\ServerEngineConfigManager">
+      <UniqueIdentifier>{06908acf-c435-4d20-ac06-5b95ff8faf20}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="config.json">
+    <None Include="..\Binaries\Server\Release\Config\config.json">
       <Filter>94. Config</Filter>
     </None>
   </ItemGroup>

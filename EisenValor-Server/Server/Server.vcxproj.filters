@@ -82,6 +82,9 @@
     <ClCompile Include="GameLobby.cpp">
       <Filter>02. Contents\Lobby</Filter>
     </ClCompile>
+    <ClCompile Include="GameDataManager.cpp">
+      <Filter>02. Contents\GameDataManager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -183,6 +186,12 @@
     <Filter Include="02. Contents\Lobby\GameRoom\GameWorld\Factory">
       <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\GameDataManager">
+      <UniqueIdentifier>{c6998192-3f6a-429d-9614-7181bd78db0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameDataManager\GameData">
+      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -275,6 +284,9 @@
     <ClInclude Include="GameRoom.h">
       <Filter>02. Contents\Lobby\GameRoom</Filter>
     </ClInclude>
+    <ClInclude Include="GameDataManager.h">
+      <Filter>02. Contents\GameDataManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -292,6 +304,9 @@
     </None>
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>03. Packets\Schema</Filter>
+    </None>
+    <None Include="..\Binaries\Server\Release\GameData\GameData.json">
+      <Filter>02. Contents\GameDataManager\GameData</Filter>
     </None>
   </ItemGroup>
 </Project>

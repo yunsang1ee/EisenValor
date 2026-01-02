@@ -6,14 +6,16 @@
 
 void Server::Contents::GameLobby::Init()
 {
-	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(1000);
+	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
 	room->Init();
 	m_rooms.insert(std::make_pair(room->GetID(), std::move(room)));
 	
+	m_roomIDGen++;
+
 	LOG_INFO("GameLobby Init");
 }
 
-void Server::Contents::GameLobby::EnterGameLobby(const std::shared_ptr<ClientSession>& clientSession)
+void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
 	clientSession->SetState(SESSION_STATE::IN_LOBBY);
 	
@@ -41,21 +43,17 @@ void Server::Contents::GameLobby::EnterGameLobby(const std::shared_ptr<ClientSes
 		Broadcast(std::move(pb));
 	}
 
-	if(m_users.find(id) == m_users.end()) {
-		m_users.insert(std::make_pair(id, clientSession));
-	}
+	AddUser(clientSession);
 }
 
-void Server::Contents::GameLobby::LeaveGameLobby(const std::shared_ptr<ClientSession>& clientSession)
+void Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
 	// TODO: 나갔다는 사실을 나에게 알림
 	const uint32 id{ clientSession->GetID()};
 	auto pb{ ServerPackets::Make_SC_LEAVE_GAME_LOBBY_PACKET() };
 	clientSession->Send(std::move(pb));
 	
-	if(m_users.find(id) != m_users.end()) {
-		m_users.erase(id);
-	}
+	RemoveUser(id);
 
 	clientSession->SetState(SESSION_STATE::ACCEPTED);
 
@@ -63,6 +61,22 @@ void Server::Contents::GameLobby::LeaveGameLobby(const std::shared_ptr<ClientSes
 		auto pb{ ServerPackets::Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(id) };
 		Broadcast(std::move(pb));
 	}
+}
+
+void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
+{
+	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
+	room->Init();
+	m_rooms.insert(std::make_pair(room->GetID(), room));
+	m_roomIDGen++;
+
+	const uint32 id{ clientSession->GetID() };
+	RemoveUser(id);
+
+	auto pb = ServerPackets::Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(clientSession->GetID());
+	Broadcast(std::move(pb));
+
+	room->ExecAsync(&Server::Contents::GameRoom::JoinGameRoom, clientSession);
 }
 
 void Server::Contents::GameLobby::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
@@ -97,5 +111,16 @@ void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::s
 
 	if(room) {
 		room->ExecAsync(&Server::Contents::GameRoom::EnterGameWorld, clientSession);
+	}
+}
+
+void Server::Contents::GameLobby::AddUser(const std::shared_ptr<ClientSession>& clientSession)
+{
+}
+
+void Server::Contents::GameLobby::RemoveUser(const uint32 id)
+{
+	if(m_users.find(id) != m_users.end()) {
+		m_users.erase(id);
 	}
 }

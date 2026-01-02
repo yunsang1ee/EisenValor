@@ -29,7 +29,7 @@ table SC_LOGIN_SUCCESS_PACKET {
 }
 
 table SC_LOGIN_FAIL_PACKET {
-
+	fail_msg: string;
 }
 
 // ================================================
@@ -53,12 +53,15 @@ table SC_LEAVE_GAME_LOBBY_PACKET{
 }
 
 table SC_ADD_USER_IN_GAME_LOBBY_PACKET {
-	user: string;
+	user_name: string;
 	user_id: int;
 }
 
 table SC_REMOVE_USER_IN_GAME_LOBBY_PACKET {
 	user_id: uint;
+}
+
+table CS_MAKE_GAME_ROOM_PACKET {
 }
 
 
@@ -70,7 +73,7 @@ table CS_JOIN_GAME_ROOM_PACKET {
 }
 
 table SC_JOIN_GAME_ROOM_FAIL_PACKET {
-	msg: string;
+	fail_msg: string;
 }
 
 table SC_JOIN_GAME_ROOM_SUCCESS_PACKET {
@@ -168,7 +171,7 @@ table CS_GAME_START_PACKET{
 // ================================================
 table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
+	pos_info: FB_STRUCTS.PosInfo;
 	team_type: FB_ENUMS.TEAM_TYPE;
 	hp: uint;
 }
@@ -180,7 +183,7 @@ table SC_ADD_OBJ_PACKET {
 	obj_id: uint;
 	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
+	pos_info: FB_STRUCTS.PosInfo;
 	hp: uint;
 }
 
@@ -192,7 +195,7 @@ table SC_ADD_NPC_PACKET {
 	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
 	npc_type: FB_ENUMS.NPC_TYPE;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
+	pos_info: FB_STRUCTS.PosInfo;
 	hp: uint;
 }
 
@@ -216,12 +219,12 @@ table SC_CHAT_PACKET {
 //						MOVE
 // ================================================
 table CS_MOVE_PACKET {
-	kinematic_info: FB_STRUCTS.KinematicInfo;
+	pos_info: FB_STRUCTS.PosInfo;
 }
 
 table SC_MOVE_PACKET {
 	obj_id: uint;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
+	pos_info: FB_STRUCTS.PosInfo;
 }
 
 // ================================================
@@ -291,7 +294,7 @@ table SC_NPC_INFO {
 	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
 	npc_type: FB_ENUMS.NPC_TYPE;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
+	pos_info: FB_STRUCTS.PosInfo;
 	hp: uint;
 	obj_state : ubyte;
 }

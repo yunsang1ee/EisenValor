@@ -58,6 +58,11 @@ enum class PACKET_TYPE : uint16 {
 
 	SC_ADD_USER_IN_GAME_LOBBY_PKT = 104,
 	SC_REMOVE_USER_IN_GAME_LOBBY_PKT = 105,
+
+
+	// TODO: ¹æ ¸¸µé±â
+	CS_MAKE_GAME_ROOM_PKT = 106,
+
 	
 	// ==================
 	//		·ë
@@ -94,8 +99,8 @@ enum class PACKET_TYPE : uint16 {
 	// ==================
 	SC_LOCAL_PLAYER_PKT = 10000,
 
-	SC_ADD_OBJ_PKT = 10001,
-	SC_REMOVE_OBJ_PKT = 10002,
+	SC_ADD_OBJ_IN_GAME_WORLD_PKT = 10001,
+	SC_REMOVE_OBJ_IN_GAME_WORLD_PKT = 10002,
 
 	CS_MOVE_PKT = 10003,
 	SC_MOVE_PKT = 10004,
@@ -143,6 +148,7 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 // =================
 bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt) noexcept;
 bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt) noexcept;
+bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt);
 
 
 // =================
@@ -212,6 +218,7 @@ public:
 		// =================
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET>(Handle_CS_ENTER_GAME_LOBBY_PACKET, session, buffer); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LEAVE_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET>(Handle_CS_LEAVE_GAME_LOBBY_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MAKE_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MAKE_GAME_ROOM_PACKET>(Handle_CS_MAKE_GAME_ROOM_PACKET, session, buffer); };
 
 		// =================
 		//		·ë

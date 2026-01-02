@@ -1,5 +1,22 @@
 namespace FB_ENUMS;
 
+enum ROOM_STATE_TYPE: ubyte{
+	WATING,
+	PLAYING,
+}
+
+enum PARTICIPANT_TYPE :ubyte{
+	HOST,
+	USER,
+	BOT
+}
+
+enum PARTICIPANT_STATE_TYPE :ubyte{
+	NOT_READY,
+	READY,
+
+}
+
 enum GAME_OBJECT_TYPE : ubyte{
 	NPC = 0,
 	PLAYER,
@@ -32,20 +49,4 @@ enum SOLDIER_STATE_TYPE : ubyte {
 	DEFENSE,
 	DAMAGED,
 	DEAD,
-}
-
-enum ROOM_STATE_TYPE: ubyte{
-	WATING,
-	PLAYING,
-}
-
-enum PARTICIPANT_TYPE :ubyte{
-	HOST,
-	USER,
-	BOT
-}
-
-enum PARTICIPANT_STATE_TYPE :ubyte{
-	NOT_READY,
-	READY,
 }
