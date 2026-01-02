@@ -15,6 +15,99 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 
 namespace FB_ENUMS {
 
+enum ROOM_STATE_TYPE : uint8_t {
+  ROOM_STATE_TYPE_WATING = 0,
+  ROOM_STATE_TYPE_PLAYING = 1,
+  ROOM_STATE_TYPE_MIN = ROOM_STATE_TYPE_WATING,
+  ROOM_STATE_TYPE_MAX = ROOM_STATE_TYPE_PLAYING
+};
+
+inline const ROOM_STATE_TYPE (&EnumValuesROOM_STATE_TYPE())[2] {
+  static const ROOM_STATE_TYPE values[] = {
+    ROOM_STATE_TYPE_WATING,
+    ROOM_STATE_TYPE_PLAYING
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesROOM_STATE_TYPE() {
+  static const char * const names[3] = {
+    "WATING",
+    "PLAYING",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameROOM_STATE_TYPE(ROOM_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, ROOM_STATE_TYPE_WATING, ROOM_STATE_TYPE_PLAYING)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesROOM_STATE_TYPE()[index];
+}
+
+enum PARTICIPANT_TYPE : uint8_t {
+  PARTICIPANT_TYPE_HOST = 0,
+  PARTICIPANT_TYPE_USER = 1,
+  PARTICIPANT_TYPE_BOT = 2,
+  PARTICIPANT_TYPE_MIN = PARTICIPANT_TYPE_HOST,
+  PARTICIPANT_TYPE_MAX = PARTICIPANT_TYPE_BOT
+};
+
+inline const PARTICIPANT_TYPE (&EnumValuesPARTICIPANT_TYPE())[3] {
+  static const PARTICIPANT_TYPE values[] = {
+    PARTICIPANT_TYPE_HOST,
+    PARTICIPANT_TYPE_USER,
+    PARTICIPANT_TYPE_BOT
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesPARTICIPANT_TYPE() {
+  static const char * const names[4] = {
+    "HOST",
+    "USER",
+    "BOT",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNamePARTICIPANT_TYPE(PARTICIPANT_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, PARTICIPANT_TYPE_HOST, PARTICIPANT_TYPE_BOT)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesPARTICIPANT_TYPE()[index];
+}
+
+enum PARTICIPANT_STATE_TYPE : uint8_t {
+  PARTICIPANT_STATE_TYPE_NOT_READY = 0,
+  PARTICIPANT_STATE_TYPE_READY = 1,
+  PARTICIPANT_STATE_TYPE_MIN = PARTICIPANT_STATE_TYPE_NOT_READY,
+  PARTICIPANT_STATE_TYPE_MAX = PARTICIPANT_STATE_TYPE_READY
+};
+
+inline const PARTICIPANT_STATE_TYPE (&EnumValuesPARTICIPANT_STATE_TYPE())[2] {
+  static const PARTICIPANT_STATE_TYPE values[] = {
+    PARTICIPANT_STATE_TYPE_NOT_READY,
+    PARTICIPANT_STATE_TYPE_READY
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesPARTICIPANT_STATE_TYPE() {
+  static const char * const names[3] = {
+    "NOT_READY",
+    "READY",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNamePARTICIPANT_STATE_TYPE(PARTICIPANT_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, PARTICIPANT_STATE_TYPE_NOT_READY, PARTICIPANT_STATE_TYPE_READY)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesPARTICIPANT_STATE_TYPE()[index];
+}
+
 enum GAME_OBJECT_TYPE : uint8_t {
   GAME_OBJECT_TYPE_NPC = 0,
   GAME_OBJECT_TYPE_PLAYER = 1,
@@ -166,99 +259,6 @@ inline const char *EnumNameSOLDIER_STATE_TYPE(SOLDIER_STATE_TYPE e) {
   if (::flatbuffers::IsOutRange(e, SOLDIER_STATE_TYPE_IDLE, SOLDIER_STATE_TYPE_DEAD)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesSOLDIER_STATE_TYPE()[index];
-}
-
-enum ROOM_STATE_TYPE : uint8_t {
-  ROOM_STATE_TYPE_WATING = 0,
-  ROOM_STATE_TYPE_PLAYING = 1,
-  ROOM_STATE_TYPE_MIN = ROOM_STATE_TYPE_WATING,
-  ROOM_STATE_TYPE_MAX = ROOM_STATE_TYPE_PLAYING
-};
-
-inline const ROOM_STATE_TYPE (&EnumValuesROOM_STATE_TYPE())[2] {
-  static const ROOM_STATE_TYPE values[] = {
-    ROOM_STATE_TYPE_WATING,
-    ROOM_STATE_TYPE_PLAYING
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesROOM_STATE_TYPE() {
-  static const char * const names[3] = {
-    "WATING",
-    "PLAYING",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameROOM_STATE_TYPE(ROOM_STATE_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, ROOM_STATE_TYPE_WATING, ROOM_STATE_TYPE_PLAYING)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesROOM_STATE_TYPE()[index];
-}
-
-enum PARTICIPANT_TYPE : uint8_t {
-  PARTICIPANT_TYPE_HOST = 0,
-  PARTICIPANT_TYPE_USER = 1,
-  PARTICIPANT_TYPE_BOT = 2,
-  PARTICIPANT_TYPE_MIN = PARTICIPANT_TYPE_HOST,
-  PARTICIPANT_TYPE_MAX = PARTICIPANT_TYPE_BOT
-};
-
-inline const PARTICIPANT_TYPE (&EnumValuesPARTICIPANT_TYPE())[3] {
-  static const PARTICIPANT_TYPE values[] = {
-    PARTICIPANT_TYPE_HOST,
-    PARTICIPANT_TYPE_USER,
-    PARTICIPANT_TYPE_BOT
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesPARTICIPANT_TYPE() {
-  static const char * const names[4] = {
-    "HOST",
-    "USER",
-    "BOT",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNamePARTICIPANT_TYPE(PARTICIPANT_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, PARTICIPANT_TYPE_HOST, PARTICIPANT_TYPE_BOT)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesPARTICIPANT_TYPE()[index];
-}
-
-enum PARTICIPANT_STATE_TYPE : uint8_t {
-  PARTICIPANT_STATE_TYPE_NOT_READY = 0,
-  PARTICIPANT_STATE_TYPE_READY = 1,
-  PARTICIPANT_STATE_TYPE_MIN = PARTICIPANT_STATE_TYPE_NOT_READY,
-  PARTICIPANT_STATE_TYPE_MAX = PARTICIPANT_STATE_TYPE_READY
-};
-
-inline const PARTICIPANT_STATE_TYPE (&EnumValuesPARTICIPANT_STATE_TYPE())[2] {
-  static const PARTICIPANT_STATE_TYPE values[] = {
-    PARTICIPANT_STATE_TYPE_NOT_READY,
-    PARTICIPANT_STATE_TYPE_READY
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesPARTICIPANT_STATE_TYPE() {
-  static const char * const names[3] = {
-    "NOT_READY",
-    "READY",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNamePARTICIPANT_STATE_TYPE(PARTICIPANT_STATE_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, PARTICIPANT_STATE_TYPE_NOT_READY, PARTICIPANT_STATE_TYPE_READY)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesPARTICIPANT_STATE_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS

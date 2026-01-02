@@ -22,17 +22,15 @@ namespace Server {
 			std::weak_ptr<GameRoom>												m_gameRoom;
 			Users																m_users;
 			
-			/* 모든 게임오브젝트들 */
 			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>				m_gameObjectsGroups;
 			std::queue<std::function<void()>>									m_eventFpQueue;
 
 			// UPDATE & TIME
 			bool																m_firstUpdate = true;
-			static constexpr auto												UPDATE_MS = 10ms;
-			static constexpr auto												MAX_HEART_BEAT_TIME_STAMP = 10s;
-			static constexpr auto												GAME_TIME = 20min;
+			std::chrono::milliseconds											GAME_UPDATE_TIME_MS;
+			std::chrono::minutes												GAME_TIME_MIN;
 			std::chrono::high_resolution_clock::time_point						m_lastUpdate;
-			std::chrono::milliseconds											m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME);
+			std::chrono::milliseconds											m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN);
 			float																m_accGameTime = 0.f;
 			float																m_dt{ 0.f };
 
@@ -60,7 +58,7 @@ namespace Server {
 			void LeaveGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 
 		public:
-			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const KinematicInfo& kinematicInfo);
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo);
 			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>  player);
 
 		private:

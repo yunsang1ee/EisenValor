@@ -3,8 +3,7 @@
 namespace Server {
 	namespace Contents {
 		struct GameObjectTemplate {
-			Vec3				pos;
-			Vec3				rot;
+			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
 			FB_ENUMS::GAME_OBJECT_TYPE	objType;
 		};

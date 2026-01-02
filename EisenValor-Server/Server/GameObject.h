@@ -14,23 +14,21 @@ namespace Server {
 		class GameObject {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
+			using Scripts = std::vector<std::unique_ptr<Script>>;
 			
 			std::wstring							m_name;
 			uint32									m_id;
 			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
-			ComponentGroup							m_components;
-			std::vector<std::unique_ptr<Script>>	m_scripts;
 			const FB_ENUMS::TEAM_TYPE				m_teamType;
+			
+			ComponentGroup							m_components;
+			Scripts									m_scripts;
 
-		protected:
-			KinematicInfo							m_kinematicInfo;
-
-		public:
-			// TODO: World를 들고있어야...
 			std::weak_ptr<GameRoom>					m_room;
+			std::weak_ptr<GameWorld>				m_gameWorld;
 
-			GameWorld* m_gameWorld;
-
+			PosInfo									m_posInfo;
+		
 		public:
 			GameObject() = default;
 			explicit GameObject(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
@@ -44,34 +42,28 @@ namespace Server {
 		public:
 			void SetID(const uint32 id) noexcept { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
-			void SetKinematicInfo(const KinematicInfo& transform) noexcept { m_kinematicInfo = transform; }
-			void SetPos(const Vec3& pos) noexcept { m_kinematicInfo.position = pos; }
-			void SetRotation(const Vec3& rotation) noexcept { m_kinematicInfo.rotation = rotation; }
-			void SetVelocity(const Vec3& velocity) noexcept { m_kinematicInfo.velocity = velocity; }
-			void SetAcceleration(const Vec3& acceleration) noexcept { m_kinematicInfo.acceleration = acceleration; }
-			void SetTimeStamp(const uint64 timeStamp) noexcept { m_kinematicInfo.timeStamp = timeStamp; }
+			void SetPosInfo(const PosInfo& transform) noexcept { m_posInfo = transform; }
+			void SetPos(const Vec3& pos) noexcept { m_posInfo.position = pos; }
+			void SetRotation(const Vec3& rotation) noexcept { m_posInfo.rotation = rotation; }
 			void SetRoom(std::weak_ptr<GameRoom> match) noexcept { m_room = match; }
-			void SetGameWorld(GameWorld* const gameWorld) noexcept { m_gameWorld = gameWorld; }
+			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
 
 			const std::wstring& GetName() const noexcept { return m_name; }
 			uint32 GetID() const noexcept { return m_id; }
 			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const noexcept { return m_type; }
-			const KinematicInfo& GetKinematicInfo() const noexcept { return m_kinematicInfo; }
-			const Vec3& GetPos() const noexcept { return m_kinematicInfo.position; }
-			const Vec3& GetRotation() const noexcept { return m_kinematicInfo.rotation; }
-			const Vec3& GetVelocity() const noexcept { return m_kinematicInfo.velocity; }
-			const Vec3& GetAcceleration() const noexcept { return m_kinematicInfo.acceleration; }
-			const uint64 GetTimeStamp() const noexcept { return m_kinematicInfo.timeStamp; }
+			const PosInfo& GetPosInfo() const noexcept { return m_posInfo; }
+			const Vec3& GetPos() const noexcept { return m_posInfo.position; }
+			const Vec3& GetRotation() const noexcept { return m_posInfo.rotation; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 			const Vec3 GetForwardDir();
-			GameWorld* GetGameWorld() { return m_gameWorld; }
+			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
 
 		public:
 			virtual void Update(const float dt);
 
 		public:
-			template<typename T> requires std::derived_from<T, Component>
+			template<std::derived_from<Component> T>
 			T* GetComponent()
 			{
 				if constexpr(std::is_same_v<FSM, T>) {
@@ -82,7 +74,7 @@ namespace Server {
 				}
 			}
 
-			template<typename T> requires std::derived_from<T, Component>
+			template<std::derived_from<Component> T>
 			auto AddComponent()
 			{
 				if constexpr(std::is_same_v<FSM, T>) {
@@ -95,7 +87,7 @@ namespace Server {
 				}
 			}
 
-			template<typename T> requires std::derived_from<T, Script>
+			template<std::derived_from<Script> T>
 			Script* AddScript(std::unique_ptr<T> script) 
 			{ 
 				Script* s = script.get();

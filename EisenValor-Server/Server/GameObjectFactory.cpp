@@ -16,8 +16,7 @@
 std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
-	player->SetPos(t.pos);
-	player->SetRotation(t.rot);
+	player->SetPosInfo(t.posInfo);
 	player->SetStatInfo(t.stat);
 
 	return player;
@@ -26,9 +25,8 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
 	auto general = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
-	general->SetPos(t.pos);
-	general->SetRotation(t.rot);
-	general->SetStatInfo(t.stat);
+	general->SetPosInfo(t.posInfo);
+	general->SetStatInfo(t.stat)	;
 
 	const auto bt = general->AddComponent<BehaviorTree>();
 	bt->SetOwner(general);
@@ -43,8 +41,7 @@ std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::Crea
 std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
 	const auto soldier = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
-	soldier->SetPos(t.pos);
-	soldier->SetRotation(t.rot);
+	soldier->SetPosInfo(t.posInfo);
 	soldier->SetStatInfo(t.stat);
 
 	const auto fsm = soldier->AddComponent<Server::Contents::FSM>();

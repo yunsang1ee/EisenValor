@@ -2,20 +2,16 @@ include "Enums.fbs";
 
 namespace FB_STRUCTS;
 
-struct Vec3{
+struct Vec3 {
 	x: float;
 	y: float;
 	z: float;
 }
 
-struct KinematicInfo {
+struct PosInfo {
 	pos: Vec3;
 	rot: Vec3;
-	vel: Vec3;
-	accel: Vec3;
-	time_stamp: uint64;
 }
-
 
 struct RoomInfo {
 	id: uint16;

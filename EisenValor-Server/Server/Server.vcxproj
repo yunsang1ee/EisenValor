@@ -160,6 +160,7 @@
     <ClCompile Include="ClientSessionManager.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
+    <ClCompile Include="GameDataManager.cpp" />
     <ClCompile Include="FSM.cpp" />
     <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="ClientSessionManager.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
+    <ClInclude Include="GameDataManager.h" />
     <ClInclude Include="FSM.h" />
     <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
@@ -219,6 +221,7 @@
     <ClInclude Include="TargetTraceNode.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Binaries\Server\Release\GameData\GameData.json" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\GenPackets.bat" />

@@ -9,15 +9,20 @@
 #include "ClientSession.h"
 #include "Participant.h"
 
+#include "GameDataManager.h"
+
 void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 {
+	const auto& gameWorldData{ MANAGER(Server::Contents::GameDataManager)->GetGameWorldData() };
+
+	GAME_UPDATE_TIME_MS = std::chrono::milliseconds(gameWorldData.gameUpdateTimeMs);
+	GAME_TIME_MIN = std::chrono::minutes(gameWorldData.gameTimeMin);
+	m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN);
+
 	// TODO: GameWorld Init
 	// 1. 참여자 정보 토대로 오브젝트 생성
 	// 2. 참여자 제외한 NPC 오브젝트 생성
 	// 3. 게임 시작
-
-#ifndef DEVELOP
-#endif // !DEVELOP
 	m_users.insert(users.begin(), users.end());
 
 	for(const auto& [id, user] : users) {
@@ -29,7 +34,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		PlayerTemplate t;
 		t.objType = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER;
 		t.teamType = user->GetTeamType();
-		t.pos = startPos;
+		t.posInfo = PosInfo{ startPos, rot };
 		t.stat.hp = 100;
 		t.stat.atk = 50;
 		t.stat.stamina = 100;
@@ -47,8 +52,22 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 
 	for(const auto& [id, bot] : bots) {
 		// TODO: 장수 캐릭터 생성
-	}
+		static const Vec3 offset{ 10.f, 0.f, 10.f };
+		static Vec3 startPos{ 0.f, 0.f, 0.f };
+		startPos += offset;
+		const Vec3 rot{ 0.f, 0.f, 0.f };
+		GeneralTemplate t;
+		t.npcType = FB_ENUMS::NPC_TYPE_GENERAL;
+		t.objType = FB_ENUMS::GAME_OBJECT_TYPE_NPC;
+		t.posInfo = PosInfo{ startPos, rot };
+		t.stat.hp = 100;
+		t.stat.atk = 50;
+		t.stat.stamina = 100;
+		t.teamType = bot->GetTeamType();
+		auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
 
+		AddEvent([this, general]() { AddGameObject(std::move(general)); });
+	}
 
 	//{
 	//	SpanwerTemplate spawner;
@@ -71,10 +90,6 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 
 void Server::Contents::GameWorld::Update()
 {
-	// TODO: GameWorld::Update
-	// - 게임 이벤트 처리
-	// - 모든 게임 오브젝트 업데이트
-
 	const auto now = std::chrono::high_resolution_clock::now();
 	m_dt = 0.f;
 	if(m_firstUpdate) m_firstUpdate = false;
@@ -83,8 +98,6 @@ void Server::Contents::GameWorld::Update()
 	}
 
 	m_lastUpdate = now;
-
-	// std::cout << "GameWorld Update!" << std::endl;
 
 	ProcessEvents();
 	for(const auto& group : m_gameObjectsGroups) {
@@ -95,7 +108,7 @@ void Server::Contents::GameWorld::Update()
 	}
 
 	CheckGameTime(m_dt);
-	GetGameRoom()->ExecTimer(UPDATE_MS, [this]() { Update(); });
+	ExecTimer(GAME_UPDATE_TIME_MS, &Server::Contents::GameWorld::Update);
 }
 
 void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newGameObject)
@@ -123,7 +136,7 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 		// 패킷으로 보낼 나의 데이터 정의
 		auto startPos = newPlayer->GetPos();
 		auto rot = newPlayer->GetRotation();
-		const KinematicInfo kInfo{ startPos, rot, Vec3{0.f, 0.f, 0.f} };
+		const PosInfo kInfo{ startPos, rot };
 
 		// 나에게 내 정보 전송
 		{
@@ -145,7 +158,7 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 				const uint16 genID = obj->GetID();
 				const Vec3 pos{ obj->GetPos() };
 				const Vec3 rot{ obj->GetRotation() };
-				const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
+				const PosInfo kInfo{ pos, rot };
 
 				if(obj->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
 					const auto npc = std::static_pointer_cast<NPC>(obj);
@@ -171,7 +184,7 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 		const uint16 genID = newGameObject->GetID();
 		const Vec3 pos{ newGameObject->GetPos() };
 		const Vec3 rot{ newGameObject->GetRotation() };
-		const KinematicInfo kInfo{ pos, rot, Vec3{0.f, 0.f, 0.f} };
+		const PosInfo kInfo{ pos, rot };
 		if(newGameObject->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
 			const auto npc = std::static_pointer_cast<NPC>(newGameObject);
 			auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
@@ -244,16 +257,13 @@ void Server::Contents::GameWorld::Broadcast(std::shared_ptr<ServerEngine::Packet
 	}
 }
 
-void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const KinematicInfo& kinematicInfo)
+void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo)
 {
 	auto playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	auto player = std::static_pointer_cast<Player>(playerGroup[clientSession->GetID()]);
 
 	player->SetPos(kinematicInfo.position);
 	player->SetRotation(kinematicInfo.rotation);
-	player->SetVelocity(kinematicInfo.velocity);
-	player->SetAcceleration(kinematicInfo.acceleration);
-	player->SetTimeStamp(kinematicInfo.timeStamp);
 
 	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	Broadcast(std::move(pb));
@@ -346,7 +356,7 @@ void Server::Contents::GameWorld::EnterGameWorld(const std::shared_ptr<ClientSes
 
 	//// TODO: 플레이어 수치를 Json이나 XML에서 뽑기	
 	PlayerTemplate t;
-	t.pos = startPos;
+	t.posInfo = PosInfo{ startPos, rot };
 	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 	flag = !flag;
 	t.stat.hp = 100;
@@ -357,7 +367,7 @@ void Server::Contents::GameWorld::EnterGameWorld(const std::shared_ptr<ClientSes
 	player->SetID(clientSession->GetID());
 	player->SetSession(clientSession);
 	player->SetRoom(GetGameRoom());
-	player->SetGameWorld(this);
+	player->SetGameWorld(std::static_pointer_cast<Server::Contents::GameWorld>(shared_from_this()));
 
 	AddEvent([this, player]()
 		{
@@ -379,7 +389,6 @@ void Server::Contents::GameWorld::CheckGameTime(const float dt)
 			const auto remainTime = static_cast<uint32>(m_remainingTime.count());
 			const uint32_t totalSeconds = remainTime / 1000;
 
-			// 분, 초 계산
 			const uint32_t minutes = totalSeconds / 60;
 			const uint32_t seconds = totalSeconds % 60;
 
@@ -387,7 +396,7 @@ void Server::Contents::GameWorld::CheckGameTime(const float dt)
 			Broadcast(std::move(pb));
 		}
 		else {
-			// TODO: 게임 종료
+
 		}
 	}
 }

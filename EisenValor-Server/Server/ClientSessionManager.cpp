@@ -3,25 +3,25 @@
 
 #include "ClientSession.h"
 
-void Server::ClientSessionManager::AddSession(std::shared_ptr<ClientSession>&& clientSession)
+void Server::ClientSessionManager::AddSession(std::shared_ptr<ClientSession> clientSession)
 {
-	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 	if(false == m_sessions.contains(clientSession))
 		m_sessions.insert(std::move(clientSession));
 }
 
 void Server::ClientSessionManager::RemoveSession(std::shared_ptr<ClientSession> clientSession)
 {
-	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 	if(m_sessions.contains(clientSession))
 		m_sessions.erase(clientSession);
 }
 
 void Server::ClientSessionManager::Broadcast(std::shared_ptr<ClientSession> clientSession, std::shared_ptr<ServerEngine::PacketBuffer> buffer)
 {
-	std::lock_guard<tbb::spin_mutex> lk{ m_mutex };
+	std::lock_guard<std::mutex> lk{ m_mutex };
 	for(const auto& session : m_sessions) {
-		if(session != clientSession && SESSION_STATE::IN_GAME_WORLD != session->GetState()) {
+		if(session != clientSession && SESSION_STATE::FREE != session->GetState()) {
 			session->Send(buffer);
 		}
 	}

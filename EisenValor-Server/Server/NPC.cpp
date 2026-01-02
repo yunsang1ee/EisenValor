@@ -26,7 +26,7 @@ void Server::Contents::NPC::Update(const float dt)
 		const uint32 id{ GetID() };
 		const Vec3 pos{ GetPos() };
 		const Vec3 rot{ GetRotation() };
-		KinematicInfo kInfo{ pos, rot };
+		PosInfo kInfo{ pos, rot };
 		const int32 hp{ GetHP() };
 		uint8 state{};
 		if(GetNpcType() == FB_ENUMS::NPC_TYPE_SOLDIER)

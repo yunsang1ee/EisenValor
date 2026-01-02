@@ -5,8 +5,8 @@ namespace Server {
 	namespace Contents {
 		class Creature : public GameObject, public std::enable_shared_from_this<GameObject> {
 		private:
-			StatInfo					m_stat;
 			bool						m_alive;
+			StatInfo					m_statInfo;
 			std::weak_ptr<Creature>		m_target;
 
 		public:
@@ -14,21 +14,21 @@ namespace Server {
 			virtual ~Creature();
 
 		public:
-			void	SetStatInfo(const StatInfo& stat) noexcept { m_stat = stat; }
+			void	SetStatInfo(const StatInfo& stat) noexcept { m_statInfo = stat; }
 			void	SetHp(const uint32 hp) noexcept;
-			void	SetAtk(const int32 atk) noexcept { m_stat.atk = atk; }
-			void	SetStamina(const int32 stamina) noexcept { m_stat.stamina = stamina; }
+			void	SetAtk(const int32 atk) noexcept { m_statInfo.atk = atk; }
+			void	SetStamina(const int32 stamina) noexcept { m_statInfo.stamina = stamina; }
 			void	SetAlive(const bool alive) noexcept { m_alive = alive; }
 			void	SetTarget(std::shared_ptr<Creature> target) { m_target = target; }
 			std::shared_ptr<Creature> GetTarget() { return m_target.lock(); }
-			int		GetHP() const noexcept { return m_stat.hp; }
-			int32	GetAtk() const noexcept { return m_stat.atk; }
-			int32	GetStamina() const noexcept { return m_stat.stamina; }
+			int		GetHP() const noexcept { return m_statInfo.hp; }
+			int32	GetAtk() const noexcept { return m_statInfo.atk; }
+			int32	GetStamina() const noexcept { return m_statInfo.stamina; }
 
-			int32	incHP(const int32 amount) { m_stat.hp += amount; }
-			int32	decHP(const int32 amount) { m_stat.hp -= amount; }
-			int32	incStamina(const int32 amount) { m_stat.stamina += amount; }
-			int32	decStamina(const int32 amount) { m_stat.stamina -= amount; }
+			int32	incHP(const int32 amount) { m_statInfo.hp += amount; }
+			int32	decHP(const int32 amount) { m_statInfo.hp -= amount; }
+			int32	incStamina(const int32 amount) { m_statInfo.stamina += amount; }
+			int32	decStamina(const int32 amount) { m_statInfo.stamina -= amount; }
 
 			bool	IsAlive() const noexcept { return m_alive; }
 

@@ -5,8 +5,13 @@ std::ostringstream ServerEngine::LogManager::s_oss;
 
 void ServerEngine::LogManager::Init() noexcept
 {
+#ifdef _DEBUG
+	if(false == std::filesystem::exists("../Debug/LOG"))
+		std::filesystem::create_directory("../Debug/LOG");
+#else
 	if(false == std::filesystem::exists("LOG"))
 		std::filesystem::create_directory("LOG");
+#endif // DEBUG
 }
 
 void ServerEngine::LogManager::PrintLastError(const std::source_location& loc) noexcept

@@ -5,7 +5,7 @@
 #include "RIOWorker.h"
 #include "TaskQueueManager.h"
 #include "TaskQueue.h"
-#include "ServerEngineConfigureManager.h"
+#include "ServerEngineConfigManager.h"
 
 bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
@@ -25,18 +25,18 @@ bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 		return false;
 	}
 
-	constexpr int opt = 1;
+	constexpr int opt{ 1 };
 	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
 
 	GUID functionTableId = WSAID_MULTIPLE_RIO;
-	DWORD bytes = 0;
+	DWORD bytes{};
 
 	if(0 != WSAIoctl(m_listenSocket, SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER, &functionTableId, sizeof(GUID), (void**)&m_rioExtfuncTable, sizeof(m_rioExtfuncTable), &bytes, NULL, NULL)) {
-		ServerEngine::LogManager::PrintLastError();
+		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
 
-	const uint16 PORT_NUM = MANAGER(ServerEngineConfigureManager)->GetNetworkConfigure().port;
+	const uint16 PORT_NUM{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
 	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
 	m_serverAddress.sin_family = AF_INET;
 	m_serverAddress.sin_port = htons(PORT_NUM);
@@ -44,7 +44,7 @@ bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 
 	// 4. Bind
 	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
-		ServerEngine::LogManager::PrintLastError();
+		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
 
@@ -55,8 +55,8 @@ bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 	LISTEN_THREAD_ID = MANAGER(ThreadManager)->IssueID();
 
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
-		const uint16 id = MANAGER(ThreadManager)->IssueID();
-		auto rioWorker = std::make_unique<RIOWorker>(id);
+		const uint16 id{ MANAGER(ThreadManager)->IssueID() };
+		auto rioWorker = std::make_unique<RIOWorker>(id) ;
 		if(false == rioWorker->Init(sessionFunc))
 			return false;
 		m_rioWorkers.emplace_back(std::move(rioWorker));
@@ -70,7 +70,7 @@ bool ServerEngine::RIOCore::StartAccept()
 {
 	// 1. Listen
 	if(SOCKET_ERROR == ::listen(m_listenSocket, SOMAXCONN)) {
-		LOG_LAST_ERROR
+		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
 
@@ -105,10 +105,10 @@ void ServerEngine::RIOCore::Run()
 
 void ServerEngine::RIOCore::DoAcceptLoop()
 {
-	const SOCKET clientSocket = accept(m_listenSocket, NULL, NULL);
+	const SOCKET clientSocket{ accept(m_listenSocket, NULL, NULL) };
 	if(clientSocket == SOCKET_ERROR) return;
 	SOCKADDR_IN clientaddr;
-	int32 addrlen = sizeof(clientaddr);
+	int32 addrlen{ sizeof(clientaddr) };
 	getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
 
 	std::cout << "Client Accept Success!" << std::endl;
@@ -118,7 +118,7 @@ void ServerEngine::RIOCore::DoAcceptLoop()
 	InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
 	std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
 
-	ServerEngine::RIOWorker* const rioWorker = m_rioWorkers[m_acceptThreadNum].get();
+	ServerEngine::RIOWorker* const rioWorker{ m_rioWorkers[m_acceptThreadNum].get() };
 	if(rioWorker->ProcessAccept(clientSocket, clientaddr))
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
 }
