@@ -127,11 +127,11 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		GLOBAL(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
 		std::string id, pw;
 		std::cout << "Input ID(any):";
-		std::cin >> id;
+		//std::cin >> id;
 		id = "ID";
 		std::cout << "\n";
 		std::cout << "Input PW(any):";
-		std::cin >> pw;
+		//std::cin >> pw;
 		pw = "PW";
 
 		auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());

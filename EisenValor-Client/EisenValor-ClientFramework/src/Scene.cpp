@@ -21,12 +21,22 @@ void Scene::Initialize()
 	DEBUG_LOG_FMT("[Scene] Initialized (Components registered, waiting for LoadScene)\n");
 }
 
-GameObject::Handle Scene::CreateGameObject(std::string name, std::optional<uint32> serverID)
+GameObject::Handle Scene::CreateGameObject(
+	std::string name, std::optional<uint32> serverID, std::function<void(GameObject*)> onCreated
+)
 {
 	GameObject::Handle handle = m_gameObjects.ReserveHandle();
 
 	DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
-	m_pendingCreates.push(CreateRequest{.name = std::move(name), .handle = handle, .serverID = serverID});
+
+	if (serverID.has_value())
+	{
+		RegisterNetworkObject(serverID.value(), handle);
+	}
+
+	m_pendingCreates.push(CreateRequest{
+		.name = std::move(name), .handle = handle, .serverID = serverID, .onCreated = std::move(onCreated)
+	});
 
 	return handle;
 }
@@ -124,7 +134,6 @@ void Scene::OnEndFrame()
 }
 
 
-
 void Scene::ProcessDeferredCreates()
 {
 	if (m_isProcessingDeferred)
@@ -178,7 +187,11 @@ void Scene::CreateGameObjectInternal(const CreateRequest& req)
 	if (req.serverID.has_value())
 	{
 		object.SetServerID(req.serverID.value());
-		RegisterNetworkObject(req.serverID.value(), req.handle);
+	}
+
+	if (req.onCreated)
+	{
+		req.onCreated(&object);
 	}
 
 	DEBUG_LOG_FMT("[Scene] GameObject created: {} (Handle={})\n", object.GetName(), req.handle.GetValue());
@@ -205,7 +218,7 @@ void Scene::DestroyGameObjectImmediate(GameObject::Handle handle)
 			}
 		}
 
-		auto	   children = tr.GetChildren();
+		auto children = tr.GetChildren();
 		for (auto& childHandle : children)
 		{
 			auto* childTr = trStorage->Get(childHandle);

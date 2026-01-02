@@ -21,7 +21,7 @@ public:
 		ID3D12Device*			device,
 		uint32_t				frameIndex,
 		D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-		uint64_t				uploadHeapSizeInBytes = 16 * 1024 * 1024
+		uint64_t				uploadHeapSizeInBytes = 24 * 1024 * 1024
 		/*uint32_t				numWorkers = 0*/ // Multi-thread 시 향후 추가
 	);
 

@@ -23,7 +23,8 @@ public:
 	//========================================================================
 
 	GameObject::Handle CreateGameObject(
-		std::string name = "GameObject", std::optional<ServerID> serverID = std::nullopt
+		std::string name = "GameObject", std::optional<ServerID> serverID = std::nullopt,
+		std::function<void(GameObject*)> onCreated = nullptr
 	);
 	void		DestroyGameObject(GameObject::Handle handle);
 	GameObject* TryGetGameObject(GameObject::Handle handle) { return m_gameObjects.TryGet(handle); }
@@ -35,11 +36,20 @@ public:
 	template <IsValidComponent Component, typename... Args>
 	typename ComponentStorage<Component>::Handle CreateComponent(GameObject::Handle ownerHandle, Args&&... args)
 	{
+		return CreateComponentWithInit<Component>(ownerHandle, nullptr, std::forward<Args>(args)...);
+	}
+
+	template <IsValidComponent Component, typename InitFunc, typename... Args>
+		requires std::is_invocable_v<InitFunc, Component*> || std::is_null_pointer_v<InitFunc>
+	typename ComponentStorage<Component>::Handle CreateComponentWithInit(
+		GameObject::Handle ownerHandle, InitFunc&& initFunc, Args&&... args
+	)
+	{
 		if (!ownerHandle.IsValid() && !m_gameObjects.IsReserved(ownerHandle))
 		{
 			DEBUG_LOG_FMT("[Scene] CreateComponent called with invalid GameObject handle!\n");
 			assert(false);
-			return typename ComponentStorage<Component>::Handle::Invalid();
+			return ComponentStorage<Component>::Handle::Invalid();
 		}
 		auto* storage = GetStorage<Component>();
 		if (!storage)
@@ -48,7 +58,7 @@ public:
 				"[Scene] CreateComponent called for unregistered component type: {}\n", Component::GetStaticTypeName()
 			);
 			assert(false);
-			return typename ComponentStorage<Component>::Handle::Invalid();
+			return ComponentStorage<Component>::Handle::Invalid();
 		}
 
 		auto componentHandle = storage->ReserveHandle();
@@ -58,6 +68,7 @@ public:
 			.componentHandle = componentHandle.GetValue(),
 			.createFunc =
 				[this, storage, ownerHandle, componentHandle,
+				 init = std::forward<InitFunc>(initFunc),
 				 args = std::make_tuple(std::forward<Args>(args)...)]() mutable
 			{
 				std::apply(
@@ -76,13 +87,17 @@ public:
 
 				comp->SetOwner(ownerHandle);
 
-				if (m_gameObjects.IsValid(ownerHandle))
-				{
-					GameObject& ownerObj = m_gameObjects.Get(ownerHandle);
-					ownerObj.AddComponentHandle<Component>(componentHandle);
-				}
+				GameObject& ownerObj = m_gameObjects.Get(ownerHandle);
+				ownerObj.AddComponentHandle<Component>(componentHandle);
 
 				comp->OnAttach();
+				
+				if constexpr (std::is_invocable_v<InitFunc, Component*>)
+				{
+					if (init)
+						init(comp);
+				}
+
 				DEBUG_LOG_FMT(
 					"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
 					ownerHandle.GetValue(), componentHandle.GetValue()
@@ -242,6 +257,7 @@ private:
 		std::string				name;
 		GameObject::Handle		handle;
 		std::optional<ServerID> serverID;
+		std::function<void(GameObject*)> onCreated;
 	};
 
 	struct ComponentCreateRequest

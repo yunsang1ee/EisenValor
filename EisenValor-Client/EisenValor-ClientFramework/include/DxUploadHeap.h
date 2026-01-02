@@ -18,6 +18,9 @@ public:
 	DxUploadHeap(const DxUploadHeap&) = delete;
 	DxUploadHeap& operator=(const DxUploadHeap&) = delete;
 
+	DxUploadHeap(DxUploadHeap&&) noexcept = default;
+	DxUploadHeap& operator=(DxUploadHeap&&) noexcept = default;
+
 	void Initialize(ID3D12Device* device, uint64_t sizeInBytes, const std::string& name = "");
 	void Reset(); // 프레임 시작 시 호출
 

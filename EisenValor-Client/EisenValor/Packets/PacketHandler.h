@@ -2,7 +2,6 @@
 
 #define NOMINMAX
 #include <numeric>
-#include "PacketBuffer.h"
 #include "IPacketHandler.h"
 
 using PacketHandlerFunc = bool (*)(const SOCKET&, const char* const, const PacketHeader&);
@@ -68,7 +67,7 @@ class PacketBuffer;
 
 class ServerPacketHandler : public IPacketHandler
 {
-private:
+public:
 	ServerPacketHandler() = default;
 	~ServerPacketHandler() = default;
 	ServerPacketHandler(const ServerPacketHandler&) = delete;
@@ -76,7 +75,6 @@ private:
 	ServerPacketHandler(ServerPacketHandler&&) noexcept = default;
 	ServerPacketHandler& operator=(ServerPacketHandler&&) noexcept = default;
 
-public:
 	virtual void Init() noexcept final
 	{
 		for (auto& packetHandlerFunc : PacketHandlerFuncs)

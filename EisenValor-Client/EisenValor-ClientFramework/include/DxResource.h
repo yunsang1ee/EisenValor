@@ -15,7 +15,7 @@ public:
 
 	// Getters
 	ID3D12Resource*			  GetResource() const { return m_resource.Get(); }
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const;
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(uint64_t offset = 0) const;
 	D3D12_RESOURCE_STATES	  GetCurrentState() const { return m_currentState; }
 	uint64_t				  GetSizeInBytes() const { return m_sizeInBytes; }
 	bool					  IsValid() const { return m_resource != nullptr; }
@@ -38,8 +38,8 @@ protected:
 	);
 	void ReleaseResource();
 
-	EQueueType			   m_lastUsedQueue = EQueueType::Graphics;
 	ComPtr<ID3D12Resource> m_resource;
+	EQueueType			   m_lastUsedQueue = EQueueType::Graphics;
 	D3D12_RESOURCE_STATES  m_currentState = D3D12_RESOURCE_STATE_COMMON;
 	uint64_t			   m_sizeInBytes = 0;
 	std::string			   m_name;

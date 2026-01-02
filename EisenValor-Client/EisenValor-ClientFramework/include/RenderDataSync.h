@@ -24,13 +24,13 @@ public:
 	RenderDataSync(RenderDataSync&&) noexcept = default;
 	RenderDataSync& operator=(RenderDataSync&&) noexcept = default;
 
-	[[nodiscard]] Handle Register(const T& data) { return m_list.Emplace(data); }
-	[[nodiscard]] Handle Register(T&& data) { return m_list.Emplace(std::move(data)); }
+	Handle Register(const T& data) { return m_list.Emplace(data); }
+	Handle Register(T&& data) { return m_list.Emplace(std::move(data)); }
 
 	template <typename... Args>
 		requires std::constructible_from<T, Args...> &&
 				 (sizeof...(Args) != 1 || !std::same_as<std::decay_t<Args>..., T>)
-	[[nodiscard]] Handle Register(Args&&... args)
+	Handle Register(Args&&... args)
 	{
 		return m_list.Emplace(std::forward<Args>(args)...);
 	}

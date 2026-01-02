@@ -150,6 +150,10 @@
       <ShaderModel>6.6</ShaderModel>
       <AdditionalOptions>-HV 2021</AdditionalOptions>
     </FxCompile>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -177,6 +181,10 @@
       <ShaderModel>6.6</ShaderModel>
       <AdditionalOptions>-HV 2021</AdditionalOptions>
     </FxCompile>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="EisenValor.h" />

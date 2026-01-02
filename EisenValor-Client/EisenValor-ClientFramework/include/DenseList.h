@@ -36,6 +36,18 @@ struct DenseListHandle
 	auto operator<=>(const DenseListHandle&) const = default;
 };
 
+namespace std
+{
+template <typename T>
+struct hash<DenseListHandle<T>>
+{
+	std::size_t operator()(const DenseListHandle<T>& handle) const noexcept
+	{
+		return std::hash<uint64_t>{}(handle.GetValue());
+	}
+};
+} // namespace std
+
 template <typename T>
 	requires std::movable<T> && std::destructible<T>
 class DenseList

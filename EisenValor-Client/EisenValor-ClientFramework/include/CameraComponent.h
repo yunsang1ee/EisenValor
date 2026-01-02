@@ -23,7 +23,7 @@ public:
 
 	// View Matrix (매 프레임 업데이트)
 	DirectX::XMMATRIX GetViewMatrix() const { return m_viewMatrix; }
-	void SetViewMatrix(const DirectX::XMMATRIX& matrix) { m_viewMatrix = matrix; }
+	void			  SetViewMatrix(const DirectX::XMMATRIX& matrix) { m_viewMatrix = matrix; }
 
 	// View Matrix 생성용 데이터
 	DirectX::XMFLOAT3 GetEyePosition() const { return m_eye; }

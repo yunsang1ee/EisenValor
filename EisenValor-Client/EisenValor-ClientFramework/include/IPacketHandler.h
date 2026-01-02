@@ -3,8 +3,8 @@
 #pragma pack(push, 1)
 struct PacketHeader
 {
-	uint16 packetType;
-	uint16 packetSize; // PacketHeader Å©±â Æ÷ÇÔ
+	uint16_t packetType;
+	uint16_t packetSize; // PacketHeader í¬ê¸° í¬í•¨
 };
 #pragma pack(pop)
 
@@ -16,6 +16,6 @@ public:
 	virtual ~IPacketHandler() = default;
 
 	virtual void Init() = 0;
-	virtual bool HandlePacket(uint16_t packetType, const char* const data, PacketHeader size) = 0;
+	virtual bool HandlePacket(const SOCKET& socket, const char* const data, const PacketHeader& size) = 0;
 };
 } // namespace NetBridge

@@ -80,15 +80,26 @@ public:
 	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetSRVGPUHandle() const { return m_srvHandle.GetGPUHandle(); }
 	[[nodiscard]] D3D12_CPU_DESCRIPTOR_HANDLE GetUAVCPUHandle(uint32_t mipLevel) const
 	{
+		if (mipLevel >= m_uavHandles.size())
+		{
+			return {};
+		}
 		return m_uavHandles[mipLevel].GetCPUHandle();
 	}
 	[[nodiscard]] D3D12_GPU_DESCRIPTOR_HANDLE GetUAVGPUHandle(uint32_t mipLevel) const
 	{
+		if (mipLevel >= m_uavHandles.size())
+		{
+			return {};
+		}
 		return m_uavHandles[mipLevel].GetGPUHandle();
 	}
 
 	[[nodiscard]] bool HasSRV() const { return m_srvHandle.IsValid(); }
-	[[nodiscard]] bool HasUAV(uint32_t mipLevel) const { return m_uavHandles[mipLevel].IsValid(); }
+	[[nodiscard]] bool HasUAV(uint32_t mipLevel) const
+	{
+		return mipLevel < m_uavHandles.size() && m_uavHandles[mipLevel].IsValid();
+	}
 	[[nodiscard]] bool HasAnyUAV() const;
 
 	[[nodiscard]] uint32_t	  GetWidth() const { return m_width; }

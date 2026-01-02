@@ -7,6 +7,8 @@
 #include <DxTexture.h>
 #include <memory>
 
+class MeshComponent;
+
 struct alignas(16) VertexPNU
 {
 	DX::XMFLOAT3 position;
@@ -52,7 +54,7 @@ struct alignas(16) InstanceData
 	uint32_t	   pad0;
 	uint32_t	   pad1;
 };
-static_assert(sizeof(GeoInfo) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
+static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
 
 class DxrRenderPass : public IRenderPass
 {
@@ -72,8 +74,18 @@ private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
 	void CollectRenderData(Scene* scene);
-	void BuildAccelerationStructures();
-	void CreateGeometryBuffers();
+	void BuildAccelerationStructures(Scene* scene);
+
+	struct MeshRenderResource
+	{
+		std::unique_ptr<class DxBuffer> vertexBuffer;
+		std::unique_ptr<class DxBuffer> indexBuffer;
+		std::unique_ptr<class DxBLAS>	blas;
+		uint64_t						vertexCount = 0;
+		uint64_t						indexCount	= 0;
+		uint64_t						lastUsedFrame = 0;
+	};
+	std::unordered_map<HandleOf<MeshComponent>, MeshRenderResource> m_meshCache;
 
 private:
 	std::unique_ptr<DxRtPipelineState> m_rtPipeline;
@@ -83,19 +95,6 @@ private:
 	std::unique_ptr<DxTLAS>			   m_tlas;
 
 	DxTexture m_raytracingOutput;
-
-	struct MeshRenderData
-	{
-		RenderDataSync<VertexPNU>::Handle verticesHandle;
-		RenderDataSync<uint32_t>::Handle  indicesHandle;
-		RenderDataSync<GeoInfo>::Handle	  geoInfoHandle;
-		RenderDataSync<uint32_t>::Handle  instGeoBaseHandle;
-		uint32_t						  materialIndex = 0;
-
-		size_t vertexCount = 0;
-		size_t indexCount = 0;
-	};
-	std::unordered_map<uint64_t, MeshRenderData> m_meshDataMap;
 
 	RenderDataSync<PBRMaterial> m_materials;   // t1: Material Buffer
 	RenderDataSync<VertexPNU>	m_vertices;	   // t2: Vertex Buffer

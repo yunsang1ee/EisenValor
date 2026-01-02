@@ -36,7 +36,7 @@ DxResource& DxResource::operator=(DxResource&& other) noexcept
 	return *this;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS DxResource::GetGPUAddress() const
+D3D12_GPU_VIRTUAL_ADDRESS DxResource::GetGPUAddress(uint64_t offset) const
 {
 	if (!m_resource)
 		return 0;
@@ -48,7 +48,7 @@ D3D12_GPU_VIRTUAL_ADDRESS DxResource::GetGPUAddress() const
 		return 0;
 	}
 
-	return m_resource->GetGPUVirtualAddress();
+	return m_resource->GetGPUVirtualAddress() + offset;
 }
 
 void DxResource::SetName(std::string_view name)

@@ -54,7 +54,7 @@ public:
 private:
 	std::unordered_map<std::string, std::unique_ptr<Scene>> m_scenes;
 
-	uint32_t	m_localNetworkID;
+	uint32_t	m_localNetworkID = 0;
 	Scene*		m_activeScene = nullptr;
 	std::string m_activeSceneName;
 };
