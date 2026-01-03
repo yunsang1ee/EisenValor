@@ -100,6 +100,12 @@ public:
 		// clang-format on
 	}
 
+	[[nodiscard]] bool IsReserved(Handle handle) const noexcept
+	{
+		return handle.generation != 0 && handle.id < m_generation.size() &&
+			   m_generation[handle.id] == handle.generation && m_idToIndex[handle.id] == kInvalidIndex;
+	}
+
 	template <typename... Args>
 		requires std::constructible_from<T, Args...>
 	[[nodiscard]] Handle Emplace(Args&&... args)
@@ -201,7 +207,7 @@ public:
 
 	[[nodiscard]] Handle ReserveHandle()
 	{
-		uint32_t   id{};
+		uint32_t id{};
 
 		if (!m_freeIds.empty())
 		{
@@ -223,7 +229,7 @@ public:
 		requires std::constructible_from<T, Args...>
 	void FulfillReservation(Handle handle, Args&&... args)
 	{
-		if (!IsValid(handle))
+		if (!IsReserved(handle))
 		{
 			assert(false && "[DenseList] FulfillReservation - Invalid handle passed");
 			return;
@@ -239,13 +245,6 @@ public:
 		m_data.emplace_back(std::forward<Args>(args)...);
 		m_indexToId.push_back(handle.id);
 		m_idToIndex[handle.id] = index;
-	}
-
-	[[nodiscard]] bool IsReserved(Handle handle) const noexcept
-	{
-		return handle.generation != 0 && handle.id < m_generation.size() &&
-			   m_generation[handle.id] == handle.generation &&
-			   m_idToIndex[handle.id] == kInvalidIndex;
 	}
 
 	[[nodiscard]] pointer TryGet(Handle handle) noexcept

@@ -1,10 +1,29 @@
 #include "stdafxClientFramework.h"
 #include "DxUtils.h"
+#include "DxResource.h"
 #include <string_view>
 
 
 namespace DxUtils
 {
+D3D12_RESOURCE_BARRIER CreateAutoTransitionBarrier(
+	DxResource& resource, D3D12_RESOURCE_STATES afterState, UINT subresource
+)
+{
+	D3D12_RESOURCE_STATES beforeState = resource.GetCurrentState();
+	resource.SetState(afterState);
+
+	return {
+		.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+		.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+		.Transition =
+			{.pResource = resource.GetResource(),
+			 .Subresource = subresource,
+			 .StateBefore = beforeState,
+			 .StateAfter = afterState}
+	};
+}
+
 
 size_t GetFormatSizeInBytes(DXGI_FORMAT format)
 {

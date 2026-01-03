@@ -117,52 +117,6 @@ public:
 	}
 
 	//========================================================================
-	// ComponentStorage Registration
-	//========================================================================
-
-	template <IsValidComponent Component>
-	ComponentStorage<Component>* RegisterComponent(int priority = Component::kPriority)
-	{
-		const ComponentTypeID		typeID = Component::StaticRuntimeTypeID();
-		constexpr ComponentTypeHash typeHash = Component::StaticStableTypeHash();
-
-		if (typeID < m_componentsStorage.size() && nullptr != m_componentsStorage[typeID])
-		{
-			return static_cast<ComponentStorage<Component>*>(m_componentsStorage[typeID].get());
-		}
-
-		auto						 storage = std::make_unique<ComponentStorage<Component>>();
-		ComponentStorage<Component>* storagePtr = storage.get();
-
-		if (typeID >= m_componentsStorage.size())
-		{
-			m_componentsStorage.resize(typeID + 1);
-		}
-		m_componentsStorage[typeID] = std::move(storage);
-		m_compHashToStorage[typeHash] = storagePtr;
-
-		ComponentEntry entry{priority, typeID, storagePtr};
-
-		if constexpr (ComponentTraits::HasUpdate<Component>)
-		{
-			m_updateList.push_back(entry);
-		}
-
-		if constexpr (ComponentTraits::HasFixedUpdate<Component>)
-		{
-			m_fixedList.push_back(entry);
-		}
-
-		if constexpr (ComponentTraits::HasLateUpdate<Component>)
-		{
-			m_lateList.push_back(entry);
-		}
-
-		return storagePtr;
-	}
-
-
-	//========================================================================
 	// Frame Lifecycle & Clear
 	//========================================================================
 	// Usage:
@@ -228,10 +182,56 @@ public:
 	}
 
 protected:
+	//========================================================================
 	// Add user-defined components in derived Scene classes
+	//========================================================================
 	virtual void OnRegisterCustomComponents() = 0;
 	virtual void OnStartImpl() {}
 	virtual void OnEndImpl() {}
+
+	//========================================================================
+	// ComponentStorage Registration
+	//========================================================================
+	template <IsValidComponent Component>
+	ComponentStorage<Component>* RegisterComponent(int priority = Component::kPriority)
+	{
+		const ComponentTypeID		typeID = Component::StaticRuntimeTypeID();
+		constexpr ComponentTypeHash typeHash = Component::StaticStableTypeHash();
+
+		if (typeID < m_componentsStorage.size() && nullptr != m_componentsStorage[typeID])
+		{
+			return static_cast<ComponentStorage<Component>*>(m_componentsStorage[typeID].get());
+		}
+
+		auto						 storage = std::make_unique<ComponentStorage<Component>>();
+		ComponentStorage<Component>* storagePtr = storage.get();
+
+		if (typeID >= m_componentsStorage.size())
+		{
+			m_componentsStorage.resize(typeID + 1);
+		}
+		m_componentsStorage[typeID] = std::move(storage);
+		m_compHashToStorage[typeHash] = storagePtr;
+
+		ComponentEntry entry{priority, typeID, storagePtr};
+
+		if constexpr (ComponentTraits::HasUpdate<Component>)
+		{
+			m_updateList.push_back(entry);
+		}
+
+		if constexpr (ComponentTraits::HasFixedUpdate<Component>)
+		{
+			m_fixedList.push_back(entry);
+		}
+
+		if constexpr (ComponentTraits::HasLateUpdate<Component>)
+		{
+			m_lateList.push_back(entry);
+		}
+
+		return storagePtr;
+	}
 
 	template <IsValidComponent... Ts>
 	void RegisterComponents()

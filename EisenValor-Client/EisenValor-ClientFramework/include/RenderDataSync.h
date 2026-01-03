@@ -52,6 +52,12 @@ public:
 	[[nodiscard]] const T* TryGet(Handle handle) const { return m_list.TryGet(handle); }
 	void				   Clear() { m_list.Reset(); }
 
+	[[nodiscard]] bool NeedsDescriptorUpdate() const { return m_descriptorDirty; }
+	void			   MarkDescriptorUpdated() { m_descriptorDirty = false; }
+
+	[[nodiscard]] DxBuffer* GetBuffer() { return m_gpuBuffer.get(); }
+	[[nodiscard]] size_t	Size() const { return m_list.size(); }
+
 	void SyncToGPU(ID3D12Device* device, DxCommandContext& context, DxUploadHeap& uploadHeap)
 	{
 		if (m_list.empty())
@@ -90,6 +96,7 @@ private:
 		m_gpuBuffer->CreateSRV(device, GLOBAL(DxDescriptorHeapGlobal), (uint32_t)newCapacity, (uint32_t)sizeof(T));
 
 		m_currentCapacity = newCapacity;
+		m_descriptorDirty = true;
 
 		DEBUG_LOG_FMT("[RenderDataSync] Resized GPU buffer to {} elements ({} bytes)", newCapacity, sizeInBytes);
 	}
@@ -113,11 +120,12 @@ private:
 		);
 		cmdList->ResourceBarrier(1, &barrier2);
 
-		DEBUG_LOG_FMT("[RenderDataSync] Uploaded {} elements ({} bytes) to GPU\n", m_list.size(), sizeInBytes);
+		// DEBUG_LOG_FMT("[RenderDataSync] Uploaded {} elements ({} bytes) to GPU\n", m_list.size(), sizeInBytes);
 	}
 
 private:
 	DenseList<T>			  m_list;
 	std::unique_ptr<DxBuffer> m_gpuBuffer;
 	size_t					  m_currentCapacity = 0;
+	bool					  m_descriptorDirty = false;
 };

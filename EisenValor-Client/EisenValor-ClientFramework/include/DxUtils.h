@@ -1,5 +1,7 @@
 #pragma once
 
+class DxResource;
+
 namespace DxUtils
 {
 
@@ -21,6 +23,10 @@ inline D3D12_RESOURCE_BARRIER CreateTransitionBarrier(
 			{.pResource = resource, .Subresource = subresource, .StateBefore = beforeState, .StateAfter = afterState}
 	};
 }
+
+D3D12_RESOURCE_BARRIER CreateAutoTransitionBarrier(
+	DxResource& resource, D3D12_RESOURCE_STATES afterState, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES
+);
 
 // UAV 배리어 생성
 inline D3D12_RESOURCE_BARRIER CreateUAVBarrier(ID3D12Resource* resource)

@@ -24,7 +24,15 @@ public:
         ID3D12Device*       device,
         uint64_t            sizeInBytes,
         EBufferUsage        usage,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_FLAGS additionalFlags = D3D12_RESOURCE_FLAG_NONE,
+        const std::string&  name = ""
+    );
+    void Initialize(
+        ID3D12Device*       device,
+        uint64_t            sizeInBytes,
+        EBufferUsage        usage,
+		D3D12_RESOURCE_FLAGS additionalFlags = D3D12_RESOURCE_FLAG_NONE,
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON,
         const std::string&  name = ""
     );
 	

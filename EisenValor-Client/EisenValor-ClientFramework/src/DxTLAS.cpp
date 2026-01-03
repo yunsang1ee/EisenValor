@@ -144,18 +144,18 @@ void DxTLAS::BuildInternal(
 		);
 	}
 
-	auto barrierToCopy = DxUtils::CreateTransitionBarrier(
-		m_instanceDescBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
-	);
-	cmdList->ResourceBarrier(1, &barrierToCopy);
+	if (m_instanceDescBuffer.GetCurrentState() != D3D12_RESOURCE_STATE_COPY_DEST)
+	{
+		auto barrierToCopy = DxUtils::CreateAutoTransitionBarrier(m_instanceDescBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+		cmdList->ResourceBarrier(1, &barrierToCopy);
+	}
 
 	cmdList->CopyBufferRegion(
 		m_instanceDescBuffer.GetResource(), 0, m_tlasUploadHeap->GetResource(), instanceUpload.offset, instanceDescSize
 	);
 
-	auto transitionBarrier = DxUtils::CreateTransitionBarrier(
-		m_instanceDescBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
-	);
+	auto transitionBarrier =
+		DxUtils::CreateAutoTransitionBarrier(m_instanceDescBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdList->ResourceBarrier(1, &transitionBarrier);
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -174,7 +174,7 @@ void DxTLAS::BuildInternal(
 		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE |
 					   D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
 
-		DEBUG_LOG_FMT("[DxTLAS] Build with {} instances\n", m_instanceCount);
+		// DEBUG_LOG_FMT("[DxTLAS] Build with {} instances\n", m_instanceCount);
 	}
 
 	if (isFirstBuild || !isRefit)
@@ -186,7 +186,8 @@ void DxTLAS::BuildInternal(
 		{
 			m_tlasBuffer.Initialize(
 				device, prebuildInfo.ResultDataMaxSizeInBytes, EBufferUsage::RawBuffer,
-				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, "TLAS_Result"
+				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+				"TLAS_Result"
 			);
 		}
 
@@ -199,14 +200,11 @@ void DxTLAS::BuildInternal(
 		}
 	}
 
-	D3D12_RESOURCE_BARRIER barriers[2];
-	barriers[0] = DxUtils::CreateTransitionBarrier(
-		m_scratchBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-	);
-	barriers[1] = DxUtils::CreateTransitionBarrier(
-		m_tlasBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE
-	);
-	cmdList->ResourceBarrier(2, barriers);
+	if (m_scratchBuffer.GetCurrentState() != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+	{
+		auto barrier = DxUtils::CreateAutoTransitionBarrier(m_scratchBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		cmdList->ResourceBarrier(1, &barrier);
+	}
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = inputs;
@@ -220,9 +218,7 @@ void DxTLAS::BuildInternal(
 
 	cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
-	D3D12_RESOURCE_BARRIER uavBarrier = {};
-	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	uavBarrier.UAV.pResource = m_tlasBuffer.GetResource();
+	D3D12_RESOURCE_BARRIER uavBarrier = DxUtils::CreateUAVBarrier(m_tlasBuffer.GetResource());
 	cmdList->ResourceBarrier(1, &uavBarrier);
 
 	if (isFirstBuild && m_srvIndex == ~0u)

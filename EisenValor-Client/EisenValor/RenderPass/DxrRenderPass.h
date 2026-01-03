@@ -73,6 +73,7 @@ public:
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
+	void CreateGeometryDescriptorTable();
 	void CollectRenderData(Scene* scene);
 	void BuildAccelerationStructures(Scene* scene);
 
@@ -82,7 +83,7 @@ private:
 		std::unique_ptr<class DxBuffer> indexBuffer;
 		std::unique_ptr<class DxBLAS>	blas;
 		uint64_t						vertexCount = 0;
-		uint64_t						indexCount	= 0;
+		uint64_t						indexCount = 0;
 		uint64_t						lastUsedFrame = 0;
 	};
 	std::unordered_map<HandleOf<MeshComponent>, MeshRenderResource> m_meshCache;
@@ -102,10 +103,13 @@ private:
 	RenderDataSync<GeoInfo>		m_geoInfos;	   // t4: GeoInfo Buffer
 	RenderDataSync<uint32_t>	m_instGeoBase; // t5: InstGeoBase Buffer
 
+	DxDescriptorRange			   m_geometryTableRange = {0, 0};
+
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;
 
 	bool m_initialized = false;
 	bool m_needsRebuild = false;
+	bool m_geometryTableValid = false;
 	bool m_usePathTracing = false;
 };

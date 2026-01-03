@@ -84,6 +84,96 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 	);
 }
 
+void DxrRenderPass::CreateGeometryDescriptorTable()
+{
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
+
+	if (m_geometryTableRange.count > 0)
+	{
+		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
+		auto  fenceValue = queue.GetCurrentFenceValue();
+		descHeap.FreeRange(
+			m_geometryTableRange.startIndex, m_geometryTableRange.count, FenceHandle{EQueueType::Graphics, fenceValue},
+			"DXR_GeometryTable_Old"
+		);
+	}
+
+	DxDescriptorTableBuilder tableBuilder;
+
+	// Material SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC materialSRV{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_materials.Size()),
+			 .StructureByteStride = sizeof(PBRMaterial),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_materials.GetBuffer()->GetResource(), &materialSRV);
+
+	// Vertex SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC vertexSRV{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_vertices.Size()),
+			 .StructureByteStride = sizeof(VertexPNU),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_vertices.GetBuffer()->GetResource(), &vertexSRV);
+
+	// Index SRV (Raw Buffer)
+	D3D12_SHADER_RESOURCE_VIEW_DESC indexSRV{
+		.Format = DXGI_FORMAT_R32_UINT,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_indices.Size()),
+			 .StructureByteStride = 0,
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_indices.GetBuffer()->GetResource(), &indexSRV);
+
+	// GeoInfo SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC geoInfoSRV{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_geoInfos.Size()),
+			 .StructureByteStride = sizeof(GeoInfo),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_geoInfos.GetBuffer()->GetResource(), &geoInfoSRV);
+
+	// InstGeoBase SRV
+	D3D12_SHADER_RESOURCE_VIEW_DESC instGeoSRV{
+		.Format = DXGI_FORMAT_R32_UINT,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_instGeoBase.Size()),
+			 .StructureByteStride = 0,
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_instGeoBase.GetBuffer()->GetResource(), &instGeoSRV);
+
+	m_geometryTableRange = tableBuilder.Commit(device.GetDevice(), descHeap);
+
+	DEBUG_LOG_FMT(
+		"[DxrRenderPass] Geometry descriptor table created: StartIndex={}, Count={}\n", m_geometryTableRange.startIndex,
+		m_geometryTableRange.count
+	);
+}
+
 void DxrRenderPass::CollectRenderData(Scene* scene)
 {
 	auto* meshStorage = scene->GetStorage<MeshComponent>();
@@ -108,12 +198,15 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 	defaultMat.emissive = {0.0f, 0.0f, 0.0f};
 	defaultMat.emissiveStrength = 0.0f;
 
+	uint32_t validMeshCount = 0;
 	for (const auto& mesh : meshStorage->GetList())
 	{
 		if (!mesh.IsValid())
 		{
 			continue;
 		}
+
+		validMeshCount++;
 
 		const auto& vertices = mesh.GetVertices();
 		const auto& indices = mesh.GetIndices();
@@ -142,7 +235,14 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 		currentGeoIndex++;
 	}
 
-	m_needsRebuild = true;
+	if (m_tlas && m_tlas->GetInstanceCount() != validMeshCount)
+	{
+		m_needsRebuild = true;
+		DEBUG_LOG_FMT(
+			"[DxrRenderPass] Instance count changed: {} -> {}, TLAS rebuild required\n", m_tlas->GetInstanceCount(),
+			validMeshCount
+		);
+	}
 }
 
 void DxrRenderPass::BuildAccelerationStructures(Scene* scene)
@@ -337,40 +437,31 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	m_geoInfos.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
 	m_instGeoBase.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
 
+	if (m_vertices.NeedsDescriptorUpdate() || m_indices.NeedsDescriptorUpdate() ||
+		m_materials.NeedsDescriptorUpdate() || m_geoInfos.NeedsDescriptorUpdate() ||
+		m_instGeoBase.NeedsDescriptorUpdate())
+	{
+		m_geometryTableValid = false;
+
+		m_vertices.MarkDescriptorUpdated();
+		m_indices.MarkDescriptorUpdated();
+		m_materials.MarkDescriptorUpdated();
+		m_geoInfos.MarkDescriptorUpdated();
+		m_instGeoBase.MarkDescriptorUpdated();
+
+		DEBUG_LOG_FMT("[DxrRenderPass] Buffer resized, geometry table invalidated\n");
+	}
+
 	BuildAccelerationStructures(scene);
-
-	std::vector<std::pair<GameObject*, DxBLAS*>> instances;
-	if (scene)
-	{
-		if (auto* meshStorage = scene->GetStorage<MeshComponent>())
-		{
-			for (auto& mesh : meshStorage->GetList())
-			{
-				if (!mesh.IsValid())
-					continue;
-
-				auto it = m_meshCache.find(mesh.GetHandle());
-				if (it != m_meshCache.end() && it->second.blas)
-				{
-					instances.push_back({mesh.GetGameObject(), it->second.blas.get()});
-				}
-			}
-		}
-	}
-
-	if (m_tlas && !instances.empty())
-	{
-		ComPtr<ID3D12Device5> device5;
-		ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
-		ComPtr<ID3D12GraphicsCommandList4> cmdList4;
-		ThrowIfFailed(context->CommandList()->QueryInterface(IID_PPV_ARGS(&cmdList4)));
-
-		m_tlas->Build(device5.Get(), cmdList4.Get(), instances);
-	}
-
 
 	if (!m_tlas || !m_tlas->IsBuilt())
 		return;
+
+	if (!m_geometryTableValid || m_needsRebuild)
+	{
+		CreateGeometryDescriptorTable();
+		m_geometryTableValid = true;
+	}
 
 	// DXR 실행
 	auto*							   cmdList = context->CommandList();
@@ -399,42 +490,20 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	cmdList4->SetComputeRootDescriptorTable(1, outputUAV);
 
 	// Camera
-	CameraConstants camConsts;
-	auto			mainCam = CameraComponent::GetMainViewMatrix();
-	auto			mainProj = CameraComponent::GetMainProjectionMatrix();
-	auto			viewProj = DirectX::XMMatrixMultiply(mainCam, mainProj);
-	auto			viewProjInv = DirectX::XMMatrixInverse(nullptr, viewProj);
-	DirectX::XMStoreFloat4x4(&camConsts.viewProjInverse, viewProjInv);
+	auto mainCam = CameraComponent::GetMainViewMatrix();
+	auto mainProj = CameraComponent::GetMainProjectionMatrix();
+	auto viewProj = DX::XMMatrixMultiply(mainCam, mainProj);
+	auto viewProjInv = DX::XMMatrixInverse(nullptr, viewProj);
 
-	auto camAlloc = uploadHeap->UploadConstantBuffer(camConsts);
-	cmdList4->SetComputeRootConstantBufferView(2, camAlloc.gpuAddress);
+	viewProjInv = DX::XMMatrixTranspose(viewProjInv);
+
+	DX::XMFLOAT4X4 viewProjInvFloat;
+	DX::XMStoreFloat4x4(&viewProjInvFloat, viewProjInv);
+
+	cmdList4->SetComputeRoot32BitConstants(2, 16, &viewProjInvFloat, 0);
 
 	// Tables
-	auto& heap = GLOBAL(DxDescriptorHeapGlobal);
-	auto  srvRange = heap.ReserveRange(5);
-
-	device.GetDevice()->CopyDescriptorsSimple(
-		1, heap.GetCPUHandle(srvRange.startIndex + 0), heap.GetCPUHandle(m_materials.GetSRVIndex()),
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-	device.GetDevice()->CopyDescriptorsSimple(
-		1, heap.GetCPUHandle(srvRange.startIndex + 1), heap.GetCPUHandle(m_vertices.GetSRVIndex()),
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-	device.GetDevice()->CopyDescriptorsSimple(
-		1, heap.GetCPUHandle(srvRange.startIndex + 2), heap.GetCPUHandle(m_indices.GetSRVIndex()),
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-	device.GetDevice()->CopyDescriptorsSimple(
-		1, heap.GetCPUHandle(srvRange.startIndex + 3), heap.GetCPUHandle(m_geoInfos.GetSRVIndex()),
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-	device.GetDevice()->CopyDescriptorsSimple(
-		1, heap.GetCPUHandle(srvRange.startIndex + 4), heap.GetCPUHandle(m_instGeoBase.GetSRVIndex()),
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-
-	cmdList4->SetComputeRootDescriptorTable(3, heap.GetGPUHandle(srvRange.startIndex));
+	cmdList4->SetComputeRootDescriptorTable(3, descHeap.GetGPUHandle(m_geometryTableRange.startIndex));
 
 	// Dispatch
 	auto*					 shaderTable = m_usePathTracing ? m_ptShaderTable.get() : m_rtShaderTable.get();
@@ -447,11 +516,6 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 		.Depth = 1
 	};
 	cmdList4->DispatchRays(&desc);
-
-	heap.FreeRange(
-		srvRange.startIndex, 5,
-		FenceHandle{EQueueType::Graphics, GLOBAL(DxGfxCommandQueueGlobal).GetCurrentFenceValue()}, "DXR_Table"
-	);
 }
 
 

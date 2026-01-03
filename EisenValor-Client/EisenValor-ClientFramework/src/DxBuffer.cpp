@@ -99,6 +99,70 @@ void DxBuffer::Initialize(
 	);
 }
 
+void DxBuffer::Initialize(
+	ID3D12Device*		  device,
+	uint64_t			  sizeInBytes,
+	EBufferUsage		  usage,
+	D3D12_RESOURCE_FLAGS  additionalFlags,
+	D3D12_RESOURCE_STATES initialState,
+	const std::string&	  name
+)
+{
+	m_usage = usage;
+
+	D3D12_HEAP_PROPERTIES heapProps = {
+		.Type = D3D12_HEAP_TYPE_DEFAULT,
+		.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+		.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+		.CreationNodeMask = 0,
+		.VisibleNodeMask = 0
+	};
+
+	D3D12_RESOURCE_FLAGS  resourceFlags = additionalFlags;
+
+	switch (usage)
+	{
+	case EBufferUsage::Constant:
+		if (sizeInBytes % 256 != 0)
+		{
+			DEBUG_LOG_FMT("[DxBuffer] WARNING: Constant buffer size ({} bytes) is not 256-byte aligned\n", sizeInBytes);
+		}
+		break;
+
+	case EBufferUsage::Structured:
+		if (!(additionalFlags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
+		{
+			resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		}
+		break;
+
+	case EBufferUsage::RawBuffer:
+		resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		break;
+	}
+
+	D3D12_RESOURCE_DESC bufferDesc = {
+		.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+		.Alignment = 0,
+		.Width = sizeInBytes,
+		.Height = 1,
+		.DepthOrArraySize = 1,
+		.MipLevels = 1,
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.SampleDesc = {1, 0},
+		.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+		.Flags = resourceFlags
+	};
+
+	SetName(name);
+	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
+
+	DEBUG_LOG_FMT(
+		"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
+		static_cast<uint32_t>(resourceFlags)
+	);
+}
+
 void DxBuffer::CreateSRV(
 	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride
 )

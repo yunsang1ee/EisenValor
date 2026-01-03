@@ -24,6 +24,15 @@ void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene)
 	if (!m_srcTexture || !m_swapChain)
 		return;
 
+	if (m_srcTexture->GetWidth() != m_swapChain->GetWidth() || m_srcTexture->GetHeight() != m_swapChain->GetHeight())
+	{
+		DEBUG_LOG_FMT(
+			"[CopyToBackBufferPass] ERROR: Size mismatch! Src: {}x{}, BackBuffer: {}x{}\n", m_srcTexture->GetWidth(),
+			m_srcTexture->GetHeight(), m_swapChain->GetWidth(), m_swapChain->GetHeight()
+		);
+		return;
+	}
+
 	auto* context = frame->GetMainContext();
 	auto* cmdList = context->CommandList();
 	auto* backBuffer = m_swapChain->GetCurrentBackBuffer();
