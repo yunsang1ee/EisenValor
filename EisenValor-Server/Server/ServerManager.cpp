@@ -19,6 +19,8 @@ BOOL __stdcall ConsoleHandler(DWORD signal)
 
 bool Server::ServerManager::Init()
 {
+	ServerEngine::LogManager::Init();
+
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
 		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
 		return false;
@@ -26,8 +28,6 @@ bool Server::ServerManager::Init()
 
 	std::wcout.imbue(std::locale("korean"));
 	
-	ServerEngine::LogManager::Init();
-
 	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		return false;

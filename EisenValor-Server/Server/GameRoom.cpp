@@ -9,10 +9,11 @@
 #include "GameWorld.h"
 #include "Participant.h"
 
+#include "GameLobby.h"
+
 Server::Contents::GameRoom::GameRoom(const uint16 roomID)
 {
 	m_info.id = roomID;
-	// TODO: 나중에 Waiting으로...
 	m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_WATING;
 }
 
@@ -29,22 +30,12 @@ void Server::Contents::GameRoom::Init()
 
 bool Server::Contents::GameRoom::CanStart()
 {
-	int32 redCount{}, blueCount{};
-
-	for(const auto& [id, user] : m_users) {
-		if(user != m_host && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY == user->GetStateType()) {
-			// TODO: UserName가져온 후, UserName이 준비 안 했다고 Broadcast
+	for(const auto& [id, user] : m_users)
+		if(user != m_host && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY != user->GetStateType())
 			return false;
-		}
 
-		if(FB_ENUMS::TEAM_TYPE_OFFENSE == user->GetTeamType()) blueCount++; else redCount++;
-	}
-
-	if(blueCount < 1 || redCount < 1) {
-		// TODO: 인원이 맞지 않다고 Broadcast
-		return false;
-	}
-
+	if(m_offenseCount < 1 || m_defenseCount < 1) return false;
+	
 	return true;
 }
 
@@ -52,20 +43,26 @@ void Server::Contents::GameRoom::CreateWorld()
 {
 	m_gameWorld = std::make_shared<GameWorld>();
 	m_gameWorld->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-	m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_PLAYING;
+	
+	{
+		m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_PLAYING;
+		auto pb = ServerPackets::Make_SC_CHANGE_GAME_ROOM_STATE_PACKET(m_info.id, m_info.stateType);
+		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Broadcast, std::move(pb));
+	}
+	
 	m_gameWorld->ExecAsync(&GameWorld::Start, m_users, m_bots);
 }
 
 void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
 {
-	// TODO: 현재 게임방 상태가 플레이 중이면 입장 불가
+	// 현재 게임방 상태가 플레이 중이면 입장 불가
 	if(m_info.stateType == FB_ENUMS::ROOM_STATE_TYPE_PLAYING) {
 		auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_FAIL_PACKET("Already Playing") };
 		clientSession->Send(std::move(pb));
 		return;
 	}
 
-	// TODO: Room최대 정원을 넘기면 입장 불가
+	// Room최대 정원을 넘기면 입장 불가
 	if(m_info.currentParticipants >= MAX_PARTICIPANTS) {
 		auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_FAIL_PACKET("MAX PARTICIPANTS") };
 		clientSession->Send(std::move(pb));
@@ -83,7 +80,9 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	if(m_info.currentParticipants == 0) participantType = FB_ENUMS::PARTICIPANT_TYPE_HOST;
 	else participantType = FB_ENUMS::PARTICIPANT_TYPE_USER;
 
-	FB_ENUMS::TEAM_TYPE teamType{ FB_ENUMS::TEAM_TYPE_DEFENSE };
+	static bool teamFlag{ false };
+	teamFlag = !teamFlag;
+	FB_ENUMS::TEAM_TYPE teamType{ static_cast<uint8>(teamFlag) };
 
 	if(teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) {
 		if(m_offenseCount >= MAX_PARTICIPANTS / 2) {
@@ -115,7 +114,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	for(const auto& [id, bot] : m_bots)
 		particinpants.emplace_back(bot->GetInfo());
 
-	auto pb{ ServerPackets::Make_SC_JOIN_GAME_SUCCESS_PACKET(newUser->GetInfo(), particinpants) };
+	auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(newUser->GetInfo(), particinpants) };
 	clientSession->Send(std::move(pb));
 
 	{
@@ -124,6 +123,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	}
 
 	AddParticipant(std::move(newUser));
+
 }
 
 void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
@@ -147,6 +147,38 @@ void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSessi
 	{
 		auto pb{ ServerPackets::Make_SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(id) };
 		Broadcast(std::move(pb));
+	}
+}
+
+void Server::Contents::GameRoom::ReturnToGameRoom(const Users& users, const Bots& bots)
+{
+	m_users = users;
+	m_bots = bots;
+
+	for(const auto& [myID, my] : m_users) {
+		auto session = my->GetSession();
+		session->SetState(SESSION_STATE::IN_GAME_ROOM);
+		session->SetGameWorld(nullptr);
+		my->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
+
+		std::vector<ParticipantInfo> particinpants;
+
+		for(const auto& [id, target] : m_users) {
+			if(myID != id)
+				particinpants.emplace_back(target->GetInfo());
+		}
+
+		for(const auto& [id, bot] : m_bots)
+			particinpants.emplace_back(bot->GetInfo());
+
+		auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(my->GetInfo(), particinpants) };
+		session->Send(std::move(pb));
+	}
+
+	{
+		m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_WATING;
+		auto pb = ServerPackets::Make_SC_CHANGE_GAME_ROOM_STATE_PACKET(m_info.id, m_info.stateType);
+		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Broadcast, std::move(pb));
 	}
 }
 
@@ -243,19 +275,11 @@ void Server::Contents::GameRoom::Handle_CS_GAME_START(const std::shared_ptr<Clie
 {
 	if(FB_ENUMS::ROOM_STATE_TYPE_PLAYING == m_info.stateType) return;
 
-	// TODO: 게임 시작 조건 검사
 	const uint32 id{ clientSession->GetID() };
 
 	if(id != m_host->GetID()) return;
 
-	bool allReady{ true };
-
-	for(const auto& [id, user] : m_users) {
-		if(user->GetStateType() != FB_ENUMS::PARTICIPANT_STATE_TYPE_READY) {
-			allReady = false;
-			break;
-		}
-	}
+	if(false == CanStart()) return;
 
 	auto pb{ ServerPackets::Make_SC_LOADING_GAME_WORLD_PACKET() };
 	Broadcast(std::move(pb));
@@ -265,7 +289,7 @@ void Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std
 {
 	m_loadingCompletedUserCount++;
 
-	if(m_loadingCompletedUserCount = m_users.size()) {
+	if(m_loadingCompletedUserCount == m_users.size()) {
 		CreateWorld();
 	}
 }

@@ -102,6 +102,18 @@ bool ServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::stri
         }
         else return false;
 
+        if(session.HasMember("PING_INTERVAL_MS")) {
+            m_sessionConfig.PING_INTERVAL_MS = session["PING_INTERVAL_MS"].GetInt();
+            std::cout << " - Ping Interval MS: " << m_sessionConfig.PING_INTERVAL_MS << std::endl;
+        }
+		else return false;
+
+        if(session.HasMember("SESSION_TIMEOUT_MS")) {
+            m_sessionConfig.SESSION_TIMEOUT_MS = session["SESSION_TIMEOUT_MS"].GetInt();
+            std::cout << " - SESSION_TIMEOUT_MS: " << m_sessionConfig.SESSION_TIMEOUT_MS << std::endl;
+		}
+		else return false;
+
         m_rioWorkerConfig.MAX_CQ_SIZE = (m_sessionConfig.MAX_SEND_RQ_SIZE_PER_SESSION + m_sessionConfig.MAX_RECV_RQ_SIZE_PER_SESSION) * m_rioWorkerConfig.MAX_SESSION_PER_RIO_WORKER;
     }
     else return false;

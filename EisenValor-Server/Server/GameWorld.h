@@ -21,6 +21,7 @@ namespace Server {
 		private:
 			std::weak_ptr<GameRoom>												m_gameRoom;
 			Users																m_users;
+			Bots																m_bots;
 			
 			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>				m_gameObjectsGroups;
 			std::queue<std::function<void()>>									m_eventFpQueue;
@@ -68,14 +69,15 @@ namespace Server {
 		private:
 			void AddGameObject(std::shared_ptr<GameObject> newGameObject);
 			void AddEvent(const std::function<void()>& eve) { m_eventFpQueue.push(eve); }
-			
 			void RemoveGameObject(std::shared_ptr<GameObject> gameObject);
 
 		private:
 			void ProcessEvents();
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			void CheckGameTime(const float dt);
-	
+
+			bool IsFinish();
+
 			friend class GameRoom; 
 		};
 	}

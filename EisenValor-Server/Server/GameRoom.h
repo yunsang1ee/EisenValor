@@ -57,10 +57,11 @@ namespace Server {
 			const RoomInfo& GetRoomInfo() const noexcept { return m_info; }
 
 		public:
-			// TODO: 나중에 방장이 게임 시작한다는 패킷을 보내면 실행되어야 함.
 			void JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept;
 			void LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept;
 		
+			void ReturnToGameRoom(const Users& users, const Bots& bots);
+
 		public:
 			/* 패킷 받아서 처리되는 부분 */
 			void Handle_CS_CHANGE_TEAM(const std::shared_ptr<ClientSession>& clientSession);

@@ -47,6 +47,13 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_USER_IN_GAME_LOBBY_PACKET, id));
 	}
 
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MAKE_GAME_ROOM_PACKET(const RoomInfo& roomInfo)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		FB_STRUCTS::RoomInfo fbRoomInfo{ roomInfo.id, roomInfo.stateType, roomInfo.currentParticipants, roomInfo.maxParticipants };
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MAKE_GAME_ROOM_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MAKE_GAME_ROOM_PACKET, &fbRoomInfo));
+	}
+
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_JOIN_GAME_ROOM_FAIL_PACKET(const std::string_view msg)
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -54,7 +61,7 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_JOIN_GAME_ROOM_FAIL_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_JOIN_GAME_ROOM_FAIL_PACKETDirect, msg.data()));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_JOIN_GAME_SUCCESS_PACKET(const ParticipantInfo& user, const std::vector<ParticipantInfo>& participants)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(const ParticipantInfo& user, const std::vector<ParticipantInfo>& participants)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -108,6 +115,12 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOADING_GAME_WORLD_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOADING_GAME_WORLD_PACKET));
 
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_GAME_ROOM_STATE_PACKET(const uint16 id, const FB_ENUMS::ROOM_STATE_TYPE stateType)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_GAME_ROOM_STATE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GAME_ROOM_STATE_PACKET, id, stateType));
 	}
 
 

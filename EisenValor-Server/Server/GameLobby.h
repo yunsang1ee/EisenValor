@@ -15,13 +15,12 @@ namespace Server {
 		private:
 			ClientSessions	m_users;
 			GameRooms		m_rooms;
-			uint16			m_roomIDGen{ 1000 };
+			uint16			m_roomIDGen{ 1 };
 
 		public:
 			void Init();
 			void JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID);
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb);
-			
 			
 		public:
 			void Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession);

@@ -53,7 +53,7 @@
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalFunc.cpp">
-      <Filter>05. Global</Filter>
+      <Filter>98. Global</Filter>
     </ClCompile>
     <ClCompile Include="SoldierStates.cpp">
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\NPC\Soldier\State</Filter>
@@ -99,17 +99,11 @@
     <Filter Include="96. Headers">
       <UniqueIdentifier>{1745fc1b-553c-4224-825e-7cefc9cd4c15}</UniqueIdentifier>
     </Filter>
-    <Filter Include="05. Global">
-      <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="01. ClientSessionManager">
       <UniqueIdentifier>{e7bed467-3e89-4a3b-877a-09b6eba0ec3b}</UniqueIdentifier>
     </Filter>
     <Filter Include="01. ClientSessionManager\ClientSession">
       <UniqueIdentifier>{cbaaff46-38ff-49d6-afed-319281533012}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Packets\PacketHandler">
-      <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
     </Filter>
     <Filter Include="03. Packets\Schema">
       <UniqueIdentifier>{2b95e60b-2a18-4e25-8e90-c47c9b9dd645}</UniqueIdentifier>
@@ -192,6 +186,12 @@
     <Filter Include="02. Contents\GameDataManager\GameData">
       <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
     </Filter>
+    <Filter Include="98. Global">
+      <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler">
+      <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -261,7 +261,7 @@
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalFunc.h">
-      <Filter>05. Global</Filter>
+      <Filter>98. Global</Filter>
     </ClInclude>
     <ClInclude Include="SoldierStates.h">
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\NPC\Soldier\State</Filter>

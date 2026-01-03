@@ -6,8 +6,11 @@
 #include "GameRoom.h"
 #include "GameLobby.h"
 #include "GameWorld.h"
+#include "ServerEngineConfigManager.h"
 
 Server::ClientSession::ClientSession()
+	:m_pingInterval{std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
+	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }
 {
 	// std::cout << "ClientSession" << std::endl;
 } 
@@ -21,10 +24,10 @@ void Server::ClientSession::Ping()
 {
 	if(GetState() != SESSION_STATE::FREE) {
 
-		const auto now =  std::chrono::high_resolution_clock::now() ;
-		const auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) ;
+		const auto now{ std::chrono::high_resolution_clock::now()};
+		const auto dt{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
 
-		if(dt >= 30'000ms) {
+		if(dt > m_timeoutInterval) {
 			Disconnect("Disconnected By PingCheck");
 			return;
 		}
@@ -32,7 +35,7 @@ void Server::ClientSession::Ping()
 		auto pb{ ServerPackets::Make_SC_PING_PACKET() };
 		Send(std::move(pb));
 
-		ExecTimer(5000ms, &ClientSession::Ping);
+		ExecTimer(m_pingInterval, &ClientSession::Ping);
 	}
 }
 
@@ -41,6 +44,7 @@ void Server::ClientSession::OnConnected()
 	std::cout << "ClientSession OnConnected!" << std::endl;
 	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<Server::ClientSession>(shared_from_this()));
 	m_lastPong = std::chrono::high_resolution_clock::now();
+	
 	Ping();
 }
 
