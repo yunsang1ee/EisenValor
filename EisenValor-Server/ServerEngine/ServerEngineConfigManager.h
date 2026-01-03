@@ -28,6 +28,8 @@ namespace ServerEngine {
 			uint32 MAX_SEND_RQ_SIZE_PER_SESSION;
 			uint32 MAX_RECV_RQ_SIZE_PER_SESSION;
 			uint32 COMMIT_SEND_MS;
+			uint32 PING_INTERVAL_MS;
+			uint32 SESSION_TIMEOUT_MS;
 		};
 
 	private:

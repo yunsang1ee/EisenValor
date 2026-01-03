@@ -150,6 +150,10 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 
+	if(clientSession->GetState() != SESSION_STATE::IN_GAME_WORLD) {
+		return true;
+	}
+
 	const Vec3 pos{ FlatVec3ToVec3(recvPkt.pos_info()->pos()) };
 	const Vec3 rot{ FlatVec3ToVec3(recvPkt.pos_info()->rot()) };
 	const PosInfo info{ pos, rot };

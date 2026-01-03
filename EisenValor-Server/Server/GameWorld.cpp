@@ -23,9 +23,14 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	// 1. 참여자 정보 토대로 오브젝트 생성
 	// 2. 참여자 제외한 NPC 오브젝트 생성
 	// 3. 게임 시작
-	m_users.insert(users.begin(), users.end());
 
-	for(const auto& [id, user] : users) {
+	m_users.clear();
+	m_bots.clear();
+
+	m_users.insert(users.begin(), users.end());
+	m_bots.insert(bots.begin(), bots.end());
+
+	for(const auto& [id, user] : m_users) {
 		static const Vec3 offset{ 3.f, 0.f, 3.f };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
 		startPos += offset;
@@ -42,7 +47,6 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 
 		// 플레이어 아이디 세팅
 		auto session = user->GetSession();
-		session->SetState(SESSION_STATE::IN_GAME_WORLD);
 		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
 		player->SetID(session->GetID());
 		player->SetSession(user->GetSession());
@@ -50,7 +54,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		AddEvent([this, player]() { AddGameObject(std::move(player)); });
 	}
 
-	for(const auto& [id, bot] : bots) {
+	for(const auto& [id, bot] : m_bots) {
 		// TODO: 장수 캐릭터 생성
 		static const Vec3 offset{ 10.f, 0.f, 10.f };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
@@ -90,25 +94,31 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 
 void Server::Contents::GameWorld::Update()
 {
-	const auto now = std::chrono::high_resolution_clock::now();
-	m_dt = 0.f;
-	if(m_firstUpdate) m_firstUpdate = false;
-	else {
-		m_dt = std::chrono::duration<float>(now - m_lastUpdate).count();
-	}
-
-	m_lastUpdate = now;
-
-	ProcessEvents();
-	for(const auto& group : m_gameObjectsGroups) {
-		for(const auto& [id, obj] : group) {
-			if(obj)
-				obj->Update(m_dt);
+	if(false == IsFinish()) {
+		const auto now = std::chrono::high_resolution_clock::now();
+		m_dt = 0.f;
+		if(m_firstUpdate) m_firstUpdate = false;
+		else {
+			m_dt = std::chrono::duration<float>(now - m_lastUpdate).count();
 		}
-	}
 
-	CheckGameTime(m_dt);
-	ExecTimer(GAME_UPDATE_TIME_MS, &Server::Contents::GameWorld::Update);
+		m_lastUpdate = now;
+
+		ProcessEvents();
+		for(const auto& group : m_gameObjectsGroups) {
+			for(const auto& [id, obj] : group) {
+				if(obj)
+					obj->Update(m_dt);
+			}
+		}
+
+		CheckGameTime(m_dt);
+		ExecTimer(GAME_UPDATE_TIME_MS, &Server::Contents::GameWorld::Update);
+	}
+	else {
+		// TODO: 게임이 종료되면 유저와 봇 들을 모두 다시 방으로 이동
+		GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::ReturnToGameRoom, m_users, m_bots);
+	}
 }
 
 void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newGameObject)
@@ -122,7 +132,7 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == newGameObject->GetObjType()) {
 		auto newPlayer = std::static_pointer_cast<Player>(newGameObject);
 		auto clientSession = newPlayer->GetSession();
-
+		clientSession->SetState(SESSION_STATE::IN_GAME_WORLD);
 
 #ifdef DEVELOP
 		if(m_users.find(id) == m_users.end()) {
@@ -131,7 +141,6 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 			m_users.insert(std::make_pair(id, std::move(user)));
 		}
 #endif // DEVELOP
-
 
 		// 패킷으로 보낼 나의 데이터 정의
 		auto startPos = newPlayer->GetPos();
@@ -153,25 +162,23 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 		// 남들 정보 나에게 전송
 		for(const auto& group : m_gameObjectsGroups) {
 			for(const auto& [id, obj] : group) {
-				const uint32 id{ obj->GetID() };
 				const uint8 type{ etou8(obj->GetObjType()) };
-				const uint16 genID = obj->GetID();
 				const Vec3 pos{ obj->GetPos() };
 				const Vec3 rot{ obj->GetRotation() };
 				const PosInfo kInfo{ pos, rot };
 
 				if(obj->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
 					const auto npc = std::static_pointer_cast<NPC>(obj);
-					auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, obj->GetObjType(), obj->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
+					auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(id, obj->GetObjType(), obj->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
 					clientSession->Send(std::move(pb));
 				}
 				else {
 					if(obj->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, obj->GetObjType(), obj->GetTeamType(), kInfo, std::static_pointer_cast<Player>(obj)->GetHP());
+						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, std::static_pointer_cast<Player>(obj)->GetHP());
 						clientSession->Send(std::move(pb));
 					}
 					else {
-						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, obj->GetObjType(), obj->GetTeamType(), kInfo, 0);
+						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, 0);
 						clientSession->Send(std::move(pb));
 					}
 				}
@@ -346,7 +353,6 @@ void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player
 void Server::Contents::GameWorld::EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession)
 {
 	std::cout << "Enter Game World!" << std::endl;
-	clientSession->SetState(SESSION_STATE::IN_GAME_WORLD);
 
 	static const Vec3 offset{ 3.f, 0.f, 3.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
@@ -395,8 +401,12 @@ void Server::Contents::GameWorld::CheckGameTime(const float dt)
 			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
 			Broadcast(std::move(pb));
 		}
-		else {
-
-		}
 	}
+}
+
+bool Server::Contents::GameWorld::IsFinish()
+{
+	if(m_remainingTime.count() <= 0) return true;
+
+	return false;
 }

@@ -42,13 +42,12 @@ void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_p
 		auto pb = ServerPackets::Make_SC_ADD_USER_IN_GAME_LOBBY_PACKET(clientSession->GetName(), id);
 		Broadcast(std::move(pb));
 	}
-
+	
 	AddUser(clientSession);
 }
 
 void Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
-	// TODO: 나갔다는 사실을 나에게 알림
 	const uint32 id{ clientSession->GetID()};
 	auto pb{ ServerPackets::Make_SC_LEAVE_GAME_LOBBY_PACKET() };
 	clientSession->Send(std::move(pb));
@@ -65,18 +64,31 @@ void Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_p
 
 void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
 {
-	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
-	room->Init();
-	m_rooms.insert(std::make_pair(room->GetID(), room));
+	if(clientSession->GetState() != SESSION_STATE::IN_LOBBY)
+		return;
+
+	// 새로운 방 생성
+	auto newRoom = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
+	newRoom->Init();
+	m_rooms.insert(std::make_pair(newRoom->GetID(), newRoom));
 	m_roomIDGen++;
 
-	const uint32 id{ clientSession->GetID() };
-	RemoveUser(id);
+	{
+		// 로비에서 유저 제거(만든 방에 들어갔으니..)
+		const uint32 id{ clientSession->GetID() };
+		RemoveUser(id);
+		auto pb = ServerPackets::Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(clientSession->GetID());
+		Broadcast(std::move(pb));
+	}
 
-	auto pb = ServerPackets::Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(clientSession->GetID());
-	Broadcast(std::move(pb));
+	// 새로운 방 입장
+	newRoom->ExecAsync(&Server::Contents::GameRoom::JoinGameRoom, clientSession);
 
-	room->ExecAsync(&Server::Contents::GameRoom::JoinGameRoom, clientSession);
+	// 새로 방이 만들어졌다고 로비에 있는 유저들에게 전송
+	{
+		auto pb = ServerPackets::Make_SC_MAKE_GAME_ROOM_PACKET(newRoom->GetRoomInfo());
+		Broadcast(std::move(pb));
+	}
 }
 
 void Server::Contents::GameLobby::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
@@ -98,6 +110,9 @@ std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameLobby::GetRoom
 
 void Server::Contents::GameLobby::JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID)
 {
+	if(clientSession->GetState() != SESSION_STATE::IN_LOBBY)
+		return;
+
 	auto room = GetRoom(roomID);
 
 	if(room) {
@@ -116,11 +131,13 @@ void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::s
 
 void Server::Contents::GameLobby::AddUser(const std::shared_ptr<ClientSession>& clientSession)
 {
+	const uint32 id{ clientSession->GetID() };
+	if(m_users.find(id) == m_users.end())
+		m_users.insert(std::make_pair(id, clientSession));
 }
 
 void Server::Contents::GameLobby::RemoveUser(const uint32 id)
 {
-	if(m_users.find(id) != m_users.end()) {
+	if(m_users.find(id) != m_users.end())
 		m_users.erase(id);
-	}
 }

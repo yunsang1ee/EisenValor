@@ -32,8 +32,10 @@ enum class PACKET_TYPE : uint16 {
 	// ==================
 	//		세션
 	// ==================
+#pragma region SESSION_PACKETS
 	CS_PONG_PKT = 0,
 	SC_PING_PKT = 1,
+#pragma endregion
 
 	// ==================
 	//		로그인
@@ -59,9 +61,8 @@ enum class PACKET_TYPE : uint16 {
 	SC_ADD_USER_IN_GAME_LOBBY_PKT = 104,
 	SC_REMOVE_USER_IN_GAME_LOBBY_PKT = 105,
 
-
-	// TODO: 방 만들기
 	CS_MAKE_GAME_ROOM_PKT = 106,
+	SC_MAKE_GAME_ROOM_PKT = 107,
 
 	
 	// ==================
@@ -93,6 +94,8 @@ enum class PACKET_TYPE : uint16 {
 	SC_START_GAME_FAIL_PKT = 1016,
 	SC_START_GAME_SUCCESS_PKT = 1017,
 
+	SC_CHANGE_GAME_ROOM_STATE_PKT = 1018,
+
 
 	// ==================
 	//		월드
@@ -122,6 +125,12 @@ enum class PACKET_TYPE : uint16 {
 	SC_ADD_NPC_PKT = 10012,
 
 	K_CS_GAME_START_PKT = 10013,
+
+	SC_GAME_FINISH_PKT = 10014,
+
+
+	CS_RETURN_TO_GAME_ROOM_PKT = 10015,
+	SC_RETURN_TO_GAME_ROOM_PKT = 10016,
 
 
 	// 테스트

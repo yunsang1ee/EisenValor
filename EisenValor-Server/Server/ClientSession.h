@@ -16,6 +16,9 @@ namespace Server {
 		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;
 		std::chrono::high_resolution_clock::time_point						m_lastPong;
 
+		const std::chrono::milliseconds										m_pingInterval;	
+		const std::chrono::milliseconds										m_timeoutInterval;
+
 	public:
 		ClientSession();
 		virtual ~ClientSession();
