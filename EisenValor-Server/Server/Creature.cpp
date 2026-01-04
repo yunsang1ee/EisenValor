@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "Creature.h"
 
-Server::Contents::Creature::Creature(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType)
-	:GameObject{type, teamType}, m_alive{true}
+Server::Contents::Creature::Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
+	:GameObject(teamType, type), m_alive{true}
 {
 }
 

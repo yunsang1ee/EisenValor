@@ -109,20 +109,22 @@ inline const char *EnumNamePARTICIPANT_STATE_TYPE(PARTICIPANT_STATE_TYPE e) {
 }
 
 enum GAME_OBJECT_TYPE : uint8_t {
-  GAME_OBJECT_TYPE_NPC = 0,
+  GAME_OBJECT_TYPE_GENERAL = 0,
   GAME_OBJECT_TYPE_PLAYER = 1,
-  GAME_OBJECT_TYPE_SPAWNER = 2,
-  GAME_OBJECT_TYPE_VALLISTAR = 3,
-  GAME_OBJECT_TYPE_PROJECTILE = 4,
-  GAME_OBJECT_TYPE_END = 5,
-  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NPC,
+  GAME_OBJECT_TYPE_SOLDIER = 2,
+  GAME_OBJECT_TYPE_SPAWNER = 3,
+  GAME_OBJECT_TYPE_VALLISTAR = 4,
+  GAME_OBJECT_TYPE_PROJECTILE = 5,
+  GAME_OBJECT_TYPE_END = 6,
+  GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_GENERAL,
   GAME_OBJECT_TYPE_MAX = GAME_OBJECT_TYPE_END
 };
 
-inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
+inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[7] {
   static const GAME_OBJECT_TYPE values[] = {
-    GAME_OBJECT_TYPE_NPC,
+    GAME_OBJECT_TYPE_GENERAL,
     GAME_OBJECT_TYPE_PLAYER,
+    GAME_OBJECT_TYPE_SOLDIER,
     GAME_OBJECT_TYPE_SPAWNER,
     GAME_OBJECT_TYPE_VALLISTAR,
     GAME_OBJECT_TYPE_PROJECTILE,
@@ -132,9 +134,10 @@ inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[6] {
 }
 
 inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
-  static const char * const names[7] = {
-    "NPC",
+  static const char * const names[8] = {
+    "GENERAL",
     "PLAYER",
+    "SOLDIER",
     "SPAWNER",
     "VALLISTAR",
     "PROJECTILE",
@@ -145,42 +148,9 @@ inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
 }
 
 inline const char *EnumNameGAME_OBJECT_TYPE(GAME_OBJECT_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_NPC, GAME_OBJECT_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, GAME_OBJECT_TYPE_GENERAL, GAME_OBJECT_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesGAME_OBJECT_TYPE()[index];
-}
-
-enum NPC_TYPE : uint8_t {
-  NPC_TYPE_GENERAL = 0,
-  NPC_TYPE_SOLDIER = 1,
-  NPC_TYPE_END = 2,
-  NPC_TYPE_MIN = NPC_TYPE_GENERAL,
-  NPC_TYPE_MAX = NPC_TYPE_END
-};
-
-inline const NPC_TYPE (&EnumValuesNPC_TYPE())[3] {
-  static const NPC_TYPE values[] = {
-    NPC_TYPE_GENERAL,
-    NPC_TYPE_SOLDIER,
-    NPC_TYPE_END
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesNPC_TYPE() {
-  static const char * const names[4] = {
-    "GENERAL",
-    "SOLDIER",
-    "END",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameNPC_TYPE(NPC_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, NPC_TYPE_GENERAL, NPC_TYPE_END)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesNPC_TYPE()[index];
 }
 
 enum TEAM_TYPE : uint8_t {
@@ -214,6 +184,162 @@ inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
   if (::flatbuffers::IsOutRange(e, TEAM_TYPE_OFFENSE, TEAM_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTEAM_TYPE()[index];
+}
+
+enum GENERAL_ATTACK_TYPE : uint8_t {
+  GENERAL_ATTACK_TYPE_LIGHT = 0,
+  GENERAL_ATTACK_TYPE_HEAVY = 1,
+  GENERAL_ATTACK_TYPE_AREA = 2,
+  GENERAL_ATTACK_TYPE_DISARM = 3,
+  GENERAL_ATTACK_TYPE_END = 4,
+  GENERAL_ATTACK_TYPE_MIN = GENERAL_ATTACK_TYPE_LIGHT,
+  GENERAL_ATTACK_TYPE_MAX = GENERAL_ATTACK_TYPE_END
+};
+
+inline const GENERAL_ATTACK_TYPE (&EnumValuesGENERAL_ATTACK_TYPE())[5] {
+  static const GENERAL_ATTACK_TYPE values[] = {
+    GENERAL_ATTACK_TYPE_LIGHT,
+    GENERAL_ATTACK_TYPE_HEAVY,
+    GENERAL_ATTACK_TYPE_AREA,
+    GENERAL_ATTACK_TYPE_DISARM,
+    GENERAL_ATTACK_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesGENERAL_ATTACK_TYPE() {
+  static const char * const names[6] = {
+    "LIGHT",
+    "HEAVY",
+    "AREA",
+    "DISARM",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameGENERAL_ATTACK_TYPE(GENERAL_ATTACK_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesGENERAL_ATTACK_TYPE()[index];
+}
+
+enum GENERAL_ATTACK_DIR_TYPE : uint8_t {
+  GENERAL_ATTACK_DIR_TYPE_NONE = 0,
+  GENERAL_ATTACK_DIR_TYPE_TOP = 1,
+  GENERAL_ATTACK_DIR_TYPE_LEFT = 2,
+  GENERAL_ATTACK_DIR_TYPE_RIGHT = 3,
+  GENERAL_ATTACK_DIR_TYPE_END = 4,
+  GENERAL_ATTACK_DIR_TYPE_MIN = GENERAL_ATTACK_DIR_TYPE_NONE,
+  GENERAL_ATTACK_DIR_TYPE_MAX = GENERAL_ATTACK_DIR_TYPE_END
+};
+
+inline const GENERAL_ATTACK_DIR_TYPE (&EnumValuesGENERAL_ATTACK_DIR_TYPE())[5] {
+  static const GENERAL_ATTACK_DIR_TYPE values[] = {
+    GENERAL_ATTACK_DIR_TYPE_NONE,
+    GENERAL_ATTACK_DIR_TYPE_TOP,
+    GENERAL_ATTACK_DIR_TYPE_LEFT,
+    GENERAL_ATTACK_DIR_TYPE_RIGHT,
+    GENERAL_ATTACK_DIR_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesGENERAL_ATTACK_DIR_TYPE() {
+  static const char * const names[6] = {
+    "NONE",
+    "TOP",
+    "LEFT",
+    "RIGHT",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameGENERAL_ATTACK_DIR_TYPE(GENERAL_ATTACK_DIR_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, GENERAL_ATTACK_DIR_TYPE_NONE, GENERAL_ATTACK_DIR_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesGENERAL_ATTACK_DIR_TYPE()[index];
+}
+
+enum GENERAL_STANCE_TYPE : uint8_t {
+  GENERAL_STANCE_TYPE_NEUTRAL = 0,
+  GENERAL_STANCE_TYPE_COMBAT = 1,
+  GENERAL_STANCE_TYPE_END = 2,
+  GENERAL_STANCE_TYPE_MIN = GENERAL_STANCE_TYPE_NEUTRAL,
+  GENERAL_STANCE_TYPE_MAX = GENERAL_STANCE_TYPE_END
+};
+
+inline const GENERAL_STANCE_TYPE (&EnumValuesGENERAL_STANCE_TYPE())[3] {
+  static const GENERAL_STANCE_TYPE values[] = {
+    GENERAL_STANCE_TYPE_NEUTRAL,
+    GENERAL_STANCE_TYPE_COMBAT,
+    GENERAL_STANCE_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesGENERAL_STANCE_TYPE() {
+  static const char * const names[4] = {
+    "NEUTRAL",
+    "COMBAT",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameGENERAL_STANCE_TYPE(GENERAL_STANCE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, GENERAL_STANCE_TYPE_NEUTRAL, GENERAL_STANCE_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesGENERAL_STANCE_TYPE()[index];
+}
+
+enum GENERAL_STATE_TYPE : uint8_t {
+  GENERAL_STATE_TYPE_IDLE = 0,
+  GENERAL_STATE_TYPE_MOVE = 1,
+  GENERAL_STATE_TYPE_ATTACK = 2,
+  GENERAL_STATE_TYPE_DEFENSE = 3,
+  GENERAL_STATE_TYPE_DAMAGED = 4,
+  GENERAL_STATE_TYPE_DEAD = 5,
+  GENERAL_STATE_TYPE_END = 6,
+  GENERAL_STATE_TYPE_MIN = GENERAL_STATE_TYPE_IDLE,
+  GENERAL_STATE_TYPE_MAX = GENERAL_STATE_TYPE_END
+};
+
+inline const GENERAL_STATE_TYPE (&EnumValuesGENERAL_STATE_TYPE())[7] {
+  static const GENERAL_STATE_TYPE values[] = {
+    GENERAL_STATE_TYPE_IDLE,
+    GENERAL_STATE_TYPE_MOVE,
+    GENERAL_STATE_TYPE_ATTACK,
+    GENERAL_STATE_TYPE_DEFENSE,
+    GENERAL_STATE_TYPE_DAMAGED,
+    GENERAL_STATE_TYPE_DEAD,
+    GENERAL_STATE_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesGENERAL_STATE_TYPE() {
+  static const char * const names[8] = {
+    "IDLE",
+    "MOVE",
+    "ATTACK",
+    "DEFENSE",
+    "DAMAGED",
+    "DEAD",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameGENERAL_STATE_TYPE(GENERAL_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, GENERAL_STATE_TYPE_IDLE, GENERAL_STATE_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesGENERAL_STATE_TYPE()[index];
 }
 
 enum SOLDIER_STATE_TYPE : uint8_t {

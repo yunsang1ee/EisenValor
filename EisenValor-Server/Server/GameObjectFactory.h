@@ -5,37 +5,36 @@ namespace Server {
 		struct GameObjectTemplate {
 			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
-			FB_ENUMS::GAME_OBJECT_TYPE	objType;
 		};
 
-		struct SpanwerTemplate : public GameObjectTemplate {
-		};
-
-		struct CreatureTemplate  : public GameObjectTemplate {
+		struct CreatureTemplate : public GameObjectTemplate {
 			StatInfo stat;
 		};
 
-		struct PlayerTemplate : public CreatureTemplate {
+		struct GeneralTemplate : public CreatureTemplate {
+			// TODO: GeneralTemplate
 		};
 
-		struct NPCTemplate : public CreatureTemplate {
-			FB_ENUMS::NPC_TYPE npcType;
+		struct PlayerTemplate : public GeneralTemplate {
+			// TODO: PlayerTemplate
 		};
 
-		struct GeneralTemplate : public NPCTemplate {
-		};
-
-		struct SoldierTemplate : public NPCTemplate {
+		struct SoldierTemplate : public CreatureTemplate {
 			std::weak_ptr<NPC> ownerGeneral;
 			float enemyDetectionRange;
 			float combatRange;
 			std::chrono::seconds attackCycleTime;
 
 		};
+
+		struct SpanwerTemplate : public GameObjectTemplate {
 		
+		};
+
 		class GameObject;
+		class General;
 		class Player;
-		class NPC;
+		class Soldier;
 
 		class GameObjectFactory {
 		private:
@@ -48,10 +47,10 @@ namespace Server {
 
 		public:
 			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
-			static std::shared_ptr<NPC>			CreateGeneral(const GeneralTemplate& t);
-			static std::shared_ptr<NPC>			CreateSoldier(const SoldierTemplate& t);
-			static std::shared_ptr<GameObject>  CreateSpawnObj(const SpanwerTemplate& t);
-			
+			static std::shared_ptr<General>		CreateGeneral(const GeneralTemplate& t);
+			// static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
+
 		};
 	}
 }

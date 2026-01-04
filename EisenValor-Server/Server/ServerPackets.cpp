@@ -130,12 +130,18 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_USER_IN_GAME_LOBBY_PACKETDirect, user.data(), id));
 	}
 
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
+	}
+
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 hp) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.pos) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot};
 		std::cout << "SC_MY_PLAYER" << std::endl;
@@ -146,24 +152,12 @@ namespace ServerPackets {
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.pos) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
 		std::cout << "SC_ADD_OBJ" << std::endl;
 		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_IN_GAME_WORLD_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &posInfo, hp));
-	}
-
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_NPC_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::NPC_TYPE npcType, const PosInfo& transform, const uint32 hp) noexcept
-	{
-		flatbuffers::FlatBufferBuilder builder;
-
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
-
-		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
-		std::cout << "SC_ADD_NPC" << std::endl;
-		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_NPC_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_NPC_PACKET, id, objType, teamType, npcType, &posInfo, hp));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id) noexcept
@@ -177,8 +171,8 @@ namespace ServerPackets {
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.pos) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
 
@@ -197,17 +191,6 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
-	}
-
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_NPC_INFO_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::NPC_TYPE npcType, const PosInfo& transform, const int hp, const uint8 objState)
-	{
-		flatbuffers::FlatBufferBuilder builder;
-
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.position) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rotation) };
-
-		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_NPC_INFO_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_NPC_INFO, id, objType, teamType, npcType, &posInfo, hp, objState));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PING_PACKET()

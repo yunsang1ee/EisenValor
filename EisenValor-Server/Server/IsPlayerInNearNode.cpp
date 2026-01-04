@@ -4,7 +4,6 @@
 #include "BehaviorTree.h"
 #include "GameRoom.h"
 #include "Player.h"
-#include "NPC.h"
 bool Server::Contents::IsPlayerInNearNode::Check()
 {
 	//const auto& players = GetTree()->GetOwner()->GetGameRoom()->GetPlayers();

@@ -2,7 +2,6 @@
 #include "GameRoom.h"
 
 #include "Player.h"
-#include "NPC.h"
 #include "ClientSession.h"
 #include "SoldierStates.h"
 #include "FSM.h"
@@ -124,6 +123,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 
 	AddParticipant(std::move(newUser));
 
+	LOG_INFO("Session:{}, Join Game Room", id);
 }
 
 void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
@@ -148,6 +148,11 @@ void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSessi
 		auto pb{ ServerPackets::Make_SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(id) };
 		Broadcast(std::move(pb));
 	}
+
+
+	LOG_INFO("Session:{}, Leave Game Room", id);
+
+	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY, clientSession);
 }
 
 void Server::Contents::GameRoom::ReturnToGameRoom(const Users& users, const Bots& bots)
@@ -297,9 +302,12 @@ void Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std
 #ifdef DEVELOP
 void Server::Contents::GameRoom::EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession)
 {
+	if(nullptr == m_gameWorld)
+		CreateWorld();
+
 	if(m_gameWorld) {
 		clientSession->SetGameWorld(m_gameWorld);
-		m_gameWorld->EnterGameWorld(clientSession);
+		m_gameWorld->ExecAsync(&Server::Contents::GameWorld::EnterGameWorld, clientSession);
 	}
 }
 #endif // DEVELOP

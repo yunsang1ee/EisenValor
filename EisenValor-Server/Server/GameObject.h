@@ -31,7 +31,7 @@ namespace Server {
 		
 		public:
 			GameObject() = default;
-			explicit GameObject(const FB_ENUMS::GAME_OBJECT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
+			explicit GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type);
 			virtual ~GameObject();
 			
 			GameObject(const GameObject&) = delete;
@@ -43,8 +43,8 @@ namespace Server {
 			void SetID(const uint32 id) noexcept { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
 			void SetPosInfo(const PosInfo& transform) noexcept { m_posInfo = transform; }
-			void SetPos(const Vec3& pos) noexcept { m_posInfo.position = pos; }
-			void SetRotation(const Vec3& rotation) noexcept { m_posInfo.rotation = rotation; }
+			void SetPos(const Vec3& pos) noexcept { m_posInfo.pos = pos; }
+			void SetRotation(const Vec3& rotation) noexcept { m_posInfo.rot = rotation; }
 			void SetRoom(std::weak_ptr<GameRoom> match) noexcept { m_room = match; }
 			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
 
@@ -52,8 +52,8 @@ namespace Server {
 			uint32 GetID() const noexcept { return m_id; }
 			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const noexcept { return m_type; }
 			const PosInfo& GetPosInfo() const noexcept { return m_posInfo; }
-			const Vec3& GetPos() const noexcept { return m_posInfo.position; }
-			const Vec3& GetRotation() const noexcept { return m_posInfo.rotation; }
+			const Vec3& GetPos() const noexcept { return m_posInfo.pos; }
+			const Vec3& GetRotation() const noexcept { return m_posInfo.rot; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 			const Vec3 GetForwardDir();
