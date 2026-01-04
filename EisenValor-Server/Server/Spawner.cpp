@@ -3,7 +3,6 @@
 
 #include "GameObject.h"
 #include "GameRoom.h"
-#include "NPC.h"
 
 void Server::Contents::Spawner::Update(const float dt)
 {

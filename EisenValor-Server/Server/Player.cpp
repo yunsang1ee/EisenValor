@@ -1,11 +1,12 @@
 #include "pch.h"
 #include "Player.h"
-
-#include "NPC.h"
 #include "GameRoom.h"
 
+#include "ClientSession.h"
+#include "GameWorld.h"
+
 Server::Contents::Player::Player(const FB_ENUMS::TEAM_TYPE teamType)
-	:Creature(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, teamType)
+	:General(teamType, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
 {
 }
 
@@ -19,6 +20,6 @@ bool Server::Contents::Player::OnDamaged(std::shared_ptr<Creature> attacker, con
 	curHp -= damaged;
 	SetHp(curHp);
 	auto pb = ServerPackets::Make_SC_HIT_PACKET(GetID(), curHp);
-	// GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::BroadcastToAll, std::move(pb));
+	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 	return true;
 }

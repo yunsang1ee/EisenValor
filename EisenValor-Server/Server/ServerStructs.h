@@ -15,8 +15,8 @@ struct ParticipantInfo {
 };
 
 struct PosInfo {
-	Vec3 position;
-	Vec3 rotation;
+	Vec3 pos;
+	Vec3 rot;
 };
 
 struct StatInfo {

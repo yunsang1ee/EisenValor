@@ -26,3 +26,8 @@ struct ParticipantInfo {
 	state_type: FB_ENUMS.PARTICIPANT_STATE_TYPE;
 	team_type: FB_ENUMS.TEAM_TYPE;
 }
+
+struct GeneralAttackInfo {
+	attack_type: FB_ENUMS.GENERAL_ATTACK_TYPE;
+	attack_dir: FB_ENUMS.GENERAL_ATTACK_DIR_TYPE;
+}

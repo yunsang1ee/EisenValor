@@ -158,6 +158,54 @@ table SC_CHANGE_GAME_ROOM_STATE_PACKET{
 table SC_GAME_FINISH_PACKET {
 
 }
+table SC_LOCAL_PLAYER_PACKET {
+	player_id: uint;
+	pos_info: FB_STRUCTS.PosInfo;
+	team_type: FB_ENUMS.TEAM_TYPE;
+	hp: uint;
+}
+
+table SC_ADD_OBJ_PACKET {
+	obj_id: uint;
+	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
+	team_type : FB_ENUMS.TEAM_TYPE;
+	pos_info: FB_STRUCTS.PosInfo;
+	hp: uint;
+}
+
+table SC_REMOVE_OBJ_PACKET {
+	obj_id: uint;
+}
+
+table CS_CHAT_PACKET {
+	msg: string;				
+}
+
+table SC_CHAT_PACKET {
+	msg: string;
+}
+
+table CS_MOVE_PACKET {
+	pos_info: FB_STRUCTS.PosInfo;
+}
+
+table SC_MOVE_PACKET {
+	obj_id: uint;
+	pos_info: FB_STRUCTS.PosInfo;
+}
+
+table CS_PLAYER_ATTACK {
+	attack_info: FB_STRUCTS.GeneralAttackInfo;
+}
+
+table SC_PLAYER_DAMAGED_PACKET {
+	obj_id: uint;
+	current_hp: uint;
+}
+
+table SC_REMAINING_GAME_TIME {
+	remaining_time : uint;
+}
 
 
 
@@ -168,157 +216,9 @@ table CS_ENTER_GAME_WORLD_PACKET {
 	room_id: ushort;
 }
 
-
 // ====================================================
 //					  GAME_START
 // ====================================================
 table CS_GAME_START_PACKET{
 
 }
-
-// ================================================
-//					LOCAL_PLAYER
-// ================================================
-table SC_LOCAL_PLAYER_PACKET {
-	player_id: uint;
-	pos_info: FB_STRUCTS.PosInfo;
-	team_type: FB_ENUMS.TEAM_TYPE;
-	hp: uint;
-}
-
-// ================================================
-//					ADD/REMOVE OBJ
-// ================================================
-table SC_ADD_OBJ_PACKET {
-	obj_id: uint;
-	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
-	team_type : FB_ENUMS.TEAM_TYPE;
-	pos_info: FB_STRUCTS.PosInfo;
-	hp: uint;
-}
-
-// ================================================
-//					ADD/REMOVE NPC
-// ================================================
-table SC_ADD_NPC_PACKET {
-	obj_id: uint;
-	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
-	team_type : FB_ENUMS.TEAM_TYPE;
-	npc_type: FB_ENUMS.NPC_TYPE;
-	pos_info: FB_STRUCTS.PosInfo;
-	hp: uint;
-}
-
-table SC_REMOVE_OBJ_PACKET {
-	obj_id: uint;
-}
-
-// ================================================
-//						CHAT
-// ================================================
-table CS_CHAT_PACKET {
-	msg: string;				
-}
-
-table SC_CHAT_PACKET {
-	msg: string;
-}
-
-
-// ================================================
-//						MOVE
-// ================================================
-table CS_MOVE_PACKET {
-	pos_info: FB_STRUCTS.PosInfo;
-}
-
-table SC_MOVE_PACKET {
-	obj_id: uint;
-	pos_info: FB_STRUCTS.PosInfo;
-}
-
-// ================================================
-//					SUMMON_NPC
-// ================================================
-table CS_SUMMON_NPC {
-
-}
-
-
-// ================================================
-//					SOLDIER_FORMATION
-// ================================================
-table CS_SOLDIER_FORMATION {
-	formation: ubyte;
-}
-
-
-// ================================================
-//					PLAYER_ATTACK
-// ================================================
-table CS_PLAYER_ATTACK {
-	
-}
-
-// ================================================
-//						HIT
-// ================================================
-table SC_PLAYER_DAMAGED_PACKET {
-	obj_id: uint;
-	current_hp: uint;
-}
-
-// ================================================
-//					SOLDIER_MOVE
-// ================================================
-table CS_SOLDIER_MOVE {
-	pos : FB_STRUCTS.Vec3;
-}
-
-// ================================================
-//					REMAINING_GAME_TIME
-// ================================================
-table SC_REMAINING_GAME_TIME {
-	remaining_time : uint;
-}
-
-// ================================================
-//					CHANGE_SOLDIER_FORMATION
-// ================================================
-table CS_CHANGE_SOLDIER_FORMATION {
-
-}
-
-// ================================================
-//				REQ_ATTACK
-// ================================================
-table CS_REQ_ATTACK {
-
-}
-
-// ================================================
-//					NPC_INFO
-// ================================================
-table SC_NPC_INFO {
-	obj_id: uint;
-	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
-	team_type : FB_ENUMS.TEAM_TYPE;
-	npc_type: FB_ENUMS.NPC_TYPE;
-	pos_info: FB_STRUCTS.PosInfo;
-	hp: uint;
-	obj_state : ubyte;
-}
-
-
-
-
-// 아이디
-// 오브젝트 타입
-// 
-// 위치
-// 회전값
-// 속도
-// 가속도
-// 타임스탬프
-// 체력
-// state

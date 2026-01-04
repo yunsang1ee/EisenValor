@@ -18,8 +18,9 @@ enum PARTICIPANT_STATE_TYPE :ubyte{
 }
 
 enum GAME_OBJECT_TYPE : ubyte{
-	NPC = 0,
+	GENERAL = 0,
 	PLAYER,
+	SOLDIER,
 	SPAWNER,
 	VALLISTAR,
 	PROJECTILE,
@@ -27,16 +28,45 @@ enum GAME_OBJECT_TYPE : ubyte{
 	END
 }
 
-enum NPC_TYPE: ubyte{
-	GENERAL = 0,
-	SOLDIER,
+enum TEAM_TYPE: ubyte{
+	OFFENSE = 0,
+	DEFENSE,
 
 	END
 }
 
-enum TEAM_TYPE: ubyte{
-	OFFENSE = 0,
+enum GENERAL_ATTACK_TYPE : ubyte {
+	LIGHT,	// 약공격
+	HEAVY,	// 강공격
+	AREA,	// 범위공격
+	DISARM,	// 무장해제 공격
+
+	END
+}
+
+enum GENERAL_ATTACK_DIR_TYPE : ubyte {
+	NONE,
+	TOP,	// 상단
+	LEFT,	// 좌
+	RIGHT,	// 우
+
+	END
+}
+
+enum GENERAL_STANCE_TYPE : ubyte{
+	NEUTRAL = 0,
+	COMBAT,
+
+	END
+}
+
+enum GENERAL_STATE_TYPE: ubyte {
+	IDLE =0,
+	MOVE,
+	ATTACK,
 	DEFENSE,
+	DAMAGED,
+	DEAD,
 
 	END
 }

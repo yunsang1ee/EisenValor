@@ -6,11 +6,11 @@
 
 void Server::Contents::GameLobby::Init()
 {
-	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
-	room->Init();
-	m_rooms.insert(std::make_pair(room->GetID(), std::move(room)));
-	
-	m_roomIDGen++;
+	//auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
+	//room->Init();
+	//m_rooms.insert(std::make_pair(room->GetID(), std::move(room)));
+	//
+	//m_roomIDGen++;
 
 	LOG_INFO("GameLobby Init");
 }
@@ -44,6 +44,8 @@ void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_p
 	}
 	
 	AddUser(clientSession);
+	
+	LOG_INFO("Session:{}, Enter Game Lobby", id);
 }
 
 void Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
@@ -60,6 +62,8 @@ void Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_p
 		auto pb{ ServerPackets::Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(id) };
 		Broadcast(std::move(pb));
 	}
+
+	LOG_INFO("Session:{}, Leave Game Lobby", id);
 }
 
 void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
@@ -71,7 +75,7 @@ void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr
 	auto newRoom = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
 	newRoom->Init();
 	m_rooms.insert(std::make_pair(newRoom->GetID(), newRoom));
-	m_roomIDGen++;
+	
 
 	{
 		// 로비에서 유저 제거(만든 방에 들어갔으니..)
@@ -88,7 +92,11 @@ void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr
 	{
 		auto pb = ServerPackets::Make_SC_MAKE_GAME_ROOM_PACKET(newRoom->GetRoomInfo());
 		Broadcast(std::move(pb));
+	
 	}
+
+	LOG_INFO("Make New Game Room: {}", m_roomIDGen);
+	m_roomIDGen++;
 }
 
 void Server::Contents::GameLobby::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)

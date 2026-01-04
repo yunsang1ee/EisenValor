@@ -10,7 +10,6 @@
 
 #include "GameObjectFactory.h"
 #include "Player.h"
-#include "NPC.h"
 
 #include "SoldierStates.h"
 
@@ -167,17 +166,13 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
 {
-	//const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	auto world = clientSession->GetGameWorld();
 
-	//const auto player = clientSession->GetPlayer();
-	//
-	//if(auto room = player->GetGameRoom()) {
-	//	room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_PLAYER_ATTACK, player);
-	//	return true;
-	//}
+	if(world)
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK, clientSession, *recvPkt.attack_info());
 
 	return true;
-	return false;
 }
 
 // =================

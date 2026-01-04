@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Creature.h"
+#include "General.h"
 
 namespace Server {
 	class ClientSession;
@@ -8,7 +8,7 @@ namespace Server {
 	namespace Contents {
 		class NPC;
 
-		class Player : public Creature {
+		class Player : public General {
 		private:
 			std::weak_ptr<ClientSession>			m_session;
 
@@ -23,7 +23,7 @@ namespace Server {
 			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
 		
 		public:
-			virtual bool OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt) override;
+			virtual bool OnDamaged(std::shared_ptr<Creature> attacker, const int32 damaged, const float dt) override final;
 
 		};
 	}

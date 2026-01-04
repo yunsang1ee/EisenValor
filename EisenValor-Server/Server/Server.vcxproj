@@ -167,6 +167,7 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
     <ClCompile Include="GameWorld.cpp" />
+    <ClCompile Include="General.cpp" />
     <ClCompile Include="Participant.cpp" />
     <ClCompile Include="ServerPackets.cpp" />
     <ClCompile Include="ServerGlobalFunc.cpp" />
@@ -181,7 +182,7 @@
     <ClCompile Include="Script.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerManager.cpp" />
-    <ClCompile Include="NPC.cpp" />
+    <ClCompile Include="Soldier.cpp" />
     <ClCompile Include="SoldierStates.cpp" />
     <ClCompile Include="Spawner.cpp" />
     <ClCompile Include="State.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
     <ClInclude Include="GameWorld.h" />
+    <ClInclude Include="General.h" />
     <ClInclude Include="Participant.h" />
     <ClInclude Include="ServerPackets.h" />
     <ClInclude Include="ServerGlobalFunc.h" />
@@ -214,7 +216,7 @@
     <ClInclude Include="ServerManager.h" />
     <ClInclude Include="ServerStructs.h" />
     <ClInclude Include="ServerTypes.h" />
-    <ClInclude Include="NPC.h" />
+    <ClInclude Include="Soldier.h" />
     <ClInclude Include="SoldierStates.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="State.h" />

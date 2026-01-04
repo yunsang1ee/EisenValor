@@ -59,8 +59,10 @@ namespace Server {
 			void LeaveGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 
 		public:
+			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
+			
 			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo);
-			void Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player>  player);
+			void Handle_CS_PLAYER_ATTACK(const std::shared_ptr<ClientSession>& clientSession, const FB_STRUCTS::GeneralAttackInfo attackInfo);
 
 		private:
 			void Update();
@@ -73,7 +75,6 @@ namespace Server {
 
 		private:
 			void ProcessEvents();
-			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			void CheckGameTime(const float dt);
 
 			bool IsFinish();

@@ -35,6 +35,8 @@ enum class PACKET_TYPE : uint16 {
 #pragma region SESSION_PACKETS
 	CS_PONG_PKT = 0,
 	SC_PING_PKT = 1,
+	CS_CHAT_PKT = 2,
+	SC_CHAT_PKT = 3,
 #pragma endregion
 
 	// ==================
@@ -112,17 +114,7 @@ enum class PACKET_TYPE : uint16 {
 
 	SC_PLAYER_DAMAGED_PKT = 10006,
 
-	CS_SOLDIER_MOVE_PKT = 10007,
-
 	SC_REMAINING_GAME_TIME_PKT = 10008,
-
-	CS_CHANGE_SOLDIER_FORMATION_PKT = 10009,
-
-	CS_REQ_ATTACK_PKT = 10010,
-
-	SC_NPC_INFO_PKT = 10011,
-
-	SC_ADD_NPC_PKT = 10012,
 
 	K_CS_GAME_START_PKT = 10013,
 
@@ -131,7 +123,6 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_RETURN_TO_GAME_ROOM_PKT = 10015,
 	SC_RETURN_TO_GAME_ROOM_PKT = 10016,
-
 
 	// Å×½ºÆ®
 #ifdef DEVELOP

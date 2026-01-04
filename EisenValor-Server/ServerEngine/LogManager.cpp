@@ -2,6 +2,7 @@
 #include "LogManager.h"
 
 std::ostringstream ServerEngine::LogManager::s_oss;
+std::mutex ServerEngine::LogManager::s_logMutex;
 
 void ServerEngine::LogManager::Init() noexcept
 {

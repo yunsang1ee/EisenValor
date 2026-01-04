@@ -4,7 +4,6 @@
 #include "GameRoom.h"
 #include "GameObjectFactory.h"
 #include "Player.h"
-#include "NPC.h"
 #include "SoldierStates.h"
 #include "ClientSession.h"
 #include "Participant.h"
@@ -37,7 +36,6 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		const Vec3 rot{ 0.f, 0.f, 0.f };
 
 		PlayerTemplate t;
-		t.objType = FB_ENUMS::GAME_OBJECT_TYPE_PLAYER;
 		t.teamType = user->GetTeamType();
 		t.posInfo = PosInfo{ startPos, rot };
 		t.stat.hp = 100;
@@ -45,7 +43,6 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		t.stat.stamina = 100;
 		auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
 
-		// 플레이어 아이디 세팅
 		auto session = user->GetSession();
 		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
 		player->SetID(session->GetID());
@@ -61,8 +58,6 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		startPos += offset;
 		const Vec3 rot{ 0.f, 0.f, 0.f };
 		GeneralTemplate t;
-		t.npcType = FB_ENUMS::NPC_TYPE_GENERAL;
-		t.objType = FB_ENUMS::GAME_OBJECT_TYPE_NPC;
 		t.posInfo = PosInfo{ startPos, rot };
 		t.stat.hp = 100;
 		t.stat.atk = 50;
@@ -88,6 +83,8 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	//}
 
 	// TODO: 위에 애들 전부 처리하고 SC_GAME_START_SUCCESS_PACKET 보내기
+
+	LOG_INFO("Room ID:{}, Game Start!", GetGameRoom()->GetID());
 
 	Update();
 }
@@ -167,21 +164,8 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 				const Vec3 rot{ obj->GetRotation() };
 				const PosInfo kInfo{ pos, rot };
 
-				if(obj->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
-					const auto npc = std::static_pointer_cast<NPC>(obj);
-					auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(id, obj->GetObjType(), obj->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
-					clientSession->Send(std::move(pb));
-				}
-				else {
-					if(obj->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, std::static_pointer_cast<Player>(obj)->GetHP());
-						clientSession->Send(std::move(pb));
-					}
-					else {
-						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, 0);
-						clientSession->Send(std::move(pb));
-					}
-				}
+				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, 0);
+				clientSession->Send(std::move(pb));
 			}
 		}
 	}
@@ -192,15 +176,8 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 		const Vec3 pos{ newGameObject->GetPos() };
 		const Vec3 rot{ newGameObject->GetRotation() };
 		const PosInfo kInfo{ pos, rot };
-		if(newGameObject->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_NPC) {
-			const auto npc = std::static_pointer_cast<NPC>(newGameObject);
-			auto pb = ServerPackets::Make_SC_ADD_NPC_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), npc->GetNpcType(), kInfo, npc->GetHP());
-			Broadcast(std::move(pb));
-		}
-		else {
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, 0);
-			Broadcast(std::move(pb));
-		}
+		auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, 0);
+		Broadcast(std::move(pb));
 	}
 
 	const uint8 index = newGameObject->GetObjType();
@@ -209,9 +186,8 @@ void Server::Contents::GameWorld::AddGameObject(std::shared_ptr<GameObject> newG
 
 	auto& gameObjectMap = m_gameObjectsGroups[index];
 
-	if(gameObjectMap.end() == gameObjectMap.find(id)) {
+	if(gameObjectMap.end() == gameObjectMap.find(id))
 		gameObjectMap.insert(std::make_pair(id, newGameObject));
-	}
 }
 
 void Server::Contents::GameWorld::RemoveGameObject(std::shared_ptr<GameObject> gameObject)
@@ -269,84 +245,55 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 	auto playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	auto player = std::static_pointer_cast<Player>(playerGroup[clientSession->GetID()]);
 
-	player->SetPos(kinematicInfo.position);
-	player->SetRotation(kinematicInfo.rotation);
+	player->SetPos(kinematicInfo.pos);
+	player->SetRotation(kinematicInfo.rot);
 
 	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
 	Broadcast(std::move(pb));
 }
 
-void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(std::shared_ptr<Player> player)
+void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(const std::shared_ptr<ClientSession>& clientSession, const FB_STRUCTS::GeneralAttackInfo attackInfo)
 {
-	//static constexpr float attackRadius = 3.f;
-	//static constexpr float attackDegree = 90.f;
-	//constexpr float radiusSq = attackRadius * attackRadius;
+	const uint32 playerID{ clientSession->GetID() };
+	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+	if(playerGroup.find(playerID) != playerGroup.end()) {
+		auto player = std::static_pointer_cast<Player>(playerGroup[playerID]);
 
-	//const Vec3& playerPos = player->GetPos();
-	//Vec3 playerDir{ sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y) };
-	//playerDir.Normalize();
+		static constexpr float attackRadius = 3.f;
+		static constexpr float attackDegree = 90.f;
+		constexpr float radiusSq = attackRadius * attackRadius;
 
-	//const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
+		const Vec3& playerPos = player->GetPos();
+		Vec3 playerDir{ sinf(player->GetRotation().y), 0.f, cosf(player->GetRotation().y) };
+		playerDir.Normalize();
 
-	//const auto teamType = player->GetTeamType();
-	//const auto otherTeam = etou8(GetOtherTeamType(teamType));
+		const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
 
-	//for(const auto& objectGroup : m_teams[otherTeam].GetAllObjectGroups()) {
-	//	for(const auto& [targetID, object] : objectGroup) {
+		for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
+			// TODO: 검색에 필요없는 그룹 제거
 
-	//		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE) continue;
-	//		if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER) continue;
-	//		 
-	//		const Vec3& pos = object->GetPos();
-	//		Vec3 toTargetDir = pos - playerPos;
-	//		const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
+			for(const auto& [id, obj] : m_gameObjectsGroups[i]) {
+				if(id == playerID) continue;
 
-	//		// 반지름 길이와 타겟까지의 거리 비교
-	//		if(distToTargetSq >= radiusSq) continue;
+				const Vec3& pos = obj->GetPos();
+				Vec3 toTargetDir = pos - playerPos;
+				const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
+				if(distToTargetSq >= radiusSq) continue;
+				const float dotValue{ playerDir.Dot(toTargetDir) };
+				const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+				//		// a * b = |a| |b| cos	
+				//		// cos = a * b / |a| |b|
+				//		// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
+				// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
+				if(dotValue <= 0) continue;
+				if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
+					// 공격 성공!
 
-	//		const float dotValue{ playerDir.Dot(toTargetDir) };
-
-	//		const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
-
-	//		// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
-	//		if(dotValue <= 0) continue;
-
-	//		if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
-	//			std::cout << std::format("ATTACKER ID: {}, TARGET ID:{}", player->GetID(), targetID) << std::endl;
-	//			const auto playerAtk = player->GetAtk();
-	//			int hp{ std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP() };
-	//			hp -= playerAtk;
-	//			if(hp <= 0) {
-	//				std::static_pointer_cast<Server::Contents::Creature>(object)->SetAlive(false);
-	//				std::static_pointer_cast<Server::Contents::Creature>(object)->GetGameRoom()->AddEvent([t = object]()
-	//					{
-	//						t->GetGameRoom()->GetTeam(t->GetTeamType()).RemoveObject(t);
-	//					});
-	//			}
-	//			else {
-	//				std::static_pointer_cast<Server::Contents::Creature>(object)->SetHp(hp);
-	//			}
-
-	//			// TODO: SC_PLAYER_ATTACK 보냄 -> 그럼 클라에서는 해당 PLAYER의 ATTACK ANIMATION 재생
-
-	//			if(object->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-	//				auto pb = ServerPackets::Make_SC_HIT_PACKET(std::static_pointer_cast<Server::Contents::Creature>(object)->GetID(), std::static_pointer_cast<Server::Contents::Creature>(object)->GetHP());
-	//				ExecAsync(&GameRoom::BroadcastToAll, std::move(pb));
-	//			}
-
-	//			//if(hp <= 0) {
-	//			//	object->GetGameRoom()->AddEvent([this, otherTeam, object]()
-	//			//		{
-	//			//			m_teams[otherTeam].RemoveObject(object);
-	//			//		});
-	//			//}
-	//		}
-
-	//		// a * b = |a| |b| cos	
-	//		// cos = a * b / |a| |b|
-	//		// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
-	//	}
-	//}
+					std::cout << std::format("Attacker: {}, Target: {}", playerID, id);
+				}
+			}
+		}
+	}
 }
 
 #ifdef DEVELOP

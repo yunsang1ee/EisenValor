@@ -25,6 +25,8 @@ struct RoomInfo;
 
 struct ParticipantInfo;
 
+struct GeneralAttackInfo;
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
   float x_;
@@ -156,6 +158,29 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ParticipantInfo FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(ParticipantInfo, 8);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) GeneralAttackInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint8_t attack_type_;
+  uint8_t attack_dir_;
+
+ public:
+  GeneralAttackInfo()
+      : attack_type_(0),
+        attack_dir_(0) {
+  }
+  GeneralAttackInfo(FB_ENUMS::GENERAL_ATTACK_TYPE _attack_type, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE _attack_dir)
+      : attack_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_attack_type))),
+        attack_dir_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_attack_dir))) {
+  }
+  FB_ENUMS::GENERAL_ATTACK_TYPE attack_type() const {
+    return static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(::flatbuffers::EndianScalar(attack_type_));
+  }
+  FB_ENUMS::GENERAL_ATTACK_DIR_TYPE attack_dir() const {
+    return static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(::flatbuffers::EndianScalar(attack_dir_));
+  }
+};
+FLATBUFFERS_STRUCT_END(GeneralAttackInfo, 2);
 
 }  // namespace FB_STRUCTS
 
