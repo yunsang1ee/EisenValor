@@ -41,7 +41,6 @@ void ServerEngine::TaskQueue::Execute() noexcept
 void ServerEngine::TaskQueue::ClearTaskQueue() noexcept
 {
 	std::shared_ptr<Task> task;
-	while(m_tasks.try_pop(task)) {
-	}
+	while(m_tasks.try_pop(task));
 	m_taskCount.store(0);
 }

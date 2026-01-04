@@ -25,10 +25,12 @@ void Server::ClientSession::Ping()
 	if(GetState() != SESSION_STATE::FREE) {
 
 		const auto now{ std::chrono::high_resolution_clock::now()};
-		const auto dt{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
 
-		if(dt > m_timeoutInterval) {
-			Disconnect("Disconnected By PingCheck");
+		if(pingPongInterval >= m_timeoutInterval) {
+			std::string_view reason{ "Disconnected By PingCheck" };
+			Disconnect(reason.data());
+			LOG_INFO("Session ID:{},", GetID() + reason.data());
 			return;
 		}
 
@@ -41,7 +43,7 @@ void Server::ClientSession::Ping()
 
 void Server::ClientSession::OnConnected()
 {
-	std::cout << "ClientSession OnConnected!" << std::endl;
+	LOG_INFO("Session ID:{}, OnConnected!", GetID());
 	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<Server::ClientSession>(shared_from_this()));
 	m_lastPong = std::chrono::high_resolution_clock::now();
 	
@@ -52,7 +54,7 @@ void Server::ClientSession::OnDisconnected()
 {
 	auto clientSession = std::static_pointer_cast<Server::ClientSession>(shared_from_this());
 	MANAGER(Server::ClientSessionManager)->RemoveSession(clientSession);
-	std::cout << "ClientSession OnDisconnected!" << std::endl;
+	LOG_INFO("Session ID:{}, OnDisconnected!", GetID());
 
 	switch(const auto state = clientSession->GetState()) {
 		case SESSION_STATE::FREE:
@@ -106,6 +108,6 @@ void Server::ClientSession::OnSend(const uint32 bytesTransferred)
 
 void Server::ClientSession::Handle_CS_PONG()
 {
-	std::cout << "Pong!" << std::endl;
+	// std::cout << "Pong!" << std::endl;
 	m_lastPong = std::chrono::high_resolution_clock::now();
 }

@@ -7,6 +7,12 @@
 #include "TaskQueue.h"
 #include "ServerEngineConfigManager.h"
 
+std::string WStringToString(const std::wstring& wstr)
+{
+	std::filesystem::path p(wstr);
+	return p.string();
+}
+
 bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
 	m_acceptThreadNum = 0;
@@ -116,8 +122,9 @@ void ServerEngine::RIOCore::DoAcceptLoop()
 	std::wstring ipAddress;
 	ipAddress.resize(100);
 	InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
-	std::wcout << std::format(L"Session Connected! IP = {}, PORT = {}", ipAddress.c_str(), clientaddr.sin_port) << std::endl;
 
+	LOG_INFO("Session Connected! IP = {}, PORT = {}", WStringToString(ipAddress.c_str()), clientaddr.sin_port);
+	
 	ServerEngine::RIOWorker* const rioWorker{ m_rioWorkers[m_acceptThreadNum].get() };
 	if(rioWorker->ProcessAccept(clientSocket, clientaddr))
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;

@@ -19,8 +19,7 @@ ServerEngine::Session::Session()
 
 ServerEngine::Session::~Session()
 {
-	std::osyncstream oss{ std::cout };
-	oss << std::format("~Session, ID = {}", m_id) << std::endl;
+	std::cout << std::format("~Session, ID = {}", m_id) << std::endl;
 	CloseSocket();
 }
 
@@ -252,7 +251,7 @@ void ServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 	m_recvContext.ReleaseSession();
 
 	if(0 == bytesTransferred) {
-		Disconnect("bytesTransferred 0");
+		Disconnect("Recv Zero");
 		return;
 	}
 	else {
