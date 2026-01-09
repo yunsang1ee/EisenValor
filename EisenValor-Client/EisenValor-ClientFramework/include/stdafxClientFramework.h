@@ -101,6 +101,11 @@ using HandleOf = DenseListHandle<T>;
 #include "DxCommon.h"
 // #include "DxMath.h"
 
+namespace epsilon
+{
+constexpr float kMachineEpsilon = 1.192092896e-7f;
+} // namespace epsilon
+
 #include "SimpleMath.h"
 using Vec2 = DirectX::SimpleMath::Vector2;
 using Vec3 = DirectX::SimpleMath::Vector3;

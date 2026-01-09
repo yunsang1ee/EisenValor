@@ -2,8 +2,46 @@
 #include "MovementComponent.h"
 #include "GameObject.h"
 #include "Scene.h"
-#include "SceneGlobal.h" 
+#include "SceneGlobal.h"
+#include "InputGlobal.h"
 #include "Transform.h"
+
+void MovementComponent::BindInput(MovementAction action, InputBinding inputFunc)
+{
+	switch (action)
+	{
+	case MovementAction::Forward:
+		m_forwardBinding = std::move(inputFunc);
+		break;
+	case MovementAction::Backward:
+		m_backwardBinding = std::move(inputFunc);
+		break;
+	case MovementAction::Left:
+		m_leftBinding = std::move(inputFunc);
+		break;
+	case MovementAction::Right:
+		m_rightBinding = std::move(inputFunc);
+		break;
+	}
+}
+
+void MovementComponent::BindDefaultWASD()
+{
+	m_forwardBinding = []() { return GLOBAL(InputGlobal).GetInput('W'); };
+	m_backwardBinding = []() { return GLOBAL(InputGlobal).GetInput('S'); };
+	m_leftBinding = []() { return GLOBAL(InputGlobal).GetInput('A'); };
+	m_rightBinding = []() { return GLOBAL(InputGlobal).GetInput('D'); };
+}
+
+bool MovementComponent::IsAnyInputActive() const
+{
+	bool forward = m_forwardBinding && m_forwardBinding();
+	bool backward = m_backwardBinding && m_backwardBinding();
+	bool left = m_leftBinding && m_leftBinding();
+	bool right = m_rightBinding && m_rightBinding();
+
+	return forward || backward || left || right;
+}
 
 void MovementComponent::ProcessInput(float deltaTime)
 {
@@ -11,42 +49,67 @@ void MovementComponent::ProcessInput(float deltaTime)
 	if (!myGameObject)
 		return;
 
-	// Transform 컴포넌트 가져오기
 	auto& transform = myGameObject->GetTransform();
-	DX::XMFLOAT3 rot = transform.GetRotation();
-	float playerYaw = rot.y; // Y축 회전 (라디안)
 
-	// 플레이어 정면 벡터
-	const float forwardX = sinf(playerYaw);
-	const float forwardZ = cosf(playerYaw);
+	DX::XMFLOAT3 forward = transform.GetForward();
+	DX::XMFLOAT3 right = transform.GetRight();
 
-	// 플레이어 우측 벡터
-	const float rightX = sinf(playerYaw + DirectX::XM_PIDIV2);
-	const float rightZ = cosf(playerYaw + DirectX::XM_PIDIV2);
+	bool isForward = m_forwardBinding && m_forwardBinding();
+	bool isBackward = m_backwardBinding && m_backwardBinding();
+	bool isLeft = m_leftBinding && m_leftBinding();
+	bool isRight = m_rightBinding && m_rightBinding();
 
-	// 입력에 따른 속도 설정
-	m_velocity = Vec3{0.0f, 0.0f, 0.0f};
+	DX::XMVECTOR moveDir = DX::XMVectorZero();
 
-	if (m_isMovingForward)
+	if (isForward)
 	{
-		m_velocity.x = forwardX * m_moveSpeed;
-		m_velocity.z = forwardZ * m_moveSpeed;
+		moveDir = DX::XMVectorAdd(moveDir, DX::XMLoadFloat3(&forward));
 	}
-	else if (m_isMovingBackward)
+	if (isBackward)
 	{
-		m_velocity.x = -forwardX * m_moveSpeed;
-		m_velocity.z = -forwardZ * m_moveSpeed;
+		moveDir = DX::XMVectorSubtract(moveDir, DX::XMLoadFloat3(&forward));
+	}
+	if (isRight)
+	{
+		moveDir = DX::XMVectorAdd(moveDir, DX::XMLoadFloat3(&right));
+	}
+	if (isLeft)
+	{
+		moveDir = DX::XMVectorSubtract(moveDir, DX::XMLoadFloat3(&right));
 	}
 
-	if (m_isMovingLeft)
+	float moveDirLength = DX::XMVectorGetX(DX::XMVector3Length(moveDir));
+	if (moveDirLength > 0.0f)
 	{
-		m_velocity.x -= rightX * m_moveSpeed;
-		m_velocity.z -= rightZ * m_moveSpeed;
+		moveDir = DX::XMVector3Normalize(moveDir);
 	}
-	else if (m_isMovingRight)
+
+	DX::XMVECTOR desiredVelocity = DX::XMVectorScale(moveDir, m_moveSpeed);
+	switch (m_movementMode)
 	{
-		m_velocity.x += rightX * m_moveSpeed;
-		m_velocity.z += rightZ * m_moveSpeed;
+	case MovementMode::Immediate:
+	{
+		DX::XMStoreFloat3(&m_velocity, desiredVelocity);
+		break;
+	}
+	case MovementMode::Physics:
+	{
+		if (moveDirLength > 0.0f)
+		{
+			DX::XMVECTOR currentVelocity = DX::XMLoadFloat3(&m_velocity);
+
+			float		 lerpFactor = 1.0f - expf(-m_acceleration * deltaTime);
+			DX::XMVECTOR newVelocity = DX::XMVectorLerp(currentVelocity, desiredVelocity, lerpFactor);
+						
+			if (float speed = DX::XMVectorGetX(DX::XMVector3Length(newVelocity)); speed > m_maxSpeed)
+			{
+				newVelocity = DX::XMVectorScale(DX::XMVector3Normalize(newVelocity), m_maxSpeed);
+			}
+
+			DX::XMStoreFloat3(&m_velocity, newVelocity);
+		}
+		break;
+	}
 	}
 }
 
@@ -59,18 +122,45 @@ void MovementComponent::OnUpdate(float deltaTime)
 	// 입력 처리
 	ProcessInput(deltaTime);
 
-	// Transform 컴포넌트 가져오기
 	auto& transform = myGameObject->GetTransform();
-	DX::XMFLOAT3 currentPos = transform.GetPosition();
-	
-	// 위치 업데이트
-	currentPos.x += m_velocity.x * deltaTime;
-	currentPos.y += m_velocity.y * deltaTime;
-	currentPos.z += m_velocity.z * deltaTime;
-	transform.SetPosition(currentPos);
 
-	// 속도 감쇠
-	m_velocity.x *= m_dampingFactor;
-	m_velocity.y *= m_dampingFactor;
-	m_velocity.z *= m_dampingFactor;
+	DX::XMVECTOR velocityVec = DX::XMLoadFloat3(&m_velocity);
+	DX::XMVECTOR displacement = DX::XMVectorScale(velocityVec, deltaTime);
+
+	DX::XMFLOAT3 currentPos = transform.GetWorldPosition();
+	DX::XMVECTOR currentPosVec = DX::XMLoadFloat3(&currentPos);
+
+	DX::XMVECTOR newPosVec = DX::XMVectorAdd(currentPosVec, displacement);
+
+	DX::XMFLOAT3 newPos;
+	DX::XMStoreFloat3(&newPos, newPosVec);
+
+	transform.SetWorldPosition(newPos);
+
+
+	switch (m_movementMode)
+	{
+	case MovementMode::Immediate:
+	{
+		if (!IsAnyInputActive())
+		{
+			m_velocity = DX::XMFLOAT3{0.0f, 0.0f, 0.0f};
+		}
+		break;
+	}
+	case MovementMode::Physics:
+	{
+		float		 dampingFactor = std::max(0.0f, 1.0f - m_physicsDamping * deltaTime);
+		DX::XMVECTOR dampedVelocity = DX::XMVectorScale(velocityVec, dampingFactor);
+		DX::XMStoreFloat3(&m_velocity, dampedVelocity);
+		float speed = DX::XMVectorGetX(DX::XMVector3Length(dampedVelocity));
+		if (speed < kEpsilon)
+		{
+			m_velocity = DX::XMFLOAT3{0.0f, 0.0f, 0.0f};
+		}
+		break;
+	}
+	default:
+		break;
+	}
 }

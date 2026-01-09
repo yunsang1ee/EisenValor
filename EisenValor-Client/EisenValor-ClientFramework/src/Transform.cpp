@@ -25,8 +25,7 @@ Transform::~Transform()
 	// 부모와의 연결 끊기
 	if (m_parent.IsValid())
 	{
-		auto* parentTransform = storage->Get(m_parent);
-		if (parentTransform)
+		if (auto* parentTransform = storage->Get(m_parent))
 		{
 			parentTransform->RemoveChild(m_handle);
 		}
@@ -35,19 +34,28 @@ Transform::~Transform()
 	// 자식들과의 연결 끊기
 	for (auto& childHandle : m_children)
 	{
-		if (childHandle.IsValid())
+		if (!childHandle.IsValid())
 		{
-			auto* childTransform = storage->Get(childHandle);
-			if (childTransform)
-			{
-				childTransform->m_parent = Handle::Invalid();
-				childTransform->MarkDirty();
-			}
+			continue;
+		}
+
+		if (auto* childTransform = storage->Get(childHandle))
+		{
+			childTransform->m_parent = Handle::Invalid();
+			childTransform->MarkDirty();
 		}
 	}
 	m_children.clear();
 }
 
+void Transform::OnUpdate(float deltaTime)
+{
+	if (m_isDirty)
+	{
+		UpdateWorldMatrix();
+		m_isDirty = false;
+	}
+}
 
 void Transform::SetPosition(float x, float y, float z)
 {
@@ -61,47 +69,128 @@ void Transform::SetPosition(const XMFLOAT3& position)
 	MarkDirty();
 }
 
+void Transform::SetWorldPosition(const DX::XMFLOAT3& worldPosition)
+{
+	if (!m_parent.IsValid())
+	{
+		SetPosition(worldPosition);
+		return;
+	}
+
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+	if (!storage)
+	{
+		SetPosition(worldPosition);
+		return;
+	}
+
+	auto* parent = storage->Get(m_parent);
+	if (!parent)
+	{
+		SetPosition(worldPosition);
+		return;
+	}
+
+	XMMATRIX parentWorldInv = XMMatrixInverse(nullptr, XMLoadFloat4x4(&parent->m_worldMatrix));
+
+	XMVECTOR worldPosVec = XMLoadFloat3(&worldPosition);
+	XMVECTOR localPosVec = XMVector3TransformCoord(worldPosVec, parentWorldInv);
+
+	XMFLOAT3 localPos;
+	XMStoreFloat3(&localPos, localPosVec);
+	SetPosition(localPos);
+}
+
 XMFLOAT3 Transform::GetWorldPosition()
 {
-	XMFLOAT4X4 worldMtx = GetWorldMatrix();
-	return {worldMtx._41, worldMtx._42, worldMtx._43};
+	return {m_worldMatrix._41, m_worldMatrix._42, m_worldMatrix._43};
 }
 
 
 void Transform::SetRotation(float x, float y, float z)
 {
-	m_localRotation = {x, y, z};
+	SetRotation(XMFLOAT3(x, y, z));
+}
+
+void Transform::SetRotation(const XMFLOAT3& degrees)
+{
+	XMVECTOR quatVec = XMQuaternionRotationRollPitchYaw(
+		XMConvertToRadians(degrees.x), XMConvertToRadians(degrees.y), XMConvertToRadians(degrees.z)
+	);
+
+	XMStoreFloat4(&m_localRotationQuat, quatVec);
+	m_eulerCacheDirty = true;
 	MarkDirty();
 }
 
-void Transform::SetRotation(const XMFLOAT3& rotation)
+void Transform::SetRotationQuaternion(const XMFLOAT4& quaternion)
 {
-	m_localRotation = rotation;
+	XMVECTOR quatVec = XMLoadFloat4(&quaternion);
+	quatVec = XMQuaternionNormalize(quatVec);
+	XMStoreFloat4(&m_localRotationQuat, quatVec);
+
+	m_eulerCacheDirty = true;
 	MarkDirty();
+}
+
+XMFLOAT3 Transform::GetRotation() const
+{
+	if (m_eulerCacheDirty)
+	{
+		float x = m_localRotationQuat.x;
+		float y = m_localRotationQuat.y;
+		float z = m_localRotationQuat.z;
+		float w = m_localRotationQuat.w;
+
+		float pitch = asinf(std::clamp(2.0f * (w * x - y * z), -1.0f, 1.0f));
+		float yaw = atan2f(2.0f * (w * y + x * z), 1.0f - 2.0f * (x * x + y * y));
+		float roll = atan2f(2.0f * (w * z + x * y), 1.0f - 2.0f * (x * x + z * z));
+
+		m_cachedEulerAngles = {XMConvertToDegrees(pitch), XMConvertToDegrees(yaw), XMConvertToDegrees(roll)};
+
+		m_eulerCacheDirty = false;
+	}
+
+	return m_cachedEulerAngles;
 }
 
 XMFLOAT3 Transform::GetWorldRotation()
 {
-	XMFLOAT4X4 worldMtx = GetWorldMatrix();
-	XMMATRIX   world = XMLoadFloat4x4(&worldMtx);
+	XMFLOAT4 worldQuat = GetWorldRotationQuaternion();
 
-	XMVECTOR scale, rotation, translation;
-	XMMatrixDecompose(&scale, &rotation, &translation, world);
+	float x = worldQuat.x;
+	float y = worldQuat.y;
+	float z = worldQuat.z;
+	float w = worldQuat.w;
 
-	XMFLOAT4 quatFloat;
-	XMStoreFloat4(&quatFloat, rotation);
-
-	float pitch = atan2f(
-		2.0f * (quatFloat.w * quatFloat.x + quatFloat.y * quatFloat.z),
-		1.0f - 2.0f * (quatFloat.x * quatFloat.x + quatFloat.y * quatFloat.y)
-	);
-	float yaw = asinf(std::clamp(2.0f * (quatFloat.w * quatFloat.y - quatFloat.z * quatFloat.x), -1.0f, 1.0f));
-	float roll = atan2f(
-		2.0f * (quatFloat.w * quatFloat.z + quatFloat.x * quatFloat.y),
-		1.0f - 2.0f * (quatFloat.y * quatFloat.y + quatFloat.z * quatFloat.z)
-	);
+	float pitch = asinf(std::clamp(2.0f * (w * x - y * z), -1.0f, 1.0f));
+	float yaw = atan2f(2.0f * (w * y + x * z), 1.0f - 2.0f * (x * x + y * y));
+	float roll = atan2f(2.0f * (w * z + x * y), 1.0f - 2.0f * (x * x + z * z));
 
 	return {XMConvertToDegrees(pitch), XMConvertToDegrees(yaw), XMConvertToDegrees(roll)};
+}
+
+XMFLOAT4 Transform::GetWorldRotationQuaternion()
+{
+	XMVECTOR worldQuat = XMLoadFloat4(&m_localRotationQuat);
+
+	if (m_parent.IsValid())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+		if (auto* parent = storage ? storage->Get(m_parent) : nullptr)
+		{
+			XMFLOAT4 parentQuat = parent->GetWorldRotationQuaternion();
+			XMVECTOR parentQuatVec = XMLoadFloat4(&parentQuat);
+			worldQuat = XMQuaternionMultiply(parentQuatVec, worldQuat);
+			worldQuat = XMQuaternionNormalize(worldQuat);
+		}
+	}
+
+	XMFLOAT4 result;
+	XMStoreFloat4(&result, worldQuat);
+	return result;
 }
 
 void Transform::SetScale(float uniformScale)
@@ -112,48 +201,20 @@ void Transform::SetScale(float uniformScale)
 
 XMFLOAT3 Transform::GetWorldScale()
 {
-	XMFLOAT4X4 worldMtx = GetWorldMatrix();
-	XMMATRIX   world = XMLoadFloat4x4(&worldMtx);
+	XMVECTOR sx = XMVector3Length(XMVectorSet(m_worldMatrix._11, m_worldMatrix._12, m_worldMatrix._13, 0.0f));
+	XMVECTOR sy = XMVector3Length(XMVectorSet(m_worldMatrix._21, m_worldMatrix._22, m_worldMatrix._23, 0.0f));
+	XMVECTOR sz = XMVector3Length(XMVectorSet(m_worldMatrix._31, m_worldMatrix._32, m_worldMatrix._33, 0.0f));
 
-	XMVECTOR scale, rotation, translation;
-	XMMatrixDecompose(&scale, &rotation, &translation, world);
-
-	XMFLOAT3 result;
-	XMStoreFloat3(&result, scale);
-	return result;
-}
-
-
-XMFLOAT4X4 Transform::GetLocalMatrix()
-{
-	if (m_isDirty)
-	{
-		UpdateLocalMatrix();
-	}
-	return m_localMatrix;
-}
-
-XMFLOAT4X4 Transform::GetWorldMatrix()
-{
-	if (m_isDirty)
-	{
-		UpdateWorldMatrix();
-	}
-	return m_worldMatrix;
+	return {XMVectorGetX(sx), XMVectorGetX(sy), XMVectorGetX(sz)};
 }
 
 void Transform::UpdateLocalMatrix()
 {
-	XMMATRIX S = XMMatrixScaling(m_localScale.x, m_localScale.y, m_localScale.z);
+	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_localPosition));
+	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&m_localRotationQuat));
+	XMMATRIX scale = XMMatrixScalingFromVector(XMLoadFloat3(&m_localScale));
 
-	XMMATRIX R = XMMatrixRotationRollPitchYaw(
-		XMConvertToRadians(m_localRotation.x), XMConvertToRadians(m_localRotation.y),
-		XMConvertToRadians(m_localRotation.z)
-	);
-
-	XMMATRIX T = XMMatrixTranslation(m_localPosition.x, m_localPosition.y, m_localPosition.z);
-
-	XMMATRIX localMatrix = S * R * T;
+	XMMATRIX localMatrix = scale * rotation * translation;
 	XMStoreFloat4x4(&m_localMatrix, localMatrix);
 }
 
@@ -166,15 +227,15 @@ void Transform::UpdateWorldMatrix()
 	{
 		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
-		auto* parentTransform = storage ? storage->Get(m_parent) : nullptr;
-
-		if (parentTransform)
+		if (auto* parentTransform = storage ? storage->Get(m_parent) : nullptr)
 		{
-			XMFLOAT4X4 parentWorldMtx4x4 = parentTransform->GetWorldMatrix();
-			XMMATRIX   parentWorldMtx = XMLoadFloat4x4(&parentWorldMtx4x4);
+			if (parentTransform->m_isDirty)
+			{
+				parentTransform->UpdateWorldMatrix();
+			}
 
+			XMMATRIX parentWorldMtx = XMLoadFloat4x4(&parentTransform->m_worldMatrix);
 			XMStoreFloat4x4(&m_worldMatrix, localMtx * parentWorldMtx);
-			m_isDirty = false;
 			return;
 		}
 	}
@@ -191,9 +252,10 @@ void Transform::SetParent(Handle parentHandle)
 	// 1. 기존 부모에서 제거
 	if (m_parent.IsValid() && storage)
 	{
-		auto* oldParent = storage->Get(m_parent);
-		if (oldParent)
+		if (auto* oldParent = storage->Get(m_parent))
+		{
 			oldParent->RemoveChild(m_handle);
+		}
 	}
 
 	m_parent = parentHandle;
@@ -201,32 +263,50 @@ void Transform::SetParent(Handle parentHandle)
 	// 2. 새 부모에 추가
 	if (m_parent.IsValid() && storage)
 	{
-		auto* newParent = storage->Get(m_parent);
-		if (newParent)
-			newParent->AddChild(m_handle);
+		if (auto* newParent = storage->Get(m_parent))
+		{
+			newParent->AddChildInternal(m_handle);
+		}
 	}
 
-	MarkDirtyRecursive();
+	MarkDirty();
 }
 
 void Transform::AddChild(Handle child)
 {
-	if (!child.IsValid() || child == m_handle)
-		return;
-
-	for (auto& existingChild : m_children)
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+	if (!storage)
 	{
-		if (existingChild == child)
-			return;
+		return;
 	}
 
-	m_children.push_back(child);
+	if (auto* childTransform = storage->Get(child))
+	{
+		if (childTransform->m_parent == m_handle)
+		{
+			return;
+		}
+		childTransform->SetParent(m_handle);
+	}
+}
+
+void Transform::AddChildInternal(Handle child)
+{
+	if (!child.IsValid() || child == m_handle)
+	{
+		return;
+	}
+
+	if (std::find(m_children.begin(), m_children.end(), child) == m_children.end())
+	{
+		m_children.push_back(child);
+	}
 }
 
 void Transform::RemoveChild(Handle child)
-{
-	auto it = std::find(m_children.begin(), m_children.end(), child);
-	if (it != m_children.end())
+{	
+	if (auto it = std::find(m_children.begin(), m_children.end(), child);  it != m_children.end())
 	{
 		m_children.erase(it);
 	}
@@ -246,55 +326,51 @@ void Transform::DetachChildren()
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 
-	if (storage)
+	if (!storage)
 	{
-		for (auto& childHandle : m_children)
+		m_children.clear();
+		return;
+	}
+
+	for (auto& childHandle : m_children)
+	{
+		if (auto* childTransform = storage->Get(childHandle))
 		{
-			auto* childTransform = storage->Get(childHandle);
-			if (childTransform)
-			{
-				childTransform->m_parent = Handle::Invalid();
-				childTransform->MarkDirty();
-			}
+			childTransform->m_parent = Handle::Invalid();
+			childTransform->MarkDirty();
 		}
 	}
+
 	m_children.clear();
 }
 
 void Transform::MarkDirty()
 {
-	if (!m_isDirty)
-	{
-		m_isDirty = true;
-
-		MarkDirtyRecursive();
-	}
-}
-
-void Transform::MarkDirtyRecursive()
-{
 	if (m_isDirty)
+	{
 		return;
-
+	}
 	m_isDirty = true;
 
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 	if (!storage)
+	{
 		return;
+	}
 
 	for (auto& childHandle : m_children)
 	{
-		auto* childTransform = storage->Get(childHandle);
-		if (childTransform)
+		if (auto* childTransform = storage->Get(childHandle))
+		{
 			childTransform->MarkDirty();
+		}
 	}
 }
 
 XMFLOAT3 Transform::GetForward()
 {
-	XMFLOAT4X4 worldMtx = GetWorldMatrix();
-	XMFLOAT3   forward = {worldMtx._31, worldMtx._32, worldMtx._33};
+	XMFLOAT3 forward = {m_worldMatrix._31, m_worldMatrix._32, m_worldMatrix._33};
 
 	XMVECTOR forwardVec = XMLoadFloat3(&forward);
 	forwardVec = XMVector3Normalize(forwardVec);
@@ -306,8 +382,7 @@ XMFLOAT3 Transform::GetForward()
 
 XMFLOAT3 Transform::GetRight()
 {
-	XMFLOAT4X4 worldMtx = GetWorldMatrix();
-	XMFLOAT3   right = {worldMtx._11, worldMtx._12, worldMtx._13};
+	XMFLOAT3 right = {m_worldMatrix._11, m_worldMatrix._12, m_worldMatrix._13};
 
 	XMVECTOR rightVec = XMLoadFloat3(&right);
 	rightVec = XMVector3Normalize(rightVec);
@@ -319,8 +394,7 @@ XMFLOAT3 Transform::GetRight()
 
 XMFLOAT3 Transform::GetUp()
 {
-	XMFLOAT4X4 worldMtx = GetWorldMatrix();
-	XMFLOAT3   up = {worldMtx._21, worldMtx._22, worldMtx._23};
+	XMFLOAT3 up = {m_worldMatrix._21, m_worldMatrix._22, m_worldMatrix._23};
 
 	XMVECTOR upVec = XMLoadFloat3(&up);
 	upVec = XMVector3Normalize(upVec);

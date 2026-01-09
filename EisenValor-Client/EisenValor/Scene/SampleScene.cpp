@@ -91,15 +91,15 @@ void SampleScene::CreateSceneObjects()
 			"LocalPlayer", std::nullopt,
 			[this](GameObject* obj)
 			{
-				CreateComponent<MovementComponent>(obj->GetHandle());
-
 				CreateComponentWithInit<MeshComponent>(
 					obj->GetHandle(), [](MeshComponent* mesh)
 					{ mesh->SetMesh(Resources::Cube::cubeVertices, Resources::Cube::cubeIndices); }
 				);
 
 				CreateComponentWithInit<CameraComponent>(
-					obj->GetHandle(), [](CameraComponent* cam) { cam->SetAsMainCamera(); }
+					obj->GetHandle(), [](CameraComponent* cam) { 
+						cam->SetAsMainCamera();
+					}
 				);
 			}
 		);
