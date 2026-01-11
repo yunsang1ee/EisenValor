@@ -6,11 +6,13 @@
 
 void Server::Contents::GameLobby::Init()
 {
-	//auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
-	//room->Init();
-	//m_rooms.insert(std::make_pair(room->GetID(), std::move(room)));
-	//
-	//m_roomIDGen++;
+#ifdef DEVELOP
+	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
+	room->Init();
+	m_rooms.insert(std::make_pair(room->GetID(), std::move(room)));
+	
+	m_roomIDGen++;
+#endif // DEVELOP
 
 	LOG_INFO("GameLobby Init");
 }
@@ -75,7 +77,6 @@ void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr
 	auto newRoom = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
 	newRoom->Init();
 	m_rooms.insert(std::make_pair(newRoom->GetID(), newRoom));
-	
 
 	{
 		// 로비에서 유저 제거(만든 방에 들어갔으니..)

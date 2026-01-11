@@ -18,10 +18,3 @@ struct PosInfo {
 	Vec3 pos;
 	Vec3 rot;
 };
-
-struct StatInfo {
-	uint32 hp;			// 체력
-	uint32 atk;			// 공격력
-	uint32 stamina;		// 스태미나
-};
-

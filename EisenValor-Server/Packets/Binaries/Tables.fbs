@@ -162,7 +162,11 @@ table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint;
 	pos_info: FB_STRUCTS.PosInfo;
 	team_type: FB_ENUMS.TEAM_TYPE;
-	hp: uint;
+	max_hp: uint;
+	current_hp: uint;
+	max_stamina: uint;
+	current_stamina: uint;
+	
 }
 
 table SC_ADD_OBJ_PACKET {
@@ -170,7 +174,10 @@ table SC_ADD_OBJ_PACKET {
 	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
 	pos_info: FB_STRUCTS.PosInfo;
-	hp: uint;
+	max_hp: uint;
+	current_hp: uint;
+	max_stamina: uint;
+	current_stamina: uint;
 }
 
 table SC_REMOVE_OBJ_PACKET {
@@ -194,6 +201,10 @@ table SC_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
 }
 
+table CS_CHANGE_PLAYER_STANCE_PACKET {
+	
+}
+
 table CS_PLAYER_ATTACK {
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
@@ -207,6 +218,17 @@ table SC_REMAINING_GAME_TIME {
 	remaining_time : uint;
 }
 
+table CS_PLAYER_FAKE_PACKET {
+
+}
+
+table CS_CHANGE_CAMERA_TARGET_PACKET {
+	camera_target_id: uint;
+}
+
+table SC_CHANGE_CAMERA_TARGET_PACKET {
+	camera_target_id: uint;
+}
 
 
 // ================================================

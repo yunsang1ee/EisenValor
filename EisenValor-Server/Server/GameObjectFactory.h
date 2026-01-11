@@ -8,7 +8,7 @@ namespace Server {
 		};
 
 		struct CreatureTemplate : public GameObjectTemplate {
-			StatInfo stat;
+			CreatureStatInfo stat;
 		};
 
 		struct GeneralTemplate : public CreatureTemplate {
@@ -46,8 +46,8 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
-			static std::shared_ptr<General>		CreateGeneral(const GeneralTemplate& t);
+			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
+			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
 			// static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
 			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
 

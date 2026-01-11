@@ -80,13 +80,25 @@
       <Filter>02. Contents\Lobby</Filter>
     </ClCompile>
     <ClCompile Include="GameDataManager.cpp">
-      <Filter>02. Contents\GameDataManager</Filter>
+      <Filter>02. Contents\DataManager</Filter>
     </ClCompile>
     <ClCompile Include="General.cpp">
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General</Filter>
     </ClCompile>
     <ClCompile Include="Soldier.cpp">
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\Soldier</Filter>
+    </ClCompile>
+    <ClCompile Include="AttackDataTable.cpp">
+      <Filter>02. Contents\DataManager\DataTable\Attack</Filter>
+    </ClCompile>
+    <ClCompile Include="StatDataTable.cpp">
+      <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
+    </ClCompile>
+    <ClCompile Include="IDataTable.cpp">
+      <Filter>02. Contents\DataManager\DataTable</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralStates.cpp">
+      <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General\State</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -168,12 +180,6 @@
     <Filter Include="02. Contents\Lobby\GameRoom\GameWorld\Factory">
       <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameDataManager">
-      <UniqueIdentifier>{c6998192-3f6a-429d-9614-7181bd78db0c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameDataManager\GameData">
-      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
-    </Filter>
     <Filter Include="98. Global">
       <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
     </Filter>
@@ -189,8 +195,23 @@
     <Filter Include="02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General">
       <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General\Behavior">
-      <UniqueIdentifier>{ed2dfafc-cb9b-4dcc-a35e-3920e277d50b}</UniqueIdentifier>
+    <Filter Include="02. Contents\DataManager">
+      <UniqueIdentifier>{c6998192-3f6a-429d-9614-7181bd78db0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\DataManager\GameData">
+      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\DataManager\DataTable">
+      <UniqueIdentifier>{783813da-7b5c-45a0-b095-04e46273f8c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\DataManager\DataTable\Attack">
+      <UniqueIdentifier>{1ae00776-3b57-4fc2-8406-3a5ce48bc55f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\DataManager\DataTable\Stat">
+      <UniqueIdentifier>{f687bb87-3a78-4619-a9fa-41c54b2ca1d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General\State">
+      <UniqueIdentifier>{e2f15a41-5300-4a54-81ed-a762c62508d5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -282,13 +303,25 @@
       <Filter>02. Contents\Lobby\GameRoom</Filter>
     </ClInclude>
     <ClInclude Include="GameDataManager.h">
-      <Filter>02. Contents\GameDataManager</Filter>
+      <Filter>02. Contents\DataManager</Filter>
     </ClInclude>
     <ClInclude Include="General.h">
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General</Filter>
     </ClInclude>
     <ClInclude Include="Soldier.h">
       <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\Soldier</Filter>
+    </ClInclude>
+    <ClInclude Include="AttackDataTable.h">
+      <Filter>02. Contents\DataManager\DataTable\Attack</Filter>
+    </ClInclude>
+    <ClInclude Include="StatDataTable.h">
+      <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
+    </ClInclude>
+    <ClInclude Include="IDataTable.h">
+      <Filter>02. Contents\DataManager\DataTable</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralStates.h">
+      <Filter>02. Contents\Lobby\GameRoom\GameWorld\GameObject\Creature\General\State</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -309,7 +342,7 @@
       <Filter>03. Packets\Schema</Filter>
     </None>
     <None Include="..\Binaries\Server\Release\GameData\GameData.json">
-      <Filter>02. Contents\GameDataManager\GameData</Filter>
+      <Filter>02. Contents\DataManager\GameData</Filter>
     </None>
   </ItemGroup>
 </Project>

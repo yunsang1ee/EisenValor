@@ -1,6 +1,16 @@
 #pragma once
 #include "Component.h"
 
+#define DECLARE_CREATE_FUNC(StateClass)														\
+    friend class GameObjectFactory;															\
+    friend struct std::default_delete<Server::Contents::StateClass>;						\
+private:																					\
+    template <typename... Args>																\
+    static std::unique_ptr<StateClass> Create(Args&&... args) {								\
+        return std::unique_ptr<StateClass>(new StateClass(std::forward<Args>(args)...));	\
+    }
+
+
 namespace Server {
 	namespace Contents {
 		class FSM;
