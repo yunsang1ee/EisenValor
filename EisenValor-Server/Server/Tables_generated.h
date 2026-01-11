@@ -138,6 +138,9 @@ struct CS_MOVE_PACKETBuilder;
 struct SC_MOVE_PACKET;
 struct SC_MOVE_PACKETBuilder;
 
+struct CS_CHANGE_PLAYER_STANCE_PACKET;
+struct CS_CHANGE_PLAYER_STANCE_PACKETBuilder;
+
 struct CS_PLAYER_ATTACK;
 struct CS_PLAYER_ATTACKBuilder;
 
@@ -146,6 +149,15 @@ struct SC_PLAYER_DAMAGED_PACKETBuilder;
 
 struct SC_REMAINING_GAME_TIME;
 struct SC_REMAINING_GAME_TIMEBuilder;
+
+struct CS_PLAYER_FAKE_PACKET;
+struct CS_PLAYER_FAKE_PACKETBuilder;
+
+struct CS_CHANGE_CAMERA_TARGET_PACKET;
+struct CS_CHANGE_CAMERA_TARGET_PACKETBuilder;
+
+struct SC_CHANGE_CAMERA_TARGET_PACKET;
+struct SC_CHANGE_CAMERA_TARGET_PACKETBuilder;
 
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
@@ -1499,7 +1511,10 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
     VT_PLAYER_ID = 4,
     VT_POS_INFO = 6,
     VT_TEAM_TYPE = 8,
-    VT_HP = 10
+    VT_MAX_HP = 10,
+    VT_CURRENT_HP = 12,
+    VT_MAX_STAMINA = 14,
+    VT_CURRENT_STAMINA = 16
   };
   uint32_t player_id() const {
     return GetField<uint32_t>(VT_PLAYER_ID, 0);
@@ -1510,15 +1525,27 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   FB_ENUMS::TEAM_TYPE team_type() const {
     return static_cast<FB_ENUMS::TEAM_TYPE>(GetField<uint8_t>(VT_TEAM_TYPE, 0));
   }
-  uint32_t hp() const {
-    return GetField<uint32_t>(VT_HP, 0);
+  uint32_t max_hp() const {
+    return GetField<uint32_t>(VT_MAX_HP, 0);
+  }
+  uint32_t current_hp() const {
+    return GetField<uint32_t>(VT_CURRENT_HP, 0);
+  }
+  uint32_t max_stamina() const {
+    return GetField<uint32_t>(VT_MAX_STAMINA, 0);
+  }
+  uint32_t current_stamina() const {
+    return GetField<uint32_t>(VT_CURRENT_STAMINA, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
-           VerifyField<uint32_t>(verifier, VT_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAX_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CURRENT_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAX_STAMINA, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CURRENT_STAMINA, 4) &&
            verifier.EndTable();
   }
 };
@@ -1536,8 +1563,17 @@ struct SC_LOCAL_PLAYER_PACKETBuilder {
   void add_team_type(FB_ENUMS::TEAM_TYPE team_type) {
     fbb_.AddElement<uint8_t>(SC_LOCAL_PLAYER_PACKET::VT_TEAM_TYPE, static_cast<uint8_t>(team_type), 0);
   }
-  void add_hp(uint32_t hp) {
-    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_HP, hp, 0);
+  void add_max_hp(uint32_t max_hp) {
+    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_MAX_HP, max_hp, 0);
+  }
+  void add_current_hp(uint32_t current_hp) {
+    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_CURRENT_HP, current_hp, 0);
+  }
+  void add_max_stamina(uint32_t max_stamina) {
+    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_MAX_STAMINA, max_stamina, 0);
+  }
+  void add_current_stamina(uint32_t current_stamina) {
+    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_CURRENT_STAMINA, current_stamina, 0);
   }
   explicit SC_LOCAL_PLAYER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1555,9 +1591,15 @@ inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKE
     uint32_t player_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
-    uint32_t hp = 0) {
+    uint32_t max_hp = 0,
+    uint32_t current_hp = 0,
+    uint32_t max_stamina = 0,
+    uint32_t current_stamina = 0) {
   SC_LOCAL_PLAYER_PACKETBuilder builder_(_fbb);
-  builder_.add_hp(hp);
+  builder_.add_current_stamina(current_stamina);
+  builder_.add_max_stamina(max_stamina);
+  builder_.add_current_hp(current_hp);
+  builder_.add_max_hp(max_hp);
   builder_.add_pos_info(pos_info);
   builder_.add_player_id(player_id);
   builder_.add_team_type(team_type);
@@ -1571,7 +1613,10 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     VT_OBJ_TYPE = 6,
     VT_TEAM_TYPE = 8,
     VT_POS_INFO = 10,
-    VT_HP = 12
+    VT_MAX_HP = 12,
+    VT_CURRENT_HP = 14,
+    VT_MAX_STAMINA = 16,
+    VT_CURRENT_STAMINA = 18
   };
   uint32_t obj_id() const {
     return GetField<uint32_t>(VT_OBJ_ID, 0);
@@ -1585,8 +1630,17 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
   }
-  uint32_t hp() const {
-    return GetField<uint32_t>(VT_HP, 0);
+  uint32_t max_hp() const {
+    return GetField<uint32_t>(VT_MAX_HP, 0);
+  }
+  uint32_t current_hp() const {
+    return GetField<uint32_t>(VT_CURRENT_HP, 0);
+  }
+  uint32_t max_stamina() const {
+    return GetField<uint32_t>(VT_MAX_STAMINA, 0);
+  }
+  uint32_t current_stamina() const {
+    return GetField<uint32_t>(VT_CURRENT_STAMINA, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1594,7 +1648,10 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
            VerifyField<uint8_t>(verifier, VT_OBJ_TYPE, 1) &&
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
-           VerifyField<uint32_t>(verifier, VT_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAX_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CURRENT_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAX_STAMINA, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CURRENT_STAMINA, 4) &&
            verifier.EndTable();
   }
 };
@@ -1615,8 +1672,17 @@ struct SC_ADD_OBJ_PACKETBuilder {
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(SC_ADD_OBJ_PACKET::VT_POS_INFO, pos_info);
   }
-  void add_hp(uint32_t hp) {
-    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_HP, hp, 0);
+  void add_max_hp(uint32_t max_hp) {
+    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_MAX_HP, max_hp, 0);
+  }
+  void add_current_hp(uint32_t current_hp) {
+    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_CURRENT_HP, current_hp, 0);
+  }
+  void add_max_stamina(uint32_t max_stamina) {
+    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_MAX_STAMINA, max_stamina, 0);
+  }
+  void add_current_stamina(uint32_t current_stamina) {
+    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_CURRENT_STAMINA, current_stamina, 0);
   }
   explicit SC_ADD_OBJ_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1632,12 +1698,18 @@ struct SC_ADD_OBJ_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
-    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_GENERAL,
+    FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    uint32_t hp = 0) {
+    uint32_t max_hp = 0,
+    uint32_t current_hp = 0,
+    uint32_t max_stamina = 0,
+    uint32_t current_stamina = 0) {
   SC_ADD_OBJ_PACKETBuilder builder_(_fbb);
-  builder_.add_hp(hp);
+  builder_.add_current_stamina(current_stamina);
+  builder_.add_max_stamina(max_stamina);
+  builder_.add_current_hp(current_hp);
+  builder_.add_max_hp(max_hp);
   builder_.add_pos_info(pos_info);
   builder_.add_obj_id(obj_id);
   builder_.add_team_type(team_type);
@@ -1880,6 +1952,35 @@ inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
   return builder_.Finish();
 }
 
+struct CS_CHANGE_PLAYER_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_CHANGE_PLAYER_STANCE_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_CHANGE_PLAYER_STANCE_PACKETBuilder {
+  typedef CS_CHANGE_PLAYER_STANCE_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_CHANGE_PLAYER_STANCE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_CHANGE_PLAYER_STANCE_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_CHANGE_PLAYER_STANCE_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_CHANGE_PLAYER_STANCE_PACKET> CreateCS_CHANGE_PLAYER_STANCE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_CHANGE_PLAYER_STANCE_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct CS_PLAYER_ATTACK FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_PLAYER_ATTACKBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -2010,6 +2111,117 @@ inline ::flatbuffers::Offset<SC_REMAINING_GAME_TIME> CreateSC_REMAINING_GAME_TIM
     uint32_t remaining_time = 0) {
   SC_REMAINING_GAME_TIMEBuilder builder_(_fbb);
   builder_.add_remaining_time(remaining_time);
+  return builder_.Finish();
+}
+
+struct CS_PLAYER_FAKE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_PLAYER_FAKE_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_PLAYER_FAKE_PACKETBuilder {
+  typedef CS_PLAYER_FAKE_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_PLAYER_FAKE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_PLAYER_FAKE_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_PLAYER_FAKE_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_PLAYER_FAKE_PACKET> CreateCS_PLAYER_FAKE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_PLAYER_FAKE_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CS_CHANGE_CAMERA_TARGET_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_CHANGE_CAMERA_TARGET_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CAMERA_TARGET_ID = 4
+  };
+  uint32_t camera_target_id() const {
+    return GetField<uint32_t>(VT_CAMERA_TARGET_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_CAMERA_TARGET_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_CHANGE_CAMERA_TARGET_PACKETBuilder {
+  typedef CS_CHANGE_CAMERA_TARGET_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_camera_target_id(uint32_t camera_target_id) {
+    fbb_.AddElement<uint32_t>(CS_CHANGE_CAMERA_TARGET_PACKET::VT_CAMERA_TARGET_ID, camera_target_id, 0);
+  }
+  explicit CS_CHANGE_CAMERA_TARGET_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_CHANGE_CAMERA_TARGET_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_CHANGE_CAMERA_TARGET_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_CHANGE_CAMERA_TARGET_PACKET> CreateCS_CHANGE_CAMERA_TARGET_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t camera_target_id = 0) {
+  CS_CHANGE_CAMERA_TARGET_PACKETBuilder builder_(_fbb);
+  builder_.add_camera_target_id(camera_target_id);
+  return builder_.Finish();
+}
+
+struct SC_CHANGE_CAMERA_TARGET_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_CHANGE_CAMERA_TARGET_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CAMERA_TARGET_ID = 4
+  };
+  uint32_t camera_target_id() const {
+    return GetField<uint32_t>(VT_CAMERA_TARGET_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_CAMERA_TARGET_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_CHANGE_CAMERA_TARGET_PACKETBuilder {
+  typedef SC_CHANGE_CAMERA_TARGET_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_camera_target_id(uint32_t camera_target_id) {
+    fbb_.AddElement<uint32_t>(SC_CHANGE_CAMERA_TARGET_PACKET::VT_CAMERA_TARGET_ID, camera_target_id, 0);
+  }
+  explicit SC_CHANGE_CAMERA_TARGET_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_CHANGE_CAMERA_TARGET_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_CHANGE_CAMERA_TARGET_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_CHANGE_CAMERA_TARGET_PACKET> CreateSC_CHANGE_CAMERA_TARGET_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t camera_target_id = 0) {
+  SC_CHANGE_CAMERA_TARGET_PACKETBuilder builder_(_fbb);
+  builder_.add_camera_target_id(camera_target_id);
   return builder_.Finish();
 }
 

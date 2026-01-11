@@ -166,11 +166,48 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
 {
-	const std::shared_ptr<Server::ClientSession> clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
-		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK, clientSession, *recvPkt.attack_info());
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK, id, *recvPkt.attack_info());
+
+	return true;
+}
+
+bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET& recvPkt) noexcept
+{
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+
+	if(world)
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_CHANGE_STANCE, id);
+
+	return true;
+}
+
+bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt)
+{
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+
+	if(world)
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_FAKE, id);
+
+	return true;
+}
+
+bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt) noexcept
+{
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+
+	if(world)
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET, id, recvPkt.camera_target_id());
 
 	return true;
 }

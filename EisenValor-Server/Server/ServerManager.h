@@ -18,5 +18,3 @@ namespace Server {
 		static void Shutdown();
 	};
 }
-
-

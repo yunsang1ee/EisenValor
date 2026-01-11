@@ -8,6 +8,8 @@ namespace Server {
 		private:
 
 		public:
+			Soldier(const FB_ENUMS::TEAM_TYPE teamType);
+			virtual ~Soldier();
 			
 		};
 	}

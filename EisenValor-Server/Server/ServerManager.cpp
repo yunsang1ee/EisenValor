@@ -7,6 +7,7 @@
 #include "GameLobby.h"
 #include "ServerEngineConfigManager.h"
 #include "GameDataManager.h"
+#include "AttackDataTable.h"
 
 BOOL __stdcall ConsoleHandler(DWORD signal)
 {
@@ -35,6 +36,16 @@ bool Server::ServerManager::Init()
 		
 	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("GameData/GameData.json")) {
 		LOG_ERROR("GameDataManager Load Failed");
+		return false;
+	}
+
+	if(false == MANAGER(Server::Contents::StatDataTable)->LoadFromCSV("DataTable/StatDataTable.csv")) {
+		LOG_ERROR("StatDataTable Load Failed");
+		return false;
+	}
+
+	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("DataTable/AttackDataTable.csv")) {
+		LOG_ERROR("AttackDataTable Load Failed");
 		return false;
 	}
 

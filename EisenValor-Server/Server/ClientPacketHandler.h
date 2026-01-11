@@ -124,10 +124,20 @@ enum class PACKET_TYPE : uint16 {
 	CS_RETURN_TO_GAME_ROOM_PKT = 10015,
 	SC_RETURN_TO_GAME_ROOM_PKT = 10016,
 
+	CS_CHANGE_PLAYER_STANCE_PKT = 10017,
+
+	CS_PLAYER_FAKE_PKT = 10018,
+
+	CS_CHANGE_CAMERA_TARGET_PKT = 10019,
+	SC_CHANGE_CAMERA_TARGET_PKT = 10020,
+
+	CS_RUN_PKT = 10021,
+	CS_ROLL_PKT = 10022,
+
 	// 테스트
 #ifdef DEVELOP
-	CS_ENTER_GAME_WORLD_PACKET = 20000,
-	SC_ENTER_GAME_WORLD_PACKET = 20001,
+	TEST_CS_ENTER_GAME_WORLD_PACKET = 20000,
+	TEST_SC_ENTER_GAME_WORLD_PACKET = 20001,
 #endif // DEVELOP
 
 	END= 65535,
@@ -169,8 +179,9 @@ bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEn
 // =================
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept;
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept;
-
-
+bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET& recvPkt) noexcept;
+bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt);
+bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt) noexcept;
 
 // =================
 //		세션
@@ -236,13 +247,14 @@ public:
 		// =================
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
-
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_FAKE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_FAKE_PACKET>(Handle_CS_PLAYER_FAKE_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
 
 		// =================
 		//		테스트
 		// =================
 #ifdef DEVELOP
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_WORLD_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_WORLD_PACKET>(Handle_CS_ENTER_GAME_WORLD_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::TEST_CS_ENTER_GAME_WORLD_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_WORLD_PACKET>(Handle_CS_ENTER_GAME_WORLD_PACKET, session, buffer); };
 #endif // DEVELOP
 
 

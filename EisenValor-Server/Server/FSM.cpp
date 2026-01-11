@@ -2,7 +2,8 @@
 #include "FSM.h"
 
 #include "State.h"
-	
+#include "GameWorld.h"
+
 Server::Contents::FSM::FSM()
 	:m_curState{nullptr}
 {
@@ -13,7 +14,11 @@ void Server::Contents::FSM::SetState(const uint8 state)
 	auto iter = m_states.find(state);
 	if(iter != m_states.end()) {
 		m_curState = iter->second.get();
-		m_curState->Enter(0.f);
+		float dt{};
+		const auto world = GetOwner()->GetGameWorld();
+		if(world)
+			dt = world->GetGameWorldDT();
+		m_curState->Enter(dt);
 	}
 }
 

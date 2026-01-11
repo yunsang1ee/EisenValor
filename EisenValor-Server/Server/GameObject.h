@@ -28,12 +28,13 @@ namespace Server {
 			std::weak_ptr<GameWorld>				m_gameWorld;
 
 			PosInfo									m_posInfo;
+
+			bool									m_isCreature{ false };
 		
 		public:
 			GameObject() = default;
 			explicit GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type);
 			virtual ~GameObject();
-			
 			GameObject(const GameObject&) = delete;
 			GameObject& operator=(const GameObject&) = delete;
 			GameObject (GameObject&&) = default;
@@ -47,6 +48,7 @@ namespace Server {
 			void SetRotation(const Vec3& rotation) noexcept { m_posInfo.rot = rotation; }
 			void SetRoom(std::weak_ptr<GameRoom> match) noexcept { m_room = match; }
 			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
+			void SetCreature(bool flag) { m_isCreature = flag; }
 
 			const std::wstring& GetName() const noexcept { return m_name; }
 			uint32 GetID() const noexcept { return m_id; }
@@ -58,6 +60,8 @@ namespace Server {
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
 			const Vec3 GetForwardDir();
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
+
+			bool IsCreature() const noexcept { return m_isCreature; }
 
 		public:
 			virtual void Update(const float dt);
@@ -78,7 +82,9 @@ namespace Server {
 			auto AddComponent()
 			{
 				if constexpr(std::is_same_v<FSM, T>) {
-					m_components[etou8(COMPONENT_TYPE::FSM)] = std::make_unique<T>();
+					auto component = std::make_unique<T>();
+					component->SetOwner(this);
+					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
 					return GetComponent<T>();
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {

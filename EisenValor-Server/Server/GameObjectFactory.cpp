@@ -5,7 +5,7 @@
 #include "Soldier.h"
 
 #include "FSM.h"
-
+#include "GeneralStates.h"
 #include "SoldierStates.h"
 
 #include "BehaviorNode.h"
@@ -14,31 +14,47 @@
 #include "TargetTraceNode.h"
 #include "Spawner.h"
 
-std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
+	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
 	player->SetPosInfo(t.posInfo);
 	player->SetStatInfo(t.stat);
+	player->SetStamina(0);
+	const auto fsm = player->AddComponent<Server::Contents::FSM>();
+	
+	auto idleState =  Server::Contents::GeneralIdleState::Create();
+	auto preDelayState = Server::Contents::GeneralPreDelayState::Create();
+	auto attackState = Server::Contents::GeneralAttackState::Create();
+	auto postDelayState = Server::Contents::GeneralPostDelayState::Create();
+	auto stunState = Server::Contents::GeneralStunState::Create();
+	auto deadState = Server::Contents::GeneralDeadState::Create();
+
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(preDelayState));
+	fsm->AddState(std::move(attackState));
+	fsm->AddState(std::move(postDelayState));
+	fsm->AddState(std::move(stunState));
+	fsm->AddState(std::move(deadState));
 
 	return player;
 }
 
-std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
+std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
 	static uint32 idGen{ 1000 };
 
-	auto general = ServerEngine::ObjectPool<Server::Contents::General>::MakeShared(t.teamType);
+	auto general = std::make_unique<Server::Contents::General>(t.teamType);
 	general->SetPosInfo(t.posInfo);
 	general->SetStatInfo(t.stat);
 	general->SetID(idGen);
 	idGen++;
 
-	const auto bt = general->AddComponent<BehaviorTree>();
-	bt->SetOwner(general);
-	auto root = std::make_unique<Server::Contents::SequenceNode>();
-	root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
-	root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
-	bt->SetRoot(std::move(root));
+	//const auto bt = general->AddComponent<BehaviorTree>();
+	//bt->SetOwner(general);
+	//auto root = std::make_unique<Server::Contents::SequenceNode>();
+	//root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
+	//root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
+	//bt->SetRoot(std::move(root));
 
 
 	return general;
@@ -74,8 +90,8 @@ std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 
 std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
-	auto spawnObj = ServerEngine::ObjectPool<GameObject>::MakeShared(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	const auto spawner = spawnObj->AddScript(std::make_unique<Spawner>());
-	spawner->SetOwner(spawnObj);
+	spawner->SetOwner(spawnObj.get());
 	return spawnObj;
 }
