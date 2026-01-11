@@ -16,9 +16,9 @@
 namespace Globals
 {
 
-void Initialize()
+void Initialize(HWND hwnd)
 {
-	GLOBAL(InputGlobal).Initialize();
+	GLOBAL(InputGlobal).Initialize(hwnd);
 	GLOBAL(TimerGlobal).Initialize();
 
 #ifdef _DEBUG

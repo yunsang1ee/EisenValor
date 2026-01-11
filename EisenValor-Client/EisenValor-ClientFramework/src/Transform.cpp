@@ -53,7 +53,6 @@ void Transform::OnUpdate(float deltaTime)
 	if (m_isDirty)
 	{
 		UpdateWorldMatrix();
-		m_isDirty = false;
 	}
 }
 
@@ -232,10 +231,12 @@ void Transform::UpdateWorldMatrix()
 			if (parentTransform->m_isDirty)
 			{
 				parentTransform->UpdateWorldMatrix();
+				parentTransform->m_isDirty = false;
 			}
 
 			XMMATRIX parentWorldMtx = XMLoadFloat4x4(&parentTransform->m_worldMatrix);
 			XMStoreFloat4x4(&m_worldMatrix, localMtx * parentWorldMtx);
+			m_isDirty = false;
 			return;
 		}
 	}

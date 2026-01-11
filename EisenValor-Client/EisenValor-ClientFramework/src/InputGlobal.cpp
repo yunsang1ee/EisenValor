@@ -1,7 +1,24 @@
 #include "stdafxClientFramework.h"
 #include "InputGlobal.h"
 
-void InputGlobal::Initialize() {}
+void InputGlobal::Initialize(HWND hwnd)
+{
+	m_hwnd = hwnd;
+	std::memset(m_InputState, 0, sizeof(m_InputState));
+	m_InputEventsFront.clear();
+	m_InputEventsBack.clear();
+
+	if (m_hwnd)
+	{
+		RECT clientRect;
+		if (GetClientRect(m_hwnd, &clientRect))
+		{
+			m_centerX = (clientRect.right - clientRect.left) / 2;
+			m_centerY = (clientRect.bottom - clientRect.top) / 2;
+			DEBUG_LOG_FMT("[InputGlobal] Initialized - Center: ({}, {})\n", m_centerX, m_centerY);
+		}
+	}
+}
 
 void InputGlobal::BeforeUpdate()
 {
@@ -41,4 +58,54 @@ void InputGlobal::AfterUpdate()
 	m_MouseState.wheelDelta = 0;
 	m_MouseState.deltaX = 0;
 	m_MouseState.deltaY = 0;
+
+	UpdateMouseLock();
+}
+
+void InputGlobal::SetMouseLocked(bool locked)
+{
+	if (m_mouseLocked == locked)
+	{
+		return;
+	}
+
+	m_mouseLocked = locked;
+
+	if (locked)
+	{
+		ShowCursor(FALSE);
+		DEBUG_LOG_FMT("[InputGlobal] Mouse locked to center: ({}, {})\n", m_centerX, m_centerY);
+	}
+	else
+	{
+		ShowCursor(TRUE);
+		DEBUG_LOG_FMT("[InputGlobal] Mouse unlocked\n");
+	}
+}
+
+void InputGlobal::OnResize(uint32_t width, uint32_t height)
+{
+	m_centerX = static_cast<int>(width / 2);
+	m_centerY = static_cast<int>(height / 2);
+
+	DEBUG_LOG_FMT("[InputGlobal] OnResize - New center: ({}, {})\n", m_centerX, m_centerY);
+
+	if (m_mouseLocked && m_hwnd)
+	{
+		POINT centerPoint = {m_centerX, m_centerY};
+		ClientToScreen(m_hwnd, &centerPoint);
+		SetCursorPos(centerPoint.x, centerPoint.y);
+	}
+}
+
+void InputGlobal::UpdateMouseLock()
+{
+	if (!m_mouseLocked || !m_hwnd)
+	{
+		return;
+	}
+
+	POINT centerPoint = {m_centerX, m_centerY};
+	ClientToScreen(m_hwnd, &centerPoint);
+	SetCursorPos(centerPoint.x, centerPoint.y);
 }

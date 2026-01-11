@@ -101,6 +101,31 @@ void Scene::OnBeginFrame()
 {
 	ProcessDeferredCreates();
 	ProcessDeferredComponentCreates();
+	ProcessPendingStarts();
+}
+
+void Scene::ProcessPendingStarts()
+{
+	while (!m_pendingStartComponents.empty())
+	{
+		const auto& req = m_pendingStartComponents.front();
+
+		if (req.typeID >= m_componentsStorage.size())
+		{
+			DEBUG_LOG_FMT("[Scene] Invalid component type ID: {}\n", req.typeID);
+			m_pendingStartComponents.pop();
+			continue;
+		}
+
+		if (auto* storage = m_componentsStorage[req.typeID].get())
+		{
+			if (auto* comp = storage->GetComponentPtr(req.componentHandleValue); comp->IsActive())
+			{
+				comp->OnStart();
+			}
+		}
+		m_pendingStartComponents.pop();
+	}
 }
 
 void Scene::OnUpdate(float deltaTime)
@@ -181,6 +206,7 @@ void Scene::CreateGameObjectInternal(const CreateRequest& req)
 
 	GameObject& object = m_gameObjects.Get(req.handle);
 	object.SetHandle(req.handle);
+	object.AddComponentHandle<Transform>(trHandle);
 	trComp->SetOwner(req.handle);
 	trComp->OnAttach();
 

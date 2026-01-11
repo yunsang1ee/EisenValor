@@ -46,6 +46,11 @@ public:
 
 	void LookAt(const DX::XMFLOAT3& target, std::optional<DX::XMFLOAT3> upVector = std::nullopt);
 
+	void				SetLookAtRotationOffset(const DX::XMFLOAT3& offsetEulerAngles);
+	const DX::XMFLOAT3& GetLookAtRotationOffset() const { return m_lookAt.rotationOffset; }
+
+	void SetEnableLookAtRotation(bool enable) { m_lookAt.enableLookAtRotation = enable; }
+
 	void SetLookAtUpVector(const DX::XMFLOAT3& upVector);
 	void SetFollowTargetUp(bool follow) { m_lookAt.followTargetUp = follow; }
 
@@ -101,17 +106,19 @@ private:
 	struct LookAtSettings
 	{
 		DenseListHandle<Transform> targetHandle = {};
-		DirectX::XMFLOAT3 upVector = {0.0f, 1.0f, 0.0f};
-		bool followTargetUp = false;
+		DirectX::XMFLOAT3		   upVector = {0.0f, 1.0f, 0.0f};
+		DirectX::XMFLOAT3		   rotationOffset = {0.0f, 0.0f, 0.0f};
+		bool					   followTargetUp = false;
+		bool					   enableLookAtRotation = true; 
 	};
 
 	struct FollowSettings
 	{
 		DirectX::XMFLOAT3 offset = {0.0f, 0.0f, 0.0f};
-		float positionSpeed = 5.0f;
-		float rotationSpeed = 5.0f;
-		bool smoothEnabled = false;
-		bool useLocalOffset = false;
+		float			  positionSpeed = 5.0f;
+		float			  rotationSpeed = 5.0f;
+		bool			  smoothEnabled = false;
+		bool			  useLocalOffset = false;
 	};
 
 private:
@@ -121,10 +128,10 @@ private:
 	DirectX::XMFLOAT4X4 m_cachedProjectionMatrix;
 
 	// Projection
-	ProjectionType m_projectionType = ProjectionType::Perspective;
-	float m_nearZ = 0.1f;
-	float m_farZ = 1000.0f;
-	PerspectiveParams m_perspective;
+	ProjectionType	   m_projectionType = ProjectionType::Perspective;
+	float			   m_nearZ = 0.1f;
+	float			   m_farZ = 1000.0f;
+	PerspectiveParams  m_perspective;
 	OrthographicParams m_orthographic;
 
 	// Camera Control

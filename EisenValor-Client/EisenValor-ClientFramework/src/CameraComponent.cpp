@@ -6,13 +6,6 @@
 
 using namespace DirectX;
 
-namespace
-{
-constexpr float kFovAnimThreshold = 1e-4f;
-
-constexpr float kParallelThreshold = 1e-4f;
-} // namespace
-
 CameraComponent::Handle CameraComponent::s_mainCameraHandle = CameraComponent::Handle::Invalid();
 
 void CameraComponent::OnLateUpdate(float deltaTime)
@@ -24,13 +17,10 @@ void CameraComponent::OnLateUpdate(float deltaTime)
 		UpdateLookAtTarget(deltaTime);
 	}
 
-	if (m_viewDirty)
-	{
-		UpdateViewMatrix();
-		m_viewDirty = false;
-	}
+	UpdateViewMatrix();
+	m_viewDirty = false;
 
-	if (m_projectionDirty) [[unlikely]]
+	if (m_projectionDirty)
 	{
 		UpdateProjectionMatrix();
 		m_projectionDirty = false;
@@ -61,6 +51,7 @@ XMMATRIX CameraComponent::GetMainViewMatrix()
 	{
 		return mainCamera->GetViewMatrix();
 	}
+	DEBUG_LOG_FMT("CameraComponent::GetMainViewMatrix: No main camera set!\n");
 	return XMMatrixIdentity();
 }
 
@@ -70,6 +61,7 @@ XMMATRIX CameraComponent::GetMainProjectionMatrix()
 	{
 		return mainCamera->GetProjectionMatrix();
 	}
+	DEBUG_LOG_FMT("CameraComponent::GetMainProjectionMatrix: No main camera set!\n");
 	return XMMatrixIdentity();
 }
 
@@ -131,8 +123,9 @@ void CameraComponent::UpdateFovAnimation(float deltaTime)
 		return;
 	}
 
-	if (fabsf(m_perspective.fov - m_perspective.targetFov) < kFovAnimThreshold)
+	if (fabsf(m_perspective.fov - m_perspective.targetFov) < epsilon::kEpsilon4)
 	{
+		m_perspective.fov = m_perspective.targetFov;
 		return;
 	}
 
@@ -216,11 +209,11 @@ void CameraComponent::LookAt(const XMFLOAT3& target, std::optional<DX::XMFLOAT3>
 	XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(targetVec, eyeVec));
 
 	float dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, worldUp)));
-	if (dotFU > (1.0f - kParallelThreshold))
+	if (dotFU > (1.0f - epsilon::kEpsilon4))
 	{
 		worldUp = XMVectorSet(0.f, 0.f, 1.f, 0.f);
 		dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, worldUp)));
-		if (dotFU > (1.0f - kParallelThreshold))
+		if (dotFU > (1.0f - epsilon::kEpsilon4))
 		{
 			worldUp = XMVectorSet(1.f, 0.f, 0.f, 0.f);
 		}
@@ -254,6 +247,12 @@ void CameraComponent::LookAt(const XMFLOAT3& target, std::optional<DX::XMFLOAT3>
 	XMStoreFloat4(&rotation, worldQuat);
 
 	transform.SetRotationQuaternion(rotation);
+	m_viewDirty = true;
+}
+
+void CameraComponent::SetLookAtRotationOffset(const DX::XMFLOAT3& offsetEulerAngles)
+{
+	m_lookAt.rotationOffset = offsetEulerAngles;
 	m_viewDirty = true;
 }
 
@@ -358,39 +357,55 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	XMStoreFloat3(&finalCameraPos, finalCameraPosVec);
 	cameraTransform.SetWorldPosition(finalCameraPos);
 
+	XMVECTOR desiredWorldQ;
 	// LookAt Target Rotation
-	XMVECTOR eyeVec = finalCameraPosVec;
-	XMVECTOR targetVec = targetPosVec;
-	XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(targetVec, eyeVec));
-
-	XMFLOAT3 upVector = m_lookAt.upVector;
-	if (m_lookAt.followTargetUp)
+	if (m_lookAt.enableLookAtRotation)
 	{
-		upVector = targetTransform->GetUp();
-	}
-	XMVECTOR upVec = XMLoadFloat3(&upVector);
+		XMVECTOR eyeVec = finalCameraPosVec;
+		XMVECTOR targetVec = targetPosVec;
+		XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(targetVec, eyeVec));
 
-	float dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, upVec)));
-	if (dotFU > (1.0f - kParallelThreshold))
-	{
-		// Degenerate Case
-		upVec = XMVectorSet(0.f, 0.f, 1.f, 0.f);
-		dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, upVec)));
-		if (dotFU > (1.0f - kParallelThreshold))
+		XMFLOAT3 upVector = m_lookAt.upVector;
+		if (m_lookAt.followTargetUp)
 		{
-			upVec = XMVectorSet(1.f, 0.f, 0.f, 0.f);
+			upVector = targetTransform->GetUp();
 		}
+		XMVECTOR upVec = XMLoadFloat3(&upVector);
+
+		float dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, upVec)));
+		if (dotFU > (1.0f - epsilon::kEpsilon4))
+		{
+			// Degenerate Case
+			upVec = XMVectorSet(0.f, 0.f, 1.f, 0.f);
+			dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, upVec)));
+			if (dotFU > (1.0f - epsilon::kEpsilon4))
+			{
+				upVec = XMVectorSet(1.f, 0.f, 0.f, 0.f);
+			}
+		}
+
+		XMVECTOR right = XMVector3Normalize(XMVector3Cross(upVec, forward));
+		XMVECTOR up = XMVector3Normalize(XMVector3Cross(forward, right));
+
+		XMMATRIX rotationMatrix = XMMatrixIdentity();
+		rotationMatrix.r[0] = right;
+		rotationMatrix.r[1] = up;
+		rotationMatrix.r[2] = forward;
+
+		desiredWorldQ = XMQuaternionNormalize(XMQuaternionRotationMatrix(rotationMatrix));
+	}
+	else
+	{
+		XMFLOAT4 targetRotQf = targetTransform->GetWorldRotationQuaternion();
+		desiredWorldQ = XMLoadFloat4(&targetRotQf);
 	}
 
-	XMVECTOR right = XMVector3Normalize(XMVector3Cross(upVec, forward));
-	XMVECTOR up = XMVector3Normalize(XMVector3Cross(forward, right));
-
-	XMMATRIX rotationMatrix = XMMatrixIdentity();
-	rotationMatrix.r[0] = right;
-	rotationMatrix.r[1] = up;
-	rotationMatrix.r[2] = forward;
-
-	XMVECTOR desiredWorldQ = XMQuaternionNormalize(XMQuaternionRotationMatrix(rotationMatrix));
+	XMVECTOR offsetQ = XMQuaternionRotationRollPitchYaw(
+		XMConvertToRadians(m_lookAt.rotationOffset.x),
+		XMConvertToRadians(m_lookAt.rotationOffset.y),
+		XMConvertToRadians(m_lookAt.rotationOffset.z)
+	);
+	desiredWorldQ = XMQuaternionMultiply(offsetQ, desiredWorldQ);
 
 	// Smooth Follow Rotation
 	XMVECTOR finalWorldQ = desiredWorldQ;

@@ -15,6 +15,77 @@
 #include <DxUploadHeap.h>
 #include <DxUtils.h>
 
+namespace Resources
+{
+namespace Material
+{
+constexpr PBRMaterial DefaultPBRMaterial{
+	.albedo = DX::XMFLOAT3{0.8f, 0.8f, 0.8f},
+	.metallic = 0.1f,
+	.roughness = 0.9f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f,
+};
+
+constexpr PBRMaterial EmissiveWhiteMaterial{
+	.albedo = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.metallic = 0.0f,
+	.roughness = 1.0f,
+	.emissive = DX::XMFLOAT3{1.0f, 1.0f, 1.0f},
+	.emissiveStrength = 10.0f
+};
+
+constexpr PBRMaterial RedMaterial{
+	.albedo = DX::XMFLOAT3{1.0f, 0.1f, 0.1f},
+	.metallic = 0.8f,
+	.roughness = 0.2f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f
+};
+
+constexpr PBRMaterial GreenMaterial{
+	.albedo = DX::XMFLOAT3{0.1f, 1.0f, 0.1f},
+	.metallic = 0.2f,
+	.roughness = 0.2f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f
+};
+
+constexpr PBRMaterial BlueMaterial{
+	.albedo = DX::XMFLOAT3{0.1f, 0.1f, 1.0f},
+	.metallic = 0.8f,
+	.roughness = 0.2f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f
+};
+
+constexpr PBRMaterial YellowMaterial{
+	.albedo = DX::XMFLOAT3{1.0f, 1.0f, 0.1f},
+	.metallic = 0.1f,
+	.roughness = 0.9f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f
+};
+
+constexpr PBRMaterial CyanMaterial{
+	.albedo = DX::XMFLOAT3{0.1f, 1.0f, 1.0f},
+	.metallic = 0.1f,
+	.roughness = 0.9f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f
+};
+
+constexpr PBRMaterial MagentaMaterial{
+	.albedo = DX::XMFLOAT3{1.0f, 0.1f, 1.0f},
+	.metallic = 0.1f,
+	.roughness = 0.9f,
+	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
+	.emissiveStrength = 0.0f
+};
+
+} // namespace Material
+} // namespace Resources
+
 DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), m_height(height)
 {
 	DEBUG_LOG_FMT("[DxrRenderPass] Constructor: {}x{}\n", width, height);
@@ -191,12 +262,13 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 	uint32_t currentGeoIndex = 0;
 
 	// TODO: Material Management (MeshComponent?)
-	PBRMaterial defaultMat;
-	defaultMat.albedo = {0.8f, 0.8f, 0.8f};
-	defaultMat.metallic = 0.0f;
-	defaultMat.roughness = 0.5f;
-	defaultMat.emissive = {0.0f, 0.0f, 0.0f};
-	defaultMat.emissiveStrength = 0.0f;
+	std::unordered_map<std::string, PBRMaterial> objectNameToMaterial;
+
+	objectNameToMaterial["Ground"] = Resources::Material::DefaultPBRMaterial;
+	objectNameToMaterial["Cube_0"] = Resources::Material::RedMaterial;
+	objectNameToMaterial["Cube_1"] = Resources::Material::GreenMaterial;
+	objectNameToMaterial["Cube_2"] = Resources::Material::BlueMaterial;
+	objectNameToMaterial["LocalPlayer"] = Resources::Material::EmissiveWhiteMaterial;
 
 	uint32_t validMeshCount = 0;
 	for (const auto& mesh : meshStorage->GetList())
@@ -221,7 +293,10 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 			m_indices.Register(idx);
 		}
 
-		m_materials.Register(defaultMat);
+		auto iter = objectNameToMaterial.find(mesh.GetGameObject()->GetName());
+		m_materials.Register(
+			iter != objectNameToMaterial.end() ? iter->second : Resources::Material::DefaultPBRMaterial
+		);
 
 		m_geoInfos.Register(
 			currentVertexBase, currentIndexBase, static_cast<uint32_t>(vertices.size()),

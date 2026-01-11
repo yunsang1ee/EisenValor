@@ -19,6 +19,7 @@ public:
 	virtual void DeserializeSaveGame(IDeserializer& deserializer) = 0;
 
 	virtual void RemoveByHandleValue(uint64_t handleValue) = 0;
+	virtual IComponent* GetComponentPtr(uint64_t handleValue) = 0;
 };
 
 template <IsValidComponent T>
@@ -71,6 +72,11 @@ public:
 
 			m_data.Remove(handle);
 		}
+	}
+
+	IComponent* GetComponentPtr(uint64_t handleValue) override
+	{
+		return m_data.TryGet(Handle::FromValue(handleValue));
 	}
 
 	const DenseList<T>& GetList() const { return m_data; }

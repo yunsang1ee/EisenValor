@@ -57,6 +57,9 @@
     <ClInclude Include="Scene\SampleScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Component\PlayerController.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -76,6 +79,9 @@
     </ClCompile>
     <ClCompile Include="Scene\SampleScene.cpp">
       <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PlayerController.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

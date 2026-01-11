@@ -1,5 +1,6 @@
 #include "stdafxClient.h"
 #include "SampleScene.h"
+#include "Component/PlayerController.h"
 
 namespace Resources
 {
@@ -71,9 +72,7 @@ std::vector<uint32_t> cubeIndices = {
 
 void SampleScene::OnRegisterCustomComponents()
 {
-	// RegisterComponents<
-	//		MyCustomComponent1,
-	//	>();
+	RegisterComponents<PlayerController>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -86,44 +85,82 @@ void SampleScene::OnStartImpl()
 void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
-	{
-		CreateGameObject(
-			"LocalPlayer", std::nullopt,
-			[this](GameObject* obj)
-			{
-				CreateComponentWithInit<MeshComponent>(
-					obj->GetHandle(), [](MeshComponent* mesh)
-					{ mesh->SetMesh(Resources::Cube::cubeVertices, Resources::Cube::cubeIndices); }
-				);
 
-				CreateComponentWithInit<CameraComponent>(
-					obj->GetHandle(), [](CameraComponent* cam) { 
-						cam->SetAsMainCamera();
-					}
-				);
-			}
-		);
-	}
+	auto playerObjHandle = CreateGameObject(
+		"LocalPlayer", std::nullopt,
+		[this](GameObject* playerObj)
+		{
+			auto playerObjHandle = playerObj->GetHandle();
 
-	{
-		CreateGameObject(
-			"Ground", std::nullopt,
-			[this](GameObject* obj)
-			{
-				auto& tr = obj->GetTransform();
-				tr.SetPosition(0.0f, 0.0f, 0.0f);
-				tr.SetScale(10.0f);
+			CreateComponentWithInit<MeshComponent>(
+				playerObjHandle,
+				[](MeshComponent* mesh) { mesh->SetMesh(Resources::Cube::cubeVertices, Resources::Cube::cubeIndices); }
+			);
+
+			CreateComponentWithInit<MovementComponent>(
+				playerObjHandle,
+				[](MovementComponent* move)
+				{
+					move->SetMovementMode(MovementMode::Physics);
+					move->SetMoveSpeed(5.0f);
+				}
+			);
+
+		}
+	);
+
+	CreateGameObject(
+		"PlayerCamera", std::nullopt,
+		[this, playerObjHandle](GameObject* camObj)
+		{
+			auto* playerObj = TryGetGameObject(playerObjHandle);
+			auto  playerTrHandle =
+				 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
+			auto& tr = camObj->GetTransform();
+
+			CreateComponentWithInit<CameraComponent>(
+				camObj->GetHandle(),
+				[playerTrHandle](CameraComponent* cam)
+				{
+					cam->SetAsMainCamera();
+					cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
+					cam->SetLookAtTarget(playerTrHandle);
+					cam->SetEnableLookAtRotation(false);
+					cam->SetSmoothFollow(true, 10.0f, 10.0f);
+					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
+					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
+				}
+			);
+
+			CreateComponentWithInit<PlayerController>(
+				playerObjHandle,
+				[camObj](PlayerController* controller)
+				{
+					controller->SetCameraHandle(camObj->GetHandle());
+					controller->SetMouseSensitivity(0.1f, 0.1f);
+				}
+			);
+		}
+	);
 
 
-				auto meshHandle = CreateComponentWithInit<MeshComponent>(
-					obj->GetHandle(), [](MeshComponent* mesh)
-					{ mesh->SetMesh(Resources::Ground::groundVertices, Resources::Ground::groundIndices); }
-				);
-			}
-		);
-	}
+	CreateGameObject(
+		"Ground", std::nullopt,
+		[this](GameObject* obj)
+		{
+			auto& tr = obj->GetTransform();
+			tr.SetPosition(0.0f, -1.0f, 0.0f);
+			tr.SetScale(20.0f);
 
-	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {4.0f, 3.0f, 0.0f}};
+
+			auto meshHandle = CreateComponentWithInit<MeshComponent>(
+				obj->GetHandle(), [](MeshComponent* mesh)
+				{ mesh->SetMesh(Resources::Ground::groundVertices, Resources::Ground::groundIndices); }
+			);
+		}
+	);
+
+	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
 
 	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
 
@@ -147,7 +184,7 @@ void SampleScene::CreateSceneObjects()
 		);
 	}
 
-	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 4);
+	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 5);
 }
 
 void SampleScene::OnEndImpl() {}

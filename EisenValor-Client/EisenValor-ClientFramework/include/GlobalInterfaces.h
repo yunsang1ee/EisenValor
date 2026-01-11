@@ -3,7 +3,7 @@
 namespace Globals
 {
 
-void Initialize();
+void Initialize(HWND hwnd);
 void Shutdown();
 
 } // namespace Globals

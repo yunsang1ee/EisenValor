@@ -11,7 +11,7 @@
 #include "TimerGlobal.h"
 
 
-#define SERVER
+//#define SERVER
 
 #if 0
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
@@ -697,7 +697,7 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
-	Globals::Initialize();
+	Globals::Initialize(hwnd);
 
 	RECT clientRect;
 	GetClientRect(m_hWnd, &clientRect);
@@ -734,6 +734,9 @@ void GameFramework::Run()
 		FixedUpdate();
 
 	Update(dt);
+	
+	LateUpdate(dt);
+
 	Render();
 
 	GLOBAL(SceneGlobal).OnEndFrame();
@@ -788,6 +791,9 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		{
 			renderer.OnResize(width, height);
 		}
+		GLOBAL(InputGlobal).OnResize(width, height);
+
+		DEBUG_LOG_FMT("[GameFramework] Window resized: {}x{}\n", width, height);
 		break;
 	}
 
@@ -854,7 +860,7 @@ void GameFramework::Update(float delta)
 		// FUTURE: Runtime Shader Compilation
 	}
 
-	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain())
+	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
 	{
 		if (input.GetInputDown(VK_F11))
 		{

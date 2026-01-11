@@ -37,9 +37,14 @@ private:
 	~InputGlobal() override = default;
 
 public:
-	void Initialize();
+	void Initialize(HWND hwnd);
 	void BeforeUpdate();
 	void AfterUpdate();
+
+	void SetMouseLocked(bool locked);
+	bool IsMouseLocked() const { return m_mouseLocked; }
+
+	void OnResize(uint32_t width, uint32_t height);
 
 	inline void OnInputState(InputCode code, bool isPressed, bool isUp) noexcept
 	{
@@ -53,10 +58,20 @@ public:
 
 	inline void OnMouseMove(int x, int y) noexcept
 	{
-		m_MouseState.deltaX = static_cast<float>(x - m_MouseState.x);
-		m_MouseState.deltaY = static_cast<float>(y - m_MouseState.y);
-		m_MouseState.x = x;
-		m_MouseState.y = y;
+		if (m_mouseLocked && m_centerX > 0 && m_centerY > 0)
+		{
+			m_MouseState.deltaX = static_cast<float>(x - m_centerX);
+			m_MouseState.deltaY = static_cast<float>(y - m_centerY);
+			m_MouseState.x = m_centerX;
+			m_MouseState.y = m_centerY;
+		}
+		else
+		{
+			m_MouseState.deltaX = static_cast<float>(x - m_MouseState.x);
+			m_MouseState.deltaY = static_cast<float>(y - m_MouseState.y);
+			m_MouseState.x = x;
+			m_MouseState.y = y;
+		}
 	}
 
 	inline void OnWheelScroll(int delta) noexcept { m_MouseState.wheelDelta = static_cast<float>(delta); }
@@ -83,6 +98,14 @@ public:
 		return {float(m_MouseState.x), float(m_MouseState.y)};
 	}
 
+	[[nodiscard]] inline DX::XMFLOAT2 GetMouseDelta() const noexcept
+	{
+		return {m_MouseState.deltaX, m_MouseState.deltaY};
+	}
+
+private:
+	void UpdateMouseLock();
+
 private:
 	struct DInputEvent
 	{
@@ -95,4 +118,9 @@ private:
 	DMouseState				 m_MouseState{};
 	std::vector<DInputEvent> m_InputEventsFront;
 	std::vector<DInputEvent> m_InputEventsBack;
+
+	HWND m_hwnd = nullptr;
+	bool m_mouseLocked = false;
+	int	 m_centerX = 0;
+	int	 m_centerY = 0;
 };

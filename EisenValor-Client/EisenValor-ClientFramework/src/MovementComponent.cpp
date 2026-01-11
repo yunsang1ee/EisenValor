@@ -6,41 +6,11 @@
 #include "InputGlobal.h"
 #include "Transform.h"
 
-void MovementComponent::BindInput(MovementAction action, InputBinding inputFunc)
-{
-	switch (action)
-	{
-	case MovementAction::Forward:
-		m_forwardBinding = std::move(inputFunc);
-		break;
-	case MovementAction::Backward:
-		m_backwardBinding = std::move(inputFunc);
-		break;
-	case MovementAction::Left:
-		m_leftBinding = std::move(inputFunc);
-		break;
-	case MovementAction::Right:
-		m_rightBinding = std::move(inputFunc);
-		break;
-	}
-}
-
-void MovementComponent::BindDefaultWASD()
-{
-	m_forwardBinding = []() { return GLOBAL(InputGlobal).GetInput('W'); };
-	m_backwardBinding = []() { return GLOBAL(InputGlobal).GetInput('S'); };
-	m_leftBinding = []() { return GLOBAL(InputGlobal).GetInput('A'); };
-	m_rightBinding = []() { return GLOBAL(InputGlobal).GetInput('D'); };
-}
+using namespace DirectX;
 
 bool MovementComponent::IsAnyInputActive() const
 {
-	bool forward = m_forwardBinding && m_forwardBinding();
-	bool backward = m_backwardBinding && m_backwardBinding();
-	bool left = m_leftBinding && m_leftBinding();
-	bool right = m_rightBinding && m_rightBinding();
-
-	return forward || backward || left || right;
+	return m_isMovingForward || m_isMovingBackward || m_isMovingLeft || m_isMovingRight;
 }
 
 void MovementComponent::ProcessInput(float deltaTime)
@@ -51,63 +21,56 @@ void MovementComponent::ProcessInput(float deltaTime)
 
 	auto& transform = myGameObject->GetTransform();
 
-	DX::XMFLOAT3 forward = transform.GetForward();
-	DX::XMFLOAT3 right = transform.GetRight();
+	XMFLOAT3 forward = transform.GetForward();
+	XMFLOAT3 right = transform.GetRight();
 
-	bool isForward = m_forwardBinding && m_forwardBinding();
-	bool isBackward = m_backwardBinding && m_backwardBinding();
-	bool isLeft = m_leftBinding && m_leftBinding();
-	bool isRight = m_rightBinding && m_rightBinding();
+	XMVECTOR moveDir = XMVectorZero();
 
-	DX::XMVECTOR moveDir = DX::XMVectorZero();
-
-	if (isForward)
+	if (m_isMovingForward)
 	{
-		moveDir = DX::XMVectorAdd(moveDir, DX::XMLoadFloat3(&forward));
+		moveDir = XMVectorAdd(moveDir, XMLoadFloat3(&forward));
 	}
-	if (isBackward)
+	if (m_isMovingBackward)
 	{
-		moveDir = DX::XMVectorSubtract(moveDir, DX::XMLoadFloat3(&forward));
+		moveDir = XMVectorSubtract(moveDir, XMLoadFloat3(&forward));
 	}
-	if (isRight)
+	if (m_isMovingRight)
 	{
-		moveDir = DX::XMVectorAdd(moveDir, DX::XMLoadFloat3(&right));
+		moveDir = XMVectorAdd(moveDir, XMLoadFloat3(&right));
 	}
-	if (isLeft)
+	if (m_isMovingLeft)
 	{
-		moveDir = DX::XMVectorSubtract(moveDir, DX::XMLoadFloat3(&right));
+		moveDir = XMVectorSubtract(moveDir, XMLoadFloat3(&right));
 	}
 
-	float moveDirLength = DX::XMVectorGetX(DX::XMVector3Length(moveDir));
+	float moveDirLength = XMVectorGetX(XMVector3Length(moveDir));
 	if (moveDirLength > 0.0f)
 	{
-		moveDir = DX::XMVector3Normalize(moveDir);
+		moveDir = XMVector3Normalize(moveDir);
 	}
 
-	DX::XMVECTOR desiredVelocity = DX::XMVectorScale(moveDir, m_moveSpeed);
+	XMVECTOR desiredVelocity = XMVectorScale(moveDir, m_moveSpeed);
 	switch (m_movementMode)
 	{
 	case MovementMode::Immediate:
 	{
-		DX::XMStoreFloat3(&m_velocity, desiredVelocity);
+		XMStoreFloat3(&m_velocity, desiredVelocity);
 		break;
 	}
 	case MovementMode::Physics:
 	{
-		if (moveDirLength > 0.0f)
+		XMVECTOR currentVelocity = XMLoadFloat3(&m_velocity);
+
+		float	 lerpFactor = 1.0f - expf(-m_acceleration * deltaTime);
+		XMVECTOR newVelocity = XMVectorLerp(currentVelocity, desiredVelocity, lerpFactor);
+
+		float speed = XMVectorGetX(XMVector3Length(newVelocity));
+		if (speed > m_maxSpeed)
 		{
-			DX::XMVECTOR currentVelocity = DX::XMLoadFloat3(&m_velocity);
-
-			float		 lerpFactor = 1.0f - expf(-m_acceleration * deltaTime);
-			DX::XMVECTOR newVelocity = DX::XMVectorLerp(currentVelocity, desiredVelocity, lerpFactor);
-						
-			if (float speed = DX::XMVectorGetX(DX::XMVector3Length(newVelocity)); speed > m_maxSpeed)
-			{
-				newVelocity = DX::XMVectorScale(DX::XMVector3Normalize(newVelocity), m_maxSpeed);
-			}
-
-			DX::XMStoreFloat3(&m_velocity, newVelocity);
+			newVelocity = XMVectorScale(XMVector3Normalize(newVelocity), m_maxSpeed);
 		}
+
+		XMStoreFloat3(&m_velocity, newVelocity);
 		break;
 	}
 	}
@@ -124,16 +87,16 @@ void MovementComponent::OnUpdate(float deltaTime)
 
 	auto& transform = myGameObject->GetTransform();
 
-	DX::XMVECTOR velocityVec = DX::XMLoadFloat3(&m_velocity);
-	DX::XMVECTOR displacement = DX::XMVectorScale(velocityVec, deltaTime);
+	XMVECTOR velocityVec = XMLoadFloat3(&m_velocity);
+	XMVECTOR displacement = XMVectorScale(velocityVec, deltaTime);
 
-	DX::XMFLOAT3 currentPos = transform.GetWorldPosition();
-	DX::XMVECTOR currentPosVec = DX::XMLoadFloat3(&currentPos);
+	XMFLOAT3 currentPos = transform.GetWorldPosition();
+	XMVECTOR currentPosVec = XMLoadFloat3(&currentPos);
 
-	DX::XMVECTOR newPosVec = DX::XMVectorAdd(currentPosVec, displacement);
+	XMVECTOR newPosVec = XMVectorAdd(currentPosVec, displacement);
 
-	DX::XMFLOAT3 newPos;
-	DX::XMStoreFloat3(&newPos, newPosVec);
+	XMFLOAT3 newPos;
+	XMStoreFloat3(&newPos, newPosVec);
 
 	transform.SetWorldPosition(newPos);
 
@@ -144,19 +107,19 @@ void MovementComponent::OnUpdate(float deltaTime)
 	{
 		if (!IsAnyInputActive())
 		{
-			m_velocity = DX::XMFLOAT3{0.0f, 0.0f, 0.0f};
+			m_velocity = XMFLOAT3{0.0f, 0.0f, 0.0f};
 		}
 		break;
 	}
 	case MovementMode::Physics:
 	{
-		float		 dampingFactor = std::max(0.0f, 1.0f - m_physicsDamping * deltaTime);
-		DX::XMVECTOR dampedVelocity = DX::XMVectorScale(velocityVec, dampingFactor);
-		DX::XMStoreFloat3(&m_velocity, dampedVelocity);
-		float speed = DX::XMVectorGetX(DX::XMVector3Length(dampedVelocity));
-		if (speed < kEpsilon)
+		float	 dampingFactor = std::max(0.0f, 1.0f - m_physicsDamping * deltaTime);
+		XMVECTOR dampedVelocity = XMVectorScale(velocityVec, dampingFactor);
+		XMStoreFloat3(&m_velocity, dampedVelocity);
+		float speed = XMVectorGetX(XMVector3Length(dampedVelocity));
+		if (speed < epsilon::kEpsilon4)
 		{
-			m_velocity = DX::XMFLOAT3{0.0f, 0.0f, 0.0f};
+			m_velocity = XMFLOAT3{0.0f, 0.0f, 0.0f};
 		}
 		break;
 	}

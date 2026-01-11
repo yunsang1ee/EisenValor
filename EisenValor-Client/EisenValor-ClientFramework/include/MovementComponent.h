@@ -20,8 +20,6 @@ class MovementComponent : public ComponentBase<MovementComponent>
 public:
 	static constexpr const char* GetStaticTypeName() { return "MovementComponent"; }
 
-	using InputBinding = std::function<bool()>;
-
 public:
 	void		 SetMovementMode(MovementMode mode) { m_movementMode = mode; }
 	MovementMode GetMovementMode() const { return m_movementMode; }
@@ -32,8 +30,11 @@ public:
 	void  SetAcceleration(float accel) { m_acceleration = accel; }
 	float GetMoveSpeed() const { return m_moveSpeed; }
 
-	void BindInput(MovementAction action, InputBinding inputFunc);
-	void BindDefaultWASD();
+	// 입력 상태 설정
+	void SetInputForward(bool pressed) { m_isMovingForward = pressed; }
+	void SetInputBackward(bool pressed) { m_isMovingBackward = pressed; }
+	void SetInputLeft(bool pressed) { m_isMovingLeft = pressed; }
+	void SetInputRight(bool pressed) { m_isMovingRight = pressed; }
 
 	// 속도/가속도 Setter
 	const DX::XMFLOAT3& GetVelocity() const { return m_velocity; }
@@ -63,8 +64,8 @@ private:
 	float m_physicsDamping = 5.0f;
 
 	// 입력 상태
-	InputBinding m_forwardBinding;
-	InputBinding m_backwardBinding;
-	InputBinding m_leftBinding;
-	InputBinding m_rightBinding;
+	bool m_isMovingForward = false;
+	bool m_isMovingBackward = false;
+	bool m_isMovingLeft = false;
+	bool m_isMovingRight = false;
 };

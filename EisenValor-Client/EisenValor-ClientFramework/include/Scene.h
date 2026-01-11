@@ -36,13 +36,14 @@ public:
 	template <IsValidComponent Component, typename... Args>
 	typename ComponentStorage<Component>::Handle CreateComponent(GameObject::Handle ownerHandle, Args&&... args)
 	{
-		return CreateComponentWithInit<Component>(ownerHandle, nullptr, std::forward<Args>(args)...);
+		return CreateComponentWithInit<Component>(ownerHandle, std::nullopt, std::forward<Args>(args)...);
 	}
 
-	template <IsValidComponent Component, typename InitFunc, typename... Args>
-		requires std::is_invocable_v<InitFunc, Component*> || std::is_null_pointer_v<InitFunc>
+	template <IsValidComponent Component, typename... Args>
 	typename ComponentStorage<Component>::Handle CreateComponentWithInit(
-		GameObject::Handle ownerHandle, InitFunc&& initFunc, Args&&... args
+		GameObject::Handle ownerHandle, 
+		std::optional<std::function<void(Component*)>> initFunc, 
+		Args&&... args
 	)
 	{
 		if (!ownerHandle.IsValid() && !m_gameObjects.IsReserved(ownerHandle))
@@ -68,7 +69,7 @@ public:
 			.componentHandle = componentHandle.GetValue(),
 			.createFunc =
 				[this, storage, ownerHandle, componentHandle,
-				 init = std::forward<InitFunc>(initFunc),
+				 init = std::move(initFunc),
 				 args = std::make_tuple(std::forward<Args>(args)...)]() mutable
 			{
 				std::apply(
@@ -92,10 +93,11 @@ public:
 
 				comp->OnAttach();
 				
-				if constexpr (std::is_invocable_v<InitFunc, Component*>)
+				m_pendingStartComponents.push({Component::StaticRuntimeTypeID(), componentHandle.GetValue()});
+
+				if (init.has_value())
 				{
-					if (init)
-						init(comp);
+					(*init)(comp);
 				}
 
 				DEBUG_LOG_FMT(
@@ -274,13 +276,11 @@ private:
 		ComponentRawHandle componentHandleValue;
 	};
 
-	std::queue<CreateRequest>	   m_pendingCreates;
-	std::queue<GameObject::Handle> m_pendingDestroys;
-	// std::unordered_set<ComponentRawHandle>   m_pendingDestroySet; // MAYBE: 성능 향상이 필요할 때 사용
-	std::queue<ComponentCreateRequest>	m_pendingComponentCreates;
-	std::queue<ComponentDestroyRequest> m_pendingComponentDestroys;
-	bool								m_isProcessingDeferred = false;
-	bool								m_isStarted = false;
+	struct PendingStartComponent
+	{
+		ComponentTypeID	   typeID;
+		ComponentRawHandle componentHandleValue;
+	};
 
 private:
 	void ProcessDeferredCreates();
@@ -290,9 +290,20 @@ private:
 
 	void ProcessDeferredComponentCreates();
 	void ProcessDeferredComponentDestroys();
+	void ProcessPendingStarts();
 
 	void SortComponentsByPriority();
 
+private:
+	std::queue<CreateRequest>	   m_pendingCreates;
+	std::queue<GameObject::Handle> m_pendingDestroys;
+	// std::unordered_set<ComponentRawHandle>   m_pendingDestroySet; // MAYBE: 성능 향상이 필요할 때 사용
+	std::queue<ComponentCreateRequest>	m_pendingComponentCreates;
+	std::queue<ComponentDestroyRequest> m_pendingComponentDestroys;
+	std::queue<PendingStartComponent>	m_pendingStartComponents;
+
+	bool								m_isProcessingDeferred = false;
+	bool								m_isStarted = false;
 
 private:
 	// Object

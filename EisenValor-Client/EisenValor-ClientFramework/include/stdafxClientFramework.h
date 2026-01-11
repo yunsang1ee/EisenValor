@@ -104,6 +104,7 @@ using HandleOf = DenseListHandle<T>;
 namespace epsilon
 {
 constexpr float kMachineEpsilon = 1.192092896e-7f;
+constexpr float kEpsilon4 = 1e-4f;
 } // namespace epsilon
 
 #include "SimpleMath.h"

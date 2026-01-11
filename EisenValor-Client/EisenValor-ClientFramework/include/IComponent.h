@@ -37,6 +37,7 @@ public:
 	virtual const char*		GetTypeName() const = 0; // 디버깅용
 
 	// Lifecycle Events
+	virtual void OnStart() {}
 	virtual void OnAttach() {}
 	virtual void OnDetach() {}
 	virtual void OnEnable() {}

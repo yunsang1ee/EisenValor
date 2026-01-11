@@ -187,6 +187,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Component\PlayerController.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="Packets\PacketHandler.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="stdafxClient.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Component\PlayerController.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
