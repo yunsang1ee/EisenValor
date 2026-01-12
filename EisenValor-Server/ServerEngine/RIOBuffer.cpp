@@ -3,9 +3,26 @@
 
 #include "RIOCore.h"
 
-ServerEngine::RIOBuffer::RIOBuffer(const uint32 bufferSize)
-	:m_id{ RIO_INVALID_BUFFERID }, m_buffer{ nullptr }, m_size{ bufferSize }, m_capacity {bufferSize * BUFFER_COUNT}, m_readPos{ 0 }, m_writePos{ 0 }
+ServerEngine::RIOBuffer::RIOBuffer()
+	:m_id{ RIO_INVALID_BUFFERID }, m_buffer{ nullptr }, m_readPos{ 0 }, m_writePos{ 0 }
 {
+}
+
+ServerEngine::RIOBuffer::~RIOBuffer()
+{
+	if(nullptr != m_buffer) {
+		RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
+
+		if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
+			ServerEngine::LogManager::PrintLastError();
+	}
+}
+
+void ServerEngine::RIOBuffer::Init(const uint32 bufferSize)
+{
+	m_size = bufferSize;
+	m_capacity = bufferSize * BUFFER_COUNT;
+
 	m_buffer = reinterpret_cast<char*>(VirtualAllocEx(GetCurrentProcess(), 0, m_capacity, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 
 	if(nullptr == m_buffer)
@@ -14,21 +31,13 @@ ServerEngine::RIOBuffer::RIOBuffer(const uint32 bufferSize)
 	SYSTEM_INFO systemInfo;
 	GetSystemInfo(&systemInfo); // 기본 페이지 4kb
 	const uint64 granularity = systemInfo.dwAllocationGranularity;	// 메모리 할당할 때 이 숫자의 배수로 메모리 반환해줌. (64kb 65536)
-	
+
 	assert(m_capacity % granularity == 0);
 
 	if(nullptr != m_buffer)
 		m_id = RIO_EXT_FUNC_TB.RIORegisterBuffer(m_buffer, m_capacity);
 
 	if(RIO_INVALID_BUFFERID == m_id)
-		ServerEngine::LogManager::PrintLastError();
-}
-
-ServerEngine::RIOBuffer::~RIOBuffer()
-{
-	RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
-
-	if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
 		ServerEngine::LogManager::PrintLastError();
 }
 

@@ -1,1 +1,45 @@
 namespace FB_ENUMS;
+
+enum GAME_OBJECT_TYPE : ubyte{
+	NPC = 0,
+	PLAYER,
+	SPAWNER,
+	VALLISTAR,
+	PROJECTILE,
+
+	END
+}
+
+enum NPC_TYPE: ubyte{
+	GENERAL = 0,
+	SOLDIER,
+
+	END
+}
+
+enum TEAM_TYPE: ubyte{
+	BLUE = 0,
+	RED,
+
+	END
+}
+
+enum SOLDIER_STATE_TYPE : ubyte {
+	IDLE =0,
+	MOVE,
+	CHASE,
+	ATTACK,
+	DEFENSE,
+	DAMAGED,
+	DEAD,
+}
+
+enum ROOM_STATE_TYPE: ubyte{
+	WATING,
+	PLAYING,
+}
+
+enum PARTICIPANT_TYPE :ubyte{
+	USER,
+	BOT
+}

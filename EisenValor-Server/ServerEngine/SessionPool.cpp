@@ -2,10 +2,13 @@
 #include "SessionPool.h"
 
 #include "Session.h"
+#include "ServerEngineConfigManager.h"
 
 void ServerEngine::SessionPool::Init(SessionFactoryFunc sessionFunc)
 {
 	m_func = sessionFunc;
+
+	const int MAX_SESION_PER_RIO_WORKER = MANAGER(ServerEngineConfigManager)->GetRIOWorkerConfig().MAX_SESSION_PER_RIO_WORKER;
 	
 	for(int i = 0; i < MAX_SESION_PER_RIO_WORKER; ++i) {
 		std::shared_ptr<Session> session = m_func();	// ClientSession
@@ -21,14 +24,20 @@ void ServerEngine::SessionPool::EnqSession(std::shared_ptr<Session> session)
 
 std::shared_ptr<ServerEngine::Session> ServerEngine::SessionPool::DeqSession()
 {
+	std::shared_ptr<Session> session{ nullptr };
 	if(m_freeSessions.empty() == false) {
-		auto session = m_freeSessions.front();
-		m_freeSessions.pop();
+		if(m_freeSessions.try_pop(session)) {
+			std::cout << "DeqSession!" << std::endl;
+			return session;
+		}
+
 		return session;
 	}
 	else {
-		auto newSesion = m_func();
-		return newSesion;
+		session = m_func();
+		return session;
 	}
+	
+	return session;
 }
 

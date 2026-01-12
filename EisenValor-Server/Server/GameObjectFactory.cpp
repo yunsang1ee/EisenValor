@@ -2,78 +2,96 @@
 #include "GameObjectFactory.h"
 
 #include "Player.h"
-#include "NPC.h"
-#include "FSM.h"
+#include "Soldier.h"
 
-#include "SoldierState.h"
-#include "GeneralState.h"
+#include "FSM.h"
+#include "GeneralStates.h"
+#include "SoldierStates.h"
 
 #include "BehaviorNode.h"
 #include "BehaviorTree.h"
 #include "IsPlayerInNearNode.h"
 #include "TargetTraceNode.h"
-#include "TroopController.h"
+#include "Spawner.h"
 
-std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeShared(t.teamType);
-	player->SetPos(t.pos);
-	player->SetRotation(t.rot);
-	player->AddComponent<Server::Contents::TroopController>();
-	player->GetComponent<Server::Contents::TroopController>()->SetOwner(player);
-	player->GetComponent<Server::Contents::TroopController>()->Init();
+	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
+	player->SetPosInfo(t.posInfo);
+	player->SetStatInfo(t.stat);
+	player->SetStamina(0);
+	const auto fsm = player->AddComponent<Server::Contents::FSM>();
+	
+	auto idleState =  Server::Contents::GeneralIdleState::Create();
+	auto preDelayState = Server::Contents::GeneralPreDelayState::Create();
+	auto attackState = Server::Contents::GeneralAttackState::Create();
+	auto postDelayState = Server::Contents::GeneralPostDelayState::Create();
+	auto stunState = Server::Contents::GeneralStunState::Create();
+	auto deadState = Server::Contents::GeneralDeadState::Create();
+
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(preDelayState));
+	fsm->AddState(std::move(attackState));
+	fsm->AddState(std::move(postDelayState));
+	fsm->AddState(std::move(stunState));
+	fsm->AddState(std::move(deadState));
 
 	return player;
 }
 
-std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
+std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
-	auto general = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
-	general->SetPos(t.pos);
-	general->SetRotation(t.rot);
+	static uint32 idGen{ 1000 };
+
+	auto general = std::make_unique<Server::Contents::General>(t.teamType);
+	general->SetPosInfo(t.posInfo);
 	general->SetStatInfo(t.stat);
-	general->AddComponent<Server::Contents::TroopController>();
-	general->AddComponent<Server::Contents::TroopController>()->SetOwner(general);
-	general->GetComponent<Server::Contents::TroopController>()->Init();
-	general->GetComponent<Server::Contents::TroopController>()->SetFormation(TROOP_FORMATION_TYPE::LINE);
+	general->SetID(idGen);
+	idGen++;
 
-	// const auto bt = general->AddComponent<BehaviorTree>();
-	// bt->SetOwner(general);
-	// auto root = std::make_unique<Server::Contents::SequenceNode>();
-	// root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
-	// root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
-	// bt->SetRoot(std::move(root));
+	//const auto bt = general->AddComponent<BehaviorTree>();
+	//bt->SetOwner(general);
+	//auto root = std::make_unique<Server::Contents::SequenceNode>();
+	//root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
+	//root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
+	//bt->SetRoot(std::move(root));
 
-	const auto fsm = general->AddComponent<Server::Contents::FSM>();
-	fsm->SetOwner(general);
-
-	auto idle = std::make_unique<Server::Contents::GeneralIdleState>();
-	auto trace = std::make_unique<Server::Contents::GeneralTraceState>();
-	fsm->AddState(std::move(idle));
-	fsm->AddState(std::move(trace));
-	fsm->InitStartState(etou8(GENERAL_STATE_TYPE::IDLE));
 
 	return general;
 }
 
-std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
+//std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
+//{
+//	const auto soldier = ServerEngine::ObjectPool<Server::Contents::Soldier>::MakeShared(t.npcType, t.teamType);
+//	soldier->SetPosInfo(t.posInfo);
+//	soldier->SetStatInfo(t.stat);
+//
+//	const auto fsm = soldier->AddComponent<Server::Contents::FSM>();
+//	fsm->SetOwner(soldier);
+//
+//	auto idleState = Server::Contents::SoldierIdleState::Create(t.enemyDetectionRange);
+//	auto moveState = Server::Contents::SoldierMoveState::Create();
+//	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.combatRange);
+//	auto attackState = Server::Contents::SoldierAttackState::Create(t.combatRange, t.attackCycleTime);
+//	auto defenseState = Server::Contents::SoldierDefenseState::Create();
+//	auto damagedState = Server::Contents::SoldierDamagedState::Create(0.f);
+//
+//	fsm->AddState(std::move(idleState));
+//	fsm->AddState(std::move(moveState));
+//	fsm->AddState(std::move(chaseState));
+//	fsm->AddState(std::move(attackState));
+//	fsm->AddState(std::move(defenseState));
+//	fsm->AddState(std::move(damagedState));
+//
+//	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+//
+//	return soldier;
+//}
+
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
-	const auto soldier = ServerEngine::ObjectPool<Server::Contents::NPC>::MakeShared(t.npcType, t.teamType);
-	soldier->SetPos(t.pos);
-	soldier->SetRotation(t.rot);
-	soldier->SetStatInfo(t.stat);
-
-	const auto fsm = soldier->AddComponent<Server::Contents::FSM>();
-	fsm->SetOwner(soldier);
-
-	auto idleState = std::make_unique<Server::Contents::SoldierIdleState>();
-	auto runState = std::make_unique<Server::Contents::SoldierRunState>();
-	auto attackState = std::make_unique<Server::Contents::SoldierAttackState>();
-	
-	fsm->AddState(std::move(idleState));
-	fsm->AddState(std::move(runState));
-	fsm->AddState(std::move(attackState));
-	fsm->InitStartState(etou8(SOLDIER_STATE_TYPE::IDLE));
-
-	return soldier;
+	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	const auto spawner = spawnObj->AddScript(std::make_unique<Spawner>());
+	spawner->SetOwner(spawnObj.get());
+	return spawnObj;
 }

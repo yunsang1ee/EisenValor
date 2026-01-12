@@ -6,12 +6,11 @@ namespace ServerEngine {
 	class PacketBuffer;
 
 	class SendBuffer : public RIOBuffer {
-		enum { BUFFER_COUNT = 10, };
 	private:
 		uint32 m_sendOffset;
 
 	public:
-		explicit SendBuffer(const uint32 capacity = MAX_RIO_BUFFER_SIZE);
+		explicit SendBuffer();
 		~SendBuffer();
 
 	public:

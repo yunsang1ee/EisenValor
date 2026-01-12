@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SessionPool.h"
+
 namespace ServerEngine {
 	class RIOCore;
 	class SessionPool;
@@ -7,13 +9,14 @@ namespace ServerEngine {
 
 	class RIOWorker {
 	private:
-		RIO_CQ											m_cq;
-		std::unique_ptr<SessionPool>					m_sessionPool;
-		int32											m_id;
-		std::vector<std::shared_ptr<Session>>			m_connectedSession;
-		
-		tbb::spin_mutex									m_mutex;
+		RIO_CQ														m_cq;
+		uint16														m_id;
 
+		tbb::concurrent_unordered_set<std::shared_ptr<Session>>		m_connectedSession;
+
+		SessionPool													m_sessionPool;
+		std::vector<RIORESULT>										m_ioResults;
+	
 	public:
 		explicit RIOWorker(const uint16 id);
 		~RIOWorker();
@@ -22,15 +25,18 @@ namespace ServerEngine {
 		bool			Init(SessionFactoryFunc sessionFunc) noexcept;
 		void			Work() noexcept;
 
-		void			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept;
+		bool			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept;
 
 	public:
-		const RIO_CQ&	GetCQ() const noexcept { return m_cq; }
-		SessionPool*	GetSessionPool() noexcept { return m_sessionPool.get(); }
+		const RIO_CQ	GetCQ() const noexcept { return m_cq; }
+		uint16			GetID() const noexcept { return m_id; }
+		auto&			GetSessionPool() noexcept { return m_sessionPool; }
 
 	private:
+		// 관리하고 있는 Session들의 각각 보낼 Packet들 처리
 		void			FlushSessionPacketQueue() noexcept;
-		void			DequeueCompletion() const noexcept;
+		
+		void			DequeueCompletion() noexcept;
 	};
 }
 

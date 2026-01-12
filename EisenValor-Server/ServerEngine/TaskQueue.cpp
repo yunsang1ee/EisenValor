@@ -12,7 +12,7 @@ void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, boo
 	if(0 == prevCount) {
 		if(nullptr == TLS_CURRENT_TASK_QUEUE && false == pushOnly)
 			Execute();
-		else {
+		else {	
 			MANAGER(TaskQueueManager)->EnqueTaskQueue(shared_from_this());
 		}
 	}
@@ -38,3 +38,9 @@ void ServerEngine::TaskQueue::Execute() noexcept
 	}
 }
 
+void ServerEngine::TaskQueue::ClearTaskQueue() noexcept
+{
+	std::shared_ptr<Task> task;
+	while(m_tasks.try_pop(task));
+	m_taskCount.store(0);
+}

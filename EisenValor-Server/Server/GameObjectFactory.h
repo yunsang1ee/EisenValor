@@ -3,39 +3,38 @@
 namespace Server {
 	namespace Contents {
 		struct GameObjectTemplate {
-			Vec3				pos;
-			Vec3				rot;
-			TEAM_TYPE			teamType;
-			GAME_OBJECT_TYPE	objType;
+			PosInfo						posInfo;
+			FB_ENUMS::TEAM_TYPE			teamType;
 		};
 
-		struct CreatureTemplate  : public GameObjectTemplate {
-			StatInfo stat;
+		struct CreatureTemplate : public GameObjectTemplate {
+			CreatureStatInfo stat;
 		};
 
-		struct PlayerTemplate : public CreatureTemplate {
-			// TODO: PlayerTemplate
-		};
-
-		struct SpawnBaseTemplate : public CreatureTemplate { 
-			// TODO: SpawnBasTemplate
-		};
-
-		struct NPCTemplate : public CreatureTemplate {
-			NPC_TYPE npcType;
-		};
-
-		struct GeneralTemplate : public NPCTemplate {
+		struct GeneralTemplate : public CreatureTemplate {
 			// TODO: GeneralTemplate
 		};
 
-		struct SoldierTemplate : public NPCTemplate {
-			// TODO: SoldierTemplate
-			std::weak_ptr<NPC> ownerGeneral;
+		struct PlayerTemplate : public GeneralTemplate {
+			// TODO: PlayerTemplate
 		};
+
+		struct SoldierTemplate : public CreatureTemplate {
+			std::weak_ptr<NPC> ownerGeneral;
+			float enemyDetectionRange;
+			float combatRange;
+			std::chrono::seconds attackCycleTime;
+
+		};
+
+		struct SpanwerTemplate : public GameObjectTemplate {
 		
+		};
+
+		class GameObject;
+		class General;
 		class Player;
-		class NPC;
+		class Soldier;
 
 		class GameObjectFactory {
 		private:
@@ -47,10 +46,11 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
-			static std::shared_ptr<NPC>			CreateGeneral(const GeneralTemplate& t);
-			static std::shared_ptr<NPC>			CreateSoldier(const SoldierTemplate& t);
-			
+			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
+			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
+			// static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
+
 		};
 	}
 }

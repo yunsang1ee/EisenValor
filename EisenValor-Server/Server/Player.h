@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Creature.h"
+#include "General.h"
 
 namespace Server {
 	class ClientSession;
@@ -8,20 +8,28 @@ namespace Server {
 	namespace Contents {
 		class NPC;
 
-		class Player : public Creature {
+		class Player : public General {
 		private:
 			std::weak_ptr<ClientSession>			m_session;
-
+			
 		public:
-			Player(const TEAM_TYPE teamType);
+			Player(const FB_ENUMS::TEAM_TYPE teamType);
 			virtual ~Player();
+		
+		public:
+			virtual void Update(const float dt) override final;
+			virtual bool OnDamaged(Creature* attacker, const float dt) override final;
 
 		public:
-			void SetSession(std::weak_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
-		
-		public:
-			std::shared_ptr<ClientSession> GetOwner() { return m_session.lock(); }
-		
+			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
+			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
+
+		private:
+			void Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo);
+			void Handle_CS_PLAYER_CHANGE_STANCE();
+			void Handle_CS_PLAYER_FAKE();
+			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID);
+			friend class GameWorld;
 		};
 	}
 }

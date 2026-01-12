@@ -4,34 +4,75 @@
 #include "RioCore.h"
 #include "ClientSession.h"
 #include "GameObjectFactory.h"
-#include "GameRoomManager.h"
+#include "GameLobby.h"
+#include "ServerEngineConfigManager.h"
+#include "GameDataManager.h"
+#include "AttackDataTable.h"
 
-void Server::ServerManager::Init() noexcept
+BOOL __stdcall ConsoleHandler(DWORD signal)
 {
+	if(signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT) {
+		LOG_SAVE();
+		return TRUE;
+	}
+	return FALSE;
+}
+
+bool Server::ServerManager::Init()
+{
+	ServerEngine::LogManager::Init();
+
+	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
+		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
+		return false;
+	}
+
 	std::wcout.imbue(std::locale("korean"));
+	
+	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
+		LOG_ERROR("ServerEngineConFigureManager Load Failed");
+		return false;
+	}
+		
+	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("GameData/GameData.json")) {
+		LOG_ERROR("GameDataManager Load Failed");
+		return false;
+	}
+
+	if(false == MANAGER(Server::Contents::StatDataTable)->LoadFromCSV("DataTable/StatDataTable.csv")) {
+		LOG_ERROR("StatDataTable Load Failed");
+		return false;
+	}
+
+	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("DataTable/AttackDataTable.csv")) {
+		LOG_ERROR("AttackDataTable Load Failed");
+		return false;
+	}
 
 	ClientPacketHandler::Init();
 	
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
-		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "ThreadManager Init Failed");
-		exit(-1);
+		LOG_ERROR("ThreadManager Init Failed");
+		return false;
 	}
 
 	if(false == MANAGER(ServerEngine::RIOCore)->Init(MakeClientSessionFunc)) {
-		ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::ERR, "RIOCore Init Fail");
-		Shutdown();
-		exit(-1);
+		LOG_ERROR("RIOCore Init Failed");
+		MANAGER(ServerEngine::RIOCore)->Shutdown();
+		::WSACleanup();
+		return false;
 	}
 
-	MANAGER(Server::Contents::GameRoomManager)->Init();
+	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
+	G_GAME_LOBBY->Init();
+
+	return true;
 }	
 
-void Server::ServerManager::Run() noexcept
+bool Server::ServerManager::Run()
 {
-	if(false == MANAGER(ServerEngine::RIOCore)->StartAccept()) {
-		Shutdown();
-		exit(-1);
-	}
+	if(false == MANAGER(ServerEngine::RIOCore)->StartAccept())
+		return false;
 
 	MANAGER(ServerEngine::RIOCore)->Run();
 	
@@ -41,23 +82,27 @@ void Server::ServerManager::Run() noexcept
 	// Main-Thread
 	while(true) {
 		if(!_kbhit()) {
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(1000ms);
 			continue;
 		}
 		ch = _getch();
 		if(ch == ESC) {
-			ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::INFO, "Serve Finish");
+			LOG_INFO("Server Finish");
 			break;
 		}
 		else {
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(1000ms);
 		}
 	}
+
+	return true;
 }
 
-void Server::ServerManager::Shutdown() noexcept
+void Server::ServerManager::Shutdown()
 {
 	MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
+
+	LOG_SAVE();
 }

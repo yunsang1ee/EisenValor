@@ -13,8 +13,8 @@ enum class PACKET_TYPE : uint16
 	CS_LOGIN_PKT = 1,
 	SC_LOGIN_PKT = 2,
 
-	CS_ENTER_WORLD_PKT = 3,
-	SC_ENTER_WORLD_PKT = 4,
+	CS_ENTER_GAME_PKT = 3,
+	SC_ENTER_GAME_PKT = 4,
 
 	SC_LOCAL_PLAYER_PKT = 5,
 
@@ -33,12 +33,19 @@ enum class PACKET_TYPE : uint16
 
 	CS_PLAYER_ATTACK_PKT = 14,
 
-	SC_HIT_PKT = 15,
+	SC_PLAYER_DAMAGED_PKT = 15,
 
-	CS_MOVE_SOLDIER_PKT = 16,
+	CS_SOLDIER_MOVE_PKT = 16,
 
 	SC_REMAINING_GAME_TIME_PKT = 17,
+
 	CS_CHANGE_SOLDIER_FORMATION_PKT = 18,
+
+	CS_REQ_ATTACK_PKT = 19,
+
+	SC_NPC_INFO_PKT = 20,
+
+	SC_ADD_NPC_PKT = 21,
 
 	END
 };
@@ -52,14 +59,16 @@ struct ISceneNetReceiver
 
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
 bool Handle_SC_LOGIN_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_PACKET& recvPkt);
-bool Handle_SC_ENTER_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_ROOM_PACKET& recvPkt);
+bool Handle_SC_ENTER_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_PACKET& recvPkt);
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
-bool Handle_SC_HIT_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_PACKET& recvPkt);
+bool Handle_SC_PLAYER_DAMAGED_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_DAMAGED_PACKET& recvPkt);
 bool Handle_SC_REMANING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt);
+bool Handle_SC_NPC_INFO_PACKET(const SOCKET& socket, const FB_TABLES::SC_NPC_INFO& recvPkt);
+bool Handle_SC_ADD_NPC_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_NPC_PACKET& recvPkt);
 
 namespace NetBridge
 {
@@ -84,9 +93,9 @@ public:
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{ return HandlePacket<FB_TABLES::SC_LOGIN_PACKET>(Handle_SC_LOGIN_PACKET, socket, buffer, header); };
 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_WORLD_PKT)] =
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-		{ return HandlePacket<FB_TABLES::SC_ENTER_ROOM_PACKET>(Handle_SC_ENTER_ROOM_PACKET, socket, buffer, header); };
+		{ return HandlePacket<FB_TABLES::SC_ENTER_GAME_PACKET>(Handle_SC_ENTER_GAME_PACKET, socket, buffer, header); };
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -112,9 +121,9 @@ public:
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 		{ return HandlePacket<FB_TABLES::SC_MOVE_PACKET>(Handle_SC_MOVE_PACKET, socket, buffer, header); };
 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_HIT_PKT)] =
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PLAYER_DAMAGED_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-		{ return HandlePacket<FB_TABLES::SC_HIT_PACKET>(Handle_SC_HIT_PACKET, socket, buffer, header); };
+		{ return HandlePacket<FB_TABLES::SC_PLAYER_DAMAGED_PACKET>(Handle_SC_PLAYER_DAMAGED_PACKET, socket, buffer, header); };
 
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT)] =
 			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -123,6 +132,15 @@ public:
 				Handle_SC_REMANING_GAME_TIME_PACKET, socket, buffer, header
 			);
 		};
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_NPC_INFO_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_NPC_INFO>(Handle_SC_NPC_INFO_PACKET, socket, buffer, header); };
+
+
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ADD_NPC_PKT)] =
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+		{ return HandlePacket<FB_TABLES::SC_ADD_NPC_PACKET>(Handle_SC_ADD_NPC_PACKET, socket, buffer, header); };
 	}
 
 	virtual bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader) final

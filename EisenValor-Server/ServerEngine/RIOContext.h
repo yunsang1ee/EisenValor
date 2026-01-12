@@ -30,13 +30,13 @@ namespace ServerEngine {
 
 	class RecvContext : public RIOContext {
 	private:
-		RecvContext();
+		RecvContext() : RIOContext{ RIO_CONTEXT_TYPE::RECV } {};
 		friend class Session;
 	};
 
 	class SendContext : public RIOContext {
 	public:
-		SendContext();
+		SendContext() : RIOContext{ RIO_CONTEXT_TYPE::SEND } {};
 	};
 
 }

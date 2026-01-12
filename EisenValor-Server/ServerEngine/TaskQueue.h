@@ -7,42 +7,60 @@ namespace ServerEngine {
 	class Task;
 	class TaskQueue : public std::enable_shared_from_this<ServerEngine::TaskQueue> {
 	protected:
-		// TODO: LF_QUEUE로 수정
 		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
 		std::atomic_int									m_taskCount{};
 	
 	public:
-		void Push(std::shared_ptr<Task> task, bool pushOnly = false) noexcept;
+		// CHK: PushOnly = true
+		void Push(std::shared_ptr<Task> task, bool pushOnly = true) noexcept;
 
 	public:
-		void ExecuteAsyncronously(TaskFuncCB&& func)
+		template<typename Func>
+		void ExecAsync(Func&& func)
 		{
-			Push(std::move(ObjectPool<Task>::MakeShared(std::move(func))));
+			Push(MakeTask(std::forward<Func>(func)));
 		}
 
 		template<typename T, typename Ret, typename... FArgs, typename... CallArgs>
-		void ExecuteAsyncronously(Ret(T::* memFunc)(FArgs...), CallArgs&&... args)
+		void ExecAsync(Ret(T::* memFunc)(FArgs...), CallArgs&&... args)
 		{
-			std::shared_ptr<T> owner = std::static_pointer_cast<T>(shared_from_this());
-			Push(std::move(ObjectPool<Task>::MakeShared(owner, memFunc, std::forward<CallArgs>(args)...)));
+			Push(MakeTask(memFunc, std::forward<CallArgs>(args)...));
+		}
+
+		// 지연 실행
+		template<typename Func>
+		void ExecTimer(const std::chrono::milliseconds ms, Func&& func)
+		{
+			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(std::forward<Func>(func)));
+		}
+
+		template<typename T, typename Ret, typename... FArgs, typename... CallArgs>
+		void ExecTimer(const std::chrono::milliseconds ms, Ret(T::* memFunc)(FArgs...), CallArgs&&... args)
+		{
+			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(memFunc, std::forward<CallArgs>(args)...));
+		}
+
+	private:
+		template<typename Func>
+		std::shared_ptr<Task> MakeTask(Func&& func)
+		{
+			return ObjectPool<Task>::MakeShared(std::forward<Func>(func));
 		}
 		
-		void ExecuteAfterTime(const std::chrono::milliseconds ms, TaskFuncCB&& func)
-		{
-			std::shared_ptr<Task> task = ObjectPool<Task>::MakeShared(std::move(func));
-			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), std::move(task));
-		}
-
 		template<typename T, typename Ret, typename... FArgs, typename... CallArgs>
-		void ExecuteAfterTime(const std::chrono::milliseconds ms, Ret(T::* memFunc)(FArgs...), CallArgs&&... args)
+		std::shared_ptr<Task> MakeTask(Ret(T::* memFunc)(FArgs...), CallArgs&&... args)
 		{
 			auto owner = std::static_pointer_cast<T>(shared_from_this());
-			auto task = ObjectPool<Task>::MakeShared(owner, memFunc, std::forward<CallArgs>(args)...);
-
-			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), std::move(task));
+			return ObjectPool<Task>::MakeShared(owner, memFunc, std::forward<CallArgs>(args)...);
 		}
 
+	protected:
+		void ClearTaskQueue() noexcept;
+	
+	private:
+
 		void Execute() noexcept;
+		friend class RIOCore;
 	};
 }
 

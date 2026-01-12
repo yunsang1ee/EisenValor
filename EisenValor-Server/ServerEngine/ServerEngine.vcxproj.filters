@@ -20,25 +20,25 @@
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="LogManager.h">
-      <Filter>95. Managers\00. LogManager</Filter>
+      <Filter>95. Managers\LogManager</Filter>
     </ClInclude>
     <ClInclude Include="ServerEngineGlobalVariables.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="ThreadManager.h">
-      <Filter>95. Managers\01. ThreadManager</Filter>
+      <Filter>95. Managers\ThreadManager</Filter>
     </ClInclude>
     <ClInclude Include="ServerEngineTLS.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="RIOWorker.h">
-      <Filter>00. RIOCore\00. RIOWorker</Filter>
+      <Filter>00. RIOCore\RIOWorker</Filter>
     </ClInclude>
     <ClInclude Include="ServerEngineEnums.h">
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="Session.h">
-      <Filter>03. SessionPool\00. Session</Filter>
+      <Filter>03. SessionPool\Session</Filter>
     </ClInclude>
     <ClInclude Include="SessionPool.h">
       <Filter>03. SessionPool</Filter>
@@ -47,16 +47,16 @@
       <Filter>01. RIOContext</Filter>
     </ClInclude>
     <ClInclude Include="RecvBuffer.h">
-      <Filter>02. RIOBuffer\00. RecvBuffer</Filter>
+      <Filter>02. RIOBuffer\RecvBuffer</Filter>
     </ClInclude>
     <ClInclude Include="SendBuffer.h">
-      <Filter>02. RIOBuffer\01. SendBuffer</Filter>
+      <Filter>02. RIOBuffer\SendBuffer</Filter>
     </ClInclude>
     <ClInclude Include="RIOBuffer.h">
       <Filter>02. RIOBuffer</Filter>
     </ClInclude>
     <ClInclude Include="PacketBuffer.h">
-      <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
+      <Filter>02. RIOBuffer\PacketBuffer</Filter>
     </ClInclude>
     <ClInclude Include="PacketHeader.h">
       <Filter>97. Headers</Filter>
@@ -65,25 +65,34 @@
       <Filter>97. Headers</Filter>
     </ClInclude>
     <ClInclude Include="ObjectPool.h">
-      <Filter>04. ObjectPool</Filter>
+      <Filter>04. MemoryPool</Filter>
     </ClInclude>
     <ClInclude Include="TaskQueueManager.h">
-      <Filter>95. Managers\02. TaskQueueManager</Filter>
+      <Filter>95. Managers\TaskQueueManager</Filter>
     </ClInclude>
     <ClInclude Include="Task.h">
-      <Filter>05. TaskQueue\00. Task</Filter>
+      <Filter>05. TaskQueue\Task</Filter>
     </ClInclude>
     <ClInclude Include="TaskQueue.h">
       <Filter>05. TaskQueue</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
-      <Filter>96. Utils\00. Timer</Filter>
+      <Filter>96. Utils\Timer</Filter>
     </ClInclude>
     <ClInclude Include="LockQueue.h">
-      <Filter>96. Utils\01. LockQueue</Filter>
+      <Filter>96. Utils\LockQueue</Filter>
     </ClInclude>
     <ClInclude Include="TaskTimer.h">
-      <Filter>95. Managers\03. TaskTimer</Filter>
+      <Filter>95. Managers\TaskTimer</Filter>
+    </ClInclude>
+    <ClInclude Include="Allocator.h">
+      <Filter>04. MemoryPool\Allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryPool.h">
+      <Filter>04. MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerEngineConfigManager.h">
+      <Filter>95. Managers\ServerEngineConfigManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -97,58 +106,67 @@
       <Filter>00. RIOCore</Filter>
     </ClCompile>
     <ClCompile Include="LogManager.cpp">
-      <Filter>95. Managers\00. LogManager</Filter>
+      <Filter>95. Managers\LogManager</Filter>
     </ClCompile>
     <ClCompile Include="ThreadManager.cpp">
-      <Filter>95. Managers\01. ThreadManager</Filter>
+      <Filter>95. Managers\ThreadManager</Filter>
     </ClCompile>
     <ClCompile Include="RIOWorker.cpp">
-      <Filter>00. RIOCore\00. RIOWorker</Filter>
+      <Filter>00. RIOCore\RIOWorker</Filter>
     </ClCompile>
     <ClCompile Include="Session.cpp">
-      <Filter>03. SessionPool\00. Session</Filter>
-    </ClCompile>
-    <ClCompile Include="SessionPool.cpp">
-      <Filter>03. SessionPool</Filter>
+      <Filter>03. SessionPool\Session</Filter>
     </ClCompile>
     <ClCompile Include="RIOContext.cpp">
       <Filter>01. RIOContext</Filter>
     </ClCompile>
     <ClCompile Include="RecvBuffer.cpp">
-      <Filter>02. RIOBuffer\00. RecvBuffer</Filter>
+      <Filter>02. RIOBuffer\RecvBuffer</Filter>
     </ClCompile>
     <ClCompile Include="SendBuffer.cpp">
-      <Filter>02. RIOBuffer\01. SendBuffer</Filter>
+      <Filter>02. RIOBuffer\SendBuffer</Filter>
     </ClCompile>
     <ClCompile Include="RIOBuffer.cpp">
       <Filter>02. RIOBuffer</Filter>
     </ClCompile>
     <ClCompile Include="PacketBuffer.cpp">
-      <Filter>02. RIOBuffer\02. PacketBuffer</Filter>
+      <Filter>02. RIOBuffer\PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="ObjectPool.cpp">
-      <Filter>04. ObjectPool</Filter>
+      <Filter>04. MemoryPool</Filter>
     </ClCompile>
     <ClCompile Include="TaskQueueManager.cpp">
-      <Filter>95. Managers\02. TaskQueueManager</Filter>
+      <Filter>95. Managers\TaskQueueManager</Filter>
     </ClCompile>
     <ClCompile Include="Task.cpp">
-      <Filter>05. TaskQueue\00. Task</Filter>
+      <Filter>05. TaskQueue\Task</Filter>
     </ClCompile>
     <ClCompile Include="TaskQueue.cpp">
       <Filter>05. TaskQueue</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
-      <Filter>96. Utils\00. Timer</Filter>
+      <Filter>96. Utils\Timer</Filter>
     </ClCompile>
     <ClCompile Include="LockQueue.cpp">
-      <Filter>96. Utils\01. LockQueue</Filter>
+      <Filter>96. Utils\LockQueue</Filter>
     </ClCompile>
     <ClCompile Include="TaskTimer.cpp">
-      <Filter>95. Managers\03. TaskTimer</Filter>
+      <Filter>95. Managers\TaskTimer</Filter>
     </ClCompile>
     <ClCompile Include="ServerEngineTLS.cpp">
       <Filter>97. Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="Allocator.cpp">
+      <Filter>04. MemoryPool\Allocator</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryPool.cpp">
+      <Filter>04. MemoryPool</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerEngineConfigManager.cpp">
+      <Filter>95. Managers\ServerEngineConfigManager</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionPool.cpp">
+      <Filter>03. SessionPool</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -167,62 +185,74 @@
     <Filter Include="97. Headers">
       <UniqueIdentifier>{6a2de00f-6658-4f89-82d3-66f988195fa6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="00. RIOCore\00. RIOWorker">
-      <UniqueIdentifier>{b5e94d73-e7cc-4350-8abe-df1290498a79}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. SessionPool">
       <UniqueIdentifier>{2efe83d9-6344-4b11-bc1a-f1281e39413f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. SessionPool\00. Session">
-      <UniqueIdentifier>{eb31e871-5f7c-4630-b420-fa5a7eee4f00}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. RIOBuffer">
       <UniqueIdentifier>{45322c6c-b206-42fc-8a5c-f2421ca271a1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. RIOBuffer\00. RecvBuffer">
-      <UniqueIdentifier>{7af312d6-a23f-44fd-9052-19e13d972057}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. RIOBuffer\01. SendBuffer">
-      <UniqueIdentifier>{94f86bd4-6f19-4e31-869a-241dd17ea156}</UniqueIdentifier>
-    </Filter>
     <Filter Include="95. Managers">
       <UniqueIdentifier>{7c7af7e4-cec0-40df-91c6-d41042cc9d8f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="95. Managers\00. LogManager">
-      <UniqueIdentifier>{b18df161-993b-456d-a224-8396640585d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="95. Managers\01. ThreadManager">
-      <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="04. ObjectPool">
-      <UniqueIdentifier>{1d58aba8-4053-4370-bdfc-a12582f80127}</UniqueIdentifier>
     </Filter>
     <Filter Include="96. Utils">
       <UniqueIdentifier>{855f9310-39d4-4a17-a7d6-7ae7c8fe2037}</UniqueIdentifier>
     </Filter>
-    <Filter Include="95. Managers\02. TaskQueueManager">
-      <UniqueIdentifier>{23b44939-13d9-4f85-af07-d221aabddd14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="96. Utils\00. Timer">
-      <UniqueIdentifier>{69cdb712-faaa-4fa1-9059-8073e90ec835}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="96. Utils\01. LockQueue">
-      <UniqueIdentifier>{5dc3df8c-7926-4827-bcac-6716fcb3b008}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="95. Managers\03. TaskTimer">
-      <UniqueIdentifier>{54ba449c-e187-47d0-9401-817fa3e8204c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="05. TaskQueue">
       <UniqueIdentifier>{d5ccbc04-1854-4dbb-8a22-cb8ebcd7be04}</UniqueIdentifier>
     </Filter>
-    <Filter Include="05. TaskQueue\00. Task">
+    <Filter Include="02. RIOBuffer\RecvBuffer">
+      <UniqueIdentifier>{7af312d6-a23f-44fd-9052-19e13d972057}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. RIOBuffer\PacketBuffer">
+      <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. RIOBuffer\SendBuffer">
+      <UniqueIdentifier>{94f86bd4-6f19-4e31-869a-241dd17ea156}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. RIOCore\RIOWorker">
+      <UniqueIdentifier>{b5e94d73-e7cc-4350-8abe-df1290498a79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. SessionPool\Session">
+      <UniqueIdentifier>{eb31e871-5f7c-4630-b420-fa5a7eee4f00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. TaskQueue\Task">
       <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. RIOBuffer\02. PacketBuffer">
-      <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
+    <Filter Include="95. Managers\LogManager">
+      <UniqueIdentifier>{b18df161-993b-456d-a224-8396640585d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\ThreadManager">
+      <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\TaskQueueManager">
+      <UniqueIdentifier>{23b44939-13d9-4f85-af07-d221aabddd14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\TaskTimer">
+      <UniqueIdentifier>{54ba449c-e187-47d0-9401-817fa3e8204c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Utils\Timer">
+      <UniqueIdentifier>{69cdb712-faaa-4fa1-9059-8073e90ec835}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="96. Utils\LockQueue">
+      <UniqueIdentifier>{5dc3df8c-7926-4827-bcac-6716fcb3b008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. MemoryPool">
+      <UniqueIdentifier>{1d58aba8-4053-4370-bdfc-a12582f80127}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. MemoryPool\Allocator">
+      <UniqueIdentifier>{7b6adc9b-32a3-4c18-81e7-e0f49db5c8d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="94. Config">
+      <UniqueIdentifier>{3c6df255-502a-4eeb-a1b6-80377ca64c18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\ServerEngineConfigManager">
+      <UniqueIdentifier>{06908acf-c435-4d20-ac06-5b95ff8faf20}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\Binaries\Server\Release\Config\config.json">
+      <Filter>94. Config</Filter>
+    </None>
   </ItemGroup>
 </Project>

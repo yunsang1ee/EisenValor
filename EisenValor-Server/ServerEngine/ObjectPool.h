@@ -9,6 +9,7 @@ namespace ServerEngine {
     private:
         using Pool = oneapi::tbb::memory_pool<oneapi::tbb::scalable_allocator<Type>>;
         static Pool m_pool;
+        
 
     public:
         ObjectPool()

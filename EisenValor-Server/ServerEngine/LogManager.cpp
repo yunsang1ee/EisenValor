@@ -1,12 +1,18 @@
 #include "pch.h"
 #include "LogManager.h"
 
+std::ostringstream ServerEngine::LogManager::s_oss;
+std::mutex ServerEngine::LogManager::s_logMutex;
+
 void ServerEngine::LogManager::Init() noexcept
 {
-	const auto path = std::filesystem::current_path();
-
+#ifdef _DEBUG
+	if(false == std::filesystem::exists("../Debug/LOG"))
+		std::filesystem::create_directory("../Debug/LOG");
+#else
 	if(false == std::filesystem::exists("LOG"))
 		std::filesystem::create_directory("LOG");
+#endif // DEBUG
 }
 
 void ServerEngine::LogManager::PrintLastError(const std::source_location& loc) noexcept

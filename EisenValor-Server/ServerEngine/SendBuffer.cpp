@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "SendBuffer.h"
 
-ServerEngine::SendBuffer::SendBuffer(const uint32 capacity)
-	: ServerEngine::RIOBuffer(capacity * BUFFER_COUNT), m_sendOffset{0}
+ServerEngine::SendBuffer::SendBuffer()
+	:m_sendOffset{0}
 {
 }
 

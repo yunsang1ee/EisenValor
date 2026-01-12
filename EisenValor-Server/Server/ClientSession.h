@@ -1,28 +1,48 @@
 #pragma once
 #include "Session.h"
+#include "TaskQueue.h"
 
 namespace Server {
 	namespace Contents {
 		class Player;
+		class GameRoom;
+		class GameWorld;
 	}
 
 	class ClientSession : public ServerEngine::Session {
 	private:
-		// 처음 등록하고 Read만 할거니 일반 쉐어드 쓰자
-		std::shared_ptr<Server::Contents::Player> m_player;
+		std::string															m_name;
+		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;
+		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;
+		std::chrono::high_resolution_clock::time_point						m_lastPong;
+
+		const std::chrono::milliseconds										m_pingInterval;	
+		const std::chrono::milliseconds										m_timeoutInterval;
 
 	public:
 		ClientSession();
 		virtual ~ClientSession();
 
 	public:
-		void SetPlayer(std::shared_ptr<Server::Contents::Player> general) noexcept { m_player = general; }
-		std::shared_ptr<Server::Contents::Player> GetPlayer() { return m_player; }
+		void SetName(const std::string_view name) noexcept { m_name = name.data(); }
+		const std::string& GetName() const noexcept { return m_name; }
+
+		void SetGameRoom(std::shared_ptr<Server::Contents::GameRoom> gameRoom) noexcept { m_gameRoom = gameRoom; }
+		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const noexcept { return m_gameRoom.lock(); }
+
+		void SetGameWorld(std::shared_ptr<Server::Contents::GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
+		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const noexcept { return m_gameWorld.lock(); }
 
 	public:
-		virtual void OnConnected() override;
-		virtual void OnDisconnected() override;
-		virtual void ProcessPacket(const std::span<const char>& buffer) override;
-		virtual void OnSend(const uint32 bytesTransferred) override;
+		virtual void OnConnected() override final;
+		virtual void OnDisconnected() override final;
+		virtual void ProcessPacket(const std::span<const char>& buffer) override final;
+		virtual void OnSend(const uint32 bytesTransferred) override final;
+		
+	public:
+		void		 Handle_CS_PONG();
+		
+	private:
+		void Ping();
 	};
 }

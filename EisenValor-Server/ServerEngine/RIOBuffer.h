@@ -14,13 +14,16 @@ namespace ServerEngine {
 		uint32			m_writePos;
 
 	public:
-		explicit RIOBuffer(const uint32 bufferSize);
+		explicit RIOBuffer();
 		virtual ~RIOBuffer();
 
 	public:
-		bool OnRead(const uint32 numOfBytes);
-		bool OnWrite(const uint32 numOfBytes);
-		virtual void CleanBuffer() noexcept;
+		void Init(const uint32 bufferSize);
+
+	public:
+		bool				OnRead(const uint32 numOfBytes);
+		bool				OnWrite(const uint32 numOfBytes);
+		virtual void		CleanBuffer() noexcept;
 
 	public:
 		RIO_BUFFERID		GetID() const noexcept { return m_id; }

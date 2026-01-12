@@ -47,6 +47,7 @@
 #include <source_location>
 #include <functional>
 #include <cassert>
+#include <random>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
@@ -66,11 +67,22 @@ namespace fs = std::filesystem;
 #include "Timer.h"
 
 #include "ServerEngineContainers.h"
+#include "Allocator.h"
+#include "MemoryPool.h"
 #include "ObjectPool.h"
 #include "LockQueue.h"
+
+// inc
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 struct PacketInfo {
 	PacketHeader header;
 	const uint8* ptr;
 	uint32 size;
 };
+
+template<typename Type>
+using XVector = std::vector<Type, oneapi::tbb::scalable_allocator<Type>>;

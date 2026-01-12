@@ -153,6 +153,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AttackDataTable.cpp" />
     <ClCompile Include="BehaviorNode.cpp" />
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
@@ -160,13 +161,18 @@
     <ClCompile Include="ClientSessionManager.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
-    <ClCompile Include="Formation.cpp" />
+    <ClCompile Include="GameDataManager.cpp" />
     <ClCompile Include="FSM.cpp" />
+    <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
-    <ClCompile Include="GameRoomManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
-    <ClCompile Include="GeneralState.cpp" />
+    <ClCompile Include="GameWorld.cpp" />
+    <ClCompile Include="General.cpp" />
+    <ClCompile Include="GeneralStates.cpp" />
+    <ClCompile Include="IDataTable.cpp" />
+    <ClCompile Include="Participant.cpp" />
+    <ClCompile Include="ServerPackets.cpp" />
     <ClCompile Include="ServerGlobalFunc.cpp" />
     <ClCompile Include="IsPlayerInNearNode.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -177,17 +183,18 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Script.cpp" />
-    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerManager.cpp" />
-    <ClCompile Include="NPC.cpp" />
-    <ClCompile Include="SoldierState.cpp" />
+    <ClCompile Include="Soldier.cpp" />
+    <ClCompile Include="SoldierStates.cpp" />
+    <ClCompile Include="Spawner.cpp" />
+    <ClCompile Include="StatDataTable.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TargetTraceNode.cpp" />
-    <ClCompile Include="Team.cpp" />
-    <ClCompile Include="TroopController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="AttackDataTable.h" />
     <ClInclude Include="BehaviorNode.h" />
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
@@ -195,13 +202,18 @@
     <ClInclude Include="ClientSessionManager.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
-    <ClInclude Include="Formation.h" />
+    <ClInclude Include="GameDataManager.h" />
     <ClInclude Include="FSM.h" />
+    <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
-    <ClInclude Include="GameRoomManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
-    <ClInclude Include="GeneralState.h" />
+    <ClInclude Include="GameWorld.h" />
+    <ClInclude Include="General.h" />
+    <ClInclude Include="GeneralStates.h" />
+    <ClInclude Include="IDataTable.h" />
+    <ClInclude Include="Participant.h" />
+    <ClInclude Include="ServerPackets.h" />
     <ClInclude Include="ServerGlobalFunc.h" />
     <ClInclude Include="IsPlayerInNearNode.h" />
     <ClInclude Include="Player.h" />
@@ -211,14 +223,15 @@
     <ClInclude Include="ServerManager.h" />
     <ClInclude Include="ServerStructs.h" />
     <ClInclude Include="ServerTypes.h" />
-    <ClInclude Include="NPC.h" />
-    <ClInclude Include="SoldierState.h" />
+    <ClInclude Include="Soldier.h" />
+    <ClInclude Include="SoldierStates.h" />
+    <ClInclude Include="Spawner.h" />
+    <ClInclude Include="StatDataTable.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TargetTraceNode.h" />
-    <ClInclude Include="Team.h" />
-    <ClInclude Include="TroopController.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Binaries\Server\Release\GameData\GameData.json" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\GenPackets.bat" />

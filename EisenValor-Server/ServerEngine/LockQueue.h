@@ -6,18 +6,18 @@ namespace ServerEngine {
 	class LockQueue {
 	private:
 		std::queue<T>				m_queue;
-		std::recursive_mutex		m_mutex;
+		std::mutex		m_mutex;
 	
 	public:
 		void Push(T item)
 		{
-			std::lock_guard<std::recursive_mutex> lk{ m_mutex };
+			std::lock_guard<std::mutex> lk{ m_mutex };
 			m_queue.push(item);
 		}
 
 		T Pop()
 		{
-			std::lock_guard<std::recursive_mutex> lk{ m_mutex };
+			std::lock_guard<std::mutex> lk{ m_mutex };
 			if(m_queue.empty()) return T{};
 			T item = m_queue.front();
 			m_queue.pop();
@@ -26,21 +26,21 @@ namespace ServerEngine {
 
 		void Clear()
 		{
-			std::lock_guard<std::recursive_mutex> lk{ m_mutex };
+			std::lock_guard<std::mutex> lk{ m_mutex };
 			m_queue = std::queue<T>();
 		}
 
 		void PopAllItem(std::vector<T>& vec)
 		{
 			while(T item = Pop()) {
-				std::lock_guard<std::recursive_mutex> lk{ m_mutex };
+				std::lock_guard<std::mutex> lk{ m_mutex };
 				vec.push_back(item);
 			}
 		}
 
 		bool Empty()
 		{
-			std::lock_guard<std::recursive_mutex> lk{ m_mutex };
+			std::lock_guard<std::mutex> lk{ m_mutex };
 			return m_queue.empty();
 		}
 	};

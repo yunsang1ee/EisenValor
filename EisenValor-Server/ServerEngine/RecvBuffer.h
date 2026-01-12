@@ -7,7 +7,7 @@ namespace ServerEngine {
 
 	class RecvBuffer : public RIOBuffer {
 	private:
-		explicit RecvBuffer(const uint32 bufferSize = MAX_RIO_BUFFER_SIZE);
+		explicit RecvBuffer();
 		virtual ~RecvBuffer();
 		friend class Session;
 	};
