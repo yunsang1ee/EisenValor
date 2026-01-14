@@ -15,11 +15,14 @@ namespace Server {
 			float									m_accDTForRespawn;
 			
 		public:
-			General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType = FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+			explicit General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType = FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			virtual ~General();
+
 		public:
 			bool IsTargetInAttackRange(GameObject* const target);
-		
+			virtual void OnDeath() override;
+			virtual void Respawn() override;
+
 		public:
 			void AddSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType |= subStateType; }
 			void RemoveSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType &= ~subStateType; }

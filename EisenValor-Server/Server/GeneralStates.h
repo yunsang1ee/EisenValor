@@ -12,7 +12,7 @@ namespace Server {
 			 DECLARE_CREATE_FUNC(GeneralIdleState)
 
 		private:
-			float m_accDTForStaminaRecovery = 0.f;
+			float m_accDTForStaminaRecovery;
 
 		public:
 			GeneralIdleState();
@@ -51,7 +51,7 @@ namespace Server {
 			DECLARE_CREATE_FUNC(GeneralPreDelayState)
 		
 		private:
-			uint64 m_startFrame = 0;
+			uint64 m_startFrame;
 
 		public:
 			GeneralPreDelayState();
@@ -89,7 +89,7 @@ namespace Server {
 		class GeneralPostDelayState : public State {
 			DECLARE_CREATE_FUNC(GeneralPostDelayState)
 		private:
-			uint64 m_startFrame = 0;
+			uint64 m_startFrame;
 
 		public:
 			GeneralPostDelayState();
@@ -110,8 +110,8 @@ namespace Server {
 		class GeneralStunState : public State {
 			DECLARE_CREATE_FUNC(GeneralStunState)
 		private:
-			uint64 m_startFrame = 0;
-			uint32 m_stunDuration = 0;
+			uint64 m_startFrame;
+			uint32 m_stunDuration;
 		
 		public:
 			GeneralStunState();
@@ -131,6 +131,9 @@ namespace Server {
 		// ==================================
 		class GeneralDeadState : public State {
 			DECLARE_CREATE_FUNC(GeneralDeadState)
+		private:
+			float m_accDTForRespawn;
+
 		public:
 			GeneralDeadState();
 			virtual ~GeneralDeadState();

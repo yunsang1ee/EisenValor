@@ -60,33 +60,31 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	return general;
 }
 
-//std::shared_ptr<Server::Contents::NPC> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
-//{
-//	const auto soldier = ServerEngine::ObjectPool<Server::Contents::Soldier>::MakeShared(t.npcType, t.teamType);
-//	soldier->SetPosInfo(t.posInfo);
-//	soldier->SetStatInfo(t.stat);
-//
-//	const auto fsm = soldier->AddComponent<Server::Contents::FSM>();
-//	fsm->SetOwner(soldier);
-//
-//	auto idleState = Server::Contents::SoldierIdleState::Create(t.enemyDetectionRange);
-//	auto moveState = Server::Contents::SoldierMoveState::Create();
-//	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.combatRange);
-//	auto attackState = Server::Contents::SoldierAttackState::Create(t.combatRange, t.attackCycleTime);
-//	auto defenseState = Server::Contents::SoldierDefenseState::Create();
-//	auto damagedState = Server::Contents::SoldierDamagedState::Create(0.f);
-//
-//	fsm->AddState(std::move(idleState));
-//	fsm->AddState(std::move(moveState));
-//	fsm->AddState(std::move(chaseState));
-//	fsm->AddState(std::move(attackState));
-//	fsm->AddState(std::move(defenseState));
-//	fsm->AddState(std::move(damagedState));
-//
-//	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
-//
-//	return soldier;
-//}
+std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
+{
+	auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
+	soldier->SetPosInfo(t.posInfo);
+	soldier->SetStatInfo(t.stat);
+	auto fsm{ soldier->AddComponent<Server::Contents::FSM>() };
+	
+	auto idleState = Server::Contents::SoldierIdleState::Create(t.enemyDetectionRange);
+	auto moveState = Server::Contents::SoldierMoveState::Create();
+	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.combatRange);
+	auto attackState = Server::Contents::SoldierAttackState::Create(t.combatRange, t.attackCycleTime);
+	auto defenseState = Server::Contents::SoldierDefenseState::Create();
+	auto damagedState = Server::Contents::SoldierDamagedState::Create(0.f);
+
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(moveState));
+	fsm->AddState(std::move(chaseState));
+	fsm->AddState(std::move(attackState));
+	fsm->AddState(std::move(defenseState));
+	fsm->AddState(std::move(damagedState));
+
+	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+
+	return soldier;
+}
 
 std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {

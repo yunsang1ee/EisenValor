@@ -8,9 +8,11 @@ namespace Server {
 		private:
 
 		public:
-			Soldier(const FB_ENUMS::TEAM_TYPE teamType);
+			explicit Soldier(const FB_ENUMS::TEAM_TYPE teamType);
 			virtual ~Soldier();
 			
+		public:
+			virtual void OnDeath() override final;
 		};
 	}
 }

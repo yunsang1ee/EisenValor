@@ -4,6 +4,29 @@
 #include "ClientPacketHandler.h"
 
 namespace ServerPackets {
+	// ==================
+	//		세션
+	// ==================
+#pragma region SESSION_PACKETS
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PING_PACKET()
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PING_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PING_PACKET));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
+	}
+#pragma endregion
+
+	
+	// =================
+	//		로그인
+	// =================
+#pragma region LOGIN_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_SUCCESS_PACKET(const uint32 id, const std::string_view nickName) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -17,7 +40,13 @@ namespace ServerPackets {
 
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOGIN_FAIL_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOGIN_FAIL_PACKETDirect, failMsg.data()));
 	}
+#pragma endregion
 
+	
+	// =================
+	//		로비
+	// =================
+#pragma region LOBBY_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ENTER_GAME_LOBBY_PACKET(const std::vector<RoomInfo>& rooms, const std::vector<std::string_view>& users, const std::vector<uint32>& vecUserID) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -41,12 +70,25 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LEAVE_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LEAVE_GAME_LOBBY_PACKET));
 	}
 
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_USER_IN_GAME_LOBBY_PACKET(const std::string_view user, const uint32 id)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_USER_IN_GAME_LOBBY_PACKETDirect, user.data(), id));
+	}
+	
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(const uint32 id)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_USER_IN_GAME_LOBBY_PACKET, id));
 	}
 
+#pragma endregion
+
+	
+	// =================
+	//		룸
+	// =================
+#pragma region ROOM_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MAKE_GAME_ROOM_PACKET(const RoomInfo& roomInfo)
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -122,20 +164,13 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_GAME_ROOM_STATE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GAME_ROOM_STATE_PACKET, id, stateType));
 	}
-
-
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_USER_IN_GAME_LOBBY_PACKET(const std::string_view user, const uint32 id)
-	{
-		flatbuffers::FlatBufferBuilder builder;
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_USER_IN_GAME_LOBBY_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_USER_IN_GAME_LOBBY_PACKETDirect, user.data(), id));
-	}
-
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept
-	{
-		flatbuffers::FlatBufferBuilder builder;
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
-	}
-
+#pragma endregion
+	
+	
+	// ==================
+	//		월드
+	// ==================
+#pragma region WORLD_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -160,7 +195,7 @@ namespace ServerPackets {
 		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_IN_GAME_WORLD_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &posInfo, maxHp, currentHp, maxStamina, currentStamina));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ(const uint32 id) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ_PACKET(const uint32 id) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -179,11 +214,18 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_HIT_PACKET(const uint32 id, const uint32 hp) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_VITAL_PACKET(const uint32 id, const uint32 hp, const uint32 stamina) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PLAYER_DAMAGED_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PLAYER_DAMAGED_PACKET, id, hp));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_UPDATE_VITAL_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_UPDATE_VITAL_PACKET, id, hp, stamina));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_STATE_PACKET(const uint32 id, const uint8 stateType)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_UPDATE_STATE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_UPDATE_STATE_PACKET, id, stateType));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMANING_GAME_TIME_PACKET(const uint32 remainTime)
@@ -199,12 +241,14 @@ namespace ServerPackets {
 
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_CAMERA_TARGET_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_CAMERA_TARGET_PACKET, targetID));
 	}
-
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PING_PACKET()
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint8 attackDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PING_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PING_PACKET));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, attackDir));
+
 	}
+#pragma endregion
+
 
 }

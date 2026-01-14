@@ -62,6 +62,8 @@ namespace Server {
 		
 			void ReturnToGameRoom(const Users& users, const Bots& bots);
 
+			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
+		
 		public:
 			/* 패킷 받아서 처리되는 부분 */
 			void Handle_CS_CHANGE_TEAM(const std::shared_ptr<ClientSession>& clientSession);
@@ -72,7 +74,6 @@ namespace Server {
 
 		private:
 			void Init();
-			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 			void AddParticipant(std::shared_ptr<Server::Contents::Participant> participant);
 
 		private:
@@ -82,7 +83,7 @@ namespace Server {
 			friend class GameLobby;
 			friend class GameWorld;
 		public:
-			#ifdef DEVELOP
+			#ifndef ENABLE_LOBBY
 			void EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 			#endif // DEVELOP
 

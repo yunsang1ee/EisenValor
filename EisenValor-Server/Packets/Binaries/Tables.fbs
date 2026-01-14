@@ -14,6 +14,13 @@ table SC_PING_PACKET {
 
 }
 
+table CS_CHAT_PACKET {
+	msg: string;				
+}
+
+table SC_CHAT_PACKET {
+	msg: string;
+}
 
 // ================================================
 //					  LOGIN
@@ -184,13 +191,7 @@ table SC_REMOVE_OBJ_PACKET {
 	obj_id: uint;
 }
 
-table CS_CHAT_PACKET {
-	msg: string;				
-}
 
-table SC_CHAT_PACKET {
-	msg: string;
-}
 
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
@@ -209,9 +210,15 @@ table CS_PLAYER_ATTACK {
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
 
-table SC_PLAYER_DAMAGED_PACKET {
+table SC_UPDATE_VITAL_PACKET {
 	obj_id: uint;
 	current_hp: uint;
+	current_stamina: uint;
+}
+
+table SC_UPDATE_STATE_PACKET {
+	obj_id: uint;
+	next_state: uint8;
 }
 
 table SC_REMAINING_GAME_TIME {
@@ -228,6 +235,14 @@ table CS_CHANGE_CAMERA_TARGET_PACKET {
 
 table SC_CHANGE_CAMERA_TARGET_PACKET {
 	camera_target_id: uint;
+}
+
+table CS_SHOW_PLAYER_ATTACK_DIR_PACKET{
+	attack_dir: uint8;
+}
+
+table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
+	attack_dir: uint8;
 }
 
 

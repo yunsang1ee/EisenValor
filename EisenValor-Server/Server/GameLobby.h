@@ -26,12 +26,10 @@ namespace Server {
 			void Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession);
 			void Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession);
 			void Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession);
-
 		public:
-#ifdef DEVELOP
+#ifndef ENABLE_LOBBY
 			void Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<Server::ClientSession>& session, const uint16 roomID);
-#endif // DEVELOP
-
+#endif // ENABLE_LOBBY
 
 		public:
 			std::shared_ptr<GameRoom> GetRoom(const uint16 roomID);

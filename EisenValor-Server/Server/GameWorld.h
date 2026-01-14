@@ -48,7 +48,7 @@ namespace Server {
 			GameWorld& operator=(GameWorld&&) = delete;
 		
 		public:
-		#ifdef DEVELOP
+		#ifndef ENABLE_LOBBY
 			void EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 		#endif // DEVELOP
 

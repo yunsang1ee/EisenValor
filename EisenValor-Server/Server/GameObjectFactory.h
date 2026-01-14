@@ -2,6 +2,11 @@
 
 namespace Server {
 	namespace Contents {
+		class GameObject;
+		class General;
+		class Player;
+		class Soldier;
+
 		struct GameObjectTemplate {
 			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
@@ -20,7 +25,7 @@ namespace Server {
 		};
 
 		struct SoldierTemplate : public CreatureTemplate {
-			std::weak_ptr<NPC> ownerGeneral;
+			std::weak_ptr<General> ownerGeneral;
 			float enemyDetectionRange;
 			float combatRange;
 			std::chrono::seconds attackCycleTime;
@@ -30,11 +35,6 @@ namespace Server {
 		struct SpanwerTemplate : public GameObjectTemplate {
 		
 		};
-
-		class GameObject;
-		class General;
-		class Player;
-		class Soldier;
 
 		class GameObjectFactory {
 		private:
@@ -48,7 +48,7 @@ namespace Server {
 		public:
 			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
-			// static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
 			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
 
 		};

@@ -299,7 +299,7 @@ void Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std
 	}
 }
 
-#ifdef DEVELOP
+#ifndef ENABLE_LOBBY
 void Server::Contents::GameRoom::EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession)
 {
 	if(nullptr == m_gameWorld)
