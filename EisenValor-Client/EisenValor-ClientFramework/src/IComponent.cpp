@@ -11,3 +11,14 @@ GameObject* IComponent::GetGameObject() const
 		return nullptr;
 	return scene->TryGetGameObject(GetOwner());
 }
+
+void IComponent::SetEnabled(bool enabled)
+{
+	if (m_enabled == enabled)
+	{
+		return;
+	}
+
+	m_enabled = enabled;
+	enabled ? OnEnable() : OnDisable();
+}

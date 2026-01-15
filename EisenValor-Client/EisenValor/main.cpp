@@ -16,6 +16,7 @@
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
 #include "Packets/PacketHandler.h"
+#include "Packets/C2SPackets.h"
 #include <TimerGlobal.h>
 
 
@@ -134,7 +135,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		//std::cin >> pw;
 		pw = "PW";
 
-		auto pb = NetBridge::ServerPacketHandler::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+		auto pb = NetBridge::C2S::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 

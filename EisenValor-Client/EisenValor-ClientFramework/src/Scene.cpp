@@ -119,7 +119,7 @@ void Scene::ProcessPendingStarts()
 
 		if (auto* storage = m_componentsStorage[req.typeID].get())
 		{
-			if (auto* comp = storage->GetComponentPtr(req.componentHandleValue); comp->IsActive())
+			if (auto* comp = storage->GetComponentPtr(req.componentHandleValue); comp->IsEnabled())
 			{
 				comp->OnStart();
 			}

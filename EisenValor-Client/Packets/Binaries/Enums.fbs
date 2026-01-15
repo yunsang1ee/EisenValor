@@ -1,1 +1,72 @@
 namespace FB_ENUMS;
+
+enum ROOM_STATE_TYPE: ubyte{
+	WATING,
+	PLAYING,
+}
+
+enum PARTICIPANT_TYPE :ubyte{
+	HOST,
+	USER,
+	BOT
+}
+
+enum PARTICIPANT_STATE_TYPE :ubyte{
+	NOT_READY,
+	READY,
+
+}
+
+enum GAME_OBJECT_TYPE : ubyte{
+	NONE = 0,
+	GENERAL,
+	PLAYER,
+	SOLDIER,
+	SPAWNER,
+	VALLISTAR,
+	PROJECTILE,
+
+	END
+}
+
+enum TEAM_TYPE: ubyte{
+	OFFENSE = 0,
+	DEFENSE,
+
+	END
+}
+
+enum GENERAL_ATTACK_TYPE : ubyte {
+	LIGHT,	// 약공격
+	HEAVY,	// 강공격
+	AREA,	// 범위공격
+	DISARM,	// 무장해제 공격
+
+	END
+}
+
+enum GENERAL_ATTACK_DIR_TYPE : ubyte {
+	NONE,
+	TOP,	// 상단
+	LEFT,	// 좌
+	RIGHT,	// 우
+
+	END
+}
+
+enum GENERAL_STANCE_TYPE : ubyte{
+	NEUTRAL = 0,	// 중립 태세
+	COMBAT,			// 전투 태세
+
+	END
+}
+
+enum SOLDIER_STATE_TYPE : ubyte {
+	IDLE =0,
+	MOVE,
+	CHASE,
+	ATTACK,
+	DEFENSE,
+	DAMAGED,
+	DEAD,
+}

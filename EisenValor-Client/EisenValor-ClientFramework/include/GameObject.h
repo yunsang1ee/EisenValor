@@ -27,6 +27,10 @@ public:
 	const Transform& GetTransform() const;
 	DX::XMFLOAT4X4	 GetWorldMatrix();
 
+	bool IsActive() const { return m_isActive; }
+	bool IsActiveInHierarchy() const;
+	void SetActive(bool active);
+
 	template <IsValidComponent T>
 	void AddComponentHandle(HandleOf<T> handle)
 	{
@@ -36,6 +40,11 @@ public:
 			m_components.resize(typeID + 1, 0);
 		}
 		m_components[typeID] = handle.GetValue();
+	}
+
+	bool HasComponent(ComponentTypeID typeID) const
+	{
+		return typeID < m_components.size() && m_components[typeID] != 0;
 	}
 
 	template <IsValidComponent T>
@@ -67,12 +76,19 @@ public:
 	void			   SetName(std::string name) { m_name = std::move(name); }
 	const std::string& GetName() const { return m_name; }
 
+private:
+	void UpdateActiveInHierarchyCache();
+	void UpdateComponentActiveCache();
+	void PropagateActiveStateToChildren();
+
 protected:
 	Handle m_handle;
 
 private:
 	std::string m_name;
 	uint32_t	m_serverID = 0;
+	bool		m_isActive = true;
+	bool		m_cachedActiveInHierarchy = true;
 
 	Scene*							m_scene;
 	HandleOf<Transform>				m_transform;

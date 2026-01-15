@@ -11,7 +11,7 @@
 #include "TimerGlobal.h"
 
 
-//#define SERVER
+#define SERVER
 
 #if 0
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)

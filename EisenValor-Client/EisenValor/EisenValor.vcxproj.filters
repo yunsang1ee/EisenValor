@@ -60,6 +60,27 @@
     <ClInclude Include="Component\PlayerController.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Packets\C2SPackets.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\S2CPackets.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\ServerEnum.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\HealthComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Enums_generated.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Structs_generated.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Tables_generated.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -81,6 +102,15 @@
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Component\PlayerController.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Packets\C2SPackets.cpp">
+      <Filter>Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Packets\S2CPackets.cpp">
+      <Filter>Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\HealthComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,4 +5,8 @@
 #define _WIN32_WINNT 0x0A00
 #include <windows.h>
 
+#include "Packets/Enums_generated.h"
+#include "Packets/Structs_generated.h"
+#include "Packets/Tables_generated.h"
+
 #include "../EisenValor-ClientFramework/include/stdafxClientFramework.h"

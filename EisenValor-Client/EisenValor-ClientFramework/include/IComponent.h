@@ -44,24 +44,21 @@ public:
 	virtual void OnDisable() {}
 	virtual void OnDestroy() {}
 
-	bool IsActive() const { return m_isActive; }
-	void SetActive(bool active)
-	{
-		if (m_isActive == active)
-			return;
-
-		m_isActive = active;
-		active ? OnEnable() : OnDisable();
-	}
+	bool IsEnabled() const { return m_enabled; }
+	void SetEnabled(bool enabled);
 
 	void						SetOwner(DenseListHandle<GameObject> owner) { m_owner = owner; }
 	DenseListHandle<GameObject> GetOwner() const { return m_owner; }
 
 	GameObject* GetGameObject() const;
 
+	bool IsOwnerActiveInHierarchy() const { return m_cachedOwnerActive; }
+	void UpdateOwnerActiveCache(bool active) { m_cachedOwnerActive = active; }
+
 protected:
 	DenseListHandle<GameObject> m_owner = DenseListHandle<GameObject>::Invalid();
-	bool						m_isActive = true;
+	bool						m_enabled = true;
+	bool						m_cachedOwnerActive = true;
 };
 
 

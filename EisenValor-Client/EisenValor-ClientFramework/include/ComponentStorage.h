@@ -91,8 +91,10 @@ public:
 		{
 			for (auto& component : m_data)
 			{
-				if (component.IsActive())
+				if (component.IsEnabled() && component.IsOwnerActiveInHierarchy())
+				{
 					component.OnUpdate(deltaTime);
+				}
 			}
 		}
 	}
@@ -103,8 +105,10 @@ public:
 		{
 			for (auto& component : m_data)
 			{
-				if (component.IsActive())
+				if (component.IsEnabled() && component.IsOwnerActiveInHierarchy())
+				{
 					component.OnLateUpdate(deltaTime);
+				}
 			}
 		}
 	}
@@ -115,8 +119,10 @@ public:
 		{
 			for (auto& component : m_data)
 			{
-				if (component.IsActive())
+				if (component.IsEnabled() && component.IsOwnerActiveInHierarchy())
+				{
 					component.OnFixedUpdate(fixedDeltaTime);
+				}
 			}
 		}
 	}

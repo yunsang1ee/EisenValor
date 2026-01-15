@@ -47,18 +47,6 @@ enum
 	NW_BUFFER_CAPACITY = 65536,
 };
 
-// Structs
-
-
-enum class SOLDIER_FORMATION
-{
-	FORMATION_1,
-	FORMATION_2,
-	FORMATION_3,
-
-	END
-};
-
 
 #pragma region Header
 // Windows 헤더 파일:
@@ -131,10 +119,6 @@ using Ray = DirectX::SimpleMath::Ray;
 
 #pragma region NetworkLibrary
 #include "flatbuffers\\flatbuffers.h"
-
-#include "Enums_generated.h"
-#include "Structs_generated.h"
-#include "Tables_generated.h"
 
 #include "NetworkGlobal.h"
 #include "IPacketHandler.h"

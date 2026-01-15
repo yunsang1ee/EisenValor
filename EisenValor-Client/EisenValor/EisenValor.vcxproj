@@ -151,8 +151,7 @@
       <AdditionalOptions>-HV 2021</AdditionalOptions>
     </FxCompile>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -182,14 +181,20 @@
       <AdditionalOptions>-HV 2021</AdditionalOptions>
     </FxCompile>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\PlayerController.h" />
     <ClInclude Include="EisenValor.h" />
+    <ClInclude Include="Packets\C2SPackets.h" />
+    <ClInclude Include="Packets\Enums_generated.h" />
     <ClInclude Include="Packets\PacketHandler.h" />
+    <ClInclude Include="Packets\S2CPackets.h" />
+    <ClInclude Include="Packets\ServerEnum.h" />
+    <ClInclude Include="Packets\Structs_generated.h" />
+    <ClInclude Include="Packets\Tables_generated.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="Resource.h" />
@@ -197,13 +202,16 @@
     <ClInclude Include="stdafxClient.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Component\HealthComponent.cpp" />
     <ClCompile Include="Component\PlayerController.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Packets\C2SPackets.cpp" />
     <ClCompile Include="Packets\PacketHandler.cpp" />
+    <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
     <ClCompile Include="Scene\SampleScene.cpp" />

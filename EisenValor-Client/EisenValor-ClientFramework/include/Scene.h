@@ -23,7 +23,8 @@ public:
 	//========================================================================
 
 	GameObject::Handle CreateGameObject(
-		std::string name = "GameObject", std::optional<ServerID> serverID = std::nullopt,
+		std::string						 name = "GameObject",
+		std::optional<ServerID>			 serverID = std::nullopt,
 		std::function<void(GameObject*)> onCreated = nullptr
 	);
 	void		DestroyGameObject(GameObject::Handle handle);
@@ -41,9 +42,7 @@ public:
 
 	template <IsValidComponent Component, typename... Args>
 	typename ComponentStorage<Component>::Handle CreateComponentWithInit(
-		GameObject::Handle ownerHandle, 
-		std::optional<std::function<void(Component*)>> initFunc, 
-		Args&&... args
+		GameObject::Handle ownerHandle, std::optional<std::function<void(Component*)>> initFunc, Args&&... args
 	)
 	{
 		if (!ownerHandle.IsValid() && !m_gameObjects.IsReserved(ownerHandle))
@@ -68,8 +67,7 @@ public:
 			.ownerHandle = ownerHandle,
 			.componentHandle = componentHandle.GetValue(),
 			.createFunc =
-				[this, storage, ownerHandle, componentHandle,
-				 init = std::move(initFunc),
+				[this, storage, ownerHandle, componentHandle, init = std::move(initFunc),
 				 args = std::make_tuple(std::forward<Args>(args)...)]() mutable
 			{
 				std::apply(
@@ -92,7 +90,7 @@ public:
 				ownerObj.AddComponentHandle<Component>(componentHandle);
 
 				comp->OnAttach();
-				
+
 				m_pendingStartComponents.push({Component::StaticRuntimeTypeID(), componentHandle.GetValue()});
 
 				if (init.has_value())
@@ -183,6 +181,16 @@ public:
 		return nullptr;
 	}
 
+	size_t			   GetComponentStorageCount() const { return m_componentsStorage.size(); }
+	IComponentStorage* GetComponentStorage(size_t typeID)
+	{
+		if (typeID < m_componentsStorage.size())
+		{
+			return m_componentsStorage[typeID].get();
+		}
+		return nullptr;
+	}
+
 protected:
 	//========================================================================
 	// Add user-defined components in derived Scene classes
@@ -256,9 +264,9 @@ protected:
 private:
 	struct CreateRequest
 	{
-		std::string				name;
-		GameObject::Handle		handle;
-		std::optional<ServerID> serverID;
+		std::string						 name;
+		GameObject::Handle				 handle;
+		std::optional<ServerID>			 serverID;
 		std::function<void(GameObject*)> onCreated;
 	};
 
@@ -302,8 +310,8 @@ private:
 	std::queue<ComponentDestroyRequest> m_pendingComponentDestroys;
 	std::queue<PendingStartComponent>	m_pendingStartComponents;
 
-	bool								m_isProcessingDeferred = false;
-	bool								m_isStarted = false;
+	bool m_isProcessingDeferred = false;
+	bool m_isStarted = false;
 
 private:
 	// Object
