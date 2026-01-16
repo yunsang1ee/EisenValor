@@ -110,6 +110,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
 
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}\n", id);
 	return true;
 }
 
@@ -387,17 +388,19 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
-	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] ");
+	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
 	const uint32 id = recvPkt.player_id();
 	const uint32 localID = scene->GetLocalID();
-	if (id == localID)
+	if (id != localID)
 	{
+		DEBUG_LOG_FMT("is not LocalPlayer, id:{}, LocalID: {}\n", id, localID);
 		return false;
 	}
+	DEBUG_LOG_FMT("Created LocalPlayer: {} \n", id);
 
 	auto playerObjHandle = scene->CreateGameObject(
 		"LocalPlayer", id,
@@ -459,7 +462,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt)
 {
-	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] ");
+	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
 	const uint32 id = recvPkt.obj_id();
@@ -467,6 +470,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 	if (id == localID)
 	{
+		DEBUG_LOG_FMT("id is localID: {}\n", id);
 		return false;
 	}
 
@@ -623,7 +627,7 @@ bool NetBridge::S2C::Handle_SC_REMANING_GAME_TIME_PACKET(
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;
 	const uint32_t seconds = totalSeconds % 60;
-	std::cout << std::format("{:02d}M:{:02d}S", minutes, seconds) << std::endl;
+	// DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
 	return true;
 }
 

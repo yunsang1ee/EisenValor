@@ -83,6 +83,30 @@ void InputGlobal::SetMouseLocked(bool locked)
 	}
 }
 
+void InputGlobal::SetWindowFocused(bool focused)
+{
+	if (m_isWindowFocused == focused)
+	{
+		return;
+	}
+
+	m_isWindowFocused = focused;
+
+	if (!m_mouseLocked)
+	{
+		return;
+	}
+
+	ShowCursor(!focused);
+
+	if (focused && m_hwnd)
+	{
+		POINT centerPoint = {m_centerX, m_centerY};
+		ClientToScreen(m_hwnd, &centerPoint);
+		SetCursorPos(centerPoint.x, centerPoint.y);
+	}
+}
+
 void InputGlobal::OnResize(uint32_t width, uint32_t height)
 {
 	m_centerX = static_cast<int>(width / 2);
@@ -90,7 +114,7 @@ void InputGlobal::OnResize(uint32_t width, uint32_t height)
 
 	DEBUG_LOG_FMT("[InputGlobal] OnResize - New center: ({}, {})\n", m_centerX, m_centerY);
 
-	if (m_mouseLocked && m_hwnd)
+	if (m_mouseLocked && m_isWindowFocused && m_hwnd)
 	{
 		POINT centerPoint = {m_centerX, m_centerY};
 		ClientToScreen(m_hwnd, &centerPoint);
@@ -100,7 +124,7 @@ void InputGlobal::OnResize(uint32_t width, uint32_t height)
 
 void InputGlobal::UpdateMouseLock()
 {
-	if (!m_mouseLocked || !m_hwnd)
+	if (!m_mouseLocked || !m_hwnd || !m_isWindowFocused)
 	{
 		return;
 	}

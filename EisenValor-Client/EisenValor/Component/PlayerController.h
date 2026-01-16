@@ -9,6 +9,7 @@ public:
 
 	void OnStart() override;
 	void OnDestroy() override;
+	void OnFixedUpdate(float deltaTime);
 	void OnUpdate(float deltaTime);
 
 	void  SetMouseSensitivity(float x, float y);

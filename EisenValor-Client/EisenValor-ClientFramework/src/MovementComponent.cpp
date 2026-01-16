@@ -1,9 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "MovementComponent.h"
 #include "GameObject.h"
-#include "Scene.h"
-#include "SceneGlobal.h"
-#include "InputGlobal.h"
 #include "Transform.h"
 
 using namespace DirectX;

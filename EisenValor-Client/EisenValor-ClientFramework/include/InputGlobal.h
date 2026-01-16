@@ -44,6 +44,8 @@ public:
 	void SetMouseLocked(bool locked);
 	bool IsMouseLocked() const { return m_mouseLocked; }
 
+	void SetWindowFocused(bool focused);
+
 	void OnResize(uint32_t width, uint32_t height);
 
 	inline void OnInputState(InputCode code, bool isPressed, bool isUp) noexcept
@@ -121,6 +123,7 @@ private:
 
 	HWND m_hwnd = nullptr;
 	bool m_mouseLocked = false;
+	bool m_isWindowFocused = true;
 	int	 m_centerX = 0;
 	int	 m_centerY = 0;
 };

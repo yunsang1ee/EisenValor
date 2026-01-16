@@ -35,7 +35,7 @@ public:
 	Scene* GetActiveScene() const { return m_activeScene; }
 	Scene* GetScene(const std::string& sceneName) const;
 
-	void SetLocalNetworkID(uint32_t networkID) { m_localNetworkID = networkID; }
+	void	 SetLocalNetworkID(uint32_t networkID);
 	uint32_t GetLocalNetworkID() const { return m_localNetworkID; }
 
 	void					 ClearAllScenes();

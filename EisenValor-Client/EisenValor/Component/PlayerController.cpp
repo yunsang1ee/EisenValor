@@ -6,6 +6,10 @@
 #include "SceneGlobal.h"
 #include "Scene.h"
 
+#include "NetworkGlobal.h"
+#include "Packets/C2SPackets.h"
+#include "Packets/Structs_generated.h"
+
 using namespace DirectX;
 
 namespace
@@ -65,6 +69,26 @@ void PlayerController::OnUpdate(float deltaTime)
 {
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
+}
+
+void PlayerController::OnFixedUpdate(float deltaTime)
+{
+	auto* myGameObject = GetGameObject();
+	if (!myGameObject)
+	{
+		return;
+	}
+
+	auto& transform = myGameObject->GetTransform();
+	auto  pos = transform.GetPosition();
+	auto  rot = transform.GetRotation();
+
+	FB_STRUCTS::Vec3 posVec{pos.x, pos.y, pos.z};
+	FB_STRUCTS::Vec3 rotVec{rot.x, rot.y, rot.z};
+	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
+
+	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
 
 void PlayerController::ProcessMouseRotation(float deltaTime)
