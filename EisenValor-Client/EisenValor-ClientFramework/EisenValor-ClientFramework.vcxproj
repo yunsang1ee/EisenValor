@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.props" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -126,6 +127,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -149,6 +151,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -162,73 +165,113 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
-    <ClInclude Include="include\ClientPackets.h" />
+    <ClInclude Include="include\CameraComponent.h" />
+    <ClInclude Include="include\ComponentStorage.h" />
+    <ClInclude Include="include\DenseList.h" />
+    <ClInclude Include="include\DxBLAS.h" />
+    <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
     <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
     <ClInclude Include="include\DxCommon.h" />
     <ClInclude Include="include\DxDebugGlobal.h" />
-    <ClInclude Include="include\DxDescriptorHeap.h" />
+    <ClInclude Include="include\DxDescriptorHeapGlobal.h" />
     <ClInclude Include="include\DxDeviceGlobal.h" />
+    <ClInclude Include="include\DxFeatureCaps.h" />
+    <ClInclude Include="include\DxFrameResource.h" />
+    <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
+    <ClInclude Include="include\DxResource.h" />
+    <ClInclude Include="include\DxRtPipelineState.h" />
+    <ClInclude Include="include\DxRtShaderTable.h" />
+    <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
+    <ClInclude Include="include\DxTexture.h" />
+    <ClInclude Include="include\DxTLAS.h" />
+    <ClInclude Include="include\DxUploadHeap.h" />
+    <ClInclude Include="include\DxUtils.h" />
+    <ClInclude Include="include\EngineComponents.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
-    <ClInclude Include="include\GameObjectManager.h" />
-    <ClInclude Include="include\Global.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
-    <ClInclude Include="include\Ground.h" />
     <ClInclude Include="include\IComponent.h" />
-    <ClInclude Include="include\IGlobal.h" />
-    <ClInclude Include="include\IInputGlobal.h" />
-    <ClInclude Include="include\InputDef.h" />
     <ClInclude Include="include\InputGlobal.h" />
-    <ClInclude Include="include\ITimerGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
-    <ClInclude Include="include\LocalPlayer.h" />
-    <ClInclude Include="include\NetworkManager.h" />
-    <ClInclude Include="include\NPC.h" />
+    <ClInclude Include="include\IPacketHandler.h" />
+    <ClInclude Include="include\IRenderData.h" />
+    <ClInclude Include="include\IRenderPass.h" />
+    <ClInclude Include="include\MeshComponent.h" />
+    <ClInclude Include="include\MovementComponent.h" />
+    <ClInclude Include="include\NetworkGlobal.h" />
     <ClInclude Include="include\PacketBuffer.h" />
-    <ClInclude Include="include\PacketHandler.h" />
-    <ClInclude Include="include\Player.h" />
     <ClInclude Include="include\RecvBuffer.h" />
+    <ClInclude Include="include\RenderContext.h" />
+    <ClInclude Include="include\RenderDataPool.h" />
+    <ClInclude Include="include\RenderDataSync.h" />
+    <ClInclude Include="include\DxRendererGlobal.h" />
+    <ClInclude Include="include\Scene.h" />
+    <ClInclude Include="include\SceneGlobal.h" />
+    <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
+    <ClInclude Include="include\Transform.h" />
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\ClientPackets.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
+    <ClCompile Include="src\DxBLAS.cpp" />
+    <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
     <ClCompile Include="src\DxCommandContextPool.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
     <ClCompile Include="src\DxDebugGlobal.cpp" />
-    <ClCompile Include="src\DxDescriptorHeap.cpp" />
+    <ClCompile Include="src\DxDescriptorHeapGlobal.cpp" />
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
+    <ClCompile Include="src\DxFeatureCaps.cpp" />
+    <ClCompile Include="src\DxFrameResource.cpp" />
+    <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
+    <ClCompile Include="src\DxResource.cpp" />
+    <ClCompile Include="src\DxRtPipelineState.cpp" />
+    <ClCompile Include="src\DxRtShaderTable.cpp" />
+    <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
+    <ClCompile Include="src\DxTexture.cpp" />
+    <ClCompile Include="src\DxTLAS.cpp" />
+    <ClCompile Include="src\DxUploadHeap.cpp" />
+    <ClCompile Include="src\DxUtils.cpp" />
     <ClCompile Include="src\GameFramework.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
-    <ClCompile Include="src\GameObjectManager.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
-    <ClCompile Include="src\Ground.cpp" />
+    <ClCompile Include="src\IComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
-    <ClCompile Include="src\LocalPlayer.cpp" />
-    <ClCompile Include="src\NetworkManager.cpp" />
-    <ClCompile Include="src\NPC.cpp" />
+    <ClCompile Include="src\MeshComponent.cpp" />
+    <ClCompile Include="src\MovementComponent.cpp" />
+    <ClCompile Include="src\NetworkGlobal.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
-    <ClCompile Include="src\PacketHandler.cpp" />
-    <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
+    <ClCompile Include="src\DxRendererGlobal.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneGlobal.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp" />
+    <ClCompile Include="src\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />
-    <None Include="..\Packets\Binaries\Enums.fbs" />
-    <None Include="..\Packets\Binaries\Structs.fbs" />
-    <None Include="..\Packets\Binaries\Tables.fbs" />
+    <None Include="include\GameObject.inl" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets'))" />
+  </Target>
 </Project>

@@ -16,6 +16,24 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{99e1086d-2675-4837-bbf4-511fdd0d0603}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderPass">
+      <UniqueIdentifier>{c60e310a-9a7a-433c-8fa8-e607c81fdd65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{38e8648f-026b-47d2-a991-c96122ed006b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{99f2ac79-69d0-41c3-9f93-f4e84ec9a503}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packets">
+      <UniqueIdentifier>{43ff6f2b-6884-403e-b9e4-7cd1773a46d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packets\FBS">
+      <UniqueIdentifier>{74fef24a-8fa9-4d18-afb6-90e1024ac089}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packets\PacketHandler">
+      <UniqueIdentifier>{344dd69f-16c8-4ce6-ad4b-2d95a9fae30e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -27,6 +45,42 @@
     <ClInclude Include="stdafxClient.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Packets\PacketHandler.h">
+      <Filter>Packets\PacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\CopyToBackBufferPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\DxrRenderPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SampleScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\PlayerController.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\C2SPackets.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\S2CPackets.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\ServerEnum.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\HealthComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Enums_generated.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Structs_generated.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Tables_generated.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -34,6 +88,30 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Packets\PacketHandler.cpp">
+      <Filter>Packets\PacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\DxrRenderPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\SampleScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PlayerController.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Packets\C2SPackets.cpp">
+      <Filter>Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Packets\S2CPackets.cpp">
+      <Filter>Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\HealthComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -56,5 +134,25 @@
     <FxCompile Include="Resource\Shader\PixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resource\Shader\RaytracingCommon.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Enums.fbs">
+      <Filter>Packets\FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Structs.fbs">
+      <Filter>Packets\FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Tables.fbs">
+      <Filter>Packets\FBS</Filter>
+    </None>
   </ItemGroup>
 </Project>

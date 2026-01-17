@@ -14,7 +14,7 @@ void TimerGlobal::Initialize()
 	m_curFPS = 0;
 }
 
-void TimerGlobal::Update()
+float TimerGlobal::Update()
 {
 	if (m_targetDeltaTime > 0)
 	{
@@ -35,8 +35,10 @@ void TimerGlobal::Update()
 	m_lastFrameTime += m_deltaTime;
 	if (m_lastFrameTime >= 1.0f)
 	{
-		m_curFPS = m_frameCount;
+		m_curFPS = m_frameCount / m_lastFrameTime;
 		m_frameCount = 0;
 		m_lastFrameTime = 0.0f;
 	}
+
+	return m_deltaTime;
 }

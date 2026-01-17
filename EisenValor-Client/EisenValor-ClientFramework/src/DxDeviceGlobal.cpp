@@ -1,6 +1,5 @@
 #include "stdafxClientFramework.h"
 #include "DxDeviceGlobal.h"
-#include "DxDebugGlobal.h"
 #include "DxCommon.h"
 
 void DxDeviceGlobal::Initialize()
@@ -8,7 +7,6 @@ void DxDeviceGlobal::Initialize()
 	uint32_t dxgiFactoryFlags = 0;
 
 #ifdef _DEBUG
-	GlobalRegistry::Get<IDxDebugGlobal>().EnableDebug();
 	dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
@@ -38,4 +36,25 @@ void DxDeviceGlobal::Initialize()
 	ThrowIfFailed(D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
 
 	DEBUG_LOG_FMT("[DxDevice] Device created successfully.\n");
+}
+
+void DxDeviceGlobal::Release()
+{
+#ifdef _DEBUG
+	if (m_device)
+	{
+		ULONG refCount = m_device->AddRef() - 1;
+		m_device->Release();
+		if (refCount > 1)
+		{
+			DEBUG_LOG_FMT("[DxDevice] Warning: Device still has {} references!\n", refCount - 1);
+		}
+	}
+#endif
+
+	m_device.Reset();
+	m_adapter.Reset();
+	m_factory.Reset();
+
+	DEBUG_LOG_FMT("[DxDevice] Released DxDeviceGlobal.\n");
 }

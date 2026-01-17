@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafxClientFramework.h"
-#include "Vec3.h"
 
 using XVec2 = DX::XMFLOAT2;
 using XVec3 = DX::XMFLOAT3;

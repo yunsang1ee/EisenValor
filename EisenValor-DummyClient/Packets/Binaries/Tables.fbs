@@ -4,26 +4,252 @@ include "Structs.fbs";
 namespace FB_TABLES;
 
 // ================================================
-//						LOGIN
+//					  SESSION
+// ================================================
+table CS_PONG_PACKET {
+
+}
+
+table SC_PING_PACKET {
+
+}
+
+table CS_CHAT_PACKET {
+	msg: string;				
+}
+
+table SC_CHAT_PACKET {
+	msg: string;
+}
+
+// ================================================
+//					  LOGIN
 // ================================================
 table CS_LOGIN_PACKET {
 	id: string;
 	pw: string;
 }
 
-table SC_LOGIN_PACKET {
+table SC_LOGIN_SUCCESS_PACKET {
 	player_id : uint;
+	name: string;
+}
+
+table SC_LOGIN_FAIL_PACKET {
+	fail_msg: string;
 }
 
 // ================================================
-//					ENTER GAME
+//					    LOBBY
 // ================================================
-table CS_ENTER_GAME_PACKET {
-	player_id : uint;
-	room_id: ushort;
+table CS_ENTER_GAME_LOBBY_PACKET {
+	
 }
 
-table SC_ENTER_GAME_PACKET {
+table SC_ENTER_GAME_LOBBY_PACKET {
+	rooms: [FB_STRUCTS.RoomInfo];
+	users: [string];
+	vec_user_id: [uint];
+}
+
+table CS_LEAVE_GAME_LOBBY_PACKET {
+
+}
+
+table SC_LEAVE_GAME_LOBBY_PACKET{
+}
+
+table SC_ADD_USER_IN_GAME_LOBBY_PACKET {
+	user_name: string;
+	user_id: int;
+}
+
+table SC_REMOVE_USER_IN_GAME_LOBBY_PACKET {
+	user_id: uint;
+}
+
+table CS_MAKE_GAME_ROOM_PACKET {
+}
+
+table SC_MAKE_GAME_ROOM_PACKET {
+	room_info: FB_STRUCTS.RoomInfo;
+}
+
+
+// ================================================
+//					  GAME_ROOM
+// ================================================
+table CS_JOIN_GAME_ROOM_PACKET {
+	room_id: uint16;
+}
+
+table SC_JOIN_GAME_ROOM_FAIL_PACKET {
+	fail_msg: string;
+}
+
+table SC_JOIN_GAME_ROOM_SUCCESS_PACKET {
+	user: FB_STRUCTS.ParticipantInfo;
+	participants: [FB_STRUCTS.ParticipantInfo];
+}
+
+table CS_LEAVE_GAME_ROOM_PACKET {
+}
+
+table SC_LEAVE_GAME_ROOM_PACKET{
+
+}
+
+table SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT {
+	participant : FB_STRUCTS.ParticipantInfo;
+}
+
+table SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT {
+	participant_id: uint;
+}
+
+table CS_CHANGE_TEAM_PACKET {
+
+}
+
+table SC_CHANGE_TEAM_PACKET{
+	user_id: uint;
+	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+table CS_ADD_BOT_PACKET {
+	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+table CS_REMOVE_BOT_PACKET {
+	bot_id: uint;
+}
+
+table CS_READY_GAME_PACKET{
+
+}
+
+table SC_READY_GAME_PACKET {
+	user_id: uint;
+	participant_state: FB_ENUMS.PARTICIPANT_STATE_TYPE;
+}
+
+table CS_START_GAME_PACKET {
+
+}
+
+table SC_LOADING_GAME_WORLD_PACKET {
+
+}
+
+table CS_COMPLETE_LOADING_GAME_WORLD_PACKET {
+
+}
+
+
+table SC_START_GAME_FAIL_PACKET {
+
+}
+
+table SC_START_GAME_SUCCESS_PACKET {
+
+}
+
+table SC_CHANGE_GAME_ROOM_STATE_PACKET{
+	room_id: uint16;
+	room_state: FB_ENUMS.ROOM_STATE_TYPE;
+}
+
+// ================================================
+//					  GAME_WORLD
+// ================================================
+table SC_GAME_FINISH_PACKET {
+
+}
+table SC_LOCAL_PLAYER_PACKET {
+	player_id: uint;
+	pos_info: FB_STRUCTS.PosInfo;
+	team_type: FB_ENUMS.TEAM_TYPE;
+	max_hp: uint;
+	current_hp: uint;
+	max_stamina: uint;
+	current_stamina: uint;
+	
+}
+
+table SC_ADD_OBJ_PACKET {
+	obj_id: uint;
+	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
+	team_type : FB_ENUMS.TEAM_TYPE;
+	pos_info: FB_STRUCTS.PosInfo;
+	max_hp: uint;
+	current_hp: uint;
+	max_stamina: uint;
+	current_stamina: uint;
+}
+
+table SC_REMOVE_OBJ_PACKET {
+	obj_id: uint;
+}
+
+
+
+table CS_MOVE_PACKET {
+	pos_info: FB_STRUCTS.PosInfo;
+}
+
+table SC_MOVE_PACKET {
+	obj_id: uint;
+	pos_info: FB_STRUCTS.PosInfo;
+}
+
+table CS_CHANGE_PLAYER_STANCE_PACKET {
+	
+}
+
+table CS_PLAYER_ATTACK {
+	attack_info: FB_STRUCTS.GeneralAttackInfo;
+}
+
+table SC_UPDATE_VITAL_PACKET {
+	obj_id: uint;
+	current_hp: uint;
+	current_stamina: uint;
+}
+
+table SC_UPDATE_STATE_PACKET {
+	obj_id: uint;
+	next_state: uint8;
+}
+
+table SC_REMAINING_GAME_TIME {
+	remaining_time : uint;
+}
+
+table CS_PLAYER_FAKE_PACKET {
+
+}
+
+table CS_CHANGE_CAMERA_TARGET_PACKET {
+	camera_target_id: uint;
+}
+
+table SC_CHANGE_CAMERA_TARGET_PACKET {
+	camera_target_id: uint;
+}
+
+table CS_SHOW_PLAYER_ATTACK_DIR_PACKET{
+	attack_dir: uint8;
+}
+
+table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
+	attack_dir: uint8;
+}
+
+
+// ================================================
+//					    TEST
+// ================================================
+table CS_ENTER_GAME_WORLD_PACKET {
 	room_id: ushort;
 }
 
@@ -33,150 +259,3 @@ table SC_ENTER_GAME_PACKET {
 table CS_GAME_START_PACKET{
 
 }
-
-// ================================================
-//					LOCAL_PLAYER
-// ================================================
-table SC_LOCAL_PLAYER_PACKET {
-	player_id: uint;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
-	team_type: FB_ENUMS.TEAM_TYPE;
-	hp: uint;
-}
-
-// ================================================
-//					ADD/REMOVE OBJ
-// ================================================
-table SC_ADD_OBJ_PACKET {
-	obj_id: uint;
-	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
-	team_type : FB_ENUMS.TEAM_TYPE;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
-	hp: uint;
-}
-
-// ================================================
-//					ADD/REMOVE NPC
-// ================================================
-table SC_ADD_NPC_PACKET {
-	obj_id: uint;
-	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
-	team_type : FB_ENUMS.TEAM_TYPE;
-	npc_type: FB_ENUMS.NPC_TYPE;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
-	hp: uint;
-}
-
-table SC_REMOVE_OBJ_PACKET {
-	obj_id: uint;
-}
-
-// ================================================
-//						CHAT
-// ================================================
-table CS_CHAT_PACKET {
-	msg: string;				
-}
-
-table SC_CHAT_PACKET {
-	msg: string;
-}
-
-
-// ================================================
-//						MOVE
-// ================================================
-table CS_MOVE_PACKET {
-	kinematic_info: FB_STRUCTS.KinematicInfo;
-}
-
-table SC_MOVE_PACKET {
-	obj_id: uint;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
-}
-
-// ================================================
-//					SUMMON_NPC
-// ================================================
-table CS_SUMMON_NPC {
-
-}
-
-
-// ================================================
-//					SOLDIER_FORMATION
-// ================================================
-table CS_SOLDIER_FORMATION {
-	formation: ubyte;
-}
-
-
-// ================================================
-//					PLAYER_ATTACK
-// ================================================
-table CS_PLAYER_ATTACK {
-	
-}
-
-// ================================================
-//						HIT
-// ================================================
-table SC_PLAYER_DAMAGED_PACKET {
-	obj_id: uint;
-	current_hp: uint;
-}
-
-// ================================================
-//					SOLDIER_MOVE
-// ================================================
-table CS_SOLDIER_MOVE {
-	pos : FB_STRUCTS.Vec3;
-}
-
-// ================================================
-//					REMAINING_GAME_TIME
-// ================================================
-table SC_REMAINING_GAME_TIME {
-	remaining_time : uint;
-}
-
-// ================================================
-//					CHANGE_SOLDIER_FORMATION
-// ================================================
-table CS_CHANGE_SOLDIER_FORMATION {
-
-}
-
-// ================================================
-//				REQ_ATTACK
-// ================================================
-table CS_REQ_ATTACK {
-
-}
-
-// ================================================
-//					NPC_INFO
-// ================================================
-table SC_NPC_INFO {
-	obj_id: uint;
-	obj_type:  FB_ENUMS.GAME_OBJECT_TYPE;
-	team_type : FB_ENUMS.TEAM_TYPE;
-	npc_type: FB_ENUMS.NPC_TYPE;
-	kinematic_info: FB_STRUCTS.KinematicInfo;
-	hp: uint;
-	obj_state : ubyte;
-}
-
-
-
-
-// 아이디
-// 오브젝트 타입
-// 
-// 위치
-// 회전값
-// 속도
-// 가속도
-// 타임스탬프
-// 체력
-// state

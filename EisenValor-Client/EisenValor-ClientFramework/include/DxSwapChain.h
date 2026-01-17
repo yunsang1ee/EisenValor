@@ -1,10 +1,13 @@
 #pragma once
 
-class IDxGraphicsCommandQueueGlobal;
+class DxGfxCommandQueueGlobal;
 
 class DxSwapChain
 {
 public:
+	using ResizeCallback = std::function<void(uint32_t newWidth, uint32_t newHeight)>;
+	void SetResizeCallback(ResizeCallback callback) { m_resizeCallback = std::move(callback); }
+
 	struct SwapChainInfo
 	{
 		uint32_t	width;
@@ -30,16 +33,16 @@ public:
 	};
 
 	DxSwapChain(
-		ID3D12Device*				   device,
-		IDXGIFactory6*				   factory,
-		IDxGraphicsCommandQueueGlobal& commandQueue,
-		HWND						   hwnd,
-		uint32_t					   width,
-		uint32_t					   height,
-		uint32_t					   backBufferCount,
-		DXGI_FORMAT					   format,
-		D3D12_CPU_DESCRIPTOR_HANDLE	   rtvDescriptorStart,
-		uint32_t					   rtvDescriptorSize
+		ID3D12Device*				device,
+		IDXGIFactory6*				factory,
+		DxGfxCommandQueueGlobal&	commandQueue,
+		HWND						hwnd,
+		uint32_t					width,
+		uint32_t					height,
+		uint32_t					backBufferCount,
+		DXGI_FORMAT					format,
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorStart,
+		uint32_t					rtvDescriptorSize
 	);
 	~DxSwapChain();
 
@@ -102,10 +105,10 @@ private:
 	void LogMonitorInfo() const;
 
 private:
-	ID3D12Device*				   m_device = nullptr;
-	IDXGIFactory6*				   m_factory = nullptr;
-	HWND						   m_hwnd = nullptr;
-	IDxGraphicsCommandQueueGlobal& m_graphicsCommandQueueGlobal;
+	ID3D12Device*			 m_device = nullptr;
+	IDXGIFactory6*			 m_factory = nullptr;
+	HWND					 m_hwnd = nullptr;
+	DxGfxCommandQueueGlobal& m_gfxCommandQueueGlobal;
 
 	ComPtr<IDXGISwapChain4> m_swapChain;
 
@@ -124,8 +127,9 @@ private:
 	uint64_t m_frameCount = 0;
 	bool	 m_supportsTearing = false;
 
-	bool m_isFullscreen = false;
-	bool m_isBorderlessFullscreen = false;
+	ResizeCallback m_resizeCallback;
+	bool		   m_isFullscreen = false;
+	bool		   m_isBorderlessFullscreen = false;
 
 	RECT	 m_windowedRect{};
 	LONG_PTR m_windowedStyle = 0;

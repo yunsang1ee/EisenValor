@@ -2,7 +2,7 @@
 
 namespace NetBridge
 {
-class NetworkManager;
+class NetworkGlobal;
 class RecvBuffer
 {
 	enum

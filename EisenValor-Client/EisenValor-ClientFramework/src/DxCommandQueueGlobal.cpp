@@ -2,20 +2,19 @@
 #include "DxCommandQueueGlobal.h"
 #include "DxDeviceGlobal.h"
 
-DxGraphicsCommandQueueGlobal::~DxGraphicsCommandQueueGlobal()
+DxGfxCommandQueueGlobal::~DxGfxCommandQueueGlobal()
 {
-	if (m_idleEvent)
+	if (m_fenceEvent)
 	{
-		CloseHandle(m_idleEvent);
-		m_idleEvent = nullptr;
+		CloseHandle(m_fenceEvent);
+		m_fenceEvent = nullptr;
 	}
-	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Destroyed DxGraphicsCommandQueueGlobal.\n");
+	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] Destroyed DxGfxCommandQueueGlobal.\n");
 }
 
-void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
+void DxGfxCommandQueueGlobal::Initialize(ID3D12Device* device)
 {
-	assert(device && "[DxGraphicsCommandQueueGlobal] device is null");
-	m_device = device;
+	assert(device && "[DxGfxCommandQueueGlobal] device is null");
 
 	D3D12_COMMAND_QUEUE_DESC desc = {
 		.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -25,56 +24,58 @@ void DxGraphicsCommandQueueGlobal::Initialize(ID3D12Device* device)
 	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_commandQueue)));
 	m_commandQueue->SetName(L"GfxQueue");
 
-	ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_idleFence)));
-	m_idleEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	assert(m_idleEvent && "Failed to create fence event");
+	ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+	m_fence->SetName(L"GfxQueueFence");
 
-	DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] Initialized DxGraphicsCommandQueueGlobal.\n");
+	m_fenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	assert(m_fenceEvent && "Failed to create fence event");
+
+	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] Initialized DxGfxCommandQueueGlobal.\n");
 }
 
-void DxGraphicsCommandQueueGlobal::Release()
+void DxGfxCommandQueueGlobal::Release()
 {
-	if (m_idleEvent)
+	if (m_fenceEvent)
 	{
-		CloseHandle(m_idleEvent);
-		m_idleEvent = nullptr;
+		CloseHandle(m_fenceEvent);
+		m_fenceEvent = nullptr;
 	}
 	m_commandQueue.Reset();
-	m_idleFence.Reset();
-	m_device = nullptr;
-	m_idleValue = 0;
+	m_fence.Reset();
+	m_fenceValue = 0;
 }
 
-void DxGraphicsCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
+void DxGfxCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
 {
 	if (!commandList)
 	{
-		DEBUG_LOG_FMT("[DxGraphicsCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
+		DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
 		return;
 	}
 	m_commandQueue->ExecuteCommandLists(1, &commandList);
 }
 
-void DxGraphicsCommandQueueGlobal::Signal(ID3D12Fence* fence, uint64_t fenceValue)
+void DxGfxCommandQueueGlobal::Signal(ID3D12Fence* fence, uint64_t fenceValue)
 {
-	assert(fence && "[DxGraphicsCommandQueueGlobal] fence is null");
+	assert(fence && "[DxGfxCommandQueueGlobal] fence is null");
 	ThrowIfFailed(m_commandQueue->Signal(fence, fenceValue));
 }
 
-void DxGraphicsCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
+void DxGfxCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
 {
-	assert(fence && "[DxGraphicsCommandQueueGlobal] fence is null");
+	assert(fence && "[DxGfxCommandQueueGlobal] fence is null");
 	ThrowIfFailed(m_commandQueue->Wait(fence, fenceValue));
 }
 
-void DxGraphicsCommandQueueGlobal::WaitForIdle()
+void DxGfxCommandQueueGlobal::WaitForIdle()
 {
-	const uint64_t waitValue = ++m_idleValue;
-	ThrowIfFailed(m_commandQueue->Signal(m_idleFence.Get(), waitValue));
+	const uint64_t waitValue = SignalFence();
 
-	if (m_idleFence->GetCompletedValue() < waitValue)
+	if (m_fence->GetCompletedValue() < waitValue)
 	{
-		ThrowIfFailed(m_idleFence->SetEventOnCompletion(waitValue, m_idleEvent));
-		::WaitForSingleObject(m_idleEvent, INFINITE);
+		ThrowIfFailed(m_fence->SetEventOnCompletion(waitValue, m_fenceEvent));
+		::WaitForSingleObject(m_fenceEvent, INFINITE);
 	}
+
+	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle completed (Fence={})\n", waitValue);
 }

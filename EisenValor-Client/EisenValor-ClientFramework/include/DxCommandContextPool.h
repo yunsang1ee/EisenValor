@@ -1,38 +1,46 @@
 #pragma once
 #include <DxCommandContext.h>
+#include <mutex>
 
 class DxCommandContextPool
 {
 public:
-	DxCommandContextPool(
-		ID3D12Device*						 device,
-		class IDxGraphicsCommandQueueGlobal& queue,
-		uint32_t							 numFrames = 3,
-		D3D12_COMMAND_LIST_TYPE				 type = D3D12_COMMAND_LIST_TYPE_DIRECT
+	DxCommandContextPool() = default;
+	~DxCommandContextPool() = default;
+
+	DxCommandContextPool(const DxCommandContextPool&) = delete;
+	DxCommandContextPool& operator=(const DxCommandContextPool&) = delete;
+
+	void Initialize(
+		ID3D12Device* device, uint32_t numWorkers, D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT
 	);
-	~DxCommandContextPool();
 
-	void AdvanceFrame();
-	void WaitForGPU(uint32_t frameIndex);
+	void ResetAll();
 
-	DxCommandContext& GetCurrentContext();
-	uint32_t		  GetCurrentFrameIndex() const { return m_frameIndex; }
+	DxCommandContext* Acquire();
 
-	void SignalCurrentFrame();
+	void Release(DxCommandContext* context);
+
+	std::vector<ID3D12CommandList*> GetAllCommandLists();
+
+	uint32_t GetAvailableCount() const;
+	uint32_t GetTotalCount() const { return static_cast<uint32_t>(m_workers.size()); }
 
 private:
-	struct FrameEntry
+	enum class EState : uint8_t
 	{
-		DxCommandContext	context;
-		ComPtr<ID3D12Fence> fence;
-		uint64_t			fenceValue = 0;
-
-		FrameEntry(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type, uint32_t frameIndex);
+		Free,
+		Recording,
+		Ready
+	};
+	struct WorkerEntry
+	{
+		std::unique_ptr<DxCommandContext> context;
+		EState							  state = EState::Free;
 	};
 
-	std::vector<FrameEntry>		   m_entries;
-	uint32_t					   m_frameIndex = 0;
-	HANDLE						   m_fenceEvent;
-	IDxGraphicsCommandQueueGlobal& m_queue;
-	D3D12_COMMAND_LIST_TYPE		   m_type;
+	std::vector<WorkerEntry> m_workers;
+	std::vector<uint32_t>	 m_availableIndices;
+	D3D12_COMMAND_LIST_TYPE	 m_type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	mutable std::mutex		 m_mutex;
 };

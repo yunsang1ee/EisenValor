@@ -1,22 +1,22 @@
 #pragma once
+#include "Singleton.h"
+#include "DxCommon.h"
 
-class IDxDeviceGlobal : public IGlobal
+class DxDeviceGlobal : public Singleton<DxDeviceGlobal>
 {
-public:
-	virtual void		   Initialize() = 0;
-	virtual ID3D12Device*  GetDevice() const = 0;
-	virtual IDXGIFactory6* GetFactory() const = 0;
-	virtual IDXGIAdapter4* GetAdapter() const = 0;
-};
+private:
+	friend class Singleton<DxDeviceGlobal>;
 
-class DxDeviceGlobal : public GlobalMakerBase<DxDeviceGlobal, IDxDeviceGlobal>
-{
+	DxDeviceGlobal() = default;
+	~DxDeviceGlobal() override = default;
+
 public:
 	void Initialize() override;
+	void Release() override;
 
-	ID3D12Device*  GetDevice() const override { return m_device.Get(); }
-	IDXGIFactory6* GetFactory() const override { return m_factory.Get(); }
-	IDXGIAdapter4* GetAdapter() const override { return m_adapter.Get(); }
+	ID3D12Device*  GetDevice() const { return m_device.Get(); }
+	IDXGIFactory6* GetFactory() const { return m_factory.Get(); }
+	IDXGIAdapter4* GetAdapter() const { return m_adapter.Get(); }
 
 private:
 	ComPtr<ID3D12Device>  m_device;

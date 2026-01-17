@@ -26,10 +26,10 @@ public:                                                                         
 		return &instance;                                                                                              \
 	}
 
-#define MANAGER(classname) (classname::GetInstance())
 
 #pragma endregion
 
+#define GLOBAL(classname) (classname::GetInstance())
 // Types
 using BYTE = unsigned char;
 using int8 = __int8;
@@ -45,24 +45,6 @@ using uint64 = unsigned __int64;
 enum
 {
 	NW_BUFFER_CAPACITY = 65536,
-};
-
-// Structs
-#pragma pack(push, 1)
-struct PacketHeader
-{
-	uint16 packetType;
-	uint16 packetSize; // PacketHeader 크기 포함
-};
-#pragma pack(pop)
-
-enum class SOLDIER_FORMATION
-{
-	FORMATION_1,
-	FORMATION_2,
-	FORMATION_3,
-
-	END
 };
 
 
@@ -98,10 +80,20 @@ enum class SOLDIER_FORMATION
 #include <WS2tcpip.h>
 #include <MSWSock.h>
 
-// My
+// Container
+#include "DenseList.h"
+template <typename T>
+using HandleOf = DenseListHandle<T>;
+
+// DirectX
 #include "DxCommon.h"
 // #include "DxMath.h"
-#include <Global.h>
+
+namespace epsilon
+{
+constexpr float kMachineEpsilon = 1.192092896e-7f;
+constexpr float kEpsilon4 = 1e-4f;
+} // namespace epsilon
 
 #include "SimpleMath.h"
 using Vec2 = DirectX::SimpleMath::Vector2;
@@ -128,13 +120,9 @@ using Ray = DirectX::SimpleMath::Ray;
 #pragma region NetworkLibrary
 #include "flatbuffers\\flatbuffers.h"
 
-#include "Enums_generated.h"
-#include "Structs_generated.h"
-#include "Tables_generated.h"
-
-#include "NetworkManager.h"
-#include "PacketHandler.h"
-#include "ClientPackets.h"
+#include "NetworkGlobal.h"
+#include "IPacketHandler.h"
+#pragma endregion
 
 #pragma region DebugHelpers
 std::string GetTimestamp();
@@ -152,12 +140,41 @@ std::string GetTimestamp();
 
 #pragma endregion
 
-#pragma region Variable
-constexpr size_t kFrameBufferWidth = 1920;
-constexpr size_t kFrameBufferHeight = 1080;
+#pragma region Utils
+namespace Utils
+{
+// FNV-1a Hash https://share.google/trFAqACv1zHhll7h8
+constexpr uint64_t HashString(std::string_view str)
+{
+	uint64_t hash = 14695981039346656037ULL;
+	for (char c : str)
+	{
+		hash ^= static_cast<uint8_t>(c);
+		hash *= 1099511628211ULL;
+	}
+	return hash;
+}
+} // namespace Utils
+#pragma endregion
 
-constexpr size_t kExplosionDebrises = 240;
+#pragma region Variable
+constexpr uint32 kInvalidServerID = 0;
+
+constexpr size_t kDefaultWindowWidth = 1920;
+constexpr size_t kDefaultWindowHeight = 1080;
 
 #pragma endregion
+
+// 오브젝트 타입 구분용
+enum class ObjectType
+{
+	PLAYER,
+	NPC,
+	SPAWN_BASE,
+
+
+	END
+};
+
 
 // #define DEAD_RECKONING

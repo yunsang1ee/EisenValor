@@ -1,280 +1,539 @@
 #include "stdafxClientFramework.h"
 #include "GameFramework.h"
-#include "GlobalInterfaces.h"
-#include "DxDeviceGlobal.h"
-#include "DxCommandQueueGlobal.h"
-#include "Vertex.h"
-#include "GameObjectManager.h"
-#include "LocalPlayer.h"
-#include "Ground.h"
-#include "NPC.h"
 
-using namespace DirectX;
+#include "GlobalInterfaces.h"
+#include "DxDebugGlobal.h"
+#include "SceneGlobal.h"
+#include "DxCommandQueueGlobal.h"
+#include "DxRendererGlobal.h"
+#include "DxSwapChain.h"
+#include "InputGlobal.h"
+#include "TimerGlobal.h"
+
+
 #define SERVER
 
+#if 0
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
 {
 #ifdef SERVER
-	NetBridge::ServerPacketHandler::Init();
-
-	if (false == MANAGER(NetBridge::NetworkManager)->Init())
+	if (false == GLOBAL(NetBridge::NetworkGlobal).Init())
 		return false;
 #endif
 	m_hInstance = hInstance;
 	m_hWnd = hwnd;
 
-	Globals::InitializeGlobalRegistry();
-	Globals::Timer().Initialize();
-	Globals::Timer().SetFixedFPS(60);
-	Globals::Timer().SetTargetFPS(144);
+	Globals::Initialize();
+	auto& time = GLOBAL(TimerGlobal);
+	time.SetFixedFPS(60);
+	time.SetTargetFPS(0);
 
-	// 1. 스왑체인 생성 코드 추가 25.07.19
-	// RTV 디스크립터 힙 생성
-	auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
-
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.NumDescriptors = 3; // 백버퍼 3개
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
-	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	// 윈도우 크기 가져오기
 	RECT clientRect;
 	GetClientRect(m_hWnd, &clientRect);
 	uint32_t width = clientRect.right - clientRect.left;
 	uint32_t height = clientRect.bottom - clientRect.top;
 
-	// 스왑체인 생성
-	auto& commandQueue = GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>();
+	CreateRaytracingResources(width, height);
 
-	m_swapChain = std::make_unique<DxSwapChain>(
-		device.GetDevice(), device.GetFactory(), commandQueue, m_hWnd, width, height,
-		3, // 백버퍼 개수
-		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
-	);
-
-	//-------------------------- 깊이 버퍼용 ------------
-	// DSV 디스크립터 힙 생성 (깊이 버퍼용)
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvDescriptorHeap)));
-	m_dsvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
-	// 깊이 버퍼 생성
-	D3D12_RESOURCE_DESC depthStencilDesc = {};
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Width = width;
-	depthStencilDesc.Height = height;
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이 + 8비트 스텐실
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-	depthOptimizedClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-	depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-	D3D12_HEAP_PROPERTIES depthHeapProps = {};
-	depthHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-	ThrowIfFailed(device.GetDevice()->CreateCommittedResource(
-		&depthHeapProps, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&depthOptimizedClearValue, IID_PPV_ARGS(&m_depthStencilBuffer)
-	));
-
-	// 깊이 스텐실 뷰 생성
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-	device.GetDevice()->CreateDepthStencilView(
-		m_depthStencilBuffer.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
-	);
-
-	//-------------------------- 깊이 버퍼용 ------------
-
-	// 커맨드 컨텍스트 풀 생성
-	m_commandContextPool = std::make_unique<DxCommandContextPool>(
-		device.GetDevice(), commandQueue,
-		3 // 백버퍼 개수
-	);
-
-	// 루트 파라미터 정의 (상수 버퍼용)
-	D3D12_ROOT_PARAMETER rootParameter = {};
-	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; // 상수 버퍼 뷰
-	rootParameter.Descriptor.ShaderRegister = 0;				 // register(b0)
-	rootParameter.Descriptor.RegisterSpace = 0;
-	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // 정점 셰이더에서만 사용
-
-	// 3. 루트 시그니처 생성 25.07.20
-	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-	rootSignatureDesc.NumParameters = 1;
-	rootSignatureDesc.pParameters = &rootParameter;
-	rootSignatureDesc.NumStaticSamplers = 0;
-	rootSignatureDesc.pStaticSamplers = nullptr;
-	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-	ComPtr<ID3DBlob> signature;
-	ComPtr<ID3DBlob> error;
-	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-	ThrowIfFailed(device.GetDevice()->CreateRootSignature(
-		0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)
-	));
-
-	// 4. 셰이더 컴파일 (Simple)
-	ComPtr<ID3DBlob> vertexShader;
-	ComPtr<ID3DBlob> pixelShader;
-
-
-#ifdef _DEBUG
-	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-	UINT compileFlags = 0;
-#endif
-
-	// 셰이더 파일에서 컴파일
-	ThrowIfFailed(D3DCompileFromFile(
-		L"../EisenValor/Resource/Shader/VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", compileFlags, 0,
-		&vertexShader, nullptr
-	));
-	ThrowIfFailed(D3DCompileFromFile(
-		L"../EisenValor/Resource/Shader/PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", compileFlags, 0,
-		&pixelShader, nullptr
-	));
-
-	// 5. 입력 레이아웃 정의
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-	};
-
-	// PS 생성하기
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-	psoDesc.InputLayout = {inputElementDescs, _countof(inputElementDescs)};
-	psoDesc.pRootSignature = m_rootSignature.Get();
-	psoDesc.VS = {reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize()};
-	psoDesc.PS = {reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize()};
-	psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-	
-	psoDesc.DepthStencilState.DepthEnable = TRUE;
-
-	psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;	//깊이 정보를 쓸 것인가
-	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;		//깊이 비교
-
-	psoDesc.DepthStencilState.StencilEnable = FALSE;
-
-	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.SampleDesc.Count = 1;
-
-	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; // 깊이 버퍼 포맷 설정
-	
-	ThrowIfFailed(device.GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
-
-	std::string id, pw;
-	std::cout << "Input ID(any):";
-	// std::cin >> id;
-	id = "ID";
-	std::cout << "\n";
-	std::cout << "Input PW(any):";
-	// std::cin >> pw;
-	pw = "PW";
-
-	auto pb = NetBridge::ClientPackets::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-	MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-
-	// Ground 객체 생성 및 초기화
-	m_ground = std::make_unique<Ground>();
-	m_ground->Initialize(device.GetDevice());
-
-	// Player 객체 생성 및 초기화 추가
-	// auto player = std::make_unique<Player>();
-	// player->SetPosition(0.0f, 0.5f, 0.0f);  // 초기 위치 설정
-	// player->Initialize(device.GetDevice());
-	// m_player = player.get();
-
-	// Objects들 추가
-	//  m_gameObjects.push_back(std::move(player));
-
-	// 적군 장수 생성
-	//auto enemyGeneral = std::make_shared<NPC>();
-	//enemyGeneral->SetTeam(NPC::Team::ENEMY);
-	//enemyGeneral->SetUnitType(NPC::UnitType::GENERAL);
-	//enemyGeneral->Initialize(device.GetDevice());
-	//Vec3 generalPos(0.0f, 0.0f, 8.0f);
-	//enemyGeneral->SetPosition(generalPos);
-	//enemyGeneral->lastServerPosition = generalPos;
-	//MANAGER(GameObjectManager)->AddObject(enemyGeneral);
-
-	// 적군 병사 생성 (장수 바로 옆에)
-	//auto enemySoldier = std::make_shared<NPC>();
-	//enemySoldier->SetTeam(NPC::Team::ENEMY);
-	//enemySoldier->SetUnitType(NPC::UnitType::SOLDIER);
-	//enemySoldier->Initialize(device.GetDevice());
-	//Vec3 soldierPos(1.5f, 0.0f, 8.0f);
-	//enemySoldier->SetPosition(soldierPos);
-	//enemySoldier->lastServerPosition = soldierPos;
-	//MANAGER(GameObjectManager)->AddObject(enemySoldier);
-
-	// 아군 배틀램 생성
-	//auto battleram = std::make_shared<NPC>();
-	//battleram->SetTeam(NPC::Team::ALLY);
-	//battleram->SetUnitType(NPC::UnitType::BATTLE_RAM);
-	//battleram->Initialize(device.GetDevice());
-	//Vec3 battleramPos(-3.0f, 0.0f, 2.0f);
-	//battleram->SetPosition(battleramPos);
-	//battleram->lastServerPosition = battleramPos;
-	//MANAGER(GameObjectManager)->AddObject(battleram);
-
-	// 아군 스폰 기지 생성
-	//auto allyspawnbase = std::make_shared<NPC>();
-	//allyspawnbase->SetTeam(NPC::Team::ALLY);
-	//allyspawnbase->SetUnitType(NPC::UnitType::SPAWN_BASE);
-	//allyspawnbase->Initialize(device.GetDevice());
-	//Vec3 spawnbasePos(-8.0f, 0.0f, 0.0f);
-	//allyspawnbase->SetPosition(spawnbasePos);
-	//allyspawnbase->lastServerPosition = spawnbasePos;
-	//MANAGER(GameObjectManager)->AddObject(allyspawnbase);
+	CreateStaticScene();
+	BuildAccelerationStructures();
+	CreateBuffers();
+	CreateRaytracingPipeline();
 
 	return true;
+}
+
+void GameFramework::CreateStaticScene()
+{
+	auto& device = GLOBAL(DxDeviceGlobal);
+
+	auto ground = std::make_unique<GameObject>("Ground");
+	ground->GetTransform().SetPosition(0.0f, 0.0f, 0.0f);
+	ground->GetTransform().SetScale(10.0f);
+
+	std::vector<Vertex> groundVertices = {
+		{{-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+		{{1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+		{{1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+		{{-1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}}
+	};
+
+	std::vector<uint32_t> groundIndices = {0, 2, 1, 0, 3, 2};
+
+	auto groundMesh = ground->AddComponent<MeshComponent>();
+	groundMesh->SetMesh(groundVertices, groundIndices);
+	m_sceneObjects.push_back(std::move(ground));
+
+	PBRMaterial groundMaterial;
+	groundMaterial.albedo = {1.0f, 0.95f, 0.8f};
+	groundMaterial.metallic = 0.08f;
+	groundMaterial.roughness = 0.98f;
+	groundMaterial.emissive = {0.0f, 0.0f, 0.0f};
+	groundMaterial.emissiveStrength = 0.0f;
+	m_materials.push_back(groundMaterial);
+
+	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
+	PBRMaterial	 playerMaterial[3] = {
+		 {.albedo = {0.9f, 0.3f, 0.3f},
+		  .metallic = 0.98f,
+		  .roughness = 0.01f,
+		  .emissive = {1.0f, 0.4f, 0.2f},
+		  .emissiveStrength = 0.0f},
+		 {.albedo = {0.3f, 0.3f, 0.9f},
+		  .metallic = 0.98f,
+		  .roughness = 0.01f,
+		  .emissive = {0.0f, 0.0f, 0.0f},
+		  .emissiveStrength = 0.0f},
+		 {.albedo = {0.3f, 0.9f, 0.3f},
+		  .metallic = 0.98f,
+		  .roughness = 0.01f,
+		  .emissive = {0.2f, 0.4f, 1.0f},
+		  .emissiveStrength = 0.0f},
+	 };
+
+	for (int i = 0; i < 3; ++i)
+	{
+		auto player = std::make_unique<GameObject>("Player" + std::to_string(i));
+		player->GetTransform().SetPosition(4.0f * (i - 1), (i != 1 ? 3.0f : 1.0f), 0.0f);
+		player->GetTransform().SetRotation(rotations[i]);
+		player->GetTransform().SetScale((i != 1 ? 4.0f : 1.0f));
+
+		// clang-format off
+		std::vector<Vertex> cubeVertices = {
+			// Front face (z = 0.5)
+			{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+			{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+
+			// Back face (z = -0.5)
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+			{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
+			{{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+
+			// Left face (x = -0.5)
+			{{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
+			{{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+			{{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+			{{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+
+			// Right face (x = 0.5)
+			{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+			{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+			{{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+			{{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+
+			// Top face (y = 0.5)
+			{{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+			{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+			{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
+
+			// Bottom face (y = -0.5)
+			{{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+			{{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}}
+		};
+
+		std::vector<uint32_t> cubeIndices = {
+			0, 1, 2, 0, 2, 3,      // Front
+			4, 5, 6, 4, 6, 7,      // Back
+			8, 9, 10, 8, 10, 11,   // Left
+			12, 13, 14, 12, 14, 15, // Right
+			16, 17, 18, 16, 18, 19, // Top
+			20, 21, 22, 20, 22, 23  // Bottom
+		};
+		// clang-format on
+
+		auto playerMesh = player->AddComponent<MeshComponent>();
+		playerMesh->SetMesh(cubeVertices, cubeIndices);
+
+		m_sceneObjects.push_back(std::move(player));
+		m_materials.push_back(playerMaterial[i]);
+	}
+
+	DEBUG_LOG_FMT("[GameFramework] Created static scene: {} objects\n", m_sceneObjects.size());
+}
+
+void GameFramework::BuildAccelerationStructures()
+{
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+
+	auto* frame = m_frameResources[0].get();
+	frame->BeginFrame();
+
+	auto* cmdList = frame->GetMainContext()->CommandList();
+	auto* uploadHeap = frame->GetUploadHeap();
+
+	ComPtr<ID3D12Device5> device5;
+	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+
+	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
+
+	for (auto& obj : m_sceneObjects)
+	{
+		auto* mesh = obj->GetComponent<MeshComponent>();
+		if (mesh)
+		{
+			mesh->BuildBLAS(device5.Get(), cmdList4.Get(), uploadHeap);
+		}
+	}
+
+	std::vector<GameObject*> objPtrs;
+	objPtrs.reserve(m_sceneObjects.size());
+	for (auto& obj : m_sceneObjects)
+	{
+		objPtrs.push_back(obj.get());
+	}
+
+	m_tlas = std::make_unique<DxTLAS>();
+	m_tlas->Build(device5.Get(), cmdList4.Get(), uploadHeap, objPtrs);
+
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
+	frame->WaitForCompletion();
+
+	DEBUG_LOG_FMT("[GameFramework] Acceleration structures built\n");
+}
+
+void GameFramework::CreateRaytracingPipeline()
+{
+	auto&				  device = GLOBAL(DxDeviceGlobal);
+	ComPtr<ID3D12Device5> device5;
+	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+
+	m_rtPipeline = std::make_unique<DxRtPipelineState>();
+	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
+	m_rtShaderTable = std::make_unique<DxRtShaderTable>();
+	m_rtShaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
+
+	m_ptPipeline = std::make_unique<DxRtPipelineState>();
+	m_ptPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
+	m_ptShaderTable = std::make_unique<DxRtShaderTable>();
+	m_ptShaderTable->Build(device5.Get(), m_ptPipeline.get(), 1);
+
+	DEBUG_LOG_FMT("[GameFramework] Raytracing pipeline created\n");
+}
+
+void GameFramework::CreateBuffers()
+{
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
+
+	if (m_sceneObjects.empty())
+	{
+		DEBUG_LOG_FMT("[GameFramework] WARNING: No objects for geometry buffers\n");
+		return;
+	}
+	if (m_materials.empty())
+	{
+		DEBUG_LOG_FMT("[GameFramework] WARNING: No materials to upload\n");
+	}
+
+	// 1) CPU 데이터 수집
+	m_allVertices.clear();
+	m_allIndices.clear();
+	m_geoInfoTable.clear();
+	m_instGeoBase.clear();
+
+	for (auto& obj : m_sceneObjects)
+	{
+		auto* mesh = obj->GetComponent<MeshComponent>();
+		if (!mesh)
+		{
+			continue;
+		}
+		uint32_t geoBase = static_cast<uint32_t>(m_geoInfoTable.size());
+
+		// IDEA: MeshComponent가 여러 개의 서브메시를 가질 수 있도록 확장 가능
+		// for (auto& subMesh : mesh->GetSubMeshes())
+		{
+			uint32_t vertexBase = static_cast<uint32_t>(m_allVertices.size());
+			uint32_t indexBase = static_cast<uint32_t>(m_allIndices.size());
+
+			auto& vertices = mesh->GetVertices();
+			auto& indices = mesh->GetIndices();
+
+			for (auto& v : vertices)
+			{
+				m_allVertices.emplace_back(v.position, v.normal, DX::XMFLOAT2{0.0f, 0.0f});
+			}
+
+			m_allIndices.insert(m_allIndices.end(), indices.begin(), indices.end());
+
+			m_geoInfoTable.emplace_back(
+				vertexBase, indexBase, static_cast<uint32_t>(vertices.size()), static_cast<uint32_t>(indices.size())
+			);
+		}
+
+		m_instGeoBase.push_back(geoBase);
+	}
+
+	DEBUG_LOG_FMT(
+		"[GameFramework] Collected geometry: {} vertices, {} indices, {} geos\n", m_allVertices.size(),
+		m_allIndices.size(), m_geoInfoTable.size()
+	);
+
+	// 2) GPU 버퍼 생성 + 업로드
+	auto* frame = m_frameResources[0].get();
+	frame->BeginFrame();
+	auto* cmdList = frame->GetMainContext()->CommandList();
+	auto* uploadHeap = frame->GetUploadHeap();
+
+	// --- Material Buffer (t1) ---
+	{
+		uint64_t bufSize = m_materials.size() * sizeof(PBRMaterial);
+		m_materialBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "MaterialBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_materialBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_materials.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_materialBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_materialBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- Vertex Buffer (t2) ---
+	{
+		uint64_t bufSize = m_allVertices.size() * sizeof(VertexPNU);
+		m_vertexBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "VertexBuffer_PNU"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_vertexBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_allVertices.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_vertexBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_vertexBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- Index Buffer (t3) ---
+	{
+		uint64_t bufSize = m_allIndices.size() * sizeof(uint32_t);
+		m_indexBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE, "IndexBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_indexBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_allIndices.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_indexBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_indexBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- GeoInfo Buffer (t4) ---
+	{
+		uint64_t bufSize = m_geoInfoTable.size() * sizeof(GeoInfo);
+		m_geoInfoBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "GeoInfoBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_geoInfoBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_geoInfoTable.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(m_geoInfoBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_geoInfoBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// --- InstGeoBase Buffer (t5) ---
+	{
+		uint64_t bufSize = m_instGeoBase.size() * sizeof(uint32_t);
+		m_instGeoBaseBuffer.Initialize(
+			device.GetDevice(), bufSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "InstGeoBaseBuffer"
+		);
+
+		auto barrier1 = DxUtils::CreateTransitionBarrier(
+			m_instGeoBaseBuffer.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+		);
+		cmdList->ResourceBarrier(1, &barrier1);
+
+		auto upload = uploadHeap->UploadRawData(m_instGeoBase.data(), bufSize, 256);
+		cmdList->CopyBufferRegion(
+			m_instGeoBaseBuffer.GetResource(), 0, uploadHeap->GetResource(), upload.offset, bufSize
+		);
+
+		auto barrier2 = DxUtils::CreateTransitionBarrier(
+			m_instGeoBaseBuffer.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
+		);
+		cmdList->ResourceBarrier(1, &barrier2);
+	}
+
+	// 3) 연속 슬롯에 SRV 생성 (t1~t5)
+	DxDescriptorTableBuilder tableBuilder;
+	// t1: Materials
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc1{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_materials.size()),
+			 .StructureByteStride = sizeof(PBRMaterial),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_materialBuffer.GetResource(), &srvDesc1, m_materialBuffer.GetSRVHandle());
+
+	// t2: VertexBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_allVertices.size()),
+			 .StructureByteStride = sizeof(VertexPNU),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_vertexBuffer.GetResource(), &srvDesc2, m_vertexBuffer.GetSRVHandle());
+
+	// t3: IndexBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc3{
+		.Format = DXGI_FORMAT_R32_UINT,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_allIndices.size()),
+			 .StructureByteStride = 0,
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_indexBuffer.GetResource(), &srvDesc3, m_indexBuffer.GetSRVHandle());
+
+	// t4: GeoInfoBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc4{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_geoInfoTable.size()),
+			 .StructureByteStride = sizeof(GeoInfo),
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_geoInfoBuffer.GetResource(), &srvDesc4, m_geoInfoBuffer.GetSRVHandle());
+
+	// t5: InstGeoBaseBuffer
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc5{
+		.Format = DXGI_FORMAT_R32_UINT,
+		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer =
+			{.FirstElement = 0,
+			 .NumElements = static_cast<UINT>(m_instGeoBase.size()),
+			 .StructureByteStride = 0,
+			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
+	};
+	tableBuilder.AddSRV(m_instGeoBaseBuffer.GetResource(), &srvDesc5, m_instGeoBaseBuffer.GetSRVHandle());
+
+	m_bufferRange = tableBuilder.Commit(device.GetDevice(), descHeap);
+
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
+	frame->WaitForCompletion();
+
+	DEBUG_LOG_FMT("[GameFramework] Buffers created, SRV range start: {}\n", m_bufferRange.startIndex);
+}
+
+void GameFramework::CreateRaytracingResources(uint32_t width, uint32_t height)
+{
+	auto& device = GLOBAL(DxDeviceGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
+
+	m_raytracingOutput.Initialize(
+		device.GetDevice(), width, height, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, "RaytracingOutput"
+	);
+	m_raytracingOutput.CreateUAV(device.GetDevice(), descHeap, 0);
+
+	DEBUG_LOG_FMT(
+		"[GameFramework] Raytracing output created: {}x{}, UAV Index={}\n", width, height,
+		m_raytracingOutput.GetUAVIndex(0)
+	);
+}
+
+void GameFramework::ResizeRaytracingResources(uint32_t width, uint32_t height)
+{
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
+
+	auto fenceValue = commandQueue.GetCurrentFenceValue();
+	m_raytracingOutput.ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+	CreateRaytracingResources(width, height);
 }
 
 void GameFramework::Run()
 {
 #ifdef SERVER
-	MANAGER(NetBridge::NetworkManager)->ProcessIO();
+	GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
 #endif
 
-	Globals::Input().BeforeUpdate();
+	GLOBAL(InputGlobal).BeforeUpdate();
 
-	Globals::Timer().Update();
-	if (Globals::Timer().ShouldFixedUpdate())
+	static float runTime{};
+	const float	 dt = GLOBAL(TimerGlobal).Update();
+
+	if ((runTime += dt) > 0.2f)
+	{
+		runTime = 0.0f;
+		DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
+	}
+	GLOBAL(SceneGlobal).OnBeginFrame();
+
+	if (GLOBAL(TimerGlobal).ShouldFixedUpdate())
 		FixedUpdate();
-	Update();
-	LateUpdate();
+
+	Update(dt);
+
 
 	Render();
 
-	Globals::Input().AfterUpdate();
-	MANAGER(GameObjectManager)->FinalUpdate();
+	GLOBAL(SceneGlobal).OnEndFrame();
+
+	GLOBAL(InputGlobal).AfterUpdate();
+#ifdef _DEBUG
+	GLOBAL(DxDebugGlobal).PrintDebugMessages();
+#endif
 }
 
 void GameFramework::Release()
 {
-	DEBUG_LOG_FMT("WaitForIdle....\n");
-	GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().WaitForIdle();
+	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
+
+	auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
+	queue.WaitForIdle();
+	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
 }
 
 LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
@@ -300,35 +559,35 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		isUp = (keyflags & KF_UP) == KF_UP;
 		code = static_cast<InputCode>(wParam);
 		if (code)
-			Globals::Input().OnInputState(code, isPressed, isUp);
+			GLOBAL(InputGlobal).OnInputState(code, isPressed, isUp);
 	}
 	break;
 	case WM_MOUSEMOVE:
-		Globals::Input().OnMouseMove(LOWORD(lParam), HIWORD(lParam));
+		GLOBAL(InputGlobal).OnMouseMove(LOWORD(lParam), HIWORD(lParam));
 		break;
 	case WM_LBUTTONDOWN:
 	{
-		Globals::Input().OnInputState(VK_LBUTTON, FALSE, FALSE);
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, FALSE);
 		break;
 	}
 	case WM_RBUTTONDOWN:
 	{
-		Globals::Input().OnInputState(VK_RBUTTON, FALSE, FALSE);
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
 		break;
 	}
 	case WM_LBUTTONUP:
 	{
-		Globals::Input().OnInputState(VK_LBUTTON, FALSE, TRUE);
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
 		break;
 	}
 	case WM_RBUTTONUP:
 	{
-		Globals::Input().OnInputState(VK_RBUTTON, FALSE, TRUE);
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
 		break;
 	}
 	case WM_MOUSEWHEEL:
 	{
-		Globals::Input().OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
+		GLOBAL(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 	}
 	case WM_DESTROY:
@@ -344,113 +603,298 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void GameFramework::Update()
+void GameFramework::Update(float delta)
 {
-	auto& input = Globals::Input();
+	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_ESCAPE))
 	{
 		DEBUG_LOG_FMT("close\n");
 		::DestroyWindow(m_hWnd);
 	}
+	if (input.GetInputDown(VK_F5))
+	{
+		// FUTURE: Runtime Shader Compilation
+	}
 	if (input.GetInputDown(VK_F11))
 	{
-		m_swapChain->ToggleBorderlessFullscreen();
+		GLOBAL(DxRendererGlobal).ToggleBorderlessFullscreen();
 	}
 	if (input.GetInput(VK_MENU) && input.GetInputDown(VK_RETURN))
 	{
-		m_swapChain->ToggleFullscreen();
+		GLOBAL(DxRendererGlobal).ToggleFullscreen();
 	}
 
-	const float dt = Globals::Timer().GetDeltaTime();
-
-	MANAGER(GameObjectManager)->Update(dt);
+	GLOBAL(SceneGlobal).OnUpdate(delta);
 }
 
-void GameFramework::FixedUpdate() {}
+void GameFramework::FixedUpdate()
+{
+	GLOBAL(SceneGlobal).OnFixedUpdate(GLOBAL(TimerGlobal).GetFixedDeltaTime());
+}
 
-void GameFramework::LateUpdate() {}
+void GameFramework::LateUpdate(float delta)
+{
+	GLOBAL(SceneGlobal).OnLateUpdate(delta);
+}
 
-// Render 코드 생성 25.07.20
 void GameFramework::Render()
 {
-	auto localPlayer = MANAGER(GameObjectManager)->GetLocalPlayer();
-	if (localPlayer == nullptr)
-		return;
+	auto& scene = GLOBAL(SceneGlobal);
+	auto& renderer = GLOBAL(DxRendererGlobal);
+	renderer.BeginFrame();
 
-	// 현재 프레임 준비
-	m_commandContextPool->AdvanceFrame();
-	auto& context = m_commandContextPool->GetCurrentContext();
+	renderer.Render(scene.GetActiveScene());
 
-	const XMMATRIX view = localPlayer->GetViewMatrix();
+	renderer.EndFrame();
 
-	//// 투영 행렬
-	XMMATRIX projection = XMMatrixPerspectiveFovLH(
-		XM_PI / 4.0f,											   // 45도 시야각
-		(float)m_swapChain->GetWidth() / m_swapChain->GetHeight(), // 종횡비
-		0.1f,													   // 가까운 클리핑 평면
-		100.0f													   // 먼 클리핑 평면
-	);
 
-	// 현재 백버퍼 가져오기
-	auto rtvHandle = m_swapChain->GetCurrentBackBufferRTV();
+	// RenderDXR();
+	// RT Output -> BackBuffer copy
 	auto backBuffer = m_swapChain->GetCurrentBackBuffer();
 
-	// 깊이 스텐실 핸들 가져오기
-	auto dsvHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	
-	// 백버퍼를 렌더 타겟으로 전환(Resource barrier)
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = backBuffer;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	context.CommandList()->ResourceBarrier(1, &barrier);
-
-	// 렌더 타겟과 깊이 버퍼 동시 설정
-	context.CommandList()->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-	
-	// 화면을 검은색으로 클리어 (깊이 버퍼 추가 - 25.09.16)
-	float clearColor[] = {0.0f, 0.0f, 0.0f, 1.0f}; // 검은색
-	context.CommandList()->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	context.CommandList()->ClearDepthStencilView(
-		dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr
+	auto barrier1 = DxUtils::CreateTransitionBarrier(
+		m_raytracingOutput.GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE
 	);
 
-	// 뷰포트 설정
-	D3D12_VIEWPORT viewport = {};
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-	viewport.Width = static_cast<float>(m_swapChain->GetWidth());
-	viewport.Height = static_cast<float>(m_swapChain->GetHeight());
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	D3D12_RECT scissorRect = {};
-	scissorRect.right = static_cast<LONG>(m_swapChain->GetWidth());
-	scissorRect.bottom = static_cast<LONG>(m_swapChain->GetHeight());
-	context.CommandList()->RSSetViewports(1, &viewport);
-	context.CommandList()->RSSetScissorRects(1, &scissorRect);
+	auto barrier2 =
+		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	// 파이프라인 설정
-	context.CommandList()->SetGraphicsRootSignature(m_rootSignature.Get());
-	context.CommandList()->SetPipelineState(m_pipelineState.Get());
+	D3D12_RESOURCE_BARRIER barriers[] = {barrier1, barrier2};
+	cmdList->ResourceBarrier(2, barriers);
 
-	// Ground 렌더링 (임시)
-	const auto cmdList = context.CommandList();
-	m_ground->Render(cmdList, view, projection);
+	cmdList->CopyResource(backBuffer, m_raytracingOutput.GetResource());
 
-	// GameObject 렌더링 (임시)
-	MANAGER(GameObjectManager)->Render(cmdList, view, projection);
+	// BackBuffer -> Present, RT Output -> UAV
+	auto barrier3 =
+		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
 
-	// 백버퍼를 프레젠트 상태로 전환
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	context.CommandList()->ResourceBarrier(1, &barrier);
+	auto barrier4 = DxUtils::CreateTransitionBarrier(
+		m_raytracingOutput.GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	);
 
-	// 커맨드 실행
-	m_commandContextPool->SignalCurrentFrame();
+	D3D12_RESOURCE_BARRIER restoreBarriers[] = {barrier3, barrier4};
+	cmdList->ResourceBarrier(2, restoreBarriers);
+
+	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+	frame->ExecuteAndSignal(commandQueue.GetQueue());
+
+	commandQueue.SignalFence();
+
+	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
+	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
 
 	m_swapChain->PresentMaxPerformance();
 }
+#endif
 
+bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
+{
+#ifdef SERVER
+	if (false == GLOBAL(NetBridge::NetworkGlobal).Init())
+		return false;
+#endif
+
+	m_hInstance = hInstance;
+	m_hWnd = hwnd;
+
+	Globals::Initialize(hwnd);
+
+	RECT clientRect;
+	GetClientRect(m_hWnd, &clientRect);
+	uint32_t width = clientRect.right - clientRect.left;
+	uint32_t height = clientRect.bottom - clientRect.top;
+
+	auto& renderer = GLOBAL(DxRendererGlobal);
+	renderer.CreateSwapChain(m_hWnd, width, height);
+
+	DEBUG_LOG_FMT("[GameFramework] Initialized: {}x{}\n", width, height);
+	return true;
+}
+
+void GameFramework::Run()
+{
+#ifdef SERVER
+	GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
+#endif
+
+	GLOBAL(InputGlobal).BeforeUpdate();
+
+	static float runTime{};
+	const float	 dt = GLOBAL(TimerGlobal).Update();
+
+	//if ((runTime += dt) > 0.2f)
+	//{
+	//	runTime = 0.0f;
+	//	DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
+	//}
+
+	GLOBAL(SceneGlobal).OnBeginFrame();
+
+	if (GLOBAL(TimerGlobal).ShouldFixedUpdate())
+		FixedUpdate();
+
+	Update(dt);
+	
+	LateUpdate(dt);
+
+	Render();
+
+	GLOBAL(SceneGlobal).OnEndFrame();
+	GLOBAL(InputGlobal).AfterUpdate();
+
+#ifdef _DEBUG
+	GLOBAL(DxDebugGlobal).PrintDebugMessages();
+#endif
+}
+
+void GameFramework::Release()
+{
+	if (m_released)
+		return;
+	m_released = true;
+
+	auto* queue = GLOBAL(DxGfxCommandQueueGlobal).GetQueue();
+	if (!queue)
+		return;
+
+	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
+	GLOBAL(DxGfxCommandQueueGlobal).WaitForIdle();
+	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
+
+	Globals::Shutdown();
+}
+
+LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
+{
+	WORD	  keyflags;
+	bool	  isPressed;
+	bool	  isUp;
+	InputCode code;
+
+	switch (message)
+	{
+	case WM_ACTIVATE:
+		GLOBAL(InputGlobal).SetWindowFocused(WA_ACTIVE == LOWORD(wParam));
+		break;
+
+	case WM_SYSCOMMAND:
+		if (wParam == SC_KEYMENU)
+			return 0;
+		break;
+
+	case WM_SIZE:
+	{
+		if (wParam == SIZE_MINIMIZED)
+			break;
+
+		const uint32_t width = static_cast<uint32_t>(LOWORD(lParam));
+		const uint32_t height = static_cast<uint32_t>(HIWORD(lParam));
+
+		auto& renderer = GLOBAL(DxRendererGlobal);
+		if (renderer.GetSwapChain())
+		{
+			renderer.OnResize(width, height);
+		}
+		GLOBAL(InputGlobal).OnResize(width, height);
+
+		DEBUG_LOG_FMT("[GameFramework] Window resized: {}x{}\n", width, height);
+		break;
+	}
+
+	case WM_SYSKEYDOWN:
+	case WM_KEYDOWN:
+	case WM_SYSKEYUP:
+	case WM_KEYUP:
+	{
+		keyflags = HIWORD(lParam);
+		isPressed = (keyflags & KF_REPEAT) == KF_REPEAT;
+		isUp = (keyflags & KF_UP) == KF_UP;
+		code = static_cast<InputCode>(wParam);
+		if (code)
+			GLOBAL(InputGlobal).OnInputState(code, isPressed, isUp);
+	}
+	break;
+
+	case WM_MOUSEMOVE:
+		GLOBAL(InputGlobal).OnMouseMove(LOWORD(lParam), HIWORD(lParam));
+		break;
+
+	case WM_LBUTTONDOWN:
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, FALSE);
+		break;
+
+	case WM_RBUTTONDOWN:
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
+		break;
+
+	case WM_LBUTTONUP:
+		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
+		break;
+
+	case WM_RBUTTONUP:
+		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
+		break;
+
+	case WM_MOUSEWHEEL:
+		GLOBAL(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
+		break;
+
+	case WM_DESTROY:
+		DEBUG_LOG_FMT("Window destroyed. Initiating application shutdown.\n");
+		PostQuitMessage(0);
+		break;
+
+	default:
+		break;
+	}
+
+	return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+void GameFramework::Update(float delta)
+{
+	auto& input = GLOBAL(InputGlobal);
+	if (input.GetInputDown(VK_ESCAPE))
+	{
+		DEBUG_LOG_FMT("close\n");
+		::DestroyWindow(m_hWnd);
+	}
+	if (input.GetInputDown(VK_F5))
+	{
+		// FUTURE: Runtime Shader Compilation
+	}
+
+	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
+	{
+		if (input.GetInputDown(VK_F11))
+		{
+			swapChain->ToggleBorderlessFullscreen();
+		}
+		if (input.GetInput(VK_MENU) && input.GetInputDown(VK_RETURN))
+		{
+			swapChain->ToggleFullscreen();
+		}
+	}
+
+	GLOBAL(SceneGlobal).OnUpdate(delta);
+}
+
+void GameFramework::FixedUpdate()
+{
+	GLOBAL(SceneGlobal).OnFixedUpdate(GLOBAL(TimerGlobal).GetFixedDeltaTime());
+}
+
+void GameFramework::LateUpdate(float delta)
+{
+	GLOBAL(SceneGlobal).OnLateUpdate(delta);
+}
+
+void GameFramework::Render()
+{
+	auto& scene = GLOBAL(SceneGlobal);
+	auto& renderer = GLOBAL(DxRendererGlobal);
+
+	renderer.BeginFrame();
+	renderer.Render(scene.GetActiveScene());
+	renderer.EndFrame();
+}

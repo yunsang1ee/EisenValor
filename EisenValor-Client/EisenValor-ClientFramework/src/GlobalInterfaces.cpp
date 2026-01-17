@@ -1,49 +1,64 @@
 #include "stdafxClientFramework.h"
-#include "GlobalInterfaces.h"
-
-#include <InputGlobal.h>
-#include <TimerGlobal.h>
-#include <DxDebugGlobal.h>
-#include <DxDeviceGlobal.h>
-#include <DxCommandQueueGlobal.h>
-
-void Globals::InitializeGlobalRegistry()
-{
-	static std::once_flag flag;
-	std::call_once(
-		flag,
-		[]()
-		{
-			using GR = GlobalRegistry;
-
-			GR::Register<IInputGlobal>(GR::RegistryType::Main, InputGlobal::Create());
-			GR::Register<ITimerGlobal>(GR::RegistryType::Main, TimerGlobal::Create());
+#include "InputGlobal.h"
+#include "TimerGlobal.h"
+#include "SceneGlobal.h"
+#include "DxDeviceGlobal.h"
+#include "DxCommandQueueGlobal.h"
+#include "DxShaderCompilerGlobal.h"
+#include "DxGarbageCollectorGlobal.h"
+#include "DxDescriptorHeapGlobal.h"
+#include "DxRendererGlobal.h"
 
 #ifdef _DEBUG
-			GR::Register<IDxDebugGlobal>(GR::RegistryType::Main, DxDebugGlobal::Create());
-#endif //_DEBUG
+#include "DxDebugGlobal.h"
+#endif
 
-			GR::Register<IDxDeviceGlobal>(GR::RegistryType::Main, DxDeviceGlobal::Create());
+namespace Globals
+{
 
-			auto& device = GlobalRegistry::Get<IDxDeviceGlobal>();
-			device.Initialize();
+void Initialize(HWND hwnd)
+{
+	GLOBAL(InputGlobal).Initialize(hwnd);
+	GLOBAL(TimerGlobal).Initialize();
 
-			GR::Register<IDxGraphicsCommandQueueGlobal>(GR::RegistryType::Main, DxGraphicsCommandQueueGlobal::Create());
+#ifdef _DEBUG
+	auto& debugG = GLOBAL(DxDebugGlobal);
+	debugG.Initialize();
+#endif
+	auto& deviceG = GLOBAL(DxDeviceGlobal);
+	deviceG.Initialize();
+#ifdef _DEBUG
+	debugG.SetupDebugMessages(deviceG.GetDevice());
+	debugG.SetBreakOnSeverity(true, true);
+#endif
+	GLOBAL(DxGarbageCollectorGlobal).Initialize();
+	GLOBAL(DxShaderCompilerGlobal).Initialize();
+	auto* device = deviceG.GetDevice();
+	GLOBAL(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
+	GLOBAL(DxGfxCommandQueueGlobal).Initialize(device);
+	GLOBAL(DxRendererGlobal).Initialize();
 
-			GlobalRegistry::Get<IDxGraphicsCommandQueueGlobal>().Initialize(device.GetDevice());
-
-			// GR::Register<IRendererGlobal>                (GR::RegistryType::Main, RendererGlobal::Create());
-			// GR::Register<ISwapchainGlobal>            (GR::RegistryType::Main, SwapchainGlobal::Create());
-			// GR::Register<IFenceGlobal>                (GR::RegistryType::Main, FenceGlobal::Create());
-			// GR::Register<ICommandAllocPoolGlobal>        (GR::RegistryType::Main, CommandAllocPoolGlobal::Create());
-			// GR::Register<IDescriptorHeapGlobal>        (GR::RegistryType::Main, DescriptorHeapGlobal::Create());
-			// GR::Register<IPipelineStateCacheGlobal>    (GR::RegistryType::Main, PipelineStateCacheGlobal::Create());
-			// GR::Register<IRootSignatureCacheGlobal>    (GR::RegistryType::Main, RootSignatureCacheGlobal::Create());
-			// GR::Register<IResourceGlobal>                (GR::RegistryType::Main, ResourceGlobal::Create());
-			// GR::Register<ISceneGlobal>                (GR::RegistryType::Main, ISceneGlobal::Create());
-			// GR::Register<ICollisionGlobal>            (GR::RegistryType::Main, ICollisionGlobal::Create());
-			// GR::Register<IObejectGlobal>                (GR::RegistryType::Main, IObejectGlobal::Create());
-			//     //texture, shader, binary parsing
-		}
-	);
+	GLOBAL(SceneGlobal).Initialize();
 }
+
+void Shutdown()
+{
+	GLOBAL(SceneGlobal).Release();
+
+	GLOBAL(DxRendererGlobal).Release();
+	GLOBAL(DxGfxCommandQueueGlobal).Release();
+	GLOBAL(DxDescriptorHeapGlobal).Release();
+	GLOBAL(DxShaderCompilerGlobal).Release();
+	GLOBAL(DxGarbageCollectorGlobal).Release();
+#ifdef _DEBUG
+	auto& debugG = GLOBAL(DxDebugGlobal);
+	debugG.PrintDebugMessages();
+	debugG.Release();
+#endif
+	GLOBAL(DxDeviceGlobal).Release();
+
+	GLOBAL(TimerGlobal).Release();
+	GLOBAL(InputGlobal).Release();
+}
+
+} // namespace Globals
