@@ -146,8 +146,8 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PLAYER_DAMAGED_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_PLAYER_DAMAGED_PACKET>(
-			S2C::Handle_SC_PLAYER_DAMAGED_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_UPDATE_VITAL_PACKET>(
+			S2C::Handle_SC_UPDATE_VITAL_PACKET, socket, buffer, header
 		);
 	};
 
@@ -155,7 +155,7 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
 		return HandlePacket<FB_TABLES::SC_REMAINING_GAME_TIME>(
-			S2C::Handle_SC_REMANING_GAME_TIME_PACKET, socket, buffer, header
+			S2C::Handle_SC_REMAINING_GAME_TIME_PACKET, socket, buffer, header
 		);
 	};
 

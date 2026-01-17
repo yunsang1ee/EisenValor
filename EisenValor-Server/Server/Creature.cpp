@@ -13,34 +13,45 @@ Server::Contents::Creature::~Creature()
 
 void Server::Contents::Creature::SetHp(const uint32 hp) noexcept
 {
-	if(hp > m_statInfo.hp) {
-		m_statInfo.hp = std::min(hp,  m_statInfo.maxHp);
+	if(hp > m_statInfo.currentHP) {
+		m_statInfo.currentHP = std::min(hp,  m_statInfo.maxHP);
 	}
 	else {
-		m_statInfo.hp = std::max((uint32)0, hp);
+		m_statInfo.currentHP = std::max((uint32)0, hp);
 	}
 }
 
 void Server::Contents::Creature::IncHP(const uint32 amount)
 {
 	const uint32 hp{ GetHP() + amount };
-	m_statInfo.hp = std::min(hp, m_statInfo.maxHp);
+	m_statInfo.currentHP = std::min(hp, m_statInfo.maxHP);
 }
 
 void Server::Contents::Creature::DecHP(const uint32 amount)
 {
 	const uint32 hp{ GetHP() - amount };
-	m_statInfo.hp = std::max(hp, (uint32)0);
+	m_statInfo.currentHP = std::max(hp, (uint32)0);
+
+	if(m_statInfo.currentHP == 0 && m_alive) {
+		m_alive = false;
+		OnDeath();
+	}
 }
 
 void Server::Contents::Creature::IncStamina(const uint32 amount)
 {
 	const uint32 stamina{ GetStamina() + amount };
-	m_statInfo.stamina = std::min(stamina, m_statInfo.maxStamina);
+	m_statInfo.currentStamina = std::min(stamina, m_statInfo.maxStamina);
 }
 
 void Server::Contents::Creature::DecStamina(const uint32 amount)
 {
 	const uint32 stamina{ GetStamina() - amount };
-	m_statInfo.stamina = std::max(stamina, (uint32)0);
+	m_statInfo.currentStamina = std::max(stamina, (uint32)0);
 }
+
+void Server::Contents::Creature::IncRespawnTime()
+{
+	m_statInfo.respawnTimeSec += m_statInfo.respawnTimeIncAmount;
+}
+

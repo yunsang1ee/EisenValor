@@ -9,3 +9,7 @@ Server::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 Server::Contents::Soldier::~Soldier()
 {
 }
+
+void Server::Contents::Soldier::OnDeath()
+{
+}

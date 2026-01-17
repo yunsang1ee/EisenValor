@@ -20,12 +20,12 @@ bool Server::Contents::StatDataTable::LoadFromCSV(const std::string_view filePat
         if(std::getline(ss, token, ',')) id = std::stoi(token);
         std::getline(ss, token, ',');
         if(std::getline(ss, token, ',')) {
-            info.maxHp = std::stoi(token);
-            info.hp = info.maxHp;
+            info.maxHP = std::stoi(token);
+            info.currentHP = info.maxHP;
         }
         if(std::getline(ss, token, ',')) {
             info.maxStamina = std::stoi(token);
-            info.stamina = info.maxStamina;
+            info.currentStamina = info.maxStamina;
         }
         if(std::getline(ss, token, ',')) info.staminaConsumption = std::stoi(token);
         if(std::getline(ss, token, ',')) info.extraStaminaConsumption = std::stoi(token);

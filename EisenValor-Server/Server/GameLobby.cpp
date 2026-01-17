@@ -6,7 +6,7 @@
 
 void Server::Contents::GameLobby::Init()
 {
-#ifdef DEVELOP
+#ifndef ENABLE_LOBBY
 	auto room = ServerEngine::ObjectPool<GameRoom>::MakeShared(m_roomIDGen);
 	room->Init();
 	m_rooms.insert(std::make_pair(room->GetID(), std::move(room)));
@@ -16,7 +16,7 @@ void Server::Contents::GameLobby::Init()
 
 	LOG_INFO("GameLobby Init");
 }
-
+	
 void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
 	clientSession->SetState(SESSION_STATE::IN_LOBBY);

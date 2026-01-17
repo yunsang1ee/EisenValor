@@ -2,9 +2,9 @@
 #include "IDataTable.h"
 
 struct CreatureStatInfo {
-	uint32 hp;			// 체력
-	uint32 maxHp;
-	uint32 stamina;		// 스태미나
+	uint32 currentHP;			// 체력
+	uint32 maxHP;
+	uint32 currentStamina;		// 스태미나
 	uint32 maxStamina;
 	uint32 staminaConsumption;
 	uint32 extraStaminaConsumption;

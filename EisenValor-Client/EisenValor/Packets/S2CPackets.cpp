@@ -602,8 +602,8 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_PLAYER_DAMAGED_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_PLAYER_DAMAGED_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_UPDATE_VITAL_PACKET& recvPkt
 )
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
@@ -624,7 +624,7 @@ bool NetBridge::S2C::Handle_SC_PLAYER_DAMAGED_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_REMANING_GAME_TIME_PACKET(
+bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt
 )
 {

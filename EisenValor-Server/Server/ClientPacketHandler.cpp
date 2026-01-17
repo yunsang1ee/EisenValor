@@ -17,10 +17,56 @@ bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 {
 	return false;
 }
+// =================
+//		세션
+// =================
+#pragma region SESSION_PACKETS
+
+bool Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt) noexcept
+{
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	clientSession->Handle_CS_PONG();
+	return true;
+}
+
+bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept
+{
+	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	auto pb{ ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str()) };
+
+	switch(clientSession->GetState()) {
+		case SESSION_STATE::IN_LOBBY:
+		{
+			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Broadcast, std::move(pb));
+			break;
+		}
+		case SESSION_STATE::IN_GAME_ROOM:
+		{
+			auto room = clientSession->GetGameRoom();
+
+			if(room)
+				room->ExecAsync(&Server::Contents::GameRoom::Broadcast, std::move(pb));
+			break;
+		}
+		case SESSION_STATE::IN_GAME_WORLD:
+		{
+			auto world = clientSession->GetGameWorld();
+			if(world)
+				world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+			break;
+		}
+		default:
+			break;
+	}
+
+	return true;
+}
+#pragma endregion
 
 // =================
 //		로그인
 // =================
+#pragma region LOGIN_PACKETS
 bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt) noexcept
 {
 	std::cout << "Handle_CS_LOGIN_PACKET" << std::endl;
@@ -46,10 +92,14 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 
 	return true;
 }
+#pragma endregion
+
+
 
 // =================
 //		로비
 // =================
+#pragma region LOBBY_PACKETS
 bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
@@ -64,17 +114,19 @@ bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Sessi
 	return true;
 }
 
-bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt)
+bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM, clientSession);
 	return true;
 }
+#pragma endregion
 
 
 // ==================
 //		룸
 // ==================
+#pragma region ROOM_PACKETS
 bool Handle_CS_JOIN_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_JOIN_GAME_ROOM_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
@@ -141,10 +193,12 @@ bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEn
 
 	return true;
 }
+#pragma endregion
 
 // ==================
 //		월드
 // ==================
+#pragma region WORLD_PACKETS
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
@@ -188,7 +242,7 @@ bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::S
 	return true;
 }
 
-bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt)
+bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
@@ -211,22 +265,29 @@ bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::S
 
 	return true;
 }
-
-// =================
-//		세션
-// =================
-bool Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt) noexcept
+bool Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
-	clientSession->Handle_CS_PONG();
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+
+	if(world) {
+		auto pb{ ServerPackets::Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(recvPkt.attack_dir()) };
+		world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	}
+
 	return true;
 }
+#pragma endregion
+
+
 
 // =================
 //		테스트
 // =================
-#ifdef DEVELOP
-bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt)
+#pragma region TEST_PACKETS
+#ifndef ENABLE_LOBBY
+bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt) noexcept
 {
 	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
 
@@ -237,4 +298,4 @@ bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Sessi
 	return true;
 }
 #endif // DEVELOP
-
+#pragma endregion

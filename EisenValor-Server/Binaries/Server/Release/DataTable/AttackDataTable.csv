@@ -1,0 +1,5 @@
+﻿id,name,pre_delay_frame,post_delay_frame,damage,extra_damage,attack_radius,attack_degree,stamina
+0,LIGHT,10,5,10,2,3.f,90.f,10
+1,HEAVY,20,10,24,3,3.f,90.f,10
+2,RANGE,30,20,36,0,3.f,90.f,20
+3,DISARM,10,5,5,0,1.5f,90.f,10

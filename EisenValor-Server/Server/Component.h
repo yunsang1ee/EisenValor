@@ -12,8 +12,8 @@ namespace Server {
 			virtual ~Component()noexcept = default;
 
 		public:
-			void SetOwner(GameObject* owner) noexcept { m_owner = owner; }
-			GameObject* GetOwner() noexcept { return m_owner; }
+			void SetOwner(GameObject* const owner) noexcept { m_owner = owner; }
+			GameObject* GetOwner() const noexcept { return m_owner; }
 
 		public:
 			virtual void Update(const float dt) abstract;

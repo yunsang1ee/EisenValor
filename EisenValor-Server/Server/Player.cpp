@@ -19,27 +19,28 @@ void Server::Contents::Player::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	if(GetStatInfo().stamina == 0)
+	if(GetStatInfo().currentStamina == 0)
 		AddSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
 	else
 		RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
 }
 
-bool Server::Contents::Player::OnDamaged(Creature* attacker, const float dt)
+bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float dt)
 {
-	const uint64 worldFrame{ GetGameWorld()->GetGameWorldFrameCount() };
+	auto const world{ GetGameWorld() };
+	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
-	
+
 	m_startStunDelay = worldFrame;
 
 	if(GENERAL_STATE_TYPE::DEFENSE == fsm->GetCurState()->GetStateType()) {
 		fsm->ChangeState(GENERAL_STATE_TYPE::IDLE, dt);
-		return false; 
+		return false;
 	}
 
 	if(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT == GetStanceType() && FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType())
-			return false;
+		return false;
 
 	uint32 damage{};
 
@@ -48,10 +49,9 @@ bool Server::Contents::Player::OnDamaged(Creature* attacker, const float dt)
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
 
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == GENERAL_STATE_TYPE::ATTACK) {
-			if(auto const fsm = GetComponent<Server::Contents::FSM>()) {
-				fsm->ChangeState(GENERAL_STATE_TYPE::DEFENSE, dt);
+			auto const fsm = GetComponent<Server::Contents::FSM>();
+			fsm->ChangeState(GENERAL_STATE_TYPE::DEFENSE, dt);
 				return false;
-			}
 		}
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
@@ -70,27 +70,43 @@ bool Server::Contents::Player::OnDamaged(Creature* attacker, const float dt)
 			m_stunDelay *= 2;
 		}
 	}
-
-	DecHP(damage);
 	std::cout << std::format("ID:{}, OnDamaged!", GetID()) << std::endl;
-	auto pb = ServerPackets::Make_SC_HIT_PACKET(GetID(), GetHP());
+	DecHP(damage);
+	auto pb = ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), GetHP(), GetStamina());
 	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
-
-	fsm->ChangeState(GENERAL_STATE_TYPE::STUN, dt);
-
+	
+	if(IsAlive())
+		fsm->ChangeState(GENERAL_STATE_TYPE::STUN, dt);
 	return true;
+}
+
+void Server::Contents::Player::OnDeath()
+{
+	General::OnDeath();
+}
+
+void Server::Contents::Player::Respawn()
+{
+	General::Respawn();
+
+	const auto& session{ GetSession() };
+	const auto& statInfo{ GetStatInfo() };
+	auto pb{ ServerPackets::Make_SC_LOCAL_PLAYER(GetID(), GetPosInfo(), GetTeamType(),statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina) };
+	session->Send(std::move(pb));
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 {
-	const uint64 worldFrame = GetGameWorld()->GetGameWorldFrameCount();
+	auto const world{ GetGameWorld() };
+	const float worldDT{ world->GetGameWorldDT() };
+	const uint64 worldFrame = world->GetGameWorldFrameCount();
 
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir = atkInfo.attack_dir();
 	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType = atkInfo.attack_type();
 
 	AttackData* const atkData = MANAGER(AttackDataTable)->GetData(atkType);
 	SetAtkInfo(AttackInfo{ atkData, dir, worldFrame });
-	
+
 	const float attackRadius = atkData->attackRadius;
 	const float attackDegree = atkData->attackDegree;
 	const float radiusSq = attackRadius * attackRadius;
@@ -107,14 +123,16 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 		for(const auto& [id, o] : gameObjectGroups[i]) {
 			GameObject* const obj{ o.get() };
 			if(id == GetID()) continue;
-			
+
 			if(false == obj->IsCreature()) continue;
+
+			if(GetTeamType() == obj->GetTeamType()) continue;
 
 			if(IsTargetInAttackRange(obj)) SetTarget(static_cast<Creature*>(obj));
 		}
 	}
-	
-	GetComponent<Server::Contents::FSM>()->ChangeState(GENERAL_STATE_TYPE::PRE_DELAY, GetGameWorld()->GetGameWorldDT());
+	auto const fsm{ GetComponent<Server::Contents::FSM>() };
+	fsm->ChangeState(GENERAL_STATE_TYPE::PRE_DELAY, worldDT);
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
@@ -154,21 +172,22 @@ void Server::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevT
 	uint32 bestTargetID{};
 	float bestDistSq{ std::numeric_limits<float>::max() };
 
-	const auto considerFp = [&](General* const target) {
-		if(!target) return;
+	const auto considerFp = [&](General* const target)
+		{
+			if(!target) return;
 
-		const uint32 targetID{ target->GetID()};
-		if(targetID == myID) return;
-		if(targetID == prevTargetID)return;
+			const uint32 targetID{ target->GetID() };
+			if(targetID == myID) return;
+			if(targetID == prevTargetID)return;
 
-		const auto d = target->GetPos() - myPos;
-		const float distSq = d.LengthSquared();
+			const auto d = target->GetPos() - myPos;
+			const float distSq = d.LengthSquared();
 
-		if(distSq < bestDistSq) {
-			bestDistSq = distSq;
-			bestTargetID = targetID;
-		}
-	};
+			if(distSq < bestDistSq) {
+				bestDistSq = distSq;
+				bestTargetID = targetID;
+			}
+		};
 
 
 	for(int i = 0; i < gameObjectsGroups.size(); ++i) {

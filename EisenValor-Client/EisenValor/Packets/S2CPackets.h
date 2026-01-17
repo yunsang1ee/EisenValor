@@ -48,8 +48,8 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
-bool Handle_SC_PLAYER_DAMAGED_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_DAMAGED_PACKET& recvPkt);
-bool Handle_SC_REMANING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt);
+bool Handle_SC_UPDATE_VITAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_VITAL_PACKET& recvPkt);
+bool Handle_SC_REMAINING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt);
 bool Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_CAMERA_TARGET_PACKET& recvPkt
 );

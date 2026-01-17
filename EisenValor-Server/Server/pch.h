@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #define DEG2RAD 180.f / 3.141592f
-#define DEVELOP
+// define ENABLE_LOBBY
 
 #pragma warning(disable: 4819)
 #ifdef _DEBUG
