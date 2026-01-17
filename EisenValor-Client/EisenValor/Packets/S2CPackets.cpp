@@ -586,6 +586,11 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const uint32 id = recvPkt.obj_id();
 	const uint32 localID = scene->GetLocalID();
 
+	if (id == localID)
+	{
+		return false;
+	}
+
 	auto obj = scene->FindGameObjectByServerID(id);
 	if (obj)
 	{
