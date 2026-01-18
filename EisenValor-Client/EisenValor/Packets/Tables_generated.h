@@ -132,12 +132,6 @@ struct SC_ADD_OBJ_PACKETBuilder;
 struct SC_REMOVE_OBJ_PACKET;
 struct SC_REMOVE_OBJ_PACKETBuilder;
 
-struct CS_CHAT_PACKET;
-struct CS_CHAT_PACKETBuilder;
-
-struct SC_CHAT_PACKET;
-struct SC_CHAT_PACKETBuilder;
-
 struct CS_MOVE_PACKET;
 struct CS_MOVE_PACKETBuilder;
 
@@ -1873,108 +1867,6 @@ inline ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> CreateSC_REMOVE_OBJ_PACKET(
   SC_REMOVE_OBJ_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
   return builder_.Finish();
-}
-
-struct CS_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_CHAT_PACKETBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MSG = 4
-  };
-  const ::flatbuffers::String *msg() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_MSG);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_MSG) &&
-           verifier.VerifyString(msg()) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_CHAT_PACKETBuilder {
-  typedef CS_CHAT_PACKET Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_msg(::flatbuffers::Offset<::flatbuffers::String> msg) {
-    fbb_.AddOffset(CS_CHAT_PACKET::VT_MSG, msg);
-  }
-  explicit CS_CHAT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_CHAT_PACKET> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_CHAT_PACKET>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_CHAT_PACKET> CreateCS_CHAT_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> msg = 0) {
-  CS_CHAT_PACKETBuilder builder_(_fbb);
-  builder_.add_msg(msg);
-  return builder_.Finish();
-}
-
-inline ::flatbuffers::Offset<CS_CHAT_PACKET> CreateCS_CHAT_PACKETDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *msg = nullptr) {
-  auto msg__ = msg ? _fbb.CreateString(msg) : 0;
-  return FB_TABLES::CreateCS_CHAT_PACKET(
-      _fbb,
-      msg__);
-}
-
-struct SC_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_CHAT_PACKETBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MSG = 4
-  };
-  const ::flatbuffers::String *msg() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_MSG);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_MSG) &&
-           verifier.VerifyString(msg()) &&
-           verifier.EndTable();
-  }
-};
-
-struct SC_CHAT_PACKETBuilder {
-  typedef SC_CHAT_PACKET Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_msg(::flatbuffers::Offset<::flatbuffers::String> msg) {
-    fbb_.AddOffset(SC_CHAT_PACKET::VT_MSG, msg);
-  }
-  explicit SC_CHAT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<SC_CHAT_PACKET> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_CHAT_PACKET>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<SC_CHAT_PACKET> CreateSC_CHAT_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> msg = 0) {
-  SC_CHAT_PACKETBuilder builder_(_fbb);
-  builder_.add_msg(msg);
-  return builder_.Finish();
-}
-
-inline ::flatbuffers::Offset<SC_CHAT_PACKET> CreateSC_CHAT_PACKETDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *msg = nullptr) {
-  auto msg__ = msg ? _fbb.CreateString(msg) : 0;
-  return FB_TABLES::CreateSC_CHAT_PACKET(
-      _fbb,
-      msg__);
 }
 
 struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

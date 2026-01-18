@@ -159,11 +159,6 @@ table SC_CHANGE_GAME_ROOM_STATE_PACKET{
 	room_state: FB_ENUMS.ROOM_STATE_TYPE;
 }
 
-table SC_CHANGE_GAME_ROOM_STATE_PACKET{
-	room_id: uint16;
-	room_state: FB_ENUMS.ROOM_STATE_TYPE;
-}
-
 // ================================================
 //					  GAME_WORLD
 // ================================================
