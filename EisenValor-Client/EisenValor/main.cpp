@@ -11,7 +11,6 @@
 #include <DxRendererGlobal.h>
 #include <DxSwapChain.h>
 
-
 #include "Scene/SampleScene.h"
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
@@ -19,12 +18,24 @@
 #include "Packets/C2SPackets.h"
 #include <TimerGlobal.h>
 
-
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR			 szTitle[MAX_LOADSTRING];
 WCHAR			 szWindowClass[MAX_LOADSTRING];
 
+#if _WIN32_WINNT >= 0x0A00 // Windows 10 이상
+extern "C"
+{
+	__declspec(dllexport) extern const UINT D3D12SDKVersion = 618;
+}
+extern "C"
+{
+	__declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\";
+}
+#endif
+
+
 GameFramework* g_Framework = nullptr;
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
 {

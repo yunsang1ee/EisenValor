@@ -154,5 +154,6 @@
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>Packets\FBS</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
