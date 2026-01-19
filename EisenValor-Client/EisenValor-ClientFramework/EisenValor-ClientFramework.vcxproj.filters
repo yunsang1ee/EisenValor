@@ -241,6 +241,9 @@
     <ClInclude Include="include\RenderDataPool.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="include\UIComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">

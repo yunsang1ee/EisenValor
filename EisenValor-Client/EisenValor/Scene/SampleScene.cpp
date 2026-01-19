@@ -2,14 +2,14 @@
 #include "SampleScene.h"
 #include "Component/PlayerController.h"
 #include "Component/HealthComponent.h"
-
+#include "UI/BattleUI.h"
 
 namespace
 {
 //clang-format off
 
 namespace Ground
-{
+{ 
 
 std::vector<Vertex> groundVertices = {
 	{{-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
@@ -74,7 +74,7 @@ std::vector<uint32_t> cubeIndices = {
 
 void SampleScene::OnRegisterCustomComponents()
 {
-	RegisterComponents<PlayerController, HealthComponent>();
+	RegisterComponents<PlayerController, HealthComponent, BattleUI>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -101,6 +101,26 @@ void SampleScene::CreateSceneObjects()
 				obj->GetHandle(), [](MeshComponent* mesh)
 				{ mesh->SetMesh(Ground::groundVertices, Ground::groundIndices); }
 			);
+		}
+
+	);
+
+	CreateGameObject(
+		"BattleUIObject", std::nullopt,
+		[this](GameObject* obj)
+		{
+			DEBUG_LOG_FMT("[SampleScene] Creating BattleUI component...\n");
+
+			auto battleUIHandle = CreateComponent<BattleUI>(obj->GetHandle());
+
+			if (battleUIHandle.IsValid())
+			{
+				DEBUG_LOG_FMT("[SampleScene] BattleUI component added successfully!\n");
+			}
+			else
+			{
+				DEBUG_LOG_FMT("[SampleScene] Failed to create BattleUI component!\n");
+			}
 		}
 	);
 

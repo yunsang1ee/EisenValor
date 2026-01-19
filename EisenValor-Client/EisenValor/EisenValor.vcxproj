@@ -198,9 +198,15 @@
     <ClInclude Include="Packets\Tables_generated.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
+    <ClInclude Include="UI\BattleUI.h" />
+    <ClInclude Include="UI\BattleUIComponent.h" />
+    <ClInclude Include="UI\TestUIComponent.h" />
+    <ClInclude Include="UI\UIGlobal.h" />
+    <ClInclude Include="UI\UITextureGlobal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\HealthComponent.cpp" />
@@ -215,6 +221,7 @@
     <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\SampleScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -224,6 +231,11 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="UI\BattleUI.cpp" />
+    <ClCompile Include="UI\BattleUIComponent.cpp" />
+    <ClCompile Include="UI\TestUIComponent.cpp" />
+    <ClCompile Include="UI\UIGlobal.cpp" />
+    <ClCompile Include="UI\UITextureGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />
@@ -248,6 +260,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\UIPixelShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\UIVertexShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>

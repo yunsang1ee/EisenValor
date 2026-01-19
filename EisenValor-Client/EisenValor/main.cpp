@@ -14,6 +14,12 @@
 #include "Scene/SampleScene.h"
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
+#include "RenderPass/UIRenderPass.h" \
+
+#include "UI/UIGlobal.h"
+#include "UI/UITextureGlobal.h"
+#include "UI/TestUIComponent.h"
+
 #include "Packets/PacketHandler.h"
 #include "Packets/C2SPackets.h"
 #include <TimerGlobal.h>
@@ -166,6 +172,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		// CopyToBackBuffer Pass 생성
 		auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
 		renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
+
+		// UI Pass 생성
+		auto uiPass = std::make_unique<UIRenderPass>();
+		renderer.AddRenderPass("UI", std::move(uiPass));
 	}
 
 	// Scene 등록
@@ -173,6 +183,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
 		GLOBAL(SceneGlobal).LoadScene("SampleScene");
 	}
+
+	// UI 시스템 초기화
+	GLOBAL(UITextureGlobal).Initialize();
+	GLOBAL(UIGlobal).Initialize();
 
 	while (not quit)
 	{
