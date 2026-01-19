@@ -21,7 +21,7 @@ void Scene::Initialize()
 	DEBUG_LOG_FMT("[Scene] Initialized (Components registered, waiting for LoadScene)\n");
 }
 
-GameObject::Handle Scene::CreateGameObject(
+GameObject::Handle Scene::ReserveGameObject(
 	std::string name, std::optional<uint32> serverID, std::function<void(GameObject*)> onCreated
 )
 {

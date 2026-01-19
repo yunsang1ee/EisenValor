@@ -9,7 +9,7 @@
 #include "MeshComponent.h"
 #include "CameraComponent.h"
 #include "MovementComponent.h"
-#include <Component/PlayerController.h>
+#include <Component/PlayerControllerComponent.h>
 #include <Component/HealthComponent.h>
 
 
@@ -402,7 +402,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	}
 	DEBUG_LOG_FMT("Created LocalPlayer: {} \n", id);
 
-	auto playerObjHandle = scene->CreateGameObject(
+	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
 		[scene](GameObject* playerObj)
 		{
@@ -424,7 +424,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		}
 	);
 
-	scene->CreateGameObject(
+	scene->ReserveGameObject(
 		"PlayerCamera", std::nullopt,
 		[scene, playerObjHandle](GameObject* camObj)
 		{
@@ -447,9 +447,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				}
 			);
 
-			scene->CreateComponentWithInit<PlayerController>(
+			scene->CreateComponentWithInit<PlayerControllerComponent>(
 				playerObjHandle,
-				[camObj](PlayerController* controller)
+				[camObj](PlayerControllerComponent* controller)
 				{
 					controller->SetCameraHandle(camObj->GetHandle());
 					controller->SetMouseSensitivity(0.1f, 0.1f);
@@ -495,7 +495,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		break;
 	}
 
-	auto objectHandle = scene->CreateGameObject(
+	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(),
 		 currentHP = recvPkt.current_hp()](GameObject* obj)

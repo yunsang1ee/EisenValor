@@ -1,5 +1,5 @@
 #include "stdafxClient.h"
-#include "PlayerController.h"
+#include "PlayerControllerComponent.h"
 #include "GameObject.h"
 #include "InputGlobal.h"
 #include "Transform.h"
@@ -17,19 +17,19 @@ namespace
 constexpr float kMinMouseDelta = 1e-4f;
 }
 
-void PlayerController::SetMouseSensitivity(float x, float y)
+void PlayerControllerComponent::SetMouseSensitivity(float x, float y)
 {
 	m_sensitivityX = x;
 	m_sensitivityY = y;
 }
 
-void PlayerController::SetPitchLimits(float minPitch, float maxPitch)
+void PlayerControllerComponent::SetPitchLimits(float minPitch, float maxPitch)
 {
 	m_minPitch = minPitch;
 	m_maxPitch = maxPitch;
 }
 
-void PlayerController::OnStart()
+void PlayerControllerComponent::OnStart()
 {
 	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
@@ -54,24 +54,24 @@ void PlayerController::OnStart()
 	auto& input = GLOBAL(InputGlobal);
 	input.SetMouseLocked(true);
 
-	DEBUG_LOG_FMT("[PlayerController] Mouse locked for gameplay\n");
+	DEBUG_LOG_FMT("[PlayerControllerComponent] Mouse locked for gameplay\n");
 }
 
-void PlayerController::OnDestroy()
+void PlayerControllerComponent::OnDestroy()
 {
 	auto& input = GLOBAL(InputGlobal);
 	input.SetMouseLocked(false);
 
-	DEBUG_LOG_FMT("[PlayerController] Mouse unlocked\n");
+	DEBUG_LOG_FMT("[PlayerControllerComponent] Mouse unlocked\n");
 }
 
-void PlayerController::OnUpdate(float deltaTime)
+void PlayerControllerComponent::OnUpdate(float deltaTime)
 {
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
 }
 
-void PlayerController::OnFixedUpdate(float deltaTime)
+void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 {
 	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
@@ -91,7 +91,7 @@ void PlayerController::OnFixedUpdate(float deltaTime)
 	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
 
-void PlayerController::ProcessMouseRotation(float deltaTime)
+void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 {
 	auto&		input = GLOBAL(InputGlobal);
 	const auto& mouseState = input.GetMouseDelta();
@@ -110,7 +110,7 @@ void PlayerController::ProcessMouseRotation(float deltaTime)
 	}
 }
 
-void PlayerController::ProcessMovementInput(float deltaTime)
+void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 {
 	if (!m_movementHandle.IsValid())
 	{
@@ -137,7 +137,7 @@ void PlayerController::ProcessMovementInput(float deltaTime)
 	movement->SetInputRight(input.GetInput('D'));
 }
 
-void PlayerController::RotateYaw(float deltaDegrees)
+void PlayerControllerComponent::RotateYaw(float deltaDegrees)
 {
 	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
@@ -159,7 +159,7 @@ void PlayerController::RotateYaw(float deltaDegrees)
 	bodyTransform.SetRotationQuaternion(newRotF);
 }
 
-void PlayerController::RotatePitch(float deltaDegrees)
+void PlayerControllerComponent::RotatePitch(float deltaDegrees)
 {
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
@@ -183,7 +183,7 @@ void PlayerController::RotatePitch(float deltaDegrees)
 	}
 }
 
-void PlayerController::FindCameraInChildren(GameObject* parentGameObject)
+void PlayerControllerComponent::FindCameraInChildren(GameObject* parentGameObject)
 {
 	auto& transform = parentGameObject->GetTransform();
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
@@ -221,7 +221,7 @@ void PlayerController::FindCameraInChildren(GameObject* parentGameObject)
 	}
 }
 
-void PlayerController::InitializePitchFromCamera()
+void PlayerControllerComponent::InitializePitchFromCamera()
 {
 	if (!m_cameraObjectHandle.IsValid())
 	{

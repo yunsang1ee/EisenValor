@@ -2,10 +2,10 @@
 #include "IComponent.h"
 #include "MovementComponent.h"
 
-class PlayerController : public ComponentBase<PlayerController>
+class PlayerControllerComponent : public ComponentBase<PlayerControllerComponent>
 {
 public:
-	static constexpr const char* GetStaticTypeName() { return "PlayerController"; }
+	static constexpr const char* GetStaticTypeName() { return "PlayerControllerComponent"; }
 
 	void OnStart() override;
 	void OnDestroy() override;

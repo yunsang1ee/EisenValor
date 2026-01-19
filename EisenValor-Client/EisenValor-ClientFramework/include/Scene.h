@@ -22,7 +22,7 @@ public:
 	// GameObject Lifecycle
 	//========================================================================
 
-	GameObject::Handle CreateGameObject(
+	GameObject::Handle ReserveGameObject(
 		std::string						 name = "GameObject",
 		std::optional<ServerID>			 serverID = std::nullopt,
 		std::function<void(GameObject*)> onCreated = nullptr
