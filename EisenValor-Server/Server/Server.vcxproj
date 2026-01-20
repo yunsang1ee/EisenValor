@@ -159,8 +159,62 @@
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="ClientSessionManager.cpp" />
+    <ClCompile Include="Collider.cpp" />
+    <ClCompile Include="CollisionDetector.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Creature.cpp" />
+    <ClCompile Include="DetourAlloc.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourAssert.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourCommon.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourCrowd.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourLocalBoundary.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourNavMesh.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourNavMeshBuilder.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourNavMeshQuery.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourNode.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourObstacleAvoidance.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourPathCorridor.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourPathQueue.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DetourProximityGrid.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="GameDataManager.cpp" />
     <ClCompile Include="FSM.cpp" />
     <ClCompile Include="GameLobby.cpp" />
@@ -171,6 +225,8 @@
     <ClCompile Include="General.cpp" />
     <ClCompile Include="GeneralStates.cpp" />
     <ClCompile Include="IDataTable.cpp" />
+    <ClCompile Include="NavAgent.cpp" />
+    <ClCompile Include="NavSystem.cpp" />
     <ClCompile Include="Participant.cpp" />
     <ClCompile Include="ServerPackets.cpp" />
     <ClCompile Include="ServerGlobalFunc.cpp" />
@@ -200,8 +256,25 @@
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="ClientSessionManager.h" />
+    <ClInclude Include="Collider.h" />
+    <ClInclude Include="CollisionDetector.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Creature.h" />
+    <ClInclude Include="DetourAlloc.h" />
+    <ClInclude Include="DetourAssert.h" />
+    <ClInclude Include="DetourCommon.h" />
+    <ClInclude Include="DetourCrowd.h" />
+    <ClInclude Include="DetourLocalBoundary.h" />
+    <ClInclude Include="DetourMath.h" />
+    <ClInclude Include="DetourNavMesh.h" />
+    <ClInclude Include="DetourNavMeshBuilder.h" />
+    <ClInclude Include="DetourNavMeshQuery.h" />
+    <ClInclude Include="DetourNode.h" />
+    <ClInclude Include="DetourObstacleAvoidance.h" />
+    <ClInclude Include="DetourPathCorridor.h" />
+    <ClInclude Include="DetourPathQueue.h" />
+    <ClInclude Include="DetourProximityGrid.h" />
+    <ClInclude Include="DetourStatus.h" />
     <ClInclude Include="GameDataManager.h" />
     <ClInclude Include="FSM.h" />
     <ClInclude Include="GameLobby.h" />
@@ -212,6 +285,8 @@
     <ClInclude Include="General.h" />
     <ClInclude Include="GeneralStates.h" />
     <ClInclude Include="IDataTable.h" />
+    <ClInclude Include="NavAgent.h" />
+    <ClInclude Include="NavSystem.h" />
     <ClInclude Include="Participant.h" />
     <ClInclude Include="ServerPackets.h" />
     <ClInclude Include="ServerGlobalFunc.h" />
@@ -231,6 +306,8 @@
     <ClInclude Include="TargetTraceNode.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Binaries\Server\Release\DataTable\AttackDataTable.csv" />
+    <None Include="..\Binaries\Server\Release\DataTable\StatDataTable.csv" />
     <None Include="..\Binaries\Server\Release\GameData\GameData.json" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />

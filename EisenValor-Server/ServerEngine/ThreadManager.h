@@ -22,6 +22,7 @@ namespace ServerEngine {
 	public:
 		uint16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
 		uint16 IssueID() noexcept;
+
 	private:
 		static void InitTLS() noexcept;
 		static void DestroyTLS() noexcept;

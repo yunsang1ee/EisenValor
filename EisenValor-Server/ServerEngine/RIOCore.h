@@ -16,12 +16,14 @@ namespace ServerEngine {
 		uint16									m_acceptThreadNum;
 
 		std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
-	
+
 	public:
-		[[nodiscard("DO NOT IGNORE RETURN VALUE")]] bool Init(const SessionFactoryFunc sessionFunc);
-		[[nodiscard("DO NOT IGNORE RETURN VALUE")]] bool StartAccept();
+		[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
+		bool			Init(const SessionFactoryFunc sessionFunc);
+		[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
+		bool			StartAccept();
 		void			Run();
-	
+
 	public:
 		const auto&		GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
 		void			Shutdown() const noexcept;

@@ -34,7 +34,6 @@ namespace ServerEngine {
 	private:
 		// 관리하고 있는 Session들의 각각 보낼 Packet들 처리
 		void			FlushSessionPacketQueue() noexcept;
-		
 		void			DequeueCompletion() noexcept;
 	};
 }

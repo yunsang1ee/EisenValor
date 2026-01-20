@@ -12,8 +12,7 @@ namespace ServerEngine {
 	public:
 		void EnqueTaskQueue(std::shared_ptr<ServerEngine::TaskQueue> taskQueue);
 		std::shared_ptr<ServerEngine::TaskQueue> DequeTaskQueue();
-
-	public:
 		void Clear();
+		
 	};
 }

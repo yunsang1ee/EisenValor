@@ -46,7 +46,7 @@ bool Server::ServerManager::Init()
 
 	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("DataTable/AttackDataTable.csv")) {
 		LOG_ERROR("AttackDataTable Load Failed");
-		return false;
+		return false; 
 	}
 
 	ClientPacketHandler::Init();

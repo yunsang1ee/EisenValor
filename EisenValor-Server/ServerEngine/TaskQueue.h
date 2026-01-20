@@ -40,6 +40,9 @@ namespace ServerEngine {
 			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(memFunc, std::forward<CallArgs>(args)...));
 		}
 
+	protected:
+		void ClearTaskQueue() noexcept;
+	
 	private:
 		template<typename Func>
 		std::shared_ptr<Task> MakeTask(Func&& func)
@@ -53,12 +56,8 @@ namespace ServerEngine {
 			auto owner = std::static_pointer_cast<T>(shared_from_this());
 			return ObjectPool<Task>::MakeShared(owner, memFunc, std::forward<CallArgs>(args)...);
 		}
-
-	protected:
-		void ClearTaskQueue() noexcept;
 	
 	private:
-
 		void Execute() noexcept;
 		friend class RIOCore;
 	};

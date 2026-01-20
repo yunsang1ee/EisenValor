@@ -83,7 +83,7 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 		clientSession->SetName(nickName);
 		auto pb = ServerPackets::Make_SC_LOGIN_SUCCESS_PACKET(id, nickName);
 		clientSession->Send(std::move(pb));
-		LOG_INFO("Success Login!, Session ID = {}, NickName={}", id, nickName.data());
+		LOG_INFO("Success Login!, Session ID = {}, NickName = {}", id, nickName.data());
 	}
 	else {
 		auto pb = ServerPackets::Make_SC_LOGIN_FAIL_PACKET("LOGIN_FAIL");
@@ -293,7 +293,7 @@ bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Sessi
 
 	const uint16 roomID{ recvPkt.room_id() };
 	
-	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD_PACKET, clientSession, roomID);
+	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD, clientSession, roomID);
 
 	return true;
 }

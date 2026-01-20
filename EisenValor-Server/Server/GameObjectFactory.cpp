@@ -13,6 +13,7 @@
 #include "IsPlayerInNearNode.h"
 #include "TargetTraceNode.h"
 #include "Spawner.h"
+#include "Collider.h"
 
 std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
@@ -35,6 +36,8 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	fsm->AddState(std::move(postDelayState));
 	fsm->AddState(std::move(stunState));
 	fsm->AddState(std::move(deadState));
+
+	const auto collider = player->AddComponent<Server::Contents::OBBCollider>();
 
 	return player;
 }
@@ -86,7 +89,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	return soldier;
 }
 
-std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
+std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
 	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	const auto spawner = spawnObj->AddScript(std::make_unique<Spawner>());
