@@ -153,11 +153,6 @@ void DxSwapChain::OnResize(
 
 	CreateResources(device, m_gfxCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
-	if (m_resizeCallback)
-	{
-		m_resizeCallback(m_width, m_height);
-	}
-
 	DEBUG_LOG_FMT("[DxSwapChain] SwapChain resized to {}x{}. BackBuffers recreated.\n", m_width, m_height);
 }
 

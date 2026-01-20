@@ -15,6 +15,7 @@
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{99e1086d-2675-4837-bbf4-511fdd0d0603}</UniqueIdentifier>
+      <Extensions>hlsl;hlsli</Extensions>
     </Filter>
     <Filter Include="RenderPass">
       <UniqueIdentifier>{c60e310a-9a7a-433c-8fa8-e607c81fdd65}</UniqueIdentifier>
@@ -57,7 +58,7 @@
     <ClInclude Include="Scene\SampleScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Component\PlayerController.h">
+    <ClInclude Include="Component\PlayerControllerComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Packets\C2SPackets.h">
@@ -101,7 +102,7 @@
     <ClCompile Include="Scene\SampleScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="Component\PlayerController.cpp">
+    <ClCompile Include="Component\PlayerControllerComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Packets\C2SPackets.cpp">
@@ -128,20 +129,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resource\Shader\VertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resource\Shader\RaytracingCommon.hlsli">
       <Filter>Shaders</Filter>
     </None>
@@ -155,5 +142,20 @@
       <Filter>Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Resource\Shader\PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\VertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

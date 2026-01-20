@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.props')" />
+  <Import Project="..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.props" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -72,6 +73,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <DXC_PATH Condition="'$(DXC_PATH)' == ''">$(MSBuildThisFileDirectory)..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\bin\x64\</DXC_PATH>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Binaries\$(ProjectName)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
@@ -145,12 +149,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <FxCompile>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
-      <ShaderModel>6.6</ShaderModel>
-      <AdditionalOptions>-HV 2021</AdditionalOptions>
-    </FxCompile>
+
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
     </PreBuildEvent>
@@ -175,19 +174,14 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <FxCompile>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
-      <ShaderModel>6.6</ShaderModel>
-      <AdditionalOptions>-HV 2021</AdditionalOptions>
-    </FxCompile>
+
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Component\HealthComponent.h" />
-    <ClInclude Include="Component\PlayerController.h" />
+    <ClInclude Include="Component\PlayerControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
@@ -204,7 +198,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\HealthComponent.cpp" />
-    <ClCompile Include="Component\PlayerController.cpp" />
+    <ClCompile Include="Component\PlayerControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -238,33 +232,18 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resource\Shader\PixelShader.hlsl">
-      <FileType>Document</FileType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\VertexShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
+    <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
+    <None Include="Resource\Shader\PixelShader.hlsl" />
+    <None Include="Resource\Shader\VertexShader.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="Resource\Shader\RaytracingCommon.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
-    <None Include="Resource\Shader\RaytracingCommon.hlsli">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

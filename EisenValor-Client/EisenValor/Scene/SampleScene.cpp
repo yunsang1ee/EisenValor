@@ -1,6 +1,6 @@
 #include "stdafxClient.h"
 #include "SampleScene.h"
-#include "Component/PlayerController.h"
+#include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 
 
@@ -74,7 +74,7 @@ std::vector<uint32_t> cubeIndices = {
 
 void SampleScene::OnRegisterCustomComponents()
 {
-	RegisterComponents<PlayerController, HealthComponent>();
+	RegisterComponents<PlayerControllerComponent, HealthComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -88,7 +88,7 @@ void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
 
-	CreateGameObject(
+	ReserveGameObject(
 		"Ground", std::nullopt,
 		[this](GameObject* obj)
 		{
@@ -112,7 +112,7 @@ void SampleScene::CreateSceneObjects()
 
 	for (int i = 0; i < 3; ++i)
 	{
-		CreateGameObject(
+		ReserveGameObject(
 			"Cube_" + std::to_string(i), std::nullopt,
 			[this, i, positions, rotations, scales](GameObject* obj)
 			{

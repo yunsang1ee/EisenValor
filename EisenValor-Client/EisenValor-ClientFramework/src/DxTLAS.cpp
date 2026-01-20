@@ -25,47 +25,43 @@ void DxTLAS::Initialize(ID3D12Device5* device, uint32_t maxInstances)
 	assert(maxInstances > 0 && "[DxTLAS] maxInstances must be > 0");
 
 	m_maxInstances = maxInstances;
-	const uint64_t maxSize = maxInstances * sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 2;
-	m_tlasUploadHeap = std::make_unique<DxUploadHeap>();
-	m_tlasUploadHeap->Initialize(device, maxSize, "TLAS_UploadHeap");
-
+	
 	DEBUG_LOG_FMT(
-		"[DxTLAS] Initialized with max {} instances ({:.2f} MB dedicated heap)\n", maxInstances,
-		static_cast<double>(maxSize) / (1024.0 * 1024.0)
+		"[DxTLAS] Initialized with max {} instances\n", maxInstances
 	);
 }
 
 void DxTLAS::Build(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
+	DxUploadHeap*										uploadHeap,
 	const std::vector<std::pair<GameObject*, DxBLAS*>>& instances
 )
 {
-	BuildInternal(device, cmdList, instances, false);
+	BuildInternal(device, cmdList, uploadHeap, instances, false);
 }
 
 void DxTLAS::Refit(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
+	DxUploadHeap*										uploadHeap,
 	const std::vector<std::pair<GameObject*, DxBLAS*>>& instances
 )
 {
 	assert(m_isBuilt && "[DxTLAS] Cannot Refit before initial Build");
-	BuildInternal(device, cmdList, instances, true);
+	BuildInternal(device, cmdList, uploadHeap, instances, true);
 }
 
 void DxTLAS::BuildInternal(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
+	DxUploadHeap*										uploadHeap,
 	const std::vector<std::pair<GameObject*, DxBLAS*>>& instances,
 	bool												isRefit
 )
 {
-	assert(device && cmdList && "[DxTLAS] Invalid parameters");
-	assert(m_tlasUploadHeap && "[DxTLAS] Not initialized! Call Initialize() first.");
-
-	m_tlasUploadHeap->Reset();
-
+	assert(device && cmdList && uploadHeap && "[DxTLAS] Invalid parameters");
+	
 	if (instances.empty())
 	{
 		return;
@@ -118,22 +114,9 @@ void DxTLAS::BuildInternal(
 	const uint64_t instanceDescSize = instanceDescs.size() * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
 	const uint64_t requiredSize = DxUtils::AlignUp(instanceDescSize, D3D12_RAYTRACING_INSTANCE_DESCS_BYTE_ALIGNMENT);
 
-	if (requiredSize > m_tlasUploadHeap->Capacity())
-	{
-		DEBUG_LOG_FMT(
-			"[DxTLAS] ERROR: Too many instances!\n"
-			"  Current: {} instances ({:.2f} KB)\n"
-			"  Max: {} instances ({:.2f} MB)\n"
-			"  → Increase maxInstances in Initialize()\n",
-			instanceDescs.size(), static_cast<double>(requiredSize) / 1024.0, m_maxInstances,
-			static_cast<double>(m_tlasUploadHeap->Capacity()) / (1024.0 * 1024.0)
-		);
-		return;
-	}
-
 	m_instanceCount = static_cast<uint32_t>(instanceDescs.size());
 
-	auto instanceUpload = m_tlasUploadHeap->UploadRawData(
+	auto instanceUpload = uploadHeap->UploadRawData(
 		instanceDescs.data(), instanceDescSize, D3D12_RAYTRACING_INSTANCE_DESCS_BYTE_ALIGNMENT
 	);
 
@@ -151,7 +134,7 @@ void DxTLAS::BuildInternal(
 	}
 
 	cmdList->CopyBufferRegion(
-		m_instanceDescBuffer.GetResource(), 0, m_tlasUploadHeap->GetResource(), instanceUpload.offset, instanceDescSize
+		m_instanceDescBuffer.GetResource(), 0, uploadHeap->GetResource(), instanceUpload.offset, instanceDescSize
 	);
 
 	auto transitionBarrier =

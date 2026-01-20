@@ -6,7 +6,6 @@
 # User-specific files
 *.rsuser
 *.suo
-*.user
 *.userosscache
 *.sln.docstates
 
@@ -361,3 +360,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+/EisenValor-Client/SettingMarkDown
+/EisenValor-Client/EisenValor/Build/ShaderCache

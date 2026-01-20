@@ -40,7 +40,27 @@ void DxGarbageCollectorGlobal::DeferResourceRelease(
 		return;
 	}
 
-	auto callback = [r = std::move(resource)]() mutable { r.Reset(); };
+	auto callback = [r = std::move(resource)]() mutable
+	{
+		if (r)
+		{
+			ComPtr<ID3D12Device> device;
+			if (SUCCEEDED(r->GetDevice(IID_PPV_ARGS(&device))))
+			{
+				HRESULT hr = device->GetDeviceRemovedReason();
+				if (FAILED(hr))
+				{
+					DEBUG_LOG_FMT(
+						"[DxGarbageCollectorGlobal] WARNING: Device removed (HRESULT=0x{:X}), skipping Release()\n",
+						static_cast<uint32_t>(hr)
+					);
+					r.Detach();
+					return;
+				}
+			}
+			r.Reset();
+		}
+	};
 	DeferRelease(callback, fenceHandle, debugName);
 }
 

@@ -89,8 +89,10 @@ private:
 	std::unordered_map<HandleOf<MeshComponent>, MeshRenderResource> m_meshCache;
 
 private:
+	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
 	std::unique_ptr<DxRtPipelineState> m_rtPipeline;
 	std::unique_ptr<DxRtPipelineState> m_ptPipeline;
+	std::unique_ptr<DxRtShaderTable>   m_rtLiteShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_rtShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_ptShaderTable;
 	std::unique_ptr<DxTLAS>			   m_tlas;
@@ -112,4 +114,5 @@ private:
 	bool m_needsRebuild = false;
 	bool m_geometryTableValid = false;
 	bool m_usePathTracing = false;
+	bool m_useLiteRT = false;
 };

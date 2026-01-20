@@ -21,7 +21,7 @@ void Scene::Initialize()
 	DEBUG_LOG_FMT("[Scene] Initialized (Components registered, waiting for LoadScene)\n");
 }
 
-GameObject::Handle Scene::CreateGameObject(
+GameObject::Handle Scene::ReserveGameObject(
 	std::string name, std::optional<uint32> serverID, std::function<void(GameObject*)> onCreated
 )
 {
@@ -255,19 +255,27 @@ void Scene::DestroyGameObjectImmediate(GameObject::Handle handle)
 		}
 	}
 
-	const auto& components = object.GetAllComponentHandles();
+	const auto&			components = object.GetAllComponentHandles();
+	HandleOf<Transform> transformHandle = object.GetTransform().GetHandle();
 	for (size_t typeID = 0; typeID < components.size(); ++typeID)
 	{
+		if (typeID == Transform::StaticRuntimeTypeID())
+		{
+			continue;
+		}
+
 		uint64_t handleVal = components[typeID];
 		if (handleVal == 0)
+		{
 			continue;
+		}
 
 		if (typeID < m_componentsStorage.size() && m_componentsStorage[typeID])
 		{
 			m_componentsStorage[typeID]->RemoveByHandleValue(handleVal);
 		}
 	}
-	trStorage->Remove(object.GetTransform().GetHandle());
+	trStorage->Remove(transformHandle);
 
 	if (object.IsNetworkObject())
 	{

@@ -42,6 +42,7 @@ public:
 	void AfterUpdate();
 
 	void SetMouseLocked(bool locked);
+	void ToggleMouseLock() { SetMouseLocked(!m_mouseLocked); }
 	bool IsMouseLocked() const { return m_mouseLocked; }
 
 	void SetWindowFocused(bool focused);

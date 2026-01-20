@@ -1,0 +1,18 @@
+<Project>
+  <!-- 모든 HLSL 관련 파일에 대해 빌드 제외 설정 강제 적용 -->
+  <ItemDefinitionGroup>
+    <FxCompile>
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemDefinitionGroup>
+
+  <!-- 프로젝트에 어떤 형식으로 포함되어 있든 .hlsl, .hlsli는 무조건 빌드에서 제외 -->
+  <ItemGroup>
+    <None Update="**\*.hlsl;**\*.hlsli">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <FxCompile Update="**\*.hlsl;**\*.hlsli">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
+</Project>

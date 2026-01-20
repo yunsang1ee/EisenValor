@@ -42,6 +42,13 @@ public:
 		m_components[typeID] = handle.GetValue();
 	}
 
+	template <IsValidComponent T>
+	bool HasComponent() const
+	{
+		ComponentTypeID typeID = T::StaticRuntimeTypeID();
+		return typeID < m_components.size() && m_components[typeID] != 0;
+	}
+
 	bool HasComponent(ComponentTypeID typeID) const
 	{
 		return typeID < m_components.size() && m_components[typeID] != 0;
