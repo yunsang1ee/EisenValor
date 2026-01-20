@@ -128,23 +128,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resource\Shader\VertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingPrimary.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resource\Shader\RaytracingCommon.hlsli">
       <Filter>Shaders</Filter>
     </None>
@@ -158,5 +141,12 @@
       <Filter>Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Resource\Shader\PixelShader.hlsl" />
+    <None Include="Resource\Shader\VertexShader.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="RaytracingPrimary.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

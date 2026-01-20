@@ -74,6 +74,7 @@ void InputGlobal::SetMouseLocked(bool locked)
 	if (locked)
 	{
 		ShowCursor(FALSE);
+		UpdateMouseLock();
 		DEBUG_LOG_FMT("[InputGlobal] Mouse locked to center: ({}, {})\n", m_centerX, m_centerY);
 	}
 	else
@@ -85,26 +86,7 @@ void InputGlobal::SetMouseLocked(bool locked)
 
 void InputGlobal::SetWindowFocused(bool focused)
 {
-	if (m_isWindowFocused == focused)
-	{
-		return;
-	}
-
 	m_isWindowFocused = focused;
-
-	if (!m_mouseLocked)
-	{
-		return;
-	}
-
-	ShowCursor(!focused);
-
-	if (focused && m_hwnd)
-	{
-		POINT centerPoint = {m_centerX, m_centerY};
-		ClientToScreen(m_hwnd, &centerPoint);
-		SetCursorPos(centerPoint.x, centerPoint.y);
-	}
 }
 
 void InputGlobal::OnResize(uint32_t width, uint32_t height)

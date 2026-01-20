@@ -67,15 +67,20 @@ void DxGfxCommandQueueGlobal::Wait(ID3D12Fence* fence, uint64_t fenceValue)
 	ThrowIfFailed(m_commandQueue->Wait(fence, fenceValue));
 }
 
-void DxGfxCommandQueueGlobal::WaitForIdle()
+bool DxGfxCommandQueueGlobal::WaitForIdle(uint32_t timeoutMs)
 {
 	const uint64_t waitValue = SignalFence();
 
 	if (m_fence->GetCompletedValue() < waitValue)
 	{
 		ThrowIfFailed(m_fence->SetEventOnCompletion(waitValue, m_fenceEvent));
-		::WaitForSingleObject(m_fenceEvent, INFINITE);
+		if (::WaitForSingleObject(m_fenceEvent, timeoutMs) == WAIT_TIMEOUT)
+		{
+			DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle timed out (Fence={})\n", waitValue);
+			return false;
+		}
 	}
 
 	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle completed (Fence={})\n", waitValue);
+	return true;
 }

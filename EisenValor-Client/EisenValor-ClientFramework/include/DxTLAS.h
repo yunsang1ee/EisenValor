@@ -22,12 +22,14 @@ public:
 	void Build(
 		struct ID3D12Device5*											device,
 		struct ID3D12GraphicsCommandList4*								cmdList,
+		class DxUploadHeap*												uploadHeap,
 		const std::vector<std::pair<class GameObject*, class DxBLAS*>>& instances
 	);
 
 	void Refit(
 		struct ID3D12Device5*											device,
 		struct ID3D12GraphicsCommandList4*								cmdList,
+		class DxUploadHeap*												uploadHeap,
 		const std::vector<std::pair<class GameObject*, class DxBLAS*>>& instances
 	);
 
@@ -41,11 +43,10 @@ private:
 	void BuildInternal(
 		ID3D12Device5*										device,
 		ID3D12GraphicsCommandList4*							cmdList,
+		class DxUploadHeap*									uploadHeap,
 		const std::vector<std::pair<GameObject*, DxBLAS*>>& instances,
 		bool												isRefit
 	);
-
-	std::unique_ptr<DxUploadHeap> m_tlasUploadHeap;
 
 	DxBuffer m_tlasBuffer;
 	DxBuffer m_scratchBuffer;

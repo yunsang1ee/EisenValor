@@ -255,19 +255,27 @@ void Scene::DestroyGameObjectImmediate(GameObject::Handle handle)
 		}
 	}
 
-	const auto& components = object.GetAllComponentHandles();
+	const auto&			components = object.GetAllComponentHandles();
+	HandleOf<Transform> transformHandle = object.GetTransform().GetHandle();
 	for (size_t typeID = 0; typeID < components.size(); ++typeID)
 	{
+		if (typeID == Transform::StaticRuntimeTypeID())
+		{
+			continue;
+		}
+
 		uint64_t handleVal = components[typeID];
 		if (handleVal == 0)
+		{
 			continue;
+		}
 
 		if (typeID < m_componentsStorage.size() && m_componentsStorage[typeID])
 		{
 			m_componentsStorage[typeID]->RemoveByHandleValue(handleVal);
 		}
 	}
-	trStorage->Remove(object.GetTransform().GetHandle());
+	trStorage->Remove(transformHandle);
 
 	if (object.IsNetworkObject())
 	{

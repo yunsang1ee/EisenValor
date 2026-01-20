@@ -67,6 +67,12 @@ void PlayerControllerComponent::OnDestroy()
 
 void PlayerControllerComponent::OnUpdate(float deltaTime)
 {
+	auto& input = GLOBAL(InputGlobal);
+	if (input.GetInputDown(VK_F1))
+	{
+		input.ToggleMouseLock();
+	}
+
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
 }
@@ -93,7 +99,13 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 
 void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 {
-	auto&		input = GLOBAL(InputGlobal);
+	auto& input = GLOBAL(InputGlobal);
+
+	if (!input.IsMouseLocked())
+	{
+		return;
+	}
+
 	const auto& mouseState = input.GetMouseDelta();
 
 	const float deltaX = mouseState.x * m_sensitivityX;
