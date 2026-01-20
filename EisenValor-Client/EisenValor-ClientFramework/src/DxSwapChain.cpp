@@ -242,21 +242,6 @@ void DxSwapChain::SetFullscreen(bool enable)
 
 	ThrowIfFailed(m_swapChain->SetFullscreenState(enable ? TRUE : FALSE, nullptr));
 
-	if (enable)
-	{
-		OnResize(
-			m_device, m_currentDisplayMode.width, m_currentDisplayMode.height, m_rtvDescriptorStart, m_rtvDescriptorSize
-		);
-	}
-	else
-	{
-		RECT clientRect;
-		GetClientRect(m_hwnd, &clientRect);
-		uint32_t width = std::max(1u, static_cast<uint32_t>(clientRect.right - clientRect.left));
-		uint32_t height = std::max(1u, static_cast<uint32_t>(clientRect.bottom - clientRect.top));
-
-		OnResize(m_device, width, height, m_rtvDescriptorStart, m_rtvDescriptorSize);
-	}
 
 	DEBUG_LOG_FMT("[DxSwapChain] Fullscreen: {}\n", enable);
 }
@@ -279,10 +264,6 @@ void DxSwapChain::SetBorderlessFullscreen(bool enable)
 		);
 
 		m_isBorderlessFullscreen = true;
-
-		OnResize(
-			m_device, m_currentDisplayMode.width, m_currentDisplayMode.height, m_rtvDescriptorStart, m_rtvDescriptorSize
-		);
 
 		DEBUG_LOG_FMT(
 			"[DxSwapChain] Borderless Fullscreen enabled: {}x{}\n", m_currentDisplayMode.width,
@@ -493,11 +474,6 @@ void DxSwapChain::RestoreWindowedState()
 	SetWindowPos(
 		m_hwnd, HWND_NOTOPMOST, m_windowedRect.left, m_windowedRect.top, m_windowedRect.right - m_windowedRect.left,
 		m_windowedRect.bottom - m_windowedRect.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW
-	);
-
-	OnResize(
-		m_device, m_windowedRect.right - m_windowedRect.left, m_windowedRect.bottom - m_windowedRect.top,
-		m_rtvDescriptorStart, m_rtvDescriptorSize
 	);
 }
 

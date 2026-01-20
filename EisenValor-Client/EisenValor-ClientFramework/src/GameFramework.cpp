@@ -43,16 +43,20 @@ void GameFramework::Run()
 	GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
 #endif
 
-	GLOBAL(InputGlobal).BeforeUpdate();
+	auto& input = GLOBAL(InputGlobal);
+	input.BeforeUpdate();
+
+	bool isFocused = (GetForegroundWindow() == m_hWnd);
+	input.SetWindowFocused(isFocused);
 
 	static float runTime{};
 	const float	 dt = GLOBAL(TimerGlobal).Update();
 
-	//if ((runTime += dt) > 0.2f)
+	// if ((runTime += dt) > 0.2f)
 	//{
 	//	runTime = 0.0f;
 	//	DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
-	//}
+	// }
 
 	GLOBAL(SceneGlobal).OnBeginFrame();
 
@@ -62,7 +66,7 @@ void GameFramework::Run()
 	}
 
 	Update(dt);
-	
+
 	LateUpdate(dt);
 
 	Render();
@@ -102,7 +106,15 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	switch (message)
 	{
 	case WM_ACTIVATE:
+	case WM_ACTIVATEAPP:
 		GLOBAL(InputGlobal).SetWindowFocused(WA_ACTIVE == LOWORD(wParam));
+		break;
+
+	case WM_SETFOCUS:
+		GLOBAL(InputGlobal).SetWindowFocused(true);
+		break;
+	case WM_KILLFOCUS:
+		GLOBAL(InputGlobal).SetWindowFocused(false);
 		break;
 
 	case WM_SYSCOMMAND:
