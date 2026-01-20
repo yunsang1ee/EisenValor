@@ -10,6 +10,27 @@ Server::Contents::Soldier::~Soldier()
 {
 }
 
+void Server::Contents::Soldier::OnCollisionEnter(Collider* const other)
+{
+
+}
+
+void Server::Contents::Soldier::OnCollisionStay(Collider* const other)
+{
+
+}
+
+void Server::Contents::Soldier::OnCollisionExit(Collider* const other)
+{
+
+}
+
+void Server::Contents::Soldier::Update(const float dt)
+{
+
+}
+
 void Server::Contents::Soldier::OnDeath()
 {
+
 }
