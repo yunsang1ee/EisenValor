@@ -27,14 +27,14 @@ namespace ServerEngine {
 		LogManager& operator=(LogManager&&) = delete;
 
 	public:
-		
 		static void Init() noexcept;
 
-		using LogLevel = std::pair<std::string_view, WORD>;
 
 		template<typename... Args>
 		static void WriteLog(const LOG_LEVEL level, const std::format_string<Args...> fmtStr, Args&&... args) noexcept
 		{
+			using LogLevel = std::pair<std::string_view, WORD>;
+
 			static std::osyncstream oss{ std::cout };
 
 			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());

@@ -13,8 +13,6 @@
 #include "ServerEnginePch.h"
 #include "flatbuffers\\flatbuffers.h"
 
-
-
 #include "Enums_generated.h"
 #include "Structs_generated.h"
 #include "Tables_generated.h"
@@ -30,7 +28,10 @@
 #include "ServerPackets.h"
 #include "GameObjectFactory.h"
 
-
+#include "DetourNavMesh.h"
+#include "DetourNavMeshQuery.h"
+#include "DetourCommon.h"
+#include "DetourCrowd.h"
 
 struct AttackInfo {
 	AttackData* atkData;
@@ -47,7 +48,6 @@ namespace Server {
 	}
 }
 
+extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 
 std::shared_ptr<Server::ClientSession> MakeClientSessionFunc();
-
-extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;

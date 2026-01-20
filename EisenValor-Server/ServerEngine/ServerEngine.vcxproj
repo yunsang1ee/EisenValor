@@ -157,11 +157,9 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Allocator.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
     <ClInclude Include="LockQueue.h" />
     <ClInclude Include="LogManager.h" />
-    <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="PacketBuffer.h" />
     <ClInclude Include="PacketHeader.h" />
@@ -190,11 +188,9 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Allocator.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
     <ClCompile Include="LockQueue.cpp" />
     <ClCompile Include="LogManager.cpp" />
-    <ClCompile Include="MemoryPool.cpp" />
     <ClCompile Include="ObjectPool.cpp" />
     <ClCompile Include="PacketBuffer.cpp" />
     <ClCompile Include="pch.cpp">

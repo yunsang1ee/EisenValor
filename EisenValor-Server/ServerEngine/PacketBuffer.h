@@ -15,6 +15,8 @@ namespace ServerEngine {
 
 	public:
 		void	Append(const BYTE* const src, const uint32 size) noexcept;
+
+	public:
 		char*	GetBuffer() noexcept { return m_buffer.data(); }
 		uint32	GetDataSize() const noexcept { return m_dataSize; }
 		uint32	GetCapacity() const noexcept { return m_capacity; }

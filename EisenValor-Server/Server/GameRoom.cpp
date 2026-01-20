@@ -300,14 +300,14 @@ void Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std
 }
 
 #ifndef ENABLE_LOBBY
-void Server::Contents::GameRoom::EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession)
+void Server::Contents::GameRoom::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
 {
 	if(nullptr == m_gameWorld)
 		CreateWorld();
 
 	if(m_gameWorld) {
 		clientSession->SetGameWorld(m_gameWorld);
-		m_gameWorld->ExecAsync(&Server::Contents::GameWorld::EnterGameWorld, clientSession);
+		m_gameWorld->ExecAsync(&Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD, clientSession);
 	}
 }
 #endif // DEVELOP

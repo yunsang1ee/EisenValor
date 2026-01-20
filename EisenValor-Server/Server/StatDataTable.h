@@ -24,6 +24,7 @@ namespace Server {
 		public:
 			virtual bool LoadFromCSV(const std::string_view filePath) override final;
 
+		public:
 			CreatureStatInfo* GetStatInfoByObjType(FB_ENUMS::GAME_OBJECT_TYPE type);
 		};
 	}
