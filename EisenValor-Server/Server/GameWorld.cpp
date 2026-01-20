@@ -9,15 +9,23 @@
 #include "Participant.h"
 
 #include "GameDataManager.h"
+#include "GameObject.h"
 
-void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
+#include "Collider.h"
+
+Server::Contents::GameWorld::GameWorld()
+	:FIXED_UPDATE_TICK_MS{ 16 }, FIXED_DT_SEC{ 0.016f }, m_lag{}, m_worldFrameCount{},
+	m_remainingTime{ std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN) },
+	m_accGameTime{}, m_firstUpdate{true}
 {
 	const auto& gameWorldData{ MANAGER(Server::Contents::GameDataManager)->GetGameWorldData() };
-
 	// GAME_UPDATE_TIME_MS = std::chrono::milliseconds(gameWorldData.gameUpdateTimeMs);
 	GAME_TIME_MIN = std::chrono::minutes(gameWorldData.gameTimeMin);
 	m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN);
+}
 
+void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
+{
 	// TODO: GameWorld Init
 	// 1. 참여자 정보 토대로 오브젝트 생성
 	// 2. 참여자 제외한 NPC 오브젝트 생성
@@ -46,7 +54,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		player->SetID(session->GetID());
 		player->SetSession(user->GetSession());
 		player->SetRoom(GetGameRoom());
-		GameObject* rawPlayer = player.release();
+		GameObject* rawPlayer{ player.release() };
 
 		AddEvent([this, rawPlayer]()
 			{
@@ -66,7 +74,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		t.teamType = bot->GetTeamType();
 		auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
 
-		GameObject* rawGeneral = general.release();
+		GameObject* rawGeneral = { general.release() };
 
 		AddEvent([this, rawGeneral]()
 			{
@@ -74,25 +82,15 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 			});
 	}
 
-	//{
-	//	SpanwerTemplate spawner;
-	//	spawner.objType = FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER;
-	//	spawner.teamType = m_type;
-	//	if(m_type == FB_ENUMS::TEAM_TYPE_RED) spawner.pos = Vec3{ 0.f, 0.f, 7.f };
-	//	else spawner.pos = Vec3{ 0.f, 0.f, -7.f };
-
-	//	auto spawnObj = Server::Contents::GameObjectFactory::CreateSpawnObj(spawner);
-	//	static uint32 idGen{ 20000 };
-	//	idGen++;
-	//	spawnObj->SetID(idGen);
-	//	m_room->AddGameObject(std::move(spawnObj));
-	//}
-
-	// TODO: 위에 애들 전부 처리하고 SC_GAME_START_SUCCESS_PACKET 보내기
-
 	LOG_INFO("Room ID:{}, Game Start!", GetGameRoom()->GetID());
 
 	FixedUpdate();
+
+	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+
+	if(false == m_navSystem.Load("NavData/solo_navmesh.bin")) {
+		LOG_ERROR("Nav Data Load Failed!");
+	}
 }
 
 void Server::Contents::GameWorld::Update()
@@ -215,11 +213,16 @@ void Server::Contents::GameWorld::FixedUpdate()
 	
 	while(m_lag >= FIXED_UPDATE_TICK_MS) {
 		ProcessEvents();
+
+		m_navSystem.Update(m_dt);
+
 		for(const auto& group : m_gameObjectsGroups) {
 			for(const auto& [id, obj] : group) {
 				if(obj) obj->Update(m_dt);
 			}
 		}
+		
+		CheckCollision();
 
 		m_lag -= FIXED_UPDATE_TICK_MS;
 		m_worldFrameCount++;
@@ -427,7 +430,7 @@ void Server::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 se
 }
 
 #ifndef ENABLE_LOBBY
-void Server::Contents::GameWorld::EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession)
+void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
 {
 	std::cout << "Enter Game World!" << std::endl;
 
@@ -507,4 +510,104 @@ Server::Contents::GameObject* Server::Contents::GameWorld::FindObjectByID(const 
 	}
 
 	return nullptr;
+}
+
+
+void Server::Contents::GameWorld::CheckCollision()
+{
+	for(int row = 0; row < FB_ENUMS::GAME_OBJECT_TYPE_END; ++row) {
+		for(int col = row; col < FB_ENUMS::GAME_OBJECT_TYPE_END; ++col) {
+			if(m_check[row] & (1 << col)) {
+				CollisionUpdateGroup(static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(row), static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(col));
+			}
+		}
+	}
+}
+
+void Server::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
+{
+	const auto& leftGroup{ m_gameObjectsGroups[etou8(left)] };
+	const auto& rightGroup{ m_gameObjectsGroups[etou8(right)] };
+
+	std::map<ULONGLONG, bool>::iterator iter;
+
+	for(const auto& [id, leftObj] : leftGroup) {
+		if(nullptr == leftObj->GetComponent<Server::Contents::Collider>()) continue;
+
+		for(const auto& [id, rightObj] : rightGroup) {
+			if(nullptr == rightObj->GetComponent<Server::Contents::Collider>() || leftObj == rightObj) continue;
+
+
+			auto leftCol{ leftObj->GetComponent<Server::Contents::Collider>() };
+			auto rightCol{ rightObj->GetComponent<Server::Contents::Collider>() };
+
+			COLLIDER_ID id{};
+			if(leftCol->GetID() < rightCol->GetID()) {
+				id.leftID = leftCol->GetID();
+				id.rightID = rightCol->GetID();
+			}
+			else {
+				id.leftID = rightCol->GetID(); 
+				id.rightID = leftCol->GetID(); 
+			}
+
+			iter = m_mapColInfo.find(id.id);
+
+			if(m_mapColInfo.end() == iter) {
+				m_mapColInfo.insert(std::make_pair(id.id, false));
+				iter = m_mapColInfo.find(id.id);
+			}
+
+			bool isColliding{ m_collisionDetector.CheckCollision(leftCol, rightCol) };
+
+			if(isColliding) {
+				if(iter->second) {
+					if(leftObj->IsDead() || rightObj->IsDead()) {
+						leftCol->OnCollisionExit(rightCol);
+						rightCol->OnCollisionExit(leftCol);
+						iter->second = false;
+					}
+					else {
+						leftCol->OnCollisionStay(rightCol);
+						rightCol->OnCollisionStay(leftCol);
+					}
+				}
+				else {
+					if(!leftObj->IsDead() && !rightObj->IsDead()) {
+						leftCol->OnCollisionEnter(rightCol);
+						rightCol->OnCollisionEnter(leftCol);
+						iter->second = true;
+					}
+
+
+				}
+			}
+			else
+			{
+				if(iter->second) {
+					leftCol->OnCollisionExit(rightCol);
+					rightCol->OnCollisionExit(leftCol);
+					iter->second = false;
+				}
+			}
+		}
+	}
+}
+
+void Server::Contents::GameWorld::RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
+{
+	uint32 iRow{ static_cast<uint32>(left) };
+	uint32 iCol{ static_cast<uint32>(right) };
+
+	if(iCol < iRow) {
+		iRow = static_cast<uint32>(right);
+		iCol = static_cast<uint32>(left);
+	}
+
+	if(m_check[iRow] & (1 << iCol)) {
+		m_check[iRow] &= ~(1 << iCol);
+	}
+	else {
+		m_check[iRow] |= (1 << iCol);
+	}
 }

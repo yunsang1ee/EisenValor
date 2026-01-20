@@ -3,10 +3,13 @@
 enum class COMPONENT_TYPE : uint8 {
 	FSM,
 	BEHAVIOR_TREE,
-	TROOP_CONTROLLER,
+	NAV_AGENT,
+	COLLIDER,
 
 	END
 };
+
+enum class COLLIDER_TYPE : uint8 { NONE, SPHERE, AABB, OBB, END };
 
 enum GENERAL_STATE_TYPE : uint16 {
 	NONE = 0,

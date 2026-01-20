@@ -2,7 +2,7 @@
 #include "GameObject.h"
 
 Server::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_type{ type }, m_teamType{ teamType }
+	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}
 {
 }
 
