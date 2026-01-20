@@ -60,7 +60,7 @@
     <ClInclude Include="Scene\SampleScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Component\PlayerController.h">
+    <ClInclude Include="Component\PlayerControllerComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Packets\C2SPackets.h">
@@ -122,7 +122,7 @@
     <ClCompile Include="Scene\SampleScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="Component\PlayerController.cpp">
+    <ClCompile Include="Component\PlayerControllerComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Packets\C2SPackets.cpp">
@@ -179,10 +179,15 @@
     <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Resource\Shader\UIPixelShader.hlsl">
+<FxCompile Include="Resource\Shader\UIPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Resource\Shader\UIVertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Resource\Shader\RaytracingPrimary.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

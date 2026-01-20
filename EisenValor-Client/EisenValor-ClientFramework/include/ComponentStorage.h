@@ -57,6 +57,7 @@ public:
 		}
 	}
 
+	bool IsValid(Handle handle) const { return m_data.IsValid(handle); }
 	bool IsReserved(Handle handle) const { return m_data.IsReserved(handle); }
 
 	void Remove(Handle handle) { m_data.Remove(handle); }
