@@ -4,9 +4,6 @@
     <FxCompile>
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </FxCompile>
-    <None>
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </None>
   </ItemDefinitionGroup>
 
   <!-- 프로젝트에 어떤 형식으로 포함되어 있든 .hlsl, .hlsli는 무조건 빌드에서 제외 -->
