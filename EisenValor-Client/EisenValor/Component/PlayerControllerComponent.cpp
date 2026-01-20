@@ -101,7 +101,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 {
 	auto& input = GLOBAL(InputGlobal);
 
-	if (!input.IsMouseLocked())
+	if (!input.IsMouseLocked() || !input.IsWindowFocused())
 	{
 		return;
 	}
