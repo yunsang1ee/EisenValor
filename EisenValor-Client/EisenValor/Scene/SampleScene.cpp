@@ -2,7 +2,12 @@
 #include "SampleScene.h"
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
-#include "UI/BattleUI.h"
+#include "UI/BattleUIControllerComponent.h"
+#include "Transform.h"
+#include "RectTransformComponent.h"
+#include "ImageUIComponent.h"
+#include "ButtonUIComponent.h"
+#include "UI/UITextureGlobal.h"
 
 namespace
 {
@@ -74,7 +79,7 @@ std::vector<uint32_t> cubeIndices = {
 
 void SampleScene::OnRegisterCustomComponents()
 {
-	RegisterComponents<PlayerControllerComponent, HealthComponent, BattleUI>();
+	RegisterComponents<PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, RectTransformComponent, ImageUIComponent, ButtonUIComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -87,6 +92,8 @@ void SampleScene::OnStartImpl()
 void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
+
+	uint32_t testTextureId = UITextureGlobal::GetInstance().LoadTexture(L"\Resource\Texture\test.dds");
 
 	ReserveGameObject(
 		"Ground", std::nullopt,
@@ -103,25 +110,6 @@ void SampleScene::CreateSceneObjects()
 			);
 		}
 
-	);
-
-	CreateGameObject(
-		"BattleUIObject", std::nullopt,
-		[this](GameObject* obj)
-		{
-			DEBUG_LOG_FMT("[SampleScene] Creating BattleUI component...\n");
-
-			auto battleUIHandle = CreateComponent<BattleUI>(obj->GetHandle());
-
-			if (battleUIHandle.IsValid())
-			{
-				DEBUG_LOG_FMT("[SampleScene] BattleUI component added successfully!\n");
-			}
-			else
-			{
-				DEBUG_LOG_FMT("[SampleScene] Failed to create BattleUI component!\n");
-			}
-		}
 	);
 
 	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
@@ -148,7 +136,93 @@ void SampleScene::CreateSceneObjects()
 		);
 	}
 
-	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 5);
+	// BattleUI와 자식 오브젝트들 생성
+	ReserveGameObject(
+		"BattleUI", std::nullopt,
+		[this, testTextureId](GameObject* battleUIObj)
+		{
+			// 1. 컴포넌트 부착
+			CreateComponent<BattleUIControllerComponent>(battleUIObj->GetHandle());
+			auto battleUIRTrHandle = CreateComponent<RectTransformComponent>(battleUIObj->GetHandle()); // BattleUI에 RectTransformComponent 부착
+			
+			// BattleUI RectTransform 초기 설정
+			if (RectTransformComponent* battleUIRTr = GetStorage<RectTransformComponent>()->Get(battleUIRTrHandle))
+			{
+				battleUIRTr->SetAnchors({0.4f, 0.4f}, {0.6f, 0.6f});
+				battleUIRTr->SetOffsetMin({0.0f, 0.0f});
+				battleUIRTr->SetOffsetMax({0.0f, 0.0f});
+			}
+
+			// 2. 필요한 리소스 미리 확보
+			auto   parentTrHandle = battleUIObj->GetComponentHandle<Transform>();
+			Scene* scene = battleUIObj->GetScene();
+
+			if (!scene)
+				return;
+
+			// 자식 UI 레이아웃 정보
+			struct UILayoutInfo { Vec2 anchorMin, anchorMax, pivot; };
+			const std::unordered_map<std::string, UILayoutInfo> layoutMap = {
+				{"UpUI",    {{0.5f, 0.0f}, {0.5f, 0.0f}, {0.5f, 0.0f}}},
+				{"LeftUI",  {{0.0f, 0.5f}, {0.0f, 0.5f}, {0.0f, 0.5f}}},
+				{"RightUI", {{1.0f, 0.5f}, {1.0f, 0.5f}, {1.0f, 0.5f}}}
+			};
+
+			for (const auto& layoutPair : layoutMap)
+			{
+				const std::string& name = layoutPair.first;
+				const UILayoutInfo& layout = layoutPair.second;
+
+				scene->ReserveGameObject(
+					name, std::nullopt,
+					[scene, parentTrHandle, testTextureId, layout](GameObject* childObj)
+					{
+						// RectTransform 부착
+						auto childRTrHandle = scene->CreateComponent<RectTransformComponent>(childObj->GetHandle());
+						
+						// 자식 RectTransform 초기 설정
+						if (RectTransformComponent* childRTr = scene->GetStorage<RectTransformComponent>()->Get(childRTrHandle))
+						{
+							childRTr->SetSizeDelta({50.0f, 50.0f}); // 고정 크기 50x50
+							childRTr->SetAnchors(layout.anchorMin, layout.anchorMax);
+							childRTr->SetPivot(layout.pivot);
+							childRTr->SetOffsetMin({0.0f, 0.0f});
+							childRTr->SetOffsetMax({0.0f, 0.0f});
+						}
+
+						// 부모 설정
+						if (auto childTrHandle = childObj->GetComponentHandle<Transform>(); childTrHandle.IsValid())
+						{
+							if (Transform* childTr = scene->GetStorage<Transform>()->Get(childTrHandle))
+							{
+								childTr->SetParent(parentTrHandle);
+							}
+						}
+
+						// ImageUI 컴포넌트 부착, order 및 텍스처 설정
+						scene->CreateComponentWithInit<ImageUIComponent>(
+							childObj->GetHandle(),
+							[testTextureId](ImageUIComponent* image) {
+								image->SetOrder(10);
+								image->SetTexture(testTextureId);
+							}
+						);
+						// ButtonUI 컴포넌트 부착, order 및 텍스처 설정
+						scene->CreateComponentWithInit<ButtonUIComponent>(
+							childObj->GetHandle(),
+							[testTextureId](ButtonUIComponent* button) {
+								button->SetOrder(10);
+								button->SetTexture(testTextureId);
+								// TODO: button->SetOnClick(...);
+							}
+						);
+					}
+				);
+			}
+		}
+	);
+
+	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 8);
 }
 
 void SampleScene::OnEndImpl() {}

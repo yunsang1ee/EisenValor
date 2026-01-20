@@ -149,7 +149,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
     </PreBuildEvent>
@@ -174,7 +173,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
     </PreBuildEvent>
@@ -196,10 +194,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
-    <ClInclude Include="UI\BattleUI.h" />
-    <ClInclude Include="UI\BattleUIComponent.h" />
-    <ClInclude Include="UI\TestUIComponent.h" />
-    <ClInclude Include="UI\UIGlobal.h" />
+    <ClInclude Include="UI\BattleUIControllerComponent.h" />
     <ClInclude Include="UI\UITextureGlobal.h" />
   </ItemGroup>
   <ItemGroup>
@@ -225,10 +220,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="UI\BattleUI.cpp" />
-    <ClCompile Include="UI\BattleUIComponent.cpp" />
-    <ClCompile Include="UI\TestUIComponent.cpp" />
-    <ClCompile Include="UI\UIGlobal.cpp" />
+    <ClCompile Include="UI\BattleUIControllerComponent.cpp" />
     <ClCompile Include="UI\UITextureGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>

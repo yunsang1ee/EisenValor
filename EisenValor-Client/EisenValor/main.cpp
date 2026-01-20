@@ -16,9 +16,8 @@
 #include "RenderPass/CopyToBackBufferPass.h"
 #include "RenderPass/UIRenderPass.h" \
 
-#include "UI/UIGlobal.h"
+#include "UIGlobal.h"
 #include "UI/UITextureGlobal.h"
-#include "UI/TestUIComponent.h"
 
 #include "Packets/PacketHandler.h"
 #include "Packets/C2SPackets.h"

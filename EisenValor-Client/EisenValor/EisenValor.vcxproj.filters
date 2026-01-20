@@ -84,23 +84,14 @@
     <ClInclude Include="Packets\Tables_generated.h">
       <Filter>Packets</Filter>
     </ClInclude>
-    <ClInclude Include="UI\BattleUI.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\BattleUIComponent.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\TestUIComponent.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\UIGlobal.h">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="UI\UITextureGlobal.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\UIRenderPass.h">
       <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\BattleUIControllerComponent.h">
+      <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -134,23 +125,14 @@
     <ClCompile Include="Component\HealthComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="UI\BattleUI.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\BattleUIComponent.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\TestUIComponent.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\UIGlobal.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="UI\UITextureGlobal.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\UIRenderPass.cpp">
       <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\BattleUIControllerComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -167,31 +149,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Resource\Shader\VertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibrary.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingLibraryPT.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-<FxCompile Include="Resource\Shader\UIPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\UIVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Resource\Shader\RaytracingPrimary.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-      <Filter>Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resource\Shader\RaytracingCommon.hlsli">
       <Filter>Shaders</Filter>
     </None>
@@ -205,5 +162,12 @@
       <Filter>Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="RaytracingPrimary.hlsl" />
+    <None Include="Resource\Shader\PixelShader.hlsl" />
+    <None Include="Resource\Shader\VertexShader.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="Resource\Shader\UIVertexShader.hlsl" />
+    <None Include="Resource\Shader\UIPixelShader.hlsl" />
   </ItemGroup>
 </Project>

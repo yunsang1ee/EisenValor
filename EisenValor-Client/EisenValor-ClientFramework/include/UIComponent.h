@@ -1,34 +1,64 @@
 #pragma once
-#include "DxCommon.h"
-#include "DxMath.h"  
-class UIComponent
+#include "IComponent.h"
+#include "RectTransformComponent.h"
+#include "DxMath.h"
+#include <vector>
+#include "GameObject.h"
+
+// UIRenderPass가 RenderData를 수집하여 Batching
+struct UIRenderData
 {
+	uint32_t			textureId; // 텍스처 핸들
+	RectTransformComponent::Rect rect;	   // RectTransform가 계산
+	DirectX::XMFLOAT4	color;
+	DirectX::XMFLOAT2	uvMin;
+	DirectX::XMFLOAT2	uvMax;
+};
 
-protected:
-	bool m_isSelected = false;
-
+class IUIComponent
+{
 public:
+	virtual ~IUIComponent() = default;
+	// Z-Order
+	virtual int32_t GetOrder() const = 0;
+	// 렌더링 데이터 수집
+	virtual void GetRenderData(std::vector<UIRenderData>& outData) = 0;
+};
+
+// 모든 UI 요소의 기반인 추상 클래스
+template <typename T>
+class UIComponent : public ComponentBase<T>, public IUIComponent
+{
+public:
+	static constexpr const char* GetStaticTypeName() { return "UIComponent"; }
+
 	virtual ~UIComponent() = default;
-	virtual void Initialize() = 0;
-	virtual void Render(ID3D12GraphicsCommandList* cmdList) = 0;
 
-	void SetPosition(float x, float y) { m_position = {x, y}; }
-	void SetSize(float width, float height) { m_size = {width, height}; }
-	void SetColor(const DirectX::XMFLOAT4& color) { m_color = color; }
-	void SetTexture(uint32_t textureId) { m_textureId = textureId; }
+	// IComponent 생명주기
+	virtual void OnAttach() override {}
+	virtual void OnDetach() override {}
 
-	DirectX::XMFLOAT2 GetPosition() const { return m_position; }
-	DirectX::XMFLOAT2 GetSize() const { return m_size; }
-	virtual DirectX::XMFLOAT4 GetColor() const { return m_color; }
-	uint32_t	GetTextureId() const { return m_textureId; }
+	// 같은 GameObject에 붙어있는 RectTransform 반환
+	// 위치, 크기, 앵커 정보는 RectTransform에
+	RectTransformComponent* GetRectTransform() const { return this->GetGameObject()->GetComponent<RectTransformComponent>(); }
 
-	virtual const char* GetUIType() const = 0;
-	void				SetSelected(bool selected) { m_isSelected = selected; }
-	bool				IsSelected() const { return m_isSelected; }
+	// Z-Order
+	virtual int32_t GetOrder() const { return m_order; }
+	void	SetOrder(int32_t order) { m_order = order; }
+
+	// 인터랙션
+	bool IsInteractable() const { return m_isInteractable; }
+	void SetInteractable(bool interactable) { m_isInteractable = interactable; }
+
+	// 색상
+	DirectX::XMFLOAT4 GetColor() const { return m_color; }
+	void			  SetColor(const DirectX::XMFLOAT4& color) { m_color = color; }
+
+	// UI 렌더링 데이터 수집
+	virtual void GetRenderData(std::vector<UIRenderData>& outData) override = 0;
 
 protected:
-	DirectX::XMFLOAT2 m_position = {0.0f, 0.0f};
-	DirectX::XMFLOAT2 m_size = {100.0f, 100.0f};
-	DirectX::XMFLOAT4 m_color = {1.0f, 0.0f, 0.0f, 1.0f}; // 빨간색 기본값
-	uint32_t m_textureId = 0;
+	DirectX::XMFLOAT4 m_color = {1.0f, 1.0f, 1.0f, 1.0f}; // 하얀색
+	int32_t			  m_order = 0;						  // 렌더링 우선순위
+	bool			  m_isInteractable = true;			  // 상호작용 활성화 여부
 };

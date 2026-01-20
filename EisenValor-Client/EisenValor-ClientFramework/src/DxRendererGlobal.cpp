@@ -103,7 +103,9 @@ void DxRendererGlobal::Release()
 	DEBUG_LOG_FMT("[DxRendererGlobal] Released\n");
 }
 
-void DxRendererGlobal::AddRenderPass(const std::string& name, std::unique_ptr<IRenderPass> pass)
+void DxRendererGlobal::AddRenderPass(const std::string& name, 
+                                     std::unique_ptr<IRenderPass> pass, 
+                                     RenderPassPriority priority)
 {
 	for (const auto& entry : m_renderPasses)
 	{
@@ -115,9 +117,10 @@ void DxRendererGlobal::AddRenderPass(const std::string& name, std::unique_ptr<IR
 	}
 
 	pass->Initialize();
-	m_renderPasses.push_back({name, std::move(pass)});
+	m_renderPasses.push_back({name, std::move(pass), priority});  // priority 추가
+	m_renderPassesDirty = true;
 
-	DEBUG_LOG_FMT("[DxRendererGlobal] Pass added: {}\n", name);
+	DEBUG_LOG_FMT("[DxRendererGlobal] Pass added: {} (Priority: {})\n", name, static_cast<int32_t>(priority));
 }
 
 void DxRendererGlobal::RemoveRenderPass(const std::string& name)
@@ -139,6 +142,7 @@ void DxRendererGlobal::RemoveRenderPass(const std::string& name)
 	{
 		m_renderPasses.erase(iter, m_renderPasses.end());
 		DEBUG_LOG_FMT("[DxRendererGlobal] Pass removed: {}\n", name);
+		m_renderPassesDirty = true;
 	}
 }
 
@@ -178,6 +182,16 @@ void DxRendererGlobal::Render(Scene* scene)
 	}
 
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
+
+	// Priority 기준 정렬
+	if (m_renderPassesDirty)
+	{
+		std::stable_sort(
+			m_renderPasses.begin(), m_renderPasses.end(), [](const RenderPassEntry& a, const RenderPassEntry& b)
+			{ return static_cast<int32_t>(a.priority) < static_cast<int32_t>(b.priority); }
+		);
+		m_renderPassesDirty = false;
+	}
 
 	for (auto& entry : m_renderPasses)
 	{

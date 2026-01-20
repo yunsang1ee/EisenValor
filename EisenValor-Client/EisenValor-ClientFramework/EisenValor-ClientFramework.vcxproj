@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\ComponentStorage.h" />
     <ClInclude Include="include\DenseList.h" />
@@ -195,6 +196,7 @@
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
     <ClInclude Include="include\IComponent.h" />
+    <ClInclude Include="include\ImageUIComponent.h" />
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\IPacketHandler.h" />
@@ -204,6 +206,7 @@
     <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkGlobal.h" />
     <ClInclude Include="include\PacketBuffer.h" />
+    <ClInclude Include="include\RectTransformComponent.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderContext.h" />
     <ClInclude Include="include\RenderDataPool.h" />
@@ -216,9 +219,11 @@
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Transform.h" />
     <ClInclude Include="include\UIComponent.h" />
+    <ClInclude Include="include\UIGlobal.h" />
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
@@ -244,11 +249,13 @@
     <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\IComponent.cpp" />
+    <ClCompile Include="src\ImageUIComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\MeshComponent.cpp" />
     <ClCompile Include="src\MovementComponent.cpp" />
     <ClCompile Include="src\NetworkGlobal.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
+    <ClCompile Include="src\RectTransformComponent.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
     <ClCompile Include="src\DxRendererGlobal.cpp" />
     <ClCompile Include="src\Scene.cpp" />
@@ -259,6 +266,7 @@
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp" />
     <ClCompile Include="src\Transform.cpp" />
+    <ClCompile Include="src\UIGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />

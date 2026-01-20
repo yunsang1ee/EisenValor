@@ -24,6 +24,7 @@ void InputGlobal::BeforeUpdate()
 {
 	std::swap(m_InputEventsFront, m_InputEventsBack);
 	m_InputEventsBack.clear();
+	m_consumedState.reset();
 	for (const auto& [keyIndex, isPressed, isUp] : m_InputEventsFront)
 	{
 		uint8_t mask = 0;

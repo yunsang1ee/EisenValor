@@ -9,6 +9,7 @@ using ComponentTypeHash = uint64_t;
 
 class ISerializer;
 class IDeserializer;
+
 namespace ComponentTraits
 {
 template <typename T>
