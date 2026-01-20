@@ -7,7 +7,9 @@ public:
 	GameFramework() = default;
 	~GameFramework() = default;
 
-	bool Initialize(HINSTANCE hInstance, HWND hwnd);
+	bool Initialize(
+		HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress = "127.0.0.1", uint16_t serverPort = 7777
+	);
 	void Run();
 	void Release();
 
