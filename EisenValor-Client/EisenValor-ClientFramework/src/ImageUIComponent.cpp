@@ -15,6 +15,14 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 	// Rect 계산
 	RectTransformComponent::Rect finalRect = rectTr->GetRect();
 
+	//// 디버깅용
+	//static bool s_hasLoggedRect = false;
+	//if (!s_hasLoggedRect)
+	//{
+	//	DEBUG_LOG_FMT("ImageUI GetRenderData - Rect: x={}, y={}, w={}, h={}\n", finalRect.x, finalRect.y, finalRect.width, finalRect.height);
+	//	s_hasLoggedRect = true;
+	//}
+
 	// 9-Slice 사용 여부 
 	bool use9Slice =
 		(m_sliceBorder.x > 0.0f || m_sliceBorder.y > 0.0f || m_sliceBorder.z > 0.0f || m_sliceBorder.w > 0.0f);

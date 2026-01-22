@@ -79,7 +79,7 @@ void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	cmdList->SetPipelineState(m_pipelineState.Get());
 	cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	// Descriptor Heap 설정 (Bindless Texture 사용을 위함)
+	// Descriptor Heap 설정 (Bindless Texture)
 	auto&				  descHeap = GLOBAL(DxDescriptorHeapGlobal);
 	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap()};
 	cmdList->SetDescriptorHeaps(1, heaps);

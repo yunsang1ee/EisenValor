@@ -92,7 +92,7 @@ void ButtonUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 
 	// 렌더링 데이터 생성
 	UIRenderData data;
-	data.textureId = m_textureId;
+	data.textureId = 0; // ButtonUI는 텍스처를 사용하지 않으므로 0으로 설정
 	data.rect = rectTr->GetRect();
 	data.color = finalColor;
 	data.uvMin = {0.0f, 0.0f};

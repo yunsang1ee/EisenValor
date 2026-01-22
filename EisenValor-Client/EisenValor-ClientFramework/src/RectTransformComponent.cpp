@@ -74,15 +74,24 @@ void RectTransformComponent::UpdateLayout()
 	float parentX = parentRect.x;
 	float parentY = parentRect.y;
 
-	float x = parentX + (parentWidth * m_anchorMin.x) + m_offsetMin.x;
-	float y = parentY + (parentHeight * m_anchorMin.y) + m_offsetMin.y;
+	// 앵커에 따른 기준점 계산 (피벗 미적용 상태)
+	float anchorPosX = parentX + (parentWidth * m_anchorMin.x);
+	float anchorPosY = parentY + (parentHeight * m_anchorMin.y);
+
+	// 오프셋 적용
+	float x = anchorPosX + m_offsetMin.x;
+	float y = anchorPosY + m_offsetMin.y;
 	float right = parentX + (parentWidth * m_anchorMax.x) + m_offsetMax.x;
 	float bottom = parentY + (parentHeight * m_anchorMax.y) + m_offsetMax.y;
 
-	m_rect.x = x;
-	m_rect.y = y;
 	m_rect.width = right - x;
 	m_rect.height = bottom - y;
+
+	// 최종 좌표 결정: x, y는 좌상단 좌표여야 함.
+	// m_pivot은 anchorPos + offset 위치가 Rect의 어디에 해당하는지를 결정함.
+	// (예: pivot 0.5면 해당 위치가 Rect의 중앙이 되도록 좌상단 x, y를 보정)
+	m_rect.x = x; 
+	m_rect.y = y;
 
 	m_isDirty = false;
 

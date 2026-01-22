@@ -16,8 +16,8 @@ class ButtonUIComponent : public UIComponent<ButtonUIComponent>
 {
 public:
 	static constexpr const char* GetStaticTypeName() 
-	{ 
-		return "ButtonUI"; 
+	{
+		return "ButtonUIComponent"; 
 	}
 
 	ButtonUIComponent() = default;
@@ -38,22 +38,16 @@ public:
 	// 상태에 따라 색상 변경하여 피드백
 	virtual void GetRenderData(std::vector<UIRenderData>& outData) override;
 
-	// 텍스처 설정
-	void SetTexture(uint32_t textureId) { m_textureId = textureId; }
-
 private:
 	ButtonState m_state = ButtonState::Normal;
 
 	// 이벤트 콜백
 	std::function<void()> m_onClick;
 
-	// 버튼 배경 텍스처
-	uint32_t m_textureId = 0;
-
 	// 상태별 색상
 	//
-	DirectX::XMFLOAT4 m_normalColor = {1.0f, 1.0f, 1.0f, 1.0f};	// 흰색
-	DirectX::XMFLOAT4 m_hoverColor = {0.9f, 0.9f, 0.9f, 1.0f};	// 약간 어두운 회색
-	DirectX::XMFLOAT4 m_pressedColor = {0.6f, 0.6f, 0.6f, 1.0f}; // 더 어두운 회색
+	DirectX::XMFLOAT4 m_normalColor = {0.7f, 0.7f, 0.7f, 1.0f};	// 회색
+	DirectX::XMFLOAT4 m_hoverColor = {0.0f, 0.0f, 0.0f, 1.0f};	// 검은색
+	DirectX::XMFLOAT4 m_pressedColor = {1.0f, 0.0f, 0.0f, 1.0f};
 	DirectX::XMFLOAT4 m_disabledColor = {0.0f, 0.0f, 0.0f, 0.0f}; // 반투명 회색
 };

@@ -8,7 +8,7 @@ class ImageUIComponent : public UIComponent<ImageUIComponent>
 public:
 	static constexpr const char* GetStaticTypeName() 
 	{ 
-		return "ImageUI"; 
+		return "ImageUIComponent"; 
 	}
 
 	ImageUIComponent() = default;
