@@ -19,7 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AssetStructs.h" />
+    <ClInclude Include="include\AssetLoader.h" />
+    <ClInclude Include="include\AssetMesh.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AssetLoader.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -73,6 +77,16 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Libraries\lib\$(ProjectName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)Libraries\lib\$(ProjectName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -113,6 +127,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -130,6 +146,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>

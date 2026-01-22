@@ -12,8 +12,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AssetStructs.h">
+    <ClInclude Include="include\AssetLoader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AssetMesh.h">
       <Filter>Mesh</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AssetLoader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
