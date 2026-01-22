@@ -73,7 +73,6 @@ StyleCopReport.xml
 *_p.c
 *_h.h
 *.ilk
-*.meta
 *.obj
 *.iobj
 *.pch
@@ -363,3 +362,28 @@ FodyWeavers.xsd
 
 /EisenValor-Client/SettingMarkDown
 /EisenValor-Client/EisenValor/Build/ShaderCache
+
+# Unity Tool Rules (Tools 폴더용)
+# 유니티가 자동 생성하는 폴더들 무시
+/[Tt]ools/*/Library/
+/[Tt]ools/*/Temp/
+/[Tt]ools/*/Obj/
+/[Tt]ools/*/Build/
+/[Tt]ools/*/Builds/
+/[Tt]ools/*/Logs/
+/[Tt]ools/*/UserSettings/
+
+# 유니티 자동 생성 프로젝트 파일 무시
+/[Tt]ools/*/*.csproj
+/[Tt]ools/*/*.unityproj
+/[Tt]ools/*/*.sln
+/[Tt]ools/*/*.suo
+/[Tt]ools/*/*.tmp
+/[Tt]ools/*/*.user
+/[Tt]ools/*/*.userprefs
+/[Tt]ools/*/*.pidb
+/[Tt]ools/*/*.booproj
+/[Tt]ools/*/*.svd
+/[Tt]ools/*/*.pdb
+/[Tt]ools/*/*.opendb
+/[Tt]ools/*/*.VC.db
