@@ -34,7 +34,6 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 	data.uvMin = {0.0f, 0.0f};
 	data.uvMax = {1.0f, 1.0f};
 
-	// 텍스처 ID가 0이면 빨간색으로, 아니면 원래 색상으로 설정
 	if (m_textureId == 0)
 	{
 		data.color = {1.0f, 0.0f, 0.0f, 1.0f}; // 빨간색

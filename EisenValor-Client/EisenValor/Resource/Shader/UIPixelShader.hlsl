@@ -19,7 +19,7 @@ float4 main(PSInput input) : SV_TARGET
     }
     else
     {
-        // 실제 텍스처 업로드
+        // 실제 텍스처 업로드 및 색상 곱하기 (Tint)
         float4 texColor = g_textures[NonUniformResourceIndex(input.textureIndex)].Sample(g_sampler, input.uv);
         return texColor;
     }
