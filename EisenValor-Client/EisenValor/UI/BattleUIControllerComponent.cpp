@@ -3,11 +3,12 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "Transform.h"
-#include "InputGlobal.h" 
-#include "DxRendererGlobal.h" 
-#include "DxSwapChain.h" 
-#include "RectTransformComponent.h" 
+#include "InputGlobal.h"
+#include "DxRendererGlobal.h"
+#include "DxSwapChain.h"
+#include "RectTransformComponent.h"
 #include "ComponentStorage.h"
+#include "UITextureGlobal.h" // 텍스처 로딩 기능
 
 void BattleUIControllerComponent::OnAttach()
 {
@@ -48,10 +49,12 @@ float BattleUIControllerComponent::NormalizeAngle(float degrees)
 void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 {
 	GameObject* owner = GetGameObject();
-	if (!owner) return;
+	if (!owner)
+		return;
 
 	Scene* scene = owner->GetScene();
-	if (!scene) return;
+	if (!scene)
+		return;
 
 	auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
 	if (swapChain)
@@ -60,17 +63,19 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 		m_centerY = static_cast<float>(swapChain->GetHeight()) / 2.0f;
 	}
 
-	Transform& ownerTr = owner->GetTransform();
+	Transform&	ownerTr = owner->GetTransform();
 	const auto& childrenTrHandles = ownerTr.GetChildren();
-	auto* trStorage = scene->GetStorage<Transform>();
-	
+	auto*		trStorage = scene->GetStorage<Transform>();
+
 	for (auto childTrHandle : childrenTrHandles)
 	{
 		Transform* childTr = trStorage->Get(childTrHandle);
-		if (!childTr) continue;
+		if (!childTr)
+			continue;
 
 		GameObject* childObj = childTr->GetGameObject();
-		if (!childObj) continue;
+		if (!childObj)
+			continue;
 
 		std::string name = childObj->GetName();
 
@@ -94,59 +99,108 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 	if (m_upButtonHandle.IsValid() && m_leftButtonHandle.IsValid() && m_rightButtonHandle.IsValid())
 	{
 		SetChildUIPositions();
+
+		// 텍스처 로드 - ID 캐싱
+		static uint32_t normalTex = UITextureGlobal::GetInstance().LoadTexture(L"Resource\\Texture\\normal.dds");
+		static uint32_t hoverTex = UITextureGlobal::GetInstance().LoadTexture(L"Resource\\Texture\\hovering.dds");
+		static uint32_t selectTex = UITextureGlobal::GetInstance().LoadTexture(L"Resource\\Texture\\select.dds");
+
+		// ButtonUI와 ImageUI
+		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+		auto* imgStorage = scene->GetStorage<ImageUIComponent>();
+
+		auto setupVisuals = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle)
+		{
+			if (!btnHandle.IsValid() || !imgHandle.IsValid())
+				return;
+
+			ButtonUIComponent* btn = btnStorage->Get(btnHandle);
+			ImageUIComponent*  img = imgStorage->Get(imgHandle);
+			if (btn && img)
+			{
+				btn->SetTargetImage(imgHandle);
+
+				// 상태별 텍스처 ID 설정
+				img->SetNormalTexture(normalTex);
+				img->SetHoverTexture(hoverTex);
+				img->SetPressedTexture(selectTex);
+				img->SetDisabledTexture(normalTex);
+
+				// 색상 설정
+				img->SetNormalColor({0.7f, 0.7f, 0.7f, 1.0f});
+				img->SetHoverColor({0.0f, 0.0f, 0.0f, 1.0f});
+				img->SetPressedColor({1.0f, 0.0f, 0.0f, 1.0f});
+				img->SetDisabledColor({0.5f, 0.5f, 0.5f, 0.5f});
+			}
+		};
+
+		setupVisuals(m_upButtonHandle, m_upImageHandle);
+		setupVisuals(m_leftButtonHandle, m_leftImageHandle);
+		setupVisuals(m_rightButtonHandle, m_rightImageHandle);
 	}
 }
 
 void BattleUIControllerComponent::SetChildUIPositions()
 {
 	GameObject* owner = GetGameObject();
-	if (!owner) return;
+	if (!owner)
+		return;
 	Scene* scene = owner->GetScene();
-	if (!scene) return;
+	if (!scene)
+		return;
 
 	const float innerRadius = m_radius * kInnerRadiusRatio;
-	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+	auto*		btnStorage = scene->GetStorage<ButtonUIComponent>();
 
-	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg) {
-		if (!handle.IsValid()) return;
+	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg)
+	{
+		if (!handle.IsValid())
+			return;
 		ButtonUIComponent* btn = btnStorage->Get(handle);
-		if (!btn) return;
-		
+		if (!btn)
+			return;
+
 		RectTransformComponent* rectTr = btn->GetGameObject()->GetComponent<RectTransformComponent>();
-		if (!rectTr) return;
+		if (!rectTr)
+			return;
 
 		float offsetX = cosf(angleDeg * kDegToRad) * innerRadius;
 		float offsetY = -sinf(angleDeg * kDegToRad) * innerRadius;
 
 		rectTr->SetAnchors({0.5f, 0.5f}, {0.5f, 0.5f});
 		rectTr->SetPivot({0.5f, 0.5f});
-		
+
 		rectTr->SetSizeDelta({kUISize, kUISize});
 		rectTr->SetOffsetMin({offsetX - kUIHalfSize, offsetY - kUIHalfSize});
 		rectTr->SetOffsetMax({offsetX + kUIHalfSize, offsetY + kUIHalfSize});
 	};
 
-	setupPos(m_upButtonHandle, 90.0f);    
-	setupPos(m_leftButtonHandle, 210.0f); 
+	setupPos(m_upButtonHandle, 90.0f);
+	setupPos(m_leftButtonHandle, 210.0f);
 	setupPos(m_rightButtonHandle, 330.0f);
 }
 
 EGuardDir BattleUIControllerComponent::CalculateGuardDirection(float deltaX, float deltaY) const
 {
 	float lengthSq = (deltaX * deltaX) + (deltaY * deltaY);
-	if (lengthSq < kAccumulationThresholdSq) return EGuardDir::None;
+	if (lengthSq < kAccumulationThresholdSq)
+		return EGuardDir::None;
 
-	float radian = atan2f(-deltaY, deltaX); 
+	float radian = atan2f(-deltaY, deltaX);
 	float degree = radian * kRadToDeg;
 	degree = NormalizeAngle(degree);
 
-	if (degree >= kUpRegionStart && degree < kUpRegionEnd) return EGuardDir::Up;
-	if (degree >= kLeftRegionStart && degree < kLeftRegionEnd) return EGuardDir::Left;
-	
-	// 리셋 구역 (250~270)
-	if (degree >= kDeadZoneRegionStart && degree < kDeadZoneRegionEnd) return EGuardDir::None;
+	if (degree >= kUpRegionStart && degree < kUpRegionEnd)
+		return EGuardDir::Up;
+	if (degree >= kLeftRegionStart && degree < kLeftRegionEnd)
+		return EGuardDir::Left;
 
-	if (degree >= kRightRegionStart || degree < kRightRegionEnd) return EGuardDir::Right;
+	// 리셋 구역 (250~270)
+	if (degree >= kDeadZoneRegionStart && degree < kDeadZoneRegionEnd)
+		return EGuardDir::None;
+
+	if (degree >= kRightRegionStart || degree < kRightRegionEnd)
+		return EGuardDir::Right;
 
 	return EGuardDir::None;
 }
@@ -201,7 +255,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 	// 2. 방향 판정
 	EGuardDir detectedDir = CalculateGuardDirection(m_accumulatedDeltaX, m_accumulatedDeltaY);
-	
+
 	// 3. 새로운 유효 방향이 감지되었을 때만 업데이트 및 누적치 초기화
 	if (detectedDir != EGuardDir::None && detectedDir != m_currentSelectedDir)
 	{
@@ -235,12 +289,15 @@ void BattleUIControllerComponent::ProcessMouseInput()
 void BattleUIControllerComponent::UpdateUISelection(EGuardDir selectedDir)
 {
 	GameObject* owner = GetGameObject();
-	if (!owner) return;
+	if (!owner)
+		return;
 	Scene* scene = owner->GetScene();
-	if (!scene) return;
+	if (!scene)
+		return;
 
 	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
-	if (!btnStorage) return;
+	if (!btnStorage)
+		return;
 
 	// 현재 마우스 왼쪽 버튼이 눌려 있는지 확인
 	bool isPressed = GLOBAL(InputGlobal).GetInput(VK_LBUTTON);

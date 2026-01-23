@@ -1,6 +1,18 @@
 #include "stdafxClientFramework.h"
 #include "ButtonUIComponent.h"
 #include "RectTransformComponent.h"
+#include "ImageUIComponent.h"
+#include "Scene.h"
+#include "ComponentStorage.h"
+
+void ButtonUIComponent::SetState(ButtonState state)
+{
+	if (m_state != state)
+	{
+		m_state = state;
+		UpdateVisuals();
+	}
+}
 
 bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isMouseDown, bool isMouseUp)
 {
@@ -20,13 +32,14 @@ bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isM
 	Vec2 vMousePos = {mousePos.x, mousePos.y};
 	bool isInside = rectTr->Contains(vMousePos);
 
+	ButtonState nextState = m_state;
+
 	if (isInside)
 	{
 		if (isMouseDown)
 		{
 			// 눌린 상태
-			m_state = ButtonState::Pressed;
-			return true;
+			nextState = ButtonState::Pressed;
 		}
 		else if (isMouseUp)
 		{
@@ -38,65 +51,47 @@ bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isM
 					m_onClick();
 				}
 			}
-			m_state = ButtonState::Hover;
-			return true;
+			nextState = ButtonState::Hover;
 		}
 		else
 		{
 			// 마우스만 올려져 있는 상태
-			// (기존에 Pressed였다가 밖으로 나가지 않고 버튼 위에서 마우스를 뗀 상태 포함)
-			m_state = ButtonState::Hover;
-			return true; // TODO: true/false 결정 필요
+			nextState = ButtonState::Hover;
 		}
 	}
 	else
 	{
 		// 마우스가 영역 밖에 있음
-		m_state = ButtonState::Normal;
-		return false;
+		nextState = ButtonState::Normal;
 	}
+
+	// 상태가 변했다면 시각적 업데이트 수행
+	if (nextState != m_state)
+	{
+		m_state = nextState;
+		UpdateVisuals();
+	}
+
+	return isInside;
 }
 
-void ButtonUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
+void ButtonUIComponent::UpdateVisuals()
 {
-	RectTransformComponent* rectTr = GetRectTransform();
-	if (!rectTr)
-	{
+	if (!m_targetImage.IsValid())
 		return;
-	}
 
-	// 현재 상태에 따른 색상 결정
-	DirectX::XMFLOAT4 targetColor = m_normalColor;
-	switch (m_state)
-	{
-	case ButtonState::Normal:
-		targetColor = m_normalColor;
-		break;
-	case ButtonState::Hover:
-		targetColor = m_hoverColor;
-		break;
-	case ButtonState::Pressed:
-		targetColor = m_pressedColor;
-		break;
-	case ButtonState::Disabled:
-		targetColor = m_disabledColor;
-		break;
-	}
+	GameObject* owner = GetGameObject();
+	if (!owner) return;
 
-	// 색상 Blending
-	DirectX::XMFLOAT4 finalColor;
-	finalColor.x = m_color.x * targetColor.x;
-	finalColor.y = m_color.y * targetColor.y;
-	finalColor.z = m_color.z * targetColor.z;
-	finalColor.w = m_color.w * targetColor.w;
+	Scene* scene = owner->GetScene();
+	if (!scene) return;
 
-	// 렌더링 데이터 생성
-	UIRenderData data;
-	data.textureId = 0; // ButtonUI는 텍스처를 사용하지 않으므로 0으로 설정
-	data.rect = rectTr->GetRect();
-	data.color = finalColor;
-	data.uvMin = {0.0f, 0.0f};
-	data.uvMax = {1.0f, 1.0f};
+	auto* imageStorage = scene->GetStorage<ImageUIComponent>();
+	if (!imageStorage) return;
 
-	outData.push_back(data);
+	ImageUIComponent* imageComp = imageStorage->Get(m_targetImage);
+	if (!imageComp) return;
+
+	// ImageUI에게 현재 상태만 전달 (색상은 ImageUI가 알아서 결정)
+	imageComp->SetState(m_state);
 }
