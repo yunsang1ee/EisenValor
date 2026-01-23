@@ -40,10 +40,9 @@ public:
 
 	// 패킷 만드는 부분
 	template <typename PacketFunc, typename... Args>
-	static flatbuffers::DetachedBuffer MakePacket(PacketFunc func, Args&&... args)
+	static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args)
 	{
-		flatbuffers::FlatBufferBuilder builder;
-		auto						   offset = func(builder, std::forward<Args>(args)...);
+		auto offset = func(builder, std::forward<Args>(args)...);
 		builder.Finish(offset);
 		return builder.Release();
 	}
