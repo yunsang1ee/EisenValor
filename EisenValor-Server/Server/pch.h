@@ -40,6 +40,8 @@ struct AttackInfo {
 	uint64								startPostDelay;
 };
 
+
+
 namespace Server {
 	class ClientSession;
 

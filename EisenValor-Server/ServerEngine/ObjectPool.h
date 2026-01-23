@@ -15,7 +15,6 @@ namespace ServerEngine {
 
         ~ObjectPool()
         {
-            m_pool.recycle();
         }
 
         template<typename... Args>

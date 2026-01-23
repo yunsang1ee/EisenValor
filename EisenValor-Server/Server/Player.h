@@ -21,6 +21,11 @@ namespace Server {
 			virtual bool OnDamaged(Creature* const attacker, const float dt) override final;
 			virtual void OnDeath() override final;
 			virtual void Respawn() override final;
+			void ReturnToPool() override
+			{
+				std::cout << "Player Return Pool!" << std::endl;
+				ServerEngine::ObjectPool<Player>::Push(this);
+			}
 		
 		public:
 			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }

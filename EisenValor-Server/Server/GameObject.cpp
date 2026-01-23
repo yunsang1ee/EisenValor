@@ -11,7 +11,7 @@ Server::Contents::GameObject::~GameObject()
 	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;
 }
 
-const Vec3 Server::Contents::GameObject::GetForwardDir()
+Vec3 Server::Contents::GameObject::GetForwardDir()
 {
 	Vec3 forward;
 	forward.x = sinf(m_posInfo.rot.y);

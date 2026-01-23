@@ -1,5 +1,8 @@
 #pragma once
 
+struct GameObjectDeleter;
+#include "GameObject.h"
+
 namespace Server {
 	namespace Contents {
 		class GameObject;
@@ -46,7 +49,7 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
+			static std::unique_ptr<Player, GameObjectDeleter>		CreatePlayer(const PlayerTemplate& t);
 			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
 			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
 			static std::unique_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);

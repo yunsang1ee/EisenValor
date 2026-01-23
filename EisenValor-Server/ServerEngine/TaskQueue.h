@@ -8,7 +8,12 @@ namespace ServerEngine {
 	class TaskQueue : public std::enable_shared_from_this<ServerEngine::TaskQueue> {
 	protected:
 		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
-		std::atomic_int									m_taskCount{};
+		std::atomic_int									m_taskCount;
+		bool											m_active;
+
+	public:
+		TaskQueue();
+		virtual ~TaskQueue();
 	
 	public:
 		// CHK: PushOnly = true
@@ -39,6 +44,10 @@ namespace ServerEngine {
 		{
 			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(memFunc, std::forward<CallArgs>(args)...));
 		}
+
+	public:
+		void SetActive(bool active) noexcept { m_active = active; }
+		bool IsActive() const noexcept { return m_active; }
 
 	protected:
 		void ClearTaskQueue() noexcept;
