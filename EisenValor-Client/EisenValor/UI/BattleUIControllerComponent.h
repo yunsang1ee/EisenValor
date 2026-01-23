@@ -34,22 +34,22 @@ private:
 	static constexpr float kUpRegionStart = 30.0f;
 	static constexpr float kUpRegionEnd = 150.0f;
 	static constexpr float kLeftRegionStart = 150.0f;
-	static constexpr float kLeftRegionEnd = 250.0f; // 기존 270에서 250으로 조정
+	static constexpr float kLeftRegionEnd = 250.0f;
 	
 	// 리셋 데드존 (입력 취소 구역)
 	static constexpr float kDeadZoneRegionStart = 250.0f;
 	static constexpr float kDeadZoneRegionEnd = 270.0f;
 
 	static constexpr float kRightRegionStart = 270.0f;
-	static constexpr float kRightRegionEnd = 30.0f; // 0도를 넘어가는 특별 처리 필요
+	static constexpr float kRightRegionEnd = 30.0f;
 
 	// 데드존 상수
-	static constexpr float kMouseDeltaIgnoreSq = 1.0f; // 마우스 이동량 제곱 데드존
+	static constexpr float kMouseDeltaIgnoreSq = 1.0f; // 너무 작은 값은 무시 
 
 	// 누적 방식 관련
 	float m_accumulatedDeltaX = 0.0f;
 	float m_accumulatedDeltaY = 0.0f;
-	static constexpr float kAccumulationThresholdSq = 10.0f; // 누적된 이동량 임계값
+	static constexpr float kAccumulationThresholdSq = 20.0f; // 누적된 이동량 임계값
 
 private:
 	// UI 자식 핸들

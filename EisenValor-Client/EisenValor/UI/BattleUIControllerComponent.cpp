@@ -173,9 +173,8 @@ void BattleUIControllerComponent::ProcessMouseInput()
 		else if (instantDegree >= kRightRegionStart || instantDegree < kRightRegionEnd)
 			instantDir = EGuardDir::Right;
 
-		// 이미 해당 방향이 선택(호버링)된 상태라면 누적하지 않음
-		// 단, None인 경우 현재 선택이 None이 아닐 때만 누적 진행 (리셋을 시켜야 하므로)
-		if (instantDir == m_currentSelectedDir && instantDir != EGuardDir::None)
+		// 이미 해당 방향이 호버링된 상태라면 누적하지 않음
+		if (instantDir == m_currentSelectedDir)
 		{
 			// 동일 방향으로 더 이동함 -> 무시
 		}
@@ -190,7 +189,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	float radian = atan2f(-m_accumulatedDeltaY, m_accumulatedDeltaX);
 	float degree = NormalizeAngle(radian * kRadToDeg);
 
-	// 1. 리셋 구역(데드존) 진입 시 즉시 시각적 선택 해제 및 데이터 초기화
+	// 1. 데드존
 	if (degree >= kDeadZoneRegionStart && degree < kDeadZoneRegionEnd && totalDeltaSq >= kAccumulationThresholdSq)
 	{
 		m_accumulatedDeltaX = 0.0f;
@@ -212,7 +211,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 		DEBUG_LOG_FMT("[BattleUI] Direction Changed -> {}\n", (int)detectedDir);
 	}
 
-	// 4. 마우스 좌클릭 (확정)
+	// 4. 마우스 좌클릭
 	if (input.GetInputDown(VK_LBUTTON))
 	{
 		UpdateUISelection(m_currentSelectedDir);
@@ -223,13 +222,9 @@ void BattleUIControllerComponent::ProcessMouseInput()
 		m_accumulatedDeltaX = 0.0f;
 		m_accumulatedDeltaY = 0.0f;
 	}
-	// 5. 마우스 버튼을 떼고 있을 때 감쇄 로직 (선택 상태는 유지)
 	else if (!input.GetInput(VK_LBUTTON))
 	{
-		m_accumulatedDeltaX *= 0.9f;
-		m_accumulatedDeltaY *= 0.9f;
-		
-		if (m_accumulatedDeltaX * m_accumulatedDeltaX + m_accumulatedDeltaY * m_accumulatedDeltaY < 1.0f)
+		if (m_accumulatedDeltaX * m_accumulatedDeltaX + m_accumulatedDeltaY * m_accumulatedDeltaY < kMouseDeltaIgnoreSq)
 		{
 			m_accumulatedDeltaX = 0.0f;
 			m_accumulatedDeltaY = 0.0f;

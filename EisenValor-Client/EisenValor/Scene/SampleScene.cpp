@@ -1,4 +1,5 @@
 #include "stdafxClient.h"
+#include <filesystem>
 #include "SampleScene.h"
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
@@ -94,7 +95,7 @@ void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
 
-	uint32_t testTextureId = UITextureGlobal::GetInstance().LoadTexture(L"\Resource\Texture\test.dds");
+	uint32_t testTextureId = UITextureGlobal::GetInstance().LoadTexture(L"Resource\\Texture\\test.dds");
 	DEBUG_LOG_FMT("[SampleScene] Loaded Test Texture ID: {}\n", testTextureId);
 
 	ReserveGameObject(
@@ -142,7 +143,6 @@ void SampleScene::CreateSceneObjects()
 		"BattleUI", std::nullopt,
 		[this, testTextureId](GameObject* battleUIObj)
 		{
-			// 1. 컴포넌트 부착 (컨트롤러와 기본 RectTransform)
 			CreateComponentWithInit<BattleUIControllerComponent>(battleUIObj->GetHandle(), [](auto*){});
 			CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*){});
 
@@ -161,7 +161,7 @@ void SampleScene::CreateSceneObjects()
 					name, std::nullopt,
 					[scene, parentTrHandle, testTextureId](GameObject* childObj)
 					{
-						// RectTransform 부착 (위치는 컨트롤러가 설정)
+						// RectTransform
 						scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*){});
 
 						// 부모 설정 (컨트롤러가 자식을 찾음)
@@ -186,7 +186,7 @@ void SampleScene::CreateSceneObjects()
 						scene->CreateComponentWithInit<ButtonUIComponent>(
 							childObj->GetHandle(),
 							[](ButtonUIComponent* button) {
-								button->SetOrder(11); // 이미지보다 앞에 오도록 설정
+								button->SetOrder(9); // 이미지보다 앞에 오도록 설정
 							}
 						);
 					}

@@ -163,10 +163,10 @@
       <Filter>Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="Resource\Shader\UIVertexShader.hlsl" />
+    <None Include="Resource\Shader\UIVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Resource\Shader\UIPixelShader.hlsl" />
+    <None Include="Resource\Shader\UIPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Resource\Shader\PixelShader.hlsl">
