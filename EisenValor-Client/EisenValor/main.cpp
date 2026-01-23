@@ -76,7 +76,7 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
-	if (!g_Framework->Initialize(hInstance, hWnd))
+	if (!g_Framework->Initialize(hInstance, hWnd/*, "100.90.51.106"*//*, 7777*/))
 	{
 		return FALSE;
 	}

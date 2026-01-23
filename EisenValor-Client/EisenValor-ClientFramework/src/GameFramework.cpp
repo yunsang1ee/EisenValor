@@ -13,10 +13,10 @@
 
 #define SERVER
 
-bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd)
+bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
 {
 #ifdef SERVER
-	if (false == GLOBAL(NetBridge::NetworkGlobal).Init())
+	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
 		return false;
 #endif
 
@@ -52,11 +52,25 @@ void GameFramework::Run()
 	static float runTime{};
 	const float	 dt = GLOBAL(TimerGlobal).Update();
 
-	// if ((runTime += dt) > 0.2f)
-	//{
-	//	runTime = 0.0f;
-	//	DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f}, Frame Time: {:.2f}ms\n", 1.0f / dt, dt * 1000.0f);
-	// }
+	static float timeElapsed = 0.0f;
+	static int	 frameCount = 0;
+
+	timeElapsed += dt;
+	frameCount++;
+
+	if (timeElapsed >= 1.0f)
+	{
+		const float fps = static_cast<float>(frameCount) / timeElapsed;
+		const float ms = (timeElapsed * 1000.0f) / static_cast<float>(frameCount);
+
+		DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f} ({:.2f} ms)\n", fps, ms);
+
+		std::string windowTitle = std::format("EisenValor (FPS: {:.0f})", fps);
+		SetWindowTextA(m_hWnd, windowTitle.c_str());
+
+		timeElapsed = 0.0f;
+		frameCount = 0;
+	}
 
 	GLOBAL(SceneGlobal).OnBeginFrame();
 
