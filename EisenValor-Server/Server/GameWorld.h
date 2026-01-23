@@ -22,11 +22,12 @@ namespace Server {
 		class User;
 		class Bot;
 		class PacketBuffer;
-
+		
 		using Participants = std::unordered_map<uint32, std::shared_ptr<Participant>>;
 		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
 		using Bots = std::unordered_map<uint32, std::shared_ptr<Bot>>;
-		using GameObjects = std::map<uint32, std::unique_ptr<GameObject>>;
+
+		using GameObjects = std::map<uint32, std::unique_ptr<Server::Contents::GameObject, GameObjectDeleter>>;
 
 		class GameWorld : public ServerEngine::TaskQueue {
 		private:
@@ -35,7 +36,11 @@ namespace Server {
 			Bots																	m_bots;
 
 			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>					m_gameObjectsGroups;
-			std::queue<std::function<void()>>										m_eventFpQueue;
+			
+			// PENDING
+			std::queue<std::function<void()>>										m_pendingEventFpQueue;
+			std::queue<std::unique_ptr<GameObject, GameObjectDeleter>>				m_pendingAddObjectQueue;
+			std::queue<GameObject*>													m_pendingRemoveObjectQueue;
 
 			// UPDATE & TIME
 			bool																	m_firstUpdate;
@@ -49,10 +54,12 @@ namespace Server {
 			float																	m_accGameTime;
 			float																	m_dt;
 
+			// COLLISION
 			CollisionDetector														m_collisionDetector;
 			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>	m_check;
 			std::map<uint64, bool>													m_mapColInfo;
 
+			// NAVSYSTEM
 			NavSystem																m_navSystem;
 
 		public:
@@ -67,7 +74,7 @@ namespace Server {
 			void Start(const Users& users, const Bots& bots);
 			void LeaveGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
-			void AddEvent(const std::function<void()>& eve) { m_eventFpQueue.push(eve); }
+			void AddEvent(const std::function<void()>& eve) { m_pendingEventFpQueue.push(eve); }
 
 		public:
 			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo);
@@ -92,19 +99,19 @@ namespace Server {
 			const auto& GetGameObjectGroups() const noexcept { return m_gameObjectsGroups; }
 
 		private:
+			void AddGameObject(std::unique_ptr<GameObject, GameObjectDeleter> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
+			void RemoveGameObject(GameObject* gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
 			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 
 		private:
 			void Update();
 			void FixedUpdate();
 			void Finish();
-
-		private:
-			void AddGameObject(std::unique_ptr<GameObject> newGameObject);
-			void RemoveGameObject(GameObject* gameObject);
-
+		
 		private:
 			void ProcessEvents();
+			void ProcessPendingAddObjectList();
+			void ProcessPendingRemoveObjectList();
 			void CheckGameTime(const float dt);
 
 			bool IsFinish();

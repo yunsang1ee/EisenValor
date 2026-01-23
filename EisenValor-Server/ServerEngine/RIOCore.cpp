@@ -145,8 +145,7 @@ void ServerEngine::RIOCore::FlushTaskQueue()
 			break;
 
 		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->DequeTaskQueue();
-		if(nullptr == taskQueue)
-			break;
+		if(nullptr == taskQueue) break;
 		taskQueue->Execute();
 	}
 }

@@ -23,7 +23,7 @@ void Server::Contents::FSM::SetState(const uint8 state)
 				if(world)
 					dt = world->GetGameWorldDT();
 				m_curState->Enter(dt);
-				SendPacket();
+				SendUpdateStatePacket();
 			}
 		});
 	}
@@ -54,13 +54,13 @@ void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt)
 			if(iter != m_states.end()) {
 				m_curState = iter->second.get();
 				m_curState->Enter(dt);
-				SendPacket();
+				SendUpdateStatePacket();
 			}
 			});
 	}
 }
 
-void Server::Contents::FSM::SendPacket()
+void Server::Contents::FSM::SendUpdateStatePacket()
 {
 	auto const owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };

@@ -14,6 +14,12 @@ namespace Server {
 		class Collider;
 		class OBBCollider;
 
+		class GameObject;
+
+		struct GameObjectDeleter {
+			void operator()(GameObject* obj) const;
+		};
+
 		class GameObject {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
@@ -51,6 +57,11 @@ namespace Server {
 			virtual void OnCollisionExit(Collider* const other) {}
 
 			virtual void Update(const float dt);
+
+			virtual void ReturnToPool()
+			{
+				delete this;
+			}
 
 		public:
 			template<std::derived_from<Component> T>
@@ -105,6 +116,8 @@ namespace Server {
 			}
 
 
+
+
 		public:
 			void SetID(const uint32 id) noexcept { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
@@ -124,10 +137,17 @@ namespace Server {
 			const Vec3& GetScale() const noexcept { return m_scale; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
-			const Vec3 GetForwardDir();
+			Vec3 GetForwardDir();
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
 			bool IsCreature() const noexcept { return m_isCreature; }
 			bool IsDead() { return false; }
 		};
+
+		inline void GameObjectDeleter::operator()(GameObject* obj) const
+		{
+			if(obj) {
+				obj->ReturnToPool();
+			}
+		}
 	}
 }

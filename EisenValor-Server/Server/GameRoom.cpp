@@ -25,6 +25,8 @@ void Server::Contents::GameRoom::Init()
 //#ifdef DEVELOP
 //	CreateWorld();
 //#endif // DEVELOP
+
+	CreateWorld();
 }
 
 bool Server::Contents::GameRoom::CanStart()

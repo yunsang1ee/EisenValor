@@ -27,7 +27,7 @@ void Server::Contents::Soldier::OnCollisionExit(Collider* const other)
 
 void Server::Contents::Soldier::Update(const float dt)
 {
-
+	// TODO: 이동 시 이동패킷 보내주기
 }
 
 void Server::Contents::Soldier::OnDeath()

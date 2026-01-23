@@ -59,9 +59,9 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 	OnDisconnected(reason);
 
 	Clean();
-
-	auto& sessionPool =  m_owner->GetSessionPool() ;
-	sessionPool.EnqSession(std::static_pointer_cast<Session>(shared_from_this()));
+	
+	//auto& sessionPool =  m_owner->GetSessionPool() ;
+	//sessionPool.EnqSession(std::static_pointer_cast<Session>(shared_from_this()));
 }
 
 void ServerEngine::Session::FlushPacketQueue()

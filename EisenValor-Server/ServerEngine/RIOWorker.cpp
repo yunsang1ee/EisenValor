@@ -87,6 +87,5 @@ bool ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 	session->SetOwner(this);
 	if(false == session->AcceptCompleted(socket, clientAddr)) return false;
 	m_connectedSession.insert(std::move(session));
-
 	return true;
 }
