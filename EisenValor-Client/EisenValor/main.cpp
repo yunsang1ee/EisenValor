@@ -177,15 +177,16 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		renderer.AddRenderPass("UI", std::move(uiPass));
 	}
 
+	// UI 시스템 초기화
+	GLOBAL(UITextureGlobal).Initialize();
+	GLOBAL(UIGlobal).Initialize();
+
 	// Scene 등록
 	{
 		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
 		GLOBAL(SceneGlobal).LoadScene("SampleScene");
 	}
 
-	// UI 시스템 초기화
-	GLOBAL(UITextureGlobal).Initialize();
-	GLOBAL(UIGlobal).Initialize();
 
 	while (not quit)
 	{
