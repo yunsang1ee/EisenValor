@@ -27,7 +27,7 @@ namespace Server {
 			State*		GetCurState() const { return m_curState; }
 
 		private:
-			void		SendPacket();
+			void		SendUpdateStatePacket();
 		};
 	}
 }

@@ -19,6 +19,7 @@ void ServerEngine::SessionPool::Init(SessionFactoryFunc sessionFunc)
 void ServerEngine::SessionPool::EnqSession(std::shared_ptr<Session> session)
 {
 	std::cout << "EnqSession!" << std::endl;
+	session->~Session();
 	m_freeSessions.push(session);
 }
 

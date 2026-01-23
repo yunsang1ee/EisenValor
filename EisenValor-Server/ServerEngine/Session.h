@@ -38,7 +38,7 @@ namespace ServerEngine {
 		virtual ~Session();
 
 	public:
-		virtual void OnConnected() {}
+		virtual void OnConnected() abstract;
 		virtual void OnDisconnected(const std::string_view reason) {}
 
 	public:
