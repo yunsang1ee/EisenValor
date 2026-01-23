@@ -21,10 +21,10 @@ namespace Server {
 			virtual bool OnDamaged(Creature* const attacker, const float dt) override final;
 			virtual void OnDeath() override final;
 			virtual void Respawn() override final;
+		
 		public:
 			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
 			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
-
 
 		private:
 			void Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo);
@@ -32,9 +32,7 @@ namespace Server {
 			void Handle_CS_PLAYER_FAKE();
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID);
 			friend class GameWorld;
-
-		public:
-
+			friend class GameObjectFactory;
 		};
 	}
 }

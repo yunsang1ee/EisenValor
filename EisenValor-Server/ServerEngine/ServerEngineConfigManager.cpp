@@ -25,17 +25,18 @@ bool ServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::stri
 
     if(doc.HasMember("NetworkConfigure")) {
         const Value& network = doc["NetworkConfigure"];
+        std::cout << "[NetworkConfigure]" << std::endl;
 
         if(network.HasMember("port") && network["port"].IsInt()) {
             m_networkConfig.port = network["port"].GetInt();
-            std::cout << "[NetworkConfigure] Port: " << m_networkConfig.port << std::endl;
+            std::cout << " - Port: " << m_networkConfig.port << std::endl;
         }
     }
 
     if(doc.HasMember("RIOWorkerConfigure")) {
         const Value& rio = doc["RIOWorkerConfigure"];
 
-        std::cout << "\n[RIOWorkerConfigure] Settings:" << std::endl;
+        std::cout << "\n[RIOWorkerConfigure]" << std::endl;
 
         if(rio.HasMember("MAX_SESSION_PER_RIO_WORKER")) {
             m_rioWorkerConfig.MAX_SESSION_PER_RIO_WORKER = rio["MAX_SESSION_PER_RIO_WORKER"].GetInt();
@@ -60,9 +61,10 @@ bool ServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::stri
 
     if(doc.HasMember("ThreadConfigure")) {
         const Value& thread = doc["ThreadConfigure"];
+        std::cout << "\n[ThreadConfigure]" << std::endl;
         if(thread.HasMember("MAX_WORKER_THREAD_COUNT")) {
 			m_threadConfig.MAX_WORKER_THREAD_COUNT = thread["MAX_WORKER_THREAD_COUNT"].GetInt();
-			std::cout << "\n[ThreadConfigure] Max Worker Thread Count: " << m_threadConfig.MAX_WORKER_THREAD_COUNT << std::endl;
+			std::cout << " - Max Worker Thread Count: " << m_threadConfig.MAX_WORKER_THREAD_COUNT << std::endl;
         }
         else return false;
     }
@@ -70,7 +72,7 @@ bool ServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::stri
 
     if(doc.HasMember("SessionConfigure")) {
         const Value& session = doc["SessionConfigure"];
-
+        std::cout << "\n[SessionConfigure]" << std::endl;
         if(session.HasMember("MAX_RIO_BUFFER_SIZE")) {
            m_sessionConfig.MAX_RIO_BUFFER_SIZE = session["MAX_RIO_BUFFER_SIZE"].GetInt();
             std::cout << " - Buffer Size: " << m_sessionConfig.MAX_RIO_BUFFER_SIZE << std::endl;
@@ -98,7 +100,7 @@ bool ServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::stri
 
         if(session.HasMember("COMMIT_SEND_MS")) {
             m_sessionConfig.COMMIT_SEND_MS = session["COMMIT_SEND_MS"].GetInt();
-            std::cout << "\n[SessionConfigure] Commit Send MS: " << m_sessionConfig.COMMIT_SEND_MS << std::endl;
+            std::cout << " - Commit Send MS: " << m_sessionConfig.COMMIT_SEND_MS << std::endl;
         }
         else return false;
 

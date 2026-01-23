@@ -39,7 +39,7 @@ namespace Server {
 			std::shared_ptr<GameWorld>									m_gameWorld;
 			static constexpr uint8										MAX_PARTICIPANTS = 6;
 			int32														m_loadingCompletedUserCount;
-		
+
 		private:
 			GameRoom() = delete;
 			explicit GameRoom(const uint16 roomID);
@@ -53,17 +53,11 @@ namespace Server {
 			friend class ServerEngine::ObjectPool<GameRoom>;
 
 		public:
-			uint16 GetID() const noexcept { return m_info.id; }
-			const RoomInfo& GetRoomInfo() const noexcept { return m_info; }
-
-		public:
 			void JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept;
 			void LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept;
-		
 			void ReturnToGameRoom(const Users& users, const Bots& bots);
-
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
-		
+
 		public:
 			/* 패킷 받아서 처리되는 부분 */
 			void Handle_CS_CHANGE_TEAM(const std::shared_ptr<ClientSession>& clientSession);
@@ -71,6 +65,14 @@ namespace Server {
 			void Handle_CS_READY_GAME(const std::shared_ptr<ClientSession>& clientSession);
 			void Handle_CS_GAME_START(const std::shared_ptr<ClientSession>& clientSession);
 			void Handle_CS_COMPLETE_LOADING_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession);
+
+#ifndef ENABLE_LOBBY
+			void Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession);
+#endif // DEVELOP
+
+		public:
+			uint16 GetID() const noexcept { return m_info.id; }
+			const RoomInfo& GetRoomInfo() const noexcept { return m_info; }
 
 		private:
 			void Init();
@@ -82,10 +84,6 @@ namespace Server {
 
 			friend class GameLobby;
 			friend class GameWorld;
-		public:
-			#ifndef ENABLE_LOBBY
-			void EnterGameWorld(const std::shared_ptr<ClientSession>& clientSession);
-			#endif // DEVELOP
 
 		};
 	}

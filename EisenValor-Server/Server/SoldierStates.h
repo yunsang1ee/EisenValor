@@ -24,10 +24,7 @@ namespace Server {
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
-
-		public:
 			virtual void Update(const float dt) override;
-
 		};
 
 
@@ -44,10 +41,7 @@ namespace Server {
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
-
-		public:
 			virtual void Update(const float dt) override;
-
 			friend class GameObjectFactory;
 		};
 
@@ -71,10 +65,7 @@ namespace Server {
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
-
-		public:
 			virtual void Update(const float dt) override;
-
 			friend class GameObjectFactory;
 		};
 
@@ -100,10 +91,7 @@ namespace Server {
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
-
-		public:
 			virtual void Update(const float dt) override;
-
 			friend class GameObjectFactory;
 		};
 
@@ -127,10 +115,7 @@ namespace Server {
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
-
-		public:
 			virtual void Update(const float dt) override;
-
 			friend class GameObjectFactory;
 
 		};
@@ -154,13 +139,10 @@ namespace Server {
 		public:
 			virtual void Enter(const float dt) override;
 			virtual void Exit(const float dt) override;
-
+			virtual void Update(const float dt) override;
+		
 		public:
 			void SetStunTime(const float stunTime) noexcept { m_stunTime = stunTime; }
-
-		public:
-			virtual void Update(const float dt) override;
-
 			friend class GameObjectFactory;
 		};
 

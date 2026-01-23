@@ -17,7 +17,7 @@ public:
 	void ExecuteCommandList(ID3D12CommandList* commandList);
 	void Signal(ID3D12Fence* fence, uint64_t fenceValue);
 	void Wait(ID3D12Fence* fence, uint64_t fenceValue);
-	void WaitForIdle();
+	bool WaitForIdle(uint32_t timeoutMs = INFINITE);
 
 	ID3D12CommandQueue* GetQueue() const { return m_commandQueue.Get(); }
 	uint64_t			GetCompletedFenceValue() const { return m_fence->GetCompletedValue(); }

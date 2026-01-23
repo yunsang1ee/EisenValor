@@ -5,9 +5,6 @@ class DxGfxCommandQueueGlobal;
 class DxSwapChain
 {
 public:
-	using ResizeCallback = std::function<void(uint32_t newWidth, uint32_t newHeight)>;
-	void SetResizeCallback(ResizeCallback callback) { m_resizeCallback = std::move(callback); }
-
 	struct SwapChainInfo
 	{
 		uint32_t	width;
@@ -127,7 +124,6 @@ private:
 	uint64_t m_frameCount = 0;
 	bool	 m_supportsTearing = false;
 
-	ResizeCallback m_resizeCallback;
 	bool		   m_isFullscreen = false;
 	bool		   m_isBorderlessFullscreen = false;
 

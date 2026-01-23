@@ -85,12 +85,6 @@
     <ClInclude Include="TaskTimer.h">
       <Filter>95. Managers\TaskTimer</Filter>
     </ClInclude>
-    <ClInclude Include="Allocator.h">
-      <Filter>04. MemoryPool\Allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="MemoryPool.h">
-      <Filter>04. MemoryPool</Filter>
-    </ClInclude>
     <ClInclude Include="ServerEngineConfigManager.h">
       <Filter>95. Managers\ServerEngineConfigManager</Filter>
     </ClInclude>
@@ -155,12 +149,6 @@
     </ClCompile>
     <ClCompile Include="ServerEngineTLS.cpp">
       <Filter>97. Headers</Filter>
-    </ClCompile>
-    <ClCompile Include="Allocator.cpp">
-      <Filter>04. MemoryPool\Allocator</Filter>
-    </ClCompile>
-    <ClCompile Include="MemoryPool.cpp">
-      <Filter>04. MemoryPool</Filter>
     </ClCompile>
     <ClCompile Include="ServerEngineConfigManager.cpp">
       <Filter>95. Managers\ServerEngineConfigManager</Filter>
@@ -238,9 +226,6 @@
     </Filter>
     <Filter Include="04. MemoryPool">
       <UniqueIdentifier>{1d58aba8-4053-4370-bdfc-a12582f80127}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="04. MemoryPool\Allocator">
-      <UniqueIdentifier>{7b6adc9b-32a3-4c18-81e7-e0f49db5c8d7}</UniqueIdentifier>
     </Filter>
     <Filter Include="94. Config">
       <UniqueIdentifier>{3c6df255-502a-4eeb-a1b6-80377ca64c18}</UniqueIdentifier>

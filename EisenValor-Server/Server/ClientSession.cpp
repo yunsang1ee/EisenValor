@@ -30,7 +30,7 @@ void Server::ClientSession::Ping()
 		if(pingPongInterval >= m_timeoutInterval) {
 			std::string_view reason{ "Disconnected By PingCheck" };
 			Disconnect(reason.data());
-			LOG_INFO("Session ID:{},", GetID() + reason.data());
+			LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
 			return;
 		}
 
@@ -50,11 +50,12 @@ void Server::ClientSession::OnConnected()
 	Ping();
 }
 
-void Server::ClientSession::OnDisconnected()
+void Server::ClientSession::OnDisconnected(const std::string_view reason)
 {
 	auto clientSession = std::static_pointer_cast<Server::ClientSession>(shared_from_this());
 	MANAGER(Server::ClientSessionManager)->RemoveSession(clientSession);
-	LOG_INFO("Session ID:{}, OnDisconnected!", GetID());
+	
+	LOG_INFO("Session ID:{}, OnDisconnected!, Reason: {}", GetID(), reason.data());
 
 	switch(const auto state = clientSession->GetState()) {
 		case SESSION_STATE::FREE:

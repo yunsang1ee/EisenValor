@@ -19,9 +19,9 @@ namespace Server {
 			virtual ~General();
 
 		public:
-			bool IsTargetInAttackRange(GameObject* const target);
 			virtual void OnDeath() override;
 			virtual void Respawn() override;
+			bool IsTargetInAttackRange(GameObject* const target);
 
 		public:
 			void AddSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType |= subStateType; }

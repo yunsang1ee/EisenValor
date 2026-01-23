@@ -69,16 +69,6 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
 
-	m_swapChain->SetResizeCallback(
-		[this](uint32_t w, uint32_t h)
-		{
-			for (auto& entry : m_renderPasses)
-			{
-				entry.pass->OnResize(w, h);
-			}
-		}
-	);
-
 	DEBUG_LOG_FMT("[DxRendererGlobal] SwapChain created: {}x{}\n", width, height);
 }
 
@@ -238,12 +228,30 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 	auto& device = GLOBAL(DxDeviceGlobal);
 	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 
-	commandQueue.WaitForIdle();
+	if (!commandQueue.WaitForIdle(5'000))
+	{
+		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: WaitForIdle timeout during resize!\n");
+
+		HRESULT hr = device.GetDevice()->GetDeviceRemovedReason();
+		if (FAILED(hr))
+		{
+			DEBUG_LOG_FMT(
+				"[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr)
+			);
+			return;
+		}
+	}
 		
 	m_swapChain->OnResize(
 		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
 	);	
+
+	for (auto& entry : m_renderPasses)
+	{
+		entry.pass->OnResize(width, height);
+	}
+
 	DEBUG_LOG_FMT("[DxRendererGlobal] Resize handled: {}x{}\n", width, height);
 }
 

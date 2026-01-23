@@ -15,6 +15,7 @@
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{99e1086d-2675-4837-bbf4-511fdd0d0603}</UniqueIdentifier>
+      <Extensions>hlsl;hlsli</Extensions>
     </Filter>
     <Filter Include="RenderPass">
       <UniqueIdentifier>{c60e310a-9a7a-433c-8fa8-e607c81fdd65}</UniqueIdentifier>
@@ -162,12 +163,26 @@
       <Filter>Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="RaytracingPrimary.hlsl" />
-    <None Include="Resource\Shader\PixelShader.hlsl" />
-    <None Include="Resource\Shader\VertexShader.hlsl" />
-    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
-    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
     <None Include="Resource\Shader\UIVertexShader.hlsl" />
+      <Filter>Shaders</Filter>
+    </None>
     <None Include="Resource\Shader\UIPixelShader.hlsl" />
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\VertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

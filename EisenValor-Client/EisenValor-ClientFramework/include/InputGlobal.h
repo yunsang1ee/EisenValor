@@ -43,9 +43,11 @@ public:
 	void AfterUpdate();
 
 	void SetMouseLocked(bool locked);
+	void ToggleMouseLock() { SetMouseLocked(!m_mouseLocked); }
 	bool IsMouseLocked() const { return m_mouseLocked; }
 
 	void SetWindowFocused(bool focused);
+	bool IsWindowFocused() const { return m_isWindowFocused; }
 
 	void OnResize(uint32_t width, uint32_t height);
 
