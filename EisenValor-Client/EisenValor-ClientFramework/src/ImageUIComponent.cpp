@@ -16,38 +16,60 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 	RectTransformComponent::Rect finalRect = rectTr->GetRect();
 
 	//// 디버깅용
-	//static bool s_hasLoggedRect = false;
-	//if (!s_hasLoggedRect)
+	// static bool s_hasLoggedRect = false;
+	// if (!s_hasLoggedRect)
 	//{
-	//	DEBUG_LOG_FMT("ImageUI GetRenderData - Rect: x={}, y={}, w={}, h={}\n", finalRect.x, finalRect.y, finalRect.width, finalRect.height);
-	//	s_hasLoggedRect = true;
-	//}
+	//	DEBUG_LOG_FMT("ImageUI GetRenderData - Rect: x={}, y={}, w={}, h={}\n", finalRect.x, finalRect.y,
+	// finalRect.width, finalRect.height); 	s_hasLoggedRect = true;
+	// }
 
-	// 9-Slice 사용 여부 
+	// 9-Slice 사용 여부
 	bool use9Slice =
 		(m_sliceBorder.x > 0.0f || m_sliceBorder.y > 0.0f || m_sliceBorder.z > 0.0f || m_sliceBorder.w > 0.0f);
 
+	// 상태에 따라 렌더링할 텍스처와 색상 결정
+	uint32_t		  targetTextureId = 0;
+	DirectX::XMFLOAT4 targetStateColor = {1.f, 1.f, 1.f, 1.f};
+
+	switch (m_currentState)
+	{
+	case ButtonState::Normal:
+		targetTextureId = m_normalTextureId;
+		targetStateColor = m_normalColor;
+		break;
+	case ButtonState::Hover:
+		targetTextureId = m_hoverTextureId;
+		targetStateColor = m_hoverColor;
+		break;
+	case ButtonState::Pressed:
+		targetTextureId = m_pressedTextureId;
+		targetStateColor = m_pressedColor;
+		break;
+	case ButtonState::Disabled:
+		targetTextureId = m_disabledTextureId;
+		targetStateColor = m_disabledColor;
+		break;
+	}
+
 	// UIRenderData 생성
 	UIRenderData data;
-	data.textureId = m_textureId;
+	data.textureId = targetTextureId;
 	data.rect = finalRect;
 	data.uvMin = {0.0f, 0.0f};
 	data.uvMax = {1.0f, 1.0f};
 
-	if (m_textureId == 0)
-	{
-		data.color = {1.0f, 0.0f, 0.0f, 1.0f}; // 빨간색
-	}
-	else
-	{
-		data.color = m_color; // 원래 색상
-	}
+	// 기본 색상(m_color)과 상태 색상(targetStateColor) 혼합하여 최종 틴트 결정
+	DirectX::XMFLOAT4 finalColor;
+	finalColor.x = m_color.x * targetStateColor.x;
+	finalColor.y = m_color.y * targetStateColor.y;
+	finalColor.z = m_color.z * targetStateColor.z;
+	finalColor.w = m_color.w * targetStateColor.w;
+	data.color = finalColor;
 
 	if (use9Slice)
 	{
 		// TODO : 9-Slice 렌더링 데이터 생성
 		// 현재는 생략
-		// 실제 구현 : 9개의 쿼드 데이터를 생성하여 outData.push_back()
 		outData.push_back(data);
 	}
 	else

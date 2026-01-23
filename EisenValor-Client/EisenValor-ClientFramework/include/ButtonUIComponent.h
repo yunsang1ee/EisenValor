@@ -1,17 +1,9 @@
 #pragma once
 #include "UIComponent.h"
+#include "ImageUIComponent.h"
 #include <functional>
 
-// 버튼 상태
-enum class ButtonState
-{
-	Normal,
-	Hover,
-	Pressed,
-	Disabled
-};
-
-// 이벤트
+// 이벤트 및 상호작용 담당
 class ButtonUIComponent : public UIComponent<ButtonUIComponent>
 {
 public:
@@ -28,15 +20,21 @@ public:
 
 	// 상태 호출
 	ButtonState GetState() const { return m_state; }
-	void		SetState(ButtonState state) { m_state = state; }
+	void		SetState(ButtonState state);
+
+	// 타겟 이미지 설정 (시각적 피드백 대상)
+	void SetTargetImage(HandleOf<ImageUIComponent> handle) { m_targetImage = handle; }
 
 	// UI Component Override
 	// 마우스 위치와 버튼 상태 확인 후 이벤트발생
 	bool ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isMouseDown, bool isMouseUp);
 
-	// 렌더링 데이터 생성
-	// 상태에 따라 색상 변경하여 피드백
-	virtual void GetRenderData(std::vector<UIRenderData>& outData) override;
+	// 렌더링 데이터 생성 - ButtonUI는 직접 렌더링하지 않음
+	virtual void GetRenderData(std::vector<UIRenderData>& outData) override {}
+
+private:
+	// 상태 변화를 타겟 이미지에 전파
+	void UpdateVisuals();
 
 private:
 	ButtonState m_state = ButtonState::Normal;
@@ -44,10 +42,6 @@ private:
 	// 이벤트 콜백
 	std::function<void()> m_onClick;
 
-	// 상태별 색상
-	//
-	DirectX::XMFLOAT4 m_normalColor = {0.7f, 0.7f, 0.7f, 1.0f};	// 회색
-	DirectX::XMFLOAT4 m_hoverColor = {0.0f, 0.0f, 0.0f, 1.0f};	// 검은색
-	DirectX::XMFLOAT4 m_pressedColor = {1.0f, 0.0f, 0.0f, 1.0f};
-	DirectX::XMFLOAT4 m_disabledColor = {0.0f, 0.0f, 0.0f, 0.0f}; // 반투명 회색
+	// 시각적 피드백을 줄 대상 이미지 (색상 로직은 ImageUI가 담당)
+	HandleOf<ImageUIComponent> m_targetImage;
 };

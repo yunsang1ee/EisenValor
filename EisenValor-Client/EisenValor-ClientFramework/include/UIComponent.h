@@ -5,6 +5,15 @@
 #include <vector>
 #include "GameObject.h"
 
+// UI 상호작용 상태 (UIComponent들이 공유)
+enum class ButtonState
+{
+	Normal,
+	Hover,
+	Pressed,
+	Disabled
+};
+
 // UIRenderPass가 RenderData를 수집하여 Batching
 struct UIRenderData
 {

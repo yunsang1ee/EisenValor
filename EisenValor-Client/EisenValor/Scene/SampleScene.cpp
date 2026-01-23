@@ -75,7 +75,7 @@ std::vector<uint32_t> cubeIndices = {
 } // namespace Cube
 
 // clang-format on
-} // namespace Resources
+} // namespace
 
 void SampleScene::OnRegisterCustomComponents()
 {
@@ -94,9 +94,6 @@ void SampleScene::OnStartImpl()
 void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
-
-	uint32_t testTextureId = UITextureGlobal::GetInstance().LoadTexture(L"Resource\\Texture\\test.dds");
-	DEBUG_LOG_FMT("[SampleScene] Loaded Test Texture ID: {}\n", testTextureId);
 
 	ReserveGameObject(
 		"Ground", std::nullopt,
@@ -141,10 +138,10 @@ void SampleScene::CreateSceneObjects()
 	// BattleUI와 자식 오브젝트들 생성
 	ReserveGameObject(
 		"BattleUI", std::nullopt,
-		[this, testTextureId](GameObject* battleUIObj)
+		[this](GameObject* battleUIObj)
 		{
-			CreateComponentWithInit<BattleUIControllerComponent>(battleUIObj->GetHandle(), [](auto*){});
-			CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*){});
+			CreateComponentWithInit<BattleUIControllerComponent>(battleUIObj->GetHandle(), [](auto*) {});
+			CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*) {});
 
 			auto   parentTrHandle = battleUIObj->GetComponentHandle<Transform>();
 			Scene* scene = battleUIObj->GetScene();
@@ -159,10 +156,10 @@ void SampleScene::CreateSceneObjects()
 			{
 				scene->ReserveGameObject(
 					name, std::nullopt,
-					[scene, parentTrHandle, testTextureId](GameObject* childObj)
+					[scene, parentTrHandle](GameObject* childObj)
 					{
 						// RectTransform
-						scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*){});
+						scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*) {});
 
 						// 부모 설정 (컨트롤러가 자식을 찾음)
 						if (auto childTrHandle = childObj->GetComponentHandle<Transform>(); childTrHandle.IsValid())
@@ -175,18 +172,15 @@ void SampleScene::CreateSceneObjects()
 
 						// ImageUI
 						scene->CreateComponentWithInit<ImageUIComponent>(
-							childObj->GetHandle(),
-							[testTextureId](ImageUIComponent* image) {
-								image->SetOrder(10);
-								image->SetTexture(testTextureId);
-							}
+							childObj->GetHandle(), [](ImageUIComponent* image) { image->SetOrder(10); }
 						);
 
 						// ButtonUI
 						scene->CreateComponentWithInit<ButtonUIComponent>(
 							childObj->GetHandle(),
-							[](ButtonUIComponent* button) {
-								button->SetOrder(9); // 이미지보다 앞에 오도록 설정
+							[](ButtonUIComponent* button)
+							{
+								button->SetOrder(11); // 이미지보다 앞에 오도록 설정
 							}
 						);
 					}
