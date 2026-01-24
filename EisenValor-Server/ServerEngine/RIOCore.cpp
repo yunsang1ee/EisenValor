@@ -7,12 +7,6 @@
 #include "TaskQueue.h"
 #include "ServerEngineConfigManager.h"
 
-std::string WStringToString(const std::wstring& wstr)
-{
-	std::filesystem::path p(wstr);
-	return p.string();
-}
-
 bool ServerEngine::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
 	m_acceptThreadNum = 0;
@@ -151,8 +145,7 @@ void ServerEngine::RIOCore::FlushTaskQueue()
 			break;
 
 		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->DequeTaskQueue();
-		if(nullptr == taskQueue)
-			break;
+		if(nullptr == taskQueue) break;
 		taskQueue->Execute();
 	}
 }

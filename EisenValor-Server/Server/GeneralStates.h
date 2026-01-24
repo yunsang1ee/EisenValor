@@ -10,19 +10,16 @@ namespace Server {
 		// ==================================
 		class GeneralIdleState : public State {
 			 DECLARE_CREATE_FUNC(GeneralIdleState)
-
 		private:
 			float m_accDTForStaminaRecovery;
 
-		public:
+		private:
 			GeneralIdleState();
 			virtual ~GeneralIdleState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
-
-		public:
 			virtual void Update(const float dt) override final;
 		};
 
@@ -31,16 +28,13 @@ namespace Server {
 		// ==================================
 		class GeneralMoveState : public State {
 			DECLARE_CREATE_FUNC(GeneralMoveState)
-
-		public:
+		private:
 			GeneralMoveState();
 			virtual ~GeneralMoveState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
-
-		public:
 			virtual void Update(const float dt) override final;
 		};
 
@@ -49,19 +43,16 @@ namespace Server {
 		// ==================================
 		class GeneralPreDelayState : public State {
 			DECLARE_CREATE_FUNC(GeneralPreDelayState)
-		
 		private:
 			uint64 m_startFrame;
 
-		public:
+		private:
 			GeneralPreDelayState();
 			virtual ~GeneralPreDelayState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
-
-		public:
 			virtual void Update(const float dt) override final;
 		};
 
@@ -71,15 +62,13 @@ namespace Server {
 		// ==================================
 		class GeneralAttackState : public State {
 			DECLARE_CREATE_FUNC(GeneralAttackState)
-		public:
+		private:
 			GeneralAttackState();
 			virtual ~GeneralAttackState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
-
-		public:
 			virtual void Update(const float dt) override final;
 		};
 
@@ -91,15 +80,13 @@ namespace Server {
 		private:
 			uint64 m_startFrame;
 
-		public:
+		private:
 			GeneralPostDelayState();
 			virtual ~GeneralPostDelayState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
-
-		public:
 			virtual void Update(const float dt) override final;
 		};
 
@@ -113,7 +100,7 @@ namespace Server {
 			uint64 m_startFrame;
 			uint32 m_stunDuration;
 		
-		public:
+		private:
 			GeneralStunState();
 			virtual ~GeneralStunState();
 
@@ -134,7 +121,7 @@ namespace Server {
 		private:
 			float m_accDTForRespawn;
 
-		public:
+		private:
 			GeneralDeadState();
 			virtual ~GeneralDeadState();
 

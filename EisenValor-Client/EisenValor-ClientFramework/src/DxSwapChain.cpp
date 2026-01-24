@@ -58,13 +58,14 @@ DxSwapChain::DxSwapChain(
 	));
 
 	ThrowIfFailed(swapChain1.As(&m_swapChain));
-	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER)
-	);
+	ThrowIfFailed(m_factory->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER));
 
 	CreateResources(device, m_gfxCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
+	m_nativeDisplayMode = GetNativeDisplayMode();
+
 	EnumerateDisplayModes();
-	m_currentDisplayMode = GetNativeDisplayMode();
+	m_currentDisplayMode = FindBestModeForCurrentMonitor();
 
 	LogMonitorInfo(); // 디버깅 정보 출력
 
@@ -117,15 +118,6 @@ void DxSwapChain::PresentMaxPerformance()
 	ThrowIfFailed(m_swapChain->Present(0, presentFlags));
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	++m_frameCount;
-	/*
-	if (m_frameCount % 1000 == 0)
-	{
-			DEBUG_LOG_FMT(
-				"[DxSwapChain] Performance Mode - Frame: {}, Tearing: {}, Windowed: {}\n", m_frameCount,
-		   m_supportsTearing, !m_isFullscreen && !m_isBorderlessFullscreen
-			);
-	}
-	*/
 }
 
 void DxSwapChain::OnResize(
@@ -229,7 +221,9 @@ DxSwapChain::SwapChainInfo DxSwapChain::GetInfo() const
 		.isBorderlessFullscreen = m_isBorderlessFullscreen,
 		.supportsTearing = m_supportsTearing,
 		.frameCount = m_frameCount,
-		.refreshRate = m_currentDisplayMode.refreshRateNumerator / m_currentDisplayMode.refreshRateDenominator,
+		.refreshRate = m_currentDisplayMode.refreshRateDenominator != 0
+						   ? (m_currentDisplayMode.refreshRateNumerator / m_currentDisplayMode.refreshRateDenominator)
+						   : 60,
 	};
 }
 
@@ -238,12 +232,43 @@ void DxSwapChain::SetFullscreen(bool enable)
 	if (m_isBorderlessFullscreen || m_isFullscreen == enable)
 		return;
 
+	if (!m_canExclusiveFullscreen || !m_outputFoundLastEnum)
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] Exclusive fullscreen unavailable. Fallback to borderless.\n");
+		SetBorderlessFullscreen(enable);
+		return;
+	}
+
+	HRESULT hr = m_swapChain->SetFullscreenState(enable ? TRUE : FALSE, nullptr);
+	if (FAILED(hr))
+	{
+		DEBUG_LOG_FMT(
+			"[DxSwapChain] SetFullscreenState({}) failed: 0x{:08X}\n", enable ? "TRUE" : "FALSE", (uint32_t)hr
+		);
+
+		BOOL isFs = FALSE;
+		if (SUCCEEDED(m_swapChain->GetFullscreenState(&isFs, nullptr)))
+		{
+			m_isFullscreen = (isFs == TRUE);
+			DEBUG_LOG_FMT(
+				"[DxSwapChain] Actual fullscreen state after failure: {}\n", m_isFullscreen ? "TRUE" : "FALSE"
+			);
+		}
+
+		if (enable == FALSE)
+		{
+			DEBUG_LOG_FMT("[DxSwapChain] Exit exclusive failed. Please try again.\n");
+			return;
+		}
+
+		m_canExclusiveFullscreen = false;
+		SetBorderlessFullscreen(enable);
+		return;
+	}
+
 	m_isFullscreen = enable;
-
-	ThrowIfFailed(m_swapChain->SetFullscreenState(enable ? TRUE : FALSE, nullptr));
-
-
-	DEBUG_LOG_FMT("[DxSwapChain] Fullscreen: {}\n", enable);
+	DEBUG_LOG_FMT("[DxSwapChain] Exclusive Fullscreen: {}\n", m_isFullscreen ? "TRUE" : "FALSE");
+	return;
 }
 
 void DxSwapChain::SetBorderlessFullscreen(bool enable)
@@ -279,168 +304,280 @@ void DxSwapChain::SetBorderlessFullscreen(bool enable)
 	}
 }
 
-void DxSwapChain::EnumerateDisplayModes()
+bool DxSwapChain::TryFindOutputFromDeviceAdapter(ComPtr<IDXGIOutput>& outOutput) const
 {
-	m_supportedModes.clear();
+	outOutput.Reset();
 
-	ComPtr<IDXGIOutput> output;
-	if (SUCCEEDED(m_swapChain->GetContainingOutput(&output)))
+	ComPtr<IDXGIDevice> dxgiDevice;
+	if (FAILED(m_device->QueryInterface(IID_PPV_ARGS(&dxgiDevice))))
 	{
-		UINT numModes = 0;
-		output->GetDisplayModeList(m_format, DXGI_ENUM_MODES_INTERLACED, &numModes, nullptr);
+		return false;
+	}
 
-		DEBUG_LOG_FMT("[DxSwapChain] Found {} display modes for format {}\n", numModes, (int)m_format);
+	ComPtr<IDXGIAdapter> adapter;
+	if (FAILED(dxgiDevice->GetAdapter(&adapter)))
+	{
+		return false;
+	}
 
-		if (numModes > 0)
+	const HMONITOR monitor = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
+
+	for (UINT i = 0;; ++i)
+	{
+		ComPtr<IDXGIOutput> output;
+		if (adapter->EnumOutputs(i, &output) == DXGI_ERROR_NOT_FOUND)
 		{
-			std::vector<DXGI_MODE_DESC> modes(numModes);
-			output->GetDisplayModeList(m_format, DXGI_ENUM_MODES_INTERLACED, &numModes, modes.data());
+			break;
+		}
+		if (!output)
+		{
+			continue;
+		}
 
-			DEBUG_LOG_FMT("[DxSwapChain] Available display modes:\n");
-			uint32_t logCount = std::min(numModes, 10u);
-			for (uint32_t i = 0; i < logCount; ++i)
-			{
-				const auto& mode = modes[i];
-				uint32_t	refreshRate = mode.RefreshRate.Numerator / mode.RefreshRate.Denominator;
-				DEBUG_LOG_FMT("[DxSwapChain] Mode {}: {}x{} @ {}Hz\n", i, mode.Width, mode.Height, refreshRate);
-			}
-
-			for (const auto& mode : modes)
-			{
-				m_supportedModes.emplace_back(
-					mode.Width, mode.Height, mode.RefreshRate.Numerator, mode.RefreshRate.Denominator, mode.Format,
-					mode.Scaling
-				);
-			}
+		DXGI_OUTPUT_DESC desc{};
+		if (SUCCEEDED(output->GetDesc(&desc)) && desc.Monitor == monitor)
+		{
+			outOutput = output;
+			return true;
 		}
 	}
-
-	DEBUG_LOG_FMT("[DxSwapChain] Enumerated {} display modes\n", m_supportedModes.size());
+	return false;
 }
 
-DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
+bool DxSwapChain::TryFindOutputFromFactory(ComPtr<IDXGIOutput>& outOutput) const
 {
-	MONITORINFO primaryMi = {sizeof(primaryMi)};
-	HMONITOR	primaryMonitor = MonitorFromPoint({0, 0}, MONITOR_DEFAULTTOPRIMARY);
-	GetMonitorInfo(primaryMonitor, &primaryMi);
+	outOutput.Reset();
+	const HMONITOR target = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
 
-	uint32_t primaryWidth = primaryMi.rcMonitor.right - primaryMi.rcMonitor.left;
-	uint32_t primaryHeight = primaryMi.rcMonitor.bottom - primaryMi.rcMonitor.top;
-
-	DEBUG_LOG_FMT("[DxSwapChain] Primary Monitor: {}x{}\n", primaryWidth, primaryHeight);
-
-	auto bestMode = FindBestModeForPrimaryMonitor();
-	if (bestMode.width > 0)
+	for (UINT adaptorIdx = 0;; ++adaptorIdx)
 	{
-		DEBUG_LOG_FMT(
-			"[DxSwapChain] Found best mode for primary monitor: {}x{} @ {}Hz\n", bestMode.width, bestMode.height,
-			bestMode.refreshRateNumerator / bestMode.refreshRateDenominator
-		);
-		return bestMode;
-	}
-
-	DEVMODE devMode = {};
-	devMode.dmSize = sizeof(DEVMODE);
-	uint32_t systemRefreshRate = 60;
-
-	if (EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &devMode))
-	{
-		systemRefreshRate = devMode.dmDisplayFrequency;
-		DEBUG_LOG_FMT("[DxSwapChain] System refresh rate: {}Hz\n", systemRefreshRate);
-	}
-
-	DisplayModeInfo fallbackMode{
-		.width = primaryWidth,
-		.height = primaryHeight,
-		.refreshRateNumerator = systemRefreshRate,
-		.refreshRateDenominator = 1,
-		.format = m_format
-	};
-
-	DEBUG_LOG_FMT(
-		"[DxSwapChain] Using primary monitor fallback: {}x{} @ {}Hz\n", fallbackMode.width, fallbackMode.height,
-		systemRefreshRate
-	);
-
-	return fallbackMode;
-}
-
-bool DxSwapChain::IsValidResolution(uint32_t width, uint32_t height) const
-{
-	if (width < 800 || height < 600)
-		return false;
-	if (width > 7680 || height > 4320)
-		return false;
-
-	float aspectRatio = static_cast<float>(width) / height;
-	if (aspectRatio < 1.0f || aspectRatio > 3.0f)
-		return false;
-
-	std::vector<std::pair<uint32_t, uint32_t>> commonResolutions = {{7680, 4320}, {3840, 2160}, {2560, 1440},
-																	{1920, 1080}, {1680, 1050}, {1600, 900},
-																	{1366, 768},  {1280, 720}};
-
-	for (const auto& [w, h] : commonResolutions)
-	{
-		if (width == w && height == h)
-			return true;
-	}
-
-	for (const auto& [w, h] : commonResolutions)
-	{
-		for (float scale : {1.25f, 1.5f, 1.75f, 2.0f})
+		ComPtr<IDXGIAdapter1> adaptor;
+		if (m_factory->EnumAdapters1(adaptorIdx, &adaptor) == DXGI_ERROR_NOT_FOUND)
 		{
-			uint32_t scaledW = static_cast<uint32_t>(w * scale);
-			uint32_t scaledH = static_cast<uint32_t>(h * scale);
-			if (std::abs(static_cast<int>(width - scaledW)) <= 10 && std::abs(static_cast<int>(height - scaledH)) <= 10)
+			break;
+		}
+		if (!adaptor)
+		{
+			continue;
+		}
+
+		for (UINT outputIdx = 0;; ++outputIdx)
+		{
+			ComPtr<IDXGIOutput> output;
+			if (adaptor->EnumOutputs(outputIdx, &output) == DXGI_ERROR_NOT_FOUND)
 			{
+				break;
+			}
+			if (!output)
+			{
+				continue;
+			}
+
+			DXGI_OUTPUT_DESC desc{};
+			if (SUCCEEDED(output->GetDesc(&desc)) && desc.Monitor == target)
+			{
+				outOutput = output;
 				return true;
 			}
 		}
+	}
+	return false;
+}
+
+bool DxSwapChain::TryGetOutput(ComPtr<IDXGIOutput>& outOutput) const
+{
+	outOutput.Reset();
+
+	if (SUCCEEDED(m_swapChain->GetContainingOutput(&outOutput)) && outOutput)
+	{
+		return true;
+	}
+
+	if (TryFindOutputFromDeviceAdapter(outOutput))
+	{
+		return true;
+	}
+
+	if (TryFindOutputFromFactory(outOutput))
+	{
+		return true;
 	}
 
 	return false;
 }
 
-DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForPrimaryMonitor() const
+void DxSwapChain::EnumerateDisplayModes()
 {
-	DisplayModeInfo bestMode{};
-	uint32_t		maxPixels = 0;
-	uint32_t		maxRefreshRate = 0;
+	m_supportedModes.clear();
 
-	DEBUG_LOG_FMT(
-		"[DxSwapChain] Finding best mode for primary monitor from {} available modes\n", m_supportedModes.size()
-	);
+	ComPtr<IDXGIOutput> output;
+	const bool			outputFound = TryGetOutput(output);
 
-	for (const auto& mode : m_supportedModes)
+	m_outputFoundLastEnum = outputFound;
+	if (outputFound)
 	{
-		if (!IsValidResolution(mode.width, mode.height))
+		UINT	numModes = 0;
+		HRESULT hr = output->GetDisplayModeList(m_format, 0, &numModes, nullptr);
+
+		DEBUG_LOG_FMT("[DxSwapChain] Found {} display modes for format {}\n", numModes, (int)m_format);
+
+		if (SUCCEEDED(hr) && numModes > 0)
+		{
+			std::vector<DXGI_MODE_DESC> modes(numModes);
+			if (SUCCEEDED(output->GetDisplayModeList(m_format, 0, &numModes, modes.data())))
+			{
+				for (const auto& mode : modes)
+				{
+					if (IsValidResolution(mode.Width, mode.Height))
+					{
+						m_supportedModes.emplace_back(
+							mode.Width, mode.Height, mode.RefreshRate.Numerator, mode.RefreshRate.Denominator,
+							mode.Format, mode.Scaling
+						);
+					}
+				}
+			}
+		}
+		DEBUG_LOG_FMT("[DxSwapChain] Enumerated {} display modes (DXGI output)\n", m_supportedModes.size());
+		return;
+	}
+	else
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] No DXGI output found. Falling back to Win32 API.\n");
+		EnumerateDisplayModesWin32();
+	}
+
+	if (m_supportedModes.empty())
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] No valid modes found. Using native display mode as fallback.\n");
+		m_supportedModes.push_back(m_nativeDisplayMode);
+	}
+}
+
+void DxSwapChain::EnumerateDisplayModesWin32()
+{
+	const HMONITOR monitor = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
+
+	MONITORINFOEXW info{};
+	info.cbSize = sizeof(info);
+	const bool gotMonitorInfo = (GetMonitorInfoW(monitor, &info) != FALSE);
+
+	if (!gotMonitorInfo)
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] GetMonitorInfoW failed. Cannot enumerate display modes.\n");
+		return;
+	}
+
+	std::set<std::tuple<uint32_t, uint32_t, UINT>> uniqueModes;
+
+	for (DWORD i = 0;; ++i)
+	{
+		DEVMODEW dm{};
+		dm.dmSize = sizeof(dm);
+
+		if (!EnumDisplaySettingsExW(info.szDevice, i, &dm, 0))
+		{
+			break;
+		}
+
+		if (dm.dmPelsWidth < 800 || dm.dmPelsHeight < 600)
 		{
 			continue;
 		}
 
-		uint32_t pixels = mode.width * mode.height;
-		uint32_t refreshRate = mode.refreshRateNumerator / mode.refreshRateDenominator;
-
-		bool isBetterMode = false;
-		if (pixels > maxPixels)
+		if (dm.dmBitsPerPel < 24)
 		{
-			isBetterMode = true;
-			DEBUG_LOG_FMT(
-				"[DxSwapChain] Higher resolution found: {}x{} @ {}Hz ({}Mp)\n", mode.width, mode.height, refreshRate,
-				pixels / 1'000'000
-			);
-		}
-		else if (pixels == maxPixels && refreshRate > maxRefreshRate)
-		{
-			isBetterMode = true;
-			DEBUG_LOG_FMT(
-				"[DxSwapChain] Same resolution, higher refresh rate: {}x{} @ {}Hz\n", mode.width, mode.height,
-				refreshRate
-			);
+			continue;
 		}
 
-		if (isBetterMode)
+		UINT freq = 60;
+		if (dm.dmDisplayFrequency >= 24 && dm.dmDisplayFrequency <= 500)
+		{
+			freq = dm.dmDisplayFrequency;
+		}
+
+		auto modeKey = std::make_tuple((uint32_t)dm.dmPelsWidth, (uint32_t)dm.dmPelsHeight, freq);
+
+		if (uniqueModes.insert(modeKey).second)
+		{
+			if (IsValidResolution((uint32_t)dm.dmPelsWidth, (uint32_t)dm.dmPelsHeight))
+			{
+				m_supportedModes.emplace_back(
+					(uint32_t)dm.dmPelsWidth, (uint32_t)dm.dmPelsHeight, freq, 1, m_format,
+					DXGI_MODE_SCALING_UNSPECIFIED
+				);
+			}
+		}
+	}
+	DEBUG_LOG_FMT("[DxSwapChain] Enumerated {} valid display modes (Win32 fallback)\n", m_supportedModes.size());
+}
+
+DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
+{
+	const HMONITOR monitor = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
+
+	MONITORINFOEX info{};
+	info.cbSize = sizeof(info);
+	if (!GetMonitorInfo(monitor, &info))
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] GetMonitorInfo failed. Using fallback 1920x1080@60Hz.\n");
+		return {1920, 1080, 60, 1, m_format, DXGI_MODE_SCALING_UNSPECIFIED};
+	}
+
+	const uint32_t width = info.rcMonitor.right - info.rcMonitor.left;
+	const uint32_t height = info.rcMonitor.bottom - info.rcMonitor.top;
+
+	DEVMODE dm{};
+	dm.dmSize = sizeof(dm);
+	uint32_t refreshRate = 60;
+	if (EnumDisplaySettings(info.szDevice, ENUM_CURRENT_SETTINGS, &dm))
+	{
+		refreshRate = dm.dmDisplayFrequency;
+	}
+
+	DEBUG_LOG_FMT("[DxSwapChain] Native mode: {}x{} @{}Hz\n", width, height, refreshRate);
+
+	return {width, height, refreshRate, 1, m_format, DXGI_MODE_SCALING_UNSPECIFIED};
+}
+
+bool DxSwapChain::IsValidResolution(uint32_t width, uint32_t height) const
+{
+	if (width == m_nativeDisplayMode.width && height == m_nativeDisplayMode.height)
+	{
+		return true;
+	}
+
+	if (width == 0 || height == 0 || width < 800 || height < 600 || width > 7680 || height > 4320)
+	{
+		return false;
+	}
+
+	const float aspectRatio = static_cast<float>(width) / height;
+	if (aspectRatio < 1.0f || aspectRatio > 3.6f)
+	{
+		return false;
+	}
+
+
+	return true;
+}
+
+DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForCurrentMonitor() const
+{
+	DisplayModeInfo bestMode = m_nativeDisplayMode;
+	uint32_t		maxRefreshRate = 0;
+	uint32_t		maxPixels = m_nativeDisplayMode.width * m_nativeDisplayMode.height;
+
+	
+    for (const auto& mode : m_supportedModes)
+	{
+		const uint32_t pixels = mode.width * mode.height;
+		const uint32_t refreshRate =
+			(mode.refreshRateDenominator != 0) ? (mode.refreshRateNumerator / mode.refreshRateDenominator) : 0;
+
+		const bool isBetter = (pixels > maxPixels) || (pixels == maxPixels && refreshRate > maxRefreshRate);
+
+		if (isBetter)
 		{
 			bestMode = mode;
 			maxPixels = pixels;
@@ -448,14 +585,7 @@ DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForPrimaryMonitor() const
 		}
 	}
 
-	if (bestMode.width > 0)
-	{
-		DEBUG_LOG_FMT(
-			"[DxSwapChain] Selected best mode: {}x{} @ {}Hz ({}Mp)\n", bestMode.width, bestMode.height, maxRefreshRate,
-			maxPixels / 1'000'000
-		);
-	}
-
+	DEBUG_LOG_FMT("[DxSwapChain] Selected best mode: {}x{} @{}Hz\n", bestMode.width, bestMode.height, maxRefreshRate);
 	return bestMode;
 }
 

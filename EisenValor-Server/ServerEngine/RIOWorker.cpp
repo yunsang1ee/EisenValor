@@ -24,7 +24,7 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 	m_ioResults.resize(rioConfig.MAX_RIO_RESULT);
 
 	// SEND/RECV CQ 따로 만들 수 있다. 지금은 공용
-	const int MAX_CQ_SIZE = rioConfig.MAX_CQ_SIZE;
+	const uint32 MAX_CQ_SIZE{ rioConfig.MAX_CQ_SIZE };
 	m_cq = RIO_EXT_FUNC_TB.RIOCreateCompletionQueue(MAX_CQ_SIZE, nullptr);
 
 	if(m_cq == RIO_INVALID_CQ) {
@@ -87,6 +87,5 @@ bool ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR
 	session->SetOwner(this);
 	if(false == session->AcceptCompleted(socket, clientAddr)) return false;
 	m_connectedSession.insert(std::move(session));
-
 	return true;
 }

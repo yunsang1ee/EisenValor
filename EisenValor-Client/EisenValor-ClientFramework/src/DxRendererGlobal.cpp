@@ -11,7 +11,10 @@
 
 DxRendererGlobal::DxRendererGlobal() = default;
 
-DxRendererGlobal::~DxRendererGlobal() = default;
+DxRendererGlobal::~DxRendererGlobal()
+{
+	Release();
+}
 
 void DxRendererGlobal::Initialize()
 {

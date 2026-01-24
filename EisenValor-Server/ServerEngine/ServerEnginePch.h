@@ -67,8 +67,6 @@ namespace fs = std::filesystem;
 #include "Timer.h"
 
 #include "ServerEngineContainers.h"
-#include "Allocator.h"
-#include "MemoryPool.h"
 #include "ObjectPool.h"
 #include "LockQueue.h"
 
@@ -78,11 +76,5 @@ namespace fs = std::filesystem;
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-struct PacketInfo {
-	PacketHeader header;
-	const uint8* ptr;
-	uint32 size;
-};
-
-template<typename Type>
-using XVector = std::vector<Type, oneapi::tbb::scalable_allocator<Type>>;
+std::string WStringToString(const std::wstring_view wstr);
+std::wstring StringToWString(const std::string_view str);

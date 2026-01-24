@@ -27,7 +27,7 @@ void ServerEngine::Session::Dispatch(RIOContext* const context, const uint32 byt
 {
 	switch(const auto type{ context->GetType() }) {
 		case ServerEngine::RIO_CONTEXT_TYPE::RECV:
-		{
+		{	
 			ProcessRecv(bytesTransferred);
 			break;
 		}
@@ -56,14 +56,12 @@ void ServerEngine::Session::Disconnect(const std::string_view reason)
 		std::cout << std::format("setsockopt linger option error: {}", GetLastError());
 
 	CloseSocket();
-	OnDisconnected();
-
-	std::cout << reason.data() << std::endl;
+	OnDisconnected(reason);
 
 	Clean();
-
-	auto& sessionPool =  m_owner->GetSessionPool() ;
-	sessionPool.EnqSession(std::static_pointer_cast<Session>(shared_from_this()));
+	
+	//auto& sessionPool =  m_owner->GetSessionPool() ;
+	//sessionPool.EnqSession(std::static_pointer_cast<Session>(shared_from_this()));
 }
 
 void ServerEngine::Session::FlushPacketQueue()

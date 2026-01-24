@@ -42,10 +42,10 @@ namespace ServerEngine {
 		bool LoadConfigFromFile(const std::string_view filePath);
 
 	public:
-		const NetworkConfig& GetNetworkConfig() const { return m_networkConfig; }
-		const RIOWorkerConfig& GetRIOWorkerConfig() const { return m_rioWorkerConfig; }
-		const ThreadConfig& GetThreadConfig() const { return m_threadConfig; }
-		const SessionConfig& GetSessionConfig() const { return m_sessionConfig; }
+		const NetworkConfig& GetNetworkConfig() const noexcept { return m_networkConfig; }
+		const RIOWorkerConfig& GetRIOWorkerConfig() const noexcept { return m_rioWorkerConfig; }
+		const ThreadConfig& GetThreadConfig() const noexcept { return m_threadConfig; }
+		const SessionConfig& GetSessionConfig() const noexcept { return m_sessionConfig; }
 
 	};
 }

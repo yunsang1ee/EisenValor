@@ -2,7 +2,7 @@
 #include "GameObject.h"
 
 Server::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_type{ type }, m_teamType{ teamType }
+	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}
 {
 }
 
@@ -11,7 +11,7 @@ Server::Contents::GameObject::~GameObject()
 	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;
 }
 
-const Vec3 Server::Contents::GameObject::GetForwardDir()
+Vec3 Server::Contents::GameObject::GetForwardDir()
 {
 	Vec3 forward;
 	forward.x = sinf(m_posInfo.rot.y);

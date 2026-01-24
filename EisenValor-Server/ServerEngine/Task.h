@@ -22,6 +22,7 @@ namespace ServerEngine {
 				};
 		}
 
+	public:
 		void Execute()
 		{
 			if(m_cbFunc)

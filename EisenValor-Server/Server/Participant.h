@@ -6,7 +6,7 @@ namespace Server {
 	namespace Contents {
 		class Participant {
 		private:
-			ParticipantInfo						m_info;
+			ParticipantInfo	m_info;
 
 		public:
 			explicit Participant(const uint32 id, const FB_ENUMS::PARTICIPANT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType)
@@ -41,6 +41,7 @@ namespace Server {
 					SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
 			}
 
+		public:
 			std::shared_ptr<ClientSession> GetSession() { return m_session; }
 
 		};

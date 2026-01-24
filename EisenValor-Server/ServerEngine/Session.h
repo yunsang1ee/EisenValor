@@ -38,8 +38,8 @@ namespace ServerEngine {
 		virtual ~Session();
 
 	public:
-		virtual void OnConnected() {}
-		virtual void OnDisconnected() {}
+		virtual void OnConnected() abstract;
+		virtual void OnDisconnected(const std::string_view reason) {}
 
 	public:
 		void Dispatch(RIOContext* const context, const uint32 bytesTransferred);

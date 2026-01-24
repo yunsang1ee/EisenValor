@@ -8,8 +8,17 @@ namespace Server {
 		class Component;
 		class FSM;
 		class BehaviorTree;
+		class NavAgent;
 		class Script;
 		class GameWorld;
+		class Collider;
+		class OBBCollider;
+
+		class GameObject;
+
+		struct GameObjectDeleter {
+			void operator()(GameObject* obj) const;
+		};
 
 		class GameObject {
 		private:
@@ -28,6 +37,7 @@ namespace Server {
 			std::weak_ptr<GameWorld>				m_gameWorld;
 
 			PosInfo									m_posInfo;
+			Vec3									m_scale;
 
 			bool									m_isCreature{ false };
 		
@@ -39,6 +49,74 @@ namespace Server {
 			GameObject& operator=(const GameObject&) = delete;
 			GameObject (GameObject&&) = default;
 			GameObject& operator=(GameObject&&) = default;
+
+
+		public:
+			virtual void OnCollisionEnter(Collider* const other) {}
+			virtual void OnCollisionStay(Collider* const other) {}
+			virtual void OnCollisionExit(Collider* const other) {}
+
+			virtual void Update(const float dt);
+
+			virtual void ReturnToPool()
+			{
+				delete this;
+			}
+
+		public:
+			template<std::derived_from<Component> T>
+			T* GetComponent()
+			{
+				if constexpr(std::is_same_v<FSM, T>) {
+					return static_cast<FSM*>(m_components[etou8(COMPONENT_TYPE::FSM)].get());
+				}
+				else if constexpr(std::is_same_v<BehaviorTree, T>) {
+					return static_cast<BehaviorTree*>(m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)].get());
+				}
+				else if constexpr(std::is_same_v<NavAgent, T>) {
+					return static_cast<NavAgent*>(m_components[etou8(COMPONENT_TYPE::NAV_AGENT)].get());
+				}
+				else if constexpr(std::is_same_v<Collider, T>) {
+					return static_cast<Collider*>(m_components[etou8(COMPONENT_TYPE::COLLIDER)].get());
+				}
+
+				return nullptr;
+			}
+
+			template<std::derived_from<Component> T>
+			auto AddComponent()
+			{
+				auto component = std::make_unique<T>();
+				component->SetOwner(this);
+
+				if constexpr(std::is_same_v<FSM, T>) {
+					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
+					return GetComponent<T>();
+				}
+				else if constexpr(std::is_same_v<BehaviorTree, T>) {
+					m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::move(component);
+					return GetComponent<T>();
+				}
+				else if constexpr(std::is_same_v<NavAgent, T>) {
+					m_components[etou8(COMPONENT_TYPE::NAV_AGENT)] = std::move(component);
+					return GetComponent<T>();
+				}
+				else if constexpr(std::derived_from<T, Collider>) {
+					m_components[etou8(COMPONENT_TYPE::COLLIDER)] = std::move(component);
+					return GetComponent<T>();
+				}
+			}
+
+			template<std::derived_from<Script> T>
+			Script* AddScript(std::unique_ptr<T> script)
+			{
+				Script* s = script.get();
+				m_scripts.emplace_back(std::move(script));
+				return s;
+			}
+
+
+
 
 		public:
 			void SetID(const uint32 id) noexcept { m_id = id; }
@@ -56,50 +134,20 @@ namespace Server {
 			const PosInfo& GetPosInfo() const noexcept { return m_posInfo; }
 			const Vec3& GetPos() const noexcept { return m_posInfo.pos; }
 			const Vec3& GetRotation() const noexcept { return m_posInfo.rot; }
+			const Vec3& GetScale() const noexcept { return m_scale; }
 			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
 			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
-			const Vec3 GetForwardDir();
+			Vec3 GetForwardDir();
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
-
 			bool IsCreature() const noexcept { return m_isCreature; }
-
-		public:
-			virtual void Update(const float dt);
-
-		public:
-			template<std::derived_from<Component> T>
-			T* GetComponent()
-			{
-				if constexpr(std::is_same_v<FSM, T>) {
-					return static_cast<FSM*>(m_components[etou8(COMPONENT_TYPE::FSM)].get());
-				}
-				else if constexpr(std::is_same_v<BehaviorTree, T>) {
-					return static_cast<BehaviorTree*>(m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)].get());
-				}
-			}
-
-			template<std::derived_from<Component> T>
-			auto AddComponent()
-			{
-				if constexpr(std::is_same_v<FSM, T>) {
-					auto component = std::make_unique<T>();
-					component->SetOwner(this);
-					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
-					return GetComponent<T>();
-				}
-				else if constexpr(std::is_same_v<BehaviorTree, T>) {
-					m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::make_unique<T>();
-					return GetComponent<T>();
-				}
-			}
-
-			template<std::derived_from<Script> T>
-			Script* AddScript(std::unique_ptr<T> script) 
-			{ 
-				Script* s = script.get();
-				m_scripts.emplace_back(std::move(script));
-				return s;
-			}
+			bool IsDead() { return false; }
 		};
+
+		inline void GameObjectDeleter::operator()(GameObject* obj) const
+		{
+			if(obj) {
+				obj->ReturnToPool();
+			}
+		}
 	}
 }

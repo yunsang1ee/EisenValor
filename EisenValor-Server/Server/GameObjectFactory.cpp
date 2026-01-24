@@ -13,14 +13,21 @@
 #include "IsPlayerInNearNode.h"
 #include "TargetTraceNode.h"
 #include "Spawner.h"
+#include "Collider.h"
 
-std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+#include "GameWorld.h"
+
+std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
-	player->SetPosInfo(t.posInfo);
-	player->SetStatInfo(t.stat);
-	player->SetStamina(0);
-	const auto fsm = player->AddComponent<Server::Contents::FSM>();
+	// auto player = std::make_unique<Server::Contents::Player>(t.teamType);
+	// auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeUnique(t.teamType);
+	// 1. Ç®¿¡¼­ Raw Pointer¸¦ ²¨³¿ (MakeUnique ´ë½Å Pop »ç¿ë)
+	auto* rawPtr = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
+
+	rawPtr->SetPosInfo(t.posInfo);
+	rawPtr->SetStatInfo(t.stat);
+	rawPtr->SetStamina(0);
+	const auto fsm = rawPtr->AddComponent<Server::Contents::FSM>();
 	
 	auto idleState =  Server::Contents::GeneralIdleState::Create();
 	auto preDelayState = Server::Contents::GeneralPreDelayState::Create();
@@ -36,7 +43,9 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	fsm->AddState(std::move(stunState));
 	fsm->AddState(std::move(deadState));
 
-	return player;
+	const auto collider = rawPtr->AddComponent<Server::Contents::OBBCollider>();
+
+	return std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter>(rawPtr);
 }
 
 std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
@@ -86,7 +95,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	return soldier;
 }
 
-std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
+std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
 	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	const auto spawner = spawnObj->AddScript(std::make_unique<Spawner>());
