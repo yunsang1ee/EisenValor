@@ -46,6 +46,9 @@ public:
 	DxSwapChain(const DxSwapChain&) = delete;
 	DxSwapChain& operator=(const DxSwapChain&) = delete;
 
+	DxSwapChain(DxSwapChain&&) noexcept = default;
+	DxSwapChain& operator=(DxSwapChain&&) noexcept = default;
+
 	void Present(UINT syncInterval, UINT flags);
 	void PresentMaxPerformance();
 
@@ -92,9 +95,14 @@ private:
 	);
 	void ReleaseBackBuffers();
 
+	bool TryFindOutputFromDeviceAdapter(ComPtr<IDXGIOutput>& outOutput) const;
+	bool TryFindOutputFromFactory(ComPtr<IDXGIOutput>& outOutput) const;
+	bool TryGetOutput(ComPtr<IDXGIOutput>& outOutput) const;
+
 	void			EnumerateDisplayModes();
+	void			EnumerateDisplayModesWin32();
 	DisplayModeInfo GetNativeDisplayMode() const;
-	DisplayModeInfo FindBestModeForPrimaryMonitor() const;
+	DisplayModeInfo FindBestModeForCurrentMonitor() const;
 	bool			IsValidResolution(uint32_t width, uint32_t height) const;
 	void			StoreWindowedState();
 	void			RestoreWindowedState();
@@ -124,8 +132,10 @@ private:
 	uint64_t m_frameCount = 0;
 	bool	 m_supportsTearing = false;
 
-	bool		   m_isFullscreen = false;
-	bool		   m_isBorderlessFullscreen = false;
+	bool m_isFullscreen = false;
+	bool m_isBorderlessFullscreen = false;
+	bool m_canExclusiveFullscreen = true;
+	bool m_outputFoundLastEnum = false;
 
 	RECT	 m_windowedRect{};
 	LONG_PTR m_windowedStyle = 0;
@@ -133,4 +143,5 @@ private:
 
 	std::vector<DisplayModeInfo> m_supportedModes;
 	DisplayModeInfo				 m_currentDisplayMode{};
+	DisplayModeInfo				 m_nativeDisplayMode{};
 };
