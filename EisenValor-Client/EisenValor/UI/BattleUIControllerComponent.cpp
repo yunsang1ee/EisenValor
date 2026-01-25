@@ -319,6 +319,9 @@ EGuardDir BattleUIControllerComponent::CalculateGuardDirection(float deltaX, flo
 
 void BattleUIControllerComponent::ProcessMouseInput()
 {
+	// TODO: 공격 방향 바뀔 때 마다 Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET 만들어서 보내기
+	// TODO: 마우스 클릭(공격) 할 때 마다 Make_CS_PLAYER_ATTAKC_PACKET 만들어서 보내기
+
 	auto& input = GLOBAL(InputGlobal);
 	DX::XMFLOAT2 mouseDelta = input.GetMouseDelta();
 
@@ -363,7 +366,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	bool isLeftPressed = input.GetInput(VK_LBUTTON);
 	bool isRightPressed = input.GetInput(VK_RBUTTON);
 	EAttackType currentType = EAttackType::None;
-
+	
 	if (isLeftPressed) currentType = EAttackType::Light;
 	else if (isRightPressed) currentType = EAttackType::Strong;
 	

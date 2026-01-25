@@ -779,7 +779,10 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 {
 	// TODO: 플레이어 공격 방향 표시
 	// TODO: 해당 오브젝트의 공격 방향을 UI로 표시하기
-
+	recvPkt.attack_dir();
+	
+	// recvPkt.id();	// 제가 추후에 패킷 바꿔놓을게요
+	// id 오브젝트 찾아서 해당 오브젝트의 UI가져와서 업데이트
 
 	return false;
 }

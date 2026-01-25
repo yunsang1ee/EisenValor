@@ -5,6 +5,8 @@
 #include <numbers> 
 #include <DirectXMath.h> 
 
+// TODO: 없애기
+
 // 1. 방향 열거형 정의
 enum class EGuardDir { None, Up, Left, Right };
 
