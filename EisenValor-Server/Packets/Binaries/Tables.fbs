@@ -245,6 +245,7 @@ table CS_SHOW_PLAYER_ATTACK_DIR_PACKET{
 }
 
 table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
+	player_id: uint32;
 	attack_dir: uint8;
 }
 
