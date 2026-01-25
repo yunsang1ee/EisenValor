@@ -16,7 +16,7 @@ namespace Server {
 			
 		public:
 			explicit General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType = FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-			virtual ~General();
+			virtual ~General();	
 
 		public:
 			virtual void OnDeath() override;
@@ -28,6 +28,7 @@ namespace Server {
 			void RemoveSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType &= ~subStateType; }
 			bool HasSubState(const GENERAL_SUB_STATE_TYPE subStateType) const { return (m_subStateType & subStateType) != GENERAL_SUB_STATE_TYPE::NONE; }
 			void ChangeSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType = subStateType; }
+			GENERAL_SUB_STATE_TYPE GetSubState() const noexcept { return m_subStateType; }
 			
 			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) noexcept { m_stanceType = stanceType; }
 			void SetAtkInfo(const AttackInfo& atkInfo) { m_atkInfo = atkInfo; }

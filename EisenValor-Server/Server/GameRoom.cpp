@@ -26,7 +26,8 @@ void Server::Contents::GameRoom::Init()
 //	CreateWorld();
 //#endif // DEVELOP
 
-	CreateWorld();
+	if(nullptr == m_gameWorld)
+		CreateWorld();
 }
 
 bool Server::Contents::GameRoom::CanStart()
@@ -44,7 +45,9 @@ void Server::Contents::GameRoom::CreateWorld()
 {
 	m_gameWorld = std::make_shared<GameWorld>();
 	m_gameWorld->SetRoom(std::static_pointer_cast<GameRoom>(shared_from_this()));
-	
+
+	LOG_INFO("GameRoom ID:{}, CreateWorld!", GetID());
+
 	{
 		m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_PLAYING;
 		auto pb = ServerPackets::Make_SC_CHANGE_GAME_ROOM_STATE_PACKET(m_info.id, m_info.stateType);

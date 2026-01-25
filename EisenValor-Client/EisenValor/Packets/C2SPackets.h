@@ -33,7 +33,7 @@ std::shared_ptr<PacketBuffer> Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
 // =================
 //		월드
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo);
+std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerState);
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_ATTACK_PACKET(const FB_STRUCTS::GeneralAttackInfo* attackInfo);
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_PLAYER_STANCE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_FAKE_PACKET();

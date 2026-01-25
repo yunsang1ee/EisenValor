@@ -282,6 +282,9 @@
     <Filter Include="02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\DetourCrowd">
       <UniqueIdentifier>{4dd3acde-fb2b-48d1-82f8-ddaa85e06a76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\NavMeshData">
+      <UniqueIdentifier>{6c641479-31f8-4405-978a-787b01791411}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -475,6 +478,9 @@
     </None>
     <None Include="..\Binaries\Server\Release\DataTable\StatDataTable.csv">
       <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
+    </None>
+    <None Include="..\Binaries\Server\Release\NavData\solo_navmesh.bin">
+      <Filter>02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\NavMeshData</Filter>
     </None>
   </ItemGroup>
 </Project>
