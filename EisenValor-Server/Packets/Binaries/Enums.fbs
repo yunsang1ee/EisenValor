@@ -70,3 +70,17 @@ enum SOLDIER_STATE_TYPE : ubyte {
 	DAMAGED,
 	DEAD,
 }
+
+enum GENERAL_STATE_TYPE: ubyte {
+	NONE = 0,
+	IDLE,
+	MOVE,
+	PRE_DELAY,
+	ATTACK,
+	POST_DELAY,
+	DEFENSE,
+	STUN,
+	DEAD,
+
+	END
+}

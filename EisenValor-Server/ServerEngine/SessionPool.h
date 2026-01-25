@@ -2,15 +2,14 @@
 
 namespace ServerEngine {
 	class Session;
-	// acceptThread, RioWorker가 접근
 	class SessionPool {
 	private:
 		SessionFactoryFunc										m_func;
+		// acceptThread(DeqSession), RioWorker(EnqSession)가 접근하여서 concurrent_queue로 만들었음
 		tbb::concurrent_queue<std::shared_ptr<Session>>			m_freeSessions;
 	
 	public:
 		void Init(SessionFactoryFunc sessionFunc);
-		void EnqSession(std::shared_ptr<Session> session);
 		std::shared_ptr<Session> DeqSession();
 
 	};

@@ -213,7 +213,7 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 	auto world = clientSession->GetGameWorld();
 	if(world)
-		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_MOVE, clientSession, info);
+		world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_MOVE, clientSession, info, recvPkt.player_state());
 
 	return true;
 }
