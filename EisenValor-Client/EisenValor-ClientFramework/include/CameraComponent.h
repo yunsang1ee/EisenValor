@@ -124,8 +124,18 @@ private:
 private:
 	static Handle s_mainCameraHandle;
 
-	DirectX::XMFLOAT4X4 m_cachedViewMatrix;
-	DirectX::XMFLOAT4X4 m_cachedProjectionMatrix;
+	DirectX::XMFLOAT4X4 m_cachedViewMatrix = {
+		1.f, 0.f, 0.f, 0.f,
+		0.f, 1.f, 0.f, 0.f,
+		0.f, 0.f, 1.f, 0.f,
+		0.f, 0.f, 0.f, 1.f
+	};
+	DirectX::XMFLOAT4X4 m_cachedProjectionMatrix = {
+		1.f, 0.f, 0.f, 0.f,
+		0.f, 1.f, 0.f, 0.f,
+		0.f, 0.f, 1.f, 0.f,
+		0.f, 0.f, 0.f, 1.f
+	};
 
 	// Projection
 	ProjectionType	   m_projectionType = ProjectionType::Perspective;

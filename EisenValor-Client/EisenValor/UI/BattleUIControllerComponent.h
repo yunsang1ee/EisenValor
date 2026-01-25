@@ -25,10 +25,15 @@ private:
 	static constexpr float kRadToDeg = 180.0f / kPI;
 
 	// UI 설정 상수
-	static constexpr float kDefaultRadius = 150.0f; // 기본 반지름
+	static constexpr float kDefaultRadius = 80.0f; // 기본 반지름
 	static constexpr float kInnerRadiusRatio = 0.7f; // 자식 UI 배치될 내부 원 비율
-	static constexpr float kUISize = 50.0f; // 자식 UI 크기
-	static constexpr float kUIHalfSize = kUISize / 2.0f; // 자식 UI 절반 크기
+	static constexpr float kUISize = 30.0f; // 자식 UI 크기
+	static constexpr float kUIHalfSize = kUISize / 2.0f;
+
+	// 거리 비례 스케일링 상수
+	static constexpr float kReferenceDistance = 10.0f; // 기준 거리 (이 거리에서 스케일 1.0)
+	static constexpr float kMinScale = 0.5f;		   // 최소 스케일
+	static constexpr float kMaxScale = 2.0f;		   // 최대 스케일
 
 	// 각도 영역 상수 (Degree, kCamelCase 스타일 적용)
 	static constexpr float kUpRegionStart = 30.0f;
@@ -61,6 +66,9 @@ private:
 	HandleOf<ImageUIComponent> m_leftImageHandle;
 	HandleOf<ImageUIComponent> m_rightImageHandle;
 
+	// 추적 대상 트랜스폼
+	HandleOf<Transform> m_targetTrHandle; 
+
 	// 중심점 및 반지름
 	float m_centerX = 0.0f;
 	float m_centerY = 0.0f;
@@ -71,11 +79,16 @@ private:
 private:
 	// 헬퍼 함수 선언
 	void InitializeChildHandlesAndSetupUI();
-	void SetChildUIPositions(); // 중심점, 반지름은 멤버 변수 사용
+	void SetChildUIPositions(float scale = 1.0f); // 스케일 인자 추가
 	void ProcessMouseInput();
 	EGuardDir CalculateGuardDirection(float deltaX, float deltaY) const;
 	void UpdateUISelection(EGuardDir selectedDir);
 	void OnGuardDirectionConfirmed(EGuardDir confirmedDir);
 
+	void		 UpdatePositionFromTarget();	// 타겟 위치에 따라 중심점 갱신 (World To Screen)
+
 	static float NormalizeAngle(float degrees); // 각도 정규화
+
+public:
+	void SetTarget(HandleOf<Transform> targetHandle) { m_targetTrHandle = targetHandle; }
 };

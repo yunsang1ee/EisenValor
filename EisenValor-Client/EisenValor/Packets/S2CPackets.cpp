@@ -11,6 +11,10 @@
 #include "MovementComponent.h"
 #include <Component/PlayerControllerComponent.h>
 #include <Component/HealthComponent.h>
+#include <UI/BattleUIControllerComponent.h>
+#include <RectTransformComponent.h>
+#include <ImageUIComponent.h>
+#include <ButtonUIComponent.h>
 
 
 using namespace NetBridge;
@@ -108,7 +112,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	// TODO: 로비 씬으로 전환
-	
+
 	// 테스트용으로 바로 게임 월드 진입
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
@@ -460,41 +464,105 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		}
 	);
 
-	scene->ReserveGameObject(
-		"PlayerCamera", std::nullopt,
-		[scene, playerObjHandle](GameObject* camObj)
-		{
-			auto* playerObj = scene->TryGetGameObject(playerObjHandle);
-			auto  playerTrHandle =
-				 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
-			auto& tr = camObj->GetTransform();
+		scene->ReserveGameObject(
+			"PlayerCamera", std::nullopt,
+			[scene, playerObjHandle](GameObject* camObj)
+			{
+				auto* playerObj = scene->TryGetGameObject(playerObjHandle);
+				auto  playerTrHandle =
+					 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
+				auto& tr = camObj->GetTransform();
+	
+				scene->CreateComponentWithInit<CameraComponent>(
+					camObj->GetHandle(),
+					[playerTrHandle](CameraComponent* cam)
+					{
+						cam->SetAsMainCamera();
+						cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
+						cam->SetLookAtTarget(playerTrHandle);
+						cam->SetEnableLookAtRotation(false);
+						cam->SetSmoothFollow(true, 10.0f, 10.0f);
+						cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
+						cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
+					}
+				);
+	
+				scene->CreateComponentWithInit<PlayerControllerComponent>(
+					playerObjHandle,
+					[camObj](PlayerControllerComponent* controller)
+					{
+						controller->SetCameraHandle(camObj->GetHandle());
+						controller->SetMouseSensitivity(0.1f, 0.1f);
+					}
+				);
+			}
+		);
+	
 
-			scene->CreateComponentWithInit<CameraComponent>(
-				camObj->GetHandle(),
-				[playerTrHandle](CameraComponent* cam)
+		// BattleUI 생성 및 연결
+		scene->ReserveGameObject(
+			"BattleUI", std::nullopt,
+			[scene, playerObjHandle](GameObject* battleUIObj)
+			{
+				auto* playerObj = scene->TryGetGameObject(playerObjHandle);
+				auto  playerTrHandle =
+					 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
+	
+				scene->CreateComponentWithInit<BattleUIControllerComponent>(
+					battleUIObj->GetHandle(),
+					[playerTrHandle](BattleUIControllerComponent* ui)
+					{
+						if (playerTrHandle.IsValid())
+						{
+							ui->SetTarget(playerTrHandle);
+							DEBUG_LOG_FMT("[BattleUI] Created and Connected to LocalPlayer\n");
+						}
+					}
+				);
+				scene->CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*) {});
+	
+				auto parentTrHandle = battleUIObj->GetComponentHandle<Transform>();
+	
+				// 자식 UI 생성 목록
+				std::vector<std::string> names = {"UpUI", "LeftUI", "RightUI"};
+	
+				for (const std::string& name : names)
 				{
-					cam->SetAsMainCamera();
-					cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
-					cam->SetLookAtTarget(playerTrHandle);
-					cam->SetEnableLookAtRotation(false);
-					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
-					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
+					scene->ReserveGameObject(
+						name, std::nullopt,
+						[scene, parentTrHandle](GameObject* childObj)
+						{
+							scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*) {});
+	
+							if (auto childTrHandle = childObj->GetComponentHandle<Transform>(); childTrHandle.IsValid())
+							{
+								if (Transform* childTr = scene->GetStorage<Transform>()->Get(childTrHandle))
+								{
+									childTr->SetParent(parentTrHandle);
+								}
+							}
+	
+							scene->CreateComponentWithInit<ImageUIComponent>(
+								childObj->GetHandle(), [](ImageUIComponent* image) 
+								{ 
+									image->SetOrder(10); 
+								}
+							);
+	
+							scene->CreateComponentWithInit<ButtonUIComponent>(
+								childObj->GetHandle(),
+								[](ButtonUIComponent* button) {
+									button->SetOrder(11); 
+								}
+							);
+						}
+					);
 				}
-			);
-
-			scene->CreateComponentWithInit<PlayerControllerComponent>(
-				playerObjHandle,
-				[camObj](PlayerControllerComponent* controller)
-				{
-					controller->SetCameraHandle(camObj->GetHandle());
-					controller->SetMouseSensitivity(0.1f, 0.1f);
-				}
-			);
-		}
-	);
-	return true;
-}
+			}
+		);
+	
+		return true;
+	}
 
 bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt)
 {
@@ -676,7 +744,7 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 {
 	// 게임 남은 시간 정보 수신
 	// TODO: 게임 남은 시간을 화면에 표시하기
-	
+
 	const uint32   remainingTime{recvPkt.remaining_time()};
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;

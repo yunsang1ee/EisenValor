@@ -53,7 +53,7 @@ public:
 
 	// 레이아웃 갱신 로직
 	void UpdateLayout();
-	void MarkDirty() { m_isDirty = true; }
+	void MarkDirty();
 
 private:
 	Rect GetParentRect();

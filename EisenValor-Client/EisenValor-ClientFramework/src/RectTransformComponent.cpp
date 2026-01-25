@@ -63,39 +63,88 @@ void RectTransformComponent::SetSizeDelta(Vec2 sizeDelta)
 	MarkDirty();
 }
 
+void RectTransformComponent::MarkDirty()
+{
+	m_isDirty = true;
+
+	GameObject* owner = GetGameObject();
+	if (!owner)
+		return;
+
+	Scene* scene = owner->GetScene();
+	if (!scene)
+		return;
+
+	auto* trStorage = scene->GetStorage<Transform>();
+	if (!trStorage)
+		return;
+
+	Transform& tr = owner->GetTransform();
+	const auto& children = tr.GetChildren();
+
+	for (auto childHandle : children)
+	{
+		Transform* childTr = trStorage->Get(childHandle);
+		if (!childTr)
+			continue;
+
+		GameObject* childObj = childTr->GetGameObject();
+		if (!childObj)
+			continue;
+
+		if (RectTransformComponent* childRectTr = childObj->GetComponent<RectTransformComponent>())
+		{
+			childRectTr->MarkDirty();
+		}
+	}
+}
+
 void RectTransformComponent::UpdateLayout()
 {
-	// 1. 부모를 기준으로 자신의 Rect 계산
+	// 0. 해상도 동기화
+	Vec2 scaleFactor = { 1.0f, 1.0f };
+	auto* swapChain = DxRendererGlobal::GetInstance().GetSwapChain();
+	if (swapChain && kDefaultWindowWidth > 0 && kDefaultWindowHeight > 0)
+	{
+		scaleFactor.x = (float)swapChain->GetWidth() / (float)kDefaultWindowWidth;
+		scaleFactor.y = (float)swapChain->GetHeight() / (float)kDefaultWindowHeight;
+	}
+
+	// 1. 부모 Rect 정보 획득
 	Rect parentRect = GetParentRect();
+	Vec2 parentPos = { parentRect.x, parentRect.y };
+	Vec2 parentSize = { parentRect.width, parentRect.height };
 
+	// 2. 앵커 및 기본 영역 계산
+	Vec2 anchorMinPos = parentPos + (parentSize * m_anchorMin);
+	Vec2 anchorMaxPos = parentPos + (parentSize * m_anchorMax);
 
-	float parentWidth = parentRect.width;
-	float parentHeight = parentRect.height;
-	float parentX = parentRect.x;
-	float parentY = parentRect.y;
+	// 스케일이 적용된 오프셋 계산
+	Vec2 scaledOffsetMin = m_offsetMin * scaleFactor;
+	Vec2 scaledOffsetMax = m_offsetMax * scaleFactor;
 
-	// 앵커에 따른 기준점 계산 (피벗 미적용 상태)
-	float anchorPosX = parentX + (parentWidth * m_anchorMin.x);
-	float anchorPosY = parentY + (parentHeight * m_anchorMin.y);
+	// 3. 크기 결정
+	// 최종 영역의 크기 (스케일된 오프셋 사용)
+	Vec2 size = (anchorMaxPos + scaledOffsetMax) - (anchorMinPos + scaledOffsetMin);
+	m_rect.width = size.x;
+	m_rect.height = size.y;
 
-	// 오프셋 적용
-	float x = anchorPosX + m_offsetMin.x;
-	float y = anchorPosY + m_offsetMin.y;
-	float right = parentX + (parentWidth * m_anchorMax.x) + m_offsetMax.x;
-	float bottom = parentY + (parentHeight * m_anchorMax.y) + m_offsetMax.y;
+	// 4. 앵커 기준점, 오프셋
+	// anchorPos: 앵커 사각형 내부에서 피봇 어딘지
+	Vec2 anchorPos = anchorMinPos + (anchorMaxPos - anchorMinPos) * m_pivot;
 
-	m_rect.width = right - x;
-	m_rect.height = bottom - y;
+	// anchoredOffset: 앵커 기준점에서 실제 Pivot까지 거리
+	Vec2 anchoredOffset = scaledOffsetMin + (scaledOffsetMax - scaledOffsetMin) * m_pivot;
 
-	// 최종 좌표 결정: x, y는 좌상단 좌표여야 함.
-	// m_pivot은 anchorPos + offset 위치가 Rect의 어디에 해당하는지를 결정함.
-	// (예: pivot 0.5면 해당 위치가 Rect의 중앙이 되도록 좌상단 x, y를 보정)
-	m_rect.x = x; 
-	m_rect.y = y;
+	// 5. 최종 좌표 (UI의 좌상단 좌표)
+	// (Pivot의 절대 위치) - (Pivot에서 좌상단까지의 거리)
+	Vec2 finalPos = anchorPos + anchoredOffset - (size * m_pivot);
+	m_rect.x = finalPos.x;
+	m_rect.y = finalPos.y;
 
 	m_isDirty = false;
 
-	// 2. 자식들을 순회하며 업데이트
+	// 6. 자식 레이아웃 갱신
 	UpdateChildrenLayouts();
 }
 
@@ -111,6 +160,7 @@ RectTransformComponent::Rect RectTransformComponent::GetParentRect()
 	}
 
 	GameObject* owner = GetGameObject();
+	if (!owner)
 	if (!owner)
 	{
 		return parentRect;
@@ -154,7 +204,9 @@ RectTransformComponent::Rect RectTransformComponent::GetParentRect()
 		return parentRect;
 	}
 
-	return parentRectTr->GetRect();
+	Rect result = parentRectTr->GetRect();
+
+	return result;
 }
 
 void RectTransformComponent::UpdateChildrenLayouts()

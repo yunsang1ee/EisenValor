@@ -8,7 +8,8 @@
 #include "DxSwapChain.h"
 #include "RectTransformComponent.h"
 #include "ComponentStorage.h"
-#include "UITextureGlobal.h" // 텍스처 로딩 기능
+#include "UITextureGlobal.h"
+#include <algorithm> // for std::clamp
 
 void BattleUIControllerComponent::OnAttach()
 {
@@ -30,6 +31,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	}
 
 	ProcessMouseInput();
+	UpdatePositionFromTarget();
 }
 
 void BattleUIControllerComponent::OnDetach()
@@ -98,6 +100,7 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 
 	if (m_upButtonHandle.IsValid() && m_leftButtonHandle.IsValid() && m_rightButtonHandle.IsValid())
 	{
+		DEBUG_LOG_FMT("[BattleUI] Children Linked Successfully!\n");
 		SetChildUIPositions();
 
 		// 텍스처 로드 - ID 캐싱
@@ -140,7 +143,7 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 	}
 }
 
-void BattleUIControllerComponent::SetChildUIPositions()
+void BattleUIControllerComponent::SetChildUIPositions(float scale)
 {
 	GameObject* owner = GetGameObject();
 	if (!owner)
@@ -149,8 +152,15 @@ void BattleUIControllerComponent::SetChildUIPositions()
 	if (!scene)
 		return;
 
+	// 반지름 갱신 (스케일 적용)
+	m_radius = kDefaultRadius * scale;
 	const float innerRadius = m_radius * kInnerRadiusRatio;
-	auto*		btnStorage = scene->GetStorage<ButtonUIComponent>();
+	
+	// UI 크기 갱신 (스케일 적용)
+	const float currentUISize = kUISize * scale;
+	const float currentUIHalfSize = currentUISize / 2.0f;
+
+	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
 
 	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg)
 	{
@@ -170,14 +180,115 @@ void BattleUIControllerComponent::SetChildUIPositions()
 		rectTr->SetAnchors({0.5f, 0.5f}, {0.5f, 0.5f});
 		rectTr->SetPivot({0.5f, 0.5f});
 
-		rectTr->SetSizeDelta({kUISize, kUISize});
-		rectTr->SetOffsetMin({offsetX - kUIHalfSize, offsetY - kUIHalfSize});
-		rectTr->SetOffsetMax({offsetX + kUIHalfSize, offsetY + kUIHalfSize});
+		rectTr->SetSizeDelta({currentUISize, currentUISize});
+		rectTr->SetOffsetMin({offsetX - currentUIHalfSize, offsetY - currentUIHalfSize});
+		rectTr->SetOffsetMax({offsetX + currentUIHalfSize, offsetY + currentUIHalfSize});
 	};
 
 	setupPos(m_upButtonHandle, 90.0f);
 	setupPos(m_leftButtonHandle, 210.0f);
 	setupPos(m_rightButtonHandle, 330.0f);
+}
+
+void BattleUIControllerComponent::UpdatePositionFromTarget()
+{
+	if (!m_targetTrHandle.IsValid())
+	{
+		DEBUG_LOG_FMT("[BattleUI] No Target Handle!\n");
+		return;
+	}
+
+	GameObject* owner = GetGameObject();
+	if (!owner) return;
+	Scene* scene = owner->GetScene();
+	if (!scene) return;
+
+	Transform* targetTr = scene->GetStorage<Transform>()->Get(m_targetTrHandle);
+	if (!targetTr)
+	{
+		DEBUG_LOG_FMT("[BattleUI] Target Transform is NULL!\n");
+		return;
+	}
+
+	// 1. 타겟의 월드 위치 가져오기
+	DirectX::XMFLOAT3 vPos = targetTr->GetWorldPosition();
+	DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&vPos);
+
+	// 2. 뷰포트 정보 가져오기
+	auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
+	if (!swapChain) return;
+
+	float width = static_cast<float>(swapChain->GetWidth());
+	float height = static_cast<float>(swapChain->GetHeight());
+
+	// 3. 카메라 행렬 가져오기
+	DirectX::XMMATRIX view = CameraComponent::GetMainViewMatrix();
+	DirectX::XMMATRIX proj = CameraComponent::GetMainProjectionMatrix();
+	DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
+
+	// 4. 거리 비례 스케일링 계산(Z)
+	DirectX::XMVECTOR viewPos = DirectX::XMVector3TransformCoord(worldPos, view);
+	float distance = DirectX::XMVectorGetZ(viewPos);
+
+	float scale = 1.0f;
+	if (distance > 0.1f) 
+	{
+		// 거리 반비례
+		scale = kReferenceDistance / distance;
+		scale = std::clamp(scale, kMinScale, kMaxScale);
+	}
+
+	SetChildUIPositions(scale);
+
+	// 5. Project
+	DirectX::XMVECTOR screenPos =
+		DirectX::XMVector3Project(worldPos, 0.0f, 0.0f, width, height, 0.0f, 1.0f, proj, view, world);
+
+	DirectX::XMFLOAT3 pos;
+	DirectX::XMStoreFloat3(&pos, screenPos);
+
+	// 자식 UI 요소들 표시/비표시 제어 헬퍼
+	auto setChildrenActive = [&](bool active)
+	{
+		auto setUIActive = [&](HandleOf<ButtonUIComponent> handle)
+		{
+			if (handle.IsValid())
+			{
+				if (auto* btn = scene->GetStorage<ButtonUIComponent>()->Get(handle))
+				{
+					if (auto* go = btn->GetGameObject()) go->SetActive(active);
+				}
+			}
+		};
+		setUIActive(m_upButtonHandle);
+		setUIActive(m_leftButtonHandle);
+		setUIActive(m_rightButtonHandle);
+	};
+
+	// 6. 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
+	if (pos.z < 0.0f || pos.z > 1.0f)
+	{
+		setChildrenActive(false); 
+	}
+
+	setChildrenActive(true);
+
+	// 7. 중심점 갱신 및 BattleUI 오브젝트 자체의 위치 이동
+	m_centerX = pos.x;
+	m_centerY = pos.y;
+
+	if (auto* rectTr = owner->GetComponent<RectTransformComponent>())
+	{
+		// 화면 좌표를 UI 오프셋으로 변환 (Anchor 0.5,0.5기준)
+		float offsetX = pos.x - (width * 0.5f);
+		float offsetY = pos.y - (height * 0.5f);
+
+		// 메인 컨테이너 영역 스케일링
+		float containerHalfSize = 50.0f * scale; 
+
+		rectTr->SetOffsetMin({offsetX - containerHalfSize, offsetY - containerHalfSize});
+		rectTr->SetOffsetMax({offsetX + containerHalfSize, offsetY + containerHalfSize});
+	}
 }
 
 EGuardDir BattleUIControllerComponent::CalculateGuardDirection(float deltaX, float deltaY) const
@@ -269,12 +380,15 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	if (input.GetInputDown(VK_LBUTTON))
 	{
 		UpdateUISelection(m_currentSelectedDir);
+
 		if (m_currentSelectedDir != EGuardDir::None)
 		{
 			OnGuardDirectionConfirmed(m_currentSelectedDir);
+			
+			// 확정 후 즉시 초기화
+			m_accumulatedDeltaX = 0.0f;
+			m_accumulatedDeltaY = 0.0f;
 		}
-		m_accumulatedDeltaX = 0.0f;
-		m_accumulatedDeltaY = 0.0f;
 	}
 	else if (!input.GetInput(VK_LBUTTON))
 	{

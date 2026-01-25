@@ -136,58 +136,6 @@ void SampleScene::CreateSceneObjects()
 	}
 
 	// BattleUI와 자식 오브젝트들 생성
-	ReserveGameObject(
-		"BattleUI", std::nullopt,
-		[this](GameObject* battleUIObj)
-		{
-			CreateComponentWithInit<BattleUIControllerComponent>(battleUIObj->GetHandle(), [](auto*) {});
-			CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*) {});
-
-			auto   parentTrHandle = battleUIObj->GetComponentHandle<Transform>();
-			Scene* scene = battleUIObj->GetScene();
-
-			if (!scene)
-				return;
-
-			// 자식 UI 생성 목록
-			std::vector<std::string> names = {"UpUI", "LeftUI", "RightUI"};
-
-			for (const std::string& name : names)
-			{
-				scene->ReserveGameObject(
-					name, std::nullopt,
-					[scene, parentTrHandle](GameObject* childObj)
-					{
-						// RectTransform
-						scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*) {});
-
-						// 부모 설정 (컨트롤러가 자식을 찾음)
-						if (auto childTrHandle = childObj->GetComponentHandle<Transform>(); childTrHandle.IsValid())
-						{
-							if (Transform* childTr = scene->GetStorage<Transform>()->Get(childTrHandle))
-							{
-								childTr->SetParent(parentTrHandle);
-							}
-						}
-
-						// ImageUI
-						scene->CreateComponentWithInit<ImageUIComponent>(
-							childObj->GetHandle(), [](ImageUIComponent* image) { image->SetOrder(10); }
-						);
-
-						// ButtonUI
-						scene->CreateComponentWithInit<ButtonUIComponent>(
-							childObj->GetHandle(),
-							[](ButtonUIComponent* button)
-							{
-								button->SetOrder(11); // 이미지보다 앞에 오도록 설정
-							}
-						);
-					}
-				);
-			}
-		}
-	);
 
 	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 8);
 }
