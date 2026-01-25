@@ -71,7 +71,7 @@ bool DxGfxCommandQueueGlobal::WaitForIdle(uint32_t timeoutMs)
 {
 	const uint64_t waitValue = SignalFence();
 
-	if (m_fence->GetCompletedValue() < waitValue)
+	if (waitValue > 0 && m_fence->GetCompletedValue() < waitValue)
 	{
 		ThrowIfFailed(m_fence->SetEventOnCompletion(waitValue, m_fenceEvent));
 		if (::WaitForSingleObject(m_fenceEvent, timeoutMs) == WAIT_TIMEOUT)

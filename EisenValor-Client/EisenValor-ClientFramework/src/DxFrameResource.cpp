@@ -85,8 +85,13 @@ void DxFrameResource::WaitForCompletion()
 {
 	assert(m_fence && m_fenceEvent && "[DxFrameResource] Fence not initialized");
 
+	if (m_fenceValue == 0)
+	{
+		return;
+	}
+
 	const uint64_t completed = m_fence->GetCompletedValue();
-	if (completed < m_fenceValue)
+	if (m_fenceValue > 0 && completed < m_fenceValue)
 	{
 		ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent));
 		WaitForSingleObject(m_fenceEvent, INFINITE);
