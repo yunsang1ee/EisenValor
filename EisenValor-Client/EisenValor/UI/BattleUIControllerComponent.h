@@ -8,6 +8,9 @@
 // 1. 방향 열거형 정의
 enum class EGuardDir { None, Up, Left, Right };
 
+// 2. 공격 타입 열거형 정의
+enum class EAttackType { None, Light, Strong };
+
 class BattleUIControllerComponent : public ComponentBase<BattleUIControllerComponent>
 {
 public:
@@ -62,9 +65,15 @@ private:
 	HandleOf<ButtonUIComponent> m_leftButtonHandle;
 	HandleOf<ButtonUIComponent> m_rightButtonHandle;
 
+	// 일반/약공격용 이미지
 	HandleOf<ImageUIComponent> m_upImageHandle;
 	HandleOf<ImageUIComponent> m_leftImageHandle;
 	HandleOf<ImageUIComponent> m_rightImageHandle;
+
+	// 강공격용 이미지
+	HandleOf<ImageUIComponent> m_upStrongImageHandle;
+	HandleOf<ImageUIComponent> m_leftStrongImageHandle;
+	HandleOf<ImageUIComponent> m_rightStrongImageHandle;
 
 	// 추적 대상 트랜스폼
 	HandleOf<Transform> m_targetTrHandle; 
@@ -75,6 +84,13 @@ private:
 	float m_radius = kDefaultRadius; // 기본 반지름 적용
 
 	EGuardDir m_currentSelectedDir = EGuardDir::None; // 현재 선택된 가드 방향
+	EAttackType m_currentAttackType = EAttackType::None; // 현재 시도 중인 공격 타입
+
+	// 캐싱된 텍스처 ID
+	uint32_t m_normalTexId = 0;
+	uint32_t m_hoverTexId = 0;
+	uint32_t m_lightAttackTexId = 0;
+	uint32_t m_strongAttackTexId = 0;
 
 private:
 	// 헬퍼 함수 선언
@@ -82,8 +98,8 @@ private:
 	void SetChildUIPositions(float scale = 1.0f); // 스케일 인자 추가
 	void ProcessMouseInput();
 	EGuardDir CalculateGuardDirection(float deltaX, float deltaY) const;
-	void UpdateUISelection(EGuardDir selectedDir);
-	void OnGuardDirectionConfirmed(EGuardDir confirmedDir);
+	void UpdateUISelection(EGuardDir selectedDir, EAttackType attackType);
+	void OnGuardDirectionConfirmed(EGuardDir confirmedDir, EAttackType attackType);
 
 	void		 UpdatePositionFromTarget();	// 타겟 위치에 따라 중심점 갱신 (World To Screen)
 

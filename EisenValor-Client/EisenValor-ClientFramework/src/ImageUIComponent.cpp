@@ -58,7 +58,6 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 	data.uvMin = {0.0f, 0.0f};
 	data.uvMax = {1.0f, 1.0f};
 
-	// 기본 색상(m_color)과 상태 색상(targetStateColor) 혼합하여 최종 틴트 결정
 	DirectX::XMFLOAT4 finalColor;
 	finalColor.x = m_color.x * targetStateColor.x;
 	finalColor.y = m_color.y * targetStateColor.y;
