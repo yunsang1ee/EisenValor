@@ -2369,13 +2369,18 @@ inline ::flatbuffers::Offset<CS_SHOW_PLAYER_ATTACK_DIR_PACKET> CreateCS_SHOW_PLA
 struct SC_SHOW_PLAYER_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ATTACK_DIR = 4
+    VT_PLAYER_ID = 4,
+    VT_ATTACK_DIR = 6
   };
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
   uint8_t attack_dir() const {
     return GetField<uint8_t>(VT_ATTACK_DIR, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_ATTACK_DIR, 1) &&
            verifier.EndTable();
   }
@@ -2385,6 +2390,9 @@ struct SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder {
   typedef SC_SHOW_PLAYER_ATTACK_DIR_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(SC_SHOW_PLAYER_ATTACK_DIR_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
   void add_attack_dir(uint8_t attack_dir) {
     fbb_.AddElement<uint8_t>(SC_SHOW_PLAYER_ATTACK_DIR_PACKET::VT_ATTACK_DIR, attack_dir, 0);
   }
@@ -2401,8 +2409,10 @@ struct SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_SHOW_PLAYER_ATTACK_DIR_PACKET> CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t player_id = 0,
     uint8_t attack_dir = 0) {
   SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
   builder_.add_attack_dir(attack_dir);
   return builder_.Finish();
 }

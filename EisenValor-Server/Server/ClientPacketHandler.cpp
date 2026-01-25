@@ -272,7 +272,7 @@ bool Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine:
 	auto world = clientSession->GetGameWorld();
 
 	if(world) {
-		auto pb{ ServerPackets::Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(recvPkt.attack_dir()) };
+		auto pb{ ServerPackets::Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(id, recvPkt.attack_dir()) };
 		world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 	}
 

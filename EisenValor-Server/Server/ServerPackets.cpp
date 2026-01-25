@@ -241,11 +241,11 @@ namespace ServerPackets {
 
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_CAMERA_TARGET_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_CAMERA_TARGET_PACKET, targetID));
 	}
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint8 attackDir)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint32 playerID, const uint8 attackDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, attackDir));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, playerID, attackDir));
 
 	}
 #pragma endregion
