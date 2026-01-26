@@ -9,8 +9,6 @@
 #include "ServerEngineConfigManager.h"
 
 Server::RIOClientSession::RIOClientSession()
-	:m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
-	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }
 {
 
 }
@@ -87,29 +85,14 @@ void Server::RIOClientSession::OnSend(const uint32 bytesTransferred)
 	// std::println("OnSend, Len = {}", bytesTransferred);
 }
 
+void Server::RIOClientSession::SendPing()
+{
+	auto pb{ ServerPackets::Make_SC_PING_PACKET() };
+	Send(std::move(pb));
+}
+
 void Server::RIOClientSession::Handle_CS_PONG()
 {
 	// std::cout << "Pong!" << std::endl;
 	m_lastPong = std::chrono::high_resolution_clock::now();
-}
-
-void Server::RIOClientSession::Ping()
-{
-	if(GetState() != SESSION_STATE::FREE) {
-		std::cout << "Ping" << std::endl;
-		const auto now{ std::chrono::high_resolution_clock::now() };
-		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
-
-		if(pingPongInterval >= m_timeoutInterval) {
-			std::string_view reason{ "Disconnected By PingCheck" };
-			Disconnect(reason.data());
-			LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
-			return;
-		}
-
-		auto pb{ ServerPackets::Make_SC_PING_PACKET() };
-		Send(std::move(pb));
-
-		ExecTimer(m_pingInterval, &RIOClientSession::Ping);
-	}
 }

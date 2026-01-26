@@ -1,7 +1,7 @@
 #pragma once
 
 namespace ServerEngine {
-	class Session;
+	class RIOSession;
 
 	enum class RIO_CONTEXT_TYPE {
 		RECV,
@@ -15,7 +15,7 @@ namespace ServerEngine {
 
 	protected:
 		explicit RIOContext(RIO_CONTEXT_TYPE type);
-		friend class Session;
+		friend class RIOSession;
 
 	public:
 		void Init();
@@ -31,7 +31,7 @@ namespace ServerEngine {
 	class RecvContext : public RIOContext {
 	private:
 		RecvContext() : RIOContext{ RIO_CONTEXT_TYPE::RECV } {};
-		friend class Session;
+		friend class RIOSession;
 	};
 
 	class SendContext : public RIOContext {

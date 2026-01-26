@@ -5,14 +5,14 @@
 namespace ServerEngine {
 	class RIOCore;
 	class SessionPool;
-	class Session;
+	class RIOSession;
 
 	class RIOWorker {
 	private:
 		RIO_CQ														m_cq;
 		uint16														m_id;
 
-		tbb::concurrent_unordered_set<std::shared_ptr<Session>>		m_connectedSession;
+		tbb::concurrent_unordered_set<std::shared_ptr<RIOSession>>		m_connectedSession;
 
 		SessionPool													m_sessionPool;
 		std::vector<RIORESULT>										m_ioResults;
