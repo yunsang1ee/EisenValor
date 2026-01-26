@@ -38,6 +38,9 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	// 1. Ctrl 키
 	if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
 	{
+		//auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
+		//GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
 		if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
 		{
 			// 전투 모드
@@ -176,6 +179,7 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 		m_hoverTexId = texGlobal.LoadTexture(L"Resource\\Texture\\hovering.dds");
 		m_lightAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\select.dds");
 		m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
+		m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
 
 		// ButtonUI와 ImageUI 초기 설정
 		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
@@ -414,11 +418,13 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 	bool isLeftPressed = input.GetInput(VK_LBUTTON);
 	bool isRightPressed = input.GetInput(VK_RBUTTON);
+	bool isMiddlePressed = input.GetInput(VK_MBUTTON);
 	
 	std::optional<GENERAL_ATTACK_TYPE> currentType = std::nullopt;
 	
-	if (isLeftPressed) currentType = GENERAL_ATTACK_TYPE_LIGHT;
+	if (isMiddlePressed) currentType = GENERAL_ATTACK_TYPE_DISARM;
 	else if (isRightPressed) currentType = GENERAL_ATTACK_TYPE_HEAVY;
+	else if (isLeftPressed) currentType = GENERAL_ATTACK_TYPE_LIGHT;
 	
 	// 3. 새로운 유효 방향, 공격 타입이 감지되었을 때만 업데이트 및 누적치 초기화
 	if (detectedDir != GENERAL_ATTACK_DIR_TYPE_NONE)
@@ -433,6 +439,9 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				// 방향이 바뀔 때 패킷 전송 (단순 방향 표시용)
 				auto pb = NetBridge::C2S::Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(detectedDir);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				// 마우스를 누른 채 이동한 경우 무효화
+				m_isAttackValid = false;
 			}
 			UpdateUISelection(detectedDir, currentType);
 		}
@@ -445,13 +454,18 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 	bool isLeftDown = input.GetInputDown(VK_LBUTTON);
 	bool isRightDown = input.GetInputDown(VK_RBUTTON);
+	bool isMiddleDown = input.GetInputDown(VK_MBUTTON);
 	
-	// 4. 마우스 클릭 (공격 확정)
-	if (isLeftDown || isRightDown)
+	// 4. 마우스 클릭 (공격 확정) - Vaild일 때만
+	
+	if ((isLeftDown || isRightDown || isMiddleDown) && m_isAttackValid)
 	{
 		if (m_currentSelectedDir != GENERAL_ATTACK_DIR_TYPE_NONE)
 		{
-			GENERAL_ATTACK_TYPE confirmedType = isLeftDown ? GENERAL_ATTACK_TYPE_LIGHT : GENERAL_ATTACK_TYPE_HEAVY;
+			GENERAL_ATTACK_TYPE confirmedType = GENERAL_ATTACK_TYPE_LIGHT;
+			if (isMiddleDown) confirmedType = GENERAL_ATTACK_TYPE_DISARM;
+			else if (isRightDown) confirmedType = GENERAL_ATTACK_TYPE_HEAVY;
+
 			OnGuardDirectionConfirmed(m_currentSelectedDir, confirmedType);
 			
 			// 공격 패킷 전송
@@ -464,8 +478,11 @@ void BattleUIControllerComponent::ProcessMouseInput()
 			m_accumulatedDeltaY = 0.0f;
 		}
 	}
-	else if (!isLeftPressed && !isRightPressed)
+	else if (!isLeftPressed && !isRightPressed && !isMiddlePressed)
 	{
+		// 마우스 버튼을 모두 뗐을 때 공격 유효성 리셋
+		m_isAttackValid = true;
+
 		if (m_accumulatedDeltaX * m_accumulatedDeltaX + m_accumulatedDeltaY * m_accumulatedDeltaY < kMouseDeltaIgnoreSq)
 		{
 			m_accumulatedDeltaX = 0.0f;
@@ -488,6 +505,12 @@ void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE sele
 		return;
 	auto* imgStorage = scene->GetStorage<ImageUIComponent>();
 
+	// 공격 유효성이 false - 확정 텍스쳐 안 보여줌
+	if (!m_isAttackValid)
+	{
+		attackType = std::nullopt;
+	}
+
 	auto updateBtn = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle, bool isSelected)
 	{
 		// 1. 텍스처 업데이트
@@ -495,11 +518,18 @@ void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE sele
 		{
 			if (ImageUIComponent* img = imgStorage->Get(imgHandle))
 			{
-				// 공격 타입에 따라 Pressed 텍스처 선택 (기본은 Light)
+				// 공격 타입에 따라 Pressed 텍스처 선택 (기본 Light)
 				uint32_t pressedTexId = m_lightAttackTexId;
-				if (attackType.has_value() && attackType.value() == GENERAL_ATTACK_TYPE_HEAVY)
+				if (attackType.has_value())
 				{
-					pressedTexId = m_strongAttackTexId;
+					if (attackType.value() == GENERAL_ATTACK_TYPE_HEAVY)
+					{
+						pressedTexId = m_strongAttackTexId;
+					}
+					else if (attackType.value() == GENERAL_ATTACK_TYPE_DISARM)
+					{
+						pressedTexId = m_disarmTexId;
+					}
 				}
 				img->SetPressedTexture(pressedTexId);
 			}
@@ -535,6 +565,10 @@ void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE sele
 void BattleUIControllerComponent::OnGuardDirectionConfirmed(GENERAL_ATTACK_DIR_TYPE confirmedDir, GENERAL_ATTACK_TYPE attackType)
 {
 	const char* attackStr = (attackType == GENERAL_ATTACK_TYPE_HEAVY) ? "STRONG" : "LIGHT";
+	if (attackType == GENERAL_ATTACK_TYPE_DISARM)
+	{
+		attackStr = "DISARM";
+	}
 
 	switch (confirmedDir)
 	{

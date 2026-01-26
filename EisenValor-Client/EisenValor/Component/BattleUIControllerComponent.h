@@ -84,12 +84,14 @@ private:
 	GENERAL_STANCE_TYPE				   m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;		 // 현재 스탠스
 	GENERAL_ATTACK_DIR_TYPE			   m_currentSelectedDir = GENERAL_ATTACK_DIR_TYPE_NONE;  // 현재 선택된 가드 방향
 	std::optional<GENERAL_ATTACK_TYPE> m_currentAttackType = std::nullopt;					 // 현재 시도 중인 공격 타입 (없으면 nullopt)
+	bool							   m_isAttackValid = true;								 // 현재 입력(클릭)이 유효한지 여부 (방향 변경 시 false)
 
 	// 캐싱된 텍스처 ID
 	uint32_t m_normalTexId = 0;
 	uint32_t m_hoverTexId = 0;
 	uint32_t m_lightAttackTexId = 0;
 	uint32_t m_strongAttackTexId = 0;
+	uint32_t m_disarmTexId = 0;
 
 private:
 	// 헬퍼 함수 선언

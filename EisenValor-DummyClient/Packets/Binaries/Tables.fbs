@@ -191,15 +191,16 @@ table SC_REMOVE_OBJ_PACKET {
 	obj_id: uint;
 }
 
-
-
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
+	player_state: uint8;
 }
 
 table SC_MOVE_PACKET {
 	obj_id: uint;
 	pos_info: FB_STRUCTS.PosInfo;
+	state: uint8;
+	sub_state: uint8;
 }
 
 table CS_CHANGE_PLAYER_STANCE_PACKET {
@@ -242,6 +243,7 @@ table CS_SHOW_PLAYER_ATTACK_DIR_PACKET{
 }
 
 table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
+	player_id: uint32;
 	attack_dir: uint8;
 }
 

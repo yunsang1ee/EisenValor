@@ -152,10 +152,10 @@ void CameraComponent::SetLookAtTarget(DenseListHandle<Transform> targetTransform
 	}
 
 	m_viewDirty = true;
-	DEBUG_LOG_FMT(
+	/*DEBUG_LOG_FMT(
 		"[CameraComponent] Set look-at target (Handle: {}) {}\n", targetTransform.GetValue(),
 		upVector.has_value() ? "with custom up vector" : "with default up vector"
-	);
+	);*/
 }
 
 void CameraComponent::SetLookAtTarget(DenseListHandle<GameObject> targetObject, std::optional<DX::XMFLOAT3> upVector)
