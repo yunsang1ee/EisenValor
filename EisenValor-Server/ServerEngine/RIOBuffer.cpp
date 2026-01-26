@@ -2,6 +2,7 @@
 #include "RIOBuffer.h"
 
 #include "RIOCore.h"
+#include "NetworkManager.h"
 
 ServerEngine::RIOBuffer::RIOBuffer()
 	:m_id{ RIO_INVALID_BUFFERID }, m_buffer{ nullptr }, m_readPos{ 0 }, m_writePos{ 0 }

@@ -7,6 +7,8 @@
 #include "RIOContext.h"
 #include "ServerEngineConfigManager.h"
 
+#include "NetworkManager.h"
+
 ServerEngine::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
@@ -83,7 +85,7 @@ void ServerEngine::RIOWorker::DequeueCompletion() noexcept
 bool ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	LOG_INFO("Session Accept!, RioWorker ID ={}", m_id);
-	auto session{ m_sessionPool.DeqSession() };
+	auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };
 	session->SetOwner(this);
 	if(false == session->AcceptCompleted(socket, clientAddr)) return false;
 	m_connectedSession.insert(std::move(session));

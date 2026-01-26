@@ -53,7 +53,7 @@
       <Filter>02. Contents\GameLobby\GameRoom\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalFunc.cpp">
-      <Filter>98. Global</Filter>
+      <Filter>97. Global</Filter>
     </ClCompile>
     <ClCompile Include="SoldierStates.cpp">
       <Filter>02. Contents\GameLobby\GameRoom\GameWorld\GameObject\Creature\Soldier\State</Filter>
@@ -183,9 +183,6 @@
     <Filter Include="03. Packets\ServerPackets">
       <UniqueIdentifier>{910abdf7-2458-4bb2-9644-8eaa1c718eda}</UniqueIdentifier>
     </Filter>
-    <Filter Include="98. Global">
-      <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Packets\PacketHandler">
       <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
     </Filter>
@@ -282,6 +279,15 @@
     <Filter Include="02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\DetourCrowd">
       <UniqueIdentifier>{4dd3acde-fb2b-48d1-82f8-ddaa85e06a76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\NavMeshData">
+      <UniqueIdentifier>{6c641479-31f8-4405-978a-787b01791411}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Global">
+      <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Utils">
+      <UniqueIdentifier>{d8bf9806-e324-45ba-9966-629519d36367}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -314,9 +320,6 @@
     <ClInclude Include="ServerStructs.h">
       <Filter>96. Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\Libraries\inc\SimpleMath.h">
-      <Filter>99. pch</Filter>
-    </ClInclude>
     <ClInclude Include="ServerTypes.h">
       <Filter>96. Headers</Filter>
     </ClInclude>
@@ -348,7 +351,7 @@
       <Filter>02. Contents\GameLobby\GameRoom\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalFunc.h">
-      <Filter>98. Global</Filter>
+      <Filter>97. Global</Filter>
     </ClInclude>
     <ClInclude Include="SoldierStates.h">
       <Filter>02. Contents\GameLobby\GameRoom\GameWorld\GameObject\Creature\Soldier\State</Filter>
@@ -449,6 +452,9 @@
     <ClInclude Include="DetourProximityGrid.h">
       <Filter>02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\DetourCrowd</Filter>
     </ClInclude>
+    <ClInclude Include="..\Libraries\inc\SimpleMath.h">
+      <Filter>98. Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -461,9 +467,6 @@
     <None Include="..\Packets\Binaries\Structs.fbs">
       <Filter>03. Packets\Schema</Filter>
     </None>
-    <None Include="..\Libraries\inc\SimpleMath.inl">
-      <Filter>99. pch</Filter>
-    </None>
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>03. Packets\Schema</Filter>
     </None>
@@ -475,6 +478,12 @@
     </None>
     <None Include="..\Binaries\Server\Release\DataTable\StatDataTable.csv">
       <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
+    </None>
+    <None Include="..\Binaries\Server\Release\NavData\solo_navmesh.bin">
+      <Filter>02. Contents\GameLobby\GameRoom\GameWorld\NavSystem\NavMeshData</Filter>
+    </None>
+    <None Include="..\Libraries\inc\SimpleMath.inl">
+      <Filter>98. Utils</Filter>
     </None>
   </ItemGroup>
 </Project>

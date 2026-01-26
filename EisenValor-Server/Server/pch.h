@@ -33,6 +33,7 @@
 #include "DetourCommon.h"
 #include "DetourCrowd.h"
 
+
 struct AttackInfo {
 	AttackData* atkData;
 	FB_ENUMS::GENERAL_ATTACK_DIR_TYPE	dir;
@@ -42,14 +43,19 @@ struct AttackInfo {
 
 
 
+namespace ServerEngine {
+	class Session;
+}
+
 namespace Server {
-	class ClientSession;
 
 	namespace Contents {
 		class GameLobby;
 	}
+
+	class RIOClientSession;
 }
 
 extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 
-std::shared_ptr<Server::ClientSession> MakeClientSessionFunc();
+std::shared_ptr<ClientSession> MakeClientSessionFunc();

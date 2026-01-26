@@ -157,6 +157,8 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="IOCore.h" />
+    <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
     <ClInclude Include="LockQueue.h" />
     <ClInclude Include="LogManager.h" />
@@ -188,6 +190,8 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="IOCore.cpp" />
+    <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
     <ClCompile Include="LockQueue.cpp" />
     <ClCompile Include="LogManager.cpp" />

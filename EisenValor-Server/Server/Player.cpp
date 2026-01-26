@@ -34,8 +34,8 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 
 	m_startStunDelay = worldFrame;
 
-	if(GENERAL_STATE_TYPE::DEFENSE == fsm->GetCurState()->GetStateType()) {
-		fsm->ChangeState(GENERAL_STATE_TYPE::IDLE, dt);
+	if(FB_ENUMS::GENERAL_STATE_TYPE_DEFENSE == fsm->GetCurState()->GetStateType()) {
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
 		return false;
 	}
 
@@ -48,9 +48,9 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 		auto attackerPlayer = static_cast<Player*>(attacker);
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
 
-		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == GENERAL_STATE_TYPE::ATTACK) {
+		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK) {
 			auto const fsm = GetComponent<Server::Contents::FSM>();
-			fsm->ChangeState(GENERAL_STATE_TYPE::DEFENSE, dt);
+			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEFENSE, dt);
 				return false;
 		}
 
@@ -65,7 +65,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 
 	// 선 딜레이 도중 타격받았을 때 스턴딜레이와 데미지 2배
 	if(auto const fsm = GetComponent<Server::Contents::FSM>()) {
-		if(GENERAL_STATE_TYPE::PRE_DELAY == fsm->GetCurState()->GetStateType()) {
+		if(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY == fsm->GetCurState()->GetStateType()) {
 			damage *= 2;
 			m_stunDelay *= 2;
 		}
@@ -76,7 +76,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 	
 	if(IsAlive())
-		fsm->ChangeState(GENERAL_STATE_TYPE::STUN, dt);
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt);
 	return true;
 }
 
@@ -132,7 +132,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 		}
 	}
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(GENERAL_STATE_TYPE::PRE_DELAY, worldDT);
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY, worldDT);
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
@@ -144,9 +144,9 @@ void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
 {
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
 
-	const GENERAL_STATE_TYPE curState{ static_cast<GENERAL_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
+	const FB_ENUMS::GENERAL_STATE_TYPE curState{ static_cast<FB_ENUMS::GENERAL_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
 
-	if(curState == (GENERAL_STATE_TYPE::PRE_DELAY)) {
+	if(curState == (FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY)) {
 		const AttackInfo& atkInfo{ GetAttackInfo() };
 
 		const auto world{ GetGameWorld() };

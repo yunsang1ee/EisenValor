@@ -14,7 +14,7 @@ static Server::Contents::General* GetGeneral(Server::Contents::FSM* fsm)
 //		  GENERAL_IDLE_STATE
 // ==================================
 Server::Contents::GeneralIdleState::GeneralIdleState()
-	:State(GENERAL_STATE_TYPE::IDLE), m_accDTForStaminaRecovery{}
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), m_accDTForStaminaRecovery{}
 {
 }
 
@@ -59,7 +59,7 @@ void Server::Contents::GeneralIdleState::Update(const float dt)
 //		  GENERAL_MOVE_STATE
 // ==================================
 Server::Contents::GeneralMoveState::GeneralMoveState()
-	:State(GENERAL_STATE_TYPE::MOVE)
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_MOVE)
 {
 
 }
@@ -88,7 +88,7 @@ void Server::Contents::GeneralMoveState::Update(const float dt)
 //		 GENERAL_PRE_DELAY_STATE
 // ==================================
 Server::Contents::GeneralPreDelayState::GeneralPreDelayState()
-	:State(GENERAL_STATE_TYPE::PRE_DELAY), m_startFrame{}
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY), m_startFrame{}
 {
 }
 
@@ -118,7 +118,7 @@ void Server::Contents::GeneralPreDelayState::Update(const float dt)
 	if(worldFrame >= m_startFrame + atkInfo.atkData->preDelayFrame) {
 		auto const world{ owner->GetGameWorld() };
 		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-		fsm->ChangeState(etou8(GENERAL_STATE_TYPE::ATTACK), dt);
+		fsm->ChangeState(etou8(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK), dt);
 	}
 }
 
@@ -126,7 +126,7 @@ void Server::Contents::GeneralPreDelayState::Update(const float dt)
 //		 GENERAL_ATTACK_STATE
 // ==================================
 Server::Contents::GeneralAttackState::GeneralAttackState()
-	:State(GENERAL_STATE_TYPE::ATTACK)
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
 {
 }
 
@@ -158,7 +158,7 @@ void Server::Contents::GeneralAttackState::Update(const float dt)
 					if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType || FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
 						auto const obj{ static_cast<General*>(target) };
 						auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
-						fsm->ChangeState(GENERAL_STATE_TYPE::IDLE, dt);
+						fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
 					}
 				}
 			}
@@ -167,14 +167,14 @@ void Server::Contents::GeneralAttackState::Update(const float dt)
 	}			
 	
 	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(GENERAL_STATE_TYPE::POST_DELAY, dt);
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
 }
 
 // ==================================
 //		 GENERAL_POST_DELAY_STATE
 // ==================================
 Server::Contents::GeneralPostDelayState::GeneralPostDelayState()
-	:State(GENERAL_STATE_TYPE::POST_DELAY), m_startFrame{}
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY), m_startFrame{}
 {
 }
 
@@ -203,7 +203,7 @@ void Server::Contents::GeneralPostDelayState::Update(const float dt)
 
 	if(worldFrame >= m_startFrame + atkInfo.atkData->postDelayFrame) {
 		auto const fsm{ GetFSM() };
-		fsm->ChangeState(etou8(GENERAL_STATE_TYPE::IDLE), dt);
+		fsm->ChangeState(etou8(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), dt);
 	}
 }
 
@@ -212,7 +212,7 @@ void Server::Contents::GeneralPostDelayState::Update(const float dt)
 //		 GENERAL_STUN_STATE
 // ==================================
 Server::Contents::GeneralStunState::GeneralStunState()
-	:State(GENERAL_STATE_TYPE::STUN), m_startFrame{}, m_stunDuration{}
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_STUN), m_startFrame{}, m_stunDuration{}
 {
 }
 
@@ -244,14 +244,14 @@ void Server::Contents::GeneralStunState::Update(const float dt)
 	auto const world{ owner->GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const fsm{ GetFSM() };
-	fsm->ChangeState(etou8(GENERAL_STATE_TYPE::IDLE), dt);
+	fsm->ChangeState(etou8(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), dt);
 }
 
 // ==================================
 //		 GENERAL_DEAD_STATE
 // ==================================
 Server::Contents::GeneralDeadState::GeneralDeadState()
-	:State(GENERAL_STATE_TYPE::DEAD), m_accDTForRespawn{}
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD), m_accDTForRespawn{}
 {
 }
 

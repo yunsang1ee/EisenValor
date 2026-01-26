@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Singleton.hpp"
+
+#include "IOCore.h"
 #include "RIOWorker.h"
 
 namespace ServerEngine {
 	class RIOWorker;
 
-	class RIOCore :public Singleton<RIOCore> {
-		SINGLETON(RIOCore)
+	class RIOCore : public IOCore {
 	private:
 		RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable{};
 		SOCKET									m_listenSocket;
@@ -18,21 +18,26 @@ namespace ServerEngine {
 		std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
 
 	public:
+		RIOCore() = default;
+		virtual ~RIOCore() = default;
+
+		RIOCore(const RIOCore&) = delete;
+		RIOCore(RIOCore&&) = default;
+		RIOCore& operator=(const RIOCore&) = delete;
+		RIOCore& operator=(RIOCore&&) = default;
+
+	public:
 		[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
-		bool			Init(const SessionFactoryFunc sessionFunc);
+		virtual bool	Init(const SessionFactoryFunc sessionFunc) override final;
 		[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
-		bool			StartAccept();
-		void			Run();
+		virtual bool	StartAccept() override final;
+		virtual void	Run() override final;
 
 	public:
 		const auto&		GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
-		void			Shutdown() const noexcept;
+		virtual void	Shutdown() override final;
 
 	private:
 		void			DoAcceptLoop();
-
-	private:
-		void			DistributeReservedTask() noexcept;
-		void			FlushTaskQueue();
 	};
 }

@@ -42,7 +42,7 @@ namespace ServerPackets {
 	}
 #pragma endregion
 
-	
+		
 	// =================
 	//		·Îºñ
 	// =================
@@ -202,7 +202,7 @@ namespace ServerPackets {
 		return  ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_OBJ_IN_GAME_WORLD_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform, const uint8 state, const uint8 subState) noexcept
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -211,7 +211,7 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
 
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo, state, subState));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_VITAL_PACKET(const uint32 id, const uint32 hp, const uint32 stamina) noexcept
@@ -241,11 +241,11 @@ namespace ServerPackets {
 
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_CAMERA_TARGET_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_CAMERA_TARGET_PACKET, targetID));
 	}
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint8 attackDir)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint32 playerID, const uint8 attackDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, attackDir));
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, playerID, attackDir));
 
 	}
 #pragma endregion

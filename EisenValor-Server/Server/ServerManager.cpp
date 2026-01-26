@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "ServerManager.h"
 
+#include "NetworkManager.h"
+
 #include "RioCore.h"
 #include "ClientSession.h"
 #include "GameObjectFactory.h"
@@ -28,12 +30,12 @@ bool Server::ServerManager::Init()
 	}
 
 	std::wcout.imbue(std::locale("korean"));
-	
+
 	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		return false;
 	}
-		
+
 	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("GameData/GameData.json")) {
 		LOG_ERROR("GameDataManager Load Failed");
 		return false;
@@ -46,20 +48,24 @@ bool Server::ServerManager::Init()
 
 	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("DataTable/AttackDataTable.csv")) {
 		LOG_ERROR("AttackDataTable Load Failed");
-		return false; 
+		return false;
 	}
 
 	ClientPacketHandler::Init();
-	
+
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
 
-	if(false == MANAGER(ServerEngine::RIOCore)->Init(MakeClientSessionFunc)) {
-		LOG_ERROR("RIOCore Init Failed");
-		MANAGER(ServerEngine::RIOCore)->Shutdown();
-		::WSACleanup();
+#ifdef		RIO_SERVER
+	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::RIO };
+#elifdef	IOCP_SERVER
+	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::IOCP };
+#endif
+
+	if(false == MANAGER(ServerEngine::NetworkManager)->Init(ioModelType, MakeClientSessionFunc)) {
+		LOG_ERROR("NetworkManager Init Failed");
 		return false;
 	}
 
@@ -67,15 +73,12 @@ bool Server::ServerManager::Init()
 	G_GAME_LOBBY->Init();
 
 	return true;
-}	
+}
 
 bool Server::ServerManager::Run()
 {
-	if(false == MANAGER(ServerEngine::RIOCore)->StartAccept())
-		return false;
+	MANAGER(ServerEngine::NetworkManager)->Run();
 
-	MANAGER(ServerEngine::RIOCore)->Run();
-	
 	char ch;
 	constexpr int8 ESC = 27;
 
@@ -100,7 +103,8 @@ bool Server::ServerManager::Run()
 
 void Server::ServerManager::Shutdown()
 {
-	MANAGER(ServerEngine::RIOCore)->Shutdown();
+	// MANAGER(ServerEngine::RIOCore)->Shutdown();
+	MANAGER(ServerEngine::NetworkManager)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
 

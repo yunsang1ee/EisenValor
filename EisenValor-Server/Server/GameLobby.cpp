@@ -129,7 +129,7 @@ void Server::Contents::GameLobby::JoinGameRoom(const std::shared_ptr<ClientSessi
 	}
 }
 
-void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<Server::ClientSession>& clientSession, const uint16 roomID)
+void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID)
 {
 	auto room = GetRoom(roomID);
 

@@ -345,6 +345,60 @@ inline const char *EnumNameSOLDIER_STATE_TYPE(SOLDIER_STATE_TYPE e) {
   return EnumNamesSOLDIER_STATE_TYPE()[index];
 }
 
+enum GENERAL_STATE_TYPE : uint8_t {
+  GENERAL_STATE_TYPE_NONE = 0,
+  GENERAL_STATE_TYPE_IDLE = 1,
+  GENERAL_STATE_TYPE_MOVE = 2,
+  GENERAL_STATE_TYPE_PRE_DELAY = 3,
+  GENERAL_STATE_TYPE_ATTACK = 4,
+  GENERAL_STATE_TYPE_POST_DELAY = 5,
+  GENERAL_STATE_TYPE_DEFENSE = 6,
+  GENERAL_STATE_TYPE_STUN = 7,
+  GENERAL_STATE_TYPE_DEAD = 8,
+  GENERAL_STATE_TYPE_END = 9,
+  GENERAL_STATE_TYPE_MIN = GENERAL_STATE_TYPE_NONE,
+  GENERAL_STATE_TYPE_MAX = GENERAL_STATE_TYPE_END
+};
+
+inline const GENERAL_STATE_TYPE (&EnumValuesGENERAL_STATE_TYPE())[10] {
+  static const GENERAL_STATE_TYPE values[] = {
+    GENERAL_STATE_TYPE_NONE,
+    GENERAL_STATE_TYPE_IDLE,
+    GENERAL_STATE_TYPE_MOVE,
+    GENERAL_STATE_TYPE_PRE_DELAY,
+    GENERAL_STATE_TYPE_ATTACK,
+    GENERAL_STATE_TYPE_POST_DELAY,
+    GENERAL_STATE_TYPE_DEFENSE,
+    GENERAL_STATE_TYPE_STUN,
+    GENERAL_STATE_TYPE_DEAD,
+    GENERAL_STATE_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesGENERAL_STATE_TYPE() {
+  static const char * const names[11] = {
+    "NONE",
+    "IDLE",
+    "MOVE",
+    "PRE_DELAY",
+    "ATTACK",
+    "POST_DELAY",
+    "DEFENSE",
+    "STUN",
+    "DEAD",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameGENERAL_STATE_TYPE(GENERAL_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, GENERAL_STATE_TYPE_NONE, GENERAL_STATE_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesGENERAL_STATE_TYPE()[index];
+}
+
 }  // namespace FB_ENUMS
 
 #endif  // FLATBUFFERS_GENERATED_ENUMS_FB_ENUMS_H_

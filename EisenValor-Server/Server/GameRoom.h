@@ -8,7 +8,6 @@ namespace ServerEngine {
 }
 
 namespace Server {
-	class ClientSession;
 	namespace Contents {
 		class GameLobby;
 		class GameObject;

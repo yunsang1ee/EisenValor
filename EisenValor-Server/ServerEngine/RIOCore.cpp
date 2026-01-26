@@ -124,28 +124,8 @@ void ServerEngine::RIOCore::DoAcceptLoop()
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_rioWorkerCnt;
 }
 
-void ServerEngine::RIOCore::Shutdown() const noexcept
+void ServerEngine::RIOCore::Shutdown()
 {
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
-}
-
-void ServerEngine::RIOCore::DistributeReservedTask() noexcept
-{
-	const auto now = high_resolution_clock::now();
-	MANAGER(ServerEngine::TaskTimer)->DistributeReservedTask(now);
-}
-
-void ServerEngine::RIOCore::FlushTaskQueue()
-{
-	while(true) {
-		const auto now = high_resolution_clock::now();
-
-		if(now > TLS_WORK_END_TIME)
-			break;
-
-		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->DequeTaskQueue();
-		if(nullptr == taskQueue) break;
-		taskQueue->Execute();
-	}
 }

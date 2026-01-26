@@ -3,8 +3,6 @@
 #include "General.h"
 
 namespace Server {
-	class ClientSession;
-
 	namespace Contents {
 		class NPC;
 
