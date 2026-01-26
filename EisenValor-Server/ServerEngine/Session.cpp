@@ -8,6 +8,7 @@
 #include "SessionPool.h"	
 
 #include "ServerEngineConfigManager.h"
+#include "NetworkManager.h"
 
 ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_rq{ RIO_INVALID_RQ }, m_state{ SESSION_STATE::FREE }, m_deferCount{}
@@ -301,4 +302,29 @@ void ServerEngine::Session::CloseSocket()
 {
 	shutdown(m_socket, SD_BOTH);
 	closesocket(m_socket);
+}
+
+// =============================================
+//					RIO SESSION
+// =============================================
+
+ServerEngine::RIOSession::RIOSession()
+{
+}
+
+ServerEngine::RIOSession::~RIOSession()
+{
+}
+
+
+
+// =============================================
+//					IOCP SESSION
+// =============================================
+ServerEngine::IOCPSession::IOCPSession()
+{
+}
+
+ServerEngine::IOCPSession::~IOCPSession()
+{
 }

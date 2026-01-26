@@ -15,23 +15,21 @@ namespace ServerEngine {
 
 	class Session : public TaskQueue {
 	private:
-		uint32														m_id;
-		SOCKET														m_socket;
-		RIOWorker*													m_owner;
+		uint32														m_id;					// session
+		SOCKET														m_socket;				// session	
+		std::atomic_bool											m_connected;			// session
+		SOCKADDR_IN													m_clientAddr{};			// session	
+		std::atomic<SESSION_STATE>									m_state;				// session
 
-		std::atomic_bool											m_connected;
-		SOCKADDR_IN													m_clientAddr{};
-		RIO_RQ														m_rq;
-		
-		RecvBuffer													m_recvBuffer;
-		RecvContext													m_recvContext;
-		uint32														m_deferCount;
-
-		tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
-		SendBuffer													m_sendBuffer;
-		std::atomic<SESSION_STATE>									m_state;
-		std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
-		std::chrono::milliseconds									COMMIT_SEND_MS;
+		RIOWorker*													m_owner;				// rio
+		RIO_RQ														m_rq;					// rio
+		RecvBuffer													m_recvBuffer;			// rio
+		RecvContext													m_recvContext;			// rio
+		uint32														m_deferCount;			// rio
+		tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;	// rio
+		SendBuffer													m_sendBuffer;			// rio
+		std::chrono::high_resolution_clock::time_point				m_lastSendTime{};		// rio
+		std::chrono::milliseconds									COMMIT_SEND_MS;			// rio
 
 	public:
 		Session();
@@ -39,7 +37,7 @@ namespace ServerEngine {
 
 	public:
 		virtual void OnConnected() abstract;
-		virtual void OnDisconnected(const std::string_view reason) {}
+		virtual void OnDisconnected(const std::string_view reason) abstract;
 
 	public:
 		void Dispatch(RIOContext* const context, const uint32 bytesTransferred);
@@ -80,6 +78,28 @@ namespace ServerEngine {
 
 		// SessionPool에 반납하기 전 정리
 		void Clean();
+	};
+
+	class RIOSession : public Session {
+	private:
+
+	public:
+		RIOSession();
+		virtual ~RIOSession();
+
+	public:
+
+	};
+
+	class IOCPSession : public Session {
+	private:
+
+	public:
+		IOCPSession();
+		virtual ~IOCPSession();
+
+	public:
+
 	};
 }
 
