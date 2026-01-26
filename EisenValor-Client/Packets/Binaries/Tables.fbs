@@ -191,8 +191,6 @@ table SC_REMOVE_OBJ_PACKET {
 	obj_id: uint;
 }
 
-
-
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
 	player_state: uint8;

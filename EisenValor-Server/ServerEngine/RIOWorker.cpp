@@ -7,6 +7,8 @@
 #include "RIOContext.h"
 #include "ServerEngineConfigManager.h"
 
+#include "NetworkManager.h"
+
 ServerEngine::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {

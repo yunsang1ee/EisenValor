@@ -9,26 +9,27 @@ namespace Server {
 		class GameWorld;
 	}
 
-	class ClientSession : public ServerEngine::Session {
+	class RIOClientSession : public ServerEngine::RIOSession {
 	private:
-		std::string															m_name;
-		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;
-		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;
-		std::chrono::high_resolution_clock::time_point						m_lastPong;
-
-		const std::chrono::milliseconds										m_pingInterval;	
-		const std::chrono::milliseconds										m_timeoutInterval;
+		std::string															m_name;				// ClientSession
+		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;			// ClientSession
+		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;		// ClientSession
+		
+		
+		std::chrono::high_resolution_clock::time_point						m_lastPong;			// Session
+		const std::chrono::milliseconds										m_pingInterval;		// Session
+		const std::chrono::milliseconds										m_timeoutInterval;	// Session
 
 	public:
-		ClientSession();
-		virtual ~ClientSession();
+		RIOClientSession();
+		virtual ~RIOClientSession();
 
 	public:
 		virtual void OnConnected() override final;
 		virtual void OnDisconnected(const std::string_view reason) override final;
 		virtual void ProcessPacket(const std::span<const char>& buffer) override final;
 		virtual void OnSend(const uint32 bytesTransferred) override final;
-	
+
 	public:
 		void Handle_CS_PONG();
 
@@ -40,8 +41,12 @@ namespace Server {
 		const std::string& GetName() const noexcept { return m_name; }
 		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const noexcept { return m_gameRoom.lock(); }
 		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const noexcept { return m_gameWorld.lock(); }
-		
+
 	private:
 		void Ping();
+	};
+
+	class IOCPClientSession : public ServerEngine::IOCPSession {
+
 	};
 }

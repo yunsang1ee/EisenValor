@@ -13,7 +13,7 @@ union COLLIDER_ID {
 };
 
 namespace Server {
-	class ClientSession;
+	// class ClientSession;
 	namespace Contents {
 		class GameRoom;
 		class GameObject;

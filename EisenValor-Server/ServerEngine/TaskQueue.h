@@ -68,7 +68,7 @@ namespace ServerEngine {
 	
 	private:
 		void Execute() noexcept;
-		friend class RIOCore;
+		friend class IOCore;
 	};
 }
 

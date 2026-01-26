@@ -24,14 +24,14 @@ bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	clientSession->Handle_CS_PONG();
 	return true;
 }
 
 bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto pb{ ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str()) };
 
 	switch(clientSession->GetState()) {
@@ -71,7 +71,7 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 {
 	std::cout << "Handle_CS_LOGIN_PACKET" << std::endl;
 
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	std::cout << std::format("ID:{} , PW:{} ", recvPkt.id()->c_str(), recvPkt.pw()->c_str()) << std::endl;
 	const uint32 id{ clientSession->GetID() };
 	
@@ -102,21 +102,21 @@ bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& sessio
 #pragma region LOBBY_PACKETS
 bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY, clientSession);
 	return true;
 }
 
 bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
 	return true;
 }
 
 bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM, clientSession);
 	return true;
 }
@@ -129,14 +129,14 @@ bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session
 #pragma region ROOM_PACKETS
 bool Handle_CS_JOIN_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_JOIN_GAME_ROOM_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::JoinGameRoom, clientSession, recvPkt.room_id());
 	return true;
 }
 
 bool Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto room = clientSession->GetGameRoom();
 	
 	if(room)
@@ -147,7 +147,7 @@ bool Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Sessio
 
 bool Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_TEAM_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto room = clientSession->GetGameRoom();
 	if(room)
 		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_CHANGE_TEAM, clientSession);
@@ -157,7 +157,7 @@ bool Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<ServerEngine::Session>& 
 
 bool Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ADD_BOT_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto room = clientSession->GetGameRoom();
 	if(room)
 		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_ADD_BOT, clientSession, recvPkt.team_type());
@@ -167,7 +167,7 @@ bool Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<ServerEngine::Session>& sess
 
 bool Handle_CS_READY_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_READY_GAME_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto room = clientSession->GetGameRoom();
 	if(room)
 		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_READY_GAME, clientSession);
@@ -176,7 +176,7 @@ bool Handle_CS_READY_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 
 bool Handle_CS_START_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_START_GAME_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto room = clientSession->GetGameRoom();
 	if(room)
 		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_GAME_START, clientSession);
@@ -186,7 +186,7 @@ bool Handle_CS_START_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& s
 
 bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	auto room = clientSession->GetGameRoom();
 	if(room)
 		room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD , clientSession);
@@ -201,7 +201,7 @@ bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEn
 #pragma region WORLD_PACKETS
 bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 	if(clientSession->GetState() != SESSION_STATE::IN_GAME_WORLD) {
 		return true;
@@ -220,7 +220,7 @@ bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session
 
 bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
@@ -232,7 +232,7 @@ bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>
 
 bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
@@ -244,7 +244,7 @@ bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::S
 
 bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
@@ -256,7 +256,7 @@ bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& 
 
 bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
@@ -267,7 +267,7 @@ bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::S
 }
 bool Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
@@ -289,7 +289,7 @@ bool Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine:
 #ifndef ENABLE_LOBBY
 bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt) noexcept
 {
-	const auto& clientSession = std::static_pointer_cast<Server::ClientSession>(session);
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 	const uint16 roomID{ recvPkt.room_id() };
 	

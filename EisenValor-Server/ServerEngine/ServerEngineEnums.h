@@ -1,5 +1,12 @@
 #pragma once
 
+enum class IO_MODEL_TYPE : uint8 {
+	IOCP,
+	RIO,
+
+	END
+};
+
 enum class SESSION_STATE : uint8 {
 	FREE,				// Session 생성 소멸
 	ACCEPTED,				// Accept 직후 

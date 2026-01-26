@@ -8,53 +8,32 @@
 #include "GameWorld.h"
 #include "ServerEngineConfigManager.h"
 
-Server::ClientSession::ClientSession()
-	:m_pingInterval{std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
+Server::RIOClientSession::RIOClientSession()
+	:m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
 	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }
 {
-	// std::cout << "ClientSession" << std::endl;
-} 
 
-Server::ClientSession::~ClientSession()
+}
+
+Server::RIOClientSession::~RIOClientSession()
 {
 	std::cout << "~ClientSesion" << std::endl;
 }
 
-void Server::ClientSession::Ping()
-{
-	if(GetState() != SESSION_STATE::FREE) {
-		std::cout << "Ping" << std::endl;
-		const auto now{ std::chrono::high_resolution_clock::now()};
-		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
-
-		if(pingPongInterval >= m_timeoutInterval) {
-			std::string_view reason{ "Disconnected By PingCheck" };
-			Disconnect(reason.data());
-			LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
-			return;
-		}
-
-		auto pb{ ServerPackets::Make_SC_PING_PACKET() };
-		Send(std::move(pb));
-
-		ExecTimer(m_pingInterval, &ClientSession::Ping);
-	}
-}
-
-void Server::ClientSession::OnConnected()
+void Server::RIOClientSession::OnConnected()
 {
 	LOG_INFO("Session ID:{}, OnConnected!", GetID());
-	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<Server::ClientSession>(shared_from_this()));
+	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
 	m_lastPong = std::chrono::high_resolution_clock::now();
-	
+
 	Ping();
 }
 
-void Server::ClientSession::OnDisconnected(const std::string_view reason)
+void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 {
-	auto clientSession = std::static_pointer_cast<Server::ClientSession>(shared_from_this());
+	auto clientSession = std::static_pointer_cast<ClientSession>(shared_from_this());
 	MANAGER(Server::ClientSessionManager)->RemoveSession(clientSession);
-	
+
 	LOG_INFO("Session ID:{}, OnDisconnected!, Reason: {}", GetID(), reason.data());
 
 	switch(const auto state = clientSession->GetState()) {
@@ -94,22 +73,43 @@ void Server::ClientSession::OnDisconnected(const std::string_view reason)
 	SetActive(false);
 }
 
-void Server::ClientSession::ProcessPacket(const std::span<const char>& buffer)
+void Server::RIOClientSession::ProcessPacket(const std::span<const char>& buffer)
 {
-	if(false == ClientPacketHandler::HandlePacket(std::static_pointer_cast<ClientSession>(shared_from_this()), buffer.data())) {
+	if(false == ClientPacketHandler::HandlePacket(std::static_pointer_cast<RIOClientSession>(shared_from_this()), buffer.data())) {
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer.data());
 		LOG_ERROR("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 		Disconnect("Recv Invalid Packet");
 	}
 }
 
-void Server::ClientSession::OnSend(const uint32 bytesTransferred)
+void Server::RIOClientSession::OnSend(const uint32 bytesTransferred)
 {
 	// std::println("OnSend, Len = {}", bytesTransferred);
 }
 
-void Server::ClientSession::Handle_CS_PONG()
+void Server::RIOClientSession::Handle_CS_PONG()
 {
 	// std::cout << "Pong!" << std::endl;
 	m_lastPong = std::chrono::high_resolution_clock::now();
+}
+
+void Server::RIOClientSession::Ping()
+{
+	if(GetState() != SESSION_STATE::FREE) {
+		std::cout << "Ping" << std::endl;
+		const auto now{ std::chrono::high_resolution_clock::now() };
+		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+
+		if(pingPongInterval >= m_timeoutInterval) {
+			std::string_view reason{ "Disconnected By PingCheck" };
+			Disconnect(reason.data());
+			LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
+			return;
+		}
+
+		auto pb{ ServerPackets::Make_SC_PING_PACKET() };
+		Send(std::move(pb));
+
+		ExecTimer(m_pingInterval, &RIOClientSession::Ping);
+	}
 }
