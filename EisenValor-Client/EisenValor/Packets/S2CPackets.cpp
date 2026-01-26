@@ -11,7 +11,7 @@
 #include "MovementComponent.h"
 #include <Component/PlayerControllerComponent.h>
 #include <Component/HealthComponent.h>
-#include <UI/BattleUIControllerComponent.h>
+#include <Component/BattleUIControllerComponent.h>
 #include <RectTransformComponent.h>
 #include <ImageUIComponent.h>
 #include <ButtonUIComponent.h>
@@ -427,7 +427,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 )
 {
 	// 로컬 플레이어 오브젝트 생성
-	// TODO: 로컬 플레이어 오브젝트를 게임 씬에 생성하고, 카메라 및 컨트롤러 컴포넌트도 추가하기
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
@@ -480,6 +479,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 						cam->SetAsMainCamera();
 						cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
 						cam->SetLookAtTarget(playerTrHandle);
+						cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 						cam->SetEnableLookAtRotation(false);
 						cam->SetSmoothFollow(true, 10.0f, 10.0f);
 						cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
@@ -758,18 +758,44 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 )
 {
 	// 카메라 타겟 변경
-	// TODO: 카메라 컴포넌트의 타겟을 변경하기
-	// TODO: 카메라 컴포넌트의 타겟을 특정 오브젝트로 변경
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto cameraComp = CameraComponent::GetMainCamera();
 
+	if (!cameraComp) return false;
+
 	const uint32 cameraTargetID = recvPkt.camera_target_id();
-	auto		 targetObj = scene->FindGameObjectByServerID(cameraTargetID);
-	cameraComp->SetLookAtTarget(targetObj->GetHandle());
+	
+	if (cameraTargetID == 0)
+	{
+		// 락온 해제 시(적 죽었을 때) 로컬 플레이어로 복구
+		const uint32 localID = scene->GetLocalID();
+		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
+		{
+			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
+			cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+			cameraComp->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f}); // 오프셋 복구
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
+		}
+		else
+		{
+			cameraComp->ClearLookAtTarget();
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
+		}
+	}
+	else
+	{
+		if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
+		{
+			cameraComp->SetLookAtTarget(targetObj->GetHandle());
+			cameraComp->SetEnableLookAtRotation(true); // 락온 시엔 회전 고정
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
+		}
+		else
+		{
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Target ID {} not found in scene\n", cameraTargetID);
+		}
+	}
 
-
-	DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] ");
-	DEBUG_LOG_FMT("Camera Target ID: {}\n", cameraTargetID);
 	return true;
 }
 

@@ -3,7 +3,7 @@
 #include "SampleScene.h"
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
-#include "UI/BattleUIControllerComponent.h"
+#include "Component/BattleUIControllerComponent.h"
 #include "Transform.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"

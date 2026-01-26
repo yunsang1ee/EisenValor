@@ -8,7 +8,10 @@
 #include "DxSwapChain.h"
 #include "RectTransformComponent.h"
 #include "ComponentStorage.h"
-#include "UITextureGlobal.h"
+#include "UI/UITextureGlobal.h"
+#include "NetworkGlobal.h"
+#include "Packets/C2SPackets.h"
+#include "CameraComponent.h"
 #include <algorithm> // for std::clamp
 
 void BattleUIControllerComponent::OnAttach()
@@ -20,7 +23,9 @@ void BattleUIControllerComponent::OnAttach()
 
 	InitializeChildHandlesAndSetupUI();
 
-	GLOBAL(InputGlobal).SetMouseLocked(true);
+	// 1. NEUTRAL -> UI 숨김
+	m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;
+	ToggleUI(false);
 }
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
@@ -30,8 +35,63 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 		InitializeChildHandlesAndSetupUI();
 	}
 
-	ProcessMouseInput();
-	UpdatePositionFromTarget();
+	// 1. Ctrl 키
+	if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
+	{
+		if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
+		{
+			// 전투 모드
+			m_currentStance = GENERAL_STANCE_TYPE_COMBAT;
+			ToggleUI(true); 
+			DEBUG_LOG_FMT("[BattleUI] Switch to COMBAT\n");
+		}
+		else
+		{
+			// 일반 모드
+			m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;
+			ToggleUI(false); // 숨김
+
+			// 상태 초기화
+			m_accumulatedDeltaX = 0.0f;
+			m_accumulatedDeltaY = 0.0f;
+			UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
+
+			            // 전투 모드 해제 시 카메라를 로컬 플레이어 추적 모드(자유 회전)로 복귀
+			            if (auto* mainCamera = CameraComponent::GetMainCamera())
+			            {	
+			                // 캐릭터 있을 때
+			                if (m_targetTrHandle.IsValid())
+			                {
+			                    mainCamera->SetLookAtTarget(m_targetTrHandle);
+			                    mainCamera->SetEnableLookAtRotation(false);
+			                    // 원래 오프셋으로 복구
+			                    mainCamera->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f});
+			                    DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Reset Camera to LocalPlayer\n");
+			                }
+			
+			                // 죽었을 때(일단 Clear로 해둠)
+			                // TODO: 죽었을 때 처리
+			                else
+			                {
+			                    mainCamera->ClearLookAtTarget();
+			                    DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Clear Camera Target\n");
+			                }
+			            }		}
+	}
+
+	// 2. COMBAT 모드 일때만 로직 수행
+	if (m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
+	{
+		// Alt 키: 카메라 락온 타겟 변경 요청
+		if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
+		{
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(0);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		}
+
+		ProcessMouseInput();
+		UpdatePositionFromTarget();
+	}
 }
 
 void BattleUIControllerComponent::OnDetach()
@@ -50,6 +110,9 @@ float BattleUIControllerComponent::NormalizeAngle(float degrees)
 
 void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 {
+	// 1. UI 비활성화
+	ToggleUI(false);
+
 	GameObject* owner = GetGameObject();
 	if (!owner)
 		return;
@@ -98,9 +161,13 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 		}
 	}
 
+	// 2. 모든 자식 핸들이 유효한지 확인
 	if (m_upButtonHandle.IsValid() && m_leftButtonHandle.IsValid() && m_rightButtonHandle.IsValid())
 	{
-		DEBUG_LOG_FMT("[BattleUI] Children Linked Successfully!\n");
+		// 처음 연결되었을 때 현재 상태(Neutral)에 맞춰 비활성화
+		ToggleUI(m_currentStance == GENERAL_STANCE_TYPE_COMBAT);
+
+		// DEBUG_LOG_FMT("[BattleUI] Children Linked Successfully\n");
 		SetChildUIPositions();
 
 		// 텍스처 로드 및 멤버 변수 저장
@@ -196,7 +263,7 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 {
 	if (!m_targetTrHandle.IsValid())
 	{
-		DEBUG_LOG_FMT("[BattleUI] No Target Handle!\n");
+		// DEBUG_LOG_FMT("[BattleUI] No Target Handle!\n");
 		return;
 	}
 
@@ -234,7 +301,8 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 
 	float scale = 1.0f;
 	if (distance > 0.1f) 
-	{	// 거리 반비례
+	{
+		// 거리 반비례
 		scale = kReferenceDistance / distance;
 		scale = std::clamp(scale, kMinScale, kMaxScale);
 	}
@@ -248,38 +316,22 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 	DirectX::XMFLOAT3 pos;
 	DirectX::XMStoreFloat3(&pos, screenPos);
 
-	// 자식 UI 요소들 표시/비표시 제어 헬퍼
-	auto setChildrenActive = [&](bool active)
-	{
-		auto setUIActive = [&](HandleOf<ButtonUIComponent> handle)
-		{
-			if (handle.IsValid())
-			{
-				if (auto* btn = scene->GetStorage<ButtonUIComponent>()->Get(handle))
-				{
-					if (auto* go = btn->GetGameObject()) go->SetActive(active);
-				}
-			}
-		};
-		setUIActive(m_upButtonHandle);
-		setUIActive(m_leftButtonHandle);
-		setUIActive(m_rightButtonHandle);
-	};
-
 	// 6. 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
 	if (pos.z < 0.0f || pos.z > 1.0f)
 	{
-		setChildrenActive(false); 
+		ToggleUI(false);
 	}
-
-	setChildrenActive(true);
+	else
+	{
+		ToggleUI(true);
+	}
 
 	// 7. 중심점 갱신 및 BattleUI 오브젝트 자체의 위치 이동
 	m_centerX = pos.x;
 	m_centerY = pos.y;
 
 	if (auto* rectTr = owner->GetComponent<RectTransformComponent>()) 
-	{	
+	{
 		// 화면 좌표를 UI 오프셋으로 변환 (Anchor 0.5,0.5기준)
 		float offsetX = pos.x - (width * 0.5f);
 		float offsetY = pos.y - (height * 0.5f);
@@ -292,36 +344,33 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 	}
 }
 
-EGuardDir BattleUIControllerComponent::CalculateGuardDirection(float deltaX, float deltaY) const
+GENERAL_ATTACK_DIR_TYPE BattleUIControllerComponent::CalculateGuardDirection(float deltaX, float deltaY) const
 {
 	float lengthSq = (deltaX * deltaX) + (deltaY * deltaY);
 	if (lengthSq < kAccumulationThresholdSq)
-		return EGuardDir::None;
+		return GENERAL_ATTACK_DIR_TYPE_NONE;
 
 	float radian = atan2f(-deltaY, deltaX);
 	float degree = radian * kRadToDeg;
 	degree = NormalizeAngle(degree);
 
 	if (degree >= kUpRegionStart && degree < kUpRegionEnd)
-		return EGuardDir::Up;
+		return GENERAL_ATTACK_DIR_TYPE_TOP;
 	if (degree >= kLeftRegionStart && degree < kLeftRegionEnd)
-		return EGuardDir::Left;
+		return GENERAL_ATTACK_DIR_TYPE_LEFT;
 
 	// 리셋 구역 (250~270)
 	if (degree >= kDeadZoneRegionStart && degree < kDeadZoneRegionEnd)
-		return EGuardDir::None;
+		return GENERAL_ATTACK_DIR_TYPE_NONE;
 
 	if (degree >= kRightRegionStart || degree < kRightRegionEnd)
-		return EGuardDir::Right;
+		return GENERAL_ATTACK_DIR_TYPE_RIGHT;
 
-	return EGuardDir::None;
+	return GENERAL_ATTACK_DIR_TYPE_NONE;
 }
 
 void BattleUIControllerComponent::ProcessMouseInput()
 {
-	// TODO: 공격 방향 바뀔 때 마다 Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET 만들어서 보내기
-	// TODO: 마우스 클릭(공격) 할 때 마다 Make_CS_PLAYER_ATTAKC_PACKET 만들어서 보내기
-
 	auto& input = GLOBAL(InputGlobal);
 	DX::XMFLOAT2 mouseDelta = input.GetMouseDelta();
 
@@ -330,15 +379,15 @@ void BattleUIControllerComponent::ProcessMouseInput()
 		float instantRadian = atan2f(-mouseDelta.y, mouseDelta.x);
 		float instantDegree = NormalizeAngle(instantRadian * kRadToDeg);
 
-		EGuardDir instantDir = EGuardDir::None;
+		GENERAL_ATTACK_DIR_TYPE instantDir = GENERAL_ATTACK_DIR_TYPE_NONE;
 		if (instantDegree >= kUpRegionStart && instantDegree < kUpRegionEnd)
-			instantDir = EGuardDir::Up;
+			instantDir = GENERAL_ATTACK_DIR_TYPE_TOP;
 		else if (instantDegree >= kLeftRegionStart && instantDegree < kLeftRegionEnd)
-			instantDir = EGuardDir::Left;
+			instantDir = GENERAL_ATTACK_DIR_TYPE_LEFT;
 		else if (instantDegree >= kDeadZoneRegionStart && instantDegree < kDeadZoneRegionEnd)
-			instantDir = EGuardDir::None;
+			instantDir = GENERAL_ATTACK_DIR_TYPE_NONE;
 		else if (instantDegree >= kRightRegionStart || instantDegree < kRightRegionEnd)
-			instantDir = EGuardDir::Right;
+			instantDir = GENERAL_ATTACK_DIR_TYPE_RIGHT;
 
 		if (instantDir != m_currentSelectedDir)
 		{
@@ -356,22 +405,23 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	{
 		m_accumulatedDeltaX = 0.0f;
 		m_accumulatedDeltaY = 0.0f;
-		UpdateUISelection(EGuardDir::None, EAttackType::None);
+		UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
 		return;
 	}
 
 	// 2. 방향 판정
-	EGuardDir detectedDir = CalculateGuardDirection(m_accumulatedDeltaX, m_accumulatedDeltaY);
+	GENERAL_ATTACK_DIR_TYPE detectedDir = CalculateGuardDirection(m_accumulatedDeltaX, m_accumulatedDeltaY);
 
 	bool isLeftPressed = input.GetInput(VK_LBUTTON);
 	bool isRightPressed = input.GetInput(VK_RBUTTON);
-	EAttackType currentType = EAttackType::None;
 	
-	if (isLeftPressed) currentType = EAttackType::Light;
-	else if (isRightPressed) currentType = EAttackType::Strong;
+	std::optional<GENERAL_ATTACK_TYPE> currentType = std::nullopt;
+	
+	if (isLeftPressed) currentType = GENERAL_ATTACK_TYPE_LIGHT;
+	else if (isRightPressed) currentType = GENERAL_ATTACK_TYPE_HEAVY;
 	
 	// 3. 새로운 유효 방향, 공격 타입이 감지되었을 때만 업데이트 및 누적치 초기화
-	if (detectedDir != EGuardDir::None)
+	if (detectedDir != GENERAL_ATTACK_DIR_TYPE_NONE)
 	{
 		if (detectedDir != m_currentSelectedDir || currentType != m_currentAttackType)
 		{
@@ -379,26 +429,33 @@ void BattleUIControllerComponent::ProcessMouseInput()
 			{
 				m_accumulatedDeltaX = 0.0f;
 				m_accumulatedDeltaY = 0.0f;
+
+				// 방향이 바뀔 때 패킷 전송 (단순 방향 표시용)
+				// Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(detectedDir);
 			}
 			UpdateUISelection(detectedDir, currentType);
 		}
 	}
-	else if (m_currentSelectedDir != EGuardDir::None && currentType != m_currentAttackType)
+	else if (m_currentSelectedDir != GENERAL_ATTACK_DIR_TYPE_NONE && currentType != m_currentAttackType)
 	{
+		// 방향은 그대로인데 공격 타입(눌림 상태)만 바뀐 경우
 		UpdateUISelection(m_currentSelectedDir, currentType);
 	}
 
 	bool isLeftDown = input.GetInputDown(VK_LBUTTON);
 	bool isRightDown = input.GetInputDown(VK_RBUTTON);
 	
-	// 4. 마우스 좌클릭
+	// 4. 마우스 클릭 (공격 확정)
 	if (isLeftDown || isRightDown)
 	{
-		if (m_currentSelectedDir != EGuardDir::None)
+		if (m_currentSelectedDir != GENERAL_ATTACK_DIR_TYPE_NONE)
 		{
-			EAttackType confirmedType = isLeftDown ? EAttackType::Light : EAttackType::Strong;
+			GENERAL_ATTACK_TYPE confirmedType = isLeftDown ? GENERAL_ATTACK_TYPE_LIGHT : GENERAL_ATTACK_TYPE_HEAVY;
 			OnGuardDirectionConfirmed(m_currentSelectedDir, confirmedType);
 			
+			// 공격 패킷 전송
+			// Make_CS_PLAYER_ATTACK_PACKET(m_currentSelectedDir, confirmedType);
+
 			// 확정 후 즉시 초기화
 			m_accumulatedDeltaX = 0.0f;
 			m_accumulatedDeltaY = 0.0f;
@@ -414,7 +471,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	}
 }
 
-void BattleUIControllerComponent::UpdateUISelection(EGuardDir selectedDir, EAttackType attackType)
+void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType)
 {
 	GameObject* owner = GetGameObject();
 	if (!owner)
@@ -435,8 +492,13 @@ void BattleUIControllerComponent::UpdateUISelection(EGuardDir selectedDir, EAtta
 		{
 			if (ImageUIComponent* img = imgStorage->Get(imgHandle))
 			{
-				// 공격 타입에 따라 Pressed 텍스처 선택
-				img->SetPressedTexture(attackType == EAttackType::Strong ? m_strongAttackTexId : m_lightAttackTexId);
+				// 공격 타입에 따라 Pressed 텍스처 선택 (기본은 Light)
+				uint32_t pressedTexId = m_lightAttackTexId;
+				if (attackType.has_value() && attackType.value() == GENERAL_ATTACK_TYPE_HEAVY)
+				{
+					pressedTexId = m_strongAttackTexId;
+				}
+				img->SetPressedTexture(pressedTexId);
 			}
 		}
 
@@ -447,9 +509,8 @@ void BattleUIControllerComponent::UpdateUISelection(EGuardDir selectedDir, EAtta
 			{
 				if (isSelected)
 				{
-					// 눌려 있으면 Pressed 아니면 Hover
-					// attackType이 None이 아니면 눌린 상태
-					bool isPressed = (attackType != EAttackType::None);
+					// attackType이 값이 있으면 Pressed, 아니면 Hover
+					bool isPressed = attackType.has_value();
 					btn->SetState(isPressed ? ButtonState::Pressed : ButtonState::Hover);
 				}
 				else
@@ -460,30 +521,58 @@ void BattleUIControllerComponent::UpdateUISelection(EGuardDir selectedDir, EAtta
 		}
 	};
 
-	updateBtn(m_upButtonHandle, m_upImageHandle, selectedDir == EGuardDir::Up);
-	updateBtn(m_leftButtonHandle, m_leftImageHandle, selectedDir == EGuardDir::Left);
-	updateBtn(m_rightButtonHandle, m_rightImageHandle, selectedDir == EGuardDir::Right);
+	updateBtn(m_upButtonHandle, m_upImageHandle, selectedDir == GENERAL_ATTACK_DIR_TYPE_TOP);
+	updateBtn(m_leftButtonHandle, m_leftImageHandle, selectedDir == GENERAL_ATTACK_DIR_TYPE_LEFT);
+	updateBtn(m_rightButtonHandle, m_rightImageHandle, selectedDir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
 
 	m_currentSelectedDir = selectedDir;
 	m_currentAttackType = attackType;
 }
 
-void BattleUIControllerComponent::OnGuardDirectionConfirmed(EGuardDir confirmedDir, EAttackType attackType)
+void BattleUIControllerComponent::OnGuardDirectionConfirmed(GENERAL_ATTACK_DIR_TYPE confirmedDir, GENERAL_ATTACK_TYPE attackType)
 {
-	const char* attackStr = (attackType == EAttackType::Strong) ? "STRONG" : "LIGHT";
+	const char* attackStr = (attackType == GENERAL_ATTACK_TYPE_HEAVY) ? "STRONG" : "LIGHT";
 
 	switch (confirmedDir)
 	{
-	case EGuardDir::Up:
+	case GENERAL_ATTACK_DIR_TYPE_TOP:
 		DEBUG_LOG_FMT("[BattleUI] UP confirmed! ({})\n", attackStr);
 		break;
-	case EGuardDir::Left:
+	case GENERAL_ATTACK_DIR_TYPE_LEFT:
 		DEBUG_LOG_FMT("[BattleUI] LEFT confirmed! ({})\n", attackStr);
 		break;
-	case EGuardDir::Right:
+	case GENERAL_ATTACK_DIR_TYPE_RIGHT:
 		DEBUG_LOG_FMT("[BattleUI] RIGHT confirmed! ({})\n", attackStr);
 		break;
-	case EGuardDir::None:
+	case GENERAL_ATTACK_DIR_TYPE_NONE:
 		break;
 	}
+}
+
+void BattleUIControllerComponent::ToggleUI(bool isActive)
+{
+	GameObject* owner = GetGameObject();
+	if (!owner) return;
+	Scene* scene = owner->GetScene();
+	if (!scene) return;
+
+	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+	if (!btnStorage) return;
+
+	auto setObjActive = [&](HandleOf<ButtonUIComponent> handle) 
+	{
+		if (!handle.IsValid()) return; 
+		
+		if (auto* btn = btnStorage->Get(handle))
+		{
+			if (auto* go = btn->GetGameObject())
+			{
+				go->SetActive(isActive);
+			}
+		}
+	};
+
+	setObjActive(m_upButtonHandle);
+	setObjActive(m_leftButtonHandle);
+	setObjActive(m_rightButtonHandle);
 }

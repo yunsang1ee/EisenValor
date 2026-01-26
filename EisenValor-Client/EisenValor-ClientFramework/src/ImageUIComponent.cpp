@@ -5,6 +5,15 @@
 
 void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 {
+	// GameObject 활성화 상태 체크
+	if (auto* go = GetGameObject())
+	{
+		if (!go->IsActive())
+		{
+			return;
+		}
+	}
+
 	// RectTransformComponent 가져오기
 	RectTransformComponent* rectTr = GetRectTransform();
 	if (!rectTr)

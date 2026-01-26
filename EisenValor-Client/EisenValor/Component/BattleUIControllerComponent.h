@@ -4,14 +4,10 @@
 #include "ImageUIComponent.h"  
 #include <numbers> 
 #include <DirectXMath.h> 
+#include <optional>
+#include "Packets/Enums_generated.h"
 
-// TODO: 없애기
-
-// 1. 방향 열거형 정의
-enum class EGuardDir { None, Up, Left, Right };
-
-// 2. 공격 타입 열거형 정의
-enum class EAttackType { None, Light, Strong };
+using namespace FB_ENUMS;
 
 class BattleUIControllerComponent : public ComponentBase<BattleUIControllerComponent>
 {
@@ -54,12 +50,12 @@ private:
 	static constexpr float kRightRegionEnd = 30.0f;
 
 	// 데드존 상수
-	static constexpr float kMouseDeltaIgnoreSq = 1.0f; // 너무 작은 값은 무시 
+	static constexpr float kMouseDeltaIgnoreSq = 10.0f; // 너무 작은 값은 무시 
 
 	// 누적 방식 관련
 	float m_accumulatedDeltaX = 0.0f;
 	float m_accumulatedDeltaY = 0.0f;
-	static constexpr float kAccumulationThresholdSq = 20.0f; // 누적된 이동량 임계값
+	static constexpr float kAccumulationThresholdSq = 3000.0f; // 누적된 이동량 임계값
 
 private:
 	// UI 자식 핸들
@@ -85,8 +81,9 @@ private:
 	float m_centerY = 0.0f;
 	float m_radius = kDefaultRadius; // 기본 반지름 적용
 
-	EGuardDir m_currentSelectedDir = EGuardDir::None; // 현재 선택된 가드 방향
-	EAttackType m_currentAttackType = EAttackType::None; // 현재 시도 중인 공격 타입
+	GENERAL_STANCE_TYPE				   m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;		 // 현재 스탠스
+	GENERAL_ATTACK_DIR_TYPE			   m_currentSelectedDir = GENERAL_ATTACK_DIR_TYPE_NONE;  // 현재 선택된 가드 방향
+	std::optional<GENERAL_ATTACK_TYPE> m_currentAttackType = std::nullopt;					 // 현재 시도 중인 공격 타입 (없으면 nullopt)
 
 	// 캐싱된 텍스처 ID
 	uint32_t m_normalTexId = 0;
@@ -99,11 +96,12 @@ private:
 	void InitializeChildHandlesAndSetupUI();
 	void SetChildUIPositions(float scale = 1.0f); // 스케일 인자 추가
 	void ProcessMouseInput();
-	EGuardDir CalculateGuardDirection(float deltaX, float deltaY) const;
-	void UpdateUISelection(EGuardDir selectedDir, EAttackType attackType);
-	void OnGuardDirectionConfirmed(EGuardDir confirmedDir, EAttackType attackType);
+	GENERAL_ATTACK_DIR_TYPE CalculateGuardDirection(float deltaX, float deltaY) const;
+	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
+	void OnGuardDirectionConfirmed(GENERAL_ATTACK_DIR_TYPE confirmedDir, GENERAL_ATTACK_TYPE attackType);
+	void ToggleUI(bool isActive); // 자식 UI 활성화/비활성화 토글
 
-	void		 UpdatePositionFromTarget();	// 타겟 위치에 따라 중심점 갱신 (World To Screen)
+	void UpdatePositionFromTarget();	// 타겟 위치에 따라 중심점 갱신
 
 	static float NormalizeAngle(float degrees); // 각도 정규화
 

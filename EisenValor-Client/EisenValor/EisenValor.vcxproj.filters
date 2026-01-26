@@ -91,7 +91,7 @@
     <ClInclude Include="RenderPass\UIRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="UI\BattleUIControllerComponent.h">
+    <ClInclude Include="Component\BattleUIControllerComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
   </ItemGroup>
@@ -132,7 +132,7 @@
     <ClCompile Include="RenderPass\UIRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="UI\BattleUIControllerComponent.cpp">
+    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>

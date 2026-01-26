@@ -202,7 +202,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
-    <ClInclude Include="UI\BattleUIControllerComponent.h" />
+    <ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="UI\UITextureGlobal.h" />
   </ItemGroup>
   <ItemGroup>
@@ -228,7 +228,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="UI\BattleUIControllerComponent.cpp" />
+    <ClCompile Include="Component\BattleUIControllerComponent.cpp" />
     <ClCompile Include="UI\UITextureGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>

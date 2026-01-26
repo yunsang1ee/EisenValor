@@ -59,6 +59,7 @@ public:
 	// ==================================================================================
 	// Third-Person Camera (Shoulder View)
 	// ==================================================================================
+	void SetFollowTarget(DenseListHandle<Transform> targetTransform);
 	void SetFollowOffset(const DX::XMFLOAT3& offset);
 	void SetFollowOffsetLocal(const DX::XMFLOAT3& localOffset);
 	void SetSmoothFollow(bool enable, float positionSpeed = 5.0f, float rotationSpeed = 5.0f);
@@ -81,6 +82,8 @@ public:
 	float		   GetFarZ() const { return m_farZ; }
 
 	bool HasLookAtTarget() const { return m_lookAt.targetHandle.IsValid(); }
+	DenseListHandle<Transform> GetLookAtTarget() const { return m_lookAt.targetHandle; }
+	bool IsLookAtRotationEnabled() const { return m_lookAt.enableLookAtRotation; }
 
 private:
 	void UpdateLookAtTarget(float deltaTime);
@@ -114,6 +117,7 @@ private:
 
 	struct FollowSettings
 	{
+		DenseListHandle<Transform> targetHandle = {};
 		DirectX::XMFLOAT3 offset = {0.0f, 0.0f, 0.0f};
 		float			  positionSpeed = 5.0f;
 		float			  rotationSpeed = 5.0f;

@@ -294,6 +294,13 @@ void CameraComponent::SetSmoothFollow(bool enable, float positionSpeed, float ro
 	);
 }
 
+void CameraComponent::SetFollowTarget(DenseListHandle<Transform> targetTransform)
+{
+	m_follow.targetHandle = targetTransform;
+	m_viewDirty = true;
+	DEBUG_LOG_FMT("[CameraComponent] Set follow target (Handle: {})\n", targetTransform.GetValue());
+}
+
 void CameraComponent::SetAsMainCamera()
 {
 	s_mainCameraHandle = GetHandle();
@@ -314,11 +321,19 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 		return;
 	}
 
-	auto* targetTransform = transformStorage->Get(m_lookAt.targetHandle);
-	if (!targetTransform)
+	// 1. LookAt 타겟 (회전 기준)
+	auto* lookAtTransform = transformStorage->Get(m_lookAt.targetHandle);
+	if (!lookAtTransform)
 	{
 		m_lookAt.targetHandle = HandleOf<Transform>::Invalid();
 		return;
+	}
+
+	// 2. Follow 타겟 (위치 기준) - 없으면 LookAt 타겟을 따라감
+	auto* followTransform = transformStorage->Get(m_follow.targetHandle);
+	if (!followTransform)
+	{
+		followTransform = lookAtTransform;
 	}
 
 	auto* gameObject = GetGameObject();
@@ -328,18 +343,18 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	}
 	auto& cameraTransform = gameObject->GetTransform();
 
-	// Camera Position
-	const XMFLOAT3 targetPos = targetTransform->GetWorldPosition();
-	XMVECTOR	   targetPosVec = XMLoadFloat3(&targetPos);
+	// Camera Position (Follow 타겟 기준)
+	const XMFLOAT3 followPos = followTransform->GetWorldPosition();
+	XMVECTOR	   followPosVec = XMLoadFloat3(&followPos);
 	XMVECTOR	   offsetVec = XMLoadFloat3(&m_follow.offset);
 
 	if (m_follow.useLocalOffset)
 	{
-		XMFLOAT4 targetRotQuat = targetTransform->GetWorldRotationQuaternion();
-		XMVECTOR rotQuat = XMLoadFloat4(&targetRotQuat);
+		XMFLOAT4 followRotQuat = followTransform->GetWorldRotationQuaternion();
+		XMVECTOR rotQuat = XMLoadFloat4(&followRotQuat);
 		offsetVec = XMVector3Rotate(offsetVec, rotQuat);
 	}
-	XMVECTOR desiredCameraPosVec = XMVectorAdd(targetPosVec, offsetVec);
+	XMVECTOR desiredCameraPosVec = XMVectorAdd(followPosVec, offsetVec);
 
 	// Smooth Follow Position
 	const XMFLOAT3 currentCameraPos = cameraTransform.GetWorldPosition();
@@ -358,17 +373,20 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	cameraTransform.SetWorldPosition(finalCameraPos);
 
 	XMVECTOR desiredWorldQ;
-	// LookAt Target Rotation
+	// LookAt Target Rotation (LookAt 타겟 기준)
+	const XMFLOAT3 lookAtPos = lookAtTransform->GetWorldPosition();
+	XMVECTOR	   lookAtPosVec = XMLoadFloat3(&lookAtPos);
+
 	if (m_lookAt.enableLookAtRotation)
 	{
 		XMVECTOR eyeVec = finalCameraPosVec;
-		XMVECTOR targetVec = targetPosVec;
+		XMVECTOR targetVec = lookAtPosVec;
 		XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(targetVec, eyeVec));
 
 		XMFLOAT3 upVector = m_lookAt.upVector;
 		if (m_lookAt.followTargetUp)
 		{
-			upVector = targetTransform->GetUp();
+			upVector = lookAtTransform->GetUp();
 		}
 		XMVECTOR upVec = XMLoadFloat3(&upVector);
 
@@ -396,7 +414,7 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	}
 	else
 	{
-		XMFLOAT4 targetRotQf = targetTransform->GetWorldRotationQuaternion();
+		XMFLOAT4 targetRotQf = lookAtTransform->GetWorldRotationQuaternion();
 		desiredWorldQ = XMLoadFloat4(&targetRotQf);
 	}
 
