@@ -431,7 +431,8 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				m_accumulatedDeltaY = 0.0f;
 
 				// 방향이 바뀔 때 패킷 전송 (단순 방향 표시용)
-				// Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(detectedDir);
+				auto pb = NetBridge::C2S::Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(detectedDir);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			}
 			UpdateUISelection(detectedDir, currentType);
 		}
@@ -454,7 +455,9 @@ void BattleUIControllerComponent::ProcessMouseInput()
 			OnGuardDirectionConfirmed(m_currentSelectedDir, confirmedType);
 			
 			// 공격 패킷 전송
-			// Make_CS_PLAYER_ATTACK_PACKET(m_currentSelectedDir, confirmedType);
+			FB_STRUCTS::GeneralAttackInfo attackInfo(confirmedType, m_currentSelectedDir);
+			auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			// 확정 후 즉시 초기화
 			m_accumulatedDeltaX = 0.0f;
