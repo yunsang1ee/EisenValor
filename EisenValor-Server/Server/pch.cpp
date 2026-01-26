@@ -4,7 +4,7 @@
 
 std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 
-std::shared_ptr<Server::ClientSession> MakeClientSessionFunc()
+std::shared_ptr<ClientSession> MakeClientSessionFunc()
 {
-	return ServerEngine::ObjectPool<Server::ClientSession>::MakeShared();
+	return ServerEngine::ObjectPool<ClientSession>::MakeShared();
 }

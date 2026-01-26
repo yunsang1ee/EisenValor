@@ -1,6 +1,9 @@
 #pragma once
 #pragma warning(disable: 4819)
 
+#define RIO_SERVER
+// #define IOCP_SERVER
+
 #include "ServerEngineDefines.h"
 
 #include <WS2tcpip.h>
@@ -78,3 +81,15 @@ namespace fs = std::filesystem;
 
 std::string WStringToString(const std::wstring_view wstr);
 std::wstring StringToWString(const std::string_view str);
+
+namespace Server {
+	class RIOClientSession;
+}
+
+#ifdef RIO_SERVER
+using ClientSession = Server::RIOClientSession;
+#endif
+
+#ifdef IOCP_SERVER
+using ClientSession = Server::IOCPClientSession;
+#endif

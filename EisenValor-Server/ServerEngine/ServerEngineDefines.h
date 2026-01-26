@@ -11,7 +11,7 @@ friend class Singleton;
 
 #define MANAGER(classname) (classname::GetInstance())
 
-#define RIO_EXT_FUNC_TB MANAGER(ServerEngine::RIOCore)->GetRioExtFuncTB()
+#define RIO_EXT_FUNC_TB static_cast<ServerEngine::RIOCore*>(MANAGER(ServerEngine::NetworkManager)->GetIOCore())->GetRioExtFuncTB()
 
 #define TBB_PREVIEW_MEMORY_POOL 1
 

@@ -1,7 +1,6 @@
 #pragma once
 
 namespace Server {
-	class ClientSession;
 
 	namespace Contents {
 		class Participant {

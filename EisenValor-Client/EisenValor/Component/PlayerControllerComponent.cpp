@@ -112,7 +112,7 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	FB_STRUCTS::Vec3 rotVec{rot.x, rot.y, rot.z};
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
 
-	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::GENERAL_STATE_TYPE_NONE);
 	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
 

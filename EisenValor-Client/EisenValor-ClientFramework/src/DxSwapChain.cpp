@@ -308,19 +308,25 @@ bool DxSwapChain::TryFindOutputFromDeviceAdapter(ComPtr<IDXGIOutput>& outOutput)
 {
 	outOutput.Reset();
 
-	ComPtr<IDXGIDevice> dxgiDevice;
-	if (FAILED(m_device->QueryInterface(IID_PPV_ARGS(&dxgiDevice))))
+	const HMONITOR monitor = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
+	if (!monitor)
+	{
+		return false;
+	}
+
+	const LUID			  luid = m_device->GetAdapterLuid();
+	ComPtr<IDXGIFactory4> factory4;
+	if (FAILED(m_factory->QueryInterface(IID_PPV_ARGS(&factory4))) || !factory4)
 	{
 		return false;
 	}
 
 	ComPtr<IDXGIAdapter> adapter;
-	if (FAILED(dxgiDevice->GetAdapter(&adapter)))
+	if (FAILED(factory4->EnumAdapterByLuid(luid, IID_PPV_ARGS(&adapter))))
 	{
 		return false;
 	}
 
-	const HMONITOR monitor = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
 
 	for (UINT i = 0;; ++i)
 	{

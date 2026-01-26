@@ -3,13 +3,13 @@
 #include "RIOBuffer.h"
 
 namespace ServerEngine {
-	class Session;
+	class RIOSession;
 
 	class RecvBuffer : public RIOBuffer {
 	private:
 		explicit RecvBuffer();
 		virtual ~RecvBuffer();
-		friend class Session;
+		friend class RIOSession;
 	};
 }
 

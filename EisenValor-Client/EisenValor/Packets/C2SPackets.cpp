@@ -122,12 +122,12 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_COMPLETE_LOADING_GAME_WORL
 // =================
 //		월드
 // =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo)
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerstate)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_MOVE_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo, playerstate)
 	);
 }
 

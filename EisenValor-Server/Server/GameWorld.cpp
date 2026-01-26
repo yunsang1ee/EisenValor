@@ -31,6 +31,8 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	// 2. 참여자 제외한 NPC 오브젝트 생성
 	// 3. 게임 시작
 
+	const auto roomID{ GetGameRoom()->GetID() };
+
 	m_users.clear();
 	m_bots.clear();
 
@@ -71,15 +73,15 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		AddGameObject(std::move(general));
 	}*/
 
-	LOG_INFO("Room ID:{}, Game Start!", GetGameRoom()->GetID());
-
-	FixedUpdate();
-
+	LOG_INFO("GameRoom ID:{}, GameWorld Start!", roomID);
+	
 	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-
+	
 	if(false == m_navSystem.Load("NavData/solo_navmesh.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
+
+	FixedUpdate();
 }
 
 void Server::Contents::GameWorld::Update()
@@ -256,15 +258,19 @@ void Server::Contents::GameWorld::Broadcast(std::shared_ptr<ServerEngine::Packet
 	}
 }
 
-void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo)
+void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	auto player = static_cast<Player*>(playerGroup[clientSession->GetID()].get());
 
 	player->SetPos(kinematicInfo.pos);
 	player->SetRotation(kinematicInfo.rot);
+	
+	auto fsm{ player->GetComponent<FSM>() };
+	if(fsm)
+		fsm->SetState(playerState);
 
-	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo);
+	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, playerState, etou8(player->GetSubState()));
 	Broadcast(std::move(pb));
 }
 
@@ -322,7 +328,7 @@ void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_p
 	player->SetSession(clientSession);
 	player->SetRoom(GetGameRoom());
 	player->SetGameWorld(std::static_pointer_cast<Server::Contents::GameWorld>(shared_from_this()));
-	player->GetComponent<Server::Contents::FSM>()->SetState(GENERAL_STATE_TYPE::IDLE);
+	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
 	AddGameObject(std::move(player));
 }
 #endif // DEVELOP

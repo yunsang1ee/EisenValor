@@ -12,10 +12,6 @@ namespace ServerEngine {
 	class PacketBuffer;
 }
 
-namespace Server {
-	class ClientSession;
-}
-
 /*
 	세션: 0 ~ 9
 	로그인: 10 ~ 99
@@ -291,7 +287,7 @@ public:
 		LOG_INFO("ClientPacketHandler Init");
 	}
 
-private:
+public:
 	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
 	{
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer);
@@ -324,5 +320,5 @@ public:
 		return packetBuffer;
 	}
 
-	friend class Server::ClientSession;
+	// friend class ClientSession;
 };
