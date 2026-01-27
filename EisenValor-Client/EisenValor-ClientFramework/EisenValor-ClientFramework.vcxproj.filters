@@ -241,6 +241,13 @@
     <ClInclude Include="include\RenderDataPool.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="include\UIComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RectTransformComponent.h" />
+    <ClInclude Include="include\ImageUIComponent.h" />
+    <ClInclude Include="include\ButtonUIComponent.h" />
+    <ClInclude Include="include\UIGlobal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -352,6 +359,10 @@
     <ClCompile Include="src\IComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="src\RectTransformComponent.cpp" />
+    <ClCompile Include="src\ImageUIComponent.cpp" />
+    <ClCompile Include="src\ButtonUIComponent.cpp" />
+    <ClCompile Include="src\UIGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">

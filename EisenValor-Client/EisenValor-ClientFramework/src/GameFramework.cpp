@@ -181,12 +181,20 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
 		break;
 
+	case WM_MBUTTONDOWN:
+		GLOBAL(InputGlobal).OnInputState(VK_MBUTTON, FALSE, FALSE);
+		break;
+
 	case WM_LBUTTONUP:
 		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
 		break;
 
 	case WM_RBUTTONUP:
 		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
+		break;
+
+	case WM_MBUTTONUP:
+		GLOBAL(InputGlobal).OnInputState(VK_MBUTTON, FALSE, TRUE);
 		break;
 
 	case WM_MOUSEWHEEL:

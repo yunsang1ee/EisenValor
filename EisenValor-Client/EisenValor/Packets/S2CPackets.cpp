@@ -11,6 +11,10 @@
 #include "MovementComponent.h"
 #include <Component/PlayerControllerComponent.h>
 #include <Component/HealthComponent.h>
+#include <Component/BattleUIControllerComponent.h>
+#include <RectTransformComponent.h>
+#include <ImageUIComponent.h>
+#include <ButtonUIComponent.h>
 
 
 using namespace NetBridge;
@@ -108,7 +112,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	// TODO: 로비 씬으로 전환
-	
+
 	// 테스트용으로 바로 게임 월드 진입
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
@@ -423,7 +427,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 )
 {
 	// 로컬 플레이어 오브젝트 생성
-	// TODO: 로컬 플레이어 오브젝트를 게임 씬에 생성하고, 카메라 및 컨트롤러 컴포넌트도 추가하기
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
@@ -460,41 +463,106 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		}
 	);
 
-	scene->ReserveGameObject(
-		"PlayerCamera", std::nullopt,
-		[scene, playerObjHandle](GameObject* camObj)
-		{
-			auto* playerObj = scene->TryGetGameObject(playerObjHandle);
-			auto  playerTrHandle =
-				 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
-			auto& tr = camObj->GetTransform();
+		scene->ReserveGameObject(
+			"PlayerCamera", std::nullopt,
+			[scene, playerObjHandle](GameObject* camObj)
+			{
+				auto* playerObj = scene->TryGetGameObject(playerObjHandle);
+				auto  playerTrHandle =
+					 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
+				auto& tr = camObj->GetTransform();
+	
+				scene->CreateComponentWithInit<CameraComponent>(
+					camObj->GetHandle(),
+					[playerTrHandle](CameraComponent* cam)
+					{
+						cam->SetAsMainCamera();
+						cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
+						cam->SetLookAtTarget(playerTrHandle);
+						cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
+						cam->SetEnableLookAtRotation(false);
+						cam->SetSmoothFollow(true, 10.0f, 10.0f);
+						cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
+						cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
+					}
+				);
+	
+				scene->CreateComponentWithInit<PlayerControllerComponent>(
+					playerObjHandle,
+					[camObj](PlayerControllerComponent* controller)
+					{
+						controller->SetCameraHandle(camObj->GetHandle());
+						controller->SetMouseSensitivity(0.1f, 0.1f);
+					}
+				);
+			}
+		);
+	
 
-			scene->CreateComponentWithInit<CameraComponent>(
-				camObj->GetHandle(),
-				[playerTrHandle](CameraComponent* cam)
+		// BattleUI 생성 및 연결
+		scene->ReserveGameObject(
+			"BattleUI", std::nullopt,
+			[scene, playerObjHandle](GameObject* battleUIObj)
+			{
+				auto* playerObj = scene->TryGetGameObject(playerObjHandle);
+				auto  playerTrHandle =
+					 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
+	
+				scene->CreateComponentWithInit<BattleUIControllerComponent>(
+					battleUIObj->GetHandle(),
+					[playerTrHandle](BattleUIControllerComponent* ui)
+					{
+						if (playerTrHandle.IsValid())
+						{
+							ui->SetTarget(playerTrHandle);
+							DEBUG_LOG_FMT("[BattleUI] Created and Connected to LocalPlayer\n");
+						}
+					}
+				);
+				scene->CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*) {});
+	
+				auto parentTrHandle = battleUIObj->GetComponentHandle<Transform>();
+	
+				// 자식 UI 생성 목록
+				std::vector<std::string> names = {"UpUI", "LeftUI", "RightUI"};
+	
+				for (const std::string& name : names)
 				{
-					cam->SetAsMainCamera();
-					cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
-					cam->SetLookAtTarget(playerTrHandle);
-					cam->SetEnableLookAtRotation(false);
-					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
-					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
+					scene->ReserveGameObject(
+						name, std::nullopt,
+						[scene, parentTrHandle](GameObject* childObj)
+						{
+							scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*) {});
+	
+							if (auto childTrHandle = childObj->GetComponentHandle<Transform>(); childTrHandle.IsValid())
+							{
+								if (Transform* childTr = scene->GetStorage<Transform>()->Get(childTrHandle))
+								{
+									childTr->SetParent(parentTrHandle);
+								}
+							}
+	
+							scene->CreateComponentWithInit<ImageUIComponent>(
+								childObj->GetHandle(), [](ImageUIComponent* image) 
+								{ 
+									image->SetOrder(10); 
+								}
+							);
+	
+							scene->CreateComponentWithInit<ButtonUIComponent>(
+								childObj->GetHandle(),
+								[](ButtonUIComponent* button) {
+									button->SetOrder(11); 
+								}
+							);
+						}
+					);
 				}
-			);
-
-			scene->CreateComponentWithInit<PlayerControllerComponent>(
-				playerObjHandle,
-				[camObj](PlayerControllerComponent* controller)
-				{
-					controller->SetCameraHandle(camObj->GetHandle());
-					controller->SetMouseSensitivity(0.1f, 0.1f);
-				}
-			);
-		}
-	);
-	return true;
-}
+			}
+		);
+	
+		return true;
+	}
 
 bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt)
 {
@@ -676,7 +744,7 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 {
 	// 게임 남은 시간 정보 수신
 	// TODO: 게임 남은 시간을 화면에 표시하기
-	
+
 	const uint32   remainingTime{recvPkt.remaining_time()};
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;
@@ -690,18 +758,44 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 )
 {
 	// 카메라 타겟 변경
-	// TODO: 카메라 컴포넌트의 타겟을 변경하기
-	// TODO: 카메라 컴포넌트의 타겟을 특정 오브젝트로 변경
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto cameraComp = CameraComponent::GetMainCamera();
 
+	if (!cameraComp) return false;
+
 	const uint32 cameraTargetID = recvPkt.camera_target_id();
-	auto		 targetObj = scene->FindGameObjectByServerID(cameraTargetID);
-	cameraComp->SetLookAtTarget(targetObj->GetHandle());
+	
+	if (cameraTargetID == 0)
+	{
+		// 락온 해제 시(적 죽었을 때) 로컬 플레이어로 복구
+		const uint32 localID = scene->GetLocalID();
+		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
+		{
+			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
+			cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+			cameraComp->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f}); // 오프셋 복구
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
+		}
+		else
+		{
+			cameraComp->ClearLookAtTarget();
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
+		}
+	}
+	else
+	{
+		if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
+		{
+			cameraComp->SetLookAtTarget(targetObj->GetHandle());
+			cameraComp->SetEnableLookAtRotation(true); // 락온 시엔 회전 고정
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
+		}
+		else
+		{
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Target ID {} not found in scene\n", cameraTargetID);
+		}
+	}
 
-
-	DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] ");
-	DEBUG_LOG_FMT("Camera Target ID: {}\n", cameraTargetID);
 	return true;
 }
 
@@ -711,7 +805,10 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 {
 	// TODO: 플레이어 공격 방향 표시
 	// TODO: 해당 오브젝트의 공격 방향을 UI로 표시하기
-
+	recvPkt.attack_dir();
+	
+	// recvPkt.id();	// 제가 추후에 패킷 바꿔놓을게요
+	// id 오브젝트 찾아서 해당 오브젝트의 UI가져와서 업데이트
 
 	return false;
 }

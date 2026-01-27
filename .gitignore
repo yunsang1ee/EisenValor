@@ -362,6 +362,7 @@ FodyWeavers.xsd
 
 /EisenValor-Client/SettingMarkDown
 /EisenValor-Client/EisenValor/Build/ShaderCache
+/.gemini
 
 # Unity Tool Rules (Tools 폴더용)
 # 유니티가 자동 생성하는 폴더들 무시
