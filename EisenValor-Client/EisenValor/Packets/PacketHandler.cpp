@@ -151,6 +151,14 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_UPDATE_STATE_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::SC_UPDATE_STATE_PACKET>(
+			S2C::Handle_SC_UPDATE_STATE_PACKET, socket, buffer, header
+		);
+	};
+
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
@@ -164,6 +172,22 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	{
 		return HandlePacket<FB_TABLES::SC_CHANGE_CAMERA_TARGET_PACKET>(
 			S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET, socket, buffer, header
+		);
+	};
+
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET>(
+			S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET, socket, buffer, header
+		);
+	};
+
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_RESPAWN_OBJECT_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::SC_RESPAWN_OBJECT_PACKET>(
+			S2C::Handle_SC_RESPAWN_OBJECT_PACKET, socket, buffer, header
 		);
 	};
 

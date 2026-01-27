@@ -38,9 +38,8 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	// 1. Ctrl 키
 	if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
 	{
-		//패킷 주석처리
-		//auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
-		//GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 		if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
 		{

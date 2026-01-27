@@ -39,12 +39,13 @@ namespace NetBridge {
 					return;
 				}
 				else {
-					std::println("Send Error = {}", errCode);
+					std::cout << "Send Error " << errCode << std::endl;
 					return;
 				}
 			}
 #ifdef  _DEBUG
-			std::println("Send!, sendBytes = {}", sendBytes);
+			std::cout << "Send! sendBytes = " << sendBytes << std::endl;
+
 #endif 
 		}
 
@@ -61,12 +62,12 @@ namespace NetBridge {
 					return;
 				}
 				else {
-					std::println("Send Error = {}", errCode);
+					std::cout << "Send Error " << WSAGetLastError() << std::endl;
 					return;
 				}
 			}
 #ifdef  _DEBUG
-			std::println("Send!, sendBytes = {}", sendBytes);
+			std::cout << "Send! sendBytes = " << sendBytes << std::endl;
 #endif
 		}
 

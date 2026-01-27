@@ -23,7 +23,7 @@ void Server::Contents::FSM::SetState(const uint8 state)
 				if(world)
 					dt = world->GetGameWorldDT();
 				m_curState->Enter(dt);
-				SendUpdateStatePacket();
+				// SendUpdateStatePacket();
 			}
 		});
 	}

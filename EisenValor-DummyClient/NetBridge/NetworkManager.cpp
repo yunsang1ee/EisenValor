@@ -27,7 +27,7 @@ bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 por
 	m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if(INVALID_SOCKET == m_socket) {
-		std::println("INVALID_SOCKET = {}", WSAGetLastError());
+		std::cout << "Invalid socket = " << WSAGetLastError() << std::endl;
 		WSACleanup();
 		return false;
 	}
@@ -38,7 +38,7 @@ bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 por
 	inet_pton(AF_INET, ip.data(), &serverAddr.sin_addr);
 
 	if(SOCKET_ERROR == connect(m_socket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr))) {
-		std::println("INVALID_SOCKET = {}", WSAGetLastError());
+		std::cout << "Invalid socket = " << WSAGetLastError() << std::endl;
 		closesocket(m_socket);
 		WSACleanup();
 		return false;
@@ -47,7 +47,7 @@ bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 por
 	u_long mode = 1;
 
 	if(SOCKET_ERROR == ioctlsocket(m_socket, FIONBIO, &mode)) {
-		std::println("NON BLOKING MODE FAILED = {}", WSAGetLastError());
+		std::cout << "Non-blocking mode failed = " << WSAGetLastError() << std::endl;
 		closesocket(m_socket);
 		WSACleanup();
 		return false;
@@ -56,7 +56,7 @@ bool NetBridge::NetworkManager::Init(const std::string_view ip, const uint16 por
 	BOOL flag = true;
 
 	if(SOCKET_ERROR == setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag))) {
-		std::println("NAGLE ALGORITHM TURN OFF FAILED = {}", WSAGetLastError());
+		std::cout << "NAGLE ALGORITHM TURN OFF FAILED = " << WSAGetLastError() << std::endl;
 		closesocket(m_socket);
 		WSACleanup();
 		return false;
@@ -78,14 +78,14 @@ void NetBridge::NetworkManager::ProcessIO()
 	else if(recvLen < 0) {
 		const int32 errCode = ::WSAGetLastError();
 		if(WSAEWOULDBLOCK != errCode) {
-			std::println("Recv Error = {}", errCode);
+			std::cout << "Recv Error = " << errCode << std::endl;
 			exit(-1);
 		}
 		return;
 	}
 	else {
 		if(false == recvBuffer->OnWrite(recvLen)) {
-			std::println("RecvBuffer Write OverFlow = {}", WSAGetLastError());
+			std::cout << "RecvBuffer Write OverFlow = " << WSAGetLastError() << std::endl;
 			return;
 		}
 

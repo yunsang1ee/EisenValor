@@ -248,6 +248,18 @@ namespace ServerPackets {
 		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, playerID, attackDir));
 
 	}
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_OBJECT_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(posInfo.pos) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(posInfo.rot) };
+
+		const FB_STRUCTS::PosInfo fbPosInfo{ pos, rot };
+
+		return ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_RESPAWN_OBJECT_PKT, ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_RESPAWN_OBJECT_PACKET, id, &fbPosInfo, maxHp, currentHP, maxStamina, currentStamina));
+
+	}
 #pragma endregion
 
 

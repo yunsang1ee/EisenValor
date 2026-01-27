@@ -88,11 +88,6 @@ void Server::Contents::Player::OnDeath()
 void Server::Contents::Player::Respawn()
 {
 	General::Respawn();
-
-	const auto& session{ GetSession() };
-	const auto& statInfo{ GetStatInfo() };
-	auto pb{ ServerPackets::Make_SC_LOCAL_PLAYER(GetID(), GetPosInfo(), GetTeamType(),statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina) };
-	session->Send(std::move(pb));
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
@@ -137,6 +132,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
 {
+	std::cout << "Handle_CS_PLAYER_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 }
 

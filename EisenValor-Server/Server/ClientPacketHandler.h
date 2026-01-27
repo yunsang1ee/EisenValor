@@ -137,6 +137,9 @@ enum class PACKET_TYPE : uint16 {
 
 	CS_RUN_PKT = 10025,
 	CS_ROLL_PKT = 10026,
+
+	SC_RESPAWN_OBJECT_PKT = 10030,
+
 #pragma endregion
 
 	// Å×½ºÆ®
@@ -271,6 +274,7 @@ public:
 #pragma region WORLD_PACKETS
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_PLAYER_STANCE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET>(Handle_CS_CHANGE_PLAYER_STANCE_PACKET, session, buffer); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_FAKE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_FAKE_PACKET>(Handle_CS_PLAYER_FAKE_PACKET, session, buffer); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
 		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET>(Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET, session, buffer); };

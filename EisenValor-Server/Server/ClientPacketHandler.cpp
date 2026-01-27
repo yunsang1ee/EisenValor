@@ -15,6 +15,7 @@
 
 bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
 {
+	LOG_ERROR("Handle_INVALID_PACKET");
 	return false;
 }
 // =================

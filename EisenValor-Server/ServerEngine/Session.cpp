@@ -51,7 +51,7 @@ void ServerEngine::Session::CloseSocket()
 void ServerEngine::Session::Ping()
 {
 	if(GetState() != SESSION_STATE::FREE) {
-		std::cout << "Ping" << std::endl;
+		// std::cout << "Ping" << std::endl;
 		const auto now{ std::chrono::high_resolution_clock::now() };
 		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
 
@@ -205,7 +205,7 @@ void ServerEngine::RIOSession::Disconnect(const std::string_view reason)
 	lingerOption.l_linger = 0;
 
 	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
-		std::cout << std::format("setsockopt linger option error: {}", GetLastError());
+		std::cout << std::format("setsockopt linger option error: {}", GetLastError()) << std::endl;
 
 	CloseSocket();
 	OnDisconnected(reason);

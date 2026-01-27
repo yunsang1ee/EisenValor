@@ -247,6 +247,15 @@ table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
 	attack_dir: uint8;
 }
 
+table SC_RESPAWN_OBJECT_PACKET {
+	obj_id : uint32;
+	pos_info: FB_STRUCTS.PosInfo;
+	max_hp: uint;
+	current_hp: uint;
+	max_stamina: uint;
+	current_stamina: uint;
+}
+
 
 // ================================================
 //					    TEST

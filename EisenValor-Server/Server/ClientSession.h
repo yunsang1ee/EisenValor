@@ -25,6 +25,7 @@ namespace Server {
 		virtual void ProcessPacket(const std::span<const char>& buffer) override final;
 		virtual void OnSend(const uint32 bytesTransferred) override final;
 		virtual void SendPing() override final;
+	
 	public:
 		void Handle_CS_PONG();
 

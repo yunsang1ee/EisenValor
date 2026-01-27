@@ -738,6 +738,18 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	return true;
 }
 
+bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_UPDATE_STATE_PACKET& recvPkt
+)
+{
+	// TODO: ID로 오브젝트 찾은 다음, 해당 오브젝트의 state Update
+	// 이때 state == DEAD이면 죽음 처리
+	// 플레이어/장수 같은 경우 메모리에서 삭제하지 않고
+	// 나머지 오브젝트들은 메모리에서 삭제
+
+	return false;
+}
+
 bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt
 )
@@ -809,6 +821,17 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 	
 	// recvPkt.id();	// 제가 추후에 패킷 바꿔놓을게요
 	// id 오브젝트 찾아서 해당 오브젝트의 UI가져와서 업데이트
+
+	return false;
+}
+
+bool NetBridge::S2C::Handle_SC_RESPAWN_OBJECT_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_OBJECT_PACKET& recvPkt
+)
+{
+	// TODO: Respawn 되었을 때 받는 패킷
+	// TODO: 우선 LOCAL ID인지 확인하고 LOCAL ID면 LOCAL PLAYER에 맞게 처리
+	// TODO: LOCAL ID가 아니라면 해당 ID의 오브젝트 찾아서 패킷 값 대입
 
 	return false;
 }
