@@ -15,4 +15,173 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 
 #include "Enums_generated.h"
 
+namespace FB_STRUCTS {
+
+struct Vec3;
+
+struct PosInfo;
+
+struct RoomInfo;
+
+struct ParticipantInfo;
+
+struct GeneralAttackInfo;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
+ private:
+  float x_;
+  float y_;
+  float z_;
+
+ public:
+  Vec3()
+      : x_(0),
+        y_(0),
+        z_(0) {
+  }
+  Vec3(float _x, float _y, float _z)
+      : x_(::flatbuffers::EndianScalar(_x)),
+        y_(::flatbuffers::EndianScalar(_y)),
+        z_(::flatbuffers::EndianScalar(_z)) {
+  }
+  float x() const {
+    return ::flatbuffers::EndianScalar(x_);
+  }
+  float y() const {
+    return ::flatbuffers::EndianScalar(y_);
+  }
+  float z() const {
+    return ::flatbuffers::EndianScalar(z_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Vec3, 12);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) PosInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  FB_STRUCTS::Vec3 pos_;
+  FB_STRUCTS::Vec3 rot_;
+
+ public:
+  PosInfo()
+      : pos_(),
+        rot_() {
+  }
+  PosInfo(const FB_STRUCTS::Vec3 &_pos, const FB_STRUCTS::Vec3 &_rot)
+      : pos_(_pos),
+        rot_(_rot) {
+  }
+  const FB_STRUCTS::Vec3 &pos() const {
+    return pos_;
+  }
+  const FB_STRUCTS::Vec3 &rot() const {
+    return rot_;
+  }
+};
+FLATBUFFERS_STRUCT_END(PosInfo, 24);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(2) RoomInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint16_t id_;
+  uint8_t state_;
+  uint8_t current_participants_;
+  uint8_t max_marticipants_;
+  int8_t padding0__;
+
+ public:
+  RoomInfo()
+      : id_(0),
+        state_(0),
+        current_participants_(0),
+        max_marticipants_(0),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  RoomInfo(uint16_t _id, FB_ENUMS::ROOM_STATE_TYPE _state, uint8_t _current_participants, uint8_t _max_marticipants)
+      : id_(::flatbuffers::EndianScalar(_id)),
+        state_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_state))),
+        current_participants_(::flatbuffers::EndianScalar(_current_participants)),
+        max_marticipants_(::flatbuffers::EndianScalar(_max_marticipants)),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  uint16_t id() const {
+    return ::flatbuffers::EndianScalar(id_);
+  }
+  FB_ENUMS::ROOM_STATE_TYPE state() const {
+    return static_cast<FB_ENUMS::ROOM_STATE_TYPE>(::flatbuffers::EndianScalar(state_));
+  }
+  uint8_t current_participants() const {
+    return ::flatbuffers::EndianScalar(current_participants_);
+  }
+  uint8_t max_marticipants() const {
+    return ::flatbuffers::EndianScalar(max_marticipants_);
+  }
+};
+FLATBUFFERS_STRUCT_END(RoomInfo, 6);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ParticipantInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t id_;
+  uint8_t type_;
+  uint8_t state_type_;
+  uint8_t team_type_;
+  int8_t padding0__;
+
+ public:
+  ParticipantInfo()
+      : id_(0),
+        type_(0),
+        state_type_(0),
+        team_type_(0),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  ParticipantInfo(uint32_t _id, FB_ENUMS::PARTICIPANT_TYPE _type, FB_ENUMS::PARTICIPANT_STATE_TYPE _state_type, FB_ENUMS::TEAM_TYPE _team_type)
+      : id_(::flatbuffers::EndianScalar(_id)),
+        type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_type))),
+        state_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_state_type))),
+        team_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_team_type))),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  uint32_t id() const {
+    return ::flatbuffers::EndianScalar(id_);
+  }
+  FB_ENUMS::PARTICIPANT_TYPE type() const {
+    return static_cast<FB_ENUMS::PARTICIPANT_TYPE>(::flatbuffers::EndianScalar(type_));
+  }
+  FB_ENUMS::PARTICIPANT_STATE_TYPE state_type() const {
+    return static_cast<FB_ENUMS::PARTICIPANT_STATE_TYPE>(::flatbuffers::EndianScalar(state_type_));
+  }
+  FB_ENUMS::TEAM_TYPE team_type() const {
+    return static_cast<FB_ENUMS::TEAM_TYPE>(::flatbuffers::EndianScalar(team_type_));
+  }
+};
+FLATBUFFERS_STRUCT_END(ParticipantInfo, 8);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) GeneralAttackInfo FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint8_t attack_type_;
+  uint8_t attack_dir_;
+
+ public:
+  GeneralAttackInfo()
+      : attack_type_(0),
+        attack_dir_(0) {
+  }
+  GeneralAttackInfo(FB_ENUMS::GENERAL_ATTACK_TYPE _attack_type, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE _attack_dir)
+      : attack_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_attack_type))),
+        attack_dir_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_attack_dir))) {
+  }
+  FB_ENUMS::GENERAL_ATTACK_TYPE attack_type() const {
+    return static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(::flatbuffers::EndianScalar(attack_type_));
+  }
+  FB_ENUMS::GENERAL_ATTACK_DIR_TYPE attack_dir() const {
+    return static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(::flatbuffers::EndianScalar(attack_dir_));
+  }
+};
+FLATBUFFERS_STRUCT_END(GeneralAttackInfo, 2);
+
+}  // namespace FB_STRUCTS
+
 #endif  // FLATBUFFERS_GENERATED_STRUCTS_FB_STRUCTS_H_

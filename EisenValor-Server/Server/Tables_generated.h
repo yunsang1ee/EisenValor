@@ -168,6 +168,9 @@ struct CS_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder;
 struct SC_SHOW_PLAYER_ATTACK_DIR_PACKET;
 struct SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder;
 
+struct SC_RESPAWN_OBJECT_PACKET;
+struct SC_RESPAWN_OBJECT_PACKETBuilder;
+
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
@@ -2414,6 +2417,97 @@ inline ::flatbuffers::Offset<SC_SHOW_PLAYER_ATTACK_DIR_PACKET> CreateSC_SHOW_PLA
   SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder builder_(_fbb);
   builder_.add_player_id(player_id);
   builder_.add_attack_dir(attack_dir);
+  return builder_.Finish();
+}
+
+struct SC_RESPAWN_OBJECT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_RESPAWN_OBJECT_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4,
+    VT_POS_INFO = 6,
+    VT_MAX_HP = 8,
+    VT_CURRENT_HP = 10,
+    VT_MAX_STAMINA = 12,
+    VT_CURRENT_STAMINA = 14
+  };
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  }
+  const FB_STRUCTS::PosInfo *pos_info() const {
+    return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
+  }
+  uint32_t max_hp() const {
+    return GetField<uint32_t>(VT_MAX_HP, 0);
+  }
+  uint32_t current_hp() const {
+    return GetField<uint32_t>(VT_CURRENT_HP, 0);
+  }
+  uint32_t max_stamina() const {
+    return GetField<uint32_t>(VT_MAX_STAMINA, 0);
+  }
+  uint32_t current_stamina() const {
+    return GetField<uint32_t>(VT_CURRENT_STAMINA, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAX_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CURRENT_HP, 4) &&
+           VerifyField<uint32_t>(verifier, VT_MAX_STAMINA, 4) &&
+           VerifyField<uint32_t>(verifier, VT_CURRENT_STAMINA, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_RESPAWN_OBJECT_PACKETBuilder {
+  typedef SC_RESPAWN_OBJECT_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_RESPAWN_OBJECT_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
+    fbb_.AddStruct(SC_RESPAWN_OBJECT_PACKET::VT_POS_INFO, pos_info);
+  }
+  void add_max_hp(uint32_t max_hp) {
+    fbb_.AddElement<uint32_t>(SC_RESPAWN_OBJECT_PACKET::VT_MAX_HP, max_hp, 0);
+  }
+  void add_current_hp(uint32_t current_hp) {
+    fbb_.AddElement<uint32_t>(SC_RESPAWN_OBJECT_PACKET::VT_CURRENT_HP, current_hp, 0);
+  }
+  void add_max_stamina(uint32_t max_stamina) {
+    fbb_.AddElement<uint32_t>(SC_RESPAWN_OBJECT_PACKET::VT_MAX_STAMINA, max_stamina, 0);
+  }
+  void add_current_stamina(uint32_t current_stamina) {
+    fbb_.AddElement<uint32_t>(SC_RESPAWN_OBJECT_PACKET::VT_CURRENT_STAMINA, current_stamina, 0);
+  }
+  explicit SC_RESPAWN_OBJECT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_RESPAWN_OBJECT_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_RESPAWN_OBJECT_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_RESPAWN_OBJECT_PACKET> CreateSC_RESPAWN_OBJECT_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0,
+    const FB_STRUCTS::PosInfo *pos_info = nullptr,
+    uint32_t max_hp = 0,
+    uint32_t current_hp = 0,
+    uint32_t max_stamina = 0,
+    uint32_t current_stamina = 0) {
+  SC_RESPAWN_OBJECT_PACKETBuilder builder_(_fbb);
+  builder_.add_current_stamina(current_stamina);
+  builder_.add_max_stamina(max_stamina);
+  builder_.add_current_hp(current_hp);
+  builder_.add_max_hp(max_hp);
+  builder_.add_pos_info(pos_info);
+  builder_.add_obj_id(obj_id);
   return builder_.Finish();
 }
 
