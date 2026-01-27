@@ -13,7 +13,7 @@ namespace ServerEngine {
 	class PacketBuffer;
 	class SendBuffer;
 
-	class Session : public TaskQueue {
+	class Session : public std::enable_shared_from_this<Session> {
 	protected:
 		uint32																m_id;					// session
 		SOCKET																m_socket;				// session	
@@ -22,6 +22,7 @@ namespace ServerEngine {
 		std::atomic<SESSION_STATE>											m_state;				// session
 	
 		std::chrono::high_resolution_clock::time_point						m_lastPong;				// Session
+		std::chrono::high_resolution_clock::time_point						m_lastPing;				// Session
 		const std::chrono::milliseconds										m_pingInterval;			// Session
 		const std::chrono::milliseconds										m_timeoutInterval;		// Session
 
@@ -56,10 +57,7 @@ namespace ServerEngine {
 		void CloseSocket();
 
 		virtual void SendPing() abstract;
-
-	protected:
-		void Ping();
-
+		void CheckPing();
 	};
 
 	class RIOSession : public Session {
@@ -89,6 +87,7 @@ namespace ServerEngine {
 		virtual void ProcessSend(const uint32 bytesTransferred) override final;
 
 		void FlushPacketQueue();
+
 
 	public:
 		void SetOwner(RIOWorker* owner) noexcept { m_owner = owner; }

@@ -22,14 +22,14 @@ BOOL __stdcall ConsoleHandler(DWORD signal)
 
 bool Server::ServerManager::Init()
 {
-	ServerEngine::LogManager::Init();
+	std::wcout.imbue(std::locale("korean"));
 
+	ServerEngine::LogManager::Init();
+	
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
 		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
 		return false;
 	}
-
-	std::wcout.imbue(std::locale("korean"));
 
 	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");

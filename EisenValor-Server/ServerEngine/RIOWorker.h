@@ -9,13 +9,11 @@ namespace ServerEngine {
 
 	class RIOWorker {
 	private:
-		RIO_CQ														m_cq;
-		uint16														m_id;
-
+		RIO_CQ															m_cq;
+		uint16															m_id;
 		tbb::concurrent_unordered_set<std::shared_ptr<RIOSession>>		m_connectedSession;
-
-		SessionPool													m_sessionPool;
-		std::vector<RIORESULT>										m_ioResults;
+		SessionPool														m_sessionPool;
+		std::vector<RIORESULT>											m_ioResults;
 	
 	public:
 		explicit RIOWorker(const uint16 id);

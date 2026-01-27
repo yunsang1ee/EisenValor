@@ -90,6 +90,7 @@ void ServerEngine::RIOCore::Run()
 	for(int i = 0; i < m_rioWorkerCnt; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
 			{
+				// TODO: 문제 없을까?
 				TLS_RIO_WORKER = m_rioWorkers[i].get();
 				TLS_THREAD_ID = TLS_RIO_WORKER->GetID();
 

@@ -3,18 +3,13 @@
 namespace ServerEngine {
 	class RIOSession;
 
-	enum class RIO_CONTEXT_TYPE {
-		RECV,
-		SEND,
-	};
-
 	class RIOContext : public RIO_BUF {
 	private:
-		RIO_CONTEXT_TYPE						m_type;
+		IO_CONTEXT_TYPE							m_type;
 		std::atomic<std::shared_ptr<Session>>	m_session;
 
 	protected:
-		explicit RIOContext(RIO_CONTEXT_TYPE type);
+		explicit RIOContext(IO_CONTEXT_TYPE type);
 		friend class RIOSession;
 
 	public:
@@ -24,19 +19,19 @@ namespace ServerEngine {
 		std::shared_ptr<Session> GetSession() const noexcept { return m_session.load(); }
 
 	public:
-		RIO_CONTEXT_TYPE GetType() const noexcept { return m_type; }
+		IO_CONTEXT_TYPE GetType() const noexcept { return m_type; }
 
 	};
 
 	class RecvContext : public RIOContext {
 	private:
-		RecvContext() : RIOContext{ RIO_CONTEXT_TYPE::RECV } {};
+		RecvContext() : RIOContext{ IO_CONTEXT_TYPE::RECV } {};
 		friend class RIOSession;
 	};
 
 	class SendContext : public RIOContext {
 	public:
-		SendContext() : RIOContext{ RIO_CONTEXT_TYPE::SEND } {};
+		SendContext() : RIOContext{ IO_CONTEXT_TYPE::SEND } {};
 	};
 
 }

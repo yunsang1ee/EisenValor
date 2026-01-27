@@ -12,7 +12,7 @@
 
 ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_state{ SESSION_STATE::FREE }, m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
-	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }
+	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
 {
 	static std::atomic_uint32_t idGen{ 1 };
 	m_id = idGen++;
@@ -48,24 +48,26 @@ void ServerEngine::Session::CloseSocket()
 	closesocket(m_socket);
 }
 
-void ServerEngine::Session::Ping()
+void ServerEngine::Session::CheckPing()
 {
-	if(GetState() != SESSION_STATE::FREE) {
-		// std::cout << "Ping" << std::endl;
-		const auto now{ std::chrono::high_resolution_clock::now() };
-		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+	if(SESSION_STATE::FREE == m_state) return;
 
-		if(pingPongInterval >= m_timeoutInterval) {
-			std::string_view reason{ "Disconnected By PingCheck" };
-			Disconnect(reason.data());
-			LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
-			return;
-		}
+	const auto now{ std::chrono::high_resolution_clock::now() };
+	const auto elapsed{ std::chrono::duration_cast<std::chrono::milliseconds>((now - m_lastPing)) };
 
-		SendPing();
+	if(elapsed < m_pingInterval) return;
 
-		ExecTimer(m_pingInterval, &Session::Ping);
+	m_lastPing = now;
+
+	const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+	if(pingPongInterval >= m_timeoutInterval) {
+		std::string_view reason{ "Disconnected By PingCheck" };
+		Disconnect(reason.data());
+		LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
+		return;
 	}
+
+	SendPing();
 }
 
 // =============================================
@@ -73,7 +75,7 @@ void ServerEngine::Session::Ping()
 // =============================================
 
 ServerEngine::RIOSession::RIOSession()
-: m_rq{ RIO_INVALID_RQ }, m_deferCount{}
+	: m_rq{ RIO_INVALID_RQ }, m_deferCount{}
 {
 	COMMIT_SEND_MS = std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS);
 }
@@ -151,12 +153,12 @@ bool ServerEngine::RIOSession::Init()
 void ServerEngine::RIOSession::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
 {
 	switch(const auto type{ context->GetType() }) {
-		case ServerEngine::RIO_CONTEXT_TYPE::RECV:
+		case IO_CONTEXT_TYPE::RECV:
 		{
 			ProcessRecv(bytesTransferred);
 			break;
 		}
-		case ServerEngine::RIO_CONTEXT_TYPE::SEND:
+		case IO_CONTEXT_TYPE::SEND:
 		{
 			ProcessSend(bytesTransferred);
 			context->ReleaseSession();

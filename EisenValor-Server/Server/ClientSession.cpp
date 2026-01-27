@@ -1,3 +1,4 @@
+#include "Session.h"
 #include "pch.h"
 #include "ClientSession.h"
 
@@ -24,7 +25,7 @@ void Server::RIOClientSession::OnConnected()
 	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
 	m_lastPong = std::chrono::high_resolution_clock::now();
 
-	Ping();
+	CheckPing();
 }
 
 void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
@@ -66,9 +67,6 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 	}
 
 	m_lastPong = std::chrono::high_resolution_clock::time_point{};
-
-	ClearTaskQueue();
-	SetActive(false);
 }
 
 void Server::RIOClientSession::ProcessPacket(const std::span<const char>& buffer)

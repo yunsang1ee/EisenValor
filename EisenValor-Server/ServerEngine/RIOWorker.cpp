@@ -49,7 +49,9 @@ void ServerEngine::RIOWorker::FlushSessionPacketQueue() noexcept
 	auto iter{ m_connectedSession.begin() };
 	for(; iter != m_connectedSession.end();) {
 		if(SESSION_STATE::FREE != (*iter)->GetState()) {
+			(*iter)->CheckPing();
 			(*iter)->FlushPacketQueue();
+			// TODO: TaskQueue 상속받지 말고 여기서 Ping 작업 진행해야함
 			++iter;
 		}
 		else
