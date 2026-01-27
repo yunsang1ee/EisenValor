@@ -86,11 +86,16 @@ private:
 	std::optional<GENERAL_ATTACK_TYPE> m_currentAttackType = std::nullopt;					 // 현재 시도 중인 공격 타입 (없으면 nullopt)
 	bool							   m_isAttackValid = true;								 // 현재 입력(클릭)이 유효한지 여부 (방향 변경 시 false)
 
+	// 공격 피드백용 타이머 (초 단위)
+	float               m_attackFeedbackTimer = 0.0f;
+	GENERAL_ATTACK_TYPE m_lastConfirmedAttackType = GENERAL_ATTACK_TYPE_LIGHT;
+
 	// 캐싱된 텍스처 ID
 	uint32_t m_normalTexId = 0;
 	uint32_t m_hoverTexId = 0;
 	uint32_t m_lightAttackTexId = 0;
 	uint32_t m_strongAttackTexId = 0;
+	uint32_t m_areaAttackTexId = 0;
 	uint32_t m_disarmTexId = 0;
 
 private:
