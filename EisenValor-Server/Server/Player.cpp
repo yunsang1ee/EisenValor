@@ -137,6 +137,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
 {
+	std::cout << "Handle_CS_PLAYER_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 }
 
