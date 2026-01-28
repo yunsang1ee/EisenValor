@@ -21,7 +21,8 @@ void BattleUIControllerComponent::OnAttach()
 		owner->SetActive(true);
 	}
 
-	InitializeChildHandlesAndSetupUI();
+	// 1. UI 동적 생성 및 초기화
+	CreateAndSetupUI();
 
 	// 1. NEUTRAL -> UI 숨김
 	m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;
@@ -30,56 +31,53 @@ void BattleUIControllerComponent::OnAttach()
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
 {
-	if (!m_upButtonHandle.IsValid() || !m_leftButtonHandle.IsValid() || !m_rightButtonHandle.IsValid())
+	// 1. Local 모드일 때만 직접 입력(전투 태세 전환) 처리
+	if (m_controlMode == ControlType::Local)
 	{
-		InitializeChildHandlesAndSetupUI();
-	}
-
-	// 1. Ctrl 키
-	if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
-	{
-		auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-		if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
+		// 1. Ctrl 키
+		if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
 		{
-			// 전투 모드
-			m_currentStance = GENERAL_STANCE_TYPE_COMBAT;
-			ToggleUI(true); 
-			DEBUG_LOG_FMT("[BattleUI] Switch to COMBAT\n");
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
+			{
+				// 전투 모드
+				SetStance(GENERAL_STANCE_TYPE_COMBAT);
+				DEBUG_LOG_FMT("[BattleUI] Switch to COMBAT\n");
+			}
+			else
+			{
+				// 일반 모드
+				SetStance(GENERAL_STANCE_TYPE_NEUTRAL);
+
+				// 상태 초기화
+				m_accumulatedDeltaX = 0.0f;
+				m_accumulatedDeltaY = 0.0f;
+				UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
+
+				// 전투 모드 해제 시 카메라를 로컬 플레이어 추적 모드(자유 회전)로 복귀
+				if (auto* mainCamera = CameraComponent::GetMainCamera())
+				{	
+					// 캐릭터 있을 때
+					if (auto* owner = GetGameObject())
+					{
+						mainCamera->SetLookAtTarget(owner->GetComponentHandle<Transform>());
+						mainCamera->SetEnableLookAtRotation(false);
+						// 원래 오프셋으로 복구
+						mainCamera->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f});
+						DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Reset Camera to LocalPlayer\n");
+					}
+					// 죽었을 때(일단 Clear로 해둠)
+					// TODO: 죽었을 때 처리
+					else
+					{
+						mainCamera->ClearLookAtTarget();
+						DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Clear Camera Target\n");
+					}
+				}
+			}
 		}
-		else
-		{
-			// 일반 모드
-			m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;
-			ToggleUI(false); // 숨김
-
-			// 상태 초기화
-			m_accumulatedDeltaX = 0.0f;
-			m_accumulatedDeltaY = 0.0f;
-			UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
-
-			            // 전투 모드 해제 시 카메라를 로컬 플레이어 추적 모드(자유 회전)로 복귀
-			            if (auto* mainCamera = CameraComponent::GetMainCamera())
-			            {	
-			                // 캐릭터 있을 때
-			                if (m_targetTrHandle.IsValid())
-			                {
-			                    mainCamera->SetLookAtTarget(m_targetTrHandle);
-			                    mainCamera->SetEnableLookAtRotation(false);
-			                    // 원래 오프셋으로 복구
-			                    mainCamera->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f});
-			                    DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Reset Camera to LocalPlayer\n");
-			                }
-			
-			                // 죽었을 때(일단 Clear로 해둠)
-			                // TODO: 죽었을 때 처리
-			                else
-			                {
-			                    mainCamera->ClearLookAtTarget();
-			                    DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Clear Camera Target\n");
-			                }
-			            }		}
 	}
 
 	// 2. COMBAT 모드 일때만 로직 수행
@@ -97,21 +95,43 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			}
 		}
 
-		// Alt 키: 카메라 락온 타겟 변경 요청
-		if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
+		if (m_controlMode == ControlType::Local)
 		{
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(0);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+			// Alt 키: 카메라 락온 타겟 변경 요청
+			if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
+			{
+				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(0);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+			}
+
+			ProcessMouseInput();
 		}
 
-		ProcessMouseInput();
-		UpdatePositionFromTarget();
+		UpdateUIPosition();
 	}
+}
+
+void BattleUIControllerComponent::SetStance(GENERAL_STANCE_TYPE stance)
+{
+	m_currentStance = stance;
+	ToggleUI(stance == GENERAL_STANCE_TYPE_COMBAT);
 }
 
 void BattleUIControllerComponent::OnDetach()
 {
-	GLOBAL(InputGlobal).SetMouseLocked(false);
+	if (m_controlMode == ControlType::Local)
+	{
+		GLOBAL(InputGlobal).SetMouseLocked(false);
+	}
+
+	// 생성했던 UI 루트 파괴
+	if (m_uiRootObjHandle.IsValid())
+	{
+		if (auto* owner = GetGameObject())
+		{
+			owner->GetScene()->DestroyGameObject(m_uiRootObjHandle);
+		}
+	}
 }
 
 float BattleUIControllerComponent::NormalizeAngle(float degrees)
@@ -123,110 +143,101 @@ float BattleUIControllerComponent::NormalizeAngle(float degrees)
 	return degrees;
 }
 
-void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
+void BattleUIControllerComponent::CreateAndSetupUI()
 {
-	// 1. UI 비활성화
-	ToggleUI(false);
-
 	GameObject* owner = GetGameObject();
-	if (!owner)
-		return;
-
+	if (!owner) return;
 	Scene* scene = owner->GetScene();
-	if (!scene)
-		return;
 
-	auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
-	if (swapChain)
-	{
-		m_centerX = static_cast<float>(swapChain->GetWidth()) / 2.0f;
-		m_centerY = static_cast<float>(swapChain->GetHeight()) / 2.0f;
-	}
-
-	Transform& ownerTr = owner->GetTransform();
-	const auto& childrenTrHandles = ownerTr.GetChildren();
-	auto* trStorage = scene->GetStorage<Transform>();
-
-	for (auto childTrHandle : childrenTrHandles)
-	{
-		Transform* childTr = trStorage->Get(childTrHandle);
-		if (!childTr)
-			continue;
-
-		GameObject* childObj = childTr->GetGameObject();
-		if (!childObj)
-			continue;
-
-		std::string name = childObj->GetName();
-
-		if (name == "UpUI")
-		{
-			m_upButtonHandle = childObj->GetComponentHandle<ButtonUIComponent>();
-			m_upImageHandle = childObj->GetComponentHandle<ImageUIComponent>();
+	// 1. UI 루트 오브젝트 생성 (플레이어의 자식이 아님 - 회전 상속 방지)
+	m_uiRootObjHandle = scene->ReserveGameObject("BattleUIRoot_" + std::to_string(owner->GetServerID()), std::nullopt,
+		[scene](GameObject* root) {
+			scene->CreateComponentWithInit<RectTransformComponent>(root->GetHandle(), [](auto*) {});
 		}
-		else if (name == "LeftUI")
-		{
-			m_leftButtonHandle = childObj->GetComponentHandle<ButtonUIComponent>();
-			m_leftImageHandle = childObj->GetComponentHandle<ImageUIComponent>();
-		}
-		else if (name == "RightUI")
-		{
-			m_rightButtonHandle = childObj->GetComponentHandle<ButtonUIComponent>();
-			m_rightImageHandle = childObj->GetComponentHandle<ImageUIComponent>();
-		}
-	}
+	);
 
-	// 2. 모든 자식 핸들이 유효한지 확인
-	if (m_upButtonHandle.IsValid() && m_leftButtonHandle.IsValid() && m_rightButtonHandle.IsValid())
-	{
-		// 처음 연결되었을 때 현재 상태(Neutral)에 맞춰 비활성화
-		ToggleUI(m_currentStance == GENERAL_STANCE_TYPE_COMBAT);
+	// 2. 리스너 등록: 자기자신의 UI 요소를 갱신하는 콜백 (옵저버 패턴)
+	AddListener(m_uiRootObjHandle, [this](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type) {
+		GameObject* owner = GetGameObject();
+		if (!owner) return;
+		auto* scene = owner->GetScene();
+		if (!scene) return;
 
-		// DEBUG_LOG_FMT("[BattleUI] Children Linked Successfully\n");
-		SetChildUIPositions();
-
-		// 텍스처 로드 및 멤버 변수 저장
-		auto& texGlobal = UITextureGlobal::GetInstance();
-		m_normalTexId = texGlobal.LoadTexture(L"Resource\\Texture\\normal.dds");
-		m_hoverTexId = texGlobal.LoadTexture(L"Resource\\Texture\\hovering.dds");
-		m_lightAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\select.dds");
-		m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
-		m_areaAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\area.dds");
-		m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
-
-		// ButtonUI와 ImageUI 초기 설정
 		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
 		auto* imgStorage = scene->GetStorage<ImageUIComponent>();
 
-		auto setupVisuals = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle)
-		{
-			if (!btnHandle.IsValid() || !imgHandle.IsValid())
-				return;
+		auto updateBtn = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle, bool isSelected) {
+			// 1. 텍스처 업데이트
+			if (ImageUIComponent* img = imgStorage->Get(imgHandle)) {
+				// 공격 타입에 따라 Pressed 텍스처 선택 (기본 Light)
+				uint32_t pressedTexId = m_lightAttackTexId;
+				if (type.has_value()) {
+					if (type.value() == GENERAL_ATTACK_TYPE_HEAVY) pressedTexId = m_strongAttackTexId;
+					else if (type.value() == GENERAL_ATTACK_TYPE_AREA) pressedTexId = m_areaAttackTexId;
+					else if (type.value() == GENERAL_ATTACK_TYPE_DISARM) pressedTexId = m_disarmTexId;
+				}
+				img->SetPressedTexture(pressedTexId);
+			}
+			// 2. 버튼 상태 업데이트
+			if (ButtonUIComponent* btn = btnStorage->Get(btnHandle)) {
+				if (isSelected) {
+					// attackType이 값이 있으면 Pressed, 아니면 Hover
+					btn->SetState(type.has_value() ? ButtonState::Pressed : ButtonState::Hover);
+				}
+				else {
+					btn->SetState(ButtonState::Normal);
+				}
+			}
+		};
 
-			ButtonUIComponent* btn = btnStorage->Get(btnHandle);
-			ImageUIComponent*  img = imgStorage->Get(imgHandle);
-			if (btn && img)
-			{
-				btn->SetTargetImage(imgHandle);
+		updateBtn(m_upButtonHandle, m_upImageHandle, dir == GENERAL_ATTACK_DIR_TYPE_TOP);
+		updateBtn(m_leftButtonHandle, m_leftImageHandle, dir == GENERAL_ATTACK_DIR_TYPE_LEFT);
+		updateBtn(m_rightButtonHandle, m_rightImageHandle, dir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
+	});
 
-				// 초기 상태 설정
+	// 자식 UI 오브젝트들 생성
+	std::vector<std::string> names = { "UpUI", "LeftUI", "RightUI" };
+	for (const auto& name : names)
+	{
+		scene->ReserveGameObject(name, std::nullopt, [this, scene, name](GameObject* child) {
+			auto childHandle = child->GetHandle();
+			scene->CreateComponentWithInit<RectTransformComponent>(childHandle, [](auto*) {});
+			
+			if (auto* rootObj = scene->TryGetGameObject(m_uiRootObjHandle)) {
+				child->GetTransform().SetParent(rootObj->GetComponentHandle<Transform>());
+			}
+
+			auto imgHandle = scene->CreateComponentWithInit<ImageUIComponent>(childHandle, [this](ImageUIComponent* img) {
+				img->SetOrder(10);
 				img->SetNormalTexture(m_normalTexId);
 				img->SetHoverTexture(m_hoverTexId);
 				img->SetPressedTexture(m_lightAttackTexId); 
 				img->SetDisabledTexture(m_normalTexId);
-
-				// 색상 설정
 				img->SetNormalColor({0.7f, 0.7f, 0.7f, 1.0f});
 				img->SetHoverColor({0.0f, 0.0f, 0.0f, 1.0f});
 				img->SetPressedColor({1.0f, 0.0f, 0.0f, 1.0f});
 				img->SetDisabledColor({0.5f, 0.5f, 0.5f, 0.5f});
-			}
-		};
+			});
 
-		setupVisuals(m_upButtonHandle, m_upImageHandle);
-		setupVisuals(m_leftButtonHandle, m_leftImageHandle);
-		setupVisuals(m_rightButtonHandle, m_rightImageHandle);
+			auto btnHandle = scene->CreateComponentWithInit<ButtonUIComponent>(childHandle, [imgHandle](ButtonUIComponent* btn) {
+				btn->SetOrder(11);
+				btn->SetTargetImage(imgHandle);
+			});
+
+			if (name == "UpUI") { m_upButtonHandle = btnHandle; m_upImageHandle = imgHandle; }
+			else if (name == "LeftUI") { m_leftButtonHandle = btnHandle; m_leftImageHandle = imgHandle; }
+			else if (name == "RightUI") { m_rightButtonHandle = btnHandle; m_rightImageHandle = imgHandle; }
+		});
 	}
+
+	// 텍스처 로드 및 멤버 변수 저장
+	auto& texGlobal = UITextureGlobal::GetInstance();
+	m_normalTexId = texGlobal.LoadTexture(L"Resource\\Texture\\normal.dds");
+	m_hoverTexId = texGlobal.LoadTexture(L"Resource\\Texture\\hovering.dds");
+	m_lightAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\select.dds");
+	m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
+	m_areaAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\area.dds");
+	m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
 }
 
 void BattleUIControllerComponent::SetChildUIPositions(float scale)
@@ -276,28 +287,15 @@ void BattleUIControllerComponent::SetChildUIPositions(float scale)
 	setupPos(m_rightButtonHandle, 330.0f);
 }
 
-void BattleUIControllerComponent::UpdatePositionFromTarget()
+void BattleUIControllerComponent::UpdateUIPosition()
 {
-	if (!m_targetTrHandle.IsValid())
-	{
-		// DEBUG_LOG_FMT("[BattleUI] No Target Handle!\n");
-		return;
-	}
-
 	GameObject* owner = GetGameObject();
-	if (!owner) return;
+	if (!owner || !m_uiRootObjHandle.IsValid()) return;
+	
 	Scene* scene = owner->GetScene();
-	if (!scene) return;
-
-	Transform* targetTr = scene->GetStorage<Transform>()->Get(m_targetTrHandle);
-	if (!targetTr)
-	{
-		DEBUG_LOG_FMT("[BattleUI] Target Transform is NULL!\n");
-		return;
-	}
-
+	Transform& playerTr = owner->GetTransform();
 	// 1. 타겟의 월드 위치 가져오기
-	DirectX::XMFLOAT3 vPos = targetTr->GetWorldPosition();
+	DirectX::XMFLOAT3 vPos = playerTr.GetWorldPosition();
 	DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&vPos);
 
 	// 2. 뷰포트 정보 가져오기
@@ -307,15 +305,13 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 	float width = static_cast<float>(swapChain->GetWidth());
 	float height = static_cast<float>(swapChain->GetHeight());
 
-	// 3. 카메라 행렬 가져오기
 	DirectX::XMMATRIX view = CameraComponent::GetMainViewMatrix();
 	DirectX::XMMATRIX proj = CameraComponent::GetMainProjectionMatrix();
 	DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
 
-	// 4. 거리 비례 스케일링 계산(Z)
+	// 거리 비례 스케일링 계산
 	DirectX::XMVECTOR viewPos = DirectX::XMVector3TransformCoord(worldPos, view);
 	float distance = DirectX::XMVectorGetZ(viewPos);
-
 	float scale = 1.0f;
 	if (distance > 0.1f) 
 	{
@@ -324,17 +320,16 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 		scale = std::clamp(scale, kMinScale, kMaxScale);
 	}
 
+	// 자식 요소들(버튼 등)의 상대 위치와 크기 조절
 	SetChildUIPositions(scale);
 
-	// 5. Project
-	DirectX::XMVECTOR screenPos =
-		DirectX::XMVector3Project(worldPos, 0.0f, 0.0f, width, height, 0.0f, 1.0f, proj, view, world);
+	// 월드 좌표를 스크린 좌표로 투영
+	DirectX::XMVECTOR screenPosVec = DirectX::XMVector3Project(worldPos, 0.0f, 0.0f, width, height, 0.0f, 1.0f, proj, view, world);
+	DirectX::XMFLOAT3 screenPos;
+	DirectX::XMStoreFloat3(&screenPos, screenPosVec);
 
-	DirectX::XMFLOAT3 pos;
-	DirectX::XMStoreFloat3(&pos, screenPos);
-
-	// 6. 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
-	if (pos.z < 0.0f || pos.z > 1.0f)
+	// 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
+	if (screenPos.z < 0.0f || screenPos.z > 1.0f)
 	{
 		ToggleUI(false);
 	}
@@ -342,22 +337,19 @@ void BattleUIControllerComponent::UpdatePositionFromTarget()
 	{
 		ToggleUI(true);
 	}
+	// 중심점 갱신 및 BattleUI 오브젝트 자체의 위치 이동
+	m_centerX = screenPos.x;
+	m_centerY = screenPos.y;
 
-	// 7. 중심점 갱신 및 BattleUI 오브젝트 자체의 위치 이동
-	m_centerX = pos.x;
-	m_centerY = pos.y;
-
-	if (auto* rectTr = owner->GetComponent<RectTransformComponent>()) 
-	{
-		// 화면 좌표를 UI 오프셋으로 변환 (Anchor 0.5,0.5기준)
-		float offsetX = pos.x - (width * 0.5f);
-		float offsetY = pos.y - (height * 0.5f);
-
-		// 메인 컨테이너 영역 스케일링
-		float containerHalfSize = 50.0f * scale; 
-
-		rectTr->SetOffsetMin({offsetX - containerHalfSize, offsetY - containerHalfSize});
-		rectTr->SetOffsetMax({offsetX + containerHalfSize, offsetY + containerHalfSize});
+	// 루트 UI 오브젝트 위치 갱신
+	if (auto* rootObj = scene->TryGetGameObject(m_uiRootObjHandle)) {
+		if (auto* rectTr = rootObj->GetComponent<RectTransformComponent>()) {
+			float offsetX = screenPos.x - (width * 0.5f);
+			float offsetY = screenPos.y - (height * 0.5f);
+			float containerHalfSize = 50.0f * scale; 
+			rectTr->SetOffsetMin({offsetX - containerHalfSize, offsetY - containerHalfSize});
+			rectTr->SetOffsetMax({offsetX + containerHalfSize, offsetY + containerHalfSize});
+		}
 	}
 }
 
@@ -513,18 +505,6 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType)
 {
-	GameObject* owner = GetGameObject();
-	if (!owner)
-		return;
-	Scene* scene = owner->GetScene();
-	if (!scene)
-		return;
-
-	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
-	if (!btnStorage)
-		return;
-	auto* imgStorage = scene->GetStorage<ImageUIComponent>();
-
 	// 공격 유효성이 false - 확정 텍스쳐 안 보여줌 (타이머가 남아있으면 유지)
 	if (!m_isAttackValid)
 	{
@@ -538,59 +518,34 @@ void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE sele
 		}
 	}
 
-	auto updateBtn = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle, bool isSelected)
-	{
-		// 1. 텍스처 업데이트
-		if (imgHandle.IsValid())
-		{
-			if (ImageUIComponent* img = imgStorage->Get(imgHandle))
-			{
-				// 공격 타입에 따라 Pressed 텍스처 선택 (기본 Light)
-				uint32_t pressedTexId = m_lightAttackTexId;
-				if (attackType.has_value())
-				{
-					if (attackType.value() == GENERAL_ATTACK_TYPE_HEAVY)
-					{
-						pressedTexId = m_strongAttackTexId;
-					}
-					else if (attackType.value() == GENERAL_ATTACK_TYPE_AREA)
-					{
-						pressedTexId = m_areaAttackTexId;
-					}
-					else if (attackType.value() == GENERAL_ATTACK_TYPE_DISARM)
-					{
-						pressedTexId = m_disarmTexId;
-					}
-				}
-				img->SetPressedTexture(pressedTexId);
-			}
-		}
-
-		// 2. 버튼 상태 업데이트
-		if (btnHandle.IsValid())
-		{
-			if (ButtonUIComponent* btn = btnStorage->Get(btnHandle))
-			{
-				if (isSelected)
-				{
-					// attackType이 값이 있으면 Pressed, 아니면 Hover
-					bool isPressed = attackType.has_value();
-					btn->SetState(isPressed ? ButtonState::Pressed : ButtonState::Hover);
-				}
-				else
-				{
-					btn->SetState(ButtonState::Normal);
-				}
-			}
-		}
-	};
-
-	updateBtn(m_upButtonHandle, m_upImageHandle, selectedDir == GENERAL_ATTACK_DIR_TYPE_TOP);
-	updateBtn(m_leftButtonHandle, m_leftImageHandle, selectedDir == GENERAL_ATTACK_DIR_TYPE_LEFT);
-	updateBtn(m_rightButtonHandle, m_rightImageHandle, selectedDir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
-
 	m_currentSelectedDir = selectedDir;
 	m_currentAttackType = attackType;
+
+	// 리스너들에게 상태 변경 알림
+	NotifyListeners(selectedDir, attackType);
+}
+
+void BattleUIControllerComponent::NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type)
+{
+	GameObject* owner = GetGameObject();
+	if (!owner) return;
+	Scene* scene = owner->GetScene();
+	if (!scene) return;
+
+	for (auto it = m_listeners.begin(); it != m_listeners.end(); )
+	{
+		// 관찰자(UI 오브젝트 등)가 여전히 살아있는지 핸들 체크
+		if (scene->TryGetGameObject(it->observerHandle))
+		{
+			it->callback(dir, type);
+			++it;
+		}
+		else
+		{
+			// 죽은 관찰자는 목록에서 제거 (Lazy Removal)
+			it = m_listeners.erase(it);
+		}
+	}
 }
 
 void BattleUIControllerComponent::OnGuardDirectionConfirmed(GENERAL_ATTACK_DIR_TYPE confirmedDir, GENERAL_ATTACK_TYPE attackType)
