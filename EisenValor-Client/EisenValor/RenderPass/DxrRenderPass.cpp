@@ -489,7 +489,7 @@ void DxrRenderPass::CreateRaytracingPipeline()
 	m_rtLiteShaderTable->Build(device5.Get(), m_rtLitePipeline.get(), 1);
 
 	m_rtPipeline = std::make_unique<DxRtPipelineState>();
-	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingPrimary.hlsl", 4);
+	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
 	m_rtShaderTable = std::make_unique<DxRtShaderTable>();
 	m_rtShaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
 

@@ -85,6 +85,18 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	// 2. COMBAT 모드 일때만 로직 수행
 	if (m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
 	{
+		// 피드백 타이머 감소 (시간 기반)
+		if (m_attackFeedbackTimer > 0.0f)
+		{
+			m_attackFeedbackTimer -= deltaTime;
+			if (m_attackFeedbackTimer <= 0.0f)
+			{
+				m_attackFeedbackTimer = 0.0f;
+				// 타이머 종료 시 UI 갱신 (선택 해제)
+				UpdateUISelection(m_currentSelectedDir, std::nullopt);
+			}
+		}
+
 		// Alt 키: 카메라 락온 타겟 변경 요청
 		if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
 		{
@@ -179,6 +191,7 @@ void BattleUIControllerComponent::InitializeChildHandlesAndSetupUI()
 		m_hoverTexId = texGlobal.LoadTexture(L"Resource\\Texture\\hovering.dds");
 		m_lightAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\select.dds");
 		m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
+		m_areaAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\area.dds");
 		m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
 
 		// ButtonUI와 ImageUI 초기 설정
@@ -423,6 +436,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	std::optional<GENERAL_ATTACK_TYPE> currentType = std::nullopt;
 	
 	if (isMiddlePressed) currentType = GENERAL_ATTACK_TYPE_DISARM;
+	else if (isLeftPressed && isRightPressed) currentType = GENERAL_ATTACK_TYPE_AREA;
 	else if (isRightPressed) currentType = GENERAL_ATTACK_TYPE_HEAVY;
 	else if (isLeftPressed) currentType = GENERAL_ATTACK_TYPE_LIGHT;
 	
@@ -464,6 +478,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 		{
 			GENERAL_ATTACK_TYPE confirmedType = GENERAL_ATTACK_TYPE_LIGHT;
 			if (isMiddleDown) confirmedType = GENERAL_ATTACK_TYPE_DISARM;
+			else if ((isLeftDown || isLeftPressed) && (isRightDown || isRightPressed)) confirmedType = GENERAL_ATTACK_TYPE_AREA;
 			else if (isRightDown) confirmedType = GENERAL_ATTACK_TYPE_HEAVY;
 
 			OnGuardDirectionConfirmed(m_currentSelectedDir, confirmedType);
@@ -476,6 +491,11 @@ void BattleUIControllerComponent::ProcessMouseInput()
 			// 확정 후 즉시 초기화
 			m_accumulatedDeltaX = 0.0f;
 			m_accumulatedDeltaY = 0.0f;
+
+			// 공격 피드백 설정 (입력 무효화 + 텍스쳐 잔상)
+			m_isAttackValid = false;
+			m_attackFeedbackTimer = 10.0f / 60.0f;
+			m_lastConfirmedAttackType = confirmedType;
 		}
 	}
 	else if (!isLeftPressed && !isRightPressed && !isMiddlePressed)
@@ -505,10 +525,17 @@ void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE sele
 		return;
 	auto* imgStorage = scene->GetStorage<ImageUIComponent>();
 
-	// 공격 유효성이 false - 확정 텍스쳐 안 보여줌
+	// 공격 유효성이 false - 확정 텍스쳐 안 보여줌 (타이머가 남아있으면 유지)
 	if (!m_isAttackValid)
 	{
-		attackType = std::nullopt;
+		if (m_attackFeedbackTimer > 0.0f)
+		{
+			attackType = m_lastConfirmedAttackType;
+		}
+		else
+		{
+			attackType = std::nullopt;
+		}
 	}
 
 	auto updateBtn = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle, bool isSelected)
@@ -525,6 +552,10 @@ void BattleUIControllerComponent::UpdateUISelection(GENERAL_ATTACK_DIR_TYPE sele
 					if (attackType.value() == GENERAL_ATTACK_TYPE_HEAVY)
 					{
 						pressedTexId = m_strongAttackTexId;
+					}
+					else if (attackType.value() == GENERAL_ATTACK_TYPE_AREA)
+					{
+						pressedTexId = m_areaAttackTexId;
 					}
 					else if (attackType.value() == GENERAL_ATTACK_TYPE_DISARM)
 					{

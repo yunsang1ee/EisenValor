@@ -1,5 +1,4 @@
 #include "stdafxClient.h"
-#include <filesystem>
 #include "SampleScene.h"
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
