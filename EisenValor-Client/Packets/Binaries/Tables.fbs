@@ -207,6 +207,11 @@ table CS_CHANGE_PLAYER_STANCE_PACKET {
 	
 }
 
+table SC_CHANGE_PLAYER_STANCE_PACKET {
+	obj_id : uint;
+	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
+}
+
 table CS_PLAYER_ATTACK {
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }

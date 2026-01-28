@@ -134,6 +134,9 @@ void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
 {
 	std::cout << "Handle_CS_PLAYER_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	
+	auto pb = ServerPackets::Make_SC_CHANGE_PLAYER_STANCE_PACKET(GetID(),GetStanceType());
+	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
