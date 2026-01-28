@@ -9,17 +9,17 @@
 
 #include "NetworkManager.h"
 
-ServerEngine::RIOWorker::RIOWorker(const uint16 id)
+ServerEngine::RIO::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
 }
 
-ServerEngine::RIOWorker::~RIOWorker()
+ServerEngine::RIO::RIOWorker::~RIOWorker()
 {
 	std::cout << std::format("~RioWorker, ID = {}", m_id) << std::endl;;
 }
 
-bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
+bool ServerEngine::RIO::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 {
 	const auto& rioConfig = MANAGER(ServerEngineConfigManager)->GetRIOWorkerConfig();
 	
@@ -38,18 +38,20 @@ bool ServerEngine::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 	return true;
 }
 
-void ServerEngine::RIOWorker::Work() noexcept
+void ServerEngine::RIO::RIOWorker::Work() noexcept
 {
 	FlushSessionPacketQueue();
 	DequeueCompletion();
 }
 
-void ServerEngine::RIOWorker::FlushSessionPacketQueue() noexcept
+void ServerEngine::RIO::RIOWorker::FlushSessionPacketQueue() noexcept
 {
 	auto iter{ m_connectedSession.begin() };
 	for(; iter != m_connectedSession.end();) {
-		if(SESSION_STATE::FREE != (*iter)->GetState()) {
-			(*iter)->FlushPacketQueue();
+		auto session{ (*iter) };
+		if(session && SESSION_STATE::FREE != session->GetState()) {
+			session->CheckPing();
+			session->FlushPacketQueue();
 			++iter;
 		}
 		else
@@ -57,7 +59,7 @@ void ServerEngine::RIOWorker::FlushSessionPacketQueue() noexcept
 	}
 }
 
-void ServerEngine::RIOWorker::DequeueCompletion() noexcept
+void ServerEngine::RIO::RIOWorker::DequeueCompletion() noexcept
 {
 	assert(TLS_THREAD_ID == m_id);
 
@@ -72,17 +74,17 @@ void ServerEngine::RIOWorker::DequeueCompletion() noexcept
 		}
 		else {
 			for(uint32 i = 0; i < numResults; ++i) {
-				RIOContext* const context{ reinterpret_cast<RIOContext*>(m_ioResults[i].RequestContext) };
+				RIO::RIOContext* const context{ reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext) };
 				auto session{ context->GetSession() };
 				assert(context && session);
 				const uint32 bytesTransferred{ m_ioResults[i].BytesTransferred };
 				session->Dispatch(context, bytesTransferred);
 			}
-		}
+		} 
 	}
 }
 
-bool ServerEngine::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
+bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	LOG_INFO("Session Accept!, RioWorker ID ={}", m_id);
 	auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };

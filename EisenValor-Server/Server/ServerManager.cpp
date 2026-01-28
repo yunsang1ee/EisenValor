@@ -22,14 +22,14 @@ BOOL __stdcall ConsoleHandler(DWORD signal)
 
 bool Server::ServerManager::Init()
 {
-	ServerEngine::LogManager::Init();
+	std::wcout.imbue(std::locale("korean"));
 
+	ServerEngine::LogManager::Init();
+	
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
 		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
 		return false;
 	}
-
-	std::wcout.imbue(std::locale("korean"));
 
 	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
@@ -57,10 +57,12 @@ bool Server::ServerManager::Init()
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
-
-#ifdef		RIO_SERVER
+	
+#ifdef	RIO_SERVER
 	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::RIO };
-#elifdef	IOCP_SERVER
+#endif
+
+#ifdef	IOCP_SERVER
 	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::IOCP };
 #endif
 
@@ -103,10 +105,8 @@ bool Server::ServerManager::Run()
 
 void Server::ServerManager::Shutdown()
 {
-	// MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::NetworkManager)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
-
 	LOG_SAVE();
 }

@@ -698,6 +698,17 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	return true;
 }
 
+bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
+)
+{
+	// TODO:오브젝트 ID와 스탠스 상태 사용해주세요
+
+	std::cout << "Handle_SC_CHANGE_PLAYER_STANCE_PACKET" << std::endl;
+
+	return true;
+}
+
 bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_STATE_PACKET& recvPkt
 )

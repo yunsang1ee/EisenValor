@@ -1,5 +1,11 @@
 #pragma once
 
+enum class IO_CONTEXT_TYPE : uint8 {
+	ACCEPT,
+	RECV,
+	SEND,
+};
+
 enum class IO_MODEL_TYPE : uint8 {
 	IOCP,
 	RIO,

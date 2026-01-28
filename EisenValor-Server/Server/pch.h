@@ -54,6 +54,7 @@ namespace Server {
 	}
 
 	class RIOClientSession;
+	class IOCPClientSession;
 }
 
 extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
