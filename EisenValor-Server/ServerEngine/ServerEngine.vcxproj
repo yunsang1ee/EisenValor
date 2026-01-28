@@ -158,6 +158,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="IOCore.h" />
+    <ClInclude Include="IOCPContext.h" />
+    <ClInclude Include="IOCPCore.h" />
+    <ClInclude Include="IOCPRecvBuffer.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
     <ClInclude Include="LockQueue.h" />
@@ -166,12 +169,12 @@
     <ClInclude Include="PacketBuffer.h" />
     <ClInclude Include="PacketHeader.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="RecvBuffer.h" />
+    <ClInclude Include="RIORecvBuffer.h" />
     <ClInclude Include="RIOBuffer.h" />
     <ClInclude Include="RIOContext.h" />
     <ClInclude Include="RIOCore.h" />
     <ClInclude Include="RIOWorker.h" />
-    <ClInclude Include="SendBuffer.h" />
+    <ClInclude Include="RIOSendBuffer.h" />
     <ClInclude Include="ServerEngineContainers.h" />
     <ClInclude Include="ServerEngineDefines.h" />
     <ClInclude Include="ServerEngineEnums.h" />
@@ -191,6 +194,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IOCore.cpp" />
+    <ClCompile Include="IOCPContext.cpp" />
+    <ClCompile Include="IOCPCore.cpp" />
+    <ClCompile Include="IOCPRecvBuffer.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
     <ClCompile Include="LockQueue.cpp" />
@@ -203,12 +209,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="RecvBuffer.cpp" />
+    <ClCompile Include="RIORecvBuffer.cpp" />
     <ClCompile Include="RIOBuffer.cpp" />
     <ClCompile Include="RIOContext.cpp" />
     <ClCompile Include="RIOCore.cpp" />
     <ClCompile Include="RIOWorker.cpp" />
-    <ClCompile Include="SendBuffer.cpp" />
+    <ClCompile Include="RIOSendBuffer.cpp" />
     <ClCompile Include="ServerEnginePch.cpp" />
     <ClCompile Include="ServerEngineTLS.cpp" />
     <ClCompile Include="Session.cpp" />

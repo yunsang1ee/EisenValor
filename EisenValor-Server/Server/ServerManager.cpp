@@ -57,10 +57,12 @@ bool Server::ServerManager::Init()
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
-
-#ifdef		RIO_SERVER
+	
+#ifdef	RIO_SERVER
 	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::RIO };
-#elifdef	IOCP_SERVER
+#endif
+
+#ifdef	IOCP_SERVER
 	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::IOCP };
 #endif
 
@@ -103,10 +105,8 @@ bool Server::ServerManager::Run()
 
 void Server::ServerManager::Shutdown()
 {
-	// MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::NetworkManager)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
-
 	LOG_SAVE();
 }

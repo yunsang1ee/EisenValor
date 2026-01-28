@@ -3,14 +3,6 @@
 #include "Singleton.hpp"
 
 namespace Server {
-
-//#ifdef RIO_SERVER
-//	using ClientSession = Server::RIOClientSession;
-//#elifdef IOCP_SERVER
-//	using ClientSession = Server::IOCPClientSession;
-//#endif 
-
-
 	class ClientSessionManager : public Singleton<ClientSessionManager> {
 		SINGLETON(ClientSessionManager)
 	

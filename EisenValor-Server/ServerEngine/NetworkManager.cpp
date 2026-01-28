@@ -2,19 +2,23 @@
 #include "NetworkManager.h"
 
 #include "RIOCore.h"
+#include "IOCPCore.h"
 
 bool ServerEngine::NetworkManager::Init(const IO_MODEL_TYPE ioModelType, const SessionFactoryFunc func)
 {
 	m_ioModelType = ioModelType;
 
-	if(IO_MODEL_TYPE::RIO == ioModelType) {
-		m_ioCore = std::make_unique<RIOCore>();
-	}
-	else if(IO_MODEL_TYPE::IOCP == ioModelType) {
-		// TODO: Make IOCPCore
-	}
-	else {
-		return false;
+	switch(ioModelType) {
+		case IO_MODEL_TYPE::RIO:
+			m_ioCore = std::make_unique<RIO::RIOCore>();
+			LOG_INFO("\n====================\nIO_MODEL_TYPE: RIO\n====================\n");
+			break;
+		case IO_MODEL_TYPE::IOCP:
+			m_ioCore = std::make_unique<IOCP::IOCPCore>();
+			LOG_INFO("\n====================\nIO_MODEL_TYPE: IOCP\n====================\n");
+			break;
+		default:
+			return false;
 	}
 
 	if(m_ioCore) {

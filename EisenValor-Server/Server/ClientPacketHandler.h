@@ -319,6 +319,8 @@ public:
 		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
 
+		// TODO: PacketBufferPoolManager로부터 packetBuffer 받아오기
+
 		const auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
 		packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 		return packetBuffer;
