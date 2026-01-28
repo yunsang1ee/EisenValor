@@ -37,6 +37,19 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 		// 1. Ctrl 키
 		if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
 		{
+			//// 디버그 로그: ID 및 상태 확인
+			//if (auto* owner = GetGameObject())
+			//{
+			//	auto* scene = owner->GetScene();
+			//	uint32 localID = scene->GetLocalID();
+			//	uint32 ownerID = owner->GetServerID();
+			//	bool isRootActive = false;
+			//	if (auto* root = scene->TryGetGameObject(m_uiRootObjHandle)) isRootActive = root->IsActive();
+
+			//	DEBUG_LOG_FMT("[BattleUI Debug] Ctrl Pressed! LocalID: {}, OwnerID: {}, RootActive: {}, Stance: {}\n",
+			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
+			//}
+
 			auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
@@ -56,7 +69,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 				m_accumulatedDeltaY = 0.0f;
 				UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
 
-				// 전투 모드 해제 시 카메라를 로컬 플레이어 추적 모드(자유 회전)로 복귀
+				// 전투 모드 해제 시 카메라 복귀
 				if (auto* mainCamera = CameraComponent::GetMainCamera())
 				{	
 					// 캐릭터 있을 때
@@ -328,6 +341,14 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	DirectX::XMFLOAT3 screenPos;
 	DirectX::XMStoreFloat3(&screenPos, screenPosVec);
 
+	//// 디버깅
+	//if (m_controlMode == ControlType::Local && m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
+	//{
+	//	DEBUG_LOG_FMT("[BattleUI] ScreenPos: ({:.2f}, {:.2f}, {:.2f}), Viewport: {}x{}\n", 
+	//		screenPos.x, screenPos.y,screenPos.z, width, height
+	//	);
+	//}
+
 	// 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
 	if (screenPos.z < 0.0f || screenPos.z > 1.0f)
 	{
@@ -349,6 +370,20 @@ void BattleUIControllerComponent::UpdateUIPosition()
 			float containerHalfSize = 50.0f * scale; 
 			rectTr->SetOffsetMin({offsetX - containerHalfSize, offsetY - containerHalfSize});
 			rectTr->SetOffsetMax({offsetX + containerHalfSize, offsetY + containerHalfSize});
+
+			//// 디버깅
+			//if (m_controlMode == ControlType::Local && m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
+			//{
+			//	DEBUG_LOG_FMT("[UI Debug] Root Active: {}, Pos Min: ({:.2f}, {:.2f})\n", 
+			//		rootObj->IsActive(), rectTr->GetOffsetMin().x, rectTr->GetOffsetMin().y);
+			//}
+		}
+	}
+	else
+	{
+		if (m_controlMode == ControlType::Local && m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
+		{
+			DEBUG_LOG_FMT("[UI Debug] Root Object NOT FOUND!\n");
 		}
 	}
 }

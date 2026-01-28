@@ -702,9 +702,24 @@ bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
 )
 {
-	// TODO:오브젝트 ID와 스탠스 상태 사용해주세요
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 id = recvPkt.obj_id();
+	const auto stance = recvPkt.stance_type();
 
-	std::cout << "Handle_SC_CHANGE_PLAYER_STANCE_PACKET" << std::endl;
+	//서버 Echo 방지
+	if (id == scene->GetLocalID())
+	{
+		return true;
+	}
+
+	if (auto* obj = scene->FindGameObjectByServerID(id))
+	{
+		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			ui->SetStance(stance);
+			DEBUG_LOG_FMT("[SC_CHANGE_PLAYER_STANCE] ID: {}, Stance: {}\n", id, static_cast<int>(stance));
+		}
+	}
 
 	return true;
 }
@@ -790,6 +805,14 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	
 	const uint32 id = recvPkt.player_id();
+	const uint32 localID = scene->GetLocalID();
+
+	// 서버 Echo 방지
+	if (id == localID)
+	{
+		return true;
+	}
+
 	const uint8_t dirRaw = recvPkt.attack_dir();
 	const GENERAL_ATTACK_DIR_TYPE dir = static_cast<GENERAL_ATTACK_DIR_TYPE>(dirRaw);
 
@@ -799,10 +822,7 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 		// 2. 컴포넌트 가져오기
 		if (auto* uiController = playerObj->GetComponent<BattleUIControllerComponent>())
 		{
-			// [임시 조치] 공격 방향이 오면 전투 중으로 간주
-			uiController->SetStance(GENERAL_STANCE_TYPE_COMBAT);
-
-			// 3. UI 갱신 (Observer 패턴에 의해 UI 자동 업데이트)
+			// 3. UI 갱신 (Observer - UI 자동 업데이트)
 			uiController->UpdateUISelection(dir, std::nullopt);
 			return true;
 		}
