@@ -352,7 +352,7 @@ void ServerEngine::RIO::RIOSession::Clean()
 //					IOCP SESSION
 // =============================================
 ServerEngine::IOCP::IOCPSession::IOCPSession()
-	:m_recvBuffer{ BUFFER_SIZE }
+	:m_recvBuffer{ BUFFER_SIZE }, m_sendRegistered{false}
 {
 
 }
@@ -367,7 +367,7 @@ bool ServerEngine::IOCP::IOCPSession::Init()
 	return true;
 }
 
-void ServerEngine::IOCP::IOCPSession::Dispatch(IOCPContext* const context, const uint32 bytesTransferred)
+void ServerEngine::IOCP::IOCPSession::Dispatch(const IOCPContext* const context, const uint32 bytesTransferred)
 {
 	switch(context->GetType()) {
 		case IO_CONTEXT_TYPE::RECV:
@@ -424,7 +424,17 @@ void ServerEngine::IOCP::IOCPSession::Disconnect(const std::string_view reason)
 
 void ServerEngine::IOCP::IOCPSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
+	if(false == IsConnected()) return;
 
+	bool registered{ false };
+
+	m_packetQueue.push(std::move(packetBuffer));
+	
+	if(m_sendRegistered.exchange(true) == false)
+		registered = true;
+
+	if(registered)
+		PostSend();
 }
 
 void ServerEngine::IOCP::IOCPSession::PostRecv()
@@ -438,9 +448,9 @@ void ServerEngine::IOCP::IOCPSession::PostRecv()
 	wsaBuf.buf = reinterpret_cast<char*>(m_recvBuffer.WritePos());
 	wsaBuf.len = m_recvBuffer.FreeSize();
 
-	DWORD numOfBytes = 0;
-	DWORD flags = 0;
-	if(SOCKET_ERROR == ::WSARecv(m_socket, &wsaBuf, 1, OUT & numOfBytes, OUT & flags, &m_recvContext, nullptr)) {
+	DWORD numOfBytes{};
+	DWORD flags{};
+	if(SOCKET_ERROR == ::WSARecv(m_socket, &wsaBuf, 1, &numOfBytes, &flags, &m_recvContext, nullptr)) {
 		int32 errCode = ::WSAGetLastError();
 
 		if(errCode != WSA_IO_PENDING) {
@@ -477,10 +487,61 @@ void ServerEngine::IOCP::IOCPSession::ProcessRecv(const uint32 bytesTransferred)
 
 		PostRecv();
 	}
-
 }
 
 void ServerEngine::IOCP::IOCPSession::ProcessSend(const uint32 bytesTransferred)
 {
+	m_sendContext.SetOwner(nullptr);
+	m_sendContext.m_packetBuffers.clear();
 
+	if(0 == bytesTransferred) {
+		Disconnect("Send Zero");
+		return;
+	}
+
+	OnSend(bytesTransferred);
+
+	if(m_packetQueue.empty())
+		m_sendRegistered = false;
+	else
+		PostSend();
+}
+
+void ServerEngine::IOCP::IOCPSession::PostSend()
+{
+	if(false == IsConnected()) return;
+
+	m_sendContext.Init();
+	m_sendContext.SetOwner(std::static_pointer_cast<ServerEngine::IOCP::IOCPSession>(shared_from_this()));
+
+	int32 writeSize{};
+	while(false == m_packetQueue.empty()) {
+		std::shared_ptr<PacketBuffer> pb;
+		if(m_packetQueue.try_pop(pb)) {
+			writeSize += pb->GetDataSize();
+
+			m_sendContext.m_packetBuffers.push_back(std::move(pb));
+		}
+	}
+
+	std::vector<WSABUF> wsaBufs;
+	wsaBufs.reserve(m_sendContext.m_packetBuffers.size());
+
+	for(auto pb : m_sendContext.m_packetBuffers) {
+		WSABUF wsaBuf;
+		wsaBuf.buf = pb->GetBuffer();
+		wsaBuf.len = pb->GetDataSize();
+		wsaBufs.push_back(wsaBuf);
+	}
+
+	DWORD numOfBytes{};
+	if(SOCKET_ERROR == ::WSASend(m_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), &numOfBytes, 0, &m_sendContext, nullptr)) {
+		int32 errCode = ::WSAGetLastError();
+
+		if(errCode != WSA_IO_PENDING) {
+			m_sendContext.SetOwner(nullptr); 
+			m_sendContext.m_packetBuffers.clear();
+			m_sendRegistered.store(false);
+		}
+	}
 }

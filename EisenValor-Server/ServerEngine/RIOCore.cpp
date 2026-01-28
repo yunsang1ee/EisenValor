@@ -31,12 +31,6 @@ bool ServerEngine::RIO::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 		return false;
 	}
 
-	const uint16 PORT_NUM{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
-	m_serverAddress.sin_family = AF_INET;
-	m_serverAddress.sin_port = htons(PORT_NUM);
-	m_serverAddress.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-
 	// 4. Bind
 	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
 		LOG_WSA_GET_LAST_ERROR();
@@ -97,11 +91,15 @@ void ServerEngine::RIO::RIOCore::Run()
 
 void ServerEngine::RIO::RIOCore::DoAcceptLoop()
 {
+ACCEPT_RETRY:
 	const SOCKET clientSocket{ accept(m_listenSocket, NULL, NULL) };
 	if(clientSocket == SOCKET_ERROR) return;
+
 	SOCKADDR_IN clientaddr;
 	int32 addrlen{ sizeof(clientaddr) };
-	getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
+	if(SOCKET_ERROR == GetPeerName(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen)) {
+		goto ACCEPT_RETRY;
+	}
 
 	std::cout << "Client Accept Success!" << std::endl;
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#define RIO_SERVER
-// #define IOCP_SERVER
+// #define RIO_SERVER
+#define IOCP_SERVER
 
 #define WIN32_LEAN_AND_MEAN
 

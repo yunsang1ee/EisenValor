@@ -22,11 +22,10 @@ bool ServerEngine::NetworkManager::Init(const IO_MODEL_TYPE ioModelType, const S
 	}
 
 	if(m_ioCore) {
-		if(m_ioCore->Init(func))return true;
-		else return false;
+		if(false == m_ioCore->Init(func))return false;
 	}
 
-	return false;
+	return true;
 }
 
 void ServerEngine::NetworkManager::Run()

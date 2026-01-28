@@ -22,5 +22,7 @@ namespace ServerEngine {
 		SOCKET	CreateSocket(const DWORD flags);
 		void	DistributeReservedTask();
 		void	FlushTaskQueue();
+		int		GetPeerName(const SOCKET clientSocket, sockaddr* name, int* nameLen);
+
 	};
 }

@@ -45,7 +45,7 @@ namespace ServerEngine {
 		virtual void OnConnected() abstract;
 		virtual void OnDisconnected(const std::string_view reason) abstract;
 		virtual void Dispatch(RIO::RIOContext* const context, const uint32 bytesTransferred) {}
-		virtual void Dispatch(IOCP::IOCPContext* const context, const uint32 bytesTransferred) {}
+		virtual void Dispatch(const IOCP::IOCPContext* const context, const uint32 bytesTransferred) {}
 		virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) abstract;
 		virtual void Disconnect(const std::string_view reason) abstract;
 		virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) abstract;
@@ -119,8 +119,11 @@ namespace ServerEngine {
 		class IOCPSession : public Session {
 			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
 		public:
-			IOCPRecvContext	m_recvContext;
-			IOCPRecvBuffer	m_recvBuffer;
+			IOCPRecvContext											m_recvContext;
+			IOCPSendContext											m_sendContext;
+			IOCPRecvBuffer											m_recvBuffer;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetQueue;
+			std::atomic_bool										m_sendRegistered;
 
 		public:
 			IOCPSession();
@@ -128,7 +131,7 @@ namespace ServerEngine {
 
 		public:
 			virtual bool Init() override final;
-			virtual void Dispatch(IOCPContext* const context, const uint32 bytesTransferred) override final;
+			virtual void Dispatch(const IOCPContext* const context, const uint32 bytesTransferred) override final;
 			virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) override final;
 			virtual void Disconnect(const std::string_view reason) override final;
 			virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) override final;
@@ -136,6 +139,8 @@ namespace ServerEngine {
 			virtual void ProcessRecv(const uint32 bytesTransferred) override final;
 			virtual void ProcessSend(const uint32 bytesTransferred) override final;
 
+		private:
+			void PostSend();
 		};
 	}
 }
