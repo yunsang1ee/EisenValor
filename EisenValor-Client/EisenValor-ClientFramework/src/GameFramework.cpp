@@ -1,6 +1,5 @@
 #include "stdafxClientFramework.h"
 #include "GameFramework.h"
-
 #include "GlobalInterfaces.h"
 #include "DxDebugGlobal.h"
 #include "SceneGlobal.h"
@@ -9,7 +8,6 @@
 #include "DxSwapChain.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
-
 
 #define SERVER
 
