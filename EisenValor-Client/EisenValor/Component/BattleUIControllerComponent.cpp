@@ -16,17 +16,27 @@
 
 void BattleUIControllerComponent::OnAttach()
 {
-	if (auto* owner = GetGameObject())
+	GameObject* owner = GetGameObject();
+	if (owner)
 	{
 		owner->SetActive(true);
+		DEBUG_LOG_FMT("[BattleUI Debug] OnAttach Called! This: {}, Owner: {}, ServerID: {}\n", 
+			(void*)this, (void*)owner, owner->GetServerID());
 	}
+}
 
-	// 1. UI 동적 생성 및 초기화
+void BattleUIControllerComponent::OnStart()
+{
+	GameObject* owner = GetGameObject();
+	DEBUG_LOG_FMT(
+		"[BattleUI Debug] OnStart Called! ID: {}, Mode: {}\n", owner->GetServerID(),
+		m_controlMode == ControlType::Local ? "Local" : "Remote"
+	);
+	// UI 동적 생성 및 초기화
 	CreateAndSetupUI();
 
-	// 1. NEUTRAL -> UI 숨김
+	// NEUTRAL -> UI 숨김
 	m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;
-	ToggleUI(false);
 }
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
@@ -303,9 +313,14 @@ void BattleUIControllerComponent::SetChildUIPositions(float scale)
 void BattleUIControllerComponent::UpdateUIPosition()
 {
 	GameObject* owner = GetGameObject();
+	Scene*		scene = owner->GetScene();
+
 	if (!owner || !m_uiRootObjHandle.IsValid()) return;
 	
-	Scene* scene = owner->GetScene();
+	auto* rootObj = scene->TryGetGameObject(m_uiRootObjHandle);
+	if (!rootObj)
+		return;
+
 	Transform& playerTr = owner->GetTransform();
 	// 1. 타겟의 월드 위치 가져오기
 	DirectX::XMFLOAT3 vPos = playerTr.GetWorldPosition();
@@ -393,6 +408,9 @@ GENERAL_ATTACK_DIR_TYPE BattleUIControllerComponent::CalculateGuardDirection(flo
 	float lengthSq = (deltaX * deltaX) + (deltaY * deltaY);
 	if (lengthSq < kAccumulationThresholdSq)
 		return GENERAL_ATTACK_DIR_TYPE_NONE;
+
+
+
 
 	float radian = atan2f(-deltaY, deltaX);
 	float degree = radian * kRadToDeg;

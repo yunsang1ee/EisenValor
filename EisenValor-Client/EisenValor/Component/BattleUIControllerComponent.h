@@ -28,6 +28,7 @@ public:
 	};
 
 	void OnAttach() override;
+	void OnStart() override;
 	void OnUpdate(float deltaTime);
 	void OnDetach() override;
 
