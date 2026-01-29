@@ -2,6 +2,8 @@
 
 namespace ServerEngine {
 	namespace IOCP {
+
+#ifdef _USE_IOCP
 		class IOCPRecvBuffer {
 			enum { BUFFER_COUNT = 10 };
 		private:
@@ -26,5 +28,6 @@ namespace ServerEngine {
 			int32	FreeSize() { return m_capacity - m_writePos; }
 
 		};
+#endif
 	}
 }

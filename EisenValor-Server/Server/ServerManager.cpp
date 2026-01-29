@@ -57,16 +57,8 @@ bool Server::ServerManager::Init()
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
-	
-#ifdef	_USE_RIO
-	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::RIO };
-#endif
 
-#ifdef	_USE_IOCP
-	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::IOCP };
-#endif
-
-	if(false == MANAGER(ServerEngine::NetworkManager)->Init(ioModelType, MakeClientSessionFunc)) {
+	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
 		LOG_ERROR("NetworkManager Init Failed");
 		return false;
 	}

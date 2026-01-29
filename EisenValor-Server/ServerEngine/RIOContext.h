@@ -4,7 +4,7 @@ namespace ServerEngine {
 
 	namespace RIO {
 		class RIOSession;
-		
+#ifdef _USE_RIO
 		class RIOContext : public RIO_BUF {
 		private:
 			IO_CONTEXT_TYPE								m_type;
@@ -35,6 +35,6 @@ namespace ServerEngine {
 		public:
 			RIOSendContext() : RIOContext{ IO_CONTEXT_TYPE::SEND } {};
 		};
+#endif
 	}
-
 }

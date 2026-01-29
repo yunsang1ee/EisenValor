@@ -2,6 +2,7 @@
 
 namespace ServerEngine {
 	namespace RIO {
+#ifdef _USE_RIO
 		class RIOBuffer {
 			enum { BUFFER_COUNT = 10 };
 		protected:
@@ -40,6 +41,7 @@ namespace ServerEngine {
 			const uint32		GetFreeSize() const noexcept { return m_capacity - m_writePos; }
 
 		};
+#endif
 	}
 }
 

@@ -515,7 +515,7 @@
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Binaries\Server\Release\Config\config.json" />
+    <None Include="..\Binaries\Server\Config\config.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

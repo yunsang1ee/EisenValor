@@ -433,6 +433,7 @@
     <ClCompile Include="BehaviorNode.cpp" />
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
+    <ClCompile Include="ClientPackets.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="ClientSessionManager.cpp" />
     <ClCompile Include="Collider.cpp" />
@@ -590,6 +591,7 @@
     <ClInclude Include="BehaviorNode.h" />
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
+    <ClInclude Include="ClientPackets.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="ClientSessionManager.h" />
     <ClInclude Include="Collider.h" />
@@ -642,9 +644,9 @@
     <ClInclude Include="TargetTraceNode.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Binaries\Server\Release\DataTable\AttackDataTable.csv" />
-    <None Include="..\Binaries\Server\Release\DataTable\StatDataTable.csv" />
-    <None Include="..\Binaries\Server\Release\GameData\GameData.json" />
+    <None Include="..\Binaries\Server\DataTable\AttackDataTable.csv" />
+    <None Include="..\Binaries\Server\DataTable\StatDataTable.csv" />
+    <None Include="..\Binaries\Server\GameData\GameData.json" />
     <None Include="..\Binaries\Server\Release\NavData\solo_navmesh.bin" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />

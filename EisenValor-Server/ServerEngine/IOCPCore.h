@@ -5,6 +5,7 @@
 
 namespace ServerEngine {
 	namespace IOCP {
+#ifdef _USE_IOCP
 		class IOCPCore : public ServerEngine::IOCore {
 		private:
 			HANDLE									m_iocpHandle;
@@ -34,6 +35,7 @@ namespace ServerEngine {
 			std::shared_ptr<IOCPSession> CreateSession();
 
 		};
+#endif
 	}
 }
 

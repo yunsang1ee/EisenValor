@@ -6,6 +6,7 @@ namespace ServerEngine {
 	namespace IOCP {
 		class IOCPSession;
 
+#ifdef _USE_IOCP
 		class IOCPContext : public OVERLAPPED {
 		private:
 			IO_CONTEXT_TYPE					m_type;
@@ -49,6 +50,7 @@ namespace ServerEngine {
 			std::vector<std::shared_ptr<PacketBuffer>> m_packetBuffers;
 			IOCPSendContext() : IOCPContext(IO_CONTEXT_TYPE::SEND) {}
 		};
+#endif
 	}
 }
 

@@ -8,6 +8,7 @@ namespace ServerEngine {
 	namespace RIO {
 		class RIOWorker;
 
+#ifdef _USE_RIO
 		class RIOCore : public IOCore {
 		private:
 			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable{};
@@ -37,5 +38,6 @@ namespace ServerEngine {
 		private:
 			void			DoAcceptLoop();
 		};
+#endif
 	}
 }

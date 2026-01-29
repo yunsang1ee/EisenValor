@@ -70,27 +70,7 @@ namespace ServerEngine {
 		static void PrintLastError(const std::source_location& loc = std::source_location::current()) noexcept;
 
 	public:
-		static void Save()
-		{
-			const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-			const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);
-
-#ifdef _USE_IOCP
-			std::string filePath{ "LOG/IOCP/" };
-#endif
-#ifdef _USE_RIO
-			std::string filePath{ "LOG/RIO/" };
-#endif
-
-#ifdef _DEBUG
-			const std::string fileName = filePath + std::format("[DEBUG] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
-#else
-			const std::string fileName = filePath + std::format("[RELEASE] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
-#endif // _DEBUG
-
-			std::ofstream ofs{ fileName,  std::ios::out | std::ios::app };
-			ofs << s_oss.str();
-		}
+		static void Save();
 	};
 
 

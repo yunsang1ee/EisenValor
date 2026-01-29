@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "RIOSendBuffer.h"
 
+#ifdef _USE_RIO
 ServerEngine::RIO::RIOSendBuffer::RIOSendBuffer()
 	:m_sendOffset{0}
 {
@@ -48,3 +49,4 @@ void ServerEngine::RIO::RIOSendBuffer::CleanBuffer() noexcept
 		}
 	}
 }
+#endif

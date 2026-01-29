@@ -284,7 +284,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\Binaries\Server\Release\Config\config.json">
+    <None Include="..\Binaries\Server\Config\config.json">
       <Filter>94. Config</Filter>
     </None>
   </ItemGroup>

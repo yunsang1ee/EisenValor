@@ -73,6 +73,38 @@ namespace ServerEngine {
 		void Handle_CS_PONG();
 	};
 
+#ifdef _USE_IOCP
+	namespace IOCP {
+		class IOCPSession : public Session {
+			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
+		public:
+			IOCPRecvContext											m_recvContext;
+			IOCPSendContext											m_sendContext;
+			IOCPRecvBuffer											m_recvBuffer;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetQueue;
+			std::atomic_bool										m_sendRegistered;
+
+		public:
+			IOCPSession();
+			virtual ~IOCPSession();
+
+		public:
+			virtual bool Init() override final;
+			virtual void Dispatch(const IOCPContext* const context, const uint32 bytesTransferred) override final;
+			virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) override final;
+			virtual void Disconnect(const std::string_view reason) override final;
+			virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) override final;
+			virtual void PostRecv() override final;
+			virtual void ProcessRecv(const uint32 bytesTransferred) override final;
+			virtual void ProcessSend(const uint32 bytesTransferred) override final;
+
+		private:
+			void PostSend();
+		};
+	}
+#endif 
+
+#ifdef _USE_RIO
 	namespace RIO {
 		class RIOSession : public Session {
 		private:
@@ -114,34 +146,6 @@ namespace ServerEngine {
 			void Clean();
 		};
 	}
-
-	namespace IOCP {
-		class IOCPSession : public Session {
-			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
-		public:
-			IOCPRecvContext											m_recvContext;
-			IOCPSendContext											m_sendContext;
-			IOCPRecvBuffer											m_recvBuffer;
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetQueue;
-			std::atomic_bool										m_sendRegistered;
-
-		public:
-			IOCPSession();
-			virtual ~IOCPSession();
-
-		public:
-			virtual bool Init() override final;
-			virtual void Dispatch(const IOCPContext* const context, const uint32 bytesTransferred) override final;
-			virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) override final;
-			virtual void Disconnect(const std::string_view reason) override final;
-			virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) override final;
-			virtual void PostRecv() override final;
-			virtual void ProcessRecv(const uint32 bytesTransferred) override final;
-			virtual void ProcessSend(const uint32 bytesTransferred) override final;
-
-		private:
-			void PostSend();
-		};
-	}
+#endif
 }
 

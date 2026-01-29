@@ -9,6 +9,7 @@
 
 #include "NetworkManager.h"
 
+#ifdef _USE_RIO
 ServerEngine::RIO::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
@@ -93,3 +94,4 @@ bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOC
 	m_connectedSession.insert(std::move(session));
 	return true;
 }
+#endif

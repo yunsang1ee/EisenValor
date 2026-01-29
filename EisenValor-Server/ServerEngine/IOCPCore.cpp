@@ -5,6 +5,7 @@
 
 #include "Session.h"
 
+#ifdef _USE_IOCP
 ServerEngine::IOCP::IOCPCore::IOCPCore()
 	:m_iocpHandle{ INVALID_HANDLE_VALUE }, m_acceptContext{}
 {
@@ -182,3 +183,4 @@ std::shared_ptr<ServerEngine::IOCP::IOCPSession> ServerEngine::IOCP::IOCPCore::C
 
 	return nullptr;
 }
+#endif

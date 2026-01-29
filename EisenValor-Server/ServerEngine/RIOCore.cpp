@@ -7,6 +7,7 @@
 #include "TaskQueue.h"
 #include "ServerEngineConfigManager.h"
 
+#ifdef _USE_RIO
 bool ServerEngine::RIO::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
 	m_acceptThreadNum = 0;
@@ -119,3 +120,4 @@ void ServerEngine::RIO::RIOCore::Shutdown()
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
 }
+#endif
