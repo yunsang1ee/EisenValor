@@ -4,11 +4,6 @@
 // define ENABLE_LOBBY
 
 #pragma warning(disable: 4819)
-#ifdef _DEBUG
-#pragma comment(lib, "ServerEngine\\Debug\\ServerEngine_Debug.lib")
-#else
-#pragma comment(lib, "ServerEngine\\Release\\ServerEngine_Release.lib")
-#endif
 
 #include "ServerEnginePch.h"
 #include "flatbuffers\\flatbuffers.h"

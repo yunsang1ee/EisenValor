@@ -84,10 +84,10 @@ namespace Server {
 	class IOCPClientSession;
 }
 
-#ifdef RIO_SERVER
+#ifdef _USE_RIO
 using ClientSession = Server::RIOClientSession;
 #endif
 
-#ifdef IOCP_SERVER
+#ifdef _USE_IOCP
 using ClientSession = Server::IOCPClientSession;
 #endif

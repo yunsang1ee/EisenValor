@@ -101,6 +101,7 @@ Server::IOCPClientSession::IOCPClientSession()
 
 Server::IOCPClientSession::~IOCPClientSession()
 {
+	std::cout << "~ClientSession" << std::endl;
 }
 
 void Server::IOCPClientSession::OnConnected()
@@ -166,5 +167,6 @@ void Server::IOCPClientSession::OnSend(const uint32 bytesTransferred)
 
 void Server::IOCPClientSession::SendPing()
 {
-	// TODO: SendPing
+	auto pb{ ServerPackets::Make_SC_PING_PACKET() };
+	Send(std::move(pb));
 }

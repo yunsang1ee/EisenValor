@@ -175,10 +175,8 @@ void ServerEngine::IOCP::IOCPCore::RegistAccept()
 
 std::shared_ptr<ServerEngine::IOCP::IOCPSession> ServerEngine::IOCP::IOCPCore::CreateSession()
 {
-#ifdef  IOCP_SERVER
-
+#ifdef  _USE_IOCP
 	auto session = m_sessionFactoryFunc();
-
 	return session;
 #endif //  IOCP_SERVER
 

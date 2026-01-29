@@ -41,7 +41,7 @@ bool ServerEngine::IOCore::StartAccept()
 	}
 
 	return true;
-}
+} 
 
 SOCKET ServerEngine::IOCore::CreateSocket(const DWORD flags)
 {

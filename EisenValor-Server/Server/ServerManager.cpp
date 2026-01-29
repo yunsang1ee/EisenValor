@@ -58,11 +58,11 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 	
-#ifdef	RIO_SERVER
+#ifdef	_USE_RIO
 	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::RIO };
 #endif
 
-#ifdef	IOCP_SERVER
+#ifdef	_USE_IOCP
 	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::IOCP };
 #endif
 
