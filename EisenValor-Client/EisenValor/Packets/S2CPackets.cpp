@@ -460,6 +460,16 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					move->SetMoveSpeed(5.0f);
 				}
 			);
+
+			// BattleUIControllerComponent
+			scene->CreateComponentWithInit<BattleUIControllerComponent>(
+				playerObjHandle,
+				[](BattleUIControllerComponent* ui)
+				{
+					ui->SetControlMode(BattleUIControllerComponent::ControlType::Local);
+					DEBUG_LOG_FMT("[BattleUI] Component attached to LocalPlayer\n");
+				}
+			);
 		}
 	);
 
@@ -495,69 +505,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 						controller->SetMouseSensitivity(0.1f, 0.1f);
 					}
 				);
-			}
-		);
-	
-
-		// BattleUI 생성 및 연결
-		scene->ReserveGameObject(
-			"BattleUI", std::nullopt,
-			[scene, playerObjHandle](GameObject* battleUIObj)
-			{
-				auto* playerObj = scene->TryGetGameObject(playerObjHandle);
-				auto  playerTrHandle =
-					 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
-	
-				scene->CreateComponentWithInit<BattleUIControllerComponent>(
-					battleUIObj->GetHandle(),
-					[playerTrHandle](BattleUIControllerComponent* ui)
-					{
-						if (playerTrHandle.IsValid())
-						{
-							ui->SetTarget(playerTrHandle);
-							DEBUG_LOG_FMT("[BattleUI] Created and Connected to LocalPlayer\n");
-						}
-					}
-				);
-				scene->CreateComponentWithInit<RectTransformComponent>(battleUIObj->GetHandle(), [](auto*) {});
-	
-				auto parentTrHandle = battleUIObj->GetComponentHandle<Transform>();
-	
-				// 자식 UI 생성 목록
-				std::vector<std::string> names = {"UpUI", "LeftUI", "RightUI"};
-	
-				for (const std::string& name : names)
-				{
-					scene->ReserveGameObject(
-						name, std::nullopt,
-						[scene, parentTrHandle](GameObject* childObj)
-						{
-							scene->CreateComponentWithInit<RectTransformComponent>(childObj->GetHandle(), [](auto*) {});
-	
-							if (auto childTrHandle = childObj->GetComponentHandle<Transform>(); childTrHandle.IsValid())
-							{
-								if (Transform* childTr = scene->GetStorage<Transform>()->Get(childTrHandle))
-								{
-									childTr->SetParent(parentTrHandle);
-								}
-							}
-	
-							scene->CreateComponentWithInit<ImageUIComponent>(
-								childObj->GetHandle(), [](ImageUIComponent* image) 
-								{ 
-									image->SetOrder(10); 
-								}
-							);
-	
-							scene->CreateComponentWithInit<ButtonUIComponent>(
-								childObj->GetHandle(),
-								[](ButtonUIComponent* button) {
-									button->SetOrder(11); 
-								}
-							);
-						}
-					);
-				}
 			}
 		);
 	
@@ -650,6 +597,19 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
 				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
 			);
+
+			// BattleUIControllerComponent 부착
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
+			{
+				scene->CreateComponentWithInit<BattleUIControllerComponent>(
+					objHandle,
+					[](BattleUIControllerComponent* ui)
+					{
+						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
+						DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer\n");
+					}
+				);
+			}
 		}
 	);
 
@@ -742,9 +702,24 @@ bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
 )
 {
-	// TODO:오브젝트 ID와 스탠스 상태 사용해주세요
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 id = recvPkt.obj_id();
+	const auto stance = recvPkt.stance_type();
 
-	std::cout << "Handle_SC_CHANGE_PLAYER_STANCE_PACKET" << std::endl;
+	//서버 Echo 방지
+	if (id == scene->GetLocalID())
+	{
+		return true;
+	}
+
+	if (auto* obj = scene->FindGameObjectByServerID(id))
+	{
+		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			ui->SetStance(stance);
+			DEBUG_LOG_FMT("[SC_CHANGE_PLAYER_STANCE] ID: {}, Stance: {}\n", id, static_cast<int>(stance));
+		}
+	}
 
 	return true;
 }
@@ -826,12 +801,32 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt
 )
 {
-	// TODO: 플레이어 공격 방향 표시
-	// TODO: 해당 오브젝트의 공격 방향을 UI로 표시하기
-	recvPkt.attack_dir();
+	// 플레이어 공격 방향 표시
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	
-	// recvPkt.id();	// 제가 추후에 패킷 바꿔놓을게요
-	// id 오브젝트 찾아서 해당 오브젝트의 UI가져와서 업데이트
+	const uint32 id = recvPkt.player_id();
+	const uint32 localID = scene->GetLocalID();
+
+	// 서버 Echo 방지
+	if (id == localID)
+	{
+		return true;
+	}
+
+	const uint8_t dirRaw = recvPkt.attack_dir();
+	const GENERAL_ATTACK_DIR_TYPE dir = static_cast<GENERAL_ATTACK_DIR_TYPE>(dirRaw);
+
+	// 1. 플레이어 오브젝트 찾기
+	if (auto* playerObj = scene->FindGameObjectByServerID(id))
+	{
+		// 2. 컴포넌트 가져오기
+		if (auto* uiController = playerObj->GetComponent<BattleUIControllerComponent>())
+		{
+			// 3. UI 갱신 (Observer - UI 자동 업데이트)
+			uiController->UpdateUISelection(dir, std::nullopt);
+			return true;
+		}
+	}
 
 	return false;
 }

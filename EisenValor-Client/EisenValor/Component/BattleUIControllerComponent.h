@@ -5,6 +5,7 @@
 #include <numbers> 
 #include <DirectXMath.h> 
 #include <optional>
+#include <functional>
 #include "Packets/Enums_generated.h"
 
 using namespace FB_ENUMS;
@@ -14,9 +15,31 @@ class BattleUIControllerComponent : public ComponentBase<BattleUIControllerCompo
 public:
 	static constexpr const char* GetStaticTypeName() { return "BattleUIControllerComponent"; }
 
+	enum class ControlType
+	{
+		Local,
+		Remote
+	};
+
+	// Observer Pattern Listener
+	struct StanceChangeListener {
+		HandleOf<GameObject> observerHandle;
+		std::function<void(GENERAL_ATTACK_DIR_TYPE, std::optional<GENERAL_ATTACK_TYPE>)> callback;
+	};
+
 	void OnAttach() override;
+	void OnStart() override;
 	void OnUpdate(float deltaTime);
 	void OnDetach() override;
+
+	void SetControlMode(ControlType mode) { m_controlMode = mode; }
+	void SetStance(GENERAL_STANCE_TYPE stance);
+	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
+	void ToggleUI(bool isActive); 
+
+	void AddListener(HandleOf<GameObject> observerHandle, std::function<void(GENERAL_ATTACK_DIR_TYPE, std::optional<GENERAL_ATTACK_TYPE>)> callback) {
+		m_listeners.push_back({observerHandle, callback});
+	}
 
 private:
 	// 수학 상수
@@ -57,8 +80,11 @@ private:
 	float m_accumulatedDeltaY = 0.0f;
 	static constexpr float kAccumulationThresholdSq = 3000.0f; // 누적된 이동량 임계값
 
+	ControlType m_controlMode = ControlType::Local;
+
 private:
-	// UI 자식 핸들
+	// UI 루트 및 자식 핸들
+	HandleOf<GameObject> m_uiRootObjHandle;
 	HandleOf<ButtonUIComponent> m_upButtonHandle;
 	HandleOf<ButtonUIComponent> m_leftButtonHandle;
 	HandleOf<ButtonUIComponent> m_rightButtonHandle;
@@ -68,13 +94,6 @@ private:
 	HandleOf<ImageUIComponent> m_leftImageHandle;
 	HandleOf<ImageUIComponent> m_rightImageHandle;
 
-	// 강공격용 이미지
-	HandleOf<ImageUIComponent> m_upStrongImageHandle;
-	HandleOf<ImageUIComponent> m_leftStrongImageHandle;
-	HandleOf<ImageUIComponent> m_rightStrongImageHandle;
-
-	// 추적 대상 트랜스폼
-	HandleOf<Transform> m_targetTrHandle; 
 
 	// 중심점 및 반지름
 	float m_centerX = 0.0f;
@@ -98,20 +117,23 @@ private:
 	uint32_t m_areaAttackTexId = 0;
 	uint32_t m_disarmTexId = 0;
 
+	// 리스너 목록
+	std::vector<StanceChangeListener> m_listeners;
+
 private:
 	// 헬퍼 함수 선언
-	void InitializeChildHandlesAndSetupUI();
+	void CreateAndSetupUI();
 	void SetChildUIPositions(float scale = 1.0f); // 스케일 인자 추가
 	void ProcessMouseInput();
 	GENERAL_ATTACK_DIR_TYPE CalculateGuardDirection(float deltaX, float deltaY) const;
-	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
+	//void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
 	void OnGuardDirectionConfirmed(GENERAL_ATTACK_DIR_TYPE confirmedDir, GENERAL_ATTACK_TYPE attackType);
-	void ToggleUI(bool isActive); // 자식 UI 활성화/비활성화 토글
-
-	void UpdatePositionFromTarget();	// 타겟 위치에 따라 중심점 갱신
+	
+	void UpdateUIPosition();
+	void NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type);
 
 	static float NormalizeAngle(float degrees); // 각도 정규화
 
-public:
-	void SetTarget(HandleOf<Transform> targetHandle) { m_targetTrHandle = targetHandle; }
+	bool m_isUIInitialized = false;
+	void SetupListener();
 };
