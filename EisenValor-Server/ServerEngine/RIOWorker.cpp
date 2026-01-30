@@ -22,6 +22,8 @@ ServerEngine::RIO::RIOWorker::~RIOWorker()
 
 bool ServerEngine::RIO::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 {
+	m_sessionFactoryFunc = sessionFunc;
+
 	const auto& rioConfig = MANAGER(ServerEngineConfigManager)->GetRIOWorkerConfig();
 	
 	m_ioResults.resize(rioConfig.MAX_RIO_RESULT);
@@ -76,7 +78,7 @@ void ServerEngine::RIO::RIOWorker::DequeueCompletion() noexcept
 		else {
 			for(uint32 i = 0; i < numResults; ++i) {
 				RIO::RIOContext* const context{ reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext) };
-				auto session{ context->GetSession() };
+				auto session{ context->GetOwner() };
 				assert(context && session);
 				const uint32 bytesTransferred{ m_ioResults[i].BytesTransferred };
 				session->Dispatch(context, bytesTransferred);
@@ -88,7 +90,8 @@ void ServerEngine::RIO::RIOWorker::DequeueCompletion() noexcept
 bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	LOG_INFO("Session Accept!, RioWorker ID ={}", m_id);
-	auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };
+	// auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };
+	auto session{ m_sessionFactoryFunc() };
 	session->SetOwner(this);
 	if(false == session->AcceptCompleted(socket, clientAddr)) return false;
 	m_connectedSession.insert(std::move(session));

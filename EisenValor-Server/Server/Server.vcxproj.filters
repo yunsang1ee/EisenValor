@@ -479,9 +479,6 @@
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>03. Packets\Schema</Filter>
     </None>
-    <None Include="..\Binaries\Server\Release\NavData\solo_navmesh.bin">
-      <Filter>02. Contents\GameWorld\NavSystem\NavMeshData</Filter>
-    </None>
     <None Include="..\Libraries\inc\SimpleMath.inl">
       <Filter>98. Utils</Filter>
     </None>
@@ -493,6 +490,9 @@
     </None>
     <None Include="..\Binaries\Server\DataTable\StatDataTable.csv">
       <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
+    </None>
+    <None Include="..\Binaries\Server\NavData\solo_navmesh.bin">
+      <Filter>02. Contents\GameWorld\NavSystem\NavMeshData</Filter>
     </None>
   </ItemGroup>
 </Project>

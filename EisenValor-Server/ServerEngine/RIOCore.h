@@ -11,12 +11,12 @@ namespace ServerEngine {
 #ifdef _USE_RIO
 		class RIOCore : public IOCore {
 		private:
-			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable{};
+			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable;
 			uint16									m_acceptThreadNum;
 			std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
 
 		public:
-			RIOCore() = default;
+			RIOCore();
 			virtual ~RIOCore() = default;
 
 			RIOCore(const RIOCore&) = delete;

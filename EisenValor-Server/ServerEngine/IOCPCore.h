@@ -23,7 +23,7 @@ namespace ServerEngine {
 
 		public:
 			bool RegistHandle(const SOCKET socket);
-			void Dispatch(const uint32 timeoutMs);
+			void Work(const uint32 timeoutMs);
 			void ProcessAccept(const IOCPAcceptContext* const acceptContext);
 
 		private:

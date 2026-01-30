@@ -54,7 +54,7 @@ void ServerEngine::IOCP::IOCPCore::Run()
 				TLS_THREAD_ID = i + 1;
 				while(false == st.stop_requested()) {
 					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_WORK_TIME;
-					Dispatch(10);
+					Work(10);
 					DistributeReservedTask();
 					FlushTaskQueue();
 				}
@@ -77,10 +77,10 @@ bool ServerEngine::IOCP::IOCPCore::RegistHandle(const SOCKET socket)
 	return true;
 }
 
-void ServerEngine::IOCP::IOCPCore::Dispatch(const uint32 timeoutMs)
+void ServerEngine::IOCP::IOCPCore::Work(const uint32 timeoutMs)
 {
-	DWORD			numOfBytes{};
-	ULONG_PTR		key{};
+	DWORD numOfBytes{};
+	ULONG_PTR key{};
 	IOCPContext* iocpContext{ nullptr };
 
 	if(::GetQueuedCompletionStatus(m_iocpHandle, &numOfBytes, &key, reinterpret_cast<LPOVERLAPPED*>(&iocpContext), timeoutMs)) {
@@ -120,6 +120,7 @@ void ServerEngine::IOCP::IOCPCore::ProcessAccept(const IOCPAcceptContext* const 
 	int32 optName{ SO_UPDATE_ACCEPT_CONTEXT };
 	::setsockopt(acceptSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<char*>(&m_listenSocket), sizeof(SOCKET));
 
+	// TODO: 固府 积己秦滴菌带 技记 楷搬
 	auto session{ CreateSession() };
 
 	SOCKADDR_IN clientaddr;
@@ -128,8 +129,6 @@ void ServerEngine::IOCP::IOCPCore::ProcessAccept(const IOCPAcceptContext* const 
 		RegistAccept();
 		return;
 	}
-
-	std::cout << "Client Accept Success!" << std::endl;
 
 	std::wstring ipAddress;
 	ipAddress.resize(100);

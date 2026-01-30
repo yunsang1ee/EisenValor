@@ -25,16 +25,16 @@ namespace ServerEngine {
 
 	class Session : public std::enable_shared_from_this<Session> {
 	protected:
-		uint32																m_id;					// session
-		SOCKET																m_socket;				// session	
-		std::atomic_bool													m_connected;			// session
-		SOCKADDR_IN															m_clientAddr{};			// session	
-		std::atomic<SESSION_STATE>											m_state;				// session
+		uint32																m_id;				
+		SOCKET																m_socket;			
+		std::atomic_bool													m_connected;		
+		SOCKADDR_IN															m_clientAddr;		
+		std::atomic<SESSION_STATE>											m_state;			
 	
-		std::chrono::high_resolution_clock::time_point						m_lastPong;				// Session
-		std::chrono::high_resolution_clock::time_point						m_lastPing;				// Session
-		const std::chrono::milliseconds										m_pingInterval;			// Session
-		const std::chrono::milliseconds										m_timeoutInterval;		// Session
+		std::chrono::high_resolution_clock::time_point						m_lastPong;			
+		std::chrono::high_resolution_clock::time_point						m_lastPing;			
+		const std::chrono::milliseconds										m_pingInterval;		
+		const std::chrono::milliseconds										m_timeoutInterval;	
 
 	public:
 		Session();
@@ -81,7 +81,7 @@ namespace ServerEngine {
 			IOCPRecvContext											m_recvContext;
 			IOCPSendContext											m_sendContext;
 			IOCPRecvBuffer											m_recvBuffer;
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetQueue;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
 			std::atomic_bool										m_sendRegistered;
 
 		public:
@@ -108,15 +108,15 @@ namespace ServerEngine {
 	namespace RIO {
 		class RIOSession : public Session {
 		private:
-			RIOWorker*													m_owner;				// rio
-			RIO_RQ														m_rq;					// rio
-			RIORecvBuffer												m_recvBuffer;			// rio
-			RIORecvContext												m_recvContext;			// rio
-			uint32														m_deferCount;			// rio
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;	// rio
-			RIOSendBuffer												m_sendBuffer;			// rio
-			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};		// rio
-			std::chrono::milliseconds									COMMIT_SEND_MS;			// rio
+			RIOWorker*													m_owner;			
+			RIO_RQ														m_rq;				
+			RIORecvBuffer												m_recvBuffer;		
+			RIORecvContext												m_recvContext;		
+			uint32														m_deferCount;		
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+			RIOSendBuffer												m_sendBuffer;		
+			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};	
+			std::chrono::milliseconds									COMMIT_SEND_MS;		
 
 		public:
 			RIOSession();

@@ -647,7 +647,7 @@
     <None Include="..\Binaries\Server\DataTable\AttackDataTable.csv" />
     <None Include="..\Binaries\Server\DataTable\StatDataTable.csv" />
     <None Include="..\Binaries\Server\GameData\GameData.json" />
-    <None Include="..\Binaries\Server\Release\NavData\solo_navmesh.bin" />
+    <None Include="..\Binaries\Server\NavData\solo_navmesh.bin" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\GenPackets.bat" />

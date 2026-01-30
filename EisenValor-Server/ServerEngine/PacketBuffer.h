@@ -22,5 +22,3 @@ namespace ServerEngine {
 		uint32	GetCapacity() const noexcept { return m_capacity; }
 	};
 }
-
-

@@ -8,6 +8,12 @@
 #include "ServerEngineConfigManager.h"
 
 #ifdef _USE_RIO
+
+ServerEngine::RIO::RIOCore::RIOCore()
+	:m_rioExtfuncTable{}
+{
+}
+
 bool ServerEngine::RIO::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
 	m_acceptThreadNum = 0;
@@ -76,7 +82,6 @@ void ServerEngine::RIO::RIOCore::Run()
 	for(int i = 0; i < m_workerThreadCount; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
 			{
-				// TODO: 문제 없을까?
 				TLS_RIO_WORKER = m_rioWorkers[i].get();
 				TLS_THREAD_ID = TLS_RIO_WORKER->GetID();
 
@@ -94,15 +99,15 @@ void ServerEngine::RIO::RIOCore::DoAcceptLoop()
 {
 ACCEPT_RETRY:
 	const SOCKET clientSocket{ accept(m_listenSocket, NULL, NULL) };
-	if(clientSocket == SOCKET_ERROR) return;
+	if(INVALID_SOCKET == clientSocket) return;
 
 	SOCKADDR_IN clientaddr;
 	int32 addrlen{ sizeof(clientaddr) };
 	if(SOCKET_ERROR == GetPeerName(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen)) {
+		closesocket(clientSocket);
+		LOG_ERROR("GetPeerName Failed");
 		goto ACCEPT_RETRY;
 	}
-
-	std::cout << "Client Accept Success!" << std::endl;
 
 	std::wstring ipAddress;
 	ipAddress.resize(100);
@@ -113,6 +118,8 @@ ACCEPT_RETRY:
 	ServerEngine::RIO::RIOWorker* const rioWorker{ m_rioWorkers[m_acceptThreadNum].get() };
 	if(rioWorker->ProcessAccept(clientSocket, clientaddr))
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_workerThreadCount;
+	else
+		closesocket(clientSocket);
 }
 
 void ServerEngine::RIO::RIOCore::Shutdown()

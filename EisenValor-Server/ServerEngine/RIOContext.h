@@ -8,7 +8,7 @@ namespace ServerEngine {
 		class RIOContext : public RIO_BUF {
 		private:
 			IO_CONTEXT_TYPE								m_type;
-			std::atomic<std::shared_ptr<RIOSession>>	m_session;
+			std::shared_ptr<RIOSession>					m_owner;
 
 		protected:
 			explicit RIOContext(IO_CONTEXT_TYPE type);
@@ -16,9 +16,8 @@ namespace ServerEngine {
 
 		public:
 			void Init();
-			void HoldSession(std::shared_ptr<RIO::RIOSession> session) { m_session.store(session); }
-			void ReleaseSession() { m_session.exchange(nullptr); }
-			std::shared_ptr<RIOSession> GetSession() const noexcept { return m_session.load(); }
+			void SetOwner(std::shared_ptr<RIOSession> owner) { m_owner = owner; }
+			std::shared_ptr<RIOSession> GetOwner() const noexcept{ return m_owner; }
 
 		public:
 			IO_CONTEXT_TYPE GetType() const noexcept { return m_type; }
