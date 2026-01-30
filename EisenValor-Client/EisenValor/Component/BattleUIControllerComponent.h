@@ -94,10 +94,6 @@ private:
 	HandleOf<ImageUIComponent> m_leftImageHandle;
 	HandleOf<ImageUIComponent> m_rightImageHandle;
 
-	// 강공격용 이미지
-	HandleOf<ImageUIComponent> m_upStrongImageHandle;
-	HandleOf<ImageUIComponent> m_leftStrongImageHandle;
-	HandleOf<ImageUIComponent> m_rightStrongImageHandle;
 
 	// 중심점 및 반지름
 	float m_centerX = 0.0f;
@@ -137,4 +133,7 @@ private:
 	void NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type);
 
 	static float NormalizeAngle(float degrees); // 각도 정규화
+
+	bool m_isUIInitialized = false;
+	void SetupListener();
 };

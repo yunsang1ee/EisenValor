@@ -27,20 +27,42 @@ void BattleUIControllerComponent::OnAttach()
 
 void BattleUIControllerComponent::OnStart()
 {
+	// 이미 초기화된 경우 중복 실행 방지
+	if (m_uiRootObjHandle.IsValid() && GetGameObject()->GetScene()->TryGetGameObject(m_uiRootObjHandle))
+	{
+		return;
+	}
+
 	GameObject* owner = GetGameObject();
-	DEBUG_LOG_FMT(
-		"[BattleUI Debug] OnStart Called! ID: {}, Mode: {}\n", owner->GetServerID(),
-		m_controlMode == ControlType::Local ? "Local" : "Remote"
-	);
+	//DEBUG_LOG_FMT(
+	//	"[BattleUI Debug] OnStart Called! ID: {}, Mode: {}\n", owner->GetServerID(),
+	//	m_controlMode == ControlType::Local ? "Local" : "Remote"
+	//);
 	// UI 동적 생성 및 초기화
 	CreateAndSetupUI();
 
-	// NEUTRAL -> UI 숨김
-	m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;
+	SetStance(GENERAL_STANCE_TYPE_NEUTRAL);
 }
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
 {
+	// 지연 초기화: 모든 UI 핸들 유효 시 리스너 등록
+	if (!m_isUIInitialized)
+	{
+		// 핸들 유효성 체크
+		bool ready = m_uiRootObjHandle.IsValid() &&
+					 m_upButtonHandle.IsValid() && m_upImageHandle.IsValid() &&
+					 m_leftButtonHandle.IsValid() && m_leftImageHandle.IsValid() &&
+					 m_rightButtonHandle.IsValid() && m_rightImageHandle.IsValid();
+		
+		if (ready)
+		{
+			SetupListener();
+			m_isUIInitialized = true;
+			DEBUG_LOG_FMT("[BattleUI] UI Initialized Deferred. Listener Setup Complete.\n");
+		}
+	}
+
 	// 1. Local 모드일 때만 직접 입력(전투 태세 전환) 처리
 	if (m_controlMode == ControlType::Local)
 	{
@@ -179,45 +201,6 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 		}
 	);
 
-	// 2. 리스너 등록: 자기자신의 UI 요소를 갱신하는 콜백 (옵저버 패턴)
-	AddListener(m_uiRootObjHandle, [this](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type) {
-		GameObject* owner = GetGameObject();
-		if (!owner) return;
-		auto* scene = owner->GetScene();
-		if (!scene) return;
-
-		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
-		auto* imgStorage = scene->GetStorage<ImageUIComponent>();
-
-		auto updateBtn = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle, bool isSelected) {
-			// 1. 텍스처 업데이트
-			if (ImageUIComponent* img = imgStorage->Get(imgHandle)) {
-				// 공격 타입에 따라 Pressed 텍스처 선택 (기본 Light)
-				uint32_t pressedTexId = m_lightAttackTexId;
-				if (type.has_value()) {
-					if (type.value() == GENERAL_ATTACK_TYPE_HEAVY) pressedTexId = m_strongAttackTexId;
-					else if (type.value() == GENERAL_ATTACK_TYPE_AREA) pressedTexId = m_areaAttackTexId;
-					else if (type.value() == GENERAL_ATTACK_TYPE_DISARM) pressedTexId = m_disarmTexId;
-				}
-				img->SetPressedTexture(pressedTexId);
-			}
-			// 2. 버튼 상태 업데이트
-			if (ButtonUIComponent* btn = btnStorage->Get(btnHandle)) {
-				if (isSelected) {
-					// attackType이 값이 있으면 Pressed, 아니면 Hover
-					btn->SetState(type.has_value() ? ButtonState::Pressed : ButtonState::Hover);
-				}
-				else {
-					btn->SetState(ButtonState::Normal);
-				}
-			}
-		};
-
-		updateBtn(m_upButtonHandle, m_upImageHandle, dir == GENERAL_ATTACK_DIR_TYPE_TOP);
-		updateBtn(m_leftButtonHandle, m_leftImageHandle, dir == GENERAL_ATTACK_DIR_TYPE_LEFT);
-		updateBtn(m_rightButtonHandle, m_rightImageHandle, dir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
-	});
-
 	// 자식 UI 오브젝트들 생성
 	std::vector<std::string> names = { "UpUI", "LeftUI", "RightUI" };
 	for (const auto& name : names)
@@ -236,6 +219,7 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 				img->SetHoverTexture(m_hoverTexId);
 				img->SetPressedTexture(m_lightAttackTexId); 
 				img->SetDisabledTexture(m_normalTexId);
+
 				img->SetNormalColor({0.7f, 0.7f, 0.7f, 1.0f});
 				img->SetHoverColor({0.0f, 0.0f, 0.0f, 1.0f});
 				img->SetPressedColor({1.0f, 0.0f, 0.0f, 1.0f});
@@ -261,6 +245,73 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 	m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
 	m_areaAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\area.dds");
 	m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
+}
+
+void BattleUIControllerComponent::SetupListener()
+{
+	GameObject* owner = GetGameObject();
+	if (!owner) return;
+	Scene* scene = owner->GetScene();
+	if (!scene) return;
+
+	// 람다 캡처[=]로 핸들 값 자체를 복사 (메모리 재할당 대응)
+	// 핸들 생성된 후에 실행
+	// 텍스처 ID 로컬변수로 복사캡쳐
+	uint32_t lightAttackTexId = m_lightAttackTexId;
+	uint32_t strongAttackTexId = m_strongAttackTexId;
+	uint32_t areaAttackTexId = m_areaAttackTexId;
+	uint32_t disarmTexId = m_disarmTexId;
+	ControlType controlMode = m_controlMode;
+
+	// 캡처할 핸들들 로컬 변수로 복사
+	auto upBtn = m_upButtonHandle;
+	auto leftBtn = m_leftButtonHandle;
+	auto rightBtn = m_rightButtonHandle;
+	auto upImg = m_upImageHandle;
+	auto leftImg = m_leftImageHandle;
+	auto rightImg = m_rightImageHandle;
+
+	AddListener(m_uiRootObjHandle, [=](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type) {
+		// this 사용하면 안 됨
+		// scene 캡처해서 사용.
+		if (!scene) return;
+
+		// 디버깅: 리스너 실행 시점 핸들 확인
+		//if (controlMode == ControlType::Local) {
+		//	DEBUG_LOG_FMT("[BattleUI Listener] Executing! UpHandle: {}\n", upImg.GetValue());
+		//}
+
+		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+		auto* imgStorage = scene->GetStorage<ImageUIComponent>();
+
+		auto updateBtn = [&](HandleOf<ButtonUIComponent> btnHandle, HandleOf<ImageUIComponent> imgHandle, bool isSelected) {
+			// 1. 텍스처 업데이트
+			if (ImageUIComponent* img = imgStorage->Get(imgHandle)) {
+				// 공격 타입에 따라 Pressed 텍스처 선택 (기본 Light)
+				uint32_t pressedTexId = lightAttackTexId;
+				if (type.has_value()) {
+					if (type.value() == GENERAL_ATTACK_TYPE_HEAVY) pressedTexId = strongAttackTexId;
+					else if (type.value() == GENERAL_ATTACK_TYPE_AREA) pressedTexId = areaAttackTexId;
+					else if (type.value() == GENERAL_ATTACK_TYPE_DISARM) pressedTexId = disarmTexId;
+				}
+				img->SetPressedTexture(pressedTexId);
+			}
+			// 2. 버튼 상태 업데이트
+			if (ButtonUIComponent* btn = btnStorage->Get(btnHandle)) {
+				if (isSelected) {
+					// attackType이 값이 있으면 Pressed, 아니면 Hover
+					btn->SetState(type.has_value() ? ButtonState::Pressed : ButtonState::Hover);
+				}
+				else {
+					btn->SetState(ButtonState::Normal);
+				}
+			}
+		};
+
+		updateBtn(upBtn, upImg, dir == GENERAL_ATTACK_DIR_TYPE_TOP);
+		updateBtn(leftBtn, leftImg, dir == GENERAL_ATTACK_DIR_TYPE_LEFT);
+		updateBtn(rightBtn, rightImg, dir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
+	});
 }
 
 void BattleUIControllerComponent::SetChildUIPositions(float scale)
@@ -584,6 +635,10 @@ void BattleUIControllerComponent::NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, s
 	if (!owner) return;
 	Scene* scene = owner->GetScene();
 	if (!scene) return;
+
+	//if (m_controlMode == ControlType::Local) {
+	//	DEBUG_LOG_FMT("[BattleUI Notify] Calling! This: {}, Listeners: {}\n", (void*)this, m_listeners.size());
+	//}
 
 	for (auto it = m_listeners.begin(); it != m_listeners.end(); )
 	{
