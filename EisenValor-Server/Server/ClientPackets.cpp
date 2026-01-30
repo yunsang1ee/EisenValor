@@ -220,7 +220,7 @@ namespace ClientPackets {
 		return true;
 	}
 
-	bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept
+	bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK_PACKET& recvPkt) noexcept
 	{
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };

@@ -1,4 +1,5 @@
 #pragma once
+#include <winsock.h>
 
 namespace NetBridge
 {
@@ -48,6 +49,7 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
+bool Handle_SC_PLAYER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt);
 bool Handle_SC_UPDATE_VITAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_VITAL_PACKET& recvPkt);
 bool Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt

@@ -498,13 +498,13 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 			// 나에게 내 정보 전송
 			const CreatureStatInfo& statInfo{ newPlayer->GetStatInfo() };
 			{
-				auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(newPlayer->GetID(), kInfo, newPlayer->GetTeamType(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina);
+				auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(newPlayer->GetID(), kInfo, newPlayer->GetTeamType(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
 				clientSession->Send(std::move(pb));
 			}
 
 			// 남들에게 내 정보 전송
 			{
-				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(newPlayer->GetID(), newPlayer->GetObjType(), newPlayer->GetTeamType(), newPlayer->GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina);
+				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(newPlayer->GetID(), newPlayer->GetObjType(), newPlayer->GetTeamType(), newPlayer->GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
 				Broadcast(std::move(pb));
 			}
 
@@ -529,7 +529,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 						maxStamina = statInfo.maxStamina;
 						stamina = statInfo.currentStamina;
 					}
-					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina);
+					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 					clientSession->Send(std::move(pb));
 				}
 			}
@@ -554,7 +554,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 				maxStamina = statInfo.maxStamina;
 				stamina = statInfo.currentStamina;
 			}
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina);
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 			Broadcast(std::move(pb));
 		}
 
