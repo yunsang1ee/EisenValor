@@ -41,8 +41,6 @@ void BattleUIControllerComponent::OnStart()
 	//);
 	// UI 동적 생성 및 초기화
 	CreateAndSetupUI();
-
-	SetStance(GENERAL_STANCE_TYPE_NEUTRAL);
 }
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
@@ -155,6 +153,12 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 
 		UpdateUIPosition();
 	}
+}
+
+void BattleUIControllerComponent::InitStance(GENERAL_STANCE_TYPE stance)
+{
+	SetStance(stance);
+	DEBUG_LOG_FMT("[BattleUI] InitStance Called! Stance: {}\n", static_cast<int>(stance));
 }
 
 void BattleUIControllerComponent::SetStance(GENERAL_STANCE_TYPE stance)

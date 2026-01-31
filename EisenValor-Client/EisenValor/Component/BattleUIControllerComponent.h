@@ -34,6 +34,7 @@ public:
 
 	void SetControlMode(ControlType mode) { m_controlMode = mode; }
 	void SetStance(GENERAL_STANCE_TYPE stance);
+	void InitStance(GENERAL_STANCE_TYPE stance); 
 	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
 	void ToggleUI(bool isActive); 
 

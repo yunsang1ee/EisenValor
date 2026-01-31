@@ -446,7 +446,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene](GameObject* playerObj)
+		[scene, stance = recvPkt.stance_type()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
@@ -467,10 +467,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			// BattleUIControllerComponent
 			scene->CreateComponentWithInit<BattleUIControllerComponent>(
 				playerObjHandle,
-				[](BattleUIControllerComponent* ui)
+				[stance](BattleUIControllerComponent* ui)
 				{
 					ui->SetControlMode(BattleUIControllerComponent::ControlType::Local);
-					DEBUG_LOG_FMT("[BattleUI] Component attached to LocalPlayer\n");
+					ui->InitStance(stance);
 				}
 			);
 		}
@@ -557,7 +557,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(),
-		 currentHP = recvPkt.current_hp()](GameObject* obj)
+		 currentHP = recvPkt.current_hp(), stance = recvPkt.stance_type()](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -609,10 +609,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
-					[](BattleUIControllerComponent* ui)
+					[stance](BattleUIControllerComponent* ui)
 					{
 						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
-						DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer\n");
+						ui->InitStance(stance);
+						//DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n", static_cast<int>(stance));
 					}
 				);
 			}
