@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "IOCPContext.h"
 
+#ifdef _USE_IOCP
 ServerEngine::IOCP::IOCPContext::IOCPContext(const IO_CONTEXT_TYPE type)
 	:m_type{type}, m_owner{nullptr}
 {
@@ -15,3 +16,4 @@ void ServerEngine::IOCP::IOCPContext::Init()
 	OVERLAPPED::Offset = 0;
 	OVERLAPPED::OffsetHigh = 0;
 }
+#endif

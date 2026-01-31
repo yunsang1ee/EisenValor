@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "RIOContext.h"
 
+#ifdef _USE_RIO
 ServerEngine::RIO::RIOContext::RIOContext(IO_CONTEXT_TYPE type)
-	:m_type{ type }, m_session{ nullptr }
+	:m_type{ type }, m_owner{ nullptr }
 {
 	Init();
 }
@@ -13,3 +14,4 @@ void ServerEngine::RIO::RIOContext::Init()
 	RIO_BUF::Offset = 0;
 	RIO_BUF::Length = 0;
 }
+#endif

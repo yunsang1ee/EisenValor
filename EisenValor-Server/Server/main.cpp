@@ -8,7 +8,7 @@ int main()
 		LOG_SAVE();
 		return EXIT_FAILURE;
 	}
-
+	
 	if(false == Server::ServerManager::Run())
 		LOG_ERROR("ServerManager Run Failed");
 

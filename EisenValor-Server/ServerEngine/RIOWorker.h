@@ -9,6 +9,7 @@ namespace ServerEngine {
 	namespace RIO {
 		class RIOSession;
 
+#ifdef _USE_RIO
 		class RIOWorker {
 		private:
 			RIO_CQ															m_cq;
@@ -16,6 +17,7 @@ namespace ServerEngine {
 			tbb::concurrent_unordered_set<std::shared_ptr<RIOSession>>		m_connectedSession;
 			SessionPool														m_sessionPool;
 			std::vector<RIORESULT>											m_ioResults;
+			SessionFactoryFunc												m_sessionFactoryFunc;
 
 		public:
 			explicit RIOWorker(const uint16 id);
@@ -36,6 +38,8 @@ namespace ServerEngine {
 			void			FlushSessionPacketQueue() noexcept;
 			void			DequeueCompletion() noexcept;
 		};
+
+#endif
 	}
 
 }

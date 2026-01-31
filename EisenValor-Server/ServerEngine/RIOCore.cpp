@@ -7,6 +7,13 @@
 #include "TaskQueue.h"
 #include "ServerEngineConfigManager.h"
 
+#ifdef _USE_RIO
+
+ServerEngine::RIO::RIOCore::RIOCore()
+	:m_rioExtfuncTable{}
+{
+}
+
 bool ServerEngine::RIO::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 {
 	m_acceptThreadNum = 0;
@@ -30,12 +37,6 @@ bool ServerEngine::RIO::RIOCore::Init(const SessionFactoryFunc sessionFunc)
 		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
-
-	const uint16 PORT_NUM{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
-	m_serverAddress.sin_family = AF_INET;
-	m_serverAddress.sin_port = htons(PORT_NUM);
-	m_serverAddress.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
 	// 4. Bind
 	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
@@ -81,7 +82,6 @@ void ServerEngine::RIO::RIOCore::Run()
 	for(int i = 0; i < m_workerThreadCount; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
 			{
-				// TODO: 문제 없을까?
 				TLS_RIO_WORKER = m_rioWorkers[i].get();
 				TLS_THREAD_ID = TLS_RIO_WORKER->GetID();
 
@@ -97,13 +97,17 @@ void ServerEngine::RIO::RIOCore::Run()
 
 void ServerEngine::RIO::RIOCore::DoAcceptLoop()
 {
+ACCEPT_RETRY:
 	const SOCKET clientSocket{ accept(m_listenSocket, NULL, NULL) };
-	if(clientSocket == SOCKET_ERROR) return;
+	if(INVALID_SOCKET == clientSocket) return;
+
 	SOCKADDR_IN clientaddr;
 	int32 addrlen{ sizeof(clientaddr) };
-	getpeername(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
-
-	std::cout << "Client Accept Success!" << std::endl;
+	if(SOCKET_ERROR == GetPeerName(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen)) {
+		closesocket(clientSocket);
+		LOG_ERROR("GetPeerName Failed");
+		goto ACCEPT_RETRY;
+	}
 
 	std::wstring ipAddress;
 	ipAddress.resize(100);
@@ -114,6 +118,8 @@ void ServerEngine::RIO::RIOCore::DoAcceptLoop()
 	ServerEngine::RIO::RIOWorker* const rioWorker{ m_rioWorkers[m_acceptThreadNum].get() };
 	if(rioWorker->ProcessAccept(clientSocket, clientaddr))
 		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_workerThreadCount;
+	else
+		closesocket(clientSocket);
 }
 
 void ServerEngine::RIO::RIOCore::Shutdown()
@@ -121,3 +127,4 @@ void ServerEngine::RIO::RIOCore::Shutdown()
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
 }
+#endif

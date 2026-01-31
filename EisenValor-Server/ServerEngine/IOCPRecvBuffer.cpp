@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "IOCPRecvBuffer.h"
 
+#ifdef _USE_IOCP
 ServerEngine::IOCP::IOCPRecvBuffer::IOCPRecvBuffer(const int32 bufferSize)
 	:m_bufferSize{bufferSize}
 {
@@ -44,4 +45,4 @@ bool ServerEngine::IOCP::IOCPRecvBuffer::OnWrite(int32 numOfBytes)
 	m_writePos += numOfBytes;
 	return true;
 }
-
+#endif

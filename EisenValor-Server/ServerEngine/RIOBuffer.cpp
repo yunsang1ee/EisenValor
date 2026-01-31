@@ -4,6 +4,7 @@
 #include "RIOCore.h"
 #include "NetworkManager.h"
 
+#ifdef _USE_RIO
 ServerEngine::RIO::RIOBuffer::RIOBuffer()
 	:m_id{ RIO_INVALID_BUFFERID }, m_buffer{ nullptr }, m_readPos{ 0 }, m_writePos{ 0 }
 {
@@ -77,3 +78,4 @@ void ServerEngine::RIO::RIOBuffer::CleanBuffer() noexcept
 		}
 	}
 }
+#endif

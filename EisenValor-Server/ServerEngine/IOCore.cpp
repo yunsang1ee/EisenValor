@@ -23,6 +23,12 @@ bool ServerEngine::IOCore::Init(const SessionFactoryFunc func)
 		return false;
 	}
 
+	const uint16 PORT_NUM{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
+	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
+	m_serverAddress.sin_family = AF_INET;
+	m_serverAddress.sin_port = htons(PORT_NUM);
+	m_serverAddress.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+
 	return true;
 }
 
@@ -35,7 +41,7 @@ bool ServerEngine::IOCore::StartAccept()
 	}
 
 	return true;
-}
+} 
 
 SOCKET ServerEngine::IOCore::CreateSocket(const DWORD flags)
 {
@@ -60,4 +66,9 @@ void ServerEngine::IOCore::FlushTaskQueue()
 		if(nullptr == taskQueue) break;
 		taskQueue->Execute();
 	}
+}
+
+int ServerEngine::IOCore::GetPeerName(const SOCKET clientSocket, sockaddr* name, int* nameLen)
+{
+	return getpeername(clientSocket, name, nameLen);
 }

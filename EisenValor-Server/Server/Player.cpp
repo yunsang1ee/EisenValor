@@ -128,6 +128,11 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	}
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY, worldDT);
+
+	{
+		auto pb{ ServerPackets::Make_SC_PLAYER_ATTACK_PACKET(GetID(), atkInfo) };
+		GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	}
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()

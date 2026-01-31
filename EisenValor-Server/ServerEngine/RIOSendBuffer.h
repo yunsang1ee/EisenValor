@@ -6,6 +6,7 @@ namespace ServerEngine {
 	class PacketBuffer;
 
 	namespace RIO {
+#ifdef _USE_RIO
 		class RIOSendBuffer : public RIOBuffer {
 		private:
 			uint32 m_sendOffset;
@@ -23,5 +24,6 @@ namespace ServerEngine {
 			uint32			GetDataSizeForCurrentPacket() const noexcept { return m_writePos - m_sendOffset; }
 			uint32			GetSendOffset() const noexcept { return m_sendOffset; }
 		};
+#endif
 	}
 }

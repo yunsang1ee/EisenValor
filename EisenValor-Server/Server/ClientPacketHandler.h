@@ -7,6 +7,8 @@
 #include "PacketHeader.h"
 #include "ServerGlobalFunc.h"
 
+#include "ClientPackets.h"
+
 namespace ServerEngine {
 	class Session;
 	class PacketBuffer;
@@ -112,11 +114,12 @@ enum class PACKET_TYPE : uint16 {
 	SC_MOVE_PKT = 10004,
 
 	CS_PLAYER_ATTACK_PKT = 10005,
+	SC_PLAYER_ATTACK_PKT = 10006,
 
-	SC_UPDATE_VITAL_PKT = 10006,
-	SC_UPDATE_STATE_PKT = 10007,
+	SC_UPDATE_VITAL_PKT = 10007,
+	SC_UPDATE_STATE_PKT = 10008,
 
-	SC_REMAINING_GAME_TIME_PKT = 10008,
+	SC_REMAINING_GAME_TIME_PKT = 10009,
 
 	K_CS_GAME_START_PKT = 10013,
 
@@ -157,175 +160,38 @@ enum class PACKET_TYPE : uint16 {
 using PacketHandlerFunc = bool(*)(const std::shared_ptr<ServerEngine::Session>&, const char* const);
 extern inline constinit std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs{};
 
-bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>&, const char* const) noexcept;
+namespace Server {
+	class ClientPacketHandler {
+	private:
+		ClientPacketHandler() = delete;
+		~ClientPacketHandler() = delete;
+		ClientPacketHandler(const ClientPacketHandler&) = delete;
+		ClientPacketHandler& operator= (const ClientPacketHandler&) = delete;
+		ClientPacketHandler(ClientPacketHandler&&) noexcept = delete;
+		ClientPacketHandler& operator= (ClientPacketHandler&&) noexcept = delete;
 
-// =================
-//		세션
-// =================
-#pragma region SESSION_PACKETS
-bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt) noexcept;
-bool Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt) noexcept;
-#pragma endregion
+	public:
+		static void Init() noexcept;
 
+	public:
+		static bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept;
 
-// =================
-//		로그인
-// =================
-#pragma region LOGIN_PACKETS
-bool Handle_CS_LOGIN_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt) noexcept;
-#pragma endregion
+		template<typename PacketType, typename HandleFunc>
+		static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
+		{
+			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
+			return handleFunc(session, *packet);
+		}
 
-// =================
-//		로비
-// =================
-#pragma region LOBBY_PACKETS
-bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt) noexcept;
-bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt) noexcept;
-bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt) noexcept;
-#pragma endregion
+	public:
+		template<typename PacketFunc, typename... Args>
+		static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args) noexcept
+		{
+			auto offset = func(builder, std::forward<Args>(args)...);
+			builder.Finish(offset);
+			return builder.Release();
+		}
 
-// =================
-//		룸
-// =================
-#pragma region ROOM_PACKETS
-bool Handle_CS_JOIN_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_JOIN_GAME_ROOM_PACKET& recvPkt) noexcept;
-bool Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET& recvPkt) noexcept;
-bool Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_TEAM_PACKET& recvPkt) noexcept;
-bool Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ADD_BOT_PACKET& recvPkt) noexcept;
-bool Handle_CS_READY_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_READY_GAME_PACKET& recvPkt) noexcept;
-bool Handle_CS_START_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_START_GAME_PACKET& recvPkt) noexcept;
-bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET& recvPkt) noexcept;
-#pragma endregion
-
-
-// =================
-//		월드
-// =================
-#pragma region WORLD_PACKETS
-bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt) noexcept;
-bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK& recvPkt) noexcept;
-bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET& recvPkt) noexcept;
-bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt) noexcept;
-bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt) noexcept;
-bool Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt) noexcept;
-#pragma endregion
-
-// =================
-//		테스트
-// =================
-#pragma region TEST_PACKETS
-#ifndef ENABLE_LOBBY
-bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt) noexcept;
-#endif // DEVELOP
-#pragma endregion
-
-
-class ClientPacketHandler {
-private:
-	ClientPacketHandler() = delete;
-	~ClientPacketHandler() = delete;
-	ClientPacketHandler(const ClientPacketHandler&) = delete;
-	ClientPacketHandler& operator= (const ClientPacketHandler&) = delete;
-	ClientPacketHandler(ClientPacketHandler&&) noexcept = delete;
-	ClientPacketHandler& operator= (ClientPacketHandler&&) noexcept = delete;
-
-public:
-	static void Init() noexcept
-	{
-		for(auto& packetHandlerFunc : PacketHandlerFuncs)
-			packetHandlerFunc = Handle_INVALID_PACKET;
-
-		// =================
-		//		세션
-		// =================
-#pragma region SESSION_PACKETS
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PONG_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PONG_PACKET>(Handle_CS_PONG_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHAT_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHAT_PACKET>(Handle_CS_CHAT_PACKET, session, buffer); };
-#pragma endregion
-
-		// =================
-		//		로그인
-		// =================
-#pragma region LOGIN_PACKETS
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(Handle_CS_LOGIN_PACKET, session, buffer); };
-#pragma endregion
-		// =================
-		//		로비
-		// =================
-#pragma region LOBBY_PACKETS
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET>(Handle_CS_ENTER_GAME_LOBBY_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LEAVE_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET>(Handle_CS_LEAVE_GAME_LOBBY_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MAKE_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MAKE_GAME_ROOM_PACKET>(Handle_CS_MAKE_GAME_ROOM_PACKET, session, buffer); };
-#pragma endregion
-		// =================
-		//		룸
-		// =================
-#pragma region ROOM_PACKETS
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_JOIN_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_JOIN_GAME_ROOM_PACKET>(Handle_CS_JOIN_GAME_ROOM_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LEAVE_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET>(Handle_CS_LEAVE_GAME_ROOM_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_TEAM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_TEAM_PACKET>(Handle_CS_CHANGE_TEAM_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ADD_BOT_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ADD_BOT_PACKET>(Handle_CS_ADD_BOT_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_READY_GAME_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_READY_GAME_PACKET>(Handle_CS_READY_GAME_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_START_GAME_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_START_GAME_PACKET>(Handle_CS_START_GAME_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_COMPLETE_LOADING_GAME_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET>(Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET, session, buffer); };
-#pragma endregion
-		// =================
-		//		월드
-		// =================
-#pragma region WORLD_PACKETS
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(Handle_CS_MOVE_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK>(Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_PLAYER_STANCE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET>(Handle_CS_CHANGE_PLAYER_STANCE_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_FAKE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_FAKE_PACKET>(Handle_CS_PLAYER_FAKE_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET>(Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET, session, buffer); };
-#pragma endregion
-		// =================
-		//		테스트
-		// =================
-#pragma region TEST_PACKETS
-#ifndef ENABLE_LOBBY
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::TEST_CS_ENTER_GAME_WORLD_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_WORLD_PACKET>(Handle_CS_ENTER_GAME_WORLD_PACKET, session, buffer); };
-#endif // DEVELOP
-#pragma endregion
-
-		LOG_INFO("ClientPacketHandler Init");
-	}
-
-public:
-	static inline bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
-	{
-		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer);
-		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], session, buffer + sizeof(PacketHeader));
-	}
-
-	template<typename PacketType, typename HandleFunc>
-	static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
-	{
-		const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
-		return handleFunc(session, *packet);
-	}
-
-public:
-	template<typename PacketFunc, typename... Args>
-	static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args) noexcept
-	{
-		auto offset = func(builder, std::forward<Args>(args)...);
-		builder.Finish(offset);
-		return builder.Release();
-	}
-
-	static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData) noexcept
-	{
-		const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
-		const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
-
-		// TODO: PacketBufferPoolManager로부터 packetBuffer 받아오기
-
-		const auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
-		packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
-		return packetBuffer;
-	}
-
-	// friend class ClientSession;
-};
+		static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData) noexcept;
+	};
+}

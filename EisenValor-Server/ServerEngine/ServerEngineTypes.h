@@ -24,11 +24,11 @@ namespace ServerEngine {
 	}
 }
 
-#ifdef		RIO_SERVER
+#ifdef  _USE_RIO
 using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
 #endif
 
-#ifdef	IOCP_SERVER
+#ifdef	_USE_IOCP
 using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::IOCP::IOCPSession>()>;
 #endif
 

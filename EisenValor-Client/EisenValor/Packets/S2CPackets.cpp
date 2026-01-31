@@ -426,6 +426,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
+
+	// TODO: stanceType 사용하기
+
 	// 로컬 플레이어 오브젝트 생성
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
@@ -515,6 +518,9 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 {
 	// 원격 플레이어 또는 봇 오브젝트 생성
 	// TODO: 원격 플레이어 또는 봇 오브젝트를 게임 씬에 생성하고, 필요한 컴포넌트도 추가하기
+
+	// TODO: stanceType 사용하기
+
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
@@ -672,6 +678,16 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		obj->GetTransform().SetRotation(rot); // TODO: degree인지 quaternion인지 확인 필요
 	}
 	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_PLAYER_ATTACK_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt
+)
+{
+	// TODO: Handle_SC_PLAYER_ATTACK_PACKET
+	std::cout << "Handle_SC_PLAYER_ATTACK_PACKET" << std::endl;
+
+	return false;
 }
 
 bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(

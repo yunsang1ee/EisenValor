@@ -5,11 +5,9 @@
 
 #include "Session.h"
 
-LPFN_CONNECTEX			ServerEngine::IOCP::IOCPCore::ConnectEx;
-LPFN_DISCONNECTEX		ServerEngine::IOCP::IOCPCore::DisconnectEx;
-LPFN_ACCEPTEX			ServerEngine::IOCP::IOCPCore::AcceptEx;
-
+#ifdef _USE_IOCP
 ServerEngine::IOCP::IOCPCore::IOCPCore()
+	:m_iocpHandle{ INVALID_HANDLE_VALUE }, m_acceptContext{}
 {
 
 }
@@ -26,20 +24,8 @@ bool ServerEngine::IOCP::IOCPCore::Init(const SessionFactoryFunc func)
 	if(INVALID_SOCKET == m_listenSocket) return false;
 	if(false == RegistHandle(m_listenSocket)) return false;
 
-	SOCKET dummySocket{ CreateSocket(WSA_FLAG_OVERLAPPED) };
-	assert(BindWindowsFunction(dummySocket, WSAID_CONNECTEX, reinterpret_cast<LPVOID*>(&ConnectEx)));
-	assert(BindWindowsFunction(dummySocket, WSAID_DISCONNECTEX, reinterpret_cast<LPVOID*>(&DisconnectEx)));
-	assert(BindWindowsFunction(dummySocket, WSAID_ACCEPTEX, reinterpret_cast<LPVOID*>(&AcceptEx)));
-	Close(dummySocket);
-
 	constexpr int opt{ 1 };
 	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
-
-	const uint16 PORT_NUM{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
-	m_serverAddress.sin_family = AF_INET;
-	m_serverAddress.sin_port = htons(PORT_NUM);
-	m_serverAddress.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
 	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
 		LOG_WSA_GET_LAST_ERROR();
@@ -54,7 +40,7 @@ bool ServerEngine::IOCP::IOCPCore::Init(const SessionFactoryFunc func)
 bool ServerEngine::IOCP::IOCPCore::StartAccept()
 {
 	if(false == IOCore::StartAccept()) return false;
-	
+
 	RegistAccept();
 
 	return true;
@@ -63,10 +49,12 @@ bool ServerEngine::IOCP::IOCPCore::StartAccept()
 void ServerEngine::IOCP::IOCPCore::Run()
 {
 	for(uint16 i = 0; i < m_workerThreadCount; ++i) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token& st)
+		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
 			{
+				TLS_THREAD_ID = i + 1;
 				while(false == st.stop_requested()) {
-					Dispatch(10);
+					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_WORK_TIME;
+					Work(10);
 					DistributeReservedTask();
 					FlushTaskQueue();
 				}
@@ -89,15 +77,15 @@ bool ServerEngine::IOCP::IOCPCore::RegistHandle(const SOCKET socket)
 	return true;
 }
 
-void ServerEngine::IOCP::IOCPCore::Dispatch(const uint32 timeoutMs)
+void ServerEngine::IOCP::IOCPCore::Work(const uint32 timeoutMs)
 {
-	DWORD			numOfBytes{};
-	ULONG_PTR		key{};
-	IOCPContext*	iocpContext{ nullptr };
+	DWORD numOfBytes{};
+	ULONG_PTR key{};
+	IOCPContext* iocpContext{ nullptr };
 
-	if(::GetQueuedCompletionStatus(m_iocpHandle, OUT & numOfBytes, OUT & key, reinterpret_cast<LPOVERLAPPED*>(&iocpContext), timeoutMs)) {
+	if(::GetQueuedCompletionStatus(m_iocpHandle, &numOfBytes, &key, reinterpret_cast<LPOVERLAPPED*>(&iocpContext), timeoutMs)) {
 		if(nullptr == iocpContext->GetOwner() && IO_CONTEXT_TYPE::ACCEPT == iocpContext->GetType()) {
-			IOCPAcceptContext* acceptContext{ static_cast<IOCPAcceptContext*>(iocpContext) };
+			const IOCPAcceptContext* const acceptContext{ static_cast<IOCPAcceptContext*>(iocpContext) };
 			ProcessAccept(acceptContext);
 		}
 		else {
@@ -115,8 +103,8 @@ void ServerEngine::IOCP::IOCPCore::Dispatch(const uint32 timeoutMs)
 			{
 				auto session = iocpContext->GetOwner();
 				session->Dispatch(iocpContext, numOfBytes);
-			}
 				break;
+			}
 			default:
 			{
 				break;
@@ -125,20 +113,22 @@ void ServerEngine::IOCP::IOCPCore::Dispatch(const uint32 timeoutMs)
 	}
 }
 
-void ServerEngine::IOCP::IOCPCore::ProcessAccept(IOCPAcceptContext* acceptContext)
+void ServerEngine::IOCP::IOCPCore::ProcessAccept(const IOCPAcceptContext* const acceptContext)
 {
-	SOCKET acceptSocket = acceptContext->GetAcceptSocket();
+	const SOCKET acceptSocket{ acceptContext->GetAcceptSocket() };
 
 	int32 optName{ SO_UPDATE_ACCEPT_CONTEXT };
 	::setsockopt(acceptSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<char*>(&m_listenSocket), sizeof(SOCKET));
-	
-	auto session = CreateSession();
-	
+
+	// TODO: 固府 积己秦滴菌带 技记 楷搬
+	auto session{ CreateSession() };
+
 	SOCKADDR_IN clientaddr;
 	int32 addrlen{ sizeof(clientaddr) };
-	getpeername(acceptSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen);
-
-	std::cout << "Client Accept Success!" << std::endl;
+	if(SOCKET_ERROR == GetPeerName(acceptSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen)) {
+		RegistAccept();
+		return;
+	}
 
 	std::wstring ipAddress;
 	ipAddress.resize(100);
@@ -166,7 +156,7 @@ void ServerEngine::IOCP::IOCPCore::Close(SOCKET& socket)
 
 void ServerEngine::IOCP::IOCPCore::RegistAccept()
 {
-	const SOCKET acceptSocket{CreateSocket(WSA_FLAG_OVERLAPPED)};
+	const SOCKET acceptSocket{ CreateSocket(WSA_FLAG_OVERLAPPED) };
 
 	if(false == RegistHandle(acceptSocket)) return;
 
@@ -174,8 +164,8 @@ void ServerEngine::IOCP::IOCPCore::RegistAccept()
 	m_acceptContext.SetAcceptSocket(acceptSocket);
 
 	DWORD bytesReceived{};
-	char buff[1024];
-	if(false == AcceptEx(m_listenSocket, acceptSocket, buff, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytesReceived, static_cast<LPOVERLAPPED>(&m_acceptContext))) {
+
+	if(false == AcceptEx(m_listenSocket, acceptSocket, m_acceptContext.GetBuff(), 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytesReceived, static_cast<LPOVERLAPPED>(&m_acceptContext))) {
 		const int32 errCode = ::WSAGetLastError();
 		if(errCode != WSA_IO_PENDING) {
 			RegistAccept();
@@ -185,12 +175,11 @@ void ServerEngine::IOCP::IOCPCore::RegistAccept()
 
 std::shared_ptr<ServerEngine::IOCP::IOCPSession> ServerEngine::IOCP::IOCPCore::CreateSession()
 {
-#ifdef  IOCP_SERVER
-
+#ifdef  _USE_IOCP
 	auto session = m_sessionFactoryFunc();
-
 	return session;
 #endif //  IOCP_SERVER
 
 	return nullptr;
 }
+#endif

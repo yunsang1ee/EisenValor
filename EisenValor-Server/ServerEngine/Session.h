@@ -25,16 +25,16 @@ namespace ServerEngine {
 
 	class Session : public std::enable_shared_from_this<Session> {
 	protected:
-		uint32																m_id;					// session
-		SOCKET																m_socket;				// session	
-		std::atomic_bool													m_connected;			// session
-		SOCKADDR_IN															m_clientAddr{};			// session	
-		std::atomic<SESSION_STATE>											m_state;				// session
+		uint32																m_id;				
+		SOCKET																m_socket;			
+		std::atomic_bool													m_connected;		
+		SOCKADDR_IN															m_clientAddr;		
+		std::atomic<SESSION_STATE>											m_state;			
 	
-		std::chrono::high_resolution_clock::time_point						m_lastPong;				// Session
-		std::chrono::high_resolution_clock::time_point						m_lastPing;				// Session
-		const std::chrono::milliseconds										m_pingInterval;			// Session
-		const std::chrono::milliseconds										m_timeoutInterval;		// Session
+		std::chrono::high_resolution_clock::time_point						m_lastPong;			
+		std::chrono::high_resolution_clock::time_point						m_lastPing;			
+		const std::chrono::milliseconds										m_pingInterval;		
+		const std::chrono::milliseconds										m_timeoutInterval;	
 
 	public:
 		Session();
@@ -45,7 +45,7 @@ namespace ServerEngine {
 		virtual void OnConnected() abstract;
 		virtual void OnDisconnected(const std::string_view reason) abstract;
 		virtual void Dispatch(RIO::RIOContext* const context, const uint32 bytesTransferred) {}
-		virtual void Dispatch(IOCP::IOCPContext* const context, const uint32 bytesTransferred) {}
+		virtual void Dispatch(const IOCP::IOCPContext* const context, const uint32 bytesTransferred) {}
 		virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) abstract;
 		virtual void Disconnect(const std::string_view reason) abstract;
 		virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) abstract;
@@ -73,18 +73,50 @@ namespace ServerEngine {
 		void Handle_CS_PONG();
 	};
 
+#ifdef _USE_IOCP
+	namespace IOCP {
+		class IOCPSession : public Session {
+			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
+		public:
+			IOCPRecvContext											m_recvContext;
+			IOCPSendContext											m_sendContext;
+			IOCPRecvBuffer											m_recvBuffer;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
+			std::atomic_bool										m_sendRegistered;
+
+		public:
+			IOCPSession();
+			virtual ~IOCPSession();
+
+		public:
+			virtual bool Init() override final;
+			virtual void Dispatch(const IOCPContext* const context, const uint32 bytesTransferred) override final;
+			virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) override final;
+			virtual void Disconnect(const std::string_view reason) override final;
+			virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) override final;
+			virtual void PostRecv() override final;
+			virtual void ProcessRecv(const uint32 bytesTransferred) override final;
+			virtual void ProcessSend(const uint32 bytesTransferred) override final;
+
+		private:
+			void PostSend();
+		};
+	}
+#endif 
+
+#ifdef _USE_RIO
 	namespace RIO {
 		class RIOSession : public Session {
 		private:
-			RIOWorker*													m_owner;				// rio
-			RIO_RQ														m_rq;					// rio
-			RIORecvBuffer												m_recvBuffer;			// rio
-			RIORecvContext												m_recvContext;			// rio
-			uint32														m_deferCount;			// rio
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;	// rio
-			RIOSendBuffer												m_sendBuffer;			// rio
-			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};		// rio
-			std::chrono::milliseconds									COMMIT_SEND_MS;			// rio
+			RIOWorker*													m_owner;			
+			RIO_RQ														m_rq;				
+			RIORecvBuffer												m_recvBuffer;		
+			RIORecvContext												m_recvContext;		
+			uint32														m_deferCount;		
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+			RIOSendBuffer												m_sendBuffer;		
+			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};	
+			std::chrono::milliseconds									COMMIT_SEND_MS;		
 
 		public:
 			RIOSession();
@@ -114,29 +146,6 @@ namespace ServerEngine {
 			void Clean();
 		};
 	}
-
-	namespace IOCP {
-		class IOCPSession : public Session {
-			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
-		public:
-			IOCPRecvContext	m_recvContext;
-			IOCPRecvBuffer	m_recvBuffer;
-
-		public:
-			IOCPSession();
-			virtual ~IOCPSession();
-
-		public:
-			virtual bool Init() override final;
-			virtual void Dispatch(IOCPContext* const context, const uint32 bytesTransferred) override final;
-			virtual bool AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr) override final;
-			virtual void Disconnect(const std::string_view reason) override final;
-			virtual void Send(std::shared_ptr<PacketBuffer> packetBuffer) override final;
-			virtual void PostRecv() override final;
-			virtual void ProcessRecv(const uint32 bytesTransferred) override final;
-			virtual void ProcessSend(const uint32 bytesTransferred) override final;
-
-		};
-	}
+#endif
 }
 

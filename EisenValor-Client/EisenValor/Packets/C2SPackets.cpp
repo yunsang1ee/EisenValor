@@ -138,7 +138,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_PLAYER_ATTACK_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PLAYER_ATTACK, attackInfo)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PLAYER_ATTACK_PACKET, attackInfo)
 	);
 }
 

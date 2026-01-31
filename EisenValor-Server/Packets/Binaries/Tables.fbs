@@ -173,7 +173,7 @@ table SC_LOCAL_PLAYER_PACKET {
 	current_hp: uint;
 	max_stamina: uint;
 	current_stamina: uint;
-	
+	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
 table SC_ADD_OBJ_PACKET {
@@ -185,6 +185,7 @@ table SC_ADD_OBJ_PACKET {
 	current_hp: uint;
 	max_stamina: uint;
 	current_stamina: uint;
+	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
 table SC_REMOVE_OBJ_PACKET {
@@ -212,7 +213,12 @@ table SC_CHANGE_PLAYER_STANCE_PACKET {
 	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
-table CS_PLAYER_ATTACK {
+table CS_PLAYER_ATTACK_PACKET {
+	attack_info: FB_STRUCTS.GeneralAttackInfo;
+}
+
+table SC_PLAYER_ATTACK_PACKET {
+	obj_id: uint;
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
 
