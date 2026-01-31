@@ -15,7 +15,7 @@ public:
 
 	void   SetServerID(uint32 id) { m_serverID = id; }
 	uint32 GetServerID() const { return m_serverID; }
-	bool   IsNetworkObject() const { return m_serverID != kInvalidServerID; }
+	bool   IsNetworkObject() const { return m_serverID != Variable::kInvalidServerID; }
 
 	void   SetScene(Scene* scene) { m_scene = scene; }
 	Scene* GetScene() const { return m_scene; }

@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafxClientFramework.h"
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <dxcapi.h>
@@ -12,10 +11,20 @@
 #include <DirectXCollision.h>
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxcompiler.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dxgi.lib")
 
 namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
+
+#include "SimpleMath.h"
+using Vec2 = DirectX::SimpleMath::Vector2;
+using Vec3 = DirectX::SimpleMath::Vector3;
+using Vec4 = DirectX::SimpleMath::Vector4;
+using Matrix = DirectX::SimpleMath::Matrix;
+using Quaternion = DirectX::SimpleMath::Quaternion;
+using Ray = DirectX::SimpleMath::Ray;
 
 enum class EQueueType : uint8_t
 {
