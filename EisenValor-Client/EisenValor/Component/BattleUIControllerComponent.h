@@ -30,7 +30,7 @@ public:
 	void OnAttach() override;
 	void OnStart() override;
 	void OnUpdate(float deltaTime);
-	void OnDetach() override;
+	void OnDestroy() override;
 
 	void SetControlMode(ControlType mode) { m_controlMode = mode; }
 	void SetStance(GENERAL_STANCE_TYPE stance);

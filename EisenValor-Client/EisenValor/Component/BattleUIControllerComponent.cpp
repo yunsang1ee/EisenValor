@@ -1,6 +1,7 @@
 #include "stdafxClient.h"
 #include "BattleUIControllerComponent.h"
 #include "Scene.h"
+#include "SceneGlobal.h"
 #include "GameObject.h"
 #include "Transform.h"
 #include "InputGlobal.h"
@@ -162,19 +163,42 @@ void BattleUIControllerComponent::SetStance(GENERAL_STANCE_TYPE stance)
 	ToggleUI(stance == GENERAL_STANCE_TYPE_COMBAT);
 }
 
-void BattleUIControllerComponent::OnDetach()
+void BattleUIControllerComponent::OnDestroy()
 {
+	// 1. 호출 확인 로그
+	DEBUG_LOG_FMT("[BattleUI Debug] OnDestroy Called! This: {}\n", (void*)this);
+
 	if (m_controlMode == ControlType::Local)
 	{
 		GLOBAL(InputGlobal).SetMouseLocked(false);
 	}
 
-	// 생성했던 UI 루트 파괴
+	// 2. 핸들 유효성 확인 및 Bottom-Up 파괴
 	if (m_uiRootObjHandle.IsValid())
 	{
-		if (auto* owner = GetGameObject())
+		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
 		{
-			owner->GetScene()->DestroyGameObject(m_uiRootObjHandle);
+			// 자식을 먼저 제거 요청 (Bottom-Up)
+			if (auto* rootObj = scene->TryGetGameObject(m_uiRootObjHandle))
+			{
+				auto* trStorage = scene->GetStorage<Transform>();
+				if (trStorage)
+				{
+					auto children = rootObj->GetTransform().GetChildren();
+					for (auto& childTrHandle : children)
+					{
+						if (auto* childTr = trStorage->Get(childTrHandle))
+						{
+							scene->DestroyGameObject(childTr->GetOwner());
+						}
+					}
+					DEBUG_LOG_FMT("[BattleUI Debug] Children destruction queued.\n");
+				}
+			}
+
+			// 루트 파괴
+			scene->DestroyGameObject(m_uiRootObjHandle);
+			DEBUG_LOG_FMT("[BattleUI Debug] Root destruction queued. Handle: {}\n", m_uiRootObjHandle.GetValue());
 		}
 	}
 }
