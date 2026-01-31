@@ -529,7 +529,11 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 						maxStamina = statInfo.maxStamina;
 						stamina = statInfo.currentStamina;
 					}
-					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+					FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+					if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+						stanceType = static_cast<Server::Contents::General*>(obj.get())->GetStanceType();
+
+					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
 					clientSession->Send(std::move(pb));
 				}
 			}
@@ -554,7 +558,10 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 				maxStamina = statInfo.maxStamina;
 				stamina = statInfo.currentStamina;
 			}
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+			FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+			if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+				stanceType = static_cast<Server::Contents::General*>(newGameObject.get())->GetStanceType();
+			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
 			Broadcast(std::move(pb));
 		}
 
