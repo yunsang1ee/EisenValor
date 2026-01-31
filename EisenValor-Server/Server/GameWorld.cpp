@@ -77,7 +77,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	
 	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	
-	if(false == m_navSystem.Load("NavData/solo_navmesh.bin")) {
+	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
 

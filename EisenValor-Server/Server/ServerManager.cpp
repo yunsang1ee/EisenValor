@@ -31,22 +31,22 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
-	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
+	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("../Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("GameData/GameData.json")) {
+	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("../GameData/GameData.json")) {
 		LOG_ERROR("GameDataManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::StatDataTable)->LoadFromCSV("DataTable/StatDataTable.csv")) {
+	if(false == MANAGER(Server::Contents::StatDataTable)->LoadFromCSV("../DataTable/StatDataTable.csv")) {
 		LOG_ERROR("StatDataTable Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("DataTable/AttackDataTable.csv")) {
+	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("../DataTable/AttackDataTable.csv")) {
 		LOG_ERROR("AttackDataTable Load Failed");
 		return false;
 	}
