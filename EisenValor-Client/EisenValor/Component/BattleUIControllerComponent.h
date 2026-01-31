@@ -35,6 +35,7 @@ public:
 	void SetControlMode(ControlType mode) { m_controlMode = mode; }
 	void SetStance(GENERAL_STANCE_TYPE stance);
 	void InitStance(GENERAL_STANCE_TYPE stance); 
+	void TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir); // 원격 공격 피드백
 	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
 	void ToggleUI(bool isActive); 
 

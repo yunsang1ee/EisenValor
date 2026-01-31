@@ -685,8 +685,34 @@ bool NetBridge::S2C::Handle_SC_PLAYER_ATTACK_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt
 )
 {
-	// TODO: Handle_SC_PLAYER_ATTACK_PACKET
-	std::cout << "Handle_SC_PLAYER_ATTACK_PACKET" << std::endl;
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 id = recvPkt.obj_id();
+	const uint32 localID = scene->GetLocalID();
+
+	// 서버 Echo 방지 (로컬 플레이어는 이미 입력 시점에 처리)
+	if (id == localID)
+	{
+		return true;
+	}
+
+	const auto attackInfo = recvPkt.attack_info();
+	if (!attackInfo) return false;
+
+	const auto type = attackInfo->attack_type();
+	const auto dir = attackInfo->attack_dir();
+
+	// 1. 공격자 오브젝트 찾기
+	if (auto* obj = scene->FindGameObjectByServerID(id))
+	{
+		// 2. 컴포넌트 가져오기
+		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			// 3. UI 갱신
+			uiController->TriggerAttackRemote(type, dir);
+			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type), static_cast<int>(dir));
+			return true;
+		}
+	}
 
 	return false;
 }

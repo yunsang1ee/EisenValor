@@ -735,3 +735,17 @@ void BattleUIControllerComponent::ToggleUI(bool isActive)
 	setObjActive(m_leftButtonHandle);
 	setObjActive(m_rightButtonHandle);
 }
+
+void BattleUIControllerComponent::TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir)
+{
+	// 원격 공격 피드백
+	OnGuardDirectionConfirmed(dir, type);
+
+	// 타이머 설정
+	m_isAttackValid = false; // UpdateUISelection에서 텍스쳐 표시할 때 체크함
+	m_attackFeedbackTimer = 10.0f / 60.0f;
+	m_lastConfirmedAttackType = type;
+
+	// UI 업데이트
+	UpdateUISelection(dir, type);
+}
