@@ -41,6 +41,9 @@ void BattleUIControllerComponent::OnStart()
 	//);
 	// UI 동적 생성 및 초기화
 	CreateAndSetupUI();
+
+	// InitStance에서 저장된 상태에 따라 UI 갱신
+	ToggleUI(m_currentStance == GENERAL_STANCE_TYPE_COMBAT);
 }
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
@@ -301,7 +304,7 @@ void BattleUIControllerComponent::SetupListener()
 
 	AddListener(m_uiRootObjHandle, [=](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type) {
 		// this 사용하면 안 됨
-		// scene 캡처해서 사용.
+		// scene 캡처해서 사용
 		if (!scene) return;
 
 		// 디버깅: 리스너 실행 시점 핸들 확인
@@ -487,9 +490,6 @@ GENERAL_ATTACK_DIR_TYPE BattleUIControllerComponent::CalculateGuardDirection(flo
 	float lengthSq = (deltaX * deltaX) + (deltaY * deltaY);
 	if (lengthSq < kAccumulationThresholdSq)
 		return GENERAL_ATTACK_DIR_TYPE_NONE;
-
-
-
 
 	float radian = atan2f(-deltaY, deltaX);
 	float degree = radian * kRadToDeg;
