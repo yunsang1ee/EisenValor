@@ -151,6 +151,16 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			}
 
+			// 입력 버퍼링 타이머 갱신
+			if (m_pendingLeftClick || m_pendingRightClick)
+			{
+				m_inputBufferTimer += deltaTime;
+			}
+			else
+			{
+				m_inputBufferTimer = 0.0f;
+			}
+
 			ProcessMouseInput();
 		}
 
@@ -595,34 +605,73 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	bool isMiddleDown = input.GetInputDown(VK_MBUTTON);
 	
 	// 4. 마우스 클릭 (공격 확정) - Vaild일 때만
-	
-	if ((isLeftDown || isRightDown || isMiddleDown) && m_isAttackValid)
+	// 유효하지 않은 상태라면 버퍼 초기화
+	if (!m_isAttackValid)
 	{
-		if (m_currentSelectedDir != GENERAL_ATTACK_DIR_TYPE_NONE)
+		m_pendingLeftClick = false;
+		m_pendingRightClick = false;
+		m_inputBufferTimer = 0.0f;
+	}
+	else
+	{
+		// 1. 입력 감지
+		if (isLeftDown) m_pendingLeftClick = true;
+		if (isRightDown) m_pendingRightClick = true;
+
+		// 2. 판정
+		std::optional<GENERAL_ATTACK_TYPE> confirmedType = std::nullopt;
+
+		// 마우스 휠: 즉시 Disarm
+		if (isMiddleDown)
 		{
-			GENERAL_ATTACK_TYPE confirmedType = GENERAL_ATTACK_TYPE_LIGHT;
-			if (isMiddleDown) confirmedType = GENERAL_ATTACK_TYPE_DISARM;
-			else if ((isLeftDown || isLeftPressed) && (isRightDown || isRightPressed)) confirmedType = GENERAL_ATTACK_TYPE_AREA;
-			else if (isRightDown) confirmedType = GENERAL_ATTACK_TYPE_HEAVY;
+			confirmedType = GENERAL_ATTACK_TYPE_DISARM;
+		}
+		// Area Attack: 양쪽 모두 Pending (동시 입력 또는 유예 시간 내 입력)
+		else if (m_pendingLeftClick && m_pendingRightClick)
+		{
+			confirmedType = GENERAL_ATTACK_TYPE_AREA;
+		}
+		// 유예 시간이 지났는데 한쪽만 눌려있다면 해당 공격 확정
+		else if (m_inputBufferTimer >= kInputBufferDuration)
+		{
+			if (m_pendingLeftClick)
+				confirmedType = GENERAL_ATTACK_TYPE_LIGHT;
+			else if (m_pendingRightClick)
+				confirmedType = GENERAL_ATTACK_TYPE_HEAVY;
+		}
 
-			OnGuardDirectionConfirmed(m_currentSelectedDir, confirmedType);
+		// 3. 실행
+		if (confirmedType.has_value())
+		{
+			if (m_currentSelectedDir != GENERAL_ATTACK_DIR_TYPE_NONE)
+			{
+				GENERAL_ATTACK_TYPE finalType = confirmedType.value();
+				OnGuardDirectionConfirmed(m_currentSelectedDir, finalType);
+
+				// 공격 패킷 전송
+				FB_STRUCTS::GeneralAttackInfo attackInfo(finalType, m_currentSelectedDir);
+				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				// 확정 후 즉시 초기화
+				m_accumulatedDeltaX = 0.0f;
+				m_accumulatedDeltaY = 0.0f;
+
+				// 공격 피드백 설정 (입력 무효화 + 텍스쳐 잔상)
+				m_isAttackValid = false;
+				m_attackFeedbackTimer = 10.0f / 60.0f;
+				m_lastConfirmedAttackType = finalType;
+			}
 			
-			// 공격 패킷 전송
-			FB_STRUCTS::GeneralAttackInfo attackInfo(confirmedType, m_currentSelectedDir);
-			auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-			// 확정 후 즉시 초기화
-			m_accumulatedDeltaX = 0.0f;
-			m_accumulatedDeltaY = 0.0f;
-
-			// 공격 피드백 설정 (입력 무효화 + 텍스쳐 잔상)
-			m_isAttackValid = false;
-			m_attackFeedbackTimer = 10.0f / 60.0f;
-			m_lastConfirmedAttackType = confirmedType;
+			// 처리 완료 후 버퍼 및 타이머 리셋
+			m_pendingLeftClick = false;
+			m_pendingRightClick = false;
+			m_inputBufferTimer = 0.0f;
 		}
 	}
-	else if (!isLeftPressed && !isRightPressed && !isMiddlePressed)
+
+	// 버튼 리셋 로직
+	if (!isLeftPressed && !isRightPressed && !isMiddlePressed)
 	{
 		// 마우스 버튼을 모두 뗐을 때 공격 유효성 리셋
 		m_isAttackValid = true;
