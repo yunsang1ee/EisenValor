@@ -446,7 +446,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene](GameObject* playerObj)
+		[scene, stance = recvPkt.stance_type()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
@@ -467,10 +467,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			// BattleUIControllerComponent
 			scene->CreateComponentWithInit<BattleUIControllerComponent>(
 				playerObjHandle,
-				[](BattleUIControllerComponent* ui)
+				[stance](BattleUIControllerComponent* ui)
 				{
 					ui->SetControlMode(BattleUIControllerComponent::ControlType::Local);
-					DEBUG_LOG_FMT("[BattleUI] Component attached to LocalPlayer\n");
+					ui->InitStance(stance);
 				}
 			);
 		}
@@ -557,7 +557,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(),
-		 currentHP = recvPkt.current_hp()](GameObject* obj)
+		 currentHP = recvPkt.current_hp(), stance = recvPkt.stance_type()](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -609,10 +609,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
-					[](BattleUIControllerComponent* ui)
+					[stance](BattleUIControllerComponent* ui)
 					{
 						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
-						DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer\n");
+						ui->InitStance(stance);
+						//DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n", static_cast<int>(stance));
 					}
 				);
 			}
@@ -684,8 +685,34 @@ bool NetBridge::S2C::Handle_SC_PLAYER_ATTACK_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt
 )
 {
-	// TODO: Handle_SC_PLAYER_ATTACK_PACKET
-	std::cout << "Handle_SC_PLAYER_ATTACK_PACKET" << std::endl;
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 id = recvPkt.obj_id();
+	const uint32 localID = scene->GetLocalID();
+
+	// 서버 Echo 방지 (로컬 플레이어는 이미 입력 시점에 처리)
+	if (id == localID)
+	{
+		return true;
+	}
+
+	const auto attackInfo = recvPkt.attack_info();
+	if (!attackInfo) return false;
+
+	const auto type = attackInfo->attack_type();
+	const auto dir = attackInfo->attack_dir();
+
+	// 1. 공격자 오브젝트 찾기
+	if (auto* obj = scene->FindGameObjectByServerID(id))
+	{
+		// 2. 컴포넌트 가져오기
+		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			// 3. UI 갱신
+			uiController->TriggerAttackRemote(type, dir);
+			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type), static_cast<int>(dir));
+			return true;
+		}
+	}
 
 	return false;
 }

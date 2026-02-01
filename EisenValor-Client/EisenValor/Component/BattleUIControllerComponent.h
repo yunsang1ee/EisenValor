@@ -30,10 +30,12 @@ public:
 	void OnAttach() override;
 	void OnStart() override;
 	void OnUpdate(float deltaTime);
-	void OnDetach() override;
+	void OnDestroy() override;
 
 	void SetControlMode(ControlType mode) { m_controlMode = mode; }
 	void SetStance(GENERAL_STANCE_TYPE stance);
+	void InitStance(GENERAL_STANCE_TYPE stance); 
+	void TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir); // 원격 공격 피드백
 	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
 	void ToggleUI(bool isActive); 
 
@@ -57,7 +59,7 @@ private:
 	// 거리 비례 스케일링 상수
 	static constexpr float kReferenceDistance = 10.0f; // 기준 거리 (이 거리에서 스케일 1.0)
 	static constexpr float kMinScale = 0.5f;		   // 최소 스케일
-	static constexpr float kMaxScale = 2.0f;		   // 최대 스케일
+	static constexpr float kMaxScale = 5.0f;		   // 최대 스케일
 
 	// 각도 영역 상수 (Degree, kCamelCase 스타일 적용)
 	static constexpr float kUpRegionStart = 30.0f;
@@ -79,6 +81,12 @@ private:
 	float m_accumulatedDeltaX = 0.0f;
 	float m_accumulatedDeltaY = 0.0f;
 	static constexpr float kAccumulationThresholdSq = 3000.0f; // 누적된 이동량 임계값
+
+	// 입력 버퍼링 (범위공격 동시 입력 판정용)
+	bool  m_pendingLeftClick = false;
+	bool  m_pendingRightClick = false;
+	float m_inputBufferTimer = 0.0f;
+	static constexpr float kInputBufferDuration = 10.0f / 60.0f; // 10프레임
 
 	ControlType m_controlMode = ControlType::Local;
 
