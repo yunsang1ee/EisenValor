@@ -241,6 +241,12 @@
     <ClInclude Include="include\RenderDataPool.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="include\CommonInclude.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Commonutils.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -351,6 +357,9 @@
     </ClCompile>
     <ClCompile Include="src\IComponent.cpp">
       <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Commonutils.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
