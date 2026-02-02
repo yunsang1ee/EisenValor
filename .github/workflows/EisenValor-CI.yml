@@ -110,6 +110,12 @@ jobs:
       with:
         nuget-version: "6.x"
 
+    - name: NuGet Restore
+      working-directory: ${{ matrix.solution_path }}
+      run: |
+        Write-Host "NuGet restoring ${{ matrix.project }}..."
+        nuget restore ${{ matrix.solution_file }} -PackagesDirectory packages -NonInteractive
+    
     - name: Detect NuGet package management
       working-directory: ${{ matrix.solution_path }}
       run: |
@@ -152,7 +158,7 @@ jobs:
       run: |
         Write-Host "Building ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
         msbuild ${{ matrix.solution_file }} `
-        /t:Restore,Build `
+        /t:Build `
         /p:Configuration=${{ matrix.configuration }} `
         /p:Platform=${{ matrix.platform }} `
         /m `
