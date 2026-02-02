@@ -12,6 +12,9 @@
 #include <Component/PlayerControllerComponent.h>
 #include <Component/HealthComponent.h>
 #include <Component/BattleUIControllerComponent.h>
+#include <Component/TeamComponent.h>
+#include <Component/VitalUIControllerComponent.h>
+#include <Component/StaminaComponent.h>
 #include <RectTransformComponent.h>
 #include <ImageUIComponent.h>
 #include <ButtonUIComponent.h>
@@ -446,7 +449,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, stance = recvPkt.stance_type()](GameObject* playerObj)
+		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
@@ -472,6 +475,35 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					ui->SetControlMode(BattleUIControllerComponent::ControlType::Local);
 					ui->InitStance(stance);
 				}
+			);
+
+			// VitalUI (HP/Stamina/Team)
+			scene->CreateComponentWithInit<HealthComponent>(
+				playerObjHandle,
+				[](HealthComponent* health) {
+					health->SetMaxHealth(1000);
+					health->SetHealth(1000);
+				}
+			);
+
+			scene->CreateComponentWithInit<StaminaComponent>(
+				playerObjHandle,
+				[](StaminaComponent* stamina) {
+					stamina->SetMaxStamina(100);
+					stamina->SetStamina(100);
+				}
+			);
+
+			scene->CreateComponentWithInit<TeamComponent>(
+				playerObjHandle,
+				[teamType](TeamComponent* team) {
+					team->SetTeamType(teamType); 
+				}
+			);
+
+			scene->CreateComponentWithInit<VitalUIControllerComponent>(
+				playerObjHandle,
+				[](VitalUIControllerComponent* vital) {}
 			);
 		}
 	);
@@ -557,7 +589,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(),
-		 currentHP = recvPkt.current_hp(), stance = recvPkt.stance_type()](GameObject* obj)
+		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(), stance = recvPkt.stance_type()](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -598,6 +630,39 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					health->SetHealth(currentHP);
 				}
 			);
+
+			// TeamComponent
+			scene->CreateComponentWithInit<TeamComponent>(
+				objHandle,
+				[teamType](TeamComponent* team) {
+					team->SetTeamType(teamType);
+				}
+			);
+
+			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+
+			// StaminaComponent (Player Only)
+			if (isPlayer)
+			{
+				scene->CreateComponentWithInit<StaminaComponent>(
+					objHandle,
+					[maxStamina, currentStamina](StaminaComponent* stamina) {
+						stamina->SetMaxStamina(maxStamina);
+						stamina->SetStamina(currentStamina);
+					}
+				);
+			}
+
+			// VitalUIControllerComponent
+			if (isPlayer || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+			{
+				scene->CreateComponentWithInit<VitalUIControllerComponent>(
+					objHandle,
+					[](VitalUIControllerComponent* vital) {
+						// Init 제거->OnStart에서 자동 판단
+					}
+				);
+			}
 
 			DEBUG_LOG_FMT(
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
@@ -735,6 +800,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 		if (healthComp)
 		{
 			healthComp->SetHealth(hp);
+		}
+
+		const uint32 stamina = recvPkt.current_stamina();
+		auto		 staminaComp = obj->GetComponent<StaminaComponent>();
+		if (staminaComp)
+		{
+			staminaComp->SetStamina(stamina);
 		}
 	}
 

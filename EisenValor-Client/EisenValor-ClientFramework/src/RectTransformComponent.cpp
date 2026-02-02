@@ -148,6 +148,11 @@ void RectTransformComponent::UpdateLayout()
 	UpdateChildrenLayouts();
 }
 
+Transform& RectTransformComponent::GetTransform() const
+{
+	return GetGameObject()->GetTransform();
+}
+
 RectTransformComponent::Rect RectTransformComponent::GetParentRect()
 {
 	Rect parentRect = {0.0f, 0.0f, (float)kDefaultWindowWidth, (float)kDefaultWindowHeight};

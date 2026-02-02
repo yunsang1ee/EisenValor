@@ -94,6 +94,15 @@
     <ClInclude Include="Component\BattleUIControllerComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\StaminaComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\VitalUIControllerComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\TeamComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -133,6 +142,15 @@
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="Component\BattleUIControllerComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\StaminaComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\VitalUIControllerComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\TeamComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>

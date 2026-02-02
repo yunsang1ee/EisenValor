@@ -3,6 +3,9 @@
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "Component/TeamComponent.h"
+#include "Component/VitalUIControllerComponent.h"
+#include "Component/StaminaComponent.h"
 #include "Transform.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
@@ -80,7 +83,7 @@ void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, RectTransformComponent,
-		ImageUIComponent, ButtonUIComponent>();
+		ImageUIComponent, ButtonUIComponent, TeamComponent, VitalUIControllerComponent, StaminaComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 

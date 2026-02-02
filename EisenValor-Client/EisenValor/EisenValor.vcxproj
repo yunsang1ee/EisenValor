@@ -188,6 +188,9 @@
   <ItemGroup>
     <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
+    <ClInclude Include="Component\StaminaComponent.h" />
+    <ClInclude Include="Component\TeamComponent.h" />
+    <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
@@ -208,6 +211,9 @@
   <ItemGroup>
     <ClCompile Include="Component\HealthComponent.cpp" />
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
+    <ClCompile Include="Component\StaminaComponent.cpp" />
+    <ClCompile Include="Component\TeamComponent.cpp" />
+    <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
