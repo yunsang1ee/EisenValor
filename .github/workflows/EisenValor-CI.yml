@@ -2,9 +2,20 @@ name: EisenValor-CI
 
 on:
   push:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
+    branches: [master]
+    tags:
+      - 'v*'
   pull_request:
-    branches: [master, Framework-Develop, Dageon-Lee, Seongyeol]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      create_deploy_link:
+        description: 'Create temporary deployment link (with Resource)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
   build-all:
@@ -46,22 +57,6 @@ jobs:
             platform: "x64"
             upload_artifacts: true
 
-          # EisenValor-DummyClient (Debug / Release)
-          # - project: "EisenValor-DummyClient"
-          #   solution_path: "EisenValor-DummyClient"
-          #   solution_file: "EisenValor-DummyClient.sln"
-          #   cache_key: "nuget-dummy"
-          #   configuration: "Debug"
-          #   platform: "x64"
-          #   upload_artifacts: false
-          # - project: "EisenValor-DummyClient"
-          #   solution_path: "EisenValor-DummyClient"
-          #   solution_file: "EisenValor-DummyClient.sln"
-          #   cache_key: "nuget-dummy"
-          #   configuration: "Release"
-          #   platform: "x64"
-          #   upload_artifacts: true
-
     name: "Build ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
 
     steps:
@@ -69,6 +64,33 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
+
+    - name: Verify tag is on master branch
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        Write-Host "Verifying tag ${{ github.ref_name }} is on master branch..."
+        
+        git fetch origin master --no-tags --prune --unshallow 2>$null
+        if ($LASTEXITCODE -ne 0) {
+          git fetch origin master --no-tags --prune
+        }
+        git merge-base --is-ancestor $env:GITHUB_SHA origin/master
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host ""
+          Write-Host "::error::Tag ${{ github.ref_name }} is not on master branch"
+          Write-Host ""
+          Write-Host "This commit is not an ancestor of master."
+          Write-Host ""
+          Write-Host "To create a valid release:"
+          Write-Host "  1. Merge your changes to master"
+          Write-Host "  2. git checkout master"
+          Write-Host "  3. git tag v1.0.0"
+          Write-Host "  4. git push origin v1.0.0"
+          Write-Host ""
+          exit 1
+        }
+        
+        Write-Host "Tag commit is an ancestor of master - proceeding with release"
 
     - name: Set up MSBuild (VS 2022)
       uses: microsoft/setup-msbuild@v2
@@ -79,7 +101,7 @@ jobs:
         path: |
           ${{ env.USERPROFILE }}\.nuget\packages
           ${{ matrix.solution_path }}\packages
-        key: ${{ matrix.cache_key }}-${{ runner.os }}-${{ hashFiles(format('{0}/**/packages.config', matrix.solution_path), format('{0}/**/*.vcxproj', matrix.solution_path)) }}
+        key: ${{ matrix.cache_key }}-${{ runner.os }}-${{ hashFiles(format('{0}/**/packages.config', matrix.solution_path)) }}
         restore-keys: |
           ${{ matrix.cache_key }}-${{ runner.os }}-
 
@@ -88,14 +110,12 @@ jobs:
       with:
         nuget-version: "6.x"
 
-    - name: Detect NuGet package management and restore
+    - name: Detect NuGet package management
       working-directory: ${{ matrix.solution_path }}
       run: |
         Write-Host "Detecting NuGet package management for ${{ matrix.project }}..."
         
         $packagesConfigFiles = Get-ChildItem -Path . -Name "packages.config" -Recurse -ErrorAction SilentlyContinue
-        $hasPackagesConfig = $packagesConfigFiles.Count -gt 0
-        
         $vcxprojFiles = Get-ChildItem -Path . -Name "*.vcxproj" -Recurse -ErrorAction SilentlyContinue
         $hasPackageReference = $false
         $packageRefCount = 0
@@ -124,64 +144,207 @@ jobs:
         Write-Host "packages.config files: $($packagesConfigFiles.Count)"
         Write-Host ".vcxproj files scanned: $($vcxprojFiles.Count)"
         Write-Host "PackageReference entries: $packageRefCount"
-        Write-Host "Has packages.config: $hasPackagesConfig"
-        Write-Host "Has PackageReference: $hasPackageReference"
-        
-        $needsRestore = $false
-        
-        if ($hasPackagesConfig)
-        {
-          Write-Host ""
-          Write-Host "Strategy 1: Legacy packages.config restore"
-          try
-          {
-            nuget restore ${{ matrix.solution_file }}
-            Write-Host "packages.config restore completed"
-            $needsRestore = $true
-          }
-          catch
-          {
-            Write-Warning "packages.config restore failed: $($_.Exception.Message)"
-          }
-        }
-        
-        if ($hasPackageReference)
-        {
-          Write-Host ""
-          Write-Host "Strategy 2: PackageReference restore (will be handled by MSBuild)"
-          $needsRestore = $true
-        }
-        
-        if (-not $needsRestore)
-        {
-          Write-Host ""
-          Write-Host "No NuGet packages detected - this solution uses only system libraries"
-          Write-Host "This is normal for projects that only use DirectX, Windows SDK, etc."
-        }
-        
         Write-Host ""
-        Write-Host "Package restore strategy complete for ${{ matrix.project }}"
+        Write-Host "NuGet restore will be handled by MSBuild /t:Restore"
 
     - name: Build ${{ matrix.project }}
       working-directory: ${{ matrix.solution_path }}
       run: |
         Write-Host "Building ${{ matrix.project }} (${{ matrix.configuration }}|${{ matrix.platform }})"
         msbuild ${{ matrix.solution_file }} `
-        -t:Restore,Build `
-        -p:Configuration=${{ matrix.configuration }} `
-        -p:Platform=${{ matrix.platform }} `
-        -maxCpuCount `
-        -verbosity:minimal
-
-    - name: Upload Artifacts
+        /t:Restore,Build `
+        /p:Configuration=${{ matrix.configuration }} `
+        /p:Platform=${{ matrix.platform }} `
+        /m `
+        /v:m
+    
+    - name: Upload Build Artifacts (Executables Only)
       if: matrix.upload_artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.project }}-${{ matrix.configuration }}-${{ matrix.platform }}
+        name: ${{ matrix.project }}-${{ matrix.configuration }}-${{ matrix.platform }}-executables
         path: |
           ${{ matrix.solution_path }}/Binaries/**/${{ matrix.configuration }}/**/*.exe
           ${{ matrix.solution_path }}/Binaries/**/${{ matrix.configuration }}/**/*.dll
-          ${{ matrix.solution_path }}/Binaries/**/${{ matrix.configuration }}/**/*.pdb
-          ${{ matrix.solution_path }}/Libraries/**/${{ matrix.configuration }}/**/*.lib
-          ${{ matrix.solution_path }}/**/Resource/Shader/**/*.hlsl
-        retention-days: 30
+        retention-days: 7
+        if-no-files-found: error
+        
+    - name: Create Deployment Package
+      id: create_package
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && (startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.create_deploy_link))
+      working-directory: ${{ matrix.solution_path }}
+      run: |
+        Write-Host "=========================================="
+        Write-Host "Creating Deployment Package"
+        Write-Host "=========================================="
+        Write-Host ""
+        
+        $cfg = "${{ matrix.configuration }}"
+        $packageName = "EisenValor-${{ matrix.project }}-$cfg-Build${{ github.run_number }}"
+        $packageDir = "Deploy-$packageName"
+        
+        New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+        
+        Write-Host "Searching for deployment root..."
+        
+        $releaseDirs = Get-ChildItem -Path "Binaries" -Directory -Recurse -ErrorAction SilentlyContinue |
+                       Where-Object { $_.Name -eq $cfg }
+        
+        if (-not $releaseDirs -or $releaseDirs.Count -eq 0) {
+          Write-Host "::error::No '$cfg' directory found under Binaries/"
+          Write-Host "Available directories:"
+          Get-ChildItem -Path "Binaries" -Directory -Recurse | ForEach-Object {
+            Write-Host "  - $($_.FullName.Substring((Get-Location).Path.Length + 1))"
+          }
+          exit 1
+        }
+        
+        $root = $null
+        foreach ($d in $releaseDirs) {
+          $hasExe = Get-ChildItem -Path $d.FullName -Filter *.exe -File -ErrorAction SilentlyContinue |
+                    Select-Object -First 1
+          if ($hasExe) {
+            $root = $d
+            break
+          }
+        }
+        
+        if (-not $root) {
+          $root = $releaseDirs | Select-Object -First 1
+        }
+        
+        $rootRelative = $root.FullName.Substring((Get-Location).Path.Length + 1)
+        Write-Host "Selected deployment root: $rootRelative"
+        Write-Host ""
+        
+        Write-Host "Copying directory structure..."
+        Copy-Item -Path (Join-Path $root.FullName '*') -Destination $packageDir -Recurse -Force
+        
+        $allFiles = Get-ChildItem -Path $packageDir -Recurse -File
+        $exeFiles = $allFiles | Where-Object { $_.Extension -eq ".exe" }
+        $dllFiles = $allFiles | Where-Object { $_.Extension -eq ".dll" }
+        
+        Write-Host "  Total files: $($allFiles.Count)"
+        Write-Host "  Executables: $($exeFiles.Count) exe"
+        Write-Host "  DLLs: $($dllFiles.Count) dll"
+        Write-Host ""
+        
+        Write-Host "Removing unnecessary files..."
+        Get-ChildItem -Path $packageDir -Recurse -Filter *.lib -File -ErrorAction SilentlyContinue |
+          ForEach-Object {
+            Remove-Item $_.FullName -Force
+            Write-Host "  Removed: $($_.Name)"
+          }
+        
+        Get-ChildItem -Path $packageDir -Recurse -Filter *.pdb -File -ErrorAction SilentlyContinue |
+          ForEach-Object {
+            Remove-Item $_.FullName -Force
+            Write-Host "  Removed: $($_.Name)"
+          }
+        
+        Write-Host ""
+        Write-Host "Directory structure:"
+        Get-ChildItem -Path $packageDir -Directory | ForEach-Object {
+          Write-Host "  - $($_.Name)/"
+          Get-ChildItem -Path $_.FullName -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "    - $($_.Name)/"
+          }
+        }
+        
+        $resourceFiles = Get-ChildItem -Path "$packageDir/Resource" -Recurse -File -ErrorAction SilentlyContinue
+        if ($resourceFiles) {
+          $resourceSize = ($resourceFiles | Measure-Object -Property Length -Sum).Sum
+          Write-Host ""
+          Write-Host "Resource folder:"
+          Write-Host "  Files: $($resourceFiles.Count)"
+          Write-Host "  Size: $([math]::Round($resourceSize / 1MB, 2)) MB"
+        }
+        
+        $readmeLines = @(
+          "EisenValor 배포 패키지",
+          "================================",
+          "프로젝트: ${{ matrix.project }}",
+          "빌드: #${{ github.run_number }}",
+          "커밋: ${{ github.sha }}",
+          "브랜치: ${{ github.ref_name }}",
+          "날짜: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
+          "",
+          "설치 방법:",
+          "1. 압축 해제",
+          "2. 폴더 구조 확인 (Resource 폴더 필수)",
+          "3. EisenValor.exe 실행",
+          "",
+          "주의사항:",
+          "- 폴더 구조를 변경하지 마세요",
+          "- Resource 폴더는 게임 에셋입니다",
+        )
+        $readme = $readmeLines -join "`n"
+        $readme | Out-File "$packageDir/README.txt" -Encoding UTF8
+        
+        Write-Host ""
+        Write-Host "Compressing package..."
+        $zipName = "$packageName.zip"
+        Compress-Archive -Path "$packageDir/*" -DestinationPath $zipName -CompressionLevel Fastest
+        
+        if (-not (Test-Path $zipName)) {
+          Write-Host "::error::ZIP file not found: $zipName"
+          exit 1
+        }
+
+        $zipSize = (Get-Item $zipName).Length
+        $zipSizeMB = $zipSize / 1MB
+        $zipSizeGB = $zipSize / 1GB
+        
+        Write-Host "  Package created: $zipName"
+        Write-Host "  Size: $([math]::Round($zipSizeMB, 2)) MB ($([math]::Round($zipSizeGB, 3)) GB)"
+        
+        if ($zipSize -gt 2GB) {
+          Write-Host ""
+          Write-Host "::warning::Package exceeds 2GB ($([math]::Round($zipSizeGB, 2)) GB)"
+        } else {
+          Write-Host "  ✓ Package size OK for GitHub Release"
+        }
+        
+        $zipFullPath = (Resolve-Path $zipName).Path
+        "zip_path=$zipFullPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        
+        Write-Host ""
+        Write-Host "Output variables set:"
+        Write-Host "  zip_path: $zipFullPath"
+        Write-Host "  zip_name: $zipName"
+        Write-Host ""
+        Write-Host "=========================================="
+
+    - name: Upload to GitHub Release
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ steps.create_package.outputs.zip_path }}
+        body: |
+          ## EisenValor ${{ github.ref_name }}
+          
+          **빌드 정보**
+          - Configuration: ${{ matrix.configuration }}
+          - Platform: ${{ matrix.platform }}
+          - Build: #${{ github.run_number }}
+          - Commit: ${{ github.sha }}
+          - 패키지: ${{ steps.create_package.outputs.zip_name }}
+          
+          **설치 방법**
+          1. .zip 파일 다운로드
+          2. 압축 해제
+          3. Resource 폴더가 .exe와 같은 위치에 있는지 확인
+          4. 실행
+        draft: false
+        prerelease: false
+        fail_on_unmatched_files: true
+
+    - name: Upload Deployment Package (Manual Trigger)
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && github.event_name == 'workflow_dispatch' && inputs.create_deploy_link && !startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.project }}-${{ matrix.configuration }}-Full-Deployment
+        path: ${{ steps.create_package.outputs.zip_path }}
+        retention-days: 7
+        if-no-files-found: error

@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <chrono>
+#include <filesystem>
 
 #pragma region Utils
 namespace Utils
@@ -18,6 +20,8 @@ constexpr uint64_t HashString(std::string_view str)
 }
 
 std::string GetTimestamp();
+
+const std::filesystem::path& ExeDir();
 } // namespace Utils
 #pragma endregion
 
