@@ -244,7 +244,7 @@
     <ClInclude Include="include\CommonInclude.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="include\Commonutils.h">
+    <ClInclude Include="include\CommonUtils.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -358,7 +358,7 @@
     <ClCompile Include="src\IComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="src\Commonutils.cpp">
+    <ClCompile Include="src\CommonUtils.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
