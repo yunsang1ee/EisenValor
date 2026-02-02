@@ -2,7 +2,15 @@
 #include "SampleScene.h"
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
-
+#include "Component/BattleUIControllerComponent.h"
+#include "Component/TeamComponent.h"
+#include "Component/VitalUIControllerComponent.h"
+#include "Component/StaminaComponent.h"
+#include "Transform.h"
+#include "RectTransformComponent.h"
+#include "ImageUIComponent.h"
+#include "ButtonUIComponent.h"
+#include "UI/UITextureGlobal.h"
 
 namespace
 {
@@ -10,7 +18,6 @@ namespace
 
 namespace Ground
 {
-
 std::vector<Vertex> groundVertices = {
 	{{-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
 	{{1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
@@ -70,11 +77,13 @@ std::vector<uint32_t> cubeIndices = {
 } // namespace Cube
 
 // clang-format on
-} // namespace Resources
+} // namespace
 
 void SampleScene::OnRegisterCustomComponents()
 {
-	RegisterComponents<PlayerControllerComponent, HealthComponent>();
+	RegisterComponents<
+		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, RectTransformComponent,
+		ImageUIComponent, ButtonUIComponent, TeamComponent, VitalUIControllerComponent, StaminaComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -98,10 +107,11 @@ void SampleScene::CreateSceneObjects()
 
 
 			auto meshHandle = CreateComponentWithInit<MeshComponent>(
-				obj->GetHandle(), [](MeshComponent* mesh)
-				{ mesh->SetMesh(Ground::groundVertices, Ground::groundIndices); }
+				obj->GetHandle(),
+				[](MeshComponent* mesh) { mesh->SetMesh(Ground::groundVertices, Ground::groundIndices); }
 			);
 		}
+
 	);
 
 	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
@@ -121,14 +131,15 @@ void SampleScene::CreateSceneObjects()
 				tr.SetRotation(rotations[i].x, rotations[i].y, rotations[i].z);
 				tr.SetScale(scales[i]);
 				auto meshHandle = CreateComponentWithInit<MeshComponent>(
-					obj->GetHandle(), [](MeshComponent* mesh)
-					{ mesh->SetMesh(Cube::cubeVertices, Cube::cubeIndices); }
+					obj->GetHandle(), [](MeshComponent* mesh) { mesh->SetMesh(Cube::cubeVertices, Cube::cubeIndices); }
 				);
 			}
 		);
 	}
 
-	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 5);
+	// BattleUI와 자식 오브젝트들 생성
+
+	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 8);
 }
 
 void SampleScene::OnEndImpl() {}

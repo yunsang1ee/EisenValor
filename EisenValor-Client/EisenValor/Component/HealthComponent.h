@@ -10,6 +10,7 @@ public:
 	void SetMaxHealth(int health) { m_maxHealth = health; }
 	void SetHealth(int health);
 	int GetHealth() const { return m_health; }
+	int GetMaxHealth() const { return m_maxHealth; }
 
 private:
 	int m_maxHealth{100};

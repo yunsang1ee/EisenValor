@@ -22,9 +22,6 @@
     <ClInclude Include="PacketHandler.h">
       <Filter>02. Packets\01. PacketHandler</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\EisenValor-Server\Server\TestPackets.h">
-      <Filter>98. Headers</Filter>
-    </ClInclude>
     <ClInclude Include="NetBridgeEnums.h">
       <Filter>98. Headers</Filter>
     </ClInclude>

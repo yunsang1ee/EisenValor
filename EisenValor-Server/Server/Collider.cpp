@@ -17,7 +17,7 @@ Server::Contents::Collider::~Collider()
 void Server::Contents::Collider::OnCollisionEnter(Collider* const other)
 {
 	const auto owner{ GetOwner() };
-	std::cout << std::format("OnCollisionEnter! Me:{}, Other:{}", owner->GetID(), other->GetOwner()->GetID()) << std::endl;
+	// std::cout << std::format("OnCollisionEnter! Me:{}, Other:{}", owner->GetID(), other->GetOwner()->GetID()) << std::endl;
 	if(owner)
 		owner->OnCollisionEnter(other);
 }
@@ -30,7 +30,7 @@ void Server::Contents::Collider::OnCollisionStay(Collider* const other)
 
 void Server::Contents::Collider::OnCollisionExit(Collider* const other)
 {
-	std::cout << std::format("OnCollisionExit! Me:{}, Other:{}", GetOwner()->GetID(), other->GetOwner()->GetID()) << std::endl;;
+	// std::cout << std::format("OnCollisionExit! Me:{}, Other:{}", GetOwner()->GetID(), other->GetOwner()->GetID()) << std::endl;;
 	
 	const auto owner{ GetOwner() };
 	owner->OnCollisionExit(other);

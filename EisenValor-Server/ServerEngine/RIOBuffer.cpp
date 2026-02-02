@@ -4,12 +4,13 @@
 #include "RIOCore.h"
 #include "NetworkManager.h"
 
-ServerEngine::RIOBuffer::RIOBuffer()
+#ifdef _USE_RIO
+ServerEngine::RIO::RIOBuffer::RIOBuffer()
 	:m_id{ RIO_INVALID_BUFFERID }, m_buffer{ nullptr }, m_readPos{ 0 }, m_writePos{ 0 }
 {
 }
 
-ServerEngine::RIOBuffer::~RIOBuffer()
+ServerEngine::RIO::RIOBuffer::~RIOBuffer()
 {
 	if(nullptr != m_buffer) {
 		RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
@@ -19,7 +20,7 @@ ServerEngine::RIOBuffer::~RIOBuffer()
 	}
 }
 
-void ServerEngine::RIOBuffer::Init(const uint32 bufferSize)
+void ServerEngine::RIO::RIOBuffer::Init(const uint32 bufferSize)
 {
 	m_size = bufferSize;
 	m_capacity = bufferSize * BUFFER_COUNT;
@@ -42,7 +43,7 @@ void ServerEngine::RIOBuffer::Init(const uint32 bufferSize)
 		ServerEngine::LogManager::PrintLastError();
 }
 
-bool ServerEngine::RIOBuffer::OnRead(const uint32 numOfBytes)
+bool ServerEngine::RIO::RIOBuffer::OnRead(const uint32 numOfBytes)
 {
 	if(numOfBytes > GetDataSize())
 		return false;
@@ -52,7 +53,7 @@ bool ServerEngine::RIOBuffer::OnRead(const uint32 numOfBytes)
 	return true;
 }
 
-bool ServerEngine::RIOBuffer::OnWrite(const uint32 numOfBytes)
+bool ServerEngine::RIO::RIOBuffer::OnWrite(const uint32 numOfBytes)
 {
 	if(numOfBytes > GetFreeSize())
 		return false;
@@ -62,7 +63,7 @@ bool ServerEngine::RIOBuffer::OnWrite(const uint32 numOfBytes)
 	return true;
 }
 
-void ServerEngine::RIOBuffer::CleanBuffer() noexcept
+void ServerEngine::RIO::RIOBuffer::CleanBuffer() noexcept
 {
 	const uint32 dataSize = GetDataSize();
 
@@ -77,3 +78,4 @@ void ServerEngine::RIOBuffer::CleanBuffer() noexcept
 		}
 	}
 }
+#endif

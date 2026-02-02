@@ -11,10 +11,14 @@ namespace ServerEngine {
         static Pool m_pool;
         
     public:
-        ObjectPool() = default;
+        ObjectPool()
+        {
+            std::cout << "ObjectPool" << std::endl;
+        }
 
         ~ObjectPool()
         {
+            std::cout << "~ObjectPool" << std::endl;
         }
 
         template<typename... Args>

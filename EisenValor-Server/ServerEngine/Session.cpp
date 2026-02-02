@@ -3,16 +3,17 @@
 
 #include "RIOCore.h"
 #include "RIOWorker.h"
-#include "RecvBuffer.h"
-#include "SendBuffer.h"
+#include "RIORecvBuffer.h"
+#include "RIOSendBuffer.h"
 #include "SessionPool.h"	
 
 #include "ServerEngineConfigManager.h"
 #include "NetworkManager.h"
+#include "IOCPRecvBuffer.h"
 
 ServerEngine::Session::Session()
-	:m_socket{ 0 }, m_connected{ false }, m_state{ SESSION_STATE::FREE }, m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
-	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }
+	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
+	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
 {
 	static std::atomic_uint32_t idGen{ 1 };
 	m_id = idGen++;
@@ -48,87 +49,337 @@ void ServerEngine::Session::CloseSocket()
 	closesocket(m_socket);
 }
 
-void ServerEngine::Session::Ping()
+void ServerEngine::Session::CheckPing()
 {
-	if(GetState() != SESSION_STATE::FREE) {
-		std::cout << "Ping" << std::endl;
-		const auto now{ std::chrono::high_resolution_clock::now() };
-		const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+	if(SESSION_STATE::FREE == m_state) return;
 
-		if(pingPongInterval >= m_timeoutInterval) {
-			std::string_view reason{ "Disconnected By PingCheck" };
-			Disconnect(reason.data());
-			LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
+	const auto now{ std::chrono::high_resolution_clock::now() };
+	const auto elapsed{ std::chrono::duration_cast<std::chrono::milliseconds>((now - m_lastPing)) };
+
+	if(elapsed < m_pingInterval) return;
+
+	m_lastPing = now;
+
+	const auto pingPongInterval{ std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastPong) };
+	if(pingPongInterval >= m_timeoutInterval) {
+		std::string_view reason{ "Disconnected By PingCheck" };
+		Disconnect(reason.data());
+		LOG_INFO("Session ID:{}, Reason: {}", GetID(), reason.data());
+		return;
+	}
+
+	SendPing();
+}
+
+void ServerEngine::Session::Handle_CS_PONG()
+{
+	// std::cout << "Pong!" << std::endl;
+	m_lastPong = std::chrono::high_resolution_clock::now();
+}
+
+
+// =============================================
+//					IOCP SESSION
+// =============================================
+#ifdef _USE_IOCP
+ServerEngine::IOCP::IOCPSession::IOCPSession()
+	:m_recvBuffer{ BUFFER_SIZE }, m_sendRegistered{ false }
+{
+
+}
+
+ServerEngine::IOCP::IOCPSession::~IOCPSession()
+{
+}
+
+
+bool ServerEngine::IOCP::IOCPSession::Init()
+{
+	return true;
+}
+
+void ServerEngine::IOCP::IOCPSession::Dispatch(const IOCPContext* const context, const uint32 bytesTransferred)
+{
+	switch(context->GetType()) {
+		case IO_CONTEXT_TYPE::RECV:
+		{
+			ProcessRecv(bytesTransferred);
+			break;
+		}
+		case IO_CONTEXT_TYPE::SEND:
+		{
+			ProcessSend(bytesTransferred);
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+bool ServerEngine::IOCP::IOCPSession::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
+{
+	m_socket = socket;
+
+	if(false == Init()) {
+		LOG_ERROR("Session Init Failed");
+		return false;
+	}
+
+	m_connected = true;
+
+	m_state = SESSION_STATE::ACCEPTED;
+
+	OnConnected();
+
+	PostRecv();
+
+	return true;
+}
+
+void ServerEngine::IOCP::IOCPSession::Disconnect(const std::string_view reason)
+{
+	if(false == IsConnected())
+		return;
+
+	LINGER lingerOption;
+	lingerOption.l_onoff = 1;
+	lingerOption.l_linger = 0;
+
+	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
+		std::cout << std::format("setsockopt linger option error: {}", GetLastError()) << std::endl;
+
+	CloseSocket();
+	OnDisconnected(reason);
+	m_lastPong = std::chrono::high_resolution_clock::time_point{};
+}
+
+void ServerEngine::IOCP::IOCPSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)
+{
+	if(false == IsConnected()) return;
+
+	bool registered{ false };
+
+	m_packetBufferQueue.push(std::move(packetBuffer));
+
+	if(m_sendRegistered.exchange(true) == false)
+		registered = true;
+
+	if(registered)
+		PostSend();
+}
+
+void ServerEngine::IOCP::IOCPSession::PostRecv()
+{
+	if(false == IsConnected()) return;
+
+	m_recvContext.Init();
+	m_recvContext.SetOwner(std::static_pointer_cast<ServerEngine::IOCP::IOCPSession>(shared_from_this()));
+
+	WSABUF wsaBuf;
+	wsaBuf.buf = reinterpret_cast<char*>(m_recvBuffer.WritePos());
+	wsaBuf.len = m_recvBuffer.FreeSize();
+
+	DWORD numOfBytes{};
+	DWORD flags{};
+	if(SOCKET_ERROR == ::WSARecv(m_socket, &wsaBuf, 1, &numOfBytes, &flags, &m_recvContext, nullptr)) {
+		int32 errCode = ::WSAGetLastError();
+
+		if(errCode != WSA_IO_PENDING) {
+			LOG_ERROR("NOT PENDING!, errCode = {}", errCode);
+			m_recvContext.SetOwner(nullptr);
+		}
+	}
+}
+
+void ServerEngine::IOCP::IOCPSession::ProcessRecv(const uint32 bytesTransferred)
+{
+	m_recvContext.SetOwner(nullptr);
+
+	if(0 == bytesTransferred) {
+		Disconnect("Recv Zero");
+		return;
+	}
+	else {
+		if(false == m_recvBuffer.OnWrite(bytesTransferred)) {
+			Disconnect("RecvBuffer Overflow");
 			return;
 		}
 
-		SendPing();
+		const uint32 remainDataSize{ static_cast<uint32>(m_recvBuffer.DataSize()) };
 
-		ExecTimer(m_pingInterval, &Session::Ping);
+		const uint32 processLen{ AssembleReceivedData({ (m_recvBuffer.ReadPos()), remainDataSize }) };
+
+		if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
+			Disconnect("OnRead Overflow");
+			return;
+		}
+
+		m_recvBuffer.Clean();
+
+		PostRecv();
 	}
 }
+
+void ServerEngine::IOCP::IOCPSession::ProcessSend(const uint32 bytesTransferred)
+{
+	m_sendContext.SetOwner(nullptr);
+	m_sendContext.m_packetBuffers.clear();
+
+	if(0 == bytesTransferred) {
+		Disconnect("Send Zero");
+		return;
+	}
+
+	OnSend(bytesTransferred);
+
+	if(m_packetBufferQueue.empty())
+		m_sendRegistered = false;
+	else
+		PostSend();
+}
+
+void ServerEngine::IOCP::IOCPSession::PostSend()
+{
+	if(false == IsConnected()) return;
+
+	m_sendContext.Init();
+	m_sendContext.SetOwner(std::static_pointer_cast<ServerEngine::IOCP::IOCPSession>(shared_from_this()));
+
+	int32 writeSize{};
+	while(false == m_packetBufferQueue.empty()) {
+		std::shared_ptr<PacketBuffer> pb;
+		if(m_packetBufferQueue.try_pop(pb)) {
+			writeSize += pb->GetDataSize();
+
+			m_sendContext.m_packetBuffers.push_back(std::move(pb));
+		}
+	}
+
+	std::vector<WSABUF> wsaBufs;
+	wsaBufs.reserve(m_sendContext.m_packetBuffers.size());
+
+	for(auto pb : m_sendContext.m_packetBuffers) {
+		WSABUF wsaBuf;
+		wsaBuf.buf = pb->GetBuffer();
+		wsaBuf.len = pb->GetDataSize();
+		wsaBufs.push_back(wsaBuf);
+	}
+
+	DWORD numOfBytes{};
+	if(SOCKET_ERROR == ::WSASend(m_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), &numOfBytes, 0, &m_sendContext, nullptr)) {
+		int32 errCode = ::WSAGetLastError();
+
+		if(errCode != WSA_IO_PENDING) {
+			m_sendContext.SetOwner(nullptr);
+			m_sendContext.m_packetBuffers.clear();
+			m_sendRegistered.store(false);
+		}
+	}
+}
+#endif 
 
 // =============================================
 //					RIO SESSION
 // =============================================
 
-ServerEngine::RIOSession::RIOSession()
-: m_rq{ RIO_INVALID_RQ }, m_deferCount{}
+#ifdef _USE_RIO
+ServerEngine::RIO::RIOSession::RIOSession()
+	: m_owner{ nullptr }, m_rq{RIO_INVALID_RQ}, m_deferCount{}
 {
 	COMMIT_SEND_MS = std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS);
 }
 
-ServerEngine::RIOSession::~RIOSession()
+ServerEngine::RIO::RIOSession::~RIOSession()
 {
 }
 
-void ServerEngine::RIOSession::FlushPacketQueue()
+void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 {
+	//const auto currentTime = std::chrono::high_resolution_clock::now();
+	//const auto lastSendElapsed = currentTime - m_lastSendTime;
+
+	//if(IsConnected() == false)
+	//	return;
+
+	//uint32 deferCount{};
+
+	//std::shared_ptr<PacketBuffer> packetBuffer{ nullptr };
+
+	//const uint32 MAX_SEND_RQ_SIZE_PER_SESSION{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION };
+
+	//while(m_packetBufferQueue.empty() == false) {
+	//	if(m_packetBufferQueue.try_pop(packetBuffer)) {
+
+	//		if(packetBuffer == nullptr) break;
+	//		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
+	//			Disconnect("SendBuffer Append");
+	//	}
+
+	//	while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
+	//		if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
+	//			break;
+	//		deferCount++;
+
+
+	//		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
+	//			// std::cout << std::format("DeferCount:{}", deferCount);
+	//			break;
+	//		}
+	//	}
+
+	//	if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
+	//		// std::cout << std::format("DeferCount:{}", deferCount);
+	//		break;
+	//	}
+	//}
+
+	//if(deferCount > 0 || lastSendElapsed > COMMIT_SEND_MS) {
+	//	CommitSend();
+	//	m_lastSendTime = currentTime;
+	//}
+
+	if(!IsConnected())
+		return;
+
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
-	if(IsConnected() == false)
-		return;
+	uint32 deferCount = 0;
+	const uint32 MAX_SEND_RQ = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION;
 
-	uint32 deferCount{};
+	std::shared_ptr<PacketBuffer> packetBuffer;
 
-	std::shared_ptr<PacketBuffer> packetBuffer{ nullptr };
-
-	const uint32 MAX_SEND_RQ_SIZE_PER_SESSION{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION };
-
-	while(m_packetBufferQueue.empty() == false) {
-		if(m_packetBufferQueue.try_pop(packetBuffer)) {
-
-			if(packetBuffer == nullptr) break;
-			if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize()))
-				Disconnect("SendBuffer Append");
+	while(deferCount < MAX_SEND_RQ) {
+		if(!m_packetBufferQueue.try_pop(packetBuffer)) {
+			break;
 		}
 
-		while(m_sendBuffer.GetDataSizeForCurrentPacket() > 0) {
-			if(false == DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket()))
-				break;
-			deferCount++;
+		if(packetBuffer == nullptr) continue;
 
-
-			if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
-				// std::cout << std::format("DeferCount:{}", deferCount);
+		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize())) {
+			if(DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket())) {
+				deferCount++;
+			}
+			else {
+				LOG_ERROR("Defer Send Fail");
 				break;
 			}
 		}
-
-		if(deferCount >= MAX_SEND_RQ_SIZE_PER_SESSION) {
-			// std::cout << std::format("DeferCount:{}", deferCount);
-			break;
+		else {
+			Disconnect("SendBuffer Append Full");
+			return;
 		}
 	}
 
-	if(deferCount > 0 || lastSendElapsed > COMMIT_SEND_MS) {
-		CommitSend();
-		m_lastSendTime = currentTime;
+	if(deferCount > 0) {
+		if(deferCount >= (MAX_SEND_RQ / 2) || lastSendElapsed >= COMMIT_SEND_MS) {
+			CommitSend();
+			m_lastSendTime = currentTime;
+		}
 	}
 }
 
-bool ServerEngine::RIOSession::Init()
+bool ServerEngine::RIO::RIOSession::Init()
 {
 	const RIO_CQ cq = m_owner->GetCQ();
 
@@ -148,19 +399,19 @@ bool ServerEngine::RIOSession::Init()
 	return true;
 }
 
-void ServerEngine::RIOSession::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
+void ServerEngine::RIO::RIOSession::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
 {
 	switch(const auto type{ context->GetType() }) {
-		case ServerEngine::RIO_CONTEXT_TYPE::RECV:
+		case IO_CONTEXT_TYPE::RECV:
 		{
 			ProcessRecv(bytesTransferred);
 			break;
 		}
-		case ServerEngine::RIO_CONTEXT_TYPE::SEND:
+		case IO_CONTEXT_TYPE::SEND:
 		{
 			ProcessSend(bytesTransferred);
-			context->ReleaseSession();
-			ObjectPool<SendContext>::Push(static_cast<SendContext*>(context));
+			context->SetOwner(nullptr);
+			ObjectPool<RIOSendContext>::Push(static_cast<RIOSendContext*>(context));
 			break;
 		}
 		default:
@@ -168,7 +419,7 @@ void ServerEngine::RIOSession::Dispatch(RIOContext* const context, const uint32 
 	}
 }
 
-bool ServerEngine::RIOSession::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
+bool ServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
 {
 	m_socket = socket;
 
@@ -195,7 +446,7 @@ bool ServerEngine::RIOSession::AcceptCompleted(const SOCKET& socket, const SOCKA
 	return true;
 }
 
-void ServerEngine::RIOSession::Disconnect(const std::string_view reason)
+void ServerEngine::RIO::RIOSession::Disconnect(const std::string_view reason)
 {
 	if(false == IsConnected())
 		return;
@@ -205,20 +456,20 @@ void ServerEngine::RIOSession::Disconnect(const std::string_view reason)
 	lingerOption.l_linger = 0;
 
 	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
-		std::cout << std::format("setsockopt linger option error: {}", GetLastError());
+		std::cout << std::format("setsockopt linger option error: {}", GetLastError()) << std::endl;
 
 	CloseSocket();
 	OnDisconnected(reason);
-
+	m_lastPong = std::chrono::high_resolution_clock::time_point{};
 	Clean();
 }
 
-void ServerEngine::RIOSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)
+void ServerEngine::RIO::RIOSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
-	m_packetBufferQueue.push(packetBuffer);
+	m_packetBufferQueue.push(std::move(packetBuffer));
 }
 
-void ServerEngine::RIOSession::PostRecv()
+void ServerEngine::RIO::RIOSession::PostRecv()
 {
 	if(false == IsConnected()) {
 		Disconnect("IsConnected False");
@@ -231,7 +482,7 @@ void ServerEngine::RIOSession::PostRecv()
 	}
 
 	m_recvContext.Init();
-	m_recvContext.HoldSession(std::static_pointer_cast<ServerEngine::Session>(shared_from_this()));
+	m_recvContext.SetOwner(std::static_pointer_cast<ServerEngine::RIO::RIOSession>(shared_from_this()));
 
 	m_recvContext.BufferId = m_recvBuffer.GetID();
 	m_recvContext.Offset = m_recvBuffer.GetReadOffset();
@@ -241,14 +492,14 @@ void ServerEngine::RIOSession::PostRecv()
 
 	if(false == RIO_EXT_FUNC_TB.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
 		LOG_WSA_GET_LAST_ERROR();
-		m_recvContext.ReleaseSession();
+		m_recvContext.SetOwner(nullptr);
 		Disconnect("RioReceive Fail");
 	}
 }
 
-void ServerEngine::RIOSession::ProcessRecv(const uint32 bytesTransferred)
+void ServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
 {
-	m_recvContext.ReleaseSession();
+	m_recvContext.SetOwner(nullptr);
 
 	if(0 == bytesTransferred) {
 		Disconnect("Recv Zero");
@@ -275,7 +526,7 @@ void ServerEngine::RIOSession::ProcessRecv(const uint32 bytesTransferred)
 	}
 }
 
-void ServerEngine::RIOSession::ProcessSend(const uint32 bytesTransferred)
+void ServerEngine::RIO::RIOSession::ProcessSend(const uint32 bytesTransferred)
 {
 	m_sendBuffer.OnRead(bytesTransferred);
 
@@ -284,11 +535,11 @@ void ServerEngine::RIOSession::ProcessSend(const uint32 bytesTransferred)
 	m_sendBuffer.CleanBuffer();
 }
 
-bool ServerEngine::RIOSession::DeferSend(const uint32 offset, const uint32 size)
+bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 size)
 {
-	SendContext* sendContext{ ObjectPool<SendContext>::Pop() };
+	RIOSendContext* sendContext{ ObjectPool<RIOSendContext>::Pop() };
 	sendContext->Init();
-	sendContext->HoldSession(std::static_pointer_cast<Session>(shared_from_this()));
+	sendContext->SetOwner(std::static_pointer_cast<RIOSession>(shared_from_this()));
 
 	sendContext->BufferId = m_sendBuffer.GetID();
 	sendContext->Offset = offset;
@@ -296,31 +547,33 @@ bool ServerEngine::RIOSession::DeferSend(const uint32 offset, const uint32 size)
 
 	if(false == RIO_EXT_FUNC_TB.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
 		ServerEngine::LogManager::PrintLastError();
-		sendContext->ReleaseSession();
-		ObjectPool<SendContext>::Push(sendContext);
+		sendContext->SetOwner(nullptr);
+		ObjectPool<RIOSendContext>::Push(sendContext);
 		Disconnect("RIO_SEND_FAILED");
 		return false;
 	}
 
 	if(false == m_sendBuffer.moveSendOffset(size)) {
-		sendContext->ReleaseSession();
-		ObjectPool<SendContext>::Push(sendContext);
-		Disconnect("moveSendOffset");
+		sendContext->SetOwner(nullptr);
+		ObjectPool<RIOSendContext>::Push(sendContext);
+		Disconnect("moveSendOffset Fail");
 		return false;
 	}
 
 	return true;
 }
 
-void ServerEngine::RIOSession::CommitSend()
+void ServerEngine::RIO::RIOSession::CommitSend()
 {
 	if(false == RIO_EXT_FUNC_TB.RIOSend(m_rq, nullptr, 0, RIO_MSG_COMMIT_ONLY, nullptr)) {
 		ServerEngine::LogManager::PrintLastError();
 		Disconnect("CommitSend");
 	}
+	// else
+		// std::cout << "Commit Send!" << std::endl;
 }
 
-void ServerEngine::RIOSession::Clean()
+void ServerEngine::RIO::RIOSession::Clean()
 {
 	m_socket = INVALID_SOCKET;
 
@@ -337,15 +590,5 @@ void ServerEngine::RIOSession::Clean()
 	m_state = SESSION_STATE::FREE;
 	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
 }
+#endif
 
-
-// =============================================
-//					IOCP SESSION
-// =============================================
-ServerEngine::IOCPSession::IOCPSession()
-{
-}
-
-ServerEngine::IOCPSession::~IOCPSession()
-{
-}

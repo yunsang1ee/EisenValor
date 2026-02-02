@@ -35,6 +35,9 @@
     <Filter Include="Packets\PacketHandler">
       <UniqueIdentifier>{344dd69f-16c8-4ce6-ad4b-2d95a9fae30e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{343191af-0f9a-4c0c-b11b-5ba9df649a5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -82,6 +85,24 @@
     <ClInclude Include="Packets\Tables_generated.h">
       <Filter>Packets</Filter>
     </ClInclude>
+    <ClInclude Include="UI\UITextureGlobal.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\UIRenderPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\BattleUIControllerComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\StaminaComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\VitalUIControllerComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\TeamComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -114,6 +135,24 @@
     <ClCompile Include="Component\HealthComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="UI\UITextureGlobal.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\UIRenderPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\StaminaComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\VitalUIControllerComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\TeamComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc">
@@ -142,6 +181,12 @@
       <Filter>Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="Resource\Shader\UIVertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resource\Shader\UIPixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
     <None Include="Resource\Shader\PixelShader.hlsl">
       <Filter>Shaders</Filter>
     </None>

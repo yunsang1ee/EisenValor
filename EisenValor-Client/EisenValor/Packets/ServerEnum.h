@@ -19,7 +19,7 @@ enum class SOLDIER_FORMATION
 	월드: 1000 ~ 9999
 	테스트: 10000 ~ 65535
 */
-enum class PACKET_TYPE : uint16_t
+enum class PACKET_TYPE : uint16
 {
 // ==================
 //		세션
@@ -34,6 +34,7 @@ enum class PACKET_TYPE : uint16_t
 	// ==================
 	//		로그인
 	// ==================
+#pragma region LOGIN_PACKETS
 	CS_LOGIN_PKT = 10,
 	SC_LOGIN_FAIL_PKT = 11,
 	SC_LOGIN_SUCCESS_PKT = 12,
@@ -42,10 +43,13 @@ enum class PACKET_TYPE : uint16_t
 	CS_SIGN_UP_PKT = 13,
 	SC_SIGN_UP_FAIL_PKT = 14,
 	SC_SIGN_UP_SUCCESS_PKT = 15,
+#pragma endregion
+
 
 	// ==================
 	//		로비
 	// ==================
+#pragma region LOBBY_PACKETS
 	CS_ENTER_GAME_LOBBY_PKT = 100,
 	SC_ENTER_GAME_LOBBY_PKT = 101, // To me
 
@@ -57,11 +61,13 @@ enum class PACKET_TYPE : uint16_t
 
 	CS_MAKE_GAME_ROOM_PKT = 106,
 	SC_MAKE_GAME_ROOM_PKT = 107,
+#pragma endregion
 
 
 	// ==================
 	//		룸
 	// ==================
+#pragma region ROOM_PACKETS
 	CS_JOIN_GAME_ROOM_PKT = 1000,
 	SC_JOIN_GAME_ROOM_FAIL_PKT = 1001,	  // To me
 	SC_JOIN_GAME_ROOM_SUCCESS_PKT = 1002, // To me
@@ -89,11 +95,12 @@ enum class PACKET_TYPE : uint16_t
 	SC_START_GAME_SUCCESS_PKT = 1017,
 
 	SC_CHANGE_GAME_ROOM_STATE_PKT = 1018,
-
+#pragma endregion
 
 	// ==================
 	//		월드
 	// ==================
+#pragma region WORLD_PACKETS
 	SC_LOCAL_PLAYER_PKT = 10000,
 
 	SC_ADD_OBJ_IN_GAME_WORLD_PKT = 10001,
@@ -103,35 +110,43 @@ enum class PACKET_TYPE : uint16_t
 	SC_MOVE_PKT = 10004,
 
 	CS_PLAYER_ATTACK_PKT = 10005,
+	SC_PLAYER_ATTACK_PKT = 10006,
 
-	SC_PLAYER_DAMAGED_PKT = 10006,
+	SC_UPDATE_VITAL_PKT = 10007,
+	SC_UPDATE_STATE_PKT = 10008,
 
-	SC_REMAINING_GAME_TIME_PKT = 10008,
+	SC_REMAINING_GAME_TIME_PKT = 10009,
 
 	K_CS_GAME_START_PKT = 10013,
 
 	SC_GAME_FINISH_PKT = 10014,
 
-
 	CS_RETURN_TO_GAME_ROOM_PKT = 10015,
 	SC_RETURN_TO_GAME_ROOM_PKT = 10016,
 
 	CS_CHANGE_PLAYER_STANCE_PKT = 10017,
+	SC_CHANGE_PLAYER_STANCE_PKT = 10018,
 
-	CS_PLAYER_FAKE_PKT = 10018,
+	CS_PLAYER_FAKE_PKT = 10019,
 
-	CS_CHANGE_CAMERA_TARGET_PKT = 10019,
-	SC_CHANGE_CAMERA_TARGET_PKT = 10020,
+	CS_CHANGE_CAMERA_TARGET_PKT = 10020,
+	SC_CHANGE_CAMERA_TARGET_PKT = 10021,
 
-	CS_SHOW_PLAYER_ATTACK_DIR_PKT = 10021,
-	SC_SHOW_PLAYER_ATTACK_DIR_PKT = 10022,
+	CS_SHOW_PLAYER_ATTACK_DIR_PKT = 10022,
+	SC_SHOW_PLAYER_ATTACK_DIR_PKT = 10023,
 
-	CS_RUN_PKT = 10025,
-	CS_ROLL_PKT = 10026,
+	CS_RUN_PKT = 10024,
+	CS_ROLL_PKT = 10025,
 
+	SC_RESPAWN_OBJECT_PKT = 10030,
 
+#pragma endregion
+
+	// 테스트
+#pragma region TEST_PACKETS
 	TEST_CS_ENTER_GAME_WORLD_PACKET = 20000,
 	TEST_SC_ENTER_GAME_WORLD_PACKET = 20001,
+#pragma endregion
 
 	END = 65535,
 };

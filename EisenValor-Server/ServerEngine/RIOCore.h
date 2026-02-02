@@ -5,39 +5,39 @@
 #include "RIOWorker.h"
 
 namespace ServerEngine {
-	class RIOWorker;
+	namespace RIO {
+		class RIOWorker;
 
-	class RIOCore : public IOCore {
-	private:
-		RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable{};
-		SOCKET									m_listenSocket;
-		SOCKADDR_IN								m_serverAddress{};
-		uint16									m_rioWorkerCnt;
-		uint16									m_acceptThreadNum;
+#ifdef _USE_RIO
+		class RIOCore : public IOCore {
+		private:
+			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable;
+			uint16									m_acceptThreadNum;
+			std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
 
-		std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
+		public:
+			RIOCore();
+			virtual ~RIOCore() = default;
 
-	public:
-		RIOCore() = default;
-		virtual ~RIOCore() = default;
+			RIOCore(const RIOCore&) = delete;
+			RIOCore(RIOCore&&) = default;
+			RIOCore& operator=(const RIOCore&) = delete;
+			RIOCore& operator=(RIOCore&&) = default;
 
-		RIOCore(const RIOCore&) = delete;
-		RIOCore(RIOCore&&) = default;
-		RIOCore& operator=(const RIOCore&) = delete;
-		RIOCore& operator=(RIOCore&&) = default;
+		public:
+			[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
+			virtual bool	Init(const SessionFactoryFunc sessionFunc) override final;
+			[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
+			virtual bool	StartAccept() override final;
+			virtual void	Run() override final;
 
-	public:
-		[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
-		virtual bool	Init(const SessionFactoryFunc sessionFunc) override final;
-		[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
-		virtual bool	StartAccept() override final;
-		virtual void	Run() override final;
+		public:
+			const auto& GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
+			virtual void	Shutdown() override final;
 
-	public:
-		const auto&		GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
-		virtual void	Shutdown() override final;
-
-	private:
-		void			DoAcceptLoop();
-	};
+		private:
+			void			DoAcceptLoop();
+		};
+#endif
+	}
 }
