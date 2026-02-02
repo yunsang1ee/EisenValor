@@ -104,10 +104,10 @@ void RectTransformComponent::UpdateLayout()
 	// 0. 해상도 동기화
 	Vec2 scaleFactor = { 1.0f, 1.0f };
 	auto* swapChain = DxRendererGlobal::GetInstance().GetSwapChain();
-	if (swapChain && kDefaultWindowWidth > 0 && kDefaultWindowHeight > 0)
+	if (swapChain && Variable::kDefaultWindowWidth > 0 && Variable::kDefaultWindowHeight > 0)
 	{
-		scaleFactor.x = (float)swapChain->GetWidth() / (float)kDefaultWindowWidth;
-		scaleFactor.y = (float)swapChain->GetHeight() / (float)kDefaultWindowHeight;
+		scaleFactor.x = (float)swapChain->GetWidth() / (float)Variable::kDefaultWindowWidth;
+		scaleFactor.y = (float)swapChain->GetHeight() / (float)Variable::kDefaultWindowHeight;
 	}
 
 	// 1. 부모 Rect 정보 획득
@@ -148,9 +148,14 @@ void RectTransformComponent::UpdateLayout()
 	UpdateChildrenLayouts();
 }
 
+Transform& RectTransformComponent::GetTransform() const
+{
+	return GetGameObject()->GetTransform();
+}
+
 RectTransformComponent::Rect RectTransformComponent::GetParentRect()
 {
-	Rect parentRect = {0.0f, 0.0f, (float)kDefaultWindowWidth, (float)kDefaultWindowHeight};
+	Rect parentRect = {0.0f, 0.0f, (float)Variable::kDefaultWindowWidth, (float)Variable::kDefaultWindowHeight};
 
 	auto* swapChain = DxRendererGlobal::GetInstance().GetSwapChain();
 	if (swapChain)

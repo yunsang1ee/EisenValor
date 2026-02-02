@@ -44,7 +44,7 @@ public:
 	void SetSizeDelta(Vec2 sizeDelta);
 
 	// Getters
-	Transform* GetTransform() const;
+	Transform& GetTransform() const;
 	Vec2 GetAnchorMin() const { return m_anchorMin; }
 	Vec2 GetAnchorMax() const { return m_anchorMax; }
 	Vec2 GetPivot() const { return m_pivot; }

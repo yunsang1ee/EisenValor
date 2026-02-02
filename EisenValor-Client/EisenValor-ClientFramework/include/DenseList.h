@@ -36,6 +36,9 @@ struct DenseListHandle
 	auto operator<=>(const DenseListHandle&) const = default;
 };
 
+template <typename T>
+using HandleOf = DenseListHandle<T>;
+
 namespace std
 {
 template <typename T>

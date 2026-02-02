@@ -72,7 +72,8 @@ bool RegisterWindowClass(HINSTANCE hInstance)
 bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd = CreateWindowW(
-		szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, kDefaultWindowWidth, kDefaultWindowHeight, NULL,
+		szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, Variable::kDefaultWindowWidth,
+		Variable::kDefaultWindowHeight, NULL,
 		NULL, hInstance, NULL
 	);
 

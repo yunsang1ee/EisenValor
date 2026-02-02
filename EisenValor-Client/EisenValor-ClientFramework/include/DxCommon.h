@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafxClientFramework.h"
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <dxcapi.h>
@@ -12,10 +11,20 @@
 #include <DirectXCollision.h>
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxcompiler.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dxgi.lib")
 
 namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;
 using Microsoft::WRL::ComPtr;
+
+#include "SimpleMath.h"
+using Vec2 = DirectX::SimpleMath::Vector2;
+using Vec3 = DirectX::SimpleMath::Vector3;
+using Vec4 = DirectX::SimpleMath::Vector4;
+using Matrix = DirectX::SimpleMath::Matrix;
+using Quaternion = DirectX::SimpleMath::Quaternion;
+using Ray = DirectX::SimpleMath::Ray;
 
 enum class EQueueType : uint8_t
 {
@@ -120,18 +129,38 @@ struct ConstantBuffer
 #define ThrowIfFailed(x)                                                                                               \
 	do                                                                                                                 \
 	{                                                                                                                  \
-		HRESULT hr = (x);                                                                                              \
-		if (FAILED(hr))                                                                                                \
+		HRESULT _hr = (x);                                                                                             \
+		if (FAILED(_hr))                                                                                               \
 		{                                                                                                              \
 			const char* file = __FILE__;                                                                               \
 			int			line = __LINE__;                                                                               \
 			const char* expr = #x;                                                                                     \
                                                                                                                        \
 			DEBUG_LOG_FMT(                                                                                             \
-				"HRESULT FAILED: {}({}): {} (Code: {:#x})\n", file, line, expr, static_cast<unsigned int>(hr)          \
+				"HRESULT FAILED: {}({}): {} (Code: {:#x})\n", file, line, expr, static_cast<unsigned int>(_hr)         \
 			);                                                                                                         \
 			__debugbreak();                                                                                            \
-			throw HrException(hr, file, line, expr);                                                                   \
+			throw HrException(_hr, file, line, expr);                                                                  \
 		}                                                                                                              \
 	} while (false)
+
+#define ThrowWin32Error(err, exprText)                                                                                 \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		const DWORD _e = (err);                                                                                        \
+		DEBUG_LOG_FMT("[Win32][ERROR] {} failed. GetLastError={} (0x{:08X})\n", exprText, _e, (uint32_t)_e);           \
+		__debugbreak();                                                                                                \
+		throw HrException(HRESULT_FROM_WIN32(_e), __FILE__, __LINE__, exprText);                                       \
+	} while (false)
+
+#define ThrowIfWin32False(x)                                                                                           \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		if (!(x))                                                                                                      \
+		{                                                                                                              \
+			const DWORD _e = ::GetLastError();                                                                         \
+			ThrowWin32Error(_e, #x);                                                                                   \
+		}                                                                                                              \
+	} while (false)
+
 #endif
