@@ -263,7 +263,7 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, playerID, attackDir));
 
 	}
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_OBJECT_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -272,7 +272,7 @@ namespace ServerPackets {
 
 		const FB_STRUCTS::PosInfo fbPosInfo{ pos, rot };
 
-		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_RESPAWN_OBJECT_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_RESPAWN_OBJECT_PACKET, id, &fbPosInfo, maxHp, currentHP, maxStamina, currentStamina));
+		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_RESPAWN_GENERAL_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_RESPAWN_GENERAL_PACKET, id, &fbPosInfo, maxHp, currentHP, maxStamina, currentStamina, stanceType));
 
 	}
 #pragma endregion

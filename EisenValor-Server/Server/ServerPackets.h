@@ -64,7 +64,7 @@ namespace ServerPackets {
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_PLAYER_STANCE_PACKET(const uint32 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_CAMERA_TARGET_PACKET(const uint32 targetID);
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint32 playerID, const uint8 attackDir);
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_OBJECT_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina);
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);
 #pragma endregion
 
 	
