@@ -449,7 +449,8 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type()](GameObject* playerObj)
+		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(),  maxHP = recvPkt.max_hp(),
+		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
@@ -480,17 +481,17 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			// VitalUI (HP/Stamina/Team)
 			scene->CreateComponentWithInit<HealthComponent>(
 				playerObjHandle,
-				[](HealthComponent* health) {
-					health->SetMaxHealth(1000);
-					health->SetHealth(1000);
+				[maxHP, currentHP](HealthComponent* health) {
+					health->SetMaxHealth(maxHP);
+					health->SetHealth(currentHP);
 				}
 			);
 
 			scene->CreateComponentWithInit<StaminaComponent>(
 				playerObjHandle,
-				[](StaminaComponent* stamina) {
-					stamina->SetMaxStamina(100);
-					stamina->SetStamina(100);
+				[maxStamina, currentStamina](StaminaComponent* stamina) {
+					stamina->SetMaxStamina(maxStamina);
+					stamina->SetStamina(currentStamina);
 				}
 			);
 
@@ -786,7 +787,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_VITAL_PACKET& recvPkt
 )
 {
-	// 오브젝트의 체력 정보 업데이트
+	// 오브젝트의 체력 정보 업데이트f
 	// TODO: 해당 오브젝트의 HealthComponent를 찾아서 바이탈 정보 업데이트하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
@@ -803,6 +804,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 		}
 
 		const uint32 stamina = recvPkt.current_stamina();
+
+
+		std::cout << std::format("ID:{}, hp:{}, stanmina:{}", objID, hp, stamina);
+
 		auto		 staminaComp = obj->GetComponent<StaminaComponent>();
 		if (staminaComp)
 		{
