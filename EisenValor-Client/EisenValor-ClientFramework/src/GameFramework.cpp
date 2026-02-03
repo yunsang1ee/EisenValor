@@ -199,6 +199,21 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		GLOBAL(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
 		break;
 
+	case WM_ENTERSIZEMOVE:
+		SetTimer(m_hWnd, 1, 1, NULL);
+		break;
+
+	case WM_EXITSIZEMOVE:
+		KillTimer(m_hWnd, 1);
+		break;
+
+	case WM_TIMER:
+		if (wParam == 1)
+		{
+			Run();
+		}
+		break;
+
 	case WM_DESTROY:
 		DEBUG_LOG_FMT("Window destroyed. Initiating application shutdown.\n");
 		PostQuitMessage(0);
