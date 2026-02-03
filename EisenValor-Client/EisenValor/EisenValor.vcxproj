@@ -156,6 +156,11 @@
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
+    <PostBuildEvent>
+      <Command>robocopy "$(ProjectDir)Resource" "$(TargetDir)Resource" /MIR /FFT /R:2 /W:1 /NP /NFL /NDL /NJH /NJS /MT:8
+if %ERRORLEVEL% GEQ 8 exit /b %ERRORLEVEL%
+exit /b 0</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -184,6 +189,11 @@
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
+    <PostBuildEvent>
+      <Command>robocopy "$(ProjectDir)Resource" "$(TargetDir)Resource" /MIR /FFT /R:2 /W:1 /NP /NFL /NDL /NJH /NJS /MT:8
+if %ERRORLEVEL% GEQ 8 exit /b %ERRORLEVEL%
+exit /b 0</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Component\HealthComponent.h" />

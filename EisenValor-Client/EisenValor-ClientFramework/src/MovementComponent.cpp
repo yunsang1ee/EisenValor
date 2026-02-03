@@ -114,7 +114,7 @@ void MovementComponent::OnUpdate(float deltaTime)
 		XMVECTOR dampedVelocity = XMVectorScale(velocityVec, dampingFactor);
 		XMStoreFloat3(&m_velocity, dampedVelocity);
 		float speed = XMVectorGetX(XMVector3Length(dampedVelocity));
-		if (speed < epsilon::kEpsilon4)
+		if (speed < Epsilon::kEpsilon4)
 		{
 			m_velocity = XMFLOAT3{0.0f, 0.0f, 0.0f};
 		}

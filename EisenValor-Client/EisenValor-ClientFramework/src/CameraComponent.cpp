@@ -123,7 +123,7 @@ void CameraComponent::UpdateFovAnimation(float deltaTime)
 		return;
 	}
 
-	if (fabsf(m_perspective.fov - m_perspective.targetFov) < epsilon::kEpsilon4)
+	if (fabsf(m_perspective.fov - m_perspective.targetFov) < Epsilon::kEpsilon4)
 	{
 		m_perspective.fov = m_perspective.targetFov;
 		return;
@@ -209,11 +209,11 @@ void CameraComponent::LookAt(const XMFLOAT3& target, std::optional<DX::XMFLOAT3>
 	XMVECTOR forward = XMVector3Normalize(XMVectorSubtract(targetVec, eyeVec));
 
 	float dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, worldUp)));
-	if (dotFU > (1.0f - epsilon::kEpsilon4))
+	if (dotFU > (1.0f - Epsilon::kEpsilon4))
 	{
 		worldUp = XMVectorSet(0.f, 0.f, 1.f, 0.f);
 		dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, worldUp)));
-		if (dotFU > (1.0f - epsilon::kEpsilon4))
+		if (dotFU > (1.0f - Epsilon::kEpsilon4))
 		{
 			worldUp = XMVectorSet(1.f, 0.f, 0.f, 0.f);
 		}
@@ -391,12 +391,12 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 		XMVECTOR upVec = XMLoadFloat3(&upVector);
 
 		float dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, upVec)));
-		if (dotFU > (1.0f - epsilon::kEpsilon4))
+		if (dotFU > (1.0f - Epsilon::kEpsilon4))
 		{
 			// Degenerate Case
 			upVec = XMVectorSet(0.f, 0.f, 1.f, 0.f);
 			dotFU = fabsf(XMVectorGetX(XMVector3Dot(forward, upVec)));
-			if (dotFU > (1.0f - epsilon::kEpsilon4))
+			if (dotFU > (1.0f - Epsilon::kEpsilon4))
 			{
 				upVec = XMVectorSet(1.f, 0.f, 0.f, 0.f);
 			}

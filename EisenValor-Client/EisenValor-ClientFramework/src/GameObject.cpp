@@ -6,7 +6,7 @@
 
 GameObject::GameObject(Scene* scene, HandleOf<Transform> trHd, std::string name)
 	: m_scene(scene), m_transform(trHd), m_name(std::move(name)), m_handle(Handle::Invalid()),
-	  m_serverID(kInvalidServerID)
+	  m_serverID(Variable::kInvalidServerID)
 {
 }
 
