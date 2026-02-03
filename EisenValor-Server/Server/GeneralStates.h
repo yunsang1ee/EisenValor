@@ -12,6 +12,7 @@ namespace Server {
 			 DECLARE_CREATE_FUNC(GeneralIdleState)
 		private:
 			float m_accDTForStaminaRecovery;
+			float m_accDTForExhaustedRecovery;
 
 		private:
 			GeneralIdleState();

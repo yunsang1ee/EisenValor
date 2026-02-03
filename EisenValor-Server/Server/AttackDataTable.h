@@ -12,7 +12,7 @@ struct AttackData {
 	uint16 extraDamage;
 	float attackRadius;
 	float attackDegree;
-	uint16 stamina;
+	uint16 staminaCost;
 };
 
 namespace Server {

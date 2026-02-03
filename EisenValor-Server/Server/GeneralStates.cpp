@@ -14,7 +14,7 @@ static Server::Contents::General* GetGeneral(Server::Contents::FSM* fsm)
 //		  GENERAL_IDLE_STATE
 // ==================================
 Server::Contents::GeneralIdleState::GeneralIdleState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), m_accDTForStaminaRecovery{}
+	:State(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), m_accDTForStaminaRecovery{}, m_accDTForExhaustedRecovery{}
 {
 }
 
@@ -32,26 +32,73 @@ void Server::Contents::GeneralIdleState::Exit(const float dt)
 {
 	std::cout << std::format("ID:{}, GeneralIdleState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
 	m_accDTForStaminaRecovery = 0.f;
+	m_accDTForExhaustedRecovery = 0.f;
 }
 
 void Server::Contents::GeneralIdleState::Update(const float dt)
 {
-	m_accDTForStaminaRecovery += dt;
+	//m_accDTForStaminaRecovery += dt;
+	//auto const owner{ GetGeneral(GetFSM()) };
+	//if(owner->HasSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED)) {
+	//	m_accDTForExhaustedRecovery += dt;
+	//	m_accDTForStaminaRecovery = 0.f;
+	//	if(m_accDTForExhaustedRecovery >= 3.f) {
+	//		owner->RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
+	//		m_accDTForExhaustedRecovery = 0.f;
+	//		m_accDTForStaminaRecovery = 0.f;
+	//	}
+	//	return;
+	//}
+	//else {
+	//	if(m_accDTForStaminaRecovery >= 1.f) {
+	//		m_accDTForStaminaRecovery = 0.f;
+	//		const auto& statInfo{ owner->GetStatInfo() };
+	//		if(statInfo.currentStamina < statInfo.maxStamina) {
+	//			owner->IncStamina(statInfo.staminaRecoveryPerSec);
+	//			auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina()) };
+	//			owner->GetGameWorld()->Broadcast(std::move(pb));
+	//		}
+	//	}
+	//}
 
-	auto const owner{ GetGeneral(GetFSM()) };
+	auto const owner = GetGeneral(GetFSM());
+	const auto& statInfo = owner->GetStatInfo();
+
+	// 1. 탈진 상태 관리
 	if(owner->HasSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED)) {
-		m_accDTForStaminaRecovery = 0.f;
-		return;
+		m_accDTForExhaustedRecovery += dt;
+		m_accDTForStaminaRecovery = 0.f; // 탈진 중에는 회복 타이머 정지
+
+		if(m_accDTForExhaustedRecovery >= 3.f) {
+			owner->RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
+			m_accDTForExhaustedRecovery = 0.f;
+			// 탈진이 풀렸으므로 즉시 일반 로직으로 이어지게 return 생략 가능
+		}
+		else {
+			return; // 아직 탈진 중이면 여기서 종료
+		}
 	}
 
-	if(m_accDTForStaminaRecovery >= std::chrono::duration<float>(std::chrono::seconds(1)).count()) {
-		m_accDTForStaminaRecovery = 0.f;
+	// 2. 스태미나 회복 체크 (최대치라면 연산/브로드캐스트 생략)
+	if(statInfo.currentStamina < statInfo.maxStamina) {
+		m_accDTForStaminaRecovery += dt;
 
-		const auto& statInfo{ owner->GetStatInfo() };
-		if(statInfo.currentStamina < statInfo.maxStamina) {
+		if(m_accDTForStaminaRecovery >= 3.f) {
+			// 오차 보정: 1.0을 빼서 남은 시간을 다음 턴으로 이월
+			m_accDTForStaminaRecovery = 0.F;
+
 			owner->IncStamina(statInfo.staminaRecoveryPerSec);
-			std::cout << std::format("General:{}, Stamina = {}", owner->GetID(), owner->GetStatInfo().currentStamina) << std::endl;
+
+			std::cout << "IncStamina!" << std::endl;
+
+			// 패킷 생성 및 브로드캐스트
+			auto pb = ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina());
+			owner->GetGameWorld()->Broadcast(std::move(pb));
 		}
+	}
+	else {
+		// 이미 가득 찼다면 타이머 초기화 (나중에 다시 닳았을 때 1초 뒤부터 회복되도록)
+		m_accDTForStaminaRecovery = 0.f;
 	}
 }
 
@@ -147,12 +194,16 @@ void Server::Contents::GeneralAttackState::Exit(const float dt)
 void Server::Contents::GeneralAttackState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	const auto& atkInfo{ owner->GetAttackInfo() };			
+	const auto& atkInfo{ owner->GetAttackInfo() };
 	auto const world{ owner->GetGameWorld() };
 	if(auto const target = owner->GetTarget()) {
 		if(owner->IsTargetInAttackRange(target)) {
 			if(target->OnDamaged(owner, dt)) {
-				owner->DecStamina(atkInfo.atkData->stamina);
+				{
+					auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina()) };
+					owner->GetGameWorld()->Broadcast(std::move(pb));
+				}
+
 				if(atkInfo.atkData->id == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
 					const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
 					if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType || FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
@@ -164,8 +215,8 @@ void Server::Contents::GeneralAttackState::Update(const float dt)
 			}
 
 		}
-	}			
-	
+	}
+
 	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
 }

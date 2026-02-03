@@ -27,7 +27,8 @@ namespace Server {
 		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
 		using Bots = std::unordered_map<uint32, std::shared_ptr<Bot>>;
 
-		using GameObjects = std::map<uint32, std::unique_ptr<Server::Contents::GameObject, GameObjectDeleter>>;
+		// using GameObjects = std::map<uint32, std::unique_ptr<Server::Contents::GameObject, GameObjectDeleter>>;
+		using GameObjects = std::map<uint32, std::unique_ptr<Server::Contents::GameObject>>;
 
 		class GameWorld : public ServerEngine::TaskQueue {
 		private:
@@ -39,7 +40,8 @@ namespace Server {
 			
 			// PENDING
 			std::queue<std::function<void()>>										m_pendingEventFpQueue;
-			std::queue<std::unique_ptr<GameObject, GameObjectDeleter>>				m_pendingAddObjectQueue;
+			// std::queue<std::unique_ptr<GameObject, GameObjectDeleter>>				m_pendingAddObjectQueue;
+			std::queue<std::unique_ptr<GameObject>>									m_pendingAddObjectQueue;
 			std::queue<GameObject*>													m_pendingRemoveObjectQueue;
 
 			// UPDATE & TIME
@@ -99,7 +101,8 @@ namespace Server {
 			const auto& GetGameObjectGroups() const noexcept { return m_gameObjectsGroups; }
 
 		private:
-			void AddGameObject(std::unique_ptr<GameObject, GameObjectDeleter> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
+			// void AddGameObject(std::unique_ptr<GameObject, GameObjectDeleter> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
+			void AddGameObject(std::unique_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void RemoveGameObject(GameObject* gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
 			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 

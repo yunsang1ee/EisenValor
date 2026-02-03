@@ -19,10 +19,10 @@ void Server::Contents::Player::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	if(GetStatInfo().currentStamina == 0)
+	/*if(GetStatInfo().currentStamina == 0)
 		AddSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
 	else
-		RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
+		RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);*/
 }
 
 bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float dt)
@@ -90,6 +90,15 @@ void Server::Contents::Player::Respawn()
 	General::Respawn();
 }
 
+void Server::Contents::Player::DecStamina(const uint32 amount)
+{
+	Creature::DecStamina(amount);
+
+	if(GetStamina() == 0) {
+		AddSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
+	}
+}
+
 void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 {
 	auto const world{ GetGameWorld() };
@@ -101,6 +110,11 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 	AttackData* const atkData = MANAGER(AttackDataTable)->GetData(atkType);
 	SetAtkInfo(AttackInfo{ atkData, dir, worldFrame });
+	DecStamina(atkData->staminaCost);
+	{
+		auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), GetHP(), GetStamina()) };
+		GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	}
 
 	const float attackRadius = atkData->attackRadius;
 	const float attackDegree = atkData->attackDegree;

@@ -19,6 +19,8 @@ namespace Server {
 			virtual bool OnDamaged(Creature* const attacker, const float dt) override final;
 			virtual void OnDeath() override final;
 			virtual void Respawn() override final;
+			virtual void	DecStamina(const uint32 amount) override;
+
 			void ReturnToPool() override
 			{
 				std::cout << "Player Return Pool!" << std::endl;
