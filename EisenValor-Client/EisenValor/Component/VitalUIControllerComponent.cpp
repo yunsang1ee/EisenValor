@@ -94,7 +94,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
 
 	DirectX::XMFLOAT3 worldPos = owner->GetTransform().GetWorldPosition();
-	worldPos.y += 2.2f;
+	worldPos.y += 1.2f;
 
 	DirectX::XMVECTOR worldPosVec = DirectX::XMLoadFloat3(&worldPos);
 
