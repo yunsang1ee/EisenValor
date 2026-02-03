@@ -17,16 +17,17 @@
 
 #include "GameWorld.h"
 
-std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+// std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	// auto player = std::make_unique<Server::Contents::Player>(t.teamType);
 	// auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeUnique(t.teamType);
 	// 1. Ç®¿¡¼­ Raw Pointer¸¦ ²¨³¿ (MakeUnique ´ë½Å Pop »ç¿ë)
-	auto* rawPtr = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
+	// auto* rawPtr = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
+	auto rawPtr = std::make_unique<Server::Contents::Player>(t.teamType);
 
 	rawPtr->SetPosInfo(t.posInfo);
 	rawPtr->SetStatInfo(t.stat);
-	rawPtr->SetStamina(0);
 	const auto fsm = rawPtr->AddComponent<Server::Contents::FSM>();
 	
 	auto idleState =  Server::Contents::GeneralIdleState::Create();
@@ -45,7 +46,9 @@ std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter> S
 
 	const auto collider = rawPtr->AddComponent<Server::Contents::OBBCollider>();
 
-	return std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter>(rawPtr);
+	// return std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter>(rawPtr);
+
+	return rawPtr;
 }
 
 std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)

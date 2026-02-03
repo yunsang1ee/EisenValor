@@ -196,11 +196,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_RESPAWN_OBJECT_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_RESPAWN_GENERAL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_RESPAWN_OBJECT_PACKET>(
-			S2C::Handle_SC_RESPAWN_OBJECT_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_RESPAWN_GENERAL_PACKET>(
+			S2C::Handle_SC_RESPAWN_GENERAL_PACKET, socket, buffer, header
 		);
 	};
 

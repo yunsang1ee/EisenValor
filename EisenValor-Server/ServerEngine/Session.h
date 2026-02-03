@@ -116,8 +116,11 @@ namespace ServerEngine {
 			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
 			RIOSendBuffer												m_sendBuffer;		
 			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};	
-			std::chrono::milliseconds									COMMIT_SEND_MS;		
-
+			uint32														m_outstandingSendCount;
+			
+			const std::chrono::milliseconds								m_commitSendMS;		
+			const uint32												m_maxSendRQSize;
+		
 		public:
 			RIOSession();
 			virtual ~RIOSession();

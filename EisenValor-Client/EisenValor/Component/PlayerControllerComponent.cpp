@@ -336,7 +336,7 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), dirH));
 
 		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
-		XMVECTOR offset = XMVectorScale(rightH, 1.0f) + XMVectorSet(0, 1.0f, 0, 0) + XMVectorScale(dirH, -1.5f);
+		XMVECTOR offset = XMVectorScale(rightH, 2.0f) + XMVectorSet(0, 1.2f, 0, 0) + XMVectorScale(dirH, -3.0f);
 
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);

@@ -23,7 +23,7 @@ bool Server::Contents::AttackDataTable::LoadFromCSV(const std::string_view fileP
         if(std::getline(ss, token, ',')) data.extraDamage = std::stoi(token);
         if(std::getline(ss, token, ',')) data.attackRadius = std::stof(token);
         if(std::getline(ss, token, ',')) data.attackDegree = std::stof(token);
-        if(std::getline(ss, token, ',')) data.stamina = std::stoi(token);
+        if(std::getline(ss, token, ',')) data.staminaCost = std::stoi(token);
         
         m_attackDataTable.insert({ data.id, data });
     }

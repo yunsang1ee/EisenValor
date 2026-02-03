@@ -29,9 +29,7 @@ void Server::Contents::Creature::IncHP(const uint32 amount)
 
 void Server::Contents::Creature::DecHP(const uint32 amount)
 {
-	const uint32 hp{ GetHP() - amount };
-	m_statInfo.currentHP = std::max(hp, (uint32)0);
-
+	m_statInfo.currentHP = std::max(static_cast<int32>(GetHP()) - static_cast<int32>(amount), 0);
 	if(m_statInfo.currentHP == 0 && m_alive) {
 		m_alive = false;
 		OnDeath();
@@ -47,7 +45,7 @@ void Server::Contents::Creature::IncStamina(const uint32 amount)
 void Server::Contents::Creature::DecStamina(const uint32 amount)
 {
 	const uint32 stamina{ GetStamina() - amount };
-	m_statInfo.currentStamina = std::max(stamina, (uint32)0);
+	m_statInfo.currentStamina = std::max(static_cast<int32>(GetStamina()) - static_cast<int32>(amount), 0);
 }
 
 void Server::Contents::Creature::IncRespawnTime()
