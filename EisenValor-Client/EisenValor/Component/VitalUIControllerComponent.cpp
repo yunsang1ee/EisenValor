@@ -5,12 +5,14 @@
 #include "TeamComponent.h"
 #include "DxRendererGlobal.h"
 #include "DxSwapChain.h"
+#include "SceneGlobal.h"
 #include <Scene.h>
 #include <GameObject.h>
 #include <Transform.h>
 #include <Packets/Enums_generated.h>
 #include <UI/UITextureGlobal.h>
 #include <algorithm>
+#include <functional>
 
 void VitalUIControllerComponent::OnStart()
 {
@@ -94,7 +96,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
 
 	DirectX::XMFLOAT3 worldPos = owner->GetTransform().GetWorldPosition();
-	worldPos.y += 2.2f;
+	worldPos.y += 1.2f;
 
 	DirectX::XMVECTOR worldPosVec = DirectX::XMLoadFloat3(&worldPos);
 
@@ -213,15 +215,44 @@ void VitalUIControllerComponent::OnDestroy()
 {
 	if (m_rootUI.IsValid())
 	{
-		auto owner = GetGameObject();
-			if (owner)
+		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
+		{
+			auto* trStorage = scene->GetStorage<Transform>();
+
+			// 재귀적 파괴 람다함수 (Bottom-Up)
+			std::function<void(HandleOf<Transform>)> destroyRecursively = 
+				[&](HandleOf<Transform> trHandle)
 			{
-				auto scene = owner->GetScene();
-						if (scene)
-						{
-							scene->DestroyGameObject(m_rootUI);
-						}
+				if (!trStorage) return;
+
+				if (auto* tr = trStorage->Get(trHandle))
+				{
+					// 자식의 자식 파괴
+					// GetChildren() 핸들 사본 반환
+					auto children = tr->GetChildren(); 
+					for (auto& childHandle : children)
+					{
+						destroyRecursively(childHandle);
+					}
+
+					// 본인 파괴
+					scene->DestroyGameObject(tr->GetOwner());
+				}
+			};
+
+			// 1. 모든 자식 파괴
+			if (auto* rootObj = scene->TryGetGameObject(m_rootUI))
+			{
+				auto children = rootObj->GetTransform().GetChildren();
+				for (auto& childTrHandle : children)
+				{
+					destroyRecursively(childTrHandle);
+				}
 			}
+
+			// 2. 루트 오브젝트 파괴
+			scene->DestroyGameObject(m_rootUI);
+		}
 		m_rootUI = HandleOf<GameObject>::Invalid();
 	}
 }
