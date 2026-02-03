@@ -905,7 +905,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
 		{
 			cameraComp->SetLookAtTarget(targetObj->GetHandle());
-			cameraComp->SetEnableLookAtRotation(true); // 락온 시엔 회전 고정
+			cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
 		}
 		else
