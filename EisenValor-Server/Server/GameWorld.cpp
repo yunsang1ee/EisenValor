@@ -267,10 +267,12 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 	player->SetRotation(kinematicInfo.rot);
 	
 	auto fsm{ player->GetComponent<FSM>() };
-	if(fsm)
-		fsm->SetState(playerState);
+	if(fsm) {
+		if(FB_ENUMS::GENERAL_STATE_TYPE_NONE != playerState)
+			fsm->SetState(playerState);
+	}
 
-	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, playerState, etou8(player->GetSubState()));
+	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, fsm->GetCurState()->GetStateType(), etou8(player->GetSubState()));
 	Broadcast(std::move(pb));
 }
 

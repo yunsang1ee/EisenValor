@@ -36,6 +36,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 
 	if(FB_ENUMS::GENERAL_STATE_TYPE_DEFENSE == fsm->GetCurState()->GetStateType()) {
 		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
+		std::cout << "DEFENSE!" << std::endl;
 		return false;
 	}
 
@@ -51,6 +52,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK) {
 			auto const fsm = GetComponent<Server::Contents::FSM>();
 			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEFENSE, dt);
+			std::cout << "DEFENSE!" << std::endl;
 				return false;
 		}
 
@@ -70,10 +72,10 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 			m_stunDelay *= 2;
 		}
 	}
-	std::cout << std::format("ID:{}, OnDamaged!", GetID()) << std::endl;
 	DecHP(damage);
 	auto pb = ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), GetHP(), GetStamina());
 	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 	
 	if(IsAlive())
 		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt);
@@ -124,8 +126,6 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	const float yaw{ GetRotation().y };
 	Vec3 playerDir{ sinf(yaw), 0.f, cosf(yaw) };
 	playerDir.Normalize();
-
-	const float cosHalfAngle{ std::cosf((attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
 
 	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
 		const auto& gameObjectGroups = GetGameWorld()->GetGameObjectGroups();

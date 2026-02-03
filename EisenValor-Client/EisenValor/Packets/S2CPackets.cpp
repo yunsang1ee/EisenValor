@@ -951,8 +951,8 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 	return false;
 }
 
-bool NetBridge::S2C::Handle_SC_RESPAWN_OBJECT_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_OBJECT_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt
 )
 {
 	// TODO: Respawn 되었을 때 받는 패킷

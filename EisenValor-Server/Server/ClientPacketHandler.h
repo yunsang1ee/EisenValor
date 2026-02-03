@@ -142,7 +142,7 @@ enum class PACKET_TYPE : uint16 {
 	CS_RUN_PKT = 10024,
 	CS_ROLL_PKT = 10025,
 
-	SC_RESPAWN_OBJECT_PKT = 10030,
+	SC_RESPAWN_GENERAL_PKT = 10030,
 
 #pragma endregion
 
