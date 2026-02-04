@@ -314,10 +314,10 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 
 		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize())) {
 
-			if(m_outstandingSendCount >= m_maxSendRQSize) {
-				Disconnect("Too many pending sends - Client unresponsive");
-				return;
-			}
+			//if(m_outstandingSendCount >= m_maxSendRQSize) {
+			//	Disconnect("Too many pending sends - Client unresponsive");
+			//	return;
+			//}
 
 			if(DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket())) {
 				deferCount++;

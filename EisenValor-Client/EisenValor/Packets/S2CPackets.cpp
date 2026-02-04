@@ -90,7 +90,7 @@ std::vector<uint32_t> cubeIndices = {
 namespace Sector
 {
 	// 반지름, 각도, 세그먼트, 높이
-	inline std::pair<std::vector<Vertex>, std::vector<uint32_t>> CreateSectorMesh(float radius = 3.0f, float angleDeg = 90.0f, int segments = 20)
+	inline std::pair<std::vector<Vertex>, std::vector<uint32_t>> CreateSectorMesh(float radius = 5.0f, float angleDeg = 90.0f, int segments = 20)
 	{
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
@@ -955,7 +955,7 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;
 	const uint32_t seconds = totalSeconds % 60;
-	// DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
+	DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
 	return true;
 }
 
