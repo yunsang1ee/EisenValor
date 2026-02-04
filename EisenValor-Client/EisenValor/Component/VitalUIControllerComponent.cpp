@@ -1,4 +1,5 @@
 #include "stdafxClient.h"
+#include "InputGlobal.h"
 #include "VitalUIControllerComponent.h"
 #include "HealthComponent.h"
 #include "StaminaComponent.h"
@@ -45,7 +46,16 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	// 1. HP Bar
 	if (auto* health = owner->GetComponent<HealthComponent>()) 
 	{
-		float ratio = static_cast<float>(health->GetHealth()) / health->GetMaxHealth();
+		uint32_t currentHP = health->GetHealth();
+		uint32_t maxHP = health->GetMaxHealth();
+
+		// 디버깅
+		if (GLOBAL(InputGlobal).GetInputDown(VK_F2))
+		{
+			DEBUG_LOG_FMT("[HP Debug] Object ID: {}, HP: {} / {}\n", owner->GetServerID(), currentHP, maxHP);
+		}
+
+		float ratio = static_cast<float>(currentHP) / maxHP;
 		ratio = std::clamp(ratio, 0.0f, 1.0f);
 
 		if (m_hpFill.IsValid())
