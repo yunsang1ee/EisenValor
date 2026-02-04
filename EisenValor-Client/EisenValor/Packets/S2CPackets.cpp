@@ -955,10 +955,46 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt
 )
 {
-	// TODO: Respawn 되었을 때 받는 패킷
-	// TODO: 우선 LOCAL ID인지 확인하고 LOCAL ID면 LOCAL PLAYER에 맞게 처리
-	// TODO: LOCAL ID가 아니라면 해당 ID의 오브젝트 찾아서 패킷 값 대입
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 objID = recvPkt.obj_id();
+	auto obj = scene->FindGameObjectByServerID(objID);
 
+	if (obj)
+	{
+		// 부활
+		obj->SetActive(true);
+
+		// 위치, 회전 업데이트
+		const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+		obj->GetTransform().SetPosition(pos);
+		obj->GetTransform().SetRotation(rot);
+
+		// 바이탈 업데이트
+		if (auto* health = obj->GetComponent<HealthComponent>())
+		{
+			health->SetMaxHealth(recvPkt.max_hp());
+			health->SetHealth(recvPkt.current_hp());
+		}
+		if (auto* stamina = obj->GetComponent<StaminaComponent>())
+		{
+			stamina->SetMaxStamina(recvPkt.max_stamina());
+			stamina->SetStamina(recvPkt.current_stamina());
+		}
+
+		// 스탠스 업데이트
+		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			ui->SetStance(recvPkt.stance_type());
+		}
+		//디버깅
+		DEBUG_LOG_FMT("[SC_RESPAWN_GENERAL_PACKET] Object ID {} has respawned at ({:.1f}, {:.1f}, {:.1f})\n", 
+			objID, pos.x, pos.y, pos.z);
+		
+		return true;
+	}
+
+	DEBUG_LOG_FMT("[SC_RESPAWN_GENERAL_PACKET] Failed to find object ID {}\n", objID);
 	return false;
 }
 
