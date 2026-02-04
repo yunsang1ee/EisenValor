@@ -9,15 +9,17 @@
 #include "MeshComponent.h"
 #include "CameraComponent.h"
 #include "MovementComponent.h"
-#include <Component/PlayerControllerComponent.h>
-#include <Component/HealthComponent.h>
-#include <Component/BattleUIControllerComponent.h>
-#include <Component/TeamComponent.h>
-#include <Component/VitalUIControllerComponent.h>
-#include <Component/StaminaComponent.h>
-#include <RectTransformComponent.h>
-#include <ImageUIComponent.h>
-#include <ButtonUIComponent.h>
+#include "DxSwapChain.h"
+#include "DxRendererGlobal.h"
+#include "Component/PlayerControllerComponent.h"
+#include "Component/HealthComponent.h"
+#include "Component/BattleUIControllerComponent.h"
+#include "Component/TeamComponent.h"
+#include "Component/VitalUIControllerComponent.h"
+#include "Component/StaminaComponent.h"
+#include "RectTransformComponent.h"
+#include "ImageUIComponent.h"
+#include "ButtonUIComponent.h"
 
 
 using namespace NetBridge;
@@ -583,8 +585,11 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					camObj->GetHandle(),
 					[playerTrHandle](CameraComponent* cam)
 					{
+						auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
+						float aspect = static_cast<float>(swapChain->GetWidth()) / swapChain->GetHeight();
+
 						cam->SetAsMainCamera();
-						cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
+						cam->SetPerspective(DX::XM_PI / 3.0f, aspect, 0.1f, 1000.0f);
 						cam->SetLookAtTarget(playerTrHandle);
 						cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 						cam->SetEnableLookAtRotation(false);

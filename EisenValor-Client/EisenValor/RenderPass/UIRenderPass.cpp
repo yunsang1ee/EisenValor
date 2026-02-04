@@ -265,7 +265,10 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	{
 		for (ImageUIComponent& ui : imgStorage->GetList())
 		{
-			renderableUIs.push_back(&ui);
+			if (ui.GetGameObject()->IsActiveInHierarchy())
+			{
+				renderableUIs.push_back(&ui);
+			}
 		}
 	}
 
@@ -275,7 +278,10 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	{
 		for (ButtonUIComponent& ui : btnStorage->GetList())
 		{
-			renderableUIs.push_back(&ui);
+			if (ui.GetGameObject()->IsActiveInHierarchy())
+			{
+				renderableUIs.push_back(&ui);
+			}
 		}
 	}
 

@@ -141,13 +141,15 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 		}
 	}
 
-	DirectX::XMVECTOR screenPosVec = DirectX::XMVector3Project(worldPosVec, 0.0f, 0.0f, screenW, screenH, 0.0f, 1.0f, proj, view, world);
+	DirectX::XMVECTOR screenPosVec = DirectX::XMVector3Project(worldPosVec, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, proj, view, world);
 
 	DirectX::XMFLOAT3 screenPos;
 	DirectX::XMStoreFloat3(&screenPos, screenPosVec);
 
-	// 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
-	if (screenPos.z < 0.0f || screenPos.z > 1.0f)
+	// 카메라 뒤에 있거나 화면 가시 영역을 벗어난 경우 처리
+	if (screenPos.x < 0.0f || screenPos.x > 1.0f || 
+		screenPos.y < 0.05f || screenPos.y > 1.0f || 
+		screenPos.z < 0.0f || screenPos.z > 1.0f)
 	{
 		ToggleUI(false);
 	}
@@ -160,9 +162,10 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 			// 수동 스케일링
 			SetChildUIPositions(scale);
 
-			float finalX = screenPos.x - (screenW * 0.5f);
-			float finalY = screenPos.y - (screenH * 0.5f);
+			float finalX = (screenPos.x - 0.5f) * (float)Variable::kDefaultWindowWidth;
+			float finalY = (screenPos.y - 0.5f) * (float)Variable::kDefaultWindowHeight;
 			
+			// 크기 0
 			rect->SetOffsetMin({ finalX, finalY });
 			rect->SetOffsetMax({ finalX, finalY });
 		}
@@ -244,46 +247,12 @@ void VitalUIControllerComponent::OnDestroy()
 	{
 		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
 		{
-			auto* trStorage = scene->GetStorage<Transform>();
-
-			// 재귀적 파괴 람다함수 (Bottom-Up)
-			std::function<void(HandleOf<Transform>)> destroyRecursively = 
-				[&](HandleOf<Transform> trHandle)
-			{
-				if (!trStorage) return;
-
-				if (auto* tr = trStorage->Get(trHandle))
-				{
-					// 자식의 자식 파괴
-					// GetChildren() 핸들 사본 반환
-					auto children = tr->GetChildren(); 
-					for (auto& childHandle : children)
-					{
-						destroyRecursively(childHandle);
-					}
-
-					// 본인 파괴
-					scene->DestroyGameObject(tr->GetOwner());
-				}
-			};
-
-			// 1. 모든 자식 파괴
-			if (auto* rootObj = scene->TryGetGameObject(m_rootUI))
-			{
-				auto children = rootObj->GetTransform().GetChildren();
-				for (auto& childTrHandle : children)
-				{
-					destroyRecursively(childTrHandle);
-				}
-			}
-
-			// 2. 루트 오브젝트 파괴
 			scene->DestroyGameObject(m_rootUI);
 		}
 		m_rootUI = HandleOf<GameObject>::Invalid();
 	}
 	
-	// 관리 목록 초기화 (핸들 무효화)
+	// 관리 목록 초기화
 	m_managedImages.clear();
 }
 
@@ -301,7 +270,10 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 
 	m_rootUI = scene->ReserveGameObject(rootName, std::nullopt,
 		[scene](GameObject* root) {
-			scene->CreateComponentWithInit<RectTransformComponent>(root->GetHandle(), [](auto*) {});
+			scene->CreateComponentWithInit<RectTransformComponent>(root->GetHandle(), [](RectTransformComponent* rect) {
+				rect->SetAnchors({ 0.5f, 0.5f }, { 0.5f, 0.5f });
+				rect->SetPivot({ 0.5f, 0.5f });
+			});
 		}
 	);
 	
