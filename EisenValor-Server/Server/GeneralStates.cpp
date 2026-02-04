@@ -210,7 +210,6 @@ void Server::Contents::GeneralAttackState::Update(const float dt)
 						auto const obj{ static_cast<General*>(target) };
 						auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
 						fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
-						return;
 					}
 				}
 			}
@@ -218,18 +217,6 @@ void Server::Contents::GeneralAttackState::Update(const float dt)
 				std::cout << "Target OnDamaged Fail!" << std::endl;
 			}
 		}
-		else {
-			std::cout << "Target Not in Range!" << std::endl;
-			auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
-			return;
-		}
-	}
-	else {
-		std::cout << "No Target!" << std::endl;
-		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
-		return;
 	}
 
 	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
