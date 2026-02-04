@@ -86,6 +86,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 					if (camComp->IsLookAtRotationEnabled())
 					{
 						UpdateCameraShoulderView(camComp);
+						RotatePlayerToTarget(camComp);
 					}
 				}
 			}
@@ -342,5 +343,53 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMStoreFloat3(&offsetF, offset);
 
 		camComp->SetFollowOffset(offsetF); // 월드 오프셋 적용
+	}
+}
+
+void PlayerControllerComponent::RotatePlayerToTarget(CameraComponent* camComp)
+{
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
+
+	auto* trStorage = scene->GetStorage<Transform>();
+	auto* playerTr = GetGameObject()->GetComponent<Transform>();
+
+	auto lookAtHandle = camComp->GetLookAtTarget();
+	auto* enemyTr = trStorage->Get(lookAtHandle);
+
+	if (playerTr && enemyTr)
+	{
+		XMFLOAT3 pPos = playerTr->GetWorldPosition();
+		XMFLOAT3 ePos = enemyTr->GetWorldPosition();
+
+		// 적 방향 벡터 (수평)
+		float dx = ePos.x - pPos.x;
+		float dz = ePos.z - pPos.z;
+
+		// 거리 체크
+		if (dx * dx + dz * dz < 1e-4f) return;
+
+		// 타겟 방향 Yaw 계산
+		float targetYaw = atan2f(dx, dz);
+
+		// 현재 플레이어의 Yaw 가져오기
+		// forward 벡터
+		XMFLOAT3 fwd = playerTr->GetForward();
+		float currentYaw = atan2f(fwd.x, fwd.z);
+
+		// 각도 최단 경로 보간
+		float diff = targetYaw - currentYaw;
+		while (diff <= -XM_PI) diff += XM_2PI;
+		while (diff > XM_PI)  diff -= XM_2PI;
+
+		// 보간
+		float newYaw = currentYaw + diff * 0.2f;
+
+		// Yaw 회전
+		XMVECTOR newRotQ = XMQuaternionRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), newYaw);
+		
+		XMFLOAT4 newRotQF;
+		XMStoreFloat4(&newRotQF, newRotQ);
+		playerTr->SetRotationQuaternion(newRotQF);
 	}
 }

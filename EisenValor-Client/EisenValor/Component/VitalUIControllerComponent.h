@@ -41,6 +41,9 @@ private:
 	
 	bool m_isPlayer = false;
 
+	// Order 관리용 ImageComponent (핸들 + 기본 Order)
+	std::vector<std::pair<HandleOf<ImageUIComponent>, int32_t>> m_managedImages;
+
 private:
 	// 헬퍼 함수
 	void CreateAndSetupUI();

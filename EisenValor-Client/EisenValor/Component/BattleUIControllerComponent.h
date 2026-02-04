@@ -128,6 +128,10 @@ private:
 	// 리스너 목록
 	std::vector<StanceChangeListener> m_listeners;
 
+	// Depth Sorting
+	std::vector<std::pair<HandleOf<ImageUIComponent>, int32_t>> m_managedImages;
+	std::vector<std::pair<HandleOf<ButtonUIComponent>, int32_t>> m_managedButtons;
+
 private:
 	// 헬퍼 함수 선언
 	void CreateAndSetupUI();
