@@ -168,6 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\CommonInclude.h" />
     <ClInclude Include="include\CommonUtils.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
     <ClInclude Include="include\IComponent.h" />
+    <ClInclude Include="include\ImageUIComponent.h" />
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
     <ClInclude Include="include\IPacketHandler.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkGlobal.h" />
     <ClInclude Include="include\PacketBuffer.h" />
+    <ClInclude Include="include\RectTransformComponent.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderContext.h" />
     <ClInclude Include="include\RenderDataPool.h" />
@@ -219,9 +222,12 @@
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Transform.h" />
+    <ClInclude Include="include\UIComponent.h" />
+    <ClInclude Include="include\UIGlobal.h" />
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\CommonUtils.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
@@ -248,11 +254,13 @@
     <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\IComponent.cpp" />
+    <ClCompile Include="src\ImageUIComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\MeshComponent.cpp" />
     <ClCompile Include="src\MovementComponent.cpp" />
     <ClCompile Include="src\NetworkGlobal.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
+    <ClCompile Include="src\RectTransformComponent.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
     <ClCompile Include="src\DxRendererGlobal.cpp" />
     <ClCompile Include="src\Scene.cpp" />
@@ -263,6 +271,7 @@
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp" />
     <ClCompile Include="src\Transform.cpp" />
+    <ClCompile Include="src\UIGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl" />
@@ -278,6 +287,7 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets" Condition="Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets')" />
     <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets" Condition="Exists('..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -287,5 +297,6 @@
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.DXC.1.8.2505.32\build\native\Microsoft.Direct3D.DXC.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets'))" />
   </Target>
 </Project>

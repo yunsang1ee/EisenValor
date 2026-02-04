@@ -53,15 +53,18 @@ namespace ServerPackets {
 	// ==================
 #pragma region WORLD_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept;
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina) noexcept;
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const PosInfo& transform, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina) noexcept;
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) noexcept;
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const PosInfo& transform, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) noexcept;
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ_PACKET(const uint32 id) noexcept;
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform, const uint8 state, const uint8 subState) noexcept;
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PLAYER_ATTACK_PACKET(const uint32 id, const FB_STRUCTS::GeneralAttackInfo& atkInfo);
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_VITAL_PACKET(const uint32 id, const uint32 hp, const uint32 stamina) noexcept;
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_STATE_PACKET(const uint32 id, const uint8 stateType);
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMANING_GAME_TIME_PACKET(const uint32 remainTime);
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_PLAYER_STANCE_PACKET(const uint32 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_CAMERA_TARGET_PACKET(const uint32 targetID);
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint32 playerID, const uint8 attackDir);
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_OBJECT_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina);
 #pragma endregion
 
 	

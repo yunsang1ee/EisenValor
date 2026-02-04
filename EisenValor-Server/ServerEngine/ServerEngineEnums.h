@@ -1,10 +1,9 @@
 #pragma once
 
-enum class IO_MODEL_TYPE : uint8 {
-	IOCP,
-	RIO,
-
-	END
+enum class IO_CONTEXT_TYPE : uint8 {
+	ACCEPT,
+	RECV,
+	SEND,
 };
 
 enum class SESSION_STATE : uint8 {

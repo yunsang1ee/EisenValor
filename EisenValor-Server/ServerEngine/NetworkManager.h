@@ -7,11 +7,10 @@ namespace ServerEngine {
 	class NetworkManager : public Singleton<NetworkManager> {
 		SINGLETON(NetworkManager)
 	private:
-		IO_MODEL_TYPE			m_ioModelType;
 		std::unique_ptr<IOCore> m_ioCore;
 
 	public:
-		bool Init(const IO_MODEL_TYPE ioModelType, const SessionFactoryFunc func);
+		bool Init(const SessionFactoryFunc func);
 		void Run();
 		void Shutdown();
 

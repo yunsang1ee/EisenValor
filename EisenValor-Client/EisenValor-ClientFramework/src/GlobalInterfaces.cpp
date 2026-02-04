@@ -29,7 +29,7 @@ void Initialize(HWND hwnd)
 	deviceG.Initialize();
 #ifdef _DEBUG
 	debugG.SetupDebugMessages(deviceG.GetDevice());
-	debugG.SetBreakOnSeverity(true, true);
+	debugG.SetBreakOnSeverity(true, false);
 #endif
 	GLOBAL(DxGarbageCollectorGlobal).Initialize();
 	GLOBAL(DxShaderCompilerGlobal).Initialize();

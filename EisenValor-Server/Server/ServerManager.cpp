@@ -22,31 +22,31 @@ BOOL __stdcall ConsoleHandler(DWORD signal)
 
 bool Server::ServerManager::Init()
 {
-	ServerEngine::LogManager::Init();
+	std::wcout.imbue(std::locale("korean"));
 
+	ServerEngine::LogManager::Init();
+	
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
 		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
 		return false;
 	}
 
-	std::wcout.imbue(std::locale("korean"));
-
-	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("Config/config.json")) {
+	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("../Config/config.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("GameData/GameData.json")) {
+	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("../GameData/GameData.json")) {
 		LOG_ERROR("GameDataManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::StatDataTable)->LoadFromCSV("DataTable/StatDataTable.csv")) {
+	if(false == MANAGER(Server::Contents::StatDataTable)->LoadFromCSV("../DataTable/StatDataTable.csv")) {
 		LOG_ERROR("StatDataTable Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("DataTable/AttackDataTable.csv")) {
+	if(false == MANAGER(Server::Contents::AttackDataTable)->LoadFromCSV("../DataTable/AttackDataTable.csv")) {
 		LOG_ERROR("AttackDataTable Load Failed");
 		return false;
 	}
@@ -58,13 +58,7 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
-#ifdef		RIO_SERVER
-	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::RIO };
-#elifdef	IOCP_SERVER
-	const IO_MODEL_TYPE ioModelType{ IO_MODEL_TYPE::IOCP };
-#endif
-
-	if(false == MANAGER(ServerEngine::NetworkManager)->Init(ioModelType, MakeClientSessionFunc)) {
+	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
 		LOG_ERROR("NetworkManager Init Failed");
 		return false;
 	}
@@ -103,10 +97,8 @@ bool Server::ServerManager::Run()
 
 void Server::ServerManager::Shutdown()
 {
-	// MANAGER(ServerEngine::RIOCore)->Shutdown();
 	MANAGER(ServerEngine::NetworkManager)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
 	WSACleanup();
-
 	LOG_SAVE();
 }

@@ -73,6 +73,25 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		input.ToggleMouseLock();
 	}
 
+	// 락온 상태 시 숄더뷰 갱신
+	if (m_cameraObjectHandle.IsValid())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		if (scene)
+		{
+			if (auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle))
+			{
+				if (auto* camComp = camObj->GetComponent<CameraComponent>())
+				{
+					if (camComp->IsLookAtRotationEnabled())
+					{
+						UpdateCameraShoulderView(camComp);
+					}
+				}
+			}
+		}
+	}
+
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
 }
@@ -102,6 +121,29 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	auto& input = GLOBAL(InputGlobal);
 
 	if (!input.IsMouseLocked() || !input.IsWindowFocused())
+	{
+		return;
+	}
+
+	// 카메라의 락온(LookAt Rotation) 활성화 여부 확인
+	bool isLookAtLocked = false;
+	if (m_cameraObjectHandle.IsValid())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		if (scene)
+		{
+			if (auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle))
+			{
+				if (auto* camComp = camObj->GetComponent<CameraComponent>())
+				{
+					isLookAtLocked = camComp->IsLookAtRotationEnabled();
+				}
+			}
+		}
+	}
+
+	// 락온 상태면 마우스 회전 무시
+	if (isLookAtLocked)
 	{
 		return;
 	}
@@ -259,4 +301,46 @@ void PlayerControllerComponent::InitializePitchFromCamera()
 	}
 
 	m_pitch = camComp->GetLookAtRotationOffset().x;
+}
+
+void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camComp)
+{
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
+
+	auto* trStorage = scene->GetStorage<Transform>();
+	auto* playerTr = GetGameObject()->GetComponent<Transform>();
+	
+	auto lookAtHandle = camComp->GetLookAtTarget();
+	auto* enemyTr = trStorage->Get(lookAtHandle);
+
+	if (playerTr && enemyTr)
+	{
+		XMFLOAT3 pPos = playerTr->GetWorldPosition();
+		XMVECTOR playerPos = XMLoadFloat3(&pPos);
+
+		XMFLOAT3 ePos = enemyTr->GetWorldPosition();
+		XMVECTOR enemyPos = XMLoadFloat3(&ePos);
+
+		// 적 방향 계산 (수평)
+		XMVECTOR dirToTarget = XMVectorSubtract(enemyPos, playerPos);
+		XMVECTOR dirH = XMVector3Normalize(XMVectorSetY(dirToTarget, 0.0f));
+		
+		if (XMVector3LengthSq(dirH).m128_f32[0] < 1e-6f) 
+		{
+			XMFLOAT3 fwd = playerTr->GetForward();
+			dirH = XMLoadFloat3(&fwd);
+		}
+
+		// 오른쪽 방향
+		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), dirH));
+
+		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
+		XMVECTOR offset = XMVectorScale(rightH, 1.0f) + XMVectorSet(0, 1.0f, 0, 0) + XMVectorScale(dirH, -1.5f);
+
+		XMFLOAT3 offsetF;
+		XMStoreFloat3(&offsetF, offset);
+
+		camComp->SetFollowOffset(offsetF); // 월드 오프셋 적용
+	}
 }

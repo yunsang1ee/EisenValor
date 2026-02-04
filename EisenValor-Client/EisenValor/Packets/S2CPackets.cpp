@@ -11,6 +11,13 @@
 #include "MovementComponent.h"
 #include <Component/PlayerControllerComponent.h>
 #include <Component/HealthComponent.h>
+#include <Component/BattleUIControllerComponent.h>
+#include <Component/TeamComponent.h>
+#include <Component/VitalUIControllerComponent.h>
+#include <Component/StaminaComponent.h>
+#include <RectTransformComponent.h>
+#include <ImageUIComponent.h>
+#include <ButtonUIComponent.h>
 
 
 using namespace NetBridge;
@@ -108,7 +115,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
 	// TODO: 로비 씬으로 전환
-	
+
 	// 테스트용으로 바로 게임 월드 진입
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
@@ -422,8 +429,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
+
+	// TODO: stanceType 사용하기
+
 	// 로컬 플레이어 오브젝트 생성
-	// TODO: 로컬 플레이어 오브젝트를 게임 씬에 생성하고, 카메라 및 컨트롤러 컴포넌트도 추가하기
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
@@ -440,7 +449,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene](GameObject* playerObj)
+		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
@@ -457,49 +466,93 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					move->SetMoveSpeed(5.0f);
 				}
 			);
-		}
-	);
 
-	scene->ReserveGameObject(
-		"PlayerCamera", std::nullopt,
-		[scene, playerObjHandle](GameObject* camObj)
-		{
-			auto* playerObj = scene->TryGetGameObject(playerObjHandle);
-			auto  playerTrHandle =
-				 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
-			auto& tr = camObj->GetTransform();
-
-			scene->CreateComponentWithInit<CameraComponent>(
-				camObj->GetHandle(),
-				[playerTrHandle](CameraComponent* cam)
-				{
-					cam->SetAsMainCamera();
-					cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
-					cam->SetLookAtTarget(playerTrHandle);
-					cam->SetEnableLookAtRotation(false);
-					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
-					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
-				}
-			);
-
-			scene->CreateComponentWithInit<PlayerControllerComponent>(
+			// BattleUIControllerComponent
+			scene->CreateComponentWithInit<BattleUIControllerComponent>(
 				playerObjHandle,
-				[camObj](PlayerControllerComponent* controller)
+				[stance](BattleUIControllerComponent* ui)
 				{
-					controller->SetCameraHandle(camObj->GetHandle());
-					controller->SetMouseSensitivity(0.1f, 0.1f);
+					ui->SetControlMode(BattleUIControllerComponent::ControlType::Local);
+					ui->InitStance(stance);
 				}
+			);
+
+			// VitalUI (HP/Stamina/Team)
+			scene->CreateComponentWithInit<HealthComponent>(
+				playerObjHandle,
+				[](HealthComponent* health) {
+					health->SetMaxHealth(1000);
+					health->SetHealth(1000);
+				}
+			);
+
+			scene->CreateComponentWithInit<StaminaComponent>(
+				playerObjHandle,
+				[](StaminaComponent* stamina) {
+					stamina->SetMaxStamina(100);
+					stamina->SetStamina(100);
+				}
+			);
+
+			scene->CreateComponentWithInit<TeamComponent>(
+				playerObjHandle,
+				[teamType](TeamComponent* team) {
+					team->SetTeamType(teamType); 
+				}
+			);
+
+			scene->CreateComponentWithInit<VitalUIControllerComponent>(
+				playerObjHandle,
+				[](VitalUIControllerComponent* vital) {}
 			);
 		}
 	);
-	return true;
-}
+
+		scene->ReserveGameObject(
+			"PlayerCamera", std::nullopt,
+			[scene, playerObjHandle](GameObject* camObj)
+			{
+				auto* playerObj = scene->TryGetGameObject(playerObjHandle);
+				auto  playerTrHandle =
+					 playerObj ? playerObj->GetComponentHandle<Transform>() : DenseListHandle<Transform>::Invalid();
+				auto& tr = camObj->GetTransform();
+	
+				scene->CreateComponentWithInit<CameraComponent>(
+					camObj->GetHandle(),
+					[playerTrHandle](CameraComponent* cam)
+					{
+						cam->SetAsMainCamera();
+						cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
+						cam->SetLookAtTarget(playerTrHandle);
+						cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
+						cam->SetEnableLookAtRotation(false);
+						cam->SetSmoothFollow(true, 10.0f, 10.0f);
+						cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
+						cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
+					}
+				);
+	
+				scene->CreateComponentWithInit<PlayerControllerComponent>(
+					playerObjHandle,
+					[camObj](PlayerControllerComponent* controller)
+					{
+						controller->SetCameraHandle(camObj->GetHandle());
+						controller->SetMouseSensitivity(0.1f, 0.1f);
+					}
+				);
+			}
+		);
+	
+		return true;
+	}
 
 bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt)
 {
 	// 원격 플레이어 또는 봇 오브젝트 생성
 	// TODO: 원격 플레이어 또는 봇 오브젝트를 게임 씬에 생성하고, 필요한 컴포넌트도 추가하기
+
+	// TODO: stanceType 사용하기
+
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
@@ -536,7 +589,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(),
-		 currentHP = recvPkt.current_hp()](GameObject* obj)
+		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(), stance = recvPkt.stance_type()](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -578,10 +631,57 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				}
 			);
 
+			// TeamComponent
+			scene->CreateComponentWithInit<TeamComponent>(
+				objHandle,
+				[teamType](TeamComponent* team) {
+					team->SetTeamType(teamType);
+				}
+			);
+
+			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+
+			// StaminaComponent (Player Only)
+			if (isPlayer)
+			{
+				scene->CreateComponentWithInit<StaminaComponent>(
+					objHandle,
+					[maxStamina, currentStamina](StaminaComponent* stamina) {
+						stamina->SetMaxStamina(maxStamina);
+						stamina->SetStamina(currentStamina);
+					}
+				);
+			}
+
+			// VitalUIControllerComponent
+			if (isPlayer || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+			{
+				scene->CreateComponentWithInit<VitalUIControllerComponent>(
+					objHandle,
+					[](VitalUIControllerComponent* vital) {
+						// Init 제거->OnStart에서 자동 판단
+					}
+				);
+			}
+
 			DEBUG_LOG_FMT(
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
 				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
 			);
+
+			// BattleUIControllerComponent 부착
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
+			{
+				scene->CreateComponentWithInit<BattleUIControllerComponent>(
+					objHandle,
+					[stance](BattleUIControllerComponent* ui)
+					{
+						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
+						ui->InitStance(stance);
+						//DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n", static_cast<int>(stance));
+					}
+				);
+			}
 		}
 	);
 
@@ -646,6 +746,42 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	return true;
 }
 
+bool NetBridge::S2C::Handle_SC_PLAYER_ATTACK_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt
+)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 id = recvPkt.obj_id();
+	const uint32 localID = scene->GetLocalID();
+
+	// 서버 Echo 방지 (로컬 플레이어는 이미 입력 시점에 처리)
+	if (id == localID)
+	{
+		return true;
+	}
+
+	const auto attackInfo = recvPkt.attack_info();
+	if (!attackInfo) return false;
+
+	const auto type = attackInfo->attack_type();
+	const auto dir = attackInfo->attack_dir();
+
+	// 1. 공격자 오브젝트 찾기
+	if (auto* obj = scene->FindGameObjectByServerID(id))
+	{
+		// 2. 컴포넌트 가져오기
+		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			// 3. UI 갱신
+			uiController->TriggerAttackRemote(type, dir);
+			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type), static_cast<int>(dir));
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_VITAL_PACKET& recvPkt
 )
@@ -665,9 +801,54 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 		{
 			healthComp->SetHealth(hp);
 		}
+
+		const uint32 stamina = recvPkt.current_stamina();
+		auto		 staminaComp = obj->GetComponent<StaminaComponent>();
+		if (staminaComp)
+		{
+			staminaComp->SetStamina(stamina);
+		}
 	}
 
 	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
+)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 id = recvPkt.obj_id();
+	const auto stance = recvPkt.stance_type();
+
+	//서버 Echo 방지
+	if (id == scene->GetLocalID())
+	{
+		return true;
+	}
+
+	if (auto* obj = scene->FindGameObjectByServerID(id))
+	{
+		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			ui->SetStance(stance);
+			DEBUG_LOG_FMT("[SC_CHANGE_PLAYER_STANCE] ID: {}, Stance: {}\n", id, static_cast<int>(stance));
+		}
+	}
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_UPDATE_STATE_PACKET& recvPkt
+)
+{
+	// TODO: ID로 오브젝트 찾은 다음, 해당 오브젝트의 state Update
+	// 이때 state == DEAD이면 죽음 처리
+	// 플레이어/장수 같은 경우 메모리에서 삭제하지 않고
+	// 나머지 오브젝트들은 메모리에서 삭제
+
+	return false;
 }
 
 bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
@@ -676,7 +857,7 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 {
 	// 게임 남은 시간 정보 수신
 	// TODO: 게임 남은 시간을 화면에 표시하기
-	
+
 	const uint32   remainingTime{recvPkt.remaining_time()};
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;
@@ -690,18 +871,44 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 )
 {
 	// 카메라 타겟 변경
-	// TODO: 카메라 컴포넌트의 타겟을 변경하기
-	// TODO: 카메라 컴포넌트의 타겟을 특정 오브젝트로 변경
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	auto cameraComp = CameraComponent::GetMainCamera();
 
+	if (!cameraComp) return false;
+
 	const uint32 cameraTargetID = recvPkt.camera_target_id();
-	auto		 targetObj = scene->FindGameObjectByServerID(cameraTargetID);
-	cameraComp->SetLookAtTarget(targetObj->GetHandle());
+	
+	if (cameraTargetID == 0)
+	{
+		// 락온 해제 시(적 죽었을 때) 로컬 플레이어로 복구
+		const uint32 localID = scene->GetLocalID();
+		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
+		{
+			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
+			cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+			cameraComp->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f}); // 오프셋 복구
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
+		}
+		else
+		{
+			cameraComp->ClearLookAtTarget();
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
+		}
+	}
+	else
+	{
+		if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
+		{
+			cameraComp->SetLookAtTarget(targetObj->GetHandle());
+			cameraComp->SetEnableLookAtRotation(true); // 락온 시엔 회전 고정
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
+		}
+		else
+		{
+			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Target ID {} not found in scene\n", cameraTargetID);
+		}
+	}
 
-
-	DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] ");
-	DEBUG_LOG_FMT("Camera Target ID: {}\n", cameraTargetID);
 	return true;
 }
 
@@ -709,9 +916,43 @@ bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt
 )
 {
-	// TODO: 플레이어 공격 방향 표시
-	// TODO: 해당 오브젝트의 공격 방향을 UI로 표시하기
+	// 플레이어 공격 방향 표시
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	
+	const uint32 id = recvPkt.player_id();
+	const uint32 localID = scene->GetLocalID();
 
+	// 서버 Echo 방지
+	if (id == localID)
+	{
+		return true;
+	}
+
+	const uint8_t dirRaw = recvPkt.attack_dir();
+	const GENERAL_ATTACK_DIR_TYPE dir = static_cast<GENERAL_ATTACK_DIR_TYPE>(dirRaw);
+
+	// 1. 플레이어 오브젝트 찾기
+	if (auto* playerObj = scene->FindGameObjectByServerID(id))
+	{
+		// 2. 컴포넌트 가져오기
+		if (auto* uiController = playerObj->GetComponent<BattleUIControllerComponent>())
+		{
+			// 3. UI 갱신 (Observer - UI 자동 업데이트)
+			uiController->UpdateUISelection(dir, std::nullopt);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool NetBridge::S2C::Handle_SC_RESPAWN_OBJECT_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_OBJECT_PACKET& recvPkt
+)
+{
+	// TODO: Respawn 되었을 때 받는 패킷
+	// TODO: 우선 LOCAL ID인지 확인하고 LOCAL ID면 LOCAL PLAYER에 맞게 처리
+	// TODO: LOCAL ID가 아니라면 해당 ID의 오브젝트 찾아서 패킷 값 대입
 
 	return false;
 }

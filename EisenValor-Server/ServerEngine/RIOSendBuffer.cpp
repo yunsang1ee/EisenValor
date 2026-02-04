@@ -1,16 +1,17 @@
 #include "pch.h"
-#include "SendBuffer.h"
+#include "RIOSendBuffer.h"
 
-ServerEngine::SendBuffer::SendBuffer()
+#ifdef _USE_RIO
+ServerEngine::RIO::RIOSendBuffer::RIOSendBuffer()
 	:m_sendOffset{0}
 {
 }
 
-ServerEngine::SendBuffer::~SendBuffer()
+ServerEngine::RIO::RIOSendBuffer::~RIOSendBuffer()
 {
 }
 
-bool ServerEngine::SendBuffer::Append(const char* const data, const uint32 size) noexcept
+bool ServerEngine::RIO::RIOSendBuffer::Append(const char* const data, const uint32 size) noexcept
 {
 	if(size > GetFreeSize())
 		return false;
@@ -23,7 +24,7 @@ bool ServerEngine::SendBuffer::Append(const char* const data, const uint32 size)
 	return true;
 }
 
-bool ServerEngine::SendBuffer::moveSendOffset(const uint32 bytesTransferred)
+bool ServerEngine::RIO::RIOSendBuffer::moveSendOffset(const uint32 bytesTransferred)
 {
 	if(bytesTransferred > GetFreeSize())
 		return false;
@@ -33,7 +34,7 @@ bool ServerEngine::SendBuffer::moveSendOffset(const uint32 bytesTransferred)
 	return true;
 }
 
-void ServerEngine::SendBuffer::CleanBuffer() noexcept
+void ServerEngine::RIO::RIOSendBuffer::CleanBuffer() noexcept
 {
 	const uint32 dataSize = GetDataSizeForCurrentPacket();
 
@@ -48,3 +49,4 @@ void ServerEngine::SendBuffer::CleanBuffer() noexcept
 		}
 	}
 }
+#endif

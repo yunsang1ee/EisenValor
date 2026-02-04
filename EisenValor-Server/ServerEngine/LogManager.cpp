@@ -6,13 +6,9 @@ std::mutex ServerEngine::LogManager::s_logMutex;
 
 void ServerEngine::LogManager::Init() noexcept
 {
-#ifdef _DEBUG
-	if(false == std::filesystem::exists("../Debug/LOG"))
-		std::filesystem::create_directory("../Debug/LOG");
-#else
-	if(false == std::filesystem::exists("LOG"))
-		std::filesystem::create_directory("LOG");
-#endif // DEBUG
+	std::string filePath{ "LOG/" };
+	if(false == std::filesystem::exists(filePath))
+		std::filesystem::create_directory(filePath);
 }
 
 void ServerEngine::LogManager::PrintLastError(const std::source_location& loc) noexcept
@@ -31,4 +27,19 @@ void ServerEngine::LogManager::PrintLastError(const std::source_location& loc) n
 		(LPTSTR)&lpMsgBuf, 0, NULL);
 
 	std::wcout << lpMsgBuf;
+}
+
+void ServerEngine::LogManager::Save()
+{
+	const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+	const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);
+
+#ifdef _DEBUG
+	const std::string fileName = std::format("LOG/[DEBUG] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
+#else
+	const std::string fileName = std::format("LOG/[RELEASE] {:%Y-%m-%d %H%M} KST.txt", localTime).c_str();
+#endif // _DEBUG
+
+	std::ofstream ofs{ fileName,  std::ios::out | std::ios::app };
+	ofs << s_oss.str();
 }

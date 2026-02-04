@@ -198,6 +198,9 @@ exit /b 0</Command>
   <ItemGroup>
     <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
+    <ClInclude Include="Component\StaminaComponent.h" />
+    <ClInclude Include="Component\TeamComponent.h" />
+    <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
@@ -208,13 +211,19 @@ exit /b 0</Command>
     <ClInclude Include="Packets\Tables_generated.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
+    <ClInclude Include="Component\BattleUIControllerComponent.h" />
+    <ClInclude Include="UI\UITextureGlobal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\HealthComponent.cpp" />
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
+    <ClCompile Include="Component\StaminaComponent.cpp" />
+    <ClCompile Include="Component\TeamComponent.cpp" />
+    <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -225,6 +234,7 @@ exit /b 0</Command>
     <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\SampleScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -234,6 +244,8 @@ exit /b 0</Command>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Component\BattleUIControllerComponent.cpp" />
+    <ClCompile Include="UI\UITextureGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />
@@ -257,6 +269,8 @@ exit /b 0</Command>
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
     <None Include="Resource\Shader\RaytracingCommon.hlsli" />
+    <None Include="Resource\Shader\UIVertexShader.hlsl" />
+    <None Include="Resource\Shader\UIPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs" />
@@ -267,6 +281,7 @@ exit /b 0</Command>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets" Condition="Exists('..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -274,5 +289,6 @@ exit /b 0</Command>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets'))" />
   </Target>
 </Project>

@@ -22,6 +22,12 @@ mono_crash.*
 [Rr]eleases/
 x64/
 x86/
+
+# Custom Configurations (IOCP/RIO)
+IOCP-*/
+RIO-*/
+# ---------------------
+
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
@@ -362,6 +368,7 @@ FodyWeavers.xsd
 
 /EisenValor-Client/SettingMarkDown
 /EisenValor-Client/EisenValor/Build/ShaderCache
+/.gemini
 
 # Unity Tool Rules (Tools 폴더용)
 # 유니티가 자동 생성하는 폴더들 무시

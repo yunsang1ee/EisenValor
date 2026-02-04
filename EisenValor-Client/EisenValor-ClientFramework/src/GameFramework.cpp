@@ -1,6 +1,5 @@
 #include "stdafxClientFramework.h"
 #include "GameFramework.h"
-
 #include "GlobalInterfaces.h"
 #include "DxDebugGlobal.h"
 #include "SceneGlobal.h"
@@ -9,7 +8,6 @@
 #include "DxSwapChain.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
-
 
 #define SERVER
 
@@ -181,6 +179,10 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, FALSE);
 		break;
 
+	case WM_MBUTTONDOWN:
+		GLOBAL(InputGlobal).OnInputState(VK_MBUTTON, FALSE, FALSE);
+		break;
+
 	case WM_LBUTTONUP:
 		GLOBAL(InputGlobal).OnInputState(VK_LBUTTON, FALSE, TRUE);
 		break;
@@ -189,8 +191,27 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		GLOBAL(InputGlobal).OnInputState(VK_RBUTTON, FALSE, TRUE);
 		break;
 
+	case WM_MBUTTONUP:
+		GLOBAL(InputGlobal).OnInputState(VK_MBUTTON, FALSE, TRUE);
+		break;
+
 	case WM_MOUSEWHEEL:
 		GLOBAL(InputGlobal).OnWheelScroll(GET_WHEEL_DELTA_WPARAM(wParam));
+		break;
+
+	case WM_ENTERSIZEMOVE:
+		SetTimer(m_hWnd, 1, 1, NULL);
+		break;
+
+	case WM_EXITSIZEMOVE:
+		KillTimer(m_hWnd, 1);
+		break;
+
+	case WM_TIMER:
+		if (wParam == 1)
+		{
+			Run();
+		}
 		break;
 
 	case WM_DESTROY:

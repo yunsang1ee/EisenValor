@@ -7,6 +7,15 @@ class DxFrameResource;
 class DxSwapChain;
 class IRenderPass;
 
+// 우선순위 배정
+enum class RenderPassPriority : int32_t
+{
+	High = 0,
+	World = 1000,
+	PostProcess = 2000,
+	UI = 3000
+};
+
 class DxRendererGlobal : public Singleton<DxRendererGlobal>
 {
 private:
@@ -19,7 +28,12 @@ public:
 	void Initialize() override;
 	void Release() override;
 
-	void		 AddRenderPass(const std::string& name, std::unique_ptr<IRenderPass> pass);
+	void AddRenderPass(
+		const std::string&			 name,
+		std::unique_ptr<IRenderPass> pass,
+		RenderPassPriority			 priority = RenderPassPriority::World
+	);
+
 	void		 RemoveRenderPass(const std::string& name);
 	IRenderPass* GetRenderPass(const std::string& name) const;
 
@@ -50,6 +64,9 @@ private:
 	{
 		std::string					 name;
 		std::unique_ptr<IRenderPass> pass;
+		RenderPassPriority			 priority; 
 	};
 	std::vector<RenderPassEntry> m_renderPasses;
+	// 더티 플래그
+	bool m_renderPassesDirty = false;
 };

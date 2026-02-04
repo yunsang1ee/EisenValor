@@ -1,6 +1,7 @@
 #pragma once
 #include "Singleton.h"
 #include <vector>
+#include <bitset>
 
 inline constexpr size_t kMaxInputCode = 256;
 
@@ -107,6 +108,41 @@ public:
 		return {m_MouseState.deltaX, m_MouseState.deltaY};
 	}
 
+	// 소비 상태 마킹 및 확인
+	[[nodiscard]] inline bool IsConsumed(InputCode code) const noexcept
+	{
+		if (code >= kMaxInputCode)
+		{
+			return false;
+		}
+		return m_consumedState[code];
+	}
+
+	inline void SetConsumed(InputCode code) noexcept
+	{
+		if (code >= kMaxInputCode)
+		{
+			DEBUG_LOG_FMT("[InputGlobal] Invalid InputCode in SetConsumed: {}\n", code);
+			return;
+		}
+		m_consumedState[code] = true;
+	}
+
+	[[nodiscard]] inline bool GetUnConsumedInput(InputCode code) const noexcept
+	{
+		return GetInput(code) && !IsConsumed(code);
+	}
+
+	[[nodiscard]] inline bool GetUnConsumedInputDown(InputCode code) const noexcept
+	{
+		return GetInputDown(code) && !IsConsumed(code);
+	}
+
+	[[nodiscard]] inline bool GetUnConsumedInputUp(InputCode code) const noexcept
+	{
+		return GetInputUp(code) && !IsConsumed(code);
+	}
+
 private:
 	void UpdateMouseLock();
 
@@ -126,6 +162,8 @@ private:
 	HWND m_hwnd = nullptr;
 	bool m_mouseLocked = false;
 	bool m_isWindowFocused = true;
+	// 소비 상태 저장 배열
+	std::bitset<kMaxInputCode> m_consumedState;
 	int	 m_centerX = 0;
 	int	 m_centerY = 0;
 };

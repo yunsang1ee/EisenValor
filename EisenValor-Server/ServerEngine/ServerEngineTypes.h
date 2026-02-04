@@ -14,7 +14,21 @@ namespace ServerEngine {
 	class Session;
 	class Task;
 	class TaskQueue;
+
+	namespace RIO {
+		class RIOSession;
+	}
+
+	namespace IOCP {
+		class IOCPSession;
+	}
 }
 
-using SessionFactoryFunc = std::function<std::shared_ptr<class ServerEngine::Session>()>;
+#ifdef  _USE_RIO
+using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
+#endif
+
+#ifdef	_USE_IOCP
+using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::IOCP::IOCPSession>()>;
+#endif
 

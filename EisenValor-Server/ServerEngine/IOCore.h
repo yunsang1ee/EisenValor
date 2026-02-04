@@ -2,18 +2,27 @@
 
 namespace ServerEngine {
 	class IOCore {
+	protected:
+		SOCKET									m_listenSocket;		
+		SOCKADDR_IN								m_serverAddress;	
+		uint16									m_workerThreadCount;	
+		SessionFactoryFunc						m_sessionFactoryFunc;
+	
 	public:
-		IOCore()=default;
+		IOCore();
 		virtual ~IOCore()=default;
 
 	public:
-		virtual bool Init(const SessionFactoryFunc func) abstract;
-		virtual bool StartAccept() abstract;
+		virtual bool Init(const SessionFactoryFunc func);
+		virtual bool StartAccept();
 		virtual void Run() abstract;
 		virtual void Shutdown() abstract;
 
 	protected:
-		void DistributeReservedTask();
-		void FlushTaskQueue();
+		SOCKET	CreateSocket(const DWORD flags);
+		void	DistributeReservedTask();
+		void	FlushTaskQueue();
+		int		GetPeerName(const SOCKET clientSocket, sockaddr* name, int* nameLen);
+
 	};
 }

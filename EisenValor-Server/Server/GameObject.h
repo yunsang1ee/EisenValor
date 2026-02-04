@@ -39,7 +39,7 @@ namespace Server {
 			PosInfo									m_posInfo;
 			Vec3									m_scale;
 
-			bool									m_isCreature{ false };
+			bool									m_isCreature;
 		
 		public:
 			GameObject() = default;
@@ -114,9 +114,6 @@ namespace Server {
 				m_scripts.emplace_back(std::move(script));
 				return s;
 			}
-
-
-
 
 		public:
 			void SetID(const uint32 id) noexcept { m_id = id; }

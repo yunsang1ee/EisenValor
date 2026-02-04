@@ -1,4 +1,5 @@
 #pragma once
+
 #define WIN32_LEAN_AND_MEAN
 
 #define NOMINMAX
@@ -11,7 +12,7 @@ friend class Singleton;
 
 #define MANAGER(classname) (classname::GetInstance())
 
-#define RIO_EXT_FUNC_TB static_cast<ServerEngine::RIOCore*>(MANAGER(ServerEngine::NetworkManager)->GetIOCore())->GetRioExtFuncTB()
+#define RIO_EXT_FUNC_TB static_cast<ServerEngine::RIO::RIOCore*>(MANAGER(ServerEngine::NetworkManager)->GetIOCore())->GetRioExtFuncTB()
 
 #define TBB_PREVIEW_MEMORY_POOL 1
 
