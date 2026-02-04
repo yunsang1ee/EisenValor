@@ -114,6 +114,23 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 		scale = std::clamp(scale, kMinScale, kMaxScale);
 	}
 
+	// Depth Sorting
+	// Max 200m 가정 정밀도 100
+	int32_t depthOffset = static_cast<int32_t>((200.0f - std::min(distance, 200.0f)) * 100.0f);
+	if (depthOffset < 0) depthOffset = 0;
+
+	auto* imgStorage = scene->GetStorage<ImageUIComponent>();
+	if (imgStorage)
+	{
+		for (const auto& pair : m_managedImages)
+		{
+			if (auto* img = imgStorage->Get(pair.first))
+			{
+				img->SetOrder(pair.second + depthOffset);
+			}
+		}
+	}
+
 	DirectX::XMVECTOR screenPosVec = DirectX::XMVector3Project(worldPosVec, 0.0f, 0.0f, screenW, screenH, 0.0f, 1.0f, proj, view, world);
 
 	DirectX::XMFLOAT3 screenPos;
@@ -255,6 +272,9 @@ void VitalUIControllerComponent::OnDestroy()
 		}
 		m_rootUI = HandleOf<GameObject>::Invalid();
 	}
+	
+	// 관리 목록 초기화 (핸들 무효화)
+	m_managedImages.clear();
 }
 
 void VitalUIControllerComponent::CreateAndSetupUI()
@@ -290,6 +310,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 
 		m_flagIcon = scene->CreateComponentWithInit<ImageUIComponent>(flagHandle, [this, &texGlobal](ImageUIComponent* img) {
 			img->SetOrder(12);
+			// 관리 목록 등록
+			m_managedImages.push_back({img->GetHandle(), 12});
+
 			// TeamComponent
 			auto teamComp = GetGameObject()->GetComponent<TeamComponent>();
 			FB_ENUMS::TEAM_TYPE team = teamComp ? teamComp->GetTeamType() : FB_ENUMS::TEAM_TYPE_OFFENSE;
@@ -314,8 +337,10 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			rect->SetAnchors({ 0.0f, 0.5f }, { 0.0f, 0.5f });
 		});
 
-		scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [&texGlobal](ImageUIComponent* img) {
+		scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, &texGlobal](ImageUIComponent* img) {
 			img->SetOrder(11);
+			// 관리 목록 등록 (Back)
+			m_managedImages.push_back({img->GetHandle(), 11});
 			img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\HPback.dds"));
 		});
 
@@ -333,8 +358,10 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				rect->SetOffsetMax({ -kPadding, -kPadding });
 			});
 
-			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [&texGlobal](ImageUIComponent* img) {
+			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &texGlobal](ImageUIComponent* img) {
 				img->SetOrder(11);
+				// 관리 목록 등록 (Fill)
+				m_managedImages.push_back({img->GetHandle(), 11});
 				img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\HPfill.dds"));
 				img->SetNormalColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 하얀색
 			});
@@ -356,8 +383,10 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				rect->SetAnchors({ 0.0f, 0.5f }, { 0.0f, 0.5f });
 			});
 
-			scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [&texGlobal](ImageUIComponent* img) {
+			scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, &texGlobal](ImageUIComponent* img) {
 				img->SetOrder(10);
+				// 관리 목록 등록 (Back)
+				m_managedImages.push_back({img->GetHandle(), 10});
 				img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\Staminaback.dds"));
 			});
 
@@ -375,8 +404,10 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 					rect->SetOffsetMax({ -kPadding, -kPadding });
 				});
 
-				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [&texGlobal](ImageUIComponent* img) {
+				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &texGlobal](ImageUIComponent* img) {
 					img->SetOrder(10);
+					// 관리 목록 등록 (Fill)
+					m_managedImages.push_back({img->GetHandle(), 10});
 					img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\Staminafill.dds"));
 					img->SetNormalColor({ 0.0f, 1.0f, 1.0f, 1.0f }); // 민트색
 				});

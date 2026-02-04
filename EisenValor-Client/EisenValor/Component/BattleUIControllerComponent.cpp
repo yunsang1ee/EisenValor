@@ -218,6 +218,10 @@ void BattleUIControllerComponent::OnDestroy()
 			DEBUG_LOG_FMT("[BattleUI Debug] Root destruction queued. Handle: {}\n", m_uiRootObjHandle.GetValue());
 		}
 	}
+
+	// 관리 목록 비우기
+	m_managedImages.clear();
+	m_managedButtons.clear();
 }
 
 float BattleUIControllerComponent::NormalizeAngle(float degrees)
@@ -256,6 +260,9 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 
 			auto imgHandle = scene->CreateComponentWithInit<ImageUIComponent>(childHandle, [this](ImageUIComponent* img) {
 				img->SetOrder(10);
+				// Depth 정렬 목록 등록
+				m_managedImages.push_back({img->GetHandle(), 10});
+
 				img->SetNormalTexture(m_normalTexId);
 				img->SetHoverTexture(m_hoverTexId);
 				img->SetPressedTexture(m_lightAttackTexId); 
@@ -267,8 +274,11 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 				img->SetDisabledColor({0.5f, 0.5f, 0.5f, 0.5f});
 			});
 
-			auto btnHandle = scene->CreateComponentWithInit<ButtonUIComponent>(childHandle, [imgHandle](ButtonUIComponent* btn) {
+			auto btnHandle = scene->CreateComponentWithInit<ButtonUIComponent>(childHandle, [this, imgHandle](ButtonUIComponent* btn) {
 				btn->SetOrder(11);
+				// Depth 정렬 목록 등록
+				m_managedButtons.push_back({btn->GetHandle(), 11});
+
 				btn->SetTargetImage(imgHandle);
 			});
 
@@ -440,7 +450,39 @@ void BattleUIControllerComponent::UpdateUIPosition()
 		scale = std::clamp(scale, kMinScale, kMaxScale);
 	}
 
-	// 자식 요소들(버튼 등)의 상대 위치와 크기 조절
+	// Depth Sorting
+	// Max 200m 가정 정밀도 100
+	int32_t depthOffset = static_cast<int32_t>((200.0f - std::min(distance, 200.0f)) * 100.0f);
+	if (depthOffset < 0) depthOffset = 0;
+
+	auto* imgStorage = scene->GetStorage<ImageUIComponent>();
+	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+
+	// ImageUI 갱신
+	if (imgStorage)
+	{
+		for (const auto& pair : m_managedImages)
+		{
+			if (auto* img = imgStorage->Get(pair.first))
+			{
+				img->SetOrder(pair.second + depthOffset);
+			}
+		}
+	}
+
+	// ButtonUI 갱신
+	if (btnStorage)
+	{
+		for (const auto& pair : m_managedButtons)
+		{
+			if (auto* btn = btnStorage->Get(pair.first))
+			{
+				btn->SetOrder(pair.second + depthOffset);
+			}
+		}
+	}
+
+	// 자식 요소들의 상대 위치와 크기 조절
 	SetChildUIPositions(scale);
 
 	// 월드 좌표를 스크린 좌표로 투영

@@ -29,7 +29,8 @@ private:
 	void RotateYaw(float deltaDegrees);
 	void RotatePitch(float deltaDegrees);
 
-	void UpdateCameraShoulderView(class CameraComponent* camComp); // New
+	void UpdateCameraShoulderView(class CameraComponent* camComp);
+	void RotatePlayerToTarget(class CameraComponent* camComp);
 
 	void FindCameraInChildren(GameObject* parentGameObject);
 	void InitializePitchFromCamera();
