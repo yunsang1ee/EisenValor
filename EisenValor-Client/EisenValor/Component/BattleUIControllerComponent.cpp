@@ -182,44 +182,20 @@ void BattleUIControllerComponent::SetStance(GENERAL_STANCE_TYPE stance)
 
 void BattleUIControllerComponent::OnDestroy()
 {
-	// 1. 호출 확인 로그
-	DEBUG_LOG_FMT("[BattleUI Debug] OnDestroy Called! This: {}\n", (void*)this);
+	if (m_uiRootObjHandle.IsValid())
+	{
+		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
+		{
+			scene->DestroyGameObject(m_uiRootObjHandle);
+		}
+		m_uiRootObjHandle = HandleOf<GameObject>::Invalid();
+	}
 
 	if (m_controlMode == ControlType::Local)
 	{
 		GLOBAL(InputGlobal).SetMouseLocked(false);
 	}
 
-	// 2. 핸들 유효성 확인 및 Bottom-Up 파괴
-	if (m_uiRootObjHandle.IsValid())
-	{
-		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
-		{
-			// 자식을 먼저 제거 요청 (Bottom-Up)
-			if (auto* rootObj = scene->TryGetGameObject(m_uiRootObjHandle))
-			{
-				auto* trStorage = scene->GetStorage<Transform>();
-				if (trStorage)
-				{
-					auto children = rootObj->GetTransform().GetChildren();
-					for (auto& childTrHandle : children)
-					{
-						if (auto* childTr = trStorage->Get(childTrHandle))
-						{
-							scene->DestroyGameObject(childTr->GetOwner());
-						}
-					}
-					DEBUG_LOG_FMT("[BattleUI Debug] Children destruction queued.\n");
-				}
-			}
-
-			// 루트 파괴
-			scene->DestroyGameObject(m_uiRootObjHandle);
-			DEBUG_LOG_FMT("[BattleUI Debug] Root destruction queued. Handle: {}\n", m_uiRootObjHandle.GetValue());
-		}
-	}
-
-	// 관리 목록 비우기
 	m_managedImages.clear();
 	m_managedButtons.clear();
 }
@@ -242,7 +218,10 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 	// 1. UI 루트 오브젝트 생성 (플레이어의 자식이 아님 - 회전 상속 방지)
 	m_uiRootObjHandle = scene->ReserveGameObject("BattleUIRoot_" + std::to_string(owner->GetServerID()), std::nullopt,
 		[scene](GameObject* root) {
-			scene->CreateComponentWithInit<RectTransformComponent>(root->GetHandle(), [](auto*) {});
+			scene->CreateComponentWithInit<RectTransformComponent>(root->GetHandle(), [](RectTransformComponent* rect) {
+				rect->SetAnchors({ 0.5f, 0.5f }, { 0.5f, 0.5f });
+				rect->SetPivot({ 0.5f, 0.5f });
+			});
 		}
 	);
 
@@ -486,7 +465,7 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	SetChildUIPositions(scale);
 
 	// 월드 좌표를 스크린 좌표로 투영
-	DirectX::XMVECTOR screenPosVec = DirectX::XMVector3Project(worldPos, 0.0f, 0.0f, width, height, 0.0f, 1.0f, proj, view, world);
+	DirectX::XMVECTOR screenPosVec = DirectX::XMVector3Project(worldPos, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, proj, view, world);
 	DirectX::XMFLOAT3 screenPos;
 	DirectX::XMStoreFloat3(&screenPos, screenPosVec);
 
@@ -498,8 +477,10 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	//	);
 	//}
 
-	// 카메라 뒤에 있는 경우 처리 (Z-range [0, 1] 체크)
-	if (screenPos.z < 0.0f || screenPos.z > 1.0f)
+	// 카메라 뒤에 있거나 화면 가시 영역을 벗어난 경우 처리
+	if (screenPos.x < 0.0f || screenPos.x > 1.0f || 
+		screenPos.y < 0.0f || screenPos.y > 1.0f || 
+		screenPos.z < 0.0f || screenPos.z > 1.0f)
 	{
 		ToggleUI(false);
 	}
@@ -514,8 +495,8 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	// 루트 UI 오브젝트 위치 갱신
 	if (auto* rootObj = scene->TryGetGameObject(m_uiRootObjHandle)) {
 		if (auto* rectTr = rootObj->GetComponent<RectTransformComponent>()) {
-			float offsetX = screenPos.x - (width * 0.5f);
-			float offsetY = screenPos.y - (height * 0.5f);
+			float offsetX = (screenPos.x - 0.5f) * (float)Variable::kDefaultWindowWidth;
+			float offsetY = (screenPos.y - 0.5f) * (float)Variable::kDefaultWindowHeight;
 			float containerHalfSize = 50.0f * scale; 
 			rectTr->SetOffsetMin({offsetX - containerHalfSize, offsetY - containerHalfSize});
 			rectTr->SetOffsetMax({offsetX + containerHalfSize, offsetY + containerHalfSize});
@@ -801,30 +782,10 @@ void BattleUIControllerComponent::OnGuardDirectionConfirmed(GENERAL_ATTACK_DIR_T
 
 void BattleUIControllerComponent::ToggleUI(bool isActive)
 {
-	GameObject* owner = GetGameObject();
-	if (!owner) return;
-	Scene* scene = owner->GetScene();
-	if (!scene) return;
-
-	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
-	if (!btnStorage) return;
-
-	auto setObjActive = [&](HandleOf<ButtonUIComponent> handle) 
+	if (auto rootObj = GetGameObject()->GetScene()->TryGetGameObject(m_uiRootObjHandle))
 	{
-		if (!handle.IsValid()) return; 
-		
-		if (auto* btn = btnStorage->Get(handle))
-		{
-			if (auto* go = btn->GetGameObject())
-			{
-				go->SetActive(isActive);
-			}
-		}
-	};
-
-	setObjActive(m_upButtonHandle);
-	setObjActive(m_leftButtonHandle);
-	setObjActive(m_rightButtonHandle);
+		rootObj->SetActive(isActive);
+	}
 }
 
 void BattleUIControllerComponent::TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir)

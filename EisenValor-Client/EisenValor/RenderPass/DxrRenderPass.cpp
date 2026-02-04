@@ -277,6 +277,7 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 	objectNameToMaterial["Cube_1"] = Resources::Material::GreenMaterial;
 	objectNameToMaterial["Cube_2"] = Resources::Material::BlueMaterial;
 	objectNameToMaterial["LocalPlayer"] = Resources::Material::EmissiveWhiteMaterial;
+	//objectNameToMaterial["AttackRangeIndicator"] = Resources::Material::RedMaterial;
 
 	uint32_t validMeshCount = 0;
 	for (const auto& mesh : meshStorage->GetList())
