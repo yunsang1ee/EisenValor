@@ -429,7 +429,6 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AttackDataTable.cpp" />
     <ClCompile Include="BehaviorNode.cpp" />
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
@@ -553,7 +552,6 @@
     <ClCompile Include="GameWorld.cpp" />
     <ClCompile Include="General.cpp" />
     <ClCompile Include="GeneralStates.cpp" />
-    <ClCompile Include="IDataTable.cpp" />
     <ClCompile Include="NavAgent.cpp" />
     <ClCompile Include="NavSystem.cpp" />
     <ClCompile Include="Participant.cpp" />
@@ -581,13 +579,11 @@
     <ClCompile Include="Soldier.cpp" />
     <ClCompile Include="SoldierStates.cpp" />
     <ClCompile Include="Spawner.cpp" />
-    <ClCompile Include="StatDataTable.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TargetTraceNode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
-    <ClInclude Include="AttackDataTable.h" />
     <ClInclude Include="BehaviorNode.h" />
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
@@ -622,7 +618,6 @@
     <ClInclude Include="GameWorld.h" />
     <ClInclude Include="General.h" />
     <ClInclude Include="GeneralStates.h" />
-    <ClInclude Include="IDataTable.h" />
     <ClInclude Include="NavAgent.h" />
     <ClInclude Include="NavSystem.h" />
     <ClInclude Include="Participant.h" />
@@ -639,13 +634,10 @@
     <ClInclude Include="Soldier.h" />
     <ClInclude Include="SoldierStates.h" />
     <ClInclude Include="Spawner.h" />
-    <ClInclude Include="StatDataTable.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TargetTraceNode.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Binaries\Server\DataTable\AttackDataTable.csv" />
-    <None Include="..\Binaries\Server\DataTable\StatDataTable.csv" />
     <None Include="..\Binaries\Server\GameData\GameData.json" />
     <None Include="..\Binaries\Server\NavData\solo_navmesh.bin" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />

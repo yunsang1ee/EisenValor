@@ -2,5 +2,92 @@
   "GameWorldData": {
     "GAME_TIME_MIN": 20,
     "GAME_UPDATE_TIME_MS": 100
-  }
+  },
+
+  "SkillData": [
+    {
+      "id": 0,
+      "name": "LIGHT",
+      "pre_delay": 10,
+      "post_delay": 5,
+      "damage": 5,
+      "extra_damage": 2,
+      "attack_radius": 5.0,
+      "attack_degree": 90.0,
+      "stamina_cost": 10
+    },
+    {
+      "id": 1,
+      "name": "HEAVY",
+      "pre_delay": 20,
+      "post_delay": 10,
+      "damage": 24,
+      "extra_damage": 3,
+      "attack_radius": 5.0,
+      "attack_degree": 90.0,
+      "stamina_cost": 10
+    },
+    {
+      "id": 2,
+      "name": "RANGE",
+      "pre_delay": 30,
+      "post_delay": 20,
+      "damage": 36,
+      "extra_damage": 0,
+      "attack_radius": 5.0,
+      "attack_degree": 90.0,
+      "stamina_cost": 20
+    },
+    {
+      "id": 3,
+      "name": "DISARM",
+      "pre_delay": 10,
+      "post_delay": 5,
+      "damage": 5,
+      "extra_damage": 0,
+      "attack_radius": 5.0,
+      "attack_degree": 90.0,
+      "stamina_cost": 10
+    }
+  ],
+  "GameObjectData": [
+    {
+      "obj_type_id": 1,
+      "type": "General",
+      "max_hp": 150,
+      "max_stamina": 1000,
+      "stamina_cost": 10,
+      "extra_stamina": 20,
+      "stun_delay": 5,
+      "stamina_reg": 25,
+      "respawn_time_min": 5,
+      "respawn_time_max": 3,
+      "skills": [ 0, 1, 2, 3 ]
+    },
+    {
+      "obj_type_id": 2,
+      "type": "Player",
+      "max_hp": 150,
+      "max_stamina": 1000,
+      "stamina_cost": 10,
+      "extra_stamina": 20,
+      "stun_delay": 5,
+      "stamina_reg": 25,
+      "respawn_time_min": 5,
+      "respawn_time_max": 3,
+      "skills": [ 0, 1, 2, 3 ]
+    },
+    {
+      "obj_type_id": 3,
+      "type": "Soldier",
+      "max_hp": 100,
+      "max_stamina": 0,
+      "stamina_cost": 0,
+      "extra_stamina": 0,
+      "stun_delay": 0,
+      "stamina_reg": 0,
+      "respawn_time_min": 0,
+      "respawn_time_max": 0
+    }
+  ]
 }

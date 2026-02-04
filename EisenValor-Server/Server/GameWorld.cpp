@@ -19,7 +19,6 @@ Server::Contents::GameWorld::GameWorld()
 	m_accGameTime{}, m_firstUpdate{true}
 {
 	const auto& gameWorldData{ MANAGER(Server::Contents::GameDataManager)->GetGameWorldData() };
-	// GAME_UPDATE_TIME_MS = std::chrono::milliseconds(gameWorldData.gameUpdateTimeMs);
 	GAME_TIME_MIN = std::chrono::minutes(gameWorldData.gameTimeMin);
 	m_remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN);
 }
@@ -48,9 +47,9 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		PlayerTemplate t;
 		t.teamType = user->GetTeamType();
 		t.posInfo = PosInfo{ startPos, rot };
-		t.stat = *MANAGER(Server::Contents::StatDataTable)->GetStatInfoByObjType(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+		
 		auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
-
 		auto session = user->GetSession();
 		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
 		player->SetID(session->GetID());
@@ -322,9 +321,9 @@ void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_p
 	PlayerTemplate t;
 	t.posInfo = PosInfo{ startPos, rot };
 	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	flag = !flag;
-	t.stat = *MANAGER(Server::Contents::StatDataTable)->GetStatInfoByObjType(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-
+	
 	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
 	player->SetID(clientSession->GetID());
 	player->SetSession(clientSession);
@@ -498,7 +497,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 			const PosInfo kInfo{ startPos, rot };
 
 			// 나에게 내 정보 전송
-			const CreatureStatInfo& statInfo{ newPlayer->GetStatInfo() };
+			const CreatureStat& statInfo{ newPlayer->GetStat() };
 			{
 				auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(newPlayer->GetID(), kInfo, newPlayer->GetTeamType(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
 				clientSession->Send(std::move(pb));
@@ -525,7 +524,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 
 					if(obj->IsCreature()) {
 						Creature* creature = static_cast<Creature*>(obj.get());
-						const CreatureStatInfo& statInfo{ creature->GetStatInfo() };
+						const CreatureStat& statInfo{ creature->GetStat() };
 						maxHp = statInfo.maxHP;
 						hp = statInfo.currentHP;
 						maxStamina = statInfo.maxStamina;
@@ -554,7 +553,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 			uint32 stamina{};
 			if(newGameObject->IsCreature()) {
 				Creature* creature = static_cast<Creature*>(newGameObject.get());
-				const CreatureStatInfo& statInfo{ creature->GetStatInfo() };
+				const CreatureStat& statInfo{ creature->GetStat() };
 				maxHp = statInfo.maxHP;
 				hp = statInfo.currentHP;
 				maxStamina = statInfo.maxStamina;

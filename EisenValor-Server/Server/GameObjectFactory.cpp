@@ -24,11 +24,19 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	// auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeUnique(t.teamType);
 	// 1. Ç®¿¡¼­ Raw Pointer¸¦ ²¨³¿ (MakeUnique ´ë½Å Pop »ç¿ë)
 	// auto* rawPtr = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
-	auto rawPtr = std::make_unique<Server::Contents::Player>(t.teamType);
+	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
 
-	rawPtr->SetPosInfo(t.posInfo);
-	rawPtr->SetStatInfo(t.stat);
-	const auto fsm = rawPtr->AddComponent<Server::Contents::FSM>();
+	player->SetPosInfo(t.posInfo);
+	player->SetGameObjectData(t.gameObjectData);
+	player->SetStat(CreatureStat{
+			.currentHP = t.gameObjectData->maxHp,
+			.maxHP = t.gameObjectData->maxHp,
+			.currentStamina = t.gameObjectData->maxStamina,
+			.maxStamina = t.gameObjectData->maxStamina,
+			.respawnTimeSec = t.gameObjectData->respawnTimeSec
+		});
+
+	const auto fsm = player->AddComponent<Server::Contents::FSM>();
 	
 	auto idleState =  Server::Contents::GeneralIdleState::Create();
 	auto preDelayState = Server::Contents::GeneralPreDelayState::Create();
@@ -44,11 +52,11 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	fsm->AddState(std::move(stunState));
 	fsm->AddState(std::move(deadState));
 
-	const auto collider = rawPtr->AddComponent<Server::Contents::OBBCollider>();
+	const auto collider = player->AddComponent<Server::Contents::OBBCollider>();
 
 	// return std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter>(rawPtr);
 
-	return rawPtr;
+	return player;
 }
 
 std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
@@ -57,7 +65,7 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 
 	auto general = std::make_unique<Server::Contents::General>(t.teamType);
 	general->SetPosInfo(t.posInfo);
-	general->SetStatInfo(t.stat);
+	general->SetStat(t.stat);
 	general->SetID(idGen);
 	idGen++;
 
@@ -76,7 +84,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 {
 	auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
 	soldier->SetPosInfo(t.posInfo);
-	soldier->SetStatInfo(t.stat);
+	soldier->SetStat(t.stat);
 	auto fsm{ soldier->AddComponent<Server::Contents::FSM>() };
 	
 	auto idleState = Server::Contents::SoldierIdleState::Create(t.enemyDetectionRange);

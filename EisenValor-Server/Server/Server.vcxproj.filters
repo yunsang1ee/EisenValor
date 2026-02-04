@@ -85,15 +85,6 @@
     <ClCompile Include="Soldier.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Creature\Soldier</Filter>
     </ClCompile>
-    <ClCompile Include="AttackDataTable.cpp">
-      <Filter>02. Contents\DataManager\DataTable\Attack</Filter>
-    </ClCompile>
-    <ClCompile Include="StatDataTable.cpp">
-      <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
-    </ClCompile>
-    <ClCompile Include="IDataTable.cpp">
-      <Filter>02. Contents\DataManager\DataTable</Filter>
-    </ClCompile>
     <ClCompile Include="GeneralStates.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Creature\General\State</Filter>
     </ClCompile>
@@ -104,7 +95,7 @@
       <Filter>02. Contents\GameWorld\GameObject\Component\Collider</Filter>
     </ClCompile>
     <ClCompile Include="GameDataManager.cpp">
-      <Filter>02. Contents\DataManager\GameData</Filter>
+      <Filter>02. Contents\GameData</Filter>
     </ClCompile>
     <ClCompile Include="CollisionDetector.cpp">
       <Filter>02. Contents\GameWorld\CollisionDetector</Filter>
@@ -188,21 +179,6 @@
     </Filter>
     <Filter Include="03. Packets\PacketHandler">
       <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\DataManager">
-      <UniqueIdentifier>{c6998192-3f6a-429d-9614-7181bd78db0c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\DataManager\GameData">
-      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\DataManager\DataTable">
-      <UniqueIdentifier>{783813da-7b5c-45a0-b095-04e46273f8c0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\DataManager\DataTable\Attack">
-      <UniqueIdentifier>{1ae00776-3b57-4fc2-8406-3a5ce48bc55f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\DataManager\DataTable\Stat">
-      <UniqueIdentifier>{f687bb87-3a78-4619-a9fa-41c54b2ca1d5}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\GameLobby">
       <UniqueIdentifier>{8f998587-e972-469f-b22b-bb3809c30d17}</UniqueIdentifier>
@@ -294,6 +270,9 @@
     <Filter Include="03. Packets\ClientPackets">
       <UniqueIdentifier>{6599864d-637d-496b-8f7b-9048f39ad1fb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\GameData">
+      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -383,15 +362,6 @@
     <ClInclude Include="Soldier.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\Soldier</Filter>
     </ClInclude>
-    <ClInclude Include="AttackDataTable.h">
-      <Filter>02. Contents\DataManager\DataTable\Attack</Filter>
-    </ClInclude>
-    <ClInclude Include="StatDataTable.h">
-      <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
-    </ClInclude>
-    <ClInclude Include="IDataTable.h">
-      <Filter>02. Contents\DataManager\DataTable</Filter>
-    </ClInclude>
     <ClInclude Include="GeneralStates.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\General\State</Filter>
     </ClInclude>
@@ -402,7 +372,7 @@
       <Filter>02. Contents\GameWorld\GameObject\Component\Collider</Filter>
     </ClInclude>
     <ClInclude Include="GameDataManager.h">
-      <Filter>02. Contents\DataManager\GameData</Filter>
+      <Filter>02. Contents\GameData</Filter>
     </ClInclude>
     <ClInclude Include="CollisionDetector.h">
       <Filter>02. Contents\GameWorld\CollisionDetector</Filter>
@@ -482,14 +452,8 @@
     <None Include="..\Libraries\inc\SimpleMath.inl">
       <Filter>98. Utils</Filter>
     </None>
-    <None Include="..\Binaries\Server\DataTable\AttackDataTable.csv">
-      <Filter>02. Contents\DataManager\DataTable\Attack</Filter>
-    </None>
     <None Include="..\Binaries\Server\GameData\GameData.json">
-      <Filter>02. Contents\DataManager\GameData</Filter>
-    </None>
-    <None Include="..\Binaries\Server\DataTable\StatDataTable.csv">
-      <Filter>02. Contents\DataManager\DataTable\Stat</Filter>
+      <Filter>02. Contents\GameData</Filter>
     </None>
     <None Include="..\Binaries\Server\NavData\solo_navmesh.bin">
       <Filter>02. Contents\GameWorld\NavSystem\NavMeshData</Filter>
