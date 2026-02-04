@@ -31,7 +31,7 @@ namespace Server {
 			void	IncHP(const uint32 amount);
 			void	DecHP(const uint32 amount);
 			void	IncStamina(const uint32 amount);
-			void	DecStamina(const uint32 amount);
+			virtual void	DecStamina(const uint32 amount);
 			void	IncRespawnTime();
 
 			bool	IsAlive() const noexcept { return m_alive; }

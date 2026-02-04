@@ -258,13 +258,14 @@ table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
 	attack_dir: uint8;
 }
 
-table SC_RESPAWN_OBJECT_PACKET {
+table SC_RESPAWN_GENERAL_PACKET {
 	obj_id : uint32;
 	pos_info: FB_STRUCTS.PosInfo;
 	max_hp: uint;
 	current_hp: uint;
 	max_stamina: uint;
 	current_stamina: uint;
+	stance_type:  FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
 

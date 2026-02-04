@@ -1,4 +1,4 @@
 ﻿obj_type_id,type,max_hp,max_stamina,stamina_consumption,extra_stamina_consumption,stun_delay_frame,stamina_recovery_per_sec,respawn_time_sec,respawn_time_increase_amount
-1,General,150,100,10,20,5,25,3,3
-2,Player,150,100,10,20,5,25,3,3
+1,General,150,1000,10,20,5,25,3,3
+2,Player,150,1000,10,20,5,25,3,3
 3,Soldier,100,0,0,0,0,0,0,0
