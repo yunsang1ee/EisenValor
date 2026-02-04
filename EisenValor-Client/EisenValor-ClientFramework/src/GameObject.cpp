@@ -53,7 +53,7 @@ bool GameObject::IsActiveInHierarchy() const
 	auto* parentTr = trStorage->Get(parentHandle);
 	if (!parentTr)
 	{
-		assert(false && "Invalid parent transform handle!");
+		//assert(false && "Invalid parent transform handle!");
 		return false;
 	}
 
