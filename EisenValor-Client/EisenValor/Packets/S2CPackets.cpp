@@ -960,7 +960,7 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;
 	const uint32_t seconds = totalSeconds % 60;
-	DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
+	//DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
 	return true;
 }
 

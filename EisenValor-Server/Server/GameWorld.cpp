@@ -16,7 +16,7 @@
 Server::Contents::GameWorld::GameWorld()
 	:FIXED_UPDATE_TICK_MS{ 16 }, FIXED_DT_SEC{ 0.016f }, m_lag{}, m_worldFrameCount{},
 	m_remainingTime{ std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN) },
-	m_accGameTime{}, m_firstUpdate{true}
+	m_accGameTime{}, m_firstUpdate{ true }
 {
 	const auto& gameWorldData{ MANAGER(Server::Contents::GameDataManager)->GetGameWorldData() };
 	GAME_TIME_MIN = std::chrono::minutes(gameWorldData.gameTimeMin);
@@ -48,7 +48,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 		t.teamType = user->GetTeamType();
 		t.posInfo = PosInfo{ startPos, rot };
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-		
+
 		auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
 		auto session = user->GetSession();
 		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
@@ -73,9 +73,9 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	}*/
 
 	LOG_INFO("GameRoom ID:{}, GameWorld Start!", roomID);
-	
+
 	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-	
+
 	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
@@ -200,7 +200,7 @@ void Server::Contents::GameWorld::FixedUpdate()
 	m_lastUpdate = now;
 	m_lag += elapsed;
 	m_dt = std::chrono::duration<float>(m_lag).count();
-	
+
 	while(m_lag >= FIXED_UPDATE_TICK_MS) {
 		ProcessEvents();
 
@@ -211,7 +211,7 @@ void Server::Contents::GameWorld::FixedUpdate()
 				if(obj) obj->Update(m_dt);
 			}
 		}
-		
+
 		CheckCollision();
 
 		m_lag -= FIXED_UPDATE_TICK_MS;
@@ -243,8 +243,8 @@ void Server::Contents::GameWorld::ProcessEvents()
 		eve();
 		m_pendingEventFpQueue.pop();
 	}
-	ProcessPendingAddObjectList();
 	ProcessPendingRemoveObjectList();
+	ProcessPendingAddObjectList();
 }
 
 void Server::Contents::GameWorld::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer)
@@ -260,19 +260,26 @@ void Server::Contents::GameWorld::Broadcast(std::shared_ptr<ServerEngine::Packet
 void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+
+	// 플레이어 존재 여부 확인 추가
+	auto it = playerGroup.find(clientSession->GetID());
+	if(it == playerGroup.end() || !it->second) return;
+
 	auto player = static_cast<Player*>(playerGroup[clientSession->GetID()].get());
 
 	player->SetPos(kinematicInfo.pos);
 	player->SetRotation(kinematicInfo.rot);
-	
+
 	auto fsm{ player->GetComponent<FSM>() };
 	if(fsm) {
 		if(FB_ENUMS::GENERAL_STATE_TYPE_NONE != playerState)
 			fsm->SetState(playerState);
 	}
 
-	auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, fsm->GetCurState()->GetStateType(), etou8(player->GetSubState()));
-	Broadcast(std::move(pb));
+	if(fsm) {
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, fsm->GetCurState()->GetStateType(), etou8(player->GetSubState()));
+		Broadcast(std::move(pb));
+	}
 }
 
 void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
@@ -323,7 +330,7 @@ void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_p
 	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	flag = !flag;
-	
+
 	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
 	player->SetID(clientSession->GetID());
 	player->SetSession(clientSession);
@@ -413,21 +420,21 @@ void Server::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJE
 			auto leftCol{ leftObj->GetComponent<Server::Contents::Collider>() };
 			auto rightCol{ rightObj->GetComponent<Server::Contents::Collider>() };
 
-			COLLIDER_ID id{};
+			COLLIDER_ID colID{};
 			if(leftCol->GetID() < rightCol->GetID()) {
-				id.leftID = leftCol->GetID();
-				id.rightID = rightCol->GetID();
+				colID.leftID = leftCol->GetID();
+				colID.rightID = rightCol->GetID();
 			}
 			else {
-				id.leftID = rightCol->GetID(); 
-				id.rightID = leftCol->GetID(); 
+				colID.leftID = rightCol->GetID();
+				colID.rightID = leftCol->GetID();
 			}
 
-			iter = m_mapColInfo.find(id.id);
+			iter = m_mapColInfo.find(colID.id);
 
 			if(m_mapColInfo.end() == iter) {
-				m_mapColInfo.insert(std::make_pair(id.id, false));
-				iter = m_mapColInfo.find(id.id);
+				m_mapColInfo.insert(std::make_pair(colID.id, false));
+				iter = m_mapColInfo.find(colID.id);
 			}
 
 			bool isColliding{ m_collisionDetector.CheckCollision(leftCol, rightCol) };
@@ -454,8 +461,7 @@ void Server::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJE
 
 				}
 			}
-			else
-			{
+			else {
 				if(iter->second) {
 					leftCol->OnCollisionExit(rightCol);
 					rightCol->OnCollisionExit(leftCol);
@@ -474,9 +480,9 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 
 		const uint32 id{ newGameObject->GetID() };
 		const uint8 type{ etou8(newGameObject->GetObjType()) };
-		const uint16 genID = newGameObject->GetID();
 		const Vec3 pos{ newGameObject->GetPos() };
 		const Vec3 rot{ newGameObject->GetRotation() };
+		const PosInfo kInfo{ pos, rot };
 
 		if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == newGameObject->GetObjType()) {
 			auto newPlayer = static_cast<Player*>(newGameObject.get());
@@ -509,72 +515,71 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 				Broadcast(std::move(pb));
 			}
 
-			// 남들 정보 나에게 전송
-			for(const auto& group : m_gameObjectsGroups) {
-				for(const auto& [id, obj] : group) {
-					const uint8 type{ etou8(obj->GetObjType()) };
-					const Vec3 pos{ obj->GetPos() };
-					const Vec3 rot{ obj->GetRotation() };
-					const PosInfo kInfo{ pos, rot };
+				// 남들 정보 나에게 전송
+				for(const auto& group : m_gameObjectsGroups) {
+					for(const auto& [otherID, obj] : group) {
+						if(obj == nullptr) continue;
+						if(otherID == id) continue;
+						if(obj.get()) {
+							const uint8 type{ etou8(obj->GetObjType()) };
+							const Vec3 pos{ obj->GetPos() };
+							const Vec3 rot{ obj->GetRotation() };
+							const PosInfo kInfo{ pos, rot };
 
-					uint32 maxHp{};
-					uint32 hp{};
-					uint32 maxStamina{};
-					uint32 stamina{};
+							uint32 maxHp{};
+							uint32 hp{};
+							uint32 maxStamina{};
+							uint32 stamina{};
 
-					if(obj->IsCreature()) {
-						Creature* creature = static_cast<Creature*>(obj.get());
-						const CreatureStat& statInfo{ creature->GetStat() };
-						maxHp = statInfo.maxHP;
-						hp = statInfo.currentHP;
-						maxStamina = statInfo.maxStamina;
-						stamina = statInfo.currentStamina;
+							if(obj->IsCreature()) {
+								Creature* creature = static_cast<Creature*>(obj.get());
+								const CreatureStat& statInfo{ creature->GetStat() };
+								maxHp = statInfo.maxHP;
+								hp = statInfo.currentHP;
+								maxStamina = statInfo.maxStamina;
+								stamina = statInfo.currentStamina;
+							}
+							FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+							if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+								stanceType = static_cast<Server::Contents::General*>(obj.get())->GetStanceType();
+
+							auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(otherID, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
+							clientSession->Send(std::move(pb));
+						}
 					}
-					FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
-					if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
-						stanceType = static_cast<Server::Contents::General*>(obj.get())->GetStanceType();
-
-					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
-					clientSession->Send(std::move(pb));
 				}
 			}
-		}
-		else {
-			const uint32 id{ newGameObject->GetID() };
-			const uint8 type{ etou8(newGameObject->GetObjType()) };
-			const uint16 genID = newGameObject->GetID();
-			const Vec3 pos{ newGameObject->GetPos() };
-			const Vec3 rot{ newGameObject->GetRotation() };
-			const PosInfo kInfo{ pos, rot };
-
-			uint32 maxHp{};
-			uint32 hp{};
-			uint32 maxStamina{};
-			uint32 stamina{};
-			if(newGameObject->IsCreature()) {
-				Creature* creature = static_cast<Creature*>(newGameObject.get());
-				const CreatureStat& statInfo{ creature->GetStat() };
-				maxHp = statInfo.maxHP;
-				hp = statInfo.currentHP;
-				maxStamina = statInfo.maxStamina;
-				stamina = statInfo.currentStamina;
+			else {
+				uint32 maxHp{};
+				uint32 hp{};
+				uint32 maxStamina{};
+				uint32 stamina{};
+				if(newGameObject->IsCreature()) {
+					Creature* creature = static_cast<Creature*>(newGameObject.get());
+					const CreatureStat& statInfo{ creature->GetStat() };
+					maxHp = statInfo.maxHP;
+					hp = statInfo.currentHP;
+					maxStamina = statInfo.maxStamina;
+					stamina = statInfo.currentStamina;
+				}
+				FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+				if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+					stanceType = static_cast<Server::Contents::General*>(newGameObject.get())->GetStanceType();
+				{
+					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
+					Broadcast(std::move(pb));
+				}
 			}
-			FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
-			if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
-				stanceType = static_cast<Server::Contents::General*>(newGameObject.get())->GetStanceType();
-			auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(genID, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
-			Broadcast(std::move(pb));
+
+			const uint8 index = newGameObject->GetObjType();
+
+			assert(index < FB_ENUMS::GAME_OBJECT_TYPE_END);
+
+			auto& gameObjectMap = m_gameObjectsGroups[index];
+
+			if(gameObjectMap.end() == gameObjectMap.find(id))
+				gameObjectMap.insert(std::make_pair(id, std::move(newGameObject)));
 		}
-
-		const uint8 index = newGameObject->GetObjType();
-
-		assert(index < FB_ENUMS::GAME_OBJECT_TYPE_END);
-
-		auto& gameObjectMap = m_gameObjectsGroups[index];
-
-		if(gameObjectMap.end() == gameObjectMap.find(id))
-			gameObjectMap.insert(std::make_pair(id, std::move(newGameObject)));
-	}
 }
 
 void Server::Contents::GameWorld::ProcessPendingRemoveObjectList()

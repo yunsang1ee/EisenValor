@@ -3,7 +3,7 @@
 
 #ifdef _USE_IOCP
 ServerEngine::IOCP::IOCPRecvBuffer::IOCPRecvBuffer(const int32 bufferSize)
-	:m_bufferSize{bufferSize}
+	:m_bufferSize{ bufferSize }, m_readPos{}, m_writePos{}
 {
 	m_capacity = m_bufferSize * BUFFER_COUNT;
 	m_buffer.resize(m_capacity);
