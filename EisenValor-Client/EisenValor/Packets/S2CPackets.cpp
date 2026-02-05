@@ -17,6 +17,8 @@
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
+#include "Component/FSM/FSMComponent.h"
+#include "Component/FSM/GeneralStates.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
@@ -545,6 +547,14 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			scene->CreateComponentWithInit<VitalUIControllerComponent>(
 				playerObjHandle,
 				[](VitalUIControllerComponent* vital) {}
+			);
+
+			// FSMComponent
+			scene->CreateComponentWithInit<FSMComponent>(
+				playerObjHandle,
+				[](FSMComponent* fsm) {
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, 0.0f);
+				}
 			);
 
 			// 공격 범위 디버깅용
