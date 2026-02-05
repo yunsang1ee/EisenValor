@@ -171,7 +171,7 @@
     <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\CommonInclude.h" />
-    <ClInclude Include="include\Commonutils.h" />
+    <ClInclude Include="include\CommonUtils.h" />
     <ClInclude Include="include\ComponentStorage.h" />
     <ClInclude Include="include\DenseList.h" />
     <ClInclude Include="include\DxBLAS.h" />
@@ -229,7 +229,7 @@
   <ItemGroup>
     <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
-    <ClCompile Include="src\Commonutils.cpp" />
+    <ClCompile Include="src\CommonUtils.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />

@@ -44,8 +44,30 @@ GameFramework* g_Framework = nullptr;
 
 LRESULT CALLBACK WndProc(HWND hWnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
 {
-	if (g_Framework)
-		return g_Framework->OnWindowMessage(hWnd, msg, wParam, lParam);
+	try
+	{
+		if (g_Framework)
+		{
+			return g_Framework->OnWindowMessage(hWnd, msg, wParam, lParam);
+		}
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+	catch (const std::exception& e)
+	{
+		DEBUG_LOG_FMT("[WndProc][ERROR] Exception in message handler: {}\n", e.what());
+
+		if (g_Framework)
+		{
+			// TODO: g_Framework->RequestShutdown();
+		}
+
+		return 0;
+	}
+	catch (...)
+	{
+		DEBUG_LOG_FMT("[WndProc][ERROR] Unknown exception in message handler\n");
+		return 0;
+	}
 }
 
 bool RegisterWindowClass(HINSTANCE hInstance)
@@ -121,53 +143,56 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	MSG	 msg;
 	bool quit = false;
 
-	GameFramework gameFramework;
-	g_Framework = &gameFramework;
-
-	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadStringW(hInstance, IDC_EISENVALOR, szWindowClass, MAX_LOADSTRING);
-
-	if (!RegisterWindowClass(hInstance))
-		return FALSE;
-	if (!CreateAppWindow(hInstance, nCmdShow)) // g_Framework->Initialize(hInstance, hWnd)
-		return FALSE;
-
-	// Timer 초기화
+	try
 	{
-		auto& timer = GLOBAL(TimerGlobal);
-		timer.SetFixedFPS(60);
-		timer.SetTargetFPS(0);
-	}
+		GameFramework gameFramework;
+		g_Framework = &gameFramework;
 
-	// PacketHandler 등록
-	{
-		std::unique_ptr<NetBridge::IPacketHandler> packetHandler = std::make_unique<NetBridge::ServerPacketHandler>();
-		GLOBAL(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
-		std::string id, pw;
-		std::cout << "Input ID(any):";
-		//std::cin >> id;
-		id = "ID";
-		std::cout << "\n";
-		std::cout << "Input PW(any):";
-		//std::cin >> pw;
-		pw = "PW";
+		LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+		LoadStringW(hInstance, IDC_EISENVALOR, szWindowClass, MAX_LOADSTRING);
 
-		auto pb = NetBridge::C2S::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	}
+		if (!RegisterWindowClass(hInstance))
+			return FALSE;
+		if (!CreateAppWindow(hInstance, nCmdShow)) // g_Framework->Initialize(hInstance, hWnd)
+			return FALSE;
 
-	// RenderPass 등록
-	{
-		auto& renderer = GLOBAL(DxRendererGlobal);
-		auto* swapChain = renderer.GetSwapChain();
+		// Timer 초기화
+		{
+			auto& timer = GLOBAL(TimerGlobal);
+			timer.SetFixedFPS(60);
+			timer.SetTargetFPS(0);
+		}
 
-		auto width = swapChain->GetWidth();
-		auto height = swapChain->GetHeight();
+		// PacketHandler 등록
+		{
+			std::unique_ptr<NetBridge::IPacketHandler> packetHandler =
+				std::make_unique<NetBridge::ServerPacketHandler>();
+			GLOBAL(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
+			std::string id, pw;
+			std::cout << "Input ID(any):";
+			// std::cin >> id;
+			id = "ID";
+			std::cout << "\n";
+			std::cout << "Input PW(any):";
+			// std::cin >> pw;
+			pw = "PW";
 
-		// DXR Pass 생성
-		auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
-		auto* outputTexture = dxrPass->GetOutputTexture();
-		renderer.AddRenderPass("DXR", std::move(dxrPass));
+			auto pb = NetBridge::C2S::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		}
+
+		// RenderPass 등록
+		{
+			auto& renderer = GLOBAL(DxRendererGlobal);
+			auto* swapChain = renderer.GetSwapChain();
+
+			auto width = swapChain->GetWidth();
+			auto height = swapChain->GetHeight();
+
+			// DXR Pass 생성
+			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
+			auto* outputTexture = dxrPass->GetOutputTexture();
+			renderer.AddRenderPass("DXR", std::move(dxrPass));
 
 		// CopyToBackBuffer Pass 생성
 		auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
@@ -188,24 +213,52 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		GLOBAL(SceneGlobal).LoadScene("SampleScene");
 	}
 
-	while (not quit)
-	{
-		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-		{ // event
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-			if (msg.message == WM_QUIT)
-			{
-				quit = true;
-				break;
+		while (not quit)
+		{
+			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+			{ // event
+				::TranslateMessage(&msg);
+				::DispatchMessage(&msg);
+				if (msg.message == WM_QUIT)
+				{
+					quit = true;
+					break;
+				}
 			}
+			if (not quit)
+				gameFramework.Run();
 		}
-		if (not quit)
-			gameFramework.Run();
-	}
-	gameFramework.Release();
+		gameFramework.Release();
 #ifdef _DEBUG
-	FreeConsole();
+		FreeConsole();
 #endif
-	return msg.wParam;
+		return msg.wParam;
+	}
+	catch (const HrException& e)
+	{
+		const std::string errorMsg = std::format(
+			"DirectX Error at {}({})\n{}\nError Code: {:#x}", e.GetFile(), e.GetLine(), e.what(),
+			static_cast<uint32_t>(e.GetErrorCode())
+		);
+
+		DEBUG_LOG_FMT("[FATAL][D3D] {}\n", errorMsg);
+
+		MessageBoxA(nullptr, errorMsg.c_str(), "EisenValor - Fatal Error", MB_ICONERROR | MB_OK);
+
+		// NOTE: CreateMiniDump(e);
+
+		return -1;
+	}
+	catch (const std::exception& e)
+	{
+		DEBUG_LOG_FMT("[FATAL][STD] {}\n", e.what());
+		MessageBoxA(nullptr, e.what(), "EisenValor - Fatal Error", MB_ICONERROR | MB_OK);
+		return -1;
+	}
+	catch (...)
+	{
+		DEBUG_LOG_FMT("[FATAL] Unknown exception\n");
+		MessageBoxA(nullptr, "Unknown critical error occurred", "EisenValor - Fatal Error", MB_ICONERROR | MB_OK);
+		return -1;
+	}
 }

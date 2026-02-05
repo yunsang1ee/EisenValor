@@ -44,10 +44,13 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	if (!scene) return;
 
 	// 1. HP Bar
+	bool isAlive = true;
 	if (auto* health = owner->GetComponent<HealthComponent>()) 
 	{
 		uint32_t currentHP = health->GetHealth();
 		uint32_t maxHP = health->GetMaxHealth();
+
+		isAlive = (currentHP > 0);
 
 		// 디버깅
 		if (GLOBAL(InputGlobal).GetInputDown(VK_F2))
@@ -146,8 +149,8 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	DirectX::XMFLOAT3 screenPos;
 	DirectX::XMStoreFloat3(&screenPos, screenPosVec);
 
-	// 카메라 뒤에 있거나 화면 가시 영역을 벗어난 경우 처리
-	if (screenPos.x < 0.0f || screenPos.x > 1.0f || 
+	// 죽음, 카메라 뒤, 화면 영역 벗어남 처리
+	if (!isAlive || screenPos.x < 0.0f || screenPos.x > 1.0f || 
 		screenPos.y < 0.05f || screenPos.y > 1.0f || 
 		screenPos.z < 0.0f || screenPos.z > 1.0f)
 	{

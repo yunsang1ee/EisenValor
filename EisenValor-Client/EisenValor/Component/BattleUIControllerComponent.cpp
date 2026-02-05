@@ -1,5 +1,6 @@
 #include "stdafxClient.h"
 #include "BattleUIControllerComponent.h"
+#include "HealthComponent.h"
 #include "Scene.h"
 #include "SceneGlobal.h"
 #include "GameObject.h"
@@ -62,6 +63,19 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			SetupListener();
 			m_isUIInitialized = true;
 			DEBUG_LOG_FMT("[BattleUI] UI Initialized Deferred. Listener Setup Complete.\n");
+		}
+	}
+
+	GameObject* owner = GetGameObject();
+	if (!owner) return;
+
+	// 죽었으면 UI 숨기기
+	if (auto* health = owner->GetComponent<HealthComponent>())
+	{
+		if (health->GetHealth() <= 0)
+		{
+			ToggleUI(false);
+			return;
 		}
 	}
 
