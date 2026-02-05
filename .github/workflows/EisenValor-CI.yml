@@ -177,7 +177,7 @@ jobs:
         
     - name: Create Deployment Package
       id: create_package
-      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && (startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.create_deploy_link))
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && (startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_deploy_link == 'true'))
       working-directory: ${{ matrix.solution_path }}
       run: |
         Write-Host "=========================================="
@@ -347,7 +347,7 @@ jobs:
         fail_on_unmatched_files: true
 
     - name: Upload Deployment Package (Manual Trigger)
-      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && github.event_name == 'workflow_dispatch' && inputs.create_deploy_link && !startsWith(github.ref, 'refs/tags/')
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && github.event_name == 'workflow_dispatch' && github.event.inputs.create_deploy_link == 'true' && !startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.project }}-${{ matrix.configuration }}-Full-Deployment
