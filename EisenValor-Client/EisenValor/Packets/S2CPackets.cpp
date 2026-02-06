@@ -553,7 +553,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			scene->CreateComponentWithInit<FSMComponent>(
 				playerObjHandle,
 				[](FSMComponent* fsm) {
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, 0.0f);
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
 				}
 			);
 

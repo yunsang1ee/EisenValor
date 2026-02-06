@@ -13,6 +13,9 @@ void StatePool::Initialize()
 
 	// General States 등록
 	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_IDLE] = std::make_unique<GeneralIdleState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_MOVE] = std::make_unique<GeneralMoveState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY] = std::make_unique<GeneralPreDelayState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_ATTACK] = std::make_unique<GeneralAttackState>();
 	// 상태 추가 시 여기에 등록
 }
 

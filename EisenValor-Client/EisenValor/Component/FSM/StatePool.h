@@ -17,10 +17,10 @@ public:
 	explicit State(uint8_t type) : m_type(type) {}
 	virtual ~State() = default;
 
-	// 상태 로직 실행 시 핸들 받음
-	virtual void Enter(HandleOf<FSMComponent> fsmHandle, float dt) = 0;
-	virtual void Update(HandleOf<FSMComponent> fsmHandle, float dt) = 0;
-	virtual void Exit(HandleOf<FSMComponent> fsmHandle, float dt) = 0;
+	// Enter/Exit는 이벤트이므로 dt가 필요 없음
+	virtual void Enter(FSMComponent* fsm) = 0;
+	virtual void Update(FSMComponent* fsm, float dt) = 0;
+	virtual void Exit(FSMComponent* fsm) = 0;
 
 	uint8_t GetStateType() const { return m_type; }
 };
