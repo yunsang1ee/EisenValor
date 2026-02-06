@@ -90,8 +90,7 @@ void ServerEngine::RIO::RIOWorker::DequeueCompletion() noexcept
 bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
 {
 	LOG_INFO("Session Accept!, RioWorker ID ={}", m_id);
-	// auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };
-	auto session{ m_sessionFactoryFunc() };
+	auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };
 	session->SetOwner(this);
 	if(false == session->AcceptCompleted(socket, clientAddr)) return false;
 	m_connectedSession.insert(std::move(session));

@@ -1,6 +1,4 @@
 ﻿#pragma once
-
-#define DEG2RAD 180.f / 3.141592f
 // define ENABLE_LOBBY
 
 #pragma warning(disable: 4819)
@@ -16,8 +14,13 @@
 #include "ServerStructs.h"
 #include "ServerGlobalFunc.h"
 
-#include "AttackDataTable.h"
-#include "StatDataTable.h"
+struct CreatureStat {
+	uint32 currentHP;
+	uint32 maxHP;
+	uint32 currentStamina;
+	uint32 maxStamina;
+	uint32 respawnTimeSec;
+};
 
 #include "ClientPacketHandler.h"
 #include "ServerPackets.h"
@@ -28,14 +31,14 @@
 #include "DetourCommon.h"
 #include "DetourCrowd.h"
 
+#include "GameDataManager.h"
 
 struct AttackInfo {
-	AttackData* atkData;
+	const SkillData*					skillData;
 	FB_ENUMS::GENERAL_ATTACK_DIR_TYPE	dir;
 	uint64								startPreDelay;
 	uint64								startPostDelay;
 };
-
 
 
 namespace ServerEngine {

@@ -57,10 +57,10 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 		}
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
-			damage = attackerAtkInfo.atkData->damage + attackerAtkInfo.atkData->extraDamage;
+			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
 		}
 		else {
-			damage = attackerAtkInfo.atkData->damage;
+			damage = attackerAtkInfo.skillData->damage;
 		}
 	}
 
@@ -110,16 +110,16 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir = atkInfo.attack_dir();
 	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType = atkInfo.attack_type();
 
-	AttackData* const atkData = MANAGER(AttackDataTable)->GetData(atkType);
-	SetAtkInfo(AttackInfo{ atkData, dir, worldFrame });
-	DecStamina(atkData->staminaCost);
+	const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(atkType) };
+	SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
+	DecStamina(skillData->staminaCost);
 	{
 		auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), GetHP(), GetStamina()) };
 		GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 	}
 
-	const float attackRadius = atkData->attackRadius;
-	const float attackDegree = atkData->attackDegree;
+	const float attackRadius = skillData->attackRadius;
+	const float attackDegree = skillData->attackDegree;
 	const float radiusSq = attackRadius * attackRadius;
 
 	const Vec3& playerPos = GetPos();
@@ -137,7 +137,13 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 			if(GetTeamType() == obj->GetTeamType()) continue;
 
-			if(IsTargetInAttackRange(obj)) SetTarget(static_cast<Creature*>(obj));
+			if(IsTargetInAttackRange(obj)) {
+				std::cout << "Handle_CS_PLAYER_ATTACk, Targe in Range!" << std::endl;
+				SetTarget(static_cast<Creature*>(obj));
+			}
+			else {
+				std::cout << "Handle_CS_PLAYER_ATTACk, Targe ##Not## in Range!" << std::endl;
+			}
 		}
 	}
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
@@ -170,7 +176,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
 		const auto world{ GetGameWorld() };
 		if(world) {
 			const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-			if(worldFrame >= atkInfo.startPreDelay + (atkInfo.atkData->preDelayFrame / 2)) {
+			if(worldFrame >= atkInfo.startPreDelay + (atkInfo.skillData->preDelay / 2)) {
 				std::cout << "Fake!" << std::endl;
 			}
 		}

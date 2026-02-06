@@ -71,10 +71,10 @@
       <Filter>95. Managers\TaskQueueManager</Filter>
     </ClInclude>
     <ClInclude Include="Task.h">
-      <Filter>05. TaskQueue\Task</Filter>
+      <Filter>95. Managers\TaskQueueManager\TaskQueue\Task</Filter>
     </ClInclude>
     <ClInclude Include="TaskQueue.h">
-      <Filter>05. TaskQueue</Filter>
+      <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>96. Utils\Timer</Filter>
@@ -148,10 +148,10 @@
       <Filter>95. Managers\TaskQueueManager</Filter>
     </ClCompile>
     <ClCompile Include="Task.cpp">
-      <Filter>05. TaskQueue\Task</Filter>
+      <Filter>95. Managers\TaskQueueManager\TaskQueue\Task</Filter>
     </ClCompile>
     <ClCompile Include="TaskQueue.cpp">
-      <Filter>05. TaskQueue</Filter>
+      <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>96. Utils\Timer</Filter>
@@ -206,14 +206,8 @@
     <Filter Include="96. Utils">
       <UniqueIdentifier>{855f9310-39d4-4a17-a7d6-7ae7c8fe2037}</UniqueIdentifier>
     </Filter>
-    <Filter Include="05. TaskQueue">
-      <UniqueIdentifier>{d5ccbc04-1854-4dbb-8a22-cb8ebcd7be04}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. SessionPool\Session">
       <UniqueIdentifier>{eb31e871-5f7c-4630-b420-fa5a7eee4f00}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="05. TaskQueue\Task">
-      <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
     </Filter>
     <Filter Include="95. Managers\LogManager">
       <UniqueIdentifier>{b18df161-993b-456d-a224-8396640585d1}</UniqueIdentifier>
@@ -281,10 +275,16 @@
     <Filter Include="01. PacketBuffer">
       <UniqueIdentifier>{318a6894-4e25-4f08-9f0d-63bf683b97c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="95. Managers\TaskQueueManager\TaskQueue">
+      <UniqueIdentifier>{d5ccbc04-1854-4dbb-8a22-cb8ebcd7be04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\TaskQueueManager\TaskQueue\Task">
+      <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\Binaries\Server\Config\config.json">
+    <None Include="..\Binaries\Server\Config\ServerEngineConfig.json">
       <Filter>94. Config</Filter>
     </None>
   </ItemGroup>

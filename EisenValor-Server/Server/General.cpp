@@ -18,26 +18,33 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 	if(!target) return false;
 
 	const auto& atkInfo{ GetAttackInfo() };
-	const float radiusSq{ atkInfo.atkData->attackRadius * atkInfo.atkData->attackRadius };
+	const float radiusSq{ atkInfo.skillData->attackRadius * atkInfo.skillData->attackRadius };
 	const Vec3& myPos{ GetPos() };
+
 	const Vec3& myRot{ GetRotation() };
-	Vec3 myDir{ sinf(myRot.y), 0.f, cosf(myRot.y) };
+	const float yawRad = myRot.y * DirectX::XM_PI / 180.f;
+	Vec3 myDir{ sinf(yawRad), 0.f, cosf(yawRad) };
 	myDir.Normalize();
-	const float cosHalfAngle{ std::cosf((atkInfo.atkData->attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
+
+	const float degree{ atkInfo.skillData->attackDegree * 0.5f };
+	const float cosHalfAngle{ std::cosf((degree) * (DirectX::XM_PI / 180.f)) };
 	const Vec3& targetPos{ target->GetPos() };
 	const Vec3 toTargetDir{ targetPos - myPos };
 	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
-	if(distToTargetSq >= radiusSq) return false;
+
+	if(distToTargetSq >= radiusSq) {
+		return false;
+	}
+
 	const float dotValue{ myDir.Dot(toTargetDir) };
 	const float cosHalfAngleSq{ cosHalfAngle * cosHalfAngle };
-	//		// a * b = |a| |b| cos	
-	// cos = a * b / |a| |b|
-	// 공격 판정 -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
-	// dotValue < 0 -> (즉, 플레이어가 바라보는 반대편)인 경우에도, 제곱하면 양수가 된다 -> 뒤쪽 NPC가 공격 맞은것처럼 판정될 수 있음.
-	if(dotValue <= 0) return false;
-	if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq))
-		return true;
 
+	if(dotValue <= 0) {
+		return false;
+	}
+	if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
+		return true;
+	}
 	return false;
 }
 
@@ -52,7 +59,7 @@ void Server::Contents::General::OnDeath()
 
 void Server::Contents::General::Respawn()
 {
-	auto& statInfo{ GetStatInfo() };
+	auto& statInfo{ GetStat() };
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	SetHp(statInfo.maxHP);
@@ -61,6 +68,11 @@ void Server::Contents::General::Respawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
+
+	Vec3 pos{ GetPos() };
+	pos.x += 10.f;
+	pos.z += 10.f;
+	SetPos(pos);
 
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, worldDT);

@@ -25,10 +25,8 @@ void DxTLAS::Initialize(ID3D12Device5* device, uint32_t maxInstances)
 	assert(maxInstances > 0 && "[DxTLAS] maxInstances must be > 0");
 
 	m_maxInstances = maxInstances;
-	
-	DEBUG_LOG_FMT(
-		"[DxTLAS] Initialized with max {} instances\n", maxInstances
-	);
+
+	DEBUG_LOG_FMT("[DxTLAS] Initialized with max {} instances\n", maxInstances);
 }
 
 void DxTLAS::Build(
@@ -61,7 +59,7 @@ void DxTLAS::BuildInternal(
 )
 {
 	assert(device && cmdList && uploadHeap && "[DxTLAS] Invalid parameters");
-	
+
 	if (instances.empty())
 	{
 		return;
@@ -172,6 +170,20 @@ void DxTLAS::BuildInternal(
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 				"TLAS_Result"
 			);
+
+			if (m_srvIndex != ~0u)
+			{
+				D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+				srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+				srvDesc.RaytracingAccelerationStructure.Location = m_tlasBuffer.GetGPUAddress();
+
+				auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
+				descHeap.CreateSRVAt(device, m_srvIndex, nullptr, &srvDesc);
+
+				DEBUG_LOG_FMT("[DxTLAS] TLAS resized, SRV updated (Index={})\n", m_srvIndex);
+			}
 		}
 
 		if (!m_scratchBuffer.IsValid() || m_scratchBuffer.GetSizeInBytes() < prebuildInfo.ScratchDataSizeInBytes)

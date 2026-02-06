@@ -50,6 +50,6 @@ void Server::Contents::Creature::DecStamina(const uint32 amount)
 
 void Server::Contents::Creature::IncRespawnTime()
 {
-	m_statInfo.respawnTimeSec += m_statInfo.respawnTimeIncAmount;
+	m_statInfo.respawnTimeSec += GetGameObjectData()->respawnTimeIncAmount;
 }
 

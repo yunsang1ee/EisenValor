@@ -1,6 +1,8 @@
 #pragma once
 
+
 struct GameObjectDeleter;
+struct GameObjectData;
 #include "GameObject.h"
 
 namespace Server {
@@ -16,7 +18,8 @@ namespace Server {
 		};
 
 		struct CreatureTemplate : public GameObjectTemplate {
-			CreatureStatInfo stat;
+			const GameObjectData*	gameObjectData;
+			CreatureStat			stat;
 		};
 
 		struct GeneralTemplate : public CreatureTemplate {

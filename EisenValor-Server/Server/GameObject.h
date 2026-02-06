@@ -2,6 +2,9 @@
 #include "TaskQueue.h"
 #include "FSM.h"
 #include "Script.h"
+
+struct GameObjectData;
+
 namespace Server {
 	namespace Contents {
 		class GameRoom;
@@ -40,6 +43,7 @@ namespace Server {
 			Vec3									m_scale;
 
 			bool									m_isCreature;
+			const GameObjectData*					m_gameObjectData;
 		
 		public:
 			GameObject() = default;
@@ -124,6 +128,7 @@ namespace Server {
 			void SetRoom(std::weak_ptr<GameRoom> match) noexcept { m_room = match; }
 			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
 			void SetCreature(bool flag) { m_isCreature = flag; }
+			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
 
 			const std::wstring& GetName() const noexcept { return m_name; }
 			uint32 GetID() const noexcept { return m_id; }
@@ -138,6 +143,7 @@ namespace Server {
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
 			bool IsCreature() const noexcept { return m_isCreature; }
 			bool IsDead() { return false; }
+			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 		};
 
 		inline void GameObjectDeleter::operator()(GameObject* obj) const
