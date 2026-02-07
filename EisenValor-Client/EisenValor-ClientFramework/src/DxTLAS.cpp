@@ -10,12 +10,6 @@ using namespace DirectX;
 
 DxTLAS::~DxTLAS()
 {
-	if (m_srvIndex != ~0u)
-	{
-		auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
-		descHeap.FreeImmediate(m_srvIndex);
-	}
-
 	DEBUG_LOG_FMT("[DxTLAS] Destroyed (Instances: {})\n", m_instanceCount);
 }
 
@@ -172,6 +166,15 @@ void DxTLAS::BuildInternal(
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 				"TLAS_Result"
 			);
+
+			if (!m_tlasBuffer.HasSRV())
+			{
+				auto& heap = GLOBAL(DxDescriptorHeapGlobal);
+				m_tlasBuffer.CreateSRVWithAutoRecreate(
+					device, heap, SRVDescription{.type = SRVDescription::Type::TLAS}
+				);
+				DEBUG_LOG_FMT("[DxTLAS] TLAS SRV created with auto-recreate enabled\n");
+			}
 		}
 
 		if (!m_scratchBuffer.IsValid() || m_scratchBuffer.GetSizeInBytes() < prebuildInfo.ScratchDataSizeInBytes)
@@ -203,19 +206,6 @@ void DxTLAS::BuildInternal(
 
 	D3D12_RESOURCE_BARRIER uavBarrier = DxUtils::CreateUAVBarrier(m_tlasBuffer.GetResource());
 	cmdList->ResourceBarrier(1, &uavBarrier);
-
-	if (isFirstBuild && m_srvIndex == ~0u)
-	{
-		auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
-
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.RaytracingAccelerationStructure.Location = m_tlasBuffer.GetGPUAddress();
-
-		m_srvIndex = descHeap.CreateSRV(device, nullptr, &srvDesc);
-	}
 
 	m_isBuilt = true;
 }
