@@ -16,6 +16,10 @@ void StatePool::Initialize()
 	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_MOVE] = std::make_unique<GeneralMoveState>();
 	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY] = std::make_unique<GeneralPreDelayState>();
 	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_ATTACK] = std::make_unique<GeneralAttackState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY] = std::make_unique<GeneralPostDelayState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_DEFENSE] = std::make_unique<GeneralDefenseState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_STUN] = std::make_unique<GeneralStunState>();
+	s_instanceMap[FB_ENUMS::GENERAL_STATE_TYPE_DEAD] = std::make_unique<GeneralDeadState>();
 	// 상태 추가 시 여기에 등록
 }
 

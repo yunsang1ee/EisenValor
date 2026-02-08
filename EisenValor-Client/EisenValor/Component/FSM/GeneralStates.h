@@ -46,3 +46,47 @@ public:
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;
 };
+
+// PostDelay
+class GeneralPostDelayState : public State {
+public:
+	GeneralPostDelayState();
+	virtual ~GeneralPostDelayState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Defense
+class GeneralDefenseState : public State {
+public:
+	GeneralDefenseState();
+	virtual ~GeneralDefenseState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Stun
+class GeneralStunState : public State {
+public:
+	GeneralStunState();
+	virtual ~GeneralStunState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Dead
+class GeneralDeadState : public State {
+public:
+	GeneralDeadState();
+	virtual ~GeneralDeadState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
