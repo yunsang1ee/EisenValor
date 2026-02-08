@@ -6,6 +6,8 @@
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
+#include "Component/FSM/FSMComponent.h"
+#include "Component/FSM/StatePool.h"
 #include "Transform.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
@@ -83,7 +85,7 @@ void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, RectTransformComponent,
-		ImageUIComponent, ButtonUIComponent, TeamComponent, VitalUIControllerComponent, StaminaComponent>();
+		ImageUIComponent, ButtonUIComponent, TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -136,9 +138,6 @@ void SampleScene::CreateSceneObjects()
 			}
 		);
 	}
-
-	// BattleUI와 자식 오브젝트들 생성
-
 	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 8);
 }
 

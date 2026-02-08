@@ -20,7 +20,7 @@ private:
 
 public:
 	void Initialize(std::wstring_view cacheDir = L"Build/ShaderCache/");
-	void Release();
+	void Release() override;
 
 	// 일반 셰이더 컴파일 (VS/PS/CS)
 	ComPtr<IDxcBlob> CompileShaderFromFile(

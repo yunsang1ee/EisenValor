@@ -17,6 +17,8 @@
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
+#include "Component/FSM/FSMComponent.h"
+#include "Component/FSM/GeneralStates.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
@@ -547,6 +549,14 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				[](VitalUIControllerComponent* vital) {}
 			);
 
+			// FSMComponent
+			scene->CreateComponentWithInit<FSMComponent>(
+				playerObjHandle,
+				[](FSMComponent* fsm) {
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+				}
+			);
+
 			// 공격 범위 디버깅용
 			scene->ReserveGameObject(
 				"AttackRangeIndicator", std::nullopt,
@@ -941,12 +951,36 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_STATE_PACKET& recvPkt
 )
 {
-	// TODO: ID로 오브젝트 찾은 다음, 해당 오브젝트의 state Update
-	// 이때 state == DEAD이면 죽음 처리
-	// 플레이어/장수 같은 경우 메모리에서 삭제하지 않고
-	// 나머지 오브젝트들은 메모리에서 삭제
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return false;
 
-	return false;
+	const uint32 objID = recvPkt.obj_id();
+	auto obj = scene->FindGameObjectByServerID(objID);
+	if (!obj)
+	{
+		return false;
+	}
+
+	uint8_t nextState = recvPkt.next_state();
+
+	// FSM 상태 동기화
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		fsm->ChangeState(nextState);
+	}
+
+	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
+	if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+	{
+		if (obj->GetComponent<StaminaComponent>() == nullptr)
+		{
+			// 병사는 즉시 메모리에서 삭제
+			scene->DestroyGameObject(obj->GetHandle());
+		}
+		// 장수(플레이어)는 삭제하지 않음
+	}
+
+	return true;
 }
 
 bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(

@@ -40,8 +40,8 @@ jobs:
             configuration: "Release"
             platform: "x64"
             upload_artifacts: true
-
-          # EisenValor-Server (Debug / Release)
+            
+          # EisenValor-Server (Debug / IOCP-Release / RIO-Release)
           - project: "EisenValor-Server"
             solution_path: "EisenValor-Server"
             solution_file: "EisenValor-Server.sln"
@@ -52,8 +52,15 @@ jobs:
           - project: "EisenValor-Server"
             solution_path: "EisenValor-Server"
             solution_file: "EisenValor-Server.sln"
-            cache_key: "nuget-server"
-            configuration: "Release"
+            cache_key: "nuget-server-iocp"
+            configuration: "IOCP-Release"
+            platform: "x64"
+            upload_artifacts: true
+          - project: "EisenValor-Server"
+            solution_path: "EisenValor-Server"
+            solution_file: "EisenValor-Server.sln"
+            cache_key: "nuget-server-rio"
+            configuration: "RIO-Release"
             platform: "x64"
             upload_artifacts: true
 
@@ -252,9 +259,6 @@ jobs:
         Write-Host "Directory structure:"
         Get-ChildItem -Path $packageDir -Directory | ForEach-Object {
           Write-Host "  - $($_.Name)/"
-          Get-ChildItem -Path $_.FullName -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-            Write-Host "    - $($_.Name)/"
-          }
         }
         
         $resourceFiles = Get-ChildItem -Path "$packageDir/Resource" -Recurse -File -ErrorAction SilentlyContinue

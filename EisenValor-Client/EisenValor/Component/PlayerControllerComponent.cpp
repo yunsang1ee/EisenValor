@@ -5,6 +5,7 @@
 #include "Transform.h"
 #include "SceneGlobal.h"
 #include "Scene.h"
+#include "Component/FSM/FSMComponent.h"
 
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
@@ -113,6 +114,13 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	FB_STRUCTS::Vec3 rotVec{rot.x, rot.y, rot.z};
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
 
+	// FSM에서 현재 상태 가져오기
+	// uint8_t curState = FB_ENUMS::GENERAL_STATE_TYPE_IDLE;
+	/*if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	{
+		curState = fsm->GetCurStateType();
+	}*/
+
 	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::GENERAL_STATE_TYPE_NONE);
 	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
@@ -186,10 +194,34 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	auto& input = GLOBAL(InputGlobal);
 
+	bool isMoving = input.GetInput('W') || input.GetInput('S') || input.GetInput('A') || input.GetInput('D');
+
 	movement->SetInputForward(input.GetInput('W'));
 	movement->SetInputBackward(input.GetInput('S'));
 	movement->SetInputLeft(input.GetInput('A'));
 	movement->SetInputRight(input.GetInput('D'));
+
+	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	{
+		uint8_t curState = fsm->GetCurStateType();
+
+		// 공격 관련 상태인 경우 이동/대기로의 전환 방지
+		bool isAttackCycle = (curState == FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY ||
+							  curState == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK ||
+							  curState == FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY);
+
+		if (!isAttackCycle)
+		{
+			if (isMoving)
+			{
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_MOVE);
+			}
+			else
+			{
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+			}
+		}
+	}
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)

@@ -14,6 +14,7 @@
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 #include "CameraComponent.h"
+#include "Component/FSM/FSMComponent.h"
 #include <algorithm> // for std::clamp
 
 void BattleUIControllerComponent::OnAttach()
@@ -689,6 +690,13 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				FB_STRUCTS::GeneralAttackInfo attackInfo(finalType, m_currentSelectedDir);
 				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				// FSM 상태 전환
+				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+				{
+					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY);
+				}
 
 				// 확정 후 즉시 초기화
 				m_accumulatedDeltaX = 0.0f;

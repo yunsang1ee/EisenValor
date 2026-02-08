@@ -18,6 +18,7 @@
 
 #include "UIGlobal.h"
 #include "UI/UITextureGlobal.h"
+#include "Component/FSM/StatePool.h"
 
 #include "Packets/PacketHandler.h"
 #include "Packets/C2SPackets.h"
@@ -206,6 +207,9 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	// UI 시스템 초기화
 	GLOBAL(UITextureGlobal).Initialize();
 	GLOBAL(UIGlobal).Initialize();
+
+	// FSM StatePool 초기화
+	StatePool::Initialize();
 
 	// Scene 등록
 	{
