@@ -13,15 +13,7 @@
 #include "ServerEnums.h"
 #include "ServerStructs.h"
 #include "ServerGlobalFunc.h"
-
-struct CreatureStat {
-	uint32 currentHP;
-	uint32 maxHP;
-	uint32 currentStamina;
-	uint32 maxStamina;
-	uint32 respawnTimeSec;
-};
-
+#include "GameDataManager.h"
 #include "ClientPacketHandler.h"
 #include "ServerPackets.h"
 #include "GameObjectFactory.h"
@@ -31,14 +23,6 @@ struct CreatureStat {
 #include "DetourCommon.h"
 #include "DetourCrowd.h"
 
-#include "GameDataManager.h"
-
-struct AttackInfo {
-	const SkillData*					skillData;
-	FB_ENUMS::GENERAL_ATTACK_DIR_TYPE	dir;
-	uint64								startPreDelay;
-	uint64								startPostDelay;
-};
 
 
 namespace ServerEngine {
@@ -46,7 +30,6 @@ namespace ServerEngine {
 }
 
 namespace Server {
-
 	namespace Contents {
 		class GameLobby;
 	}

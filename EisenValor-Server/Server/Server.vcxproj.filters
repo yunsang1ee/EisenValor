@@ -198,6 +198,30 @@
     <Filter Include="02. Contents\GameWorld">
       <UniqueIdentifier>{2176b3bb-d56a-43f0-b9f6-c43bb61eef63}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Contents\GameWorld\Factory">
+      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\CollisionDetector">
+      <UniqueIdentifier>{55044845-55da-40aa-ab93-10bc906ce7cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\NavSystem">
+      <UniqueIdentifier>{59a833fa-06a8-40ec-8b95-f70c2eb51f0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\NavSystem\Detour">
+      <UniqueIdentifier>{34e1b0b8-b925-40fc-814b-af3539340589}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\NavSystem\DetourCrowd">
+      <UniqueIdentifier>{4dd3acde-fb2b-48d1-82f8-ddaa85e06a76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\NavSystem\NavMeshData">
+      <UniqueIdentifier>{6c641479-31f8-4405-978a-787b01791411}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\ClientPackets">
+      <UniqueIdentifier>{6599864d-637d-496b-8f7b-9048f39ad1fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameData">
+      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
+    </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject">
       <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
     </Filter>
@@ -248,30 +272,6 @@
     </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Component\Collider">
       <UniqueIdentifier>{a667c614-f8b1-41f3-b089-90afa67bee80}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\Factory">
-      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\CollisionDetector">
-      <UniqueIdentifier>{55044845-55da-40aa-ab93-10bc906ce7cf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\NavSystem">
-      <UniqueIdentifier>{59a833fa-06a8-40ec-8b95-f70c2eb51f0f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\NavSystem\Detour">
-      <UniqueIdentifier>{34e1b0b8-b925-40fc-814b-af3539340589}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\NavSystem\DetourCrowd">
-      <UniqueIdentifier>{4dd3acde-fb2b-48d1-82f8-ddaa85e06a76}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\NavSystem\NavMeshData">
-      <UniqueIdentifier>{6c641479-31f8-4405-978a-787b01791411}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Packets\ClientPackets">
-      <UniqueIdentifier>{6599864d-637d-496b-8f7b-9048f39ad1fb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameData">
-      <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

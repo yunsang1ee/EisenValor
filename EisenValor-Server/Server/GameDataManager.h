@@ -2,9 +2,13 @@
 
 #include "Singleton.hpp"
 
+struct GameRoomData {
+    uint8 maxParticipants;
+};
+
 struct GameWorldData {
-    int32	gameTimeMin;
-    int32	gameUpdateTimeMs;
+    uint32	gameTimeMin;
+    uint32	gameUpdateTimeMs;
 };
 
 struct SkillData {
@@ -30,7 +34,10 @@ struct GameObjectData {
     uint32 staminaRecoveryPerSec;
     uint32 respawnTimeSec;
     uint32 respawnTimeIncAmount;
-    std::vector<int32> skills;
+    float enemyDetectionRange;
+    float enemyCombatRange;
+    uint32 attackCycleTime;
+    std::vector<uint32> skills;
 };
 
 namespace Server {
@@ -38,6 +45,7 @@ namespace Server {
 		class GameDataManager : public Singleton<GameDataManager> {
 			SINGLETON(GameDataManager)
 		private:
+            GameRoomData                                m_gameRoomData;
 			GameWorldData                               m_gameWorldData;
             std::unordered_map<uint8, GameObjectData>   m_gameObjectDataMap;
             std::unordered_map<uint8, SkillData>        m_skillDataMap;
@@ -46,6 +54,7 @@ namespace Server {
 			bool LoadDataFromFile(const std::string_view filePath);
 
 		public:
+            const GameRoomData&     GetGameRoomData() const noexcept { return m_gameRoomData; }
 			const GameWorldData&    GetGameWorldData() const noexcept { return m_gameWorldData; }
             const GameObjectData*   GetGameObjectData(const uint8 objTypeID);
             const SkillData*        GetSkillData(const uint8 skillTypeID);

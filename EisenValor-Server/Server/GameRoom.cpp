@@ -67,7 +67,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	}
 
 	// Room최대 정원을 넘기면 입장 불가
-	if(m_info.currentParticipants >= MAX_PARTICIPANTS) {
+	if(m_info.currentParticipants >= MANAGER(GameDataManager)->GetGameRoomData().maxParticipants) {
 		auto pb{ ServerPackets::Make_SC_JOIN_GAME_ROOM_FAIL_PACKET("MAX PARTICIPANTS") };
 		clientSession->Send(std::move(pb));
 		return;
@@ -89,7 +89,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	FB_ENUMS::TEAM_TYPE teamType{ static_cast<uint8>(teamFlag) };
 
 	if(teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) {
-		if(m_offenseCount >= MAX_PARTICIPANTS / 2) {
+		if(m_offenseCount >= MANAGER(GameDataManager)->GetGameRoomData().maxParticipants / 2) {
 			teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
 			m_defenseCount++;
 		}
@@ -97,7 +97,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 			m_offenseCount++;
 	}
 	else {
-		if(m_defenseCount >= MAX_PARTICIPANTS / 2) {
+		if(m_defenseCount >= MANAGER(GameDataManager)->GetGameRoomData().maxParticipants / 2) {
 			teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
 			m_offenseCount++;
 		}
@@ -241,8 +241,8 @@ void Server::Contents::GameRoom::Handle_CS_ADD_BOT(const std::shared_ptr<ClientS
 	if(m_users.contains(id)) {
 		if(id == m_host->GetID()) {
 
-			if(((teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) && (m_offenseCount < (MAX_PARTICIPANTS / FB_ENUMS::TEAM_TYPE_MAX))) ||
-				((teamType == FB_ENUMS::TEAM_TYPE_DEFENSE) && (m_defenseCount < (MAX_PARTICIPANTS / FB_ENUMS::TEAM_TYPE_MAX)))) {
+			if(((teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) && (m_offenseCount < (MANAGER(GameDataManager)->GetGameRoomData().maxParticipants / FB_ENUMS::TEAM_TYPE_MAX))) ||
+				((teamType == FB_ENUMS::TEAM_TYPE_DEFENSE) && (m_defenseCount < (MANAGER(GameDataManager)->GetGameRoomData().maxParticipants / FB_ENUMS::TEAM_TYPE_MAX)))) {
 				// Bot 추가
 				static uint32 idGen{ 10000 };
 				auto bot = ServerEngine::ObjectPool<Bot>::MakeShared(idGen, teamType);

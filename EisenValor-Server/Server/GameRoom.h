@@ -36,7 +36,6 @@ namespace Server {
 			int32														m_defenseCount;
 
 			std::shared_ptr<GameWorld>									m_gameWorld;
-			static constexpr uint8										MAX_PARTICIPANTS = 6;
 			int32														m_loadingCompletedUserCount;
 
 		private:

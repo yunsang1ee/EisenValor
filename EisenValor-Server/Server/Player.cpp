@@ -101,6 +101,12 @@ void Server::Contents::Player::DecStamina(const uint32 amount)
 	}
 }
 
+void Server::Contents::Player::ReturnToPool()
+{
+	std::cout << "Player Return Pool!" << std::endl;
+	ServerEngine::ObjectPool<Player>::Push(this);
+}
+
 void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 {
 	auto const world{ GetGameWorld() };
@@ -124,7 +130,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 	const Vec3& playerPos = GetPos();
 	const float yaw{ GetRotation().y };
-	Vec3 playerDir{ sinf(yaw), 0.f, cosf(yaw) };
+	Vec3 playerDir{ sinf(Deg2Rad(yaw)), 0.f, cosf(Deg2Rad(yaw)) };
 	playerDir.Normalize();
 
 	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {

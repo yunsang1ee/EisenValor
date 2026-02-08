@@ -11,7 +11,7 @@ namespace Server {
 			std::weak_ptr<ClientSession>			m_session;
 			
 		public:
-			Player(const FB_ENUMS::TEAM_TYPE teamType);
+			explicit Player(const FB_ENUMS::TEAM_TYPE teamType);
 			virtual ~Player();
 		
 		public:
@@ -20,13 +20,8 @@ namespace Server {
 			virtual void OnDeath() override final;
 			virtual void Respawn() override final;
 			virtual void DecStamina(const uint32 amount) override;
+			virtual void ReturnToPool() override;
 
-			void ReturnToPool() override
-			{
-				std::cout << "Player Return Pool!" << std::endl;
-				ServerEngine::ObjectPool<Player>::Push(this);
-			}
-		
 		public:
 			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
 			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }

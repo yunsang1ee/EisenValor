@@ -7,8 +7,7 @@ namespace Server {
 		SINGLETON(ClientSessionManager)
 	
 	private:
-		std::mutex											m_mutex;
-		std::unordered_set<std::shared_ptr<ClientSession>>	m_sessions;
+		tbb::concurrent_unordered_set<std::shared_ptr<ClientSession>> m_sessions;
 	
 	public:
 		void AddSession(std::shared_ptr<ClientSession> clientSession);

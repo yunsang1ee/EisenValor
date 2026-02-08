@@ -22,6 +22,14 @@ bool Server::Contents::GameDataManager::LoadDataFromFile(const std::string_view 
 		return false;
 	}
 
+    if(doc.HasMember("GameRoomData")) {
+        const Value& data = doc["GameRoomData"];
+
+        if(data.HasMember("MAX_PARTICIPANTS_PER_ROOM") && data["MAX_PARTICIPANTS_PER_ROOM"].IsUint()) {
+            m_gameRoomData.maxParticipants = static_cast<uint8>(data["MAX_PARTICIPANTS_PER_ROOM"].GetUint());
+        }
+    }
+
 	if(doc.HasMember("GameWorldData")) {
 		const Value& data = doc["GameWorldData"];
 
@@ -55,26 +63,32 @@ bool Server::Contents::GameDataManager::LoadDataFromFile(const std::string_view 
         const auto& objects = doc["GameObjectData"];
         for(rapidjson::SizeType i = 0; i < objects.Size(); i++) {
             const auto& v = objects[i];
-            GameObjectData obj;
-            obj.objTypeID = v["obj_type_id"].GetInt();
-            obj.name = v["type"].GetString();
-            obj.maxHp = v["max_hp"].GetInt();
-            obj.maxStamina = v["max_stamina"].GetInt();
-            obj.staminaCost = v["stamina_cost"].GetInt();
-            obj.extraStaminaCost = v["extra_stamina"].GetInt();
-            obj.stunDelay = v["stun_delay"].GetInt();
-            obj.staminaRecoveryPerSec = v["stamina_reg"].GetInt();
-            obj.respawnTimeSec = v["respawn_time_min"].GetInt();
-            obj.respawnTimeIncAmount = v["respawn_time_max"].GetInt();
+            GameObjectData objData;
+            objData.objTypeID = v["obj_type_id"].GetInt();
+            objData.name = v["type"].GetString();
+            objData.maxHp = v["max_hp"].GetInt();
+            objData.maxStamina = v["max_stamina"].GetInt();
+            objData.staminaCost = v["stamina_cost"].GetInt();
+            objData.extraStaminaCost = v["extra_stamina"].GetInt();
+            objData.stunDelay = v["stun_delay"].GetInt();
+            objData.staminaRecoveryPerSec = v["stamina_reg"].GetInt();
+            objData.respawnTimeSec = v["respawn_time_min"].GetInt();
+            objData.respawnTimeIncAmount = v["respawn_time_max"].GetInt();
 
             if(v.HasMember("skills") && v["skills"].IsArray()) {
                 const auto& skillList = v["skills"];
                 for(rapidjson::SizeType j = 0; j < skillList.Size(); j++) {
-                    obj.skills.push_back(skillList[j].GetInt());
+                    objData.skills.push_back(skillList[j].GetInt());
                 }
             }
 
-            m_gameObjectDataMap[obj.objTypeID] = obj;
+            if(objData.name == "Soldier") {
+                if(v.HasMember("enemy_detection_range")) objData.enemyDetectionRange = v["enemy_detection_range"].GetFloat();
+                if(v.HasMember("enemy_combat_range")) objData.enemyCombatRange = v["enemy_combat_range"].GetFloat();
+                if(v.HasMember("attack_cycle_time")) objData.attackCycleTime = v["attack_cycle_time"].GetUint();
+            }
+
+            m_gameObjectDataMap[objData.objTypeID] = objData;
         }
     }
 

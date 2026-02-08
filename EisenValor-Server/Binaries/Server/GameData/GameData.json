@@ -1,4 +1,8 @@
 {
+  "GameRoomData": {
+    "MAX_PARTICIPANTS_PER_ROOM":  6
+  },
+
   "GameWorldData": {
     "GAME_TIME_MIN": 20,
     "GAME_UPDATE_TIME_MS": 100
@@ -87,7 +91,10 @@
       "stun_delay": 0,
       "stamina_reg": 0,
       "respawn_time_min": 0,
-      "respawn_time_max": 0
+      "respawn_time_max": 0,
+      "enemy_detection_range": 3.0,
+      "enemy_combat_range": 1.5,
+      "attack_cycle_time": 2
     }
   ]
 }

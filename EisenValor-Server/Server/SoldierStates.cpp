@@ -4,6 +4,8 @@
 #include "GameRoom.h"
 #include "Player.h"
 #include "FSM.h"
+#include "NavAgent.h"
+#include "GameWorld.h"
 
 static float GetRandomCombatProb() noexcept
 {
@@ -121,7 +123,7 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 	// -Y: 타겟을 설정하고 Chase로 전환
 	// -N: Move로 전환
 
-	const auto fsm = GetFSM();
+	// const auto fsm = GetFSM();
 	//const auto owner = fsm->GetOwner();
 	//const auto room = owner->GetGameRoom();
 	//const auto otherTeam = room->GetOtherTeamType(owner->GetTeamType());
@@ -166,6 +168,18 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 	//			// N: Move
 	//		}
 	//	}
+	//}
+
+	//auto const fsm = GetFSM();
+	//const auto owner = fsm->GetOwner();
+	//Vec3 curPos = owner->GetPos();
+	//curPos.x += 10.f * dt;
+	//curPos.z += 10.f * dt;
+	//if(auto navAgent = owner->GetComponent<Server::Contents::NavAgent>()) {
+	//	navAgent->SetDestPos(curPos);
+
+	//	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(owner->GetID(), owner->GetPosInfo(), fsm->GetCurState()->GetStateType(), 0) };
+	//	owner->GetGameWorld()->Broadcast(std::move(pb));
 	//}
 }
 

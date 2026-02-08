@@ -6,7 +6,7 @@ namespace Server {
 		class Creature : public GameObject {
 		private:
 			bool						m_alive;
-			CreatureStat				m_statInfo;
+			Stat				m_statInfo;
 			Creature*					m_target;
 
 		public:
@@ -19,7 +19,7 @@ namespace Server {
 			virtual void Respawn() {}
 		
 		public:
-			void	SetStat(const CreatureStat& stat) noexcept { m_statInfo = stat; }
+			void	SetStat(const Stat& stat) noexcept { m_statInfo = stat; }
 			void	SetHp(const uint32 hp) noexcept;
 			void	SetStamina(const int32 stamina) noexcept { m_statInfo.currentStamina = stamina; }
 			void	SetAlive(const bool alive) noexcept { m_alive = alive; }
@@ -36,7 +36,7 @@ namespace Server {
 
 			bool	IsAlive() const noexcept { return m_alive; }
 
-			const CreatureStat& GetStat() const noexcept { return m_statInfo; }
+			const Stat& GetStat() const noexcept { return m_statInfo; }
 		};
 	}
 }

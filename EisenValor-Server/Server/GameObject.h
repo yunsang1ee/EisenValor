@@ -44,6 +44,7 @@ namespace Server {
 
 			bool									m_isCreature;
 			const GameObjectData*					m_gameObjectData;
+			bool									m_active;
 		
 		public:
 			GameObject() = default;
@@ -62,10 +63,7 @@ namespace Server {
 
 			virtual void Update(const float dt);
 
-			virtual void ReturnToPool()
-			{
-				delete this;
-			}
+			virtual void ReturnToPool() { delete this; }
 
 		public:
 			template<std::derived_from<Component> T>
@@ -87,28 +85,26 @@ namespace Server {
 				return nullptr;
 			}
 
-			template<std::derived_from<Component> T>
-			auto AddComponent()
+			template<std::derived_from<Component> T, typename... Args>
+			auto AddComponent(Args&&... args)
 			{
-				auto component = std::make_unique<T>();
+				auto component = std::make_unique<T>(std::forward<Args>(args)...);
 				component->SetOwner(this);
 
 				if constexpr(std::is_same_v<FSM, T>) {
 					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
-					return GetComponent<T>();
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
 					m_components[etou8(COMPONENT_TYPE::BEHAVIOR_TREE)] = std::move(component);
-					return GetComponent<T>();
 				}
 				else if constexpr(std::is_same_v<NavAgent, T>) {
 					m_components[etou8(COMPONENT_TYPE::NAV_AGENT)] = std::move(component);
-					return GetComponent<T>();
 				}
 				else if constexpr(std::derived_from<T, Collider>) {
 					m_components[etou8(COMPONENT_TYPE::COLLIDER)] = std::move(component);
-					return GetComponent<T>();
 				}
+				
+				return GetComponent<T>();
 			}
 
 			template<std::derived_from<Script> T>
@@ -142,7 +138,7 @@ namespace Server {
 			Vec3 GetForwardDir();
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
 			bool IsCreature() const noexcept { return m_isCreature; }
-			bool IsDead() { return false; }
+			bool IsActive() { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 		};
 

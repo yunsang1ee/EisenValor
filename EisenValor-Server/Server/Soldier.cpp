@@ -3,7 +3,9 @@
 
 Server::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 	:Creature{teamType, FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER}
-{
+{	static uint32 idGen{ 10000 };
+	SetID(idGen);
+	idGen++;
 }
 
 Server::Contents::Soldier::~Soldier()
@@ -27,10 +29,16 @@ void Server::Contents::Soldier::OnCollisionExit(Collider* const other)
 
 void Server::Contents::Soldier::Update(const float dt)
 {
-	// TODO: 이동 시 이동패킷 보내주기
+	GameObject::Update(dt);
 }
 
 void Server::Contents::Soldier::OnDeath()
 {
 
+}
+
+void Server::Contents::Soldier::ReturnToPool()
+{
+	std::cout << "Soldier Return Pool!" << std::endl;
+	ServerEngine::ObjectPool<Soldier>::Push(this);
 }

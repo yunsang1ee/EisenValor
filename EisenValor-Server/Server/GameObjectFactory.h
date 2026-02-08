@@ -15,26 +15,20 @@ namespace Server {
 		struct GameObjectTemplate {
 			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
+			const GameObjectData*		gameObjectData;
+			std::weak_ptr<GameWorld>	gameWorld;
 		};
 
 		struct CreatureTemplate : public GameObjectTemplate {
-			const GameObjectData*	gameObjectData;
-			CreatureStat			stat;
 		};
 
 		struct GeneralTemplate : public CreatureTemplate {
-			// TODO: GeneralTemplate
 		};
 
 		struct PlayerTemplate : public GeneralTemplate {
-			// TODO: PlayerTemplate
 		};
 
 		struct SoldierTemplate : public CreatureTemplate {
-			std::weak_ptr<General> ownerGeneral;
-			float enemyDetectionRange;
-			float combatRange;
-			std::chrono::seconds attackCycleTime;
 
 		};
 
@@ -52,10 +46,10 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			// static std::unique_ptr<Player, GameObjectDeleter>		CreatePlayer(const PlayerTemplate& t);
-			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
+			static std::unique_ptr<Player, GameObjectDeleter>		CreatePlayer(const PlayerTemplate& t);
+			// static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
-			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::unique_ptr<Soldier, GameObjectDeleter>		CreateSoldier(const SoldierTemplate& t);
 			static std::unique_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
 
 		};

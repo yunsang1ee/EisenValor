@@ -22,8 +22,7 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 	const Vec3& myPos{ GetPos() };
 
 	const Vec3& myRot{ GetRotation() };
-	const float yawRad = myRot.y * DirectX::XM_PI / 180.f;
-	Vec3 myDir{ sinf(yawRad), 0.f, cosf(yawRad) };
+	Vec3 myDir{ sinf(Deg2Rad(myRot.y)), 0.f, cosf(Deg2Rad(myRot.y)) };
 	myDir.Normalize();
 
 	const float degree{ atkInfo.skillData->attackDegree * 0.5f };

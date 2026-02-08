@@ -11,7 +11,7 @@ namespace Server {
 			int32				m_agentIdx;
 			dtCrowdAgentParams	m_params;
 			
-			Vec3				m_targetPos;
+			Vec3				m_destPos;
 			bool				m_hasTarget;
 
 		public:
@@ -23,7 +23,7 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		public:
-			void SetTargetPos(const Vec3& targetPos);
+			void SetDestPos(const Vec3& destPos);
 			
 		};
 	}

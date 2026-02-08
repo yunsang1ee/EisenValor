@@ -4,6 +4,7 @@
 #include "GameRoom.h"
 #include "GameObjectFactory.h"
 #include "Player.h"
+#include "Soldier.h"
 #include "SoldierStates.h"
 #include "ClientSession.h"
 #include "Participant.h"
@@ -16,7 +17,7 @@
 Server::Contents::GameWorld::GameWorld()
 	:FIXED_UPDATE_TICK_MS{ 16 }, FIXED_DT_SEC{ 0.016f }, m_lag{}, m_worldFrameCount{},
 	m_remainingTime{ std::chrono::duration_cast<std::chrono::milliseconds>(GAME_TIME_MIN) },
-	m_accGameTime{}, m_firstUpdate{ true }
+	m_accGameTime{}, m_firstUpdate{ true }, m_check{}
 {
 	const auto& gameWorldData{ MANAGER(Server::Contents::GameDataManager)->GetGameWorldData() };
 	GAME_TIME_MIN = std::chrono::minutes(gameWorldData.gameTimeMin);
@@ -25,60 +26,35 @@ Server::Contents::GameWorld::GameWorld()
 
 void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 {
-	// TODO: GameWorld Init
-	// 1. 참여자 정보 토대로 오브젝트 생성
-	// 2. 참여자 제외한 NPC 오브젝트 생성
-	// 3. 게임 시작
-
-	const auto roomID{ GetGameRoom()->GetID() };
-
-	m_users.clear();
-	m_bots.clear();
-
-	m_users.insert(users.begin(), users.end());
-	m_bots.insert(bots.begin(), bots.end());
-
-	for(const auto& [id, user] : m_users) {
-		static const Vec3 offset{ 3.f, 0.f, 3.f };
-		static Vec3 startPos{ 0.f, 0.f, 0.f };
-		startPos += offset;
-		const Vec3 rot{ 0.f, 0.f, 0.f };
-
-		PlayerTemplate t;
-		t.teamType = user->GetTeamType();
-		t.posInfo = PosInfo{ startPos, rot };
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-
-		auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
-		auto session = user->GetSession();
-		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
-		player->SetID(session->GetID());
-		player->SetSession(user->GetSession());
-		player->SetRoom(GetGameRoom());
-		AddGameObject(std::move(player));
-	}
-
-	/*for(const auto& [id, bot] : m_bots) {
-		static const Vec3 offset{ 10.f, 0.f, 10.f };
-		static Vec3 startPos{ 0.f, 0.f, 0.f };
-		startPos += offset;
-		const Vec3 rot{ 0.f, 0.f, 0.f };
-		GeneralTemplate t;
-		t.posInfo = PosInfo{ startPos, rot };
-		t.stat.currentHP = 100;
-		t.stat.currentStamina = 100;
-		t.teamType = bot->GetTeamType();
-		auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
-		AddGameObject(std::move(general));
-	}*/
-
-	LOG_INFO("GameRoom ID:{}, GameWorld Start!", roomID);
-
-	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-
 	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
+
+	CreateUsersGameObjects(users);
+
+	CreateBotsGameObjects(bots);
+
+	for(int i = 0; i < 2; ++i) {
+		static bool flag{ false };
+		static Vec3 startPos{ 0.f, 0.f, 0.f};
+		SoldierTemplate t;
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+			t.posInfo = PosInfo{
+			.pos = startPos,
+			.rot = Vec3{}
+		};
+		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+		flag = !flag;
+		startPos.x += 2.f;
+		startPos.z += 2.f;
+		auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
+		AddGameObject(std::move(soldier));
+	}
+
+	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+
+	LOG_INFO("GameRoom ID:{}, GameWorld Start!", GetGameRoom()->GetID());
 
 	FixedUpdate();
 }
@@ -261,7 +237,6 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 
-	// 플레이어 존재 여부 확인 추가
 	auto it = playerGroup.find(clientSession->GetID());
 	if(it == playerGroup.end() || !it->second) return;
 
@@ -416,7 +391,6 @@ void Server::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJE
 		for(const auto& [id, rightObj] : rightGroup) {
 			if(nullptr == rightObj->GetComponent<Server::Contents::Collider>() || leftObj == rightObj) continue;
 
-
 			auto leftCol{ leftObj->GetComponent<Server::Contents::Collider>() };
 			auto rightCol{ rightObj->GetComponent<Server::Contents::Collider>() };
 
@@ -439,29 +413,35 @@ void Server::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJE
 
 			bool isColliding{ m_collisionDetector.CheckCollision(leftCol, rightCol) };
 
+			// 지금 충돌
 			if(isColliding) {
+				// 이전에도 충돌
 				if(iter->second) {
-					if(leftObj->IsDead() || rightObj->IsDead()) {
+					// 누군가 죽었다면
+					if(false == leftObj->IsActive() || false == rightObj->IsActive()) {
 						leftCol->OnCollisionExit(rightCol);
 						rightCol->OnCollisionExit(leftCol);
 						iter->second = false;
 					}
+					// 충돌 유지
 					else {
 						leftCol->OnCollisionStay(rightCol);
 						rightCol->OnCollisionStay(leftCol);
 					}
 				}
+				// 이전엔 충돌 X 
 				else {
-					if(!leftObj->IsDead() && !rightObj->IsDead()) {
+					// 둘 다 살아있다면 최초 충돌
+					if(leftObj->IsActive() && rightObj->IsActive()) {
 						leftCol->OnCollisionEnter(rightCol);
 						rightCol->OnCollisionEnter(leftCol);
 						iter->second = true;
 					}
-
-
 				}
 			}
+			// 지금은 충돌 X 
 			else {
+				// 이전에는 충돌
 				if(iter->second) {
 					leftCol->OnCollisionExit(rightCol);
 					rightCol->OnCollisionExit(leftCol);
@@ -503,7 +483,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 			const PosInfo kInfo{ startPos, rot };
 
 			// 나에게 내 정보 전송
-			const CreatureStat& statInfo{ newPlayer->GetStat() };
+			const Stat& statInfo{ newPlayer->GetStat() };
 			{
 				auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(newPlayer->GetID(), kInfo, newPlayer->GetTeamType(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
 				clientSession->Send(std::move(pb));
@@ -515,71 +495,71 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 				Broadcast(std::move(pb));
 			}
 
-				// 남들 정보 나에게 전송
-				for(const auto& group : m_gameObjectsGroups) {
-					for(const auto& [otherID, obj] : group) {
-						if(obj == nullptr) continue;
-						if(otherID == id) continue;
-						if(obj.get()) {
-							const uint8 type{ etou8(obj->GetObjType()) };
-							const Vec3 pos{ obj->GetPos() };
-							const Vec3 rot{ obj->GetRotation() };
-							const PosInfo kInfo{ pos, rot };
+			// 남들 정보 나에게 전송
+			for(const auto& group : m_gameObjectsGroups) {
+				for(const auto& [otherID, obj] : group) {
+					if(obj == nullptr) continue;
+					if(otherID == id) continue;
+					if(obj.get()) {
+						const uint8 type{ etou8(obj->GetObjType()) };
+						const Vec3 pos{ obj->GetPos() };
+						const Vec3 rot{ obj->GetRotation() };
+						const PosInfo kInfo{ pos, rot };
 
-							uint32 maxHp{};
-							uint32 hp{};
-							uint32 maxStamina{};
-							uint32 stamina{};
+						uint32 maxHp{};
+						uint32 hp{};
+						uint32 maxStamina{};
+						uint32 stamina{};
 
-							if(obj->IsCreature()) {
-								Creature* creature = static_cast<Creature*>(obj.get());
-								const CreatureStat& statInfo{ creature->GetStat() };
-								maxHp = statInfo.maxHP;
-								hp = statInfo.currentHP;
-								maxStamina = statInfo.maxStamina;
-								stamina = statInfo.currentStamina;
-							}
-							FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
-							if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
-								stanceType = static_cast<Server::Contents::General*>(obj.get())->GetStanceType();
-
-							auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(otherID, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
-							clientSession->Send(std::move(pb));
+						if(obj->IsCreature()) {
+							Creature* creature = static_cast<Creature*>(obj.get());
+							const Stat& statInfo{ creature->GetStat() };
+							maxHp = statInfo.maxHP;
+							hp = statInfo.currentHP;
+							maxStamina = statInfo.maxStamina;
+							stamina = statInfo.currentStamina;
 						}
+						FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+						if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+							stanceType = static_cast<Server::Contents::General*>(obj.get())->GetStanceType();
+
+						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(otherID, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
+						clientSession->Send(std::move(pb));
 					}
 				}
 			}
-			else {
-				uint32 maxHp{};
-				uint32 hp{};
-				uint32 maxStamina{};
-				uint32 stamina{};
-				if(newGameObject->IsCreature()) {
-					Creature* creature = static_cast<Creature*>(newGameObject.get());
-					const CreatureStat& statInfo{ creature->GetStat() };
-					maxHp = statInfo.maxHP;
-					hp = statInfo.currentHP;
-					maxStamina = statInfo.maxStamina;
-					stamina = statInfo.currentStamina;
-				}
-				FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
-				if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
-					stanceType = static_cast<Server::Contents::General*>(newGameObject.get())->GetStanceType();
-				{
-					auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
-					Broadcast(std::move(pb));
-				}
-			}
-
-			const uint8 index = newGameObject->GetObjType();
-
-			assert(index < FB_ENUMS::GAME_OBJECT_TYPE_END);
-
-			auto& gameObjectMap = m_gameObjectsGroups[index];
-
-			if(gameObjectMap.end() == gameObjectMap.find(id))
-				gameObjectMap.insert(std::make_pair(id, std::move(newGameObject)));
 		}
+		else {
+			uint32 maxHp{};
+			uint32 hp{};
+			uint32 maxStamina{};
+			uint32 stamina{};
+			if(newGameObject->IsCreature()) {
+				Creature* creature = static_cast<Creature*>(newGameObject.get());
+				const Stat& statInfo{ creature->GetStat() };
+				maxHp = statInfo.maxHP;
+				hp = statInfo.currentHP;
+				maxStamina = statInfo.maxStamina;
+				stamina = statInfo.currentStamina;
+			}
+			FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+			if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+				stanceType = static_cast<Server::Contents::General*>(newGameObject.get())->GetStanceType();
+			{
+				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
+				Broadcast(std::move(pb));
+			}
+		}
+
+		const uint8 index = newGameObject->GetObjType();
+
+		assert(index < FB_ENUMS::GAME_OBJECT_TYPE_END);
+
+		auto& gameObjectMap = m_gameObjectsGroups[index];
+
+		if(gameObjectMap.end() == gameObjectMap.find(id))
+			gameObjectMap.insert(std::make_pair(id, std::move(newGameObject)));
+	}
 }
 
 void Server::Contents::GameWorld::ProcessPendingRemoveObjectList()
@@ -628,4 +608,50 @@ void Server::Contents::GameWorld::RegistCollisionGroup(const FB_ENUMS::GAME_OBJE
 	else {
 		m_check[row] |= (1 << col);
 	}
+}
+
+void Server::Contents::GameWorld::CreateUsersGameObjects(const Users& users)
+{
+	m_users.clear();
+	m_users.insert(users.begin(), users.end());
+	for(const auto& [id, user] : m_users) {
+		static const Vec3 offset{ 3.f, 0.f, 3.f };
+		static Vec3 startPos{ 0.f, 0.f, 0.f };
+		startPos += offset;
+		const Vec3 rot{ 0.f, 0.f, 0.f };
+
+		PlayerTemplate t;
+		t.teamType = user->GetTeamType();
+		t.posInfo = PosInfo{ startPos, rot };
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+
+		auto player = Server::Contents::GameObjectFactory::CreatePlayer(t);
+		auto session = user->GetSession();
+		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
+		player->SetID(session->GetID());
+		player->SetSession(user->GetSession());
+		player->SetRoom(GetGameRoom());
+		AddGameObject(std::move(player));
+	}
+}
+
+void Server::Contents::GameWorld::CreateBotsGameObjects(const Bots& bots)
+{
+	m_bots.clear();
+	m_bots.insert(bots.begin(), bots.end());
+
+	/*for(const auto& [id, bot] : m_bots) {
+		static const Vec3 offset{ 10.f, 0.f, 10.f };
+		static Vec3 startPos{ 0.f, 0.f, 0.f };
+		startPos += offset;
+		const Vec3 rot{ 0.f, 0.f, 0.f };
+		GeneralTemplate t;
+		t.posInfo = PosInfo{ startPos, rot };
+		t.stat.currentHP = 100;
+		t.stat.currentStamina = 100;
+		t.teamType = bot->GetTeamType();
+		auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
+		AddGameObject(std::move(general));
+	}*/
+
 }
