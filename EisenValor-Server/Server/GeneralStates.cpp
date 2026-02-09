@@ -88,12 +88,6 @@ void Server::Contents::GeneralIdleState::Update(const float dt)
 			m_accDTForStaminaRecovery = 0.F;
 
 			owner->IncStamina(owner->GetGameObjectData()->staminaRecoveryPerSec);
-
-		//	std::cout << "IncStamina!" << std::endl;
-
-			// 패킷 생성 및 브로드캐스트
-			auto pb = ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina());
-			owner->GetGameWorld()->Broadcast(std::move(pb));
 		}
 	}
 	else {
@@ -196,26 +190,27 @@ void Server::Contents::GeneralAttackState::Update(const float dt)
 	auto const owner{ GetGeneral(GetFSM()) };
 	const auto& atkInfo{ owner->GetAttackInfo() };
 	auto const world{ owner->GetGameWorld() };
-	if(auto const target = owner->GetTarget()) {
-		if(owner->IsTargetInAttackRange(target)) {
-			if(target->OnDamaged(owner, dt)) {
-				{
-					auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina()) };
-					owner->GetGameWorld()->Broadcast(std::move(pb));
-				}
+	
+	auto const target = owner->GetTarget();
+	if(!target) {
+		return;
+	}
 
-				if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
-					const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
-					if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType || FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
-						auto const obj{ static_cast<General*>(target) };
-						auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
-						fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
-					}
+	if(owner->IsTargetInAttackRange(target)) {
+		if(nullptr == target) return;
+
+		if(target->OnDamaged(owner, dt)) {
+			if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
+				const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
+				if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType || FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
+					auto const obj{ static_cast<General*>(target) };
+					auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
 				}
 			}
-			else {
-				std::cout << "Target OnDamaged Fail!" << std::endl;
-			}
+		}
+		else {
+			std::cout << "Target OnDamaged Fail!" << std::endl;
 		}
 	}
 

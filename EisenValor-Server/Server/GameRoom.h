@@ -38,7 +38,7 @@ namespace Server {
 			std::shared_ptr<GameWorld>									m_gameWorld;
 			int32														m_loadingCompletedUserCount;
 
-		private:
+		public:
 			GameRoom() = delete;
 			explicit GameRoom(const uint16 roomID);
 			~GameRoom();

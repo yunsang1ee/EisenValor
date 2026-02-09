@@ -73,11 +73,9 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 		}
 	}
 	DecHP(damage);
-	auto pb = ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), GetHP(), GetStamina());
-	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 	
-	if(IsAlive())
+	if(IsActive())
 		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt);
 	return true;
 }
@@ -92,7 +90,7 @@ void Server::Contents::Player::Respawn()
 	General::Respawn();
 }
 
-void Server::Contents::Player::DecStamina(const uint32 amount)
+void Server::Contents::Player::DecStamina(const uint32 amount, const bool broadcast)
 {
 	Creature::DecStamina(amount);
 
@@ -101,14 +99,11 @@ void Server::Contents::Player::DecStamina(const uint32 amount)
 	}
 }
 
-void Server::Contents::Player::ReturnToPool()
-{
-	std::cout << "Player Return Pool!" << std::endl;
-	ServerEngine::ObjectPool<Player>::Push(this);
-}
-
 void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 {
+	if(false == IsActive())
+		return;
+
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	const uint64 worldFrame = world->GetGameWorldFrameCount();
@@ -119,10 +114,6 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(atkType) };
 	SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
 	DecStamina(skillData->staminaCost);
-	{
-		auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), GetHP(), GetStamina()) };
-		GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
-	}
 
 	const float attackRadius = skillData->attackRadius;
 	const float attackDegree = skillData->attackDegree;
@@ -134,9 +125,17 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	playerDir.Normalize();
 
 	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
+
+		// if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) continue;
+
 		const auto& gameObjectGroups = GetGameWorld()->GetGameObjectGroups();
 		for(const auto& [id, o] : gameObjectGroups[i]) {
 			GameObject* const obj{ o.get() };
+
+			if(nullptr == obj) continue;
+
+			if(false == obj->IsActive()) continue;
+
 			if(id == GetID()) continue;
 
 			if(false == obj->IsCreature()) continue;
@@ -146,6 +145,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 			if(IsTargetInAttackRange(obj)) {
 				std::cout << "Handle_CS_PLAYER_ATTACk, Targe in Range!" << std::endl;
 				SetTarget(static_cast<Creature*>(obj));
+				break;
 			}
 			else {
 				std::cout << "Handle_CS_PLAYER_ATTACk, Targe ##Not## in Range!" << std::endl;
@@ -163,6 +163,9 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
 {
+	if(false == IsActive())
+		return;
+
 	std::cout << "Handle_CS_PLAYER_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	
@@ -172,6 +175,9 @@ void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
 
 void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
 {
+	if(false == IsActive())
+		return;
+
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
 
 	const FB_ENUMS::GENERAL_STATE_TYPE curState{ static_cast<FB_ENUMS::GENERAL_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
@@ -192,6 +198,9 @@ void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
 
 void Server::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID)
 {
+	if(false == IsActive())
+		return;
+
 	auto const gameWorld{ GetGameWorld() };
 
 	const auto& gameObjectsGroups{ gameWorld->GetGameObjectGroups() };

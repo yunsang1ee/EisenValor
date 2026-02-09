@@ -26,7 +26,7 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 	myDir.Normalize();
 
 	const float degree{ atkInfo.skillData->attackDegree * 0.5f };
-	const float cosHalfAngle{ std::cosf((degree) * (DirectX::XM_PI / 180.f)) };
+	const float cosHalfAngle{ std::cosf(Deg2Rad(degree)) };
 	const Vec3& targetPos{ target->GetPos() };
 	const Vec3 toTargetDir{ targetPos - myPos };
 	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
@@ -63,7 +63,7 @@ void Server::Contents::General::Respawn()
 	const float worldDT{ world->GetGameWorldDT() };
 	SetHp(statInfo.maxHP);
 	SetStamina(statInfo.maxStamina);
-	SetAlive(true);
+	SetActive(true);
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);

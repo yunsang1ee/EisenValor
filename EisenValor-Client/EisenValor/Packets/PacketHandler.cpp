@@ -204,6 +204,14 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_DEAD_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::SC_DEAD_PACKET>(
+			S2C::Handle_SC_DEAD_PACKET, socket, buffer, header
+		);
+	};
+
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PING_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{ return HandlePacket<FB_TABLES::SC_PING_PACKET>(S2C::Handle_SC_PING_PACKET, socket, buffer, header); };

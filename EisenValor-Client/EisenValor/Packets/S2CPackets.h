@@ -63,6 +63,7 @@ bool Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt
 );
 bool Handle_SC_RESPAWN_GENERAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt);
+bool Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt);
 bool Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES::SC_PING_PACKET& recvPkt);
 
 

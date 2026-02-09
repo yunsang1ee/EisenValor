@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "Creature.h"
 
+#include "GameWorld.h"
+
 Server::Contents::Creature::Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:GameObject(teamType, type), m_alive{ true }
+	:GameObject(teamType, type)
 {
 	SetCreature(true);
 }
@@ -11,45 +13,111 @@ Server::Contents::Creature::~Creature()
 {
 }
 
-void Server::Contents::Creature::SetHp(const uint32 hp) noexcept
+void Server::Contents::Creature::SetHp(const uint32 hp, const bool broadcast) noexcept
 {
+	if(0 == hp) 
+		return;
+
 	if(hp > m_statInfo.currentHP) {
 		m_statInfo.currentHP = std::min(hp,  m_statInfo.maxHP);
 	}
 	else {
-		m_statInfo.currentHP = std::max((uint32)0, hp);
+		m_statInfo.currentHP = std::max(std::numeric_limits<uint32>::min(), hp);
+	}
+
+	if(broadcast) {
+		BroadcastUpdateVital();
 	}
 }
 
-void Server::Contents::Creature::IncHP(const uint32 amount)
+void Server::Contents::Creature::IncHP(const uint32 amount, const bool broadcast)
 {
+	if(0 == amount) 
+		return;
+
 	const uint32 hp{ GetHP() + amount };
 	m_statInfo.currentHP = std::min(hp, m_statInfo.maxHP);
-}
-
-void Server::Contents::Creature::DecHP(const uint32 amount)
-{
-	m_statInfo.currentHP = std::max(static_cast<int32>(GetHP()) - static_cast<int32>(amount), 0);
-	if(m_statInfo.currentHP == 0 && m_alive) {
-		m_alive = false;
-		OnDeath();
+	
+	if(broadcast) {
+		BroadcastUpdateVital();
 	}
 }
 
-void Server::Contents::Creature::IncStamina(const uint32 amount)
+void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
 {
-	const uint32 stamina{ GetStamina() + amount };
-	m_statInfo.currentStamina = std::min(stamina, m_statInfo.maxStamina);
+	if(0 == amount)
+		return;
+
+	m_statInfo.currentHP = std::max(static_cast<int32>(GetHP()) - static_cast<int32>(amount), 0);
+	if(broadcast) {
+		BroadcastUpdateVital();
+	}
+
+	if(m_statInfo.currentHP == 0 && IsActive()) {
+		SetActive(false);
+		OnDeath();
+
+		auto pb{ ServerPackets::Make_SC_DEAD_PACKET(GetID()) };
+		const auto& world{ GetGameWorld() };
+		if(world)
+			world->Broadcast(std::move(pb));
+	}
 }
 
-void Server::Contents::Creature::DecStamina(const uint32 amount)
+void Server::Contents::Creature::SetStamina(const uint32 stamina, const bool broadcast) noexcept
 {
+	if(0 == stamina)
+		return;
+
+	if(stamina > m_statInfo.currentStamina) {
+		m_statInfo.currentStamina = std::min(stamina, m_statInfo.maxStamina);
+	}
+	else {
+		m_statInfo.currentStamina = std::max(std::numeric_limits<uint32>::min(), stamina);
+	}
+
+	if(broadcast) {
+		BroadcastUpdateVital();
+	}
+}
+
+void Server::Contents::Creature::IncStamina(const uint32 amount, const bool broadcast)
+{
+	if(0 == amount)
+		return;
+
+
+	const uint32 stamina{ GetStamina() + amount };
+	m_statInfo.currentStamina = std::min(stamina, m_statInfo.maxStamina);
+
+	if(broadcast) {
+		BroadcastUpdateVital();
+	}
+}
+
+void Server::Contents::Creature::DecStamina(const uint32 amount, const bool broadcast)
+{
+	if(0 == amount)
+		return;
+
 	const uint32 stamina{ GetStamina() - amount };
 	m_statInfo.currentStamina = std::max(static_cast<int32>(GetStamina()) - static_cast<int32>(amount), 0);
+
+	if(broadcast) {
+		BroadcastUpdateVital();
+	}
 }
 
 void Server::Contents::Creature::IncRespawnTime()
 {
 	m_statInfo.respawnTimeSec += GetGameObjectData()->respawnTimeIncAmount;
+}
+
+void Server::Contents::Creature::BroadcastUpdateVital()
+{
+	auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), m_statInfo.currentHP, m_statInfo.currentStamina) };
+	const auto& world{ GetGameWorld() };
+	if(world)
+		world->Broadcast(std::move(pb));
 }
 

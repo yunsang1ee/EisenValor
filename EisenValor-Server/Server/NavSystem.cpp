@@ -45,7 +45,7 @@ bool Server::Contents::NavSystem::Load(const std::string_view filePath)
 
 	m_crowd = dtAllocCrowd();
 	
-	constexpr int32 maxAgents{ 10 };
+	constexpr int32 maxAgents{ 1000 };
 	constexpr float maxAgentRadius{ 2.f };
 
 	if(!m_crowd->init(maxAgents, maxAgentRadius, m_navMesh)) return false;

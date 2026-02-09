@@ -25,14 +25,13 @@ namespace ServerEngine {
         static Type* Pop(Args&&... args)
         {
             Type* obj = static_cast<Type*>(m_pool.malloc(sizeof(Type)));
-            new(obj)Type(std::forward<Args>(args)...);
-            return obj;
+            return std::construct_at(obj, std::forward<Args>(args)...);
         }
 
         static void Push(Type* const obj)
         {
             if(obj) {
-                obj->~Type();
+                std::destroy_at(obj);
                 m_pool.free(obj);
             }
         }

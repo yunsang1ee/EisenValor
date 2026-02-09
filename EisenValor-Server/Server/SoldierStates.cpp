@@ -95,7 +95,7 @@ void ApplySeparationAndCollision(const std::shared_ptr<Server::Contents::NPC>& s
 }
 
 Server::Contents::SoldierIdleState::SoldierIdleState(const float enemyDetectionRange)
-	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }, m_enemyDetectionRange{enemyDetectionRange}
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }, m_enemyDetectionRangeSq{enemyDetectionRange * enemyDetectionRange }
 {
 }
 
@@ -123,12 +123,36 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 	// -Y: 타겟을 설정하고 Chase로 전환
 	// -N: Move로 전환
 
-	// const auto fsm = GetFSM();
-	//const auto owner = fsm->GetOwner();
-	//const auto room = owner->GetGameRoom();
-	//const auto otherTeam = room->GetOtherTeamType(owner->GetTeamType());
-	//const auto& ownerPos = owner->GetPos();
-	//auto& otherTeamObjectGroup = room->GetTeam(otherTeam).GetAllObjectGroups();
+	auto const fsm = GetFSM();
+	auto const owner = fsm->GetOwner();
+	const auto& ownerPos{ owner->GetPos() };
+	auto const gameWorld = owner->GetGameWorld();
+
+	const auto& gameObjectGroups = gameWorld->GetGameObjectGroups();
+
+	for(int i = 0; i < gameObjectGroups.size(); ++i) {
+		if((i != FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_GENERAL) && (i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) &&
+			(i != FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)) continue;
+
+		for(const auto& [id, o] : gameObjectGroups[i]) {
+			auto const target{ o.get() };
+
+			if(id == owner->GetID()) continue;
+
+			if(not target) continue;
+
+			if(false == target->IsActive()) continue;
+
+			const auto& targetPos{ target->GetPos() };
+			const Vec3 targetDir{ targetPos - ownerPos };
+			const float distToTargetSq = targetDir.LengthSquared();
+
+			if(distToTargetSq <= m_enemyDetectionRangeSq) {
+				fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
+				return;
+			}
+		}
+	}
 
 	//for(int i = 0; i < otherTeamObjectGroup.size(); ++i) {
 	//	if(i == FB_ENUMS::GAME_OBJECT_TYPE_PROJECTILE ||

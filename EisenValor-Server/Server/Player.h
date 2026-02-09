@@ -19,8 +19,7 @@ namespace Server {
 			virtual bool OnDamaged(Creature* const attacker, const float dt) override final;
 			virtual void OnDeath() override final;
 			virtual void Respawn() override final;
-			virtual void DecStamina(const uint32 amount) override;
-			virtual void ReturnToPool() override;
+			virtual void DecStamina(const uint32 amount, const bool broadcast= false) override;
 
 		public:
 			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }

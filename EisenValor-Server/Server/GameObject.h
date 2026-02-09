@@ -63,8 +63,6 @@ namespace Server {
 
 			virtual void Update(const float dt);
 
-			virtual void ReturnToPool() { delete this; }
-
 		public:
 			template<std::derived_from<Component> T>
 			T* GetComponent()
@@ -125,6 +123,7 @@ namespace Server {
 			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
 			void SetCreature(bool flag) { m_isCreature = flag; }
 			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
+			void SetActive(const bool active) noexcept { m_active = active; }
 
 			const std::wstring& GetName() const noexcept { return m_name; }
 			uint32 GetID() const noexcept { return m_id; }
@@ -141,12 +140,5 @@ namespace Server {
 			bool IsActive() { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 		};
-
-		inline void GameObjectDeleter::operator()(GameObject* obj) const
-		{
-			if(obj) {
-				obj->ReturnToPool();
-			}
-		}
 	}
 }

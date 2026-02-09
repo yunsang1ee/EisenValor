@@ -9,13 +9,13 @@ Server::Contents::FSM::FSM()
 {
 }
 
-void Server::Contents::FSM::SetState(const uint8 state)
+void Server::Contents::FSM::SetState(const uint8 state, const bool broadcast)
 {
 	auto const owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };
 
 	if(world) {
-		world->AddEvent([this, state, world]() {
+		world->AddEvent([this, state, world, broadcast]() {
 			auto iter = m_states.find(state);
 			if(iter != m_states.end()) {
 				m_curState = iter->second.get();
@@ -23,7 +23,9 @@ void Server::Contents::FSM::SetState(const uint8 state)
 				if(world)
 					dt = world->GetGameWorldDT();
 				m_curState->Enter(dt);
-				// SendUpdateStatePacket();
+				
+				if(broadcast)
+					SendUpdateStatePacket();
 			}
 		});
 	}
@@ -42,19 +44,21 @@ void Server::Contents::FSM::AddState(std::unique_ptr<State> state)
 		m_states.try_emplace(state->GetStateType(), std::move(state));
 }
 
-void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt)
+void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt, const bool broadcast)
 {
 	auto const owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };
 	if(world) {
-		world->AddEvent([this, nextState, dt]() {
+		world->AddEvent([this, nextState, dt, broadcast]() {
 			if(m_curState)
 				m_curState->Exit(dt);
 			auto iter = m_states.find(nextState);
 			if(iter != m_states.end()) {
 				m_curState = iter->second.get();
 				m_curState->Enter(dt);
-				SendUpdateStatePacket();
+				
+				if(broadcast)
+					SendUpdateStatePacket();
 			}
 			});
 	}

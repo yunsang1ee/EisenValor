@@ -275,6 +275,12 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_RESPAWN_GENERAL_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_RESPAWN_GENERAL_PACKET, id, &fbPosInfo, maxHp, currentHP, maxStamina, currentStamina, stanceType));
 
 	}
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_DEAD_PACKET(const uint32 id)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_DEAD_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_DEAD_PACKET, id));
+	}
 #pragma endregion
 
 

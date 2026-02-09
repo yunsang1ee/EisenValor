@@ -177,6 +177,9 @@ struct SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder;
 struct SC_RESPAWN_GENERAL_PACKET;
 struct SC_RESPAWN_GENERAL_PACKETBuilder;
 
+struct SC_DEAD_PACKET;
+struct SC_DEAD_PACKETBuilder;
+
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
@@ -2646,6 +2649,47 @@ inline ::flatbuffers::Offset<SC_RESPAWN_GENERAL_PACKET> CreateSC_RESPAWN_GENERAL
   builder_.add_pos_info(pos_info);
   builder_.add_obj_id(obj_id);
   builder_.add_stance_type(stance_type);
+  return builder_.Finish();
+}
+
+struct SC_DEAD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_DEAD_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4
+  };
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_DEAD_PACKETBuilder {
+  typedef SC_DEAD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_DEAD_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  explicit SC_DEAD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_DEAD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_DEAD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_DEAD_PACKET> CreateSC_DEAD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0) {
+  SC_DEAD_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
   return builder_.Finish();
 }
 

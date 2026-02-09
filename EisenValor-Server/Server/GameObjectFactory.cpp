@@ -15,14 +15,9 @@
 #include "GameWorld.h"
 #include "NavAgent.h"
 
-std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
-// std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	// auto player = std::make_unique<Server::Contents::Player>(t.teamType);
-	// auto player = ServerEngine::ObjectPool<Server::Contents::Player>::MakeUnique(t.teamType);
-	// 1. 풀에서 Raw Pointer를 꺼냄 (MakeUnique 대신 Pop 사용)
-	auto* player = ServerEngine::ObjectPool<Server::Contents::Player>::Pop(t.teamType);
-	// auto player = std::make_unique<Server::Contents::Player>(t.teamType);
+	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
 
 	player->SetPosInfo(t.posInfo);
 	player->SetGameObjectData(t.gameObjectData);
@@ -52,9 +47,7 @@ std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter> S
 
 	const auto collider = player->AddComponent<Server::Contents::OBBCollider>();
 
-	return std::unique_ptr<Server::Contents::Player, Server::Contents::GameObjectDeleter>(player);
-
-	// return player;
+	return player;
 }
 
 std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
@@ -77,10 +70,9 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	return general;
 }
 
-std::unique_ptr<Server::Contents::Soldier, Server::Contents::GameObjectDeleter> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
+std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
-	// auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
-	auto* soldier{ ServerEngine::ObjectPool<Server::Contents::Soldier>::Pop(t.teamType) };
+	auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
 	soldier->SetGameWorld(t.gameWorld.lock());
 	soldier->SetPosInfo(t.posInfo);
 	soldier->SetGameObjectData(t.gameObjectData);
@@ -96,7 +88,7 @@ std::unique_ptr<Server::Contents::Soldier, Server::Contents::GameObjectDeleter> 
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;        // 충돌 반경
-	params.height = 2.0f;        // 키
+	params.height = 0.0f;        // 키
 	params.maxSpeed = 10.0f;      // 최대 속도
 	params.maxAcceleration = 10.f; // 가속도
 
@@ -127,8 +119,7 @@ std::unique_ptr<Server::Contents::Soldier, Server::Contents::GameObjectDeleter> 
 
 	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 
-
-	return std::unique_ptr<Server::Contents::Soldier, Server::Contents::GameObjectDeleter>(soldier);
+	return soldier;
 }
 
 std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)

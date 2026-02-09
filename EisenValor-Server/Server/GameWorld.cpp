@@ -8,10 +8,8 @@
 #include "SoldierStates.h"
 #include "ClientSession.h"
 #include "Participant.h"
-
 #include "GameDataManager.h"
 #include "GameObject.h"
-
 #include "Collider.h"
 
 Server::Contents::GameWorld::GameWorld()
@@ -36,7 +34,7 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 
 	for(int i = 0; i < 2; ++i) {
 		static bool flag{ false };
-		static Vec3 startPos{ 0.f, 0.f, 0.f};
+		static Vec3 startPos{1.f, 0.f, 1.f};
 		SoldierTemplate t;
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
@@ -241,6 +239,8 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 	if(it == playerGroup.end() || !it->second) return;
 
 	auto player = static_cast<Player*>(playerGroup[clientSession->GetID()].get());
+
+	if(false == player->IsActive()) return;
 
 	player->SetPos(kinematicInfo.pos);
 	player->SetRotation(kinematicInfo.rot);

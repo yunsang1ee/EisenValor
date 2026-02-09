@@ -15,16 +15,16 @@ namespace Server {
 			DECLARE_CREATE_FUNC(SoldierIdleState)
 		
 		private:
-			float m_enemyDetectionRange{};
+			float m_enemyDetectionRangeSq{};
 
 		private:
 			explicit SoldierIdleState(const float enemyDetectionRange);
 			virtual ~SoldierIdleState();
 		
 		public:
-			virtual void Enter(const float dt) override;
-			virtual void Exit(const float dt) override;
-			virtual void Update(const float dt) override;
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
 		};
 
 
@@ -39,9 +39,9 @@ namespace Server {
 			virtual ~SoldierMoveState();
 
 		public:
-			virtual void Enter(const float dt) override;
-			virtual void Exit(const float dt) override;
-			virtual void Update(const float dt) override;
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
 			friend class GameObjectFactory;
 		};
 
@@ -63,9 +63,9 @@ namespace Server {
 			virtual ~SoldierChaseState();
 
 		public:
-			virtual void Enter(const float dt) override;
-			virtual void Exit(const float dt) override;
-			virtual void Update(const float dt) override;
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
 			friend class GameObjectFactory;
 		};
 
@@ -89,9 +89,9 @@ namespace Server {
 			virtual ~SoldierAttackState();
 
 		public:
-			virtual void Enter(const float dt) override;
-			virtual void Exit(const float dt) override;
-			virtual void Update(const float dt) override;
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
 			friend class GameObjectFactory;
 		};
 
@@ -113,9 +113,9 @@ namespace Server {
 			virtual ~SoldierDefenseState();
 
 		public:
-			virtual void Enter(const float dt) override;
-			virtual void Exit(const float dt) override;
-			virtual void Update(const float dt) override;
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
 			friend class GameObjectFactory;
 
 		};
@@ -137,9 +137,9 @@ namespace Server {
 			virtual ~SoldierDamagedState();
 
 		public:
-			virtual void Enter(const float dt) override;
-			virtual void Exit(const float dt) override;
-			virtual void Update(const float dt) override;
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
 		
 		public:
 			void SetStunTime(const float stunTime) noexcept { m_stunTime = stunTime; }
