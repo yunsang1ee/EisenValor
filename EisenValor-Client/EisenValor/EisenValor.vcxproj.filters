@@ -202,5 +202,6 @@
     <None Include="Resource\Shader\RaytracingPrimary.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\.clang-format" />
   </ItemGroup>
 </Project>
