@@ -2,6 +2,9 @@
 #include "AssetFile.h"
 #include <cstring>
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
 namespace EvAsset
 {
     template <typename T>
@@ -86,6 +89,58 @@ namespace EvAsset
         if (bndsPtr && bndsSize >= sizeof(Bounds))
         {
             std::memcpy(&outData.boundsInfo, bndsPtr, sizeof(Bounds));
+        }
+
+        return outData.IsValid();
+    }
+
+    bool MeshLoader::LoadMeshFromObj(const std::filesystem::path& path, MeshData& outData)
+    {
+        tinyobj::attrib_t                attrib;
+        std::vector<tinyobj::shape_t>    shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string                      warn, err;
+
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.string().c_str()))
+        {
+            return false;
+        }
+
+        for (const auto& shape : shapes)
+        {
+            for (const auto& index : shape.mesh.indices)
+            {
+                Vertex vertex{};
+
+                // Position
+                vertex.position[0] = attrib.vertices[3 * index.vertex_index + 0];
+                vertex.position[1] = attrib.vertices[3 * index.vertex_index + 1];
+                vertex.position[2] = attrib.vertices[3 * index.vertex_index + 2];
+
+                // Normal
+                if (index.normal_index >= 0)
+                {
+                    vertex.normal[0] = attrib.normals[3 * index.normal_index + 0];
+                    vertex.normal[1] = attrib.normals[3 * index.normal_index + 1];
+                    vertex.normal[2] = attrib.normals[3 * index.normal_index + 2];
+                }
+
+                // UV
+                if (index.texcoord_index >= 0)
+                {
+                    vertex.uv0[0] = attrib.texcoords[2 * index.texcoord_index + 0];
+                    vertex.uv0[1] = 1.0f - attrib.texcoords[2 * index.texcoord_index + 1]; // Flip Y
+                }
+
+                // Tangent (Default)
+                vertex.tangent[0] = 1.0f;
+                vertex.tangent[1] = 0.0f;
+                vertex.tangent[2] = 0.0f;
+                vertex.tangent[3] = 1.0f;
+
+                outData.vertices.push_back(vertex);
+                outData.indices.push_back(static_cast<uint32_t>(outData.indices.size()));
+            }
         }
 
         return outData.IsValid();

@@ -140,6 +140,24 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 				}
 			}
 		}
+
+		// 2. NEUTRAL에서 공격 처리
+		if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
+		{
+			// 좌클릭 시 공격 (방향 NONE, 타입 LIGHT)
+			if (GLOBAL(InputGlobal).GetInputDown(VK_LBUTTON))
+			{
+				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
+				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+				{
+					fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY);
+				}
+			}
+		}
 	}
 
 	// 2. COMBAT 모드 일때만 로직 수행

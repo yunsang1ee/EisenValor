@@ -92,7 +92,17 @@ void DxTLAS::BuildInternal(
 		desc.InstanceID = instanceIndex++;
 		desc.InstanceMask = 0xFF;
 		desc.InstanceContributionToHitGroupIndex = 0;
-		desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		
+		// Map 오브젝트인 경우 컬링 비활성화
+		if (obj->GetName() == "Map")
+		{
+			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+		}
+		else
+		{
+			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		}
+
 		desc.AccelerationStructure = blas->GetGPUAddress();
 
 		instanceDescs.push_back(desc);
