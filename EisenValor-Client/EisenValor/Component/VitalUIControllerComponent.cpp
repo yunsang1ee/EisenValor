@@ -294,9 +294,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 		});
 
 		m_flagIcon = scene->CreateComponentWithInit<ImageUIComponent>(flagHandle, [this, &texGlobal](ImageUIComponent* img) {
-			img->SetOrder(12);
+			img->SetOrder(14);
 			// 관리 목록 등록
-			m_managedImages.push_back({img->GetHandle(), 12});
+			m_managedImages.push_back({img->GetHandle(), 14});
 
 			// TeamComponent
 			auto teamComp = GetGameObject()->GetComponent<TeamComponent>();
@@ -323,9 +323,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 		});
 
 		scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, &texGlobal](ImageUIComponent* img) {
-			img->SetOrder(11);
+			img->SetOrder(12);
 			// 관리 목록 등록 (Back)
-			m_managedImages.push_back({img->GetHandle(), 11});
+			m_managedImages.push_back({img->GetHandle(), 12});
 			img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\HPback.dds"));
 		});
 
@@ -344,9 +344,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			});
 
 			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &texGlobal](ImageUIComponent* img) {
-				img->SetOrder(11);
+				img->SetOrder(13);
 				// 관리 목록 등록 (Fill)
-				m_managedImages.push_back({img->GetHandle(), 11});
+				m_managedImages.push_back({img->GetHandle(), 13});
 				img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\HPfill.dds"));
 				img->SetNormalColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 하얀색
 			});
@@ -390,9 +390,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				});
 
 				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &texGlobal](ImageUIComponent* img) {
-					img->SetOrder(10);
+					img->SetOrder(11);
 					// 관리 목록 등록 (Fill)
-					m_managedImages.push_back({img->GetHandle(), 10});
+					m_managedImages.push_back({img->GetHandle(), 11});
 					img->SetNormalTexture(texGlobal.LoadTexture(L"Resource\\Texture\\Staminafill.dds"));
 					img->SetNormalColor({ 0.0f, 1.0f, 1.0f, 1.0f }); // 민트색
 				});

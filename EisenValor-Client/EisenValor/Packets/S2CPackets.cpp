@@ -565,6 +565,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					if (auto* player = scene->TryGetGameObject(playerObjHandle)) {
 						indicatorObj->GetTransform().SetParent(player->GetComponentHandle<Transform>());
 					}
+					else {
+						scene->DestroyGameObject(indicatorObj->GetHandle());
+						return;
+					}
 
 					// 위치
 					indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
