@@ -12,16 +12,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AssetLoader.h">
+    <ClInclude Include="include\AssetFormat.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\AssetMesh.h">
+    <ClInclude Include="include\MeshData.h">
       <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshLoader.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AssetFile.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\AssetLoader.cpp">
+    <ClCompile Include="src\MeshLoader.cpp">
+      <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AssetFile.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.clang-format" />
   </ItemGroup>
 </Project>
