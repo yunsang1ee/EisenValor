@@ -13,6 +13,7 @@
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
 #include "UI/UITextureGlobal.h"
+#include "MeshLoader.h"
 
 namespace
 {
@@ -114,6 +115,44 @@ void SampleScene::CreateSceneObjects()
 			);
 		}
 
+	);
+
+	ReserveGameObject(
+		"Map", std::nullopt,
+		[this](GameObject* obj)
+		{
+			auto& tr = obj->GetTransform();
+			tr.SetPosition(10.0f, -0.5f, 0.0f); // Ground 옆
+			tr.SetScale(1.0f);
+
+			EvAsset::MeshData meshData;
+			if (EvAsset::MeshLoader::LoadMeshFromObj("Resource/Models/perfect_map.obj", meshData))
+			{
+				DEBUG_LOG_FMT("[SampleScene] Loaded OBJ: {} vertices, {} indices\n", 
+					meshData.vertices.size(), meshData.indices.size());
+
+				std::vector<Vertex>	  clientVertices;
+				std::vector<uint32_t> clientIndices = meshData.indices;
+
+				for (const auto& v : meshData.vertices)
+				{
+					Vertex cv{};
+					cv.position = {v.position[0], v.position[1], v.position[2]};
+					cv.normal	= {v.normal[0], v.normal[1], v.normal[2]};
+					cv.uv		= {v.uv0[0], v.uv0[1]};
+					cv.color	= {1.0f, 1.0f, 1.0f, 1.0f};
+					cv.tangent	= {v.tangent[0], v.tangent[1], v.tangent[2]};
+
+					clientVertices.push_back(cv);
+				}
+
+				auto meshHandle = CreateComponentWithInit<MeshComponent>(
+					obj->GetHandle(),
+					[v = std::move(clientVertices), i = std::move(clientIndices)](MeshComponent* mesh)
+					{ mesh->SetMesh(v, i, "perfect_map"); }
+				);
+			}
+		}
 	);
 
 	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
