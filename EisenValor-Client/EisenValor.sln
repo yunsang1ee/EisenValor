@@ -9,7 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EisenValor-ClientFramework"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{C8D5274F-AC00-46C7-1F8D-E88E81087A52}"
 	ProjectSection(SolutionItems) = preProject
-		.clang-format = .clang-format
 		.editorconfig = .editorconfig
 		..\.github\workflows\EisenValor-CI.yml = ..\.github\workflows\EisenValor-CI.yml
 		SettingMarkDown\framework_Spec.md = SettingMarkDown\framework_Spec.md
