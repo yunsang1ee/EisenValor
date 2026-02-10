@@ -113,6 +113,7 @@ namespace Server {
 		private:
 			void CreateUsersGameObjects(const Users& users);
 			void CreateBotsGameObjects(const Bots& bots);
+			void CreateGameWorldObjects();
 
 			void ProcessEvents();
 			void ProcessPendingAddObjectList();

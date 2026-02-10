@@ -87,17 +87,17 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	auto navAgenet = soldier->AddComponent<Server::Contents::NavAgent>(soldier->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
-	params.radius = 0.6f;        // Ãæµ¹ ¹Ý°æ
-	params.height = 0.0f;        // Å°
-	params.maxSpeed = 10.0f;      // ÃÖ´ë ¼Óµµ
-	params.maxAcceleration = 10.f; // °¡¼Óµµ
+	params.radius = 0.6f;        // ì¶©ëŒ ë°˜ê²½
+	params.height = 1.f;        // í‚¤
+	params.maxSpeed = 20.0f;      // ìµœëŒ€ ì†ë„
+	params.maxAcceleration = 10.f; // ê°€ì†ë„
 
-	// Ãæµ¹ È¸ÇÇ ¼³Á¤
+	// ì¶©ëŒ íšŒí”¼ ì„¤ì •
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange = params.radius * 30.0f;
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
-	params.obstacleAvoidanceType = 0; // À§¿¡¼­ ¼³Á¤ÇÑ 0¹ø È¸ÇÇ ¼³Á¤ »ç¿ë
-	params.separationWeight = 2.0f;   // ´Ù¸¥ ¿¡ÀÌÀüÆ®¿Í ¶³¾îÁö·Á´Â Èû
+	params.obstacleAvoidanceType = 0; // ìœ„ì—ì„œ ì„¤ì •í•œ 0ë²ˆ íšŒí”¼ ì„¤ì • ì‚¬ìš©
+	params.separationWeight = 2.0f;   // ë‹¤ë¥¸ ì—ì´ì „íŠ¸ì™€ ë–¨ì–´ì§€ë ¤ëŠ” íž˜
 	if(false == navAgenet->Init(params))
 		return nullptr;
 	

@@ -100,7 +100,7 @@ void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
 
-	ReserveGameObject(
+	/*ReserveGameObject(
 		"Ground", std::nullopt,
 		[this](GameObject* obj)
 		{
@@ -115,14 +115,14 @@ void SampleScene::CreateSceneObjects()
 			);
 		}
 
-	);
+	);*/
 
 	ReserveGameObject(
 		"Map", std::nullopt,
 		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
-			tr.SetPosition(10.0f, -0.5f, 0.0f); // Ground 옆
+			tr.SetPosition(0.0f, 0.0f, 0.0f); // Ground 옆
 			tr.SetScale(1.0f);
 
 			EvAsset::MeshData meshData;

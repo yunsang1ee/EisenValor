@@ -46,7 +46,7 @@ bool Server::Contents::NavSystem::Load(const std::string_view filePath)
 	m_crowd = dtAllocCrowd();
 	
 	constexpr int32 maxAgents{ 1000 };
-	constexpr float maxAgentRadius{ 2.f };
+	constexpr float maxAgentRadius{ 0.5f };
 
 	if(!m_crowd->init(maxAgents, maxAgentRadius, m_navMesh)) return false;
 
@@ -76,7 +76,7 @@ void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3
 	if(!ag || !ag->active) return;
 
 	float pos[3] = { targetPos.x, targetPos.y, targetPos.z };
-	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f }; // °Ë»ö ¹üÀ§
+	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f }; // ê²€ìƒ‰ ë²”ìœ„
 	dtPolyRef targetRef;
 	float targetNearest[3];
 
