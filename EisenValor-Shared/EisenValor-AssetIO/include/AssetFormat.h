@@ -58,6 +58,22 @@ struct Vertex
 	float uv0[2];
 };
 
+struct SkinnedVertex
+{
+	Vertex  staticVertex;
+	uint8_t blendIndices[4];
+	float   blendWeights[4];
+};
+
+struct Bone
+{
+	uint64_t nameHash;
+	int32_t  parentIndex;
+	float	 restPos[3];
+	float	 restRot[4]; // Quaternion
+	float	 restScale[3];
+};
+
 struct SubMesh
 {
 	uint32_t indexOffset; // 인덱스 배열에서 시작 인덱스

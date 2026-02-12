@@ -85,8 +85,8 @@ std::vector<uint32_t> cubeIndices = {
 void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
-		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, RectTransformComponent,
-		ImageUIComponent, ButtonUIComponent, TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent>();
+		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent,
+		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -151,6 +151,69 @@ void SampleScene::CreateSceneObjects()
 					[v = std::move(clientVertices), i = std::move(clientIndices)](MeshComponent* mesh)
 					{ mesh->SetMesh(v, i, "perfect_map"); }
 				);
+			}
+		}
+	);
+
+	ReserveGameObject(
+		"Character", std::nullopt,
+		[this](GameObject* obj)
+		{
+			auto& tr = obj->GetTransform();
+			tr.SetPosition(10.0f, 0.0f, 0.0f);
+			tr.SetScale(1.0f);
+
+			EvAsset::SkinnedMeshData skinnedData;
+			if (EvAsset::MeshLoader::LoadSkinnedMesh("Resource/Models/HumanM_Model.evskin", skinnedData))
+			{
+				// 1. Vertex 변환
+				std::vector<SkinnedVertex> clientVertices;
+				for (const auto& v : skinnedData.vertices)
+				{
+					SkinnedVertex sv{};
+					sv.position = {v.staticVertex.position[0], v.staticVertex.position[1], v.staticVertex.position[2]};
+					sv.normal   = {v.staticVertex.normal[0], v.staticVertex.normal[1], v.staticVertex.normal[2]};
+					sv.uv       = {v.staticVertex.uv0[0], v.staticVertex.uv0[1]};
+					sv.color    = {1.0f, 1.0f, 1.0f, 1.0f};
+					
+					// Indices packing (4 bytes to uint32)
+					sv.blendIndices = (v.blendIndices[3] << 24) | (v.blendIndices[2] << 16) | 
+					                  (v.blendIndices[1] << 8) | v.blendIndices[0];
+					
+					sv.blendWeights[0] = v.blendWeights[0];
+					sv.blendWeights[1] = v.blendWeights[1];
+					sv.blendWeights[2] = v.blendWeights[2];
+					sv.blendWeights[3] = v.blendWeights[3];
+
+					clientVertices.push_back(sv);
+				}
+
+				// 2. Bone 변환
+				std::vector<SkinnedBone> clientBones;
+				for (const auto& b : skinnedData.bones)
+				{
+					SkinnedBone sb{};
+					sb.nameHash = b.nameHash;
+					sb.parentIndex = b.parentIndex;
+					sb.restPos = {b.restPos[0], b.restPos[1], b.restPos[2]};
+					sb.restRot = {b.restRot[0], b.restRot[1], b.restRot[2], b.restRot[3]};
+					sb.restScale = {b.restScale[0], b.restScale[1], b.restScale[2]};
+					clientBones.push_back(sb);
+				}
+
+				auto skinnedMeshHandle = CreateComponentWithInit<SkinnedMeshComponent>(
+					obj->GetHandle(),
+					[v = std::move(clientVertices), i = skinnedData.indices, b = std::move(clientBones), o = skinnedData.offsetMatrices](SkinnedMeshComponent* mesh)
+					{ 
+						mesh->SetMesh(v, i);
+						mesh->SetSkeleton(b, o);
+					}
+				);
+				DEBUG_LOG_FMT("[SampleScene] Character loaded: {} vertices\n", skinnedData.vertices.size());
+			}
+			else
+			{
+				DEBUG_LOG_FMT("[SampleScene] Failed to load character .evskin file\n");
 			}
 		}
 	);

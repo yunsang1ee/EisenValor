@@ -2,9 +2,13 @@
 #include <tuple>
 #include "IComponent.h"
 #include "Transform.h"
+#include "RectTransformComponent.h"
 #include "CameraComponent.h"
 #include "MeshComponent.h"
+#include "SkinnedMeshComponent.h"
 #include "MovementComponent.h" 
+#include "ImageUIComponent.h"
+#include "ButtonUIComponent.h"
 //.. Add other engine component includes here
 
 template <typename T>
@@ -21,8 +25,12 @@ concept ComponentTuple = is_valid_component_tuple<T>();
 
 using EngineComponents = std::tuple<
 	Transform,
+	RectTransformComponent,
 	CameraComponent,
 	MeshComponent,
-	MovementComponent
+	SkinnedMeshComponent,
+	MovementComponent,
+	ImageUIComponent,
+	ButtonUIComponent
 	//.. Add other engine components here
 	>;

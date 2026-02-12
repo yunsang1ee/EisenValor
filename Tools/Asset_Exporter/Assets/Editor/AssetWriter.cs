@@ -54,7 +54,7 @@ public class AssetWriter
             bw.Write((ulong)0); // FileSize placeholder
 
             bw.Write((uint)_chunks.Count);
-            bw.Write(new byte[16]); // Reserved (padding to 64 bytes)
+            bw.Write(new byte[20]); // Reserved (padding to 64 bytes)
 
             // 3. Write Chunk Table
             foreach (var chunk in _chunks)
