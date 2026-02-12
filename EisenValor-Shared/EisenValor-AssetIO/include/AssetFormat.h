@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <string_view>
+#include <string>
+#include <cstddef>
 
 /*
  - EisenValor Asset Pipeline Specification v2.1
@@ -23,19 +25,16 @@ struct Guid
 };
 
 // NOTE: 파일 레이아웃 정의를 위한 구조체 (디스크 상의 포맷)
-// 런타임 코드에서 reinterpret_cast로 접근 금지 (Udefined Behavior 발생 가능)
-// memcpy 또는 필드별 파싱을 사용하여 정렬 안전성 유지
-// 64 Bytes Global Header
 struct AssetHeader
 {
-	char	 signature[4]; // "EVMH", "EVTX", etc.
-	uint32_t version;	   // v2.1 = 2
-	uint32_t headerSize;   // sizeof(AssetHeader) = 64
-	uint32_t flags;		   // Reserved
-	Guid	 assetGuid;	   // Unity GUID
-	uint64_t fileSize;	   // 헤더를 포함한 전체 파일 크기
-	uint32_t chunkCount;   // 청크 수
-	uint8_t	 reserved[20]; // Padding to 64 bytes
+	char	  signature[4]; // "EVMH", "EVTX", etc.
+	uint32_t  version;		// v2.1 = 2
+	uint32_t  headerSize;	// sizeof(AssetHeader) = 64
+	uint32_t  flags;		// Reserved
+	Guid	  assetGuid;	// Unity GUID
+	uint64_t  fileSize;		// 헤더를 포함한 전체 파일 크기
+	uint32_t  chunkCount;	// 청크 수
+	std::byte reserved[20]; // [FIX] uint8_t -> std::byte
 };
 
 // Chunk Entry in Chunk Table
@@ -63,6 +62,9 @@ struct SubMesh
 	uint32_t indexOffset; // 인덱스 배열에서 시작 인덱스
 	uint32_t indexCount;
 	uint32_t materialSlot;
+
+	float aabbmin[3];
+	float aabbmax[3];
 };
 
 struct Bounds
@@ -108,6 +110,15 @@ struct MaterialDepEntry
 };
 
 #pragma pack(pop)
+
+struct AssetData
+{
+	Guid		assetGuid;
+	std::string name;
+
+	virtual ~AssetData() = default;
+	virtual bool Deserialize(class AssetFile& file) = 0;
+};
 
 // FNV-1a Hash https://share.google/trFAqACv1zHhll7h8
 constexpr uint64_t HashString(std::string_view str)
