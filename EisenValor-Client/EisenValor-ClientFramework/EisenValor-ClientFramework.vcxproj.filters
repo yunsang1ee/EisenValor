@@ -250,10 +250,21 @@
     <ClInclude Include="include\UIComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="include\RectTransformComponent.h" />
-    <ClInclude Include="include\ImageUIComponent.h" />
-    <ClInclude Include="include\ButtonUIComponent.h" />
-    <ClInclude Include="include\UIGlobal.h" />
+    <ClInclude Include="include\ButtonUIComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ImageUIComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RectTransformComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SkinnedMeshComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UIGlobal.h">
+      <Filter>Common\Global</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -368,10 +379,21 @@
     <ClCompile Include="src\CommonUtils.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="src\RectTransformComponent.cpp" />
-    <ClCompile Include="src\ImageUIComponent.cpp" />
-    <ClCompile Include="src\ButtonUIComponent.cpp" />
-    <ClCompile Include="src\UIGlobal.cpp" />
+    <ClCompile Include="src\ButtonUIComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImageUIComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RectTransformComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UIGlobal.cpp">
+      <Filter>Common\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkinnedMeshComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">

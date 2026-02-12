@@ -219,6 +219,7 @@
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\SceneGlobal.h" />
     <ClInclude Include="include\Singleton.h" />
+    <ClInclude Include="include\SkinnedMeshComponent.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Transform.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="src\DxRendererGlobal.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneGlobal.cpp" />
+    <ClCompile Include="src\SkinnedMeshComponent.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
