@@ -58,7 +58,7 @@ public class AssetExporter
             for (int i = 0; i < pos.Length; i++)
             {
                 bw.Write(pos[i].x); bw.Write(pos[i].y); bw.Write(pos[i].z); // Pos
-                
+
                 if (norm != null && norm.Length > i) { bw.Write(norm[i].x); bw.Write(norm[i].y); bw.Write(norm[i].z); } // Norm
                 else { bw.Write(0f); bw.Write(1f); bw.Write(0f); }
 
@@ -97,6 +97,9 @@ public class AssetExporter
                 bw.Write((uint)sm.indexStart);
                 bw.Write((uint)sm.indexCount);
                 bw.Write((uint)i); // Material Slot (Default mapping)
+
+                bw.Write(sm.bounds.min.x); bw.Write(sm.bounds.min.y); bw.Write(sm.bounds.min.z);
+                bw.Write(sm.bounds.max.x); bw.Write(sm.bounds.max.y); bw.Write(sm.bounds.max.z);
             }
             return ms.ToArray();
         }

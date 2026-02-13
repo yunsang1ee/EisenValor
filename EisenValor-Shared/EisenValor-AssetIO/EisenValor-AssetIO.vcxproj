@@ -21,12 +21,16 @@
   <ItemGroup>
     <ClInclude Include="include\AssetFile.h" />
     <ClInclude Include="include\AssetFormat.h" />
+    <ClInclude Include="include\AssetLoader.h" />
+    <ClInclude Include="include\MaterialData.h" />
     <ClInclude Include="include\MeshData.h" />
-    <ClInclude Include="include\MeshLoader.h" />
+    <ClInclude Include="include\TextureData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetFile.cpp" />
-    <ClCompile Include="src\MeshLoader.cpp" />
+    <ClCompile Include="src\MaterialData.cpp" />
+    <ClCompile Include="src\MeshData.cpp" />
+    <ClCompile Include="src\TextureData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.clang-format" />
@@ -92,6 +96,9 @@
     <OutDir>$(SolutionDir)Libraries\lib\$(ProjectName)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -14,18 +14,16 @@ public:
 	AssetFile() = default;
 	~AssetFile();
 
-	// 파일을 메모리에 매핑하고 헤더/청크 테이블을 파싱(복사)합니다.
+	// 파일을 메모리에 매핑하고 헤더/청크 테이블을 파싱
 	bool Load(const std::filesystem::path& path);
 	void Unload();
 
 	bool IsLoaded() const { return m_mappedView != nullptr; }
 
-	// 파싱된 헤더 정보 접근
 	const AssetHeader& GetHeader() const { return m_header; }
 	const ChunkEntry*  GetChunkEntry(const char type[4]) const;
 	const void*		   GetChunkDataPtr(const char type[4], size_t& outSize) const;
 
-	// Span 형태로 청크 데이터를 반환
 	template <typename T>
 	std::span<const T> GetChunkSpan(const char type[4]) const
 	{

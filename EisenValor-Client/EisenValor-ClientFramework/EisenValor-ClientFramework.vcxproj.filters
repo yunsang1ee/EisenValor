@@ -55,15 +55,6 @@
     <Filter Include="Graphics\Raytracing">
       <UniqueIdentifier>{a64a1ac2-f831-4e59-b951-98694f00ad2c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Core">
-      <UniqueIdentifier>{5b7d7db7-c2c7-4457-8d5f-941c8623dc0f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Core\Input">
-      <UniqueIdentifier>{af564647-90d4-4e9c-9ca1-071a7e59ba49}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Core\Time">
-      <UniqueIdentifier>{865c3a9f-276f-4cca-931a-a0dc9e9e1f20}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Resource\Low Resource">
       <UniqueIdentifier>{0866b4f4-037e-4337-918d-7070c172dd98}</UniqueIdentifier>
     </Filter>
@@ -76,9 +67,6 @@
     <Filter Include="Common\Container">
       <UniqueIdentifier>{540c4765-a220-4970-b8f3-6ed4e3446803}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Core\Scene">
-      <UniqueIdentifier>{62d55f6b-6a71-4962-af92-5b4a52607360}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common\Object">
       <UniqueIdentifier>{64dd2a36-df34-4eac-9a5a-de0ab2c2bb63}</UniqueIdentifier>
     </Filter>
@@ -87,6 +75,21 @@
     </Filter>
     <Filter Include="NetBridge\00. Network">
       <UniqueIdentifier>{b75b3135-5ffe-448c-ae59-f676b9c0c512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{351bf1ee-fb19-4eb7-aa79-126d5f2f3361}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Time">
+      <UniqueIdentifier>{865c3a9f-276f-4cca-931a-a0dc9e9e1f20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{62d55f6b-6a71-4962-af92-5b4a52607360}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{b8b84b96-52b5-4840-b540-92e190dc5a22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{af564647-90d4-4e9c-9ca1-071a7e59ba49}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -131,10 +134,10 @@
       <Filter>Common\Math</Filter>
     </ClInclude>
     <ClInclude Include="include\InputGlobal.h">
-      <Filter>Common\Core\Input</Filter>
+      <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="include\TimerGlobal.h">
-      <Filter>Common\Core\Time</Filter>
+      <Filter>Time</Filter>
     </ClInclude>
     <ClInclude Include="include\DxFeatureCaps.h">
       <Filter>Graphics\Common</Filter>
@@ -215,10 +218,10 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="include\Scene.h">
-      <Filter>Common\Core\Scene</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="include\SceneGlobal.h">
-      <Filter>Common\Core\Scene</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="include\DxRendererGlobal.h">
       <Filter>Graphics\Renderer</Filter>
@@ -265,6 +268,19 @@
     <ClInclude Include="include\UIGlobal.h">
       <Filter>Common\Global</Filter>
     </ClInclude>
+    <ClInclude Include="include\IResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TextureResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ResourceGlobal.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MaterialResource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -296,10 +312,10 @@
       <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="src\InputGlobal.cpp">
-      <Filter>Common\Core\Input</Filter>
+      <Filter>Input</Filter>
     </ClCompile>
     <ClCompile Include="src\TimerGlobal.cpp">
-      <Filter>Common\Core\Time</Filter>
+      <Filter>Time</Filter>
     </ClCompile>
     <ClCompile Include="src\DxFeatureCaps.cpp">
       <Filter>Graphics\Common</Filter>
@@ -352,9 +368,6 @@
     <ClCompile Include="src\DxRtShaderTable.cpp">
       <Filter>Graphics\Raytracing</Filter>
     </ClCompile>
-    <ClCompile Include="src\CameraComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="src\GameObject.cpp">
       <Filter>Common\Object</Filter>
     </ClCompile>
@@ -362,10 +375,10 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="src\Scene.cpp">
-      <Filter>Common\Core\Scene</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\SceneGlobal.cpp">
-      <Filter>Common\Core\Scene</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\MovementComponent.cpp">
       <Filter>Component</Filter>
@@ -394,6 +407,22 @@
     <ClCompile Include="src\SkinnedMeshComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="src\IResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TextureResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ResourceGlobal.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CameraComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MaterialResource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">
