@@ -24,12 +24,14 @@
     <ClInclude Include="include\AssetLoader.h" />
     <ClInclude Include="include\MaterialData.h" />
     <ClInclude Include="include\MeshData.h" />
+    <ClInclude Include="include\MeshLoader.h" />
     <ClInclude Include="include\TextureData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetFile.cpp" />
     <ClCompile Include="src\MaterialData.cpp" />
     <ClCompile Include="src\MeshData.cpp" />
+    <ClCompile Include="src\MeshLoader.cpp" />
     <ClCompile Include="src\TextureData.cpp" />
   </ItemGroup>
   <ItemGroup>
