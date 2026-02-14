@@ -13,6 +13,9 @@
     <Filter Include="Material">
       <UniqueIdentifier>{3cb81426-14d1-4d49-8851-87e0d3a9fbad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Animation">
+      <UniqueIdentifier>{484377fc-f319-437e-ae36-35d63ba6b0b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\AssetFormat.h">
@@ -36,6 +39,9 @@
     <ClInclude Include="include\MeshLoader.h">
       <Filter>Mesh</Filter>
     </ClInclude>
+    <ClInclude Include="include\AnimationData.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetFile.cpp">
@@ -52,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="src\MeshLoader.cpp">
       <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AnimationData.cpp">
+      <Filter>Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

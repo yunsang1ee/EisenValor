@@ -3,12 +3,14 @@
 #include "MeshResource.h"
 #include "TextureResource.h"
 #include "MaterialResource.h"
+#include "AnimationResource.h"
 
 // AssetIO
 #include "AssetLoader.h"
 #include "MeshData.h"
 #include "TextureData.h"
 #include "MaterialData.h"
+#include "AnimationData.h"
 
 // Framework Core & Utils
 #include "DxBuffer.h"
@@ -20,6 +22,7 @@
 #include "DxUploadHeap.h"
 #include "CommonInclude.h"
 #include "DxUtils.h"
+#include "DxCommandQueueGlobal.h"
 
 #include <DirectXTex.h>
 
@@ -99,9 +102,12 @@ std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const s
 template <>
 std::shared_ptr<TextureResource> ResourceGlobal::LoadInternal<TextureResource>(const std::filesystem::path& path)
 {
+	DEBUG_LOG_FMT("[ResourceGlobal] START LOADING: {}\n", path.string());
+
 	EvAsset::TextureData data;
 	if (false == EvAsset::AssetLoader::Load(path, data))
 	{
+		DEBUG_LOG_FMT("[ResourceGlobal] Failed to load file: {}\n", path.string());
 		return nullptr;
 	}
 
@@ -112,6 +118,7 @@ std::shared_ptr<TextureResource> ResourceGlobal::LoadInternal<TextureResource>(c
 			&metadata, image
 		)))
 	{
+		DEBUG_LOG_FMT("[ResourceGlobal] Failed to parse DDS memory for: {}\n", path.string());
 		return nullptr;
 	}
 
@@ -122,7 +129,13 @@ std::shared_ptr<TextureResource> ResourceGlobal::LoadInternal<TextureResource>(c
 	}
 
 	auto* device = GLOBAL(DxDeviceGlobal).GetDevice();
-	auto* cmdList = frame->GetMainContext()->CommandList();
+	auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
+
+	// temp context 생성 -> main context 빌려쓰지 않음
+	DxCommandContext tempContext(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	tempContext.Reset();
+
+	auto* cmdList = tempContext.CommandList();
 	auto* uploadHeap = frame->GetUploadHeap();
 
 	D3D12_RESOURCE_DESC texDesc = {};
@@ -179,14 +192,23 @@ std::shared_ptr<TextureResource> ResourceGlobal::LoadInternal<TextureResource>(c
 	);
 	cmdList->ResourceBarrier(1, &barrier);
 
+	// 명령 제출 및 대기
+	tempContext.Close();
+	tempContext.Execute(queue);
+	queue.WaitForIdle();
+
 	auto dxTex = std::make_unique<DxTexture>();
 	dxTex->InitializeFromResource(device, texRes, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, data.name);
+
+	uint32_t finalSRVIdx = dxTex->GetSRVIndex();
 
 	auto res = std::make_shared<TextureResource>();
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetMeta(data.isSRGB, data.usage);
 	res->SetTexture(std::move(dxTex));
+
+	DEBUG_LOG_FMT("[ResourceGlobal] COMPLETED: {} (SRV Index: {})\n", data.name, finalSRVIdx);
 
 	return res;
 }
@@ -213,12 +235,33 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 		{
 			res->SetTexture(slot, tex);
 		}
-		else
-		{
-			// TODO: GUID 기반 경로 검색 시스템(AssetDatabase)이 있으면 여기서 자동 Load
-			DEBUG_LOG_FMT("[ResourceGlobal] Warning: Dependency Texture not found for Material {}\n", data.name);
+				else
+				{
+					// TODO: GUID 기반 경로 검색 시스템(AssetDatabase)이 있으면 여기서 자동 Load
+					DEBUG_LOG_FMT("[ResourceGlobal] Warning: Dependency Texture not found for Material {}\n", data.name);
+				}
+			}
+		
+			return res;
 		}
-	}
-
-	return res;
-}
+		
+		template <>
+		std::shared_ptr<AnimationResource> ResourceGlobal::LoadInternal<AnimationResource>(const std::filesystem::path& path)
+		{
+			EvAsset::AnimationData data;
+			if (false == EvAsset::AssetLoader::Load(path, data))
+			{
+				DEBUG_LOG_FMT("[ResourceGlobal] Failed to load animation: {}\n", path.string());
+				return nullptr;
+			}
+		
+			auto res = std::make_shared<AnimationResource>();
+			res->SetGuid(data.assetGuid);
+			res->SetName(data.name);
+			res->SetData(data);
+		
+			DEBUG_LOG_FMT("[ResourceGlobal] COMPLETED: Animation: {} (Tracks: {})\n", data.name, (uint32_t)data.tracks.size());
+		
+			return res;
+		}
+		

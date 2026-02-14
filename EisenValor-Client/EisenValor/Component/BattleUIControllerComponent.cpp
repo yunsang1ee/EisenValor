@@ -10,7 +10,9 @@
 #include "DxSwapChain.h"
 #include "RectTransformComponent.h"
 #include "ComponentStorage.h"
-#include "UI/UITextureGlobal.h"
+#include "ResourceGlobal.h"
+#include "TextureResource.h"
+#include "DxTexture.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 #include "CameraComponent.h"
@@ -258,7 +260,21 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 		}
 	);
 
-	// 자식 UI 오브젝트들 생성
+	// 2. 텍스처 로드
+	auto& resGlobal = GLOBAL(ResourceGlobal);
+	auto loadTex = [&](const std::wstring& path) -> uint32_t {
+		auto res = resGlobal.Load<TextureResource>(path);
+		return (res && res->GetTexture()) ? res->GetTexture()->GetSRVIndex() : 0;
+	};
+
+	m_normalTexId = loadTex(L"Resource\\Texture\\normal.evtex");
+	m_hoverTexId = loadTex(L"Resource\\Texture\\hovering.evtex");
+	m_lightAttackTexId = loadTex(L"Resource\\Texture\\select.evtex");
+	m_strongAttackTexId = loadTex(L"Resource\\Texture\\strong.evtex");
+	m_areaAttackTexId = loadTex(L"Resource\\Texture\\area.evtex");
+	m_disarmTexId = loadTex(L"Resource\\Texture\\disarm.evtex");
+
+	// 3. 자식 UI 오브젝트들 생성
 	std::vector<std::string> names = { "UpUI", "LeftUI", "RightUI" };
 	for (const auto& name : names)
 	{
@@ -299,15 +315,6 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 			else if (name == "RightUI") { m_rightButtonHandle = btnHandle; m_rightImageHandle = imgHandle; }
 		});
 	}
-
-	// 텍스처 로드 및 멤버 변수 저장
-	auto& texGlobal = UITextureGlobal::GetInstance();
-	m_normalTexId = texGlobal.LoadTexture(L"Resource\\Texture\\normal.dds");
-	m_hoverTexId = texGlobal.LoadTexture(L"Resource\\Texture\\hovering.dds");
-	m_lightAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\select.dds");
-	m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
-	m_areaAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\area.dds");
-	m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
 }
 
 void BattleUIControllerComponent::SetupListener()

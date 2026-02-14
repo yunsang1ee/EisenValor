@@ -32,7 +32,7 @@ public class AnimationExporter
         string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(clip));
         AssetWriter writer = new AssetWriter("EVAN", guid);
 
-        Debug.Log($"[AnimationExporter] '{clip.name}' 추출 시작... (저장 경로: {savePath})");
+        Debug.Log($"[AnimationExporter] '{clip.name}' 추출 시작 (저장 경로: {savePath})");
 
         // 4. 기본 정보
         float duration = clip.length;
@@ -127,7 +127,7 @@ public class AnimationExporter
     private static byte[] BuildMetadataChunk(ulong nameHash, float duration, float frameRate, uint totalFrames, string skeletonGuid)
     {
         using (MemoryStream ms = new MemoryStream())
-        using (BinaryWriter bw = new BinaryWriter(ms))
+        using (BinaryWriter bw = new BinaryWriter(ms)) 
         {
             bw.Write(nameHash);
             bw.Write(duration);

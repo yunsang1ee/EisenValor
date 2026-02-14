@@ -280,7 +280,12 @@
     <ClInclude Include="include\ResourceGlobal.h">
       <Filter>Resource</Filter>
     </ClInclude>
-    <ClInclude Include="include\MaterialResource.h" />
+    <ClInclude Include="include\MaterialResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AnimationResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -422,7 +427,9 @@
     <ClCompile Include="src\CameraComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
-    <ClCompile Include="src\MaterialResource.cpp" />
+    <ClCompile Include="src\MaterialResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">

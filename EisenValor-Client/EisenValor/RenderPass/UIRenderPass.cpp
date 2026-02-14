@@ -6,7 +6,6 @@
 #include <DxDeviceGlobal.h>
 #include <DxShaderCompilerGlobal.h>
 #include "UIGlobal.h"
-#include "UI/UITextureGlobal.h"
 #include "Scene.h"
 #include "UIComponent.h"
 #include "DenseList.h"
@@ -295,7 +294,6 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	std::vector<UIInstanceData> instanceBufferData;
 	instanceBufferData.reserve(m_maxInstances);
 
-	auto&					  textureGlobal = GLOBAL(UITextureGlobal);
 	std::vector<UIRenderData> componentRenderData;
 
 	for (auto* ui : renderableUIs)
@@ -319,14 +317,7 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			inst.uvMax = rData.uvMax;
 
 			// 텍스처 바인딩
-			if (rData.textureId > 0)
-			{
-				inst.textureIndex = textureGlobal.GetSRVIndex(rData.textureId);
-			}
-			else
-			{
-				inst.textureIndex = 0;
-			}
+			inst.textureIndex = rData.textureId;
 
 			inst.padding[0] = inst.padding[1] = inst.padding[2] = 0;
 			instanceBufferData.push_back(inst);

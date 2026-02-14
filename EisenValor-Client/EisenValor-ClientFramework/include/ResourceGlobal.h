@@ -81,6 +81,7 @@ private:
 class MeshResource;
 class TextureResource;
 class MaterialResource;
+class AnimationResource;
 
 template <>
 std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const std::filesystem::path& path);
@@ -88,3 +89,5 @@ template <>
 std::shared_ptr<TextureResource> ResourceGlobal::LoadInternal<TextureResource>(const std::filesystem::path& path);
 template <>
 std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>(const std::filesystem::path& path);
+template <>
+std::shared_ptr<AnimationResource> ResourceGlobal::LoadInternal<AnimationResource>(const std::filesystem::path& path);
