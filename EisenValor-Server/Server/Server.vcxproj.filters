@@ -145,6 +145,9 @@
     <ClCompile Include="ClientPackets.cpp">
       <Filter>03. Packets\ClientPackets</Filter>
     </ClCompile>
+    <ClCompile Include="BattleRam.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -275,6 +278,12 @@
     </Filter>
     <Filter Include="02. Contents\GameWorld\GameObjectFactory">
       <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\BattleRam">
+      <UniqueIdentifier>{53307cfa-15b5-4eb7-b314-bf6bf5eac919}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\BattleRam\State">
+      <UniqueIdentifier>{1b61b4d6-a179-4a29-9691-9483ee05422d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -436,6 +445,9 @@
     </ClInclude>
     <ClInclude Include="ClientPackets.h">
       <Filter>03. Packets\ClientPackets</Filter>
+    </ClInclude>
+    <ClInclude Include="BattleRam.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

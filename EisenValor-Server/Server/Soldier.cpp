@@ -6,9 +6,7 @@
 
 Server::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 	:Creature{teamType, FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER}
-{	static uint32 idGen{ 10000 };
-	SetID(idGen);
-	idGen++;
+{
 }
 
 Server::Contents::Soldier::~Soldier()

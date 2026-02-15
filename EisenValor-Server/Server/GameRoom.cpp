@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "GameRoom.h"
 
 #include "Player.h"
@@ -22,10 +22,6 @@ Server::Contents::GameRoom::~GameRoom()
 
 void Server::Contents::GameRoom::Init()
 {
-//#ifdef DEVELOP
-//	CreateWorld();
-//#endif // DEVELOP
-
 	if(nullptr == m_gameWorld)
 		CreateWorld();
 }

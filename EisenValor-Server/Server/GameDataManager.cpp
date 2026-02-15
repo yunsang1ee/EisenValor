@@ -33,11 +33,11 @@ bool Server::Contents::GameDataManager::LoadDataFromFile(const std::string_view 
 	if(doc.HasMember("GameWorldData")) {
 		const Value& data = doc["GameWorldData"];
 
-		if(data.HasMember("GAME_TIME_MIN") && data["GAME_TIME_MIN"].IsInt())
-			m_gameWorldData.gameTimeMin = data["GAME_TIME_MIN"].GetInt();
+		if(data.HasMember("GAME_TIME_MIN") && data["GAME_TIME_MIN"].IsUint())
+			m_gameWorldData.gameTimeMin = data["GAME_TIME_MIN"].GetUint();
 
-		if(data.HasMember("GAME_UPDATE_TIME_MS") && data["GAME_UPDATE_TIME_MS"].IsInt())
-			m_gameWorldData.gameUpdateTimeMs = data["GAME_UPDATE_TIME_MS"].GetInt();
+		if(data.HasMember("GAME_UPDATE_TIME_MS") && data["GAME_UPDATE_TIME_MS"].IsUint())
+			m_gameWorldData.gameUpdateTimeMs = data["GAME_UPDATE_TIME_MS"].GetUint();
 	}
 
     if(doc.HasMember("SkillData") && doc["SkillData"].IsArray()) {
@@ -45,15 +45,15 @@ bool Server::Contents::GameDataManager::LoadDataFromFile(const std::string_view 
         for(rapidjson::SizeType i = 0; i < skills.Size(); i++) {
             const auto& v = skills[i];
             SkillData skill;
-            skill.skillTypeID = v["id"].GetInt();
+            skill.skillTypeID = static_cast<uint8>(v["id"].GetUint());
             skill.name = v["name"].GetString();
-            skill.preDelay = v["pre_delay"].GetInt();
-            skill.postDelay = v["post_delay"].GetInt();
-            skill.damage = v["damage"].GetInt();
-            skill.extraDamage = v["extra_damage"].GetInt();
+            skill.preDelay = v["pre_delay"].GetUint();
+            skill.postDelay = v["post_delay"].GetUint();
+            skill.damage = v["damage"].GetUint();
+            skill.extraDamage = v["extra_damage"].GetUint();
             skill.attackRadius = v["attack_radius"].GetFloat();
             skill.attackDegree = v["attack_degree"].GetFloat();
-            skill.staminaCost = v["stamina_cost"].GetInt();
+            skill.staminaCost = v["stamina_cost"].GetUint();
 
             m_skillDataMap[skill.skillTypeID] = skill;
         }

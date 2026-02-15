@@ -23,6 +23,9 @@ void Server::Contents::Player::Update(const float dt)
 		AddSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
 	else
 		RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);*/
+
+	// Vec3 pos{ GetPos() };
+	// std::cout << std::format("Pos: {}. {}. {}", pos.x, pos.y, pos.z) << std::endl;
 }
 
 bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float dt)
@@ -65,7 +68,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 	}
 
 
-	// ¼± µô·¹ÀÌ µµÁß Å¸°Ý¹Þ¾ÒÀ» ¶§ ½ºÅÏµô·¹ÀÌ¿Í µ¥¹ÌÁö 2¹è
+	// ì„  ë”œë ˆì´ ë„ì¤‘ íƒ€ê²©ë°›ì•˜ì„ ë•Œ ìŠ¤í„´ë”œë ˆì´ì™€ ë°ë¯¸ì§€ 2ë°°
 	if(auto const fsm = GetComponent<Server::Contents::FSM>()) {
 		if(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY == fsm->GetCurState()->GetStateType()) {
 			damage *= 2;

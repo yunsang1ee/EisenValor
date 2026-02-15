@@ -61,6 +61,8 @@ namespace Server {
 			// NAVSYSTEM
 			NavSystem																m_navSystem;
 
+			uint32																	m_npcIdGen;
+
 		public:
 			GameWorld();
 			~GameWorld() = default;

@@ -11,8 +11,10 @@ namespace Server {
 		class General;
 		class Player;
 		class Soldier;
+		class BattleRam;
 
 		struct GameObjectTemplate {
+			uint32						id;
 			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
 			const GameObjectData*		gameObjectData;
@@ -32,6 +34,11 @@ namespace Server {
 
 		};
 
+		struct BattleRamTemplate : public CreatureTemplate {
+			float	detectionRange;
+			Vec3	finalDestPos;
+		};
+
 		struct SpanwerTemplate : public GameObjectTemplate {
 		
 		};
@@ -49,6 +56,7 @@ namespace Server {
 			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
 			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::unique_ptr<BattleRam>	CreateBattleRam(const BattleRamTemplate& t);
 			static std::unique_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
 
 		};

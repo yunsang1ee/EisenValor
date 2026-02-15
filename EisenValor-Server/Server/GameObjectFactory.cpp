@@ -14,11 +14,12 @@
 #include "Collider.h"
 #include "GameWorld.h"
 #include "NavAgent.h"
+#include "BattleRam.h"
 
 std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
-
+	player->SetID(t.id);
 	player->SetPosInfo(t.posInfo);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
@@ -28,6 +29,7 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 			.maxStamina = t.gameObjectData->maxStamina,
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
+	player->SetGameWorld(t.gameWorld.lock());
 
 	const auto fsm = player->AddComponent<Server::Contents::FSM>();
 	
@@ -44,8 +46,6 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	fsm->AddState(std::move(postDelayState));
 	fsm->AddState(std::move(stunState));
 	fsm->AddState(std::move(deadState));
-
-	const auto collider = player->AddComponent<Server::Contents::OBBCollider>();
 
 	return player;
 }
@@ -73,6 +73,7 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
 	auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
+	soldier->SetID(t.id);
 	soldier->SetGameWorld(t.gameWorld.lock());
 	soldier->SetPosInfo(t.posInfo);
 	soldier->SetGameObjectData(t.gameObjectData);
@@ -120,6 +121,41 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 
 	return soldier;
+}
+
+std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory::CreateBattleRam(const BattleRamTemplate& t)
+{
+	auto battleRam{ std::make_unique<BattleRam>(t.detectionRange, t.finalDestPos) };
+	battleRam->SetID(t.id);
+	battleRam->SetGameWorld(t.gameWorld.lock());
+	battleRam->SetPosInfo(t.posInfo);
+	battleRam->SetGameObjectData(t.gameObjectData);
+	battleRam->SetStat(Stat{
+		.currentHP = t.gameObjectData->maxHp,
+		.maxHP = t.gameObjectData->maxHp,
+		.currentStamina = t.gameObjectData->maxStamina,
+		.maxStamina = t.gameObjectData->maxStamina,
+		.respawnTimeSec = t.gameObjectData->respawnTimeSec
+		});
+	
+	auto navAgenet = battleRam->AddComponent<Server::Contents::NavAgent>(battleRam->GetGameWorld()->GetNavSystem());
+	dtCrowdAgentParams params;
+	memset(&params, 0, sizeof(params));
+	params.radius = 0.6f;        // 충돌 반경
+	params.height = 1.f;        // 키
+	params.maxSpeed = 20.0f;      // 최대 속도
+	params.maxAcceleration = 10.f; // 가속도
+
+	// 충돌 회피 설정
+	params.collisionQueryRange = params.radius * 12.0f;
+	params.pathOptimizationRange = params.radius * 30.0f;
+	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
+	params.obstacleAvoidanceType = 0; // 위에서 설정한 0번 회피 설정 사용
+	params.separationWeight = 2.0f;   // 다른 에이전트와 떨어지려는 힘
+	if(false == navAgenet->Init(params))
+		return nullptr;
+
+	return battleRam;
 }
 
 std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
