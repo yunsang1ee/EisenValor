@@ -7,6 +7,7 @@
 // AssetIO
 #include "AssetLoader.h"
 #include "MeshData.h"
+#include "AssetRegistryData.h"
 #include "TextureData.h"
 #include "MaterialData.h"
 
@@ -31,8 +32,42 @@ void ResourceGlobal::Initialize()
 void ResourceGlobal::Release()
 {
 	m_resourceCache.clear();
+	m_guidToPath.clear();
 	m_pathToGuid.clear();
 	DEBUG_LOG_FMT("[ResourceGlobal] Released.\n");
+}
+
+bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)
+{
+	std::filesystem::path finalPath = path;
+	if (finalPath.is_relative())
+	{
+		finalPath = Utils::ExeDir() / finalPath;
+	}
+
+	EvAsset::AssetRegistryData data;
+	if (false == EvAsset::AssetLoader::Load(finalPath, data))
+	{
+		DEBUG_LOG_FMT("[ResourceGlobal] Failed to load asset registry: {}\n", finalPath.string());
+		return false;
+	}
+
+	m_guidToPath.clear();
+	m_pathToGuid.clear();
+
+	const std::filesystem::path resourceRoot = path.parent_path();
+	for (auto& entry : data.entries)
+	{
+		std::filesystem::path fullPath = resourceRoot / entry.path;
+		m_guidToPath[entry.guid] = fullPath;
+
+		m_pathToGuid[fullPath.wstring()] = entry.guid;
+
+		DEBUG_LOG_FMT("[ResourceGlobal] Registered asset: GUID={}, Path={}\n", entry.guid, fullPath.string());
+	}
+
+	DEBUG_LOG_FMT("[ResourceGlobal] Registry Loaded: {} entries.\n", m_guidToPath.size());
+	return true;
 }
 
 template <>
@@ -48,6 +83,7 @@ std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const s
 	auto* frame = GLOBAL(DxRendererGlobal).GetCurrentFrame();
 	if (nullptr == frame)
 	{
+		DEBUG_LOG_FMT("[ResourceGlobal] Failed to get current frame.\n");
 		return nullptr;
 	}
 
@@ -203,20 +239,16 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 	auto res = std::make_shared<MaterialResource>();
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
-	res->SetData(data.shaderNameHash, data.albedo, data.roughness, data.metallic);
+	res->SetData(data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic);
 
 	for (const auto& dep : data.dependencies)
 	{
 		std::string_view slot(dep.slotType, 4);
-		auto			 tex = GetResource<TextureResource>(dep.textureGuid);
+		auto			 tex = Load<TextureResource>(dep.textureGuid);
+
 		if (nullptr != tex)
 		{
 			res->SetTexture(slot, tex);
-		}
-		else
-		{
-			// TODO: GUID 기반 경로 검색 시스템(AssetDatabase)이 있으면 여기서 자동 Load
-			DEBUG_LOG_FMT("[ResourceGlobal] Warning: Dependency Texture not found for Material {}\n", data.name);
 		}
 	}
 

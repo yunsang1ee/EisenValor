@@ -16,7 +16,8 @@ bool MaterialData::Deserialize(AssetFile& file)
 			MaterialProp prop;
 			std::memcpy(&prop, ptr, sizeof(MaterialProp));
 
-			shaderNameHash = prop.shaderNameHash;
+			shadingModelId = prop.shadingModelId;
+			materialFlags = prop.materialFlags;
 			std::memcpy(albedo, prop.albedo, sizeof(float) * 4);
 			roughness = prop.roughness;
 			metallic = prop.metallic;

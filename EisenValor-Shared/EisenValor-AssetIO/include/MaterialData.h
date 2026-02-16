@@ -8,10 +8,11 @@ namespace EvAsset
 {
 struct MaterialData : public AssetData
 {
-	uint64_t shaderNameHash = 0;
-	float	 albedo[4]{1.0f, 0.0f, 1.0f, 0.0f};
-	float	 roughness = 1.0f;
-	float	 metallic = 0.0f;
+	ShadingModel shadingModelId = ShadingModel::LitPbr;
+	uint32_t	 materialFlags = 0;
+	float		 albedo[4]{1.0f, 1.0f, 1.0f, 1.0f};
+	float		 roughness = 1.0f;
+	float		 metallic = 0.0f;
 
 	struct Dependency
 	{
@@ -21,6 +22,6 @@ struct MaterialData : public AssetData
 	std::vector<Dependency> dependencies;
 
 	bool Deserialize(AssetFile& file) override;
-	bool IsValid() const { return shaderNameHash != 0; }
+	bool IsValid() const { return true; }
 };
 } // namespace EvAsset

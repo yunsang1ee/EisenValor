@@ -5,14 +5,6 @@
 
 namespace EvAsset
 {
-template <typename T>
-static T ReadUnaligned(const void* ptr)
-{
-	T val;
-	std::memcpy(&val, ptr, sizeof(T));
-	return val;
-}
-
 bool MeshData::Deserialize(AssetFile& file)
 {
 	// 1. VERT (Vertex Data)

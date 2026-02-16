@@ -3,15 +3,19 @@
 #include "TextureResource.h"
 #include <algorithm>
 
-void MaterialResource::SetData(uint64_t shaderHash, const float albedoIn[4], float roughnessVal, float metallicIn)
+void MaterialResource::SetData(EvAsset::ShadingModel shadingModel, uint32_t materialFlagsIn, const float albedoIn[4], float roughnessVal, float metallicIn)
 {
-	shaderNameHash = shaderHash;
+	shadingModelId = shadingModel;
+	materialFlags = materialFlagsIn;
 	roughness = roughnessVal;
 	metallic = metallicIn;
 
-	if (nullptr != albedoIn)
+	 if (nullptr != albedoIn)
 	{
-		std::copy(albedoIn, albedoIn + 4, albedo);
+		albedo.x = albedoIn[0];
+		albedo.y = albedoIn[1];
+		albedo.z = albedoIn[2];
+		albedo.w = albedoIn[3];
 	}
 }
 

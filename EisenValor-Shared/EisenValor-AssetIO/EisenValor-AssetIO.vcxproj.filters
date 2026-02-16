@@ -33,6 +33,9 @@
     <ClInclude Include="include\MaterialData.h">
       <Filter>Material</Filter>
     </ClInclude>
+    <ClInclude Include="include\AssetRegistryData.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetFile.cpp">
@@ -46,6 +49,9 @@
     </ClCompile>
     <ClCompile Include="src\MaterialData.cpp">
       <Filter>Material</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AssetRegistryData.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

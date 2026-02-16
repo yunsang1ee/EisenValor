@@ -19,6 +19,32 @@ public:
 	// ---------------------------------------------------------
 	// 통합 로더 인터페이스 (Template)
 	// ---------------------------------------------------------
+	bool LoadRegistry(const std::filesystem::path& path);
+
+	template <IsValidResource T>
+	std::shared_ptr<T> Load(const EvAsset::Guid& guid)
+	{
+		if (auto cache = GetResource<T>(guid))
+		{
+			return cache;
+		}
+
+		auto it = m_guidToPath.find(guid);
+		if (m_guidToPath.end() == it)
+		{
+			return nullptr;
+		}
+
+		std::shared_ptr<T> resource = LoadInternal<T>(it->second);
+		if (resource)
+		{
+			m_resourceCache[guid] = resource;
+			m_pathToGuid[it->second.wstring()] = guid;
+		}
+
+		return resource;
+	}
+
 	template <IsValidResource T>
 	std::shared_ptr<T> Load(const std::filesystem::path& path)
 	{
@@ -28,20 +54,19 @@ public:
 			finalPath = Utils::ExeDir() / finalPath;
 		}
 
-		std::wstring pathStr = finalPath.wstring();
+		const std::wstring pathKey = finalPath.wstring();
 
-		if (m_pathToGuid.contains(pathStr))
+		if (m_pathToGuid.contains(pathKey))
 		{
-			return GetResource<T>(m_pathToGuid[pathStr]);
+			return Load<T>(m_pathToGuid[pathKey]);
 		}
 
 		std::shared_ptr<T> resource = LoadInternal<T>(finalPath);
-
 		if (resource)
 		{
 			const EvAsset::Guid& guid = resource->GetGuid();
 			m_resourceCache[guid] = resource;
-			m_pathToGuid[pathStr] = guid;
+			m_pathToGuid[pathKey] = guid;
 		}
 
 		return resource;
@@ -75,6 +100,7 @@ private:
 	};
 
 	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, GuidHash> m_resourceCache;
+	std::unordered_map<EvAsset::Guid, std::filesystem::path, GuidHash>		m_guidToPath;
 	std::unordered_map<std::wstring, EvAsset::Guid>							m_pathToGuid;
 };
 
