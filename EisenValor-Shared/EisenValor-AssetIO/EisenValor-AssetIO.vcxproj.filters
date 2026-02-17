@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Mesh">
@@ -15,6 +15,9 @@
     </Filter>
     <Filter Include="Animation">
       <UniqueIdentifier>{484377fc-f319-437e-ae36-35d63ba6b0b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{fcc4fdcf-85db-47b3-a022-46b341520ce0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,6 +48,12 @@
     <ClInclude Include="include\AssetRegistryData.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\SkinnedMeshData.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneData.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetFile.cpp">
@@ -67,6 +76,12 @@
     </ClCompile>
     <ClCompile Include="src\AssetRegistryData.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkinnedMeshData.cpp">
+      <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneData.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

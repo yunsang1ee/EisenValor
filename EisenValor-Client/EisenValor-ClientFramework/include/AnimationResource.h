@@ -24,6 +24,9 @@ public:
 	// 트랙 데이터 접근
 	const std::vector<EvAsset::AnimationTrack>& GetTracks() const { return m_tracks; }
 
+	// 애니메이션과 메시의 guid가 일치하는지 확인
+	bool IsCompatible(std::shared_ptr<class SkinnedMeshResource> mesh) const;
+
 private:
 	uint64_t m_nameHash = 0;
 	float	 m_duration = 0.0f;

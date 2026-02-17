@@ -286,6 +286,12 @@
     <ClInclude Include="include\AnimationResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\SkinnedMeshResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneResource.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -428,6 +434,15 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="src\MaterialResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AnimationResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkinnedMeshResource.cpp">
+      <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneResource.cpp">
       <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <memory>
 #include <filesystem>
+#include <queue>
 
 class ResourceGlobal : public Singleton<ResourceGlobal>
 {
@@ -21,6 +22,7 @@ public:
 	// ---------------------------------------------------------
 	bool LoadRegistry(const std::filesystem::path& path);
 
+	//GUID
 	template <IsValidResource T>
 	std::shared_ptr<T> Load(const EvAsset::Guid& guid)
 	{
@@ -40,11 +42,14 @@ public:
 		{
 			m_resourceCache[guid] = resource;
 			m_pathToGuid[it->second.wstring()] = guid;
+			// 마지막 로딩 시간을 m_guidToLastWriteTime에 저장
+			m_guidToLastWriteTime[guid] = std::filesystem::last_write_time(it->second);
 		}
 
 		return resource;
 	}
-
+	
+	//경로
 	template <IsValidResource T>
 	std::shared_ptr<T> Load(const std::filesystem::path& path)
 	{
@@ -67,6 +72,7 @@ public:
 			const EvAsset::Guid& guid = resource->GetGuid();
 			m_resourceCache[guid] = resource;
 			m_pathToGuid[pathKey] = guid;
+			m_guidToLastWriteTime[guid] = std::filesystem::last_write_time(finalPath);
 		}
 
 		return resource;
@@ -86,9 +92,21 @@ public:
 		return nullptr;
 	}
 
+	void ProcessPendingLoads();	// 리소스 예약
+	void CheckForReload();	//Hot Reload
+
 private:
 	template <typename T>
 	std::shared_ptr<T> LoadInternal(const std::filesystem::path& path);
+
+	// 로딩 예약 정보
+	struct LoadingTask
+	{
+		std::shared_ptr<IResource> targetResource; // 리소스 껍데기, 실제 GPU 업로드는 ProcessPendingLoads에서 처리,  // shared_ptr로 관리하여 핫 리로드에도 유리
+		EvAsset::Guid assetGuid;	// 검증용
+		std::filesystem::path path;
+		ResourceTypeID typeID;	// 리소스 타입 식별자
+	};
 
 private:
 	struct GuidHash
@@ -101,13 +119,18 @@ private:
 
 	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, GuidHash> m_resourceCache;
 	std::unordered_map<EvAsset::Guid, std::filesystem::path, GuidHash>		m_guidToPath;
+	std::unordered_map<EvAsset::Guid, std::filesystem::file_time_type, GuidHash> m_guidToLastWriteTime;
 	std::unordered_map<std::wstring, EvAsset::Guid>							m_pathToGuid;
+
+	std::queue<LoadingTask> m_pendingLoads;
 };
 
 class MeshResource;
 class TextureResource;
 class MaterialResource;
 class AnimationResource;
+class SkinnedMeshResource;
+class SceneResource;
 
 template <>
 std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const std::filesystem::path& path);
@@ -117,3 +140,7 @@ template <>
 std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>(const std::filesystem::path& path);
 template <>
 std::shared_ptr<AnimationResource> ResourceGlobal::LoadInternal<AnimationResource>(const std::filesystem::path& path);
+template <>
+std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshResource>(const std::filesystem::path& path);
+template <>
+std::shared_ptr<SceneResource> ResourceGlobal::LoadInternal<SceneResource>(const std::filesystem::path& path);

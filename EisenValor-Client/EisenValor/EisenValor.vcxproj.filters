@@ -85,9 +85,6 @@
     <ClInclude Include="Packets\Tables_generated.h">
       <Filter>Packets</Filter>
     </ClInclude>
-    <ClInclude Include="UI\UITextureGlobal.h">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="RenderPass\UIRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>

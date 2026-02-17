@@ -3,6 +3,7 @@
 #include <string_view>
 #include <string>
 #include <cstddef>
+#include <format>
 
 /*
  - EisenValor Asset Pipeline Specification v2.1
@@ -23,6 +24,29 @@ struct Guid
 
 	bool operator==(const Guid& other) const { return low == other.low && high == other.high; }
 };
+
+// GUID를 읽기 위한 Format
+#pragma pack(pop)
+} // namespace EvAsset
+
+template <>
+struct std::formatter<EvAsset::Guid>
+{
+	constexpr auto parse(std::format_parse_context& ctx)
+	{
+		return ctx.begin();
+	}
+
+	template <typename FormatContext>
+	auto format(const EvAsset::Guid& guid, FormatContext& ctx) const
+	{
+		return std::format_to(ctx.out(), "{:016X}{:016X}", guid.high, guid.low);
+	}
+};
+
+namespace EvAsset
+{
+#pragma pack(push, 1)
 
 // NOTE: 파일 레이아웃 정의를 위한 구조체 (디스크 상의 포맷)
 struct AssetHeader

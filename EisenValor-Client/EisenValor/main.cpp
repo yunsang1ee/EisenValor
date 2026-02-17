@@ -14,10 +14,10 @@
 #include "Scene/SampleScene.h"
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
-#include "RenderPass/UIRenderPass.h" \
+#include "RenderPass/UIRenderPass.h"
 
 #include "UIGlobal.h"
-#include "UI/UITextureGlobal.h"
+#include "ResourceGlobal.h"
 #include "Component/FSM/StatePool.h"
 
 #include "Packets/PacketHandler.h"
@@ -204,8 +204,8 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		renderer.AddRenderPass("UI", std::move(uiPass));
 	}
 
-	// UI 시스템 초기화
-	GLOBAL(UITextureGlobal).Initialize();
+	// 에셋 레지스트리 로드
+	GLOBAL(ResourceGlobal).LoadRegistry("Resource/AssetRegistry.evreg");
 	GLOBAL(UIGlobal).Initialize();
 
 	// FSM StatePool 초기화
