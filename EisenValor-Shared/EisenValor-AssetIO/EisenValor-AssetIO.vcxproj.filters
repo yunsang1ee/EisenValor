@@ -42,6 +42,9 @@
     <ClInclude Include="include\AnimationData.h">
       <Filter>Animation</Filter>
     </ClInclude>
+    <ClInclude Include="include\AssetRegistryData.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetFile.cpp">
@@ -61,6 +64,9 @@
     </ClCompile>
     <ClCompile Include="src\AnimationData.cpp">
       <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AssetRegistryData.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

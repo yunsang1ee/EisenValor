@@ -23,6 +23,7 @@
     <ClInclude Include="include\AssetFile.h" />
     <ClInclude Include="include\AssetFormat.h" />
     <ClInclude Include="include\AssetLoader.h" />
+    <ClInclude Include="include\AssetRegistryData.h" />
     <ClInclude Include="include\MaterialData.h" />
     <ClInclude Include="include\MeshData.h" />
     <ClInclude Include="include\MeshLoader.h" />
@@ -31,6 +32,7 @@
   <ItemGroup>
     <ClCompile Include="src\AnimationData.cpp" />
     <ClCompile Include="src\AssetFile.cpp" />
+    <ClCompile Include="src\AssetRegistryData.cpp" />
     <ClCompile Include="src\MaterialData.cpp" />
     <ClCompile Include="src\MeshData.cpp" />
     <ClCompile Include="src\MeshLoader.cpp" />

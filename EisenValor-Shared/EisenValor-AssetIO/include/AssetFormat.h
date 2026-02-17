@@ -34,7 +34,7 @@ struct AssetHeader
 	Guid	  assetGuid;	// Unity GUID
 	uint64_t  fileSize;		// 헤더를 포함한 전체 파일 크기
 	uint32_t  chunkCount;	// 청크 수
-	std::byte reserved[20]; // [FIX] uint8_t -> std::byte
+	std::byte reserved[20];
 };
 
 // Chunk Entry in Chunk Table
@@ -111,12 +111,22 @@ struct TextureMeta
 
 // --- Material Payloads ---
 
+enum class ShadingModel : uint32_t
+{
+	LitPbr = 0,
+	Unlit = 1,
+	ClearCoat = 2,
+	Skin = 3,
+	Custom = 99
+};
+
 struct MaterialProp
 {
-	uint64_t shaderNameHash; // FNV-1a 64-bit
-	float	 albedo[4];
-	float	 roughness;
-	float	 metallic;
+	ShadingModel shadingModelId;
+	uint32_t	 materialFlags;
+	float		 albedo[4];
+	float		 roughness;
+	float		 metallic;
 };
 
 struct MaterialDepEntry
@@ -142,9 +152,17 @@ constexpr uint64_t HashString(std::string_view str)
 	uint64_t hash = 14695981039346656037ULL;
 	for (char c : str)
 	{
-		hash ^= static_cast<uint8_t>(c);
+		hash ^= static_cast<uint64_t>(static_cast<std::byte>(c));
 		hash *= 1099511628211ULL;
 	}
 	return hash;
+}
+
+template <typename T>
+static T ReadUnaligned(const void* ptr)
+{
+	T val;
+	std::memcpy(&val, ptr, sizeof(T));
+	return val;
 }
 } // namespace EvAsset
