@@ -155,7 +155,7 @@ void SampleScene::CreateSceneObjects()
 		}
 	);
 
-	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
+	/*DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
 
 	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
 
@@ -176,7 +176,7 @@ void SampleScene::CreateSceneObjects()
 				);
 			}
 		);
-	}
+	}*/
 	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 8);
 }
 
