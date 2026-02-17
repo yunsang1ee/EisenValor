@@ -111,4 +111,113 @@ bool MeshData::Deserialize(AssetFile& file)
 
 	return IsValid();
 }
+
+bool SkinnedMeshData::Deserialize(AssetFile& file)
+{
+	// 1. VERT
+	const ChunkEntry* vertEntry = file.GetChunkEntry("VERT");
+	if (vertEntry && 1 == vertEntry->version)
+	{
+		size_t		size = 0;
+		const void* ptr = file.GetChunkDataPtr("VERT", size);
+		if (nullptr != ptr)
+		{
+			vertices.resize(size / sizeof(SkinnedVertex));
+			std::memcpy(vertices.data(), ptr, size);
+		}
+	}
+
+	// 2. INDX
+	const ChunkEntry* indxEntry = file.GetChunkEntry("INDX");
+	if (indxEntry && 1 == indxEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("INDX", size));
+
+		constexpr size_t indexHeaderSize = 8;
+		if (nullptr != ptr && indexHeaderSize <= size)
+		{
+			uint32_t format = ReadUnaligned<uint32_t>(ptr);
+			uint32_t count = ReadUnaligned<uint32_t>(ptr + 4);
+
+			indexFormat = format;
+			indices.reserve(count);
+
+			if (32 == format)
+			{
+				indices.resize(count);
+				std::memcpy(indices.data(), ptr + indexHeaderSize, count * 4);
+			}
+			else if (16 == format)
+			{
+				for (uint32_t i = 0; i < count; ++i)
+				{
+					uint16_t val;
+					std::memcpy(&val, ptr + indexHeaderSize + i * (size_t)2, 2);
+					indices.push_back(val);
+				}
+			}
+		}
+	}
+
+	// 3. SUBM
+	const ChunkEntry* submEntry = file.GetChunkEntry("SUBM");
+	if (submEntry && 1 == submEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("SUBM", size));
+
+		constexpr size_t subMeshHeaderSize = 4;
+		if (nullptr != ptr && subMeshHeaderSize <= size)
+		{
+			uint32_t count = ReadUnaligned<uint32_t>(ptr);
+			subMeshes.resize(count);
+			std::memcpy(subMeshes.data(), ptr + subMeshHeaderSize, count * sizeof(SubMesh));
+		}
+	}
+
+	// 4. BNDS
+	const ChunkEntry* bndsEntry = file.GetChunkEntry("BNDS");
+	if (bndsEntry && 1 == bndsEntry->version)
+	{
+		size_t		size = 0;
+		const void* ptr = file.GetChunkDataPtr("BNDS", size);
+		if (nullptr != ptr && sizeof(Bounds) <= size)
+		{
+			std::memcpy(&boundsInfo, ptr, sizeof(Bounds));
+		}
+	}
+
+	// 5. BONE
+	const ChunkEntry* boneEntry = file.GetChunkEntry("BONE");
+	if (boneEntry && 1 == boneEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("BONE", size));
+
+		if (nullptr != ptr && 4 <= size)
+		{
+			uint32_t count = ReadUnaligned<uint32_t>(ptr);
+			bones.resize(count);
+			std::memcpy(bones.data(), ptr + 4, count * sizeof(Bone));
+		}
+	}
+
+	// 6. OFFS
+	const ChunkEntry* offsEntry = file.GetChunkEntry("OFFS");
+	if (offsEntry && 1 == offsEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("OFFS", size));
+
+		if (nullptr != ptr && 4 <= size)
+		{
+			uint32_t floatCount = ReadUnaligned<uint32_t>(ptr);
+			offsetMatrices.resize(floatCount);
+			std::memcpy(offsetMatrices.data(), ptr + 4, floatCount * sizeof(float));
+		}
+	}
+
+	return IsValid();
+}
 } // namespace EvAsset

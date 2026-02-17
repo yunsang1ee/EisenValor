@@ -17,11 +17,9 @@ struct MeshData : public AssetData
 	bool IsValid() const { return !vertices.empty() && !indices.empty(); }
 };
 
-struct SkinnedMeshData
+struct SkinnedMeshData : public AssetData
 {
-	std::string name;
-	Guid		assetGuid;
-	Bounds		boundsInfo;
+	Bounds				  boundsInfo;
 
 	std::vector<SkinnedVertex> vertices;
 	std::vector<uint32_t>	   indices;
@@ -33,6 +31,7 @@ struct SkinnedMeshData
 
 	uint32_t indexFormat = 32;
 
+	bool Deserialize(AssetFile& file) override;
 	bool IsValid() const { return !vertices.empty() && !indices.empty() && !bones.empty(); }
 };
 } // namespace EvAsset
