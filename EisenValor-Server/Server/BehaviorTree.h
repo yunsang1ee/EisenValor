@@ -6,17 +6,13 @@ namespace Server {
 		class BehaviorNode;
 		class BehaviorTree : public Component {
 		private:
-			std::unique_ptr<BehaviorNode> m_root;
+			BehaviorNode* m_root;
 
 		public:
-			BehaviorTree() :m_root{ nullptr } {}
-			explicit BehaviorTree(std::unique_ptr<BehaviorNode> root)
-				: m_root(std::move(root))
-			{
-			}
+			BehaviorTree();
 
 		public:
-			void SetRoot(std::unique_ptr<BehaviorNode> root);
+			void SetRoot(BehaviorNode* root) { m_root = root; }
 
 		public:
 			virtual void Update(const float dt) override;

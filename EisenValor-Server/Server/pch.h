@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 // define ENABLE_LOBBY
 
 #pragma warning(disable: 4819)
@@ -41,3 +41,5 @@ namespace Server {
 extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 
 std::shared_ptr<ClientSession> MakeClientSessionFunc();
+
+extern inline std::mt19937_64 mersenne{ std::random_device{}() };

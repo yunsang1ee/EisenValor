@@ -19,8 +19,10 @@ namespace Server {
 			virtual ~General();	
 
 		public:
+			virtual void Update(const float dt) override;
 			virtual void OnDeath() override;
 			virtual void Respawn() override;
+			virtual bool OnDamaged(Creature* const attacker, const float dt) override;
 			bool IsTargetInAttackRange(GameObject* const target);
 
 		public:

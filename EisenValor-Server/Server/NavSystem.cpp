@@ -76,7 +76,7 @@ void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3
 	if(!ag || !ag->active) return;
 
 	float pos[3] = { targetPos.x, targetPos.y, targetPos.z };
-	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f }; // 검색 범위
+	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f };	// search range
 	dtPolyRef targetRef;
 	float targetNearest[3];
 

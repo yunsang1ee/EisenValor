@@ -16,16 +16,10 @@ Server::Contents::BattleRam::~BattleRam()
 void Server::Contents::BattleRam::OnDeath()
 {
 	// TODO: BattleRam::OnDeath()
-	// TODO: 게임 종료!
 }
 
 void Server::Contents::BattleRam::Update(const float dt)
 {
-	// TODO: 배틀램이 성문을 공격할 경우, FSM 달려있으면 좋음
-	// IDLE: 정지
-	// MOVE: 주변에 아군 플레이어가 있어서 움직이는 경우 
-	// ATTACK: 배틀램이 성문을 공격
-
 	GameObject::Update(dt);
 
 	auto const gameWorld{ GetGameWorld() };

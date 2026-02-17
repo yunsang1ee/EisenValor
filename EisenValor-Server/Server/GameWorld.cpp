@@ -291,7 +291,7 @@ void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_p
 	player->SetSession(clientSession);
 	player->SetRoom(GetGameRoom());
 	player->SetGameWorld(std::static_pointer_cast<Server::Contents::GameWorld>(shared_from_this()));
-	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	AddGameObject(std::move(player));
 }
 #endif // DEVELOP
@@ -601,7 +601,7 @@ void Server::Contents::GameWorld::CreateUsersGameObjects(const Users& users)
 		const Vec3 rot{ 0.f, 0.f, 0.f };
 		auto session = user->GetSession();
 		session->SetGameWorld(std::static_pointer_cast<GameWorld>(shared_from_this()));
-		
+
 		PlayerTemplate t;
 		t.id = session->GetID();
 		t.teamType = user->GetTeamType();
@@ -639,12 +639,46 @@ void Server::Contents::GameWorld::CreateBotsGameObjects(const Bots& bots)
 
 void Server::Contents::GameWorld::CreateGameWorldObjects()
 {
+	//for(int i = 0; i < 2; ++i) {
+	//	static bool flag{ false };
+	//	static Vec3 startPos{ 0.f, 0.f, 0.f };
+	//	SoldierTemplate t;
+	//	t.id = m_npcIdGen++;
+	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+	//	t.posInfo = PosInfo{
+	//	.pos = startPos,
+	//	.rot = Vec3{}
+	//	};
+	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+	//	flag = !flag;
+	//	startPos.x += 2.f;
+	//	auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
+	//	AddGameObject(std::move(soldier));
+	//}
+
+	//{
+	//	BattleRamTemplate t;
+	//	t.id = m_npcIdGen++;
+	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+	//	t.posInfo = PosInfo{
+	//	.pos = Vec3{},
+	//	.rot = Vec3{}
+	//	};
+	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+	//	t.detectionRange = 2.5f;
+	//	t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
+	//	auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
+	//	AddGameObject(std::move(battleRam));
+	//}
+
 	for(int i = 0; i < 2; ++i) {
 		static bool flag{ false };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
-		SoldierTemplate t;
+
+		GeneralTemplate t;
 		t.id = m_npcIdGen++;
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 		t.posInfo = PosInfo{
 		.pos = startPos,
@@ -652,23 +686,9 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 		};
 		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
 		flag = !flag;
-		startPos.x += 2.f;
-		auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
-		AddGameObject(std::move(soldier));
-	}
+		startPos.x += 5.f;
 
-	{
-		BattleRamTemplate t;
-		t.id = m_npcIdGen++;
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-		t.posInfo = PosInfo{
-		.pos = Vec3{},
-		.rot = Vec3{}
-		};
-		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-		t.detectionRange = 2.5f;
-		t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
-		auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
-		AddGameObject(std::move(battleRam));
+		auto general{ Server::Contents::GameObjectFactory::CreateGeneral(t) };
+		AddGameObject(std::move(general));
 	}
 }

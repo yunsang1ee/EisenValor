@@ -553,12 +553,12 @@
     <ClCompile Include="GameWorld.cpp" />
     <ClCompile Include="General.cpp" />
     <ClCompile Include="GeneralStates.cpp" />
+    <ClCompile Include="PlayerStates.cpp" />
     <ClCompile Include="NavAgent.cpp" />
     <ClCompile Include="NavSystem.cpp" />
     <ClCompile Include="Participant.cpp" />
     <ClCompile Include="ServerPackets.cpp" />
     <ClCompile Include="ServerGlobalFunc.cpp" />
-    <ClCompile Include="IsPlayerInNearNode.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -581,7 +581,6 @@
     <ClCompile Include="SoldierStates.cpp" />
     <ClCompile Include="Spawner.cpp" />
     <ClCompile Include="State.cpp" />
-    <ClCompile Include="TargetTraceNode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
@@ -620,12 +619,12 @@
     <ClInclude Include="GameWorld.h" />
     <ClInclude Include="General.h" />
     <ClInclude Include="GeneralStates.h" />
+    <ClInclude Include="PlayerStates.h" />
     <ClInclude Include="NavAgent.h" />
     <ClInclude Include="NavSystem.h" />
     <ClInclude Include="Participant.h" />
     <ClInclude Include="ServerPackets.h" />
     <ClInclude Include="ServerGlobalFunc.h" />
-    <ClInclude Include="IsPlayerInNearNode.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Script.h" />
@@ -637,7 +636,6 @@
     <ClInclude Include="SoldierStates.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="State.h" />
-    <ClInclude Include="TargetTraceNode.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Binaries\Server\GameData\GameData.json" />

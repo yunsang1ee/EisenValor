@@ -5,11 +5,10 @@
 #include "Soldier.h"
 #include "FSM.h"
 #include "GeneralStates.h"
+#include "PlayerStates.h"
 #include "SoldierStates.h"
 #include "BehaviorNode.h"
 #include "BehaviorTree.h"
-#include "IsPlayerInNearNode.h"
-#include "TargetTraceNode.h"
 #include "Spawner.h"
 #include "Collider.h"
 #include "GameWorld.h"
@@ -33,12 +32,12 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 
 	const auto fsm = player->AddComponent<Server::Contents::FSM>();
 	
-	auto idleState =  Server::Contents::GeneralIdleState::Create();
-	auto preDelayState = Server::Contents::GeneralPreDelayState::Create();
-	auto attackState = Server::Contents::GeneralAttackState::Create();
-	auto postDelayState = Server::Contents::GeneralPostDelayState::Create();
-	auto stunState = Server::Contents::GeneralStunState::Create();
-	auto deadState = Server::Contents::GeneralDeadState::Create();
+	auto idleState =  Server::Contents::PlayerIdleState::Create();
+	auto preDelayState = Server::Contents::PlayerPredelayState::Create();
+	auto attackState = Server::Contents::PlayerAttackState::Create();
+	auto postDelayState = Server::Contents::PlayerPostdelayState::Create();
+	auto stunState = Server::Contents::PlayerStunState::Create();
+	auto deadState = Server::Contents::PlayerDeadState::Create();
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(preDelayState));
@@ -52,20 +51,31 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 
 std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
-	static uint32 idGen{ 1000 };
-
 	auto general = std::make_unique<Server::Contents::General>(t.teamType);
+	general->SetID(t.id);
+	general->SetGameWorld(t.gameWorld.lock());
 	general->SetPosInfo(t.posInfo);
-	general->SetID(idGen);
-	idGen++;
+	general->SetGameObjectData(t.gameObjectData);
+	general->SetStat(Stat{
+			.currentHP = t.gameObjectData->maxHp,
+			.maxHP = t.gameObjectData->maxHp,
+			.currentStamina = t.gameObjectData->maxStamina,
+			.maxStamina = t.gameObjectData->maxStamina,
+			.respawnTimeSec = t.gameObjectData->respawnTimeSec
+		});
 
-	//const auto bt = general->AddComponent<BehaviorTree>();
-	//bt->SetOwner(general);
-	//auto root = std::make_unique<Server::Contents::SequenceNode>();
-	//root->AddChild(std::make_unique<Server::Contents::IsPlayerInNearNode>(5.f));
-	//root->AddChild(std::make_unique<Server::Contents::TargetTraceNode>(1.f));
-	//bt->SetRoot(std::move(root));
+	const auto fsm = general->AddComponent<Server::Contents::FSM>();
 
+	auto roamingState = Server::Contents::GeneralRoamingState::Create();
+	auto duelingState = Server::Contents::GeneralDuelingState::Create();
+	auto deadState = Server::Contents::GeneralDeadState::Create();
+	fsm->AddState(std::move(roamingState));
+	fsm->AddState(std::move(duelingState));
+	fsm->AddState(std::move(deadState));
+
+	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
+
+	const auto bt = general->AddComponent<BehaviorTree>();
 
 	return general;
 }
@@ -88,17 +98,17 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	auto navAgenet = soldier->AddComponent<Server::Contents::NavAgent>(soldier->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
-	params.radius = 0.6f;        // 충돌 반경
-	params.height = 1.f;        // 키
-	params.maxSpeed = 20.0f;      // 최대 속도
-	params.maxAcceleration = 10.f; // 가속도
+	params.radius = 0.6f;				// collision radius
+	params.height = 1.f;				
+	params.maxSpeed = 20.0f;			
+	params.maxAcceleration = 10.f;		
 
-	// 충돌 회피 설정
+	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange = params.radius * 30.0f;
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
-	params.obstacleAvoidanceType = 0; // 위에서 설정한 0번 회피 설정 사용
-	params.separationWeight = 2.0f;   // 다른 에이전트와 떨어지려는 힘
+	params.obstacleAvoidanceType = 0; 
+	params.separationWeight = 2.0f;   // seperation force for other agent 
 	if(false == navAgenet->Init(params))
 		return nullptr;
 	
@@ -141,17 +151,17 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 	auto navAgenet = battleRam->AddComponent<Server::Contents::NavAgent>(battleRam->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
-	params.radius = 0.6f;        // 충돌 반경
-	params.height = 1.f;        // 키
-	params.maxSpeed = 20.0f;      // 최대 속도
-	params.maxAcceleration = 10.f; // 가속도
-
-	// 충돌 회피 설정
+	params.radius = 0.6f;       // collision radius
+	params.height = 1.f;			
+	params.maxSpeed = 20.0f;		
+	params.maxAcceleration = 10.f;	
+	
+	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange = params.radius * 30.0f;
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
-	params.obstacleAvoidanceType = 0; // 위에서 설정한 0번 회피 설정 사용
-	params.separationWeight = 2.0f;   // 다른 에이전트와 떨어지려는 힘
+	params.obstacleAvoidanceType = 0; 
+	params.separationWeight = 2.0f;   // seperation force for other agent 
 	if(false == navAgenet->Init(params))
 		return nullptr;
 

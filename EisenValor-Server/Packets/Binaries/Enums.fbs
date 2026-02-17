@@ -24,7 +24,8 @@ enum GAME_OBJECT_TYPE : ubyte{
 	SOLDIER,
 	BATTLERAM,
 	SPAWNER,
-
+	OCCUPATION_ZONE,
+	
 	END
 }
 
@@ -60,17 +61,16 @@ enum GENERAL_STANCE_TYPE : ubyte{
 	END
 }
 
-enum SOLDIER_STATE_TYPE : ubyte {
-	IDLE =0,
-	MOVE,
-	CHASE,
-	ATTACK,
-	DEFENSE,
-	DAMAGED,
+enum GENERAL_STATE_TYPE: ubyte {
+	NONE,
+	ROAMING,
+	DUELING,
 	DEAD,
+
+	END
 }
 
-enum GENERAL_STATE_TYPE: ubyte {
+enum PLAYER_STATE_TYPE: ubyte {
 	NONE = 0,
 	IDLE,
 	MOVE,
@@ -82,4 +82,15 @@ enum GENERAL_STATE_TYPE: ubyte {
 	DEAD,
 
 	END
+}
+
+enum SOLDIER_STATE_TYPE : ubyte {
+	NONE = 0,
+	IDLE,
+	MOVE,
+	CHASE,
+	ATTACK,
+	DEFENSE,
+	DAMAGED,
+	DEAD,
 }
