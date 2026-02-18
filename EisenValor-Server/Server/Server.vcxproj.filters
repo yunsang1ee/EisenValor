@@ -145,6 +145,9 @@
     <ClCompile Include="GeneralStates.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
     </ClCompile>
+    <ClCompile Include="OccupationZone.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -279,11 +282,11 @@
     <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\States">
       <UniqueIdentifier>{f9c531da-b829-44b2-9675-b04fbcba0f54}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameWorld\GameObject\Component\Scripts\OZ">
-      <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\BNode">
       <UniqueIdentifier>{6277f4a2-9276-4117-8c31-62664336b00c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone">
+      <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -445,6 +448,9 @@
     </ClInclude>
     <ClInclude Include="GeneralStates.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
+    </ClInclude>
+    <ClInclude Include="OccupationZone.h">
+      <Filter>02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

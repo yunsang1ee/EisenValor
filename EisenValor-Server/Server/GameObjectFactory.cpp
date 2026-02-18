@@ -14,11 +14,13 @@
 #include "GameWorld.h"
 #include "NavAgent.h"
 #include "BattleRam.h"
+#include "OccupationZone.h"
 
 std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
 	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
 	player->SetID(t.id);
+	player->SetGameWorld(t.gameWorld.lock());
 	player->SetPosInfo(t.posInfo);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
@@ -171,7 +173,15 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
 	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-	const auto spawner = spawnObj->AddScript(std::make_unique<Spawner>());
+	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>());
 	spawner->SetOwner(spawnObj.get());
 	return spawnObj;
+}
+
+std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
+{
+	auto ozObj{ std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.range * t.range, t.time))};
+	oz->SetOwner(ozObj.get());
+	return ozObj;
 }

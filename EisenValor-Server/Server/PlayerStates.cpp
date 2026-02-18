@@ -326,7 +326,7 @@ void Server::Contents::PlayerDeadState::Update(const float dt)
 	const auto& statInfo{ owner->GetStat() };
 
 	if(m_accDTForRespawn >= statInfo.respawnTimeSec) {
-		owner->Respawn();
+		owner->OnRespawn();
 	}
 }
 

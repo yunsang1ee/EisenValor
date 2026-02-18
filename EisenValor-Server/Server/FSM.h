@@ -21,9 +21,9 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		public:
-			void		SetState(const uint8 state, bool broadcast = false);
+			void		SetState(const uint8 state, const bool broadcast = false);
 			void		AddState(std::unique_ptr<State> state);
-			void		ChangeState(const uint8 nextState, const float dt, const bool broadcast = false);
+			void		ChangeState(const uint8 nextState, const float dt, const bool broadcast = true);
 			State*		GetCurState() const { return m_curState; }
 
 		private:

@@ -15,7 +15,7 @@ namespace Server {
 			BehaviorTree* m_tree;
 
 		public:
-			virtual ~BehaviorNode() = default;
+			virtual ~BehaviorNode();
 
 		public:
 			virtual void SetTree(BehaviorTree* const tree) { m_tree = tree; }
@@ -75,11 +75,9 @@ namespace Server {
 
 		// 자식 중 하나라도 성공하면 전체가 성공
 		class SelectorNode : public CompositeNode {
-		private:
-			size_t m_currentIndex = 0;
-
 		public:
 			BEHAVIOR_NODE_STATUS Execute(float DeltaTime) override;
+
 			void Reset() override;
 		};
 	}

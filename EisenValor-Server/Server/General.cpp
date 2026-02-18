@@ -59,7 +59,7 @@ void Server::Contents::General::OnDeath()
 	std::cout << "General::OnDeath()" << std::endl;
 }
 
-void Server::Contents::General::Respawn()
+void Server::Contents::General::OnRespawn()
 {
 	auto& statInfo{ GetStat() };
 	auto const world{ GetGameWorld() };
@@ -70,6 +70,8 @@ void Server::Contents::General::Respawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
+
+	// TODO: General Respawn 시 부활 위치 설정 해야함.
 
 	Vec3 pos{ GetPos() };
 	pos.x += 10.f;

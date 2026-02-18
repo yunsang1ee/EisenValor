@@ -402,11 +402,12 @@ enum SOLDIER_STATE_TYPE : uint8_t {
   SOLDIER_STATE_TYPE_DEFENSE = 5,
   SOLDIER_STATE_TYPE_DAMAGED = 6,
   SOLDIER_STATE_TYPE_DEAD = 7,
+  SOLDIER_STATE_TYPE_END = 8,
   SOLDIER_STATE_TYPE_MIN = SOLDIER_STATE_TYPE_NONE,
-  SOLDIER_STATE_TYPE_MAX = SOLDIER_STATE_TYPE_DEAD
+  SOLDIER_STATE_TYPE_MAX = SOLDIER_STATE_TYPE_END
 };
 
-inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[8] {
+inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[9] {
   static const SOLDIER_STATE_TYPE values[] = {
     SOLDIER_STATE_TYPE_NONE,
     SOLDIER_STATE_TYPE_IDLE,
@@ -415,13 +416,14 @@ inline const SOLDIER_STATE_TYPE (&EnumValuesSOLDIER_STATE_TYPE())[8] {
     SOLDIER_STATE_TYPE_ATTACK,
     SOLDIER_STATE_TYPE_DEFENSE,
     SOLDIER_STATE_TYPE_DAMAGED,
-    SOLDIER_STATE_TYPE_DEAD
+    SOLDIER_STATE_TYPE_DEAD,
+    SOLDIER_STATE_TYPE_END
   };
   return values;
 }
 
 inline const char * const *EnumNamesSOLDIER_STATE_TYPE() {
-  static const char * const names[9] = {
+  static const char * const names[10] = {
     "NONE",
     "IDLE",
     "MOVE",
@@ -430,15 +432,49 @@ inline const char * const *EnumNamesSOLDIER_STATE_TYPE() {
     "DEFENSE",
     "DAMAGED",
     "DEAD",
+    "END",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameSOLDIER_STATE_TYPE(SOLDIER_STATE_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, SOLDIER_STATE_TYPE_NONE, SOLDIER_STATE_TYPE_DEAD)) return "";
+  if (::flatbuffers::IsOutRange(e, SOLDIER_STATE_TYPE_NONE, SOLDIER_STATE_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesSOLDIER_STATE_TYPE()[index];
+}
+
+enum OCCUPATION_ZONE_STATE_TYPE : uint8_t {
+  OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED = 0,
+  OCCUPATION_ZONE_STATE_TYPE_OCCUPIED = 1,
+  OCCUPATION_ZONE_STATE_TYPE_END = 2,
+  OCCUPATION_ZONE_STATE_TYPE_MIN = OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED,
+  OCCUPATION_ZONE_STATE_TYPE_MAX = OCCUPATION_ZONE_STATE_TYPE_END
+};
+
+inline const OCCUPATION_ZONE_STATE_TYPE (&EnumValuesOCCUPATION_ZONE_STATE_TYPE())[3] {
+  static const OCCUPATION_ZONE_STATE_TYPE values[] = {
+    OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED,
+    OCCUPATION_ZONE_STATE_TYPE_OCCUPIED,
+    OCCUPATION_ZONE_STATE_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesOCCUPATION_ZONE_STATE_TYPE() {
+  static const char * const names[4] = {
+    "UNOCCUPIED",
+    "OCCUPIED",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameOCCUPATION_ZONE_STATE_TYPE(OCCUPATION_ZONE_STATE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED, OCCUPATION_ZONE_STATE_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesOCCUPATION_ZONE_STATE_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS

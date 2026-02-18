@@ -98,6 +98,7 @@ namespace Server {
 			uint64 GetGameWorldFrameCount() const noexcept { return m_worldFrameCount; }
 			float GetGameWorldDT() const noexcept { return m_dt; }
 			const auto& GetGameObjectGroups() const noexcept { return m_gameObjectsGroups; }
+			const auto& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
 
 		private:

@@ -88,10 +88,10 @@ void Server::Contents::Player::OnDeath()
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEAD, worldDT);
+	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEAD, worldDT, true);
 }
 
-void Server::Contents::Player::Respawn()
+void Server::Contents::Player::OnRespawn()
 {
 	auto& statInfo{ GetStat() };
 	auto const world{ GetGameWorld() };
@@ -104,7 +104,7 @@ void Server::Contents::Player::Respawn()
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
 
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT);
+	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT, true);
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 }

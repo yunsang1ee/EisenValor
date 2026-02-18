@@ -40,7 +40,13 @@ namespace Server {
 		};
 
 		struct SpanwerTemplate : public GameObjectTemplate {
-		
+			// TODO: 스폰 시간
+			// TODO: 스폰되는 병사의 수
+		};
+
+		struct OccupationZoneTemplate : public GameObjectTemplate {
+			int64	time;
+			float	range;
 		};
 
 		class GameObjectFactory {
@@ -58,6 +64,7 @@ namespace Server {
 			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
 			static std::unique_ptr<BattleRam>	CreateBattleRam(const BattleRamTemplate& t);
 			static std::unique_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
+			static std::unique_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
 
 		};
 	}

@@ -553,6 +553,7 @@
     <ClCompile Include="GameWorld.cpp" />
     <ClCompile Include="General.cpp" />
     <ClCompile Include="GeneralStates.cpp" />
+    <ClCompile Include="OccupationZone.cpp" />
     <ClCompile Include="PlayerStates.cpp" />
     <ClCompile Include="NavAgent.cpp" />
     <ClCompile Include="NavSystem.cpp" />
@@ -619,6 +620,7 @@
     <ClInclude Include="GameWorld.h" />
     <ClInclude Include="General.h" />
     <ClInclude Include="GeneralStates.h" />
+    <ClInclude Include="OccupationZone.h" />
     <ClInclude Include="PlayerStates.h" />
     <ClInclude Include="NavAgent.h" />
     <ClInclude Include="NavSystem.h" />

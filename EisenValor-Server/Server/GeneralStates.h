@@ -20,7 +20,6 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 		};
 
-
 		class GeneralDuelingState : public State {
 			DECLARE_CREATE_FUNC(GeneralDuelingState)
 
@@ -41,7 +40,7 @@ namespace Server {
 			DECLARE_CREATE_FUNC(GeneralDeadState)
 
 		private:
-			std::unique_ptr<BehaviorNode> m_root;
+			float m_accRespawnTime;
 
 		public:
 			GeneralDeadState();
@@ -52,7 +51,6 @@ namespace Server {
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
 		};
-
 
 	}
 }

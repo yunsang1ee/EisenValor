@@ -18,7 +18,7 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 			virtual bool OnDamaged(Creature* const attacker, const float dt) override final;
 			virtual void OnDeath() override final;
-			virtual void Respawn() override final;
+			virtual void OnRespawn() override final;
 			virtual void DecStamina(const uint32 amount, const bool broadcast= false) override;
 
 		public:

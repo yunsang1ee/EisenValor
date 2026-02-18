@@ -17,12 +17,6 @@ namespace Server {
 		class Collider;
 		class OBBCollider;
 
-		class GameObject;
-
-		struct GameObjectDeleter {
-			void operator()(GameObject* obj) const;
-		};
-
 		class GameObject {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;

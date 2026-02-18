@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "BehaviorNode.h"
 
+Server::Contents::BehaviorNode::~BehaviorNode()
+{
+}
+
 void Server::Contents::CompositeNode::AddChild(std::unique_ptr<BehaviorNode> child)
 {
 	m_children.emplace_back(std::move(child));
@@ -74,23 +78,23 @@ void Server::Contents::SequenceNode::Reset()
 
 Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SelectorNode::Execute(float DeltaTime)
 {
-	for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
-		auto& child = m_children[m_currentIndex];
+	for(size_t i = 0; i < m_children.size(); ++i) {
+		auto& child = m_children[i];
 		auto status = child->Execute(DeltaTime);
 
-		if(status == BEHAVIOR_NODE_STATUS::RUNNING)
+		if(status == BEHAVIOR_NODE_STATUS::RUNNING) {
 			return BEHAVIOR_NODE_STATUS::RUNNING;
+		}
+
 		if(status == BEHAVIOR_NODE_STATUS::SUCCESS) {
-			m_currentIndex = 0;
 			return BEHAVIOR_NODE_STATUS::SUCCESS;
 		}
 	}
-	m_currentIndex = 0;
 	return BEHAVIOR_NODE_STATUS::FAIL;
 }
 
 void Server::Contents::SelectorNode::Reset()
 {
-	m_currentIndex = 0;
 	CompositeNode::Reset();
 }
+

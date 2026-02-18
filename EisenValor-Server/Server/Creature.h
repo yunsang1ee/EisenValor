@@ -14,8 +14,8 @@ namespace Server {
 
 		public:
 			virtual bool OnDamaged(Creature* const attacker, const float dt) { return false; }
-			virtual void OnDeath() abstract;
-			virtual void Respawn() {}
+			virtual void OnDeath() {}
+			virtual void OnRespawn() {}
 		
 		public:
 			void	SetStat(const Stat& stat) noexcept { m_statInfo = stat; }

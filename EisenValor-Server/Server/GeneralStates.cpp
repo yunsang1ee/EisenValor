@@ -2,15 +2,14 @@
 #include "GeneralStates.h"
 
 #include "GameObject.h"
+#include "General.h"
 #include "BehaviorTree.h"
-
 #include "GameWorld.h"
 
 Server::Contents::GeneralRoamingState::GeneralRoamingState()
 	:State(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING)
 {
-	std::cout << "General GeneralRoamingState Enter!" << std::endl;
-	// TODO: 행동트리 생성
+	auto root{ std::make_unique<Server::Contents::SelectorNode>() };
 }
 
 Server::Contents::GeneralRoamingState::~GeneralRoamingState()
@@ -19,20 +18,22 @@ Server::Contents::GeneralRoamingState::~GeneralRoamingState()
 
 void Server::Contents::GeneralRoamingState::Enter(const float dt)
 {
+	std::cout << "General GeneralRoamingState Enter!" << std::endl;
 }
 
 void Server::Contents::GeneralRoamingState::Exit(const float dt)
 {
-	
+	std::cout << "General GeneralRoamingState Exit!" << std::endl;
 }
 
 void Server::Contents::GeneralRoamingState::Update(const float dt)
 {
 }
-
+	
 Server::Contents::GeneralDuelingState::GeneralDuelingState()
 	:State(FB_ENUMS::GENERAL_STATE_TYPE_DUELING)
 {
+	// TODO: 행동트리 생성
 }
 
 Server::Contents::GeneralDuelingState::~GeneralDuelingState()
@@ -42,12 +43,11 @@ Server::Contents::GeneralDuelingState::~GeneralDuelingState()
 void Server::Contents::GeneralDuelingState::Enter(const float dt)
 {
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
-	// TODO: 행동트리 생성
 }
 
 void Server::Contents::GeneralDuelingState::Exit(const float dt)
 {
-
+	std::cout << "General GeneralDuelingState Exit!" << std::endl;
 }
 
 void Server::Contents::GeneralDuelingState::Update(const float dt)
@@ -90,4 +90,13 @@ void Server::Contents::GeneralDeadState::Exit(const float dt)
 
 void Server::Contents::GeneralDeadState::Update(const float dt)
 {
+	m_accRespawnTime += dt;
+	auto const fsm{ GetFSM() };
+	auto const owner{ fsm->GetOwner() };
+	auto const data{ owner->GetGameObjectData() };
+
+	if(m_accRespawnTime >= data->respawnTimeSec) {
+		static_cast<General*>(owner)->OnRespawn();
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, dt, true);
+	}
 }
