@@ -18,22 +18,22 @@ namespace Server {
 			virtual void OnRespawn() {}
 		
 		public:
-			void	SetStat(const Stat& stat) noexcept { m_statInfo = stat; }
-			void	SetHp(const uint32 hp, const bool broadcast = false) noexcept;
+			void	SetStat(const Stat& stat) { m_statInfo = stat; }
+			void	SetHp(const uint32 hp, const bool broadcast = false);
 			void	IncHP(const uint32 amount, const bool broadcast = true);
 			void	DecHP(const uint32 amount, const bool broadcast = true);
 			
-			void	SetStamina(const uint32 stamina, const bool broadcast = false) noexcept;
+			void	SetStamina(const uint32 stamina, const bool broadcast = false);
 			void	IncStamina(const uint32 amount, const bool broadcast = true);
 			virtual void	DecStamina(const uint32 amount, const bool broadcast = true);
 			void	SetTarget(Creature* target) { m_target = target; }
 			Creature* GetTarget() { return m_target; }
-			int		GetHP() const noexcept { return m_statInfo.currentHP; }
-			int32	GetStamina() const noexcept { return m_statInfo.currentStamina; }
+			int		GetHP() const { return m_statInfo.currentHP; }
+			int32	GetStamina() const { return m_statInfo.currentStamina; }
 
 			void	IncRespawnTime();
 
-			const Stat& GetStat() const noexcept { return m_statInfo; }
+			const Stat& GetStat() const { return m_statInfo; }
 
 		private:
 			void BroadcastUpdateVital();

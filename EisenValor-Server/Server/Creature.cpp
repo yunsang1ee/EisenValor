@@ -13,7 +13,7 @@ Server::Contents::Creature::~Creature()
 {
 }
 
-void Server::Contents::Creature::SetHp(const uint32 hp, const bool broadcast) noexcept
+void Server::Contents::Creature::SetHp(const uint32 hp, const bool broadcast)
 {
 	if(0 == hp) 
 		return;
@@ -64,7 +64,7 @@ void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast
 	}
 }
 
-void Server::Contents::Creature::SetStamina(const uint32 stamina, const bool broadcast) noexcept
+void Server::Contents::Creature::SetStamina(const uint32 stamina, const bool broadcast)
 {
 	if(0 == stamina)
 		return;

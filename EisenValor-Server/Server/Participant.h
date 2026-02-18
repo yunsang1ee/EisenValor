@@ -13,11 +13,11 @@ namespace Server {
 		public:
 			void SetTeamType(const FB_ENUMS::TEAM_TYPE teamType) { m_info.teamType = teamType; }
 			void SetStateType(const FB_ENUMS::PARTICIPANT_STATE_TYPE stateType) { m_info.stateType = stateType; }
-			uint32 GetID() const noexcept { return m_info.id; }
-			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_info.teamType; }
-			FB_ENUMS::PARTICIPANT_TYPE GetType() const noexcept { return m_info.type; }
-			FB_ENUMS::PARTICIPANT_STATE_TYPE GetStateType() const noexcept { return m_info.stateType; }
-			const ParticipantInfo& GetInfo() const noexcept { return m_info; }
+			uint32 GetID() const { return m_info.id; }
+			FB_ENUMS::TEAM_TYPE GetTeamType() const { return m_info.teamType; }
+			FB_ENUMS::PARTICIPANT_TYPE GetType() const { return m_info.type; }
+			FB_ENUMS::PARTICIPANT_STATE_TYPE GetStateType() const { return m_info.stateType; }
+			const ParticipantInfo& GetInfo() const { return m_info; }
 		};
 
 		class User : public Participant {

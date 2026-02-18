@@ -108,29 +108,29 @@ namespace Server {
 			}
 
 		public:
-			void SetID(const uint32 id) noexcept { m_id = id; }
+			void SetID(const uint32 id)  { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
-			void SetPosInfo(const PosInfo& transform) noexcept { m_posInfo = transform; }
-			void SetPos(const Vec3& pos) noexcept { m_posInfo.pos = pos; }
-			void SetRotation(const Vec3& rotation) noexcept { m_posInfo.rot = rotation; }
-			void SetRoom(std::weak_ptr<GameRoom> match) noexcept { m_room = match; }
-			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
+			void SetPosInfo(const PosInfo& transform) { m_posInfo = transform; }
+			void SetPos(const Vec3& pos) { m_posInfo.pos = pos; }
+			void SetRotation(const Vec3& rotation) { m_posInfo.rot = rotation; }
+			void SetRoom(std::weak_ptr<GameRoom> match) { m_room = match; }
+			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) { m_gameWorld = gameWorld; }
 			void SetCreature(bool flag) { m_isCreature = flag; }
 			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
-			void SetActive(const bool active) noexcept { m_active = active; }
+			void SetActive(const bool active) { m_active = active; }
 
-			const std::wstring& GetName() const noexcept { return m_name; }
-			uint32 GetID() const noexcept { return m_id; }
-			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const noexcept { return m_type; }
-			const PosInfo& GetPosInfo() const noexcept { return m_posInfo; }
-			const Vec3& GetPos() const noexcept { return m_posInfo.pos; }
-			const Vec3& GetRotation() const noexcept { return m_posInfo.rot; }
-			const Vec3& GetScale() const noexcept { return m_scale; }
-			std::shared_ptr<GameRoom> GetGameRoom() const noexcept { return m_room.lock(); }
-			FB_ENUMS::TEAM_TYPE GetTeamType() const noexcept { return m_teamType; }
+			const std::wstring& GetName() const { return m_name; }
+			uint32 GetID() const { return m_id; }
+			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_type; }
+			const PosInfo& GetPosInfo() const { return m_posInfo; }
+			const Vec3& GetPos() const  { return m_posInfo.pos; }
+			const Vec3& GetRotation() const  { return m_posInfo.rot; }
+			const Vec3& GetScale() const  { return m_scale; }
+			std::shared_ptr<GameRoom> GetGameRoom() const  { return m_room.lock(); }
+			FB_ENUMS::TEAM_TYPE GetTeamType() const  { return m_teamType; }
 			Vec3 GetForwardDir();
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
-			bool IsCreature() const noexcept { return m_isCreature; }
+			bool IsCreature() const  { return m_isCreature; }
 			bool IsActive() { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 		};

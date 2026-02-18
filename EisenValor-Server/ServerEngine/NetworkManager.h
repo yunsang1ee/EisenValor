@@ -15,7 +15,7 @@ namespace ServerEngine {
 		void Shutdown();
 
 	public:
-		IOCore* GetIOCore() const noexcept { return m_ioCore.get(); }
+		IOCore* GetIOCore() const { return m_ioCore.get(); }
 	};
 }
 

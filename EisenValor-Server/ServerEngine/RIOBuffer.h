@@ -25,20 +25,20 @@ namespace ServerEngine {
 		public:
 			bool				OnRead(const uint32 numOfBytes);
 			bool				OnWrite(const uint32 numOfBytes);
-			virtual void		CleanBuffer() noexcept;
+			virtual void		CleanBuffer();
 
 		public:
-			RIO_BUFFERID		GetID() const noexcept { return m_id; }
-			char* GetBuffer() noexcept { return m_buffer; }
+			RIO_BUFFERID		GetID() const { return m_id; }
+			char* GetBuffer() { return m_buffer; }
 
-			char* GetWriteCursor() noexcept { return &m_buffer[m_writePos]; }
-			const char* GetReadCursor() const noexcept { return &m_buffer[m_readPos]; }
+			char* GetWriteCursor() { return &m_buffer[m_writePos]; }
+			const char* GetReadCursor() const { return &m_buffer[m_readPos]; }
 
-			uint32				GetWriteOffset() const noexcept { return m_writePos; }
-			uint32				GetReadOffset() const noexcept { return m_readPos; }
+			uint32				GetWriteOffset() const { return m_writePos; }
+			uint32				GetReadOffset() const { return m_readPos; }
 
-			const uint32		GetDataSize() const noexcept { return m_writePos - m_readPos; }
-			const uint32		GetFreeSize() const noexcept { return m_capacity - m_writePos; }
+			const uint32		GetDataSize() const { return m_writePos - m_readPos; }
+			const uint32		GetFreeSize() const { return m_capacity - m_writePos; }
 
 		};
 #endif

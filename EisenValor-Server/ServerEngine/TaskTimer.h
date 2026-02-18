@@ -18,13 +18,12 @@ namespace ServerEngine {
 		high_resolution_clock::time_point tick{};
 		TaskData* taskData{ nullptr };
 
-		bool operator < (const TimerItem& item) const noexcept { return tick > item.tick; }
+		bool operator < (const TimerItem& item) const { return tick > item.tick; }
 	};
 
 	class TaskTimer : public Singleton<TaskTimer> {
 		SINGLETON(TaskTimer)
 	private:
-		// tbb::rw_mutex					m_mutex;
 		std::mutex						m_mutex;
 		std::priority_queue<TimerItem>	m_items;
 		std::atomic_bool				m_distributing{ false };

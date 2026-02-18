@@ -17,6 +17,9 @@ namespace Server {
 
 		public:
 			virtual void Update(const float dt) override final;
+
+		public:
+			FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE GetStateType() const { return m_stateType; }
 		};
 	}
 }

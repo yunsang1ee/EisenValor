@@ -95,9 +95,9 @@ namespace Server {
 		public:
 			void SetRoom(std::shared_ptr<GameRoom> room) { m_gameRoom = room; }
 			std::shared_ptr<GameRoom> GetGameRoom() { return m_gameRoom.lock(); }
-			uint64 GetGameWorldFrameCount() const noexcept { return m_worldFrameCount; }
-			float GetGameWorldDT() const noexcept { return m_dt; }
-			const auto& GetGameObjectGroups() const noexcept { return m_gameObjectsGroups; }
+			uint64 GetGameWorldFrameCount() const { return m_worldFrameCount; }
+			float GetGameWorldDT() const { return m_dt; }
+			const auto& GetGameObjectGroups() const { return m_gameObjectsGroups; }
 			const auto& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
 

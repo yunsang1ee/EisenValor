@@ -5,7 +5,7 @@
 
 namespace ServerPackets {
 	// ==================
-	//		ººº«
+	//		ÏÑ∏ÏÖò
 	// ==================
 #pragma region SESSION_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PING_PACKET()
@@ -15,7 +15,7 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PING_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PING_PACKET));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) 
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHAT_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
@@ -24,17 +24,17 @@ namespace ServerPackets {
 
 	
 	// =================
-	//		∑Œ±◊¿Œ
+	//		Î°úÍ∑∏Ïù∏
 	// =================
 #pragma region LOGIN_PACKETS
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_SUCCESS_PACKET(const uint32 id, const std::string_view nickName) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_SUCCESS_PACKET(const uint32 id, const std::string_view nickName) 
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOGIN_SUCCESS_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOGIN_SUCCESS_PACKETDirect, id, nickName.data()));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_FAIL_PACKET(const std::string_view failMsg) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOGIN_FAIL_PACKET(const std::string_view failMsg) 
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -44,10 +44,10 @@ namespace ServerPackets {
 
 		
 	// =================
-	//		∑Œ∫Ò
+	//		Î°úÎπÑ
 	// =================
 #pragma region LOBBY_PACKETS
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ENTER_GAME_LOBBY_PACKET(const std::vector<RoomInfo>& rooms, const std::vector<std::string_view>& users, const std::vector<uint32>& vecUserID) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ENTER_GAME_LOBBY_PACKET(const std::vector<RoomInfo>& rooms, const std::vector<std::string_view>& users, const std::vector<uint32>& vecUserID)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -86,7 +86,7 @@ namespace ServerPackets {
 
 	
 	// =================
-	//		∑Î
+	//		Î£∏
 	// =================
 #pragma region ROOM_PACKETS
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MAKE_GAME_ROOM_PACKET(const RoomInfo& roomInfo)
@@ -168,10 +168,10 @@ namespace ServerPackets {
 	
 	
 	// ==================
-	//		ø˘µÂ
+	//		ÏõîÎìú
 	// ==================
 #pragma region WORLD_PACKETS
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint32 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) 
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -183,7 +183,7 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_LOCAL_PLAYER_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &posInfo, teamType, maxHp, currentHp, maxStamina, currentStamina, stanceType));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const PosInfo& transform, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint32 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const PosInfo& transform, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -195,14 +195,14 @@ namespace ServerPackets {
 		return  Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_ADD_OBJ_IN_GAME_WORLD_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &posInfo, maxHp, currentHp, maxStamina, currentStamina, stanceType));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ_PACKET(const uint32 id) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_REMOVE_OBJ_PACKET(const uint32 id)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
 		return  Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMOVE_OBJ_IN_GAME_WORLD_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform, const uint8 state, const uint8 subState) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform, const uint8 state, const uint8 subState)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -222,7 +222,7 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PLAYER_ATTACK_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PLAYER_ATTACK_PACKET, id, &info));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_VITAL_PACKET(const uint32 id, const uint32 hp, const uint32 stamina) noexcept
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_VITAL_PACKET(const uint32 id, const uint32 hp, const uint32 stamina)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 

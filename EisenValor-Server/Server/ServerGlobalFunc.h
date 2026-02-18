@@ -24,3 +24,41 @@ static inline constexpr uint8 etou8(const Enum e)
 {
 	return static_cast<uint8>(e);
 }
+
+inline constexpr GENERAL_SUB_STATE_TYPE operator|(const GENERAL_SUB_STATE_TYPE a, const GENERAL_SUB_STATE_TYPE b)
+{
+	return static_cast<GENERAL_SUB_STATE_TYPE>(static_cast<uint8>(a) | static_cast<uint8>(b));
+}
+
+inline constexpr GENERAL_SUB_STATE_TYPE& operator|=(GENERAL_SUB_STATE_TYPE& a, GENERAL_SUB_STATE_TYPE b)
+{
+	a = a | b;
+	return a;
+}
+
+inline constexpr GENERAL_SUB_STATE_TYPE operator&(const GENERAL_SUB_STATE_TYPE a, const GENERAL_SUB_STATE_TYPE b)
+{
+	return static_cast<GENERAL_SUB_STATE_TYPE>(static_cast<uint8>(a) & static_cast<uint8>(b));
+}
+
+inline constexpr GENERAL_SUB_STATE_TYPE& operator&=(GENERAL_SUB_STATE_TYPE& a, GENERAL_SUB_STATE_TYPE b)
+{
+	a = a & b;
+	return a;
+}
+
+inline constexpr GENERAL_SUB_STATE_TYPE operator^(const GENERAL_SUB_STATE_TYPE a, const GENERAL_SUB_STATE_TYPE b)
+{
+	return static_cast<GENERAL_SUB_STATE_TYPE>(static_cast<uint8>(a) ^ static_cast<uint8>(b));
+}
+
+inline constexpr GENERAL_SUB_STATE_TYPE& operator^=(GENERAL_SUB_STATE_TYPE& a, GENERAL_SUB_STATE_TYPE b)
+{
+	a = a ^ b;
+	return a;
+}
+
+inline constexpr GENERAL_SUB_STATE_TYPE operator~(const GENERAL_SUB_STATE_TYPE a)
+{
+	return static_cast<GENERAL_SUB_STATE_TYPE>(~static_cast<uint8>(a));
+}

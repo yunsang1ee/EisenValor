@@ -53,7 +53,7 @@ void Server::Contents::GameRoom::CreateWorld()
 	m_gameWorld->ExecAsync(&GameWorld::Start, m_users, m_bots);
 }
 
-void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
+void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession)
 {
 	// if the current game room status is playing, you cannot enter.
 	if(m_info.stateType == FB_ENUMS::ROOM_STATE_TYPE_PLAYING) {
@@ -124,7 +124,7 @@ void Server::Contents::GameRoom::JoinGameRoom(const std::shared_ptr<ClientSessio
 	}
 }
 
-void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept
+void Server::Contents::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession)
 {
 	auto pb{ ServerPackets::Make_SC_LEAVE_GAME_ROOM_PACKET() };
 	clientSession->Send(std::move(pb));

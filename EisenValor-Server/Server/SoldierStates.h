@@ -142,7 +142,7 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 		
 		public:
-			void SetStunTime(const float stunTime) noexcept { m_stunTime = stunTime; }
+			void SetStunTime(const float stunTime){ m_stunTime = stunTime; }
 			friend class GameObjectFactory;
 		};
 

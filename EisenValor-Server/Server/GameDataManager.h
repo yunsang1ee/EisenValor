@@ -54,8 +54,8 @@ namespace Server {
 			bool LoadDataFromFile(const std::string_view filePath);
 
 		public:
-            const GameRoomData&     GetGameRoomData() const noexcept { return m_gameRoomData; }
-			const GameWorldData&    GetGameWorldData() const noexcept { return m_gameWorldData; }
+            const GameRoomData&     GetGameRoomData() const { return m_gameRoomData; }
+			const GameWorldData&    GetGameWorldData() const{ return m_gameWorldData; }
             const GameObjectData*   GetGameObjectData(const uint8 objTypeID);
             const SkillData*        GetSkillData(const uint8 skillTypeID);
 		};

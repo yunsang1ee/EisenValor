@@ -16,13 +16,13 @@ namespace ServerEngine {
 			~RIOSendBuffer();
 
 		public:
-			bool			Append(const char* const data, const uint32 size) noexcept;
+			bool			Append(const char* const data, const uint32 size);
 			bool			moveSendOffset(const uint32 bytesTransferred);
-			virtual void	CleanBuffer() noexcept override;
+			virtual void	CleanBuffer() override;
 
 		public:
-			uint32			GetDataSizeForCurrentPacket() const noexcept { return m_writePos - m_sendOffset; }
-			uint32			GetSendOffset() const noexcept { return m_sendOffset; }
+			uint32			GetDataSizeForCurrentPacket() const { return m_writePos - m_sendOffset; }
+			uint32			GetSendOffset() const { return m_sendOffset; }
 		};
 #endif
 	}

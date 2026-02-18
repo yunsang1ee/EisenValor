@@ -17,7 +17,7 @@ namespace ServerEngine {
 	
 	public:
 		// CHK: PushOnly = true
-		void Push(std::shared_ptr<Task> task, bool pushOnly = true) noexcept;
+		void Push(std::shared_ptr<Task> task, bool pushOnly = true);
 
 	public:
 		template<typename Func>
@@ -32,7 +32,7 @@ namespace ServerEngine {
 			Push(MakeTask(memFunc, std::forward<CallArgs>(args)...));
 		}
 
-		// Áö¿¬ ½ÇÇà
+		// ì§€ì—° ì‹¤í–‰
 		template<typename Func>
 		void ExecTimer(const std::chrono::milliseconds ms, Func&& func)
 		{
@@ -46,11 +46,11 @@ namespace ServerEngine {
 		}
 
 	public:
-		void SetActive(bool active) noexcept { m_active = active; }
-		bool IsActive() const noexcept { return m_active; }
+		void SetActive(bool active) { m_active = active; }
+		bool IsActive() const { return m_active; }
 
 	protected:
-		void ClearTaskQueue() noexcept;
+		void ClearTaskQueue();
 	
 	private:
 		template<typename Func>
@@ -67,7 +67,7 @@ namespace ServerEngine {
 		}
 	
 	private:
-		void Execute() noexcept;
+		void Execute();
 		friend class IOCore;
 	};
 }

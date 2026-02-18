@@ -27,13 +27,13 @@ namespace Server {
 		virtual void SendPing() override final;
 
 	public:
-		void SetName(const std::string_view name) noexcept { m_name = name.data(); }
-		void SetGameRoom(std::shared_ptr<Server::Contents::GameRoom> gameRoom) noexcept { m_gameRoom = gameRoom; }
-		void SetGameWorld(std::shared_ptr<Server::Contents::GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
+		void SetName(const std::string_view name) { m_name = name.data(); }
+		void SetGameRoom(std::shared_ptr<Server::Contents::GameRoom> gameRoom) { m_gameRoom = gameRoom; }
+		void SetGameWorld(std::shared_ptr<Server::Contents::GameWorld> gameWorld) { m_gameWorld = gameWorld; }
 
-		const std::string& GetName() const noexcept { return m_name; }
-		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const noexcept { return m_gameRoom.lock(); }
-		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const noexcept { return m_gameWorld.lock(); }
+		const std::string& GetName() const { return m_name; }
+		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const { return m_gameRoom.lock(); }
+		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const { return m_gameWorld.lock(); }
 	};
 #endif
 
@@ -56,13 +56,13 @@ namespace Server {
 		virtual void SendPing() override final;
 
 	public:
-		void SetName(const std::string_view name) noexcept { m_name = name.data(); }
-		void SetGameRoom(std::shared_ptr<Server::Contents::GameRoom> gameRoom) noexcept { m_gameRoom = gameRoom; }
-		void SetGameWorld(std::shared_ptr<Server::Contents::GameWorld> gameWorld) noexcept { m_gameWorld = gameWorld; }
+		void SetName(const std::string_view name) { m_name = name.data(); }
+		void SetGameRoom(std::shared_ptr<Server::Contents::GameRoom> gameRoom) { m_gameRoom = gameRoom; }
+		void SetGameWorld(std::shared_ptr<Server::Contents::GameWorld> gameWorld) { m_gameWorld = gameWorld; }
 
-		const std::string& GetName() const noexcept { return m_name; }
-		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const noexcept { return m_gameRoom.lock(); }
-		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const noexcept { return m_gameWorld.lock(); }
+		const std::string& GetName() const { return m_name; }
+		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const { return m_gameRoom.lock(); }
+		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const { return m_gameWorld.lock(); }
 	};
 #endif 
 

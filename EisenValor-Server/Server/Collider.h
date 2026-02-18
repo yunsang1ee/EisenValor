@@ -20,8 +20,8 @@ namespace Server {
 			virtual void OnCollisionExit(Collider* const other);
 		
 		public:
-			uint32 GetID() const noexcept { return m_id; }
-			COLLIDER_TYPE GetType() const noexcept { return m_type; }
+			uint32 GetID() const { return m_id; }
+			COLLIDER_TYPE GetType() const { return m_type; }
 
 		};
 
@@ -47,9 +47,9 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		public:
-			Vec3			GetCenter() const noexcept { return m_center; }
-			Vec3			GetExtents() const noexcept { return m_extents; }
-			Quaternion		GetOrientation() const noexcept { return m_orientation; }
+			Vec3			GetCenter() const { return m_center; }
+			Vec3			GetExtents() const { return m_extents; }
+			Quaternion		GetOrientation() const { return m_orientation; }
 
 		};
 	}

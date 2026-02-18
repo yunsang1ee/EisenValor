@@ -24,19 +24,19 @@ namespace ServerEngine {
 			~RIOWorker();
 
 		public:
-			bool			Init(SessionFactoryFunc sessionFunc) noexcept;
-			void			Work() noexcept;
-			bool			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept;
+			bool			Init(SessionFactoryFunc sessionFunc);
+			void			Work();
+			bool			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr);
 
 		public:
-			RIO_CQ			GetCQ() const noexcept { return m_cq; }
-			uint16			GetID() const noexcept { return m_id; }
-			auto& GetSessionPool() noexcept { return m_sessionPool; }
+			RIO_CQ			GetCQ() const { return m_cq; }
+			uint16			GetID() const { return m_id; }
+			auto& GetSessionPool() { return m_sessionPool; }
 
 		private:
-			// °ü¸®ÇÏ°í ÀÖ´Â SessionµéÀÇ °¢°¢ º¸³¾ Packetµé Ã³¸®
-			void			FlushSessionPacketQueue() noexcept;
-			void			DequeueCompletion() noexcept;
+			// ê´€ë¦¬í•˜ê³  ìˆëŠ” Sessionë“¤ì˜ ê°ê° ë³´ë‚¼ Packetë“¤ ì²˜ë¦¬
+			void			FlushSessionPacketQueue();
+			void			DequeueCompletion();
 		};
 
 #endif

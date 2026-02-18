@@ -15,17 +15,17 @@ namespace ServerEngine {
 		uint16						m_threadIDCounter=0;
 
 	public:
-		bool Init() noexcept;
-		void EnqueueTask(std::function<void(const std::stop_token&)> task) noexcept;
+		bool Init();
+		void EnqueueTask(std::function<void(const std::stop_token&)> task);
 		void Join();
 
 	public:
-		uint16 GetWorkerThreadCount() const noexcept { return m_workerThreadCount; }
-		uint16 IssueID() noexcept;
+		uint16 GetWorkerThreadCount() const { return m_workerThreadCount; }
+		uint16 IssueID();
 
 	private:
-		static void InitTLS() noexcept;
-		static void DestroyTLS() noexcept;
+		static void InitTLS();
+		static void DestroyTLS();
 
 	};
 }

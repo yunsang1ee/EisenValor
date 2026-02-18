@@ -32,7 +32,7 @@ namespace ServerEngine {
 			virtual void	Run() override final;
 
 		public:
-			const auto& GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
+			const auto& GetRioExtFuncTB() const { return m_rioExtfuncTable; }
 			virtual void	Shutdown() override final;
 
 		private:

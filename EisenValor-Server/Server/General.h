@@ -30,12 +30,12 @@ namespace Server {
 			void RemoveSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType &= ~subStateType; }
 			bool HasSubState(const GENERAL_SUB_STATE_TYPE subStateType) const { return (m_subStateType & subStateType) != GENERAL_SUB_STATE_TYPE::NONE; }
 			void ChangeSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType = subStateType; }
-			GENERAL_SUB_STATE_TYPE GetSubState() const noexcept { return m_subStateType; }
+			GENERAL_SUB_STATE_TYPE GetSubState() const { return m_subStateType; }
 			
-			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) noexcept { m_stanceType = stanceType; }
+			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) { m_stanceType = stanceType; }
 			void SetAtkInfo(const AttackInfo& atkInfo) { m_atkInfo = atkInfo; }
-			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const noexcept { return m_stanceType; }
-			const AttackInfo& GetAttackInfo() const noexcept { return m_atkInfo; }
+			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }
+			const AttackInfo& GetAttackInfo() const { return m_atkInfo; }
 	
 		private:
 		};

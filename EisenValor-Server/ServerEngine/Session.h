@@ -54,11 +54,11 @@ namespace ServerEngine {
 		virtual void ProcessSend(const uint32 bytesTransferred) abstract;
 
 	public:
-		void SetState(const SESSION_STATE state) noexcept { m_state = state; }
-		uint32 GetID() const noexcept { return m_id; }
-		SESSION_STATE GetState() const noexcept { return m_state; }
-		bool IsConnected() noexcept { return m_connected; }
-		SOCKET GetSocket() const noexcept { return m_socket; }
+		void SetState(const SESSION_STATE state) { m_state = state; }
+		uint32 GetID() const { return m_id; }
+		SESSION_STATE GetState() const { return m_state; }
+		bool IsConnected() { return m_connected; }
+		SOCKET GetSocket() const { return m_socket; }
 
 	public:
 		uint32 AssembleReceivedData(std::span<const char> buf);
@@ -138,14 +138,14 @@ namespace ServerEngine {
 			void FlushPacketQueue();
 
 		public:
-			void SetOwner(RIOWorker* const owner) noexcept { m_owner = owner; }
+			void SetOwner(RIOWorker* const owner) { m_owner = owner; }
 
 		private:
 			// flags: RIO_MSG_DEFER
 			bool DeferSend(const uint32 offset, const uint32 size);
 			// flags: RIO_MSG_COMMIT_ONLY(System Call)
 			void CommitSend();
-			// SessionPoolø° π›≥≥«œ±‚ ¿¸ ¡§∏Æ
+			// SessionPoolÏóê Î∞òÎÇ©ÌïòÍ∏∞ Ï†Ñ Ï†ïÎ¶¨
 			void Clean();
 		};
 	}

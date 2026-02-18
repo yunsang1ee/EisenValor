@@ -23,8 +23,6 @@
 #include "DetourCommon.h"
 #include "DetourCrowd.h"
 
-
-
 namespace ServerEngine {
 	class Session;
 }

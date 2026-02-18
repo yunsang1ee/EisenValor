@@ -17,10 +17,10 @@ namespace ServerEngine {
 		public:
 			void Init();
 			void SetOwner(std::shared_ptr<RIOSession> owner) { m_owner = owner; }
-			std::shared_ptr<RIOSession> GetOwner() const noexcept{ return m_owner; }
+			std::shared_ptr<RIOSession> GetOwner() const { return m_owner; }
 
 		public:
-			IO_CONTEXT_TYPE GetType() const noexcept { return m_type; }
+			IO_CONTEXT_TYPE GetType() const { return m_type; }
 
 		};
 

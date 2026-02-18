@@ -27,11 +27,11 @@ namespace ServerEngine {
 		LogManager& operator=(LogManager&&) = delete;
 
 	public:
-		static void Init() noexcept;
+		static void Init();
 
 
 		template<typename... Args>
-		static void WriteLog(const LOG_LEVEL level, const std::format_string<Args...> fmtStr, Args&&... args) noexcept
+		static void WriteLog(const LOG_LEVEL level, const std::format_string<Args...> fmtStr, Args&&... args)
 		{
 			using LogLevel = std::pair<std::string_view, WORD>;
 
@@ -67,7 +67,7 @@ namespace ServerEngine {
 			}
 		}
 
-		static void PrintLastError(const std::source_location& loc = std::source_location::current()) noexcept;
+		static void PrintLastError(const std::source_location& loc = std::source_location::current());
 
 	public:
 		static void Save();
