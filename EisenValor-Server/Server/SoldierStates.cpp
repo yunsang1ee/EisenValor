@@ -32,16 +32,16 @@ void Server::Contents::SoldierIdleState::Exit(const float dt)
 
 void Server::Contents::SoldierIdleState::Update(const float dt)
 {
-	//auto const fsm = GetFSM();
-	//const auto owner = fsm->GetOwner();
-	//Vec3 curPos = owner->GetPos();
-	//curPos.x += 10.f * dt;
-	//if(auto navAgent = owner->GetComponent<Server::Contents::NavAgent>()) {
-	//	navAgent->SetDestPos(curPos);
+	auto const fsm = GetFSM();
+	const auto owner = fsm->GetOwner();
+	Vec3 curPos = owner->GetPos();
+	curPos.x += 10.f * dt;
+	if(auto navAgent = owner->GetComponent<Server::Contents::NavAgent>()) {
+		navAgent->SetDestPos(curPos);
 
-	//	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(owner->GetID(), owner->GetPosInfo(), fsm->GetCurState()->GetStateType(), 0) };
-	//	owner->GetGameWorld()->Broadcast(std::move(pb));
-	//}
+		auto pb{ ServerPackets::Make_SC_MOVE_PACKET(owner->GetID(), owner->GetPosInfo(), fsm->GetCurState()->GetStateType(), 0) };
+		owner->GetGameWorld()->Broadcast(std::move(pb));
+	}
 }
 
 Server::Contents::SoldierMoveState::SoldierMoveState()
