@@ -10,7 +10,7 @@
 #include "NavAgent.h"
 
 Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_ROAMING }
 {
 	SetFSM(fsm);
 
@@ -89,7 +89,7 @@ void Server::Contents::GeneralRoamingState::Update(const float dt)
 }
 	
 Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_DUELING)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_DUELING }
 {
 	SetFSM(fsm);
 
@@ -113,6 +113,8 @@ Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
 		auto seqAtk{ std::make_unique<Server::Contents::SequenceNode>() };
 		rootSelector->AddChild(std::move(seqAtk));
 	}
+
+	m_root = std::move(rootSelector);
 }
 
 Server::Contents::GeneralDuelingState::~GeneralDuelingState()
@@ -122,13 +124,18 @@ Server::Contents::GeneralDuelingState::~GeneralDuelingState()
 void Server::Contents::GeneralDuelingState::Enter(const float dt)
 {
 	auto const fsm{ GetFSM() };
-	auto const owner{ fsm->GetOwner() };
+	auto const owner{ static_cast<General*>(fsm->GetOwner()) };
+	auto const world{ owner->GetGameWorld() };
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
 	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
 	if(bt) {
 		bt->SetRoot(m_root.get());
 		bt->Reset();
 	}
+
+	owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(owner->GetID(), owner->GetStanceType()) };
+	world->Broadcast(std::move(pb));
 
 	owner->GetComponent<NavAgent>()->StopMove();
 }
@@ -166,8 +173,30 @@ void Server::Contents::GeneralDuelingState::Update(const float dt)
 */
 }
 
+Server::Contents::GeneralStunState::GeneralStunState(FSM* const fsm)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_STUN }
+{
+}
+
+Server::Contents::GeneralStunState::~GeneralStunState()
+{
+}
+
+void Server::Contents::GeneralStunState::Enter(const float dt)
+{
+}
+
+void Server::Contents::GeneralStunState::Exit(const float dt)
+{
+}
+
+void Server::Contents::GeneralStunState::Update(const float dt)
+{
+}
+
+
 Server::Contents::GeneralDeadState::GeneralDeadState(FSM* const fsm)
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD), m_accDTForRespawn{}
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_DEAD }, m_accDTForRespawn{}
 {
 	SetFSM(fsm);
 }

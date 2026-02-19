@@ -3,7 +3,7 @@
 
 #include "GameWorld.h"
 #include "Player.h"
-
+#include "BehaviorTree.h"
 
 Server::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
@@ -96,7 +96,7 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 	// TODO: 블랙보드에 공격자 정보 갱신
 	// TODO: 현재 Roaming 중이었다면, 즉시 Duel 상태로 전환해야함.
 
-	auto const world{ GetGameWorld() };
+	/*auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
@@ -116,7 +116,18 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 		}
 	}
 
-	DecHP(damage);
+	DecHP(damage);*/
+
+	auto const world{ GetGameWorld() };
+	auto bt = GetComponent<BehaviorTree>();
+	bt->GetBlackboard()->SetValue("AttackerID", attacker->GetID());
+	bt->GetBlackboard()->SetValue("LastHitFrame", world->GetGameWorldFrameCount());
+
+	auto fsm = GetComponent<FSM>();
+	if(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING == fsm->GetCurState()->GetStateType()) {
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
+		return false;
+	}
 
 	return true;
 

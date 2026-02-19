@@ -65,6 +65,7 @@ enum GENERAL_STATE_TYPE: ubyte {
 	NONE,
 	ROAMING,
 	DUELING,
+	STUN,
 	DEAD,
 
 	END

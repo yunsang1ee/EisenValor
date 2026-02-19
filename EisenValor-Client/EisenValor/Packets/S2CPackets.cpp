@@ -751,7 +751,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// BattleUIControllerComponent 부착
-			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,

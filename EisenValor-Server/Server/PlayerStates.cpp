@@ -141,12 +141,12 @@ void Server::Contents::PlayerPredelayState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-//	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
+	//	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
 void Server::Contents::PlayerPredelayState::Exit(const float dt)
 {
-//	std::cout << std::format("ID:{}, GeneralPreDelayState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
+	//	std::cout << std::format("ID:{}, GeneralPreDelayState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
 void Server::Contents::PlayerPredelayState::Update(const float dt)
@@ -185,12 +185,12 @@ void Server::Contents::PlayerAttackState::Exit(const float dt)
 	//std::cout << std::format("ID:{}, GeneralAttackState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
-	void Server::Contents::PlayerAttackState::Update(const float dt)
+void Server::Contents::PlayerAttackState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	const auto& atkInfo{ owner->GetAttackInfo() };
 	auto const world{ owner->GetGameWorld() };
-	
+
 	auto const target = owner->GetTarget();
 	if(!target) {
 		return;
@@ -200,9 +200,11 @@ void Server::Contents::PlayerAttackState::Exit(const float dt)
 		if(nullptr == target) return;
 
 		if(target->OnDamaged(owner, dt)) {
+
 			if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
 				const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
-				if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType || FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
+				// 무장해제 공격일 시, 상대 플레이어의 상태를 IDLE로...
+				if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
 					auto const obj{ static_cast<General*>(target) };
 					auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
 					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt);
@@ -232,7 +234,7 @@ Server::Contents::PlayerPostdelayState::~PlayerPostdelayState()
 
 void Server::Contents::PlayerPostdelayState::Enter(const float dt)
 {
-//	std::cout << std::format("ID:{}, GeneralPostDelayState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
+	//	std::cout << std::format("ID:{}, GeneralPostDelayState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 }
@@ -281,7 +283,7 @@ void Server::Contents::PlayerStunState::Enter(const float dt)
 
 void Server::Contents::PlayerStunState::Exit(const float dt)
 {
-//	std::cout << std::format("ID:{}, GeneralStunState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
+	//	std::cout << std::format("ID:{}, GeneralStunState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_stunDuration = owner->GetGameObjectData()->stunDelay;
 }
