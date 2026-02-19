@@ -358,7 +358,7 @@ void Server::Contents::GameWorld::CheckCollision()
 	}
 }
 
-const auto& Server::Contents::GameWorld::GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type)
+const Server::Contents::GameObjects& Server::Contents::GameWorld::GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type)
 {
 	const uint8 index{ etou8(type )};
 	if(index >= FB_ENUMS::GAME_OBJECT_TYPE_END)
@@ -647,31 +647,12 @@ void Server::Contents::GameWorld::CreateBotsGameObjects(const Bots& bots)
 void Server::Contents::GameWorld::CreateGameWorldObjects()
 {
 	// Spanwer로 옮겨야 함
-	for(int i = 0; i < 2; ++i) {
-		static bool flag{ false };
-		static Vec3 startPos{ 0.f, 0.f, 0.f };
-		SoldierTemplate t;
-		t.id = m_npcIdGen++;
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-		t.posInfo = PosInfo{
-		.pos = startPos,
-		.rot = Vec3{}
-		};
-		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-		flag = !flag;
-		startPos.x += 2.f;
-		auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
-		AddGameObject(std::move(soldier));
-	}
-	
 	//for(int i = 0; i < 2; ++i) {
 	//	static bool flag{ false };
 	//	static Vec3 startPos{ 0.f, 0.f, 0.f };
-
-	//	GeneralTemplate t;
+	//	SoldierTemplate t;
 	//	t.id = m_npcIdGen++;
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 	//	t.posInfo = PosInfo{
 	//	.pos = startPos,
@@ -679,31 +660,34 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 	//	};
 	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
 	//	flag = !flag;
-	//	startPos.x += 5.f;
-
-	//	auto general{ Server::Contents::GameObjectFactory::CreateGeneral(t) };
-	//	AddGameObject(std::move(general));
+	//	startPos.x += 2.f;
+	//	auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
+	//	AddGameObject(std::move(soldier));
 	//}
+	
+	for(int i = 0; i < 1; ++i) {
+		static bool flag{ true };
+		static Vec3 startPos{ 5.f, 0.f, 5.f };
 
-	// - 배틀램 생성
-	{
-		BattleRamTemplate t;
+		GeneralTemplate t;
 		t.id = m_npcIdGen++;
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 		t.posInfo = PosInfo{
-		.pos = Vec3{},
+		.pos = startPos,
 		.rot = Vec3{}
 		};
 		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-		t.detectionRange = 2.5f;
-		t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
-		auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
-		AddGameObject(std::move(battleRam));
+		flag = !flag;
+		startPos.x += 5.f;
+
+		auto general{ Server::Contents::GameObjectFactory::CreateGeneral(t) };
+		AddGameObject(std::move(general));
 	}
-	
-	// 점령지 생성
+
+	// - 배틀램 생성
 	//{
-	//	OccupationZoneTemplate t;
+	//	BattleRamTemplate t;
 	//	t.id = m_npcIdGen++;
 	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 	//	t.posInfo = PosInfo{
@@ -711,11 +695,28 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 	//	.rot = Vec3{}
 	//	};
 	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-	//	t.range = 2.f;
-	//	t.time = 10;
-	//	auto oz{ Server::Contents::GameObjectFactory::CreateOccupationZone(t) };
-	//	AddGameObject(std::move(oz));
+	//	t.detectionRange = 2.5f;
+	//	t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
+	//	auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
+	//	AddGameObject(std::move(battleRam));
 	//}
+	
+	 // 점령지 생성
+	{
+		OccupationZoneTemplate t;
+		t.id = m_npcIdGen++;
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		t.posInfo = PosInfo{
+		.pos = Vec3{10.f, 0.f, 10.f},
+		.rot = Vec3{}
+		};
+		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+		t.range = 0.5f;
+		t.time = 10;
+		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+		auto oz{ Server::Contents::GameObjectFactory::CreateOccupationZone(t) };
+		AddGameObject(std::move(oz));
+	}
 
 	// 스포너 생성
 	{

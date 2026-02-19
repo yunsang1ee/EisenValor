@@ -45,3 +45,10 @@ void Server::Contents::NavAgent::SetDestPos(const Vec3& destPos)
 		m_navSystem->SetMoveTarget(m_agentIdx, destPos);
 	}
 }
+
+void Server::Contents::NavAgent::StopMove()
+{
+	if(m_agentIdx != -1) {
+		m_navSystem->ResetMoveTarget(m_agentIdx);
+	}
+}

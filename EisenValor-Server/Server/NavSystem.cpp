@@ -86,3 +86,20 @@ void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3
 		m_crowd->requestMoveTarget(agentIdx, targetRef, targetNearest);
 	}
 }
+
+void Server::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
+{
+	if(!m_crowd) return;
+
+	const dtCrowdAgent* ag{ m_crowd->getAgent(agentIdx) };
+	if(!ag || !ag->active) return;
+
+	float zeroVel[3] = { 0.0f, 0.0f, 0.0f };
+	if(m_crowd->requestMoveVelocity(agentIdx, zeroVel)) {
+		std::cout << "requestMoveVelocity" << std::endl;
+	}
+	std::cout << "requestMoveVelocity" << std::endl;
+	if(m_crowd->resetMoveTarget(agentIdx)) {
+		std::cout << "resetMoveTarget" << std::endl;
+	}
+}

@@ -4,7 +4,7 @@
 #include "GameWorld.h"
 
 Server::Contents::OccupationZone::OccupationZone(const float rangeSq, const int64 time)
-	:m_accDT{}, m_stateType{FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_OCCUPIED}, m_rangeSq{rangeSq}, m_time{time}
+	:m_accDT{}, m_stateType{FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED}, m_rangeSq{rangeSq}, m_time{time}
 {
 }
 
@@ -23,7 +23,7 @@ void Server::Contents::OccupationZone::Update(const float dt)
 			continue;
 
 		for(const auto& [id, o] : groups[i]) {
-			if(owner->GetTeamType() != o->GetTeamType()) continue;
+			if(owner->GetTeamType() == o->GetTeamType()) continue;
 
 			const auto& otherPos{ o->GetPos() };
 			const auto& distToOtherSq{ (otherPos - ownerPos).LengthSquared() };

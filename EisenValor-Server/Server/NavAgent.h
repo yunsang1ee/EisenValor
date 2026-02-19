@@ -24,6 +24,7 @@ namespace Server {
 
 		public:
 			void SetDestPos(const Vec3& destPos);
+			void StopMove();
 			
 		};
 	}

@@ -53,12 +53,13 @@ void Server::Contents::DecoratorNode::Reset()
 		m_child->Reset();
 }
 
-Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SequenceNode::Execute(float DeltaTime)
+Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SequenceNode::Execute(const float dt)
 {
 	for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
 		auto& child = m_children[m_currentIndex];
-		auto status = child->Execute(DeltaTime);
+		auto status = child->Execute(dt);
 
+		// status가 Success가 되면 다음으로 넘어감, Running이 반환되면 Success가 반환될 때 까지 대기
 		if(status == BEHAVIOR_NODE_STATUS::RUNNING)
 			return BEHAVIOR_NODE_STATUS::RUNNING;
 		if(status == BEHAVIOR_NODE_STATUS::FAIL) {
@@ -76,11 +77,11 @@ void Server::Contents::SequenceNode::Reset()
 	CompositeNode::Reset();
 }
 
-Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SelectorNode::Execute(float DeltaTime)
+Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SelectorNode::Execute(const float dt)
 {
 	for(size_t i = 0; i < m_children.size(); ++i) {
 		auto& child = m_children[i];
-		auto status = child->Execute(DeltaTime);
+		auto status = child->Execute(dt);
 
 		if(status == BEHAVIOR_NODE_STATUS::RUNNING) {
 			return BEHAVIOR_NODE_STATUS::RUNNING;

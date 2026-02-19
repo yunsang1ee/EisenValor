@@ -552,6 +552,7 @@
     <ClCompile Include="GameObjectFactory.cpp" />
     <ClCompile Include="GameWorld.cpp" />
     <ClCompile Include="General.cpp" />
+    <ClCompile Include="GeneralNodes.cpp" />
     <ClCompile Include="GeneralStates.cpp" />
     <ClCompile Include="OccupationZone.cpp" />
     <ClCompile Include="PlayerStates.cpp" />
@@ -619,6 +620,7 @@
     <ClInclude Include="GameObjectFactory.h" />
     <ClInclude Include="GameWorld.h" />
     <ClInclude Include="General.h" />
+    <ClInclude Include="GeneralNodes.h" />
     <ClInclude Include="GeneralStates.h" />
     <ClInclude Include="OccupationZone.h" />
     <ClInclude Include="PlayerStates.h" />

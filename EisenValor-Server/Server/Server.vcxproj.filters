@@ -22,9 +22,6 @@
     <ClCompile Include="GameObjectFactory.cpp">
       <Filter>02. Contents\GameWorld\GameObjectFactory</Filter>
     </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
-    </ClCompile>
     <ClCompile Include="FSM.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component\FSM</Filter>
     </ClCompile>
@@ -147,6 +144,12 @@
     </ClCompile>
     <ClCompile Include="OccupationZone.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralNodes.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\Nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -282,11 +285,11 @@
     <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\States">
       <UniqueIdentifier>{f9c531da-b829-44b2-9675-b04fbcba0f54}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\BNode">
-      <UniqueIdentifier>{6277f4a2-9276-4117-8c31-62664336b00c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone">
       <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\Nodes">
+      <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -446,11 +449,14 @@
     <ClInclude Include="BattleRam.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
     </ClInclude>
-    <ClInclude Include="GeneralStates.h">
-      <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
-    </ClInclude>
     <ClInclude Include="OccupationZone.h">
       <Filter>02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralNodes.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralStates.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

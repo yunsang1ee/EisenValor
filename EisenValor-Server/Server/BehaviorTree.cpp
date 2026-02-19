@@ -4,7 +4,7 @@
 #include "BehaviorNode.h"
 
 Server::Contents::BehaviorTree::BehaviorTree()
-	:m_root{ nullptr}
+	:m_root{nullptr}
 {
 
 }
@@ -17,5 +17,6 @@ void Server::Contents::BehaviorTree::Update(const float dt)
 
 void Server::Contents::BehaviorTree::Reset()
 {
-	if(m_root) m_root->Reset();
+	if(m_root)
+		m_root->Reset();
 }

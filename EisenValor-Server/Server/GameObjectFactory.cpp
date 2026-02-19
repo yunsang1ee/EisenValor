@@ -65,19 +65,35 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 			.maxStamina = t.gameObjectData->maxStamina,
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
+	const auto bt = general->AddComponent<BehaviorTree>();
 
+	auto navAgenet = general->AddComponent<Server::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
+	dtCrowdAgentParams params;
+	memset(&params, 0, sizeof(params));
+	params.radius = 0.6f;				// collision radius
+	params.height = 1.f;
+	params.maxSpeed = 0.3f;
+	params.maxAcceleration = 10.f;
+
+	// set collision avoidance
+	params.collisionQueryRange = params.radius * 12.0f;
+	params.pathOptimizationRange = params.radius * 30.0f;
+	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
+	params.obstacleAvoidanceType = 0;
+	params.separationWeight = 2.0f;   // seperation force for other agent 
+	if(false == navAgenet->Init(params))
+		return nullptr;
+	
 	const auto fsm = general->AddComponent<Server::Contents::FSM>();
-
-	auto roamingState = Server::Contents::GeneralRoamingState::Create();
-	auto duelingState = Server::Contents::GeneralDuelingState::Create();
-	auto deadState = Server::Contents::GeneralDeadState::Create();
+	auto roamingState = Server::Contents::GeneralRoamingState::Create(fsm);
+	auto duelingState = Server::Contents::GeneralDuelingState::Create(fsm);
+	auto deadState = Server::Contents::GeneralDeadState::Create(fsm);
+	
 	fsm->AddState(std::move(roamingState));
 	fsm->AddState(std::move(duelingState));
 	fsm->AddState(std::move(deadState));
 
 	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
-
-	const auto bt = general->AddComponent<BehaviorTree>();
 
 	return general;
 }
@@ -173,15 +189,29 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
 	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	spawnObj->SetID(t.id);
+	spawnObj->SetGameWorld(t.gameWorld.lock());
+	spawnObj->SetPosInfo(t.posInfo);
+	spawnObj->SetGameObjectData(t.gameObjectData);
+	
 	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>());
+	spawner->SetName("Spawner");
 	spawner->SetOwner(spawnObj.get());
+	
 	return spawnObj;
 }
 
 std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
 {
 	auto ozObj{ std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	ozObj->SetID(t.id);
+	ozObj->SetGameWorld(t.gameWorld.lock());
+	ozObj->SetPosInfo(t.posInfo);
+	ozObj->SetGameObjectData(t.gameObjectData);
+	
 	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.range * t.range, t.time))};
+	oz->SetName("OZ");
 	oz->SetOwner(ozObj.get());
+	
 	return ozObj;
 }

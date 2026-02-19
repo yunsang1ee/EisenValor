@@ -22,7 +22,7 @@ namespace Server {
 			virtual void DecStamina(const uint32 amount, const bool broadcast= false) override;
 
 		public:
-			void SetSession(std::shared_ptr<ClientSession> clientSession) noexcept { m_session = clientSession; }
+			void SetSession(std::shared_ptr<ClientSession> clientSession) { m_session = clientSession; }
 			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
 
 		private:

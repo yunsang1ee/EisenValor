@@ -20,6 +20,8 @@ namespace Server {
 
 		public:
 			FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE GetStateType() const { return m_stateType; }
+
+			float GetRangeSq() const { return m_rangeSq; }
 		};
 	}
 }

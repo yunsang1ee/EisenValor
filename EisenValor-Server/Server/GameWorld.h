@@ -98,9 +98,9 @@ namespace Server {
 			uint64 GetGameWorldFrameCount() const { return m_worldFrameCount; }
 			float GetGameWorldDT() const { return m_dt; }
 			const auto& GetGameObjectGroups() const { return m_gameObjectsGroups; }
-			const auto& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
+			const GameObjects& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
-
+			GameObject*	FindObjectByID(const uint32 targetID);
 		private:
 			void AddGameObject(std::unique_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
@@ -126,7 +126,7 @@ namespace Server {
 			bool IsFinish();
 
 			Player*		IDToPlayer(const uint32 sessionID);
-			GameObject*	FindObjectByID(const uint32 targetID);
+	
 
 			friend class GameRoom;
 		};

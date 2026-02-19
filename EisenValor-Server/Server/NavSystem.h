@@ -32,6 +32,7 @@ namespace Server {
 			void Update(const float dt);
 			
 			void SetMoveTarget(const int32 agentIdx, const Vec3& targetPos);
+			void ResetMoveTarget(const int32 agentIdx);
 			dtCrowd* GetCrowd() const { return m_crowd; }
 		};
 	}

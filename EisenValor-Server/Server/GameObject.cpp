@@ -11,6 +11,19 @@ Server::Contents::GameObject::~GameObject()
 	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;
 }
 
+Server::Contents::Script* Server::Contents::GameObject::GetScript(const std::string_view name)
+{
+	auto iter = std::find_if(m_scripts.begin(), m_scripts.end(), [name](const auto& script) {
+		return script->GetName() == name.data();
+		});
+
+	if(iter == m_scripts.end()) {
+		return nullptr;
+	}
+
+	return iter->get();
+}
+
 Vec3 Server::Contents::GameObject::GetForwardDir()
 {
 	const float yawRad{ Deg2Rad(m_posInfo.rot.y)};

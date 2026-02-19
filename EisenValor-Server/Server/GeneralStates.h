@@ -1,17 +1,18 @@
 #pragma once
 
 #include "State.h"
-#include "BehaviorNode.h"
 
 namespace Server {
 	namespace Contents {
+		class BehaviorNode;
+
 		class GeneralRoamingState : public State {
 			DECLARE_CREATE_FUNC(GeneralRoamingState)
 		private:
 			std::unique_ptr<BehaviorNode> m_root;
 
 		public:
-			GeneralRoamingState();
+			explicit GeneralRoamingState(FSM* const fsm);
 			virtual ~GeneralRoamingState();
 
 		public:
@@ -27,7 +28,7 @@ namespace Server {
 			std::unique_ptr<BehaviorNode> m_root;
 
 		public:
-			GeneralDuelingState();
+			explicit GeneralDuelingState(FSM* const fsm);
 			virtual ~GeneralDuelingState();
 
 		public:
@@ -40,10 +41,10 @@ namespace Server {
 			DECLARE_CREATE_FUNC(GeneralDeadState)
 
 		private:
-			float m_accRespawnTime;
+			float m_accDTForRespawn;
 
 		public:
-			GeneralDeadState();
+			explicit GeneralDeadState(FSM* const fsm);
 			virtual ~GeneralDeadState();
 
 		public:

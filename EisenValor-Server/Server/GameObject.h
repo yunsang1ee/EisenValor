@@ -107,6 +107,8 @@ namespace Server {
 				return s;
 			}
 
+			Script* GetScript(const std::string_view name);
+
 		public:
 			void SetID(const uint32 id)  { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }

@@ -52,11 +52,20 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 void Server::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
+
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0, 0) };
+	GetGameWorld()->Broadcast(std::move(pb));
 }
 
 void Server::Contents::General::OnDeath()
 {
 	std::cout << "General::OnDeath()" << std::endl;
+	auto const world{ GetGameWorld() };
+	const float worldDT{ world->GetGameWorldDT() };
+	auto const fsm{ GetComponent<Server::Contents::FSM>() };
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT, true);
+
+	// TODO: 블랙보드 초기화
 }
 
 void Server::Contents::General::OnRespawn()
@@ -84,6 +93,9 @@ void Server::Contents::General::OnRespawn()
 
 bool Server::Contents::General::OnDamaged(Creature* const attacker, const float dt)
 {
+	// TODO: 블랙보드에 공격자 정보 갱신
+	// TODO: 현재 Roaming 중이었다면, 즉시 Duel 상태로 전환해야함.
+
 	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
