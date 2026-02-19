@@ -553,7 +553,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			scene->CreateComponentWithInit<FSMComponent>(
 				playerObjHandle,
 				[](FSMComponent* fsm) {
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 				}
 			);
 
@@ -925,8 +925,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_STANCE_PACKET& recvPkt
 )
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();

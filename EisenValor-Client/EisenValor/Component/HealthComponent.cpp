@@ -25,7 +25,7 @@ void HealthComponent::SetHealth(int health)
 		// 체력이 다시 생기면 FSM을 IDLE로 복구
 		if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 		{
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 		}
 	}
 }

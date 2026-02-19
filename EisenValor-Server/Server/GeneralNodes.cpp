@@ -7,6 +7,9 @@
 #include "OccupationZone.h"
 #include "NavAgent.h"
 
+// ====================================
+//		  GENERAL_ROAMING_STATE
+// ====================================
 Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::ActionFindOZ::DoAction(const float dt)
 {
 	auto const tree{ GetTree() };
@@ -64,4 +67,47 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::ActionMoveToOZ::DoActio
 	}
 
 	return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
+}
+
+
+
+// ====================================
+//		  GENERAL_DUELING_STATE
+// ====================================
+bool Server::Contents::ConditionIsTargetAttacking::Check(const float dt)
+{
+	auto const tree{ GetTree() };
+	auto const owner{ tree->GetOwner() };
+	auto const world{ owner->GetGameWorld() };
+
+	const uint32 targetID = tree->GetBlackboard()->GetValue<uint32>("Target", -1);
+	
+	if(-1 != targetID) {
+	
+		auto target{ world->FindObjectByID(targetID) };
+		const auto targetObjType{ target->GetObjType() };
+
+		if(target) {
+			if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == targetObjType) {
+				auto const fsm{ target->GetComponent<Server::Contents::FSM>() };
+				const auto stateType{ fsm->GetCurState()->GetStateType() };
+
+				if(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK == stateType || FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY == stateType || FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY  == stateType)
+					return true;
+
+			}
+			else if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == targetObjType) {
+
+			}
+		}
+	}
+
+	return false;
+}
+
+Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::ActionDefense::DoAction(const float dt)
+{
+
+
+	return BEHAVIOR_NODE_STATUS();
 }

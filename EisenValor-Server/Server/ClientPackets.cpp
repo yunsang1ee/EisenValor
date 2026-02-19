@@ -232,14 +232,14 @@ namespace ClientPackets {
 		return true;
 	}
 
-	bool Handle_CS_CHANGE_PLAYER_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET& recvPkt)
+	bool Handle_CS_CHANGE_GENERAL_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET& recvPkt)
 	{
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
-			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_CHANGE_STANCE, id);
+			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE, id);
 
 		return true;
 	}

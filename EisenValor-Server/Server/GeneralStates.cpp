@@ -94,6 +94,25 @@ Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
 	SetFSM(fsm);
 
 	// TODO: 행동트리 구현
+	auto rootSelector = std::make_unique<Server::Contents::SelectorNode>();
+	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
+
+	// seqDefense
+	{
+		auto seqDefense{ std::make_unique<Server::Contents::SequenceNode>() };
+		{
+			seqDefense->AddChild(std::make_unique<Server::Contents::ConditionIsTargetAttacking>());
+			seqDefense->AddChild(std::make_unique<Server::Contents::ActionDefense>());
+		}
+
+		rootSelector->AddChild(std::move(seqDefense));
+	}
+
+	// seqAtk
+	{
+		auto seqAtk{ std::make_unique<Server::Contents::SequenceNode>() };
+		rootSelector->AddChild(std::move(seqAtk));
+	}
 }
 
 Server::Contents::GeneralDuelingState::~GeneralDuelingState()

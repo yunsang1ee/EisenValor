@@ -246,11 +246,11 @@ void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(const uint32 sessionID
 	}
 }
 
-void Server::Contents::GameWorld::Handle_CS_PLAYER_CHANGE_STANCE(const uint32 sessionID)
+void Server::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID)
 {
 	auto const player = IDToPlayer(sessionID);
 	if(player)
-		player->Handle_CS_PLAYER_CHANGE_STANCE();
+		player->Handle_CS_PLAYER_GENERAL_STANCE();
 }
 
 void Server::Contents::GameWorld::Handle_CS_PLAYER_FAKE(const uint32 sessionID)

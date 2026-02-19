@@ -99,7 +99,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
 			//}
 
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
@@ -154,7 +154,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 				{
 					fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
 			}
 		}
@@ -713,7 +713,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 				{
 					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
 
 				// 확정 후 즉시 초기화

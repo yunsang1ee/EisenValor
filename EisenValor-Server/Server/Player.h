@@ -24,7 +24,7 @@ namespace Server {
 
 		private:
 			void Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo);
-			void Handle_CS_PLAYER_CHANGE_STANCE();
+			void Handle_CS_PLAYER_GENERAL_STANCE();
 			void Handle_CS_PLAYER_FAKE();
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID);
 			friend class GameWorld;

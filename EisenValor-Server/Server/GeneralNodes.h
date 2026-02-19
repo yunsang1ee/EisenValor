@@ -13,6 +13,7 @@ namespace Server {
 		};
 
 		class ActionMoveToOZ : public ActionNode {
+		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
 
@@ -20,7 +21,15 @@ namespace Server {
 		// ====================================
 		//		  GENERAL_DUELING_STATE
 		// ====================================
+		class ConditionIsTargetAttacking : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
 
+		class ActionDefense : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
 
 	}
 }

@@ -243,11 +243,11 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_PLAYER_STANCE_PACKET(const uint32 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_GENERAL_STANCE_PACKET(const uint32 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_PLAYER_STANCE_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_PLAYER_STANCE_PACKET, id, stanceType));
+		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_PLAYER_STANCE_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GENERAL_STANCE_PACKET, id, stanceType));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHANGE_CAMERA_TARGET_PACKET(const uint32 targetID)

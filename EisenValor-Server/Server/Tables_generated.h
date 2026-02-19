@@ -138,11 +138,11 @@ struct CS_MOVE_PACKETBuilder;
 struct SC_MOVE_PACKET;
 struct SC_MOVE_PACKETBuilder;
 
-struct CS_CHANGE_PLAYER_STANCE_PACKET;
-struct CS_CHANGE_PLAYER_STANCE_PACKETBuilder;
+struct CS_CHANGE_GENERAL_STANCE_PACKET;
+struct CS_CHANGE_GENERAL_STANCE_PACKETBuilder;
 
-struct SC_CHANGE_PLAYER_STANCE_PACKET;
-struct SC_CHANGE_PLAYER_STANCE_PACKETBuilder;
+struct SC_CHANGE_GENERAL_STANCE_PACKET;
+struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder;
 
 struct CS_PLAYER_ATTACK_PACKET;
 struct CS_PLAYER_ATTACK_PACKETBuilder;
@@ -2023,37 +2023,37 @@ inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
   return builder_.Finish();
 }
 
-struct CS_CHANGE_PLAYER_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_CHANGE_PLAYER_STANCE_PACKETBuilder Builder;
+struct CS_CHANGE_GENERAL_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_CHANGE_GENERAL_STANCE_PACKETBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
 };
 
-struct CS_CHANGE_PLAYER_STANCE_PACKETBuilder {
-  typedef CS_CHANGE_PLAYER_STANCE_PACKET Table;
+struct CS_CHANGE_GENERAL_STANCE_PACKETBuilder {
+  typedef CS_CHANGE_GENERAL_STANCE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  explicit CS_CHANGE_PLAYER_STANCE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_CHANGE_GENERAL_STANCE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_CHANGE_PLAYER_STANCE_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_CHANGE_GENERAL_STANCE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_CHANGE_PLAYER_STANCE_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_CHANGE_GENERAL_STANCE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_CHANGE_PLAYER_STANCE_PACKET> CreateCS_CHANGE_PLAYER_STANCE_PACKET(
+inline ::flatbuffers::Offset<CS_CHANGE_GENERAL_STANCE_PACKET> CreateCS_CHANGE_GENERAL_STANCE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb) {
-  CS_CHANGE_PLAYER_STANCE_PACKETBuilder builder_(_fbb);
+  CS_CHANGE_GENERAL_STANCE_PACKETBuilder builder_(_fbb);
   return builder_.Finish();
 }
 
-struct SC_CHANGE_PLAYER_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_CHANGE_PLAYER_STANCE_PACKETBuilder Builder;
+struct SC_CHANGE_GENERAL_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_CHANGE_GENERAL_STANCE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_STANCE_TYPE = 6
@@ -2072,32 +2072,32 @@ struct SC_CHANGE_PLAYER_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbu
   }
 };
 
-struct SC_CHANGE_PLAYER_STANCE_PACKETBuilder {
-  typedef SC_CHANGE_PLAYER_STANCE_PACKET Table;
+struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder {
+  typedef SC_CHANGE_GENERAL_STANCE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_CHANGE_PLAYER_STANCE_PACKET::VT_OBJ_ID, obj_id, 0);
+    fbb_.AddElement<uint32_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_stance_type(FB_ENUMS::GENERAL_STANCE_TYPE stance_type) {
-    fbb_.AddElement<uint8_t>(SC_CHANGE_PLAYER_STANCE_PACKET::VT_STANCE_TYPE, static_cast<uint8_t>(stance_type), 0);
+    fbb_.AddElement<uint8_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_STANCE_TYPE, static_cast<uint8_t>(stance_type), 0);
   }
-  explicit SC_CHANGE_PLAYER_STANCE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_CHANGE_GENERAL_STANCE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_CHANGE_PLAYER_STANCE_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_CHANGE_GENERAL_STANCE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_CHANGE_PLAYER_STANCE_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_CHANGE_GENERAL_STANCE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_CHANGE_PLAYER_STANCE_PACKET> CreateSC_CHANGE_PLAYER_STANCE_PACKET(
+inline ::flatbuffers::Offset<SC_CHANGE_GENERAL_STANCE_PACKET> CreateSC_CHANGE_GENERAL_STANCE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
     FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) {
-  SC_CHANGE_PLAYER_STANCE_PACKETBuilder builder_(_fbb);
+  SC_CHANGE_GENERAL_STANCE_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
   builder_.add_stance_type(stance_type);
   return builder_.Finish();

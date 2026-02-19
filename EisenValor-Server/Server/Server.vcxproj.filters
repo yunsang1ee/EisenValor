@@ -195,12 +195,6 @@
     <Filter Include="98. Utils">
       <UniqueIdentifier>{d8bf9806-e324-45ba-9966-629519d36367}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameRoom">
-      <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameRoom\Participant">
-      <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameWorld">
       <UniqueIdentifier>{2176b3bb-d56a-43f0-b9f6-c43bb61eef63}</UniqueIdentifier>
     </Filter>
@@ -290,6 +284,12 @@
     </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\Nodes">
       <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoom">
+      <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoom\Participant">
+      <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

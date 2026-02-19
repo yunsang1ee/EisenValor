@@ -180,15 +180,15 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	}
 }
 
-void Server::Contents::Player::Handle_CS_PLAYER_CHANGE_STANCE()
+void Server::Contents::Player::Handle_CS_PLAYER_GENERAL_STANCE()
 {
 	if(false == IsActive())
 		return;
 
-	std::cout << "Handle_CS_PLAYER_CHANGE_STATNCE" << std::endl;
+	std::cout << "Handle_CS_GENERAL_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	
-	auto pb = ServerPackets::Make_SC_CHANGE_PLAYER_STANCE_PACKET(GetID(),GetStanceType());
+	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(),GetStanceType());
 	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
 }
 

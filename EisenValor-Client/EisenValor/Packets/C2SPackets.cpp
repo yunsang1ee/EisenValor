@@ -142,12 +142,12 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET()
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET()
 {
 	flatbuffers::FlatBufferBuilder builder;	
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_CHANGE_PLAYER_STANCE_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_CHANGE_PLAYER_STANCE_PACKET)
+		PACKET_TYPE::CS_CHANGE_GENERAL_STANCE_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_CHANGE_GENERAL_STANCE_PACKET)
 	);
 }
 
