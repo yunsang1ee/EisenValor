@@ -27,6 +27,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::ActionFindOZ::DoAction(
 		auto oz{ static_cast<OccupationZone*>(obj->GetScript("OZ")) };
 		if(oz) {
 			if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
+				owner->SetLook(obj->GetPos());
 				tree->GetBlackboard()->SetValue("OZ_ID", o->GetID());
 				return Server::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 			}
