@@ -112,6 +112,8 @@ public:
 	[[nodiscard]] const DxDescriptorHandles& GetUAVHandle() const { return m_uavHandle; }
 	[[nodiscard]] const DxDescriptorHandles& GetCBVHandle() const { return m_cbvHandle; }
 
+	[[nodiscard]] uint32_t GetSRVIndex() const { return m_srvHandle.GetIndex(); }
+
 	[[nodiscard]] bool HasSRV() const { return m_srvHandle.IsValid(); }
 	[[nodiscard]] bool HasUAV() const { return m_uavHandle.IsValid(); }
 	[[nodiscard]] bool HasCBV() const { return m_cbvHandle.IsValid(); }

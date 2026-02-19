@@ -109,9 +109,6 @@
     <ClInclude Include="include\DxCommandContext.h">
       <Filter>Graphics\Device\Command</Filter>
     </ClInclude>
-    <ClInclude Include="include\DxCommandContextPool.h">
-      <Filter>Graphics\Device\Command</Filter>
-    </ClInclude>
     <ClInclude Include="include\DxSwapChain.h">
       <Filter>Graphics\Device</Filter>
     </ClInclude>
@@ -241,9 +238,6 @@
     <ClInclude Include="include\IRenderData.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="include\RenderDataPool.h">
-      <Filter>Graphics\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="include\CommonInclude.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -290,9 +284,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="src\DxCommandContext.cpp">
-      <Filter>Graphics\Device\Command</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DxCommandContextPool.cpp">
       <Filter>Graphics\Device\Command</Filter>
     </ClCompile>
     <ClCompile Include="src\DxSwapChain.cpp">

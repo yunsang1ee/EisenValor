@@ -11,6 +11,7 @@ struct MeshData : public AssetData
 	std::vector<Vertex>	  vertices;
 	std::vector<uint32_t> indices;
 	std::vector<SubMesh>  subMeshes;
+	std::vector<Guid>	  materialGuids;
 	uint32_t			  indexFormat = 32;
 
 	bool Deserialize(AssetFile& file) override;

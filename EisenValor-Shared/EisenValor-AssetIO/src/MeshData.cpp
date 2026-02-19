@@ -101,6 +101,31 @@ bool MeshData::Deserialize(AssetFile& file)
 		}
 	}
 
+	const ChunkEntry* matEntry = file.GetChunkEntry("DEPS");
+	if (matEntry && 1 == matEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("DEPS", size));
+
+		constexpr size_t guidHeaderSize = 4; // GUID List Header (4 Bytes) = Count(4)
+		if (nullptr != ptr && guidHeaderSize <= size)
+		{
+			uint32_t count = ReadUnaligned<uint32_t>(ptr);
+			size_t	 requiredSize = guidHeaderSize + (count * sizeof(Guid));
+
+			if (requiredSize <= size)
+			{
+				materialGuids.resize(count);
+				std::memcpy(materialGuids.data(), ptr + guidHeaderSize, count * sizeof(Guid));
+			}
+			else
+			{
+				std::print("[MeshData] DEPS chunk size mismatch: expected {} bytes, got {}\n", requiredSize, size);
+				return false;
+			}
+		}
+	}
+
 	return IsValid();
 }
 } // namespace EvAsset
