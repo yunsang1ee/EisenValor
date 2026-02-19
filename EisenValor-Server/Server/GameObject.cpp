@@ -2,7 +2,7 @@
 #include "GameObject.h"
 
 Server::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}
+	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}
 {
 }
 
@@ -38,6 +38,8 @@ Vec3 Server::Contents::GameObject::GetForwardDir()
 
 void Server::Contents::GameObject::Update(const float dt)
 {
+	LookAt(m_look, dt);
+
 	for(const auto& comp : m_components) {
 		if(comp)
 			comp->Update(dt);
@@ -46,4 +48,18 @@ void Server::Contents::GameObject::Update(const float dt)
 	for(const auto& script : m_scripts)
 		if(script)
 			script->Update(dt);
+}
+
+void Server::Contents::GameObject::LookAt(const Vec3& lookAt, const float dt)
+{
+	Vec3 dir{ lookAt - m_posInfo.pos };
+	dir.y = 0.0f;
+
+	if(dir.LengthSquared() < 0.0001f) return;
+
+	const float targetYaw{ Rad2Deg(atan2f(dir.x, dir.z))};
+	const float currentYaw{ m_posInfo.rot.y };
+
+	float deltaYaw{ NormalizeAngle(targetYaw - currentYaw) };
+	m_posInfo.rot.y = NormalizeAngle(currentYaw + (deltaYaw * dt * 1.0f));
 }

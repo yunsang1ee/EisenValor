@@ -19,6 +19,18 @@ static inline float Deg2Rad(const float degree)
 	return degree * (DirectX::XM_PI / 180.f);
 }
 
+static inline float Rad2Deg(const float radian)
+{
+	return radian * (180.f / DirectX::XM_PI);
+}
+
+static inline float NormalizeAngle(float angle)
+{
+	angle = fmodf(angle + 180.0f, 360.0f);
+	if(angle < 0) angle += 360.0f;
+	return angle - 180.0f;
+}
+
 template<typename Enum> requires std::is_enum_v<Enum>
 static inline constexpr uint8 etou8(const Enum e)
 {

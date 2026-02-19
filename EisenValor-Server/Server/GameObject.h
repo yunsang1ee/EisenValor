@@ -39,6 +39,9 @@ namespace Server {
 			virtual void Update(const float dt);
 
 		public:
+			void LookAt(const Vec3& lookAt, const float dt);
+
+		public:
 			template<std::derived_from<Component> T>
 			T* GetComponent()
 			{
@@ -96,6 +99,7 @@ namespace Server {
 			void SetPosInfo(const PosInfo& transform) { m_posInfo = transform; }
 			void SetPos(const Vec3& pos) { m_posInfo.pos = pos; }
 			void SetRotation(const Vec3& rotation) { m_posInfo.rot = rotation; }
+			void SetLook(const Vec3& look) { m_look = look; }
 			void SetRoom(std::weak_ptr<GameRoom> match) { m_room = match; }
 			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) { m_gameWorld = gameWorld; }
 			void SetCreature(bool flag) { m_isCreature = flag; }
@@ -131,9 +135,10 @@ namespace Server {
 
 			PosInfo									m_posInfo;
 			Vec3									m_scale;
+			Vec3									m_look;
 
 			bool									m_isCreature;
-			const GameObjectData* m_gameObjectData;
+			const GameObjectData*					m_gameObjectData;
 			bool									m_active;
 		};
 	}

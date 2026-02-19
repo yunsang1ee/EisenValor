@@ -56,7 +56,6 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::ActionMoveToOZ::DoActio
 				std::cout << "In OZ!" << std::endl;
 			}
 			else {
-				// std::cout << "SetDestPos!" << std::endl;
 				owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(ozPos);
 			}
 
@@ -87,6 +86,7 @@ bool Server::Contents::ConditionIsTargetAttacking::Check(const float dt)
 	
 		auto target{ world->FindObjectByID(targetID) };
 		if(target) {
+			owner->SetLook(target->GetPos());
 			const auto targetObjType{ target->GetObjType() };
 			if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == targetObjType) {
 				auto const fsm{ target->GetComponent<Server::Contents::FSM>() };

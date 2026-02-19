@@ -51,7 +51,7 @@ namespace Server {
 			explicit GeneralStunState(FSM* const fsm);
 			virtual ~GeneralStunState();
 
-		public:	private:
+		public:
 			virtual void Enter(const float dt) override final;		
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
