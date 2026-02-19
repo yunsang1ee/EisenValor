@@ -6,11 +6,6 @@
 namespace ServerEngine {
 	class Task;
 	class TaskQueue : public std::enable_shared_from_this<ServerEngine::TaskQueue> {
-	protected:
-		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
-		std::atomic_int									m_taskCount;
-		bool											m_active;
-
 	public:
 		TaskQueue();
 		virtual ~TaskQueue();
@@ -69,6 +64,12 @@ namespace ServerEngine {
 	private:
 		void Execute();
 		friend class IOCore;
+
+	protected:
+		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
+		std::atomic_int									m_taskCount;
+		bool											m_active;
+
 	};
 }
 

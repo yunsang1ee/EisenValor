@@ -6,10 +6,6 @@
 namespace ServerEngine {
     template<typename Type>
     class ObjectPool {
-    private:
-        using Pool = oneapi::tbb::memory_pool<oneapi::tbb::scalable_allocator<Type>>;
-        static Pool m_pool;
-        
     public:
         ObjectPool()
         {
@@ -42,6 +38,10 @@ namespace ServerEngine {
             std::shared_ptr<Type> ptr{ Pop(std::forward<Args>(args)...), Push };
             return ptr;
         }
+
+    private:
+        using Pool = oneapi::tbb::memory_pool<oneapi::tbb::scalable_allocator<Type>>;
+        static Pool m_pool;
     };
 
     template<typename Type>

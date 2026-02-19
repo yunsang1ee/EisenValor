@@ -21,25 +21,6 @@ namespace Server {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
 			using Scripts = std::vector<std::unique_ptr<Script>>;
-			
-			std::wstring							m_name;
-			uint32									m_id;
-			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
-			const FB_ENUMS::TEAM_TYPE				m_teamType;
-			
-			ComponentGroup							m_components;
-			Scripts									m_scripts;
-
-			std::weak_ptr<GameRoom>					m_room;
-			std::weak_ptr<GameWorld>				m_gameWorld;
-
-			PosInfo									m_posInfo;
-			Vec3									m_scale;
-
-			bool									m_isCreature;
-			const GameObjectData*					m_gameObjectData;
-			bool									m_active;
-		
 		public:
 			GameObject() = default;
 			explicit GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type);
@@ -135,6 +116,25 @@ namespace Server {
 			bool IsCreature() const  { return m_isCreature; }
 			bool IsActive() { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
+
+		private:
+			std::wstring							m_name;
+			uint32									m_id;
+			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
+			const FB_ENUMS::TEAM_TYPE				m_teamType;
+
+			ComponentGroup							m_components;
+			Scripts									m_scripts;
+
+			std::weak_ptr<GameRoom>					m_room;
+			std::weak_ptr<GameWorld>				m_gameWorld;
+
+			PosInfo									m_posInfo;
+			Vec3									m_scale;
+
+			bool									m_isCreature;
+			const GameObjectData* m_gameObjectData;
+			bool									m_active;
 		};
 	}
 }

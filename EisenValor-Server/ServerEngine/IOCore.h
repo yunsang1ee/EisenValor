@@ -2,12 +2,6 @@
 
 namespace ServerEngine {
 	class IOCore {
-	protected:
-		SOCKET									m_listenSocket;		
-		SOCKADDR_IN								m_serverAddress;	
-		uint16									m_workerThreadCount;	
-		SessionFactoryFunc						m_sessionFactoryFunc;
-	
 	public:
 		IOCore();
 		virtual ~IOCore()=default;
@@ -23,6 +17,12 @@ namespace ServerEngine {
 		void	DistributeReservedTask();
 		void	FlushTaskQueue();
 		inline int	GetPeerName(const SOCKET clientSocket, sockaddr* name, int* nameLen) {  return getpeername(clientSocket, name, nameLen);}
+
+	protected:
+		SOCKET									m_listenSocket;
+		SOCKADDR_IN								m_serverAddress;
+		uint16									m_workerThreadCount;
+		SessionFactoryFunc						m_sessionFactoryFunc;
 
 	};
 }

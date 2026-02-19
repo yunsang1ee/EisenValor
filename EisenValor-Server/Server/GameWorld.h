@@ -29,40 +29,6 @@ namespace Server {
 		using GameObjects = std::map<uint32, std::unique_ptr<Server::Contents::GameObject>>;
 
 		class GameWorld : public ServerEngine::TaskQueue {
-		private:
-			std::weak_ptr<GameRoom>													m_gameRoom;
-			Users																	m_users;
-			Bots																	m_bots;
-
-			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>					m_gameObjectsGroups;
-			
-			// PENDING
-			std::queue<std::function<void()>>										m_pendingEventFpQueue;
-			std::queue<std::unique_ptr<GameObject>>									m_pendingAddObjectQueue;
-			std::queue<GameObject*>													m_pendingRemoveObjectQueue;
-
-			// UPDATE & TIME
-			bool																	m_firstUpdate;
-			const std::chrono::milliseconds											FIXED_UPDATE_TICK_MS;
-			const float																FIXED_DT_SEC;
-			std::chrono::minutes													GAME_TIME_MIN;
-			std::chrono::high_resolution_clock::time_point							m_lastUpdate;
-			std::chrono::milliseconds												m_lag;
-			uint64																	m_worldFrameCount;
-			std::chrono::milliseconds												m_remainingTime;
-			float																	m_accGameTime;
-			float																	m_dt;
-
-			// COLLISION
-			CollisionDetector														m_collisionDetector;
-			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>	m_check;
-			std::map<uint64, bool>													m_mapColInfo;
-
-			// NAVSYSTEM
-			NavSystem																m_navSystem;
-
-			uint32																	m_npcIdGen;
-
 		public:
 			GameWorld();
 			~GameWorld() = default;
@@ -129,6 +95,41 @@ namespace Server {
 	
 
 			friend class GameRoom;
+
+		private:
+			std::weak_ptr<GameRoom>													m_gameRoom;
+			Users																	m_users;
+			Bots																	m_bots;
+
+			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>					m_gameObjectsGroups;
+
+			// PENDING
+			std::queue<std::function<void()>>										m_pendingEventFpQueue;
+			std::queue<std::unique_ptr<GameObject>>									m_pendingAddObjectQueue;
+			std::queue<GameObject*>													m_pendingRemoveObjectQueue;
+
+			// UPDATE & TIME
+			bool																	m_firstUpdate;
+			const std::chrono::milliseconds											FIXED_UPDATE_TICK_MS;
+			const float																FIXED_DT_SEC;
+			std::chrono::minutes													GAME_TIME_MIN;
+			std::chrono::high_resolution_clock::time_point							m_lastUpdate;
+			std::chrono::milliseconds												m_lag;
+			uint64																	m_worldFrameCount;
+			std::chrono::milliseconds												m_remainingTime;
+			float																	m_accGameTime;
+			float																	m_dt;
+
+			// COLLISION
+			CollisionDetector														m_collisionDetector;
+			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>	m_check;
+			std::map<uint64, bool>													m_mapColInfo;
+
+			// NAVSYSTEM
+			NavSystem																m_navSystem;
+
+			uint32																	m_npcIdGen;
+
 		};
 	}
 }

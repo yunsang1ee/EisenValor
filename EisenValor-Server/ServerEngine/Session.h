@@ -24,18 +24,6 @@ namespace ServerEngine {
 	}
 
 	class Session : public std::enable_shared_from_this<Session> {
-	protected:
-		uint32																m_id;				
-		SOCKET																m_socket;			
-		std::atomic_bool													m_connected;		
-		SOCKADDR_IN															m_clientAddr;		
-		std::atomic<SESSION_STATE>											m_state;			
-	
-		std::chrono::high_resolution_clock::time_point						m_lastPong;			
-		std::chrono::high_resolution_clock::time_point						m_lastPing;			
-		const std::chrono::milliseconds										m_pingInterval;		
-		const std::chrono::milliseconds										m_timeoutInterval;	
-
 	public:
 		Session();
 		virtual ~Session();
@@ -71,19 +59,25 @@ namespace ServerEngine {
 		virtual void SendPing() abstract;
 		void CheckPing();
 		void Handle_CS_PONG();
+
+	protected:
+		uint32																m_id;
+		SOCKET																m_socket;
+		std::atomic_bool													m_connected;
+		SOCKADDR_IN															m_clientAddr;
+		std::atomic<SESSION_STATE>											m_state;
+
+		std::chrono::high_resolution_clock::time_point						m_lastPong;
+		std::chrono::high_resolution_clock::time_point						m_lastPing;
+		const std::chrono::milliseconds										m_pingInterval;
+		const std::chrono::milliseconds										m_timeoutInterval;
+
 	};
 
 #ifdef _USE_IOCP
 	namespace IOCP {
 		class IOCPSession : public Session {
 			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
-		public:
-			IOCPRecvContext											m_recvContext;
-			IOCPSendContext											m_sendContext;
-			IOCPRecvBuffer											m_recvBuffer;
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
-			std::atomic_bool										m_sendRegistered;
-
 		public:
 			IOCPSession();
 			virtual ~IOCPSession();
@@ -100,6 +94,13 @@ namespace ServerEngine {
 
 		private:
 			void PostSend();
+
+		public:
+			IOCPRecvContext											m_recvContext;
+			IOCPSendContext											m_sendContext;
+			IOCPRecvBuffer											m_recvBuffer;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
+			std::atomic_bool										m_sendRegistered;
 		};
 	}
 #endif 
@@ -107,20 +108,6 @@ namespace ServerEngine {
 #ifdef _USE_RIO
 	namespace RIO {
 		class RIOSession : public Session {
-		private:
-			RIOWorker*													m_owner;			
-			RIO_RQ														m_rq;				
-			RIORecvBuffer												m_recvBuffer;		
-			RIORecvContext												m_recvContext;		
-			uint32														m_deferCount;		
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
-			RIOSendBuffer												m_sendBuffer;		
-			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};	
-			uint32														m_outstandingSendCount;
-			
-			const std::chrono::milliseconds								m_commitSendMS;		
-			const uint32												m_maxSendRQSize;
-		
 		public:
 			RIOSession();
 			virtual ~RIOSession();
@@ -147,6 +134,21 @@ namespace ServerEngine {
 			void CommitSend();
 			// SessionPool에 반납하기 전 정리
 			void Clean();
+
+		private:
+			RIOWorker* m_owner;
+			RIO_RQ														m_rq;
+			RIORecvBuffer												m_recvBuffer;
+			RIORecvContext												m_recvContext;
+			uint32														m_deferCount;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+			RIOSendBuffer												m_sendBuffer;
+			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
+			uint32														m_outstandingSendCount;
+
+			const std::chrono::milliseconds								m_commitSendMS;
+			const uint32												m_maxSendRQSize;
+
 		};
 	}
 #endif

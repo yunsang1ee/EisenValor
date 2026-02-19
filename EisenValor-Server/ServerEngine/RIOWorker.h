@@ -11,14 +11,6 @@ namespace ServerEngine {
 
 #ifdef _USE_RIO
 		class RIOWorker {
-		private:
-			RIO_CQ															m_cq;
-			uint16															m_id;
-			tbb::concurrent_unordered_set<std::shared_ptr<RIOSession>>		m_connectedSession;
-			SessionPool														m_sessionPool;
-			std::vector<RIORESULT>											m_ioResults;
-			SessionFactoryFunc												m_sessionFactoryFunc;
-
 		public:
 			explicit RIOWorker(const uint16 id);
 			~RIOWorker();
@@ -37,6 +29,15 @@ namespace ServerEngine {
 			// 관리하고 있는 Session들의 각각 보낼 Packet들 처리
 			void			FlushSessionPacketQueue();
 			void			DequeueCompletion();
+
+		private:
+			RIO_CQ															m_cq;
+			uint16															m_id;
+			tbb::concurrent_unordered_set<std::shared_ptr<RIOSession>>		m_connectedSession;
+			SessionPool														m_sessionPool;
+			std::vector<RIORESULT>											m_ioResults;
+			SessionFactoryFunc												m_sessionFactoryFunc;
+
 		};
 
 #endif

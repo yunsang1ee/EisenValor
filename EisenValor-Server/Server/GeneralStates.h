@@ -8,9 +8,6 @@ namespace Server {
 
 		class GeneralRoamingState : public State {
 			DECLARE_CREATE_FUNC(GeneralRoamingState)
-		private:
-			std::unique_ptr<BehaviorNode> m_root;
-
 		public:
 			explicit GeneralRoamingState(FSM* const fsm);
 			virtual ~GeneralRoamingState();
@@ -19,14 +16,13 @@ namespace Server {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+		
+		private:
+			std::unique_ptr<BehaviorNode> m_root;
 		};
 
 		class GeneralDuelingState : public State {
 			DECLARE_CREATE_FUNC(GeneralDuelingState)
-
-		private:
-			std::unique_ptr<BehaviorNode> m_root;
-
 		public:
 			explicit GeneralDuelingState(FSM* const fsm);
 			virtual ~GeneralDuelingState();
@@ -35,14 +31,13 @@ namespace Server {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			std::unique_ptr<BehaviorNode> m_root;
 		};
 
 		class GeneralDeadState : public State {
 			DECLARE_CREATE_FUNC(GeneralDeadState)
-
-		private:
-			float m_accDTForRespawn;
-
 		public:
 			explicit GeneralDeadState(FSM* const fsm);
 			virtual ~GeneralDeadState();
@@ -51,6 +46,9 @@ namespace Server {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDTForRespawn;
 		};
 
 	}

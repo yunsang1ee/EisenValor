@@ -24,20 +24,6 @@ namespace Server {
 		// ex) Update(), EnterRoom(), LeaveRoom(), Broadcast() ...
 		// GameRoom의 JobQueue를 실행하는 쓰레드는 여러 쓰레드 중, 단 하나만
 		class GameRoom : public ServerEngine::TaskQueue {
-		private:
-			// 세션 아이디 == 유저 아이디 == 플레이어 아이디
-			RoomInfo													m_info;
-
-			Users														m_users;
-			Bots														m_bots;
-			std::shared_ptr<User>										m_host;
-
-			int32														m_offenseCount;
-			int32														m_defenseCount;
-
-			std::shared_ptr<GameWorld>									m_gameWorld;
-			int32														m_loadingCompletedUserCount;
-
 		public:
 			GameRoom() = delete;
 			explicit GameRoom(const uint16 roomID);
@@ -82,6 +68,21 @@ namespace Server {
 
 			friend class GameLobby;
 			friend class GameWorld;
+
+		private:
+			// 세션 아이디 == 유저 아이디 == 플레이어 아이디
+			RoomInfo													m_info;
+
+			Users														m_users;
+			Bots														m_bots;
+			std::shared_ptr<User>										m_host;
+
+			int32														m_offenseCount;
+			int32														m_defenseCount;
+
+			std::shared_ptr<GameWorld>									m_gameWorld;
+			int32														m_loadingCompletedUserCount;
+
 
 		};
 	}

@@ -4,9 +4,6 @@ namespace Server {
 
 	namespace Contents {
 		class Participant {
-		private:
-			ParticipantInfo	m_info;
-
 		public:
 			explicit Participant(const uint32 id, const FB_ENUMS::PARTICIPANT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
 
@@ -18,18 +15,20 @@ namespace Server {
 			FB_ENUMS::PARTICIPANT_TYPE GetType() const { return m_info.type; }
 			FB_ENUMS::PARTICIPANT_STATE_TYPE GetStateType() const { return m_info.stateType; }
 			const ParticipantInfo& GetInfo() const { return m_info; }
+
+		private:
+			ParticipantInfo	m_info;
 		};
 
 		class User : public Participant {
-		private:
-			std::shared_ptr<ClientSession> m_session;
-
 		public:
 			explicit User(const uint32 id, const FB_ENUMS::PARTICIPANT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType, std::shared_ptr<ClientSession> clientSession);
 
 		public:
 			std::shared_ptr<ClientSession> GetSession() { return m_session; }
 
+		private:
+			std::shared_ptr<ClientSession> m_session;
 		};
 
 		class Bot : public Participant {

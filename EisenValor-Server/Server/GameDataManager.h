@@ -44,12 +44,6 @@ namespace Server {
 	namespace Contents {
 		class GameDataManager : public Singleton<GameDataManager> {
 			SINGLETON(GameDataManager)
-		private:
-            GameRoomData                                m_gameRoomData;
-			GameWorldData                               m_gameWorldData;
-            std::unordered_map<uint8, GameObjectData>   m_gameObjectDataMap;
-            std::unordered_map<uint8, SkillData>        m_skillDataMap;
-
 		public:
 			bool LoadDataFromFile(const std::string_view filePath);
 
@@ -58,6 +52,13 @@ namespace Server {
 			const GameWorldData&    GetGameWorldData() const{ return m_gameWorldData; }
             const GameObjectData*   GetGameObjectData(const uint8 objTypeID);
             const SkillData*        GetSkillData(const uint8 skillTypeID);
+
+        private:
+            GameRoomData                                m_gameRoomData;
+            GameWorldData                               m_gameWorldData;
+            std::unordered_map<uint8, GameObjectData>   m_gameObjectDataMap;
+            std::unordered_map<uint8, SkillData>        m_skillDataMap;
+
 		};
 	}
 }

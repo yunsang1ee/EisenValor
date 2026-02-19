@@ -8,9 +8,6 @@ namespace Server {
 		using BlackboardValue = std::variant<uint32, uint64, float, bool, Vec3>;
 
         class Blackboard {
-        private:
-            std::map<std::string, BlackboardValue> m_data;
-
         public:
             void SetValue(const std::string_view key, const BlackboardValue& value) { m_data[key.data()] = value; }
 
@@ -28,13 +25,12 @@ namespace Server {
             bool HasKey(const std::string_view key) const { return m_data.find(key.data()) != m_data.end(); }
 
             void Clear() { m_data.clear(); }
+
+        private:
+            std::map<std::string, BlackboardValue> m_data;
         };
 
 		class BehaviorTree : public Component {
-		private:
-			BehaviorNode*                   m_root;
-            Blackboard                      m_blackboard;
-		
         public:
 			BehaviorTree();
             virtual ~BehaviorTree()=default;
@@ -46,6 +42,11 @@ namespace Server {
 		public:
 			virtual void Update(const float dt) override;
 			void Reset();
+
+        private:
+            BehaviorNode*                   m_root;
+            Blackboard                      m_blackboard;
+
 		};
 	}
 }

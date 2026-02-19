@@ -5,16 +5,6 @@ namespace ServerEngine {
 #ifdef _USE_RIO
 		class RIOBuffer {
 			enum { BUFFER_COUNT = 10 };
-		protected:
-			RIO_BUFFERID	m_id;
-			char* m_buffer;
-
-			uint32			m_size;
-			uint32			m_capacity;
-
-			uint32			m_readPos;
-			uint32			m_writePos;
-
 		public:
 			explicit RIOBuffer();
 			virtual ~RIOBuffer();
@@ -40,6 +30,15 @@ namespace ServerEngine {
 			const uint32		GetDataSize() const { return m_writePos - m_readPos; }
 			const uint32		GetFreeSize() const { return m_capacity - m_writePos; }
 
+		protected:
+			RIO_BUFFERID	m_id;
+			char* m_buffer;
+
+			uint32			m_size;
+			uint32			m_capacity;
+
+			uint32			m_readPos;
+			uint32			m_writePos;
 		};
 #endif
 	}

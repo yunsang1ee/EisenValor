@@ -5,10 +5,6 @@
 namespace Server {
 	namespace Contents {
 		class BattleRam : public Creature {
-		private:
-			const float		m_detectionRangeSq;
-			const Vec3		m_finalDestPos;
-
 		public:
 			explicit BattleRam(const float detecionRange, const Vec3& finalDestPos);
 			virtual ~BattleRam();
@@ -17,6 +13,9 @@ namespace Server {
 			virtual void OnDeath() override final;
 			virtual void Update(const float dt) override final;
 
+		private:
+			const float		m_detectionRangeSq;
+			const Vec3		m_finalDestPos;
 		};
 	}
 }

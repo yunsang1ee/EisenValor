@@ -6,10 +6,6 @@ namespace ServerEngine {
 		class RIOSession;
 #ifdef _USE_RIO
 		class RIOContext : public RIO_BUF {
-		private:
-			IO_CONTEXT_TYPE								m_type;
-			std::shared_ptr<RIOSession>					m_owner;
-
 		protected:
 			explicit RIOContext(IO_CONTEXT_TYPE type);
 			friend class RIOSession;
@@ -21,6 +17,10 @@ namespace ServerEngine {
 
 		public:
 			IO_CONTEXT_TYPE GetType() const { return m_type; }
+
+		private:
+			IO_CONTEXT_TYPE								m_type;
+			std::shared_ptr<RIOSession>					m_owner;
 
 		};
 

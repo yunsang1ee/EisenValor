@@ -15,14 +15,6 @@ namespace Server {
 		};
 
 		class NavSystem {
-		private:
-			dtNavMesh*		m_navMesh;
-
-			dtNavMeshQuery* m_navMeshQuery;
-			dtQueryFilter	m_queryFilter;
-
-			dtCrowd*		m_crowd;
-		
 		public:
 			NavSystem();
 			~NavSystem();
@@ -34,6 +26,14 @@ namespace Server {
 			void SetMoveTarget(const int32 agentIdx, const Vec3& targetPos);
 			void ResetMoveTarget(const int32 agentIdx);
 			dtCrowd* GetCrowd() const { return m_crowd; }
+
+		private:
+			dtNavMesh*		m_navMesh;
+
+			dtNavMeshQuery* m_navMeshQuery;
+			dtQueryFilter	m_queryFilter;
+
+			dtCrowd*		m_crowd;
 		};
 	}
 }

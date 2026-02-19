@@ -4,16 +4,6 @@
 namespace Server {
 	namespace Contents {
 		class General : public Creature {
-		protected:
-			FB_ENUMS::GENERAL_STANCE_TYPE			m_stanceType;
-			GENERAL_SUB_STATE_TYPE					m_subStateType;
-			AttackInfo								m_atkInfo;
-			uint64									m_startStunDelay;
-			uint32									m_stunDelay;
-
-			float									m_accDTForStaminaRecovery;
-			float									m_accDTForRespawn;
-			
 		public:
 			explicit General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType = FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			virtual ~General();	
@@ -36,8 +26,16 @@ namespace Server {
 			void SetAtkInfo(const AttackInfo& atkInfo) { m_atkInfo = atkInfo; }
 			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }
 			const AttackInfo& GetAttackInfo() const { return m_atkInfo; }
-	
-		private:
+
+		protected:
+			FB_ENUMS::GENERAL_STANCE_TYPE			m_stanceType;
+			GENERAL_SUB_STATE_TYPE					m_subStateType;
+			AttackInfo								m_atkInfo;
+			uint64									m_startStunDelay;
+			uint32									m_stunDelay;
+
+			float									m_accDTForStaminaRecovery;
+			float									m_accDTForRespawn;
 		};
 	}
 }

@@ -6,9 +6,6 @@ namespace ServerEngine {
 	class IOCore;
 	class NetworkManager : public Singleton<NetworkManager> {
 		SINGLETON(NetworkManager)
-	private:
-		std::unique_ptr<IOCore> m_ioCore;
-
 	public:
 		bool Init(const SessionFactoryFunc func);
 		void Run();
@@ -16,6 +13,9 @@ namespace ServerEngine {
 
 	public:
 		IOCore* GetIOCore() const { return m_ioCore.get(); }
+
+	private:
+		std::unique_ptr<IOCore> m_ioCore;
 	};
 }
 

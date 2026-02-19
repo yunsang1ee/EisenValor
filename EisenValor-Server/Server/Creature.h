@@ -4,10 +4,6 @@
 namespace Server {
 	namespace Contents {
 		class Creature : public GameObject {
-		private:
-			Stat						m_statInfo;
-			Creature*					m_target;
-
 		public:
 			explicit Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type);
 			virtual ~Creature();
@@ -37,6 +33,11 @@ namespace Server {
 
 		private:
 			void BroadcastUpdateVital();
+
+		private:
+			Stat						m_statInfo;
+			Creature* m_target;
+
 		};
 	}
 }

@@ -9,10 +9,6 @@ namespace Server {
 		class Creature;
 
 		class FSM : public Component {
-		private:
-			std::map<uint8, std::unique_ptr<State>>				m_states;
-			State*												m_curState;
-			
 		public:
 			FSM();
 			virtual ~FSM()=default;
@@ -28,6 +24,11 @@ namespace Server {
 
 		private:
 			void		SendUpdateStatePacket();
+
+		private:
+			std::map<uint8, std::unique_ptr<State>>	m_states;
+			State*									m_curState;
+
 		};
 	}
 }

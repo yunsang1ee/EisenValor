@@ -10,11 +10,6 @@ namespace Server {
 
 #ifdef _USE_IOCP
 	class IOCPClientSession : public ServerEngine::IOCP::IOCPSession {
-	private:
-		std::string															m_name;				// ClientSession
-		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;			// ClientSession
-		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;		// ClientSession
-
 	public:
 		IOCPClientSession();
 		virtual ~IOCPClientSession();
@@ -34,16 +29,16 @@ namespace Server {
 		const std::string& GetName() const { return m_name; }
 		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const { return m_gameRoom.lock(); }
 		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const { return m_gameWorld.lock(); }
+
+	private:
+		std::string															m_name;				// ClientSession
+		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;			// ClientSession
+		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;		// ClientSession
 	};
 #endif
 
 #if _USE_RIO
 	class RIOClientSession : public ServerEngine::RIO::RIOSession {
-	private:
-		std::string															m_name;				// ClientSession
-		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;			// ClientSession
-		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;		// ClientSession
-
 	public:
 		RIOClientSession();
 		virtual ~RIOClientSession();
@@ -63,6 +58,11 @@ namespace Server {
 		const std::string& GetName() const { return m_name; }
 		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const { return m_gameRoom.lock(); }
 		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const { return m_gameWorld.lock(); }
+
+	private:
+		std::string															m_name;				// ClientSession
+		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;			// ClientSession
+		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;		// ClientSession
 	};
 #endif 
 

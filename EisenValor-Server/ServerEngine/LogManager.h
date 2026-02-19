@@ -3,10 +3,6 @@
 namespace ServerEngine {
 	class LogManager {
 	public:
-		static std::mutex s_logMutex;
-		static std::ostringstream s_oss;
-
-	public:
 		enum class LOG_LEVEL : uint8 {
 			INFO,
 			WARNING,
@@ -71,6 +67,11 @@ namespace ServerEngine {
 
 	public:
 		static void Save();
+
+	public:
+		static std::mutex s_logMutex;
+		static std::ostringstream s_oss;
+
 	};
 
 

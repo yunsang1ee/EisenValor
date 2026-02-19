@@ -7,13 +7,6 @@ namespace ServerEngine {
 
 	class ThreadManager : public Singleton<ThreadManager> {
 		SINGLETON(ThreadManager)
-	private:
-		uint16						m_workerThreadCount;
-		std::mutex					m_mutex;
-		std::vector<std::jthread>	m_threads;
-		
-		uint16						m_threadIDCounter=0;
-
 	public:
 		bool Init();
 		void EnqueueTask(std::function<void(const std::stop_token&)> task);
@@ -26,6 +19,13 @@ namespace ServerEngine {
 	private:
 		static void InitTLS();
 		static void DestroyTLS();
+
+	private:
+		uint16						m_workerThreadCount;
+		std::mutex					m_mutex;
+		std::vector<std::jthread>	m_threads;
+
+		uint16						m_threadIDCounter = 0;
 
 	};
 }

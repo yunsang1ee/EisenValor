@@ -11,10 +11,6 @@ namespace Server {
 		class PlayerIdleState : public State {
 			 DECLARE_CREATE_FUNC(PlayerIdleState)
 		private:
-			float m_accDTForStaminaRecovery;
-			float m_accDTForExhaustedRecovery;
-
-		private:
 			PlayerIdleState();
 			virtual ~PlayerIdleState();
 
@@ -22,6 +18,10 @@ namespace Server {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDTForStaminaRecovery;
+			float m_accDTForExhaustedRecovery;
 		};
 
 		// ==================================
@@ -45,9 +45,6 @@ namespace Server {
 		class PlayerPredelayState : public State {
 			DECLARE_CREATE_FUNC(PlayerPredelayState)
 		private:
-			uint64 m_startFrame;
-
-		private:
 			PlayerPredelayState();
 			virtual ~PlayerPredelayState();
 
@@ -55,6 +52,9 @@ namespace Server {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			uint64 m_startFrame;
 		};
 
 		// ==================================
@@ -78,9 +78,6 @@ namespace Server {
 		class PlayerPostdelayState : public State {
 			DECLARE_CREATE_FUNC(PlayerPostdelayState)
 		private:
-			uint64 m_startFrame;
-
-		private:
 			PlayerPostdelayState();
 			virtual ~PlayerPostdelayState();
 
@@ -88,6 +85,9 @@ namespace Server {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			uint64 m_startFrame;
 		};
 
 
@@ -96,10 +96,6 @@ namespace Server {
 		// ==================================
 		class PlayerStunState : public State {
 			DECLARE_CREATE_FUNC(PlayerStunState)
-		private:
-			uint64 m_startFrame;
-			uint32 m_stunDuration;
-		
 		private:
 			PlayerStunState();
 			virtual ~PlayerStunState();
@@ -110,6 +106,10 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 			void SetStunDuration(uint32 duration) { m_stunDuration = duration; }
+
+		private:
+			uint64 m_startFrame;
+			uint32 m_stunDuration;
 		};
 
 
@@ -119,9 +119,6 @@ namespace Server {
 		class PlayerDeadState : public State {
 			DECLARE_CREATE_FUNC(PlayerDeadState)
 		private:
-			float m_accDTForRespawn;
-
-		private:
 			PlayerDeadState();
 			virtual ~PlayerDeadState();
 
@@ -130,6 +127,8 @@ namespace Server {
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
 
+		private:
+			float m_accDTForRespawn;
 		};
 	}
 }

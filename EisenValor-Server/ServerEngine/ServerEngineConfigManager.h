@@ -32,12 +32,6 @@ namespace ServerEngine {
 			uint32 SESSION_TIMEOUT_MS;
 		};
 
-	private:
-		NetworkConfig		m_networkConfig;
-		RIOWorkerConfig		m_rioWorkerConfig;
-		ThreadConfig		m_threadConfig;
-		SessionConfig		m_sessionConfig;
-
 	public:
 		bool LoadConfigFromFile(const std::string_view filePath);
 
@@ -47,5 +41,10 @@ namespace ServerEngine {
 		const ThreadConfig& GetThreadConfig() const { return m_threadConfig; }
 		const SessionConfig& GetSessionConfig() const { return m_sessionConfig; }
 
+	private:
+		NetworkConfig		m_networkConfig;
+		RIOWorkerConfig		m_rioWorkerConfig;
+		ThreadConfig		m_threadConfig;
+		SessionConfig		m_sessionConfig;
 	};
 }
