@@ -38,6 +38,12 @@
     <Filter Include="UI">
       <UniqueIdentifier>{343191af-0f9a-4c0c-b11b-5ba9df649a5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\Vital">
+      <UniqueIdentifier>{990ceb67-0df0-4224-988a-2ecb5abf5557}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\UI">
+      <UniqueIdentifier>{7e1b3462-47a3-4408-bc83-5a8dcbceb848}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -61,9 +67,6 @@
     <ClInclude Include="Scene\SampleScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Component\PlayerControllerComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="Packets\C2SPackets.h">
       <Filter>Packets</Filter>
     </ClInclude>
@@ -72,9 +75,6 @@
     </ClInclude>
     <ClInclude Include="Packets\ServerEnum.h">
       <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\HealthComponent.h">
-      <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Packets\Enums_generated.h">
       <Filter>Packets</Filter>
@@ -85,23 +85,26 @@
     <ClInclude Include="Packets\Tables_generated.h">
       <Filter>Packets</Filter>
     </ClInclude>
-    <ClInclude Include="UI\UITextureGlobal.h">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="RenderPass\UIRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="Component\BattleUIControllerComponent.h">
-      <Filter>Component</Filter>
+    <ClInclude Include="Component\HealthComponent.h">
+      <Filter>Component\Vital</Filter>
     </ClInclude>
     <ClInclude Include="Component\StaminaComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\VitalUIControllerComponent.h">
-      <Filter>Component</Filter>
+      <Filter>Component\Vital</Filter>
     </ClInclude>
     <ClInclude Include="Component\TeamComponent.h">
-      <Filter>Component</Filter>
+      <Filter>Component\Vital</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\BattleUIControllerComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\VitalUIControllerComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\PlayerControllerComponent.h">
+      <Filter>Component\Vital</Filter>
     </ClInclude>
     <ClInclude Include="Component\FSM\FSMComponent.h">
       <Filter>헤더 파일</Filter>
@@ -132,17 +135,11 @@
     <ClCompile Include="Scene\SampleScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="Component\PlayerControllerComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="Packets\C2SPackets.cpp">
       <Filter>Packets</Filter>
     </ClCompile>
     <ClCompile Include="Packets\S2CPackets.cpp">
       <Filter>Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\HealthComponent.cpp">
-      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="UI\UITextureGlobal.cpp">
       <Filter>UI</Filter>
@@ -150,17 +147,23 @@
     <ClCompile Include="RenderPass\UIRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
-      <Filter>Component</Filter>
+    <ClCompile Include="Component\HealthComponent.cpp">
+      <Filter>Component\Vital</Filter>
     </ClCompile>
     <ClCompile Include="Component\StaminaComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\VitalUIControllerComponent.cpp">
-      <Filter>Component</Filter>
+      <Filter>Component\Vital</Filter>
     </ClCompile>
     <ClCompile Include="Component\TeamComponent.cpp">
-      <Filter>Component</Filter>
+      <Filter>Component\Vital</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
+      <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\VitalUIControllerComponent.cpp">
+      <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PlayerControllerComponent.cpp">
+      <Filter>Component\Vital</Filter>
     </ClCompile>
     <ClCompile Include="Component\FSM\FSMComponent.cpp">
       <Filter>소스 파일</Filter>

@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "Scene.h"
+#include "SceneResource.h"
 
 void Scene::Initialize()
 {
@@ -19,6 +20,75 @@ void Scene::Initialize()
 
 	m_gameObjects.Reserve(512);
 	DEBUG_LOG_FMT("[Scene] Initialized (Components registered, waiting for LoadScene)\n");
+}
+
+void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
+{
+	if (!resource)
+	{
+		DEBUG_LOG_FMT("[Scene] LoadFromSceneResource failed: Resource is null\n");
+		return;
+	}
+
+	const auto& nodes = resource->GetNodes();
+	const auto& componentEntries = resource->GetComponents();
+
+	// 1. 모든 노드 핸들을 미리 예약하여 보관 (부모 연결을 위해서)
+	std::vector<GameObject::Handle> nodeHandles;
+	nodeHandles.reserve(nodes.size());
+	for (size_t i = 0; i < nodes.size(); ++i)
+	{
+		nodeHandles.push_back(m_gameObjects.ReserveHandle());
+	}
+
+	DEBUG_LOG_FMT("[Scene] LoadFromSceneResource: Spawning {} nodes from '{}'\n", nodes.size(), resource->GetName());
+
+	// 2. 예약된 핸들로 실제 생성 요청
+	for (size_t i = 0; i < nodes.size(); ++i)
+	{
+		const auto& nodeData = nodes[i];
+		GameObject::Handle myHandle = nodeHandles[i];
+		
+		// 부모 핸들 미리 알려줌
+		GameObject::Handle parentHandle = (nodeData.ParentIndex != -1) ? nodeHandles[nodeData.ParentIndex] : GameObject::Handle::Invalid();
+
+		std::string nodeName = std::format("Node_{}", i);
+
+		m_pendingCreates.push(CreateRequest{
+			.name = std::move(nodeName),
+			.handle = myHandle,
+			.serverID = std::nullopt,
+			.onCreated = [this, nodeData, parentHandle](GameObject* obj) {
+				auto& tr = obj->GetTransform();
+				
+				tr.SetPosition(nodeData.LocalPos[0], nodeData.LocalPos[1], nodeData.LocalPos[2]);
+				
+				DX::XMFLOAT4 rot(nodeData.LocalRot[0], nodeData.LocalRot[1], nodeData.LocalRot[2], nodeData.LocalRot[3]);
+				tr.SetRotationQuaternion(rot);
+				
+				tr.SetScale(nodeData.LocalScale[0]);
+
+				if (parentHandle.IsValid())
+				{
+					if (auto* parentObj = TryGetGameObject(parentHandle))
+					{
+						tr.SetParent(parentObj->GetTransform().GetHandle());
+					}
+				}
+			}
+		});
+	}
+
+	for (const auto& entry : componentEntries)
+	{
+		if (entry.NodeIndex >= nodeHandles.size()) continue;
+
+		GameObject::Handle ownerHandle = nodeHandles[entry.NodeIndex];
+		
+		if (entry.ComponentVersion == 0) {
+			DEBUG_LOG_FMT("[Scene] Warning: Component version 0 for node index {}\n", entry.NodeIndex);
+		}
+	}
 }
 
 GameObject::Handle Scene::ReserveGameObject(

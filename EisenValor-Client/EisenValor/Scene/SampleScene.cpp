@@ -1,5 +1,7 @@
 #include "stdafxClient.h"
 #include "SampleScene.h"
+
+// Component
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
@@ -8,11 +10,18 @@
 #include "Component/StaminaComponent.h"
 #include "Component/FSM/FSMComponent.h"
 #include "Component/FSM/StatePool.h"
-#include "Transform.h"
-#include "RectTransformComponent.h"
+
+// Engine
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
-#include "UI/UITextureGlobal.h"
+#include "RectTransformComponent.h"
+
+#include "Transform.h"
+
+// Resource
+#include "ResourceGlobal.h"
+#include "SkinnedMeshResource.h"
+
 #include "MeshLoader.h"
 
 namespace
@@ -55,7 +64,7 @@ std::vector<Vertex> cubeVertices = { // Front face (z = 0.5)
 	{{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
 	{{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
 	{{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-
+	 
 	// Top face (y = 0.5)
 	{{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
 	{{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
@@ -85,14 +94,22 @@ std::vector<uint32_t> cubeIndices = {
 void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
-		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, RectTransformComponent,
-		ImageUIComponent, ButtonUIComponent, TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent>();
+		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent,
+		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
 void SampleScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");
+
+	//.evscene 로딩 함수
+	// auto sceneRes = GLOBAL(ResourceGlobal).Load<SceneResource>("Resource/Scenes/MainArea.evscene");
+	// if (sceneRes)
+	// {
+	// 	LoadFromSceneResource(sceneRes);
+	// }
+
 	CreateSceneObjects();
 }
 
@@ -155,6 +172,45 @@ void SampleScene::CreateSceneObjects()
 		}
 	);
 
+	/*ReserveGameObject(
+		"Character", std::nullopt,
+		[this](GameObject* obj)
+		{
+			auto& tr = obj->GetTransform();
+			tr.SetPosition(10.0f, 0.0f, 0.0f);
+			tr.SetScale(1.0f);
+
+			auto res = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+			if (res)
+			{
+				auto skinnedMeshHandle = CreateComponentWithInit<SkinnedMeshComponent>(
+					obj->GetHandle(),
+					[res](SkinnedMeshComponent* mesh)
+					{ 
+						mesh->SetMesh(res->GetVertices(), res->GetIndices());
+						
+						std::vector<SkinnedBone> clientBones;
+						for (const auto& b : res->GetBones())
+						{
+							SkinnedBone sb{};
+							sb.nameHash = b.nameHash;
+							sb.parentIndex = b.parentIndex;
+							sb.restPos = {b.restPos[0], b.restPos[1], b.restPos[2]};
+							sb.restRot = {b.restRot[0], b.restRot[1], b.restRot[2], b.restRot[3]};
+							sb.restScale = {b.restScale[0], b.restScale[1], b.restScale[2]};
+							clientBones.push_back(sb);
+						}
+						mesh->SetSkeleton(clientBones, res->GetOffsetMatrices());
+					}
+				);
+				DEBUG_LOG_FMT("[SampleScene] Character loaded via ResourceGlobal: {} vertices\n", res->GetVertexCount());
+			}
+			else
+			{
+				DEBUG_LOG_FMT("[SampleScene] Failed to load character via ResourceGlobal\n");
+			}
+		}
+	);*/
 	/*DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
 
 	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};

@@ -1,20 +1,24 @@
 #include "MeshLoader.h"
 #include "AssetFile.h"
 #include <cstring>
+#include <windows.h>
+#include <format>
+
+#ifdef _DEBUG
+#define DEBUG_LOG_FMT(fmt, ...) \
+    do { \
+        std::string _msg = std::format(fmt, __VA_ARGS__); \
+        OutputDebugStringA(_msg.c_str()); \
+    } while (false)
+#else
+#define DEBUG_LOG_FMT(fmt, ...) ((void)0)
+#endif
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
 namespace EvAsset
 {
-    template <typename T>
-    static T ReadUnaligned(const void* ptr)
-    {
-        T val;
-        std::memcpy(&val, ptr, sizeof(T));
-        return val;
-    }
-
     bool MeshLoader::LoadMesh(const std::filesystem::path& path, MeshData& outData)
     {
         AssetFile file;
@@ -145,4 +149,5 @@ namespace EvAsset
 
         return outData.IsValid();
     }
+
 }

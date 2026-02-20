@@ -18,6 +18,9 @@ public:
 
 	void Initialize();
 
+	// .evscene 리소스를 사용하여 Scene 구성
+	void LoadFromSceneResource(std::shared_ptr<class SceneResource> resource);
+
 	//========================================================================
 	// GameObject Lifecycle
 	//========================================================================
