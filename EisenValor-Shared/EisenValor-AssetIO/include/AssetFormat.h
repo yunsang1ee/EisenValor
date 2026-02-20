@@ -6,7 +6,6 @@
 #include <bit>   
 #include <array> 
 #include <cstddef>
-#include <format>
 
 /*
  - EisenValor Asset Pipeline Specification v2.1
@@ -31,21 +30,6 @@ struct Guid
 // GUID를 읽기 위한 Format
 #pragma pack(pop)
 } // namespace EvAsset
-
-template <>
-struct std::formatter<EvAsset::Guid>
-{
-	constexpr auto parse(std::format_parse_context& ctx)
-	{
-		return ctx.begin();
-	}
-
-	template <typename FormatContext>
-	auto format(const EvAsset::Guid& guid, FormatContext& ctx) const
-	{
-		return std::format_to(ctx.out(), "{:016X}{:016X}", guid.high, guid.low);
-	}
-};
 
 namespace EvAsset
 {
@@ -116,6 +100,12 @@ struct SubMesh
 
 	float aabbmin[3];
 	float aabbmax[3];
+};
+
+struct ChunkIndexMeta
+{
+	uint32_t indexFormat; // 16 or 32
+	uint32_t indexCount;
 };
 
 struct Bounds

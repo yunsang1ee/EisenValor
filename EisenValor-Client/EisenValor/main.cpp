@@ -204,7 +204,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		}
 
 	// 에셋 레지스트리 로드
-	GLOBAL(ResourceGlobal).LoadRegistry("Resource/AssetRegistry.evreg");
+	GLOBAL(ResourceGlobal).LoadRegistry("Resource\\AssetRegistry.evreg");
 	GLOBAL(UIGlobal).Initialize();
 
 	// FSM StatePool 초기화
