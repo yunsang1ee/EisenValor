@@ -17,9 +17,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
-
 namespace EvAsset
 {
     bool MeshLoader::LoadMesh(const std::filesystem::path& path, MeshData& outData)
