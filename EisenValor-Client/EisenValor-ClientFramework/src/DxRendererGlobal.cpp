@@ -188,7 +188,7 @@ void DxRendererGlobal::Render(Scene* scene)
 
 	for (auto& entry : m_renderPasses)
 	{
-		entry.pass->Execute(frame, scene);
+		entry.pass->Execute(frame, scene, &m_renderContext);
 	}
 }
 
@@ -212,6 +212,8 @@ void DxRendererGlobal::EndFrame()
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
 	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
+
+	m_renderContext.UpdateLifetimes();
 }
 
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)

@@ -117,10 +117,10 @@ private:
 		}
 	};
 
-	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, GuidHash> m_resourceCache;
-	std::unordered_map<EvAsset::Guid, std::filesystem::path, GuidHash>		m_guidToPath;
-	std::unordered_map<EvAsset::Guid, std::filesystem::file_time_type, GuidHash> m_guidToLastWriteTime;
-	std::unordered_map<std::wstring, EvAsset::Guid>							m_pathToGuid;
+	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, EvAsset::GuidHash> m_resourceCache;
+	std::unordered_map<EvAsset::Guid, std::filesystem::path, EvAsset::GuidHash>		 m_guidToPath;
+	std::unordered_map<EvAsset::Guid, std::filesystem::file_time_type, EvAsset::GuidHash> m_guidToLastWriteTime;
+	std::unordered_map<std::wstring, EvAsset::Guid>									 m_pathToGuid;
 
 	std::queue<LoadingTask> m_pendingLoads;
 };

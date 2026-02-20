@@ -181,7 +181,6 @@
     <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
-    <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
     <ClInclude Include="include\DxCommon.h" />
     <ClInclude Include="include\DxDebugGlobal.h" />
@@ -220,7 +219,6 @@
     <ClInclude Include="include\RectTransformComponent.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderContext.h" />
-    <ClInclude Include="include\RenderDataPool.h" />
     <ClInclude Include="include\RenderDataSync.h" />
     <ClInclude Include="include\DxRendererGlobal.h" />
     <ClInclude Include="include\ResourceGlobal.h" />
@@ -246,7 +244,6 @@
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
-    <ClCompile Include="src\DxCommandContextPool.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
     <ClCompile Include="src\DxDebugGlobal.cpp" />
     <ClCompile Include="src\DxDescriptorHeapGlobal.cpp" />

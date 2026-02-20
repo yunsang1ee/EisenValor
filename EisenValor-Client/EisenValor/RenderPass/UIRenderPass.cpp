@@ -47,9 +47,9 @@ void UIRenderPass::Release()
 	m_initialized = false;
 }
 
-void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene)
+void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
-	if (!m_initialized || !m_pipelineState || !m_vertexBuffer || !scene)
+	if (!m_initialized || !m_pipelineState || !m_vertexBuffer || !scene || !renderContext)
 	{
 		return;
 	}

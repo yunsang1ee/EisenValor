@@ -75,7 +75,7 @@ public:
 		UploadData(context, uploadHeap, requiredBytes);
 	}
 
-	[[nodiscard]] uint32_t GetSRVIndex() const { return m_gpuBuffer ? m_gpuBuffer->GetSRVHandle()->GetIndex() : ~0u; }
+	[[nodiscard]] uint32_t GetSRVIndex() const { return m_gpuBuffer ? m_gpuBuffer->GetSRVHandle().GetIndex() : ~0u; }
 
 private:
 	void ResizeBuffer(ID3D12Device* device, size_t requiredCount)

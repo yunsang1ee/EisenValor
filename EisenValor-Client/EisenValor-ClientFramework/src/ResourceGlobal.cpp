@@ -228,8 +228,8 @@ std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const s
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetMetadata(
-		data.boundsInfo, std::move(data.subMeshes), static_cast<uint32_t>(data.vertices.size()),
-		static_cast<uint32_t>(data.indices.size()), data.indexFormat
+		data.boundsInfo, std::move(data.subMeshes), std::move(data.materialGuids),
+		static_cast<uint32_t>(data.vertices.size()), static_cast<uint32_t>(data.indices.size()), data.indexFormat
 	);
 
 	m_pendingLoads.push({res, data.assetGuid, path, MeshResource::StaticRuntimeTypeID()});

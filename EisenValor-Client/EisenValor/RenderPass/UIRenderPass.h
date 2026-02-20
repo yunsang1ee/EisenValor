@@ -31,7 +31,7 @@ public:
 
 	virtual void		Initialize() override;
 	virtual void		Release() override;
-	virtual void		Execute(DxFrameResource* frame, Scene* scene) override;
+	virtual void		Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
 	virtual void		OnResize(uint32_t width, uint32_t height) override;
 	virtual const char* GetName() const override { return "UIRenderPass"; }
 

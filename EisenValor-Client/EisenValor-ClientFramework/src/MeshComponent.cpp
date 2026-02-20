@@ -1,31 +1,62 @@
 #include "stdafxClientFramework.h"
 #include "MeshComponent.h"
-#include "GameObject.h"
-#include "Scene.h"
-#include "SceneGlobal.h"
+#include "MeshResource.h"
+#include "MaterialResource.h"
+#include "ResourceGlobal.h"
 
-void MeshComponent::SetMesh(
-	const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::string_view name
-)
+void MeshComponent::SetMeshResource(std::shared_ptr<MeshResource> mesh, bool loadDefaultMaterials)
 {
-	m_vertices = vertices;
-	m_indices = indices;
+	m_meshResource = std::move(mesh);
 
-	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (scene)
+	if (nullptr == m_meshResource)
 	{
-		auto* myGameObject = scene->TryGetGameObject(GetOwner());
-		if (myGameObject)
+		return;
+	}
+
+	uint32_t maxSlot = 0;
+	for (const auto& subMesh : m_meshResource->GetSubMeshes())
+	{
+		if (subMesh.materialSlot > maxSlot)
 		{
-			this->m_name = name.empty() ? myGameObject->GetName() + "_Mesh" : std::string(name);
+			maxSlot = subMesh.materialSlot;
 		}
-		else
+	}
+	m_materials.assign(maxSlot + 1, nullptr);
+
+	if (!loadDefaultMaterials)
+	{
+		return;
+	}
+
+	const auto& defaultGuids = m_meshResource->GetDefaultMaterialGuids();
+	for (uint32_t i = 0; defaultGuids.size() > i && m_materials.size() > i; ++i)
+	{
+		auto mat = GLOBAL(ResourceGlobal).Load<MaterialResource>(defaultGuids[i]);
+		if (nullptr != mat)
 		{
-			this->m_name = name.empty() ? "Mesh" : std::string(name);
+			m_materials[i] = std::move(mat);
 		}
+	}
+}
+
+void MeshComponent::SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialResource> material)
+{
+	if (slot < m_materials.size())
+	{
+		m_materials[slot] = std::move(material);
 	}
 	else
 	{
-		this->m_name = name.empty() ? "Mesh" : std::string(name);
+		m_materials.resize(slot + 1);
+		m_materials[slot] = std::move(material);
 	}
+}
+
+MaterialResource* MeshComponent::GetMaterial(uint32_t slot) const
+{
+	if (slot < m_materials.size())
+	{
+		return m_materials[slot].get();
+	}
+	return nullptr;
 }

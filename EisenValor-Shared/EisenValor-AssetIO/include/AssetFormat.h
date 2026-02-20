@@ -2,6 +2,9 @@
 #include <cstdint>
 #include <string_view>
 #include <string>
+#include <format>
+#include <bit>   
+#include <array> 
 #include <cstddef>
 #include <format>
 
@@ -47,6 +50,14 @@ struct std::formatter<EvAsset::Guid>
 namespace EvAsset
 {
 #pragma pack(push, 1)
+
+struct GuidHash
+{
+	size_t operator()(const EvAsset::Guid& guid) const
+	{
+		return std::hash<uint64_t>{}(guid.low) ^ (std::hash<uint64_t>{}(guid.high) << 1);
+	}
+};
 
 // NOTE: 파일 레이아웃 정의를 위한 구조체 (디스크 상의 포맷)
 struct AssetHeader
@@ -190,3 +201,21 @@ static T ReadUnaligned(const void* ptr)
 	return val;
 }
 } // namespace EvAsset
+
+template <>
+struct std::formatter<EvAsset::Guid> : std::formatter<std::string>
+{
+	auto format(const EvAsset::Guid& guid, std::format_context& ctx) const
+	{
+		auto bytes = std::bit_cast<std::array<uint8_t, 16>>(guid);
+
+		std::string result;
+		result.reserve(32);
+		for (uint8_t byte : bytes)
+		{
+			result += std::format("{:02X}", byte);
+		}
+
+		return std::formatter<std::string>::format(result, ctx);
+	}
+};

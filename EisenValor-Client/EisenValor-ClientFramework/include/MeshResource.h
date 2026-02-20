@@ -24,6 +24,7 @@ public:
 
 	const EvAsset::Bounds&				 GetBounds() const { return m_bounds; }
 	const std::vector<EvAsset::SubMesh>& GetSubMeshes() const { return m_subMeshes; }
+	const std::vector<EvAsset::Guid>&	 GetDefaultMaterialGuids() const { return m_defaultMaterialGuids; }
 
 	uint32_t GetVertexCount() const { return m_vertexCount; }
 	uint32_t GetIndexCount() const { return m_indexCount; }
@@ -33,6 +34,7 @@ public:
 	void SetMetadata(
 		const EvAsset::Bounds&			bounds,
 		std::vector<EvAsset::SubMesh>&& subMeshes,
+		std::vector<EvAsset::Guid>&&	defaultMaterialGuids,
 		uint32_t						vCount,
 		uint32_t						iCount,
 		uint32_t						iFormat
@@ -43,6 +45,7 @@ private:
 	std::unique_ptr<DxBuffer> m_indexBuffer;
 
 	std::vector<EvAsset::SubMesh> m_subMeshes;
+	std::vector<EvAsset::Guid>	  m_defaultMaterialGuids;
 	EvAsset::Bounds				  m_bounds{};
 
 	uint32_t m_vertexCount = 0;

@@ -14,85 +14,9 @@
 #include <DxBuffer.h>
 #include <DxUploadHeap.h>
 #include <DxUtils.h>
-
-namespace Resources
-{
-namespace Material
-{
-constexpr PBRMaterial DefaultPBRMaterial{
-	.albedo = DX::XMFLOAT3{0.8f, 0.8f, 0.8f},
-	.metallic = 0.1f,
-	.roughness = 0.9f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f,
-};
-
-constexpr PBRMaterial EmissiveWhiteMaterial{
-	.albedo = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.metallic = 0.0f,
-	.roughness = 1.0f,
-	.emissive = DX::XMFLOAT3{1.0f, 1.0f, 1.0f},
-	.emissiveStrength = 10.0f
-};
-
-constexpr PBRMaterial RedMaterial{
-	.albedo = DX::XMFLOAT3{1.0f, 0.1f, 0.1f},
-	.metallic = 0.8f,
-	.roughness = 0.2f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-constexpr PBRMaterial GreenMaterial{
-	.albedo = DX::XMFLOAT3{0.1f, 1.0f, 0.1f},
-	.metallic = 0.2f,
-	.roughness = 0.2f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-constexpr PBRMaterial BlueMaterial{
-	.albedo = DX::XMFLOAT3{0.1f, 0.1f, 1.0f},
-	.metallic = 0.8f,
-	.roughness = 0.2f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-constexpr PBRMaterial YellowMaterial{
-	.albedo = DX::XMFLOAT3{1.0f, 1.0f, 0.1f},
-	.metallic = 0.1f,
-	.roughness = 0.9f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-constexpr PBRMaterial CyanMaterial{
-	.albedo = DX::XMFLOAT3{0.1f, 1.0f, 1.0f},
-	.metallic = 0.1f,
-	.roughness = 0.9f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-constexpr PBRMaterial MagentaMaterial{
-	.albedo = DX::XMFLOAT3{1.0f, 0.1f, 1.0f},
-	.metallic = 0.1f,
-	.roughness = 0.9f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-constexpr PBRMaterial BrownMaterial{
-	.albedo = DX::XMFLOAT3{0.6f, 0.3f, 0.1f},
-	.metallic = 0.1f,
-	.roughness = 0.9f,
-	.emissive = DX::XMFLOAT3{0.0f, 0.0f, 0.0f},
-	.emissiveStrength = 0.0f
-};
-
-} // namespace Material
-} // namespace Resources
+#include "MeshResource.h"
+#include "MaterialResource.h"
+#include "TextureResource.h"
 
 DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), m_height(height)
 {
@@ -118,12 +42,9 @@ void DxrRenderPass::Initialize()
 
 void DxrRenderPass::Release()
 {
-	m_meshCache.clear();
-	m_vertices.Clear();
-	m_indices.Clear();
-	m_materials.Clear();
-	m_geoInfos.Clear();
-	m_instGeoBase.Clear();
+	m_blasCache.clear();
+	m_instanceBuffer.Clear();
+	m_materialConstants.Clear();
 
 	m_initialized = false;
 	DEBUG_LOG_FMT("[DxrRenderPass] Released\n");
@@ -163,317 +84,146 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 	);
 }
 
-void DxrRenderPass::CreateGeometryDescriptorTable()
-{
-	auto& device = GLOBAL(DxDeviceGlobal);
-	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
-
-	if (m_geometryTableRange.count > 0)
-	{
-		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
-		auto  fenceValue = queue.GetCurrentFenceValue();
-		descHeap.FreeRange(
-			m_geometryTableRange.startIndex, m_geometryTableRange.count, FenceHandle{EQueueType::Graphics, fenceValue},
-			"DXR_GeometryTable_Old"
-		);
-	}
-
-	DxDescriptorTableBuilder tableBuilder;
-
-	// Material SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC materialSRV{
-		.Format = DXGI_FORMAT_UNKNOWN,
-		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
-		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-		.Buffer =
-			{.FirstElement = 0,
-			 .NumElements = static_cast<UINT>(m_materials.Size()),
-			 .StructureByteStride = sizeof(PBRMaterial),
-			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
-	};
-	tableBuilder.AddSRV(m_materials.GetBuffer()->GetResource(), &materialSRV);
-
-	// Vertex SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC vertexSRV{
-		.Format = DXGI_FORMAT_UNKNOWN,
-		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
-		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-		.Buffer =
-			{.FirstElement = 0,
-			 .NumElements = static_cast<UINT>(m_vertices.Size()),
-			 .StructureByteStride = sizeof(VertexPNU),
-			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
-	};
-	tableBuilder.AddSRV(m_vertices.GetBuffer()->GetResource(), &vertexSRV);
-
-	// Index SRV (Raw Buffer)
-	D3D12_SHADER_RESOURCE_VIEW_DESC indexSRV{
-		.Format = DXGI_FORMAT_R32_UINT,
-		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
-		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-		.Buffer =
-			{.FirstElement = 0,
-			 .NumElements = static_cast<UINT>(m_indices.Size()),
-			 .StructureByteStride = 0,
-			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
-	};
-	tableBuilder.AddSRV(m_indices.GetBuffer()->GetResource(), &indexSRV);
-
-	// GeoInfo SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC geoInfoSRV{
-		.Format = DXGI_FORMAT_UNKNOWN,
-		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
-		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-		.Buffer =
-			{.FirstElement = 0,
-			 .NumElements = static_cast<UINT>(m_geoInfos.Size()),
-			 .StructureByteStride = sizeof(GeoInfo),
-			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
-	};
-	tableBuilder.AddSRV(m_geoInfos.GetBuffer()->GetResource(), &geoInfoSRV);
-
-	// InstGeoBase SRV
-	D3D12_SHADER_RESOURCE_VIEW_DESC instGeoSRV{
-		.Format = DXGI_FORMAT_R32_UINT,
-		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
-		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
-		.Buffer =
-			{.FirstElement = 0,
-			 .NumElements = static_cast<UINT>(m_instGeoBase.Size()),
-			 .StructureByteStride = 0,
-			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
-	};
-	tableBuilder.AddSRV(m_instGeoBase.GetBuffer()->GetResource(), &instGeoSRV);
-
-	m_geometryTableRange = tableBuilder.Commit(device.GetDevice(), descHeap);
-
-	DEBUG_LOG_FMT(
-		"[DxrRenderPass] Geometry descriptor table created: StartIndex={}, Count={}\n", m_geometryTableRange.startIndex,
-		m_geometryTableRange.count
-	);
-}
-
 void DxrRenderPass::CollectRenderData(Scene* scene)
 {
 	auto* meshStorage = scene->GetStorage<MeshComponent>();
-	if (!meshStorage)
-		return;
-
-	m_vertices.Clear();
-	m_indices.Clear();
-	m_materials.Clear();
-	m_geoInfos.Clear();
-	m_instGeoBase.Clear();
-
-	uint32_t currentVertexBase = 0;
-	uint32_t currentIndexBase = 0;
-	uint32_t currentGeoIndex = 0;
-
-	// TODO: Material Management (MeshComponent?)
-	std::unordered_map<std::string, PBRMaterial> objectNameToMaterial;
-
-	objectNameToMaterial["Ground"] = Resources::Material::BrownMaterial;
-	objectNameToMaterial["Cube_0"] = Resources::Material::RedMaterial;
-	objectNameToMaterial["Cube_1"] = Resources::Material::GreenMaterial;
-	objectNameToMaterial["Cube_2"] = Resources::Material::BlueMaterial;
-	objectNameToMaterial["LocalPlayer"] = Resources::Material::EmissiveWhiteMaterial;
-	objectNameToMaterial["AttackRangeIndicator"] = Resources::Material::YellowMaterial;
-
-	uint32_t validMeshCount = 0;
-	for (const auto& mesh : meshStorage->GetList())
+	if (nullptr == meshStorage)
 	{
-		if (!mesh.IsValid())
+		return;
+	}
+
+	m_instanceBuffer.Clear();
+	m_materialConstants.Clear();
+
+	std::unordered_map<EvAsset::Guid, uint32_t, EvAsset::GuidHash> materialToIndex;
+
+	for (const auto& meshComp : meshStorage->GetList())
+	{
+		if (!meshComp.IsValid())
 		{
 			continue;
 		}
 
-		validMeshCount++;
+		auto* meshRes = meshComp.GetMeshResource();
+		auto* matRes = meshComp.GetMaterial(0);
 
-		const auto& vertices = mesh.GetVertices();
-		const auto& indices = mesh.GetIndices();
-
-		for (const auto& v : vertices)
+		uint32_t matIdx = 0;
+		if (nullptr != matRes)
 		{
-			m_vertices.Register(VertexPNU{v.position, v.normal, v.uv});
+			const auto& matGuid = matRes->GetGuid();
+			if (!materialToIndex.contains(matGuid))
+			{
+				matIdx = static_cast<uint32_t>(m_materialConstants.Size());
+
+				MaterialGPUData gpuMat = {};
+				gpuMat.albedo = matRes->GetAlbedo();
+				gpuMat.roughness = matRes->GetRoughness();
+				gpuMat.metallic = matRes->GetMetallic();
+				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
+				gpuMat.materialFlags = matRes->GetMaterialFlags();
+
+				if (auto albedoRes = matRes->GetTexture("ALBD"))
+				{
+					gpuMat.albedoTextureIdx = albedoRes->GetTexture()->GetSRVIndex();
+				}
+
+				if (auto normalRes = matRes->GetTexture("NRML"))
+				{
+					gpuMat.normalTextureIdx = normalRes->GetTexture()->GetSRVIndex();
+				}
+
+				if (auto ormRes = matRes->GetTexture("ORMS"))
+				{
+					gpuMat.ormTextureIdx = ormRes->GetTexture()->GetSRVIndex();
+				}
+
+				m_materialConstants.Register(gpuMat);
+				materialToIndex[matGuid] = matIdx;
+			}
+			else
+			{
+				matIdx = materialToIndex[matGuid];
+			}
 		}
 
-		for (auto idx : indices)
-		{
-			m_indices.Register(idx);
-		}
+		// 인스턴스 정보 등록
+		InstanceData   inst = {};
+		DX::XMFLOAT4X4 worldFloat = meshComp.GetGameObject()->GetTransform().GetWorldMatrix();
+		DX::XMMATRIX   worldMat = DX::XMLoadFloat4x4(&worldFloat);
+		DX::XMStoreFloat4x4(&inst.worldMatrix, worldMat);
+		DX::XMStoreFloat4x4(&inst.worldIT, DX::XMMatrixTranspose(DX::XMMatrixInverse(nullptr, worldMat)));
 
-		auto iter = objectNameToMaterial.find(mesh.GetGameObject()->GetName());
-		m_materials.Register(
-			iter != objectNameToMaterial.end() ? iter->second : Resources::Material::DefaultPBRMaterial
-		);
+		inst.vertexBufferIdx = meshRes->GetVertexBuffer()->GetSRVIndex();
+		inst.indexBufferIdx = meshRes->GetIndexBuffer()->GetSRVIndex();
+		inst.materialIdx = matIdx;
+		inst.instanceID = meshComp.GetOwner().id;
 
-		m_geoInfos.Register(
-			currentVertexBase, currentIndexBase, static_cast<uint32_t>(vertices.size()),
-			static_cast<uint32_t>(indices.size())
-		);
-
-		m_instGeoBase.Register(currentGeoIndex);
-
-		currentVertexBase += static_cast<uint32_t>(vertices.size());
-		currentIndexBase += static_cast<uint32_t>(indices.size());
-		currentGeoIndex++;
-	}
-
-	if (m_tlas && m_tlas->GetInstanceCount() != validMeshCount)
-	{
-		m_needsRebuild = true;
-		DEBUG_LOG_FMT(
-			"[DxrRenderPass] Instance count changed: {} -> {}, TLAS rebuild required\n", m_tlas->GetInstanceCount(),
-			validMeshCount
-		);
+		m_instanceBuffer.Register(inst);
 	}
 }
 
-void DxrRenderPass::BuildAccelerationStructures(Scene* scene)
+void DxrRenderPass::BuildAccelerationStructures(DxFrameResource* frame, Scene* scene)
 {
 	auto& renderer = GLOBAL(DxRendererGlobal);
-	auto* frame = renderer.GetCurrentFrame();
-	if (!frame)
-	{
-		return;
-	}
-
-	auto* context = frame->GetMainContext();
-	auto* uploadHeap = frame->GetUploadHeap();
-	auto* cmdList = context->CommandList();
 	auto& device = GLOBAL(DxDeviceGlobal);
 
 	ComPtr<ID3D12Device5> device5;
 	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
 
+	auto*							   cmdList = frame->GetMainContext()->CommandList();
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
-	if (!scene)
-	{
+	if (nullptr == scene)
 		return;
-	}
 
 	std::vector<std::pair<GameObject*, DxBLAS*>> instances;
-	std::unordered_set<HandleOf<MeshComponent>>	 currentFrameMeshes;
-
-	uint64_t currentFrame = renderer.GetSwapChain()->GetFrameCount();
-	auto*	 meshStorage = scene->GetStorage<MeshComponent>();
-	if (!meshStorage)
-	{
+	auto*										 meshStorage = scene->GetStorage<MeshComponent>();
+	if (nullptr == meshStorage)
 		return;
-	}
 
-	for (auto& mesh : meshStorage->GetList())
+	for (auto& meshComp : meshStorage->GetList())
 	{
-		if (!mesh.IsValid())
-		{
+		if (false == meshComp.IsValid())
 			continue;
+
+		auto*		meshRes = meshComp.GetMeshResource();
+		const auto& guid = meshRes->GetGuid();
+
+		auto it = m_blasCache.find(guid);
+		if (m_blasCache.end() == it)
+		{
+			auto blas = std::make_unique<DxBLAS>();
+			blas->Build(device5.Get(), cmdList4.Get(), meshRes, false, meshRes->GetName() + "_BLAS");
+
+			auto barrier = DxUtils::CreateUAVBarrier(blas->GetResource());
+			cmdList->ResourceBarrier(1, &barrier);
+
+			m_blasCache[guid] = std::move(blas);
+			it = m_blasCache.find(guid);
+
+			DEBUG_LOG_FMT("[DxrRenderPass] Built BLAS for Asset: {}\n", meshRes->GetName());
 		}
 
-		auto meshHandle = mesh.GetHandle();
-		// auto* mesh = mesh.GetMesh();
-		// if (!mesh)
-		// {
-		// 	continue;
-		// }
-		// if (mesh->GetVertices().empty() || mesh->GetIndices().empty())
-		// {
-		// 	continue;
-		// }
-		// auto meshID = mesh->GetResourceID();
-
-		currentFrameMeshes.insert(meshHandle);
-
-		auto it = m_meshCache.find(meshHandle);
-		if (it == m_meshCache.end())
+		// 인스턴스 목록에 추가
+		auto* obj = meshComp.GetGameObject();
+		if (nullptr != obj && it->second->IsBuilt())
 		{
-			MeshRenderResource res;
-			res.vertexCount = mesh.GetVertices().size();
-			res.indexCount = mesh.GetIndices().size();
-
-			// Upload Vertex Buffer
-			uint64_t vSize = res.vertexCount * sizeof(Vertex);
-			res.vertexBuffer = std::make_unique<DxBuffer>();
-			res.vertexBuffer->Initialize(
-				device5.Get(), vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE,
-				"BLAS_VB_" + mesh.GetGameObject()->GetName()
-			);
-			auto vUpload = uploadHeap->UploadVertexBuffer(mesh.GetVertices());
-
-			D3D12_RESOURCE_BARRIER vBarriers[2];
-			vBarriers[0] = DxUtils::CreateTransitionBarrier(
-				res.vertexBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
-			);
-			cmdList->ResourceBarrier(1, &vBarriers[0]);
-			cmdList->CopyBufferRegion(
-				res.vertexBuffer->GetResource(), 0, uploadHeap->GetResource(), vUpload.offset, vSize
-			);
-			vBarriers[1] = DxUtils::CreateTransitionBarrier(
-				res.vertexBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST,
-				D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
-			);
-			cmdList->ResourceBarrier(1, &vBarriers[1]);
-
-			// Upload Index Buffer
-			uint64_t iSize = res.indexCount * sizeof(uint32_t);
-			res.indexBuffer = std::make_unique<DxBuffer>();
-			res.indexBuffer->Initialize(
-				device5.Get(), iSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE,
-				"BLAS_IB_" + mesh.GetGameObject()->GetName()
-			);
-			auto iUpload = uploadHeap->UploadIndexBuffer(mesh.GetIndices());
-
-			D3D12_RESOURCE_BARRIER iBarriers[2];
-			iBarriers[0] = DxUtils::CreateTransitionBarrier(
-				res.indexBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
-			);
-			cmdList->ResourceBarrier(1, &iBarriers[0]);
-			cmdList->CopyBufferRegion(
-				res.indexBuffer->GetResource(), 0, uploadHeap->GetResource(), iUpload.offset, iSize
-			);
-			iBarriers[1] = DxUtils::CreateTransitionBarrier(
-				res.indexBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST,
-				D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
-			);
-			cmdList->ResourceBarrier(1, &iBarriers[1]);
-
-			// Build BLAS
-			res.blas = std::make_unique<DxBLAS>();
-			res.blas->Build(
-				device5.Get(), cmdList4.Get(), res.vertexBuffer->GetGPUAddress(),
-				static_cast<uint32_t>(res.vertexCount), sizeof(Vertex), res.indexBuffer->GetGPUAddress(),
-				static_cast<uint32_t>(res.indexCount), false, "BLAS_" + mesh.GetGameObject()->GetName()
-			);
-
-			m_meshCache[meshHandle] = std::move(res);
-			it = m_meshCache.find(meshHandle);
-
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] Created BLAS for mesh {} (Handle: {})\n", mesh.GetGameObject()->GetName(),
-				meshHandle.id
-			);
-		}
-
-		it->second.lastUsedFrame = currentFrame;
-
-		auto* obj = mesh.GetGameObject();
-		if (obj && it->second.blas && it->second.blas->IsBuilt())
-		{
-			instances.push_back({obj, it->second.blas.get()});
+			instances.push_back({obj, it->second.get()});
 		}
 	}
 
-	if (m_tlas && !instances.empty())
+	// TLAS Update
+	if (m_tlas && false == instances.empty())
 	{
-		if (m_needsRebuild || !m_tlas->IsBuilt())
+		if (m_needsRebuild || false == m_tlas->IsBuilt())
 		{
-			m_tlas->Build(device5.Get(), cmdList4.Get(), uploadHeap, instances);
+			m_tlas->Build(device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), instances);
 			m_needsRebuild = false;
 		}
 		else
 		{
-			m_tlas->Refit(device5.Get(), cmdList4.Get(), uploadHeap, instances);
+			m_tlas->Refit(device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), instances);
 		}
 	}
 }
@@ -502,7 +252,7 @@ void DxrRenderPass::CreateRaytracingPipeline()
 	DEBUG_LOG_FMT("[GameFramework] Raytracing pipeline created\n");
 }
 
-void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
+void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
 	if (!m_initialized || !scene)
 		return;
@@ -523,41 +273,18 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	auto* context = frame->GetMainContext();
 	auto* uploadHeap = frame->GetUploadHeap();
 
+	// 1. 데이터 수집 및 BLAS 확인
 	CollectRenderData(scene);
+	BuildAccelerationStructures(frame, scene);
 
-	m_vertices.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
-	m_indices.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
-	m_materials.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
-	m_geoInfos.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
-	m_instGeoBase.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
+	// 2. 인스턴스/머티리얼 버퍼 GPU 동기화
+	m_instanceBuffer.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
+	m_materialConstants.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
 
-	if (m_vertices.NeedsDescriptorUpdate() || m_indices.NeedsDescriptorUpdate() ||
-		m_materials.NeedsDescriptorUpdate() || m_geoInfos.NeedsDescriptorUpdate() ||
-		m_instGeoBase.NeedsDescriptorUpdate())
-	{
-		m_geometryTableValid = false;
-
-		m_vertices.MarkDescriptorUpdated();
-		m_indices.MarkDescriptorUpdated();
-		m_materials.MarkDescriptorUpdated();
-		m_geoInfos.MarkDescriptorUpdated();
-		m_instGeoBase.MarkDescriptorUpdated();
-
-		DEBUG_LOG_FMT("[DxrRenderPass] Buffer resized, geometry table invalidated\n");
-	}
-
-	BuildAccelerationStructures(scene);
-
-	if (!m_tlas || !m_tlas->IsBuilt())
+	// 3. DXR Dispatch
+	if (nullptr == m_tlas || false == m_tlas->IsBuilt())
 		return;
 
-	if (!m_geometryTableValid || m_needsRebuild)
-	{
-		CreateGeometryDescriptorTable();
-		m_geometryTableValid = true;
-	}
-
-	// DXR 실행
 	auto*							   cmdList = context->CommandList();
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
@@ -582,18 +309,20 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap()};
 	cmdList4->SetDescriptorHeaps(1, heaps);
 
+	// Root Parameters (기존 인덱스와 호환성 확인 필요)
+	// 0: TLAS
 	D3D12_GPU_DESCRIPTOR_HANDLE tlasSRV = descHeap.GetGPUHandle(m_tlas->GetSRVIndex());
 	cmdList4->SetComputeRootDescriptorTable(0, tlasSRV);
 
+	// 1: Output UAV
 	D3D12_GPU_DESCRIPTOR_HANDLE outputUAV = descHeap.GetGPUHandle(m_raytracingOutput.GetUAVIndex(0));
 	cmdList4->SetComputeRootDescriptorTable(1, outputUAV);
 
-	// Camera
+	// 2: Camera Constants
 	auto mainCam = CameraComponent::GetMainViewMatrix();
 	auto mainProj = CameraComponent::GetMainProjectionMatrix();
 	auto viewProj = DX::XMMatrixMultiply(mainCam, mainProj);
 	auto viewProjInv = DX::XMMatrixInverse(nullptr, viewProj);
-
 	viewProjInv = DX::XMMatrixTranspose(viewProjInv);
 
 	DX::XMFLOAT4X4 viewProjInvFloat;
@@ -601,11 +330,20 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 
 	cmdList4->SetComputeRoot32BitConstants(2, 16, &viewProjInvFloat, 0);
 
-	// Tables
-	cmdList4->SetComputeRootDescriptorTable(3, descHeap.GetGPUHandle(m_geometryTableRange.startIndex));
+	// [FIX] 3: Geometry Descriptor Table -> 이제 Instance/Material 버퍼를 넘겨야 함
+	// 기존 코드는 Range를 썼지만, Bindless에서는 InstanceBuffer SRV 하나만 넘기면 됨
+	// 단, 셰이더가 아직 구형(Range) 방식을 쓰고 있다면 이 부분에서 셰이더 수정이 필요함.
+	// 우선 m_instanceBuffer의 SRV를 넘기는 것으로 가정.
+	if (m_instanceBuffer.GetBuffer())
+	{
+		auto handle = descHeap.GetGPUHandle(m_instanceBuffer.GetSRVIndex());
+		cmdList4->SetComputeRootDescriptorTable(3, handle);
+	}
+	// 4: Material Buffer SRV (추가 필요 가능성 있음)
 
 	// Dispatch
-	auto*					 shaderTable = m_usePathTracing ? m_ptShaderTable.get() : (m_useLiteRT ? m_rtLiteShaderTable.get() : m_rtShaderTable.get());
+	auto* shaderTable =
+		m_usePathTracing ? m_ptShaderTable.get() : (m_useLiteRT ? m_rtLiteShaderTable.get() : m_rtShaderTable.get());
 	D3D12_DISPATCH_RAYS_DESC desc = {
 		.RayGenerationShaderRecord = shaderTable->GetRayGenRecord(),
 		.MissShaderTable = shaderTable->GetMissTable(),
