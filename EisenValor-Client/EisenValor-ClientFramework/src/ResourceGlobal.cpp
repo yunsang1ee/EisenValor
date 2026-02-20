@@ -137,7 +137,7 @@ void ResourceGlobal::ProcessPendingLoads()
 
 			auto& heap = GLOBAL(DxDescriptorHeapGlobal);
 			vb->CreateSRV(device, heap, static_cast<uint32_t>(data.vertices.size()), sizeof(EvAsset::Vertex));
-			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0);
+			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0, DXGI_FORMAT_R32_UINT);
 
 			meshRes->SetGPUResources(std::move(vb), std::move(ib));
 		}
@@ -167,7 +167,7 @@ void ResourceGlobal::ProcessPendingLoads()
 
 			auto& heap = GLOBAL(DxDescriptorHeapGlobal);
 			vb->CreateSRV(device, heap, static_cast<uint32_t>(data.vertices.size()), sizeof(EvAsset::SkinnedVertex));
-			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0);
+			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0, DXGI_FORMAT_R32_UINT);
 
 			skinnedRes->SetGPUResources(std::move(vb), std::move(ib));
 		}

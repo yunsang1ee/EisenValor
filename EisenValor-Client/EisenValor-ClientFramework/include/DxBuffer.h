@@ -62,7 +62,8 @@ public:
 		ID3D12Device*           device,
 		DxDescriptorHeapGlobal& heap,
 		uint32_t                numElements,
-		uint32_t                elementSize
+		uint32_t                elementSize,
+		DXGI_FORMAT             format = DXGI_FORMAT_UNKNOWN
 	);
 
 	// UAV 생성 (i.e. RWStructuredBuffer)
