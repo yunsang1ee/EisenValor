@@ -24,6 +24,7 @@
 #include "SkinnedMeshResource.h"
 
 #include "MeshLoader.h"
+#include "MeshComponent.h"
 
 using Vertex = EvAsset::Vertex;
 
@@ -37,20 +38,16 @@ void SampleScene::OnRegisterCustomComponents()
 
 void SampleScene::OnStartImpl()
 {
-	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");	
+	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");
 
-	//.evscene 로딩 함수
-	// auto sceneRes = GLOBAL(ResourceGlobal).Load<SceneResource>("Resource/Scenes/MainArea.evscene");
-	// if (sceneRes)
-	// {
-	// 	LoadFromSceneResource(sceneRes);
-	// }	CreateSceneObjects();
-	
+	GLOBAL(ResourceGlobal).LoadRegistry("Resource/AssetRegistry.evreg");
+
+	CreateSceneObjects();
 }
 
 void SampleScene::CreateSceneObjects()
 {
-	DEBUG_LOG_FMT("[SampleScene] Creating scene objects from assets...\n");
+	DEBUG_LOG_FMT("[SampleScene] Creating scene objects from exported assets...\n");
 
 	// 1. Ground 생성
 	ReserveGameObject(
@@ -61,70 +58,46 @@ void SampleScene::CreateSceneObjects()
 			tr.SetPosition(0.0f, -1.0f, 0.0f);
 			tr.SetScale(1.0f);
 
-			auto groundRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Ground.evmesh");
-			if (groundRes)
-			{
-				obj->GetScene()->CreateComponentWithInit<MeshComponent>(
-					obj->GetHandle(),
-					[groundRes](MeshComponent* mesh) {
-						mesh->SetMeshResource(groundRes);
+			CreateComponentWithInit<MeshComponent>(
+				obj->GetHandle(),
+				[](MeshComponent* mesh) 
+				{
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Plane.evmesh");
+					if (nullptr != meshRes)
+					{
+						mesh->SetMeshResource(meshRes);
 					}
-				);
-			}
+				}
+			);
 		}
 	);
 
-	//// 2. Character 생성
-	//ReserveGameObject(
-	//	"Character", std::nullopt,
-	//	[](GameObject* obj)
-	//	{
-	//		auto& tr = obj->GetTransform();
-	//		tr.SetPosition(10.0f, 0.0f, 0.0f);
-	//		tr.SetScale(1.0f);
+	ReserveGameObject(
+		"TestSphere", std::nullopt,
+		[this](GameObject* obj)
+		{
+			auto& tr = obj->GetTransform();
+			tr.SetPosition(0.0f, 1.0f, 0.0f);
+			tr.SetScale(2.0f);
 
-	//		auto res = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
-	//		if (res)
-	//		{
-	//			obj->GetScene()->CreateComponentWithInit<SkinnedMeshComponent>(
-	//				obj->GetHandle(),
-	//				[res](SkinnedMeshComponent* mesh) {
-	//					mesh->SetMeshResource(res);
-	//				}
-	//			);
-	//			DEBUG_LOG_FMT("[SampleScene] Character assigned: {}\n", res->GetName());
-	//		}
-	//	}
-	//);
-
-	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
-	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
-	float scales[3] = {4.0f, 1.0f, 4.0f};
-
-	for (int i = 0; i < 3; ++i)
-	{
-		ReserveGameObject(
-			"Cube_" + std::to_string(i), std::nullopt,
-			[i, positions, rotations, scales](GameObject* obj)
-			{
-				auto& tr = obj->GetTransform();
-				tr.SetPosition(positions[i].x, positions[i].y, positions[i].z);
-				tr.SetRotation(rotations[i].x, rotations[i].y, rotations[i].z);
-				tr.SetScale(scales[i]);
-
-				auto cubeRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Cube.evmesh");
-				if (cubeRes)
-				{
-					obj->GetScene()->CreateComponentWithInit<MeshComponent>(
-						obj->GetHandle(),
-						[cubeRes](MeshComponent* mesh) {
-							mesh->SetMeshResource(cubeRes);
-						}
-					);
+			CreateComponentWithInit<MeshComponent>(
+				obj->GetHandle(),
+				[](MeshComponent* mesh) 
+				{ 
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+					if (nullptr != meshRes)
+					{
+						mesh->SetMeshResource(meshRes);
+					}
 				}
-			}
-		);
-	}
+			);
+		}
+	);
+
+	DEBUG_LOG_FMT("[SampleScene] Scene objects created and assets linked\n");
 }
 
-void SampleScene::OnEndImpl() {}
+void SampleScene::OnEndImpl() 
+{
+	DEBUG_LOG_FMT("[SampleScene] OnEnd called\n");
+}

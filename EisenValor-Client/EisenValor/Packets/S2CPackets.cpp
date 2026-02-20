@@ -27,6 +27,8 @@
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "ResourceGlobal.h"
+#include "MeshResource.h"
 
 
 using namespace NetBridge;
@@ -397,9 +399,13 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			scene->CreateComponentWithInit<MeshComponent>(
 				playerObjHandle,
-				[](MeshComponent* mesh) { 
-					auto cubeRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource\\Models\\Cube.evmesh");
-					if (cubeRes) mesh->SetMeshResource(cubeRes);
+				[](MeshComponent* mesh)
+				{
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Models/Sphere.evmesh");
+					if (nullptr != meshRes)
+					{
+						mesh->SetMeshResource(meshRes);
+					}
 				}
 			);
 
@@ -585,14 +591,13 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				objHandle,
 				[teamType](MeshComponent* mesh)
 				{
-					auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource\\Models\\Cube.evmesh");
-					if (res) mesh->SetMeshResource(res);
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Models/Sphere.evmesh");
+					if (nullptr != meshRes)
+					{
+						mesh->SetMeshResource(meshRes);
+					}
 
 					// TODO: 팀에 따라 색상 설정
-					// if (teamType == FB_ENUMS::TEAM_TYPE_OFFENSE)
-					// {
-					//     mesh->SetColor(...);
-					// }
 				}
 			);
 

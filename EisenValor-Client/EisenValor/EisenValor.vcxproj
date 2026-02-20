@@ -219,6 +219,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
+    <ClInclude Include="UI\UITextureGlobal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\FSM\FSMComponent.cpp" />
@@ -250,6 +251,7 @@ exit /b 0</Command>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Component\BattleUIControllerComponent.cpp" />
+    <ClCompile Include="UI\UITextureGlobal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />
@@ -277,6 +279,9 @@ exit /b 0</Command>
     <None Include="Resource\Shader\UIVertexShader.hlsl" />
     <None Include="Resource\Shader\UIPixelShader.hlsl" />
   </ItemGroup>
+  	<ItemGroup>
+		<UpToDateCheckInput Include="Resource\**\*" />
+	</ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />

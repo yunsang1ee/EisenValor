@@ -6,6 +6,7 @@
 #include <bit>   
 #include <array> 
 #include <cstddef>
+#include <cstring>
 
 /*
  - EisenValor Asset Pipeline Specification v2.1
@@ -18,13 +19,14 @@ namespace EvAsset
 {
 #pragma pack(push, 1)
 
-// 128-bit GUID
 struct Guid
 {
-	uint64_t low;
-	uint64_t high;
+	uint8_t data[16];
 
-	bool operator==(const Guid& other) const { return low == other.low && high == other.high; }
+	bool operator==(const Guid& other) const 
+	{ 
+		return 0 == std::memcmp(data, other.data, 16); 
+	}
 };
 
 // GUID를 읽기 위한 Format
@@ -39,7 +41,10 @@ struct GuidHash
 {
 	size_t operator()(const EvAsset::Guid& guid) const
 	{
-		return std::hash<uint64_t>{}(guid.low) ^ (std::hash<uint64_t>{}(guid.high) << 1);
+		uint64_t low, high;
+		std::memcpy(&low, guid.data, 8);
+		std::memcpy(&high, guid.data + 8, 8);
+		return std::hash<uint64_t>{}(low) ^ (std::hash<uint64_t>{}(high) << 1);
 	}
 };
 
@@ -197,15 +202,12 @@ struct std::formatter<EvAsset::Guid> : std::formatter<std::string>
 {
 	auto format(const EvAsset::Guid& guid, std::format_context& ctx) const
 	{
-		auto bytes = std::bit_cast<std::array<uint8_t, 16>>(guid);
-
 		std::string result;
 		result.reserve(32);
-		for (uint8_t byte : bytes)
+		for (uint8_t byte : guid.data)
 		{
 			result += std::format("{:02X}", byte);
 		}
-
 		return std::formatter<std::string>::format(result, ctx);
 	}
 };
