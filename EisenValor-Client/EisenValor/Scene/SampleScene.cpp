@@ -49,18 +49,17 @@ void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects from exported assets...\n");
 
-	// 1. Ground 생성
 	ReserveGameObject(
 		"Ground", std::nullopt,
-		[](GameObject* obj)
+		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(0.0f, -1.0f, 0.0f);
-			tr.SetScale(1.0f);
+			tr.SetScale(20.0f);
 
 			CreateComponentWithInit<MeshComponent>(
 				obj->GetHandle(),
-				[](MeshComponent* mesh) 
+				[](MeshComponent* mesh)
 				{
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Plane.evmesh");
 					if (nullptr != meshRes)
@@ -82,8 +81,8 @@ void SampleScene::CreateSceneObjects()
 
 			CreateComponentWithInit<MeshComponent>(
 				obj->GetHandle(),
-				[](MeshComponent* mesh) 
-				{ 
+				[](MeshComponent* mesh)
+				{
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
 					if (nullptr != meshRes)
 					{

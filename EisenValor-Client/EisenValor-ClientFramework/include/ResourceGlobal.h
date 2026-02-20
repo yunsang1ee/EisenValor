@@ -109,13 +109,13 @@ private:
 	};
 
 private:
-	struct GuidHash
-	{
-		size_t operator()(const EvAsset::Guid& guid) const
-		{
-			return std::hash<uint64_t>{}(guid.low) ^ (std::hash<uint64_t>{}(guid.high) << 1);
-		}
-	};
+	//struct GuidHash
+	//{
+	//	size_t operator()(const EvAsset::Guid& guid) const
+	//	{
+	//		return std::hash<uint64_t>{}(guid.low) ^ (std::hash<uint64_t>{}(guid.high) << 1);
+	//	}
+	//};
 
 	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, EvAsset::GuidHash> m_resourceCache;
 	std::unordered_map<EvAsset::Guid, std::filesystem::path, EvAsset::GuidHash>		 m_guidToPath;
