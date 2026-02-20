@@ -13,13 +13,21 @@ class MeshResource;
 class MaterialResource;
 class DxBLAS;
 
+struct alignas(16) GeoInfo
+{
+	uint32_t vertexBase;
+	uint32_t indexBase;
+	uint32_t materialIdx;
+	uint32_t pad0;
+};
+
 struct alignas(16) InstanceData
 {
 	DirectX::XMFLOAT4X4 worldMatrix;
 	DirectX::XMFLOAT4X4 worldIT;
 	uint32_t			vertexBufferIdx;
 	uint32_t			indexBufferIdx;
-	uint32_t			materialIdx;
+	uint32_t			geoInfoBaseIdx;
 	uint32_t			instanceID;
 };
 static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
@@ -75,6 +83,7 @@ private:
 
 	RenderDataSync<InstanceData>	m_instanceBuffer;
 	RenderDataSync<MaterialGPUData> m_materialConstants;
+	RenderDataSync<GeoInfo>         m_geoTable;
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;

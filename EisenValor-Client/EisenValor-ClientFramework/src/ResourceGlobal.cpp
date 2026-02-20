@@ -58,12 +58,19 @@ bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)
 	const std::filesystem::path resourceRoot = path.parent_path();
 	for (auto& entry : data.entries)
 	{
-		std::filesystem::path fullPath = resourceRoot / entry.path;
-		m_guidToPath[entry.guid] = fullPath;
+		std::filesystem::path relativePath = entry.path;
+		std::filesystem::path fullPath = resourceRoot / relativePath;
+		
+		std::filesystem::path finalFullPath = fullPath;
+		if (finalFullPath.is_relative())
+		{
+			finalFullPath = Utils::ExeDir() / finalFullPath;
+		}
 
-		m_pathToGuid[fullPath.wstring()] = entry.guid;
+		m_guidToPath[entry.guid] = finalFullPath;
+		m_pathToGuid[finalFullPath.wstring()] = entry.guid;
 
-		DEBUG_LOG_FMT("[ResourceGlobal] Registered asset: GUID={}, Path={}\n", entry.guid, fullPath.string());
+		DEBUG_LOG_FMT("[ResourceGlobal] Registered asset: GUID={}, Path={}\n", entry.guid, finalFullPath.string());
 	}
 
 	DEBUG_LOG_FMT("[ResourceGlobal] Registry Loaded: {} entries.\n", m_guidToPath.size());

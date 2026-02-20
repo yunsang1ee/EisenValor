@@ -35,7 +35,7 @@ public:
 private:
 	EvAsset::ShadingModel shadingModelId = EvAsset::ShadingModel::LitPbr;
 	uint32_t			  materialFlags = 0;
-	DX::XMFLOAT4		  albedo{1.0f, 1.0f, 1.0f, 1.0f};
+	DX::XMFLOAT4		  albedo{1.0f, 0.0f, 1.0f, 1.0f};
 	float				  roughness = 1.0f;
 	float				  metallic = 0.0f;
 

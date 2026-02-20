@@ -57,6 +57,8 @@ public:
 		const std::string& name = "DxTexture"
 	);
 
+	void LoadFromFile(ID3D12Device* device, const std::wstring& filePath);
+
 	void CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap);
 	void CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel = 0);
 

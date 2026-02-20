@@ -21,7 +21,34 @@ public class AssetExporter
 	private const uint SHADING_MODEL_LIT_PBR = 0;
 	private const uint SHADING_MODEL_UNLIT = 1;
 
-	private static readonly HashSet<string> ValidSignatures = new HashSet<string>
+    // --- Material Flags (Engine Spec v2.1) ---
+    private const uint FLAG_NONE = 0;
+    private const uint FLAG_USE_UNITY_PACKING = 1 << 0;
+    private const uint FLAG_ALPHA_TEST = 1 << 1;
+    private const uint FLAG_DOUBLE_SIDED = 1 << 2;
+    private static uint BuildMaterialFlags(Material mat)
+    {
+        uint flags = FLAG_NONE;
+
+        if (mat.shader.name.Contains("Lit") || mat.shader.name.Contains("Standard"))
+        {
+            flags |= FLAG_USE_UNITY_PACKING;
+        }
+
+        if (mat.IsKeywordEnabled("_ALPHATEST_ON") || mat.renderQueue >= 2450)
+        {
+            flags |= FLAG_ALPHA_TEST;
+        }
+
+        if (mat.HasProperty("_Cull") && mat.GetInt("_Cull") == (int)UnityEngine.Rendering.CullMode.Off)
+        {
+            flags |= FLAG_DOUBLE_SIDED;
+        }
+
+        return flags;
+    }
+
+    private static readonly HashSet<string> ValidSignatures = new HashSet<string>
 	{
 		"EVMH"/*mesh*/, "EVTX"/*texture*/, "EVMT"/*material*/, "EVSK"/*skinned*/, "EVAN"/*anim*/, "EVSN"/*scene*/
 	};
@@ -105,7 +132,8 @@ public class AssetExporter
 
 		// --- Usage of AssetWriter ---
 		string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mesh));
-		var writer = new AssetWriter("EVMH", guid);
+		UnityEngine.Debug.Log($"Mesh GUID: {guid}");
+        var writer = new AssetWriter("EVMH", guid);
 
 		writer.AddChunk("VERT", 1, BuildVertexChunk(mesh));
 		writer.AddChunk("INDX", 1, BuildIndexChunk(mesh));
@@ -287,7 +315,7 @@ public class AssetExporter
 				shadingModel = SHADING_MODEL_UNLIT;
 			}
 			bw.Write(shadingModel);
-			bw.Write(0u); // Reserved for future use
+			bw.Write(BuildMaterialFlags(mat)); // Material Flags
 
 			Color color = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : (mat.HasProperty("_Color") ? mat.color : Color.white);
 			bw.Write(color.r); bw.Write(color.g); bw.Write(color.b); bw.Write(color.a);
