@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxShaderCompilerGlobal.h"
+#include "Commonutils.h"
 #include <fstream>
 #include <ranges>
 #include <algorithm>
@@ -10,7 +11,13 @@ void DxShaderCompilerGlobal::Initialize(std::wstring_view cacheDir)
 	ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_dxcUtils)));
 	ThrowIfFailed(m_dxcUtils->CreateDefaultIncludeHandler(&m_includeHandler));
 
-	m_cacheDirectory = cacheDir;
+	std::filesystem::path cd = std::filesystem::path(cacheDir);
+	if (cd.is_relative())
+	{
+		cd = Utils::ExeDir() / cd;
+	}
+
+	m_cacheDirectory = cd.wstring();
 	std::filesystem::create_directories(m_cacheDirectory);
 
 	DEBUG_LOG_FMT(
@@ -64,7 +71,12 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	bool												   isRaytacing
 )
 {
-	std::wstring sourceFile{filename};
+	std::filesystem::path sourcePath = std::filesystem::path(filename);
+	if (sourcePath.is_relative())
+	{
+		sourcePath = Utils::ExeDir() / sourcePath;
+	}
+	std::wstring sourceFile = sourcePath.wstring();
 
 	// 메모리 캐시 확인
 	if (auto it = m_memoryCache.find(shaderName); it != m_memoryCache.end())
@@ -96,61 +108,57 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	// 파일 읽기
 	ComPtr<IDxcBlobEncoding> sourceBlob;
 	UINT32					 codePage = DXC_CP_UTF8;
-	auto					 absolutePath = std::filesystem::absolute(sourceFile);
-	DEBUG_LOG_FMT(
-		"[DxShaderCompiler] Loading file:\n  Relative: {}\n  Absolute: {}\n  CWD: {}\n",
-		std::filesystem::path(sourceFile).string(), absolutePath.string(), std::filesystem::current_path().string()
-	);
+	
+	DEBUG_LOG_FMT("[DxShaderCompiler] Loading file: {}\n", sourcePath.string());
+	
 	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), &codePage, &sourceBlob));
 
 	ComPtr<IDxcBlobUtf8> sourceUtf8;
 	ThrowIfFailed(m_dxcUtils->GetBlobAsUtf8(sourceBlob.Get(), &sourceUtf8));
 
 	std::vector<std::wstring> stringStorage;
-	stringStorage.reserve(2 + defines.size());
-	std::vector<const wchar_t*> args;
-	args.reserve(16 + defines.size() * 2);
+	stringStorage.reserve(32); 
 
 	if (!isRaytacing)
 	{
-		// Entry point
-		args.push_back(L"-E");
+		stringStorage.emplace_back(L"-E");
 		stringStorage.emplace_back(entryPoint.begin(), entryPoint.end());
-		args.push_back(stringStorage.back().c_str());
 	}
 
-	// Target
-	args.push_back(L"-T");
+	stringStorage.emplace_back(L"-T");
 	stringStorage.emplace_back(target.begin(), target.end());
-	args.push_back(stringStorage.back().c_str());
 
-	// Defines
 	for (const auto& [name, value] : defines)
 	{
-		args.push_back(L"-D");
-		std::wstring& defineStr = stringStorage.emplace_back();
-		defineStr.reserve(name.size() + 1 + value.size());
-		defineStr.append(name);
-		defineStr.push_back(L'=');
-		defineStr.append(value);
-		args.push_back(defineStr.c_str());
+		stringStorage.emplace_back(L"-D");
+		std::wstring defineStr;
+		defineStr.append(name).append(L"=").append(value);
+		stringStorage.push_back(std::move(defineStr));
 	}
 
 #ifdef _DEBUG
-	args.push_back(L"-Zi");
-	args.push_back(L"-Od");
-	args.push_back(L"-Qembed_debug");
+	stringStorage.emplace_back(L"-Zi");
+	stringStorage.emplace_back(L"-Od");
+	stringStorage.emplace_back(L"-Qembed_debug");
 #else
-	args.push_back(L"-O3");
-	args.push_back(L"-Qstrip_debug");
+	stringStorage.emplace_back(L"-O3");
+	stringStorage.emplace_back(L"-Qstrip_debug");
 #endif
-	args.push_back(L"-HV");
-	args.push_back(L"2021");
-	args.push_back(L"-WX");
-	args.push_back(L"-enable-16bit-types");
+	stringStorage.emplace_back(L"-HV");
+	stringStorage.emplace_back(L"2021");
+	stringStorage.emplace_back(L"-WX");
+	stringStorage.emplace_back(L"-enable-16bit-types");
 
-	args.push_back(L"-I");
-	args.push_back(L"Resource/Shader");
+	stringStorage.emplace_back(L"-I");
+	std::filesystem::path includePath = Utils::ExeDir() / L"Resource/Shader";
+	stringStorage.emplace_back(includePath.wstring());
+
+	std::vector<const wchar_t*> args;
+	args.reserve(stringStorage.size());
+	for (const auto& str : stringStorage)
+	{
+		args.push_back(str.c_str());
+	}
 
 	const DxcBuffer sourceBuffer{
 		.Ptr = sourceUtf8->GetBufferPointer(), .Size = sourceUtf8->GetBufferSize(), .Encoding = DXC_CP_UTF8

@@ -11,7 +11,7 @@ ServerEngine::RIO::RIOSendBuffer::~RIOSendBuffer()
 {
 }
 
-bool ServerEngine::RIO::RIOSendBuffer::Append(const char* const data, const uint32 size) noexcept
+bool ServerEngine::RIO::RIOSendBuffer::Append(const char* const data, const uint32 size)
 {
 	if(size > GetFreeSize())
 		return false;
@@ -34,7 +34,7 @@ bool ServerEngine::RIO::RIOSendBuffer::moveSendOffset(const uint32 bytesTransfer
 	return true;
 }
 
-void ServerEngine::RIO::RIOSendBuffer::CleanBuffer() noexcept
+void ServerEngine::RIO::RIOSendBuffer::CleanBuffer()
 {
 	const uint32 dataSize = GetDataSizeForCurrentPacket();
 

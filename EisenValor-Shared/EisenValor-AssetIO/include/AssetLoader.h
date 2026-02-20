@@ -1,21 +1,30 @@
 #pragma once
+#include <filesystem>
+#include <concepts>
+#include "AssetFormat.h"
+#include "AssetFile.h"
 
-#include <string>
-#include <memory>
-
-namespace AssetIO
+namespace EvAsset
 {
-	class AssetMeshData;
+template <typename T>
+concept IsAssetData = std::derived_from<T, AssetData>;
 
-	class AssetLoader
+class AssetLoader
+{
+public:
+	template <IsAssetData T>
+	static bool Load(const std::filesystem::path& path, T& outData)
 	{
-	public:
-		AssetLoader() = default;
-		~AssetLoader() = default;
+		AssetFile file;
+		if (!file.Load(path))
+		{
+			return false;
+		}
 
-		static std::unique_ptr<AssetMeshData> LoadStaticMesh(const std::wstring& filePath);
+		outData.assetGuid = file.GetHeader().assetGuid;
+		outData.name = path.stem().string();
 
-	private:
-
-	};
-}
+		return outData.Deserialize(file);
+	}
+};
+} // namespace EvAsset

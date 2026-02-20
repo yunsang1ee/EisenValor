@@ -6,13 +6,6 @@ namespace ServerEngine {
 #ifdef _USE_IOCP
 		class IOCPRecvBuffer {
 			enum { BUFFER_COUNT = 10 };
-		private:
-			int32				m_capacity;
-			int32				m_bufferSize;
-			int32				m_readPos;
-			int32				m_writePos;
-			std::vector<char>	m_buffer;
-
 		public:
 			IOCPRecvBuffer(const int32 bufferSize);
 			~IOCPRecvBuffer();
@@ -27,6 +20,12 @@ namespace ServerEngine {
 			int32	DataSize() { return m_writePos - m_readPos; }
 			int32	FreeSize() { return m_capacity - m_writePos; }
 
+		private:
+			int32				m_capacity;
+			int32				m_bufferSize;
+			int32				m_readPos;
+			int32				m_writePos;
+			std::vector<char>	m_buffer;
 		};
 #endif
 	}

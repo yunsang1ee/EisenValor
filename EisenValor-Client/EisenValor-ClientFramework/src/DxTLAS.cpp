@@ -10,12 +10,6 @@ using namespace DirectX;
 
 DxTLAS::~DxTLAS()
 {
-	if (m_srvIndex != ~0u)
-	{
-		auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
-		descHeap.FreeImmediate(m_srvIndex);
-	}
-
 	DEBUG_LOG_FMT("[DxTLAS] Destroyed (Instances: {})\n", m_instanceCount);
 }
 
@@ -25,10 +19,8 @@ void DxTLAS::Initialize(ID3D12Device5* device, uint32_t maxInstances)
 	assert(maxInstances > 0 && "[DxTLAS] maxInstances must be > 0");
 
 	m_maxInstances = maxInstances;
-	
-	DEBUG_LOG_FMT(
-		"[DxTLAS] Initialized with max {} instances\n", maxInstances
-	);
+
+	DEBUG_LOG_FMT("[DxTLAS] Initialized with max {} instances\n", maxInstances);
 }
 
 void DxTLAS::Build(
@@ -61,7 +53,7 @@ void DxTLAS::BuildInternal(
 )
 {
 	assert(device && cmdList && uploadHeap && "[DxTLAS] Invalid parameters");
-	
+
 	if (instances.empty())
 	{
 		return;
@@ -100,7 +92,17 @@ void DxTLAS::BuildInternal(
 		desc.InstanceID = instanceIndex++;
 		desc.InstanceMask = 0xFF;
 		desc.InstanceContributionToHitGroupIndex = 0;
-		desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		
+		// Map 오브젝트인 경우 컬링 비활성화
+		if (obj->GetName() == "Map")
+		{
+			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+		}
+		else
+		{
+			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+		}
+
 		desc.AccelerationStructure = blas->GetGPUAddress();
 
 		instanceDescs.push_back(desc);
@@ -172,6 +174,15 @@ void DxTLAS::BuildInternal(
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 				"TLAS_Result"
 			);
+
+			if (!m_tlasBuffer.HasSRV())
+			{
+				auto& heap = GLOBAL(DxDescriptorHeapGlobal);
+				m_tlasBuffer.CreateSRVWithAutoRecreate(
+					device, heap, SRVDescription{.type = SRVDescription::Type::TLAS}
+				);
+				DEBUG_LOG_FMT("[DxTLAS] TLAS SRV created with auto-recreate enabled\n");
+			}
 		}
 
 		if (!m_scratchBuffer.IsValid() || m_scratchBuffer.GetSizeInBytes() < prebuildInfo.ScratchDataSizeInBytes)
@@ -203,19 +214,6 @@ void DxTLAS::BuildInternal(
 
 	D3D12_RESOURCE_BARRIER uavBarrier = DxUtils::CreateUAVBarrier(m_tlasBuffer.GetResource());
 	cmdList->ResourceBarrier(1, &uavBarrier);
-
-	if (isFirstBuild && m_srvIndex == ~0u)
-	{
-		auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
-
-		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.RaytracingAccelerationStructure.Location = m_tlasBuffer.GetGPUAddress();
-
-		m_srvIndex = descHeap.CreateSRV(device, nullptr, &srvDesc);
-	}
 
 	m_isBuilt = true;
 }

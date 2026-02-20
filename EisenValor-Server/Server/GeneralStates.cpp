@@ -1,284 +1,180 @@
 #include "pch.h"
 #include "GeneralStates.h"
 
-#include "GameWorld.h"
+#include "GameObject.h"
 #include "General.h"
-#include "FSM.h"
+#include "BehaviorTree.h"
+#include "GameWorld.h"
+#include "BehaviorNode.h"
+#include "GeneralNodes.h"
+#include "NavAgent.h"
 
-static Server::Contents::General* GetGeneral(Server::Contents::FSM* fsm)
+Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_ROAMING }
 {
-	return static_cast<Server::Contents::General*>(fsm->GetOwner());
-}
+	SetFSM(fsm);
 
-// ==================================
-//		  GENERAL_IDLE_STATE
-// ==================================
-Server::Contents::GeneralIdleState::GeneralIdleState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), m_accDTForStaminaRecovery{}, m_accDTForExhaustedRecovery{}
-{
-}
+	auto rootSelector = std::make_unique<Server::Contents::SelectorNode>();
+	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
+	{
+		// ì ë ¹ì§€ë¥¼ ì°¾ê³ , ì ë ¹ì§€ë¥¼ í–¥í•´ ë‹¬ë ¤ê°€ëŠ” ì‹œí€€ìŠ¤ ë…¸ë“œ
+		auto seqFindOZAndMove = std::make_unique<Server::Contents::SequenceNode>();
+		seqFindOZAndMove->AddChild(std::make_unique<Server::Contents::ActionFindOZ>()); 		//	- 1. Action -  ì ë ¹ì§€ë¥¼ ì°¾ëŠ”ë‹¤.
+		seqFindOZAndMove->AddChild(std::make_unique<Server::Contents::ActionMoveToOZ>()); 		//	- 2. Action - ì ë ¹ì§€ë¥¼ ì°¾ì•˜ìœ¼ë©´ ì ë ¹ì§€ë¥¼ í–¥í•´ ë‹¬ë ¤ê°„ë‹¤
 
-Server::Contents::GeneralIdleState::~GeneralIdleState()
-{
-}
-
-void Server::Contents::GeneralIdleState::Enter(const float dt)
-{
-	m_accDTForStaminaRecovery = 0.f;
-	std::cout << std::format("ID:{}, GeneralIdleState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
-}
-
-void Server::Contents::GeneralIdleState::Exit(const float dt)
-{
-	std::cout << std::format("ID:{}, GeneralIdleState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
-	m_accDTForStaminaRecovery = 0.f;
-	m_accDTForExhaustedRecovery = 0.f;
-}
-
-void Server::Contents::GeneralIdleState::Update(const float dt)
-{
-	//m_accDTForStaminaRecovery += dt;
-	//auto const owner{ GetGeneral(GetFSM()) };
-	//if(owner->HasSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED)) {
-	//	m_accDTForExhaustedRecovery += dt;
-	//	m_accDTForStaminaRecovery = 0.f;
-	//	if(m_accDTForExhaustedRecovery >= 3.f) {
-	//		owner->RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
-	//		m_accDTForExhaustedRecovery = 0.f;
-	//		m_accDTForStaminaRecovery = 0.f;
-	//	}
-	//	return;
-	//}
-	//else {
-	//	if(m_accDTForStaminaRecovery >= 1.f) {
-	//		m_accDTForStaminaRecovery = 0.f;
-	//		const auto& statInfo{ owner->GetStatInfo() };
-	//		if(statInfo.currentStamina < statInfo.maxStamina) {
-	//			owner->IncStamina(statInfo.staminaRecoveryPerSec);
-	//			auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina()) };
-	//			owner->GetGameWorld()->Broadcast(std::move(pb));
-	//		}
-	//	}
-	//}
-
-	auto const owner = GetGeneral(GetFSM());
-	const auto& statInfo = owner->GetStatInfo();
-
-	// 1. Å»Áø »óÅÂ °ü¸®
-	if(owner->HasSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED)) {
-		m_accDTForExhaustedRecovery += dt;
-		m_accDTForStaminaRecovery = 0.f; // Å»Áø Áß¿¡´Â È¸º¹ Å¸ÀÌ¸Ó Á¤Áö
-
-		if(m_accDTForExhaustedRecovery >= 3.f) {
-			owner->RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
-			m_accDTForExhaustedRecovery = 0.f;
-			// Å»ÁøÀÌ Ç®·ÈÀ¸¹Ç·Î Áï½Ã ÀÏ¹İ ·ÎÁ÷À¸·Î ÀÌ¾îÁö°Ô return »ı·« °¡´É
-		}
-		else {
-			return; // ¾ÆÁ÷ Å»Áø ÁßÀÌ¸é ¿©±â¼­ Á¾·á
-		}
+		rootSelector->AddChild(std::move(seqFindOZAndMove));
 	}
 
-	// 2. ½ºÅÂ¹Ì³ª È¸º¹ Ã¼Å© (ÃÖ´ëÄ¡¶ó¸é ¿¬»ê/ºê·ÎµåÄ³½ºÆ® »ı·«)
-	if(statInfo.currentStamina < statInfo.maxStamina) {
-		m_accDTForStaminaRecovery += dt;
+	m_root = std::move(rootSelector);
+}
 
-		if(m_accDTForStaminaRecovery >= 3.f) {
-			// ¿ÀÂ÷ º¸Á¤: 1.0À» »©¼­ ³²Àº ½Ã°£À» ´ÙÀ½ ÅÏÀ¸·Î ÀÌ¿ù
-			m_accDTForStaminaRecovery = 0.F;
+Server::Contents::GeneralRoamingState::~GeneralRoamingState()
+{
+}
 
-			owner->IncStamina(statInfo.staminaRecoveryPerSec);
-
-			std::cout << "IncStamina!" << std::endl;
-
-			// ÆĞÅ¶ »ı¼º ¹× ºê·ÎµåÄ³½ºÆ®
-			auto pb = ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina());
-			owner->GetGameWorld()->Broadcast(std::move(pb));
-		}
-	}
-	else {
-		// ÀÌ¹Ì °¡µæ Ã¡´Ù¸é Å¸ÀÌ¸Ó ÃÊ±âÈ­ (³ªÁß¿¡ ´Ù½Ã ´â¾ÒÀ» ¶§ 1ÃÊ µÚºÎÅÍ È¸º¹µÇµµ·Ï)
-		m_accDTForStaminaRecovery = 0.f;
+void Server::Contents::GeneralRoamingState::Enter(const float dt)
+{
+	std::cout << "General GeneralRoamingState Enter!" << std::endl;
+	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
+	if(bt) {
+		bt->SetRoot(m_root.get());
+		bt->Reset();
 	}
 }
 
-// ==================================
-//		  GENERAL_MOVE_STATE
-// ==================================
-Server::Contents::GeneralMoveState::GeneralMoveState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_MOVE)
+void Server::Contents::GeneralRoamingState::Exit(const float dt)
 {
-
-}
-
-Server::Contents::GeneralMoveState::~GeneralMoveState()
-{
-
-}
-
-void Server::Contents::GeneralMoveState::Enter(const float dt)
-{
-
-}
-
-void Server::Contents::GeneralMoveState::Exit(const float dt)
-{
-
-}
-
-void Server::Contents::GeneralMoveState::Update(const float dt)
-{
-	// TODO: General Move State
-}
-
-// ==================================
-//		 GENERAL_PRE_DELAY_STATE
-// ==================================
-Server::Contents::GeneralPreDelayState::GeneralPreDelayState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY), m_startFrame{}
-{
-}
-
-Server::Contents::GeneralPreDelayState::~GeneralPreDelayState()
-{
-}
-
-void Server::Contents::GeneralPreDelayState::Enter(const float dt)
-{
-	auto const owner{ GetGeneral(GetFSM()) };
-	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
-}
-
-void Server::Contents::GeneralPreDelayState::Exit(const float dt)
-{
-	std::cout << std::format("ID:{}, GeneralPreDelayState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
-}
-
-void Server::Contents::GeneralPreDelayState::Update(const float dt)
-{
-	auto const owner{ GetGeneral(GetFSM()) };
-
-	const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAttackInfo() };
-
-	if(worldFrame >= m_startFrame + atkInfo.atkData->preDelayFrame) {
-		auto const world{ owner->GetGameWorld() };
-		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-		fsm->ChangeState(etou8(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK), dt);
+	std::cout << "General GeneralRoamingState Exit!" << std::endl;
+	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
+	if(bt) {
+		bt->SetRoot(m_root.get());
+		bt->Reset();
 	}
 }
 
-// ==================================
-//		 GENERAL_ATTACK_STATE
-// ==================================
-Server::Contents::GeneralAttackState::GeneralAttackState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
+void Server::Contents::GeneralRoamingState::Update(const float dt)
 {
-}
-
-Server::Contents::GeneralAttackState::~GeneralAttackState()
-{
-}
-
-void Server::Contents::GeneralAttackState::Enter(const float dt)
-{
-	std::cout << std::format("ID:{}, GeneralAttackState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
-}
-
-void Server::Contents::GeneralAttackState::Exit(const float dt)
-{
-	std::cout << std::format("ID:{}, GeneralAttackState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
-}
-
-void Server::Contents::GeneralAttackState::Update(const float dt)
-{
-	auto const owner{ GetGeneral(GetFSM()) };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	auto const fsm{ GetFSM() };
+	auto const owner{ fsm->GetOwner() };
+	const auto& ownerPos{ owner->GetPos() };
 	auto const world{ owner->GetGameWorld() };
-	if(auto const target = owner->GetTarget()) {
-		if(owner->IsTargetInAttackRange(target)) {
-			if(target->OnDamaged(owner, dt)) {
-				{
-					auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(owner->GetID(), owner->GetHP(), owner->GetStamina()) };
-					owner->GetGameWorld()->Broadcast(std::move(pb));
-				}
+	const auto& groups{ world->GetGameObjectGroups() };
 
-				if(atkInfo.atkData->id == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
-					const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
-					if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType || FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
-						auto const obj{ static_cast<General*>(target) };
-						auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
-						fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt);
-						return;
-					}
-				}
+	for(int i = 0; i < groups.size(); ++i) {
+		if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
+			continue;
+
+		for(const auto& [id, o] : groups[i]) {
+			
+			if(owner->GetID() == id) continue;
+
+			const auto& targetPos{ o->GetPos() };
+
+			const float distToTargetSq{ (targetPos - ownerPos).LengthSquared() };
+
+			if(distToTargetSq <= 2.f * 2.f) {
+				std::cout << "Stop!" << std::endl;
+				owner->GetComponent<Server::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", o->GetID());
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
+				return;
 			}
-			else {
-				std::cout << "Target OnDamaged Fail!" << std::endl;
-			}
-		}
-		else {
-			std::cout << "Target Not in Range!" << std::endl;
-			auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
-			return;
+
 		}
 	}
-	else {
-		std::cout << "No Target!" << std::endl;
-		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
-		return;
+
+	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
+	
+	if(bt)
+		bt->Update(dt);
+}
+	
+Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_DUELING }
+{
+	SetFSM(fsm);
+
+	// TODO: í–‰ë™íŠ¸ë¦¬ êµ¬í˜„
+	auto rootSelector = std::make_unique<Server::Contents::SelectorNode>();
+	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
+
+	// seqDefense
+	{
+		auto seqDefense{ std::make_unique<Server::Contents::SequenceNode>() };
+		{
+			seqDefense->AddChild(std::make_unique<Server::Contents::ConditionIsTargetAttacking>());
+			seqDefense->AddChild(std::make_unique<Server::Contents::ActionDefense>());
+		}
+
+		rootSelector->AddChild(std::move(seqDefense));
 	}
 
-	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY, dt);
+	// seqAtk
+	{
+		auto seqAtk{ std::make_unique<Server::Contents::SequenceNode>() };
+		rootSelector->AddChild(std::move(seqAtk));
+	}
+
+	m_root = std::move(rootSelector);
 }
 
-// ==================================
-//		 GENERAL_POST_DELAY_STATE
-// ==================================
-Server::Contents::GeneralPostDelayState::GeneralPostDelayState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY), m_startFrame{}
+Server::Contents::GeneralDuelingState::~GeneralDuelingState()
 {
 }
 
-Server::Contents::GeneralPostDelayState::~GeneralPostDelayState()
+void Server::Contents::GeneralDuelingState::Enter(const float dt)
 {
-}
-
-void Server::Contents::GeneralPostDelayState::Enter(const float dt)
-{
-	std::cout << std::format("ID:{}, GeneralPostDelayState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
-	auto const owner{ GetGeneral(GetFSM()) };
-	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-}
-
-void Server::Contents::GeneralPostDelayState::Exit(const float dt)
-{
-	std::cout << std::format("ID:{}, GeneralPostDelayState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
-}
-
-void Server::Contents::GeneralPostDelayState::Update(const float dt)
-{
-	auto const owner{ GetGeneral(GetFSM()) };
+	auto const fsm{ GetFSM() };
+	auto const owner{ static_cast<General*>(fsm->GetOwner()) };
 	auto const world{ owner->GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	std::cout << "General GeneralDuelingState Enter!" << std::endl;
+	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
+	if(bt) {
+		bt->SetRoot(m_root.get());
+		bt->Reset();
+	}
 
-	if(worldFrame >= m_startFrame + atkInfo.atkData->postDelayFrame) {
-		auto const fsm{ GetFSM() };
-		fsm->ChangeState(etou8(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), dt);
+	owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(owner->GetID(), owner->GetStanceType()) };
+	world->Broadcast(std::move(pb));
+
+	owner->GetComponent<NavAgent>()->StopMove();
+}
+
+void Server::Contents::GeneralDuelingState::Exit(const float dt)
+{
+	std::cout << "General GeneralDuelingState Exit!" << std::endl;
+	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
+	if(bt) {
+		bt->SetRoot(m_root.get());
+		bt->Reset();
 	}
 }
 
+void Server::Contents::GeneralDuelingState::Update(const float dt)
+{
+	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
 
-// ==================================
-//		 GENERAL_STUN_STATE
-// ==================================
-Server::Contents::GeneralStunState::GeneralStunState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_STUN), m_startFrame{}, m_stunDuration{}
+	if(bt)
+		bt->Update(dt);
+/*
+	- ìƒëŒ€ê°€ ê³µê²© O
+		- ì•½ê³µê²© ë°©ì–´ í™•ë¥  30%
+		- ê°•ê³µê²© ë°©ì–´ í™•ë¥  90%
+		- ë°˜ê²© í™•ë¥  20%
+	- ìƒëŒ€ê°€ ê³µê²© X
+		- ê³µê²©í•  í™•ë¥  60% (ì´ë•Œ ìŠ¤íƒ ìŠ¤ë¥¼ ë°”ê¿€ í™•ë¥  50%)
+		- ì•½ê³µê²© í™•ë¥  40%
+			- ì•½ê³µê²©ìœ¼ë¡œ ì‹œì‘í•˜ëŠ” ì½¤ë³´ ì¤‘ í•˜ë‚˜ ì‹¤í–‰í™•ë¥  30%
+		- ê°•ê³µê²© í™•ë¥  50%
+			- í˜ì´í¬í™•ë¥  60%
+			- ê°•ê³µê²©ìœ¼ë¡œ ì‹œì‘í•˜ëŠ” ì½¤ë³´ ì¤‘ í•˜ë‚˜ ì‹¤í–‰í™•ë¥  40%
+		- ë°©ì–´í•´ì œê³µê²© 10%
+	- ì›€ì§ì´ê±°ë‚˜ ìŠ¤íƒ ìŠ¤ë§Œ ë³€ê²½í•  í™•ë¥  40%
+*/
+}
+
+Server::Contents::GeneralStunState::GeneralStunState(FSM* const fsm)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_STUN }
 {
 }
 
@@ -288,37 +184,21 @@ Server::Contents::GeneralStunState::~GeneralStunState()
 
 void Server::Contents::GeneralStunState::Enter(const float dt)
 {
-	std::cout << std::format("ID:{}, GeneralStunState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
-
-	auto const owner{ GetGeneral(GetFSM()) };
-	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-	if(m_stunDuration == 0) {
-		m_stunDuration = owner->GetStatInfo().stunDelayFrame;
-	}
 }
 
 void Server::Contents::GeneralStunState::Exit(const float dt)
 {
-	std::cout << std::format("ID:{}, GeneralStunState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
-	auto const owner{ GetGeneral(GetFSM()) };
-	m_stunDuration = owner->GetStatInfo().stunDelayFrame;
 }
 
 void Server::Contents::GeneralStunState::Update(const float dt)
 {
-	auto const owner{ GetGeneral(GetFSM()) };
-	auto const world{ owner->GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-	auto const fsm{ GetFSM() };
-	fsm->ChangeState(etou8(FB_ENUMS::GENERAL_STATE_TYPE_IDLE), dt);
 }
 
-// ==================================
-//		 GENERAL_DEAD_STATE
-// ==================================
-Server::Contents::GeneralDeadState::GeneralDeadState()
-	:State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD), m_accDTForRespawn{}
+
+Server::Contents::GeneralDeadState::GeneralDeadState(FSM* const fsm)
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_DEAD }, m_accDTForRespawn{}
 {
+	SetFSM(fsm);
 }
 
 Server::Contents::GeneralDeadState::~GeneralDeadState()
@@ -327,24 +207,25 @@ Server::Contents::GeneralDeadState::~GeneralDeadState()
 
 void Server::Contents::GeneralDeadState::Enter(const float dt)
 {
-	m_accDTForRespawn = 0.f;
-	std::cout << std::format("ID:{}, GeneralDeadState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
+	std::cout << "General GeneralDeadState Enter!" << std::endl;
+	// TODO: í–‰ë™íŠ¸ë¦¬ ìƒì„±
 }
 
 void Server::Contents::GeneralDeadState::Exit(const float dt)
 {
-	std::cout << std::format("ID:{}, GeneralDeadState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
+	std::cout << "General GeneralDeadState Exit!" << std::endl;
 	m_accDTForRespawn = 0.f;
 }
 
 void Server::Contents::GeneralDeadState::Update(const float dt)
 {
 	m_accDTForRespawn += dt;
-	auto const owner{ GetGeneral(GetFSM()) };
-	const auto& statInfo{ owner->GetStatInfo() };
+	auto const fsm{ GetFSM() };
+	auto const owner{ fsm->GetOwner() };
+	auto const data{ owner->GetGameObjectData() };
 
-	if(m_accDTForRespawn >= statInfo.respawnTimeSec) {
-		owner->Respawn();
+	if(m_accDTForRespawn >= data->respawnTimeSec) {
+		static_cast<General*>(owner)->OnRespawn();
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, dt, true);
 	}
 }
-

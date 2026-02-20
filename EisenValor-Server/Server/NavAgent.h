@@ -6,14 +6,6 @@ namespace Server {
 	namespace Contents {
 		class NavSystem;
 		class NavAgent : public Component {
-		private:
-			NavSystem*			m_navSystem;
-			int32				m_agentIdx;
-			dtCrowdAgentParams	m_params;
-			
-			Vec3				m_targetPos;
-			bool				m_hasTarget;
-
 		public:
 			explicit NavAgent(NavSystem* const navSystem);
 			virtual ~NavAgent() = default;
@@ -23,8 +15,17 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		public:
-			void SetTargetPos(const Vec3& targetPos);
+			void SetDestPos(const Vec3& destPos);
+			void StopMove();
 			
+		private:
+			NavSystem* m_navSystem;
+			int32				m_agentIdx;
+			dtCrowdAgentParams	m_params;
+
+			Vec3				m_destPos;
+			bool				m_hasTarget;
+
 		};
 	}
 }

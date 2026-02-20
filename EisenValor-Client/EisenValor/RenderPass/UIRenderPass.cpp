@@ -6,7 +6,6 @@
 #include <DxDeviceGlobal.h>
 #include <DxShaderCompilerGlobal.h>
 #include "UIGlobal.h"
-#include "UI/UITextureGlobal.h"
 #include "Scene.h"
 #include "UIComponent.h"
 #include "DenseList.h"
@@ -65,7 +64,7 @@ void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene)
 		DxUtils::CreateTransitionBarrier(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	cmdList->ResourceBarrier(1, &barrier);
 
-	// 2. 렌더 타겟 및 뷰포트 설정 (BackBuffer에 직접 렌더링)
+	// 2. 렌더 타겟 및 뷰포트 설정 (BackBuffer 렌더링)
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapChain->GetCurrentBackBufferRTV();
 	cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
@@ -265,7 +264,10 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	{
 		for (ImageUIComponent& ui : imgStorage->GetList())
 		{
-			renderableUIs.push_back(&ui);
+			if (ui.GetGameObject()->IsActiveInHierarchy())
+			{
+				renderableUIs.push_back(&ui);
+			}
 		}
 	}
 
@@ -275,7 +277,10 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	{
 		for (ButtonUIComponent& ui : btnStorage->GetList())
 		{
-			renderableUIs.push_back(&ui);
+			if (ui.GetGameObject()->IsActiveInHierarchy())
+			{
+				renderableUIs.push_back(&ui);
+			}
 		}
 	}
 
@@ -289,7 +294,6 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	std::vector<UIInstanceData> instanceBufferData;
 	instanceBufferData.reserve(m_maxInstances);
 
-	auto&					  textureGlobal = GLOBAL(UITextureGlobal);
 	std::vector<UIRenderData> componentRenderData;
 
 	for (auto* ui : renderableUIs)
@@ -313,14 +317,7 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			inst.uvMax = rData.uvMax;
 
 			// 텍스처 바인딩
-			if (rData.textureId > 0)
-			{
-				inst.textureIndex = textureGlobal.GetSRVIndex(rData.textureId);
-			}
-			else
-			{
-				inst.textureIndex = 0;
-			}
+			inst.textureIndex = rData.textureId;
 
 			inst.padding[0] = inst.padding[1] = inst.padding[2] = 0;
 			instanceBufferData.push_back(inst);

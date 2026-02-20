@@ -4,9 +4,6 @@ using TaskFuncCB = std::function<void()>;
 
 namespace ServerEngine {
 	class Task {
-	private:
-		TaskFuncCB m_cbFunc;
-
 	public:
 		explicit Task(TaskFuncCB&& cbFunc)
 			: m_cbFunc(std::move(cbFunc))
@@ -28,5 +25,9 @@ namespace ServerEngine {
 			if(m_cbFunc)
 				m_cbFunc();
 		}
+
+	private:
+		TaskFuncCB m_cbFunc;
+
 	};
 }

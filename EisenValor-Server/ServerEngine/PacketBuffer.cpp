@@ -15,7 +15,7 @@ ServerEngine::PacketBuffer::~PacketBuffer()
 	// std::cout << "~PacketBuffer" << std::endl;
 }
 
-void ServerEngine::PacketBuffer::Append(const BYTE* const src, const uint32 size) noexcept
+void ServerEngine::PacketBuffer::Append(const BYTE* const src, const uint32 size)
 {
 	memcpy_s(&m_buffer[m_dataSize], m_capacity- m_dataSize, src, size);
 	m_dataSize += size;

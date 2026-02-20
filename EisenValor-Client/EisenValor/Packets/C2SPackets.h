@@ -35,7 +35,7 @@ std::shared_ptr<PacketBuffer> Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
 // =================
 std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerState);
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_ATTACK_PACKET(const FB_STRUCTS::GeneralAttackInfo* attackInfo);
-std::shared_ptr<PacketBuffer> Make_CS_CHANGE_PLAYER_STANCE_PACKET();
+std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_FAKE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_CAMERA_TARGET_PACKET(uint32_t targetId);
 std::shared_ptr<PacketBuffer> Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);

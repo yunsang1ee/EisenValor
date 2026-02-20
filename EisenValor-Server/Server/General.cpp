@@ -2,6 +2,8 @@
 #include "General.h"
 
 #include "GameWorld.h"
+#include "Player.h"
+#include "BehaviorTree.h"
 
 Server::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
@@ -18,52 +20,115 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 	if(!target) return false;
 
 	const auto& atkInfo{ GetAttackInfo() };
-	const float radiusSq{ atkInfo.atkData->attackRadius * atkInfo.atkData->attackRadius };
+	const float radiusSq{ atkInfo.skillData->attackRadius * atkInfo.skillData->attackRadius };
 	const Vec3& myPos{ GetPos() };
+
 	const Vec3& myRot{ GetRotation() };
-	Vec3 myDir{ sinf(myRot.y), 0.f, cosf(myRot.y) };
+	Vec3 myDir{ sinf(Deg2Rad(myRot.y)), 0.f, cosf(Deg2Rad(myRot.y)) };
 	myDir.Normalize();
-	const float cosHalfAngle{ std::cosf((atkInfo.atkData->attackDegree * 0.5f) * DirectX::XM_PI / 180.f) };
+
+	const float degree{ atkInfo.skillData->attackDegree * 0.5f };
+	const float cosHalfAngle{ std::cosf(Deg2Rad(degree)) };
 	const Vec3& targetPos{ target->GetPos() };
 	const Vec3 toTargetDir{ targetPos - myPos };
 	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
-	if(distToTargetSq >= radiusSq) return false;
+
+	if(distToTargetSq >= radiusSq) {
+		return false;
+	}
+
 	const float dotValue{ myDir.Dot(toTargetDir) };
 	const float cosHalfAngleSq{ cosHalfAngle * cosHalfAngle };
-	//		// a * b = |a| |b| cos	
-	// cos = a * b / |a| |b|
-	// °ø°Ý ÆÇÁ¤ -> theta <= halfAngle -> cos(theta) >= cos(halfAngle)
-	// dotValue < 0 -> (Áï, ÇÃ·¹ÀÌ¾î°¡ ¹Ù¶óº¸´Â ¹Ý´ëÆí)ÀÎ °æ¿ì¿¡µµ, Á¦°öÇÏ¸é ¾ç¼ö°¡ µÈ´Ù -> µÚÂÊ NPC°¡ °ø°Ý ¸ÂÀº°ÍÃ³·³ ÆÇÁ¤µÉ ¼ö ÀÖÀ½.
-	if(dotValue <= 0) return false;
-	if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq))
-		return true;
 
+	if(dotValue <= 0) {
+		return false;
+	}
+	if((dotValue * dotValue >= distToTargetSq * cosHalfAngleSq)) {
+		return true;
+	}
 	return false;
+}
+
+void Server::Contents::General::Update(const float dt)
+{
+	GameObject::Update(dt);
+
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0, 0) };
+	GetGameWorld()->Broadcast(std::move(pb));
 }
 
 void Server::Contents::General::OnDeath()
 {
-	std::cout << std::format("ID:{}, OnDeath!", GetID()) << std::endl;
+	std::cout << "General::OnDeath()" << std::endl;
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT);
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT, true);
+
+	// TODO: ë¸”ëž™ë³´ë“œ ì´ˆê¸°í™”
 }
 
-void Server::Contents::General::Respawn()
+void Server::Contents::General::OnRespawn()
 {
-	auto& statInfo{ GetStatInfo() };
+	auto& statInfo{ GetStat() };
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	SetHp(statInfo.maxHP);
 	SetStamina(statInfo.maxStamina);
-	SetAlive(true);
+	SetActive(true);
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
 
-	auto const fsm{ GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, worldDT);
+	// TODO: General Respawn ì‹œ ë¶€í™œ ìœ„ì¹˜ ì„¤ì • í•´ì•¼í•¨.
+
+	Vec3 pos{ GetPos() };
+	pos.x += 10.f;
+	pos.z += 10.f;
+	SetPos(pos);
+
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+}
+
+bool Server::Contents::General::OnDamaged(Creature* const attacker, const float dt)
+{
+	// TODO: ë¸”ëž™ë³´ë“œì— ê³µê²©ìž ì •ë³´ ê°±ì‹ 
+	// TODO: í˜„ìž¬ Roaming ì¤‘ì´ì—ˆë‹¤ë©´, ì¦‰ì‹œ Duel ìƒíƒœë¡œ ì „í™˜í•´ì•¼í•¨.
+
+	/*auto const world{ GetGameWorld() };
+	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+
+	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	const auto stateType{ fsm->GetCurState()->GetStateType() };
+
+	uint32 damage{};
+
+	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
+		auto attackerPlayer = static_cast<Player*>(attacker);
+		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
+
+		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+		}
+		else {
+			damage = attackerAtkInfo.skillData->damage;
+		}
+	}
+
+	DecHP(damage);*/
+
+	auto const world{ GetGameWorld() };
+	auto bt = GetComponent<BehaviorTree>();
+	bt->GetBlackboard()->SetValue("AttackerID", attacker->GetID());
+	bt->GetBlackboard()->SetValue("LastHitFrame", world->GetGameWorldFrameCount());
+
+	auto fsm = GetComponent<FSM>();
+	if(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING == fsm->GetCurState()->GetStateType()) {
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
+		return false;
+	}
+
+	return true;
+
 }

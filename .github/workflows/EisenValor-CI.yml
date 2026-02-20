@@ -40,8 +40,8 @@ jobs:
             configuration: "Release"
             platform: "x64"
             upload_artifacts: true
-
-          # EisenValor-Server (Debug / Release)
+            
+          # EisenValor-Server (Debug / IOCP-Release / RIO-Release)
           - project: "EisenValor-Server"
             solution_path: "EisenValor-Server"
             solution_file: "EisenValor-Server.sln"
@@ -52,8 +52,15 @@ jobs:
           - project: "EisenValor-Server"
             solution_path: "EisenValor-Server"
             solution_file: "EisenValor-Server.sln"
-            cache_key: "nuget-server"
-            configuration: "Release"
+            cache_key: "nuget-server-iocp"
+            configuration: "IOCP-Release"
+            platform: "x64"
+            upload_artifacts: true
+          - project: "EisenValor-Server"
+            solution_path: "EisenValor-Server"
+            solution_file: "EisenValor-Server.sln"
+            cache_key: "nuget-server-rio"
+            configuration: "RIO-Release"
             platform: "x64"
             upload_artifacts: true
 
@@ -177,7 +184,7 @@ jobs:
         
     - name: Create Deployment Package
       id: create_package
-      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && (startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.create_deploy_link))
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && (startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_deploy_link == 'true'))
       working-directory: ${{ matrix.solution_path }}
       run: |
         Write-Host "=========================================="
@@ -252,9 +259,6 @@ jobs:
         Write-Host "Directory structure:"
         Get-ChildItem -Path $packageDir -Directory | ForEach-Object {
           Write-Host "  - $($_.Name)/"
-          Get-ChildItem -Path $_.FullName -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-            Write-Host "    - $($_.Name)/"
-          }
         }
         
         $resourceFiles = Get-ChildItem -Path "$packageDir/Resource" -Recurse -File -ErrorAction SilentlyContinue
@@ -347,7 +351,7 @@ jobs:
         fail_on_unmatched_files: true
 
     - name: Upload Deployment Package (Manual Trigger)
-      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && github.event_name == 'workflow_dispatch' && inputs.create_deploy_link && !startsWith(github.ref, 'refs/tags/')
+      if: matrix.upload_artifacts && matrix.project == 'EisenValor-Client' && github.event_name == 'workflow_dispatch' && github.event.inputs.create_deploy_link == 'true' && !startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.project }}-${{ matrix.configuration }}-Full-Deployment

@@ -67,8 +67,3 @@ void ServerEngine::IOCore::FlushTaskQueue()
 		taskQueue->Execute();
 	}
 }
-
-int ServerEngine::IOCore::GetPeerName(const SOCKET clientSocket, sockaddr* name, int* nameLen)
-{
-	return getpeername(clientSocket, name, nameLen);
-}

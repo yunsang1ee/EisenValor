@@ -11,11 +11,6 @@ namespace Server {
 		using GameRooms = std::unordered_map<uint16, std::shared_ptr<GameRoom>>;
 
 		class GameLobby : public ServerEngine::TaskQueue {
-		private:
-			ClientSessions	m_users;
-			GameRooms		m_rooms;
-			uint16			m_roomIDGen{ 1 };
-
 		public:
 			void Init();
 			void JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID);
@@ -35,6 +30,11 @@ namespace Server {
 		private:
 			void AddUser(const std::shared_ptr<ClientSession>& clientSession);
 			void RemoveUser(const uint32 id);
+
+		private:
+			ClientSessions	m_users;
+			GameRooms		m_rooms;
+			uint16			m_roomIDGen{ 1 };
 
 		};
 	}

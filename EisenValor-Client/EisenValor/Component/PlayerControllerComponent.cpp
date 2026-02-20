@@ -5,6 +5,7 @@
 #include "Transform.h"
 #include "SceneGlobal.h"
 #include "Scene.h"
+#include "Component/FSM/FSMComponent.h"
 
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
@@ -86,6 +87,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 					if (camComp->IsLookAtRotationEnabled())
 					{
 						UpdateCameraShoulderView(camComp);
+						RotatePlayerToTarget(camComp);
 					}
 				}
 			}
@@ -111,6 +113,13 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	FB_STRUCTS::Vec3 posVec{pos.x, pos.y, pos.z};
 	FB_STRUCTS::Vec3 rotVec{rot.x, rot.y, rot.z};
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
+
+	// FSM에서 현재 상태 가져오기
+	// uint8_t curState = FB_ENUMS::GENERAL_STATE_TYPE_IDLE;
+	/*if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	{
+		curState = fsm->GetCurStateType();
+	}*/
 
 	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::GENERAL_STATE_TYPE_NONE);
 	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
@@ -185,10 +194,34 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	auto& input = GLOBAL(InputGlobal);
 
+	bool isMoving = input.GetInput('W') || input.GetInput('S') || input.GetInput('A') || input.GetInput('D');
+
 	movement->SetInputForward(input.GetInput('W'));
 	movement->SetInputBackward(input.GetInput('S'));
 	movement->SetInputLeft(input.GetInput('A'));
 	movement->SetInputRight(input.GetInput('D'));
+
+	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	{
+		uint8_t curState = fsm->GetCurStateType();
+
+		// 공격 관련 상태인 경우 이동/대기로의 전환 방지
+		bool isAttackCycle = (curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+							  curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
+							  curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+
+		if (!isAttackCycle)
+		{
+			if (isMoving)
+			{
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			}
+			else
+			{
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+			}
+		}
+	}
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)
@@ -342,5 +375,53 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMStoreFloat3(&offsetF, offset);
 
 		camComp->SetFollowOffset(offsetF); // 월드 오프셋 적용
+	}
+}
+
+void PlayerControllerComponent::RotatePlayerToTarget(CameraComponent* camComp)
+{
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
+
+	auto* trStorage = scene->GetStorage<Transform>();
+	auto* playerTr = GetGameObject()->GetComponent<Transform>();
+
+	auto lookAtHandle = camComp->GetLookAtTarget();
+	auto* enemyTr = trStorage->Get(lookAtHandle);
+
+	if (playerTr && enemyTr)
+	{
+		XMFLOAT3 pPos = playerTr->GetWorldPosition();
+		XMFLOAT3 ePos = enemyTr->GetWorldPosition();
+
+		// 적 방향 벡터 (수평)
+		float dx = ePos.x - pPos.x;
+		float dz = ePos.z - pPos.z;
+
+		// 거리 체크
+		if (dx * dx + dz * dz < 1e-4f) return;
+
+		// 타겟 방향 Yaw 계산
+		float targetYaw = atan2f(dx, dz);
+
+		// 현재 플레이어의 Yaw 가져오기
+		// forward 벡터
+		XMFLOAT3 fwd = playerTr->GetForward();
+		float currentYaw = atan2f(fwd.x, fwd.z);
+
+		// 각도 최단 경로 보간
+		float diff = targetYaw - currentYaw;
+		while (diff <= -XM_PI) diff += XM_2PI;
+		while (diff > XM_PI)  diff -= XM_2PI;
+
+		// 보간
+		float newYaw = currentYaw + diff * 0.2f;
+
+		// Yaw 회전
+		XMVECTOR newRotQ = XMQuaternionRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), newYaw);
+		
+		XMFLOAT4 newRotQF;
+		XMStoreFloat4(&newRotQF, newRotQ);
+		playerTr->SetRotationQuaternion(newRotQF);
 	}
 }

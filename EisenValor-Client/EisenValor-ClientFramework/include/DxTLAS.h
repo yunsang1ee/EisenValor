@@ -37,7 +37,7 @@ public:
 	ID3D12Resource*			  GetResource() const { return m_tlasBuffer.GetResource(); }
 	bool					  IsBuilt() const { return m_tlasBuffer.IsValid(); }
 	uint32_t				  GetInstanceCount() const { return m_instanceCount; }
-	uint32_t				  GetSRVIndex() const { return m_srvIndex; }
+	uint32_t				  GetSRVIndex() const { return m_tlasBuffer.GetSRVHandle().GetIndex(); }
 
 private:
 	void BuildInternal(
@@ -53,6 +53,5 @@ private:
 	DxBuffer m_instanceDescBuffer;
 	uint32_t m_instanceCount = 0;
 	uint32_t m_maxInstances = 0;
-	uint32_t m_srvIndex = ~0u;
 	bool	 m_isBuilt = false;
 };

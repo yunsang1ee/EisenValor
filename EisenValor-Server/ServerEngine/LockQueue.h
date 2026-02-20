@@ -4,10 +4,6 @@
 namespace ServerEngine {
 	template<typename T>
 	class LockQueue {
-	private:
-		std::queue<T>	m_queue;
-		std::mutex		m_mutex;
-	
 	public:
 		void Push(T item)
 		{
@@ -43,6 +39,11 @@ namespace ServerEngine {
 			std::lock_guard<std::mutex> lk{ m_mutex };
 			return m_queue.empty();
 		}
+
+	private:
+		std::queue<T>	m_queue;
+		std::mutex		m_mutex;
+
 	};
 }
 

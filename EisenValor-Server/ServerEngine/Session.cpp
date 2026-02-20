@@ -284,8 +284,8 @@ void ServerEngine::IOCP::IOCPSession::PostSend()
 
 #ifdef _USE_RIO
 ServerEngine::RIO::RIOSession::RIOSession()
-	: m_owner{ nullptr }, m_rq{RIO_INVALID_RQ}, m_deferCount{}, m_maxSendRQSize{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION }
-	, m_commitSendMS{ std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS) }
+	: m_owner{ nullptr }, m_rq{ RIO_INVALID_RQ }, m_deferCount{}, m_maxSendRQSize{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION }
+	, m_commitSendMS{ std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS) }, m_outstandingSendCount{}
 {
 }
 
@@ -306,9 +306,7 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 	std::shared_ptr<PacketBuffer> packetBuffer;
 
 	while(deferCount < m_maxSendRQSize) {
-		if(!m_packetBufferQueue.try_pop(packetBuffer)) {
-			break;
-		}
+		if(!m_packetBufferQueue.try_pop(packetBuffer)) break;
 
 		if(packetBuffer == nullptr) continue;
 

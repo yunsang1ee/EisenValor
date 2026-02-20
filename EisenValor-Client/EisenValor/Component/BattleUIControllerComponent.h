@@ -38,6 +38,9 @@ public:
 	void TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir); // 원격 공격 피드백
 	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
 	void ToggleUI(bool isActive); 
+	
+	// FSM에서 쓸 현재 공격 모드 가져오는 함수
+	std::optional<GENERAL_ATTACK_TYPE> GetCurrentAttackType() const { return m_currentAttackType; }
 
 	void AddListener(HandleOf<GameObject> observerHandle, std::function<void(GENERAL_ATTACK_DIR_TYPE, std::optional<GENERAL_ATTACK_TYPE>)> callback) {
 		m_listeners.push_back({observerHandle, callback});
@@ -127,6 +130,10 @@ private:
 
 	// 리스너 목록
 	std::vector<StanceChangeListener> m_listeners;
+
+	// Depth Sorting
+	std::vector<std::pair<HandleOf<ImageUIComponent>, int32_t>> m_managedImages;
+	std::vector<std::pair<HandleOf<ButtonUIComponent>, int32_t>> m_managedButtons;
 
 private:
 	// 헬퍼 함수 선언

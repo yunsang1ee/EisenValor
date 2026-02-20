@@ -9,15 +9,19 @@
 #include "MeshComponent.h"
 #include "CameraComponent.h"
 #include "MovementComponent.h"
-#include <Component/PlayerControllerComponent.h>
-#include <Component/HealthComponent.h>
-#include <Component/BattleUIControllerComponent.h>
-#include <Component/TeamComponent.h>
-#include <Component/VitalUIControllerComponent.h>
-#include <Component/StaminaComponent.h>
-#include <RectTransformComponent.h>
-#include <ImageUIComponent.h>
-#include <ButtonUIComponent.h>
+#include "DxSwapChain.h"
+#include "DxRendererGlobal.h"
+#include "Component/PlayerControllerComponent.h"
+#include "Component/HealthComponent.h"
+#include "Component/BattleUIControllerComponent.h"
+#include "Component/TeamComponent.h"
+#include "Component/VitalUIControllerComponent.h"
+#include "Component/StaminaComponent.h"
+#include "Component/FSM/FSMComponent.h"
+#include "Component/FSM/GeneralStates.h"
+#include "RectTransformComponent.h"
+#include "ImageUIComponent.h"
+#include "ButtonUIComponent.h"
 
 
 using namespace NetBridge;
@@ -86,6 +90,44 @@ std::vector<uint32_t> cubeIndices = {
 	20, 21, 22, 20, 22, 23	// Bottom
 };
 } // namespace Cube
+
+namespace Sector
+{
+	// 반지름, 각도, 세그먼트, 높이
+	inline std::pair<std::vector<Vertex>, std::vector<uint32_t>> CreateSectorMesh(float radius = 5.0f, float angleDeg = 90.0f, int segments = 20)
+	{
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+
+		float halfAngle = DirectX::XMConvertToRadians(angleDeg * 0.5f);
+		float angleStep = DirectX::XMConvertToRadians(angleDeg) / segments;
+
+		// 중심점
+		vertices.push_back({ {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
+
+		// 호
+		for (int i = 0; i <= segments; ++i)
+		{
+			float currentAngle = -halfAngle + (angleStep * i);
+			// Z축이 전방
+			float x = radius * sinf(currentAngle);
+			float z = radius * cosf(currentAngle);
+
+			vertices.push_back({ {x, 0.0f, z}, {0.0f, 1.0f, 0.0f} });
+		}
+
+		// 인덱스 생성
+		// 단면
+		for (int i = 0; i < segments; ++i)
+		{
+			indices.push_back(0);     // 중심
+			indices.push_back(i + 1); // 현재
+			indices.push_back(i + 2); // 다음
+		}
+
+		return { vertices, indices };
+	}
+} // namespace Sector
 
 // clang-format on
 } // namespace Resources
@@ -506,6 +548,41 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle,
 				[](VitalUIControllerComponent* vital) {}
 			);
+
+			// FSMComponent
+			scene->CreateComponentWithInit<FSMComponent>(
+				playerObjHandle,
+				[](FSMComponent* fsm) {
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+				}
+			);
+
+			// 공격 범위 디버깅용
+			scene->ReserveGameObject(
+				"AttackRangeIndicator", std::nullopt,
+				[scene, playerObjHandle](GameObject* indicatorObj)
+				{	// 부모 설정
+					if (auto* player = scene->TryGetGameObject(playerObjHandle)) {
+						indicatorObj->GetTransform().SetParent(player->GetComponentHandle<Transform>());
+					}
+					else {
+						scene->DestroyGameObject(indicatorObj->GetHandle());
+						return;
+					}
+
+					// 위치
+					indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
+
+					// 부채꼴 Mesh
+					auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
+					scene->CreateComponentWithInit<MeshComponent>(
+						indicatorObj->GetHandle(),
+						[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
+							mesh->SetMesh(v, i);
+						}
+					);
+				}
+			);
 		}
 	);
 
@@ -522,8 +599,11 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					camObj->GetHandle(),
 					[playerTrHandle](CameraComponent* cam)
 					{
+						auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
+						float aspect = static_cast<float>(swapChain->GetWidth()) / swapChain->GetHeight();
+
 						cam->SetAsMainCamera();
-						cam->SetPerspective(DX::XM_PI, 16.0f / 9.0f, 0.1f, 1000.0f);
+						cam->SetPerspective(DX::XM_PI / 3.0f, aspect, 0.1f, 1000.0f);
 						cam->SetLookAtTarget(playerTrHandle);
 						cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 						cam->SetEnableLookAtRotation(false);
@@ -671,7 +751,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// BattleUIControllerComponent 부착
-			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
@@ -680,6 +760,33 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
 						ui->InitStance(stance);
 						//DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n", static_cast<int>(stance));
+					}
+				);
+			}
+
+			// 공격 범위 디버깅
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+			{
+				scene->ReserveGameObject(
+					"AttackRangeIndicator", std::nullopt,
+					[scene, objHandle](GameObject* indicatorObj)
+					{
+						// 부모
+						if (auto* parent = scene->TryGetGameObject(objHandle)) {
+							indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
+						}
+
+						// 위치
+						indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
+
+						// 부채꼴 Mesh
+						auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
+						scene->CreateComponentWithInit<MeshComponent>(
+							indicatorObj->GetHandle(),
+							[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
+								mesh->SetMesh(v, i);
+							}
+						);
 					}
 				);
 			}
@@ -818,8 +925,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_STANCE_PACKET& recvPkt
 )
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
@@ -848,12 +955,36 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_STATE_PACKET& recvPkt
 )
 {
-	// TODO: ID로 오브젝트 찾은 다음, 해당 오브젝트의 state Update
-	// 이때 state == DEAD이면 죽음 처리
-	// 플레이어/장수 같은 경우 메모리에서 삭제하지 않고
-	// 나머지 오브젝트들은 메모리에서 삭제
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return false;
 
-	return false;
+	const uint32 objID = recvPkt.obj_id();
+	auto obj = scene->FindGameObjectByServerID(objID);
+	if (!obj)
+	{
+		return false;
+	}
+
+	uint8_t nextState = recvPkt.next_state();
+
+	// FSM 상태 동기화
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		fsm->ChangeState(nextState);
+	}
+
+	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
+	if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+	{
+		if (obj->GetComponent<StaminaComponent>() == nullptr)
+		{
+			// 병사는 즉시 메모리에서 삭제
+			scene->DestroyGameObject(obj->GetHandle());
+		}
+		// 장수(플레이어)는 삭제하지 않음
+	}
+
+	return true;
 }
 
 bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
@@ -867,7 +998,7 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	const uint32_t totalSeconds = remainingTime / 1000;
 	const uint32_t minutes = totalSeconds / 60;
 	const uint32_t seconds = totalSeconds % 60;
-	// DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
+	//DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
 	return true;
 }
 
@@ -955,9 +1086,54 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt
 )
 {
-	// TODO: Respawn 되었을 때 받는 패킷
-	// TODO: 우선 LOCAL ID인지 확인하고 LOCAL ID면 LOCAL PLAYER에 맞게 처리
-	// TODO: LOCAL ID가 아니라면 해당 ID의 오브젝트 찾아서 패킷 값 대입
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	const uint32 objID = recvPkt.obj_id();
+	auto obj = scene->FindGameObjectByServerID(objID);
+
+	if (obj)
+	{
+		// 부활
+		obj->SetActive(true);
+
+		// 위치, 회전 업데이트
+		const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+		obj->GetTransform().SetPosition(pos);
+		obj->GetTransform().SetRotation(rot);
+
+		// 바이탈 업데이트
+		if (auto* health = obj->GetComponent<HealthComponent>())
+		{
+			health->SetMaxHealth(recvPkt.max_hp());
+			health->SetHealth(recvPkt.current_hp());
+		}
+		if (auto* stamina = obj->GetComponent<StaminaComponent>())
+		{
+			stamina->SetMaxStamina(recvPkt.max_stamina());
+			stamina->SetStamina(recvPkt.current_stamina());
+		}
+
+		// 스탠스 업데이트
+		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		{
+			ui->SetStance(recvPkt.stance_type());
+		}
+		//디버깅
+		DEBUG_LOG_FMT("[SC_RESPAWN_GENERAL_PACKET] Object ID {} has respawned at ({:.1f}, {:.1f}, {:.1f})\n", 
+			objID, pos.x, pos.y, pos.z);
+		
+		return true;
+	}
+
+	DEBUG_LOG_FMT("[SC_RESPAWN_GENERAL_PACKET] Failed to find object ID {}\n", objID);
+	return false;
+}
+
+bool NetBridge::S2C::Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt)
+{
+	// TODO: SC_DEAD_PACKET
+
+	std::cout << "Handle_SC_DEAD_PACKET!, ID: " << recvPkt.obj_id() << std::endl;
 
 	return false;
 }

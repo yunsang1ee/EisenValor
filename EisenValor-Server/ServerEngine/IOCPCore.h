@@ -7,10 +7,6 @@ namespace ServerEngine {
 	namespace IOCP {
 #ifdef _USE_IOCP
 		class IOCPCore : public ServerEngine::IOCore {
-		private:
-			HANDLE									m_iocpHandle;
-			IOCPAcceptContext						m_acceptContext;
-
 		public:
 			IOCPCore();
 			virtual ~IOCPCore() = default;
@@ -33,6 +29,10 @@ namespace ServerEngine {
 			void RegistAccept();
 
 			std::shared_ptr<IOCPSession> CreateSession();
+
+		private:
+			HANDLE									m_iocpHandle;
+			IOCPAcceptContext						m_acceptContext;
 
 		};
 #endif

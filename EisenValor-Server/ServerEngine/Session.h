@@ -24,18 +24,6 @@ namespace ServerEngine {
 	}
 
 	class Session : public std::enable_shared_from_this<Session> {
-	protected:
-		uint32																m_id;				
-		SOCKET																m_socket;			
-		std::atomic_bool													m_connected;		
-		SOCKADDR_IN															m_clientAddr;		
-		std::atomic<SESSION_STATE>											m_state;			
-	
-		std::chrono::high_resolution_clock::time_point						m_lastPong;			
-		std::chrono::high_resolution_clock::time_point						m_lastPing;			
-		const std::chrono::milliseconds										m_pingInterval;		
-		const std::chrono::milliseconds										m_timeoutInterval;	
-
 	public:
 		Session();
 		virtual ~Session();
@@ -54,11 +42,11 @@ namespace ServerEngine {
 		virtual void ProcessSend(const uint32 bytesTransferred) abstract;
 
 	public:
-		void SetState(const SESSION_STATE state) noexcept { m_state = state; }
-		uint32 GetID() const noexcept { return m_id; }
-		SESSION_STATE GetState() const noexcept { return m_state; }
-		bool IsConnected() noexcept { return m_connected; }
-		SOCKET GetSocket() const noexcept { return m_socket; }
+		void SetState(const SESSION_STATE state) { m_state = state; }
+		uint32 GetID() const { return m_id; }
+		SESSION_STATE GetState() const { return m_state; }
+		bool IsConnected() { return m_connected; }
+		SOCKET GetSocket() const { return m_socket; }
 
 	public:
 		uint32 AssembleReceivedData(std::span<const char> buf);
@@ -71,19 +59,25 @@ namespace ServerEngine {
 		virtual void SendPing() abstract;
 		void CheckPing();
 		void Handle_CS_PONG();
+
+	protected:
+		uint32																m_id;
+		SOCKET																m_socket;
+		std::atomic_bool													m_connected;
+		SOCKADDR_IN															m_clientAddr;
+		std::atomic<SESSION_STATE>											m_state;
+
+		std::chrono::high_resolution_clock::time_point						m_lastPong;
+		std::chrono::high_resolution_clock::time_point						m_lastPing;
+		const std::chrono::milliseconds										m_pingInterval;
+		const std::chrono::milliseconds										m_timeoutInterval;
+
 	};
 
 #ifdef _USE_IOCP
 	namespace IOCP {
 		class IOCPSession : public Session {
 			enum { BUFFER_SIZE = 0x10'000, /*64kb*/ };
-		public:
-			IOCPRecvContext											m_recvContext;
-			IOCPSendContext											m_sendContext;
-			IOCPRecvBuffer											m_recvBuffer;
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
-			std::atomic_bool										m_sendRegistered;
-
 		public:
 			IOCPSession();
 			virtual ~IOCPSession();
@@ -100,6 +94,13 @@ namespace ServerEngine {
 
 		private:
 			void PostSend();
+
+		public:
+			IOCPRecvContext											m_recvContext;
+			IOCPSendContext											m_sendContext;
+			IOCPRecvBuffer											m_recvBuffer;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
+			std::atomic_bool										m_sendRegistered;
 		};
 	}
 #endif 
@@ -107,20 +108,6 @@ namespace ServerEngine {
 #ifdef _USE_RIO
 	namespace RIO {
 		class RIOSession : public Session {
-		private:
-			RIOWorker*													m_owner;			
-			RIO_RQ														m_rq;				
-			RIORecvBuffer												m_recvBuffer;		
-			RIORecvContext												m_recvContext;		
-			uint32														m_deferCount;		
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
-			RIOSendBuffer												m_sendBuffer;		
-			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};	
-			uint32														m_outstandingSendCount;
-			
-			const std::chrono::milliseconds								m_commitSendMS;		
-			const uint32												m_maxSendRQSize;
-		
 		public:
 			RIOSession();
 			virtual ~RIOSession();
@@ -138,15 +125,30 @@ namespace ServerEngine {
 			void FlushPacketQueue();
 
 		public:
-			void SetOwner(RIOWorker* const owner) noexcept { m_owner = owner; }
+			void SetOwner(RIOWorker* const owner) { m_owner = owner; }
 
 		private:
 			// flags: RIO_MSG_DEFER
 			bool DeferSend(const uint32 offset, const uint32 size);
 			// flags: RIO_MSG_COMMIT_ONLY(System Call)
 			void CommitSend();
-			// SessionPoolø° π›≥≥«œ±‚ ¿¸ ¡§∏Æ
+			// SessionPoolÏóê Î∞òÎÇ©ÌïòÍ∏∞ Ï†Ñ Ï†ïÎ¶¨
 			void Clean();
+
+		private:
+			RIOWorker* m_owner;
+			RIO_RQ														m_rq;
+			RIORecvBuffer												m_recvBuffer;
+			RIORecvContext												m_recvContext;
+			uint32														m_deferCount;
+			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+			RIOSendBuffer												m_sendBuffer;
+			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
+			uint32														m_outstandingSendCount;
+
+			const std::chrono::milliseconds								m_commitSendMS;
+			const uint32												m_maxSendRQSize;
+
 		};
 	}
 #endif

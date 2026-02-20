@@ -3,12 +3,10 @@
 
 #include "BehaviorNode.h"
 
-void Server::Contents::BehaviorTree::SetRoot(std::unique_ptr<BehaviorNode> root)
+Server::Contents::BehaviorTree::BehaviorTree()
+	:m_root{nullptr}
 {
-	m_root = std::move(root);
-	if(m_root) {
-		m_root->SetTree(this);
-	}
+
 }
 
 void Server::Contents::BehaviorTree::Update(const float dt)
@@ -19,5 +17,6 @@ void Server::Contents::BehaviorTree::Update(const float dt)
 
 void Server::Contents::BehaviorTree::Reset()
 {
-	if(m_root) m_root->Reset();
+	if(m_root)
+		m_root->Reset();
 }
