@@ -117,7 +117,7 @@ void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects...\n");
 
-	ReserveGameObject(
+	/*ReserveGameObject(
 		"Ground", std::nullopt,
 		[this](GameObject* obj)
 		{
@@ -132,6 +132,44 @@ void SampleScene::CreateSceneObjects()
 			);
 		}
 
+	);*/
+
+	ReserveGameObject(
+		"Map", std::nullopt,
+		[this](GameObject* obj)
+		{
+			auto& tr = obj->GetTransform();
+			tr.SetPosition(0.0f, 0.0f, 0.0f); // Ground 옆
+			tr.SetScale(1.0f);
+
+			EvAsset::MeshData meshData;
+			if (EvAsset::MeshLoader::LoadMeshFromObj("Resource/Models/perfect_map.obj", meshData))
+			{
+				DEBUG_LOG_FMT("[SampleScene] Loaded OBJ: {} vertices, {} indices\n", 
+					meshData.vertices.size(), meshData.indices.size());
+
+				std::vector<Vertex>	  clientVertices;
+				std::vector<uint32_t> clientIndices = meshData.indices;
+
+				for (const auto& v : meshData.vertices)
+				{
+					Vertex cv{};
+					cv.position = {v.position[0], v.position[1], v.position[2]};
+					cv.normal	= {v.normal[0], v.normal[1], v.normal[2]};
+					cv.uv		= {v.uv0[0], v.uv0[1]};
+					cv.color	= {1.0f, 1.0f, 1.0f, 1.0f};
+					cv.tangent	= {v.tangent[0], v.tangent[1], v.tangent[2]};
+
+					clientVertices.push_back(cv);
+				}
+
+				auto meshHandle = CreateComponentWithInit<MeshComponent>(
+					obj->GetHandle(),
+					[v = std::move(clientVertices), i = std::move(clientIndices)](MeshComponent* mesh)
+					{ mesh->SetMesh(v, i, "perfect_map"); }
+				);
+			}
+		}
 	);
 
 	ReserveGameObject(
@@ -211,8 +249,7 @@ void SampleScene::CreateSceneObjects()
 			}
 		}
 	);*/
-
-	DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
+	/*DX::XMFLOAT3 positions[3] = {{-4.0f, 3.0f, 0.0f}, {0.0f, 1.0f, 5.0f}, {4.0f, 3.0f, 0.0f}};
 
 	DX::XMFLOAT3 rotations[3] = {{10.0f, 15.0f, 0.0f}, {-5.0f, 120.0f, 3.0f}, {8.0f, 210.0f, -10.0f}};
 
@@ -233,7 +270,7 @@ void SampleScene::CreateSceneObjects()
 				);
 			}
 		);
-	}
+	}*/
 	DEBUG_LOG_FMT("[SampleScene] Created {} GameObjects\n", 8);
 }
 

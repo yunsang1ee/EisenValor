@@ -8,10 +8,6 @@ namespace ServerEngine {
 
 #ifdef _USE_IOCP
 		class IOCPContext : public OVERLAPPED {
-		private:
-			IO_CONTEXT_TYPE					m_type;
-			std::shared_ptr<IOCPSession>	m_owner;
-
 		public:
 			explicit IOCPContext(const IO_CONTEXT_TYPE type);
 
@@ -23,13 +19,13 @@ namespace ServerEngine {
 			std::shared_ptr<IOCPSession> GetOwner() const { return m_owner; }
 			IO_CONTEXT_TYPE GetType() const { return m_type; }
 
+		private:
+			IO_CONTEXT_TYPE					m_type;
+			std::shared_ptr<IOCPSession>	m_owner;
+
 		};
 
 		class IOCPAcceptContext : public IOCPContext {
-		private:
-			// Session¿ª πÃ∏Æ ø¨∞·«ÿµŒæÓµµ µ 
-			SOCKET m_acceptSocket;
-			char buff[1024]{};
 		public:
 			IOCPAcceptContext() : IOCPContext{ IO_CONTEXT_TYPE::ACCEPT }, m_acceptSocket{ INVALID_SOCKET } {}
 
@@ -37,6 +33,11 @@ namespace ServerEngine {
 			void SetAcceptSocket(const SOCKET acceptSocket) { m_acceptSocket = acceptSocket; }
 			SOCKET GetAcceptSocket() const { return m_acceptSocket; }
 			char* GetBuff() { return buff; }
+
+		private:
+			// SessionÏùÑ ÎØ∏Î¶¨ Ïó∞Í≤∞Ìï¥ÎëêÏñ¥ÎèÑ Îê®
+			SOCKET m_acceptSocket;
+			char buff[1024]{};
 		};
 
 		class IOCPRecvContext : public IOCPContext {

@@ -3,14 +3,14 @@
 namespace ServerEngine {
 	class Session;
 	class SessionPool {
-	private:
-		SessionFactoryFunc										m_func;
-		// acceptThread(DeqSession), RioWorker(EnqSession)°¡ Á¢±ÙÇÏ¿©¼­ concurrent_queue·Î ¸¸µé¾úÀ½
-		tbb::concurrent_queue<std::shared_ptr<Session>>			m_freeSessions;
-	
 	public:
 		void Init(SessionFactoryFunc sessionFunc);
 		std::shared_ptr<Session> DeqSession();
+	
+	private:
+		SessionFactoryFunc										m_func;
+		// acceptThread(DeqSession), RioWorker(EnqSession)ê°€ ì ‘ê·¼í•˜ì—¬ì„œ concurrent_queueë¡œ ë§Œë“¤ì—ˆìŒ
+		tbb::concurrent_queue<std::shared_ptr<Session>>			m_freeSessions;
 
 	};
 }

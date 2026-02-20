@@ -11,6 +11,25 @@ namespace ServerEngine {
 
 #ifdef _USE_RIO
 		class RIOWorker {
+		public:
+			explicit RIOWorker(const uint16 id);
+			~RIOWorker();
+
+		public:
+			bool			Init(SessionFactoryFunc sessionFunc);
+			void			Work();
+			bool			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr);
+
+		public:
+			RIO_CQ			GetCQ() const { return m_cq; }
+			uint16			GetID() const { return m_id; }
+			auto& GetSessionPool() { return m_sessionPool; }
+
+		private:
+			// Í¥ÄÎ¶¨ÌïòÍ≥† ÏûàÎäî SessionÎì§Ïùò Í∞ÅÍ∞Å Î≥¥ÎÇº PacketÎì§ Ï≤òÎ¶¨
+			void			FlushSessionPacketQueue();
+			void			DequeueCompletion();
+
 		private:
 			RIO_CQ															m_cq;
 			uint16															m_id;
@@ -19,24 +38,6 @@ namespace ServerEngine {
 			std::vector<RIORESULT>											m_ioResults;
 			SessionFactoryFunc												m_sessionFactoryFunc;
 
-		public:
-			explicit RIOWorker(const uint16 id);
-			~RIOWorker();
-
-		public:
-			bool			Init(SessionFactoryFunc sessionFunc) noexcept;
-			void			Work() noexcept;
-			bool			ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept;
-
-		public:
-			RIO_CQ			GetCQ() const noexcept { return m_cq; }
-			uint16			GetID() const noexcept { return m_id; }
-			auto& GetSessionPool() noexcept { return m_sessionPool; }
-
-		private:
-			// ∞¸∏Æ«œ∞Ì ¿÷¥¬ SessionµÈ¿« ∞¢∞¢ ∫∏≥æ PacketµÈ √≥∏Æ
-			void			FlushSessionPacketQueue() noexcept;
-			void			DequeueCompletion() noexcept;
 		};
 
 #endif

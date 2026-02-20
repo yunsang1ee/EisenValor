@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "ClientPacketHandler.h"
 
-void Server::ClientPacketHandler::Init() noexcept
+void Server::ClientPacketHandler::Init()
 {
 	for(auto& packetHandlerFunc : PacketHandlerFuncs)
 		packetHandlerFunc = ClientPackets::Handle_INVALID_PACKET;
 
 	// =================
-	//		ººº«
+	//		ÏÑ∏ÏÖò
 	// =================
 #pragma region SESSION_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PONG_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PONG_PACKET>(ClientPackets::Handle_CS_PONG_PACKET, session, buffer); };
@@ -15,13 +15,13 @@ void Server::ClientPacketHandler::Init() noexcept
 #pragma endregion
 
 	// =================
-	//		∑Œ±◊¿Œ
+	//		Î°úÍ∑∏Ïù∏
 	// =================
 #pragma region LOGIN_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_LOGIN_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_LOGIN_PACKET>(ClientPackets::Handle_CS_LOGIN_PACKET, session, buffer); };
 #pragma endregion
 	// =================
-	//		∑Œ∫Ò
+	//		Î°úÎπÑ
 	// =================
 #pragma region LOBBY_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_ENTER_GAME_LOBBY_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET>(ClientPackets::Handle_CS_ENTER_GAME_LOBBY_PACKET, session, buffer); };
@@ -29,7 +29,7 @@ void Server::ClientPacketHandler::Init() noexcept
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MAKE_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MAKE_GAME_ROOM_PACKET>(ClientPackets::Handle_CS_MAKE_GAME_ROOM_PACKET, session, buffer); };
 #pragma endregion
 	// =================
-	//		∑Î
+	//		Î£∏
 	// =================
 #pragma region ROOM_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_JOIN_GAME_ROOM_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_JOIN_GAME_ROOM_PACKET>(ClientPackets::Handle_CS_JOIN_GAME_ROOM_PACKET, session, buffer); };
@@ -41,18 +41,18 @@ void Server::ClientPacketHandler::Init() noexcept
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_COMPLETE_LOADING_GAME_WORLD_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET>(ClientPackets::Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET, session, buffer); };
 #pragma endregion
 	// =================
-	//		ø˘µÂ
+	//		ÏõîÎìú
 	// =================
 #pragma region WORLD_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(ClientPackets::Handle_CS_MOVE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK_PACKET>(ClientPackets::Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_PLAYER_STANCE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_PLAYER_STANCE_PACKET>(ClientPackets::Handle_CS_CHANGE_PLAYER_STANCE_PACKET, session, buffer); };
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_GENERAL_STANCE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET>(ClientPackets::Handle_CS_CHANGE_GENERAL_STANCE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_FAKE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_FAKE_PACKET>(ClientPackets::Handle_CS_PLAYER_FAKE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(ClientPackets::Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET>(ClientPackets::Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET, session, buffer); };
 #pragma endregion
 	// =================
-	//		≈◊Ω∫∆Æ
+	//		ÌÖåÏä§Ìä∏
 	// =================
 #pragma region TEST_PACKETS
 #ifndef ENABLE_LOBBY
@@ -63,18 +63,18 @@ void Server::ClientPacketHandler::Init() noexcept
 	LOG_INFO("ClientPacketHandler Init");
 }
 
-bool Server::ClientPacketHandler::HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
+bool Server::ClientPacketHandler::HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
 {
 	const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer);
 	return std::invoke(PacketHandlerFuncs[packetHeader.packetType], session, buffer + sizeof(PacketHeader));
 }
 
-std::shared_ptr<ServerEngine::PacketBuffer> Server::ClientPacketHandler::MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData) noexcept
+std::shared_ptr<ServerEngine::PacketBuffer> Server::ClientPacketHandler::MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData)
 {
 	const uint16 packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 	const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
 
-	// TODO: PacketBufferPoolManager∑Œ∫Œ≈Õ packetBuffer πﬁæ∆ø¿±‚
+	// TODO: PacketBufferPoolManagerÎ°úÎ∂ÄÌÑ∞ packetBuffer Î∞õÏïÑÏò§Í∏∞
 	const auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
 	packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 	return packetBuffer;

@@ -20,10 +20,7 @@
       <Filter>02. Contents\GameWorld\GameObject\Creature\Player</Filter>
     </ClCompile>
     <ClCompile Include="GameObjectFactory.cpp">
-      <Filter>02. Contents\GameWorld\Factory</Filter>
-    </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
+      <Filter>02. Contents\GameWorld\GameObjectFactory</Filter>
     </ClCompile>
     <ClCompile Include="FSM.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component\FSM</Filter>
@@ -45,12 +42,6 @@
     </ClCompile>
     <ClCompile Include="BehaviorNode.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode</Filter>
-    </ClCompile>
-    <ClCompile Include="IsPlayerInNearNode.cpp">
-      <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
-    </ClCompile>
-    <ClCompile Include="TargetTraceNode.cpp">
-      <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalFunc.cpp">
       <Filter>97. Global</Filter>
@@ -85,8 +76,8 @@
     <ClCompile Include="Soldier.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Creature\Soldier</Filter>
     </ClCompile>
-    <ClCompile Include="GeneralStates.cpp">
-      <Filter>02. Contents\GameWorld\GameObject\Creature\General\State</Filter>
+    <ClCompile Include="PlayerStates.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="NavAgent.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component\NavAgent</Filter>
@@ -145,6 +136,21 @@
     <ClCompile Include="ClientPackets.cpp">
       <Filter>03. Packets\ClientPackets</Filter>
     </ClCompile>
+    <ClCompile Include="BattleRam.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralStates.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
+    </ClCompile>
+    <ClCompile Include="OccupationZone.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralNodes.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\Nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -189,12 +195,6 @@
     <Filter Include="98. Utils">
       <UniqueIdentifier>{d8bf9806-e324-45ba-9966-629519d36367}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameRoom">
-      <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameRoom\Participant">
-      <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameWorld">
       <UniqueIdentifier>{2176b3bb-d56a-43f0-b9f6-c43bb61eef63}</UniqueIdentifier>
     </Filter>
@@ -215,9 +215,6 @@
     </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Creature\General">
       <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\State">
-      <UniqueIdentifier>{e2f15a41-5300-4a54-81ed-a762c62508d5}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Component">
       <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
@@ -240,17 +237,11 @@
     <Filter Include="02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode">
       <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode">
-      <UniqueIdentifier>{78ab9b19-e408-4466-b80d-0f7d82c9a817}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Component\NavAgent">
       <UniqueIdentifier>{8bfe2cf1-67ed-42e0-afdd-54f3a9faf857}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\GameWorld\GameObject\Component\Collider">
       <UniqueIdentifier>{a667c614-f8b1-41f3-b089-90afa67bee80}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameWorld\Factory">
-      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Contents\GameWorld\CollisionDetector">
       <UniqueIdentifier>{55044845-55da-40aa-ab93-10bc906ce7cf}</UniqueIdentifier>
@@ -272,6 +263,33 @@
     </Filter>
     <Filter Include="02. Contents\GameData">
       <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObjectFactory">
+      <UniqueIdentifier>{37d126e9-b075-41d8-84f6-979642b2e328}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\BattleRam">
+      <UniqueIdentifier>{53307cfa-15b5-4eb7-b314-bf6bf5eac919}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\BattleRam\State">
+      <UniqueIdentifier>{1b61b4d6-a179-4a29-9691-9483ee05422d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\Player\State">
+      <UniqueIdentifier>{e2f15a41-5300-4a54-81ed-a762c62508d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\States">
+      <UniqueIdentifier>{f9c531da-b829-44b2-9675-b04fbcba0f54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone">
+      <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameWorld\GameObject\Creature\General\Nodes">
+      <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoom">
+      <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameRoom\Participant">
+      <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -300,7 +318,7 @@
       <Filter>96. Headers</Filter>
     </ClInclude>
     <ClInclude Include="GameObjectFactory.h">
-      <Filter>02. Contents\GameWorld\Factory</Filter>
+      <Filter>02. Contents\GameWorld\GameObjectFactory</Filter>
     </ClInclude>
     <ClInclude Include="ServerStructs.h">
       <Filter>96. Headers</Filter>
@@ -329,12 +347,6 @@
     <ClInclude Include="BehaviorNode.h">
       <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode</Filter>
     </ClInclude>
-    <ClInclude Include="IsPlayerInNearNode.h">
-      <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
-    </ClInclude>
-    <ClInclude Include="TargetTraceNode.h">
-      <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode\00. CommonLeafNode</Filter>
-    </ClInclude>
     <ClInclude Include="ServerGlobalFunc.h">
       <Filter>97. Global</Filter>
     </ClInclude>
@@ -362,8 +374,8 @@
     <ClInclude Include="Soldier.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\Soldier</Filter>
     </ClInclude>
-    <ClInclude Include="GeneralStates.h">
-      <Filter>02. Contents\GameWorld\GameObject\Creature\General\State</Filter>
+    <ClInclude Include="PlayerStates.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="NavAgent.h">
       <Filter>02. Contents\GameWorld\GameObject\Component\NavAgent</Filter>
@@ -433,6 +445,18 @@
     </ClInclude>
     <ClInclude Include="ClientPackets.h">
       <Filter>03. Packets\ClientPackets</Filter>
+    </ClInclude>
+    <ClInclude Include="BattleRam.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
+    </ClInclude>
+    <ClInclude Include="OccupationZone.h">
+      <Filter>02. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralNodes.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralStates.h">
+      <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

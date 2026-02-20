@@ -13,9 +13,6 @@ namespace Server {
 		private:
 			using CollisionFunc = bool(*)(const Collider* const, const Collider* const);
 			static constexpr uint8 MAX_TYPE_COUNT = static_cast<int>(COLLIDER_TYPE::END);
-		
-		private:
-			CollisionFunc m_collisionTable[MAX_TYPE_COUNT + 1][MAX_TYPE_COUNT + 1];
 
 		private:
 			CollisionDetector();
@@ -37,6 +34,10 @@ namespace Server {
 			static bool OverlapOnAxis(const OBBCollider* const box1, const OBBCollider* const box2, const Matrix& mat1, const Matrix& mat2, const Vec3& axis);
 		
 			friend class GameWorld;
+
+		private:
+			CollisionFunc m_collisionTable[MAX_TYPE_COUNT + 1][MAX_TYPE_COUNT + 1];
+
 		};
 	}
 }

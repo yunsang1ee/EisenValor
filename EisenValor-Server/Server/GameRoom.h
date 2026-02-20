@@ -20,26 +20,11 @@ namespace Server {
 		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
 		using Bots = std::unordered_map<uint32, std::shared_ptr<Bot>>;
 
-		// JobQueue¿¡´Â GameRoom¿¡¼­ ÀÏ¾î³ª´Â ¸ğµç ÀÏµéÀÌ ½×ÀÌ°Ô µÊ
+		// JobQueueì—ëŠ” GameRoomì—ì„œ ì¼ì–´ë‚˜ëŠ” ëª¨ë“  ì¼ë“¤ì´ ìŒ“ì´ê²Œ ë¨
 		// ex) Update(), EnterRoom(), LeaveRoom(), Broadcast() ...
-		// GameRoomÀÇ JobQueue¸¦ ½ÇÇàÇÏ´Â ¾²·¹µå´Â ¿©·¯ ¾²·¹µå Áß, ´Ü ÇÏ³ª¸¸
+		// GameRoomì˜ JobQueueë¥¼ ì‹¤í–‰í•˜ëŠ” ì“°ë ˆë“œëŠ” ì—¬ëŸ¬ ì“°ë ˆë“œ ì¤‘, ë‹¨ í•˜ë‚˜ë§Œ
 		class GameRoom : public ServerEngine::TaskQueue {
-		private:
-			// ¼¼¼Ç ¾ÆÀÌµğ == À¯Àú ¾ÆÀÌµğ == ÇÃ·¹ÀÌ¾î ¾ÆÀÌµğ
-			RoomInfo													m_info;
-
-			Users														m_users;
-			Bots														m_bots;
-			std::shared_ptr<User>										m_host;
-
-			int32														m_offenseCount;
-			int32														m_defenseCount;
-
-			std::shared_ptr<GameWorld>									m_gameWorld;
-			static constexpr uint8										MAX_PARTICIPANTS = 6;
-			int32														m_loadingCompletedUserCount;
-
-		private:
+		public:
 			GameRoom() = delete;
 			explicit GameRoom(const uint16 roomID);
 			~GameRoom();
@@ -52,13 +37,13 @@ namespace Server {
 			friend class ServerEngine::ObjectPool<GameRoom>;
 
 		public:
-			void JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept;
-			void LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession) noexcept;
+			void JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession);
+			void LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession);
 			void ReturnToGameRoom(const Users& users, const Bots& bots);
 			void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> packetBuffer);
 
 		public:
-			/* ÆĞÅ¶ ¹Ş¾Æ¼­ Ã³¸®µÇ´Â ºÎºĞ */
+			/* íŒ¨í‚· ë°›ì•„ì„œ ì²˜ë¦¬ë˜ëŠ” ë¶€ë¶„ */
 			void Handle_CS_CHANGE_TEAM(const std::shared_ptr<ClientSession>& clientSession);
 			void Handle_CS_ADD_BOT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE teamType);
 			void Handle_CS_READY_GAME(const std::shared_ptr<ClientSession>& clientSession);
@@ -70,8 +55,8 @@ namespace Server {
 #endif // DEVELOP
 
 		public:
-			uint16 GetID() const noexcept { return m_info.id; }
-			const RoomInfo& GetRoomInfo() const noexcept { return m_info; }
+			uint16 GetID() const { return m_info.id; }
+			const RoomInfo& GetRoomInfo() const { return m_info; }
 
 		private:
 			void Init();
@@ -83,6 +68,21 @@ namespace Server {
 
 			friend class GameLobby;
 			friend class GameWorld;
+
+		private:
+			// ì„¸ì…˜ ì•„ì´ë”” == ìœ ì € ì•„ì´ë”” == í”Œë ˆì´ì–´ ì•„ì´ë””
+			RoomInfo													m_info;
+
+			Users														m_users;
+			Bots														m_bots;
+			std::shared_ptr<User>										m_host;
+
+			int32														m_offenseCount;
+			int32														m_defenseCount;
+
+			std::shared_ptr<GameWorld>									m_gameWorld;
+			int32														m_loadingCompletedUserCount;
+
 
 		};
 	}

@@ -553,7 +553,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			scene->CreateComponentWithInit<FSMComponent>(
 				playerObjHandle,
 				[](FSMComponent* fsm) {
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 				}
 			);
 
@@ -751,7 +751,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// BattleUIControllerComponent 부착
-			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
@@ -925,8 +925,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_STANCE_PACKET& recvPkt
 )
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
@@ -1126,6 +1126,15 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	}
 
 	DEBUG_LOG_FMT("[SC_RESPAWN_GENERAL_PACKET] Failed to find object ID {}\n", objID);
+	return false;
+}
+
+bool NetBridge::S2C::Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt)
+{
+	// TODO: SC_DEAD_PACKET
+
+	std::cout << "Handle_SC_DEAD_PACKET!, ID: " << recvPkt.obj_id() << std::endl;
+
 	return false;
 }
 

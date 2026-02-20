@@ -48,6 +48,7 @@
 #include <functional>
 #include <cassert>
 #include <random>
+#include <variant>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;

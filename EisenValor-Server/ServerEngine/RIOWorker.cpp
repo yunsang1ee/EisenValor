@@ -20,7 +20,7 @@ ServerEngine::RIO::RIOWorker::~RIOWorker()
 	std::cout << std::format("~RioWorker, ID = {}", m_id) << std::endl;;
 }
 
-bool ServerEngine::RIO::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
+bool ServerEngine::RIO::RIOWorker::Init(SessionFactoryFunc sessionFunc)
 {
 	m_sessionFactoryFunc = sessionFunc;
 
@@ -28,7 +28,7 @@ bool ServerEngine::RIO::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 	
 	m_ioResults.resize(rioConfig.MAX_RIO_RESULT);
 
-	// SEND/RECV CQ µû·Î ¸¸µé ¼ö ÀÖ´Ù. Áö±ÝÀº °ø¿ë
+	// SEND/RECV CQ ë”°ë¡œ ë§Œë“¤ ìˆ˜ ìžˆë‹¤. ì§€ê¸ˆì€ ê³µìš©
 	const uint32 MAX_CQ_SIZE{ rioConfig.MAX_CQ_SIZE };
 	m_cq = RIO_EXT_FUNC_TB.RIOCreateCompletionQueue(MAX_CQ_SIZE, nullptr);
 
@@ -41,13 +41,13 @@ bool ServerEngine::RIO::RIOWorker::Init(SessionFactoryFunc sessionFunc) noexcept
 	return true;
 }
 
-void ServerEngine::RIO::RIOWorker::Work() noexcept
+void ServerEngine::RIO::RIOWorker::Work()
 {
 	FlushSessionPacketQueue();
 	DequeueCompletion();
 }
 
-void ServerEngine::RIO::RIOWorker::FlushSessionPacketQueue() noexcept
+void ServerEngine::RIO::RIOWorker::FlushSessionPacketQueue()
 {
 	auto iter{ m_connectedSession.begin() };
 	for(; iter != m_connectedSession.end();) {
@@ -62,7 +62,7 @@ void ServerEngine::RIO::RIOWorker::FlushSessionPacketQueue() noexcept
 	}
 }
 
-void ServerEngine::RIO::RIOWorker::DequeueCompletion() noexcept
+void ServerEngine::RIO::RIOWorker::DequeueCompletion()
 {
 	assert(TLS_THREAD_ID == m_id);
 
@@ -87,7 +87,7 @@ void ServerEngine::RIO::RIOWorker::DequeueCompletion() noexcept
 	}
 }
 
-bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr) noexcept
+bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOCKADDR_IN& clientAddr)
 {
 	LOG_INFO("Session Accept!, RioWorker ID ={}", m_id);
 	auto session{ std::static_pointer_cast<RIOSession>(m_sessionPool.DeqSession()) };

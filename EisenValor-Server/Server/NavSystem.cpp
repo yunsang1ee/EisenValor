@@ -45,8 +45,8 @@ bool Server::Contents::NavSystem::Load(const std::string_view filePath)
 
 	m_crowd = dtAllocCrowd();
 	
-	constexpr int32 maxAgents{ 10 };
-	constexpr float maxAgentRadius{ 2.f };
+	constexpr int32 maxAgents{ 1000 };
+	constexpr float maxAgentRadius{ 0.5f };
 
 	if(!m_crowd->init(maxAgents, maxAgentRadius, m_navMesh)) return false;
 
@@ -76,7 +76,7 @@ void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3
 	if(!ag || !ag->active) return;
 
 	float pos[3] = { targetPos.x, targetPos.y, targetPos.z };
-	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f }; // 검색 범위
+	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f };	// search range
 	dtPolyRef targetRef;
 	float targetNearest[3];
 
@@ -84,5 +84,22 @@ void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3
 
 	if(targetRef) {
 		m_crowd->requestMoveTarget(agentIdx, targetRef, targetNearest);
+	}
+}
+
+void Server::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
+{
+	if(!m_crowd) return;
+
+	const dtCrowdAgent* ag{ m_crowd->getAgent(agentIdx) };
+	if(!ag || !ag->active) return;
+
+	float zeroVel[3] = { 0.0f, 0.0f, 0.0f };
+	if(m_crowd->requestMoveVelocity(agentIdx, zeroVel)) {
+		std::cout << "requestMoveVelocity" << std::endl;
+	}
+	std::cout << "requestMoveVelocity" << std::endl;
+	if(m_crowd->resetMoveTarget(agentIdx)) {
+		std::cout << "resetMoveTarget" << std::endl;
 	}
 }
