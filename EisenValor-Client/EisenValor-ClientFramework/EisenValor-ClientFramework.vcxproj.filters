@@ -286,6 +286,9 @@
     <ClInclude Include="include\SceneResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxSamplerHeapGlobal.h">
+      <Filter>Graphics\Resource\Heap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -435,6 +438,9 @@
     </ClCompile>
     <ClCompile Include="src\SceneResource.cpp">
       <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxSamplerHeapGlobal.cpp">
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
