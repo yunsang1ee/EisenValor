@@ -192,6 +192,7 @@
     <ClInclude Include="include\DxResource.h" />
     <ClInclude Include="include\DxRtPipelineState.h" />
     <ClInclude Include="include\DxRtShaderTable.h" />
+    <ClInclude Include="include\DxSamplerHeapGlobal.h" />
     <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\DxTexture.h" />
@@ -254,6 +255,7 @@
     <ClCompile Include="src\DxResource.cpp" />
     <ClCompile Include="src\DxRtPipelineState.cpp" />
     <ClCompile Include="src\DxRtShaderTable.cpp" />
+    <ClCompile Include="src\DxSamplerHeapGlobal.cpp" />
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\DxTexture.cpp" />

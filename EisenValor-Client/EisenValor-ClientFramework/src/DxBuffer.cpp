@@ -235,15 +235,15 @@ void DxBuffer::CreateSRV(
 		.Buffer =
 			{.FirstElement = 0,
 			 .NumElements = numElements,
-			 .StructureByteStride = elementStride,
+			 .StructureByteStride = (format == DXGI_FORMAT_UNKNOWN) ? elementStride : 0,
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
 
 	m_srvHandle = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
 
 	DEBUG_LOG_FMT(
-		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes\n", GetName(), m_srvHandle.GetIndex(), numElements,
-		elementStride
+		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes, Format={}\n", GetName(), m_srvHandle.GetIndex(), numElements,
+		elementStride, static_cast<int>(format)
 	);
 }
 

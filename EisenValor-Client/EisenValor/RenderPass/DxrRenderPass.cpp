@@ -6,6 +6,7 @@
 #include <DxDeviceGlobal.h>
 #include <DxRendererGlobal.h>
 #include <DxDescriptorHeapGlobal.h>
+#include <DxSamplerHeapGlobal.h>
 #include <DxCommandQueueGlobal.h>
 #include <InputGlobal.h>
 #include <MeshComponent.h>
@@ -332,9 +333,10 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
+	auto& samplerHeap = GLOBAL(DxSamplerHeapGlobal);
 
-	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap()};
-	cmdList4->SetDescriptorHeaps(1, heaps);
+	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap(), samplerHeap.GetHeap()};
+	cmdList4->SetDescriptorHeaps(2, heaps);
 
 	if (m_usePathTracing)
 	{
