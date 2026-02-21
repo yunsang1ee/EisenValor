@@ -64,7 +64,7 @@ public:
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
-		
+
 	void CollectRenderData(Scene* scene);
 	void BuildAccelerationStructures(DxFrameResource* frame, Scene* scene);
 
@@ -83,7 +83,7 @@ private:
 
 	RenderDataSync<InstanceData>	m_instanceBuffer;
 	RenderDataSync<MaterialGPUData> m_materialConstants;
-	RenderDataSync<GeoInfo>         m_geoTable;
+	RenderDataSync<GeoInfo>			m_geoTable;
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;

@@ -24,6 +24,7 @@ void DxCommandContext::Reset()
 	if (m_state == DxCommandContextState::Executing)
 	{
 		DEBUG_LOG_FMT("[DxCommandContext] Warning: Resetting while executing - this may cause GPU sync issues\n");
+		assert(false && "Cannot reset a command context that is still executing on the GPU");
 	}
 
 	if (m_state == DxCommandContextState::Recording)

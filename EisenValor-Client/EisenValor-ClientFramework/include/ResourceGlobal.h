@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <queue>
 
+class MaterialResource;
+
 class ResourceGlobal : public Singleton<ResourceGlobal>
 {
 	friend class Singleton<ResourceGlobal>;
@@ -95,7 +97,11 @@ public:
 	void ProcessPendingLoads();	// 리소스 예약
 	void CheckForReload();	//Hot Reload
 
+	std::shared_ptr<MaterialResource> GetDefaultMaterial() const { return m_defaultMaterial; }
+
 private:
+	void InitializeDefaultResources();
+
 	template <typename T>
 	std::shared_ptr<T> LoadInternal(const std::filesystem::path& path);
 
@@ -123,11 +129,12 @@ private:
 	std::unordered_map<std::wstring, EvAsset::Guid>									 m_pathToGuid;
 
 	std::queue<LoadingTask> m_pendingLoads;
+
+	std::shared_ptr<MaterialResource> m_defaultMaterial;
 };
 
 class MeshResource;
 class TextureResource;
-class MaterialResource;
 class AnimationResource;
 class SkinnedMeshResource;
 class SceneResource;

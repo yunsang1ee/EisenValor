@@ -8,6 +8,7 @@
 #include "DxGarbageCollectorGlobal.h"
 #include "DxDescriptorHeapGlobal.h"
 #include "DxSamplerHeapGlobal.h"
+#include "ResourceGlobal.h"
 #include "DxRendererGlobal.h"
 
 #ifdef _DEBUG
@@ -48,6 +49,7 @@ void Initialize(HWND hwnd)
 	GLOBAL(DxSamplerHeapGlobal).CreateSampler(device, defaultSamplerDesc);
 
 	GLOBAL(DxGfxCommandQueueGlobal).Initialize(device);
+	GLOBAL(ResourceGlobal).Initialize();
 	GLOBAL(DxRendererGlobal).Initialize();
 
 	GLOBAL(SceneGlobal).Initialize();
@@ -58,6 +60,7 @@ void Shutdown()
 	GLOBAL(SceneGlobal).Release();
 
 	GLOBAL(DxRendererGlobal).Release();
+	GLOBAL(ResourceGlobal).Release();
 	GLOBAL(DxGfxCommandQueueGlobal).Release();
 	GLOBAL(DxSamplerHeapGlobal).Release();
 	GLOBAL(DxDescriptorHeapGlobal).Release();

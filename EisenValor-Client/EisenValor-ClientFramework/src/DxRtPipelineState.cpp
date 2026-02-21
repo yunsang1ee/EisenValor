@@ -74,9 +74,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	versionedDesc.Desc_1_1.pParameters = rootParams;
 	versionedDesc.Desc_1_1.NumStaticSamplers = 1;
 	versionedDesc.Desc_1_1.pStaticSamplers = &staticSampler;
-	versionedDesc.Desc_1_1.Flags =
-		D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED | 
-		D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+	versionedDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 
 	ComPtr<ID3DBlob> signature, error;
 	ThrowIfFailed(D3D12SerializeVersionedRootSignature(&versionedDesc, &signature, &error));
