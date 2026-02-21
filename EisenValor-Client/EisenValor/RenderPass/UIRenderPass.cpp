@@ -12,6 +12,8 @@
 #include "ComponentStorage.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "TextureResource.h"
+#include "DxTexture.h"
 #include <algorithm>
 
 UIRenderPass::UIRenderPass() {}
@@ -316,8 +318,15 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			inst.uvMin = rData.uvMin;
 			inst.uvMax = rData.uvMax;
 
-			// 텍스처 바인딩
-			inst.textureIndex = rData.textureId;
+			// 텍스처 바인딩 (Lazy-Resolving)
+			if (rData.textureResource && rData.textureResource->GetTexture())
+			{
+				inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
+			}
+			else
+			{
+				inst.textureIndex = 0;
+			}
 
 			inst.padding[0] = inst.padding[1] = inst.padding[2] = 0;
 			instanceBufferData.push_back(inst);

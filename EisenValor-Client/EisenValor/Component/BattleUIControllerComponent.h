@@ -10,6 +10,8 @@
 
 using namespace FB_ENUMS;
 
+class TextureResource;
+
 class BattleUIControllerComponent : public ComponentBase<BattleUIControllerComponent>
 {
 public:
@@ -120,13 +122,13 @@ private:
 	float               m_attackFeedbackTimer = 0.0f;
 	GENERAL_ATTACK_TYPE m_lastConfirmedAttackType = GENERAL_ATTACK_TYPE_LIGHT;
 
-	// 캐싱된 텍스처 ID
-	uint32_t m_normalTexId = 0;
-	uint32_t m_hoverTexId = 0;
-	uint32_t m_lightAttackTexId = 0;
-	uint32_t m_strongAttackTexId = 0;
-	uint32_t m_areaAttackTexId = 0;
-	uint32_t m_disarmTexId = 0;
+	// 캐싱된 텍스처 리소스
+	std::shared_ptr<TextureResource> m_normalTexResource;
+	std::shared_ptr<TextureResource> m_hoverTexResource;
+	std::shared_ptr<TextureResource> m_lightAttackTexResource;
+	std::shared_ptr<TextureResource> m_strongAttackTexResource;
+	std::shared_ptr<TextureResource> m_areaAttackTexResource;
+	std::shared_ptr<TextureResource> m_disarmTexResource;
 
 	// 리스너 목록
 	std::vector<StanceChangeListener> m_listeners;

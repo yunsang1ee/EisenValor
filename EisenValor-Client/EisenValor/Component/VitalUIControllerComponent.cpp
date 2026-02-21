@@ -270,11 +270,6 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 	
 	auto& resGlobal = GLOBAL(ResourceGlobal);
 
-	auto loadTex = [&](const std::wstring& path) -> uint32_t {
-		auto res = resGlobal.Load<TextureResource>(path);
-		return (res && res->GetTexture()) ? res->GetTexture()->GetSRVIndex() : 0;
-	};
-
 	// 1. UI 루트 오브젝트 생성
 	std::string rootName = "VitalUIRoot_" + std::to_string(owner->GetServerID());
 
@@ -288,7 +283,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 	);
 	
 	// 2. 깃발 아이콘 생성
-	m_flagRootHandle = scene->ReserveGameObject("FlagIcon", std::nullopt, [this, scene, loadTex](GameObject* flagObj) {
+	m_flagRootHandle = scene->ReserveGameObject("FlagIcon", std::nullopt, [this, scene, &resGlobal](GameObject* flagObj) {
 		auto flagHandle = flagObj->GetHandle();
 		
 		if (auto rootObj = scene->TryGetGameObject(m_rootUI)) {
@@ -300,7 +295,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			rect->SetAnchors({ 0.0f, 0.5f }, { 0.0f, 0.5f });
 		});
 
-		m_flagIcon = scene->CreateComponentWithInit<ImageUIComponent>(flagHandle, [this, loadTex](ImageUIComponent* img) {
+		m_flagIcon = scene->CreateComponentWithInit<ImageUIComponent>(flagHandle, [this, &resGlobal](ImageUIComponent* img) {
 			img->SetOrder(14);
 			// 관리 목록 등록
 			m_managedImages.push_back({img->GetHandle(), 14});
@@ -309,16 +304,16 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			auto teamComp = GetGameObject()->GetComponent<TeamComponent>();
 			FB_ENUMS::TEAM_TYPE team = teamComp ? teamComp->GetTeamType() : FB_ENUMS::TEAM_TYPE_OFFENSE;
 
-			uint32_t texId = (team == FB_ENUMS::TEAM_TYPE_OFFENSE) ? 
-				loadTex(L"Resource\\Texture\\FlagBlue.evtex") : 
-				loadTex(L"Resource\\Texture\\FlagRed.evtex");
+			auto texRes = (team == FB_ENUMS::TEAM_TYPE_OFFENSE) ? 
+				resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex") : 
+				resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
 			
-			img->SetNormalTexture(texId);
+			img->SetNormalTextureResource(texRes);
 		});
 	});
 
 	// 3. HP Bar 세트 생성
-	m_hpRootHandle = scene->ReserveGameObject("HP_Back", std::nullopt, [this, scene, loadTex](GameObject* backObj) {
+	m_hpRootHandle = scene->ReserveGameObject("HP_Back", std::nullopt, [this, scene, &resGlobal](GameObject* backObj) {
 		auto backHandle = backObj->GetHandle();
 
 		if (auto rootObj = scene->TryGetGameObject(m_rootUI)) {
@@ -330,15 +325,16 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			rect->SetAnchors({ 0.0f, 0.5f }, { 0.0f, 0.5f });
 		});
 
-		scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, loadTex](ImageUIComponent* img) {
+		scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, &resGlobal](ImageUIComponent* img) {
 			img->SetOrder(12);
 			// 관리 목록 등록 (Back)
 			m_managedImages.push_back({img->GetHandle(), 12});
-			img->SetNormalTexture(loadTex(L"Resource\\Texture\\HPback.evtex"));
+			auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\HPback.evtex");
+			img->SetNormalTextureResource(texRes);
 		});
 
 		// HP Fill
-		scene->ReserveGameObject("HP_Fill", std::nullopt, [this, scene, backHandle, loadTex](GameObject* fillObj) {
+		scene->ReserveGameObject("HP_Fill", std::nullopt, [this, scene, backHandle, &resGlobal](GameObject* fillObj) {
 			auto fillHandle = fillObj->GetHandle();
 			if (auto backObj = scene->TryGetGameObject(backHandle)) {
 				fillObj->GetTransform().SetParent(backObj->GetComponentHandle<Transform>());
@@ -351,11 +347,12 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				rect->SetOffsetMax({ -kPadding, -kPadding });
 			});
 
-			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, loadTex](ImageUIComponent* img) {
+			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &resGlobal](ImageUIComponent* img) {
 				img->SetOrder(13);
 				// 관리 목록 등록 (Fill)
 				m_managedImages.push_back({img->GetHandle(), 13});
-				img->SetNormalTexture(loadTex(L"Resource\\Texture\\HPfill.evtex"));
+				auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\HPfill.evtex");
+				img->SetNormalTextureResource(texRes);
 				img->SetNormalColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 하얀색
 			});
 		});
@@ -364,7 +361,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 	// 4. Stamina Bar 세트 생성 (Player 전용)
 	if (m_isPlayer)
 	{
-		m_staminaRootHandle = scene->ReserveGameObject("Stamina_Back", std::nullopt, [this, scene, loadTex](GameObject* backObj) {
+		m_staminaRootHandle = scene->ReserveGameObject("Stamina_Back", std::nullopt, [this, scene, &resGlobal](GameObject* backObj) {
 			auto backHandle = backObj->GetHandle();
 
 			if (auto rootObj = scene->TryGetGameObject(m_rootUI)) {
@@ -376,15 +373,16 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				rect->SetAnchors({ 0.0f, 0.5f }, { 0.0f, 0.5f });
 			});
 
-			scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, loadTex](ImageUIComponent* img) {
+			scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, &resGlobal](ImageUIComponent* img) {
 				img->SetOrder(10);
 				// 관리 목록 등록 (Back)
 				m_managedImages.push_back({img->GetHandle(), 10});
-				img->SetNormalTexture(loadTex(L"Resource\\Texture\\Staminaback.evtex"));
+				auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\Staminaback.evtex");
+				img->SetNormalTextureResource(texRes);
 			});
 
 			// Stamina Fill
-			scene->ReserveGameObject("Stamina_Fill", std::nullopt, [this, scene, backHandle, loadTex](GameObject* fillObj) {
+			scene->ReserveGameObject("Stamina_Fill", std::nullopt, [this, scene, backHandle, &resGlobal](GameObject* fillObj) {
 				auto fillHandle = fillObj->GetHandle();
 				if (auto backObj = scene->TryGetGameObject(backHandle)) {
 					fillObj->GetTransform().SetParent(backObj->GetComponentHandle<Transform>());
@@ -397,11 +395,12 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 					rect->SetOffsetMax({ -kPadding, -kPadding });
 				});
 
-				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, loadTex](ImageUIComponent* img) {
+				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &resGlobal](ImageUIComponent* img) {
 					img->SetOrder(11);
 					// 관리 목록 등록 (Fill)
 					m_managedImages.push_back({img->GetHandle(), 11});
-					img->SetNormalTexture(loadTex(L"Resource\\Texture\\Staminafill.evtex"));
+					auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\Staminafill.evtex");
+					img->SetNormalTextureResource(texRes);
 					img->SetNormalColor({ 0.0f, 1.0f, 1.0f, 1.0f }); // 민트색
 				});
 			});
