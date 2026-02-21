@@ -106,14 +106,57 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 			continue;
 		}
 
-		auto* meshRes = meshComp.GetMeshResource();
-
+		auto*	 meshRes = meshComp.GetMeshResource();
 		uint32_t geoBaseIdx = static_cast<uint32_t>(m_geoTable.Size());
 
 		for (const auto& subMesh : meshRes->GetSubMeshes())
 		{
-			auto*	 matRes = meshComp.GetMaterial(subMesh.materialSlot);
-			uint32_t matIdx = 0;
+			auto* matRes = meshComp.GetMaterial(subMesh.materialSlot);
+			if (nullptr == matRes)
+			{
+				DEBUG_LOG_FMT(
+					"[DxrRenderPass] WARNING: Mesh '{}' has submesh with invalid material slot {}. Skipping this submesh.\n",
+					meshRes->GetName(), subMesh.materialSlot
+				);
+				continue;
+			}
+
+			uint32_t	matIdx = 0;
+			const auto& matGuid = matRes->GetGuid();
+
+			if (materialToIndex.contains(matGuid))
+			{
+				matIdx = materialToIndex[matGuid];
+			}
+			else
+			{
+				matIdx = static_cast<uint32_t>(m_materialConstants.Size());
+
+				MaterialGPUData gpuMat = {};
+				gpuMat.albedo = matRes->GetAlbedo();
+				gpuMat.roughness = matRes->GetRoughness();
+				gpuMat.metallic = matRes->GetMetallic();
+				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
+				gpuMat.materialFlags = matRes->GetMaterialFlags();
+
+				if (auto albedoRes = matRes->GetTexture("ALBD"))
+				{
+					gpuMat.albedoTextureIdx = albedoRes->GetTexture()->GetSRVIndex();
+				}
+
+				if (auto normalRes = matRes->GetTexture("NRML"))
+				{
+					gpuMat.normalTextureIdx = normalRes->GetTexture()->GetSRVIndex();
+				}
+
+				if (auto ormRes = matRes->GetTexture("ORMS"))
+				{
+					gpuMat.ormTextureIdx = ormRes->GetTexture()->GetSRVIndex();
+				}
+
+				m_materialConstants.Register(gpuMat);
+				materialToIndex[matGuid] = matIdx;
+			}
 
 			m_geoTable.Register(
 				{.vertexBase = 0, // 단일 버퍼이므로 0
@@ -121,49 +164,18 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 				 .materialIdx = matIdx,
 				 .pad0 = 0}
 			);
+		}
 
-			if (nullptr == matRes)
-			{
-				DEBUG_LOG_FMT(
-					"[DxrRenderPass] WARNING: Mesh '{}' has submesh with invalid material slot {}. Using default "
-					"material.\n",
-					meshRes->GetName(), subMesh.materialSlot
-				);
-				continue;
-			}
+		const uint32_t vbIdx = meshRes->GetVertexBuffer()->GetSRVIndex();
+		const uint32_t ibIdx = meshRes->GetIndexBuffer()->GetSRVIndex();
 
-			const auto& matGuid = matRes->GetGuid();
-			if (true == materialToIndex.contains(matGuid))
-			{
-				matIdx = materialToIndex[matGuid];
-				continue;
-			}
-
-			matIdx = static_cast<uint32_t>(m_materialConstants.Size());
-			MaterialGPUData gpuMat = {};
-			gpuMat.albedo = matRes->GetAlbedo();
-			gpuMat.roughness = matRes->GetRoughness();
-			gpuMat.metallic = matRes->GetMetallic();
-			gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
-			gpuMat.materialFlags = matRes->GetMaterialFlags();
-
-			if (auto albedoRes = matRes->GetTexture("ALBD"))
-			{
-				gpuMat.albedoTextureIdx = albedoRes->GetTexture()->GetSRVIndex();
-			}
-
-			if (auto normalRes = matRes->GetTexture("NRML"))
-			{
-				gpuMat.normalTextureIdx = normalRes->GetTexture()->GetSRVIndex();
-			}
-
-			if (auto ormRes = matRes->GetTexture("ORMS"))
-			{
-				gpuMat.ormTextureIdx = ormRes->GetTexture()->GetSRVIndex();
-			}
-
-			m_materialConstants.Register(gpuMat);
-			materialToIndex[matGuid] = matIdx;
+		if (vbIdx == ~0u || ibIdx == ~0u)
+		{
+			DEBUG_LOG_FMT(
+				"[DxrRenderPass] WARNING: Mesh '{}' has invalid VB/IB SRV index (VB={}, IB={}). Skipping instance.\n",
+				meshRes->GetName(), vbIdx, ibIdx
+			);
+			continue;
 		}
 
 		InstanceData   inst = {};
@@ -172,8 +184,8 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 		DX::XMStoreFloat4x4(&inst.worldMatrix, worldMat);
 		DX::XMStoreFloat4x4(&inst.worldIT, DX::XMMatrixTranspose(DX::XMMatrixInverse(nullptr, worldMat)));
 
-		inst.vertexBufferIdx = meshRes->GetVertexBuffer()->GetSRVIndex();
-		inst.indexBufferIdx = meshRes->GetIndexBuffer()->GetSRVIndex();
+		inst.vertexBufferIdx = vbIdx;
+		inst.indexBufferIdx = ibIdx;
 		inst.geoInfoBaseIdx = geoBaseIdx;
 		inst.instanceID = meshComp.GetOwner().id;
 
@@ -242,6 +254,9 @@ void DxrRenderPass::BuildAccelerationStructures(DxFrameResource* frame, Scene* s
 		{
 			m_tlas->Refit(device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), instances);
 		}
+
+		auto barrier = DxUtils::CreateUAVBarrier(m_tlas->GetResource());
+		cmdList->ResourceBarrier(1, &barrier);
 	}
 }
 
@@ -302,6 +317,17 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		return;
 	}
 
+	if (!m_instanceBuffer.GetBuffer() || !m_materialConstants.GetBuffer() || !m_geoTable.GetBuffer())
+	{
+		DEBUG_LOG_FMT(
+			"[DxrRenderPass] Skipping DispatchRays: required buffers not ready "
+			"(inst={}, mat={}, geo={})\n",
+			m_instanceBuffer.GetBuffer() != nullptr, m_materialConstants.GetBuffer() != nullptr,
+			m_geoTable.GetBuffer() != nullptr
+		);
+		return;
+	}
+
 	auto*							   cmdList = context->CommandList();
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
@@ -339,11 +365,15 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	// 바인딩: t1(Instance), t2(Material), t3(GeoTable)
 	if (m_instanceBuffer.GetBuffer())
 	{
-		cmdList4->SetComputeRootShaderResourceView(3, m_instanceBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress());
+		cmdList4->SetComputeRootShaderResourceView(
+			3, m_instanceBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+		);
 	}
 	if (m_materialConstants.GetBuffer())
 	{
-		cmdList4->SetComputeRootShaderResourceView(4, m_materialConstants.GetBuffer()->GetResource()->GetGPUVirtualAddress());
+		cmdList4->SetComputeRootShaderResourceView(
+			4, m_materialConstants.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+		);
 	}
 	if (m_geoTable.GetBuffer())
 	{
@@ -360,5 +390,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		.Height = m_raytracingOutput.GetHeight(),
 		.Depth = 1
 	};
+
+
 	cmdList4->DispatchRays(&desc);
 }

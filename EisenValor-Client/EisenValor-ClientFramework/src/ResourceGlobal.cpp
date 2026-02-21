@@ -35,15 +35,23 @@
 
 void ResourceGlobal::Initialize()
 {
+	InitializeDefaultResources();
 	DEBUG_LOG_FMT("[ResourceGlobal] Initialized (ExeDir: {})\n", Utils::ExeDir().string());
 }
 
 void ResourceGlobal::Release()
 {
+	m_defaultMaterial.reset();
 	m_resourceCache.clear();
 	m_guidToPath.clear();
 	m_pathToGuid.clear();
 	DEBUG_LOG_FMT("[ResourceGlobal] Released.\n");
+}
+
+void ResourceGlobal::InitializeDefaultResources()
+{
+	m_defaultMaterial = std::make_shared<MaterialResource>();
+	m_defaultMaterial->SetName("DefaultMaterial");
 }
 
 bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)
@@ -69,7 +77,7 @@ bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)
 	{
 		std::filesystem::path relativePath = entry.path;
 		std::filesystem::path fullPath = resourceRoot / relativePath;
-		
+
 		std::filesystem::path finalFullPath = fullPath;
 		if (finalFullPath.is_relative())
 		{
@@ -104,9 +112,9 @@ void ResourceGlobal::ProcessPendingLoads()
 	auto* uploadHeap = frame->GetUploadHeap();
 
 	DEBUG_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
-	
-	// 실제 data 로딩과 GPU 업로드
-	while(!m_pendingLoads.empty())
+
+	// ���� data �ε��� GPU ���ε�
+	while (!m_pendingLoads.empty())
 	{
 		LoadingTask task = m_pendingLoads.front();
 		m_pendingLoads.pop();
@@ -114,55 +122,87 @@ void ResourceGlobal::ProcessPendingLoads()
 		if (task.typeID == MeshResource::StaticRuntimeTypeID())
 		{
 			EvAsset::MeshData data;
-			if (false == EvAsset::AssetLoader::Load(task.path, data)) continue;
+			if (false == EvAsset::AssetLoader::Load(task.path, data))
+				continue;
 
-			auto meshRes = std::static_pointer_cast<MeshResource>(task.targetResource);
+			auto		 meshRes = std::static_pointer_cast<MeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::Vertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
 
 			auto vb = std::make_unique<DxBuffer>();
-			vb->Initialize(device, vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, data.name + "_VB");
+			vb->Initialize(device, vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE, data.name + "_VB");
+
+			auto ib = std::make_unique<DxBuffer>();
+			ib->Initialize(device, iSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE, data.name + "_IB");
+
+			D3D12_RESOURCE_BARRIER preCopyBarriers[2];
+			preCopyBarriers[0] = DxUtils::CreateTransitionBarrier(
+				vb->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+			);
+			preCopyBarriers[1] = DxUtils::CreateTransitionBarrier(
+				ib->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+			);
+			cmdList->ResourceBarrier(2, preCopyBarriers);
+
 			auto vAlloc = uploadHeap->UploadVertexBuffer(data.vertices);
 			cmdList->CopyBufferRegion(vb->GetResource(), 0, uploadHeap->GetResource(), vAlloc.offset, vSize);
 
-			auto ib = std::make_unique<DxBuffer>();
-			ib->Initialize(device, iSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, data.name + "_IB");
 			auto iAlloc = uploadHeap->UploadIndexBuffer(data.indices);
 			cmdList->CopyBufferRegion(ib->GetResource(), 0, uploadHeap->GetResource(), iAlloc.offset, iSize);
 
 			D3D12_RESOURCE_BARRIER barriers[2];
-			barriers[0] = DxUtils::CreateTransitionBarrier(vb->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-			barriers[1] = DxUtils::CreateTransitionBarrier(ib->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			barriers[0] = DxUtils::CreateTransitionBarrier(
+				vb->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			);
+			barriers[1] = DxUtils::CreateTransitionBarrier(
+				ib->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			);
 			cmdList->ResourceBarrier(2, barriers);
 
 			auto& heap = GLOBAL(DxDescriptorHeapGlobal);
 			vb->CreateSRV(device, heap, static_cast<uint32_t>(data.vertices.size()), sizeof(EvAsset::Vertex));
-			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0);
+			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0, DXGI_FORMAT_R32_UINT);
 
 			meshRes->SetGPUResources(std::move(vb), std::move(ib));
 		}
 		else if (task.typeID == SkinnedMeshResource::StaticRuntimeTypeID())
 		{
 			EvAsset::SkinnedMeshData data;
-			if (false == EvAsset::AssetLoader::Load(task.path, data)) continue;
+			if (false == EvAsset::AssetLoader::Load(task.path, data))
+				continue;
 
-			auto skinnedRes = std::static_pointer_cast<SkinnedMeshResource>(task.targetResource);
+			auto		 skinnedRes = std::static_pointer_cast<SkinnedMeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::SkinnedVertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
 
 			auto vb = std::make_unique<DxBuffer>();
-			vb->Initialize(device, vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, data.name + "_SkinnedVB");
+			vb->Initialize(device, vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE, data.name + "_SkinnedVB");
+
+			auto ib = std::make_unique<DxBuffer>();
+			ib->Initialize(device, iSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE, data.name + "_SkinnedIB");
+
+			D3D12_RESOURCE_BARRIER preCopyBarriers[2];
+			preCopyBarriers[0] = DxUtils::CreateTransitionBarrier(
+				vb->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+			);
+			preCopyBarriers[1] = DxUtils::CreateTransitionBarrier(
+				ib->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST
+			);
+			cmdList->ResourceBarrier(2, preCopyBarriers);
+
 			auto vAlloc = uploadHeap->UploadVertexBuffer(data.vertices);
 			cmdList->CopyBufferRegion(vb->GetResource(), 0, uploadHeap->GetResource(), vAlloc.offset, vSize);
 
-			auto ib = std::make_unique<DxBuffer>();
-			ib->Initialize(device, iSize, EBufferUsage::Index, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_DEST, data.name + "_SkinnedIB");
 			auto iAlloc = uploadHeap->UploadIndexBuffer(data.indices);
 			cmdList->CopyBufferRegion(ib->GetResource(), 0, uploadHeap->GetResource(), iAlloc.offset, iSize);
 
 			D3D12_RESOURCE_BARRIER barriers[2];
-			barriers[0] = DxUtils::CreateTransitionBarrier(vb->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-			barriers[1] = DxUtils::CreateTransitionBarrier(ib->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			barriers[0] = DxUtils::CreateTransitionBarrier(
+				vb->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			);
+			barriers[1] = DxUtils::CreateTransitionBarrier(
+				ib->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			);
 			cmdList->ResourceBarrier(2, barriers);
 
 			auto& heap = GLOBAL(DxDescriptorHeapGlobal);
@@ -174,44 +214,67 @@ void ResourceGlobal::ProcessPendingLoads()
 		else if (task.typeID == TextureResource::StaticRuntimeTypeID())
 		{
 			EvAsset::TextureData data;
-			if (false == EvAsset::AssetLoader::Load(task.path, data)) continue;
+			if (false == EvAsset::AssetLoader::Load(task.path, data))
+				continue;
 
 			auto texRes = std::static_pointer_cast<TextureResource>(task.targetResource);
-			
+
 			DirectX::TexMetadata  metadata;
 			DirectX::ScratchImage image;
-			if (FAILED(DirectX::LoadFromDDSMemory(reinterpret_cast<const uint8_t*>(data.ddsBuffer.data()), data.ddsBuffer.size(), DirectX::DDS_FLAGS_NONE, &metadata, image))) continue;
+			if (FAILED(DirectX::LoadFromDDSMemory(
+					reinterpret_cast<const uint8_t*>(data.ddsBuffer.data()), data.ddsBuffer.size(),
+					DirectX::DDS_FLAGS_NONE, &metadata, image
+				)))
+				continue;
 
 			D3D12_RESOURCE_DESC texDesc = {};
-			texDesc.Dimension = (metadata.depth > 1) ? D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+			texDesc.Dimension =
+				(metadata.depth > 1) ? D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 			texDesc.Width = static_cast<uint64_t>(metadata.width);
 			texDesc.Height = static_cast<uint32_t>(metadata.height);
-			texDesc.DepthOrArraySize = (metadata.depth > 1) ? static_cast<uint16_t>(metadata.depth) : static_cast<uint16_t>(metadata.arraySize);
+			texDesc.DepthOrArraySize = (metadata.depth > 1) ? static_cast<uint16_t>(metadata.depth)
+															: static_cast<uint16_t>(metadata.arraySize);
 			texDesc.MipLevels = static_cast<uint16_t>(metadata.mipLevels);
 			texDesc.Format = metadata.format;
 			texDesc.SampleDesc.Count = 1;
 			texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 			texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-			D3D12_HEAP_PROPERTIES heapProps = {.Type = D3D12_HEAP_TYPE_DEFAULT};
+			D3D12_HEAP_PROPERTIES  heapProps = {.Type = D3D12_HEAP_TYPE_DEFAULT};
 			ComPtr<ID3D12Resource> rawTex;
-			if (FAILED(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&rawTex)))) continue;
+			if (FAILED(device->CreateCommittedResource(
+					&heapProps, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+					IID_PPV_ARGS(&rawTex)
+				)))
+				continue;
 
 			const uint32_t numSubresources = static_cast<uint32_t>(metadata.mipLevels * metadata.arraySize);
 			for (uint32_t i = 0; numSubresources > i; ++i)
 			{
-				const auto& subImage = image.GetImages()[i];
-				DxUploadHeap::TextureUploadDesc uDesc = {.texDesc = texDesc, .mipLevel = i % static_cast<uint32_t>(metadata.mipLevels), .arraySlice = i / static_cast<uint32_t>(metadata.mipLevels)};
+				const auto&						subImage = image.GetImages()[i];
+				DxUploadHeap::TextureUploadDesc uDesc = {
+					.texDesc = texDesc,
+					.mipLevel = i % static_cast<uint32_t>(metadata.mipLevels),
+					.arraySlice = i / static_cast<uint32_t>(metadata.mipLevels)
+				};
 				auto texAlloc = uploadHeap->AllocateTexture(uDesc);
 				uploadHeap->UploadTextureData(texAlloc, subImage.pixels, subImage.rowPitch);
 
-				D3D12_TEXTURE_COPY_LOCATION dstLoc = {.pResource = rawTex.Get(), .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, .SubresourceIndex = i};
-				D3D12_TEXTURE_COPY_LOCATION srcLoc = {.pResource = uploadHeap->GetResource(), .Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, .PlacedFootprint = texAlloc.footprint};
+				D3D12_TEXTURE_COPY_LOCATION dstLoc = {
+					.pResource = rawTex.Get(), .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, .SubresourceIndex = i
+				};
+				D3D12_TEXTURE_COPY_LOCATION srcLoc = {
+					.pResource = uploadHeap->GetResource(),
+					.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+					.PlacedFootprint = texAlloc.footprint
+				};
 				srcLoc.PlacedFootprint.Offset += texAlloc.allocation.offset;
 				cmdList->CopyTextureRegion(&dstLoc, 0, 0, 0, &srcLoc, nullptr);
 			}
 
-			auto barrier = DxUtils::CreateTransitionBarrier(rawTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			auto barrier = DxUtils::CreateTransitionBarrier(
+				rawTex.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			);
 			cmdList->ResourceBarrier(1, &barrier);
 
 			auto dxTex = std::make_unique<DxTexture>();
@@ -245,7 +308,8 @@ std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const s
 }
 
 template <>
-std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshResource>(const std::filesystem::path& path)
+std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshResource>(const std::filesystem::path& path
+)
 {
 	EvAsset::SkinnedMeshData data;
 	if (false == EvAsset::AssetLoader::Load(path, data))
@@ -259,8 +323,8 @@ std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshRes
 	res->SetName(data.name);
 	res->SetMetadata(
 		data.boundsInfo, std::move(data.subMeshes), static_cast<uint32_t>(data.vertices.size()),
-		static_cast<uint32_t>(data.indices.size()), data.indexFormat,
-		std::move(data.bones), std::move(data.offsetMatrices)
+		static_cast<uint32_t>(data.indices.size()), data.indexFormat, std::move(data.bones),
+		std::move(data.offsetMatrices)
 	);
 
 	m_pendingLoads.push({res, data.assetGuid, path, SkinnedMeshResource::StaticRuntimeTypeID()});
@@ -351,14 +415,17 @@ std::shared_ptr<SceneResource> ResourceGlobal::LoadInternal<SceneResource>(const
 	res->SetName(data.name);
 	res->SetData(std::move(data));
 
-	DEBUG_LOG_FMT("[ResourceGlobal] COMPLETED: Scene: {} (Nodes: {}, Components: {})\n", data.name, (uint32_t)res->GetNodes().size(), (uint32_t)res->GetComponents().size());
+	DEBUG_LOG_FMT(
+		"[ResourceGlobal] COMPLETED: Scene: {} (Nodes: {}, Components: {})\n", res->GetName(),
+		(uint32_t)res->GetNodes().size(), (uint32_t)res->GetComponents().size()
+	);
 
 	return res;
 }
 
 #ifdef _DEBUG
 void ResourceGlobal::CheckForReload()
-{	
+{
 	if (!GLOBAL(InputGlobal).GetInputDown(VK_F5))
 	{
 		return;
@@ -366,26 +433,27 @@ void ResourceGlobal::CheckForReload()
 
 	DEBUG_LOG_FMT("[ResourceGlobal] F5 pressed. Checking for asset changes...\n");
 
-	// 자산 순회하며 현재 파일 시간 확인
+	// �ڻ� ��ȸ�ϸ� ���� ���� �ð� Ȯ��
 	for (auto& [guid, path] : m_guidToPath)
 	{
 		if (!std::filesystem::exists(path))
 		{
 			continue;
 		}
-		
-		// 현재 파일의 마지막 수정 시간 가져오기
+
+		// ���� ������ ������ ���� �ð� ��������
 		auto currentWriteTime = std::filesystem::last_write_time(path);
-		
-		// 이전 저장 시간과 비교: 변경 감지
+
+		// ���� ���� �ð��� ��: ���� ����
 		if (m_guidToLastWriteTime.contains(guid) && m_guidToLastWriteTime[guid] == currentWriteTime)
 			continue;
 
-		// FileSize 검증
+		// FileSize ����
 		uint64_t actualSize = std::filesystem::file_size(path);
-		
+
 		std::ifstream file(path, std::ios::binary);
-		if (!file) continue;
+		if (!file)
+			continue;
 
 		EvAsset::AssetHeader header;
 		file.read(reinterpret_cast<char*>(&header), sizeof(header));
@@ -397,8 +465,8 @@ void ResourceGlobal::CheckForReload()
 		}
 
 		DEBUG_LOG_FMT("[ResourceGlobal] Hot Reloading: {}\n", path.string());
-	
-		// 기존 리소스의 타입을 확인하여 적절한 타입으로 리로드		
+
+		// ���� ���ҽ��� Ÿ���� Ȯ���Ͽ� ������ Ÿ������ ���ε�
 		auto cacheIt = m_resourceCache.find(guid);
 		if (cacheIt == m_resourceCache.end())
 			continue;

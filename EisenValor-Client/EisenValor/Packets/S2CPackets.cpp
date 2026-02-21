@@ -401,7 +401,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle,
 				[](MeshComponent* mesh)
 				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Models/Sphere.evmesh");
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
 					if (nullptr != meshRes)
 					{
 						mesh->SetMeshResource(meshRes);
@@ -591,7 +591,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				objHandle,
 				[teamType](MeshComponent* mesh)
 				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Models/Sphere.evmesh");
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
 					if (nullptr != meshRes)
 					{
 						mesh->SetMeshResource(meshRes);

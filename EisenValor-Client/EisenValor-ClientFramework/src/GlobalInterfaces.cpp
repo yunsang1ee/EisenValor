@@ -7,6 +7,7 @@
 #include "DxShaderCompilerGlobal.h"
 #include "DxGarbageCollectorGlobal.h"
 #include "DxDescriptorHeapGlobal.h"
+#include "ResourceGlobal.h"
 #include "DxRendererGlobal.h"
 
 #ifdef _DEBUG
@@ -36,6 +37,7 @@ void Initialize(HWND hwnd)
 	auto* device = deviceG.GetDevice();
 	GLOBAL(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
 	GLOBAL(DxGfxCommandQueueGlobal).Initialize(device);
+	GLOBAL(ResourceGlobal).Initialize();
 	GLOBAL(DxRendererGlobal).Initialize();
 
 	GLOBAL(SceneGlobal).Initialize();
@@ -46,6 +48,7 @@ void Shutdown()
 	GLOBAL(SceneGlobal).Release();
 
 	GLOBAL(DxRendererGlobal).Release();
+	GLOBAL(ResourceGlobal).Release();
 	GLOBAL(DxGfxCommandQueueGlobal).Release();
 	GLOBAL(DxDescriptorHeapGlobal).Release();
 	GLOBAL(DxShaderCompilerGlobal).Release();

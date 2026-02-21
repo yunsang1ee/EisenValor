@@ -1,6 +1,5 @@
 #pragma once
 #include "IResource.h"
-#include <map>
 #include <memory>
 #include <string>
 

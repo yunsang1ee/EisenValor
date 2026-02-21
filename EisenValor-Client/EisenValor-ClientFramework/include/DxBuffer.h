@@ -57,12 +57,13 @@ public:
 	);
 	
 	// ========================= 수동 뷰 생성 (리사이즈 미지원) ========================= 
-	// SRV 생성 (i.e. Structured Buffer)
+	// SRV 생성 (i.e. Structured Buffer or Typed Buffer)
 	void CreateSRV(
 		ID3D12Device*           device,
 		DxDescriptorHeapGlobal& heap,
 		uint32_t                numElements,
-		uint32_t                elementSize
+		uint32_t                elementSize,
+		DXGI_FORMAT             format = DXGI_FORMAT_UNKNOWN
 	);
 
 	// UAV 생성 (i.e. RWStructuredBuffer)

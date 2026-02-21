@@ -21,7 +21,7 @@ void MeshComponent::SetMeshResource(std::shared_ptr<MeshResource> mesh, bool loa
 			maxSlot = subMesh.materialSlot;
 		}
 	}
-	m_materials.assign(maxSlot + 1, nullptr);
+	m_materials.assign(maxSlot + 1, GLOBAL(ResourceGlobal).GetDefaultMaterial());
 
 	if (!loadDefaultMaterials)
 	{

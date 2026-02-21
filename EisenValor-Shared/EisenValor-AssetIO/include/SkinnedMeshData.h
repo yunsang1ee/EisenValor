@@ -7,15 +7,15 @@ namespace EvAsset
 {
 struct SkinnedMeshData : public AssetData
 {
-	Bounds				  boundsInfo;
+	Bounds boundsInfo;
 
 	std::vector<SkinnedVertex> vertices;
 	std::vector<uint32_t>	   indices;
 	std::vector<SubMesh>	   subMeshes;
-	
+
 	// Skin Mesh용
-	std::vector<Bone>		   bones;
-	std::vector<float>		   offsetMatrices; // 4*4 행우선
+	std::vector<Bone>  bones;
+	std::vector<float> offsetMatrices; // 4*4 행우선
 
 	uint32_t indexFormat = 32;
 

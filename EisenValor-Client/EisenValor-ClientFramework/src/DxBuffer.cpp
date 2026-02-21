@@ -210,7 +210,7 @@ void DxBuffer::Initialize(
 }
 
 void DxBuffer::CreateSRV(
-	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride
+	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride, DXGI_FORMAT format
 )
 {
 	if (!IsValid())
@@ -229,7 +229,7 @@ void DxBuffer::CreateSRV(
 	}
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {
-		.Format = DXGI_FORMAT_UNKNOWN,
+		.Format = format,
 		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
 		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 		.Buffer =

@@ -101,6 +101,7 @@ bool MeshData::Deserialize(AssetFile& file)
 		}
 	}
 
+	// 5. DEPS (Material Dependencies - List of Material GUIDs)
 	const ChunkEntry* matEntry = file.GetChunkEntry("DEPS");
 	if (matEntry && 1 == matEntry->version)
 	{
