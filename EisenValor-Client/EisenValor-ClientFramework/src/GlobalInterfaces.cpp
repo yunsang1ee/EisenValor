@@ -37,6 +37,16 @@ void Initialize(HWND hwnd)
 	auto* device = deviceG.GetDevice();
 	GLOBAL(DxDescriptorHeapGlobal).Initialize(device, 1'000'000);
 	GLOBAL(DxSamplerHeapGlobal).Initialize(device, 2048);
+
+	// 기본 샘플러 생성 (Index 0)
+	D3D12_SAMPLER_DESC defaultSamplerDesc = {};
+	defaultSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	defaultSamplerDesc.AddressU = defaultSamplerDesc.AddressV = defaultSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	defaultSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	defaultSamplerDesc.MinLOD = 0;
+	defaultSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	GLOBAL(DxSamplerHeapGlobal).CreateSampler(device, defaultSamplerDesc);
+
 	GLOBAL(DxGfxCommandQueueGlobal).Initialize(device);
 	GLOBAL(DxRendererGlobal).Initialize();
 

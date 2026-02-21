@@ -260,7 +260,8 @@ std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshRes
 	res->SetMetadata(
 		data.boundsInfo, std::move(data.subMeshes), static_cast<uint32_t>(data.vertices.size()),
 		static_cast<uint32_t>(data.indices.size()), data.indexFormat,
-		std::move(data.bones), std::move(data.offsetMatrices)
+		std::move(data.bones), std::move(data.offsetMatrices),
+		std::move(data.materialGuids)
 	);
 
 	m_pendingLoads.push({res, data.assetGuid, path, SkinnedMeshResource::StaticRuntimeTypeID()});

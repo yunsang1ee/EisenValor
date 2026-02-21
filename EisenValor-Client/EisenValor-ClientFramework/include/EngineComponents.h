@@ -6,6 +6,7 @@
 #include "CameraComponent.h"
 #include "MeshComponent.h"
 #include "SkinnedMeshComponent.h"
+#include "AnimationComponent.h"
 #include "MovementComponent.h" 
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
@@ -29,6 +30,7 @@ using EngineComponents = std::tuple<
 	CameraComponent,
 	MeshComponent,
 	SkinnedMeshComponent,
+	AnimationComponent,
 	MovementComponent,
 	ImageUIComponent,
 	ButtonUIComponent

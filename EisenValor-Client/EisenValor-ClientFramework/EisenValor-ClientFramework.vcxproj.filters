@@ -277,6 +277,9 @@
     <ClInclude Include="include\MaterialResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\AnimationComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="include\AnimationResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
