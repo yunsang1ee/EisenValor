@@ -1,7 +1,9 @@
 #include "stdafxClientFramework.h"
 #include "AnimationComponent.h"
 #include "GameObject.h"
+#include "GameObject.inl"
 #include "SkinnedMeshComponent.h"
+#include "DxMath.h"
 #include <cmath>
 #include <algorithm>
 
@@ -85,9 +87,9 @@ void AnimationComponent::UpdateBoneMatrices()
 	// 1. 모든 본의 로컬 행렬 계산 (애니메이션 트랙이 없는 본은 Rest Pose 사용)
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		XMVECTOR pos = XMLoadFloat3(&bones[i].restPos);
-		XMVECTOR rot = XMLoadFloat4(&bones[i].restRot);
-		XMVECTOR scale = XMLoadFloat3(&bones[i].restScale);
+		XMVECTOR pos = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restPos));
+		XMVECTOR rot = XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(bones[i].restRot));
+		XMVECTOR scale = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restScale));
 
 		// 이 본에 대한 애니메이션 트랙 찾기 (최적화 여지 있음)
 		for (const auto& track : tracks)

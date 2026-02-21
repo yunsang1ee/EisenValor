@@ -16,6 +16,7 @@ struct SkinnedMeshData : public AssetData
 	// Skin Mesh용
 	std::vector<Bone>  bones;
 	std::vector<float> offsetMatrices; // 4*4 행우선
+	std::vector<Guid>  materialGuids;
 
 	uint32_t indexFormat = 32;
 

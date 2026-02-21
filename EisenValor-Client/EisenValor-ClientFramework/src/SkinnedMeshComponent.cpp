@@ -12,9 +12,9 @@ void SkinnedMeshComponent::SetResource(std::shared_ptr<SkinnedMeshResource> reso
 		return;
 	}
 
-	// 1. 뼈 개수에 맞춰 본 행렬 초기화 (단위 행렬로)
+	// 1. 뼈 개수에 맞춰 본 행렬 초기화 (단위행렬)
 	const size_t boneCount = m_resource->GetBones().size();
-	m_finalMatrices.assign(boneCount, DX::Identity4x4());
+	m_finalMatrices.assign(boneCount, Matrix4x4::Identity());
 
 	// 2. 머터리얼 슬롯 설정
 	uint32_t maxSlot = 0;

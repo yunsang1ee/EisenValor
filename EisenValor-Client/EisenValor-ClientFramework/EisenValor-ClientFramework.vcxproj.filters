@@ -445,6 +445,9 @@
     <ClCompile Include="src\DxSamplerHeapGlobal.cpp">
       <Filter>Graphics\Resource\Heap</Filter>
     </ClCompile>
+    <ClCompile Include="src\AnimationComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">
