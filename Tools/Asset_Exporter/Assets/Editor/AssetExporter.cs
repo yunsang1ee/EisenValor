@@ -21,10 +21,37 @@ public class AssetExporter
     private const uint SHADING_MODEL_LIT_PBR = 0;
     private const uint SHADING_MODEL_UNLIT = 1;
 
+    // --- Material Flags (Engine Spec v2.1) ---
+    private const uint FLAG_NONE = 0;
+    private const uint FLAG_USE_UNITY_PACKING = 1 << 0;
+    private const uint FLAG_ALPHA_TEST = 1 << 1;
+    private const uint FLAG_DOUBLE_SIDED = 1 << 2;
+    private static uint BuildMaterialFlags(Material mat)
+    {
+        uint flags = FLAG_NONE;
+
+        if (mat.shader.name.Contains("Lit") || mat.shader.name.Contains("Standard"))
+        {
+            flags |= FLAG_USE_UNITY_PACKING;
+        }
+
+        if (mat.IsKeywordEnabled("_ALPHATEST_ON") || mat.renderQueue >= 2450)
+        {
+            flags |= FLAG_ALPHA_TEST;
+        }
+
+        if (mat.HasProperty("_Cull") && mat.GetInt("_Cull") == (int)UnityEngine.Rendering.CullMode.Off)
+        {
+            flags |= FLAG_DOUBLE_SIDED;
+        }
+
+        return flags;
+    }
+
     private static readonly HashSet<string> ValidSignatures = new HashSet<string>
     {
         "EVMH"/*mesh*/, "EVTX"/*texture*/, "EVMT"/*material*/, "EVSK"/*skinned*/, "EVAN"/*anim*/, "EVSN"/*scene*/
-    };
+	};
 
     [MenuItem("Tools/EisenValor/Build Asset Registry (v2.1)")]
     public static void BuildAssetRegistry()
@@ -105,15 +132,16 @@ public class AssetExporter
 
         // --- Usage of AssetWriter ---
         string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mesh));
+        UnityEngine.Debug.Log($"Mesh GUID: {guid}");
         var writer = new AssetWriter("EVMH", guid);
 
         writer.AddChunk("VERT", 1, BuildVertexChunk(mesh));
         writer.AddChunk("INDX", 1, BuildIndexChunk(mesh));
         writer.AddChunk("SUBM", 1, BuildSubMeshChunk(mesh));
         writer.AddChunk("BNDS", 1, BuildBoundsChunk(mesh));
+        writer.AddChunk("DEPS", 1, BuildMeshDepsChunk(go));
 
-        writer.WriteToFile(path);
-        UnityEngine.Debug.Log($"<b>[Export]</b> Saved Mesh: {Path.GetFileName(path)} ({mesh.vertexCount} verts)");
+        writer.WriteToFile(path); UnityEngine.Debug.Log($"<b>[Export]</b> Saved Mesh: {Path.GetFileName(path)} ({mesh.vertexCount} verts)");
     }
 
     [MenuItem("Tools/EisenValor/Export Selected Texture (v2.1)")]
@@ -182,6 +210,24 @@ public class AssetExporter
     }
 
     // --- Chunk Builders ---
+
+    private static byte[] BuildMeshDepsChunk(GameObject go)
+    {
+        Renderer renderer = go.GetComponent<Renderer>();
+        Material[] mats = renderer != null ? renderer.sharedMaterials : new Material[0];
+
+        using (MemoryStream ms = new MemoryStream())
+        using (BinaryWriter bw = new BinaryWriter(ms))
+        {
+            bw.Write((uint)mats.Length);
+            foreach (var mat in mats)
+            {
+                string guid = (mat != null) ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mat)) : "";
+                WriteGuidBytes(bw, guid);
+            }
+            return ms.ToArray();
+        }
+    }
 
     private static byte[] BuildVertexChunk(Mesh mesh)
     {
@@ -287,7 +333,7 @@ public class AssetExporter
                 shadingModel = SHADING_MODEL_UNLIT;
             }
             bw.Write(shadingModel);
-            bw.Write(0u); // Reserved for future use
+            bw.Write(BuildMaterialFlags(mat)); // Material Flags
 
             Color color = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : (mat.HasProperty("_Color") ? mat.color : Color.white);
             bw.Write(color.r); bw.Write(color.g); bw.Write(color.b); bw.Write(color.a);

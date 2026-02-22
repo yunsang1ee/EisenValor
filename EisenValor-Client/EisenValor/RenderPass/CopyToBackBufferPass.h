@@ -12,7 +12,7 @@ public:
 
 	void		Initialize() override;
 	void		Release() override;
-	void		Execute(DxFrameResource* frame, Scene* scene) override;
+	void		Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
 	void		OnResize(uint32_t width, uint32_t height) override;
 	const char* GetName() const override { return "CopyToBackBuffer"; }
 

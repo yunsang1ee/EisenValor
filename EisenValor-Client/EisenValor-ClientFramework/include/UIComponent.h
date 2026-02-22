@@ -4,6 +4,9 @@
 #include "DxMath.h"
 #include <vector>
 #include "GameObject.h"
+#include <memory>
+
+class TextureResource;
 
 // UI 상호작용 상태 (UIComponent들이 공유)
 enum class ButtonState
@@ -17,7 +20,7 @@ enum class ButtonState
 // UIRenderPass가 RenderData를 수집하여 Batching
 struct UIRenderData
 {
-	uint32_t			textureId; // 텍스처 핸들
+	std::shared_ptr<TextureResource> textureResource; // 텍스처 리소스 참조
 	RectTransformComponent::Rect rect;	   // RectTransform가 계산
 	DirectX::XMFLOAT4	color;
 	DirectX::XMFLOAT2	uvMin;

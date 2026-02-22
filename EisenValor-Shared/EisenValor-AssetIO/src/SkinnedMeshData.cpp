@@ -83,6 +83,28 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 		std::print("[SkinnedMeshData] OFFS Loaded: {} matrices\n", floatCount / 16);
 	}
 
+	// 6. SUBM 청크 파싱
+	size_t subSize = 0;
+	const void* subPtr = file.GetChunkDataPtr("SUBM", subSize);
+	if (subPtr)
+	{
+		size_t count = subSize / sizeof(SubMesh);
+		subMeshes.resize(count);
+		std::memcpy(subMeshes.data(), subPtr, subSize);
+		std::print("[SkinnedMeshData] SUBM Loaded: {} submeshes\n", count);
+	}
+
+	// 7. DEPS 청크 파싱 (머터리얼)
+	size_t depSize = 0;
+	const uint8_t* depPtr = static_cast<const uint8_t*>(file.GetChunkDataPtr("DEPS", depSize));
+	if (depPtr && depSize >= 4)
+	{
+		uint32_t count = ReadUnaligned<uint32_t>(depPtr);
+		materialGuids.resize(count);
+		std::memcpy(materialGuids.data(), depPtr + 4, count * sizeof(Guid));
+		std::print("[SkinnedMeshData] DEPS Loaded: {} material guids\n", count);
+	}
+
 	if (!IsValid())
 	{
 		std::print(

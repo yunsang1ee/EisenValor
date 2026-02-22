@@ -72,13 +72,54 @@ void DxFrameResource::ExecuteAndSignal(ID3D12CommandQueue* queue)
 	if (m_mainContext->IsRecording())
 		m_mainContext->Close();
 
+	assert(m_mainContext->IsClosed() && "[DxFrameResource] Context must be Closed before Execute");
+
 	ID3D12CommandList* lists[] = {m_mainContext->CommandList()};
 	queue->ExecuteCommandLists(1, lists);
 
 	m_mainContext->MarkAsExecuting();
 
 	++m_fenceValue;
-	ThrowIfFailed(queue->Signal(m_fence.Get(), m_fenceValue));
+	HRESULT hr = queue->Signal(m_fence.Get(), m_fenceValue);
+	if (FAILED(hr))
+	{
+		ComPtr<ID3D12Device> device;
+		queue->GetDevice(IID_PPV_ARGS(&device));
+		if (device)
+		{
+			HRESULT removedReason = device->GetDeviceRemovedReason();
+			DEBUG_LOG_FMT(
+				"[DxFrameResource] Signal failed! DeviceRemovedReason=0x{:08X}\n", static_cast<uint32_t>(removedReason)
+			);
+
+#ifdef _DEBUG
+			// DRED Breadcrumb 데이터 출력 - 어떤 GPU 명령이 hang을 유발했는지 확인
+			ComPtr<ID3D12DeviceRemovedExtendedData1> dred;
+			if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&dred))))
+			{
+				D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 breadcrumbs{};
+				D3D12_DRED_PAGE_FAULT_OUTPUT		pageFault{};
+				dred->GetAutoBreadcrumbsOutput1(&breadcrumbs);
+				dred->GetPageFaultAllocationOutput(&pageFault);
+
+				DEBUG_LOG_FMT("[DxFrameResource] DRED PageFault VA: 0x{:016X}\n", pageFault.PageFaultVA);
+
+				// Breadcrumb 체인 순회 - hang 직전 마지막 명령 확인
+				const auto* node = breadcrumbs.pHeadAutoBreadcrumbNode;
+				while (node)
+				{
+					DEBUG_LOG_FMT(
+						"[DxFrameResource] DRED Breadcrumb: CmdList={}, LastOp={}/{}\n",
+						node->pCommandListDebugNameA ? node->pCommandListDebugNameA : "Unknown",
+						node->pLastBreadcrumbValue ? *node->pLastBreadcrumbValue : 0, node->BreadcrumbCount
+					);
+					node = node->pNext;
+				}
+			}
+#endif
+		}
+		ThrowIfFailed(hr);
+	}
 }
 
 void DxFrameResource::WaitForCompletion()

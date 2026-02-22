@@ -1,6 +1,7 @@
 #pragma once
 #include "Singleton.h"
 #include "DxFeatureCaps.h"
+#include "RenderContext.h"
 
 class Scene;
 class DxFrameResource;
@@ -47,7 +48,9 @@ public:
 
 	void ClearAllPasses();
 
-	DxFrameResource* GetCurrentFrame() const;
+	DxFrameResource*	 GetCurrentFrame() const;
+	const RenderContext* GetRenderContext() const { return &m_renderContext; }
+	RenderContext*		 GetRenderContext() { return &m_renderContext; }
 
 private:
 	bool						 m_isInitialized = false;
@@ -59,12 +62,13 @@ private:
 	static constexpr uint32_t								  kFrameCount = 3;
 	uint32_t												  m_currentFrameIndex = 0;
 	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
+	RenderContext											  m_renderContext;
 
 	struct RenderPassEntry
 	{
 		std::string					 name;
 		std::unique_ptr<IRenderPass> pass;
-		RenderPassPriority			 priority; 
+		RenderPassPriority			 priority;
 	};
 	std::vector<RenderPassEntry> m_renderPasses;
 	// 더티 플래그

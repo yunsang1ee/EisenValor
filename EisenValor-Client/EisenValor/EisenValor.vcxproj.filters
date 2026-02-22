@@ -141,9 +141,6 @@
     <ClCompile Include="Packets\S2CPackets.cpp">
       <Filter>Packets</Filter>
     </ClCompile>
-    <ClCompile Include="UI\UITextureGlobal.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPass\UIRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>

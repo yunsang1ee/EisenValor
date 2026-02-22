@@ -1,6 +1,11 @@
 #include "stdafxClientFramework.h"
 #include "DxBLAS.h"
 #include "DxUtils.h"
+#include "MeshResource.h"
+#include "DxBuffer.h"
+#include "AssetFormat.h"
+
+DxBLAS::DxBLAS() = default;
 
 DxBLAS::~DxBLAS()
 {
@@ -20,7 +25,7 @@ void DxBLAS::Build(
 )
 {
 	assert(device && cmdList && "[DxBLAS] Device or CommandList is null");
-	assert(vertexBuffer && vertexCount > 0 && "[DxBLAS] Invalid vertex buffer");
+	assert(vertexBuffer && 0 < vertexCount && "[DxBLAS] Invalid vertex buffer");
 
 	// 1. Geometry Descriptor 정의
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
@@ -33,7 +38,7 @@ void DxBLAS::Build(
 	triangles.VertexCount = vertexCount;
 	triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 
-	if (indexBuffer && indexCount > 0)
+	if (indexBuffer && 0 < indexCount)
 	{
 		triangles.IndexBuffer = indexBuffer;
 		triangles.IndexCount = indexCount;
@@ -58,74 +63,161 @@ void DxBLAS::Build(
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
 	device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
 
-	DEBUG_LOG_FMT(
-		"[DxBLAS] Prebuild Info - Result: {} bytes, Scratch: {} bytes\n", prebuildInfo.ResultDataMaxSizeInBytes,
-		prebuildInfo.ScratchDataSizeInBytes
-	);
-
 	// 4. BLAS 결과 버퍼 생성 (UAV)
-	D3D12_RESOURCE_DESC blasDesc = {};
-	blasDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	blasDesc.Width = prebuildInfo.ResultDataMaxSizeInBytes;
-	blasDesc.Height = 1;
-	blasDesc.DepthOrArraySize = 1;
-	blasDesc.MipLevels = 1;
-	blasDesc.Format = DXGI_FORMAT_UNKNOWN;
-	blasDesc.SampleDesc.Count = 1;
-	blasDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	blasDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	D3D12_HEAP_PROPERTIES defaultHeap = {};
-	defaultHeap.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &blasDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr,
-		IID_PPV_ARGS(&m_blasBuffer)
-	));
-	auto debugName = "BLAS_Result_ " + name;
-	m_blasBuffer->SetName(std::wstring(debugName.begin(), debugName.end()).c_str());
+	m_blasBuffer = std::make_unique<DxBuffer>();
+	m_blasBuffer->Initialize(
+		device,
+		prebuildInfo.ResultDataMaxSizeInBytes,
+		EBufferUsage::RawBuffer,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+		"BLAS_Result_" + name
+	);
 
 	// 5. Scratch 버퍼 생성 (임시)
-	D3D12_RESOURCE_DESC scratchDesc = {};
-	scratchDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	scratchDesc.Width = prebuildInfo.ScratchDataSizeInBytes;
-	scratchDesc.Height = 1;
-	scratchDesc.DepthOrArraySize = 1;
-	scratchDesc.MipLevels = 1;
-	scratchDesc.Format = DXGI_FORMAT_UNKNOWN;
-	scratchDesc.SampleDesc.Count = 1;
-	scratchDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	scratchDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-
-	ThrowIfFailed(device->CreateCommittedResource(
-		&defaultHeap, D3D12_HEAP_FLAG_NONE, &scratchDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
-		IID_PPV_ARGS(&m_scratchBuffer)
-	));
-
-	auto barrierToCopy = DxUtils::CreateTransitionBarrier(
-		m_scratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	m_scratchBuffer = std::make_unique<DxBuffer>();
+	m_scratchBuffer->Initialize(
+		device,
+		prebuildInfo.ScratchDataSizeInBytes,
+		EBufferUsage::RawBuffer,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_COMMON,
+		"BLAS_Scratch_" + name
 	);
-	cmdList->ResourceBarrier(1, &barrierToCopy);
 
-	debugName = "BLAS_Scratch_ " + name;
-	m_scratchBuffer->SetName(std::wstring(debugName.begin(), debugName.end()).c_str());
+	D3D12_RESOURCE_BARRIER barrierToUAV = DxUtils::CreateTransitionBarrier(
+		m_scratchBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	);
+	cmdList->ResourceBarrier(1, &barrierToUAV);
 
 	// 6. BLAS 빌드
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = inputs;
-	buildDesc.DestAccelerationStructureData = m_blasBuffer->GetGPUVirtualAddress();
-	buildDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetGPUVirtualAddress();
+	buildDesc.DestAccelerationStructureData = m_blasBuffer->GetResource()->GetGPUVirtualAddress();
+	buildDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetResource()->GetGPUVirtualAddress();
 
 	cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
 	// 7. UAV Barrier (BLAS 빌드 완료 대기)
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	barrier.UAV.pResource = m_blasBuffer.Get();
+	D3D12_RESOURCE_BARRIER barrier = DxUtils::CreateUAVBarrier(m_blasBuffer->GetResource());
+	cmdList->ResourceBarrier(1, &barrier);
+
+	DEBUG_LOG_FMT("[DxBLAS] Built Single Geometry - Size: {} bytes\n", prebuildInfo.ResultDataMaxSizeInBytes);
+}
+
+void DxBLAS::Build(
+	ID3D12Device5*				device,
+	ID3D12GraphicsCommandList4* cmdList,
+	const MeshResource*			mesh,
+	bool						allowUpdate,
+	const std::string&			name
+)
+{
+	assert(device && cmdList && mesh);
+
+	const auto& subMeshes = mesh->GetSubMeshes();
+	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geoDescs;
+	geoDescs.reserve(subMeshes.size());
+
+	D3D12_GPU_VIRTUAL_ADDRESS vbAddr = mesh->GetVertexBuffer()->GetResource()->GetGPUVirtualAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS ibAddr = mesh->GetIndexBuffer()->GetResource()->GetGPUVirtualAddress();
+
+	for (const auto& sm : subMeshes)
+	{
+		D3D12_RAYTRACING_GEOMETRY_DESC desc = {};
+		desc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+		desc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+		auto& tri = desc.Triangles;
+		tri.VertexBuffer.StartAddress = vbAddr;
+		tri.VertexBuffer.StrideInBytes = sizeof(EvAsset::Vertex);
+		tri.VertexCount = mesh->GetVertexCount();
+		tri.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+
+		tri.IndexBuffer = ibAddr + (static_cast<uint64_t>(sm.indexOffset) * 4);
+		tri.IndexCount = sm.indexCount;
+		tri.IndexFormat = DXGI_FORMAT_R32_UINT;
+		
+		geoDescs.push_back(desc);
+	}
+
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+	inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+	inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	if (allowUpdate)
+	{
+		inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+	}
+
+	inputs.NumDescs = static_cast<UINT>(geoDescs.size());
+	inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	inputs.pGeometryDescs = geoDescs.data();
+
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
+	device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
+
+	// 1. Result Buffer (DxBuffer)
+	m_blasBuffer = std::make_unique<DxBuffer>();
+	m_blasBuffer->Initialize(
+		device,
+		prebuildInfo.ResultDataMaxSizeInBytes,
+		EBufferUsage::RawBuffer,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+		"BLAS_Result_" + name
+	);
+
+	// 2. Scratch Buffer (DxBuffer)
+	m_scratchBuffer = std::make_unique<DxBuffer>();
+	m_scratchBuffer->Initialize(
+		device,
+		prebuildInfo.ScratchDataSizeInBytes,
+		EBufferUsage::RawBuffer,
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_COMMON,
+		"BLAS_Scratch_" + name
+	);
+
+	D3D12_RESOURCE_BARRIER barrierToUAV = DxUtils::CreateTransitionBarrier(
+		m_scratchBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	);
+	cmdList->ResourceBarrier(1, &barrierToUAV);
+
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
+	buildDesc.Inputs = inputs;
+	buildDesc.DestAccelerationStructureData = m_blasBuffer->GetResource()->GetGPUVirtualAddress();
+	buildDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetResource()->GetGPUVirtualAddress();
+
+	cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+
+	D3D12_RESOURCE_BARRIER barrier = DxUtils::CreateUAVBarrier(m_blasBuffer->GetResource());
 	cmdList->ResourceBarrier(1, &barrier);
 
 	DEBUG_LOG_FMT(
-		"[DxBLAS] Built - Vertices: {}, Indices: {}, Size: {} bytes\n", vertexCount, indexCount,
+		"[DxBLAS] Built Multi-Geo BLAS - SubMeshes: {}, Size: {} bytes\n", subMeshes.size(),
 		prebuildInfo.ResultDataMaxSizeInBytes
 	);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS DxBLAS::GetGPUAddress() const
+{
+	if (nullptr != m_blasBuffer)
+	{
+		return m_blasBuffer->GetResource()->GetGPUVirtualAddress();
+	}
+	return 0;
+}
+
+ID3D12Resource* DxBLAS::GetResource() const
+{
+	if (nullptr != m_blasBuffer)
+	{
+		return m_blasBuffer->GetResource();
+	}
+	return nullptr;
+}
+
+bool DxBLAS::IsBuilt() const
+{
+	return nullptr != m_blasBuffer;
 }

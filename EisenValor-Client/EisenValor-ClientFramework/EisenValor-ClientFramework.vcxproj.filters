@@ -109,9 +109,6 @@
     <ClInclude Include="include\DxCommandContext.h">
       <Filter>Graphics\Device\Command</Filter>
     </ClInclude>
-    <ClInclude Include="include\DxCommandContextPool.h">
-      <Filter>Graphics\Device\Command</Filter>
-    </ClInclude>
     <ClInclude Include="include\DxSwapChain.h">
       <Filter>Graphics\Device</Filter>
     </ClInclude>
@@ -241,9 +238,6 @@
     <ClInclude Include="include\IRenderData.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="include\RenderDataPool.h">
-      <Filter>Graphics\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="include\CommonInclude.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -283,6 +277,9 @@
     <ClInclude Include="include\MaterialResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\AnimationComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="include\AnimationResource.h">
       <Filter>Resource</Filter>
     </ClInclude>
@@ -291,6 +288,9 @@
     </ClInclude>
     <ClInclude Include="include\SceneResource.h">
       <Filter>Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxSamplerHeapGlobal.h">
+      <Filter>Graphics\Resource\Heap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -302,9 +302,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="src\DxCommandContext.cpp">
-      <Filter>Graphics\Device\Command</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DxCommandContextPool.cpp">
       <Filter>Graphics\Device\Command</Filter>
     </ClCompile>
     <ClCompile Include="src\DxSwapChain.cpp">
@@ -444,6 +441,12 @@
     </ClCompile>
     <ClCompile Include="src\SceneResource.cpp">
       <Filter>Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxSamplerHeapGlobal.cpp">
+      <Filter>Graphics\Resource\Heap</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AnimationComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

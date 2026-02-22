@@ -3,6 +3,7 @@
 class Scene;
 class DxFrameResource;
 class DxSwapChain;
+class RenderContext;
 
 class IRenderPass
 {
@@ -13,7 +14,7 @@ public:
 
 	virtual void Release() = 0;
 
-	virtual void Execute(DxFrameResource* frame, Scene* scene) = 0;
+	virtual void Execute(DxFrameResource* frame, Scene* scene, RenderContext* context) = 0;
 
 	virtual void OnResize(uint32_t width, uint32_t height) = 0;
 

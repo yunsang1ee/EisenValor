@@ -8,7 +8,8 @@ void SkinnedMeshResource::SetGPUResources(std::unique_ptr<DxBuffer>&& vb, std::u
 }
 void SkinnedMeshResource::SetMetadata(const EvAsset::Bounds& bounds, std::vector<EvAsset::SubMesh>&& subMeshes,
 									  uint32_t vertexCount, uint32_t indexCount, uint32_t indexFormat,
-									  std::vector<EvAsset::Bone>&& bones, std::vector<float>&& offsetMatrices)
+									  std::vector<EvAsset::Bone>&& bones, std::vector<float>&& offsetMatrices,
+									  std::vector<EvAsset::Guid>&& materialGuids)
 {
 	m_bounds = bounds;
 	m_subMeshes = std::move(subMeshes);
@@ -17,5 +18,6 @@ void SkinnedMeshResource::SetMetadata(const EvAsset::Bounds& bounds, std::vector
 	m_indexFormat = indexFormat;
 	m_bones = std::move(bones);
 	m_offsetMatrices = std::move(offsetMatrices);
+	m_materialGuids = std::move(materialGuids);
 }
 

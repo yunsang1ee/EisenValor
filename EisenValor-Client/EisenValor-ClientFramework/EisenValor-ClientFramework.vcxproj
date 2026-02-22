@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\AnimationResource.h" />
+    <ClInclude Include="include\AnimationComponent.h" />
     <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\CommonInclude.h" />
@@ -181,7 +182,6 @@
     <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
-    <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
     <ClInclude Include="include\DxCommon.h" />
     <ClInclude Include="include\DxDebugGlobal.h" />
@@ -193,6 +193,7 @@
     <ClInclude Include="include\DxResource.h" />
     <ClInclude Include="include\DxRtPipelineState.h" />
     <ClInclude Include="include\DxRtShaderTable.h" />
+    <ClInclude Include="include\DxSamplerHeapGlobal.h" />
     <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\DxTexture.h" />
@@ -220,7 +221,6 @@
     <ClInclude Include="include\RectTransformComponent.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderContext.h" />
-    <ClInclude Include="include\RenderDataPool.h" />
     <ClInclude Include="include\RenderDataSync.h" />
     <ClInclude Include="include\DxRendererGlobal.h" />
     <ClInclude Include="include\ResourceGlobal.h" />
@@ -240,13 +240,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AnimationResource.cpp" />
+    <ClCompile Include="src\AnimationComponent.cpp" />
     <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\CommonUtils.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
-    <ClCompile Include="src\DxCommandContextPool.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
     <ClCompile Include="src\DxDebugGlobal.cpp" />
     <ClCompile Include="src\DxDescriptorHeapGlobal.cpp" />
@@ -257,6 +257,7 @@
     <ClCompile Include="src\DxResource.cpp" />
     <ClCompile Include="src\DxRtPipelineState.cpp" />
     <ClCompile Include="src\DxRtShaderTable.cpp" />
+    <ClCompile Include="src\DxSamplerHeapGlobal.cpp" />
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\DxTexture.cpp" />

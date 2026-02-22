@@ -19,7 +19,7 @@ void CopyToBackBufferPass::Release()
 {
 }
 
-void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene)
+void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
 	if (!m_srcTexture || !m_swapChain)
 		return;
