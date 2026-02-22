@@ -8,6 +8,7 @@
 #include "DxSwapChain.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
+#include "ResourceGlobal.h"
 
 #define SERVER
 
@@ -270,6 +271,11 @@ void GameFramework::Render()
 	auto& renderer = GLOBAL(DxRendererGlobal);
 
 	renderer.BeginFrame();
+
+	GLOBAL(ResourceGlobal).ProcessPendingLoads();
+
 	renderer.Render(scene.GetActiveScene());
 	renderer.EndFrame();
+
+	GLOBAL(ResourceGlobal).CheckForReload();
 }

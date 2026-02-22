@@ -50,9 +50,14 @@ public:
 		const std::string&	  name = "DxTextureCube"
 	);
 
-	void LoadFromFile(ID3D12Device* device, const std::wstring& filePath);
-	// TODO: DirectXTex 통합
+	void InitializeFromResource(
+		ID3D12Device* device,
+		ComPtr<ID3D12Resource> resource,
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		const std::string& name = "DxTexture"
+	);
 
+	void LoadFromFile(ID3D12Device* device, const std::wstring& filePath);
 
 	void CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap);
 	void CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel = 0);

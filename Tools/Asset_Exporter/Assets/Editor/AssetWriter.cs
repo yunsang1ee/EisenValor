@@ -36,12 +36,10 @@ public class AssetWriter
         using (FileStream fs = new FileStream(path, FileMode.Create))
         using (BinaryWriter bw = new BinaryWriter(fs))
         {
-            // 1. Calculate Offsets
             uint headerSize = 64;
             uint chunkTableSize = (uint)(_chunks.Count * 32); // 32 bytes per ChunkEntry (Type:4, Ver:4, Off:8, Size:8, UnSize:8)
             ulong currentPayloadOffset = headerSize + chunkTableSize;
 
-            // 2. Write Global Header
             bw.Write(Encoding.ASCII.GetBytes(_signature)); // Signature
             bw.Write((uint)2); // Version (v2.1)
             bw.Write(headerSize);
@@ -54,9 +52,8 @@ public class AssetWriter
             bw.Write((ulong)0); // FileSize placeholder
 
             bw.Write((uint)_chunks.Count);
-            bw.Write(new byte[16]); // Reserved (padding to 64 bytes)
+            bw.Write(new byte[20]); // Reserved (padding to 64 bytes)
 
-            // 3. Write Chunk Table
             foreach (var chunk in _chunks)
             {
                 bw.Write(Encoding.ASCII.GetBytes(chunk.Type));
@@ -68,13 +65,11 @@ public class AssetWriter
                 currentPayloadOffset += (ulong)chunk.Data.Length;
             }
 
-            // 4. Write Chunk Payloads
             foreach (var chunk in _chunks)
             {
                 bw.Write(chunk.Data);
             }
 
-            // 5. Finalize FileSize
             ulong totalSize = (ulong)bw.BaseStream.Position;
             bw.BaseStream.Seek(fileSizePos, SeekOrigin.Begin);
             bw.Write(totalSize);

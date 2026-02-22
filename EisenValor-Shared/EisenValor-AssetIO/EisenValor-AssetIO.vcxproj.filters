@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Mesh">
@@ -10,6 +10,15 @@
     <Filter Include="Core">
       <UniqueIdentifier>{801fa6a9-7815-4ed1-b853-90fc91393e01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Material">
+      <UniqueIdentifier>{3cb81426-14d1-4d49-8851-87e0d3a9fbad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Animation">
+      <UniqueIdentifier>{484377fc-f319-437e-ae36-35d63ba6b0b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{fcc4fdcf-85db-47b3-a022-46b341520ce0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\AssetFormat.h">
@@ -18,19 +27,61 @@
     <ClInclude Include="include\MeshData.h">
       <Filter>Mesh</Filter>
     </ClInclude>
-    <ClInclude Include="include\MeshLoader.h">
-      <Filter>Mesh</Filter>
-    </ClInclude>
     <ClInclude Include="include\AssetFile.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\AssetLoader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TextureData.h">
+      <Filter>Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MaterialData.h">
+      <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshLoader.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AnimationData.h">
+      <Filter>Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AssetRegistryData.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SkinnedMeshData.h">
+      <Filter>Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneData.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AssetFile.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshData.cpp">
+      <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TextureData.cpp">
+      <Filter>Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MaterialData.cpp">
+      <Filter>Material</Filter>
+    </ClCompile>
     <ClCompile Include="src\MeshLoader.cpp">
       <Filter>Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="src\AssetFile.cpp">
+    <ClCompile Include="src\AnimationData.cpp">
+      <Filter>Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AssetRegistryData.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkinnedMeshData.cpp">
+      <Filter>Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneData.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

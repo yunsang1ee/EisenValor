@@ -10,7 +10,9 @@
 #include "DxSwapChain.h"
 #include "RectTransformComponent.h"
 #include "ComponentStorage.h"
-#include "UI/UITextureGlobal.h"
+#include "ResourceGlobal.h"
+#include "TextureResource.h"
+#include "DxTexture.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 #include "CameraComponent.h"
@@ -258,7 +260,16 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 		}
 	);
 
-	// 자식 UI 오브젝트들 생성
+	// 2. 텍스처 로드
+	auto& resGlobal = GLOBAL(ResourceGlobal);
+	m_normalTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\normal.evtex");
+	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\hovering.evtex");
+	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\select.evtex");
+	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\strong.evtex");
+	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\area.evtex");
+	m_disarmTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\disarm.evtex");
+
+	// 3. 자식 UI 오브젝트들 생성
 	std::vector<std::string> names = { "UpUI", "LeftUI", "RightUI" };
 	for (const auto& name : names)
 	{
@@ -275,10 +286,11 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 				// Depth 정렬 목록 등록
 				m_managedImages.push_back({img->GetHandle(), 10});
 
-				img->SetNormalTexture(m_normalTexId);
-				img->SetHoverTexture(m_hoverTexId);
-				img->SetPressedTexture(m_lightAttackTexId); 
-				img->SetDisabledTexture(m_normalTexId);
+				// 리소스 참조
+				img->SetNormalTextureResource(m_normalTexResource);
+				img->SetHoverTextureResource(m_hoverTexResource);
+				img->SetPressedTextureResource(m_lightAttackTexResource);
+				img->SetDisabledTextureResource(m_normalTexResource);
 
 				img->SetNormalColor({0.7f, 0.7f, 0.7f, 1.0f});
 				img->SetHoverColor({0.0f, 0.0f, 0.0f, 1.0f});
@@ -299,15 +311,6 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 			else if (name == "RightUI") { m_rightButtonHandle = btnHandle; m_rightImageHandle = imgHandle; }
 		});
 	}
-
-	// 텍스처 로드 및 멤버 변수 저장
-	auto& texGlobal = UITextureGlobal::GetInstance();
-	m_normalTexId = texGlobal.LoadTexture(L"Resource\\Texture\\normal.dds");
-	m_hoverTexId = texGlobal.LoadTexture(L"Resource\\Texture\\hovering.dds");
-	m_lightAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\select.dds");
-	m_strongAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\strong.dds");
-	m_areaAttackTexId = texGlobal.LoadTexture(L"Resource\\Texture\\area.dds");
-	m_disarmTexId = texGlobal.LoadTexture(L"Resource\\Texture\\disarm.dds");
 }
 
 void BattleUIControllerComponent::SetupListener()
@@ -319,11 +322,11 @@ void BattleUIControllerComponent::SetupListener()
 
 	// 람다 캡처[=]로 핸들 값 자체를 복사 (메모리 재할당 대응)
 	// 핸들 생성된 후에 실행
-	// 텍스처 ID 로컬변수로 복사캡쳐
-	uint32_t lightAttackTexId = m_lightAttackTexId;
-	uint32_t strongAttackTexId = m_strongAttackTexId;
-	uint32_t areaAttackTexId = m_areaAttackTexId;
-	uint32_t disarmTexId = m_disarmTexId;
+	// 리소스 참조를 직접 캡처
+	auto lightAttackTexRes = m_lightAttackTexResource;
+	auto strongAttackTexRes = m_strongAttackTexResource;
+	auto areaAttackTexRes = m_areaAttackTexResource;
+	auto disarmTexRes = m_disarmTexResource;
 	ControlType controlMode = m_controlMode;
 
 	// 캡처할 핸들들 로컬 변수로 복사
@@ -338,7 +341,7 @@ void BattleUIControllerComponent::SetupListener()
 		// this 사용하면 안 됨
 		// scene 캡처해서 사용
 		if (!scene) return;
-
+		
 		// 디버깅: 리스너 실행 시점 핸들 확인
 		//if (controlMode == ControlType::Local) {
 		//	DEBUG_LOG_FMT("[BattleUI Listener] Executing! UpHandle: {}\n", upImg.GetValue());
@@ -351,13 +354,13 @@ void BattleUIControllerComponent::SetupListener()
 			// 1. 텍스처 업데이트
 			if (ImageUIComponent* img = imgStorage->Get(imgHandle)) {
 				// 공격 타입에 따라 Pressed 텍스처 선택 (기본 Light)
-				uint32_t pressedTexId = lightAttackTexId;
+				auto pressedTexRes = lightAttackTexRes;
 				if (type.has_value()) {
-					if (type.value() == GENERAL_ATTACK_TYPE_HEAVY) pressedTexId = strongAttackTexId;
-					else if (type.value() == GENERAL_ATTACK_TYPE_AREA) pressedTexId = areaAttackTexId;
-					else if (type.value() == GENERAL_ATTACK_TYPE_DISARM) pressedTexId = disarmTexId;
+					if (type.value() == GENERAL_ATTACK_TYPE_HEAVY) pressedTexRes = strongAttackTexRes;
+					else if (type.value() == GENERAL_ATTACK_TYPE_AREA) pressedTexRes = areaAttackTexRes;
+					else if (type.value() == GENERAL_ATTACK_TYPE_DISARM) pressedTexRes = disarmTexRes;
 				}
-				img->SetPressedTexture(pressedTexId);
+				img->SetPressedTextureResource(pressedTexRes);
 			}
 			// 2. 버튼 상태 업데이트
 			if (ButtonUIComponent* btn = btnStorage->Get(btnHandle)) {

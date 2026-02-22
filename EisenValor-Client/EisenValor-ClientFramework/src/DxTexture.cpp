@@ -4,8 +4,14 @@
 #include "DxDescriptorHeapGlobal.h"
 #include "DxGarbageCollectorGlobal.h"
 #include "DxCommandQueueGlobal.h"
-
+#include "DxRendererGlobal.h"
+#include "DxFrameResource.h"
+#include "DxUploadHeap.h"
+#include "DxCommandContext.h"
+#include "CommonUtils.h"
 #include <DirectXTex.h>
+#include <filesystem>
+#include <algorithm>
 
 DxTexture::~DxTexture()
 {
@@ -22,7 +28,6 @@ DxTexture::~DxTexture()
 	}
 }
 
-// 2D 텍스처 리소스 초기화
 void DxTexture::Initialize(
 	ID3D12Device*		  device,
 	uint32_t			  width,
@@ -73,7 +78,6 @@ void DxTexture::Initialize(
 	);
 }
 
-// 3D 텍스처 리소스 초기화
 void DxTexture::Initialize3D(
 	ID3D12Device*		  device,
 	uint32_t			  width,
@@ -121,7 +125,6 @@ void DxTexture::Initialize3D(
 	DEBUG_LOG_FMT("[DxTexture] Texture3D initialized: {}x{}x{}, Format:{}\n", width, height, depth, (int)format);
 }
 
-// 큐브맵 텍스처 리소스 초기화
 void DxTexture::InitializeCube(
 	ID3D12Device*		  device,
 	uint32_t			  size,
@@ -167,11 +170,42 @@ void DxTexture::InitializeCube(
 	DEBUG_LOG_FMT("[DxTexture] TextureCube initialized: {}x{}, Mips:{}\n", size, size, mipLevels);
 }
 
+void DxTexture::InitializeFromResource(
+	ID3D12Device*			device,
+	ComPtr<ID3D12Resource>	resource,
+	D3D12_RESOURCE_STATES	initialState,
+	const std::string&		name
+)
+{
+	assert(device && resource);
+
+	m_resource = std::move(resource);
+	SetName(name);
+
+	auto desc = m_resource->GetDesc();
+	m_width = static_cast<uint32_t>(desc.Width);
+	m_height = desc.Height;
+	m_depth = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? desc.DepthOrArraySize : 1;
+	m_mipLevels = desc.MipLevels;
+	m_arraySize = (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? desc.DepthOrArraySize : 1;
+	m_format = desc.Format;
+	m_isCubeMap = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D && desc.DepthOrArraySize == 6);
+
+	m_currentState = initialState;
+	
+	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &desc);
+	m_sizeInBytes = allocInfo.SizeInBytes;
+	m_uavHandles.resize(m_mipLevels);
+
+	CreateSRV(device, GLOBAL(DxDescriptorHeapGlobal));
+
+	DEBUG_LOG_FMT("[DxTexture] Initialized from external resource: {} ({}x{})\n", name, m_width, m_height);
+}
 
 void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 {
 	DirectX::ScratchImage image;
-	HRESULT	hr = DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image);
+	HRESULT				  hr = DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image);
 
 	if (FAILED(hr))
 	{
@@ -210,8 +244,8 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 	SetName(std::string(filePath.begin(), filePath.end()));
 
 	// GetCopyableFootprints를 사용하여 레이아웃 계산 후 복사
-	UINT	numSubresources = static_cast<UINT>(meta.mipLevels * meta.arraySize);
-	UINT64	uploadBufferSize = 0;
+	UINT   numSubresources = static_cast<UINT>(meta.mipLevels * meta.arraySize);
+	UINT64 uploadBufferSize = 0;
 
 	std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts(numSubresources);
 	std::vector<UINT>								numRows(numSubresources);
@@ -219,8 +253,7 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 
 	D3D12_RESOURCE_DESC desc = m_resource->GetDesc();
 	device->GetCopyableFootprints(
-		&desc, 0, numSubresources, 0, layouts.data(), numRows.data(), rowSizes.data(),
-		&uploadBufferSize
+		&desc, 0, numSubresources, 0, layouts.data(), numRows.data(), rowSizes.data(), &uploadBufferSize
 	);
 
 	// 업로드 힙 생성
@@ -274,7 +307,7 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 	uploadHeap->Unmap(0, nullptr);
 
 	// 커맨드 리스트 생성 및 복사 명령 기록 (업로드 힙 -> 텍스처 리소스)
-	ComPtr<ID3D12CommandAllocator>	  cmdAlloc;
+	ComPtr<ID3D12CommandAllocator> cmdAlloc;
 	device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
 	ComPtr<ID3D12GraphicsCommandList> cmdList;
 	device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc.Get(), nullptr, IID_PPV_ARGS(&cmdList));
@@ -316,7 +349,6 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 	m_currentState = barrier.Transition.StateAfter;
 }
 
-// SRV
 void DxTexture::CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 {
 	assert(device && IsValid() && "[DxTexture] Invalid resource for SRV");
@@ -359,7 +391,6 @@ void DxTexture::CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 	DEBUG_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvHandle.GetIndex(), GetName());
 }
 
-// UAV
 void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel)
 {
 	assert(device && IsValid() && "[DxTexture] Invalid resource for UAV");

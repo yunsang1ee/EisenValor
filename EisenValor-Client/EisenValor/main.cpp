@@ -14,10 +14,10 @@
 #include "Scene/SampleScene.h"
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
-#include "RenderPass/UIRenderPass.h" \
+#include "RenderPass/UIRenderPass.h"
 
 #include "UIGlobal.h"
-#include "UI/UITextureGlobal.h"
+#include "ResourceGlobal.h"
 #include "Component/FSM/StatePool.h"
 
 #include "Packets/PacketHandler.h"
@@ -96,8 +96,7 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd = CreateWindowW(
 		szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, Variable::kDefaultWindowWidth,
-		Variable::kDefaultWindowHeight, NULL,
-		NULL, hInstance, NULL
+		Variable::kDefaultWindowHeight, NULL, NULL, hInstance, NULL
 	);
 
 	if (!hWnd)
@@ -105,7 +104,7 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
-	if (!g_Framework->Initialize(hInstance, hWnd/*, "100.90.51.106"*//*, 7777*/))
+	if (!g_Framework->Initialize(hInstance, hWnd /*, "100.90.51.106"*/ /*, 7777*/))
 	{
 		return FALSE;
 	}
@@ -195,17 +194,17 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			auto* outputTexture = dxrPass->GetOutputTexture();
 			renderer.AddRenderPass("DXR", std::move(dxrPass));
 
-		// CopyToBackBuffer Pass 생성
-		auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
-		renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
+			// CopyToBackBuffer Pass 생성
+			auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
+			renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
 
-		// UI Pass 생성
-		auto uiPass = std::make_unique<UIRenderPass>();
-		renderer.AddRenderPass("UI", std::move(uiPass));
-	}
+			// UI Pass 생성
+			auto uiPass = std::make_unique<UIRenderPass>();
+			renderer.AddRenderPass("UI", std::move(uiPass));
+		}
 
-	// UI 시스템 초기화
-	GLOBAL(UITextureGlobal).Initialize();
+	// 에셋 레지스트리 로드
+	GLOBAL(ResourceGlobal).LoadRegistry("Resource\\AssetRegistry.evreg");
 	GLOBAL(UIGlobal).Initialize();
 
 	// FSM StatePool 초기화

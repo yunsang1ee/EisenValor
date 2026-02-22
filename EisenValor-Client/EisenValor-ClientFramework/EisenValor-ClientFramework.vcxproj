@@ -74,17 +74,20 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)NetBridge\;$(SolutionDir)Libraries\inc\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Libraries\inc\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Libraries\lib\$(ProjectName)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)NetBridge\;$(SolutionDir)Libraries\inc\;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Libraries\inc\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Libraries\lib\$(ProjectName)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -127,7 +130,7 @@
       <PrecompiledHeaderFile>stdafxClientFramework.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -152,7 +155,7 @@
       <PrecompiledHeaderFile>stdafxClientFramework.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -168,6 +171,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
+    <ClInclude Include="include\AnimationResource.h" />
+    <ClInclude Include="include\AnimationComponent.h" />
     <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\CommonInclude.h" />
@@ -177,7 +182,6 @@
     <ClInclude Include="include\DxBLAS.h" />
     <ClInclude Include="include\DxBuffer.h" />
     <ClInclude Include="include\DxCommandContext.h" />
-    <ClInclude Include="include\DxCommandContextPool.h" />
     <ClInclude Include="include\DxCommandQueueGlobal.h" />
     <ClInclude Include="include\DxCommon.h" />
     <ClInclude Include="include\DxDebugGlobal.h" />
@@ -189,6 +193,7 @@
     <ClInclude Include="include\DxResource.h" />
     <ClInclude Include="include\DxRtPipelineState.h" />
     <ClInclude Include="include\DxRtShaderTable.h" />
+    <ClInclude Include="include\DxSamplerHeapGlobal.h" />
     <ClInclude Include="include\DxShaderCompilerGlobal.h" />
     <ClInclude Include="include\DxSwapChain.h" />
     <ClInclude Include="include\DxTexture.h" />
@@ -206,20 +211,27 @@
     <ClInclude Include="include\IPacketHandler.h" />
     <ClInclude Include="include\IRenderData.h" />
     <ClInclude Include="include\IRenderPass.h" />
+    <ClInclude Include="include\IResource.h" />
+    <ClInclude Include="include\MaterialResource.h" />
     <ClInclude Include="include\MeshComponent.h" />
+    <ClInclude Include="include\MeshResource.h" />
     <ClInclude Include="include\MovementComponent.h" />
     <ClInclude Include="include\NetworkGlobal.h" />
     <ClInclude Include="include\PacketBuffer.h" />
     <ClInclude Include="include\RectTransformComponent.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderContext.h" />
-    <ClInclude Include="include\RenderDataPool.h" />
     <ClInclude Include="include\RenderDataSync.h" />
     <ClInclude Include="include\DxRendererGlobal.h" />
+    <ClInclude Include="include\ResourceGlobal.h" />
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\SceneGlobal.h" />
+    <ClInclude Include="include\SceneResource.h" />
     <ClInclude Include="include\Singleton.h" />
+    <ClInclude Include="include\SkinnedMeshComponent.h" />
+    <ClInclude Include="include\SkinnedMeshResource.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
+    <ClInclude Include="include\TextureResource.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Transform.h" />
     <ClInclude Include="include\UIComponent.h" />
@@ -227,13 +239,14 @@
     <ClInclude Include="include\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AnimationResource.cpp" />
+    <ClCompile Include="src\AnimationComponent.cpp" />
     <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\CommonUtils.cpp" />
     <ClCompile Include="src\DxBLAS.cpp" />
     <ClCompile Include="src\DxBuffer.cpp" />
     <ClCompile Include="src\DxCommandContext.cpp" />
-    <ClCompile Include="src\DxCommandContextPool.cpp" />
     <ClCompile Include="src\DxCommandQueueGlobal.cpp" />
     <ClCompile Include="src\DxDebugGlobal.cpp" />
     <ClCompile Include="src\DxDescriptorHeapGlobal.cpp" />
@@ -244,6 +257,7 @@
     <ClCompile Include="src\DxResource.cpp" />
     <ClCompile Include="src\DxRtPipelineState.cpp" />
     <ClCompile Include="src\DxRtShaderTable.cpp" />
+    <ClCompile Include="src\DxSamplerHeapGlobal.cpp" />
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp" />
     <ClCompile Include="src\DxSwapChain.cpp" />
     <ClCompile Include="src\DxTexture.cpp" />
@@ -256,19 +270,27 @@
     <ClCompile Include="src\IComponent.cpp" />
     <ClCompile Include="src\ImageUIComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
+    <ClCompile Include="src\IResource.cpp" />
+    <ClCompile Include="src\MaterialResource.cpp" />
     <ClCompile Include="src\MeshComponent.cpp" />
+    <ClCompile Include="src\MeshResource.cpp" />
     <ClCompile Include="src\MovementComponent.cpp" />
     <ClCompile Include="src\NetworkGlobal.cpp" />
     <ClCompile Include="src\PacketBuffer.cpp" />
     <ClCompile Include="src\RectTransformComponent.cpp" />
     <ClCompile Include="src\RecvBuffer.cpp" />
     <ClCompile Include="src\DxRendererGlobal.cpp" />
+    <ClCompile Include="src\ResourceGlobal.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneGlobal.cpp" />
+    <ClCompile Include="src\SceneResource.cpp" />
+    <ClCompile Include="src\SkinnedMeshComponent.cpp" />
+    <ClCompile Include="src\SkinnedMeshResource.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\TextureResource.cpp" />
     <ClCompile Include="src\TimerGlobal.cpp" />
     <ClCompile Include="src\Transform.cpp" />
     <ClCompile Include="src\UIGlobal.cpp" />

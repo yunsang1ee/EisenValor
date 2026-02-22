@@ -6,13 +6,14 @@
 #include <DxDeviceGlobal.h>
 #include <DxShaderCompilerGlobal.h>
 #include "UIGlobal.h"
-#include "UI/UITextureGlobal.h"
 #include "Scene.h"
 #include "UIComponent.h"
 #include "DenseList.h"
 #include "ComponentStorage.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "TextureResource.h"
+#include "DxTexture.h"
 #include <algorithm>
 
 UIRenderPass::UIRenderPass() {}
@@ -48,9 +49,9 @@ void UIRenderPass::Release()
 	m_initialized = false;
 }
 
-void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene)
+void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
-	if (!m_initialized || !m_pipelineState || !m_vertexBuffer || !scene)
+	if (!m_initialized || !m_pipelineState || !m_vertexBuffer || !scene || !renderContext)
 	{
 		return;
 	}
@@ -295,7 +296,6 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	std::vector<UIInstanceData> instanceBufferData;
 	instanceBufferData.reserve(m_maxInstances);
 
-	auto&					  textureGlobal = GLOBAL(UITextureGlobal);
 	std::vector<UIRenderData> componentRenderData;
 
 	for (auto* ui : renderableUIs)
@@ -318,10 +318,10 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			inst.uvMin = rData.uvMin;
 			inst.uvMax = rData.uvMax;
 
-			// 텍스처 바인딩
-			if (rData.textureId > 0)
+			// 텍스처 바인딩 (Lazy-Resolving)
+			if (rData.textureResource && rData.textureResource->GetTexture())
 			{
-				inst.textureIndex = textureGlobal.GetSRVIndex(rData.textureId);
+				inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
 			}
 			else
 			{
