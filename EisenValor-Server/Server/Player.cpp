@@ -36,6 +36,9 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
 
 	m_startStunDelay = worldFrame;
+	
+	if(FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType())
+		return false;
 
 	if(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE == fsm->GetCurState()->GetStateType()) {
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt);
@@ -43,20 +46,38 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 		return false;
 	}
 
-	if(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT == GetStanceType() && FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType())
-		return false;
-
 	uint32 damage{};
 
+	// 공격자가 플레이어인 경우
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
 		auto attackerPlayer = static_cast<Player*>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
+		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) {
 			auto const fsm = GetComponent<Server::Contents::FSM>();
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE, dt);
 			std::cout << "DEFENSE!" << std::endl;
 				return false;
+		}
+
+		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+		}
+		else {
+			damage = attackerAtkInfo.skillData->damage;
+		}
+	}
+	// 공격자가 NPC 장수 일경우
+	else if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == attacker->GetObjType()) {
+		std::cout << "Attacker Is General!" << std::endl;
+		auto attackGeneral{ static_cast<General*>(attacker) };
+		const AttackInfo& attackerAtkInfo{ attackGeneral->GetAtkInfo() };
+
+		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) {
+			auto const fsm = GetComponent<Server::Contents::FSM>();
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE, dt);
+			std::cout << "DEFENSE!" << std::endl;
+			return false;
 		}
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
@@ -202,7 +223,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
 	const FB_ENUMS::GENERAL_STATE_TYPE curState{ static_cast<FB_ENUMS::GENERAL_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
 
 	if(curState == (FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)) {
-		const AttackInfo& atkInfo{ GetAttackInfo() };
+		const AttackInfo& atkInfo{ GetAtkInfo() };
 
 		const auto world{ GetGameWorld() };
 		if(world) {
@@ -264,4 +285,13 @@ void Server::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevT
 		session->Send(std::move(pb));
 		std::cout << "Make_SC_CHANGE_CAMERA_TARGET_PACKET" << std::endl;
 	}
+}
+
+void Server::Contents::Player::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+{
+	SetAtkDir(dirType);
+
+	auto const world{ GetGameWorld() };
+	auto pb{ ServerPackets::Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(GetID(), etou8(dirType)) };
+	world->Broadcast(std::move(pb));
 }

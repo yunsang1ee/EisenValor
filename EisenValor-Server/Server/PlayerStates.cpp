@@ -154,7 +154,7 @@ void Server::Contents::PlayerPredelayState::Update(const float dt)
 	auto const owner{ GetGeneral(GetFSM()) };
 
 	const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	const auto& atkInfo{ owner->GetAtkInfo() };
 
 	if(worldFrame >= m_startFrame + atkInfo.skillData->preDelay) {
 		auto const world{ owner->GetGameWorld() };
@@ -188,7 +188,7 @@ void Server::Contents::PlayerAttackState::Exit(const float dt)
 void Server::Contents::PlayerAttackState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
 	auto const target = owner->GetTarget();
@@ -249,7 +249,7 @@ void Server::Contents::PlayerPostdelayState::Update(const float dt)
 	auto const owner{ GetGeneral(GetFSM()) };
 	auto const world{ owner->GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	const auto& atkInfo{ owner->GetAtkInfo() };
 
 	if(worldFrame >= m_startFrame + atkInfo.skillData->postDelay) {
 		auto const fsm{ GetFSM() };

@@ -18,11 +18,11 @@ Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
 	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
 	{
 		// 점령지를 찾고, 점령지를 향해 달려가는 시퀀스 노드
-		auto seqFindOZAndMove = std::make_unique<Server::Contents::SequenceNode>();
-		seqFindOZAndMove->AddChild(std::make_unique<Server::Contents::ActionFindOZ>()); 		//	- 1. Action -  점령지를 찾는다.
-		seqFindOZAndMove->AddChild(std::make_unique<Server::Contents::ActionMoveToOZ>()); 		//	- 2. Action - 점령지를 찾았으면 점령지를 향해 달려간다
+		auto findOZAndMoveSeq = std::make_unique<Server::Contents::SequenceNode>();
+		findOZAndMoveSeq->AddChild(std::make_unique<Server::Contents::FindOZ>()); 		//	- 1. Action -  점령지를 찾는다.
+		findOZAndMoveSeq->AddChild(std::make_unique<Server::Contents::MoveToOZ>()); 		//	- 2. Action - 점령지를 찾았으면 점령지를 향해 달려간다
 
-		rootSelector->AddChild(std::move(seqFindOZAndMove));
+		rootSelector->AddChild(std::move(findOZAndMoveSeq));
 	}
 
 	m_root = std::move(rootSelector);
@@ -47,7 +47,7 @@ void Server::Contents::GeneralRoamingState::Exit(const float dt)
 	std::cout << "General GeneralRoamingState Exit!" << std::endl;
 	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
 	if(bt) {
-		bt->SetRoot(m_root.get());
+		bt->SetRoot(nullptr);
 		bt->Reset();
 	}
 }
@@ -68,6 +68,8 @@ void Server::Contents::GeneralRoamingState::Update(const float dt)
 			
 			if(owner->GetID() == id) continue;
 
+			if(o->GetTeamType() == owner->GetTeamType()) continue;
+
 			const auto& targetPos{ o->GetPos() };
 
 			const float distToTargetSq{ (targetPos - ownerPos).LengthSquared() };
@@ -81,11 +83,6 @@ void Server::Contents::GeneralRoamingState::Update(const float dt)
 
 		}
 	}
-
-	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
-	
-	if(bt)
-		bt->Update(dt);
 }
 	
 Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
@@ -93,25 +90,27 @@ Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
 {
 	SetFSM(fsm);
 
-	// TODO: 행동트리 구현
 	auto rootSelector = std::make_unique<Server::Contents::SelectorNode>();
 	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
 
-	// seqDefense
+	// DefenseSeq
 	{
-		auto seqDefense{ std::make_unique<Server::Contents::SequenceNode>() };
+		auto defenseSeq{ std::make_unique<Server::Contents::SequenceNode>() };
 		{
-			seqDefense->AddChild(std::make_unique<Server::Contents::ConditionIsTargetAttacking>());
-			seqDefense->AddChild(std::make_unique<Server::Contents::ActionDefense>());
+			defenseSeq->AddChild(std::make_unique<Server::Contents::IsTargetAttacking>());
+			defenseSeq->AddChild(std::make_unique<Server::Contents::MatchGuard>());
+			defenseSeq->AddChild(std::make_unique<Server::Contents::Parrying>());
 		}
 
-		rootSelector->AddChild(std::move(seqDefense));
+		rootSelector->AddChild(std::move(defenseSeq));
 	}
 
-	// seqAtk
+	// AttackSeq
 	{
-		auto seqAtk{ std::make_unique<Server::Contents::SequenceNode>() };
-		rootSelector->AddChild(std::move(seqAtk));
+		auto attackSeq{ std::make_unique<Server::Contents::SequenceNode>() };
+		attackSeq->AddChild(std::make_unique<Server::Contents::DefaultAttack>());
+		
+		rootSelector->AddChild(std::move(attackSeq));
 	}
 
 	m_root = std::move(rootSelector);
@@ -133,10 +132,6 @@ void Server::Contents::GeneralDuelingState::Enter(const float dt)
 		bt->Reset();
 	}
 
-	owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(owner->GetID(), owner->GetStanceType()) };
-	world->Broadcast(std::move(pb));
-
 	owner->GetComponent<NavAgent>()->StopMove();
 }
 
@@ -152,10 +147,6 @@ void Server::Contents::GeneralDuelingState::Exit(const float dt)
 
 void Server::Contents::GeneralDuelingState::Update(const float dt)
 {
-	auto const bt{ GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>() };
-
-	if(bt)
-		bt->Update(dt);
 /*
 	- 상대가 공격 O
 		- 약공격 방어 확률 30%

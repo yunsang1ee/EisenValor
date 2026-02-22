@@ -48,7 +48,7 @@ bool Server::Contents::Soldier::OnDamaged(Creature* const attacker, const float 
 
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
 		auto attackerPlayer = static_cast<Player*>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
+		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
 			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;

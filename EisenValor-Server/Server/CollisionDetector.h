@@ -11,10 +11,6 @@ namespace Server {
 
 		class CollisionDetector {
 		private:
-			using CollisionFunc = bool(*)(const Collider* const, const Collider* const);
-			static constexpr uint8 MAX_TYPE_COUNT = static_cast<int>(COLLIDER_TYPE::END);
-
-		private:
 			CollisionDetector();
 			CollisionDetector(const CollisionDetector&) = delete;
 			CollisionDetector(CollisionDetector&&) = delete;
@@ -36,6 +32,8 @@ namespace Server {
 			friend class GameWorld;
 
 		private:
+			using CollisionFunc = bool(*)(const Collider* const, const Collider* const);
+			static constexpr uint8 MAX_TYPE_COUNT = static_cast<int>(COLLIDER_TYPE::END);
 			CollisionFunc m_collisionTable[MAX_TYPE_COUNT + 1][MAX_TYPE_COUNT + 1];
 
 		};

@@ -249,12 +249,12 @@ table SC_CHANGE_CAMERA_TARGET_PACKET {
 	camera_target_id: uint;
 }
 
-table CS_SHOW_PLAYER_ATTACK_DIR_PACKET{
+table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
 	attack_dir: uint8;
 }
 
-table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
-	player_id: uint32;
+table SC_SHOW_GENERAL_ATTACK_DIR_PACKET{
+	obj_id: uint32;
 	attack_dir: uint8;
 }
 

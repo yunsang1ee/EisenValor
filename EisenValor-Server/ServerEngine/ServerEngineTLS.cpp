@@ -8,5 +8,5 @@ thread_local std::chrono::milliseconds TLS_ALLOCATED_WORK_TIME{64ms};
 #ifdef _USE_RIO
 thread_local std::chrono::milliseconds TLS_ALLOCATED_WORK_TIME{1ms};
 #endif
-thread_local ServerEngine::TaskQueue* TLS_CURRENT_TASK_QUEUE{ nullptr };	// ³»°¡ ÇöÀç Ã³¸®ÇÏ°í ÀÖ´Â TaskQueue
+thread_local ServerEngine::TaskQueue* TLS_CURRENT_TASK_QUEUE{ nullptr };	// ë‚´ê°€ í˜„ìž¬ ì²˜ë¦¬í•˜ê³  ìžˆëŠ” TaskQueue
 thread_local ServerEngine::RIO::RIOWorker* TLS_RIO_WORKER{ nullptr };

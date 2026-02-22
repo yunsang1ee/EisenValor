@@ -19,7 +19,7 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 {
 	if(!target) return false;
 
-	const auto& atkInfo{ GetAttackInfo() };
+	const auto& atkInfo{ GetAtkInfo() };
 	const float radiusSq{ atkInfo.skillData->attackRadius * atkInfo.skillData->attackRadius };
 	const Vec3& myPos{ GetPos() };
 
@@ -94,41 +94,68 @@ void Server::Contents::General::OnRespawn()
 bool Server::Contents::General::OnDamaged(Creature* const attacker, const float dt)
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
-	// TODO: 현재 Roaming 중이었다면, 즉시 Duel 상태로 전환해야함.
-
-	/*auto const world{ GetGameWorld() };
+	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
 	const auto stateType{ fsm->GetCurState()->GetStateType() };
 
+	if(FB_ENUMS::GENERAL_STATE_TYPE_DEAD == stateType)
+		return false;
+
+	const auto bt = GetComponent<BehaviorTree>();
+
 	uint32 damage{};
 
+	// 상대가 플레이어인 경우
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
-		auto attackerPlayer = static_cast<Player*>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
 
-		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
-			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
-		}
-		else {
-			damage = attackerAtkInfo.skillData->damage;
+		switch(stateType) {
+			case FB_ENUMS::GENERAL_STATE_TYPE_ROAMING:
+			{
+				auto attackerPlayer = static_cast<Player*>(attacker);
+				const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
+
+				if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+					damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+				}
+				else {
+					damage = attackerAtkInfo.skillData->damage;
+				}
+				DecHP(damage);
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
+				return true;
+			}
+			case FB_ENUMS::GENERAL_STATE_TYPE_DUELING:
+			{
+				// TODO: BT의 블랙보드에 저장된 정보 가져와서 
+				// DUEL && def && 방향일치 -> 공격실패
+		/*
+			- 상대가 공격 O
+				- 약공격 방어 확률 30%
+				- 강공격 방어 확률 90%
+				- 반격 확률 20%
+			- 상대가 공격 X
+				- 공격할 확률 60% (이때 스탠스를 바꿀 확률 50%)
+				- 약공격 확률 40%
+				- 약공격으로 시작하는 콤보 중 하나 실행확률 30%
+				- 강공격 확률 50%
+				- 페이크확률 60%
+				- 강공격으로 시작하는 콤보 중 하나 실행확률 40%
+				- 방어해제공격 10%
+				- 움직이거나 스탠스만 변경할 확률 40%
+*/
+
+				break;
+			}
+			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:
+			{
+
+				break;
+			}
+			default:
+				break;
 		}
 	}
-
-	DecHP(damage);*/
-
-	auto const world{ GetGameWorld() };
-	auto bt = GetComponent<BehaviorTree>();
-	bt->GetBlackboard()->SetValue("AttackerID", attacker->GetID());
-	bt->GetBlackboard()->SetValue("LastHitFrame", world->GetGameWorldFrameCount());
-
-	auto fsm = GetComponent<FSM>();
-	if(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING == fsm->GetCurState()->GetStateType()) {
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
-		return false;
-	}
-
 	return true;
-
 }

@@ -49,6 +49,9 @@ void ServerEngine::RIO::RIOWorker::Work()
 
 void ServerEngine::RIO::RIOWorker::FlushSessionPacketQueue()
 {
+	if(m_connectedSession.empty())
+		return;
+
 	auto iter{ m_connectedSession.begin() };
 	for(; iter != m_connectedSession.end();) {
 		auto session{ (*iter) };

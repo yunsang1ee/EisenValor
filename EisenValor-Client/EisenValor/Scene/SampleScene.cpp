@@ -139,7 +139,7 @@ void SampleScene::CreateSceneObjects()
 		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
-			tr.SetPosition(0.0f, 0.0f, 0.0f); // Ground 옆
+			tr.SetPosition(0.0f, -0.5f, 0.0f); // Ground 옆
 			tr.SetScale(1.0f);
 
 			EvAsset::MeshData meshData;

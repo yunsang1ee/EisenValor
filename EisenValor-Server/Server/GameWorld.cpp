@@ -269,6 +269,14 @@ void Server::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 se
 	}
 }
 
+void Server::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+{
+	auto const player = IDToPlayer(sessionID);
+	if(player) {
+		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
+	}
+}
+
 #ifndef ENABLE_LOBBY
 void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
 {
@@ -311,6 +319,8 @@ void Server::Contents::GameWorld::CheckGameTime(const float dt)
 
 			const uint32_t minutes = totalSeconds / 60;
 			const uint32_t seconds = totalSeconds % 60;
+	
+			// std::cout << std::format("{}M {}S", minutes, seconds) << std::endl;
 
 			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
 			Broadcast(std::move(pb));

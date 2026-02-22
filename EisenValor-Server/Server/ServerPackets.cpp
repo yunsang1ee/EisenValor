@@ -256,11 +256,11 @@ namespace ServerPackets {
 
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_CHANGE_CAMERA_TARGET_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_CAMERA_TARGET_PACKET, targetID));
 	}
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(const uint32 playerID, const uint8 attackDir)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(const uint32 generalID, const uint8 attackDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET, playerID, attackDir));
+		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_SHOW_GENERAL_ATTACK_DIR_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_GENERAL_ATTACK_DIR_PACKET, generalID, attackDir));
 
 	}
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint32 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)

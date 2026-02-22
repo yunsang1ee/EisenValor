@@ -188,11 +188,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_SHOW_GENERAL_ATTACK_DIR_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET>(
-			S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET>(
+			S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET, socket, buffer, header
 		);
 	};
 
@@ -216,3 +216,17 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{ return HandlePacket<FB_TABLES::SC_PING_PACKET>(S2C::Handle_SC_PING_PACKET, socket, buffer, header); };
 }
+
+std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePacketBuffer(
+	const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
+)
+{
+	const uint32  packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
+	auto		  packetBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
+	PacketHeader* header = reinterpret_cast<PacketHeader*>(packetBuffer->GetBuffer());
+	header->packetType = static_cast<uint16>(packetType);
+	header->packetSize = packetSize;
+	memcpy_s(&header[1], packetBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
+	return packetBuffer;
+}
+

@@ -168,11 +168,11 @@ struct CS_CHANGE_CAMERA_TARGET_PACKETBuilder;
 struct SC_CHANGE_CAMERA_TARGET_PACKET;
 struct SC_CHANGE_CAMERA_TARGET_PACKETBuilder;
 
-struct CS_SHOW_PLAYER_ATTACK_DIR_PACKET;
-struct CS_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder;
+struct CS_SHOW_GENERAL_ATTACK_DIR_PACKET;
+struct CS_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder;
 
-struct SC_SHOW_PLAYER_ATTACK_DIR_PACKET;
-struct SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder;
+struct SC_SHOW_GENERAL_ATTACK_DIR_PACKET;
+struct SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder;
 
 struct SC_RESPAWN_GENERAL_PACKET;
 struct SC_RESPAWN_GENERAL_PACKETBuilder;
@@ -2459,8 +2459,8 @@ inline ::flatbuffers::Offset<SC_CHANGE_CAMERA_TARGET_PACKET> CreateSC_CHANGE_CAM
   return builder_.Finish();
 }
 
-struct CS_SHOW_PLAYER_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder Builder;
+struct CS_SHOW_GENERAL_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ATTACK_DIR = 4
   };
@@ -2474,79 +2474,79 @@ struct CS_SHOW_PLAYER_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::flat
   }
 };
 
-struct CS_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder {
-  typedef CS_SHOW_PLAYER_ATTACK_DIR_PACKET Table;
+struct CS_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder {
+  typedef CS_SHOW_GENERAL_ATTACK_DIR_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_attack_dir(uint8_t attack_dir) {
-    fbb_.AddElement<uint8_t>(CS_SHOW_PLAYER_ATTACK_DIR_PACKET::VT_ATTACK_DIR, attack_dir, 0);
+    fbb_.AddElement<uint8_t>(CS_SHOW_GENERAL_ATTACK_DIR_PACKET::VT_ATTACK_DIR, attack_dir, 0);
   }
-  explicit CS_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_SHOW_PLAYER_ATTACK_DIR_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_SHOW_GENERAL_ATTACK_DIR_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_SHOW_PLAYER_ATTACK_DIR_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_SHOW_GENERAL_ATTACK_DIR_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_SHOW_PLAYER_ATTACK_DIR_PACKET> CreateCS_SHOW_PLAYER_ATTACK_DIR_PACKET(
+inline ::flatbuffers::Offset<CS_SHOW_GENERAL_ATTACK_DIR_PACKET> CreateCS_SHOW_GENERAL_ATTACK_DIR_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint8_t attack_dir = 0) {
-  CS_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder builder_(_fbb);
+  CS_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder builder_(_fbb);
   builder_.add_attack_dir(attack_dir);
   return builder_.Finish();
 }
 
-struct SC_SHOW_PLAYER_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder Builder;
+struct SC_SHOW_GENERAL_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PLAYER_ID = 4,
+    VT_OBJ_ID = 4,
     VT_ATTACK_DIR = 6
   };
-  uint32_t player_id() const {
-    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
   }
   uint8_t attack_dir() const {
     return GetField<uint8_t>(VT_ATTACK_DIR, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_ATTACK_DIR, 1) &&
            verifier.EndTable();
   }
 };
 
-struct SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder {
-  typedef SC_SHOW_PLAYER_ATTACK_DIR_PACKET Table;
+struct SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder {
+  typedef SC_SHOW_GENERAL_ATTACK_DIR_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(SC_SHOW_PLAYER_ATTACK_DIR_PACKET::VT_PLAYER_ID, player_id, 0);
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_SHOW_GENERAL_ATTACK_DIR_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_attack_dir(uint8_t attack_dir) {
-    fbb_.AddElement<uint8_t>(SC_SHOW_PLAYER_ATTACK_DIR_PACKET::VT_ATTACK_DIR, attack_dir, 0);
+    fbb_.AddElement<uint8_t>(SC_SHOW_GENERAL_ATTACK_DIR_PACKET::VT_ATTACK_DIR, attack_dir, 0);
   }
-  explicit SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_SHOW_PLAYER_ATTACK_DIR_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_SHOW_GENERAL_ATTACK_DIR_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_SHOW_PLAYER_ATTACK_DIR_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_SHOW_GENERAL_ATTACK_DIR_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_SHOW_PLAYER_ATTACK_DIR_PACKET> CreateSC_SHOW_PLAYER_ATTACK_DIR_PACKET(
+inline ::flatbuffers::Offset<SC_SHOW_GENERAL_ATTACK_DIR_PACKET> CreateSC_SHOW_GENERAL_ATTACK_DIR_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t player_id = 0,
+    uint32_t obj_id = 0,
     uint8_t attack_dir = 0) {
-  SC_SHOW_PLAYER_ATTACK_DIR_PACKETBuilder builder_(_fbb);
-  builder_.add_player_id(player_id);
+  SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
   builder_.add_attack_dir(attack_dir);
   return builder_.Finish();
 }

@@ -49,16 +49,7 @@ public:
 
 	static std::shared_ptr<NetBridge::PacketBuffer> MakePacketBuffer(
 		const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
-	)
-	{
-		const uint32  packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
-		auto		  packetBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
-		PacketHeader* header = reinterpret_cast<PacketHeader*>(packetBuffer->GetBuffer());
-		header->packetType = static_cast<uint16>(packetType);
-		header->packetSize = packetSize;
-		memcpy_s(&header[1], packetBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
-		return packetBuffer;
-	}
+	);
 
 private:
 	static std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;

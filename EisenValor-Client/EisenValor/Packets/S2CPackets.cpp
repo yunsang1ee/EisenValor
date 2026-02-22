@@ -1048,14 +1048,14 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
 )
 {
 	// 플레이어 공격 방향 표시
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	
-	const uint32 id = recvPkt.player_id();
+	const uint32 id = recvPkt.obj_id();
 	const uint32 localID = scene->GetLocalID();
 
 	// 서버 Echo 방지

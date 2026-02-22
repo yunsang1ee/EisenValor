@@ -24,8 +24,9 @@ namespace Server {
 			
 			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) { m_stanceType = stanceType; }
 			void SetAtkInfo(const AttackInfo& atkInfo) { m_atkInfo = atkInfo; }
+			void SetAtkDir(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType) { m_atkInfo.dir = dirType; }
 			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }
-			const AttackInfo& GetAttackInfo() const { return m_atkInfo; }
+			const AttackInfo& GetAtkInfo() const { return m_atkInfo; }
 
 		protected:
 			FB_ENUMS::GENERAL_STANCE_TYPE			m_stanceType;

@@ -169,14 +169,14 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKE
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_SHOW_PLAYER_ATTACK_DIR_PACKET, dirType)
+		PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_SHOW_GENERAL_ATTACK_DIR_PACKET, dirType)
 	);
 }
 

@@ -49,7 +49,7 @@ void Server::ClientPacketHandler::Init()
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_GENERAL_STANCE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET>(ClientPackets::Handle_CS_CHANGE_GENERAL_STANCE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_FAKE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_FAKE_PACKET>(ClientPackets::Handle_CS_PLAYER_FAKE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(ClientPackets::Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET>(ClientPackets::Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET, session, buffer); };
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET>(ClientPackets::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET, session, buffer); };
 #pragma endregion
 	// =================
 	//		테스트
