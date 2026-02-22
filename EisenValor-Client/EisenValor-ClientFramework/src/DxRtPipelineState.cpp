@@ -28,7 +28,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	// Range 1: Output UAV (u0)
 	ranges[1] = {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 
-	// 2. Root Parameters (총 6개 사용)
+	// 2. Root Parameters
 	D3D12_ROOT_PARAMETER1 rootParams[6] = {};
 
 	// Param 0: TLAS Table (t0)

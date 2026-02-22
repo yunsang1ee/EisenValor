@@ -28,7 +28,7 @@ public:
 	DxBuffer* GetIndexBuffer() const { return m_ib.get(); }
 
 private:
-	EvAsset::Bounds			   m_bounds{};
+	EvAsset::Bounds				m_bounds{};
 	std::vector<EvAsset::SubMesh>  m_subMeshes;
 	uint32_t					   m_vertexCount = 0;
 	uint32_t					   m_indexCount = 0;

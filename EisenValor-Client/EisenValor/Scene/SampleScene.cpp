@@ -25,6 +25,7 @@
 
 #include "MeshLoader.h"
 #include "MeshComponent.h"
+#include "SkinnedMeshComponent.h"
 
 using Vertex = EvAsset::Vertex;
 
@@ -72,7 +73,7 @@ void SampleScene::CreateSceneObjects()
 	);
 
 	ReserveGameObject(
-		"TestSphere", std::nullopt,
+		"Sphere", std::nullopt,
 		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
@@ -86,7 +87,7 @@ void SampleScene::CreateSceneObjects()
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
 					if (nullptr != meshRes)
 					{
-						mesh->SetMeshResource(meshRes);
+						mesh->SetMeshResource(meshRes, true);
 					}
 				}
 			);

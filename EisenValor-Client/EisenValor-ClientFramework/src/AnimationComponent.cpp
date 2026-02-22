@@ -64,7 +64,7 @@ void AnimationComponent::UpdateBoneMatrices()
 	auto* skinnedMesh = GetGameObject()->GetComponent<SkinnedMeshComponent>();
 	if (!skinnedMesh || !skinnedMesh->IsValid()) return;
 
-	auto meshRes = skinnedMesh->GetResource();
+	auto meshRes = skinnedMesh->GetSkinnedMeshResource();
 	const auto& bones = meshRes->GetBones();
 	const size_t boneCount = bones.size();
 

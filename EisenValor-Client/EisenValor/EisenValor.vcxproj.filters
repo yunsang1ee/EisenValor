@@ -222,4 +222,9 @@
     </None>
     <None Include="..\.clang-format" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
 </Project>

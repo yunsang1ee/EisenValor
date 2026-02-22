@@ -29,6 +29,11 @@ struct alignas(16) InstanceData
 	uint32_t			indexBufferIdx;
 	uint32_t			geoInfoBaseIdx;
 	uint32_t			instanceID;
+
+	uint32_t instanceFlags;
+	uint32_t boneMatrixBaseIdx;
+	uint32_t pad0;
+	uint32_t pad1;
 };
 static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
 
@@ -64,11 +69,17 @@ public:
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
+	void CreateSkinningPipeline(); // 스키닝 전용 파이프라인 (Compute Shader)
+	void UpdateSkinning(DxFrameResource* frame, Scene* scene); // 매 프레임 정점 Skinning
 
 	void CollectRenderData(Scene* scene);
 	void BuildAccelerationStructures(DxFrameResource* frame, Scene* scene);
 
 private:
+	// Skinning Compute Shader Resources
+	ComPtr<ID3D12RootSignature> m_skinningRootSignature;
+	ComPtr<ID3D12PipelineState> m_skinningPSO;
+
 	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
 	std::unique_ptr<DxRtPipelineState> m_rtPipeline;
 	std::unique_ptr<DxRtPipelineState> m_ptPipeline;
@@ -81,9 +92,10 @@ private:
 
 	std::unordered_map<EvAsset::Guid, std::unique_ptr<DxBLAS>, EvAsset::GuidHash> m_blasCache;
 
-	RenderDataSync<InstanceData>	m_instanceBuffer;
-	RenderDataSync<MaterialGPUData> m_materialConstants;
-	RenderDataSync<GeoInfo>			m_geoTable;
+	RenderDataSync<InstanceData>		m_instanceBuffer;
+	RenderDataSync<MaterialGPUData>		m_materialConstants;
+	RenderDataSync<GeoInfo>				m_geoTable;
+	RenderDataSync<DirectX::XMFLOAT4X4> m_boneMatrixBuffer;
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;
