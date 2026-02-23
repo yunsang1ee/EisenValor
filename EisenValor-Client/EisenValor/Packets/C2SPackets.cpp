@@ -131,14 +131,14 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(const FB_STRUC
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(
 	const FB_STRUCTS::GeneralAttackInfo* attackInfo
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_PLAYER_ATTACK_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PLAYER_ATTACK_PACKET, attackInfo)
+		PACKET_TYPE::CS_GENERAL_ATTACK_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GENERAL_ATTACK_PACKET, attackInfo)
 	);
 }
 

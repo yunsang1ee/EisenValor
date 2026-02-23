@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "GameObject.h"
 
+#include "Creature.h"
+
 Server::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
 	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}
 {
@@ -34,6 +36,25 @@ Vec3 Server::Contents::GameObject::GetForwardDir()
 	forward.Normalize();
 
 	return forward;
+}
+
+bool Server::Contents::GameObject::IsTargetInRange(const GameObject* const target, const float rangeSq)
+{
+	if(nullptr == target)
+		return false;
+
+	if(false == target->IsActive())
+		return false;
+
+	const auto& myPos{ GetPos() };
+	const auto& targetPos{ target->GetPos() };
+
+	const float distToTargetSq{ (targetPos - myPos).LengthSquared() };
+	
+	if(distToTargetSq <= rangeSq)
+		return true;
+	
+	return false;
 }
 
 void Server::Contents::GameObject::Update(const float dt)

@@ -66,13 +66,14 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
 	const auto bt = general->AddComponent<BehaviorTree>();
+	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);
 
 	auto navAgenet = general->AddComponent<Server::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;
-	params.maxSpeed = 0.3f;
+	params.maxSpeed = 1.f;
 	params.maxAcceleration = 10.f;
 
 	// set collision avoidance

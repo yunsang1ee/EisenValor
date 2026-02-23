@@ -144,11 +144,11 @@ struct CS_CHANGE_GENERAL_STANCE_PACKETBuilder;
 struct SC_CHANGE_GENERAL_STANCE_PACKET;
 struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder;
 
-struct CS_PLAYER_ATTACK_PACKET;
-struct CS_PLAYER_ATTACK_PACKETBuilder;
+struct CS_GENERAL_ATTACK_PACKET;
+struct CS_GENERAL_ATTACK_PACKETBuilder;
 
-struct SC_PLAYER_ATTACK_PACKET;
-struct SC_PLAYER_ATTACK_PACKETBuilder;
+struct SC_GENERAL_ATTACK_PACKET;
+struct SC_GENERAL_ATTACK_PACKETBuilder;
 
 struct SC_UPDATE_VITAL_PACKET;
 struct SC_UPDATE_VITAL_PACKETBuilder;
@@ -2103,8 +2103,8 @@ inline ::flatbuffers::Offset<SC_CHANGE_GENERAL_STANCE_PACKET> CreateSC_CHANGE_GE
   return builder_.Finish();
 }
 
-struct CS_PLAYER_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_PLAYER_ATTACK_PACKETBuilder Builder;
+struct CS_GENERAL_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GENERAL_ATTACK_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ATTACK_INFO = 4
   };
@@ -2118,34 +2118,34 @@ struct CS_PLAYER_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
   }
 };
 
-struct CS_PLAYER_ATTACK_PACKETBuilder {
-  typedef CS_PLAYER_ATTACK_PACKET Table;
+struct CS_GENERAL_ATTACK_PACKETBuilder {
+  typedef CS_GENERAL_ATTACK_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_attack_info(const FB_STRUCTS::GeneralAttackInfo *attack_info) {
-    fbb_.AddStruct(CS_PLAYER_ATTACK_PACKET::VT_ATTACK_INFO, attack_info);
+    fbb_.AddStruct(CS_GENERAL_ATTACK_PACKET::VT_ATTACK_INFO, attack_info);
   }
-  explicit CS_PLAYER_ATTACK_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_GENERAL_ATTACK_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_PLAYER_ATTACK_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_GENERAL_ATTACK_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_PLAYER_ATTACK_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_GENERAL_ATTACK_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_PLAYER_ATTACK_PACKET> CreateCS_PLAYER_ATTACK_PACKET(
+inline ::flatbuffers::Offset<CS_GENERAL_ATTACK_PACKET> CreateCS_GENERAL_ATTACK_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const FB_STRUCTS::GeneralAttackInfo *attack_info = nullptr) {
-  CS_PLAYER_ATTACK_PACKETBuilder builder_(_fbb);
+  CS_GENERAL_ATTACK_PACKETBuilder builder_(_fbb);
   builder_.add_attack_info(attack_info);
   return builder_.Finish();
 }
 
-struct SC_PLAYER_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_PLAYER_ATTACK_PACKETBuilder Builder;
+struct SC_GENERAL_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_GENERAL_ATTACK_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_ATTACK_INFO = 6
@@ -2164,32 +2164,32 @@ struct SC_PLAYER_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
   }
 };
 
-struct SC_PLAYER_ATTACK_PACKETBuilder {
-  typedef SC_PLAYER_ATTACK_PACKET Table;
+struct SC_GENERAL_ATTACK_PACKETBuilder {
+  typedef SC_GENERAL_ATTACK_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_PLAYER_ATTACK_PACKET::VT_OBJ_ID, obj_id, 0);
+    fbb_.AddElement<uint32_t>(SC_GENERAL_ATTACK_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_attack_info(const FB_STRUCTS::GeneralAttackInfo *attack_info) {
-    fbb_.AddStruct(SC_PLAYER_ATTACK_PACKET::VT_ATTACK_INFO, attack_info);
+    fbb_.AddStruct(SC_GENERAL_ATTACK_PACKET::VT_ATTACK_INFO, attack_info);
   }
-  explicit SC_PLAYER_ATTACK_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_GENERAL_ATTACK_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_PLAYER_ATTACK_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_GENERAL_ATTACK_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_PLAYER_ATTACK_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_GENERAL_ATTACK_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_PLAYER_ATTACK_PACKET> CreateSC_PLAYER_ATTACK_PACKET(
+inline ::flatbuffers::Offset<SC_GENERAL_ATTACK_PACKET> CreateSC_GENERAL_ATTACK_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
     const FB_STRUCTS::GeneralAttackInfo *attack_info = nullptr) {
-  SC_PLAYER_ATTACK_PACKETBuilder builder_(_fbb);
+  SC_GENERAL_ATTACK_PACKETBuilder builder_(_fbb);
   builder_.add_attack_info(attack_info);
   builder_.add_obj_id(obj_id);
   return builder_.Finish();

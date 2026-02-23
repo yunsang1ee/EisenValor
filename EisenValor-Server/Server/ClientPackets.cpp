@@ -220,14 +220,14 @@ namespace ClientPackets {
 		return true;
 	}
 
-	bool Handle_CS_PLAYER_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_ATTACK_PACKET& recvPkt)
+	bool Handle_CS_GENERAL_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GENERAL_ATTACK_PACKET& recvPkt)
 	{
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
-			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK, id, *recvPkt.attack_info());
+			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_GENERAL_ATTACK, id, *recvPkt.attack_info());
 
 		return true;
 	}

@@ -9,6 +9,13 @@ Server::Contents::BehaviorTree::BehaviorTree()
 
 }
 
+void Server::Contents::BehaviorTree::SetRoot(BehaviorNode* const root)
+{
+	Reset();
+
+	m_root = root;
+}
+
 void Server::Contents::BehaviorTree::Update(const float dt)
 {
 	if(m_root)
@@ -19,4 +26,6 @@ void Server::Contents::BehaviorTree::Reset()
 {
 	if(m_root)
 		m_root->Reset();
+
+	m_root = nullptr;
 }

@@ -214,12 +214,12 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo, state, subState));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_PLAYER_ATTACK_PACKET(const uint32 id, const FB_STRUCTS::GeneralAttackInfo& atkInfo)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_GENERAL_ATTACK_PACKET(const uint32 id, const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		const FB_STRUCTS::GeneralAttackInfo info{ atkInfo };
 
-		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_PLAYER_ATTACK_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PLAYER_ATTACK_PACKET, id, &info));
+		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_GENERAL_ATTACK_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GENERAL_ATTACK_PACKET, id, &info));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_UPDATE_VITAL_PACKET(const uint32 id, const uint32 hp, const uint32 stamina)

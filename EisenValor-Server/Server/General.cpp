@@ -79,6 +79,8 @@ void Server::Contents::General::OnRespawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
+	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, worldDT, true);
 
 	// TODO: General Respawn 시 부활 위치 설정 해야함.
 
@@ -89,6 +91,8 @@ void Server::Contents::General::OnRespawn()
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+
+	std::cout << "General NPC Respawn!" << std::endl;
 }
 
 bool Server::Contents::General::OnDamaged(Creature* const attacker, const float dt)
@@ -104,48 +108,39 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 		return false;
 
 	const auto bt = GetComponent<BehaviorTree>();
+	const auto bb = bt->GetBlackboard();
+	const auto atkInfo{ GetAtkInfo() };
 
 	uint32 damage{};
 
 	// 상대가 플레이어인 경우
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
+		auto attackerPlayer = static_cast<Player*>(attacker);
+		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 		switch(stateType) {
 			case FB_ENUMS::GENERAL_STATE_TYPE_ROAMING:
 			{
-				auto attackerPlayer = static_cast<Player*>(attacker);
-				const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
-
-				if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
-					damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
-				}
-				else {
-					damage = attackerAtkInfo.skillData->damage;
-				}
-				DecHP(damage);
 				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
-				return true;
+				break;
 			}
 			case FB_ENUMS::GENERAL_STATE_TYPE_DUELING:
 			{
-				// TODO: BT의 블랙보드에 저장된 정보 가져와서 
-				// DUEL && def && 방향일치 -> 공격실패
-		/*
-			- 상대가 공격 O
-				- 약공격 방어 확률 30%
-				- 강공격 방어 확률 90%
-				- 반격 확률 20%
-			- 상대가 공격 X
-				- 공격할 확률 60% (이때 스탠스를 바꿀 확률 50%)
-				- 약공격 확률 40%
-				- 약공격으로 시작하는 콤보 중 하나 실행확률 30%
-				- 강공격 확률 50%
-				- 페이크확률 60%
-				- 강공격으로 시작하는 콤보 중 하나 실행확률 40%
-				- 방어해제공격 10%
-				- 움직이거나 스탠스만 변경할 확률 40%
-*/
+				uint64 lastDefendedFrame = bb->GetValue<uint64>("LastDefendedFrame", 0UI64);
 
+				if(lastDefendedFrame != 0) {
+					uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
+					uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
+
+					// 방어 성공
+					if(frameDiff <= 10) {
+						std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
+						bb->SetValue("LastDefendedFrame", 0UI64);
+						return false;
+					}
+
+					bb->SetValue("LastDefendedFrame", 0UI64);
+				}
 				break;
 			}
 			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:
@@ -156,6 +151,14 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 			default:
 				break;
 		}
+
+		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+		}
+		else {
+			damage = attackerAtkInfo.skillData->damage;
+		}
+		DecHP(damage);
 	}
 	return true;
 }

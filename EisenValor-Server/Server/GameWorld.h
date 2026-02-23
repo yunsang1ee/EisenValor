@@ -4,14 +4,6 @@
 #include "CollisionDetector.h"
 #include "NavSystem.h"
 
-union COLLIDER_ID {
-	struct {
-		uint32 leftID;
-		uint32 rightID;
-	};
-	uint64 id;
-};
-
 namespace Server {
 	namespace Contents {
 		class GameRoom;
@@ -45,7 +37,7 @@ namespace Server {
 
 		public:
 			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState);
-			void Handle_CS_PLAYER_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
+			void Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
 			void Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID);
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);

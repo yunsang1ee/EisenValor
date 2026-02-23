@@ -237,7 +237,7 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 	}
 }
 
-void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
+void Server::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(sessionID) != playerGroup.end()) {
@@ -717,7 +717,7 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 		t.id = m_npcIdGen++;
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 		t.posInfo = PosInfo{
-		.pos = Vec3{10.f, 0.f, 10.f},
+		.pos = Vec3{30.f, 0.f, 30.f},
 		.rot = Vec3{}
 		};
 		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());

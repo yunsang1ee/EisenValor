@@ -21,6 +21,7 @@ namespace Server {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
 			using Scripts = std::vector<std::unique_ptr<Script>>;
+		
 		public:
 			GameObject() = default;
 			explicit GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type);
@@ -29,7 +30,6 @@ namespace Server {
 			GameObject& operator=(const GameObject&) = delete;
 			GameObject (GameObject&&) = default;
 			GameObject& operator=(GameObject&&) = default;
-
 
 		public:
 			virtual void OnCollisionEnter(Collider* const other) {}
@@ -118,8 +118,10 @@ namespace Server {
 			Vec3 GetForwardDir();
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
 			bool IsCreature() const  { return m_isCreature; }
-			bool IsActive() { return m_active; }
+			bool IsActive() const { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
+			
+			bool IsTargetInRange(const GameObject* const target, const float rangeSq = 2.f * 2.f);
 
 		private:
 			std::wstring							m_name;

@@ -1,10 +1,6 @@
 #include "pch.h"
 #include "BehaviorNode.h"
 
-Server::Contents::BehaviorNode::~BehaviorNode()
-{
-}
-
 void Server::Contents::CompositeNode::AddChild(std::unique_ptr<BehaviorNode> child)
 {
 	m_children.emplace_back(std::move(child));
@@ -57,45 +53,35 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SequenceNode::Execute(c
 {
 	for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
 		auto& child = m_children[m_currentIndex];
-		auto status = child->Execute(dt);
+		const auto status = child->Execute(dt);
 
-		// status가 Success가 되면 다음으로 넘어감, Running이 반환되면 Success가 반환될 때 까지 대기
-		if(status == BEHAVIOR_NODE_STATUS::RUNNING)
+		if(BEHAVIOR_NODE_STATUS::RUNNING == status)
 			return BEHAVIOR_NODE_STATUS::RUNNING;
-		if(status == BEHAVIOR_NODE_STATUS::FAIL) {
+		if(BEHAVIOR_NODE_STATUS::FAIL == status) {
 			m_currentIndex = 0;
 			return BEHAVIOR_NODE_STATUS::FAIL;
 		}
 	}
+
 	m_currentIndex = 0;
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 
-void Server::Contents::SequenceNode::Reset()
-{
-	m_currentIndex = 0;
-	CompositeNode::Reset();
-}
-
 Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SelectorNode::Execute(const float dt)
 {
-	for(size_t i = 0; i < m_children.size(); ++i) {
-		auto& child = m_children[i];
-		auto status = child->Execute(dt);
+	for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
+		auto& child = m_children[m_currentIndex];
+		const auto status = child->Execute(dt);
 
-		if(status == BEHAVIOR_NODE_STATUS::RUNNING) {
+		if(BEHAVIOR_NODE_STATUS::RUNNING == status) {
 			return BEHAVIOR_NODE_STATUS::RUNNING;
 		}
-
-		if(status == BEHAVIOR_NODE_STATUS::SUCCESS) {
+		if(BEHAVIOR_NODE_STATUS::RUNNING == status) {
+			m_currentIndex = 0;
 			return BEHAVIOR_NODE_STATUS::SUCCESS;
 		}
 	}
+	m_currentIndex = 0;
 	return BEHAVIOR_NODE_STATUS::FAIL;
-}
-
-void Server::Contents::SelectorNode::Reset()
-{
-	CompositeNode::Reset();
 }
 

@@ -33,12 +33,11 @@ namespace Server {
 			virtual bool Check(const float dt) override final;
 		};
 
-		class MatchGuard : public ActionNode {
+		class DefaultDefense : public ActionNode {
 		public:
-			// 상대방의 공격 방향을 읽어서, 내 가드 방향을 일치시킨다.
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
-
+		 
 		class Parrying : public ActionNode {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
@@ -48,7 +47,7 @@ namespace Server {
 		// ==================
 		//	  ATTACK_SEQ
 		// ==================
-		class DefaultAttack : public ActionNode {
+		class AttackTry : public ActionNode {
 		public:
 			// 상대방을 공격한다.
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
@@ -57,6 +56,10 @@ namespace Server {
 			float m_accDT=0.f;
 		};
 
+		class CombatMovement : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
 	}
 }
 

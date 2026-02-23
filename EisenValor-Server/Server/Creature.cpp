@@ -53,7 +53,7 @@ void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast
 		BroadcastUpdateVital();
 	}
 
-	if(m_statInfo.currentHP == 0 && IsActive()) {
+	if(m_statInfo.currentHP == 0  && IsActive()) {
 		SetActive(false);
 		OnDeath();
 

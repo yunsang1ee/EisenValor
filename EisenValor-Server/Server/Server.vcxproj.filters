@@ -10,9 +10,6 @@
     <ClCompile Include="ClientSession.cpp">
       <Filter>01. ClientSessionManager\ClientSession</Filter>
     </ClCompile>
-    <ClCompile Include="ClientPacketHandler.cpp">
-      <Filter>03. Packets\PacketHandler</Filter>
-    </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>02. Contents\GameWorld\GameObject</Filter>
     </ClCompile>
@@ -150,6 +147,9 @@
     </ClCompile>
     <ClCompile Include="Component.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

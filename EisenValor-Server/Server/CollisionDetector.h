@@ -3,6 +3,14 @@
 
 namespace Server {
 	namespace Contents {
+		
+		union COLLIDER_ID {
+			struct {
+				uint32 leftID;
+				uint32 rightID;
+			};
+			uint64 id;
+		};
 
 		class GameWorld;
 

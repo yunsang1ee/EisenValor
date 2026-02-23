@@ -150,7 +150,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			if (GLOBAL(InputGlobal).GetInputDown(VK_LBUTTON))
 			{
 				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+				auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
@@ -709,7 +709,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 				// 공격 패킷 전송
 				FB_STRUCTS::GeneralAttackInfo attackInfo(finalType, m_currentSelectedDir);
-				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+				auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// FSM 상태 전환

@@ -144,9 +144,9 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	{ return HandlePacket<FB_TABLES::SC_MOVE_PACKET>(S2C::Handle_SC_MOVE_PACKET, socket, buffer, header); };
 
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PLAYER_ATTACK_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_GENERAL_ATTACK_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{ return HandlePacket<FB_TABLES::SC_PLAYER_ATTACK_PACKET>(S2C::Handle_SC_PLAYER_ATTACK_PACKET, socket, buffer, header); };
+	{ return HandlePacket<FB_TABLES::SC_GENERAL_ATTACK_PACKET>(S2C::Handle_SC_GENERAL_ATTACK_PACKET, socket, buffer, header); };
 
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_UPDATE_VITAL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool

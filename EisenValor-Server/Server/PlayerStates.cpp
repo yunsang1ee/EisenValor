@@ -159,7 +159,7 @@ void Server::Contents::PlayerPredelayState::Update(const float dt)
 	if(worldFrame >= m_startFrame + atkInfo.skillData->preDelay) {
 		auto const world{ owner->GetGameWorld() };
 		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt);
+		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
 	}
 }
 
@@ -207,7 +207,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 				if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
 					auto const obj{ static_cast<General*>(target) };
 					auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt, true);
 				}
 			}
 		}
@@ -217,7 +217,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 	}
 
 	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt);
+	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 }
 
 // ==================================
@@ -253,7 +253,7 @@ void Server::Contents::PlayerPostdelayState::Update(const float dt)
 
 	if(worldFrame >= m_startFrame + atkInfo.skillData->postDelay) {
 		auto const fsm{ GetFSM() };
-		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt);
+		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
 	}
 }
 
@@ -294,7 +294,7 @@ void Server::Contents::PlayerStunState::Update(const float dt)
 	auto const world{ owner->GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const fsm{ GetFSM() };
-	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt);
+	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
 }
 
 // ==================================
