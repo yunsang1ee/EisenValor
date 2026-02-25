@@ -4,6 +4,7 @@
 #include "GameWorld.h"
 #include "Player.h"
 #include "BehaviorTree.h"
+#include "NavAgent.h"
 
 Server::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
@@ -65,7 +66,7 @@ void Server::Contents::General::OnDeath()
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT, true);
 
-	// TODO: 블랙보드 초기화
+	GetComponent<Server::Contents::BehaviorTree>()->Reset();
 }
 
 void Server::Contents::General::OnRespawn()
@@ -83,11 +84,10 @@ void Server::Contents::General::OnRespawn()
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, worldDT, true);
 
 	// TODO: General Respawn 시 부활 위치 설정 해야함.
-
 	Vec3 pos{ GetPos() };
 	pos.x += 10.f;
 	pos.z += 10.f;
-	SetPos(pos);
+	GetComponent<Server::Contents::NavAgent>()->SetDestPos(pos);
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
@@ -141,6 +141,7 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 
 					bb->SetValue("LastDefendedFrame", 0UI64);
 				}
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
 				break;
 			}
 			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:

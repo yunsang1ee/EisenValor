@@ -5,7 +5,7 @@
 #include "Tables_generated.h"
 
 #include "PacketHeader.h"
-#include "ServerGlobalFunc.h"
+#include "ServerGlobalFuncs.h"
 
 #include "ClientPackets.h"
 

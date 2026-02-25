@@ -26,11 +26,7 @@ namespace Server {
 
             void Clear() { m_data.clear(); }
 
-            void Erase(const std::string_view key)
-            {
-                if(HasKey(key))
-                    m_data.erase(key.data());
-            }
+            void Erase(const std::string_view key) { if(HasKey(key)) m_data.erase(key.data()); }
 
         private:
             std::map<std::string, BlackboardValue> m_data;

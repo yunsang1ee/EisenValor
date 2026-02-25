@@ -273,6 +273,15 @@ table SC_DEAD_PACKET {
 	obj_id: uint32;
 }
 
+table SC_START_ANIMATION {
+	obj_id: uint32;
+	anim_name: string;
+}
+
+table SC_END_ANIMATION {
+	obj_id: uint32;
+	anim_name: string;
+}
 
 // ================================================
 //					    TEST

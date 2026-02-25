@@ -10,7 +10,7 @@
 #include "NavAgent.h"
 
 Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
-	:State{ FB_ENUMS::GENERAL_STATE_TYPE_ROAMING }
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_ROAMING }, m_accDTForStaminaRecovery{}
 {
 	SetFSM(fsm);
 
@@ -63,11 +63,25 @@ void Server::Contents::GeneralRoamingState::Exit(const float dt)
 void Server::Contents::GeneralRoamingState::Update(const float dt)
 {
 	auto const fsm{ GetFSM() };
-	auto const owner{ fsm->GetOwner() };
+	auto const owner{ static_cast<Creature*>(fsm->GetOwner()) };
 	const auto bt{ owner->GetComponent<Server::Contents::BehaviorTree>() };
 	const auto& ownerPos{ owner->GetPos() };
 	auto const world{ owner->GetGameWorld() };
 	const auto& groups{ world->GetGameObjectGroups() };
+
+	const auto& statInfo = owner->GetStat();
+	if(statInfo.currentStamina < statInfo.maxStamina) {
+		m_accDTForStaminaRecovery += dt;
+
+		if(m_accDTForStaminaRecovery >= 3.f) {
+			m_accDTForStaminaRecovery = 0.F;
+
+			owner->IncStamina(owner->GetGameObjectData()->staminaRecoveryPerSec);
+		}
+	}
+	else {
+		m_accDTForStaminaRecovery = 0.f;
+	}
 
 	for(int i = 0; i < groups.size(); ++i) {
 		if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
@@ -75,19 +89,26 @@ void Server::Contents::GeneralRoamingState::Update(const float dt)
 
 		for(const auto& [id, o] : groups[i]) {
 
-			if(owner->GetID() == id) continue;
+			auto obj{ o.get() };
 
-			if(o->GetTeamType() == owner->GetTeamType()) continue;
+			if(false == IsValidObj(obj))
+				continue;
+			
+			if(owner->GetID() == id)
+				continue;
 
-			const auto& targetPos{ o->GetPos() };
+			if(obj->GetTeamType() == owner->GetTeamType()) continue;
 
-			if(owner->IsTargetInRange(o.get(), 2.f * 2.f)) {
-				owner->GetComponent<Server::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", o->GetID());
+			const auto& targetPos{ obj->GetPos() };
+
+			if(owner->IsTargetInRange(obj, 2.f * 2.f)) {
+				owner->GetComponent<Server::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", obj->GetID());
 				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
 				return;
 			}
 		}
 	}
+
 }
 
 Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
@@ -171,8 +192,10 @@ void Server::Contents::GeneralDuelingState::Update(const float dt)
 }
 
 Server::Contents::GeneralStunState::GeneralStunState(FSM* const fsm)
-	:State{ FB_ENUMS::GENERAL_STATE_TYPE_STUN }
+	:State{ FB_ENUMS::GENERAL_STATE_TYPE_STUN }, m_accDTForStunState{}
 {
+	SetFSM(fsm);
+
 }
 
 Server::Contents::GeneralStunState::~GeneralStunState()
@@ -181,14 +204,27 @@ Server::Contents::GeneralStunState::~GeneralStunState()
 
 void Server::Contents::GeneralStunState::Enter(const float dt)
 {
+	std::cout << "General GeneralStunState Enter!" << std::endl;
+	m_accDTForStunState = 0.f;
 }
 
 void Server::Contents::GeneralStunState::Exit(const float dt)
 {
+	std::cout << "General GeneralStunState Exit!" << std::endl;
+	m_accDTForStunState = 0.f;
 }
 
 void Server::Contents::GeneralStunState::Update(const float dt)
 {
+	const auto fsm{ GetFSM() };
+
+	m_accDTForStunState += dt;
+
+	if(m_accDTForStunState >= 2.f) {
+		const auto prevStateType{ fsm->GetPrevStateType() };
+		fsm->ChangeState(prevStateType, dt, true);
+		return;
+	}
 }
 
 
@@ -214,7 +250,6 @@ void Server::Contents::GeneralDeadState::Enter(const float dt)
 
 	if(bt)
 		bt->Reset();	
-
 }
 
 void Server::Contents::GeneralDeadState::Exit(const float dt)

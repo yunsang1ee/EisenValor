@@ -1,4 +1,5 @@
 #pragma once
+
 static inline FB_STRUCTS::Vec3 Vec3ToFlatVec3(const Vec3& v)
 {
 	return FB_STRUCTS::Vec3{ v.x, v.y, v.z };
@@ -30,6 +31,19 @@ static inline float NormalizeAngle(float angle)
 	if(angle < 0) angle += 360.0f;
 	return angle - 180.0f;
 }
+
+static inline bool TryLuck(const double probability)
+{
+	static std::bernoulli_distribution d{ probability };
+	return d(mersenne);
+}
+
+static inline float GetDistSq(const Vec3& v1, const Vec3& v2)
+{
+	return (v1 - v2).LengthSquared();
+}
+
+bool IsValidObj(const Server::Contents::GameObject* const obj);
 
 template<typename Enum> requires std::is_enum_v<Enum>
 static inline constexpr uint8 etou8(const Enum e)

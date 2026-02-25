@@ -22,6 +22,7 @@ namespace Server {
 		
 		private:
 			std::unique_ptr<BehaviorNode> m_root;
+			float m_accDTForStaminaRecovery;
 		};
 
 		// =================================
@@ -55,6 +56,9 @@ namespace Server {
 			virtual void Enter(const float dt) override final;		
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+		
+		private:
+			float m_accDTForStunState;
 		};
 
 		// =================================

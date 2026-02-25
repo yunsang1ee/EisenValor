@@ -76,8 +76,8 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::SelectorNode::Execute(c
 		if(BEHAVIOR_NODE_STATUS::RUNNING == status) {
 			return BEHAVIOR_NODE_STATUS::RUNNING;
 		}
-		if(BEHAVIOR_NODE_STATUS::RUNNING == status) {
-			m_currentIndex = 0;
+		if(BEHAVIOR_NODE_STATUS::SUCCESS == status) {
+			m_currentIndex = 0; 
 			return BEHAVIOR_NODE_STATUS::SUCCESS;
 		}
 	}

@@ -5,7 +5,7 @@
 #include "GameWorld.h"
 
 Server::Contents::FSM::FSM()
-	:m_curState{nullptr}
+	:m_curState{nullptr}, m_prevStateType{}
 {
 }
 
@@ -18,6 +18,8 @@ void Server::Contents::FSM::SetState(const uint8 state, const bool broadcast)
 		world->AddEvent([this, state, world, broadcast]() {
 			auto iter = m_states.find(state);
 			if(iter != m_states.end()) {
+				if(m_curState)
+					m_prevStateType = m_curState->GetStateType();
 				m_curState = iter->second.get();
 				float dt{};
 				if(world)
@@ -50,8 +52,10 @@ void Server::Contents::FSM::ChangeState(const uint8 nextState, const float dt, c
 	auto const world{ owner->GetGameWorld() };
 	if(world) {
 		world->AddEvent([this, nextState, dt, broadcast]() {
-			if(m_curState)
+			if(m_curState) {
+				m_prevStateType = m_curState->GetStateType();
 				m_curState->Exit(dt);
+			}
 			auto iter = m_states.find(nextState);
 			if(iter != m_states.end()) {
 				m_curState = iter->second.get();

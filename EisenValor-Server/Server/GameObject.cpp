@@ -49,11 +49,21 @@ bool Server::Contents::GameObject::IsTargetInRange(const GameObject* const targe
 	const auto& myPos{ GetPos() };
 	const auto& targetPos{ target->GetPos() };
 
-	const float distToTargetSq{ (targetPos - myPos).LengthSquared() };
+	const float distToTargetSq{ GetDistSq(myPos, targetPos) };
 	
 	if(distToTargetSq <= rangeSq)
 		return true;
 	
+	return false;
+}
+
+bool Server::Contents::GameObject::IsSameTeam(const GameObject* const other)
+{
+	const auto otherTeamType{ other->GetTeamType() };
+
+	if(otherTeamType == m_teamType)
+		return true;
+
 	return false;
 }
 

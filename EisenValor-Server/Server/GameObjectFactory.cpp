@@ -88,10 +88,12 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	const auto fsm = general->AddComponent<Server::Contents::FSM>();
 	auto roamingState = Server::Contents::GeneralRoamingState::Create(fsm);
 	auto duelingState = Server::Contents::GeneralDuelingState::Create(fsm);
+	auto stunState = Server::Contents::GeneralStunState::Create(fsm);
 	auto deadState = Server::Contents::GeneralDeadState::Create(fsm);
 	
 	fsm->AddState(std::move(roamingState));
 	fsm->AddState(std::move(duelingState));
+	fsm->AddState(std::move(stunState));
 	fsm->AddState(std::move(deadState));
 
 	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);

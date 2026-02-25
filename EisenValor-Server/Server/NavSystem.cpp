@@ -96,10 +96,10 @@ void Server::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
 
 	float zeroVel[3] = { 0.0f, 0.0f, 0.0f };
 	if(m_crowd->requestMoveVelocity(agentIdx, zeroVel)) {
-		std::cout << "requestMoveVelocity" << std::endl;
+	//	std::cout << "requestMoveVelocity" << std::endl;
 	}
-	std::cout << "requestMoveVelocity" << std::endl;
+	// std::cout << "requestMoveVelocity" << std::endl;
 	if(m_crowd->resetMoveTarget(agentIdx)) {
-		std::cout << "resetMoveTarget" << std::endl;
+	//	std::cout << "resetMoveTarget" << std::endl;
 	}
 }

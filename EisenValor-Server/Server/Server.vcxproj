@@ -559,8 +559,9 @@
     <ClCompile Include="NavAgent.cpp" />
     <ClCompile Include="NavSystem.cpp" />
     <ClCompile Include="Participant.cpp" />
+    <ClCompile Include="ServerGlobalVariables.cpp" />
     <ClCompile Include="ServerPackets.cpp" />
-    <ClCompile Include="ServerGlobalFunc.cpp" />
+    <ClCompile Include="ServerGlobalFuncs.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -627,8 +628,9 @@
     <ClInclude Include="NavAgent.h" />
     <ClInclude Include="NavSystem.h" />
     <ClInclude Include="Participant.h" />
+    <ClInclude Include="ServerGlobalVariables.h" />
     <ClInclude Include="ServerPackets.h" />
-    <ClInclude Include="ServerGlobalFunc.h" />
+    <ClInclude Include="ServerGlobalFuncs.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Script.h" />

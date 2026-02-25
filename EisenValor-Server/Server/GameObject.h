@@ -122,6 +122,7 @@ namespace Server {
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 			
 			bool IsTargetInRange(const GameObject* const target, const float rangeSq = 2.f * 2.f);
+			bool IsSameTeam(const GameObject* const other);
 
 		private:
 			std::wstring							m_name;

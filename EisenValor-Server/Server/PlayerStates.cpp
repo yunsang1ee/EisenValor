@@ -67,31 +67,27 @@ void Server::Contents::PlayerIdleState::Update(const float dt)
 	// 1. 탈진 상태 관리
 	if(owner->HasSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED)) {
 		m_accDTForExhaustedRecovery += dt;
-		m_accDTForStaminaRecovery = 0.f; // 탈진 중에는 회복 타이머 정지
+		m_accDTForStaminaRecovery = 0.f;
 
 		if(m_accDTForExhaustedRecovery >= 3.f) {
 			owner->RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
 			m_accDTForExhaustedRecovery = 0.f;
-			// 탈진이 풀렸으므로 즉시 일반 로직으로 이어지게 return 생략 가능
 		}
 		else {
-			return; // 아직 탈진 중이면 여기서 종료
+			return;
 		}
 	}
 
-	// 2. 스태미나 회복 체크 (최대치라면 연산/브로드캐스트 생략)
 	if(statInfo.currentStamina < statInfo.maxStamina) {
 		m_accDTForStaminaRecovery += dt;
 
 		if(m_accDTForStaminaRecovery >= 3.f) {
-			// 오차 보정: 1.0을 빼서 남은 시간을 다음 턴으로 이월
 			m_accDTForStaminaRecovery = 0.F;
 
 			owner->IncStamina(owner->GetGameObjectData()->staminaRecoveryPerSec);
 		}
 	}
 	else {
-		// 이미 가득 찼다면 타이머 초기화 (나중에 다시 닳았을 때 1초 뒤부터 회복되도록)
 		m_accDTForStaminaRecovery = 0.f;
 	}
 }

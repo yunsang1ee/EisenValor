@@ -60,11 +60,9 @@ namespace Server {
 			const GameObjects& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
 			GameObject*	FindObjectByID(const uint32 targetID);
-		private:
-			void AddGameObject(std::unique_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
-			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
-
+	
 		public:
+			void AddGameObject(std::unique_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void RemoveGameObject(GameObject* gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
 		
 		private:
@@ -81,7 +79,7 @@ namespace Server {
 			void ProcessPendingAddObjectList();
 			void ProcessPendingRemoveObjectList();
 			void CheckGameTime(const float dt);
-
+			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			bool IsFinish();
 
 			Player*		IDToPlayer(const uint32 sessionID);
