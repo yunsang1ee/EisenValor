@@ -48,27 +48,27 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
-	//if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
-	//	LOG_ERROR("NetworkManager Init Failed");
-	//	return false;
-	//}
-
-	//G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
-	//G_GAME_LOBBY->Init();
-
-
-	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init()) {
-		LOG_ERROR("ServerEngineCore Init Failed");
+	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
+		LOG_ERROR("NetworkManager Init Failed");
 		return false;
 	}
+
+	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
+	G_GAME_LOBBY->Init();
+
+
+	//if(false == MANAGER(ServerEngine::ServerEngineCore)->Init()) {
+	//	LOG_ERROR("ServerEngineCore Init Failed");
+	//	return false;
+	//}
 
 	return true;
 }
 
 bool Server::ServerManager::Run()
 {
-	// MANAGER(ServerEngine::NetworkManager)->Run();
-	MANAGER(ServerEngine::ServerEngineCore)->Run();
+	MANAGER(ServerEngine::NetworkManager)->Run();
+	// MANAGER(ServerEngine::ServerEngineCore)->Run();
 	char ch;
 	constexpr int8 ESC = 27;
 
