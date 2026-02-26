@@ -103,6 +103,36 @@
     <ClInclude Include="IOCPRecvBuffer.h">
       <Filter>00. IOCore\IOCPCore\IOCPBuffer\IOCPRecvBuffer</Filter>
     </ClInclude>
+    <ClInclude Include="ServerEngineCore.h">
+      <Filter>ServerEngineCore</Filter>
+    </ClInclude>
+    <ClInclude Include="AcceptThread.h">
+      <Filter>Network\AcceptThread</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyThread.h">
+      <Filter>Network\LobbyThread</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkerThread.h">
+      <Filter>Network\WorkerThread</Filter>
+    </ClInclude>
+    <ClInclude Include="IRoom.h">
+      <Filter>Interfaces\IRoom</Filter>
+    </ClInclude>
+    <ClInclude Include="JobQueue.h">
+      <Filter>JobQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPCoreTest.h">
+      <Filter>Network\WorkerThread\IOCoreTest\IOCPCoreTest</Filter>
+    </ClInclude>
+    <ClInclude Include="RIOCoreTest.h">
+      <Filter>Network\WorkerThread\IOCoreTest\RIOCoreTest</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCoreTest.h">
+      <Filter>Network\WorkerThread\IOCoreTest</Filter>
+    </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>JobQueue</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -186,13 +216,40 @@
     <ClCompile Include="IOCPRecvBuffer.cpp">
       <Filter>00. IOCore\IOCPCore\IOCPBuffer\IOCPRecvBuffer</Filter>
     </ClCompile>
+    <ClCompile Include="ServerEngineCore.cpp">
+      <Filter>ServerEngineCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AcceptThread.cpp">
+      <Filter>Network\AcceptThread</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyThread.cpp">
+      <Filter>Network\LobbyThread</Filter>
+    </ClCompile>
+    <ClCompile Include="WorkerThread.cpp">
+      <Filter>Network\WorkerThread</Filter>
+    </ClCompile>
+    <ClCompile Include="IRoom.cpp">
+      <Filter>Interfaces\IRoom</Filter>
+    </ClCompile>
+    <ClCompile Include="JobQueue.cpp">
+      <Filter>JobQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCoreTest.cpp">
+      <Filter>Network\WorkerThread\IOCoreTest</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCPCoreTest.cpp">
+      <Filter>Network\WorkerThread\IOCoreTest\IOCPCoreTest</Filter>
+    </ClCompile>
+    <ClCompile Include="RIOCoreTest.cpp">
+      <Filter>Network\WorkerThread\IOCoreTest\RIOCoreTest</Filter>
+    </ClCompile>
+    <ClCompile Include="Job.cpp">
+      <Filter>JobQueue</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
       <UniqueIdentifier>{bcb828dd-e22c-4feb-8eba-84175ef8fb50}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="98. Scripts">
-      <UniqueIdentifier>{9bc071bf-9497-472d-a613-e880df0af6ee}</UniqueIdentifier>
     </Filter>
     <Filter Include="97. Headers">
       <UniqueIdentifier>{6a2de00f-6658-4f89-82d3-66f988195fa6}</UniqueIdentifier>
@@ -280,6 +337,42 @@
     </Filter>
     <Filter Include="95. Managers\TaskQueueManager\TaskQueue\Task">
       <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{5db253db-94e8-44b1-b9d7-2d02cd9a7948}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\AcceptThread">
+      <UniqueIdentifier>{1ef05aae-e0e7-472a-ab5e-aa8e57644be0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\WorkerThread">
+      <UniqueIdentifier>{6875bbd8-eee7-47be-b76c-276e02a4b1a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces">
+      <UniqueIdentifier>{76725601-eb7a-4fc1-9480-b35ced554647}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Headers\98. Scripts">
+      <UniqueIdentifier>{9bc071bf-9497-472d-a613-e880df0af6ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\WorkerThread\IOCoreTest">
+      <UniqueIdentifier>{7cb32645-4561-4a68-82a2-e10c6dd5752a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\WorkerThread\IOCoreTest\RIOCoreTest">
+      <UniqueIdentifier>{5a3164d6-bd80-4efa-a4b0-01b8424f8ff6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\WorkerThread\IOCoreTest\IOCPCoreTest">
+      <UniqueIdentifier>{41d7538b-8c51-40d6-87f6-ad53ba8ce9be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\LobbyThread">
+      <UniqueIdentifier>{561c8dea-80a2-4950-9ac6-07079098b6b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JobQueue">
+      <UniqueIdentifier>{f9048861-98d4-478f-a8de-ffa48c9a104a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces\IRoom">
+      <UniqueIdentifier>{a300e325-95c2-457e-825a-d436fe1eecd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ServerEngineCore">
+      <UniqueIdentifier>{75449ec7-4223-4197-8a17-e2d1740c71ed}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

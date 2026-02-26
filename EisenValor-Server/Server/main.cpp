@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "ServerManager.h"
 
-int main(){
+int main()
+{
 	if(false == Server::ServerManager::Init()) {
 		LOG_ERROR("ServerManager Init Failed");
 		LOG_SAVE();

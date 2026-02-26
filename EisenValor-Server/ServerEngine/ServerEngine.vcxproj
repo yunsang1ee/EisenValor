@@ -437,11 +437,19 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AcceptThread.h" />
     <ClInclude Include="IOCore.h" />
+    <ClInclude Include="IOCoreTest.h" />
     <ClInclude Include="IOCPContext.h" />
     <ClInclude Include="IOCPCore.h" />
+    <ClInclude Include="IOCPCoreTest.h" />
     <ClInclude Include="IOCPRecvBuffer.h" />
+    <ClInclude Include="IRoom.h" />
+    <ClInclude Include="Job.h" />
+    <ClInclude Include="JobQueue.h" />
+    <ClInclude Include="LobbyThread.h" />
     <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="RIOCoreTest.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
     <ClInclude Include="LockQueue.h" />
     <ClInclude Include="LogManager.h" />
@@ -456,6 +464,7 @@
     <ClInclude Include="RIOWorker.h" />
     <ClInclude Include="RIOSendBuffer.h" />
     <ClInclude Include="ServerEngineContainers.h" />
+    <ClInclude Include="ServerEngineCore.h" />
     <ClInclude Include="ServerEngineDefines.h" />
     <ClInclude Include="ServerEngineEnums.h" />
     <ClInclude Include="ServerEngineGlobalVariables.h" />
@@ -471,13 +480,22 @@
     <ClInclude Include="TaskTimer.h" />
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="WorkerThread.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AcceptThread.cpp" />
     <ClCompile Include="IOCore.cpp" />
+    <ClCompile Include="IOCoreTest.cpp" />
     <ClCompile Include="IOCPContext.cpp" />
     <ClCompile Include="IOCPCore.cpp" />
+    <ClCompile Include="IOCPCoreTest.cpp" />
     <ClCompile Include="IOCPRecvBuffer.cpp" />
+    <ClCompile Include="IRoom.cpp" />
+    <ClCompile Include="Job.cpp" />
+    <ClCompile Include="JobQueue.cpp" />
+    <ClCompile Include="LobbyThread.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
+    <ClCompile Include="RIOCoreTest.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
     <ClCompile Include="LockQueue.cpp" />
     <ClCompile Include="LogManager.cpp" />
@@ -503,6 +521,7 @@
     <ClCompile Include="RIOCore.cpp" />
     <ClCompile Include="RIOWorker.cpp" />
     <ClCompile Include="RIOSendBuffer.cpp" />
+    <ClCompile Include="ServerEngineCore.cpp" />
     <ClCompile Include="ServerEnginePch.cpp" />
     <ClCompile Include="ServerEngineTLS.cpp" />
     <ClCompile Include="Session.cpp" />
@@ -513,6 +532,7 @@
     <ClCompile Include="TaskTimer.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="WorkerThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Binaries\Server\Config\ServerEngineConfig.json" />

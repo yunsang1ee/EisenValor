@@ -13,6 +13,13 @@ bool ServerEngine::ThreadManager::Init()
 	// 1st: Listen Thread
 	// 2nd ~ Nth: RioWorker
 
+
+	// TODO: ThreadManager 수정
+	// 0th: Main Thread
+	// 1st: Listen Thread
+	// 2nd: Lobby Thread
+	// 3nd ~ Nth: Worker Thread
+
 	InitTLS();
 
 	return true;

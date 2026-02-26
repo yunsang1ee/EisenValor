@@ -77,8 +77,11 @@ namespace fs = std::filesystem;
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+#include "JobQueue.h"
+
 std::string WStringToString(const std::wstring_view wstr);
 std::wstring StringToWString(const std::string_view str);
+SOCKET CreateSocket(const DWORD flags);
 
 namespace Server {
 	class RIOClientSession;
