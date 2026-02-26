@@ -129,6 +129,8 @@ void Server::Contents::Player::OnRespawn()
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT, true);
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+
+	std::cout << "Player Respawn!" << std::endl;
 }
 
 void Server::Contents::Player::DecStamina(const uint32 amount, const bool broadcast)

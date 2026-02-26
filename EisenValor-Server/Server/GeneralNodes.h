@@ -58,7 +58,13 @@ namespace Server {
 
 		class CombatMovement : public ActionNode {
 		public:
+			CombatMovement();
+
+		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+
+		private:
+			float m_accDTForChangeAttackDir;
 		};
 	}
 }

@@ -27,14 +27,18 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::FindOZ::DoAction(const 
 		if(false == IsValidObj(obj))
 			continue;
 
-		if(false == owner->IsSameTeam(obj))
+		if(owner->IsSameTeam(obj))
 			continue;
 
 		auto oz{ static_cast<OccupationZone*>(obj->GetScript("OZ")) };
 		if(oz) {
+			const auto& ozPos{ obj->GetPos() };
 			if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
+				std::cout << "Find OZ!" << std::endl;
 				owner->SetLook(obj->GetPos());
 				tree->GetBlackboard()->SetValue("OZ_ID", o->GetID());
+				std::cout << "SetDestPos" << std::endl;
+				owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(ozPos);
 				return Server::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 			}
 			else {
@@ -65,10 +69,10 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::MoveToOZ::DoAction(cons
 		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
 
 	if(ozObj->IsTargetInRange(owner, oz->GetRangeSq())) {
+		std::cout << "Target In OZ!" << std::endl;
 		return Server::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 	}
 	else {
-		owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(ozPos);
 		return Server::Contents::BEHAVIOR_NODE_STATUS::RUNNING;
 	}
 }
@@ -205,40 +209,42 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::Parrying::DoAction(cons
 	auto const bb{ tree->GetBlackboard() };
 	auto const world{ owner->GetGameWorld() };
 
-	const uint32 targetID = tree->GetBlackboard()->GetValue<uint32>("Target", -1);
+	// TODO: 반격
 
-	if(-1 == targetID)
-		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
+	//const uint32 targetID = tree->GetBlackboard()->GetValue<uint32>("Target", -1);
 
-	auto target{ static_cast<General*>(world->FindObjectByID(targetID)) };
+	//if(-1 == targetID)
+	//	return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
 
-	if(false == IsValidObj(target)) {
-		tree->GetBlackboard()->Erase("Target");
-		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
-	}
+	//auto target{ static_cast<General*>(world->FindObjectByID(targetID)) };
 
-	const auto& targetAtkInfo{ target->GetAtkInfo() };
-	const auto targetAttackStartFrame{ targetAtkInfo.startPreDelay };
-	const uint64 currentFrame = world->GetGameWorldFrameCount();
+	//if(false == IsValidObj(target)) {
+	//	tree->GetBlackboard()->Erase("Target");
+	//	return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
+	//}
 
-	uint64 elapsed = currentFrame - targetAttackStartFrame;
-	const uint64 parryWindowStart = 25;
-	const uint64 parryWindowEnd = 35;
+	//const auto& targetAtkInfo{ target->GetAtkInfo() };
+	//const auto targetAttackStartFrame{ targetAtkInfo.startPreDelay };
+	//const uint64 currentFrame = world->GetGameWorldFrameCount();
 
-	if(elapsed >= parryWindowStart && elapsed <= parryWindowEnd) {
-		int chance = rand() % 100;
-		int botLevelSkill = 80;
+	//uint64 elapsed = currentFrame - targetAttackStartFrame;
+	//const uint64 parryWindowStart = 25;
+	//const uint64 parryWindowEnd = 35;
 
-		if(chance < botLevelSkill) {
-			if(target) {
-				if(target->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
-					target->GetComponent<Server::Contents::FSM>()->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_STUN, true);
-				}
+	//if(elapsed >= parryWindowStart && elapsed <= parryWindowEnd) {
+	//	int chance = rand() % 100;
+	//	int botLevelSkill = 80;
 
-				return BEHAVIOR_NODE_STATUS::SUCCESS;
-			}
-		}
-	}
+	//	if(chance < botLevelSkill) {
+	//		if(target) {
+	//			if(target->GetObjType() == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) {
+	//				target->GetComponent<Server::Contents::FSM>()->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_STUN, true);
+	//			}
+
+	//			return BEHAVIOR_NODE_STATUS::SUCCESS;
+	//		}
+	//	}
+	//}
 
 	return BEHAVIOR_NODE_STATUS::RUNNING;
 }
@@ -268,10 +274,9 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::AttackTry::DoAction(con
 
 	if(m_accDT >= 1.f) {	
 		m_accDT = 0.f;
-		if(TryLuck(0.6)) {
-			// 공격 실패
-			m_accDT = 0.f;
-			tree->GetBlackboard()->Erase("Target");
+		if(false == TryLuck(0.6)) {
+			// 공격 실패 -> CombatMovement로 이동
+			std::cout << "Attack Failed!" << std::endl;
 			return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
 		}
 
@@ -307,7 +312,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::AttackTry::DoAction(con
 
 		const auto& targetPos{ target->GetPos() };
 
-		if(owner->IsTargetInRange(target, 2.f * 2.f)) {
+		if(owner->IsTargetInRange(target, 3.f * 3.f)) {
 			std::uniform_int_distribution<int> uid{ FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_MIN, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_MAX - 1 };
 			const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir{ static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(uid(mersenne)) };
 
@@ -334,8 +339,93 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::AttackTry::DoAction(con
 	return Server::Contents::BEHAVIOR_NODE_STATUS::RUNNING;
 }
 
+Server::Contents::CombatMovement::CombatMovement()
+	:m_accDTForChangeAttackDir{}
+{
+}
+
 Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::CombatMovement::DoAction(const float dt)
 {
-	// TODO: CombatMovement
-	return BEHAVIOR_NODE_STATUS();
+	auto const tree{ GetTree() };
+	auto const owner{ static_cast<General*>(tree->GetOwner()) };
+	auto const world{ owner->GetGameWorld() };
+	auto const bb{ tree->GetBlackboard() };
+
+	const uint32 targetID = bb->GetValue<uint32>("Target", -1);
+
+	if(-1 == targetID) {
+		tree->GetBlackboard()->Erase("Target");
+		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
+	}
+
+	auto target = static_cast<Creature*>(world->FindObjectByID(targetID));
+
+	if(false == IsValidObj(target))
+		return BEHAVIOR_NODE_STATUS::FAIL;
+
+	const auto& targetPos{ target->GetPos() };
+
+	m_accDTForChangeAttackDir += dt;
+	
+	if(m_accDTForChangeAttackDir >= 1.2f) {
+		FB_ENUMS::GENERAL_ATTACK_DIR_TYPE newDir = static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>((rand() % 3) + 1);
+		owner->SetAtkDir(newDir);
+		m_accDTForChangeAttackDir = 0.0f;
+
+		auto pb{ ServerPackets::Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(owner->GetID(), newDir) };
+		world->Broadcast(std::move(pb));
+	}
+
+	const auto& ownerPos{ owner->GetPos() };
+
+	auto dir{ targetPos - ownerPos };
+	dir.Normalize();
+
+	constexpr float tolerance{ 0.25f };
+	constexpr float attackRange{ 2.f };
+
+	constexpr float maxRange{ attackRange + tolerance };
+	constexpr float minRange{ attackRange - tolerance };
+
+	constexpr float maxRangeSq{ maxRange * maxRange };
+	constexpr float minRangeSq{ minRange * minRange };
+
+	const float distToSq{ (targetPos - owner->GetPos()).LengthSquared() };
+
+	if(distToSq > maxRangeSq) {
+		Vec3 nextPos{ owner->GetPos() + dir * 1.5f };
+		owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(nextPos);
+		std::cout << "DistToSq > maxRangeSq" << std::endl;
+	}
+	else if(distToSq < minRangeSq) {
+		Vec3 nextPos{ owner->GetPos() - dir * 1.5f };
+		owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(nextPos);
+		std::cout << "distToSq < minRangeSq" << std::endl;
+	}
+	else {
+		std::cout << "Fine Dist!" << std::endl;
+
+		Vec3 rightDir{ dir.z, 0.0f, -dir.x };
+
+		static bool moveRight{ true };
+
+		Vec3 sideDir{moveRight ? rightDir : (rightDir * -1.0f)};
+		Vec3 nextPos{ owner->GetPos() + (sideDir * 1.0f) };
+
+		owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(nextPos);
+	}
+
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
+
+// 1. 상대방과 나의 거리 구한다
+// 2. 공격범위 구한다
+// 3. 허용오차값
+
+// 상대방과 나의거리 > 공격범위 + 오차값
+// -> 상대쪽으로 전진
+
+// 상대방과 나의 거리 < 공격범위 - 오차값
+// -> 상대방으로부터 후퇴
+
+// 좌우로 이동

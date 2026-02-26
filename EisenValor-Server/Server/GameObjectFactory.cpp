@@ -140,7 +140,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.gameObjectData->enemyCombatRange);
 	auto attackState = Server::Contents::SoldierAttackState::Create(t.gameObjectData->enemyCombatRange, std::chrono::seconds(t.gameObjectData->attackCycleTime));
 	auto defenseState = Server::Contents::SoldierDefenseState::Create();
-	auto damagedState = Server::Contents::SoldierDamagedState::Create(0.f);
+	auto damagedState = Server::Contents::SoldierStunState::Create(0.f);
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(moveState));

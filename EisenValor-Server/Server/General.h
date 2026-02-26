@@ -37,6 +37,7 @@ namespace Server {
 
 			float									m_accDTForStaminaRecovery;
 			float									m_accDTForRespawn;
+
 		};
 	}
 }

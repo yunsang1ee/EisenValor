@@ -4,7 +4,7 @@
 #include "Creature.h"
 
 Server::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}
+	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}, m_rotateSpeed{1.f}
 {
 }
 
@@ -92,5 +92,5 @@ void Server::Contents::GameObject::LookAt(const Vec3& lookAt, const float dt)
 	const float currentYaw{ m_posInfo.rot.y };
 
 	float deltaYaw{ NormalizeAngle(targetYaw - currentYaw) };
-	m_posInfo.rot.y = NormalizeAngle(currentYaw + (deltaYaw * dt * 1.0f));
+	m_posInfo.rot.y = NormalizeAngle(currentYaw + (deltaYaw * dt * m_rotateSpeed));
 }

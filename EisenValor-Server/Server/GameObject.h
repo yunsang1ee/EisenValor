@@ -105,6 +105,7 @@ namespace Server {
 			void SetCreature(bool flag) { m_isCreature = flag; }
 			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
 			void SetActive(const bool active) { m_active = active; }
+			void SetRotateSpeed(const float rotateSpeed) { m_rotateSpeed = rotateSpeed; }
 
 			const std::wstring& GetName() const { return m_name; }
 			uint32 GetID() const { return m_id; }
@@ -139,6 +140,8 @@ namespace Server {
 			PosInfo									m_posInfo;
 			Vec3									m_scale;
 			Vec3									m_look;
+
+			float									m_rotateSpeed;
 
 			bool									m_isCreature;
 			const GameObjectData*					m_gameObjectData;

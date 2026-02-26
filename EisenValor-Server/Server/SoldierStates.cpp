@@ -147,25 +147,25 @@ void Server::Contents::SoldierDefenseState::Update(const float dt)
 {
 }
 
-Server::Contents::SoldierDamagedState::SoldierDamagedState(const float stunTime)
-	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_DAMAGED }, m_stunTime{ stunTime }, m_accForStun{ 0.f }
+Server::Contents::SoldierStunState::SoldierStunState(const float stunTime)
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_STUN }, m_stunTime{ stunTime }, m_accForStun{ 0.f }
 {
 }
 
-Server::Contents::SoldierDamagedState::~SoldierDamagedState()
+Server::Contents::SoldierStunState::~SoldierStunState()
 {
 }
 
-void Server::Contents::SoldierDamagedState::Enter(const float dt)
+void Server::Contents::SoldierStunState::Enter(const float dt)
 {
 
 }
 
-void Server::Contents::SoldierDamagedState::Exit(const float dt)
+void Server::Contents::SoldierStunState::Exit(const float dt)
 {
 	m_accForStun = 0.f;
 }
 
-void Server::Contents::SoldierDamagedState::Update(const float dt)
+void Server::Contents::SoldierStunState::Update(const float dt)
 {
 }

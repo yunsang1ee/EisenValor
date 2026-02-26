@@ -119,12 +119,12 @@ namespace Server {
 		// ============================================
 		//					DAMAGED
 		// ============================================
-		class SoldierDamagedState : public State {
+		class SoldierStunState : public State {
 		private:
-			DECLARE_CREATE_FUNC(SoldierDamagedState)
+			DECLARE_CREATE_FUNC(SoldierStunState)
 		private:
-			explicit SoldierDamagedState(const float stunTime);
-			virtual ~SoldierDamagedState();
+			explicit SoldierStunState(const float stunTime);
+			virtual ~SoldierStunState();
 
 		public:
 			virtual void Enter(const float dt) override final;

@@ -19,7 +19,7 @@ namespace Server {
 			explicit State(const uint8 type);
 
 		public:
-			virtual ~State();
+			virtual ~State() = default;
 
 		public:
 			virtual void Enter(const float dt) abstract;
@@ -32,7 +32,7 @@ namespace Server {
 			uint8 GetStateType() const { return m_type; }
 
 		private:
-			FSM* m_fsm;
+			FSM*							m_fsm;
 			uint8							m_type;
 		};
 	}

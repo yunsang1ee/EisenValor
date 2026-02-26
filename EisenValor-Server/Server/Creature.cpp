@@ -86,7 +86,6 @@ void Server::Contents::Creature::IncStamina(const uint32 amount, const bool broa
 	if(0 == amount)
 		return;
 
-
 	const uint32 stamina{ GetStamina() + amount };
 	m_statInfo.currentStamina = std::min(stamina, m_statInfo.maxStamina);
 

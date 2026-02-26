@@ -23,12 +23,13 @@ void Server::Contents::OccupationZone::Update(const float dt)
 			continue;
 
 		for(const auto& [id, o] : groups[i]) {
+			auto obj{ o.get() };
+
+			if(false == IsValidObj(obj)) continue;
+
 			if(owner->GetTeamType() == o->GetTeamType()) continue;
-
-			const auto& otherPos{ o->GetPos() };
-			const auto& distToOtherSq{ (otherPos - ownerPos).LengthSquared() };
-
-			if(distToOtherSq <= m_rangeSq) {
+			
+			if(owner->IsTargetInRange(obj)) {
 				m_accDT += dt;
 			}
 
