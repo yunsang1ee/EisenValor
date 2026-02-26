@@ -392,7 +392,8 @@ public class AssetExporter
         {
             { "ALBD", "_BaseMap" },
             { "NRML", "_BumpMap" },
-            { "ORMS", "_MaskMap" }
+            { "ORMS", "_MaskMap" },
+            { "EMSV", "_EmissionMap" }
         };
 
         using MemoryStream ms = new();
