@@ -142,17 +142,41 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 
 				if (auto albedoRes = matRes->GetTexture("ALBD"))
 				{
-					gpuMat.albedoTextureIdx = albedoRes->GetTexture()->GetSRVIndex();
+					uint32_t idx = albedoRes->GetTexture()->GetSRVIndex();
+					if (idx != 0 && idx != ~0u)
+					{
+						gpuMat.albedoTextureIdx = idx;
+					}
+					else
+					{
+						gpuMat.materialFlags &= ~MATERIAL_FLAG_USE_ALBEDO_MAP;
+					}
 				}
 
 				if (auto normalRes = matRes->GetTexture("NRML"))
 				{
-					gpuMat.normalTextureIdx = normalRes->GetTexture()->GetSRVIndex();
+					uint32_t idx = normalRes->GetTexture()->GetSRVIndex();
+					if (idx != 0 && idx != ~0u)
+					{
+						gpuMat.normalTextureIdx = idx;
+					}
+					else
+					{
+						gpuMat.materialFlags &= ~MATERIAL_FLAG_USE_NORMAL_MAP;
+					}
 				}
 
 				if (auto ormRes = matRes->GetTexture("ORMS"))
 				{
-					gpuMat.ormTextureIdx = ormRes->GetTexture()->GetSRVIndex();
+					uint32_t idx = ormRes->GetTexture()->GetSRVIndex();
+					if (idx != 0 && idx != ~0u)
+					{
+						gpuMat.ormTextureIdx = idx;
+					}
+					else
+					{
+						gpuMat.materialFlags &= ~MATERIAL_FLAG_USE_ORM_MAP;
+					}
 				}
 
 				m_materialConstants.Register(gpuMat);
@@ -183,7 +207,7 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 		DX::XMFLOAT4X4 worldFloat = meshComp.GetGameObject()->GetTransform().GetWorldMatrix();
 		DX::XMMATRIX   worldMat = DX::XMLoadFloat4x4(&worldFloat);
 		DX::XMStoreFloat4x4(&inst.worldMatrix, worldMat);
-		DX::XMStoreFloat4x4(&inst.worldIT, DX::XMMatrixTranspose(DX::XMMatrixInverse(nullptr, worldMat)));
+		DX::XMStoreFloat4x4(&inst.worldInverse, DX::XMMatrixInverse(nullptr, worldMat));
 
 		inst.vertexBufferIdx = vbIdx;
 		inst.indexBufferIdx = ibIdx;

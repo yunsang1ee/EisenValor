@@ -7,45 +7,12 @@
 #include <DxTexture.h>
 #include <memory>
 #include "AssetFormat.h"
+#include "RaytracingCommon.h"
 
 class MeshComponent;
 class MeshResource;
 class MaterialResource;
 class DxBLAS;
-
-struct alignas(16) GeoInfo
-{
-	uint32_t vertexBase;
-	uint32_t indexBase;
-	uint32_t materialIdx;
-	uint32_t pad0;
-};
-
-struct alignas(16) InstanceData
-{
-	DirectX::XMFLOAT4X4 worldMatrix;
-	DirectX::XMFLOAT4X4 worldIT;
-	uint32_t			vertexBufferIdx;
-	uint32_t			indexBufferIdx;
-	uint32_t			geoInfoBaseIdx;
-	uint32_t			instanceID;
-};
-static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
-
-struct alignas(16) MaterialGPUData
-{
-	DirectX::XMFLOAT4 albedo;
-	float			  roughness;
-	float			  metallic;
-	uint32_t		  shadingModel;
-	uint32_t		  materialFlags;
-
-	uint32_t albedoTextureIdx;
-	uint32_t normalTextureIdx;
-	uint32_t ormTextureIdx;
-	uint32_t pad0;
-};
-static_assert(sizeof(MaterialGPUData) % 16 == 0, "MaterialGPUData size must be multiple of 16 bytes");
 
 class DxrRenderPass : public IRenderPass
 {

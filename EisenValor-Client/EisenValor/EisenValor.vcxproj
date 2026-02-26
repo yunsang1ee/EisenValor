@@ -212,6 +212,7 @@ exit /b 0</Command>
     <ClInclude Include="Packets\ServerEnum.h" />
     <ClInclude Include="Packets\Structs_generated.h" />
     <ClInclude Include="Packets\Tables_generated.h" />
+    <ClInclude Include="RaytracingCommon.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="RenderPass\UIRenderPass.h" />
@@ -277,9 +278,9 @@ exit /b 0</Command>
     <None Include="Resource\Shader\UIVertexShader.hlsl" />
     <None Include="Resource\Shader\UIPixelShader.hlsl" />
   </ItemGroup>
-  	<ItemGroup>
-		<UpToDateCheckInput Include="Resource\**\*" />
-	</ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="Resource\**\*" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
