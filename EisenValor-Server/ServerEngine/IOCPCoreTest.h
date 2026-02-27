@@ -3,12 +3,12 @@
 #include "IOCoreTest.h"
 
 namespace ServerEngine {
-	class Session;
+	class SessionTest;
 
 	class IOCPCoreTest : public IOCoreTest {
 	public:
-		IOCPCoreTest() = default;
-		~IOCPCoreTest() = default;
+		IOCPCoreTest();
+		virtual ~IOCPCoreTest();
 
 	public:
 		virtual bool Init() override final;

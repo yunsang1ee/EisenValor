@@ -1,6 +1,17 @@
 #include "pch.h"
 #include "IOCPCoreTest.h"
 
+#include "Session.h"
+#include "ServerEngineConfigManager.h"
+
+ServerEngine::IOCPCoreTest::IOCPCoreTest()
+{
+}
+
+ServerEngine::IOCPCoreTest::~IOCPCoreTest()
+{
+}
+
 bool ServerEngine::IOCPCoreTest::Init()
 {
 	// TODO:  ServerEngine::IOCPCoreTest::Init()

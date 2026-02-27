@@ -4,7 +4,6 @@
 
 namespace ServerEngine {
 
-	// TODO: JobQueue 상속
 	class LobbyThread : public JobQueue {
 	public:
 		LobbyThread();

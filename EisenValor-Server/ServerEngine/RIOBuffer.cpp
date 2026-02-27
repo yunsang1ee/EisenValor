@@ -13,8 +13,14 @@ ServerEngine::RIO::RIOBuffer::RIOBuffer()
 ServerEngine::RIO::RIOBuffer::~RIOBuffer()
 {
 	if(nullptr != m_buffer) {
+#ifdef LEGACY_CODE
 		RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
+#endif
 
+#ifdef MODERN_CODE
+		m_table.RIODeregisterBuffer(m_id);
+#endif
+		
 		if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
 			ServerEngine::LogManager::PrintLastError();
 	}
@@ -37,7 +43,12 @@ void ServerEngine::RIO::RIOBuffer::Init(const uint32 bufferSize)
 	assert(m_capacity % granularity == 0);
 
 	if(nullptr != m_buffer)
+#ifdef LEGACY_CODE
 		m_id = RIO_EXT_FUNC_TB.RIORegisterBuffer(m_buffer, m_capacity);
+#endif
+#ifdef MODERN_CODE
+		m_id = m_table.RIORegisterBuffer(m_buffer, m_capacity);
+#endif
 
 	if(RIO_INVALID_BUFFERID == m_id)
 		ServerEngine::LogManager::PrintLastError();

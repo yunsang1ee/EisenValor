@@ -10,6 +10,7 @@
 
 #include "IOCPCoreTest.h"
 #include "RIOCoreTest.h"
+#ifdef MODERN_CODE
 
 ServerEngine::ServerEngineCore::ServerEngineCore()
 {
@@ -19,7 +20,7 @@ ServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func)
+bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func, const GameWorldTestFactory factory)
 {
 	m_nextWorkerIndex = 0;
 	
@@ -58,7 +59,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func)
 		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
 		m_workerThreads[i] = (std::make_unique<WorkerThread>(std::move(rioCore)));
 
-		if(false == m_workerThreads[i]->Init())
+		if(false == m_workerThreads[i]->Init(factory))
 			return false;
 	}
 
@@ -72,9 +73,9 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func)
 #endif
 	
 	// 3. acceptor 초기화
-	m_acceptor = std::make_unique<ServerEngine::AcceptThread>();
+	m_acceptThread = std::make_unique<ServerEngine::AcceptThread>();
  	const uint16 port{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	if(false == m_acceptor->Init(func, port, flags))
+	if(false == m_acceptThread->Init(func, port, flags))
 		return false;
 
 	return true;
@@ -84,7 +85,7 @@ void ServerEngine::ServerEngineCore::Run()
 {
 	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st)
 		{
-			m_acceptor->Run(st);
+			m_acceptThread->Run(st);
 		});
 
 	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st)
@@ -110,3 +111,4 @@ ServerEngine::WorkerThread* ServerEngine::ServerEngineCore::GetLeisurelyWorker()
 	uint16 index = 0;
 	return m_workerThreads[index].get();
 }
+#endif

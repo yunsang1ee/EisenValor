@@ -12,7 +12,7 @@ namespace ServerEngine {
 		virtual ~WorkerThread();
 
 	public:
-		bool Init();
+		bool Init(const GameWorldTestFactory func);
 		void Run(const std::stop_token st);
 
 	public:
@@ -22,5 +22,6 @@ namespace ServerEngine {
 		std::unique_ptr<IOCoreTest>					m_ioCore;
 		std::map<uint32, std::unique_ptr<IRoom>>	m_worlds;
 		// TODO: SessionPool 필요
+		GameWorldTestFactory						m_func;
 	};
 }

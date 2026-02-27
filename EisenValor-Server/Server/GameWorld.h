@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "CollisionDetector.h"
 #include "NavSystem.h"
+#include "IRoom.h"
 
 namespace Server {
 	namespace Contents {
@@ -121,6 +122,20 @@ namespace Server {
 
 			uint32																	m_npcIdGen;
 
+		};
+
+		class GameWorldTest : public ServerEngine::IRoom {
+		public:
+			GameWorldTest();
+			virtual ~GameWorldTest();
+
+		public:
+			virtual void Init() override final;
+			virtual void Update() override final;
+			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
+
+		private:
+			std::map<uint32, std::shared_ptr<ClientSession>> m_sessions;
 		};
 	}
 }

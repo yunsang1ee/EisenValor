@@ -15,13 +15,18 @@ ServerEngine::WorkerThread::~WorkerThread()
 {
 }
 
-bool ServerEngine::WorkerThread::Init()
+bool ServerEngine::WorkerThread::Init(const GameWorldTestFactory func)
 {
+	m_func = func;
+
 	if(nullptr == m_ioCore)
 		return false;
 
 	if(false == m_ioCore->Init())
 		return false;
+
+	for(int i = 0; i < 2; ++i)
+		m_worlds.insert(std::make_pair(i, std::move(m_func())));
 
 	return true;
 }
@@ -40,8 +45,9 @@ void ServerEngine::WorkerThread::Run(const std::stop_token st)
 
 void ServerEngine::WorkerThread::EnterSession(std::shared_ptr<Session> session)
 {
-	std::cout << "EnterSession!" << std::endl;
 	if(false == m_ioCore->Register(session)) {
 		return;
 	}
+
+	m_worlds[0]->EnterSession(session);
 }

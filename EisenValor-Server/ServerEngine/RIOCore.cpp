@@ -8,6 +8,7 @@
 #include "ServerEngineConfigManager.h"
 
 #ifdef _USE_RIO
+#ifdef LEGACY_CODE
 
 ServerEngine::RIO::RIOCore::RIOCore()
 	:m_rioExtfuncTable{}
@@ -127,4 +128,5 @@ void ServerEngine::RIO::RIOCore::Shutdown()
 	shutdown(m_listenSocket, SD_BOTH);
 	closesocket(m_listenSocket);
 }
+#endif
 #endif

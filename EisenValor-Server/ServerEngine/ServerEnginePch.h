@@ -1,6 +1,9 @@
 #pragma once
 #pragma warning(disable: 4819)
 
+#define LEGACY_CODE
+// #define MODERN_CODE
+
 #include "ServerEngineDefines.h"
 
 #include <WS2tcpip.h>
@@ -86,6 +89,8 @@ SOCKET CreateSocket(const DWORD flags);
 namespace Server {
 	class RIOClientSession;
 	class IOCPClientSession;
+
+	class GameWorldTest;
 }
 
 #ifdef _USE_RIO

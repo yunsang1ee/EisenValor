@@ -3,6 +3,15 @@
 
 #include "Session.h"
 #include "ServerEngineConfigManager.h"
+#ifdef MODERN_CODE
+
+ServerEngine::RIO::RIOCoreTest::RIOCoreTest()
+{
+}
+
+ServerEngine::RIO::RIOCoreTest::~RIOCoreTest()
+{
+}
 
 bool ServerEngine::RIO::RIOCoreTest::Init()
 {
@@ -40,18 +49,57 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RECV_RQ_SIZE_PER_SESSION;
 	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION;
 	
-	// I/O 버퍼 등록
-	RIO_RQ rq = m_rioExtfuncTable.RIOCreateRequestQueue(session->GetSocket(), MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, m_cq, m_cq, 0);
+	const RIO_RQ rq = m_rioExtfuncTable.RIOCreateRequestQueue(session->GetSocket(), MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, m_cq, m_cq, 0);
 	if(rq == RIO_INVALID_RQ)
 		return false;
 
+	rioSession->SetRQ(rq);
+	rioSession->SetTable(m_rioExtfuncTable);
+	
+	// 버퍼 생성
 	if(false == rioSession->Init())
 		return false;
+
+	m_connectedSessions.insert(std::make_pair(rioSession->GetID(), rioSession));
+
+	rioSession->PostRecv();
 
 	return true;
 }
 
 void ServerEngine::RIO::RIOCoreTest::ProcessIO()
 {
-	// TODO: ServerEngine::RIOCoreTest::ProcessIO()
+	auto iter{ m_connectedSessions.begin() };
+
+	while(iter != m_connectedSessions.end()) {
+		auto& session = iter->second;
+
+		if(session == nullptr || session->GetState() == SESSION_STATE::FREE) {
+			iter = m_connectedSessions.erase(iter);
+			continue; 
+		}
+		
+		session->CheckPing();
+		session->FlushPacketQueue();
+		++iter;
+	}
+
+	memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
+
+	const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
+	if(0 == numResults) return;
+	else if(RIO_CORRUPT_CQ == numResults) {
+		std::cout << "RIO_CORRUPT_CQ" << std::endl;
+		return;
+	}
+	else {
+		for(uint32 i = 0; i < numResults; ++i) {
+			RIO::RIOContext* const context{ reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext) };
+			auto session{ context->GetOwner() };
+			assert(context && session);
+			const uint32 bytesTransferred{ m_ioResults[i].BytesTransferred };
+			session->Dispatch(context, bytesTransferred);
+		}
+	}
 }
+#endif

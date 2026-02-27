@@ -1,5 +1,7 @@
 #include "IRoom.h"
 #include "IRoom.h"
+#include "IRoom.h"
+#include "IRoom.h"
 #include "pch.h"
 #include "GameWorld.h"
 
@@ -733,5 +735,36 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 	// 스포너 생성
 	{
 
+	}
+}
+
+Server::Contents::GameWorldTest::GameWorldTest()
+{
+	std::cout << "GameWorldTest!" << std::endl;
+}
+
+Server::Contents::GameWorldTest::~GameWorldTest()
+{
+}
+
+void Server::Contents::GameWorldTest::Init()
+{
+
+}
+
+void Server::Contents::GameWorldTest::Update()
+{
+}
+
+void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine::Session> session)
+{
+	std::cout << "GameWorldTest EnterSession!" << std::endl;
+
+	auto clientSession{ std::static_pointer_cast<ClientSession>(session) };
+
+	const uint32 id{ session->GetID() };
+
+	if(false == m_sessions.contains(id)) {
+		m_sessions.insert(std::make_pair(id, clientSession));
 	}
 }

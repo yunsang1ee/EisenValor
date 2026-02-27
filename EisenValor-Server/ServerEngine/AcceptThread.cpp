@@ -4,6 +4,7 @@
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
 #include "Session.h"
+#ifdef  MODERN_CODE
 
 ServerEngine::AcceptThread::AcceptThread()
 	: m_listenSocket{ INVALID_SOCKET }, m_serverAddress{}
@@ -20,6 +21,8 @@ ServerEngine::AcceptThread::~AcceptThread()
 
 bool ServerEngine::AcceptThread::Init(const SessionFactoryFunc func, const uint16 port, const DWORD listenSocketFlags)
 {
+	m_func = func;
+
 	m_listenSocket = CreateSocket(listenSocketFlags);
 
 	if(m_listenSocket == INVALID_SOCKET)
@@ -68,10 +71,11 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 		LOG_INFO("Session Connected! IP = {}, PORT = {}", WStringToString(ipAddress.c_str()), clientAddr.sin_port);
 
 		auto session = m_func();
-		if(false == session->AcceptCompleted(clientSocket, clientAddr)) {
-			assert(nullptr);
-		}
 
+		if(false == session->AcceptCompleted(clientSocket, clientAddr))
+			continue;
+
+		// 지금은 일단 고정쓰레드로...
 		auto worker = MANAGER(ServerEngineCore)->GetLeisurelyWorker();
 		worker->PushJob(&ServerEngine::WorkerThread::EnterSession, (session));
 	}
@@ -89,3 +93,4 @@ void ServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
 	int opt{ 1 };
 	setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int));
 }
+#endif //  MODERN_CODE

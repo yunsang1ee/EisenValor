@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "IOCore.h"
 #include "RIOWorker.h"
 
@@ -9,6 +8,7 @@ namespace ServerEngine {
 		class RIOWorker;
 
 #ifdef _USE_RIO
+#ifdef LEGACY_CODE
 		class RIOCore : public IOCore {
 		public:
 			RIOCore();
@@ -38,6 +38,7 @@ namespace ServerEngine {
 			uint16									m_acceptThreadNum;
 			std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
 		};
+#endif
 #endif
 	}
 }

@@ -2,6 +2,7 @@
 
 namespace ServerEngine {
 	class Session;
+#ifdef LEGACY_CODE
 	class SessionPool {
 	public:
 		void Init(SessionFactoryFunc sessionFunc);
@@ -13,4 +14,5 @@ namespace ServerEngine {
 		tbb::concurrent_queue<std::shared_ptr<Session>>			m_freeSessions;
 
 	};
+#endif
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 namespace ServerEngine {
-	class Session;
+	class SessionTest;
 
 	class IOCoreTest {
 	public:

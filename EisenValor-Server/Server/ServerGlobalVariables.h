@@ -2,6 +2,7 @@
 
 namespace ServerEngine {
 	class Session;
+	class SessionTest;
 }
 
 namespace Server {
@@ -12,9 +13,12 @@ namespace Server {
 
 	class RIOClientSession;
 	class IOCPClientSession;
+
+	class RIOClientSessionTest;
+	class IOCPClientSessionTest;
 }
 
 extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 extern inline std::mt19937_64 mersenne{ std::random_device{}() };
 
-std::shared_ptr<ClientSession> MakeClientSessionFunc();
+

@@ -2,6 +2,8 @@
 
 namespace ServerEngine {
 	class WorkerThread;
+#ifdef  MODERN_CODE
+
 
 	class AcceptThread {
 	public:
@@ -22,11 +24,13 @@ namespace ServerEngine {
 		void SetSocketOptions(SOCKET& socket);
 
 	private:
-		SOCKET				m_listenSocket;
-		SOCKADDR_IN			m_serverAddress;
-		WorkerThread*		m_workerThread;
+		SOCKET					m_listenSocket;
+		SOCKADDR_IN				m_serverAddress;
+		WorkerThread*			m_workerThread;
 		SessionFactoryFunc	m_func;
 
 		friend class ServerEngineCore;
 	};
+#endif //  MODERN_CODE
+
 }

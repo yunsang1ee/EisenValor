@@ -3,6 +3,7 @@
 
 #include "Session.h"
 #include "ServerEngineConfigManager.h"
+#ifdef LEGACY_CODE
 
 void ServerEngine::SessionPool::Init(SessionFactoryFunc sessionFunc)
 {
@@ -34,4 +35,4 @@ std::shared_ptr<ServerEngine::Session> ServerEngine::SessionPool::DeqSession()
 	
 	return session;
 }
-
+#endif

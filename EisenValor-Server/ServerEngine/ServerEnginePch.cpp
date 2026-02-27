@@ -17,6 +17,3 @@ SOCKET CreateSocket(const DWORD flags)
 {
 	return WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, flags);
 }
-
-
-

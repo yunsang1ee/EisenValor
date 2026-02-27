@@ -1,5 +1,22 @@
 #pragma once
 
+namespace ServerEngine {
+	class IRoom;
+}
+
+namespace Server {
+	class RIOClientSession;
+	class IOCPClientSession;
+
+	class RIOClientSessionTest;
+	class IOCPClientSessionTest;
+
+	class GameWorldTest;
+}
+
+std::shared_ptr<ClientSession> MakeClientSessionFunc();
+std::unique_ptr<ServerEngine::IRoom> MakeGameWorldTest();
+
 static inline FB_STRUCTS::Vec3 Vec3ToFlatVec3(const Vec3& v)
 {
 	return FB_STRUCTS::Vec3{ v.x, v.y, v.z };
