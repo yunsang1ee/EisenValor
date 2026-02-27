@@ -12,10 +12,11 @@ namespace ServerEngine {
 		virtual ~WorkerThread();
 
 	public:
+		bool Init();
 		void Run(const std::stop_token st);
 
 	public:
-		void EnterSession(const SOCKET socket);
+		void EnterSession(std::shared_ptr<Session> session);
 
 	private:
 		std::unique_ptr<IOCoreTest>					m_ioCore;

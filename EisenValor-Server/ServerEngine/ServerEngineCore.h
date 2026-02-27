@@ -13,7 +13,7 @@ namespace ServerEngine {
 		~ServerEngineCore();
 
 	public:
-		bool Init();
+		bool Init(const SessionFactoryFunc func);
 		void Run();
 		void Shutdown();
 	

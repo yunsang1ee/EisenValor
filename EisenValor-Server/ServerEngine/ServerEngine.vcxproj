@@ -473,6 +473,7 @@
     <ClInclude Include="ServerEngineTypes.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="SessionPool.h" />
+    <ClInclude Include="SessionTest.h" />
     <ClInclude Include="Singleton.hpp" />
     <ClInclude Include="Task.h" />
     <ClInclude Include="TaskQueue.h" />
@@ -526,6 +527,7 @@
     <ClCompile Include="ServerEngineTLS.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SessionPool.cpp" />
+    <ClCompile Include="SessionTest.cpp" />
     <ClCompile Include="Task.cpp" />
     <ClCompile Include="TaskQueue.cpp" />
     <ClCompile Include="TaskQueueManager.cpp" />

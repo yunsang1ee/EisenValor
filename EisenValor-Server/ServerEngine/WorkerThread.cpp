@@ -4,6 +4,8 @@
 #include "IRoom.h"
 #include "IOCoreTest.h"
 
+#include "Session.h"
+
 ServerEngine::WorkerThread::WorkerThread(std::unique_ptr<IOCoreTest>&& ioCore)
 	:m_ioCore{std::move(ioCore)}
 {
@@ -11,6 +13,17 @@ ServerEngine::WorkerThread::WorkerThread(std::unique_ptr<IOCoreTest>&& ioCore)
 
 ServerEngine::WorkerThread::~WorkerThread()
 {
+}
+
+bool ServerEngine::WorkerThread::Init()
+{
+	if(nullptr == m_ioCore)
+		return false;
+
+	if(false == m_ioCore->Init())
+		return false;
+
+	return true;
 }
 
 void ServerEngine::WorkerThread::Run(const std::stop_token st)
@@ -25,7 +38,10 @@ void ServerEngine::WorkerThread::Run(const std::stop_token st)
 	}
 }
 
-void ServerEngine::WorkerThread::EnterSession(const SOCKET socket)
+void ServerEngine::WorkerThread::EnterSession(std::shared_ptr<Session> session)
 {
 	std::cout << "EnterSession!" << std::endl;
+	if(false == m_ioCore->Register(session)) {
+		return;
+	}
 }

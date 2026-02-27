@@ -15,7 +15,7 @@ void ServerEngine::JobQueue::FlushJobQueue()
 
 void ServerEngine::JobQueue::MoveReservedJobs()
 {
-    auto now = Clock::now();
+    const auto now = Clock::now();
 
     ReservedJob topJob;
 

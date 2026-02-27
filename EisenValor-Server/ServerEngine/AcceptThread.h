@@ -15,13 +15,17 @@ namespace ServerEngine {
 		AcceptThread& operator=(AcceptThread&&) = delete;
 
 	public:
-		bool Init(const uint16 port, const DWORD listenSocketFlags);
+		bool Init(const SessionFactoryFunc func, const uint16 port, const DWORD listenSocketFlags);
 		void Run(const std::stop_token st);
+
+	private:
+		void SetSocketOptions(SOCKET& socket);
 
 	private:
 		SOCKET				m_listenSocket;
 		SOCKADDR_IN			m_serverAddress;
 		WorkerThread*		m_workerThread;
+		SessionFactoryFunc	m_func;
 
 		friend class ServerEngineCore;
 	};

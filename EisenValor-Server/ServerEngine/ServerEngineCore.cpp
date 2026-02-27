@@ -19,7 +19,7 @@ ServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init()
+bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func)
 {
 	m_nextWorkerIndex = 0;
 	
@@ -55,8 +55,11 @@ bool ServerEngine::ServerEngineCore::Init()
 	
 	// 1. WorkerThread 생성
 	for(int i = 0; i < m_workerThreads.size(); ++i) {
-		auto rioCore = std::make_unique<RIOCoreTest>();
+		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
 		m_workerThreads[i] = (std::make_unique<WorkerThread>(std::move(rioCore)));
+
+		if(false == m_workerThreads[i]->Init())
+			return false;
 	}
 
 	// 2. LobbyThread 초기화
@@ -71,7 +74,7 @@ bool ServerEngine::ServerEngineCore::Init()
 	// 3. acceptor 초기화
 	m_acceptor = std::make_unique<ServerEngine::AcceptThread>();
  	const uint16 port{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	if(false == m_acceptor->Init(port, flags))
+	if(false == m_acceptor->Init(func, port, flags))
 		return false;
 
 	return true;
@@ -94,25 +97,6 @@ void ServerEngine::ServerEngineCore::Run()
 			{
 				worker->Run(st);
 			});
-	}
-
-	char ch;
-	constexpr int8 ESC = 27;
-
-	// Main-Thread
-	while(true) {
-		if(!_kbhit()) {
-			std::this_thread::sleep_for(1000ms);
-			continue;
-		}
-		ch = _getch();
-		if(ch == ESC) {
-			LOG_INFO("Server Finish");
-			break;
-		}
-		else {
-			std::this_thread::sleep_for(1000ms);
-		}
 	}
 }
 

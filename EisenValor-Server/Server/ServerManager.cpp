@@ -57,7 +57,7 @@ bool Server::ServerManager::Init()
 	G_GAME_LOBBY->Init();
 
 
-	//if(false == MANAGER(ServerEngine::ServerEngineCore)->Init()) {
+	//if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc)) {
 	//	LOG_ERROR("ServerEngineCore Init Failed");
 	//	return false;
 	//}
@@ -95,6 +95,7 @@ void Server::ServerManager::Shutdown()
 {
 	MANAGER(ServerEngine::NetworkManager)->Shutdown();
 	MANAGER(ServerEngine::ThreadManager)->Join();
+	// MANAGER(ServerEngine::ServerEngineCore)->Shutdown();
 	WSACleanup();
 	LOG_SAVE();
 }

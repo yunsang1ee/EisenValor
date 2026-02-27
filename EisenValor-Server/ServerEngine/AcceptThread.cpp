@@ -3,6 +3,7 @@
 
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
+#include "Session.h"
 
 ServerEngine::AcceptThread::AcceptThread()
 	: m_listenSocket{ INVALID_SOCKET }, m_serverAddress{}
@@ -17,7 +18,7 @@ ServerEngine::AcceptThread::~AcceptThread()
 	}
 }
 
-bool ServerEngine::AcceptThread::Init(const uint16 port, const DWORD listenSocketFlags)
+bool ServerEngine::AcceptThread::Init(const SessionFactoryFunc func, const uint16 port, const DWORD listenSocketFlags)
 {
 	m_listenSocket = CreateSocket(listenSocketFlags);
 
@@ -51,12 +52,14 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 		sockaddr_in clientAddr;
 		int addrLen = sizeof(clientAddr);
 	RETRY:
-		const SOCKET clientSocket{ accept(m_listenSocket, (SOCKADDR*)&clientAddr, &addrLen) };
+		SOCKET clientSocket{ accept(m_listenSocket, (SOCKADDR*)&clientAddr, &addrLen) };
 		if(INVALID_SOCKET == clientSocket) {
 			if(st.stop_requested())
 				break;
 			goto RETRY;
 		}
+
+		SetSocketOptions(clientSocket);
 
 		std::wstring ipAddress;
 		ipAddress.resize(100);
@@ -64,10 +67,25 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 
 		LOG_INFO("Session Connected! IP = {}, PORT = {}", WStringToString(ipAddress.c_str()), clientAddr.sin_port);
 
+		auto session = m_func();
+		if(false == session->AcceptCompleted(clientSocket, clientAddr)) {
+			assert(nullptr);
+		}
+
 		auto worker = MANAGER(ServerEngineCore)->GetLeisurelyWorker();
-		worker->PushJob(&ServerEngine::WorkerThread::EnterSession, clientSocket);
+		worker->PushJob(&ServerEngine::WorkerThread::EnterSession, (session));
 	}
 
 	std::cout << "Accept Thread Run Finish!" << std::endl;
 
+}
+
+void ServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
+{
+	u_long arg{ 1 };
+	ioctlsocket(socket, FIONBIO, &arg);
+
+	// NAGLE Algorithm off
+	int opt{ 1 };
+	setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int));
 }

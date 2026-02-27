@@ -133,6 +133,9 @@
     <ClInclude Include="Job.h">
       <Filter>JobQueue</Filter>
     </ClInclude>
+    <ClInclude Include="SessionTest.h">
+      <Filter>Interfaces\Session</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -245,6 +248,9 @@
     </ClCompile>
     <ClCompile Include="Job.cpp">
       <Filter>JobQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionTest.cpp">
+      <Filter>Interfaces\Session</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -373,6 +379,9 @@
     </Filter>
     <Filter Include="ServerEngineCore">
       <UniqueIdentifier>{75449ec7-4223-4197-8a17-e2d1740c71ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces\Session">
+      <UniqueIdentifier>{f5a46eab-c031-4865-a36d-c3ffda15f33f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

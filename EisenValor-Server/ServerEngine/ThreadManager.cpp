@@ -28,7 +28,8 @@ bool ServerEngine::ThreadManager::Init()
 void ServerEngine::ThreadManager::EnqueueTask(std::function<void(const std::stop_token&)> task)
 {
 	std::lock_guard<std::mutex> lk{ m_mutex };
-
+	//TLS_THREAD_ID = m_threadIDCounter;
+	//m_threadIDCounter++;
 	m_threads.emplace_back([task](const std::stop_token& st)
 		{
 			InitTLS();

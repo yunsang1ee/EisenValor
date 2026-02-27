@@ -1,6 +1,20 @@
 #include "pch.h"
 #include "IOCPCoreTest.h"
 
+bool ServerEngine::IOCPCoreTest::Init()
+{
+	// TODO:  ServerEngine::IOCPCoreTest::Init()
+
+	return false;
+}
+
+bool ServerEngine::IOCPCoreTest::Register(std::shared_ptr<Session> session)
+{
+	// TODO: ServerEngine::IOCPCoreTest::Register(std::shared_ptr<Session> session)
+	
+	return false;
+}
+
 void ServerEngine::IOCPCoreTest::ProcessIO()
 {
 	// TODO:  ServerEngine::IOCPCoreTest::ProcessIO()
