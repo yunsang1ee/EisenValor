@@ -738,6 +738,7 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 	}
 }
 
+#ifdef MODERN_CODE
 Server::Contents::GameWorldTest::GameWorldTest()
 {
 	std::cout << "GameWorldTest!" << std::endl;
@@ -745,6 +746,7 @@ Server::Contents::GameWorldTest::GameWorldTest()
 
 Server::Contents::GameWorldTest::~GameWorldTest()
 {
+
 }
 
 void Server::Contents::GameWorldTest::Init()
@@ -752,13 +754,19 @@ void Server::Contents::GameWorldTest::Init()
 
 }
 
-void Server::Contents::GameWorldTest::Update()
+void Server::Contents::GameWorldTest::Update(const float dt)
 {
+	m_accDT += dt;
+
+	if(m_accDT >= 1.f) {
+		// std::cout << "World Update!" << std::endl;
+		m_accDT = 0.f;
+	}
 }
 
 void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine::Session> session)
 {
-	std::cout << "GameWorldTest EnterSession!" << std::endl;
+	std::cout << "GameWorld EnterSession!" << std::endl;
 
 	auto clientSession{ std::static_pointer_cast<ClientSession>(session) };
 
@@ -768,3 +776,8 @@ void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine:
 		m_sessions.insert(std::make_pair(id, clientSession));
 	}
 }
+void Server::Contents::GameWorldTest::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
+{
+	// TODO: 월드에 있는 모든 유저들에게 Broadcast
+}
+#endif

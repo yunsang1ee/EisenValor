@@ -1,10 +1,12 @@
 #pragma once
 #include "TaskQueue.h"
+#include "IRoom.h"
 
 class ClientPacketHandler;
 
 namespace ServerEngine {
 	class Objectpool;
+	class Session;
 }
 
 namespace Server {
@@ -85,5 +87,21 @@ namespace Server {
 
 
 		};
+
+#ifdef MODERN_CODE
+		class GameRoomTest : public ServerEngine::IRoom {
+		public:
+			GameRoomTest();
+			virtual ~GameRoomTest();
+
+		public:
+			virtual void Init() override final;
+			virtual void Update(const float dt) override final;
+			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
+			virtual void Broadcast(std::shared_ptr <ServerEngine::PacketBuffer> pb) override final;
+
+		private:
+		};
+#endif
 	}
 }

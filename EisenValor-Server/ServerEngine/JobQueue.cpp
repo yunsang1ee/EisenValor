@@ -6,6 +6,9 @@ void ServerEngine::JobQueue::FlushJobQueue()
 {
     MoveReservedJobs();
 
+    if(m_jobs.empty())
+        return;
+
     std::shared_ptr<Job> job;
     while(m_jobs.try_pop(job)) {
         if(job)
@@ -15,6 +18,9 @@ void ServerEngine::JobQueue::FlushJobQueue()
 
 void ServerEngine::JobQueue::MoveReservedJobs()
 {
+    if(m_reservedJobs.empty())
+        return;
+
     const auto now = Clock::now();
 
     ReservedJob topJob;

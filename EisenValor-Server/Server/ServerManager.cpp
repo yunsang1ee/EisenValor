@@ -60,7 +60,7 @@ bool Server::ServerManager::Init()
 #endif
 
 #ifdef MODERN_CODE
-	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeGameWorldTest)) {
+	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;
 	}

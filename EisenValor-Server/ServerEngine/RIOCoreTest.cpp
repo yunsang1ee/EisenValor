@@ -67,7 +67,18 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	return true;
 }
 
+bool ServerEngine::RIO::RIOCoreTest::Deregister(std::shared_ptr<Session> session)
+{
+	return false;
+}
+
 void ServerEngine::RIO::RIOCoreTest::ProcessIO()
+{
+	FlushPacketQueue();
+	DequeueCompletion();
+}
+
+void ServerEngine::RIO::RIOCoreTest::FlushPacketQueue()
 {
 	auto iter{ m_connectedSessions.begin() };
 
@@ -76,14 +87,17 @@ void ServerEngine::RIO::RIOCoreTest::ProcessIO()
 
 		if(session == nullptr || session->GetState() == SESSION_STATE::FREE) {
 			iter = m_connectedSessions.erase(iter);
-			continue; 
+			continue;
 		}
-		
+
 		session->CheckPing();
 		session->FlushPacketQueue();
 		++iter;
 	}
+}
 
+void ServerEngine::RIO::RIOCoreTest::DequeueCompletion()
+{
 	memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
 
 	const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
@@ -102,4 +116,5 @@ void ServerEngine::RIO::RIOCoreTest::ProcessIO()
 		}
 	}
 }
+
 #endif

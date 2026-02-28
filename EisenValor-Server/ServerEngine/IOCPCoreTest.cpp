@@ -26,6 +26,11 @@ bool ServerEngine::IOCPCoreTest::Register(std::shared_ptr<Session> session)
 	return false;
 }
 
+bool ServerEngine::IOCPCoreTest::Deregister(std::shared_ptr<Session> session)
+{
+	return false;
+}
+
 void ServerEngine::IOCPCoreTest::ProcessIO()
 {
 	// TODO:  ServerEngine::IOCPCoreTest::ProcessIO()

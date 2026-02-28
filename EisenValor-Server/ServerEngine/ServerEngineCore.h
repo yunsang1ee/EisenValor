@@ -14,7 +14,7 @@ namespace ServerEngine {
 		~ServerEngineCore();
 
 	public:
-		bool Init(const SessionFactoryFunc func, const GameWorldTestFactory factory);
+		bool Init(const SessionFactoryFunc sessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc);
 		void Run();
 		void Shutdown();
 	
@@ -26,6 +26,7 @@ namespace ServerEngine {
 
 	public:
 		WorkerThread* GetLeisurelyWorker();
+		LobbyThread* GetLobbyThread() const { return m_lobbyThread.get(); }
 	};
 #endif
 }

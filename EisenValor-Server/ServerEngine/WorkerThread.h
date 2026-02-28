@@ -8,20 +8,20 @@ namespace ServerEngine {
 
 	class WorkerThread : public JobQueue {
 	public:
-		explicit WorkerThread(std::unique_ptr<IOCoreTest>&& ioCore);
+		explicit WorkerThread(const GameWorldTestFactoryFunc func, std::unique_ptr<IOCoreTest>&& ioCore);
 		virtual ~WorkerThread();
 
 	public:
-		bool Init(const GameWorldTestFactory func);
+		bool Init();
 		void Run(const std::stop_token st);
 
 	public:
-		void EnterSession(std::shared_ptr<Session> session);
+		void EnterWorld(std::shared_ptr<Session> session);
 
 	private:
 		std::unique_ptr<IOCoreTest>					m_ioCore;
 		std::map<uint32, std::unique_ptr<IRoom>>	m_worlds;
 		// TODO: SessionPool 필요
-		GameWorldTestFactory						m_func;
+		const GameWorldTestFactoryFunc						m_func;
 	};
 }

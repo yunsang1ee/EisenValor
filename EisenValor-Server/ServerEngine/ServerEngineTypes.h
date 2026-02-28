@@ -38,4 +38,5 @@ using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::IOCP::IOC
 #endif
 
 
-using GameWorldTestFactory = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
+using GameWorldTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
+using GameLobbyTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;

@@ -67,9 +67,6 @@
     <ClInclude Include="ObjectPool.h">
       <Filter>04. MemoryPool</Filter>
     </ClInclude>
-    <ClInclude Include="TaskQueueManager.h">
-      <Filter>95. Managers\TaskQueueManager</Filter>
-    </ClInclude>
     <ClInclude Include="Task.h">
       <Filter>95. Managers\TaskQueueManager\TaskQueue\Task</Filter>
     </ClInclude>
@@ -122,16 +119,19 @@
       <Filter>Test\JobQueue</Filter>
     </ClInclude>
     <ClInclude Include="IOCPCoreTest.h">
-      <Filter>Test\Network\WorkerThread\IOCoreTest\IOCPCoreTest</Filter>
+      <Filter>Test\Network\IOCoreTest\IOCPCoreTest</Filter>
     </ClInclude>
     <ClInclude Include="RIOCoreTest.h">
-      <Filter>Test\Network\WorkerThread\IOCoreTest\RIOCoreTest</Filter>
-    </ClInclude>
-    <ClInclude Include="IOCoreTest.h">
-      <Filter>Test\Network\WorkerThread\IOCoreTest</Filter>
+      <Filter>Test\Network\IOCoreTest\RIOCoreTest</Filter>
     </ClInclude>
     <ClInclude Include="Job.h">
       <Filter>Test\JobQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCoreTest.h">
+      <Filter>Test\Network\IOCoreTest</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskQueueManager.h">
+      <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -173,9 +173,6 @@
     </ClCompile>
     <ClCompile Include="ObjectPool.cpp">
       <Filter>04. MemoryPool</Filter>
-    </ClCompile>
-    <ClCompile Include="TaskQueueManager.cpp">
-      <Filter>95. Managers\TaskQueueManager</Filter>
     </ClCompile>
     <ClCompile Include="Task.cpp">
       <Filter>95. Managers\TaskQueueManager\TaskQueue\Task</Filter>
@@ -235,16 +232,19 @@
       <Filter>Test\JobQueue</Filter>
     </ClCompile>
     <ClCompile Include="IOCoreTest.cpp">
-      <Filter>Test\Network\WorkerThread\IOCoreTest</Filter>
+      <Filter>Test\Network\IOCoreTest</Filter>
     </ClCompile>
     <ClCompile Include="IOCPCoreTest.cpp">
-      <Filter>Test\Network\WorkerThread\IOCoreTest\IOCPCoreTest</Filter>
+      <Filter>Test\Network\IOCoreTest\IOCPCoreTest</Filter>
     </ClCompile>
     <ClCompile Include="RIOCoreTest.cpp">
-      <Filter>Test\Network\WorkerThread\IOCoreTest\RIOCoreTest</Filter>
+      <Filter>Test\Network\IOCoreTest\RIOCoreTest</Filter>
     </ClCompile>
     <ClCompile Include="Job.cpp">
       <Filter>Test\JobQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskQueueManager.cpp">
+      <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -362,20 +362,20 @@
     <Filter Include="Test\Network\WorkerThread">
       <UniqueIdentifier>{6875bbd8-eee7-47be-b76c-276e02a4b1a1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Test\Network\WorkerThread\IOCoreTest">
-      <UniqueIdentifier>{7cb32645-4561-4a68-82a2-e10c6dd5752a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Test\Network\WorkerThread\IOCoreTest\RIOCoreTest">
-      <UniqueIdentifier>{5a3164d6-bd80-4efa-a4b0-01b8424f8ff6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Test\Network\WorkerThread\IOCoreTest\IOCPCoreTest">
-      <UniqueIdentifier>{41d7538b-8c51-40d6-87f6-ad53ba8ce9be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Test\ServerEngineCore">
       <UniqueIdentifier>{75449ec7-4223-4197-8a17-e2d1740c71ed}</UniqueIdentifier>
     </Filter>
     <Filter Include="Test\Network\LobbyThread">
       <UniqueIdentifier>{561c8dea-80a2-4950-9ac6-07079098b6b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\Network\IOCoreTest">
+      <UniqueIdentifier>{7cb32645-4561-4a68-82a2-e10c6dd5752a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\Network\IOCoreTest\RIOCoreTest">
+      <UniqueIdentifier>{5a3164d6-bd80-4efa-a4b0-01b8424f8ff6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\Network\IOCoreTest\IOCPCoreTest">
+      <UniqueIdentifier>{41d7538b-8c51-40d6-87f6-ad53ba8ce9be}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

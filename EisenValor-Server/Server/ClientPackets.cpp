@@ -292,7 +292,8 @@ namespace ClientPackets {
 
 		const uint16 roomID{ recvPkt.room_id() };
 
-		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD, clientSession, roomID);
+		if(G_GAME_LOBBY)
+			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD, clientSession, roomID);
 
 		return true;
 	}

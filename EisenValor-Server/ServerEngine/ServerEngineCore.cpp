@@ -20,7 +20,7 @@ ServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func, const GameWorldTestFactory factory)
+bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc)
 {
 	m_nextWorkerIndex = 0;
 	
@@ -54,28 +54,27 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc func, const G
 #ifdef _USE_RIO
 	flags = WSA_FLAG_REGISTERED_IO;
 	
-	// 1. WorkerThread 생성
+	// WorkerThread 생성
 	for(int i = 0; i < m_workerThreads.size(); ++i) {
 		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
-		m_workerThreads[i] = (std::make_unique<WorkerThread>(std::move(rioCore)));
+		m_workerThreads[i] = (std::make_unique<WorkerThread>(worldFunc, std::move(rioCore)));
 
-		if(false == m_workerThreads[i]->Init(factory))
+		if(false == m_workerThreads[i]->Init())
 			return false;
 	}
 
-	// 2. LobbyThread 초기화
+	// LobbyThread 초기화
 	// -> RIO인 경우 LobbyThread I/O도 RIO로...
-
-	m_lobbyThread = std::make_unique<ServerEngine::LobbyThread>();
+	m_lobbyThread = std::make_unique<ServerEngine::LobbyThread>(lobbyFunc);
 
 	if(false == m_lobbyThread->Init())
 		return false;
 #endif
 	
-	// 3. acceptor 초기화
+	// acceptor 초기화
 	m_acceptThread = std::make_unique<ServerEngine::AcceptThread>();
  	const uint16 port{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	if(false == m_acceptThread->Init(func, port, flags))
+	if(false == m_acceptThread->Init(sessionFunc, port, flags))
 		return false;
 
 	return true;
@@ -93,10 +92,17 @@ void ServerEngine::ServerEngineCore::Run()
 			m_lobbyThread->Run(st);
 		});
 
-	for(const auto& worker : m_workerThreads) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, &worker](const std::stop_token st)
+	//for(const auto& worker : m_workerThreads) {
+	//	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, &worker](const std::stop_token st)
+	//		{
+	//			worker->Run(st);
+	//		});
+	//}
+
+	for(int i = 0; i < 1; ++i) {
+		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
 			{
-				worker->Run(st);
+				m_workerThreads[i]->Run(st);
 			});
 	}
 }
@@ -108,6 +114,8 @@ void ServerEngine::ServerEngineCore::Shutdown()
 
 ServerEngine::WorkerThread* ServerEngine::ServerEngineCore::GetLeisurelyWorker()
 {
+	// TODO: WorkerThread가 현재 얼마나 바쁜지 판단해서 가장 여유로운애를 반환해줘야함.
+	// 판단? WorkerThread::Run에서 DT가 가장 짧은 얘로..?
 	uint16 index = 0;
 	return m_workerThreads[index].get();
 }

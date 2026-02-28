@@ -143,7 +143,7 @@ void ServerEngine::Session::CheckPing()
 
 void ServerEngine::Session::Handle_CS_PONG()
 {
-	// std::cout << "Pong!" << std::endl;
+	std::cout << "Pong!" << std::endl;
 	m_lastPong = std::chrono::high_resolution_clock::now();
 }
 #endif
@@ -684,6 +684,20 @@ bool ServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const 
 
 void ServerEngine::RIO::RIOSession::Disconnect(const std::string_view reason)
 {
+	if(false == IsConnected())
+		return;
+
+	LINGER lingerOption;
+	lingerOption.l_onoff = 1;
+	lingerOption.l_linger = 0;
+
+	if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_LINGER, (char*)&lingerOption, sizeof(LINGER)))
+		std::cout << std::format("setsockopt linger option error: {}", GetLastError()) << std::endl;
+
+	CloseSocket();
+	OnDisconnected(reason);
+	m_lastPong = std::chrono::high_resolution_clock::time_point{};
+	Clean();
 }
 
 void ServerEngine::RIO::RIOSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)

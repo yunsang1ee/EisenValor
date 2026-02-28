@@ -7,15 +7,13 @@ namespace ServerEngine {
 namespace Server {
 	class RIOClientSession;
 	class IOCPClientSession;
-
-	class RIOClientSessionTest;
-	class IOCPClientSessionTest;
-
-	class GameWorldTest;
 }
 
 std::shared_ptr<ClientSession> MakeClientSessionFunc();
+#ifdef MODERN_CODE
 std::unique_ptr<ServerEngine::IRoom> MakeGameWorldTest();
+std::unique_ptr<ServerEngine::IRoom> MakeGameLobbyTest();
+#endif
 
 static inline FB_STRUCTS::Vec3 Vec3ToFlatVec3(const Vec3& v)
 {

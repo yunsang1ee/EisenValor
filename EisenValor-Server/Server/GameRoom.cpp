@@ -305,3 +305,30 @@ void Server::Contents::GameRoom::Handle_CS_ENTER_GAME_WORLD(const std::shared_pt
 }
 #endif // DEVELOP
 
+#ifdef MODERN_CODE
+Server::Contents::GameRoomTest::GameRoomTest()
+{
+}
+
+Server::Contents::GameRoomTest::~GameRoomTest()
+{
+}
+
+void Server::Contents::GameRoomTest::Init()
+{
+}
+
+void Server::Contents::GameRoomTest::Update(const float dt)
+{
+
+}
+
+void Server::Contents::GameRoomTest::EnterSession(std::shared_ptr<ServerEngine::Session> session)
+{
+}
+
+void Server::Contents::GameRoomTest::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
+{
+	// TODO: GameRoom안에 있는 모든 애들에게 Broadcast
+}
+#endif

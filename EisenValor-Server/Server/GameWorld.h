@@ -124,6 +124,7 @@ namespace Server {
 
 		};
 
+#ifdef MODERN_CODE
 		class GameWorldTest : public ServerEngine::IRoom {
 		public:
 			GameWorldTest();
@@ -131,11 +132,14 @@ namespace Server {
 
 		public:
 			virtual void Init() override final;
-			virtual void Update() override final;
+			virtual void Update(const float dt) override final;
 			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
+			virtual void Broadcast(std::shared_ptr <ServerEngine::PacketBuffer> pb) override final;
 
 		private:
 			std::map<uint32, std::shared_ptr<ClientSession>> m_sessions;
+			float m_accDT{ 0.f };
 		};
+#endif
 	}
 }

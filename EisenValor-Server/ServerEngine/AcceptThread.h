@@ -27,7 +27,7 @@ namespace ServerEngine {
 		SOCKET					m_listenSocket;
 		SOCKADDR_IN				m_serverAddress;
 		WorkerThread*			m_workerThread;
-		SessionFactoryFunc	m_func;
+		SessionFactoryFunc		m_func;
 
 		friend class ServerEngineCore;
 	};

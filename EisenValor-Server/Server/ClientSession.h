@@ -6,6 +6,10 @@ namespace Server {
 	namespace Contents {
 		class GameRoom;
 		class GameWorld;
+
+		class GameLobbyTest;
+		class GameRoomTest;
+		class GameWorldTest;
 	}
 
 #ifdef _USE_IOCP

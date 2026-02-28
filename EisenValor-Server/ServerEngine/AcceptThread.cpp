@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "AcceptThread.h"
 
+#include "LobbyThread.h"
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
 #include "Session.h"
+
 #ifdef  MODERN_CODE
 
 ServerEngine::AcceptThread::AcceptThread()
@@ -75,13 +77,18 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 		if(false == session->AcceptCompleted(clientSocket, clientAddr))
 			continue;
 
-		// 지금은 일단 고정쓰레드로...
-		auto worker = MANAGER(ServerEngineCore)->GetLeisurelyWorker();
-		worker->PushJob(&ServerEngine::WorkerThread::EnterSession, (session));
+		// 로비로
+		//auto lobby = MANAGER(ServerEngineCore)->GetLobbyThread();
+		//if(lobby)
+		//	lobby->PushJob(&ServerEngine::LobbyThread::EnterLobby, session);
+	
+		// 월드로
+		auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
+		if(worker)
+			worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, (session));
 	}
 
 	std::cout << "Accept Thread Run Finish!" << std::endl;
-
 }
 
 void ServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
