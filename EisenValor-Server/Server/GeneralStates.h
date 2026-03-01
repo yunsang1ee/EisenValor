@@ -15,7 +15,13 @@ namespace Server {
 			std::unique_ptr<BehaviorNode>	m_root;
 			BehaviorTree*					m_bt;
 			General*						m_owner;
+
+#ifdef LEGACY_CODE
 			std::shared_ptr<GameWorld>		m_gameWorld;
+#endif
+#ifdef MODERN_CODE
+			GameWorldTest* m_gameWorld;
+#endif
 		};
 
 		// =================================

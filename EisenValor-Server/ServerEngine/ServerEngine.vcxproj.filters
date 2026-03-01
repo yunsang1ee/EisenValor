@@ -222,9 +222,6 @@
     <ClCompile Include="LobbyThread.cpp">
       <Filter>Test\Network\LobbyThread</Filter>
     </ClCompile>
-    <ClCompile Include="WorkerThread.cpp">
-      <Filter>Test\Network\WorkerThread</Filter>
-    </ClCompile>
     <ClCompile Include="IRoom.cpp">
       <Filter>Test\Interfaces\IRoom</Filter>
     </ClCompile>
@@ -245,6 +242,9 @@
     </ClCompile>
     <ClCompile Include="TaskQueueManager.cpp">
       <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="WorkerThread.cpp">
+      <Filter>Test\Network\WorkerThread</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

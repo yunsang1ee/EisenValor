@@ -33,6 +33,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_CHAT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHAT_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto pb{ ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str()) };
 
@@ -60,6 +61,10 @@ namespace ClientPackets {
 			default:
 				break;
 		}
+#endif
+#ifdef MODERN_CODE
+
+#endif
 
 		return true;
 	}
@@ -104,22 +109,31 @@ namespace ClientPackets {
 #pragma region LOBBY_PACKETS
 	bool Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY, clientSession);
+#endif
 		return true;
 	}
 
 	bool Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
+#endif
+
 		return true;
 	}
 
 	bool Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
+
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM, clientSession);
+#endif
+
 		return true;
 	}
 #pragma endregion
@@ -131,67 +145,103 @@ namespace ClientPackets {
 #pragma region ROOM_PACKETS
 	bool Handle_CS_JOIN_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_JOIN_GAME_ROOM_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
+
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::JoinGameRoom, clientSession, recvPkt.room_id());
+#endif
 		return true;
 	}
 
 	bool Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto room = clientSession->GetGameRoom();
 
 		if(room)
 			room->ExecAsync(&Server::Contents::GameRoom::LeaveGameRoom, clientSession);
+#endif
+
+#ifdef MODERN_CODE
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_TEAM_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
+
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto room = clientSession->GetGameRoom();
 		if(room)
 			room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_CHANGE_TEAM, clientSession);
+#endif
+
+#ifdef MODERN_CODE
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ADD_BOT_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto room = clientSession->GetGameRoom();
 		if(room)
 			room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_ADD_BOT, clientSession, recvPkt.team_type());
+#endif
+
+#ifdef MODERN_CODE
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_READY_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_READY_GAME_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto room = clientSession->GetGameRoom();
 		if(room)
 			room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_READY_GAME, clientSession);
+#endif
+
+#ifdef MODERN_CODE
+#endif
+
 		return true;
 	}
 
 	bool Handle_CS_START_GAME_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_START_GAME_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto room = clientSession->GetGameRoom();
 		if(room)
 			room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_GAME_START, clientSession);
+#endif
+
+#ifdef MODERN_CODE
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_COMPLETE_LOADING_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_COMPLETE_LOADING_GAME_WORLD_PACKET& recvPkt)
 	{
+#ifdef LEGACY_CODE
+
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		auto room = clientSession->GetGameRoom();
 		if(room)
 			room->ExecAsync(&Server::Contents::GameRoom::Handle_CS_COMPLETE_LOADING_GAME_WORLD, clientSession);
+#endif
+
+#ifdef MODERN_CODE
+#endif
 
 		return true;
 	}
@@ -203,6 +253,8 @@ namespace ClientPackets {
 #pragma region WORLD_PACKETS
 	bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt)
 	{
+		std::cout << "Hadle_CS_MOVE_PACKET" << std::endl;
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 		if(clientSession->GetState() != SESSION_STATE::IN_GAME_WORLD) {
@@ -216,66 +268,144 @@ namespace ClientPackets {
 		auto world = clientSession->GetGameWorld();
 		if(world)
 			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_MOVE, clientSession, info, recvPkt.player_state());
+#endif
+
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+		if(clientSession->GetState() != SESSION_STATE::IN_GAME_WORLD) {
+			return true;
+		}
+
+		const Vec3 pos{ FlatVec3ToVec3(recvPkt.pos_info()->pos()) };
+		const Vec3 rot{ FlatVec3ToVec3(recvPkt.pos_info()->rot()) };
+		const PosInfo info{ pos, rot };
+
+		auto world = clientSession->GetGameWorld();
+		if(world)
+			world->Handle_CS_MOVE(clientSession, info, recvPkt.player_state());
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_GENERAL_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GENERAL_ATTACK_PACKET& recvPkt)
 	{
+		std::cout << "Handle_CS_GENERAL_ATTACK_PACKET" << std::endl;
+#ifdef LEGACY_CODE
+
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
 			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_GENERAL_ATTACK, id, *recvPkt.attack_info());
+#endif
 
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->Handle_CS_GENERAL_ATTACK(id, *recvPkt.attack_info());
+#endif
 		return true;
 	}
 
 	bool Handle_CS_CHANGE_GENERAL_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET& recvPkt)
 	{
+		std::cout << "Handle_CS_CHANGE_GENERAL_STANCE_PACKET" << std::endl;
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
 			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE, id);
+#endif
+
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->Handle_CS_GENERAL_CHANGE_STANCE(id);
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt)
 	{
+		std::cout << "Handle_CS_PLAYER_FAKE_PACKET" << std::endl;
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
 			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_PLAYER_FAKE, id);
+#endif
+
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->Handle_CS_PLAYER_FAKE(id);
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt)
 	{
+		std::cout << "Handle_CS_CHANGE_CAMERA_TARGET_PACKET" << std::endl;
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
 			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET, id, recvPkt.camera_target_id());
+#endif
+
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->Handle_CS_CHANGE_CAMERA_TARGET(id, recvPkt.camera_target_id());
+#endif
 
 		return true;
 	}
 
 	bool Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt)
 	{
+		std::cout << "Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET" << std::endl;
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
 			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR, id, static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(recvPkt.attack_dir()));
+#endif
+
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->Handle_CS_SHOW_GENERAL_ATTACK_DIR(id, static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(recvPkt.attack_dir()));
+#endif
 
 		return true;
 	}
@@ -288,13 +418,16 @@ namespace ClientPackets {
 #ifndef ENABLE_LOBBY
 	bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt)
 	{
+		std::cout << "Handle_CS_ENTER_GAME_WORLD_PACKET" << std::endl;
+
+#ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 		const uint16 roomID{ recvPkt.room_id() };
 
 		if(G_GAME_LOBBY)
 			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_ENTER_GAME_WORLD, clientSession, roomID);
-
+#endif
 		return true;
 	}
 #endif // DEVELOP

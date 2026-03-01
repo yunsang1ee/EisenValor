@@ -128,7 +128,7 @@ void Server::Contents::Player::OnRespawn()
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT, true);
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
-	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	world->Broadcast(std::move(pb));
 
 	std::cout << "Player Respawn!" << std::endl;
 }
@@ -146,7 +146,6 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 {
 	if(false == IsActive())
 		return;
-
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	const uint64 worldFrame = world->GetGameWorldFrameCount();
@@ -200,8 +199,9 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 	{
 		auto pb{ ServerPackets::Make_SC_GENERAL_ATTACK_PACKET(GetID(), atkInfo) };
-		GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+		GetSession()->GetGameWorld()->Broadcast(std::move(pb));
 	}
+
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_GENERAL_STANCE()
@@ -211,14 +211,15 @@ void Server::Contents::Player::Handle_CS_PLAYER_GENERAL_STANCE()
 
 	// std::cout << "Handle_CS_GENERAL_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	
+#ifdef LEGACY_CODE
 	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(),GetStanceType());
 	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+#endif
+
 }
 
 void Server::Contents::Player::Handle_CS_PLAYER_FAKE()
-{
-	if(false == IsActive())
+{	if(false == IsActive())
 		return;
 
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
@@ -292,9 +293,11 @@ void Server::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevT
 
 void Server::Contents::Player::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
+#ifdef LEGACY_CODE
 	SetAtkDir(dirType);
 
 	auto const world{ GetGameWorld() };
 	auto pb{ ServerPackets::Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(GetID(), etou8(dirType)) };
 	world->Broadcast(std::move(pb));
+#endif
 }

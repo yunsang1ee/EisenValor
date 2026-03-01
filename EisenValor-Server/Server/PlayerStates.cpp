@@ -136,7 +136,9 @@ Server::Contents::PlayerPredelayState::~PlayerPredelayState()
 void Server::Contents::PlayerPredelayState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
+#ifdef LEGACY_CODE
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
+#endif
 	//	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
@@ -269,7 +271,6 @@ Server::Contents::PlayerStunState::~PlayerStunState()
 void Server::Contents::PlayerStunState::Enter(const float dt)
 {
 	//std::cout << std::format("ID:{}, GeneralStunState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
-
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 	if(m_stunDuration == 0) {

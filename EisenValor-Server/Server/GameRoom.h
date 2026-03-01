@@ -25,6 +25,8 @@ namespace Server {
 		// JobQueue에는 GameRoom에서 일어나는 모든 일들이 쌓이게 됨
 		// ex) Update(), EnterRoom(), LeaveRoom(), Broadcast() ...
 		// GameRoom의 JobQueue를 실행하는 쓰레드는 여러 쓰레드 중, 단 하나만
+
+#ifdef LEGACY_CODE
 		class GameRoom : public ServerEngine::TaskQueue {
 		public:
 			GameRoom() = delete;
@@ -87,6 +89,7 @@ namespace Server {
 
 
 		};
+#endif
 
 #ifdef MODERN_CODE
 		class GameRoomTest : public ServerEngine::IRoom {
@@ -98,6 +101,7 @@ namespace Server {
 			virtual void Init() override final;
 			virtual void Update(const float dt) override final;
 			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
+			virtual void LeaveSession(std::shared_ptr<ServerEngine::Session> session)  override final;
 			virtual void Broadcast(std::shared_ptr <ServerEngine::PacketBuffer> pb) override final;
 
 		private:

@@ -3,6 +3,7 @@
 
 #include "ClientSession.h"
 #include "GameRoom.h"
+#ifdef LEGACY_CODE
 
 void Server::Contents::GameLobby::Init()
 {
@@ -150,6 +151,7 @@ void Server::Contents::GameLobby::RemoveUser(const uint32 id)
 	if(m_users.find(id) != m_users.end())
 		m_users.erase(id);
 }
+#endif
 
 #ifdef MODERN_CODE
 Server::Contents::GameLobbyTest::GameLobbyTest()
@@ -174,6 +176,12 @@ void Server::Contents::GameLobbyTest::EnterSession(std::shared_ptr<ServerEngine:
 {
 
 }
+
+void Server::Contents::GameLobbyTest::LeaveSession(std::shared_ptr<ServerEngine::Session> session)
+{
+
+}
+
 void Server::Contents::GameLobbyTest::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
 {
 	// TODO: Lobby에 있는 모든 애들에게 Broadcast

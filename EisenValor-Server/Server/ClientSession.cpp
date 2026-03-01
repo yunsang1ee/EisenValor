@@ -210,21 +210,21 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 		}
 		case SESSION_STATE::IN_LOBBY:
 		{
-			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
+			// G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
 			break;
 		}
 		case SESSION_STATE::IN_GAME_ROOM:
 		{
-			auto room = GetGameRoom();
-			if(room)
-				room->ExecAsync(&Server::Contents::GameRoom::LeaveGameRoom, clientSession);
+			// auto room = GetGameRoom();
+			//if(room)
+			//	room->ExecAsync(&Server::Contents::GameRoom::LeaveGameRoom, clientSession);
 			break;
 		}
 		case SESSION_STATE::IN_GAME_WORLD:
 		{
-			auto world = GetGameWorld();
-			if(world)
-				world->ExecAsync(&Server::Contents::GameWorld::LeaveGameWorld, clientSession);
+			auto gameWorld{ clientSession->GetGameWorld() };
+			if(gameWorld)
+				gameWorld->LeaveSession(clientSession);
 			break;
 		}
 		default:

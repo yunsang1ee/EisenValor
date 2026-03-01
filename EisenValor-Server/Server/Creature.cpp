@@ -56,7 +56,6 @@ void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast
 	if(m_statInfo.currentHP == 0  && IsActive()) {
 		SetActive(false);
 		OnDeath();
-
 		auto pb{ ServerPackets::Make_SC_DEAD_PACKET(GetID()) };
 		const auto& world{ GetGameWorld() };
 		if(world)

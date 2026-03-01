@@ -59,6 +59,8 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	// 버퍼 생성
 	if(false == rioSession->Init())
 		return false;
+	
+	rioSession->SetState(SESSION_STATE::ACCEPTED);
 
 	m_connectedSessions.insert(std::make_pair(rioSession->GetID(), rioSession));
 
@@ -80,6 +82,7 @@ void ServerEngine::RIO::RIOCoreTest::ProcessIO()
 
 void ServerEngine::RIO::RIOCoreTest::FlushPacketQueue()
 {
+	// TODO: Send 방식 수정
 	auto iter{ m_connectedSessions.begin() };
 
 	while(iter != m_connectedSessions.end()) {
@@ -98,21 +101,23 @@ void ServerEngine::RIO::RIOCoreTest::FlushPacketQueue()
 
 void ServerEngine::RIO::RIOCoreTest::DequeueCompletion()
 {
-	memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
+	while(true) {
+		memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
 
-	const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
-	if(0 == numResults) return;
-	else if(RIO_CORRUPT_CQ == numResults) {
-		std::cout << "RIO_CORRUPT_CQ" << std::endl;
-		return;
-	}
-	else {
-		for(uint32 i = 0; i < numResults; ++i) {
-			RIO::RIOContext* const context{ reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext) };
-			auto session{ context->GetOwner() };
-			assert(context && session);
-			const uint32 bytesTransferred{ m_ioResults[i].BytesTransferred };
-			session->Dispatch(context, bytesTransferred);
+		const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
+		if(0 == numResults) return;
+		else if(RIO_CORRUPT_CQ == numResults) {
+			std::cout << "RIO_CORRUPT_CQ" << std::endl;
+			return;
+		}
+		else {
+			for(uint32 i = 0; i < numResults; ++i) {
+				RIO::RIOContext* const context{ reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext) };
+				auto session{ context->GetOwner() };
+				assert(context && session);
+				const uint32 bytesTransferred{ m_ioResults[i].BytesTransferred };
+				session->Dispatch(context, bytesTransferred);
+			}
 		}
 	}
 }

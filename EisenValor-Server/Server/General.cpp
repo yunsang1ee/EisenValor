@@ -90,7 +90,7 @@ void Server::Contents::General::OnRespawn()
 	GetComponent<Server::Contents::NavAgent>()->SetDestPos(pos);
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
-	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	world->Broadcast(std::move(pb));
 
 	std::cout << "General NPC Respawn!" << std::endl;
 }

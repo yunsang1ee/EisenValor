@@ -86,17 +86,14 @@ namespace Server {
 
 	public:
 		void SetName(const std::string_view name) { m_name = name.data(); }
-		void SetGameRoom(std::shared_ptr<Server::Contents::GameRoom> gameRoom) { m_gameRoom = gameRoom; }
-		void SetGameWorld(std::shared_ptr<Server::Contents::GameWorld> gameWorld) { m_gameWorld = gameWorld; }
-
 		const std::string& GetName() const { return m_name; }
-		std::shared_ptr<Server::Contents::GameRoom> GetGameRoom() const { return m_gameRoom.lock(); }
-		std::shared_ptr<Server::Contents::GameWorld> GetGameWorld() const { return m_gameWorld.lock(); }
+
+		void SetGameWorld(Server::Contents::GameWorldTest* world) { m_gameWorld = world; }
+		Server::Contents::GameWorldTest* GetGameWorld() const { return m_gameWorld; }
 
 	private:
 		std::string															m_name;			
-		std::weak_ptr<Server::Contents::GameRoom>							m_gameRoom;		
-		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;	
+		Server::Contents::GameWorldTest*									m_gameWorld;
 	};
 
 #endif 

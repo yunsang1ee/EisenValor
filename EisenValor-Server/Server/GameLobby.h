@@ -11,6 +11,7 @@ namespace Server {
 		using ClientSessions = std::unordered_map<uint32, std::shared_ptr<ClientSession>>;
 		using GameRooms = std::unordered_map<uint16, std::shared_ptr<GameRoom>>;
 
+#ifdef LEGACY_CODE
 		class GameLobby : public ServerEngine::TaskQueue {
 		public:
 			void Init();
@@ -38,6 +39,7 @@ namespace Server {
 			uint16			m_roomIDGen{ 1 };
 
 		};
+#endif
 
 #ifdef MODERN_CODE
 		class GameLobbyTest : public ServerEngine::IRoom {
@@ -49,6 +51,7 @@ namespace Server {
 			virtual void Init() override final;
 			virtual void Update(const float dt) override final;
 			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
+			virtual void LeaveSession(std::shared_ptr<ServerEngine::Session> session)  override final;
 			virtual void Broadcast(std::shared_ptr <ServerEngine::PacketBuffer> pb) override final;
 
 		private:

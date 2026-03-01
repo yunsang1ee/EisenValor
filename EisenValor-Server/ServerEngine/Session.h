@@ -104,6 +104,7 @@ namespace ServerEngine {
 		SESSION_STATE GetState() const { return m_state; }
 		bool IsConnected() { return m_connected; }
 		SOCKET GetSocket() const { return m_socket; }
+		void SetID(const uint32 id) { m_id = id; }
 
 	public:
 		uint32 AssembleReceivedData(std::span<const char> buf);

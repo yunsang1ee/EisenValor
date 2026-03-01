@@ -50,6 +50,7 @@ bool Server::ServerManager::Init()
 	}
 
 #ifdef LEGACY_CODE
+	LOG_INFO("LEGACY_CODE");
 	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
 		LOG_ERROR("NetworkManager Init Failed");
 		return false;
@@ -60,6 +61,7 @@ bool Server::ServerManager::Init()
 #endif
 
 #ifdef MODERN_CODE
+	LOG_INFO("MODERN_CODE");
 	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;

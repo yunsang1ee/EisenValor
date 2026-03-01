@@ -180,6 +180,12 @@ struct SC_RESPAWN_GENERAL_PACKETBuilder;
 struct SC_DEAD_PACKET;
 struct SC_DEAD_PACKETBuilder;
 
+struct SC_START_ANIMATION;
+struct SC_START_ANIMATIONBuilder;
+
+struct SC_END_ANIMATION;
+struct SC_END_ANIMATIONBuilder;
+
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
@@ -2691,6 +2697,132 @@ inline ::flatbuffers::Offset<SC_DEAD_PACKET> CreateSC_DEAD_PACKET(
   SC_DEAD_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
   return builder_.Finish();
+}
+
+struct SC_START_ANIMATION FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_START_ANIMATIONBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4,
+    VT_ANIM_NAME = 6
+  };
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  }
+  const ::flatbuffers::String *anim_name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ANIM_NAME);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyOffset(verifier, VT_ANIM_NAME) &&
+           verifier.VerifyString(anim_name()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_START_ANIMATIONBuilder {
+  typedef SC_START_ANIMATION Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_START_ANIMATION::VT_OBJ_ID, obj_id, 0);
+  }
+  void add_anim_name(::flatbuffers::Offset<::flatbuffers::String> anim_name) {
+    fbb_.AddOffset(SC_START_ANIMATION::VT_ANIM_NAME, anim_name);
+  }
+  explicit SC_START_ANIMATIONBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_START_ANIMATION> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_START_ANIMATION>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_START_ANIMATION> CreateSC_START_ANIMATION(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> anim_name = 0) {
+  SC_START_ANIMATIONBuilder builder_(_fbb);
+  builder_.add_anim_name(anim_name);
+  builder_.add_obj_id(obj_id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SC_START_ANIMATION> CreateSC_START_ANIMATIONDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0,
+    const char *anim_name = nullptr) {
+  auto anim_name__ = anim_name ? _fbb.CreateString(anim_name) : 0;
+  return FB_TABLES::CreateSC_START_ANIMATION(
+      _fbb,
+      obj_id,
+      anim_name__);
+}
+
+struct SC_END_ANIMATION FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_END_ANIMATIONBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4,
+    VT_ANIM_NAME = 6
+  };
+  uint32_t obj_id() const {
+    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  }
+  const ::flatbuffers::String *anim_name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ANIM_NAME);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyOffset(verifier, VT_ANIM_NAME) &&
+           verifier.VerifyString(anim_name()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_END_ANIMATIONBuilder {
+  typedef SC_END_ANIMATION Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint32_t obj_id) {
+    fbb_.AddElement<uint32_t>(SC_END_ANIMATION::VT_OBJ_ID, obj_id, 0);
+  }
+  void add_anim_name(::flatbuffers::Offset<::flatbuffers::String> anim_name) {
+    fbb_.AddOffset(SC_END_ANIMATION::VT_ANIM_NAME, anim_name);
+  }
+  explicit SC_END_ANIMATIONBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_END_ANIMATION> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_END_ANIMATION>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATION(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> anim_name = 0) {
+  SC_END_ANIMATIONBuilder builder_(_fbb);
+  builder_.add_anim_name(anim_name);
+  builder_.add_obj_id(obj_id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATIONDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t obj_id = 0,
+    const char *anim_name = nullptr) {
+  auto anim_name__ = anim_name ? _fbb.CreateString(anim_name) : 0;
+  return FB_TABLES::CreateSC_END_ANIMATION(
+      _fbb,
+      obj_id,
+      anim_name__);
 }
 
 struct CS_ENTER_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

@@ -5,9 +5,9 @@
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
 #include "Session.h"
+#include "IOCoreTest.h"
 
 #ifdef  MODERN_CODE
-
 ServerEngine::AcceptThread::AcceptThread()
 	: m_listenSocket{ INVALID_SOCKET }, m_serverAddress{}
 {
@@ -35,6 +35,9 @@ bool ServerEngine::AcceptThread::Init(const SessionFactoryFunc func, const uint1
 	m_serverAddress.sin_port = htons(port);
 	m_serverAddress.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
+	constexpr int opt{ 1 };
+	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
+
 	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
 		LOG_WSA_GET_LAST_ERROR();
 		return false;
@@ -44,9 +47,6 @@ bool ServerEngine::AcceptThread::Init(const SessionFactoryFunc func, const uint1
 		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
-
-	constexpr int opt{ 1 };
-	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
 
 	return true;
 }
@@ -74,6 +74,10 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 
 		auto session = m_func();
 
+		static uint32 idGen{ 1 };
+		session->SetID(idGen);
+		idGen++;
+
 		if(false == session->AcceptCompleted(clientSocket, clientAddr))
 			continue;
 
@@ -84,8 +88,16 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 	
 		// 월드로
 		auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
-		if(worker)
-			worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, (session));
+		/*auto ioCore{ worker->GetIoCore() };
+		if(ioCore) {
+			if(false == ioCore->Register(session))
+				continue;
+		}*/
+
+		if(worker) {
+			worker->PushJob(&ServerEngine::WorkerThread::Register, (session));
+			worker->PushJobAfter(1000ms, &ServerEngine::WorkerThread::EnterWorld, (session));
+		}
 	}
 
 	std::cout << "Accept Thread Run Finish!" << std::endl;

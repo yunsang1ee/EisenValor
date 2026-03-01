@@ -85,8 +85,8 @@ ServerEngine::Session::Session()
 	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
 	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
 {
-	static std::atomic_uint32_t idGen{ 1 };
-	m_id = idGen++;
+	//static std::atomic_uint32_t idGen{ 1 };
+	//m_id = idGen++;
 }
 
 ServerEngine::Session::~Session()
@@ -635,6 +635,7 @@ ServerEngine::RIO::RIOSession::~RIOSession()
 }
 
 bool ServerEngine::RIO::RIOSession::Init()
+
 {
 	// RIO BUFFER 등록
 	const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
@@ -660,7 +661,8 @@ void ServerEngine::RIO::RIOSession::Dispatch(RIOContext* const context, const ui
 		{
 			ProcessSend(bytesTransferred);
 			context->SetOwner(nullptr);
-			ObjectPool<RIOContext>::Push(static_cast<RIOContext*>(context));
+			ObjectPool<RIOSendContext>::Push(static_cast<RIOSendContext*>(context));
+			m_outstandingSendCount--;
 			break;
 		}
 		default:
@@ -674,8 +676,6 @@ bool ServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const 
 	m_clientAddr = addr;
 
 	m_connected = true;
-
-	m_state = SESSION_STATE::ACCEPTED;
 
 	OnConnected();
 

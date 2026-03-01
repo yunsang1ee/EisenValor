@@ -9,6 +9,7 @@
 #include "Participant.h"
 
 #include "GameLobby.h"
+#ifdef LEGACY_CODE
 
 Server::Contents::GameRoom::GameRoom(const uint16 roomID)
 {
@@ -304,6 +305,7 @@ void Server::Contents::GameRoom::Handle_CS_ENTER_GAME_WORLD(const std::shared_pt
 	}
 }
 #endif // DEVELOP
+#endif
 
 #ifdef MODERN_CODE
 Server::Contents::GameRoomTest::GameRoomTest()
@@ -324,6 +326,10 @@ void Server::Contents::GameRoomTest::Update(const float dt)
 }
 
 void Server::Contents::GameRoomTest::EnterSession(std::shared_ptr<ServerEngine::Session> session)
+{
+}
+
+void Server::Contents::GameRoomTest::LeaveSession(std::shared_ptr<ServerEngine::Session> session)
 {
 }
 
