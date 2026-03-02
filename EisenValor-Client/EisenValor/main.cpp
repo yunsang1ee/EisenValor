@@ -12,6 +12,7 @@
 #include <DxSwapChain.h>
 
 #include "Scene/SampleScene.h"
+#include "RenderPass/SkinningPass.h"
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
 #include "RenderPass/UIRenderPass.h"
@@ -189,6 +190,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			auto width = swapChain->GetWidth();
 			auto height = swapChain->GetHeight();
 
+			// Skinning Pass 생성
+			auto  skinningPass = std::make_unique<SkinningPass>();
+			renderer.AddRenderPass("Skinning", std::move(skinningPass), RenderPassPriority::High);
+
 			// DXR Pass 생성
 			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
 			auto* outputTexture = dxrPass->GetOutputTexture();
@@ -200,21 +205,21 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 			// UI Pass 생성
 			auto uiPass = std::make_unique<UIRenderPass>();
-			renderer.AddRenderPass("UI", std::move(uiPass));
+			renderer.AddRenderPass("UI", std::move(uiPass), RenderPassPriority::UI);
 		}
 
-	// 에셋 레지스트리 로드
-	GLOBAL(ResourceGlobal).LoadRegistry("Resource\\AssetRegistry.evreg");
-	GLOBAL(UIGlobal).Initialize();
+		// 에셋 레지스트리 로드
+		GLOBAL(ResourceGlobal).LoadRegistry("Resource\\AssetRegistry.evreg");
+		GLOBAL(UIGlobal).Initialize();
 
-	// FSM StatePool 초기화
-	StatePool::Initialize();
+		// FSM StatePool 초기화
+		StatePool::Initialize();
 
-	// Scene 등록
-	{
-		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
-		GLOBAL(SceneGlobal).LoadScene("SampleScene");
-	}
+		// Scene 등록
+		{
+			GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
+			GLOBAL(SceneGlobal).LoadScene("SampleScene");
+		}
 
 		while (not quit)
 		{

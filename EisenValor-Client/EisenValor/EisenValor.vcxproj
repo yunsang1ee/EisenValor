@@ -215,6 +215,7 @@ exit /b 0</Command>
     <ClInclude Include="RaytracingCommon.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\SkinningPass.h" />
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\SampleScene.h" />
@@ -240,6 +241,7 @@ exit /b 0</Command>
     <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\SampleScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
@@ -270,8 +272,6 @@ exit /b 0</Command>
   <ItemGroup>
     <None Include="..\.clang-format" />
     <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
-    <None Include="Resource\Shader\PixelShader.hlsl" />
-    <None Include="Resource\Shader\VertexShader.hlsl" />
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
     <None Include="Resource\Shader\RaytracingCommon.hlsli" />
@@ -286,6 +286,9 @@ exit /b 0</Command>
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

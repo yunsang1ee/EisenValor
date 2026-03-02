@@ -32,8 +32,14 @@ private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
 
-	void CollectRenderData(Scene* scene);
-	void BuildAccelerationStructures(DxFrameResource* frame, Scene* scene);
+	void PrepareRenderData(DxFrameResource* frame, Scene* scene);
+
+	void CollectStaticMeshData(
+		Scene* scene, ID3D12GraphicsCommandList4* cmdList, std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances
+	);
+	void CollectSkinnedMeshData(
+		Scene* scene, ID3D12GraphicsCommandList4* cmdList, std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances
+	);
 
 private:
 	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
@@ -46,6 +52,7 @@ private:
 
 	DxTexture m_raytracingOutput;
 
+	std::unordered_map<EvAsset::Guid, uint32_t, EvAsset::GuidHash>				  m_materialToIndex;
 	std::unordered_map<EvAsset::Guid, std::unique_ptr<DxBLAS>, EvAsset::GuidHash> m_blasCache;
 
 	RenderDataSync<InstanceData>	m_instanceBuffer;
@@ -55,8 +62,9 @@ private:
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;
 
+	ComPtr<ID3D12Device5> device5;
+
 	bool m_initialized = false;
-	bool m_needsRebuild = false;
 	bool m_usePathTracing = false;
 	bool m_useLiteRT = false;
 };

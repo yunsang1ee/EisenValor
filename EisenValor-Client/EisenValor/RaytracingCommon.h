@@ -8,14 +8,16 @@
 #ifdef __cplusplus
 #include <DirectXMath.h>
 #include <cstdint>
-#define RAY_FLOAT3 DirectX::XMFLOAT3
 #define RAY_FLOAT4 DirectX::XMFLOAT4
+#define RAY_FLOAT3 DirectX::XMFLOAT3
+#define RAY_FLOAT2 DirectX::XMFLOAT2
 #define RAY_MATRIX DirectX::XMFLOAT4X4
 #define RAY_UINT uint32_t
 
 #else
-#define RAY_FLOAT3 float3
 #define RAY_FLOAT4 float4
+#define RAY_FLOAT3 float3
+#define RAY_FLOAT2 float2
 #define RAY_MATRIX float4x4
 #define RAY_UINT uint
 #endif
@@ -45,6 +47,16 @@ struct Vertex
 	float2 uv;
 };
 #endif
+
+struct SkinnedVertex
+{
+	RAY_FLOAT3 position;
+	RAY_FLOAT3 normal;
+	RAY_FLOAT4 tangent;
+	RAY_FLOAT2 uv;
+	RAY_UINT   blendIndices;
+	RAY_FLOAT4 blendWeights;
+};
 
 struct GeoInfo
 {
@@ -76,7 +88,7 @@ struct MaterialGPUData
 	RAY_UINT albedoTextureIdx;
 	RAY_UINT normalTextureIdx;
 	RAY_UINT ormTextureIdx;
-	RAY_UINT pad0;
+	RAY_UINT emissiveTextureIdx;
 };
 
 #ifdef __cplusplus

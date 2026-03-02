@@ -11,7 +11,8 @@ using namespace DirectX;
 
 void AnimationComponent::OnUpdate(float dt)
 {
-	if (!m_isPlaying || !m_currentAnimation) return;
+	if (!m_isPlaying || !m_currentAnimation)
+		return;
 
 	m_currentTime += dt;
 	float duration = m_currentAnimation->GetDuration();
@@ -59,13 +60,19 @@ void AnimationComponent::Resume()
 
 void AnimationComponent::UpdateBoneMatrices()
 {
-	if (!m_currentAnimation) return;
+	if (!m_currentAnimation)
+	{
+		return;
+	}
 
 	auto* skinnedMesh = GetGameObject()->GetComponent<SkinnedMeshComponent>();
-	if (!skinnedMesh || !skinnedMesh->IsValid()) return;
+	if (!skinnedMesh || !skinnedMesh->IsValid())
+	{
+		return;
+	}
 
-	auto meshRes = skinnedMesh->GetResource();
-	const auto& bones = meshRes->GetBones();
+	auto		 meshRes = skinnedMesh->GetSkinnedMeshResource();
+	const auto&	 bones = meshRes->GetBones();
 	const size_t boneCount = bones.size();
 
 	if (m_localMatrices.size() != boneCount)
@@ -75,12 +82,12 @@ void AnimationComponent::UpdateBoneMatrices()
 		m_finalPalette.resize(boneCount);
 	}
 
-	float frameRate = m_currentAnimation->GetFrameRate();
+	float	 frameRate = m_currentAnimation->GetFrameRate();
 	uint32_t totalFrames = m_currentAnimation->GetTotalFrames();
-	float framePos = m_currentTime * frameRate;
+	float	 framePos = m_currentTime * frameRate;
 	uint32_t frameIdx0 = static_cast<uint32_t>(std::floor(framePos)) % totalFrames;
 	uint32_t frameIdx1 = (frameIdx0 + 1) % totalFrames;
-	float alpha = framePos - std::floor(framePos);
+	float	 alpha = framePos - std::floor(framePos);
 
 	const auto& tracks = m_currentAnimation->GetTracks();
 
@@ -105,8 +112,14 @@ void AnimationComponent::UpdateBoneMatrices()
 					}
 					else
 					{
-						XMVECTOR p0 = XMVectorSet(track.Positions[frameIdx0 * 3 + 0], track.Positions[frameIdx0 * 3 + 1], track.Positions[frameIdx0 * 3 + 2], 1.0f);
-						XMVECTOR p1 = XMVectorSet(track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1], track.Positions[frameIdx1 * 3 + 2], 1.0f);
+						XMVECTOR p0 = XMVectorSet(
+							track.Positions[frameIdx0 * 3 + 0], track.Positions[frameIdx0 * 3 + 1],
+							track.Positions[frameIdx0 * 3 + 2], 1.0f
+						);
+						XMVECTOR p1 = XMVectorSet(
+							track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1],
+							track.Positions[frameIdx1 * 3 + 2], 1.0f
+						);
 						pos = XMVectorLerp(p0, p1, alpha);
 					}
 				}
@@ -116,12 +129,19 @@ void AnimationComponent::UpdateBoneMatrices()
 				{
 					if (track.Flags & EvAsset::IsConstRot)
 					{
-						rot = XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
+						rot =
+							XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
 					}
 					else
 					{
-						XMVECTOR r0 = XMVectorSet(track.Rotations[frameIdx0 * 4 + 0], track.Rotations[frameIdx0 * 4 + 1], track.Rotations[frameIdx0 * 4 + 2], track.Rotations[frameIdx0 * 4 + 3]);
-						XMVECTOR r1 = XMVectorSet(track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1], track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]);
+						XMVECTOR r0 = XMVectorSet(
+							track.Rotations[frameIdx0 * 4 + 0], track.Rotations[frameIdx0 * 4 + 1],
+							track.Rotations[frameIdx0 * 4 + 2], track.Rotations[frameIdx0 * 4 + 3]
+						);
+						XMVECTOR r1 = XMVectorSet(
+							track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1],
+							track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]
+						);
 						rot = XMQuaternionSlerp(r0, r1, alpha);
 					}
 				}
@@ -135,8 +155,14 @@ void AnimationComponent::UpdateBoneMatrices()
 					}
 					else
 					{
-						XMVECTOR s0 = XMVectorSet(track.Scales[frameIdx0 * 3 + 0], track.Scales[frameIdx0 * 3 + 1], track.Scales[frameIdx0 * 3 + 2], 0.0f);
-						XMVECTOR s1 = XMVectorSet(track.Scales[frameIdx1 * 3 + 0], track.Scales[frameIdx1 * 3 + 1], track.Scales[frameIdx1 * 3 + 2], 0.0f);
+						XMVECTOR s0 = XMVectorSet(
+							track.Scales[frameIdx0 * 3 + 0], track.Scales[frameIdx0 * 3 + 1],
+							track.Scales[frameIdx0 * 3 + 2], 0.0f
+						);
+						XMVECTOR s1 = XMVectorSet(
+							track.Scales[frameIdx1 * 3 + 0], track.Scales[frameIdx1 * 3 + 1],
+							track.Scales[frameIdx1 * 3 + 2], 0.0f
+						);
 						scale = XMVectorLerp(s0, s1, alpha);
 					}
 				}
@@ -153,7 +179,7 @@ void AnimationComponent::UpdateBoneMatrices()
 	for (size_t i = 0; i < boneCount; ++i)
 	{
 		XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[i]);
-		int32_t parentIdx = bones[i].parentIndex;
+		int32_t	 parentIdx = bones[i].parentIndex;
 
 		XMMATRIX global;
 		if (parentIdx == -1)

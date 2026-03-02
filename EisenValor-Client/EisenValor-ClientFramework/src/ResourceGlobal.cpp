@@ -171,6 +171,19 @@ void ResourceGlobal::ProcessPendingLoads()
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
 				continue;
 
+			// --- INDEX VALIDATION ---
+			uint32_t maxV = (uint32_t)data.vertices.size();
+			for (uint32_t idx : data.indices)
+			{
+				if (idx >= maxV)
+				{
+					DEBUG_LOG_FMT(
+						"[CRITICAL] SkinnedMesh '{}' has BAD INDEX: {} (Max: {})\n", data.name, idx, maxV - 1
+					);
+					break;
+				}
+			}
+
 			auto		 skinnedRes = std::static_pointer_cast<SkinnedMeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::SkinnedVertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
@@ -323,9 +336,8 @@ std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshRes
 	res->SetName(data.name);
 	res->SetMetadata(
 		data.boundsInfo, std::move(data.subMeshes), static_cast<uint32_t>(data.vertices.size()),
-		static_cast<uint32_t>(data.indices.size()), data.indexFormat,
-		std::move(data.bones), std::move(data.offsetMatrices),
-		std::move(data.materialGuids)
+		static_cast<uint32_t>(data.indices.size()), data.indexFormat, std::move(data.bones),
+		std::move(data.offsetMatrices), std::move(data.materialGuids)
 	);
 
 	m_pendingLoads.push({res, data.assetGuid, path, SkinnedMeshResource::StaticRuntimeTypeID()});

@@ -118,6 +118,9 @@
     <ClInclude Include="RaytracingCommon.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\SkinningPass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -174,6 +177,9 @@
     <ClCompile Include="Component\FSM\StatePool.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\SkinningPass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc">
@@ -208,12 +214,6 @@
     <None Include="Resource\Shader\UIPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Resource\Shader\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\VertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Resource\Shader\RaytracingLibrary.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -224,5 +224,10 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\.clang-format" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
