@@ -290,6 +290,9 @@ table CS_ENTER_GAME_WORLD_PACKET {
 	room_id: ushort;
 }
 
+table CS_GO_WORLD_PACKET{
+}
+
 // ====================================================
 //					  GAME_START
 // ====================================================

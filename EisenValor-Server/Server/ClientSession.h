@@ -88,11 +88,15 @@ namespace Server {
 		void SetName(const std::string_view name) { m_name = name.data(); }
 		const std::string& GetName() const { return m_name; }
 
+		void SetGameLobby(Server::Contents::GameLobbyTest* const lobby) { m_gameLobby = lobby; }
+		Server::Contents::GameLobbyTest* GetGameLobby() const { return m_gameLobby; }
+
 		void SetGameWorld(Server::Contents::GameWorldTest* world) { m_gameWorld = world; }
 		Server::Contents::GameWorldTest* GetGameWorld() const { return m_gameWorld; }
 
 	private:
 		std::string															m_name;			
+		Server::Contents::GameLobbyTest*									m_gameLobby;
 		Server::Contents::GameWorldTest*									m_gameWorld;
 	};
 

@@ -1,8 +1,8 @@
 #pragma once
 #pragma warning(disable: 4819)
 
-#define LEGACY_CODE
-// #define MODERN_CODE
+// #define LEGACY_CODE
+#define MODERN_CODE
 
 #include "ServerEngineDefines.h"
 

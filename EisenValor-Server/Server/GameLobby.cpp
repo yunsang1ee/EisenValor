@@ -3,6 +3,10 @@
 
 #include "ClientSession.h"
 #include "GameRoom.h"
+
+#include "ServerEngineCore.h"
+#include "LobbyThread.h"
+#include "WorkerThread.h"
 #ifdef LEGACY_CODE
 
 void Server::Contents::GameLobby::Init()
@@ -174,12 +178,42 @@ void Server::Contents::GameLobbyTest::Update(const float dt)
 
 void Server::Contents::GameLobbyTest::EnterSession(std::shared_ptr<ServerEngine::Session> session)
 {
+	auto clientSession = std::static_pointer_cast<ClientSession>(session);
+	
+	clientSession->SetGameLobby(this);
 
+	const uint32 id{ clientSession->GetID() };
+
+	if(false == m_lobbySessions.contains(id))
+		m_lobbySessions.insert(std::make_pair(id, clientSession));
+
+	clientSession->SetState(SESSION_STATE::IN_GAME_LOBBY);
+	std::cout << std::format("ID: {}, EnterSession In Lobby!", id) << std::endl;
+
+	auto worker{ MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker() };
+	if(worker) {
+		auto lobbyThread{ MANAGER(ServerEngine::ServerEngineCore)->GetLobbyThread() };
+		
+		if(lobbyThread)
+			lobbyThread->Deregister(clientSession);
+		
+		if(m_lobbySessions.contains(id))
+			m_lobbySessions.erase(id);
+
+		worker->PushJob(&ServerEngine::WorkerThread::Register, session);
+		worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, session);
+	}
 }
 
 void Server::Contents::GameLobbyTest::LeaveSession(std::shared_ptr<ServerEngine::Session> session)
 {
+	auto clientSession = std::static_pointer_cast<ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
 
+	if(m_lobbySessions.contains(id))
+		m_lobbySessions.erase(id);
+
+	std::cout << std::format("ID: {}, LeaveSession In Lobby!", id) << std::endl;
 }
 
 void Server::Contents::GameLobbyTest::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)

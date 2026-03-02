@@ -189,6 +189,9 @@ struct SC_END_ANIMATIONBuilder;
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
+struct CS_GO_WORLD_PACKET;
+struct CS_GO_WORLD_PACKETBuilder;
+
 struct CS_GAME_START_PACKET;
 struct CS_GAME_START_PACKETBuilder;
 
@@ -2863,6 +2866,35 @@ inline ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> CreateCS_ENTER_GAME_WOR
     uint16_t room_id = 0) {
   CS_ENTER_GAME_WORLD_PACKETBuilder builder_(_fbb);
   builder_.add_room_id(room_id);
+  return builder_.Finish();
+}
+
+struct CS_GO_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GO_WORLD_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_GO_WORLD_PACKETBuilder {
+  typedef CS_GO_WORLD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_GO_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_GO_WORLD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_GO_WORLD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_GO_WORLD_PACKET> CreateCS_GO_WORLD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_GO_WORLD_PACKETBuilder builder_(_fbb);
   return builder_.Finish();
 }
 

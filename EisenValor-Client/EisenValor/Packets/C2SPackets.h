@@ -50,5 +50,6 @@ std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
 //		테스트
 // =================
 std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept;
+std::shared_ptr<PacketBuffer> Make_CS_GO_WORLD_PACKET() noexcept;
 } // namespace C2S
 } // namespace NetBridge

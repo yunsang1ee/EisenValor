@@ -176,6 +176,7 @@ void Server::RIOClientSession::SendPing()
 #endif 
 #ifdef MODERN_CODE
 Server::RIOClientSession::RIOClientSession()
+	:m_gameWorld{nullptr}
 {
 
 }
@@ -208,9 +209,10 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 			SetState(SESSION_STATE::FREE);
 			break;
 		}
-		case SESSION_STATE::IN_LOBBY:
+		case SESSION_STATE::IN_GAME_LOBBY:
 		{
-			// G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
+			if(m_gameLobby)
+				m_gameLobby->LeaveSession(clientSession);
 			break;
 		}
 		case SESSION_STATE::IN_GAME_ROOM:
@@ -222,9 +224,8 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 		}
 		case SESSION_STATE::IN_GAME_WORLD:
 		{
-			auto gameWorld{ clientSession->GetGameWorld() };
-			if(gameWorld)
-				gameWorld->LeaveSession(clientSession);
+			if(m_gameWorld)
+				m_gameWorld->LeaveSession(clientSession);
 			break;
 		}
 		default:

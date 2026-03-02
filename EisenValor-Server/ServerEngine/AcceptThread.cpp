@@ -55,7 +55,7 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 {
 	while(false == st.stop_requested()) {
 		sockaddr_in clientAddr;
-		int addrLen = sizeof(clientAddr);
+		int addrLen{ sizeof(clientAddr) };
 	RETRY:
 		SOCKET clientSocket{ accept(m_listenSocket, (SOCKADDR*)&clientAddr, &addrLen) };
 		if(INVALID_SOCKET == clientSocket) {
@@ -81,22 +81,27 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 		if(false == session->AcceptCompleted(clientSocket, clientAddr))
 			continue;
 
+		// Accept직후 로비쓰레드로 I/O, 로그인 성공 시 로비로 입장
+
+		// 클라이언트
+		// - 로그인 씬
+
 		// 로비로
 		//auto lobby = MANAGER(ServerEngineCore)->GetLobbyThread();
-		//if(lobby)
-		//	lobby->PushJob(&ServerEngine::LobbyThread::EnterLobby, session);
-	
+		//if(lobby) {
+		//	lobby->PushJob(&ServerEngine::LobbyThread::Register, (session));
+		//	// lobby->PushJob(& ServerEngine::LobbyThread::EnterLobby, session);
+		//}
 		// 월드로
-		auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
-		/*auto ioCore{ worker->GetIoCore() };
-		if(ioCore) {
-			if(false == ioCore->Register(session))
-				continue;
-		}*/
+		///*auto ioCore{ worker->GetIoCore() };
+		//if(ioCore) {
+		//	if(false == ioCore->Register(session))
+		//		continue;
+		//}*/
 
+		auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
 		if(worker) {
 			worker->PushJob(&ServerEngine::WorkerThread::Register, (session));
-			worker->PushJobAfter(1000ms, &ServerEngine::WorkerThread::EnterWorld, (session));
 		}
 	}
 

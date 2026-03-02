@@ -248,7 +248,8 @@ namespace ServerEngine {
 			RIORecvBuffer												m_recvBuffer;
 			RIOSendBuffer												m_sendBuffer;
 			RIORecvContext												m_recvContext;
-			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
+			std::queue<std::shared_ptr<PacketBuffer>>					m_packetBufferQueue;
+			// tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>					m_packetBufferQueue;
 			uint32														m_deferCount;
 			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
 			uint32														m_outstandingSendCount;

@@ -9,7 +9,14 @@ namespace Server {
 		class GameRoom;
 		class GameRoomTest;
 		using ClientSessions = std::unordered_map<uint32, std::shared_ptr<ClientSession>>;
+
+#ifdef LEGACY_CODE
 		using GameRooms = std::unordered_map<uint16, std::shared_ptr<GameRoom>>;
+#endif
+
+#ifdef MODERN_CODE
+		using GameRooms = std::unordered_map<uint16, std::unique_ptr<GameRoomTest>>;
+#endif
 
 #ifdef LEGACY_CODE
 		class GameLobby : public ServerEngine::TaskQueue {
@@ -55,7 +62,8 @@ namespace Server {
 			virtual void Broadcast(std::shared_ptr <ServerEngine::PacketBuffer> pb) override final;
 
 		private:
-			std::unordered_map<uint32, std::unique_ptr<GameRoomTest>> m_rooms;
+			ClientSessions	m_lobbySessions;
+			GameRooms		m_rooms;
 
 		};
 #endif

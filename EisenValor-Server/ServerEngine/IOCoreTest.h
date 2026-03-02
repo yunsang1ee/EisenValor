@@ -4,6 +4,8 @@ namespace ServerEngine {
 	class SessionTest;
 
 	class IOCoreTest {
+	protected:
+
 	public:
 		IOCoreTest();
 		virtual ~IOCoreTest();

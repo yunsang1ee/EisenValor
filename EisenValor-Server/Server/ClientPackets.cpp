@@ -13,6 +13,11 @@
 
 #include "SoldierStates.h"
 
+#include "ServerEngineCore.h"
+#include "WorkerThread.h"
+#include "LobbyThread.h"
+
+
 namespace ClientPackets {
 	bool Handle_INVALID_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
 	{
@@ -91,6 +96,18 @@ namespace ClientPackets {
 			auto pb = ServerPackets::Make_SC_LOGIN_SUCCESS_PACKET(id, nickName);
 			clientSession->Send(std::move(pb));
 			LOG_INFO("Success Login!, Session ID = {}, NickName = {}", id, nickName.data());
+
+			// TODO: Login 성공 시, Lobby로 입장!
+			// -> SC_LOGIN 보내줄 필요 X 
+			// -> 실패했을때만 보내주면 됨
+
+			//auto lobby = MANAGER(ServerEngine::ServerEngineCore)->GetLobbyThread();
+			//if(lobby)
+			//	lobby->EnterLobby(session);
+
+			auto worker = MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker();
+			if(worker)
+				worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, clientSession);
 		}
 		else {
 			auto pb = ServerPackets::Make_SC_LOGIN_FAIL_PACKET("LOGIN_FAIL");
@@ -253,7 +270,7 @@ namespace ClientPackets {
 #pragma region WORLD_PACKETS
 	bool Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt)
 	{
-		std::cout << "Hadle_CS_MOVE_PACKET" << std::endl;
+		// std::cout << "Hadle_CS_MOVE_PACKET" << std::endl;
 #ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
@@ -291,7 +308,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_GENERAL_ATTACK_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GENERAL_ATTACK_PACKET& recvPkt)
 	{
-		std::cout << "Handle_CS_GENERAL_ATTACK_PACKET" << std::endl;
+		// std::cout << "Handle_CS_GENERAL_ATTACK_PACKET" << std::endl;
 #ifdef LEGACY_CODE
 
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
@@ -316,7 +333,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_CHANGE_GENERAL_STANCE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET& recvPkt)
 	{
-		std::cout << "Handle_CS_CHANGE_GENERAL_STANCE_PACKET" << std::endl;
+		// std::cout << "Handle_CS_CHANGE_GENERAL_STANCE_PACKET" << std::endl;
 #ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
@@ -340,7 +357,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt)
 	{
-		std::cout << "Handle_CS_PLAYER_FAKE_PACKET" << std::endl;
+		// std::cout << "Handle_CS_PLAYER_FAKE_PACKET" << std::endl;
 #ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
@@ -364,7 +381,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt)
 	{
-		std::cout << "Handle_CS_CHANGE_CAMERA_TARGET_PACKET" << std::endl;
+		// std::cout << "Handle_CS_CHANGE_CAMERA_TARGET_PACKET" << std::endl;
 #ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
@@ -388,7 +405,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt)
 	{
-		std::cout << "Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET" << std::endl;
+		// std::cout << "Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET" << std::endl;
 #ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 		const uint32 id{ clientSession->GetID() };
@@ -418,7 +435,7 @@ namespace ClientPackets {
 #ifndef ENABLE_LOBBY
 	bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt)
 	{
-		std::cout << "Handle_CS_ENTER_GAME_WORLD_PACKET" << std::endl;
+		// std::cout << "Handle_CS_ENTER_GAME_WORLD_PACKET" << std::endl;
 
 #ifdef LEGACY_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
@@ -431,6 +448,20 @@ namespace ClientPackets {
 		return true;
 	}
 #endif // DEVELOP
+
+	bool Handle_CS_GO_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GO_WORLD_PACKET& recvPkt)
+	{
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+		std::cout << "Handle_CS_GO_WORLD_PACKET" << std::endl;
+
+		auto worker{ MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker() };
+		if(worker) {
+			worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, clientSession);
+		}
+
+		return true;
+	}
 #pragma endregion
 
 }

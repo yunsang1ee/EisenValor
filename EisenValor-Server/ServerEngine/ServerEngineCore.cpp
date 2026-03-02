@@ -65,10 +65,13 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, 
 
 	// LobbyThread 초기화
 	// -> RIO인 경우 LobbyThread I/O도 RIO로...
-	m_lobbyThread = std::make_unique<ServerEngine::LobbyThread>(lobbyFunc);
+	{
+		auto rioCore{ std::make_unique<RIO::RIOCoreTest>() };
+		m_lobbyThread = std::make_unique<ServerEngine::LobbyThread>(lobbyFunc, std::move(rioCore));
 
-	if(false == m_lobbyThread->Init())
-		return false;
+		if(false == m_lobbyThread->Init())
+			return false;
+	}
 #endif
 	
 	// acceptor 초기화

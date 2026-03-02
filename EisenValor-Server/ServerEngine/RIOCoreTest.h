@@ -6,7 +6,6 @@ namespace ServerEngine {
 	namespace RIO {
 		class RIOSession;
 #ifdef MODERN_CODE
-		// WorkerThread마다 소유
 		class RIOCoreTest : public IOCoreTest {
 		public:
 			RIOCoreTest();
@@ -29,8 +28,8 @@ namespace ServerEngine {
 		private:
 			RIO_CQ															m_cq;
 			std::vector<RIORESULT>											m_ioResults;
-			std::unordered_map<uint32, std::shared_ptr<RIOSession>>			m_connectedSessions;
 			RIO_EXTENSION_FUNCTION_TABLE									m_rioExtfuncTable;
+			std::unordered_map<uint32, std::shared_ptr<RIOSession>>			m_connectedSessions;
 
 		};
 #endif

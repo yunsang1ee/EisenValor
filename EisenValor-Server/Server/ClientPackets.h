@@ -61,5 +61,6 @@ namespace ClientPackets {
 #ifndef ENABLE_LOBBY
 	bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt);
 #endif // DEVELOP
+	bool Handle_CS_GO_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GO_WORLD_PACKET& recvPkt);
 #pragma endregion
 }

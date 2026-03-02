@@ -149,5 +149,8 @@ enum class PACKET_TYPE : uint16
 	TEST_SC_ENTER_GAME_WORLD_PACKET = 20001,
 #pragma endregion
 
+	CS_GO_WORLD_PACKET = 20010,
+
+
 	END = 65535,
 };

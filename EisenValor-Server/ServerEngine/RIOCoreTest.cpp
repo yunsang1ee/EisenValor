@@ -48,10 +48,18 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	// RQ 생성
 	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RECV_RQ_SIZE_PER_SESSION;
 	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION;
+
+	// 2. 함수 테이블 유효성 검사 (함수 포인터가 깨졌는지 확인)
+	if(m_rioExtfuncTable.RIOCreateRequestQueue == nullptr) {
+		LOG_ERROR("RIO Function Table is NULL in this Worker!");
+		return false;
+	}
 	
 	const RIO_RQ rq = m_rioExtfuncTable.RIOCreateRequestQueue(session->GetSocket(), MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, m_cq, m_cq, 0);
-	if(rq == RIO_INVALID_RQ)
+	if(rq == RIO_INVALID_RQ) {
+		LOG_WSA_GET_LAST_ERROR();
 		return false;
+	}
 
 	rioSession->SetRQ(rq);
 	rioSession->SetTable(m_rioExtfuncTable);
@@ -62,16 +70,34 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	
 	rioSession->SetState(SESSION_STATE::ACCEPTED);
 
-	m_connectedSessions.insert(std::make_pair(rioSession->GetID(), rioSession));
+	const uint32 id{ rioSession->GetID() };
+
+	if(false == m_connectedSessions.contains(id))
+		m_connectedSessions.insert(std::make_pair(rioSession->GetID(), rioSession));
+	else
+		return false;
 
 	rioSession->PostRecv();
-
 	return true;
 }
 
 bool ServerEngine::RIO::RIOCoreTest::Deregister(std::shared_ptr<Session> session)
 {
-	return false;
+	if(!session) 
+		return false;
+	
+	auto rioSession = std::static_pointer_cast<RIOSession>(session);
+
+	rioSession->SetState(SESSION_STATE::TRANSFERRING);
+
+	const uint32 id{ rioSession->GetID() };
+
+	if(m_connectedSessions.contains(id))
+		m_connectedSessions.erase(id);
+
+	DequeueCompletion();
+
+	return true;
 }
 
 void ServerEngine::RIO::RIOCoreTest::ProcessIO()
@@ -120,6 +146,25 @@ void ServerEngine::RIO::RIOCoreTest::DequeueCompletion()
 			}
 		}
 	}
+
+	//while(true) {
+	//	memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
+	//	const uint32 numResults = m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size()));
+	//	if(0 == numResults) return;
+
+	//	for(uint32 i = 0; i < numResults; ++i) {
+	//		RIO::RIOContext* const context = reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext);
+	//		auto session = std::static_pointer_cast<RIOSession>(context->GetOwner());
+	//		const uint32 bytes = m_ioResults[i].BytesTransferred;
+
+	//		if(session->GetCurrentCore() != this) {
+	//			session->ReleaseContextOnly(context, bytes);
+	//			continue;
+	//		}
+
+	//		session->Dispatch(context, bytes);
+	//	}
+	//}
 }
 
 #endif

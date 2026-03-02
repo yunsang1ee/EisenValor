@@ -143,7 +143,7 @@ void ServerEngine::Session::CheckPing()
 
 void ServerEngine::Session::Handle_CS_PONG()
 {
-	std::cout << "Pong!" << std::endl;
+	// std::cout << "Pong!" << std::endl;
 	m_lastPong = std::chrono::high_resolution_clock::now();
 }
 #endif
@@ -619,6 +619,7 @@ void ServerEngine::RIO::RIOSession::Clean()
 	m_state = SESSION_STATE::FREE;
 	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
 }
+
 #endif
 #endif
 
@@ -635,14 +636,13 @@ ServerEngine::RIO::RIOSession::~RIOSession()
 }
 
 bool ServerEngine::RIO::RIOSession::Init()
-
 {
 	// RIO BUFFER 등록
 	const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
 
 	m_recvBuffer.SetTable(m_table);
 	m_sendBuffer.SetTable(m_table);
-	
+
 	m_recvBuffer.Init(bufferSize);
 	m_sendBuffer.Init(bufferSize * 10);
 
@@ -819,7 +819,11 @@ void ServerEngine::RIO::RIOSession::Clean()
 	m_sendBuffer.CleanBuffer();
 	m_deferCount = 0;
 
-	m_packetBufferQueue.clear();
+	// m_packetBufferQueue.clear();
+
+	while(false == m_packetBufferQueue.empty())
+		m_packetBufferQueue.pop();
+
 	m_state = SESSION_STATE::FREE;
 	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
 }
@@ -837,9 +841,15 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 	std::shared_ptr<PacketBuffer> packetBuffer;
 
 	while(deferCount < m_maxSendRQSize) {
-		if(!m_packetBufferQueue.try_pop(packetBuffer)) break;
 
-		if(packetBuffer == nullptr) continue;
+		if(m_packetBufferQueue.empty()) break;
+
+		packetBuffer = m_packetBufferQueue.front();
+		m_packetBufferQueue.pop();
+
+		if(packetBuffer == nullptr) break;
+
+		// if(!m_packetBufferQueue.try_pop(packetBuffer)) break;
 
 		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize())) {
 
@@ -860,6 +870,7 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 			Disconnect("SendBuffer Append Full");
 			return;
 		}
+
 	}
 
 	if(deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= m_commitSendMS) {
@@ -867,4 +878,5 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 		m_lastSendTime = currentTime;
 	}
 }
+
 #endif
