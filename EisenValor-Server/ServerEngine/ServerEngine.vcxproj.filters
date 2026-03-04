@@ -133,6 +133,9 @@
     <ClInclude Include="TaskQueueManager.h">
       <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
     </ClInclude>
+    <ClInclude Include="RIORingBuffer.h">
+      <Filter>Test\RingBuffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -246,6 +249,9 @@
     <ClCompile Include="WorkerThread.cpp">
       <Filter>Test\Network\Thread\WorkerThread</Filter>
     </ClCompile>
+    <ClCompile Include="RIORingBuffer.cpp">
+      <Filter>Test\RingBuffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -268,9 +274,6 @@
     </Filter>
     <Filter Include="95. Managers\LogManager">
       <UniqueIdentifier>{b18df161-993b-456d-a224-8396640585d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="95. Managers\ThreadManager">
-      <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
     </Filter>
     <Filter Include="95. Managers\TaskQueueManager">
       <UniqueIdentifier>{23b44939-13d9-4f85-af07-d221aabddd14}</UniqueIdentifier>
@@ -379,6 +382,12 @@
     </Filter>
     <Filter Include="Test\Network\Thread\WorkerThread">
       <UniqueIdentifier>{6875bbd8-eee7-47be-b76c-276e02a4b1a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\RingBuffer">
+      <UniqueIdentifier>{2f9ce61b-087b-462f-a034-da844e60f290}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="95. Managers\ThreadManager">
+      <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

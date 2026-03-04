@@ -43,7 +43,7 @@ namespace ClientPackets {
 		auto pb{ ServerPackets::Make_SC_CHAT_PACKET(recvPkt.msg()->c_str()) };
 
 		switch(clientSession->GetState()) {
-			case SESSION_STATE::IN_LOBBY:
+			case SESSION_STATE::IN_GAME_LOBBY:
 			{
 				G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Broadcast, std::move(pb));
 				break;
@@ -104,10 +104,11 @@ namespace ClientPackets {
 			//auto lobby = MANAGER(ServerEngine::ServerEngineCore)->GetLobbyThread();
 			//if(lobby)
 			//	lobby->EnterLobby(session);
-
+#ifdef MODERN_CODE
 			auto worker = MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker();
 			if(worker)
 				worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, clientSession);
+#endif
 		}
 		else {
 			auto pb = ServerPackets::Make_SC_LOGIN_FAIL_PACKET("LOGIN_FAIL");
@@ -451,6 +452,7 @@ namespace ClientPackets {
 
 	bool Handle_CS_GO_WORLD_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GO_WORLD_PACKET& recvPkt)
 	{
+#ifdef MODERN_CODE
 		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 		std::cout << "Handle_CS_GO_WORLD_PACKET" << std::endl;
@@ -459,6 +461,7 @@ namespace ClientPackets {
 		if(worker) {
 			worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, clientSession);
 		}
+#endif
 
 		return true;
 	}

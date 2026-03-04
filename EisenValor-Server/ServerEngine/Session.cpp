@@ -620,6 +620,7 @@ void ServerEngine::RIO::RIOSession::Clean()
 	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
 }
 
+
 #endif
 #endif
 
@@ -633,18 +634,20 @@ ServerEngine::RIO::RIOSession::RIOSession()
 
 ServerEngine::RIO::RIOSession::~RIOSession()
 {
+	m_table.RIODeregisterBuffer(m_recvBuffer.GetID());
+	m_table.RIODeregisterBuffer(m_sendBuffer.GetID());
 }
 
 bool ServerEngine::RIO::RIOSession::Init()
 {
 	// RIO BUFFER 등록
-	const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
+	// const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
 
-	m_recvBuffer.SetTable(m_table);
-	m_sendBuffer.SetTable(m_table);
+	// m_recvBuffer.SetTable(m_table);
+	// m_sendBuffer.SetTable(m_table);
 
-	m_recvBuffer.Init(bufferSize);
-	m_sendBuffer.Init(bufferSize * 10);
+	// m_recvBuffer.Init(bufferSize);
+	// m_sendBuffer.Init(bufferSize * 10);
 
 	return true;
 }
@@ -673,6 +676,7 @@ void ServerEngine::RIO::RIOSession::Dispatch(RIOContext* const context, const ui
 bool ServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
 {
 	m_socket = socket;
+
 	m_clientAddr = addr;
 
 	m_connected = true;
@@ -707,22 +711,73 @@ void ServerEngine::RIO::RIOSession::Send(std::shared_ptr<PacketBuffer> packetBuf
 
 void ServerEngine::RIO::RIOSession::PostRecv()
 {
+	//if(false == IsConnected()) {
+	//	Disconnect("IsConnected False");
+	//	return;
+	//}
+
+	//if(m_recvBuffer.GetFreeSize() <= 0) {
+	//	Disconnect("RecvBuffer FreeSize 0");
+	//	return;
+	//}
+
+	//m_recvContext.Init();
+	//m_recvContext.SetOwner(std::static_pointer_cast<ServerEngine::RIO::RIOSession>(shared_from_this()));
+
+	//m_recvContext.BufferId = m_recvBuffer.GetID();
+	//m_recvContext.Offset = m_recvBuffer.GetReadOffset();
+	//m_recvContext.Length = m_recvBuffer.GetFreeSize();
+
+	//const DWORD flags{};
+
+	//if(false == m_table.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
+	//	LOG_WSA_GET_LAST_ERROR();
+	//	m_recvContext.SetOwner(nullptr);
+	//	Disconnect("RioReceive Fail");
+	//}
+
+	//if(false == IsConnected()) {
+	//	Disconnect("IsConnected False");
+	//	return;
+	//}
+
+	//m_recvContext.Init();
+	//m_recvContext.SetOwner(std::static_pointer_cast<ServerEngine::RIO::RIOSession>(shared_from_this()));
+
+	//RIO_BUF rioBuf = m_recvBuffer.GetWriteRioBuf();
+
+	//if(rioBuf.Length < 100) { 
+	//	m_recvBuffer.AdjustPos();
+	//	rioBuf = m_recvBuffer.GetWriteRioBuf();
+	//}
+
+	//m_recvContext.BufferId = rioBuf.BufferId;
+	//m_recvContext.Offset = rioBuf.Offset;
+	//m_recvContext.Length = rioBuf.Length;
+
+	//const DWORD flags{};
+
+	//if(false == m_table.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
+	//	LOG_WSA_GET_LAST_ERROR();
+	//	m_recvContext.SetOwner(nullptr);
+	//	Disconnect("RioReceive Fail");
+	//}
+
 	if(false == IsConnected()) {
 		Disconnect("IsConnected False");
-		return;
-	}
-
-	if(m_recvBuffer.GetFreeSize() <= 0) {
-		Disconnect("RecvBuffer FreeSize 0");
 		return;
 	}
 
 	m_recvContext.Init();
 	m_recvContext.SetOwner(std::static_pointer_cast<ServerEngine::RIO::RIOSession>(shared_from_this()));
 
+	if(m_recvBuffer.GetContiguousFreeSize() < 100) {
+		m_recvBuffer.AdjustPos();
+	}
+
 	m_recvContext.BufferId = m_recvBuffer.GetID();
-	m_recvContext.Offset = m_recvBuffer.GetReadOffset();
-	m_recvContext.Length = m_recvBuffer.GetFreeSize();
+	m_recvContext.Offset = m_recvBuffer.GetWriteOffset();
+	m_recvContext.Length = m_recvBuffer.GetContiguousFreeSize();
 
 	const DWORD flags{};
 
@@ -731,35 +786,65 @@ void ServerEngine::RIO::RIOSession::PostRecv()
 		m_recvContext.SetOwner(nullptr);
 		Disconnect("RioReceive Fail");
 	}
+
 }
 
 void ServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
 {
-	m_recvContext.SetOwner(nullptr);
+	//m_recvContext.SetOwner(nullptr);
+
+	//if(0 == bytesTransferred) {
+	//	Disconnect("Recv Zero");
+	//	return;
+	//}
+	//else {
+	//	if(false == m_recvBuffer.OnWrite(bytesTransferred)) {
+	//		Disconnect("RecvBuffer Overflow");
+	//		return;
+	//	}
+
+	//	const uint32 remainDataSize{ m_recvBuffer.GetDataSize() };
+
+	//	const uint32 processLen{ AssembleReceivedData({ m_recvBuffer.GetReadCursor(), remainDataSize }) };
+
+	//	if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
+	//		Disconnect("OnRead Overflow");
+	//		return;
+	//	}
+
+	//	m_recvBuffer.CleanBuffer();
+
+	//	PostRecv();
+	//}
+
+	m_recvContext.SetOwner(nullptr); // RELEASE_REF
 
 	if(0 == bytesTransferred) {
 		Disconnect("Recv Zero");
 		return;
 	}
-	else {
-		if(false == m_recvBuffer.OnWrite(bytesTransferred)) {
-			Disconnect("RecvBuffer Overflow");
-			return;
-		}
 
-		const uint32 remainDataSize{ m_recvBuffer.GetDataSize() };
-
-		const uint32 processLen{ AssembleReceivedData({ m_recvBuffer.GetReadCursor(), remainDataSize }) };
-
-		if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
-			Disconnect("OnRead Overflow");
-			return;
-		}
-
-		m_recvBuffer.CleanBuffer();
-
-		PostRecv();
+	// 1. 데이터 수신 기록 (Tail 이동)
+	if(false == m_recvBuffer.OnWrite(bytesTransferred)) {
+		Disconnect("RecvBuffer Overflow");
+		return;
 	}
+
+	if(m_recvBuffer.GetContiguousReadSize() < sizeof(PacketHeader)) {
+		m_recvBuffer.AdjustPos();
+	}
+
+	const uint32 remainDataSize = m_recvBuffer.GetUsedSize();
+	const uint32 processLen = AssembleReceivedData({ m_recvBuffer.GetReadCursor(), remainDataSize });
+
+	if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
+		Disconnect("OnRead Overflow");
+		return;
+	}
+
+	m_recvBuffer.CleanBuffer();
+
+	PostRecv();
 }
 
 void ServerEngine::RIO::RIOSession::ProcessSend(const uint32 bytesTransferred)
@@ -771,7 +856,7 @@ void ServerEngine::RIO::RIOSession::ProcessSend(const uint32 bytesTransferred)
 
 bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 size)
 {
-	RIOSendContext* sendContext{ ObjectPool<RIOSendContext>::Pop() };
+	RIOSendContext* sendContext = ObjectPool<RIOSendContext>::Pop();
 	sendContext->Init();
 	sendContext->SetOwner(std::static_pointer_cast<RIOSession>(shared_from_this()));
 
@@ -779,6 +864,7 @@ bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 
 	sendContext->Offset = offset;
 	sendContext->Length = size;
 
+	// RIO 송신 예약
 	if(false == m_table.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
 		ServerEngine::LogManager::PrintLastError();
 		sendContext->SetOwner(nullptr);
@@ -787,13 +873,8 @@ bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 
 		return false;
 	}
 
-	if(false == m_sendBuffer.moveSendOffset(size)) {
-		sendContext->SetOwner(nullptr);
-		ObjectPool<RIOSendContext>::Push(sendContext);
-		Disconnect("moveSendOffset Fail");
-		return false;
-	}
-
+	// [중요] RIO 예약 성공 후 버퍼의 m_writePos를 실제로 이동시킴
+	m_sendBuffer.moveSendOffset(size);
 	m_outstandingSendCount++;
 
 	return true;
@@ -815,7 +896,7 @@ void ServerEngine::RIO::RIOSession::Clean()
 	memset(&m_clientAddr, 0, sizeof(m_clientAddr));
 	m_rq = RIO_INVALID_RQ;
 
-	m_recvBuffer.CleanBuffer();
+	// m_recvBuffer.CleanBuffer();
 	m_sendBuffer.CleanBuffer();
 	m_deferCount = 0;
 
@@ -830,53 +911,118 @@ void ServerEngine::RIO::RIOSession::Clean()
 
 void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 {
-	if(false == IsConnected())
-		return;
+	//if(false == IsConnected())
+	//	return;
+
+	//const auto currentTime = std::chrono::high_resolution_clock::now();
+	//const auto lastSendElapsed = currentTime - m_lastSendTime;
+
+	//uint32 deferCount{};
+
+	//std::shared_ptr<PacketBuffer> packetBuffer;
+
+	//while(deferCount < m_maxSendRQSize) {
+
+	//	if(m_packetBufferQueue.empty()) break;
+
+	//	packetBuffer = m_packetBufferQueue.front();
+	//	m_packetBufferQueue.pop();
+
+	//	if(packetBuffer == nullptr) break;
+
+	//	// if(!m_packetBufferQueue.try_pop(packetBuffer)) break;
+
+	//	if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize())) {
+
+	//		if(m_outstandingSendCount >= m_maxSendRQSize) {
+	//			Disconnect("Too many pending sends - Client unresponsive");
+	//			return;
+	//		}
+
+	//		if(DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket())) {
+	//			deferCount++;
+	//		}
+	//		else {
+	//			LOG_ERROR("Defer Send Fail");
+	//			break;
+	//		}
+	//	}
+	//	else {
+	//		Disconnect("SendBuffer Append Full");
+	//		return;
+	//	}
+
+	//}
+
+	//if(deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= m_commitSendMS) {
+	//	CommitSend();
+	//	m_lastSendTime = currentTime;
+	//}
+
+	if(false == IsConnected()) return;
 
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
 
-	uint32 deferCount{};
-
-	std::shared_ptr<PacketBuffer> packetBuffer;
+	uint32 deferCount = 0;
 
 	while(deferCount < m_maxSendRQSize) {
-
 		if(m_packetBufferQueue.empty()) break;
 
-		packetBuffer = m_packetBufferQueue.front();
-		m_packetBufferQueue.pop();
-
+		std::shared_ptr<PacketBuffer> packetBuffer = m_packetBufferQueue.front();
 		if(packetBuffer == nullptr) break;
 
-		// if(!m_packetBufferQueue.try_pop(packetBuffer)) break;
+		uint32 packetSize = packetBuffer->GetDataSize();
+		uint32 sendOffset = m_sendBuffer.GetSendOffset();
 
-		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetBuffer->GetDataSize())) {
+		// 1. 링버퍼에 패킷 복사
+		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
 
-			if(m_outstandingSendCount >= m_maxSendRQSize) {
-				Disconnect("Too many pending sends - Client unresponsive");
-				return;
-			}
+			// 2. 만약 패킷이 링버퍼 끝에 걸쳐서 쪼개졌다면? 
+			// RIO_BUF는 하나의 연속된 영역만 가리킬 수 있으므로 두 번에 나눠서 DeferSend 해야 함
+			uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
 
-			if(DeferSend(m_sendBuffer.GetSendOffset(), m_sendBuffer.GetDataSizeForCurrentPacket())) {
-				deferCount++;
+			if(packetSize <= contiguousSize) {
+				// 한 번에 예약 가능
+				if(DeferSend(sendOffset, packetSize)) {
+					m_packetBufferQueue.pop();
+					deferCount++;
+				}
 			}
 			else {
-				LOG_ERROR("Defer Send Fail");
-				break;
+				// 두 번에 나누어 예약 (Wrap-around 처리)
+				// 1차: 끝부분까지
+				if(DeferSend(sendOffset, contiguousSize)) {
+					// 2차: 맨 앞부분부터 나머지
+					if(DeferSend(0, packetSize - contiguousSize)) {
+						m_packetBufferQueue.pop();
+						deferCount += 2; // 예약 횟수 2회 증가
+					}
+				}
 			}
 		}
 		else {
-			Disconnect("SendBuffer Append Full");
-			return;
+			// 버퍼가 꽉 찼다면 다음 Flush를 기약하거나 로그 출력
+			break;
 		}
-
 	}
 
-	if(deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= m_commitSendMS) {
+	// 조건 충족 시 커널에 일괄 전송 명령
+	if(deferCount > 0 && (deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= std::chrono::milliseconds(m_commitSendMS))) {
 		CommitSend();
 		m_lastSendTime = currentTime;
 	}
+
 }
 
+bool ServerEngine::RIO::RIOSession::RegisterBuffer()
+{
+	if(false == m_recvBuffer.RegisterBuffer(m_table))
+		return false;
+
+	if(false == m_sendBuffer.RegisterBuffer(m_table))
+		return false;
+
+	return true;
+}
 #endif

@@ -60,8 +60,9 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// TODO: 로비 씬으로 전환
 
 	// 테스트용으로 바로 게임 월드 진입
-	/*auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
-	GLOBAL(NetworkGlobal).Send(std::move(pb));*/
+	
+	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
+	GLOBAL(NetworkGlobal).Send(std::move(pb));
 
 	// 테스트용으로 바로 게임 월드 진입
 	//{

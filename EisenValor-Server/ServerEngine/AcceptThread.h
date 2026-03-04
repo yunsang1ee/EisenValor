@@ -4,7 +4,6 @@ namespace ServerEngine {
 	class WorkerThread;
 #ifdef  MODERN_CODE
 
-
 	class AcceptThread {
 	public:
 		AcceptThread();
@@ -26,7 +25,6 @@ namespace ServerEngine {
 	private:
 		SOCKET					m_listenSocket;
 		SOCKADDR_IN				m_serverAddress;
-		WorkerThread*			m_workerThread;
 		SessionFactoryFunc		m_func;
 
 		friend class ServerEngineCore;

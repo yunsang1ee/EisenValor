@@ -49,6 +49,7 @@ void ServerEngine::WorkerThread::Run(const std::stop_token st)
 		// 패킷을 받으면, 해당 세션의 게임월드를 찾아서 바로 적용해주거나, 이벤트 큐에 쌓아놓고 WorldUpdate에서 처리하거나....
 		// -> 바로 적용하는게 나은듯
 		
+		// 월드에서 무한루프돌면 I/O 안됨 조심
 		for(const auto& [id, world] : m_worlds)	// 나의 관리하는 게임 월드
 			world->Update(dt);
 	}

@@ -7,6 +7,7 @@
 #include "IOCPContext.h"
 #include "IOCPRecvBuffer.h"
 
+#include "RIORingBuffer.h"
 
 namespace ServerEngine {
 	class RIOWorker;
@@ -17,6 +18,9 @@ namespace ServerEngine {
 
 	class IOCoreTest;
 	class RIOCoreTest;
+
+	class RIORingRecvBuffer;
+	class RIORingSendBuffer;
 	
 
 	namespace RIO {
@@ -242,14 +246,16 @@ namespace ServerEngine {
 			// SessionPool에 반납하기 전 정리
 			void Clean();
 
+		public:
+			bool RegisterBuffer();
+
 		private:
 			RIO_EXTENSION_FUNCTION_TABLE								m_table;
 			RIO_RQ														m_rq;
-			RIORecvBuffer												m_recvBuffer;
-			RIOSendBuffer												m_sendBuffer;
+			RIORingRecvBuffer											m_recvBuffer;
+			RIORingSendBuffer											m_sendBuffer;
 			RIORecvContext												m_recvContext;
 			std::queue<std::shared_ptr<PacketBuffer>>					m_packetBufferQueue;
-			// tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>					m_packetBufferQueue;
 			uint32														m_deferCount;
 			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
 			uint32														m_outstandingSendCount;

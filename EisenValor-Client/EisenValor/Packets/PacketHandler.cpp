@@ -221,7 +221,7 @@ std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePac
 	const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
 )
 {
-	const uint32  packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
+	const uint16  packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
 	auto		  packetBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(packetBuffer->GetBuffer());
 	header->packetType = static_cast<uint16>(packetType);

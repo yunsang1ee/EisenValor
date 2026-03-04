@@ -3,6 +3,8 @@
 
 int main()
 {
+	TLS_THREAD_NAME = "Main";
+
 	if(false == Server::ServerManager::Init()) {
 		LOG_ERROR("ServerManager Init Failed");
 		LOG_SAVE();

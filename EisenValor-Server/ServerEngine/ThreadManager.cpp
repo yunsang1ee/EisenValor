@@ -61,6 +61,7 @@ void ServerEngine::ThreadManager::InitTLS()
 void ServerEngine::ThreadManager::DestroyTLS()
 {
 	std::osyncstream oss{ std::cout };
-	oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
+	// oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
+	oss << TLS_THREAD_NAME << " Thread DestroyTLS" << std::endl;
 }
 

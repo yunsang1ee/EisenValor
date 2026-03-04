@@ -450,6 +450,7 @@
     <ClInclude Include="LobbyThread.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="RIOCoreTest.h" />
+    <ClInclude Include="RIORingBuffer.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
     <ClInclude Include="LockQueue.h" />
     <ClInclude Include="LogManager.h" />
@@ -496,6 +497,7 @@
     <ClCompile Include="LobbyThread.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="RIOCoreTest.cpp" />
+    <ClCompile Include="RIORingBuffer.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
     <ClCompile Include="LockQueue.cpp" />
     <ClCompile Include="LogManager.cpp" />

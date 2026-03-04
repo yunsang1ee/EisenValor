@@ -76,7 +76,7 @@ bool ServerEngine::RIO::RIOBuffer::OnWrite(const uint32 numOfBytes)
 
 void ServerEngine::RIO::RIOBuffer::CleanBuffer()
 {
-	const uint32 dataSize = GetDataSize();
+	/*const uint32 dataSize = GetDataSize();
 
 	if(dataSize == 0) {
 		m_readPos = m_writePos = 0;
@@ -86,6 +86,20 @@ void ServerEngine::RIO::RIOBuffer::CleanBuffer()
 			::memcpy(&m_buffer[0], &m_buffer[m_readPos], dataSize);
 			m_readPos = 0;
 			m_writePos = dataSize;
+		}
+	}*/
+
+	const int32 dataSize = GetDataSize();
+	if(dataSize == 0) {
+		m_readPos = m_writePos = 0;
+	}
+	else {
+		if(m_readPos > 0) {
+			memmove(&m_buffer[0], &m_buffer[m_readPos], dataSize);
+			m_readPos = 0;
+			m_writePos = dataSize;
+			
+			std::cout << "Recv Buffer Mem Move!" << std::endl;
 		}
 	}
 }

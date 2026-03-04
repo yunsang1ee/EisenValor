@@ -181,7 +181,7 @@ namespace Server {
 		static bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer);
 
 		template<typename PacketType, typename HandleFunc>
-		static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
+		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
 		{
 			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
 			return handleFunc(session, *packet);

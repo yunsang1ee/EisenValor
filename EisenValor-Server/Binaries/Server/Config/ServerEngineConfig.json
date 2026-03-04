@@ -10,7 +10,7 @@
   },
 
   "ThreadConfigure": {
-    "MAX_WORKER_THREAD_COUNT": 8
+    "MAX_WORKER_THREAD_COUNT": 1
   },
 
   "SessionConfigure": {

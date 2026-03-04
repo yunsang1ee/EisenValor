@@ -23,7 +23,7 @@ ServerEngine::ServerEngineCore::~ServerEngineCore()
 bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc)
 {
 	m_nextWorkerIndex = 0;
-	
+
 	WSADATA wsaData;
 	if(0 != WSAStartup(MAKEWORD(2, 2), &wsaData)) {
 		ServerEngine::LogManager::PrintLastError();
@@ -55,7 +55,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, 
 	flags = WSA_FLAG_REGISTERED_IO;
 	
 	// WorkerThread 생성
-	for(int i = 0; i < 1; ++i) {
+	for(int i = 0; i < m_workerThreads.size(); ++i) {
 		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
 		m_workerThreads[i] = (std::make_unique<WorkerThread>(worldFunc, std::move(rioCore)));
 
@@ -65,6 +65,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, 
 
 	// LobbyThread 초기화
 	// -> RIO인 경우 LobbyThread I/O도 RIO로...
+	// TOOD: Lobby는 LobbyServer로 옮기기...
 	{
 		auto rioCore{ std::make_unique<RIO::RIOCoreTest>() };
 		m_lobbyThread = std::make_unique<ServerEngine::LobbyThread>(lobbyFunc, std::move(rioCore));
@@ -87,11 +88,13 @@ void ServerEngine::ServerEngineCore::Run()
 {
 	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st)
 		{
+			TLS_THREAD_NAME = "Accept";
 			m_acceptThread->Run(st);
 		});
 
 	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st)
 		{
+			TLS_THREAD_NAME = "Lobby";
 			m_lobbyThread->Run(st);
 		});
 
@@ -105,6 +108,7 @@ void ServerEngine::ServerEngineCore::Run()
 	for(int i = 0; i < 1; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
 			{
+				TLS_THREAD_NAME = "Worker_" + std::to_string(TLS_THREAD_ID);
 				m_workerThreads[i]->Run(st);
 			});
 	}

@@ -130,7 +130,7 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 			SetState(SESSION_STATE::FREE);
 			break;
 		}
-		case SESSION_STATE::IN_LOBBY:
+		case SESSION_STATE::IN_GAME_LOBBY:
 		{
 			G_GAME_LOBBY->ExecAsync(&Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
 			break;

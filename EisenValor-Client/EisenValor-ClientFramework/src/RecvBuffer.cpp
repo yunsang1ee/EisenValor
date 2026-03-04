@@ -34,7 +34,7 @@ bool NetBridge::RecvBuffer::OnRead(const uint32 numOfBytes)
 
 void NetBridge::RecvBuffer::Clean()
 {
-	const int32 dataSize = GetDataSize();
+	/*const int32 dataSize = GetDataSize();
 	if (dataSize == 0)
 	{
 		m_readPos = m_writePos = 0;
@@ -46,6 +46,22 @@ void NetBridge::RecvBuffer::Clean()
 			memcpy_s(&m_buffer[0], m_capacity, &m_buffer[m_readPos], dataSize);
 			m_readPos = 0;
 			m_writePos = dataSize;
+		}
+	}*/
+	const int32 dataSize = GetDataSize();
+	if (dataSize == 0)
+	{
+		m_readPos = m_writePos = 0;
+	}
+	else
+	{
+		if (m_readPos > 0)
+		{
+			memmove(&m_buffer[0], &m_buffer[m_readPos], dataSize);
+			m_readPos = 0;
+			m_writePos = dataSize;
+			std::cout << "Recv Buffer Mem Move!" << std::endl;
+
 		}
 	}
 }

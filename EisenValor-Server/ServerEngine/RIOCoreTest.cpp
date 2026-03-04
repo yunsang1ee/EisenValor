@@ -46,10 +46,9 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	auto rioSession{ std::static_pointer_cast<RIOSession>(session) };
 
 	// RQ 생성
-	const int MAX_RECV_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RECV_RQ_SIZE_PER_SESSION;
-	const int MAX_SEND_RQ_SIZE_PER_SESSION = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION;
+	const uint32 MAX_RECV_RQ_SIZE_PER_SESSION{MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RECV_RQ_SIZE_PER_SESSION};
+	const uint32 MAX_SEND_RQ_SIZE_PER_SESSION{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION };
 
-	// 2. 함수 테이블 유효성 검사 (함수 포인터가 깨졌는지 확인)
 	if(m_rioExtfuncTable.RIOCreateRequestQueue == nullptr) {
 		LOG_ERROR("RIO Function Table is NULL in this Worker!");
 		return false;
@@ -63,10 +62,13 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 
 	rioSession->SetRQ(rq);
 	rioSession->SetTable(m_rioExtfuncTable);
+
+	if(false == rioSession->RegisterBuffer())
+		return false;
 	
 	// 버퍼 생성
-	if(false == rioSession->Init())
-		return false;
+	//if(false == rioSession->Init())
+	//	return false;
 	
 	rioSession->SetState(SESSION_STATE::ACCEPTED);
 
@@ -80,7 +82,7 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 	rioSession->PostRecv();
 	return true;
 }
-
+ 
 bool ServerEngine::RIO::RIOCoreTest::Deregister(std::shared_ptr<Session> session)
 {
 	if(!session) 
@@ -146,25 +148,6 @@ void ServerEngine::RIO::RIOCoreTest::DequeueCompletion()
 			}
 		}
 	}
-
-	//while(true) {
-	//	memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
-	//	const uint32 numResults = m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size()));
-	//	if(0 == numResults) return;
-
-	//	for(uint32 i = 0; i < numResults; ++i) {
-	//		RIO::RIOContext* const context = reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext);
-	//		auto session = std::static_pointer_cast<RIOSession>(context->GetOwner());
-	//		const uint32 bytes = m_ioResults[i].BytesTransferred;
-
-	//		if(session->GetCurrentCore() != this) {
-	//			session->ReleaseContextOnly(context, bytes);
-	//			continue;
-	//		}
-
-	//		session->Dispatch(context, bytes);
-	//	}
-	//}
 }
 
 #endif

@@ -210,7 +210,6 @@ namespace ServerPackets {
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
-		// std::cout << std::format("ID:{}, Make_SC_MOVE_PACKET", id) << std::endl;
 		return Server::ClientPacketHandler::MakePacketBuffer(PACKET_TYPE::SC_MOVE_PKT, Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo, state, subState));
 	}
 

@@ -18,7 +18,8 @@ namespace ServerEngine {
 	
 		void Execute()
 		{
-			if(m_cbFunc) m_cbFunc();
+			if(m_cbFunc) 
+				m_cbFunc();
 		}
 
 	private:

@@ -24,7 +24,7 @@ void Server::Contents::GameLobby::Init()
 	
 void Server::Contents::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
-	clientSession->SetState(SESSION_STATE::IN_LOBBY);
+	clientSession->SetState(SESSION_STATE::IN_GAME_LOBBY);
 	
 	const uint32 id{ clientSession->GetID() };
 
@@ -75,7 +75,7 @@ void Server::Contents::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_p
 
 void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
 {
-	if(clientSession->GetState() != SESSION_STATE::IN_LOBBY)
+	if(clientSession->GetState() != SESSION_STATE::IN_GAME_LOBBY)
 		return;
 
 	// 새로운 방 생성
@@ -108,7 +108,7 @@ void Server::Contents::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr
 void Server::Contents::GameLobby::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
 {
 	for(const auto& [id, session] : m_users) {
-		if(SESSION_STATE::IN_LOBBY == session->GetState()) {
+		if(SESSION_STATE::IN_GAME_LOBBY == session->GetState()) {
 			session->Send(pb);
 		}
 	}
@@ -124,7 +124,7 @@ std::shared_ptr<Server::Contents::GameRoom> Server::Contents::GameLobby::GetRoom
 
 void Server::Contents::GameLobby::JoinGameRoom(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID)
 {
-	if(clientSession->GetState() != SESSION_STATE::IN_LOBBY)
+	if(clientSession->GetState() != SESSION_STATE::IN_GAME_LOBBY)
 		return;
 
 	auto room = GetRoom(roomID);

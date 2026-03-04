@@ -168,29 +168,30 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 
 	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
 
-		// if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) continue;
+		if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER && i != FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) 
+			continue;
 
 		const auto& gameObjectGroups = GetGameWorld()->GetGameObjectGroups();
 		for(const auto& [id, o] : gameObjectGroups[i]) {
 			GameObject* const obj{ o.get() };
+			if(false == IsValidObj(obj))
+				continue;
+			
+			if(id == GetID())
+				continue;
 
-			if(nullptr == obj) continue;
+			if(false == obj->IsCreature()) 
+				continue;
 
-			if(false == obj->IsActive()) continue;
-
-			if(id == GetID()) continue;
-
-			if(false == obj->IsCreature()) continue;
-
-			if(GetTeamType() == obj->GetTeamType()) continue;
+			if(GetTeamType() == obj->GetTeamType()) 
+				continue;
 
 			if(IsTargetInAttackRange(obj)) {
-			//	std::cout << "Handle_CS_PLAYER_ATTACk, Targe in Range!" << std::endl;
 				SetTarget(static_cast<Creature*>(obj));
 				break;
 			}
 			else {
-//				std::cout << "Handle_CS_PLAYER_ATTACk, Targe ##Not## in Range!" << std::endl;
+				SetTarget(nullptr);
 			}
 		}
 	}

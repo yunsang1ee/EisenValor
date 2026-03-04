@@ -190,12 +190,16 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 	auto const world{ owner->GetGameWorld() };
 
 	auto const target = owner->GetTarget();
-	if(!target) {
+
+	if(false == IsValidObj(target)) {
+		owner->SetTarget(nullptr);
 		return;
 	}
 
 	if(owner->IsTargetInAttackRange(target)) {
-		if(nullptr == target) return;
+		
+		if(false == IsValidObj(target))
+			return;
 
 		if(target->OnDamaged(owner, dt)) {
 

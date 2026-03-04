@@ -98,14 +98,13 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 		//	if(false == ioCore->Register(session))
 		//		continue;
 		//}*/
-
+		
+		// 지금은 바로 월드로...
 		auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
 		if(worker) {
 			worker->PushJob(&ServerEngine::WorkerThread::Register, (session));
 		}
 	}
-
-	std::cout << "Accept Thread Run Finish!" << std::endl;
 }
 
 void ServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
