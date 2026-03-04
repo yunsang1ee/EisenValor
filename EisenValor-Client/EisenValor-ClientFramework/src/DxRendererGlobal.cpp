@@ -8,6 +8,12 @@
 #include "DxGarbageCollectorGlobal.h"
 #include "DxFrameResource.h"
 #include "DxSwapChain.h"
+#include "CameraRenderData.h"
+#include "FrameRenderData.h"
+#include "CameraComponent.h"
+#include "TimerGlobal.h"
+#include "Transform.h"
+#include "GameObject.h"
 
 DxRendererGlobal::DxRendererGlobal() = default;
 
@@ -96,9 +102,9 @@ void DxRendererGlobal::Release()
 	DEBUG_LOG_FMT("[DxRendererGlobal] Released\n");
 }
 
-void DxRendererGlobal::AddRenderPass(const std::string& name, 
-                                     std::unique_ptr<IRenderPass> pass, 
-                                     RenderPassPriority priority)
+void DxRendererGlobal::AddRenderPass(
+	const std::string& name, std::unique_ptr<IRenderPass> pass, RenderPassPriority priority
+)
 {
 	for (const auto& entry : m_renderPasses)
 	{
@@ -110,7 +116,7 @@ void DxRendererGlobal::AddRenderPass(const std::string& name,
 	}
 
 	pass->Initialize();
-	m_renderPasses.push_back({name, std::move(pass), priority});  // priority 추가
+	m_renderPasses.push_back({name, std::move(pass), priority}); // priority 추가
 	m_renderPassesDirty = true;
 
 	DEBUG_LOG_FMT("[DxRendererGlobal] Pass added: {} (Priority: {})\n", name, static_cast<int32_t>(priority));
@@ -156,7 +162,7 @@ void DxRendererGlobal::BeginFrame()
 	if (!m_isInitialized || !m_swapChain)
 	{
 		DEBUG_LOG_FMT(
-			"[DxRendererGlobal] ERROR: Not ready (init:{}, swapChain:{})\n", m_isInitialized, nullptr != m_swapChain 
+			"[DxRendererGlobal] ERROR: Not ready (init:{}, swapChain:{})\n", m_isInitialized, nullptr != m_swapChain
 		);
 		return;
 	}
@@ -168,7 +174,7 @@ void DxRendererGlobal::BeginFrame()
 
 void DxRendererGlobal::Render(Scene* scene)
 {
-	if (!scene)
+	if (nullptr == scene)
 	{
 		DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: Scene is null!\n");
 		return;
@@ -176,7 +182,33 @@ void DxRendererGlobal::Render(Scene* scene)
 
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
-	// Priority 기준 정렬
+	auto frameData = std::make_shared<FrameRenderData>();
+	frameData->deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
+	frameData->totalTime = GLOBAL(TimerGlobal).GetRuntime();
+	frameData->frameIndex = frame->GetFrameIndex();
+	m_renderContext.SetData(frameData, 0);
+
+	auto* mainCamera = CameraComponent::GetMainCamera();
+	if (nullptr != mainCamera)
+	{
+		auto cameraData = std::make_shared<CameraRenderData>();
+		cameraData->viewMatrix = mainCamera->GetViewMatrix();
+		cameraData->projectionMatrix = mainCamera->GetProjectionMatrix();
+		cameraData->viewProjInverse = DirectX::XMMatrixInverse(
+			nullptr, DirectX::XMMatrixMultiply(cameraData->viewMatrix, cameraData->projectionMatrix)
+		);
+
+		auto& transform = mainCamera->GetGameObject()->GetTransform();
+		cameraData->cameraPosition = transform.GetWorldPosition();
+		cameraData->cameraDirection = transform.GetForward();
+		cameraData->nearZ = mainCamera->GetNearZ();
+		cameraData->farZ = mainCamera->GetFarZ();
+		cameraData->fov = mainCamera->GetFOV();
+		cameraData->aspectRatio = mainCamera->GetAspectRatio();
+
+		m_renderContext.SetData(cameraData, 0);
+	}
+
 	if (m_renderPassesDirty)
 	{
 		std::stable_sort(
@@ -240,17 +272,15 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 		HRESULT hr = device.GetDevice()->GetDeviceRemovedReason();
 		if (FAILED(hr))
 		{
-			DEBUG_LOG_FMT(
-				"[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr)
-			);
+			DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr));
 			return;
 		}
 	}
-		
+
 	m_swapChain->OnResize(
 		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
-	);	
+	);
 
 	for (auto& entry : m_renderPasses)
 	{

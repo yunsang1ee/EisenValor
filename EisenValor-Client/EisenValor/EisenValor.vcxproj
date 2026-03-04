@@ -213,6 +213,9 @@ exit /b 0</Command>
     <ClInclude Include="Packets\Structs_generated.h" />
     <ClInclude Include="Packets\Tables_generated.h" />
     <ClInclude Include="RaytracingCommon.h" />
+    <ClInclude Include="RenderData\GeoTableRenderData.h" />
+    <ClInclude Include="RenderData\InstanceRenderData.h" />
+    <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />

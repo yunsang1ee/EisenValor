@@ -1,13 +1,14 @@
 #pragma once
 #include <IRenderPass.h>
-#include <RenderDataSync.h>
 #include <DxRtPipelineState.h>
 #include <DxRtShaderTable.h>
 #include <DxTLAS.h>
 #include <DxTexture.h>
 #include <memory>
 #include "AssetFormat.h"
-#include "RaytracingCommon.h"
+#include "RenderData/InstanceRenderData.h"
+#include "RenderData/MaterialRenderData.h"
+#include "RenderData/GeoTableRenderData.h"
 
 class MeshComponent;
 class MeshResource;
@@ -52,17 +53,14 @@ private:
 
 	DxTexture m_raytracingOutput;
 
-	std::unordered_map<EvAsset::Guid, uint32_t, EvAsset::GuidHash>				  m_materialToIndex;
-	std::unordered_map<EvAsset::Guid, std::unique_ptr<DxBLAS>, EvAsset::GuidHash> m_blasCache;
-
-	RenderDataSync<InstanceData>	m_instanceBuffer;
-	RenderDataSync<MaterialGPUData> m_materialConstants;
-	RenderDataSync<GeoInfo>			m_geoTable;
+	std::shared_ptr<InstanceRenderData> m_instanceData;
+	std::shared_ptr<MaterialRenderData> m_materialData;
+	std::shared_ptr<GeoTableRenderData> m_geoTableData;
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;
 
-	ComPtr<ID3D12Device5> device5;
+	ComPtr<ID3D12Device5> m_device5;
 
 	bool m_initialized = false;
 	bool m_usePathTracing = false;

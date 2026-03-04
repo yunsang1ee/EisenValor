@@ -10,12 +10,15 @@
 #include "ResourceGlobal.h"
 #include "InputGlobal.h"
 #include "MeshComponent.h"
+#include "SkinnedMeshComponent.h"
 #include "DxBLAS.h"
 #include "DxBuffer.h"
 #include "DxUtils.h"
 #include "MeshResource.h"
 #include "MaterialResource.h"
 #include "TextureResource.h"
+#include "CameraRenderData.h"
+#include "FrameRenderData.h"
 
 #include <unordered_map>
 
@@ -28,10 +31,16 @@ void DxrRenderPass::Initialize()
 {
 	DEBUG_LOG_FMT("[DxrRenderPass] Initializing with resolution: {}x{}\n", m_width, m_height);
 
-	auto& device = GLOBAL(DxDeviceGlobal);
-	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
+	auto& deviceG = GLOBAL(DxDeviceGlobal);
+	auto* device = deviceG.GetDevice();
+	ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_device5)));
+
 	m_tlas = std::make_unique<DxTLAS>();
-	m_tlas->Initialize(device5.Get(), 2000);
+	m_tlas->Initialize(m_device5.Get(), 2'000);
+
+	m_instanceData = std::make_shared<InstanceRenderData>();
+	m_materialData = std::make_shared<MaterialRenderData>();
+	m_geoTableData = std::make_shared<GeoTableRenderData>();
 
 	CreateRaytracingPipeline();
 	CreateRaytracingResources(m_width, m_height);
@@ -42,10 +51,10 @@ void DxrRenderPass::Initialize()
 
 void DxrRenderPass::Release()
 {
-	m_blasCache.clear();
-	m_instanceBuffer.Clear();
-	m_materialConstants.Clear();
-	m_geoTable.Clear();
+	m_instanceData.reset();
+	m_materialData.reset();
+	m_geoTableData.reset();
+	m_device5.Reset();
 
 	m_initialized = false;
 	DEBUG_LOG_FMT("[DxrRenderPass] Released\n");
@@ -87,12 +96,10 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 {
-
-	m_instanceBuffer.Clear();
-	m_materialConstants.Clear();
-	m_geoTable.Clear();
-
-	m_materialToIndex.clear();
+	m_instanceData->syncBuffer.Clear();
+	m_materialData->syncBuffer.Clear();
+	m_geoTableData->syncBuffer.Clear();
+	m_materialData->materialToIndex.clear();
 
 	std::vector<std::pair<GameObject*, DxBLAS*>> tlasInstances;
 	tlasInstances.reserve(1'000);
@@ -104,14 +111,21 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 	CollectStaticMeshData(scene, cmdList4.Get(), tlasInstances);
 	CollectSkinnedMeshData(scene, cmdList4.Get(), tlasInstances);
 
-	bool shouldRebuild = (false == m_tlas->IsBuilt()) || (m_tlas->GetInstanceCount() != tlasInstances.size());
-	if (shouldRebuild)
+	if (nullptr != m_tlas && false == tlasInstances.empty())
 	{
-		m_tlas->Build(device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
-	}
-	else
-	{
-		m_tlas->Refit(device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
+		bool shouldRebuild =
+			(false == m_tlas->IsBuilt()) || (m_tlas->GetInstanceCount() != (uint32_t)tlasInstances.size());
+		if (shouldRebuild)
+		{
+			m_tlas->Build(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
+		}
+		else
+		{
+			m_tlas->Refit(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
+		}
+
+		m_instanceData->tlasDescriptorIndex = m_tlas->GetSRVIndex();
+		m_instanceData->tlasAddress = m_tlas->GetGPUAddress();
 	}
 }
 
@@ -142,35 +156,13 @@ void DxrRenderPass::CollectStaticMeshData(
 			continue;
 		}
 
-		const auto& guid = meshRes->GetGuid();
-		auto		it = m_blasCache.find(guid);
-
-		if (m_blasCache.end() == it)
+		auto* blas = meshRes->GetBLAS();
+		if (nullptr == blas || false == blas->IsBuilt())
 		{
-			auto blas = std::make_unique<DxBLAS>();
-			blas->Build(
-				device5.Get(), cmdList, meshRes->GetVertexBuffer()->GetGPUAddress(), meshRes->GetVertexCount(),
-				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetSubMeshes(), false,
-				meshRes->GetName() + "_BLAS"
-			);
-
-			auto barrier = DxUtils::CreateUAVBarrier(blas->GetResource());
-			cmdList->ResourceBarrier(1, &barrier);
-
-			m_blasCache[guid] = std::move(blas);
-			it = m_blasCache.find(guid);
-		}
-
-		if (nullptr == it->second || false == it->second->IsBuilt())
-		{
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] WARNING: Failed to build BLAS for Mesh '{}'. Skipping this component.\n",
-				meshRes->GetName()
-			);
 			continue;
 		}
 
-		uint32_t geoBaseIdx = static_cast<uint32_t>(m_geoTable.Size());
+		uint32_t geoBaseIdx = static_cast<uint32_t>(m_geoTableData->syncBuffer.Size());
 		for (const auto& subMesh : meshRes->GetSubMeshes())
 		{
 			auto* matRes = meshComp.GetMaterial(subMesh.materialSlot);
@@ -187,14 +179,13 @@ void DxrRenderPass::CollectStaticMeshData(
 			uint32_t	matIdx = 0;
 			const auto& matGuid = matRes->GetGuid();
 
-			if (m_materialToIndex.contains(matGuid))
+			if (m_materialData->materialToIndex.contains(matGuid))
 			{
-				matIdx = m_materialToIndex[matGuid];
+				matIdx = m_materialData->materialToIndex[matGuid];
 			}
 			else
 			{
-				matIdx = static_cast<uint32_t>(m_materialConstants.Size());
-
+				matIdx = static_cast<uint32_t>(m_materialData->syncBuffer.Size());
 				MaterialGPUData gpuMat = {};
 				gpuMat.albedo = matRes->GetAlbedo();
 				gpuMat.roughness = matRes->GetRoughness();
@@ -210,11 +201,13 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.emissiveTextureIdx =
 					matRes->GetTexture("EMSV") ? matRes->GetTexture("EMSV")->GetTexture()->GetSRVIndex() : ~0u;
 
-				m_materialConstants.Register(gpuMat);
-				m_materialToIndex[matGuid] = matIdx;
+				m_materialData->syncBuffer.Register(gpuMat);
+				m_materialData->materialToIndex[matGuid] = matIdx;
 			}
 
-			m_geoTable.Register({.vertexBase = 0, .indexBase = subMesh.indexOffset, .materialIdx = matIdx, .pad0 = 0});
+			m_geoTableData->syncBuffer.Register(
+				{.vertexBase = 0, .indexBase = subMesh.indexOffset, .materialIdx = matIdx, .pad0 = 0}
+			);
 		}
 
 		InstanceData inst = {};
@@ -228,8 +221,8 @@ void DxrRenderPass::CollectStaticMeshData(
 		inst.geoInfoBaseIdx = geoBaseIdx;
 		inst.instanceID = meshComp.GetOwner().id;
 
-		m_instanceBuffer.Register(inst);
-		tlasInstances.push_back({meshComp.GetGameObject(), it->second.get()});
+		m_instanceData->syncBuffer.Register(inst);
+		tlasInstances.push_back({meshComp.GetGameObject(), blas});
 	}
 }
 
@@ -261,7 +254,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		{
 			auto newBlas = std::make_unique<DxBLAS>();
 			newBlas->Build(
-				device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
+				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
 				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetSubMeshes(), true,
 				meshRes->GetName() + "_AnimatedBLAS"
 			);
@@ -276,7 +269,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			);
 		}
 
-		uint32_t geoBaseIdx = static_cast<uint32_t>(m_geoTable.Size());
+		uint32_t geoBaseIdx = static_cast<uint32_t>(m_geoTableData->syncBuffer.Size());
 		for (const auto& subMesh : meshRes->GetSubMeshes())
 		{
 			auto* matRes = skinnedMeshComp.GetMaterialResource(subMesh.materialSlot);
@@ -293,14 +286,13 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			uint32_t	matIdx = 0;
 			const auto& matGuid = matRes->GetGuid();
 
-			if (m_materialToIndex.contains(matGuid))
+			if (m_materialData->materialToIndex.contains(matGuid))
 			{
-				matIdx = m_materialToIndex[matGuid];
+				matIdx = m_materialData->materialToIndex[matGuid];
 			}
 			else
 			{
-				matIdx = static_cast<uint32_t>(m_materialConstants.Size());
-
+				matIdx = static_cast<uint32_t>(m_materialData->syncBuffer.Size());
 				MaterialGPUData gpuMat = {};
 				gpuMat.albedo = matRes->GetAlbedo();
 				gpuMat.roughness = matRes->GetRoughness();
@@ -316,11 +308,13 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.emissiveTextureIdx =
 					matRes->GetTexture("EMSV") ? matRes->GetTexture("EMSV")->GetTexture()->GetSRVIndex() : ~0u;
 
-				m_materialConstants.Register(gpuMat);
-				m_materialToIndex[matGuid] = matIdx;
+				m_materialData->syncBuffer.Register(gpuMat);
+				m_materialData->materialToIndex[matGuid] = matIdx;
 			}
 
-			m_geoTable.Register({.vertexBase = 0, .indexBase = subMesh.indexOffset, .materialIdx = matIdx, .pad0 = 0});
+			m_geoTableData->syncBuffer.Register(
+				{.vertexBase = 0, .indexBase = subMesh.indexOffset, .materialIdx = matIdx, .pad0 = 0}
+			);
 		}
 
 		InstanceData inst = {};
@@ -334,38 +328,34 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		inst.geoInfoBaseIdx = geoBaseIdx;
 		inst.instanceID = skinnedMeshComp.GetOwner().id;
 
-		m_instanceBuffer.Register(inst);
+		m_instanceData->syncBuffer.Register(inst);
 		tlasInstances.push_back({skinnedMeshComp.GetGameObject(), skinnedMeshComp.GetBLAS()});
 	}
 }
 
 void DxrRenderPass::CreateRaytracingPipeline()
 {
-	auto&				  device = GLOBAL(DxDeviceGlobal);
-	ComPtr<ID3D12Device5> device5;
-	ThrowIfFailed(device.GetDevice()->QueryInterface(IID_PPV_ARGS(&device5)));
-
 	m_rtLitePipeline = std::make_unique<DxRtPipelineState>();
-	m_rtLitePipeline->Create(device5.Get(), L"Resource/Shader/RaytracingPrimary.hlsl", 2);
+	m_rtLitePipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingPrimary.hlsl", 2);
 	m_rtLiteShaderTable = std::make_unique<DxRtShaderTable>();
-	m_rtLiteShaderTable->Build(device5.Get(), m_rtLitePipeline.get(), 1);
+	m_rtLiteShaderTable->Build(m_device5.Get(), m_rtLitePipeline.get(), 1);
 
 	m_rtPipeline = std::make_unique<DxRtPipelineState>();
-	m_rtPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
+	m_rtPipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
 	m_rtShaderTable = std::make_unique<DxRtShaderTable>();
-	m_rtShaderTable->Build(device5.Get(), m_rtPipeline.get(), 1);
+	m_rtShaderTable->Build(m_device5.Get(), m_rtPipeline.get(), 1);
 
 	m_ptPipeline = std::make_unique<DxRtPipelineState>();
-	m_ptPipeline->Create(device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
+	m_ptPipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
 	m_ptShaderTable = std::make_unique<DxRtShaderTable>();
-	m_ptShaderTable->Build(device5.Get(), m_ptPipeline.get(), 1);
+	m_ptShaderTable->Build(m_device5.Get(), m_ptPipeline.get(), 1);
 
-	DEBUG_LOG_FMT("[GameFramework] Raytracing pipeline created\n");
+	DEBUG_LOG_FMT("[DxrRenderPass] Raytracing pipelines created\n");
 }
 
 void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
-	if (!m_initialized || !scene)
+	if (!m_initialized || nullptr == scene || nullptr == renderContext)
 	{
 		return;
 	}
@@ -380,29 +370,22 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		m_useLiteRT = !m_useLiteRT;
 	}
 
+	renderContext->SetData(m_instanceData, 0);
+	renderContext->SetData(m_materialData, 0);
+	renderContext->SetData(m_geoTableData, 0);
+
 	auto& device = GLOBAL(DxDeviceGlobal);
 	auto* context = frame->GetMainContext();
 	auto* uploadHeap = frame->GetUploadHeap();
 
 	PrepareRenderData(frame, scene);
 
-	m_instanceBuffer.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
-	m_materialConstants.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
-	m_geoTable.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
+	m_instanceData->syncBuffer.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
+	m_materialData->syncBuffer.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
+	m_geoTableData->syncBuffer.SyncToGPU(device.GetDevice(), *context, *uploadHeap);
 
 	if (nullptr == m_tlas || false == m_tlas->IsBuilt())
 	{
-		return;
-	}
-
-	if (!m_instanceBuffer.GetBuffer() || !m_materialConstants.GetBuffer() || !m_geoTable.GetBuffer())
-	{
-		DEBUG_LOG_FMT(
-			"[DxrRenderPass] Skipping DispatchRays: required buffers not ready "
-			"(inst={}, mat={}, geo={})\n",
-			m_instanceBuffer.GetBuffer() != nullptr, m_materialConstants.GetBuffer() != nullptr,
-			m_geoTable.GetBuffer() != nullptr
-		);
 		return;
 	}
 
@@ -434,29 +417,31 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	cmdList4->SetComputeRootDescriptorTable(0, descHeap.GetGPUHandle(m_tlas->GetSRVIndex()));
 	cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(m_raytracingOutput.GetUAVIndex(0)));
 
-	auto mainCam = CameraComponent::GetMainViewMatrix();
-	auto mainProj = CameraComponent::GetMainProjectionMatrix();
-	auto viewProjInv = DX::XMMatrixTranspose(DX::XMMatrixInverse(nullptr, DX::XMMatrixMultiply(mainCam, mainProj)));
-	DX::XMFLOAT4X4 viewProjInvFloat;
-	DX::XMStoreFloat4x4(&viewProjInvFloat, viewProjInv);
-	cmdList4->SetComputeRoot32BitConstants(2, 16, &viewProjInvFloat, 0);
+	auto cameraData = renderContext->GetData<CameraRenderData>();
+	if (nullptr != cameraData)
+	{
+		DX::XMFLOAT4X4 viewProjInvFloat;
+		DirectX::XMStoreFloat4x4(&viewProjInvFloat, DirectX::XMMatrixTranspose(cameraData->viewProjInverse));
+		cmdList4->SetComputeRoot32BitConstants(2, 16, &viewProjInvFloat, 0);
+	}
 
-	// 바인딩: t1(Instance), t2(Material), t3(GeoTable)
-	if (m_instanceBuffer.GetBuffer())
+	if (m_instanceData->syncBuffer.GetBuffer())
 	{
 		cmdList4->SetComputeRootShaderResourceView(
-			3, m_instanceBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+			3, m_instanceData->syncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
 		);
 	}
-	if (m_materialConstants.GetBuffer())
+	if (m_materialData->syncBuffer.GetBuffer())
 	{
 		cmdList4->SetComputeRootShaderResourceView(
-			4, m_materialConstants.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+			4, m_materialData->syncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
 		);
 	}
-	if (m_geoTable.GetBuffer())
+	if (m_geoTableData->syncBuffer.GetBuffer())
 	{
-		cmdList4->SetComputeRootShaderResourceView(5, m_geoTable.GetBuffer()->GetResource()->GetGPUVirtualAddress());
+		cmdList4->SetComputeRootShaderResourceView(
+			5, m_geoTableData->syncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+		);
 	}
 
 	auto* shaderTable =
@@ -469,7 +454,6 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		.Height = m_raytracingOutput.GetHeight(),
 		.Depth = 1
 	};
-
 
 	cmdList4->DispatchRays(&desc);
 }

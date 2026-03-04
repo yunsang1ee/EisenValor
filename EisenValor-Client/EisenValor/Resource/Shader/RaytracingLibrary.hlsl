@@ -478,9 +478,9 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
 	}
 	
-	float ao = bary.x * 0.3f + 0.7f;
+	float ao = 1.0f;
 	float3 ambient = kD * albedo * 0.15f * ao;
-	float3 emissive = 0.0f.xxx; // No emissive for now
+	float3 emissive = 0.0f.xxx;
 	
 	payload.color = ambient + Lo + reflectedColor + emissive;
 }

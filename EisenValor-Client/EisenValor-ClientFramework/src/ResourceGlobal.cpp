@@ -27,6 +27,7 @@
 #include "DxUploadHeap.h"
 #include "CommonInclude.h"
 #include "DxUtils.h"
+#include "DxBLAS.h"
 #include "DxCommandQueueGlobal.h"
 #include "InputGlobal.h"
 
@@ -163,7 +164,19 @@ void ResourceGlobal::ProcessPendingLoads()
 			vb->CreateSRV(device, heap, static_cast<uint32_t>(data.vertices.size()), sizeof(EvAsset::Vertex));
 			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0, DXGI_FORMAT_R32_UINT);
 
-			meshRes->SetGPUResources(std::move(vb), std::move(ib));
+			ComPtr<ID3D12Device5> m_device5;
+			ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_device5)));
+			ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+			ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
+
+			auto blas = std::make_unique<DxBLAS>();
+			blas->Build(
+				m_device5.Get(), cmdList4.Get(), vb->GetGPUAddress(), static_cast<uint32_t>(data.vertices.size()),
+				sizeof(EvAsset::Vertex), ib->GetGPUAddress(), meshRes->GetSubMeshes(),
+				false, data.name + "_BLAS"
+			);
+
+			meshRes->SetGPUResources(std::move(vb), std::move(ib), std::move(blas));
 		}
 		else if (task.typeID == SkinnedMeshResource::StaticRuntimeTypeID())
 		{
