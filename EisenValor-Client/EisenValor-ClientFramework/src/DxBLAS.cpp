@@ -104,7 +104,7 @@ void DxBLAS::Build(
 	D3D12_RESOURCE_BARRIER barrier = DxUtils::CreateUAVBarrier(m_blasBuffer->GetResource());
 	cmdList->ResourceBarrier(1, &barrier);
 
-	DEBUG_LOG_FMT("[DxBLAS] Built Single Geometry - Size: {} bytes\n", prebuildInfo.ResultDataMaxSizeInBytes);
+	//DEBUG_LOG_FMT("[DxBLAS] Built Single Geometry - Size: {} bytes\n", prebuildInfo.ResultDataMaxSizeInBytes);
 }
 
 void DxBLAS::Build(
@@ -195,10 +195,10 @@ void DxBLAS::Build(
 	D3D12_RESOURCE_BARRIER barrier = DxUtils::CreateUAVBarrier(m_blasBuffer->GetResource());
 	cmdList->ResourceBarrier(1, &barrier);
 
-	DEBUG_LOG_FMT(
-		"[DxBLAS] Built Multi-Geo BLAS - SubMeshes: {}, Size: {} bytes\n", subMeshes.size(),
-		prebuildInfo.ResultDataMaxSizeInBytes
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBLAS] Built Multi-Geo BLAS - SubMeshes: {}, Size: {} bytes\n", subMeshes.size(),
+	//	prebuildInfo.ResultDataMaxSizeInBytes
+	//);
 }
 
 void DxBLAS::Build(
@@ -289,10 +289,10 @@ void DxBLAS::Build(
 	D3D12_RESOURCE_BARRIER barrier = DxUtils::CreateUAVBarrier(m_blasBuffer->GetResource());
 	cmdList->ResourceBarrier(1, &barrier);
 
-	DEBUG_LOG_FMT(
-		"[DxBLAS] Built Skinned Multi-Geo BLAS - SubMeshes: {}, Size: {} bytes\n", subMeshes.size(),
-		prebuildInfo.ResultDataMaxSizeInBytes
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBLAS] Built Skinned Multi-Geo BLAS - SubMeshes: {}, Size: {} bytes\n", subMeshes.size(),
+	//	prebuildInfo.ResultDataMaxSizeInBytes
+	//);
 }
 
 

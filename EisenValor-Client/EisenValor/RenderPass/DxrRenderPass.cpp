@@ -194,7 +194,7 @@ void DxrRenderPass::CollectRenderData(Scene* scene)
 		inst.geoInfoBaseIdx = geoBaseIdx;
 		inst.instanceID = meshComp.GetOwner().id;
 
-		DEBUG_LOG_FMT("[DxrRenderPass] STATIC '{}' Debug: GeoBase={}, Flags={}\n", meshRes->GetName(), inst.geoInfoBaseIdx, inst.instanceFlags);
+		//DEBUG_LOG_FMT("[DxrRenderPass] STATIC '{}' Debug: GeoBase={}, Flags={}\n", meshRes->GetName(), inst.geoInfoBaseIdx, inst.instanceFlags);
 
 		m_instanceBuffer.Register(inst);
 	}

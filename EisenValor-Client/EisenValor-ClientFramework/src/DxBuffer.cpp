@@ -113,10 +113,10 @@ void DxBuffer::Initialize(
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
 
-	DEBUG_LOG_FMT(
-		"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
-		static_cast<uint32_t>(resourceFlags)
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
+	//	static_cast<uint32_t>(resourceFlags)
+	//);
 
 	if (needsAutoRecreate)
 	{
@@ -197,10 +197,10 @@ void DxBuffer::Initialize(
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
 
-	DEBUG_LOG_FMT(
-		"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
-		static_cast<uint32_t>(resourceFlags)
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
+	//	static_cast<uint32_t>(resourceFlags)
+	//);
 
 	if (needsAutoRecreate)
 	{
