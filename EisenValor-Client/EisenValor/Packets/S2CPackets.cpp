@@ -62,8 +62,15 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// TODO: 로비 씬으로 전환
 
 	// 테스트용으로 바로 게임 월드 진입
+	
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
+
+	// 테스트용으로 바로 게임 월드 진입
+	//{
+	//	auto pb = C2S::Make_CS_GO_WORLD_PACKET();
+	//	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	//}
 
 	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}\n", id);
 	return true;
@@ -663,7 +670,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			// StaminaComponent (Player Only)
 			if (isPlayer)
 			{
-				scene->CreateComponentWithInit<StaminaComponent>(
+				scene->CreateComponentWithInit<StaminaComponent>(	
 					objHandle,
 					[maxStamina, currentStamina](StaminaComponent* stamina) {
 						stamina->SetMaxStamina(maxStamina);
@@ -673,7 +680,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			}
 
 			// VitalUIControllerComponent
-			if (isPlayer || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+			if (isGeneral || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
 			{
 				scene->CreateComponentWithInit<VitalUIControllerComponent>(
 					objHandle,
@@ -689,7 +696,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// BattleUIControllerComponent 부착
-			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
@@ -703,31 +710,31 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			}
 
 	//		// 공격 범위 디버깅
-	//		if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
-	//		{
-	//			scene->ReserveGameObject(
-	//				"AttackRangeIndicator", std::nullopt,
-	//				[scene, objHandle](GameObject* indicatorObj)
-	//				{
-	//					// 부모
-	//					if (auto* parent = scene->TryGetGameObject(objHandle)) {
-	//						indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
-	//					}
+			//if (isGeneral)
+			//{
+			//	scene->ReserveGameObject(
+			//		"AttackRangeIndicator", std::nullopt,
+			//		[scene, objHandle](GameObject* indicatorObj)
+			//		{
+			//			// 부모
+			//			if (auto* parent = scene->TryGetGameObject(objHandle)) {
+			//				indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
+			//			}
 
-	//					// 위치
-	//					indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
+			//			// 위치
+			//			indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
 
-	//					// 부채꼴 Mesh
-	//					auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-	//					scene->CreateComponentWithInit<MeshComponent>(
-	//						indicatorObj->GetHandle(),
-	//						[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-	//							mesh->SetMesh(v, i);
-	//						}
-	//					);
-	//				}
-	//			);
-	//		}
+			//			// 부채꼴 Mesh
+			//			auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
+			//			scene->CreateComponentWithInit<MeshComponent>(
+			//				indicatorObj->GetHandle(),
+			//				[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
+			//					mesh->SetMesh(v, i);
+			//				}
+			//			);
+			//		}
+			//	);
+			//}
 		}
 	);
 
@@ -792,8 +799,8 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_PLAYER_ATTACK_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_GENERAL_ATTACK_PACKET& recvPkt
 )
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
@@ -986,14 +993,14 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
 )
 {
 	// 플레이어 공격 방향 표시
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	
-	const uint32 id = recvPkt.player_id();
+	const uint32 id = recvPkt.obj_id();
 	const uint32 localID = scene->GetLocalID();
 
 	// 서버 Echo 방지

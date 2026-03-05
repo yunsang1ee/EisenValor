@@ -34,11 +34,11 @@ std::shared_ptr<PacketBuffer> Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
 //		월드
 // =================
 std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerState);
-std::shared_ptr<PacketBuffer> Make_CS_PLAYER_ATTACK_PACKET(const FB_STRUCTS::GeneralAttackInfo* attackInfo);
+std::shared_ptr<PacketBuffer> Make_CS_GENERAL_ATTACK_PACKET(const FB_STRUCTS::GeneralAttackInfo* attackInfo);
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_FAKE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_CAMERA_TARGET_PACKET(uint32_t targetId);
-std::shared_ptr<PacketBuffer> Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+std::shared_ptr<PacketBuffer> Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 	//std::shared_ptr<PacketBuffer> Make_CS_CHAT_PACKET(const std::string& message);
 
 // =================
@@ -50,5 +50,6 @@ std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
 //		테스트
 // =================
 std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept;
+std::shared_ptr<PacketBuffer> Make_CS_GO_WORLD_PACKET() noexcept;
 } // namespace C2S
 } // namespace NetBridge

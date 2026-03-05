@@ -4,6 +4,7 @@
 #include "GameWorld.h"
 #include "Player.h"
 #include "BehaviorTree.h"
+#include "NavAgent.h"
 
 Server::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
@@ -19,7 +20,7 @@ bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
 {
 	if(!target) return false;
 
-	const auto& atkInfo{ GetAttackInfo() };
+	const auto& atkInfo{ GetAtkInfo() };
 	const float radiusSq{ atkInfo.skillData->attackRadius * atkInfo.skillData->attackRadius };
 	const Vec3& myPos{ GetPos() };
 
@@ -65,7 +66,7 @@ void Server::Contents::General::OnDeath()
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT, true);
 
-	// TODO: 블랙보드 초기화
+	GetComponent<Server::Contents::BehaviorTree>()->Reset();
 }
 
 void Server::Contents::General::OnRespawn()
@@ -79,34 +80,78 @@ void Server::Contents::General::OnRespawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
+	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, worldDT, true);
 
 	// TODO: General Respawn 시 부활 위치 설정 해야함.
-
 	Vec3 pos{ GetPos() };
 	pos.x += 10.f;
 	pos.z += 10.f;
-	SetPos(pos);
+	GetComponent<Server::Contents::NavAgent>()->SetDestPos(pos);
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
-	world->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
+	world->Broadcast(std::move(pb));
+
+	std::cout << "General NPC Respawn!" << std::endl;
 }
 
 bool Server::Contents::General::OnDamaged(Creature* const attacker, const float dt)
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
-	// TODO: 현재 Roaming 중이었다면, 즉시 Duel 상태로 전환해야함.
-
-	/*auto const world{ GetGameWorld() };
+	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<Server::Contents::FSM>() };
 	const auto stateType{ fsm->GetCurState()->GetStateType() };
 
+	if(FB_ENUMS::GENERAL_STATE_TYPE_DEAD == stateType)
+		return false;
+
+	const auto bt = GetComponent<BehaviorTree>();
+	const auto bb = bt->GetBlackboard();
+	const auto atkInfo{ GetAtkInfo() };
+
 	uint32 damage{};
 
+	// 상대가 플레이어인 경우
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
 		auto attackerPlayer = static_cast<Player*>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAttackInfo() };
+		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
+
+		switch(stateType) {
+			case FB_ENUMS::GENERAL_STATE_TYPE_ROAMING:
+			{
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
+				break;
+			}
+			case FB_ENUMS::GENERAL_STATE_TYPE_DUELING:
+			{
+				uint64 lastDefendedFrame = bb->GetValue<uint64>("LastDefendedFrame", 0UI64);
+
+				if(lastDefendedFrame != 0) {
+					uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
+					uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
+
+					// 방어 성공
+					if(frameDiff <= 10) {
+						std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
+						bb->SetValue("LastDefendedFrame", 0UI64);
+						return false;
+					}
+
+					bb->SetValue("LastDefendedFrame", 0UI64);
+				}
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+				break;
+			}
+			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:
+			{
+
+				break;
+			}
+			default:
+				break;
+		}
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
 			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
@@ -114,21 +159,7 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 		else {
 			damage = attackerAtkInfo.skillData->damage;
 		}
+		DecHP(damage);
 	}
-
-	DecHP(damage);*/
-
-	auto const world{ GetGameWorld() };
-	auto bt = GetComponent<BehaviorTree>();
-	bt->GetBlackboard()->SetValue("AttackerID", attacker->GetID());
-	bt->GetBlackboard()->SetValue("LastHitFrame", world->GetGameWorldFrameCount());
-
-	auto fsm = GetComponent<FSM>();
-	if(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING == fsm->GetCurState()->GetStateType()) {
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
-		return false;
-	}
-
 	return true;
-
 }

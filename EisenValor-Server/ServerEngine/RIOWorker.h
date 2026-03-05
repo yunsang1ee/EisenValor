@@ -10,6 +10,7 @@ namespace ServerEngine {
 		class RIOSession;
 
 #ifdef _USE_RIO
+#ifdef LEGACY_CODE
 		class RIOWorker {
 		public:
 			explicit RIOWorker(const uint16 id);
@@ -39,7 +40,7 @@ namespace ServerEngine {
 			SessionFactoryFunc												m_sessionFactoryFunc;
 
 		};
-
+#endif
 #endif
 	}
 

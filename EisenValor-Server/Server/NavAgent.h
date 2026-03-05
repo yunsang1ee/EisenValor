@@ -19,7 +19,7 @@ namespace Server {
 			void StopMove();
 			
 		private:
-			NavSystem* m_navSystem;
+			NavSystem*			m_navSystem;
 			int32				m_agentIdx;
 			dtCrowdAgentParams	m_params;
 

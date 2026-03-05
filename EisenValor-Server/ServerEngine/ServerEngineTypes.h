@@ -14,6 +14,7 @@ namespace ServerEngine {
 	class Session;
 	class Task;
 	class TaskQueue;
+	class IRoom;
 
 	namespace RIO {
 		class RIOSession;
@@ -24,6 +25,10 @@ namespace ServerEngine {
 	}
 }
 
+namespace Server {
+	class GameWorldTest;
+}
+
 #ifdef  _USE_RIO
 using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
 #endif
@@ -32,3 +37,6 @@ using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOS
 using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::IOCP::IOCPSession>()>;
 #endif
 
+
+using GameWorldTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
+using GameLobbyTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;

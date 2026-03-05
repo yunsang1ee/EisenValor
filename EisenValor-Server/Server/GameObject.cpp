@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "GameObject.h"
 
+#include "Creature.h"
+
 Server::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}
+	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}, m_rotateSpeed{1.f}
 {
 }
 
@@ -36,6 +38,35 @@ Vec3 Server::Contents::GameObject::GetForwardDir()
 	return forward;
 }
 
+bool Server::Contents::GameObject::IsTargetInRange(const GameObject* const target, const float rangeSq)
+{
+	if(nullptr == target)
+		return false;
+
+	if(false == target->IsActive())
+		return false;
+
+	const auto& myPos{ GetPos() };
+	const auto& targetPos{ target->GetPos() };
+
+	const float distToTargetSq{ GetDistSq(myPos, targetPos) };
+	
+	if(distToTargetSq <= rangeSq)
+		return true;
+	
+	return false;
+}
+
+bool Server::Contents::GameObject::IsSameTeam(const GameObject* const other)
+{
+	const auto otherTeamType{ other->GetTeamType() };
+
+	if(otherTeamType == m_teamType)
+		return true;
+
+	return false;
+}
+
 void Server::Contents::GameObject::Update(const float dt)
 {
 	LookAt(m_look, dt);
@@ -61,5 +92,5 @@ void Server::Contents::GameObject::LookAt(const Vec3& lookAt, const float dt)
 	const float currentYaw{ m_posInfo.rot.y };
 
 	float deltaYaw{ NormalizeAngle(targetYaw - currentYaw) };
-	m_posInfo.rot.y = NormalizeAngle(currentYaw + (deltaYaw * dt * 1.0f));
+	m_posInfo.rot.y = NormalizeAngle(currentYaw + (deltaYaw * dt * m_rotateSpeed));
 }

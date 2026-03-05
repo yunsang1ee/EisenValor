@@ -1,3 +1,3 @@
-﻿#pragma once
+#pragma once
 
 #include "ServerEnginePch.h"

@@ -12,7 +12,7 @@ namespace Server {
 
 		class BehaviorNode {
 		public:
-			virtual ~BehaviorNode();
+			virtual ~BehaviorNode() = default;
 
 		public:
 			virtual void SetTree(BehaviorTree* const tree) { m_tree = tree; }
@@ -40,7 +40,7 @@ namespace Server {
 		class SequenceNode : public CompositeNode {
 		public:
 			BEHAVIOR_NODE_STATUS Execute(const float dt) override;
-			void Reset() override;
+			void Reset() override { m_currentIndex = 0; CompositeNode::Reset(); }
 
 		private:
 			size_t m_currentIndex = 0;
@@ -50,8 +50,10 @@ namespace Server {
 		class SelectorNode : public CompositeNode {
 		public:
 			BEHAVIOR_NODE_STATUS Execute(const float dt) override;
-
-			void Reset() override;
+			void Reset() override { m_currentIndex = 0; CompositeNode::Reset(); }
+		
+		private:
+			size_t m_currentIndex = 0;
 		};
 
 

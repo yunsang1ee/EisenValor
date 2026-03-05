@@ -67,31 +67,27 @@ void Server::Contents::PlayerIdleState::Update(const float dt)
 	// 1. 탈진 상태 관리
 	if(owner->HasSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED)) {
 		m_accDTForExhaustedRecovery += dt;
-		m_accDTForStaminaRecovery = 0.f; // 탈진 중에는 회복 타이머 정지
+		m_accDTForStaminaRecovery = 0.f;
 
 		if(m_accDTForExhaustedRecovery >= 3.f) {
 			owner->RemoveSubState(GENERAL_SUB_STATE_TYPE::EXHAUSTED);
 			m_accDTForExhaustedRecovery = 0.f;
-			// 탈진이 풀렸으므로 즉시 일반 로직으로 이어지게 return 생략 가능
 		}
 		else {
-			return; // 아직 탈진 중이면 여기서 종료
+			return;
 		}
 	}
 
-	// 2. 스태미나 회복 체크 (최대치라면 연산/브로드캐스트 생략)
 	if(statInfo.currentStamina < statInfo.maxStamina) {
 		m_accDTForStaminaRecovery += dt;
 
 		if(m_accDTForStaminaRecovery >= 3.f) {
-			// 오차 보정: 1.0을 빼서 남은 시간을 다음 턴으로 이월
 			m_accDTForStaminaRecovery = 0.F;
 
 			owner->IncStamina(owner->GetGameObjectData()->staminaRecoveryPerSec);
 		}
 	}
 	else {
-		// 이미 가득 찼다면 타이머 초기화 (나중에 다시 닳았을 때 1초 뒤부터 회복되도록)
 		m_accDTForStaminaRecovery = 0.f;
 	}
 }
@@ -140,7 +136,9 @@ Server::Contents::PlayerPredelayState::~PlayerPredelayState()
 void Server::Contents::PlayerPredelayState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
+#ifdef LEGACY_CODE
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
+#endif
 	//	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
@@ -154,12 +152,12 @@ void Server::Contents::PlayerPredelayState::Update(const float dt)
 	auto const owner{ GetGeneral(GetFSM()) };
 
 	const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	const auto& atkInfo{ owner->GetAtkInfo() };
 
 	if(worldFrame >= m_startFrame + atkInfo.skillData->preDelay) {
 		auto const world{ owner->GetGameWorld() };
 		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt);
+		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
 	}
 }
 
@@ -188,16 +186,20 @@ void Server::Contents::PlayerAttackState::Exit(const float dt)
 void Server::Contents::PlayerAttackState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
 	auto const target = owner->GetTarget();
-	if(!target) {
+
+	if(false == IsValidObj(target)) {
+		owner->SetTarget(nullptr);
 		return;
 	}
 
 	if(owner->IsTargetInAttackRange(target)) {
-		if(nullptr == target) return;
+		
+		if(false == IsValidObj(target))
+			return;
 
 		if(target->OnDamaged(owner, dt)) {
 
@@ -207,7 +209,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 				if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
 					auto const obj{ static_cast<General*>(target) };
 					auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt, true);
 				}
 			}
 		}
@@ -217,7 +219,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 	}
 
 	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt);
+	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 }
 
 // ==================================
@@ -249,11 +251,11 @@ void Server::Contents::PlayerPostdelayState::Update(const float dt)
 	auto const owner{ GetGeneral(GetFSM()) };
 	auto const world{ owner->GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAttackInfo() };
+	const auto& atkInfo{ owner->GetAtkInfo() };
 
 	if(worldFrame >= m_startFrame + atkInfo.skillData->postDelay) {
 		auto const fsm{ GetFSM() };
-		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt);
+		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
 	}
 }
 
@@ -273,7 +275,6 @@ Server::Contents::PlayerStunState::~PlayerStunState()
 void Server::Contents::PlayerStunState::Enter(const float dt)
 {
 	//std::cout << std::format("ID:{}, GeneralStunState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
-
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 	if(m_stunDuration == 0) {
@@ -294,7 +295,7 @@ void Server::Contents::PlayerStunState::Update(const float dt)
 	auto const world{ owner->GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const fsm{ GetFSM() };
-	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt);
+	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
 }
 
 // ==================================

@@ -6,8 +6,8 @@
 
 #define SINGLETON(classname)	\
 private:						\
-classname()noexcept { }			\
-~classname()noexcept  { } 		\
+classname() { }			\
+~classname(){ } 		\
 friend class Singleton; 
 
 #define MANAGER(classname) (classname::GetInstance())

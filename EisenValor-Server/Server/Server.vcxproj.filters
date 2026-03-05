@@ -10,9 +10,6 @@
     <ClCompile Include="ClientSession.cpp">
       <Filter>01. ClientSessionManager\ClientSession</Filter>
     </ClCompile>
-    <ClCompile Include="ClientPacketHandler.cpp">
-      <Filter>03. Packets\PacketHandler</Filter>
-    </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>02. Contents\GameWorld\GameObject</Filter>
     </ClCompile>
@@ -43,7 +40,7 @@
     <ClCompile Include="BehaviorNode.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode</Filter>
     </ClCompile>
-    <ClCompile Include="ServerGlobalFunc.cpp">
+    <ClCompile Include="ServerGlobalFuncs.cpp">
       <Filter>97. Global</Filter>
     </ClCompile>
     <ClCompile Include="SoldierStates.cpp">
@@ -150,6 +147,12 @@
     </ClCompile>
     <ClCompile Include="Component.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerGlobalVariables.cpp">
+      <Filter>97. Global</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -347,7 +350,7 @@
     <ClInclude Include="BehaviorNode.h">
       <Filter>02. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode</Filter>
     </ClInclude>
-    <ClInclude Include="ServerGlobalFunc.h">
+    <ClInclude Include="ServerGlobalFuncs.h">
       <Filter>97. Global</Filter>
     </ClInclude>
     <ClInclude Include="SoldierStates.h">
@@ -457,6 +460,9 @@
     </ClInclude>
     <ClInclude Include="GeneralStates.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\General\States</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerGlobalVariables.h">
+      <Filter>97. Global</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

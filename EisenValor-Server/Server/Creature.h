@@ -35,8 +35,9 @@ namespace Server {
 			void BroadcastUpdateVital();
 
 		private:
+			// TODO: Component로 뺴는것도 생각해보자
 			Stat						m_statInfo;
-			Creature* m_target;
+			Creature*					m_target;
 
 		};
 	}

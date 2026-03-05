@@ -131,14 +131,14 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(const FB_STRUC
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(
 	const FB_STRUCTS::GeneralAttackInfo* attackInfo
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_PLAYER_ATTACK_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PLAYER_ATTACK_PACKET, attackInfo)
+		PACKET_TYPE::CS_GENERAL_ATTACK_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GENERAL_ATTACK_PACKET, attackInfo)
 	);
 }
 
@@ -169,14 +169,14 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKE
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_SHOW_PLAYER_ATTACK_DIR_PACKET, dirType)
+		PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_SHOW_GENERAL_ATTACK_DIR_PACKET, dirType)
 	);
 }
 
@@ -203,4 +203,13 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(co
 		PACKET_TYPE::TEST_CS_ENTER_GAME_WORLD_PACKET,
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_WORLD_PACKET, roomID)
 	);
+}
+
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GO_WORLD_PACKET() noexcept
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_GO_WORLD_PACKET,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GO_WORLD_PACKET));
 }

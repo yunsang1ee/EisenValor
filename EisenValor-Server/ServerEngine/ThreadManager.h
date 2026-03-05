@@ -17,8 +17,8 @@ namespace ServerEngine {
 		uint16 IssueID();
 
 	private:
-		static void InitTLS();
-		static void DestroyTLS();
+		void InitTLS();
+		void DestroyTLS();
 
 	private:
 		uint16						m_workerThreadCount;

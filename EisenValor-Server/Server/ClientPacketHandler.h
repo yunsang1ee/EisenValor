@@ -5,7 +5,7 @@
 #include "Tables_generated.h"
 
 #include "PacketHeader.h"
-#include "ServerGlobalFunc.h"
+#include "ServerGlobalFuncs.h"
 
 #include "ClientPackets.h"
 
@@ -113,8 +113,8 @@ enum class PACKET_TYPE : uint16 {
 	CS_MOVE_PKT = 10003,
 	SC_MOVE_PKT = 10004,
 
-	CS_PLAYER_ATTACK_PKT = 10005,
-	SC_PLAYER_ATTACK_PKT = 10006,
+	CS_GENERAL_ATTACK_PKT = 10005,
+	SC_GENERAL_ATTACK_PKT = 10006,
 
 	SC_UPDATE_VITAL_PKT = 10007,
 	SC_UPDATE_STATE_PKT = 10008,
@@ -136,8 +136,8 @@ enum class PACKET_TYPE : uint16 {
 	CS_CHANGE_CAMERA_TARGET_PKT = 10020,
 	SC_CHANGE_CAMERA_TARGET_PKT = 10021,
 
-	CS_SHOW_PLAYER_ATTACK_DIR_PKT = 10022,
-	SC_SHOW_PLAYER_ATTACK_DIR_PKT = 10023,
+	CS_SHOW_GENERAL_ATTACK_DIR_PKT = 10022,
+	SC_SHOW_GENERAL_ATTACK_DIR_PKT = 10023,
 
 	CS_RUN_PKT = 10024,
 	CS_ROLL_PKT = 10025,
@@ -153,6 +153,9 @@ enum class PACKET_TYPE : uint16 {
 	TEST_CS_ENTER_GAME_WORLD_PACKET = 20000,
 	TEST_SC_ENTER_GAME_WORLD_PACKET = 20001,
 #endif // DEVELOP
+
+	CS_GO_WORLD_PACKET = 20010,
+
 #pragma endregion
 
 	END= 65535,
@@ -178,7 +181,7 @@ namespace Server {
 		static bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer);
 
 		template<typename PacketType, typename HandleFunc>
-		static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
+		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
 		{
 			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
 			return handleFunc(session, *packet);
