@@ -608,7 +608,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isPlayer)
