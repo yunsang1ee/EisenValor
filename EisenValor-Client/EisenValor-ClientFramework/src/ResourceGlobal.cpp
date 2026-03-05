@@ -52,6 +52,14 @@ void ResourceGlobal::InitializeDefaultResources()
 {
 	m_defaultMaterial = std::make_shared<MaterialResource>();
 	m_defaultMaterial->SetName("DefaultMaterial");
+
+	// UI 리소스 프리캐싱
+	Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex");
+	Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
+	Load<TextureResource>(L"Resource\\Texture\\HPback.evtex");
+	Load<TextureResource>(L"Resource\\Texture\\HPfill.evtex");
+	Load<TextureResource>(L"Resource\\Texture\\Staminaback.evtex");
+	Load<TextureResource>(L"Resource\\Texture\\Staminafill.evtex");
 }
 
 bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)

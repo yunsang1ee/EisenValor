@@ -66,8 +66,8 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 		targetTextureResource = m_normalTextureResource;
 	}
 
-	// 최종적으로 리소스가 없으면 렌더링 데이터 추가 안함
-	if (targetTextureResource == nullptr)
+	// 리소스가 없거나 GPU 로딩이 완료되지 않았으면
+	if (targetTextureResource == nullptr || !targetTextureResource->IsReady())
 	{
 		return;
 	}
