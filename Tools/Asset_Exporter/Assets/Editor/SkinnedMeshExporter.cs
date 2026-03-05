@@ -93,6 +93,22 @@ public class SkinnedMeshExporter
                     continue;
                 }
 
+    private static byte[] CreateDepsChunk(SkinnedMeshRenderer smr)
+    {
+        using (MemoryStream ms = new MemoryStream())
+        using (BinaryWriter bw = new BinaryWriter(ms))
+        {
+            Material[] materials = smr.sharedMaterials;
+            bw.Write((uint)materials.Length);
+
+            foreach (var mat in materials)
+            {
+                if (mat == null)
+                {
+                    bw.Write(new byte[16]); // Write a zeroed-out GUID
+                    continue;
+                }
+
                 string materialPath = AssetDatabase.GetAssetPath(mat);
                 string guidString = AssetDatabase.AssetPathToGUID(materialPath);
 
@@ -116,7 +132,7 @@ public class SkinnedMeshExporter
         using (BinaryWriter bw = new BinaryWriter(ms))
         {
             Bounds bounds = mesh.bounds;
-
+            
             // AABB
             bw.Write(bounds.min.x); bw.Write(bounds.min.y); bw.Write(bounds.min.z);
             bw.Write(bounds.max.x); bw.Write(bounds.max.y); bw.Write(bounds.max.z);

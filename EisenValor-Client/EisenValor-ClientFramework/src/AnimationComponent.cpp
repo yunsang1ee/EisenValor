@@ -6,6 +6,7 @@
 #include "DxMath.h"
 #include <cmath>
 #include <algorithm>
+#include <functional>
 
 using namespace DirectX;
 
@@ -80,6 +81,24 @@ void AnimationComponent::UpdateBoneMatrices()
 		m_localMatrices.resize(boneCount);
 		m_globalMatrices.resize(boneCount);
 		m_finalPalette.resize(boneCount);
+
+		// [DEBUG] 매칭 확인
+		const auto& tracks = m_currentAnimation->GetTracks();
+		size_t		matchCount = 0;
+		for (const auto& track : tracks)
+		{
+			for (size_t i = 0; i < boneCount; ++i)
+			{
+				if (track.BoneNameHash == bones[i].nameHash)
+				{
+					matchCount++;
+					break;
+				}
+			}
+		}
+		DEBUG_LOG_FMT(
+			"[Animation] Summary - Bones: {}, Tracks: {}, Matched: {}\n", boneCount, tracks.size(), matchCount
+		);
 	}
 
 	float	 frameRate = m_currentAnimation->GetFrameRate();
@@ -91,24 +110,24 @@ void AnimationComponent::UpdateBoneMatrices()
 
 	const auto& tracks = m_currentAnimation->GetTracks();
 
-	// 1. 모든 본의 로컬 행렬 계산 (애니메이션 트랙이 없는 본은 Rest Pose 사용)
+	// 1. 모든 본의 로컬 행렬 계산
 	for (size_t i = 0; i < boneCount; ++i)
 	{
 		XMVECTOR pos = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restPos));
 		XMVECTOR rot = XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(bones[i].restRot));
 		XMVECTOR scale = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restScale));
 
-		// 이 본에 대한 애니메이션 트랙 찾기 (최적화 여지 있음)
 		for (const auto& track : tracks)
 		{
-			if (track.BoneIndex == i)
+			if (track.BoneNameHash == bones[i].nameHash)
 			{
-				// Position
+				// Position 보정 (Unity -> DX)
 				if (track.Flags & EvAsset::HasPos)
 				{
+					XMVECTOR p;
 					if (track.Flags & EvAsset::IsConstPos)
 					{
-						pos = XMVectorSet(track.Positions[0], track.Positions[1], track.Positions[2], 1.0f);
+						p = XMVectorSet(track.Positions[0], track.Positions[1], track.Positions[2], 1.0f);
 					}
 					else
 					{
@@ -120,17 +139,19 @@ void AnimationComponent::UpdateBoneMatrices()
 							track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1],
 							track.Positions[frameIdx1 * 3 + 2], 1.0f
 						);
-						pos = XMVectorLerp(p0, p1, alpha);
+						p = XMVectorLerp(p0, p1, alpha);
 					}
+					// 유니티와 DX의 X축 반전 보정
+					pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
 				}
 
-				// Rotation
+				// Rotation 보정 (Unity -> DX)
 				if (track.Flags & EvAsset::HasRot)
 				{
+					XMVECTOR r;
 					if (track.Flags & EvAsset::IsConstRot)
 					{
-						rot =
-							XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
+						r = XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
 					}
 					else
 					{
@@ -142,11 +163,12 @@ void AnimationComponent::UpdateBoneMatrices()
 							track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1],
 							track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]
 						);
-						rot = XMQuaternionSlerp(r0, r1, alpha);
+						r = XMQuaternionSlerp(r0, r1, alpha);
 					}
+					// 유니티 Quaternion 성분 보정 (Y, Z 반전)
+					rot = XMVectorSet(XMVectorGetX(r), -XMVectorGetY(r), -XMVectorGetZ(r), XMVectorGetW(r));
 				}
 
-				// Scale
 				if (track.Flags & EvAsset::HasScale)
 				{
 					if (track.Flags & EvAsset::IsConstScale)
@@ -174,13 +196,22 @@ void AnimationComponent::UpdateBoneMatrices()
 		XMStoreFloat4x4(&m_localMatrices[i], local);
 	}
 
-	// 2. 계층 구조에 따른 전역 행렬 계산
-	const auto& offsetFloats = meshRes->GetOffsetMatrices();
-	for (size_t i = 0; i < boneCount; ++i)
-	{
-		XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[i]);
-		int32_t	 parentIdx = bones[i].parentIndex;
+	// 2. 계층 구조에 따른 전역 행렬 계산 (부모 순서 보장)
+	std::vector<bool> computed(boneCount, false);
+	const auto&		  offsetFloats = meshRes->GetOffsetMatrices();
 
+	std::function<void(int32_t)> computeGlobal = [&](int32_t idx)
+	{
+		if (idx < 0 || computed[idx])
+			return;
+
+		int32_t parentIdx = bones[idx].parentIndex;
+		if (parentIdx != -1 && !computed[parentIdx])
+		{
+			computeGlobal(parentIdx);
+		}
+
+		XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[idx]);
 		XMMATRIX global;
 		if (parentIdx == -1)
 		{
@@ -191,15 +222,20 @@ void AnimationComponent::UpdateBoneMatrices()
 			XMMATRIX parentGlobal = XMLoadFloat4x4(&m_globalMatrices[parentIdx]);
 			global = XMMatrixMultiply(local, parentGlobal);
 		}
-		XMStoreFloat4x4(&m_globalMatrices[i], global);
+		XMStoreFloat4x4(&m_globalMatrices[idx], global);
 
 		// 3. 최종 팔레트 계산 (Offset * Global)
-		// offsetMatrices는 16개의 float 배열로 저장되어 있다고 가정
-		XMMATRIX offset = XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&offsetFloats[i * 16]));
+		XMMATRIX offset = XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&offsetFloats[idx * 16]));
 		XMMATRIX final = XMMatrixMultiply(offset, global);
-		XMStoreFloat4x4(&m_finalPalette[i], final);
+		XMStoreFloat4x4(&m_finalPalette[idx], XMMatrixTranspose(final));
+
+		computed[idx] = true;
+	};
+
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		computeGlobal((int32_t)i);
 	}
 
-	// SkinnedMeshComponent에 결과 전달
 	skinnedMesh->SetFinalMatrices(m_finalPalette);
 }

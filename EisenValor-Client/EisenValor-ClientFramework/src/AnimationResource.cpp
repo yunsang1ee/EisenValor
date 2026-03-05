@@ -28,6 +28,7 @@ bool AnimationResource::IsCompatible(std::shared_ptr<SkinnedMeshResource> mesh) 
 	}
 
 	const uint32_t boneCount = static_cast<uint32_t>(mesh->GetBones().size());
+	/*
 	for (const auto& track : m_tracks)
 	{
 		if (track.BoneIndex >= boneCount)
@@ -36,6 +37,7 @@ bool AnimationResource::IsCompatible(std::shared_ptr<SkinnedMeshResource> mesh) 
 			return false;
 		}
 	}
+	*/
 
 	return true;
 }

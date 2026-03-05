@@ -43,9 +43,9 @@ bool AnimationData::Deserialize(AssetFile& file)
 			for (uint32_t i = 0; i < trackCount; ++i)
 			{
 				AnimationTrack track;
-				// BoneIndex 2바이트
-				std::memcpy(&track.BoneIndex, bytePtr, 2);
-				bytePtr += 2;
+				// BoneNameHash 8바이트
+				std::memcpy(&track.BoneNameHash, bytePtr, 8);
+				bytePtr += 8;
 				// Flags 4바이트
 				std::memcpy(&track.Flags, bytePtr, 4);
 				bytePtr += 4;

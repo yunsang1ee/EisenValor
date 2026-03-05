@@ -463,6 +463,19 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE); }
 			);
 
+			// 애니메이션 컴포넌트 추가
+			scene->CreateComponentWithInit<AnimationComponent>(
+				playerObjHandle,
+				[](AnimationComponent* anim)
+				{
+					auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+					if (animRes)
+					{
+						anim->Play(animRes, true);
+					}
+				}
+			);
+
 			//// 공격 범위 디버깅용
 			// scene->ReserveGameObject(
 			//	"AttackRangeIndicator", std::nullopt,
