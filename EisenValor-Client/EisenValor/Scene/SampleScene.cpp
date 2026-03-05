@@ -50,7 +50,7 @@ void SampleScene::CreateSceneObjects()
 {
 	DEBUG_LOG_FMT("[SampleScene] Creating scene objects from exported assets...\n");
 
-	/*ReserveGameObject(
+	ReserveGameObject(
 		"Ground", std::nullopt,
 		[this](GameObject* obj)
 		{
