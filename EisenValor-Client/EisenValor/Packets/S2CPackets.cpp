@@ -608,10 +608,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
+			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
-			if (isPlayer)
+			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
@@ -668,7 +668,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// StaminaComponent (Player Only)
-			if (isPlayer)
+			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<StaminaComponent>(	
 					objHandle,
@@ -680,7 +680,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			}
 
 			// VitalUIControllerComponent
-			if (isPlayer || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+			if (isGeneral || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
 			{
 				scene->CreateComponentWithInit<VitalUIControllerComponent>(
 					objHandle,
@@ -696,7 +696,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// BattleUIControllerComponent 부착
-			if (isPlayer)
+			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
