@@ -87,7 +87,7 @@ public class AnimationExporter
         List<AnimationTrack> tracks = new List<AnimationTrack>();
         foreach (var bone in bones)
         {
-            tracks.Add(new AnimationTrack { BoneIndex = boneToIndex[GetGameObjectPath(bone, target.transform)] });
+            tracks.Add(new AnimationTrack { BoneNameHash = HashFNV1a(bone.name) });
         }
 
         for (uint f = 0; f < totalFrames; f++)
@@ -150,7 +150,7 @@ public class AnimationExporter
             bw.Write((uint)tracks.Count);
             foreach (var track in tracks)
             {
-                bw.Write(track.BoneIndex);
+                bw.Write(track.BoneNameHash);
                 bw.Write((uint)track.Flags);
 
                 // Position
@@ -259,7 +259,7 @@ public class AnimationExporter
     // Track Data 보관함
     private class AnimationTrack
     {
-        public ushort BoneIndex;
+        public ulong BoneNameHash;
         public TrackFlags Flags;
         public List<Vector3> Positions = new List<Vector3>();
         public List<Quaternion> Rotations = new List<Quaternion>();

@@ -34,6 +34,15 @@ public:
 		const std::string&			name = ""
 	);
 
+	void Build(
+		ID3D12Device5*				device,
+		ID3D12GraphicsCommandList4* cmdList,
+		const class SkinnedMeshResource* mesh,
+		bool						allowUpdate = false,
+		const std::string&			name = "",
+		D3D12_GPU_VIRTUAL_ADDRESS	vbAddressOverride = 0 // 애니메이션 버퍼 주소
+	);
+
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const;
 	ID3D12Resource* GetResource() const;
 	bool			IsBuilt() const;

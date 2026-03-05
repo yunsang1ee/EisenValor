@@ -13,6 +13,10 @@
 #define MATERIAL_FLAG_UNITY_PACKING     (1 << 3)
 #define MATERIAL_FLAG_DOUBLE_SIDED      (1 << 4)
 
+// --- Instance Flags ---
+#define INSTANCE_FLAG_NONE              0
+#define INSTANCE_FLAG_SKINNED           (1 << 0)
+
 // --- Data Structures ---
 
 struct Vertex
@@ -21,6 +25,16 @@ struct Vertex
     float3 normal;
     float4 tangent;
     float2 uv;
+};
+
+struct SkinnedVertex
+{
+    float3 position;
+    float3 normal;
+    float4 tangent;
+    float2 uv;
+    uint blendIndices;
+    float4 blendWeights;
 };
 
 struct GeoInfo
@@ -40,6 +54,11 @@ struct InstanceData
     uint indexBufferIdx;
     uint geoInfoBaseIdx;
     uint instanceID;
+    
+    uint instanceFlags;
+    uint boneMatrixBaseIdx;
+    uint pad0;
+    uint pad1;
 };
 
 struct MaterialGPUData

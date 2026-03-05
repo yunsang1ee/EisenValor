@@ -18,7 +18,7 @@ enum TrackFlags : uint32_t
 
 struct AnimationTrack
 {
-	uint16_t BoneIndex;
+	uint64_t BoneNameHash;
 	uint32_t Flags;
 
 	std::vector<float> Positions; // If IsConstPos 3, else TotalFrames * 3

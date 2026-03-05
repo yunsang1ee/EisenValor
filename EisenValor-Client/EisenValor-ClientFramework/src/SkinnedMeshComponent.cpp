@@ -3,8 +3,16 @@
 #include "MaterialResource.h"
 #include "ResourceGlobal.h"
 #include "DxMath.h"
+#include "DxBuffer.h"
+#include "DxBLAS.h"
 
-void SkinnedMeshComponent::SetResource(std::shared_ptr<SkinnedMeshResource> resource, bool loadDefaultMaterials)
+SkinnedMeshComponent::SkinnedMeshComponent() = default;
+SkinnedMeshComponent::~SkinnedMeshComponent() = default;
+
+SkinnedMeshComponent::SkinnedMeshComponent(SkinnedMeshComponent&&) noexcept = default;
+SkinnedMeshComponent& SkinnedMeshComponent::operator=(SkinnedMeshComponent&&) noexcept = default;
+
+void SkinnedMeshComponent::SetSkinnedMeshResource(std::shared_ptr<SkinnedMeshResource> resource, bool loadDefaultMaterials)
 {
 	m_resource = std::move(resource);
 	if (nullptr == m_resource)
@@ -25,7 +33,7 @@ void SkinnedMeshComponent::SetResource(std::shared_ptr<SkinnedMeshResource> reso
 			maxSlot = subMesh.materialSlot;
 		}
 	}
-	m_materials.assign(maxSlot + 1, nullptr);
+	m_materials.assign(maxSlot + 1, GLOBAL(ResourceGlobal).GetDefaultMaterial());
 
 	if (!loadDefaultMaterials)
 	{
@@ -57,7 +65,7 @@ void SkinnedMeshComponent::SetMaterialResource(uint32_t slot, std::shared_ptr<Ma
 	}
 }
 
-MaterialResource* SkinnedMeshComponent::GetMaterial(uint32_t slot) const
+MaterialResource* SkinnedMeshComponent::GetMaterialResource(uint32_t slot) const
 {
 	if (slot < m_materials.size())
 	{
@@ -69,4 +77,14 @@ MaterialResource* SkinnedMeshComponent::GetMaterial(uint32_t slot) const
 void SkinnedMeshComponent::SetFinalMatrices(const std::vector<DirectX::XMFLOAT4X4>& matrices)
 {
 	m_finalMatrices = matrices;
+}
+
+void SkinnedMeshComponent::SetSkinnedVertexBuffer(std::unique_ptr<class DxBuffer>&& buffer)
+{
+	m_skinnedVertexBuffer = std::move(buffer);
+}
+
+void SkinnedMeshComponent::SetBLAS(std::unique_ptr<class DxBLAS>&& blas)
+{
+	m_blas = std::move(blas);
 }

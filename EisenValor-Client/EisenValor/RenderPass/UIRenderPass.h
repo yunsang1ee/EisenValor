@@ -12,15 +12,15 @@ struct UIVertex
 	DirectX::XMFLOAT4 color;
 };
 
-// 인스턴스 데이터 구조체 (슬롯 1)
+// 인스턴스 데이터 구조체 (슬롯 1) - 128바이트 정렬 (GPU 최적화)
 struct UIInstanceData
 {
-	DirectX::XMFLOAT4X4 transform;
-	DirectX::XMFLOAT4	color;
-	DirectX::XMFLOAT2	uvMin;		  // UV 좌상단
-	DirectX::XMFLOAT2	uvMax;		  // UV 우하단
-	uint32_t			textureIndex; // Bindless 텍스처 인덱스
-	uint32_t			padding[3];	  
+	DirectX::XMFLOAT4X4 transform;    // 64바이트
+	DirectX::XMFLOAT4	color;        // 16바이트
+	DirectX::XMFLOAT2	uvMin;		  // 8바이트
+	DirectX::XMFLOAT2	uvMax;		  // 8바이트
+	uint32_t			textureIndex; // 4바이트
+	uint32_t			padding[7];	  // 28바이트 (총 128바이트)
 };
 
 class UIRenderPass : public IRenderPass
@@ -61,3 +61,4 @@ private:
 	bool m_initialized = false;
 	bool m_vertexDataUploaded = false;
 };
+

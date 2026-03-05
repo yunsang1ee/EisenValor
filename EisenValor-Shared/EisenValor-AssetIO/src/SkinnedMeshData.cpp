@@ -60,8 +60,32 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 			std::print("[SkinnedMeshData] INDX Loaded: {} indices\n", count);
 		}
 	}
+	
+	// 4. BNDS (Global Mesh Bounds)
+	size_t bndsSize = 0;
+	const void* bndsPtr = file.GetChunkDataPtr("BNDS", bndsSize);
+	if (bndsPtr && sizeof(Bounds) <= bndsSize)
+	{
+		std::memcpy(&boundsInfo, bndsPtr, sizeof(Bounds));
+		std::print("[SkinnedMeshData] BNDS Loaded\n");
+	}
 
-	// 4. BONE 청크 파싱: 뼈대(Hierarchy,Rest Pose)
+	// 5. SUBM (SubMesh Data)
+	size_t subSize = 0;
+	const uint8_t* subPtr = static_cast<const uint8_t*>(file.GetChunkDataPtr("SUBM", subSize));
+	if (subPtr && subSize >= 4)
+	{
+		uint32_t count = ReadUnaligned<uint32_t>(subPtr);
+		size_t requiredSize = 4 + (count * sizeof(SubMesh));
+		if (requiredSize <= subSize)
+		{
+			subMeshes.resize(count);
+			std::memcpy(subMeshes.data(), subPtr + 4, count * sizeof(SubMesh));
+			std::print("[SkinnedMeshData] SUBM Loaded: {} submeshes\n", count);
+		}
+	}
+
+	// 6. BONE 청크 파싱: 뼈대(Hierarchy,Rest Pose)
 	size_t		   boneSize = 0;
 	const uint8_t* bonePtr = static_cast<const uint8_t*>(file.GetChunkDataPtr("BONE", boneSize));
 	if (bonePtr && boneSize >= 4)
@@ -72,7 +96,7 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 		std::print("[SkinnedMeshData] BONE Loaded: {} bones\n", count);
 	}
 
-	// 5. OFFS 청크 파싱: Inverse Bind Poses
+	// 7. OFFS 청크 파싱: Inverse Bind Poses
 	size_t		offSize = 0;
 	const void* offPtr = file.GetChunkDataPtr("OFFS", offSize);
 	if (offPtr)
@@ -83,18 +107,7 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 		std::print("[SkinnedMeshData] OFFS Loaded: {} matrices\n", floatCount / 16);
 	}
 
-	// 6. SUBM 청크 파싱
-	size_t subSize = 0;
-	const void* subPtr = file.GetChunkDataPtr("SUBM", subSize);
-	if (subPtr)
-	{
-		size_t count = subSize / sizeof(SubMesh);
-		subMeshes.resize(count);
-		std::memcpy(subMeshes.data(), subPtr, subSize);
-		std::print("[SkinnedMeshData] SUBM Loaded: {} submeshes\n", count);
-	}
-
-	// 7. DEPS 청크 파싱 (머터리얼)
+	// 8. DEPS 청크 파싱 (머터리얼)
 	size_t depSize = 0;
 	const uint8_t* depPtr = static_cast<const uint8_t*>(file.GetChunkDataPtr("DEPS", depSize));
 	if (depPtr && depSize >= 4)

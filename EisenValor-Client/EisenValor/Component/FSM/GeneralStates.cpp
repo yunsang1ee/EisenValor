@@ -2,7 +2,11 @@
 #include "GeneralStates.h"
 #include "FSMComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "AnimationComponent.h"
+#include "ResourceGlobal.h"
+#include "AnimationResource.h"
 #include <GameObject.h>
+#include <GameObject.inl>
 #include <Packets/Enums_generated.h>
 
 // ==================================
@@ -97,6 +101,19 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
+
+	// 애니메이션 한 번 재생
+	if (auto* go = fsm->GetGameObject())
+	{
+		if (auto* anim = go->GetComponent<AnimationComponent>())
+		{
+			auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+			if (animRes)
+			{
+				anim->Play(animRes, false);
+			}
+		}
+	}
 }
 
 void PlayerAttackState::Update(FSMComponent* fsm, float dt)

@@ -90,10 +90,10 @@ void DxResource::InitializeResource(
 		DxUtils::SetDebugName(m_resource.Get(), m_name);
 	}
 
-	DEBUG_LOG_FMT(
-		"[DxResource] Resource created: {}, {} bytes, State: 0x{:X}\n", m_name, m_sizeInBytes,
-		static_cast<uint32_t>(m_currentState)
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxResource] Resource created: {}, {} bytes, State: 0x{:X}\n", m_name, m_sizeInBytes,
+	//	static_cast<uint32_t>(m_currentState)
+	//);
 }
 
 void DxResource::ReleaseResource()
@@ -121,8 +121,8 @@ void DxResource::ReleaseResource()
 	FenceHandle currentFence(m_lastUsedQueue, fenceValue);
 	gc.DeferResourceRelease(std::move(m_resource), currentFence, m_name);
 
-	if (!m_name.empty())
-	{
-		DEBUG_LOG_FMT("[DxResource] Resource queued for GC: {} (Fence={})\n", m_name, currentFence.value);
-	}
+	//if (!m_name.empty())
+	//{
+	//	DEBUG_LOG_FMT("[DxResource] Resource queued for GC: {} (Fence={})\n", m_name, currentFence.value);
+	//}
 }

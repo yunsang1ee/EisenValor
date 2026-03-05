@@ -11,6 +11,8 @@
 #include "ResourceGlobal.h"
 #include "MeshComponent.h"
 #include "MeshResource.h"
+#include "SkinnedMeshComponent.h"
+#include "SkinnedMeshResource.h"
 
 #include "CameraComponent.h"
 #include "MovementComponent.h"
@@ -404,14 +406,14 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
-			scene->CreateComponentWithInit<MeshComponent>(
+			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 				playerObjHandle,
-				[](MeshComponent* mesh)
+				[](SkinnedMeshComponent* mesh)
 				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+					auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
 					if (nullptr != meshRes)
 					{
-						mesh->SetMeshResource(meshRes);
+						mesh->SetSkinnedMeshResource(meshRes);
 					}
 				}
 			);
@@ -469,6 +471,19 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle,
 				[](FSMComponent* fsm) {
 					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+				}
+			);
+
+			// 애니메이션 컴포넌트 추가
+			scene->CreateComponentWithInit<AnimationComponent>(
+				playerObjHandle,
+				[](AnimationComponent* anim)
+				{
+					auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+					if (animRes)
+					{
+						anim->Play(animRes, false);
+					}
 				}
 			);
 
@@ -593,20 +608,37 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			// MeshComponent 추가
-			scene->CreateComponentWithInit<MeshComponent>(
-				objHandle,
-				[teamType](MeshComponent* mesh)
-				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
-					if (nullptr != meshRes)
-					{
-						mesh->SetMeshResource(meshRes);
-					}
+			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
-					// TODO: 팀에 따라 색상 설정
-				}
-			);
+			// MeshComponent 또는 SkinnedMeshComponent 추가
+			if (isGeneral)
+			{
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+					objHandle,
+					[](SkinnedMeshComponent* mesh)
+					{
+						auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+						if (nullptr != meshRes)
+						{
+							mesh->SetSkinnedMeshResource(meshRes);
+						}
+					}
+				);
+			}
+			else
+			{
+				scene->CreateComponentWithInit<MeshComponent>(
+					objHandle,
+					[teamType](MeshComponent* mesh)
+					{
+						auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+						if (nullptr != meshRes)
+						{
+							mesh->SetMeshResource(meshRes);
+						}
+					}
+				);
+			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
 			scene->CreateComponentWithInit<MovementComponent>(
@@ -635,9 +667,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				}
 			);
 
-			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
-
-			// StaminaComponent (General Only)
+			// StaminaComponent (Player Only)
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<StaminaComponent>(	

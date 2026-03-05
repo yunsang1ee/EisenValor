@@ -166,6 +166,8 @@ void UIRenderPass::CreateUIPipelineState()
 		{"UV_MIN", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 80, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
 		{"UV_MAX", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 88, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
 		{"TEXTURE_INDEX", 0, DXGI_FORMAT_R32_UINT, 1, 96, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+		{"PADDING", 0, DXGI_FORMAT_R32G32B32_UINT, 1, 100, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+		{"PADDING", 1, DXGI_FORMAT_R32G32B32A32_UINT, 1, 112, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
 	};
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -308,7 +310,7 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			if (instanceBufferData.size() >= m_maxInstances)
 				break;
 
-			UIInstanceData inst;
+			UIInstanceData inst = {}; // 초기화
 
 			// 화면 좌표 -> NDC 변환
 			auto transform = CalculateUITransform(rData.rect.x, rData.rect.y, rData.rect.width, rData.rect.height);
@@ -322,13 +324,22 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			if (rData.textureResource && rData.textureResource->GetTexture())
 			{
 				inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
+
+				//// 깃발 텍스처 렌더링 디버그 로그
+				//if (rData.textureResource->GetName().find("Flag") != std::string::npos)
+				//{
+				//	DEBUG_LOG_FMT(
+				//		"[UIRenderPass] Rendering Flag Texture: '{}', Index: {}\n",
+				//		rData.textureResource->GetName(),
+				//		inst.textureIndex
+				//	);
+				//}
 			}
 			else
 			{
 				inst.textureIndex = 0;
 			}
 
-			inst.padding[0] = inst.padding[1] = inst.padding[2] = 0;
 			instanceBufferData.push_back(inst);
 		}
 	}
