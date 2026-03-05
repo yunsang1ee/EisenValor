@@ -2,6 +2,7 @@
 #include "ImageUIComponent.h"
 #include "RectTransformComponent.h"
 #include "UIGlobal.h"
+#include "TextureResource.h"
 
 void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 {
@@ -23,7 +24,6 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 
 	// Rect 계산
 	RectTransformComponent::Rect finalRect = rectTr->GetRect();
-
 	//// 디버깅용
 	// static bool s_hasLoggedRect = false;
 	// if (!s_hasLoggedRect)
@@ -37,32 +37,44 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 		(m_sliceBorder.x > 0.0f || m_sliceBorder.y > 0.0f || m_sliceBorder.z > 0.0f || m_sliceBorder.w > 0.0f);
 
 	// 상태에 따라 렌더링할 텍스처와 색상 결정
-	uint32_t		  targetTextureId = 0;
+	std::shared_ptr<TextureResource> targetTextureResource = nullptr;
 	DirectX::XMFLOAT4 targetStateColor = {1.f, 1.f, 1.f, 1.f};
 
 	switch (m_currentState)
 	{
 	case ButtonState::Normal:
-		targetTextureId = m_normalTextureId;
+		targetTextureResource = m_normalTextureResource;
 		targetStateColor = m_normalColor;
 		break;
 	case ButtonState::Hover:
-		targetTextureId = m_hoverTextureId;
+		targetTextureResource = m_hoverTextureResource;
 		targetStateColor = m_hoverColor;
 		break;
 	case ButtonState::Pressed:
-		targetTextureId = m_pressedTextureId;
+		targetTextureResource = m_pressedTextureResource;
 		targetStateColor = m_pressedColor;
 		break;
 	case ButtonState::Disabled:
-		targetTextureId = m_disabledTextureId;
+		targetTextureResource = m_disabledTextureResource;
 		targetStateColor = m_disabledColor;
 		break;
 	}
 
+	// 상태별 텍스처 리소스가 지정되지 않은 경우 Normal 리소스로 대체
+	if (targetTextureResource == nullptr)
+	{
+		targetTextureResource = m_normalTextureResource;
+	}
+
+	// 리소스가 없거나 GPU 로딩이 완료되지 않았으면
+	if (targetTextureResource == nullptr || !targetTextureResource->IsReady())
+	{
+		return;
+	}
+
 	// UIRenderData 생성
 	UIRenderData data;
-	data.textureId = targetTextureId;
+	data.textureResource = targetTextureResource;
 	data.rect = finalRect;
 	data.uvMin = {0.0f, 0.0f};
 	data.uvMax = {1.0f, 1.0f};

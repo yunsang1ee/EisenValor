@@ -113,10 +113,10 @@ void DxBuffer::Initialize(
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
 
-	DEBUG_LOG_FMT(
-		"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
-		static_cast<uint32_t>(resourceFlags)
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
+	//	static_cast<uint32_t>(resourceFlags)
+	//);
 
 	if (needsAutoRecreate)
 	{
@@ -197,10 +197,10 @@ void DxBuffer::Initialize(
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
 
-	DEBUG_LOG_FMT(
-		"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
-		static_cast<uint32_t>(resourceFlags)
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
+	//	static_cast<uint32_t>(resourceFlags)
+	//);
 
 	if (needsAutoRecreate)
 	{
@@ -210,7 +210,7 @@ void DxBuffer::Initialize(
 }
 
 void DxBuffer::CreateSRV(
-	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride
+	ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t numElements, uint32_t elementStride, DXGI_FORMAT format
 )
 {
 	if (!IsValid())
@@ -229,21 +229,21 @@ void DxBuffer::CreateSRV(
 	}
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {
-		.Format = DXGI_FORMAT_UNKNOWN,
+		.Format = format,
 		.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
 		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
 		.Buffer =
 			{.FirstElement = 0,
 			 .NumElements = numElements,
-			 .StructureByteStride = elementStride,
+			 .StructureByteStride = (format == DXGI_FORMAT_UNKNOWN) ? elementStride : 0,
 			 .Flags = D3D12_BUFFER_SRV_FLAG_NONE}
 	};
 
 	m_srvHandle = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
 
 	DEBUG_LOG_FMT(
-		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes\n", GetName(), m_srvHandle.GetIndex(), numElements,
-		elementStride
+		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes, Format={}\n", GetName(), m_srvHandle.GetIndex(), numElements,
+		elementStride, static_cast<int>(format)
 	);
 }
 

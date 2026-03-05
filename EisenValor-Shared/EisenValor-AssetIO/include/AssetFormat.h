@@ -2,8 +2,11 @@
 #include <cstdint>
 #include <string_view>
 #include <string>
-#include <cstddef>
 #include <format>
+#include <bit>   
+#include <array> 
+#include <cstddef>
+#include <cstring>
 
 /*
  - EisenValor Asset Pipeline Specification v2.1
@@ -16,37 +19,34 @@ namespace EvAsset
 {
 #pragma pack(push, 1)
 
-// 128-bit GUID
 struct Guid
 {
-	uint64_t low;
-	uint64_t high;
+	uint8_t data[16];
 
-	bool operator==(const Guid& other) const { return low == other.low && high == other.high; }
+	bool operator==(const Guid& other) const 
+	{ 
+		return 0 == std::memcmp(data, other.data, 16); 
+	}
 };
 
 // GUID를 읽기 위한 Format
 #pragma pack(pop)
 } // namespace EvAsset
 
-template <>
-struct std::formatter<EvAsset::Guid>
-{
-	constexpr auto parse(std::format_parse_context& ctx)
-	{
-		return ctx.begin();
-	}
-
-	template <typename FormatContext>
-	auto format(const EvAsset::Guid& guid, FormatContext& ctx) const
-	{
-		return std::format_to(ctx.out(), "{:016X}{:016X}", guid.high, guid.low);
-	}
-};
-
 namespace EvAsset
 {
 #pragma pack(push, 1)
+
+struct GuidHash
+{
+	size_t operator()(const EvAsset::Guid& guid) const
+	{
+		uint64_t low, high;
+		std::memcpy(&low, guid.data, 8);
+		std::memcpy(&high, guid.data + 8, 8);
+		return std::hash<uint64_t>{}(low) ^ (std::hash<uint64_t>{}(high) << 1);
+	}
+};
 
 // NOTE: 파일 레이아웃 정의를 위한 구조체 (디스크 상의 포맷)
 struct AssetHeader
@@ -105,6 +105,12 @@ struct SubMesh
 
 	float aabbmin[3];
 	float aabbmax[3];
+};
+
+struct ChunkIndexMeta
+{
+	uint32_t indexFormat; // 16 or 32
+	uint32_t indexCount;
 };
 
 struct Bounds
@@ -190,3 +196,18 @@ static T ReadUnaligned(const void* ptr)
 	return val;
 }
 } // namespace EvAsset
+
+template <>
+struct std::formatter<EvAsset::Guid> : std::formatter<std::string>
+{
+	auto format(const EvAsset::Guid& guid, std::format_context& ctx) const
+	{
+		std::string result;
+		result.reserve(32);
+		for (uint8_t byte : guid.data)
+		{
+			result += std::format("{:02X}", byte);
+		}
+		return std::formatter<std::string>::format(result, ctx);
+	}
+};

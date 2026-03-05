@@ -20,212 +20,107 @@ void DxRtPipelineState::Create(ID3D12Device5* device, const std::wstring& shader
 
 void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 {
-	// Global Root Signature
-	// Slot 0 (Table):
-	//                      TLAS (t0)
-	// Slot 1 (Table):
-	//                      Output UAV (u0)
-	// Slot 2 (Constant):   Camera Constants (b0, inline 16 DWORD)
-	// Slot 3 (Table):
-	//                      Materials           (t1)
-	//                      Vertex Buffer       (t2)
-	//                      Index Buffer        (t3)
-	//                      GeoInfo Buffer      (t4)
-	//                      GeoInstBase Buffer  (t5)
-
-	D3D12_DESCRIPTOR_RANGE1 ranges[7] = {};
-
+	// 1. Descriptor Ranges (Table용)
+	D3D12_DESCRIPTOR_RANGE1 ranges[2] = {};
+	
 	// Range 0: TLAS (t0)
-	ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	ranges[0].NumDescriptors = 1;
-	ranges[0].BaseShaderRegister = 0;
-	ranges[0].RegisterSpace = 0;
-	ranges[0].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-	ranges[0].OffsetInDescriptorsFromTableStart = 0;
-
+	ranges[0] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 	// Range 1: Output UAV (u0)
-	ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	ranges[1].NumDescriptors = 1;
-	ranges[1].BaseShaderRegister = 0;
-	ranges[1].RegisterSpace = 0;
-	ranges[1].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-	ranges[1].OffsetInDescriptorsFromTableStart = 0;
+	ranges[1] = {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 
-	// clang-format off
-	// Range 2: Materials (t1)
-	ranges[2] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
-	// Range 3: Vertex Buffer (t2)
-	ranges[3] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
-	// Range 4: Index Buffer (t3)
-	ranges[4] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
-	// Range 5: GeoInfo Buffer (t4)
-	ranges[5] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
-	// Range 6: GeoInstBase Buffer (t5)
-	ranges[6] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND};
-	// clang-format on
+	// 2. Root Parameters
+	D3D12_ROOT_PARAMETER1 rootParams[6] = {};
 
-	D3D12_ROOT_PARAMETER1 rootParams[4] = {};
-
-	// Param 0: TLAS Descriptor Table
+	// Param 0: TLAS Table (t0)
 	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[0].DescriptorTable.NumDescriptorRanges = 1;
-	rootParams[0].DescriptorTable.pDescriptorRanges = &ranges[0];
+	rootParams[0].DescriptorTable = {1, &ranges[0]};
 	rootParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 1: Output UAV Descriptor Table
+	// Param 1: Output UAV Table (u0)
 	rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[1].DescriptorTable.NumDescriptorRanges = 1;
-	rootParams[1].DescriptorTable.pDescriptorRanges = &ranges[1];
+	rootParams[1].DescriptorTable = {1, &ranges[1]};
 	rootParams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 2: Camera Constants (16 DWORD = 64 bytes)
+	// Param 2: Camera Constants (b0)
 	rootParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParams[2].Constants.ShaderRegister = 0;
-	rootParams[2].Constants.RegisterSpace = 0;
-	rootParams[2].Constants.Num32BitValues = 16;
+	rootParams[2].Constants = {0, 0, 16};
 	rootParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 3: Materials Descriptor Table (t1~t5)
-	rootParams[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[3].DescriptorTable.NumDescriptorRanges = 5;
-	rootParams[3].DescriptorTable.pDescriptorRanges = &ranges[2];
+	// Param 3: Instance Buffer (t1)
+	rootParams[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParams[3].Descriptor = {1, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
 	rootParams[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	// Param 4: Material Buffer (t2)
+	rootParams[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParams[4].Descriptor = {2, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
+	rootParams[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// Param 5: GeoTable (t3)
+	rootParams[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParams[5].Descriptor = {3, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
+	rootParams[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// 3. Static Sampler (Linear Wrap)
+	D3D12_STATIC_SAMPLER_DESC staticSampler = {};
+	staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	staticSampler.AddressU = staticSampler.AddressV = staticSampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	staticSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// 4. Root Signature Desc
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedDesc = {};
 	versionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	versionedDesc.Desc_1_1.NumParameters = 4;
+	versionedDesc.Desc_1_1.NumParameters = 6;
 	versionedDesc.Desc_1_1.pParameters = rootParams;
-	versionedDesc.Desc_1_1.NumStaticSamplers = 0;
-	versionedDesc.Desc_1_1.pStaticSamplers = nullptr;
-	versionedDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+	versionedDesc.Desc_1_1.NumStaticSamplers = 1;
+	versionedDesc.Desc_1_1.pStaticSamplers = &staticSampler;
+	versionedDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 
-	ComPtr<ID3DBlob> signature;
-	ComPtr<ID3DBlob> error;
-
-	HRESULT hrr = D3D12SerializeVersionedRootSignature(&versionedDesc, &signature, &error);
-
-	if (FAILED(hrr))
-	{
-		if (error)
-		{
-			const char* errorMsg = static_cast<const char*>(error->GetBufferPointer());
-			DEBUG_LOG_FMT("[DxRtPipelineState] Root Signature serialization failed:\n{}\n", errorMsg);
-		}
-		ThrowIfFailed(hrr);
-	}
-
-	ThrowIfFailed(device->CreateRootSignature(
-		0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_globalRootSignature)
-	));
-
+	ComPtr<ID3DBlob> signature, error;
+	ThrowIfFailed(D3D12SerializeVersionedRootSignature(&versionedDesc, &signature, &error));
+	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_globalRootSignature)));
+	
 	m_globalRootSignature->SetName(L"DXR_GlobalRootSig");
-	DEBUG_LOG_FMT("[DxRtPipelineState] Global Root Signature created\n");
 }
 
-void DxRtPipelineState::CreateStateObject(
-	ID3D12Device5* device, const std::wstring& shaderPath, uint32_t maxRecursionDepth
-)
+void DxRtPipelineState::CreateStateObject(ID3D12Device5* device, const std::wstring& shaderPath, uint32_t maxRecursionDepth)
 {
 	auto& compiler = GLOBAL(DxShaderCompilerGlobal);
-
 	std::wstring shaderName = shaderPath;
-	size_t		 lastSlash = shaderName.find_last_of(L"/\\");
-	if (lastSlash != std::wstring::npos)
-	{
-		shaderName = shaderName.substr(lastSlash + 1);
-	}
+	size_t lastSlash = shaderName.find_last_of(L"/\\");
+	if (lastSlash != std::wstring::npos) shaderName = shaderName.substr(lastSlash + 1);
 	size_t dotPos = shaderName.find_last_of(L'.');
-	if (dotPos != std::wstring::npos)
-	{
-		shaderName = shaderName.substr(0, dotPos);
-	}
+	if (dotPos != std::wstring::npos) shaderName = shaderName.substr(0, dotPos);
 
 	auto shaderBlob = compiler.CompileRTShader(shaderName, shaderPath, {});
 
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
-	subobjects.reserve(5);
-	//==============================================================================
-	// DXIL Library
-	D3D12_DXIL_LIBRARY_DESC dxilLibDesc = {};
-	dxilLibDesc.DXILLibrary.pShaderBytecode = shaderBlob->GetBufferPointer();
-	dxilLibDesc.DXILLibrary.BytecodeLength = shaderBlob->GetBufferSize();
-	dxilLibDesc.NumExports = 0;
-	dxilLibDesc.pExports = nullptr;
-
-	D3D12_STATE_SUBOBJECT dxilLib = {};
-	dxilLib.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-	dxilLib.pDesc = &dxilLibDesc;
-	subobjects.push_back(dxilLib);
-
-	// Hit Group
-	const wchar_t* hitGroupName = L"HitGroup";
-	const wchar_t* closestHitName = L"ClosestHitMain";
+	
+	D3D12_DXIL_LIBRARY_DESC dxilLibDesc = { {shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize()}, 0, nullptr };
+	subobjects.push_back({D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY, &dxilLibDesc});
 
 	D3D12_HIT_GROUP_DESC hitGroupDesc = {};
-	hitGroupDesc.HitGroupExport = hitGroupName;
+	hitGroupDesc.HitGroupExport = L"HitGroup";
 	hitGroupDesc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-	hitGroupDesc.ClosestHitShaderImport = closestHitName;
 	hitGroupDesc.AnyHitShaderImport = nullptr;
+	hitGroupDesc.ClosestHitShaderImport = L"ClosestHitMain";
 	hitGroupDesc.IntersectionShaderImport = nullptr;
+	subobjects.push_back({D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP, &hitGroupDesc});
 
-	D3D12_STATE_SUBOBJECT hitGroup = {};
-	hitGroup.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-	hitGroup.pDesc = &hitGroupDesc;
-	subobjects.push_back(hitGroup);
+	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {3 * sizeof(float) + sizeof(UINT), 2 * sizeof(float)};
+	subobjects.push_back({D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig});
 
-	// Shader Config
-	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
-	shaderConfig.MaxPayloadSizeInBytes = 3 * sizeof(float) + sizeof(UINT);
-	shaderConfig.MaxAttributeSizeInBytes = 2 * sizeof(float);
+	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {maxRecursionDepth};
+	subobjects.push_back({D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG, &pipelineConfig});
 
-	D3D12_STATE_SUBOBJECT shaderConfigObj = {};
-	shaderConfigObj.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
-	shaderConfigObj.pDesc = &shaderConfig;
-	subobjects.push_back(shaderConfigObj);
-
-	// Pipeline Config
-	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
-	pipelineConfig.MaxTraceRecursionDepth = maxRecursionDepth;
-
-	D3D12_STATE_SUBOBJECT pipelineConfigObj = {};
-	pipelineConfigObj.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
-	pipelineConfigObj.pDesc = &pipelineConfig;
-	subobjects.push_back(pipelineConfigObj);
-
-	// Global Root Signature
-	D3D12_STATE_SUBOBJECT globalRootSigObj = {};
-	globalRootSigObj.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-	globalRootSigObj.pDesc = m_globalRootSignature.GetAddressOf();
+	D3D12_STATE_SUBOBJECT globalRootSigObj = {D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE, m_globalRootSignature.GetAddressOf()};
 	subobjects.push_back(globalRootSigObj);
-	//==============================================================================
 
-	D3D12_STATE_OBJECT_DESC stateObjectDesc = {};
-	stateObjectDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-	stateObjectDesc.NumSubobjects = static_cast<UINT>(subobjects.size());
-	stateObjectDesc.pSubobjects = subobjects.data();
-
+	D3D12_STATE_OBJECT_DESC stateObjectDesc = {D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE, (UINT)subobjects.size(), subobjects.data()};
 	ThrowIfFailed(device->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&m_stateObject)));
-	m_stateObject->SetName(L"DXR_StateObject");
-
 	ThrowIfFailed(m_stateObject.As(&m_stateObjectProps));
-
-	DEBUG_LOG_FMT("[DxRtPipelineState] State Object created\n");
 }
 
-const void* DxRtPipelineState::GetRayGenShaderIdentifier() const
-{
-	assert(m_stateObjectProps && "[DxRtPipelineState] State Object not created");
-	return m_stateObjectProps->GetShaderIdentifier(L"RayGenMain");
-}
-
-const void* DxRtPipelineState::GetMissShaderIdentifier() const
-{
-	assert(m_stateObjectProps && "[DxRtPipelineState] State Object not created");
-	return m_stateObjectProps->GetShaderIdentifier(L"MissMain");
-}
-
-const void* DxRtPipelineState::GetHitGroupIdentifier() const
-{
-	assert(m_stateObjectProps && "[DxRtPipelineState] State Object not created");
-	return m_stateObjectProps->GetShaderIdentifier(L"HitGroup");
-}
+const void* DxRtPipelineState::GetRayGenShaderIdentifier() const { return m_stateObjectProps->GetShaderIdentifier(L"RayGenMain"); }
+const void* DxRtPipelineState::GetMissShaderIdentifier() const { return m_stateObjectProps->GetShaderIdentifier(L"MissMain"); }
+const void* DxRtPipelineState::GetHitGroupIdentifier() const { return m_stateObjectProps->GetShaderIdentifier(L"HitGroup"); }

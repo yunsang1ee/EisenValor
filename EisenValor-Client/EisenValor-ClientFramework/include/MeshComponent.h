@@ -1,15 +1,9 @@
 #pragma once
 #include "IComponent.h"
+#include <memory>
 
-struct Vertex
-{
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT3 normal;
-	DirectX::XMFLOAT4 color;
-	DirectX::XMFLOAT2 uv;
-	DirectX::XMFLOAT3 tangent;
-	DirectX::XMFLOAT3 bitangent;
-};
+class MeshResource;
+class MaterialResource;
 
 class MeshComponent : public ComponentBase<MeshComponent>
 {
@@ -19,21 +13,17 @@ public:
 	MeshComponent() = default;
 	~MeshComponent() override = default;
 
-	// 메시 데이터 설정
-	void SetMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, std::string_view name = "");
+	void SetMeshResource(std::shared_ptr<MeshResource> meshRes, bool loadDefaultMaterials = true);
+	void SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialResource> material);
 
-	// 순수 데이터 접근자
-	uint32_t					 GetVertexCount() const { return static_cast<uint32_t>(m_vertices.size()); }
-	uint32_t					 GetIndexCount() const { return static_cast<uint32_t>(m_indices.size()); }
-	const std::vector<Vertex>&	 GetVertices() const { return m_vertices; }
-	const std::vector<uint32_t>& GetIndices() const { return m_indices; }
-	const std::string&			 GetName() const { return m_name; }
+	MeshResource*	  GetMeshResource() const { return m_meshResource.get(); }
+	MaterialResource* GetMaterial(uint32_t slot) const;
 
-	// 메시 데이터 유효성 검사
-	bool IsValid() const { return !m_vertices.empty(); }
+	const std::vector<std::shared_ptr<MaterialResource>>& GetMaterials() const { return m_materials; }
+
+	bool IsValid() const { return nullptr != m_meshResource; }
 
 private:
-	std::string			  m_name;
-	std::vector<Vertex>	  m_vertices;
-	std::vector<uint32_t> m_indices;
+	std::shared_ptr<MeshResource>				   m_meshResource;
+	std::vector<std::shared_ptr<MaterialResource>> m_materials;
 };

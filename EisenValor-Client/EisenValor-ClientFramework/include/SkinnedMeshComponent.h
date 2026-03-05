@@ -1,41 +1,47 @@
 #pragma once
 #include "IComponent.h"
-#include "Vertex.h"
+#include "SkinnedMeshResource.h"
+#include <DirectXMath.h>
+#include <vector>
+#include <memory>
 
-struct SkinnedBone
-{
-    uint64_t nameHash;
-    int32_t  parentIndex;
-    DirectX::XMFLOAT3 restPos;
-    DirectX::XMFLOAT4 restRot;
-    DirectX::XMFLOAT3 restScale;
-};
+class MaterialResource;
 
 class SkinnedMeshComponent : public ComponentBase<SkinnedMeshComponent>
 {
 public:
-    static constexpr const char* GetStaticTypeName() { return "SkinnedMeshComponent"; }
+	static constexpr const char* GetStaticTypeName() { return "SkinnedMeshComponent"; }
 
-    SkinnedMeshComponent() = default;
-    ~SkinnedMeshComponent() override = default;
+	SkinnedMeshComponent();
+	~SkinnedMeshComponent() override;
 
-    // 데이터 설정
-    void SetMesh(const std::vector<SkinnedVertex>& vertices, const std::vector<uint32_t>& indices);
-    void SetSkeleton(const std::vector<SkinnedBone>& bones, const std::vector<float>& offsetMatrices);
+	SkinnedMeshComponent(SkinnedMeshComponent&&) noexcept;
+	SkinnedMeshComponent& operator=(SkinnedMeshComponent&&) noexcept;
 
-    // 접근자
-    uint32_t                           GetVertexCount() const { return static_cast<uint32_t>(m_vertices.size()); }
-    uint32_t                           GetIndexCount() const { return static_cast<uint32_t>(m_indices.size()); }
-    const std::vector<SkinnedVertex>&  GetVertices() const { return m_vertices; }
-    const std::vector<uint32_t>&       GetIndices() const { return m_indices; }
-    const std::vector<SkinnedBone>&    GetBones() const { return m_bones; }
-    const std::vector<float>&          GetOffsetMatrices() const { return m_offsetMatrices; }
+	void SetSkinnedMeshResource(std::shared_ptr<SkinnedMeshResource> resource, bool loadDefaultMaterials = true);
+	void SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialResource> material);
 
-    bool IsValid() const { return !m_vertices.empty() && !m_bones.empty(); }
+	SkinnedMeshResource* GetSkinnedMeshResource() const { return m_resource.get(); }
+	MaterialResource*	 GetMaterialResource(uint32_t slot) const;
+
+	const std::vector<std::shared_ptr<MaterialResource>>& GetMaterials() const { return m_materials; }
+
+	// 애니메이션 시스템에서 계산된 최종 행렬들을 설정
+	void SetFinalMatrices(const std::vector<DirectX::XMFLOAT4X4>& matrices);
+	const std::vector<DirectX::XMFLOAT4X4>& GetFinalMatrices() const { return m_finalMatrices; }
+
+	bool IsValid() const { return m_resource != nullptr; }
+
+	class DxBuffer* GetSkinnedVertexBuffer() const { return m_skinnedVertexBuffer.get(); }
+	class DxBLAS*	GetBLAS() const { return m_blas.get(); }
+	void			SetSkinnedVertexBuffer(std::unique_ptr<class DxBuffer>&& buffer);
+	void			SetBLAS(std::unique_ptr<class DxBLAS>&& blas);
 
 private:
-    std::vector<SkinnedVertex> m_vertices;
-    std::vector<uint32_t>      m_indices;
-    std::vector<SkinnedBone>   m_bones;
-    std::vector<float>         m_offsetMatrices;
+	std::shared_ptr<SkinnedMeshResource>		   m_resource;
+	std::vector<std::shared_ptr<MaterialResource>> m_materials;
+	std::vector<DirectX::XMFLOAT4X4>			   m_finalMatrices; // 셰이더로 전달될 최종 본 행렬
+
+	std::unique_ptr<class DxBuffer> m_skinnedVertexBuffer; // Compute Shader 결과물 (Vertex)
+	std::unique_ptr<class DxBLAS>	m_blas;				   // 인스턴스 전용 BLAS
 };

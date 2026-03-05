@@ -1,6 +1,9 @@
 #pragma once
 #include "UIComponent.h"
 #include "DxMath.h"
+#include <memory>
+
+class TextureResource;
 
 // Texture Rendering Component
 class ImageUIComponent : public UIComponent<ImageUIComponent>
@@ -10,10 +13,6 @@ public:
 
 	ImageUIComponent() = default;
 	virtual ~ImageUIComponent() = default;
-
-	// 기본 텍스처 설정
-	void	 SetTexture(uint32_t textureId) { m_normalTextureId = textureId; }
-	uint32_t GetTextureId() const { return m_normalTextureId; }
 
 	// 9-Slice 테두리 설정
 	void SetSliceBorder(float left, float top, float right, float bottom)
@@ -32,11 +31,11 @@ public:
 	void SetPressedColor(const DirectX::XMFLOAT4& color) { m_pressedColor = color; }
 	void SetDisabledColor(const DirectX::XMFLOAT4& color) { m_disabledColor = color; }
 
-	// 텍스처 설정
-	void SetNormalTexture(uint32_t textureId) { m_normalTextureId = textureId; }
-	void SetHoverTexture(uint32_t textureId) { m_hoverTextureId = textureId; }
-	void SetPressedTexture(uint32_t textureId) { m_pressedTextureId = textureId; }
-	void SetDisabledTexture(uint32_t textureId) { m_disabledTextureId = textureId; }
+	// 텍스처 리소스 설정
+	void SetNormalTextureResource(std::shared_ptr<TextureResource> res) { m_normalTextureResource = res; }
+	void SetHoverTextureResource(std::shared_ptr<TextureResource> res) { m_hoverTextureResource = res; }
+	void SetPressedTextureResource(std::shared_ptr<TextureResource> res) { m_pressedTextureResource = res; }
+	void SetDisabledTextureResource(std::shared_ptr<TextureResource> res) { m_disabledTextureResource = res; }
 
 	// RenderData 수집
 	virtual void GetRenderData(std::vector<UIRenderData>& outData) override;
@@ -45,11 +44,11 @@ private:
 	// 상태 관리
 	ButtonState m_currentState = ButtonState::Normal;
 
-	// 상태별 텍스처 ID
-	uint32_t m_normalTextureId = 0;
-	uint32_t m_hoverTextureId = 0;
-	uint32_t m_pressedTextureId = 0;
-	uint32_t m_disabledTextureId = 0;
+	// 상태별 텍스처 리소스
+	std::shared_ptr<TextureResource> m_normalTextureResource;
+	std::shared_ptr<TextureResource> m_hoverTextureResource;
+	std::shared_ptr<TextureResource> m_pressedTextureResource;
+	std::shared_ptr<TextureResource> m_disabledTextureResource;
 
 	// 상태별 색상 (텍스처와 곱해지거나 텍스처가 없을 때 사용)
 	DirectX::XMFLOAT4 m_normalColor = {1.0f, 1.0f, 1.0f, 1.0f};

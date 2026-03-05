@@ -1,10 +1,14 @@
 #pragma once
 #include "DxCommon.h"
+#include <memory>
+
+class MeshResource;
+class DxBuffer;
 
 class DxBLAS
 {
 public:
-	DxBLAS() = default;
+	DxBLAS();
 	~DxBLAS();
 
 	DxBLAS(const DxBLAS&) = delete;
@@ -22,12 +26,28 @@ public:
 		const std::string&			name = ""
 	);
 
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const { return m_blasBuffer->GetGPUVirtualAddress(); }
+	void Build(
+		ID3D12Device5*				device,
+		ID3D12GraphicsCommandList4* cmdList,
+		const MeshResource*			mesh,
+		bool						allowUpdate = false,
+		const std::string&			name = ""
+	);
 
-	ID3D12Resource* GetResource() const { return m_blasBuffer.Get(); }
-	bool			IsBuilt() const { return m_blasBuffer != nullptr; }
+	void Build(
+		ID3D12Device5*				device,
+		ID3D12GraphicsCommandList4* cmdList,
+		const class SkinnedMeshResource* mesh,
+		bool						allowUpdate = false,
+		const std::string&			name = "",
+		D3D12_GPU_VIRTUAL_ADDRESS	vbAddressOverride = 0 // 애니메이션 버퍼 주소
+	);
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const;
+	ID3D12Resource* GetResource() const;
+	bool			IsBuilt() const;
 
 private:
-	ComPtr<ID3D12Resource> m_blasBuffer;
-	ComPtr<ID3D12Resource> m_scratchBuffer;
+	std::unique_ptr<DxBuffer> m_blasBuffer;
+	std::unique_ptr<DxBuffer> m_scratchBuffer;
 };

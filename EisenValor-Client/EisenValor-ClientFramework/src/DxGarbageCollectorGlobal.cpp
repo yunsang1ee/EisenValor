@@ -84,10 +84,10 @@ void DxGarbageCollectorGlobal::DeferRelease(
 	}
 #endif // _DEBUG
 	m_releaseQueue[qi].push_back(ReleaseEntry{std::move(releaseCallback), fenceHandle, std::string(debugName)});
-	DEBUG_LOG_FMT(
-		"[DxGarbageCollectorGlobal] Deferred release: Q={}, Val={}, Name={}\n", static_cast<int>(fenceHandle.queueType),
-		fenceHandle.value, debugName
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxGarbageCollectorGlobal] Deferred release: Q={}, Val={}, Name={}\n", static_cast<int>(fenceHandle.queueType),
+	//	fenceHandle.value, debugName
+	//);
 }
 
 void DxGarbageCollectorGlobal::ProcessCompleted(const CompletedFences& completedFences)

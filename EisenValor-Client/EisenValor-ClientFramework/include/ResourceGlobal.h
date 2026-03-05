@@ -1,11 +1,13 @@
 #pragma once
 #include "Singleton.h"
 #include "IResource.h"
-#include "Commonutils.h"
+#include "CommonUtils.h"
 #include <unordered_map>
 #include <memory>
 #include <filesystem>
 #include <queue>
+
+class MaterialResource;
 
 class ResourceGlobal : public Singleton<ResourceGlobal>
 {
@@ -95,7 +97,11 @@ public:
 	void ProcessPendingLoads();	// 리소스 예약
 	void CheckForReload();	//Hot Reload
 
+	std::shared_ptr<MaterialResource> GetDefaultMaterial() const { return m_defaultMaterial; }
+
 private:
+	void InitializeDefaultResources();
+
 	template <typename T>
 	std::shared_ptr<T> LoadInternal(const std::filesystem::path& path);
 
@@ -109,25 +115,26 @@ private:
 	};
 
 private:
-	struct GuidHash
-	{
-		size_t operator()(const EvAsset::Guid& guid) const
-		{
-			return std::hash<uint64_t>{}(guid.low) ^ (std::hash<uint64_t>{}(guid.high) << 1);
-		}
-	};
-
-	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, GuidHash> m_resourceCache;
-	std::unordered_map<EvAsset::Guid, std::filesystem::path, GuidHash>		m_guidToPath;
-	std::unordered_map<EvAsset::Guid, std::filesystem::file_time_type, GuidHash> m_guidToLastWriteTime;
-	std::unordered_map<std::wstring, EvAsset::Guid>							m_pathToGuid;
+//struct GuidHash
+	//{
+	//	size_t operator()(const EvAsset::Guid& guid) const
+	//	{
+	//		return std::hash<uint64_t>{}(guid.low) ^ (std::hash<uint64_t>{}(guid.high) << 1);
+	//	}
+	//};
+	
+	std::unordered_map<EvAsset::Guid, std::shared_ptr<IResource>, EvAsset::GuidHash> m_resourceCache;
+	std::unordered_map<EvAsset::Guid, std::filesystem::path, EvAsset::GuidHash>		 m_guidToPath;
+	std::unordered_map<EvAsset::Guid, std::filesystem::file_time_type, EvAsset::GuidHash> m_guidToLastWriteTime;
+	std::unordered_map<std::wstring, EvAsset::Guid>									 m_pathToGuid;
 
 	std::queue<LoadingTask> m_pendingLoads;
+
+	std::shared_ptr<MaterialResource> m_defaultMaterial;
 };
 
 class MeshResource;
 class TextureResource;
-class MaterialResource;
 class AnimationResource;
 class SkinnedMeshResource;
 class SceneResource;

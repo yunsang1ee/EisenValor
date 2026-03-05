@@ -8,6 +8,23 @@ void DxDeviceGlobal::Initialize()
 
 #ifdef _DEBUG
 	dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+
+	ComPtr<ID3D12Debug1> debugController;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+	{
+		debugController->EnableDebugLayer();
+		debugController->SetEnableGPUBasedValidation(FALSE);
+		DEBUG_LOG_FMT("[DxDevice] GPU Based Validation disabled.\n");
+	}
+
+	ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings))))
+	{
+		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		DEBUG_LOG_FMT("[DxDevice] DRED Auto-Breadcrumbs & PageFault tracking enabled.\n");
+	}
 #endif
 
 	ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&m_factory)));
@@ -28,10 +45,26 @@ void DxDeviceGlobal::Initialize()
 		{
 			maxDedicatedVideoMemory = desc.DedicatedVideoMemory;
 			tempAdapter.As(&m_adapter);
+
+			DEBUG_LOG_FMT(
+				"[DxDevice] Adapter candidate: {} ({} MB VRAM)\n",
+				std::string(std::begin(desc.Description), std::end(desc.Description)),
+				desc.DedicatedVideoMemory / (1024 * 1024)
+			);
 		}
 	}
 
 	assert(m_adapter != nullptr && "[DxDevice] Failed to find a suitable DXGI Adapter");
+
+	{
+		DXGI_ADAPTER_DESC1 finalDesc;
+		m_adapter->GetDesc1(&finalDesc);
+		DEBUG_LOG_FMT(
+			"[DxDevice] Selected adapter: {} ({} MB VRAM)\n",
+			std::string(std::begin(finalDesc.Description), std::end(finalDesc.Description)),
+			finalDesc.DedicatedVideoMemory / (1024 * 1024)
+		);
+	}
 
 	ThrowIfFailed(D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
 

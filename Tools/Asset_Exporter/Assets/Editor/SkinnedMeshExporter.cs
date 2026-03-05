@@ -3,10 +3,11 @@ using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System;
 
 public class SkinnedMeshExporter
 {
-    [MenuItem("Tools/Export Skinned Mesh (.evskin)")]
+    [MenuItem("Tools/EisenValor/Export Selected Skinned Mesh (v2.1)")]
     public static void ExportSkinnedMesh()
     {
         // 1. 대상 선정: 현재 에디터에서 선택한 게임 오브젝트
@@ -35,25 +36,131 @@ public class SkinnedMeshExporter
 
         Debug.Log($"[SkinnedMeshExporter] '{target.name}' 추출 준비 완료. (정점: {mesh.vertexCount})");
         
+        // --- 검증 로그 추가 ---
+        int[] triangles = mesh.triangles;
+        int totalSubMeshIndexCount = 0;
+        for (int i = 0; i < mesh.subMeshCount; i++) {
+            totalSubMeshIndexCount += (int)mesh.GetSubMesh(i).indexCount;
+        }
+        Debug.Log($"[SkinnedMeshExporter] Verification - triangles.Length: {triangles.Length}, SubMesh Sum: {totalSubMeshIndexCount}");
+        if (triangles.Length != totalSubMeshIndexCount) {
+            Debug.LogError("[CRITICAL] 인덱스 개수 불일치 발견!");
+        }
+        // -----------------------
+
         string savePath = EditorUtility.SaveFilePanel("Save Skinned Mesh", "", target.name, "evskin");
         if (string.IsNullOrEmpty(savePath)) return;
 
         // --- 데이터 추출 ---
         byte[] vertData = CreateVertChunk(mesh);
         byte[] indxData = CreateIndexChunk(mesh);
+        byte[] boundsData = CreateBoundsChunk(mesh);
+        byte[] subMeshData = CreateSubMeshChunk(mesh);
         byte[] boneData = CreateBoneChunk(smr);
         byte[] offsetData = CreateOffsetChunk(mesh);
+        byte[] depsData = CreateDepsChunk(smr);
         
         // --- 파일 저장 (AssetWriter 활용) ---
         string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mesh));
         AssetWriter writer = new AssetWriter("EVSK", guid);
         writer.AddChunk("VERT", 1, vertData);
         writer.AddChunk("INDX", 1, indxData);
+        writer.AddChunk("BNDS", 1, boundsData);
+        writer.AddChunk("SUBM", 1, subMeshData);
         writer.AddChunk("BONE", 1, boneData);
         writer.AddChunk("OFFS", 1, offsetData);
+        writer.AddChunk("DEPS", 1, depsData);
         
         writer.WriteToFile(savePath);
         Debug.Log($"[SkinnedMeshExporter] 파일 저장 완료: {savePath}");
+    }
+
+    private static byte[] CreateDepsChunk(SkinnedMeshRenderer smr)
+    {
+        using (MemoryStream ms = new MemoryStream())
+        using (BinaryWriter bw = new BinaryWriter(ms))
+        {
+            Material[] materials = smr.sharedMaterials;
+            bw.Write((uint)materials.Length);
+
+            foreach (var mat in materials)
+            {
+                if (mat == null)
+                {
+                    bw.Write(new byte[16]); // Write a zeroed-out GUID
+                    continue;
+                }
+
+                string materialPath = AssetDatabase.GetAssetPath(mat);
+                string guidString = AssetDatabase.AssetPathToGUID(materialPath);
+
+                if (string.IsNullOrEmpty(guidString))
+                {
+                    bw.Write(new byte[16]);
+                }
+                else
+                {
+                    Guid guid = new Guid(guidString);
+                    bw.Write(guid.ToByteArray());
+                }
+            }
+            return ms.ToArray();
+        }
+    }
+
+    private static byte[] CreateBoundsChunk(Mesh mesh)
+    {
+        using (MemoryStream ms = new MemoryStream())
+        using (BinaryWriter bw = new BinaryWriter(ms))
+        {
+            Bounds bounds = mesh.bounds;
+            
+            // AABB
+            bw.Write(bounds.min.x); bw.Write(bounds.min.y); bw.Write(bounds.min.z);
+            bw.Write(bounds.max.x); bw.Write(bounds.max.y); bw.Write(bounds.max.z);
+
+            // Bounding Sphere
+            bw.Write(bounds.center.x); bw.Write(bounds.center.y); bw.Write(bounds.center.z);
+            bw.Write(bounds.extents.magnitude); // radius
+
+            return ms.ToArray();
+        }
+    }
+
+    private static byte[] CreateSubMeshChunk(Mesh mesh)
+    {
+        using (MemoryStream ms = new MemoryStream())
+        using (BinaryWriter bw = new BinaryWriter(ms))
+        {
+            bw.Write((uint)mesh.subMeshCount); // SubMesh Count
+
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                var smd = mesh.GetSubMesh(i);
+
+                bw.Write((uint)smd.indexStart); // indexOffset
+                bw.Write((uint)smd.indexCount); // indexCount
+                bw.Write((uint)i); // materialSlot (using submesh index)
+
+                // Calculate AABB for this submesh
+                Vector3 minBounds = Vector3.one * float.MaxValue;
+                Vector3 maxBounds = Vector3.one * float.MinValue;
+
+                int[] subMeshIndices = mesh.GetIndices(i);
+                Vector3[] vertices = mesh.vertices;
+
+                for (int j = 0; j < subMeshIndices.Length; j++)
+                {
+                    Vector3 vertex = vertices[subMeshIndices[j]];
+                    minBounds = Vector3.Min(minBounds, vertex);
+                    maxBounds = Vector3.Max(maxBounds, vertex);
+                }
+
+                bw.Write(minBounds.x); bw.Write(minBounds.y); bw.Write(minBounds.z);
+                bw.Write(maxBounds.x); bw.Write(maxBounds.y); bw.Write(maxBounds.z);
+            }
+            return ms.ToArray();
+        }
     }
 
     private static byte[] CreateIndexChunk(Mesh mesh)

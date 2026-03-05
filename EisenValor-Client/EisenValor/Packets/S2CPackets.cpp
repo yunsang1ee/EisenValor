@@ -6,7 +6,14 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "Transform.h"
+
+// Resource
+#include "ResourceGlobal.h"
 #include "MeshComponent.h"
+#include "MeshResource.h"
+#include "SkinnedMeshComponent.h"
+#include "SkinnedMeshResource.h"
+
 #include "CameraComponent.h"
 #include "MovementComponent.h"
 #include "DxSwapChain.h"
@@ -22,115 +29,11 @@
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "ResourceGlobal.h"
+#include "MeshResource.h"
 
 
 using namespace NetBridge;
-
-namespace Resources
-{
-//clang-format off
-
-namespace Ground
-{
-
-std::vector<Vertex> groundVertices = {
-	{{-1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
-	{{1.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
-	{{1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
-	{{-1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}}
-};
-std::vector<uint32_t> groundIndices = {0, 2, 1, 0, 3, 2};
-} // namespace Ground
-
-namespace Cube
-{
-std::vector<Vertex> cubeVertices = { // Front face (z = 0.5)
-	{{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-	{{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-	{{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-	{{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
-
-	// Back face (z = -0.5)
-	{{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
-	{{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
-	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-
-	// Left face (x = -0.5)
-	{{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
-	{{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-	{{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
-	{{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
-
-	// Right face (x = 0.5)
-	{{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-	{{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-
-	// Top face (y = 0.5)
-	{{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
-	{{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-	{{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-	{{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f, 1.0f}},
-
-	// Bottom face (y = -0.5)
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
-	{{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
-	{{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-	{{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}}
-};
-
-std::vector<uint32_t> cubeIndices = {
-	0,	1,	2,	0,	2,	3,	// Front
-	4,	5,	6,	4,	6,	7,	// Back
-	8,	9,	10, 8,	10, 11, // Left
-	12, 13, 14, 12, 14, 15, // Right
-	16, 17, 18, 16, 18, 19, // Top
-	20, 21, 22, 20, 22, 23	// Bottom
-};
-} // namespace Cube
-
-namespace Sector
-{
-	// 반지름, 각도, 세그먼트, 높이
-	inline std::pair<std::vector<Vertex>, std::vector<uint32_t>> CreateSectorMesh(float radius = 5.0f, float angleDeg = 90.0f, int segments = 20)
-	{
-		std::vector<Vertex> vertices;
-		std::vector<uint32_t> indices;
-
-		float halfAngle = DirectX::XMConvertToRadians(angleDeg * 0.5f);
-		float angleStep = DirectX::XMConvertToRadians(angleDeg) / segments;
-
-		// 중심점
-		vertices.push_back({ {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f} });
-
-		// 호
-		for (int i = 0; i <= segments; ++i)
-		{
-			float currentAngle = -halfAngle + (angleStep * i);
-			// Z축이 전방
-			float x = radius * sinf(currentAngle);
-			float z = radius * cosf(currentAngle);
-
-			vertices.push_back({ {x, 0.0f, z}, {0.0f, 1.0f, 0.0f} });
-		}
-
-		// 인덱스 생성
-		// 단면
-		for (int i = 0; i < segments; ++i)
-		{
-			indices.push_back(0);     // 중심
-			indices.push_back(i + 1); // 현재
-			indices.push_back(i + 2); // 다음
-		}
-
-		return { vertices, indices };
-	}
-} // namespace Sector
-
-// clang-format on
-} // namespace Resources
 
 bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const PacketHeader&)
 {
@@ -496,9 +399,16 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
-			scene->CreateComponentWithInit<MeshComponent>(
+			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 				playerObjHandle,
-				[](MeshComponent* mesh) { mesh->SetMesh(Resources::Cube::cubeVertices, Resources::Cube::cubeIndices); }
+				[](SkinnedMeshComponent* mesh)
+				{
+					auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+					if (nullptr != meshRes)
+					{
+						mesh->SetSkinnedMeshResource(meshRes);
+					}
+				}
 			);
 
 			scene->CreateComponentWithInit<MovementComponent>(
@@ -557,32 +467,45 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				}
 			);
 
-			// 공격 범위 디버깅용
-			scene->ReserveGameObject(
-				"AttackRangeIndicator", std::nullopt,
-				[scene, playerObjHandle](GameObject* indicatorObj)
-				{	// 부모 설정
-					if (auto* player = scene->TryGetGameObject(playerObjHandle)) {
-						indicatorObj->GetTransform().SetParent(player->GetComponentHandle<Transform>());
+			// 애니메이션 컴포넌트 추가
+			scene->CreateComponentWithInit<AnimationComponent>(
+				playerObjHandle,
+				[](AnimationComponent* anim)
+				{
+					auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+					if (animRes)
+					{
+						anim->Play(animRes, true);
 					}
-					else {
-						scene->DestroyGameObject(indicatorObj->GetHandle());
-						return;
-					}
-
-					// 위치
-					indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
-
-					// 부채꼴 Mesh
-					auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-					scene->CreateComponentWithInit<MeshComponent>(
-						indicatorObj->GetHandle(),
-						[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-							mesh->SetMesh(v, i);
-						}
-					);
 				}
 			);
+
+			//// 공격 범위 디버깅용
+			//scene->ReserveGameObject(
+			//	"AttackRangeIndicator", std::nullopt,
+			//	[scene, playerObjHandle](GameObject* indicatorObj)
+			//	{	// 부모 설정
+			//		if (auto* player = scene->TryGetGameObject(playerObjHandle)) {
+			//			indicatorObj->GetTransform().SetParent(player->GetComponentHandle<Transform>());
+			//		}
+			//		else {
+			//			scene->DestroyGameObject(indicatorObj->GetHandle());
+			//			return;
+			//		}
+
+			//		// 위치
+			//		indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
+
+			//		// 부채꼴 Mesh
+			//		auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
+			//		scene->CreateComponentWithInit<MeshComponent>(
+			//			indicatorObj->GetHandle(),
+			//			[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
+			//				mesh->SetMesh(v, i);
+			//			}
+			//		);
+			//	}
+			//);
 		}
 	);
 
@@ -678,20 +601,37 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			// MeshComponent 추가
-			scene->CreateComponentWithInit<MeshComponent>(
-				objHandle,
-				[teamType](MeshComponent* mesh)
-				{
-					mesh->SetMesh(Resources::Cube::cubeVertices, Resources::Cube::cubeIndices);
+			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 
-					// TODO: 팀에 따라 색상 설정
-					// if (teamType == FB_ENUMS::TEAM_TYPE_OFFENSE)
-					// {
-					//     mesh->SetColor(...);
-					// }
-				}
-			);
+			// MeshComponent 또는 SkinnedMeshComponent 추가
+			if (isPlayer)
+			{
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+					objHandle,
+					[](SkinnedMeshComponent* mesh)
+					{
+						auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+						if (nullptr != meshRes)
+						{
+							mesh->SetSkinnedMeshResource(meshRes);
+						}
+					}
+				);
+			}
+			else
+			{
+				scene->CreateComponentWithInit<MeshComponent>(
+					objHandle,
+					[teamType](MeshComponent* mesh)
+					{
+						auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+						if (nullptr != meshRes)
+						{
+							mesh->SetMeshResource(meshRes);
+						}
+					}
+				);
+			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
 			scene->CreateComponentWithInit<MovementComponent>(
@@ -719,8 +659,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					team->SetTeamType(teamType);
 				}
 			);
-
-			bool isPlayer = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 
 			// StaminaComponent (Player Only)
 			if (isPlayer)
@@ -764,32 +702,32 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
-			// 공격 범위 디버깅
-			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
-			{
-				scene->ReserveGameObject(
-					"AttackRangeIndicator", std::nullopt,
-					[scene, objHandle](GameObject* indicatorObj)
-					{
-						// 부모
-						if (auto* parent = scene->TryGetGameObject(objHandle)) {
-							indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
-						}
+	//		// 공격 범위 디버깅
+	//		if (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+	//		{
+	//			scene->ReserveGameObject(
+	//				"AttackRangeIndicator", std::nullopt,
+	//				[scene, objHandle](GameObject* indicatorObj)
+	//				{
+	//					// 부모
+	//					if (auto* parent = scene->TryGetGameObject(objHandle)) {
+	//						indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
+	//					}
 
-						// 위치
-						indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
+	//					// 위치
+	//					indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
 
-						// 부채꼴 Mesh
-						auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-						scene->CreateComponentWithInit<MeshComponent>(
-							indicatorObj->GetHandle(),
-							[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-								mesh->SetMesh(v, i);
-							}
-						);
-					}
-				);
-			}
+	//					// 부채꼴 Mesh
+	//					auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
+	//					scene->CreateComponentWithInit<MeshComponent>(
+	//						indicatorObj->GetHandle(),
+	//						[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
+	//							mesh->SetMesh(v, i);
+	//						}
+	//					);
+	//				}
+	//			);
+	//		}
 		}
 	);
 

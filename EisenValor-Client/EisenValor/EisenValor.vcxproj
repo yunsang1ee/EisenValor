@@ -278,10 +278,16 @@ exit /b 0</Command>
     <None Include="Resource\Shader\UIPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
+    <UpToDateCheckInput Include="Resource\**\*" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
