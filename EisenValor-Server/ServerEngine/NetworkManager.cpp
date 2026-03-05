@@ -3,6 +3,7 @@
 
 #include "RIOCore.h"
 #include "IOCPCore.h"
+#ifdef LEGACY_CODE
 
 bool ServerEngine::NetworkManager::Init(const SessionFactoryFunc func)
 {
@@ -36,4 +37,7 @@ void ServerEngine::NetworkManager::Shutdown()
 	if(m_ioCore) {
 		m_ioCore->Shutdown();
 	}
+
+	MANAGER(ServerEngine::ThreadManager)->Join();
 }
+#endif

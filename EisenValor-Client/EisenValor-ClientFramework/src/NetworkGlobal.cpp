@@ -74,7 +74,7 @@ void NetBridge::NetworkGlobal::ProcessIO()
 
 	if (recvLen == 0)
 	{
-		assert(false && "Recv Zero");
+		// assert(false && "Recv Zero");
 		std::cout << "Recv Zero" << std::endl;
 		exit(-1);
 	}

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>00. Main</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>99. pch</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="00. Main">
+      <UniqueIdentifier>{6b97cb42-8c0f-4f1b-adc9-c94833337831}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="99. pch">
+      <UniqueIdentifier>{52126dc0-8731-4f94-9762-5e29ee4e53f6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>99. pch</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -4,6 +4,7 @@
 
 namespace ServerEngine {
 	class IOCore;
+#ifdef LEGACY_CODE
 	class NetworkManager : public Singleton<NetworkManager> {
 		SINGLETON(NetworkManager)
 	public:
@@ -17,6 +18,7 @@ namespace ServerEngine {
 	private:
 		std::unique_ptr<IOCore> m_ioCore;
 	};
+#endif
 }
 
 

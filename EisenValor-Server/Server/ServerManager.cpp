@@ -9,6 +9,8 @@
 #include "GameLobby.h"
 #include "ServerEngineConfigManager.h"
 #include "GameDataManager.h"
+#include "ServerEngineCore.h"
+#include "GameWorld.h"
 
 BOOL __stdcall ConsoleHandler(DWORD signal)
 {
@@ -47,6 +49,8 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
+#ifdef LEGACY_CODE
+	LOG_INFO("LEGACY_CODE");
 	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
 		LOG_ERROR("NetworkManager Init Failed");
 		return false;
@@ -54,13 +58,28 @@ bool Server::ServerManager::Init()
 
 	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
 	G_GAME_LOBBY->Init();
+#endif
+
+#ifdef MODERN_CODE
+	LOG_INFO("MODERN_CODE");
+	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
+		LOG_ERROR("ServerEngineCore Init Failed");
+		return false;
+	}
+#endif
 
 	return true;
 }
 
 bool Server::ServerManager::Run()
 {
+#ifdef LEGACY_CODE
 	MANAGER(ServerEngine::NetworkManager)->Run();
+#endif
+
+#ifdef MODERN_CODE
+	MANAGER(ServerEngine::ServerEngineCore)->Run();
+#endif
 
 	char ch;
 	constexpr int8 ESC = 27;
@@ -86,8 +105,15 @@ bool Server::ServerManager::Run()
 
 void Server::ServerManager::Shutdown()
 {
+#ifdef LEGACY_CODE
 	MANAGER(ServerEngine::NetworkManager)->Shutdown();
-	MANAGER(ServerEngine::ThreadManager)->Join();
+#endif
+
+#ifdef MODERN_CODE
+	MANAGER(ServerEngine::ServerEngineCore)->Shutdown();
+#endif
+	
+	
 	WSACleanup();
 	LOG_SAVE();
 }

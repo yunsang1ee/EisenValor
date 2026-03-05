@@ -11,6 +11,7 @@ namespace ServerEngine {
 
 		public:
 			void Init(const uint32 bufferSize);
+			void SetTable(const RIO_EXTENSION_FUNCTION_TABLE& table) { m_table = table; }
 
 		public:
 			bool				OnRead(const uint32 numOfBytes);
@@ -31,6 +32,7 @@ namespace ServerEngine {
 			const uint32		GetFreeSize() const { return m_capacity - m_writePos; }
 
 		protected:
+			RIO_EXTENSION_FUNCTION_TABLE m_table;
 			RIO_BUFFERID	m_id;
 			char* m_buffer;
 

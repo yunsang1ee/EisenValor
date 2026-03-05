@@ -213,11 +213,11 @@ table SC_CHANGE_GENERAL_STANCE_PACKET {
 	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
-table CS_PLAYER_ATTACK_PACKET {
+table CS_GENERAL_ATTACK_PACKET {
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
 
-table SC_PLAYER_ATTACK_PACKET {
+table SC_GENERAL_ATTACK_PACKET {
 	obj_id: uint;
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
@@ -249,12 +249,12 @@ table SC_CHANGE_CAMERA_TARGET_PACKET {
 	camera_target_id: uint;
 }
 
-table CS_SHOW_PLAYER_ATTACK_DIR_PACKET{
+table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
 	attack_dir: uint8;
 }
 
-table SC_SHOW_PLAYER_ATTACK_DIR_PACKET{
-	player_id: uint32;
+table SC_SHOW_GENERAL_ATTACK_DIR_PACKET{
+	obj_id: uint32;
 	attack_dir: uint8;
 }
 
@@ -273,12 +273,24 @@ table SC_DEAD_PACKET {
 	obj_id: uint32;
 }
 
+table SC_START_ANIMATION {
+	obj_id: uint32;
+	anim_name: string;
+}
+
+table SC_END_ANIMATION {
+	obj_id: uint32;
+	anim_name: string;
+}
 
 // ================================================
 //					    TEST
 // ================================================
 table CS_ENTER_GAME_WORLD_PACKET {
 	room_id: ushort;
+}
+
+table CS_GO_WORLD_PACKET{
 }
 
 // ====================================================

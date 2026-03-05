@@ -6,8 +6,8 @@ namespace Server {
 	namespace Contents {
 		class Script : public Component {
 		public:
-			Script();
-			virtual ~Script();
+			Script() = default;
+			virtual ~Script() = default;
 
 		public:
 			void SetName(const std::string_view name) { m_name = name; }

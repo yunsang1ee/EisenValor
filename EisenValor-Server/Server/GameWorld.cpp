@@ -33,7 +33,9 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	CreateBotsGameObjects(bots);
 	CreateUsersGameObjects(users);
 	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+#ifdef LEGACY_CODE
 	LOG_INFO("GameRoom ID:{}, GameWorld Start!", GetGameRoom()->GetID());
+#endif
 	FixedUpdate();
 }
 
@@ -41,10 +43,13 @@ void Server::Contents::GameWorld::Update()
 {
 	constexpr float FIXED_DT = 0.016667f;
 	auto startTime = std::chrono::high_resolution_clock::now();
+#ifdef LEGACY_CODE
+
 	if(IsFinish()) {
 		GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::ReturnToGameRoom, m_users, m_bots);
 		return;
 	}
+#endif
 
 	//const auto now = std::chrono::high_resolution_clock::now();
 	//m_dt = 0.f;
@@ -138,10 +143,12 @@ void Server::Contents::GameWorld::FixedUpdate()
 {
 	// 1초당 60프레임
 	// 1프레임 당 0.016s -> 16ms
+#ifdef LEGACY_CODE
 	if(IsFinish()) {
 		GetGameRoom()->ExecAsync(&Server::Contents::GameRoom::ReturnToGameRoom, m_users, m_bots);
 		return;
 	}
+#endif
 	const auto now = std::chrono::high_resolution_clock::now();
 
 	if(m_firstUpdate) {
@@ -237,7 +244,7 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 	}
 }
 
-void Server::Contents::GameWorld::Handle_CS_PLAYER_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
+void Server::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(sessionID) != playerGroup.end()) {
@@ -269,6 +276,14 @@ void Server::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 se
 	}
 }
 
+void Server::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+{
+	auto const player = IDToPlayer(sessionID);
+	if(player) {
+		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
+	}
+}
+
 #ifndef ENABLE_LOBBY
 void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
 {
@@ -283,14 +298,18 @@ void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_p
 	PlayerTemplate t;
 	t.posInfo = PosInfo{ startPos, rot };
 	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+#ifdef LEGACY_CODE
 	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+#endif
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	flag = !flag;
 
 	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
 	player->SetID(clientSession->GetID());
 	player->SetSession(clientSession);
+#ifdef LEGACY_CODE
 	player->SetRoom(GetGameRoom());
+#endif
 	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	AddGameObject(std::move(player));
 }
@@ -311,6 +330,8 @@ void Server::Contents::GameWorld::CheckGameTime(const float dt)
 
 			const uint32_t minutes = totalSeconds / 60;
 			const uint32_t seconds = totalSeconds % 60;
+	
+			// std::cout << std::format("{}M {}S", minutes, seconds) << std::endl;
 
 			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
 			Broadcast(std::move(pb));
@@ -600,6 +621,7 @@ void Server::Contents::GameWorld::RegistCollisionGroup(const FB_ENUMS::GAME_OBJE
 
 void Server::Contents::GameWorld::CreateUsersGameObjects(const Users& users)
 {
+#ifdef LEGACY_CODE
 	m_users.clear();
 	m_users.insert(users.begin(), users.end());
 	for(const auto& [id, user] : m_users) {
@@ -621,6 +643,7 @@ void Server::Contents::GameWorld::CreateUsersGameObjects(const Users& users)
 		player->SetRoom(GetGameRoom());
 		AddGameObject(std::move(player));
 	}
+#endif
 }
 
 void Server::Contents::GameWorld::CreateBotsGameObjects(const Bots& bots)
@@ -638,7 +661,9 @@ void Server::Contents::GameWorld::CreateBotsGameObjects(const Bots& bots)
 		t.posInfo = PosInfo{ startPos, rot };
 		t.teamType = bot->GetTeamType();
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+#ifdef LEGACY_CODE
 		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+#endif
 		auto general = Server::Contents::GameObjectFactory::CreateGeneral(t);
 		AddGameObject(std::move(general));
 	}
@@ -677,7 +702,9 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 		.pos = startPos,
 		.rot = Vec3{}
 		};
+#ifdef LEGACY_CODE
 		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+#endif
 		flag = !flag;
 		startPos.x += 5.f;
 
@@ -707,10 +734,12 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 		t.id = m_npcIdGen++;
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 		t.posInfo = PosInfo{
-		.pos = Vec3{10.f, 0.f, 10.f},
+		.pos = Vec3{30.f, 0.f, 30.f},
 		.rot = Vec3{}
 		};
+#ifdef LEGACY_CODE
 		t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+#endif
 		t.range = 0.5f;
 		t.time = 10;
 		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
@@ -723,3 +752,506 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 
 	}
 }
+
+#ifdef MODERN_CODE
+Server::Contents::GameWorldTest::GameWorldTest()
+	:m_check{}, m_npcIdGen{ 100000 }, m_dt{}, m_accDT{}, m_worldFrameCount{}
+{
+	std::cout << "GameWorldTest!" << std::endl;
+}
+
+Server::Contents::GameWorldTest::~GameWorldTest()
+{
+
+}
+
+void Server::Contents::GameWorldTest::Init()
+{
+	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
+		LOG_ERROR("Nav Data Load Failed!");
+	}
+
+	CreateGameWorldObjects();
+}
+
+void Server::Contents::GameWorldTest::Update(const float dt)
+{
+	//m_dt = dt;
+	//m_accDT += dt;
+
+	//if(m_accDT >= 0.016f) {
+	//	m_accDT = 0.f;
+	//	
+	//	ProcessEvents();
+	//	m_navSystem.Update(dt);
+
+	//	for(const auto& group : m_gameObjectsGroups) {
+	//		for(const auto& [id, obj] : group) {
+	//			if(obj) obj->Update(dt);
+	//		}
+	//	}
+
+	//	CheckCollision();
+
+	//	m_worldFrameCount++;
+	//	CheckGameTime(dt);
+	//}
+	m_dt = dt;
+	m_accDT += dt;
+
+	const float fixedInterval = 0.01667f;
+
+	int loopCount = 0;
+	while(m_accDT >= fixedInterval && loopCount < 5) {
+
+		m_accDT -= fixedInterval;
+
+		ProcessEvents();
+
+		m_navSystem.Update(fixedInterval);
+
+		for(const auto& group : m_gameObjectsGroups) {
+			for(const auto& [id, obj] : group) {
+				if(obj) obj->Update(fixedInterval);
+			}
+		}
+
+		CheckCollision();
+
+		m_worldFrameCount++;
+		CheckGameTime(fixedInterval);
+
+		loopCount++;
+	}
+}
+
+void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine::Session> session)
+{
+	std::cout << "GameWorld EnterSession!" << std::endl;
+
+	const auto clientSession{ std::static_pointer_cast<ClientSession>(session) };
+
+	clientSession->SetGameWorld(this);
+
+	const uint32 id{ session->GetID() };
+
+	std::cout << "Enter Game World!" << std::endl;
+
+	static const Vec3 offset{ 3.f, 0.f, 3.f };
+	static Vec3 startPos{ 0.f, 0.f, 0.f };
+	startPos += offset;
+	const Vec3 rot{ 0.f, 0.f, 0.f };
+	static bool flag{ false };
+
+	PlayerTemplate t;
+	t.posInfo = PosInfo{ startPos, rot };
+	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+	t.gameWorld = this;
+	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+	flag = !flag;
+
+	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
+	player->SetID(clientSession->GetID());
+	player->SetSession(clientSession);
+	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+	AddGameObject(std::move(player));
+}
+
+void Server::Contents::GameWorldTest::LeaveSession(std::shared_ptr<ServerEngine::Session> session)
+{
+	const uint32 id{ session->GetID() };
+	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+	if(playerGroup.find(id) != playerGroup.end()) {
+		auto player = playerGroup[id].get();
+		RemoveGameObject(player);
+	}
+}
+
+void Server::Contents::GameWorldTest::Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb)
+{
+	for(const auto& [id, user] : m_users) {
+		const auto session = user->GetSession();
+		const SESSION_STATE sessionState = session->GetState();
+		if(SESSION_STATE::IN_GAME_WORLD == sessionState)
+			session->Send(pb);
+	}
+}
+
+void Server::Contents::GameWorldTest::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState)
+{
+	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+
+	auto it = playerGroup.find(clientSession->GetID());
+	if(it == playerGroup.end() || !it->second) return;
+
+	auto player = static_cast<Player*>(playerGroup[clientSession->GetID()].get());
+
+	if(nullptr == player) return;
+
+	if(player && false == player->IsActive()) return;
+
+	player->SetPos(kinematicInfo.pos);
+	player->SetRotation(kinematicInfo.rot);
+
+	auto fsm{ player->GetComponent<FSM>() };
+	if(fsm) {
+		if(FB_ENUMS::GENERAL_STATE_TYPE_NONE != playerState)
+			fsm->SetState(playerState);
+	}
+
+	if(fsm) {
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, fsm->GetCurState()->GetStateType(), etou8(player->GetSubState()));
+		Broadcast(std::move(pb));
+	}
+}
+void Server::Contents::GameWorldTest::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
+{
+	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+	if(playerGroup.find(sessionID) != playerGroup.end()) {
+		auto player = static_cast<Player*>(playerGroup[sessionID].get());
+		player->Handle_CS_PLAYER_ATTACK(attackInfo);
+	}
+}
+
+void Server::Contents::GameWorldTest::Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID)
+{
+	auto const player = IDToPlayer(sessionID);
+	if(player)
+		player->Handle_CS_PLAYER_GENERAL_STANCE();
+}
+
+void Server::Contents::GameWorldTest::Handle_CS_PLAYER_FAKE(const uint32 sessionID)
+{
+	auto const player = IDToPlayer(sessionID);
+	if(player) {
+		player->Handle_CS_PLAYER_FAKE();
+	}
+}
+
+void Server::Contents::GameWorldTest::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID)
+{
+	auto const player = IDToPlayer(sessionID);
+	if(player) {
+		player->Handle_CS_CHANGE_CAMERA_TARGET(prevTargetID);
+	}
+}
+
+void Server::Contents::GameWorldTest::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+{
+	auto const player = IDToPlayer(sessionID);
+	if(player) {
+		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
+	}
+}
+
+void Server::Contents::GameWorldTest::RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
+{
+	uint32 row{ static_cast<uint32>(left) };
+	uint32 col{ static_cast<uint32>(right) };
+
+	if(col < row) {
+		row = static_cast<uint32>(right);
+		col = static_cast<uint32>(left);
+	}
+
+	if(m_check[row] & (1 << col)) {
+		m_check[row] &= ~(1 << col);
+	}
+	else {
+		m_check[row] |= (1 << col);
+	}
+}
+
+void Server::Contents::GameWorldTest::CheckCollision()
+{
+	for(int row = 0; row < FB_ENUMS::GAME_OBJECT_TYPE_END; ++row) {
+		for(int col = row; col < FB_ENUMS::GAME_OBJECT_TYPE_END; ++col) {
+			if(m_check[row] & (1 << col)) {
+				CollisionUpdateGroup(static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(row), static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(col));
+			}
+		}
+	}
+}
+
+void Server::Contents::GameWorldTest::ProcessEvents()
+{
+	while(false == m_pendingEventFpQueue.empty()) {
+		auto eve = m_pendingEventFpQueue.front();
+		eve();
+		m_pendingEventFpQueue.pop();
+	}
+	ProcessPendingRemoveObjectList();
+	ProcessPendingAddObjectList();
+}
+
+void Server::Contents::GameWorldTest::ProcessPendingAddObjectList()
+{
+	while(false == m_pendingAddObjectQueue.empty()) {
+		auto newGameObject = std::move(m_pendingAddObjectQueue.front());
+		m_pendingAddObjectQueue.pop();
+
+		const uint32 id{ newGameObject->GetID() };
+		const uint8 type{ etou8(newGameObject->GetObjType()) };
+		const Vec3 pos{ newGameObject->GetPos() };
+		const Vec3 rot{ newGameObject->GetRotation() };
+		const PosInfo kInfo{ pos, rot };
+
+		if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == newGameObject->GetObjType()) {
+			auto newPlayer = static_cast<Player*>(newGameObject.get());
+			auto clientSession = newPlayer->GetSession();
+			clientSession->SetState(SESSION_STATE::IN_GAME_WORLD);
+
+#ifndef ENABLE_LOBBY
+			if(m_users.find(id) == m_users.end()) {
+				// TODO: 참여자 타입 수정해야함.
+				auto user = std::make_shared<User>(id, FB_ENUMS::PARTICIPANT_TYPE_USER, newPlayer->GetTeamType(), clientSession);
+				m_users.insert(std::make_pair(id, std::move(user)));
+			}
+#endif // DEVELOP
+
+			// 패킷으로 보낼 나의 데이터 정의
+			auto startPos = newPlayer->GetPos();
+			auto rot = newPlayer->GetRotation();
+			const PosInfo kInfo{ startPos, rot };
+
+			// 나에게 내 정보 전송
+			const Stat& statInfo{ newPlayer->GetStat() };
+			{
+				auto pb = ServerPackets::Make_SC_LOCAL_PLAYER(newPlayer->GetID(), kInfo, newPlayer->GetTeamType(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
+				clientSession->Send(std::move(pb));
+			}
+
+			// 남들에게 내 정보 전송
+			{
+				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(newPlayer->GetID(), newPlayer->GetObjType(), newPlayer->GetTeamType(), newPlayer->GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
+				Broadcast(std::move(pb));
+			}
+
+			// 남들 정보 나에게 전송
+			for(const auto& group : m_gameObjectsGroups) {
+				for(const auto& [otherID, obj] : group) {
+					if(obj == nullptr) continue;
+					if(otherID == id) continue;
+					if(obj.get()) {
+						const uint8 type{ etou8(obj->GetObjType()) };
+						const Vec3 pos{ obj->GetPos() };
+						const Vec3 rot{ obj->GetRotation() };
+						const PosInfo kInfo{ pos, rot };
+
+						uint32 maxHp{};
+						uint32 hp{};
+						uint32 maxStamina{};
+						uint32 stamina{};
+
+						if(obj->IsCreature()) {
+							Creature* creature = static_cast<Creature*>(obj.get());
+							const Stat& statInfo{ creature->GetStat() };
+							maxHp = statInfo.maxHP;
+							hp = statInfo.currentHP;
+							maxStamina = statInfo.maxStamina;
+							stamina = statInfo.currentStamina;
+						}
+						FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+						if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+							stanceType = static_cast<Server::Contents::General*>(obj.get())->GetStanceType();
+
+						auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(otherID, obj->GetObjType(), obj->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
+						clientSession->Send(std::move(pb));
+					}
+				}
+			}
+		}
+		else {
+			uint32 maxHp{};
+			uint32 hp{};
+			uint32 maxStamina{};
+			uint32 stamina{};
+			if(newGameObject->IsCreature()) {
+				Creature* creature = static_cast<Creature*>(newGameObject.get());
+				const Stat& statInfo{ creature->GetStat() };
+				maxHp = statInfo.maxHP;
+				hp = statInfo.currentHP;
+				maxStamina = statInfo.maxStamina;
+				stamina = statInfo.currentStamina;
+			}
+			FB_ENUMS::GENERAL_STANCE_TYPE stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL };
+			if(type == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER || type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL)
+				stanceType = static_cast<Server::Contents::General*>(newGameObject.get())->GetStanceType();
+			{
+				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(id, newGameObject->GetObjType(), newGameObject->GetTeamType(), kInfo, maxHp, hp, maxStamina, stamina, stanceType);
+				Broadcast(std::move(pb));
+			}
+		}
+
+		const uint8 index = newGameObject->GetObjType();
+
+		assert(index < FB_ENUMS::GAME_OBJECT_TYPE_END);
+
+		auto& gameObjectMap = m_gameObjectsGroups[index];
+
+		if(gameObjectMap.end() == gameObjectMap.find(id))
+			gameObjectMap.insert(std::make_pair(id, std::move(newGameObject)));
+	}
+}
+
+void Server::Contents::GameWorldTest::ProcessPendingRemoveObjectList()
+{
+	while(false == m_pendingRemoveObjectQueue.empty()) {
+		auto gameObject = m_pendingRemoveObjectQueue.front();
+		m_pendingRemoveObjectQueue.pop();
+
+		// 퇴장 사실을 퇴장하는 플레이어에게 알린다
+		// 퇴장 사실을 모든 유저에게 알린다
+		const auto type = gameObject->GetObjType();
+		const uint32 id{ gameObject->GetID() };
+		assert(type < FB_ENUMS::GAME_OBJECT_TYPE_END);
+		auto& gameObjectMap = m_gameObjectsGroups[type];
+		if(gameObjectMap.end() != gameObjectMap.find(id)) {
+			gameObjectMap.erase(id);
+		}
+
+		if(type == FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_PLAYER) {
+			if(m_users.find(id) != m_users.end())
+				m_users.erase(id);
+		}
+		else if(type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) {
+			if(m_bots.find(id) != m_bots.end())
+				m_bots.erase(id);
+		}
+
+		auto pb = ServerPackets::Make_SC_REMOVE_OBJ_PACKET(id);
+		Broadcast(std::move(pb));
+	}
+}
+void Server::Contents::GameWorldTest::CheckGameTime(const float dt)
+{
+	// TODO: Server::Contents::GameWorldTest::CheckGameTime(const float dt)
+}
+
+void Server::Contents::GameWorldTest::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
+{
+	for(int row = 0; row < FB_ENUMS::GAME_OBJECT_TYPE_END; ++row) {
+		for(int col = row; col < FB_ENUMS::GAME_OBJECT_TYPE_END; ++col) {
+			if(m_check[row] & (1 << col)) {
+				CollisionUpdateGroup(static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(row), static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(col));
+			}
+		}
+	}
+}
+
+bool Server::Contents::GameWorldTest::IsFinish()
+{
+	return false;
+}
+
+Server::Contents::Player* Server::Contents::GameWorldTest::IDToPlayer(const uint32 sessionID)
+{
+	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+	if(playerGroup.find(sessionID) == playerGroup.end()) return nullptr;
+	auto player = static_cast<Server::Contents::Player*>(playerGroup[sessionID].get());
+	return player;
+}
+
+
+Server::Contents::GameObject* Server::Contents::GameWorldTest::FindObjectByID(const uint32 targetID)
+{
+	for(int i = 0; i < m_gameObjectsGroups.size(); ++i) {
+		for(const auto& [id, obj] : m_gameObjectsGroups[i]) {
+			if(targetID == id) {
+				return obj.get();
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+const Server::Contents::GameObjects& Server::Contents::GameWorldTest::GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type)
+{
+	const uint8 index{ etou8(type) };
+	if(index >= FB_ENUMS::GAME_OBJECT_TYPE_END)
+		assert(nullptr);
+	return m_gameObjectsGroups[index];
+}
+
+void Server::Contents::GameWorldTest::CreateGameWorldObjects()
+{
+	// Spanwer로 옮겨야 함
+//for(int i = 0; i < 2; ++i) {
+//	static bool flag{ false };
+//	static Vec3 startPos{ 0.f, 0.f, 0.f };
+//	SoldierTemplate t;
+//	t.id = m_npcIdGen++;
+//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+//	t.posInfo = PosInfo{
+//	.pos = startPos,
+//	.rot = Vec3{}
+//	};
+//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+//	flag = !flag;
+//	startPos.x += 2.f;
+//	auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
+//	AddGameObject(std::move(soldier));
+//}
+
+	for(int i = 0; i < 1; ++i) {
+		static bool flag{ true };
+		static Vec3 startPos{ 5.f, 0.f, 5.f };
+
+		GeneralTemplate t;
+		t.id = m_npcIdGen++;
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+		t.posInfo = PosInfo{
+		.pos = startPos,
+		.rot = Vec3{}
+		};
+		t.gameWorld = this;
+		flag = !flag;
+		startPos.x += 5.f;
+
+		auto general{ Server::Contents::GameObjectFactory::CreateGeneral(t) };
+		AddGameObject(std::move(general));
+	}
+
+	// - 배틀램 생성
+	//{
+	//	BattleRamTemplate t;
+	//	t.id = m_npcIdGen++;
+	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+	//	t.posInfo = PosInfo{
+	//	.pos = Vec3{},
+	//	.rot = Vec3{}
+	//	};
+	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+	//	t.detectionRange = 2.5f;
+	//	t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
+	//	auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
+	//	AddGameObject(std::move(battleRam));
+	//}
+
+	 // 점령지 생성
+	{
+		OccupationZoneTemplate t;
+		t.id = m_npcIdGen++;
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		t.posInfo = PosInfo{
+		.pos = Vec3{30.f, 0.f, 30.f},
+		.rot = Vec3{}
+		};
+		t.gameWorld = this;
+		t.range = 0.5f;
+		t.time = 10;
+		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+		auto oz{ Server::Contents::GameObjectFactory::CreateOccupationZone(t) };
+		AddGameObject(std::move(oz));
+	}
+
+	// 스포너 생성
+	{
+
+	}
+}
+
+#endif

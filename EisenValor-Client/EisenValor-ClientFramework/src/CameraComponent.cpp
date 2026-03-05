@@ -51,7 +51,7 @@ XMMATRIX CameraComponent::GetMainViewMatrix()
 	{
 		return mainCamera->GetViewMatrix();
 	}
-	DEBUG_LOG_FMT("CameraComponent::GetMainViewMatrix: No main camera set!\n");
+	// DEBUG_LOG_FMT("CameraComponent::GetMainViewMatrix: No main camera set!\n");
 	return XMMatrixIdentity();
 }
 
@@ -61,7 +61,7 @@ XMMATRIX CameraComponent::GetMainProjectionMatrix()
 	{
 		return mainCamera->GetProjectionMatrix();
 	}
-	DEBUG_LOG_FMT("CameraComponent::GetMainProjectionMatrix: No main camera set!\n");
+	// DEBUG_LOG_FMT("CameraComponent::GetMainProjectionMatrix: No main camera set!\n");
 	return XMMatrixIdentity();
 }
 

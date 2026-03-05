@@ -64,6 +64,6 @@ void ServerEngine::IOCore::FlushTaskQueue()
 
 		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->DequeTaskQueue();
 		if(nullptr == taskQueue) break;
-		taskQueue->Execute();
+		taskQueue->FlushTask();
 	}
 }

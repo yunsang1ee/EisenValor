@@ -10,6 +10,8 @@
 #include "NetworkManager.h"
 
 #ifdef _USE_RIO
+#ifdef LEGACY_CODE
+
 ServerEngine::RIO::RIOWorker::RIOWorker(const uint16 id)
 	:m_id{ id }, m_cq{ RIO_INVALID_CQ }
 {
@@ -49,6 +51,9 @@ void ServerEngine::RIO::RIOWorker::Work()
 
 void ServerEngine::RIO::RIOWorker::FlushSessionPacketQueue()
 {
+	if(m_connectedSession.empty())
+		return;
+
 	auto iter{ m_connectedSession.begin() };
 	for(; iter != m_connectedSession.end();) {
 		auto session{ (*iter) };
@@ -96,4 +101,5 @@ bool ServerEngine::RIO::RIOWorker::ProcessAccept(const SOCKET& socket, const SOC
 	m_connectedSession.insert(std::move(session));
 	return true;
 }
+#endif
 #endif

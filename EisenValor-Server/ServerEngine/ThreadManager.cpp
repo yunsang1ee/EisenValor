@@ -7,11 +7,19 @@ bool ServerEngine::ThreadManager::Init()
 {
 	m_workerThreadCount = MANAGER(ServerEngineConfigManager)->GetThreadConfig().MAX_WORKER_THREAD_COUNT;
 
-	TLS_THREAD_ID = IssueID();
-
+#ifdef LEGACY_CODE
 	// 0th: Main Thread
 	// 1st: Listen Thread
 	// 2nd ~ Nth: RioWorker
+#endif
+
+#ifdef MODERN_CODE
+	// TODO: ThreadManager 수정
+	// 0th: Main Thread
+	// 1st: Listen Thread
+	// 2nd: Lobby Thread
+	// 3nd ~ Nth: Worker Thread
+#endif
 
 	InitTLS();
 
@@ -22,7 +30,7 @@ void ServerEngine::ThreadManager::EnqueueTask(std::function<void(const std::stop
 {
 	std::lock_guard<std::mutex> lk{ m_mutex };
 
-	m_threads.emplace_back([task](const std::stop_token& st)
+	m_threads.emplace_back([this, task](const std::stop_token& st)
 		{
 			InitTLS();
 			task(st);
@@ -47,11 +55,13 @@ uint16 ServerEngine::ThreadManager::IssueID()
 
 void ServerEngine::ThreadManager::InitTLS()
 {
+	TLS_THREAD_ID = IssueID();
 }
 
 void ServerEngine::ThreadManager::DestroyTLS()
 {
 	std::osyncstream oss{ std::cout };
-	oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
+	// oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
+	oss << TLS_THREAD_NAME << " Thread DestroyTLS" << std::endl;
 }
 

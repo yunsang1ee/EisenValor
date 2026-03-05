@@ -62,7 +62,7 @@ void GameFramework::Run()
 		const float fps = static_cast<float>(frameCount) / timeElapsed;
 		const float ms = (timeElapsed * 1000.0f) / static_cast<float>(frameCount);
 
-		DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f} ({:.2f} ms)\n", fps, ms);
+		// DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f} ({:.2f} ms)\n", fps, ms);
 
 		std::string windowTitle = std::format("EisenValor (FPS: {:.0f})", fps);
 		SetWindowTextA(m_hWnd, windowTitle.c_str());

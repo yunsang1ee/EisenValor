@@ -53,10 +53,9 @@ void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast
 		BroadcastUpdateVital();
 	}
 
-	if(m_statInfo.currentHP == 0 && IsActive()) {
+	if(m_statInfo.currentHP == 0  && IsActive()) {
 		SetActive(false);
 		OnDeath();
-
 		auto pb{ ServerPackets::Make_SC_DEAD_PACKET(GetID()) };
 		const auto& world{ GetGameWorld() };
 		if(world)
@@ -85,7 +84,6 @@ void Server::Contents::Creature::IncStamina(const uint32 amount, const bool broa
 {
 	if(0 == amount)
 		return;
-
 
 	const uint32 stamina{ GetStamina() + amount };
 	m_statInfo.currentStamina = std::min(stamina, m_statInfo.maxStamina);

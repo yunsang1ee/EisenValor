@@ -20,7 +20,15 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 {
 	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
 	player->SetID(t.id);
+
+#ifdef LEGACY_CODE
 	player->SetGameWorld(t.gameWorld.lock());
+#endif
+
+#ifdef MODERN_CODE
+	player->SetGameWorld(t.gameWorld);
+#endif
+
 	player->SetPosInfo(t.posInfo);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
@@ -30,7 +38,6 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 			.maxStamina = t.gameObjectData->maxStamina,
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
-	player->SetGameWorld(t.gameWorld.lock());
 
 	const auto fsm = player->AddComponent<Server::Contents::FSM>();
 	
@@ -55,7 +62,12 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 {
 	auto general = std::make_unique<Server::Contents::General>(t.teamType);
 	general->SetID(t.id);
+#ifdef LEGACY_CODE
 	general->SetGameWorld(t.gameWorld.lock());
+#endif
+#ifdef MODERN_CODE
+	general->SetGameWorld(t.gameWorld);
+#endif
 	general->SetPosInfo(t.posInfo);
 	general->SetGameObjectData(t.gameObjectData);
 	general->SetStat(Stat{
@@ -66,13 +78,14 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
 	const auto bt = general->AddComponent<BehaviorTree>();
+	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);
 
 	auto navAgenet = general->AddComponent<Server::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;
-	params.maxSpeed = 0.3f;
+	params.maxSpeed = 1.f;
 	params.maxAcceleration = 10.f;
 
 	// set collision avoidance
@@ -81,16 +94,19 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
 	params.obstacleAvoidanceType = 0;
 	params.separationWeight = 2.0f;   // seperation force for other agent 
+	
 	if(false == navAgenet->Init(params))
 		return nullptr;
-	
+
 	const auto fsm = general->AddComponent<Server::Contents::FSM>();
 	auto roamingState = Server::Contents::GeneralRoamingState::Create(fsm);
 	auto duelingState = Server::Contents::GeneralDuelingState::Create(fsm);
+	auto stunState = Server::Contents::GeneralStunState::Create(fsm);
 	auto deadState = Server::Contents::GeneralDeadState::Create(fsm);
 	
 	fsm->AddState(std::move(roamingState));
 	fsm->AddState(std::move(duelingState));
+	fsm->AddState(std::move(stunState));
 	fsm->AddState(std::move(deadState));
 
 	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
@@ -102,7 +118,12 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 {
 	auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
 	soldier->SetID(t.id);
+#ifdef LEGACY_CODE
 	soldier->SetGameWorld(t.gameWorld.lock());
+#endif
+#ifdef MODERN_CODE
+	soldier->SetGameWorld(t.gameWorld);
+#endif
 	soldier->SetPosInfo(t.posInfo);
 	soldier->SetGameObjectData(t.gameObjectData);
 	soldier->SetStat(Stat{
@@ -114,6 +135,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 		});
 
 	auto navAgenet = soldier->AddComponent<Server::Contents::NavAgent>(soldier->GetGameWorld()->GetNavSystem());
+	
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;				// collision radius
@@ -127,6 +149,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
 	params.obstacleAvoidanceType = 0; 
 	params.separationWeight = 2.0f;   // seperation force for other agent 
+
 	if(false == navAgenet->Init(params))
 		return nullptr;
 	
@@ -137,7 +160,7 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.gameObjectData->enemyCombatRange);
 	auto attackState = Server::Contents::SoldierAttackState::Create(t.gameObjectData->enemyCombatRange, std::chrono::seconds(t.gameObjectData->attackCycleTime));
 	auto defenseState = Server::Contents::SoldierDefenseState::Create();
-	auto damagedState = Server::Contents::SoldierDamagedState::Create(0.f);
+	auto damagedState = Server::Contents::SoldierStunState::Create(0.f);
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(moveState));
@@ -155,7 +178,12 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 {
 	auto battleRam{ std::make_unique<BattleRam>(t.detectionRange, t.finalDestPos) };
 	battleRam->SetID(t.id);
+#ifdef LEGACY_CODE
 	battleRam->SetGameWorld(t.gameWorld.lock());
+#endif
+#ifdef MODERN_CODE
+	battleRam->SetGameWorld(t.gameWorld);
+#endif
 	battleRam->SetPosInfo(t.posInfo);
 	battleRam->SetGameObjectData(t.gameObjectData);
 	battleRam->SetStat(Stat{
@@ -166,7 +194,9 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 		.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
 	
+
 	auto navAgenet = battleRam->AddComponent<Server::Contents::NavAgent>(battleRam->GetGameWorld()->GetNavSystem());
+
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;       // collision radius
@@ -180,6 +210,7 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
 	params.obstacleAvoidanceType = 0; 
 	params.separationWeight = 2.0f;   // seperation force for other agent 
+
 	if(false == navAgenet->Init(params))
 		return nullptr;
 
@@ -190,7 +221,12 @@ std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 {
 	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	spawnObj->SetID(t.id);
+#ifdef LEGACY_CODE
 	spawnObj->SetGameWorld(t.gameWorld.lock());
+#endif
+#ifdef MODERN_CODE
+	spawnObj->SetGameWorld(t.gameWorld);
+#endif
 	spawnObj->SetPosInfo(t.posInfo);
 	spawnObj->SetGameObjectData(t.gameObjectData);
 	
@@ -205,7 +241,12 @@ std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 {
 	auto ozObj{ std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);
+#ifdef LEGACY_CODE
 	ozObj->SetGameWorld(t.gameWorld.lock());
+#endif
+#ifdef MODERN_CODE
+	ozObj->SetGameWorld(t.gameWorld);
+#endif
 	ozObj->SetPosInfo(t.posInfo);
 	ozObj->SetGameObjectData(t.gameObjectData);
 	

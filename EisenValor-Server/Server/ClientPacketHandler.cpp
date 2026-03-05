@@ -45,11 +45,12 @@ void Server::ClientPacketHandler::Init()
 	// =================
 #pragma region WORLD_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_MOVE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_MOVE_PACKET>(ClientPackets::Handle_CS_MOVE_PACKET, session, buffer); };
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_ATTACK_PACKET>(ClientPackets::Handle_CS_PLAYER_ATTACK_PACKET, session, buffer); };
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_GENERAL_ATTACK_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_GENERAL_ATTACK_PACKET>(ClientPackets::Handle_CS_GENERAL_ATTACK_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_GENERAL_STANCE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET>(ClientPackets::Handle_CS_CHANGE_GENERAL_STANCE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_PLAYER_FAKE_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_PLAYER_FAKE_PACKET>(ClientPackets::Handle_CS_PLAYER_FAKE_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(ClientPackets::Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_PLAYER_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_PLAYER_ATTACK_DIR_PACKET>(ClientPackets::Handle_CS_SHOW_PLAYER_ATTACK_DIR_PACKET, session, buffer); };
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET>(ClientPackets::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET, session, buffer); };
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_GO_WORLD_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_GO_WORLD_PACKET>(ClientPackets::Handle_CS_GO_WORLD_PACKET, session, buffer); };
 #pragma endregion
 	// =================
 	//		테스트
@@ -75,7 +76,7 @@ std::shared_ptr<ServerEngine::PacketBuffer> Server::ClientPacketHandler::MakePac
 	const PacketHeader header{ static_cast<uint16>(packetType), packetSize };
 
 	// TODO: PacketBufferPoolManager로부터 packetBuffer 받아오기
-	const auto packetBuffer = ServerEngine::ObjectPool<ServerEngine::PacketBuffer>::MakeShared(header);
+	const auto packetBuffer = std::make_shared<ServerEngine::PacketBuffer>(header);
 	packetBuffer->Append(packetData.data(), packetSize - sizeof(PacketHeader));
 	return packetBuffer;
 }
