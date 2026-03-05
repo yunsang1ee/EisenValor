@@ -325,15 +325,15 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			{
 				inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
 
-				// 깃발 텍스처 렌더링 디버그 로그
-				if (rData.textureResource->GetName().find("Flag") != std::string::npos)
-				{
-					DEBUG_LOG_FMT(
-						"[UIRenderPass] Rendering Flag Texture: '{}', Index: {}\n",
-						rData.textureResource->GetName(),
-						inst.textureIndex
-					);
-				}
+				//// 깃발 텍스처 렌더링 디버그 로그
+				//if (rData.textureResource->GetName().find("Flag") != std::string::npos)
+				//{
+				//	DEBUG_LOG_FMT(
+				//		"[UIRenderPass] Rendering Flag Texture: '{}', Index: {}\n",
+				//		rData.textureResource->GetName(),
+				//		inst.textureIndex
+				//	);
+				//}
 			}
 			else
 			{

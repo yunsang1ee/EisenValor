@@ -482,7 +482,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
 					if (animRes)
 					{
-						anim->Play(animRes, true);
+						anim->Play(animRes, false);
 					}
 				}
 			);
