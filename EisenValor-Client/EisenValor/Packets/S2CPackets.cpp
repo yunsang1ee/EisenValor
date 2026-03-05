@@ -680,7 +680,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			}
 
 			// VitalUIControllerComponent
-			if (isGeneral || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+			if (isPlayer || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
 			{
 				scene->CreateComponentWithInit<VitalUIControllerComponent>(
 					objHandle,
@@ -696,7 +696,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			// BattleUIControllerComponent 부착
-			if (isGeneral)
+			if (isPlayer)
 			{
 				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
