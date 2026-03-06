@@ -18,3 +18,20 @@ struct PosInfo {
 	Vec3 pos;
 	Vec3 rot;
 };
+
+struct Stat {
+	uint32 currentHP;
+	uint32 maxHP;
+	uint32 currentStamina;
+	uint32 maxStamina;
+	uint32 respawnTimeSec;
+};
+
+struct SkillData;
+
+struct AttackInfo {
+	const SkillData*					skillData;
+	FB_ENUMS::GENERAL_ATTACK_DIR_TYPE	dir;
+	uint64								startPreDelay;
+	uint64								startPostDelay;
+};

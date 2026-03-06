@@ -90,10 +90,10 @@ void DxResource::InitializeResource(
 		DxUtils::SetDebugName(m_resource.Get(), m_name);
 	}
 
-	DEBUG_LOG_FMT(
-		"[DxResource] Resource created: {}, {} bytes, State: 0x{:X}\n", m_name, m_sizeInBytes,
-		static_cast<uint32_t>(m_currentState)
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxResource] Resource created: {}, {} bytes, State: 0x{:X}\n", m_name, m_sizeInBytes,
+	//	static_cast<uint32_t>(m_currentState)
+	//);
 }
 
 void DxResource::ReleaseResource()

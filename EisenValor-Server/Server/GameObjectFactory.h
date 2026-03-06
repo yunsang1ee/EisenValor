@@ -11,35 +11,51 @@ namespace Server {
 		class General;
 		class Player;
 		class Soldier;
+		class BattleRam;
+
+		class GameWorldTest;
+
+
 
 		struct GameObjectTemplate {
+			uint32						id;
 			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
+			const GameObjectData*		gameObjectData;
+#ifdef LEGACY_CODE
+			std::weak_ptr<GameWorld>	gameWorld;
+#endif
+#ifdef MODERN_CODE
+			GameWorldTest* gameWorld;
+#endif
 		};
 
 		struct CreatureTemplate : public GameObjectTemplate {
-			const GameObjectData*	gameObjectData;
-			CreatureStat			stat;
 		};
 
 		struct GeneralTemplate : public CreatureTemplate {
-			// TODO: GeneralTemplate
 		};
 
 		struct PlayerTemplate : public GeneralTemplate {
-			// TODO: PlayerTemplate
 		};
 
 		struct SoldierTemplate : public CreatureTemplate {
-			std::weak_ptr<General> ownerGeneral;
-			float enemyDetectionRange;
-			float combatRange;
-			std::chrono::seconds attackCycleTime;
 
 		};
 
+		struct BattleRamTemplate : public CreatureTemplate {
+			float	detectionRange;
+			Vec3	finalDestPos;
+		};
+
 		struct SpanwerTemplate : public GameObjectTemplate {
-		
+			// TODO: 스폰 시간
+			// TODO: 스폰되는 병사의 수
+		};
+
+		struct OccupationZoneTemplate : public GameObjectTemplate {
+			int64	time;
+			float	range;
 		};
 
 		class GameObjectFactory {
@@ -52,11 +68,12 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			// static std::unique_ptr<Player, GameObjectDeleter>		CreatePlayer(const PlayerTemplate& t);
 			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
 			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::unique_ptr<BattleRam>	CreateBattleRam(const BattleRamTemplate& t);
 			static std::unique_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
+			static std::unique_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
 
 		};
 	}

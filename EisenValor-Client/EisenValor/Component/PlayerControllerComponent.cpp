@@ -206,19 +206,19 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		uint8_t curState = fsm->GetCurStateType();
 
 		// 공격 관련 상태인 경우 이동/대기로의 전환 방지
-		bool isAttackCycle = (curState == FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY ||
-							  curState == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK ||
-							  curState == FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY);
+		bool isAttackCycle = (curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+							  curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
+							  curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 
 		if (!isAttackCycle)
 		{
 			if (isMoving)
 			{
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_MOVE);
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
 			}
 			else
 			{
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 			}
 		}
 	}

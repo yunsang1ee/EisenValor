@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "IOCore.h"
 #include "RIOWorker.h"
 
@@ -9,12 +8,8 @@ namespace ServerEngine {
 		class RIOWorker;
 
 #ifdef _USE_RIO
+#ifdef LEGACY_CODE
 		class RIOCore : public IOCore {
-		private:
-			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable;
-			uint16									m_acceptThreadNum;
-			std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
-
 		public:
 			RIOCore();
 			virtual ~RIOCore() = default;
@@ -32,12 +27,18 @@ namespace ServerEngine {
 			virtual void	Run() override final;
 
 		public:
-			const auto& GetRioExtFuncTB() const noexcept { return m_rioExtfuncTable; }
+			const auto&		GetRioExtFuncTB() const { return m_rioExtfuncTable; }
 			virtual void	Shutdown() override final;
 
 		private:
 			void			DoAcceptLoop();
+
+		private:
+			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable;
+			uint16									m_acceptThreadNum;
+			std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
 		};
+#endif
 #endif
 	}
 }

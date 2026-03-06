@@ -29,18 +29,41 @@ public:
 		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
 	}
 
-	template <typename PacketType, typename HandleFunc>
+	// template <typename PacketType, typename HandleFunc>
+	// static bool HandlePacket(
+	//	HandleFunc handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader
+	//)
+	//{
+	//	const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
+	//	return handleFunc(socket, *packet);
+	// }
+
+	template <typename T, typename Func>
 	static bool HandlePacket(
-		HandleFunc handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader
+		const Func handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& header
 	)
 	{
-		const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
-		return handleFunc(socket, *packet);
+		const size_t		  fbSize = header.packetSize - sizeof(PacketHeader);
+		flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(buffer), fbSize);
+
+		if (!verifier.VerifyBuffer<T>(nullptr))
+		{
+			std::println(
+				"FlatBuffers Verification Failed! PacketType: {}, Size: {}", header.packetType, header.packetSize
+			);
+			assert(false && "FLatBuffer Varifier");
+			return false;
+		}
+
+		auto pktObj = flatbuffers::GetRoot<T>(buffer);
+		return handleFunc(socket, *pktObj);
 	}
 
 	// 패킷 만드는 부분
 	template <typename PacketFunc, typename... Args>
-	static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args)
+	static flatbuffers::DetachedBuffer Serialization(
+		flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args
+	)
 	{
 		auto offset = func(builder, std::forward<Args>(args)...);
 		builder.Finish(offset);
@@ -49,16 +72,7 @@ public:
 
 	static std::shared_ptr<NetBridge::PacketBuffer> MakePacketBuffer(
 		const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
-	)
-	{
-		const uint32  packetSize = static_cast<uint32>(sizeof(PacketHeader) + (packetData.size()));
-		auto		  packetBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
-		PacketHeader* header = reinterpret_cast<PacketHeader*>(packetBuffer->GetBuffer());
-		header->packetType = static_cast<uint16>(packetType);
-		header->packetSize = packetSize;
-		memcpy_s(&header[1], packetBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
-		return packetBuffer;
-	}
+	);
 
 private:
 	static std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;

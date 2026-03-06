@@ -101,7 +101,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
 			//}
 
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_PLAYER_STANCE_PACKET();
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
@@ -150,13 +150,13 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			if (GLOBAL(InputGlobal).GetInputDown(VK_LBUTTON))
 			{
 				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+				auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 				{
 					fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
 			}
 		}
@@ -644,7 +644,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				m_accumulatedDeltaY = 0.0f;
 
 				// 방향이 바뀔 때 패킷 전송 (단순 방향 표시용)
-				auto pb = NetBridge::C2S::Make_CS_SHOW_PLAYER_ATTACK_DIR_PACKET(detectedDir);
+				auto pb = NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(detectedDir);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// 마우스를 누른 채 이동한 경우 무효화
@@ -709,14 +709,14 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 				// 공격 패킷 전송
 				FB_STRUCTS::GeneralAttackInfo attackInfo(finalType, m_currentSelectedDir);
-				auto pb = NetBridge::C2S::Make_CS_PLAYER_ATTACK_PACKET(&attackInfo);
+				auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// FSM 상태 전환
 				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 				{
 					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
 
 				// 확정 후 즉시 초기화

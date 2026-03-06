@@ -49,20 +49,21 @@ bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
 bool Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHAT_PACKET& recvPkt);
 bool Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt);
-bool Handle_SC_PLAYER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_PLAYER_ATTACK_PACKET& recvPkt);
+bool Handle_SC_GENERAL_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_GENERAL_ATTACK_PACKET& recvPkt);
 bool Handle_SC_UPDATE_VITAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_VITAL_PACKET& recvPkt);
-bool Handle_SC_CHANGE_PLAYER_STANCE_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET& recvPkt
+bool Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_STANCE_PACKET& recvPkt
 );
 bool Handle_SC_UPDATE_STATE_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_STATE_PACKET& recvPkt);
 bool Handle_SC_REMAINING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMAINING_GAME_TIME& recvPkt);
 bool Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_CAMERA_TARGET_PACKET& recvPkt
 );
-bool Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET& recvPkt
+bool Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
 );
 bool Handle_SC_RESPAWN_GENERAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt);
+bool Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt);
 bool Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES::SC_PING_PACKET& recvPkt);
 
 

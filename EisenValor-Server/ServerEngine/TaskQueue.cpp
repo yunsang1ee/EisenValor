@@ -14,14 +14,14 @@ ServerEngine::TaskQueue::~TaskQueue()
 	// std::cout << "~TaskQueue" << std::endl;
 }
 
-void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, bool pushOnly) noexcept
+void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, bool pushOnly)
 {
 	const int32 prevCount = m_taskCount.fetch_add(1);
 	m_tasks.push(std::move(task));
 
 	if(0 == prevCount) {
 		if((nullptr == TLS_CURRENT_TASK_QUEUE) && (false == pushOnly))
-			Execute();
+			FlushTask();
 		else {	
 			// std::cout << "TaskQueue Push!" << std::endl;
 			MANAGER(TaskQueueManager)->EnqueTaskQueue(shared_from_this());
@@ -29,7 +29,7 @@ void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, boo
 	}
 }
 
-void ServerEngine::TaskQueue::Execute() noexcept
+void ServerEngine::TaskQueue::FlushTask()
 {
 	TLS_CURRENT_TASK_QUEUE = this;
 
@@ -50,7 +50,7 @@ void ServerEngine::TaskQueue::Execute() noexcept
 	}
 }
 
-void ServerEngine::TaskQueue::ClearTaskQueue() noexcept
+void ServerEngine::TaskQueue::ClearTaskQueue()
 {
 	std::shared_ptr<Task> task;
 	while(m_tasks.try_pop(task));

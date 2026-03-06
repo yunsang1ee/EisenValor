@@ -4,10 +4,10 @@
 // idle
 // 서버 로직에 맞게 이식
 // 데이터 없이 로직만 수행
-class GeneralIdleState : public State {
+class PlayerlIdleState : public State {
 public:
-	GeneralIdleState();
-	virtual ~GeneralIdleState() = default;
+	PlayerlIdleState();
+	virtual ~PlayerlIdleState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -15,10 +15,10 @@ public:
 };
 
 // Move
-class GeneralMoveState : public State {
+class PlayerMoveState : public State {
 public:
-	GeneralMoveState();
-	virtual ~GeneralMoveState() = default;
+	PlayerMoveState();
+	virtual ~PlayerMoveState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -26,10 +26,10 @@ public:
 };
 
 // PreDelay
-class GeneralPreDelayState : public State {
+class PlayerPreDelayState : public State {
 public:
-	GeneralPreDelayState();
-	virtual ~GeneralPreDelayState() = default;
+	PlayerPreDelayState();
+	virtual ~PlayerPreDelayState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -37,10 +37,10 @@ public:
 };
 
 // Attack
-class GeneralAttackState : public State {
+class PlayerAttackState : public State {
 public:
-	GeneralAttackState();
-	virtual ~GeneralAttackState() = default;
+	PlayerAttackState();
+	virtual ~PlayerAttackState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -48,10 +48,10 @@ public:
 };
 
 // PostDelay
-class GeneralPostDelayState : public State {
+class PlayerPostDelayState : public State {
 public:
-	GeneralPostDelayState();
-	virtual ~GeneralPostDelayState() = default;
+	PlayerPostDelayState();
+	virtual ~PlayerPostDelayState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -59,10 +59,10 @@ public:
 };
 
 // Defense
-class GeneralDefenseState : public State {
+class PlayerDefenseState : public State {
 public:
-	GeneralDefenseState();
-	virtual ~GeneralDefenseState() = default;
+	PlayerDefenseState();
+	virtual ~PlayerDefenseState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -70,10 +70,10 @@ public:
 };
 
 // Stun
-class GeneralStunState : public State {
+class PlayerStunState : public State {
 public:
-	GeneralStunState();
-	virtual ~GeneralStunState() = default;
+	PlayerStunState();
+	virtual ~PlayerStunState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -81,10 +81,10 @@ public:
 };
 
 // Dead
-class GeneralDeadState : public State {
+class PlayerDeadState : public State {
 public:
-	GeneralDeadState();
-	virtual ~GeneralDeadState() = default;
+	PlayerDeadState();
+	virtual ~PlayerDeadState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;

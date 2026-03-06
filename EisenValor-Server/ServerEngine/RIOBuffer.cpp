@@ -13,8 +13,14 @@ ServerEngine::RIO::RIOBuffer::RIOBuffer()
 ServerEngine::RIO::RIOBuffer::~RIOBuffer()
 {
 	if(nullptr != m_buffer) {
+#ifdef LEGACY_CODE
 		RIO_EXT_FUNC_TB.RIODeregisterBuffer(m_id);
+#endif
 
+#ifdef MODERN_CODE
+		m_table.RIODeregisterBuffer(m_id);
+#endif
+		
 		if(0 == VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE))
 			ServerEngine::LogManager::PrintLastError();
 	}
@@ -31,13 +37,18 @@ void ServerEngine::RIO::RIOBuffer::Init(const uint32 bufferSize)
 		ServerEngine::LogManager::PrintLastError();
 
 	SYSTEM_INFO systemInfo;
-	GetSystemInfo(&systemInfo); // ±âº» ÆäÀÌÁö 4kb
-	const uint64 granularity = systemInfo.dwAllocationGranularity;	// ¸Þ¸ð¸® ÇÒ´çÇÒ ¶§ ÀÌ ¼ýÀÚÀÇ ¹è¼ö·Î ¸Þ¸ð¸® ¹ÝÈ¯ÇØÁÜ. (64kb 65536)
+	GetSystemInfo(&systemInfo); // ê¸°ë³¸ íŽ˜ì´ì§€ 4kb
+	const uint64 granularity = systemInfo.dwAllocationGranularity;	// ë©”ëª¨ë¦¬ í• ë‹¹í•  ë•Œ ì´ ìˆ«ìžì˜ ë°°ìˆ˜ë¡œ ë©”ëª¨ë¦¬ ë°˜í™˜í•´ì¤Œ. (64kb 65536)
 
 	assert(m_capacity % granularity == 0);
 
 	if(nullptr != m_buffer)
+#ifdef LEGACY_CODE
 		m_id = RIO_EXT_FUNC_TB.RIORegisterBuffer(m_buffer, m_capacity);
+#endif
+#ifdef MODERN_CODE
+		m_id = m_table.RIORegisterBuffer(m_buffer, m_capacity);
+#endif
 
 	if(RIO_INVALID_BUFFERID == m_id)
 		ServerEngine::LogManager::PrintLastError();
@@ -63,9 +74,9 @@ bool ServerEngine::RIO::RIOBuffer::OnWrite(const uint32 numOfBytes)
 	return true;
 }
 
-void ServerEngine::RIO::RIOBuffer::CleanBuffer() noexcept
+void ServerEngine::RIO::RIOBuffer::CleanBuffer()
 {
-	const uint32 dataSize = GetDataSize();
+	/*const uint32 dataSize = GetDataSize();
 
 	if(dataSize == 0) {
 		m_readPos = m_writePos = 0;
@@ -75,6 +86,20 @@ void ServerEngine::RIO::RIOBuffer::CleanBuffer() noexcept
 			::memcpy(&m_buffer[0], &m_buffer[m_readPos], dataSize);
 			m_readPos = 0;
 			m_writePos = dataSize;
+		}
+	}*/
+
+	const int32 dataSize = GetDataSize();
+	if(dataSize == 0) {
+		m_readPos = m_writePos = 0;
+	}
+	else {
+		if(m_readPos > 0) {
+			memmove(&m_buffer[0], &m_buffer[m_readPos], dataSize);
+			m_readPos = 0;
+			m_writePos = dataSize;
+			
+			std::cout << "Recv Buffer Mem Move!" << std::endl;
 		}
 	}
 }

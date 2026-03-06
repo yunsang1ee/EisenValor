@@ -2,26 +2,30 @@
 #include "GeneralStates.h"
 #include "FSMComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "AnimationComponent.h"
+#include "ResourceGlobal.h"
+#include "AnimationResource.h"
 #include <GameObject.h>
+#include <GameObject.inl>
 #include <Packets/Enums_generated.h>
 
 // ==================================
 //		  GENERAL_IDLE_STATE
 // ==================================
-GeneralIdleState::GeneralIdleState(): State(FB_ENUMS::GENERAL_STATE_TYPE_IDLE)
+PlayerlIdleState::PlayerlIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
 {
 }
 
-void GeneralIdleState::Enter(FSMComponent* fsm)
+void PlayerlIdleState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] IDLE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
 }
 
-void GeneralIdleState::Update(FSMComponent* fsm, float dt)
+void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 {
 }
 
-void GeneralIdleState::Exit(FSMComponent* fsm)
+void PlayerlIdleState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] IDLE Exit\n");
 }
@@ -29,20 +33,20 @@ void GeneralIdleState::Exit(FSMComponent* fsm)
 // ==================================
 //		  GENERAL_MOVE_STATE
 // ==================================
-GeneralMoveState::GeneralMoveState(): State(FB_ENUMS::GENERAL_STATE_TYPE_MOVE)
+PlayerMoveState::PlayerMoveState(): State(FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
 {
 }
 
-void GeneralMoveState::Enter(FSMComponent* fsm)
+void PlayerMoveState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] MOVE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
 }
 
-void GeneralMoveState::Update(FSMComponent* fsm, float dt)
+void PlayerMoveState::Update(FSMComponent* fsm, float dt)
 {
 }
 
-void GeneralMoveState::Exit(FSMComponent* fsm)
+void PlayerMoveState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] MOVE Exit\n");
 }
@@ -50,11 +54,11 @@ void GeneralMoveState::Exit(FSMComponent* fsm)
 // ==================================
 //		 GENERAL_PRE_DELAY_STATE
 // ==================================
-GeneralPreDelayState::GeneralPreDelayState() : State(FB_ENUMS::GENERAL_STATE_TYPE_PRE_DELAY)
+PlayerPreDelayState::PlayerPreDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)
 {
 }
 
-void GeneralPreDelayState::Enter(FSMComponent* fsm)
+void PlayerPreDelayState::Enter(FSMComponent* fsm)
 {
 	if (fsm)
 	{
@@ -63,7 +67,7 @@ void GeneralPreDelayState::Enter(FSMComponent* fsm)
 	}
 }
 
-void GeneralPreDelayState::Update(FSMComponent* fsm, float dt)
+void PlayerPreDelayState::Update(FSMComponent* fsm, float dt)
 {
 	if (!fsm) return;
 
@@ -77,11 +81,11 @@ void GeneralPreDelayState::Update(FSMComponent* fsm, float dt)
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK);
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK);
 	}
 }
 
-void GeneralPreDelayState::Exit(FSMComponent* fsm)
+void PlayerPreDelayState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] PRE_DELAY Exit\n");
 }
@@ -89,27 +93,40 @@ void GeneralPreDelayState::Exit(FSMComponent* fsm)
 // ==================================
 //		  GENERAL_ATTACK_STATE
 // ==================================
-GeneralAttackState::GeneralAttackState() : State(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
+PlayerAttackState::PlayerAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
 }
 
-void GeneralAttackState::Enter(FSMComponent* fsm)
+void PlayerAttackState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
+
+	// 애니메이션 한 번 재생
+	if (auto* go = fsm->GetGameObject())
+	{
+		if (auto* anim = go->GetComponent<AnimationComponent>())
+		{
+			auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+			if (animRes)
+			{
+				anim->Play(animRes, false);
+			}
+		}
+	}
 }
 
-void GeneralAttackState::Update(FSMComponent* fsm, float dt)
+void PlayerAttackState::Update(FSMComponent* fsm, float dt)
 {
 	fsm->AddStateTimer(dt);
 	// 임시로 1.0초 후 POST_DELAY 전환
 	if (fsm->GetStateTimer() >= 1.0f) 
 	{
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY);
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 	}
 }
 
-void GeneralAttackState::Exit(FSMComponent* fsm)
+void PlayerAttackState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] ATTACK Exit\n");
 }
@@ -117,17 +134,17 @@ void GeneralAttackState::Exit(FSMComponent* fsm)
 // ==================================
 //		 GENERAL_POST_DELAY_STATE
 // ==================================
-GeneralPostDelayState::GeneralPostDelayState() : State(FB_ENUMS::GENERAL_STATE_TYPE_POST_DELAY)
+PlayerPostDelayState::PlayerPostDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
 {
 }
 
-void GeneralPostDelayState::Enter(FSMComponent* fsm)
+void PlayerPostDelayState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] POST_DELAY Enter\n");
 	fsm->SetStateTimer(0.0f);
 }
 
-void GeneralPostDelayState::Update(FSMComponent* fsm, float dt)
+void PlayerPostDelayState::Update(FSMComponent* fsm, float dt)
 {
 	if (!fsm) return;
 
@@ -141,11 +158,11 @@ void GeneralPostDelayState::Update(FSMComponent* fsm, float dt)
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	}
 }
 
-void GeneralPostDelayState::Exit(FSMComponent* fsm)
+void PlayerPostDelayState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] POST_DELAY Exit\n");
 }
@@ -153,27 +170,27 @@ void GeneralPostDelayState::Exit(FSMComponent* fsm)
 // ==================================
 //		  GENERAL_DEFENSE_STATE
 // ==================================
-GeneralDefenseState::GeneralDefenseState() : State(FB_ENUMS::GENERAL_STATE_TYPE_DEFENSE)
+PlayerDefenseState::PlayerDefenseState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE)
 {
 }
 
-void GeneralDefenseState::Enter(FSMComponent* fsm)
+void PlayerDefenseState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] DEFENSE Enter (Block Success!)\n");
 	fsm->SetStateTimer(0.0f);
 }
 
-void GeneralDefenseState::Update(FSMComponent* fsm, float dt)
+void PlayerDefenseState::Update(FSMComponent* fsm, float dt)
 {
 	fsm->AddStateTimer(dt);
 	// 방어 성공 연출 시간 (1초)
 	if (fsm->GetStateTimer() >= 1.0f)
 	{
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	}
 }
 
-void GeneralDefenseState::Exit(FSMComponent* fsm)
+void PlayerDefenseState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] DEFENSE Exit\n");
 }
@@ -181,27 +198,27 @@ void GeneralDefenseState::Exit(FSMComponent* fsm)
 // ==================================
 //		  GENERAL_STUN_STATE
 // ==================================
-GeneralStunState::GeneralStunState() : State(FB_ENUMS::GENERAL_STATE_TYPE_STUN)
+PlayerStunState::PlayerStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
 }
 
-void GeneralStunState::Enter(FSMComponent* fsm)
+void PlayerStunState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] STUN Enter (Hit!)\n");
 	fsm->SetStateTimer(0.0f);
 }
 
-void GeneralStunState::Update(FSMComponent* fsm, float dt)
+void PlayerStunState::Update(FSMComponent* fsm, float dt)
 {
 	fsm->AddStateTimer(dt);
 	// 피격 경직 시간 (1초)
 	if (fsm->GetStateTimer() >= 1.0f)
 	{
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	}
 }
 
-void GeneralStunState::Exit(FSMComponent* fsm)
+void PlayerStunState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] STUN Exit\n");
 }
@@ -209,21 +226,21 @@ void GeneralStunState::Exit(FSMComponent* fsm)
 // ==================================
 //		  GENERAL_DEAD_STATE
 // ==================================
-GeneralDeadState::GeneralDeadState() : State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
 {
 }
 
-void GeneralDeadState::Enter(FSMComponent* fsm)
+void PlayerDeadState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] DEAD Enter (Killed)\n");
 }
 
-void GeneralDeadState::Update(FSMComponent* fsm, float dt)
+void PlayerDeadState::Update(FSMComponent* fsm, float dt)
 {
 	// 죽은 상태는 별도의 전이 없이 서버의 리스폰 패킷을 기다림
 }
 
-void GeneralDeadState::Exit(FSMComponent* fsm)
+void PlayerDeadState::Exit(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] DEAD Exit (Respawned)\n");
 }

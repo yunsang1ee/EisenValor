@@ -9,10 +9,6 @@ namespace Server {
 		class Creature;
 
 		class FSM : public Component {
-		private:
-			std::map<uint8, std::unique_ptr<State>>				m_states;
-			State*												m_curState;
-			
 		public:
 			FSM();
 			virtual ~FSM()=default;
@@ -21,13 +17,19 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		public:
-			void		SetState(const uint8 state);
+			void		SetState(const uint8 state, const bool broadcast = false);
 			void		AddState(std::unique_ptr<State> state);
-			void		ChangeState(const uint8 nextState, const float dt);
+			void		ChangeState(const uint8 nextState, const float dt, const bool broadcast = true);
 			State*		GetCurState() const { return m_curState; }
+			uint8		GetPrevStateType() const { return m_prevStateType; }
 
 		private:
 			void		SendUpdateStatePacket();
+
+		private:
+			std::map<uint8, std::unique_ptr<State>>	m_states;
+			State*									m_curState;
+			uint8									m_prevStateType;
 		};
 	}
 }

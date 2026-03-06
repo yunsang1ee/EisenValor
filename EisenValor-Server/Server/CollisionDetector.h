@@ -3,20 +3,22 @@
 
 namespace Server {
 	namespace Contents {
+		
+		union COLLIDER_ID {
+			struct {
+				uint32 leftID;
+				uint32 rightID;
+			};
+			uint64 id;
+		};
 
 		class GameWorld;
+		class GameWorldTest;
 
 		class Collider;
 		class OBBCollider;
 
 		class CollisionDetector {
-		private:
-			using CollisionFunc = bool(*)(const Collider* const, const Collider* const);
-			static constexpr uint8 MAX_TYPE_COUNT = static_cast<int>(COLLIDER_TYPE::END);
-		
-		private:
-			CollisionFunc m_collisionTable[MAX_TYPE_COUNT + 1][MAX_TYPE_COUNT + 1];
-
 		private:
 			CollisionDetector();
 			CollisionDetector(const CollisionDetector&) = delete;
@@ -37,6 +39,13 @@ namespace Server {
 			static bool OverlapOnAxis(const OBBCollider* const box1, const OBBCollider* const box2, const Matrix& mat1, const Matrix& mat2, const Vec3& axis);
 		
 			friend class GameWorld;
+			friend class GameWorldTest;
+
+		private:
+			using CollisionFunc = bool(*)(const Collider* const, const Collider* const);
+			static constexpr uint8 MAX_TYPE_COUNT = static_cast<int>(COLLIDER_TYPE::END);
+			CollisionFunc m_collisionTable[MAX_TYPE_COUNT + 1][MAX_TYPE_COUNT + 1];
+
 		};
 	}
 }

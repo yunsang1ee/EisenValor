@@ -5,10 +5,17 @@
 namespace Server {
 	namespace Contents {
 		class Script : public Component {
-		private:
+		public:
+			Script() = default;
+			virtual ~Script() = default;
 
 		public:
-			virtual ~Script() = default;
+			void SetName(const std::string_view name) { m_name = name; }
+			const std::string_view GetName() const { return m_name; }
+
+		private:
+			std::string m_name;
+
 		};
 	}
 }

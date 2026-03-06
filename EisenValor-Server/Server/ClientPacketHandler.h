@@ -5,7 +5,7 @@
 #include "Tables_generated.h"
 
 #include "PacketHeader.h"
-#include "ServerGlobalFunc.h"
+#include "ServerGlobalFuncs.h"
 
 #include "ClientPackets.h"
 
@@ -15,17 +15,17 @@ namespace ServerEngine {
 }
 
 /*
-	ººº«: 0 ~ 9
-	∑Œ±◊¿Œ: 10 ~ 99
-	∑Œ∫Ò: 100 ~ 999
-	∑Î: 1000 ~ 9999
-	ø˘µÂ: 10000 ~ 19999
-	≈◊Ω∫∆Æ: 20000 ~ 65535
+	ÏÑ∏ÏÖò: 0 ~ 9
+	Î°úÍ∑∏Ïù∏: 10 ~ 99
+	Î°úÎπÑ: 100 ~ 999
+	Î£∏: 1000 ~ 9999
+	ÏõîÎìú: 10000 ~ 19999
+	ÌÖåÏä§Ìä∏: 20000 ~ 65535
 */
 
 enum class PACKET_TYPE : uint16 {
 	// ==================
-	//		ººº«
+	//		ÏÑ∏ÏÖò
 	// ==================
 #pragma region SESSION_PACKETS
 	CS_PONG_PKT = 0,
@@ -35,14 +35,14 @@ enum class PACKET_TYPE : uint16 {
 #pragma endregion
 
 	// ==================
-	//		∑Œ±◊¿Œ
+	//		Î°úÍ∑∏Ïù∏
 	// ==================
 #pragma region LOGIN_PACKETS
 	CS_LOGIN_PKT = 10,
 	SC_LOGIN_FAIL_PKT = 11,
 	SC_LOGIN_SUCCESS_PKT = 12,
 
-	// TODO: »∏ø¯∞°¿‘
+	// TODO: ÌöåÏõêÍ∞ÄÏûÖ
 	CS_SIGN_UP_PKT = 13,
 	SC_SIGN_UP_FAIL_PKT = 14,
 	SC_SIGN_UP_SUCCESS_PKT = 15,
@@ -51,7 +51,7 @@ enum class PACKET_TYPE : uint16 {
 
 
 	// ==================
-	//		∑Œ∫Ò
+	//		Î°úÎπÑ
 	// ==================
 #pragma region LOBBY_PACKETS
 	CS_ENTER_GAME_LOBBY_PKT = 100,
@@ -69,7 +69,7 @@ enum class PACKET_TYPE : uint16 {
 
 	
 	// ==================
-	//		∑Î
+	//		Î£∏
 	// ==================
 #pragma region ROOM_PACKETS
 	CS_JOIN_GAME_ROOM_PKT = 1000,
@@ -102,7 +102,7 @@ enum class PACKET_TYPE : uint16 {
 #pragma endregion
 
 	// ==================
-	//		ø˘µÂ
+	//		ÏõîÎìú
 	// ==================
 #pragma region WORLD_PACKETS
 	SC_LOCAL_PLAYER_PKT = 10000,
@@ -113,8 +113,8 @@ enum class PACKET_TYPE : uint16 {
 	CS_MOVE_PKT = 10003,
 	SC_MOVE_PKT = 10004,
 
-	CS_PLAYER_ATTACK_PKT = 10005,
-	SC_PLAYER_ATTACK_PKT = 10006,
+	CS_GENERAL_ATTACK_PKT = 10005,
+	SC_GENERAL_ATTACK_PKT = 10006,
 
 	SC_UPDATE_VITAL_PKT = 10007,
 	SC_UPDATE_STATE_PKT = 10008,
@@ -128,30 +128,34 @@ enum class PACKET_TYPE : uint16 {
 	CS_RETURN_TO_GAME_ROOM_PKT = 10015,
 	SC_RETURN_TO_GAME_ROOM_PKT = 10016,
 
-	CS_CHANGE_PLAYER_STANCE_PKT = 10017,
-	SC_CHANGE_PLAYER_STANCE_PKT = 10018,
+	CS_CHANGE_GENERAL_STANCE_PKT = 10017,
+	SC_CHANGE_GENERAL_STANCE_PKT = 10018,
 
 	CS_PLAYER_FAKE_PKT = 10019,
 
 	CS_CHANGE_CAMERA_TARGET_PKT = 10020,
 	SC_CHANGE_CAMERA_TARGET_PKT = 10021,
 
-	CS_SHOW_PLAYER_ATTACK_DIR_PKT = 10022,
-	SC_SHOW_PLAYER_ATTACK_DIR_PKT = 10023,
+	CS_SHOW_GENERAL_ATTACK_DIR_PKT = 10022,
+	SC_SHOW_GENERAL_ATTACK_DIR_PKT = 10023,
 
 	CS_RUN_PKT = 10024,
 	CS_ROLL_PKT = 10025,
 
 	SC_RESPAWN_GENERAL_PKT = 10030,
+	SC_DEAD_PKT = 10031,
 
 #pragma endregion
 
-	// ≈◊Ω∫∆Æ
+	// ÌÖåÏä§Ìä∏
 #pragma region TEST_PACKETS
 #ifndef ENABLE_LOBBY
 	TEST_CS_ENTER_GAME_WORLD_PACKET = 20000,
 	TEST_SC_ENTER_GAME_WORLD_PACKET = 20001,
 #endif // DEVELOP
+
+	CS_GO_WORLD_PACKET = 20010,
+
 #pragma endregion
 
 	END= 65535,
@@ -171,13 +175,13 @@ namespace Server {
 		ClientPacketHandler& operator= (ClientPacketHandler&&) noexcept = delete;
 
 	public:
-		static void Init() noexcept;
+		static void Init();
 
 	public:
-		static bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept;
+		static bool HandlePacket(const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer);
 
 		template<typename PacketType, typename HandleFunc>
-		static bool HandlePacket(HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) noexcept
+		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer)
 		{
 			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
 			return handleFunc(session, *packet);
@@ -185,13 +189,13 @@ namespace Server {
 
 	public:
 		template<typename PacketFunc, typename... Args>
-		static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args) noexcept
+		static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args)
 		{
 			auto offset = func(builder, std::forward<Args>(args)...);
 			builder.Finish(offset);
 			return builder.Release();
 		}
 
-		static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData) noexcept;
+		static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData);
 	};
 }

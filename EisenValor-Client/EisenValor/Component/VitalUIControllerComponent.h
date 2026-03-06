@@ -20,7 +20,7 @@ public:
 private:
 	// UI 루트 및 하위 요소 핸들
 	HandleOf<GameObject> m_rootUI;
-	
+
 	// 자식 오브젝트 핸들 (레이아웃 조절용)
 	HandleOf<GameObject> m_flagRootHandle;
 	HandleOf<GameObject> m_hpRootHandle;
@@ -38,8 +38,9 @@ private:
 	static constexpr float kStaminaBarHeight = 17.5f;
 	static constexpr float kFlagSize = 70.0f;
 	static constexpr float kPadding = -1.0f;
-	
+
 	bool m_isPlayer = false;
+	bool m_flagInitialized = false; // 깃발 초기화 여부
 
 	// Order 관리용 ImageComponent (핸들 + 기본 Order)
 	std::vector<std::pair<HandleOf<ImageUIComponent>, int32_t>> m_managedImages;

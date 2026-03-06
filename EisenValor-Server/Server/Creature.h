@@ -4,39 +4,41 @@
 namespace Server {
 	namespace Contents {
 		class Creature : public GameObject {
-		private:
-			bool						m_alive;
-			CreatureStat				m_statInfo;
-			Creature*					m_target;
-
 		public:
 			explicit Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type);
 			virtual ~Creature();
 
 		public:
 			virtual bool OnDamaged(Creature* const attacker, const float dt) { return false; }
-			virtual void OnDeath() abstract;
-			virtual void Respawn() {}
+			virtual void OnDeath() {}
+			virtual void OnRespawn() {}
 		
 		public:
-			void	SetStat(const CreatureStat& stat) noexcept { m_statInfo = stat; }
-			void	SetHp(const uint32 hp) noexcept;
-			void	SetStamina(const int32 stamina) noexcept { m_statInfo.currentStamina = stamina; }
-			void	SetAlive(const bool alive) noexcept { m_alive = alive; }
+			void	SetStat(const Stat& stat) { m_statInfo = stat; }
+			void	SetHp(const uint32 hp, const bool broadcast = false);
+			void	IncHP(const uint32 amount, const bool broadcast = true);
+			void	DecHP(const uint32 amount, const bool broadcast = true);
+			
+			void	SetStamina(const uint32 stamina, const bool broadcast = false);
+			void	IncStamina(const uint32 amount, const bool broadcast = true);
+			virtual void	DecStamina(const uint32 amount, const bool broadcast = true);
 			void	SetTarget(Creature* target) { m_target = target; }
 			Creature* GetTarget() { return m_target; }
-			int		GetHP() const noexcept { return m_statInfo.currentHP; }
-			int32	GetStamina() const noexcept { return m_statInfo.currentStamina; }
+			int		GetHP() const { return m_statInfo.currentHP; }
+			int32	GetStamina() const { return m_statInfo.currentStamina; }
 
-			void	IncHP(const uint32 amount);
-			void	DecHP(const uint32 amount);
-			void	IncStamina(const uint32 amount);
-			virtual void	DecStamina(const uint32 amount);
 			void	IncRespawnTime();
 
-			bool	IsAlive() const noexcept { return m_alive; }
+			const Stat& GetStat() const { return m_statInfo; }
 
-			const CreatureStat& GetStat() const noexcept { return m_statInfo; }
+		private:
+			void BroadcastUpdateVital();
+
+		private:
+			// TODO: Component로 뺴는것도 생각해보자
+			Stat						m_statInfo;
+			Creature*					m_target;
+
 		};
 	}
 }

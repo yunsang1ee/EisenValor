@@ -11,9 +11,6 @@ namespace Server {
 		};
 
 		class BehaviorNode {
-		protected:
-			BehaviorTree* m_tree;
-
 		public:
 			virtual ~BehaviorNode() = default;
 
@@ -23,150 +20,68 @@ namespace Server {
 		public:
 			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) abstract;
 			virtual void Reset() {}
+
+		protected:
+			BehaviorTree* m_tree;
 		};
 
-		// ¿©·¯ ÀÚ½ÄÀ» °¡Áö°í ÀÖ´Â ³ëµå
+		// ì—¬ëŸ¬ ìì‹ì„ ê°€ì§€ê³  ìˆëŠ” ë…¸ë“œ
 		class CompositeNode : public BehaviorNode {
+		public:
+			void AddChild(std::unique_ptr<BehaviorNode> child);
+			virtual void SetTree(BehaviorTree* const tree) override;
+			void Reset() override;
+		
 		protected:
 			std::vector<std::unique_ptr<BehaviorNode>> m_children;
-
-		public:
-			void AddChild(std::unique_ptr<BehaviorNode> child)
-			{
-				m_children.emplace_back(std::move(child));
-				if(m_tree) {
-					// Æ®¸®°¡ ÀÌ¹Ì ¼¼ÆÃµÈ »óÅÂ¶ó¸é ÀÚ½Ä¿¡°Ôµµ Àü´Ş
-					m_children.back()->SetTree(m_tree);
-				}
-			}
-
-			virtual void SetTree(BehaviorTree* const tree) override
-			{
-				BehaviorNode::SetTree(tree);
-				for(auto& child : m_children) {
-					child->SetTree(tree);
-				}
-
-			}
-			void Reset() override
-			{
-				for(auto& child : m_children) {
-					child->Reset();
-				}
-			}
-
 		};
 
-		// ÀÚ½ÄÀÌ ¿ÀÁ÷ ÇÏ³ªÀÎ ³ëµå
+		// ëª¨ë“  ìì‹ì´ ìˆœì„œëŒ€ë¡œ ì„±ê³µí•´ì•¼ ì „ì²´ê°€ ì„±ê³µ	
+		class SequenceNode : public CompositeNode {
+		public:
+			BEHAVIOR_NODE_STATUS Execute(const float dt) override;
+			void Reset() override { m_currentIndex = 0; CompositeNode::Reset(); }
+
+		private:
+			size_t m_currentIndex = 0;
+		};
+
+		// ìì‹ ì¤‘ í•˜ë‚˜ë¼ë„ ì„±ê³µí•˜ë©´ ì „ì²´ê°€ ì„±ê³µ
+		class SelectorNode : public CompositeNode {
+		public:
+			BEHAVIOR_NODE_STATUS Execute(const float dt) override;
+			void Reset() override { m_currentIndex = 0; CompositeNode::Reset(); }
+		
+		private:
+			size_t m_currentIndex = 0;
+		};
+
+
+		// ìì‹ì´ ì˜¤ì§ í•˜ë‚˜ì¸ ë…¸ë“œ
 		class DecoratorNode : public BehaviorNode {
+		public:
+			void SetChild(std::unique_ptr<BehaviorNode> child);
+			void SetTree(BehaviorTree* const tree) override;
+			void Reset() override;
+
 		protected:
 			std::unique_ptr<BehaviorNode> m_child;
-
-		public:
-			void SetChild(std::unique_ptr<BehaviorNode> child)
-			{
-				m_child = std::move(child);
-				if(m_tree) {
-					m_child->SetTree(m_tree);
-				}
-			}
-
-			void SetTree(BehaviorTree* const tree) override
-			{
-				BehaviorNode::SetTree(tree);
-				if(m_child) {
-					m_child->SetTree(tree);
-				}
-			}
-
-			void Reset() override
-			{
-				if(m_child) {
-					m_child->Reset();
-				}
-			}
 		};
 
 		class ConditionNode : public BehaviorNode {
 		public:
-			virtual bool Check() abstract;
+			virtual bool Check(const float dt) abstract;
 
 		public:
-			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) override
-			{
-				return Check() ? BEHAVIOR_NODE_STATUS::SUCCESS : BEHAVIOR_NODE_STATUS::FAIL;
-			}
+			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) override final { return Check(dt) ? BEHAVIOR_NODE_STATUS::SUCCESS : BEHAVIOR_NODE_STATUS::FAIL; }
 		};
 
 		class ActionNode : public BehaviorNode {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) abstract;
-
 			BEHAVIOR_NODE_STATUS Execute(const float dt) override { return DoAction(dt); }
 		};
 
-		// ¸ğµç ÀÚ½ÄÀÌ ¼ø¼­´ë·Î ¼º°øÇØ¾ß ÀüÃ¼°¡ ¼º°ø	
-		class SequenceNode : public CompositeNode {
-		private:
-			size_t m_currentIndex = 0;
-
-		public:
-			BEHAVIOR_NODE_STATUS Execute(float DeltaTime) override
-			{
-				for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
-					auto& child = m_children[m_currentIndex];
-					auto status = child->Execute(DeltaTime);
-
-					if(status == BEHAVIOR_NODE_STATUS::RUNNING) 
-						return BEHAVIOR_NODE_STATUS::RUNNING;
-					if(status == BEHAVIOR_NODE_STATUS::FAIL) {
-						m_currentIndex = 0;
-						return BEHAVIOR_NODE_STATUS::FAIL;
-					}
-				}
-				m_currentIndex = 0;
-				return BEHAVIOR_NODE_STATUS::SUCCESS;
-			}
-
-			void Reset() override
-			{
-				m_currentIndex = 0;
-				CompositeNode::Reset();
-			}
-
-		};
-
-		// ÀÚ½Ä Áß ÇÏ³ª¶óµµ ¼º°øÇÏ¸é ÀüÃ¼°¡ ¼º°ø
-		class SelectorNode : public CompositeNode {
-		private:
-			size_t m_currentIndex = 0;
-
-		public:
-			BEHAVIOR_NODE_STATUS Execute(float DeltaTime) override
-			{
-				for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
-					auto& child = m_children[m_currentIndex];
-					auto status = child->Execute(DeltaTime);
-
-					if(status == BEHAVIOR_NODE_STATUS::RUNNING) 
-						return BEHAVIOR_NODE_STATUS::RUNNING;
-					if(status == BEHAVIOR_NODE_STATUS::SUCCESS) {
-						m_currentIndex = 0;
-						return BEHAVIOR_NODE_STATUS::SUCCESS;
-					}
-				}
-				m_currentIndex = 0;
-				return BEHAVIOR_NODE_STATUS::FAIL;
-			}
-
-			void Reset() override
-			{
-				m_currentIndex = 0;
-				CompositeNode::Reset();
-			}
-		};
-
-	
 	}
 }
 

@@ -1,6 +1,9 @@
 #pragma once
 #pragma warning(disable: 4819)
 
+// #define LEGACY_CODE
+#define MODERN_CODE
+
 #include "ServerEngineDefines.h"
 
 #include <WS2tcpip.h>
@@ -48,6 +51,7 @@
 #include <functional>
 #include <cassert>
 #include <random>
+#include <variant>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
@@ -76,12 +80,17 @@ namespace fs = std::filesystem;
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+#include "JobQueue.h"
+
 std::string WStringToString(const std::wstring_view wstr);
 std::wstring StringToWString(const std::string_view str);
+SOCKET CreateSocket(const DWORD flags);
 
 namespace Server {
 	class RIOClientSession;
 	class IOCPClientSession;
+
+	class GameWorldTest;
 }
 
 #ifdef _USE_RIO

@@ -64,11 +64,6 @@ void ServerEngine::IOCore::FlushTaskQueue()
 
 		const auto taskQueue = MANAGER(ServerEngine::TaskQueueManager)->DequeTaskQueue();
 		if(nullptr == taskQueue) break;
-		taskQueue->Execute();
+		taskQueue->FlushTask();
 	}
-}
-
-int ServerEngine::IOCore::GetPeerName(const SOCKET clientSocket, sockaddr* name, int* nameLen)
-{
-	return getpeername(clientSocket, name, nameLen);
 }

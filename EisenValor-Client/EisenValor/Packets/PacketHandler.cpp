@@ -144,9 +144,13 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	{ return HandlePacket<FB_TABLES::SC_MOVE_PACKET>(S2C::Handle_SC_MOVE_PACKET, socket, buffer, header); };
 
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PLAYER_ATTACK_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_GENERAL_ATTACK_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{ return HandlePacket<FB_TABLES::SC_PLAYER_ATTACK_PACKET>(S2C::Handle_SC_PLAYER_ATTACK_PACKET, socket, buffer, header); };
+	{
+		return HandlePacket<FB_TABLES::SC_GENERAL_ATTACK_PACKET>(
+			S2C::Handle_SC_GENERAL_ATTACK_PACKET, socket, buffer, header
+		);
+	};
 
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_UPDATE_VITAL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -156,11 +160,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHANGE_PLAYER_STANCE_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_CHANGE_PLAYER_STANCE_PACKET>(
-			S2C::Handle_SC_CHANGE_PLAYER_STANCE_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_CHANGE_GENERAL_STANCE_PACKET>(
+			S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET, socket, buffer, header
 		);
 	};
 
@@ -188,11 +192,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_SHOW_PLAYER_ATTACK_DIR_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_SHOW_GENERAL_ATTACK_DIR_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_SHOW_PLAYER_ATTACK_DIR_PACKET>(
-			S2C::Handle_SC_SHOW_PLAYER_ATTACK_DIR_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET>(
+			S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET, socket, buffer, header
 		);
 	};
 
@@ -204,7 +208,24 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_DEAD_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{ return HandlePacket<FB_TABLES::SC_DEAD_PACKET>(S2C::Handle_SC_DEAD_PACKET, socket, buffer, header); };
+
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PING_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{ return HandlePacket<FB_TABLES::SC_PING_PACKET>(S2C::Handle_SC_PING_PACKET, socket, buffer, header); };
+}
+
+std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePacketBuffer(
+	const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
+)
+{
+	const uint16  packetSize = static_cast<uint16>(sizeof(PacketHeader) + (packetData.size()));
+	auto		  packetBuffer = std::make_shared<NetBridge::PacketBuffer>(packetSize);
+	PacketHeader* header = reinterpret_cast<PacketHeader*>(packetBuffer->GetBuffer());
+	header->packetType = static_cast<uint16>(packetType);
+	header->packetSize = packetSize;
+	memcpy_s(&header[1], packetBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
+	return packetBuffer;
 }

@@ -45,6 +45,25 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	Scene* scene = owner->GetScene();
 	if (!scene) return;
 
+	// 깃발 텍스처 지연 로딩 처리 (팀 정보 동기화 대기)
+	if (!m_flagInitialized)
+	{
+		if (auto teamComp = owner->GetComponent<TeamComponent>())
+		{
+			auto& resGlobal = GLOBAL(ResourceGlobal);
+			auto  team = teamComp->GetTeamType();
+			auto  texRes = (team == FB_ENUMS::TEAM_TYPE_OFFENSE)
+							  ? resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex")
+							  : resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
+
+			if (auto* img = scene->GetStorage<ImageUIComponent>()->Get(m_flagIcon))
+			{
+				img->SetNormalTextureResource(texRes);
+				m_flagInitialized = true;
+			}
+		}
+	}
+
 	// 1. HP Bar
 	bool isAlive = true;
 	if (auto* health = owner->GetComponent<HealthComponent>()) 
@@ -299,16 +318,6 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			img->SetOrder(14);
 			// 관리 목록 등록
 			m_managedImages.push_back({img->GetHandle(), 14});
-
-			// TeamComponent
-			auto teamComp = GetGameObject()->GetComponent<TeamComponent>();
-			FB_ENUMS::TEAM_TYPE team = teamComp ? teamComp->GetTeamType() : FB_ENUMS::TEAM_TYPE_OFFENSE;
-
-			auto texRes = (team == FB_ENUMS::TEAM_TYPE_OFFENSE) ? 
-				resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex") : 
-				resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
-			
-			img->SetNormalTextureResource(texRes);
 		});
 	});
 

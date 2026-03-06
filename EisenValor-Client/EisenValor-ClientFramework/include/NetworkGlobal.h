@@ -69,14 +69,14 @@ public:
 			if (WSAEWOULDBLOCK == errCode)
 			{
 				// 내부 송신 버퍼가 가득 찼을 경우
+				assert("WSAEWOULDBLOCK");
 				goto retry;
-				static_assert("WSAEWOULDBLOCK");
 				std::cout << "WSAEWOULDBLOCK" << std::endl;
 				return;
 			}
 			else
 			{
-				static_assert("SENDERROR");
+				assert("SENDERROR");
 				std::println("Send Error = {}", errCode);
 				return;
 			}

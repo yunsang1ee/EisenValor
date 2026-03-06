@@ -5,9 +5,19 @@ ServerEngine::PacketBuffer::PacketBuffer(const PacketHeader& header)
 	:m_capacity(header.packetSize), m_dataSize(0)
 {
 	// std::cout << "PacketBuffer" << std::endl;
+	//m_buffer.resize(m_capacity);
+	//memcpy(m_buffer.data(), (char*)&header, sizeof(PacketHeader));
+	//const uint32 size{ static_cast<uint32>(sizeof(PacketHeader)) };
+	//m_dataSize += size;
+
 	m_buffer.resize(m_capacity);
-	memcpy(m_buffer.data(), (char*)&header, sizeof(PacketHeader));
-	m_dataSize += sizeof(PacketHeader);
+
+	PacketHeader* destHeader = reinterpret_cast<PacketHeader*>(m_buffer.data());
+
+	destHeader->packetType = header.packetType;
+	destHeader->packetSize = header.packetSize;
+
+	m_dataSize = sizeof(PacketHeader);
 }
 
 ServerEngine::PacketBuffer::~PacketBuffer()
@@ -15,7 +25,7 @@ ServerEngine::PacketBuffer::~PacketBuffer()
 	// std::cout << "~PacketBuffer" << std::endl;
 }
 
-void ServerEngine::PacketBuffer::Append(const BYTE* const src, const uint32 size) noexcept
+void ServerEngine::PacketBuffer::Append(const BYTE* const src, const uint32 size)
 {
 	memcpy_s(&m_buffer[m_dataSize], m_capacity- m_dataSize, src, size);
 	m_dataSize += size;

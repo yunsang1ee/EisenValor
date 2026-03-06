@@ -15,15 +15,11 @@ namespace Server {
 		class FSM;
 
 		class State {
-		private:
-			FSM*							m_fsm;
-			uint8							m_type;
-
 		protected:
 			explicit State(const uint8 type);
 
 		public:
-			virtual ~State();
+			virtual ~State() = default;
 
 		public:
 			virtual void Enter(const float dt) abstract;
@@ -33,7 +29,11 @@ namespace Server {
 		public:
 			void SetFSM(FSM* fsm) { m_fsm = fsm; }
 			FSM* GetFSM() const { return m_fsm; }
-			uint8 GetStateType() const noexcept { return m_type; }
+			uint8 GetStateType() const { return m_type; }
+
+		private:
+			FSM*							m_fsm;
+			uint8							m_type;
 		};
 	}
 }
