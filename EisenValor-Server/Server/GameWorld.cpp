@@ -28,8 +28,8 @@ void Server::Contents::GameWorld::Start(const Users& users, const Bots& bots)
 	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
-	
-	CreateGameWorldObjects();	
+
+	CreateGameWorldObjects();
 	CreateBotsGameObjects(bots);
 	CreateUsersGameObjects(users);
 	RegistCollisionGroup(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
@@ -330,7 +330,7 @@ void Server::Contents::GameWorld::CheckGameTime(const float dt)
 
 			const uint32_t minutes = totalSeconds / 60;
 			const uint32_t seconds = totalSeconds % 60;
-	
+
 			// std::cout << std::format("{}M {}S", minutes, seconds) << std::endl;
 
 			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
@@ -381,7 +381,7 @@ void Server::Contents::GameWorld::CheckCollision()
 
 const Server::Contents::GameObjects& Server::Contents::GameWorld::GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type)
 {
-	const uint8 index{ etou8(type )};
+	const uint8 index{ etou8(type) };
 	if(index >= FB_ENUMS::GAME_OBJECT_TYPE_END)
 		assert(nullptr);
 	return m_gameObjectsGroups[index];
@@ -689,7 +689,7 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 	//	auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
 	//	AddGameObject(std::move(soldier));
 	//}
-	
+
 	for(int i = 0; i < 1; ++i) {
 		static bool flag{ true };
 		static Vec3 startPos{ 5.f, 0.f, 5.f };
@@ -727,7 +727,7 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 	//	auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
 	//	AddGameObject(std::move(battleRam));
 	//}
-	
+
 	 // 점령지 생성
 	{
 		OccupationZoneTemplate t;
@@ -1207,23 +1207,23 @@ const Server::Contents::GameObjects& Server::Contents::GameWorldTest::GetGameObj
 void Server::Contents::GameWorldTest::CreateGameWorldObjects()
 {
 	// Spanwer로 옮겨야 함
-//for(int i = 0; i < 2; ++i) {
-//	static bool flag{ false };
-//	static Vec3 startPos{ 0.f, 0.f, 0.f };
-//	SoldierTemplate t;
-//	t.id = m_npcIdGen++;
-//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-//	t.posInfo = PosInfo{
-//	.pos = startPos,
-//	.rot = Vec3{}
-//	};
-//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-//	flag = !flag;
-//	startPos.x += 2.f;
-//	auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
-//	AddGameObject(std::move(soldier));
-//}
+	for(int i = 0; i < 10; ++i) {
+		static bool flag{ false };
+		static Vec3 startPos{ 0.f, 0.f, 0.f };
+		SoldierTemplate t;
+		t.id = m_npcIdGen++;
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+		t.posInfo = PosInfo{
+		.pos = startPos,
+		.rot = Vec3{}
+		};
+		t.gameWorld = this;
+		flag = !flag;
+		startPos.x += 2.f;
+		auto soldier = (Server::Contents::GameObjectFactory::CreateSoldier(t));
+		AddGameObject(std::move(soldier));
+	}
 
 	for(int i = 0; i < 1; ++i) {
 		static bool flag{ true };

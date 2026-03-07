@@ -34,14 +34,8 @@ void Server::Contents::SoldierIdleState::Update(const float dt)
 {
 	auto const fsm = GetFSM();
 	const auto owner = fsm->GetOwner();
-	Vec3 curPos = owner->GetPos();
-	curPos.x += 10.f * dt;
-	if(auto navAgent = owner->GetComponent<Server::Contents::NavAgent>()) {
-		navAgent->SetDestPos(curPos);
 
-		auto pb{ ServerPackets::Make_SC_MOVE_PACKET(owner->GetID(), owner->GetPosInfo(), fsm->GetCurState()->GetStateType(), 0) };
-		owner->GetGameWorld()->Broadcast(std::move(pb));
-	}
+	// TODO: Soldier Idle State Update
 }
 
 Server::Contents::SoldierMoveState::SoldierMoveState()
@@ -69,6 +63,16 @@ void Server::Contents::SoldierMoveState::Exit(const float dt)
 
 void Server::Contents::SoldierMoveState::Update(const float dt)
 {
+	// TODO: SoldierMoveState Update
+
+	/*Vec3 curPos = owner->GetPos();
+	curPos.x += 10.f * dt;
+	if(auto navAgent = owner->GetComponent<Server::Contents::NavAgent>()) {
+		navAgent->SetDestPos(curPos);
+
+		auto pb{ ServerPackets::Make_SC_MOVE_PACKET(owner->GetID(), owner->GetPosInfo(), fsm->GetCurState()->GetStateType(), 0) };
+		owner->GetGameWorld()->Broadcast(std::move(pb));
+	}*/
 }
 
 Server::Contents::SoldierChaseState::SoldierChaseState(const float chaseSpeed, const float combatRange)
@@ -92,6 +96,7 @@ void Server::Contents::SoldierChaseState::Exit(const float dt)
 
 void Server::Contents::SoldierChaseState::Update(const float dt)
 {
+	// TODO: SoldierChaseState Update
 }
 
 Server::Contents::SoldierAttackState::SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime)
@@ -120,6 +125,7 @@ void Server::Contents::SoldierAttackState::Exit(const float dt)
 
 void Server::Contents::SoldierAttackState::Update(const float dt)
 {
+	// TODO: SoldierAttackState Update
 }
 
 Server::Contents::SoldierDefenseState::SoldierDefenseState()
@@ -145,6 +151,7 @@ void Server::Contents::SoldierDefenseState::Exit(const float dt)
 
 void Server::Contents::SoldierDefenseState::Update(const float dt)
 {
+	// TODO: SoldierDefenseState Update
 }
 
 Server::Contents::SoldierStunState::SoldierStunState(const float stunTime)
@@ -168,4 +175,5 @@ void Server::Contents::SoldierStunState::Exit(const float dt)
 
 void Server::Contents::SoldierStunState::Update(const float dt)
 {
+	// TODO: SoldierStunStateUpdate
 }
