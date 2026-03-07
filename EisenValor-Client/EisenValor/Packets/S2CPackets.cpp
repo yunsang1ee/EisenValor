@@ -51,6 +51,9 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 
 	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
 
+	// SampleScene으로 장면 전환
+	GLOBAL(SceneGlobal).LoadScene("SampleScene");
+
 	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
 	const uint16 roomID{1};
 
@@ -63,7 +66,6 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// TODO: 로비 씬으로 전환
 
 	// 테스트용으로 바로 게임 월드 진입
-	
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
 
@@ -73,7 +75,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	//	GLOBAL(NetworkGlobal).Send(std::move(pb));
 	//}
 
-	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}\n", id);
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
 	return true;
 }
 

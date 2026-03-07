@@ -11,7 +11,10 @@
 #include <DxRendererGlobal.h>
 #include <DxSwapChain.h>
 
+// Scene
 #include "Scene/SampleScene.h"
+#include "Scene/LoginScene.h"
+
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
 #include "RenderPass/UIRenderPass.h"
@@ -168,7 +171,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			std::unique_ptr<NetBridge::IPacketHandler> packetHandler =
 				std::make_unique<NetBridge::ServerPacketHandler>();
 			GLOBAL(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
-			std::string id, pw;
+			/*std::string id, pw;
 			std::cout << "Input ID(any):";
 			// std::cin >> id;
 			id = "ID";
@@ -178,7 +181,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			pw = "PW";
 
 			auto pb = NetBridge::C2S::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));*/
 		}
 
 		// RenderPass 등록
@@ -212,8 +215,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 	// Scene 등록
 	{
+		GLOBAL(SceneGlobal).RegisterScene<LoginScene>("LoginScene");
 		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
-		GLOBAL(SceneGlobal).LoadScene("SampleScene");
+
+		GLOBAL(SceneGlobal).LoadScene("LoginScene");
 	}
 
 		while (not quit)
