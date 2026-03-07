@@ -147,6 +147,7 @@ namespace Server {
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
 
 		public:
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);

@@ -427,6 +427,28 @@ namespace ClientPackets {
 
 		return true;
 	}
+	bool Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<ServerEngine::Session>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt)
+	{
+#ifdef LEGACY_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR, id, static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(recvPkt.attack_dir()));
+#endif
+
+#ifdef MODERN_CODE
+		const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+		const uint32 id{ clientSession->GetID() };
+		auto world = clientSession->GetGameWorld();
+
+		if(world)
+			world->Handle_CS_GEN_NPC_GENERAL(id);
+#endif
+
+		return true;
+	}
 #pragma endregion
 
 	// =================

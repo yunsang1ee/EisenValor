@@ -39,6 +39,7 @@ std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_FAKE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_CAMERA_TARGET_PACKET(uint32_t targetId);
 std::shared_ptr<PacketBuffer> Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+std::shared_ptr<PacketBuffer> Make_CS_GEN_NPC_GENREAL_PACKET();
 	//std::shared_ptr<PacketBuffer> Make_CS_CHAT_PACKET(const std::string& message);
 
 // =================

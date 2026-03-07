@@ -51,6 +51,7 @@ void Server::ClientPacketHandler::Init()
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET>(ClientPackets::Handle_CS_CHANGE_CAMERA_TARGET_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET>(ClientPackets::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET, session, buffer); };
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_GO_WORLD_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_GO_WORLD_PACKET>(ClientPackets::Handle_CS_GO_WORLD_PACKET, session, buffer); };
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET)] = [](const std::shared_ptr<ServerEngine::Session>& session, const char* const buffer) -> bool { return HandlePacket<FB_TABLES::CS_GEN_NPC_GENERAL_PACKET>(ClientPackets::Handle_CS_GEN_NPC_GENERAL_PACKET, session, buffer); };
 #pragma endregion
 	// =================
 	//		테스트

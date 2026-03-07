@@ -7,7 +7,7 @@ class RecvBuffer
 {
 	enum
 	{
-		BUFFER_COUNT = 10
+		BUFFER_COUNT = 100
 	};
 
 private:

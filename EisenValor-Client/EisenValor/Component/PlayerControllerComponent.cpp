@@ -222,6 +222,11 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			}
 		}
 	}
+
+	if (input.GetInputDown('F')) {
+		auto pb{NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)

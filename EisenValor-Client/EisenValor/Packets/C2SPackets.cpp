@@ -51,7 +51,6 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MAKE_GAME_ROOM_PACKET()
 }
 
 
-
 // =================
 //		룸
 // =================
@@ -93,7 +92,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ADD_BOT_PACKET(FB_ENUMS::T
 
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_READY_GAME_PACKET()
 {
-	flatbuffers::FlatBufferBuilder builder;	
+	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_READY_GAME_PKT,
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_READY_GAME_PACKET)
@@ -122,7 +121,9 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_COMPLETE_LOADING_GAME_WORL
 // =================
 //		월드
 // =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerstate)
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(
+	const FB_STRUCTS::PosInfo* posInfo, const uint8 playerstate
+)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
@@ -144,7 +145,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(
 
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET()
 {
-	flatbuffers::FlatBufferBuilder builder;	
+	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_CHANGE_GENERAL_STANCE_PKT,
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_CHANGE_GENERAL_STANCE_PACKET)
@@ -180,6 +181,16 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PA
 	);
 }
 
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_GENERAL_PACKET)
+	);
+}
+
 
 // =================
 //		세션
@@ -211,5 +222,6 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GO_WORLD_PACKET() noexcept
 
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_GO_WORLD_PACKET,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GO_WORLD_PACKET));
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GO_WORLD_PACKET)
+	);
 }

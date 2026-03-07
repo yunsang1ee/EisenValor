@@ -186,6 +186,9 @@ struct SC_START_ANIMATIONBuilder;
 struct SC_END_ANIMATION;
 struct SC_END_ANIMATIONBuilder;
 
+struct CS_GEN_NPC_GENERAL_PACKET;
+struct CS_GEN_NPC_GENERAL_PACKETBuilder;
+
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
@@ -2826,6 +2829,35 @@ inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATIONDirect(
       _fbb,
       obj_id,
       anim_name__);
+}
+
+struct CS_GEN_NPC_GENERAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GEN_NPC_GENERAL_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_GEN_NPC_GENERAL_PACKETBuilder {
+  typedef CS_GEN_NPC_GENERAL_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_GEN_NPC_GENERAL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> CreateCS_GEN_NPC_GENERAL_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_GEN_NPC_GENERAL_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
 }
 
 struct CS_ENTER_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

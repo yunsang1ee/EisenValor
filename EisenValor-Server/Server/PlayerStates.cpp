@@ -139,12 +139,17 @@ void Server::Contents::PlayerPredelayState::Enter(const float dt)
 #ifdef LEGACY_CODE
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 #endif
-	//	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
+
+#ifdef MODERN_CODE
+	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
+#endif
+	
+	std::cout << std::format("ID:{}, GeneralPreDelayState ENTER", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
 void Server::Contents::PlayerPredelayState::Exit(const float dt)
 {
-	//	std::cout << std::format("ID:{}, GeneralPreDelayState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
+	std::cout << std::format("ID:{}, GeneralPreDelayState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
 void Server::Contents::PlayerPredelayState::Update(const float dt)
@@ -175,12 +180,12 @@ Server::Contents::PlayerAttackState::~PlayerAttackState()
 
 void Server::Contents::PlayerAttackState::Enter(const float dt)
 {
-	//std::cout << std::format("ID:{}, GeneralAttackState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
+	std::cout << std::format("ID:{}, GeneralAttackState Enter", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
 void Server::Contents::PlayerAttackState::Exit(const float dt)
 {
-	//std::cout << std::format("ID:{}, GeneralAttackState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
+	std::cout << std::format("ID:{}, GeneralAttackState Exit", GetGeneral(GetFSM())->GetID()) << std::endl;
 }
 
 void Server::Contents::PlayerAttackState::Update(const float dt)
@@ -189,20 +194,32 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
-	if(false == IsValidObj(owner))
+	if(false == IsValidObj(owner)) {
+		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 		return;
+	}
 
 	auto const target = owner->GetTarget();
 
 	if(false == IsValidObj(target)) {
 		owner->SetTarget(nullptr);
+		std::cout << "PlayerAttackState! - false == IsValidObj(target)" << std::endl;
+
+		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 		return;
 	}
 
+	std::cout << std::format("PlayerAttackState!, Target ID: {}", target->GetID()) << std::endl;
+
 	if(owner->IsTargetInAttackRange(target)) {
 		
-		if(false == IsValidObj(target))
+		if(false == IsValidObj(target)) {
+			auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 			return;
+		}
 
 		if(target->OnDamaged(owner, dt)) {
 

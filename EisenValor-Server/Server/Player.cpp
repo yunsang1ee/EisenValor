@@ -146,6 +146,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 {
 	if(false == IsActive())
 		return;
+
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	const uint64 worldFrame = world->GetGameWorldFrameCount();
@@ -165,6 +166,8 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 	const float yaw{ GetRotation().y };
 	Vec3 playerDir{ sinf(Deg2Rad(yaw)), 0.f, cosf(Deg2Rad(yaw)) };
 	playerDir.Normalize();
+	
+	bool findTarget{ false };
 
 	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
 
@@ -172,6 +175,7 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 			continue;
 
 		const auto& gameObjectGroups = GetGameWorld()->GetGameObjectGroups();
+
 		for(const auto& [id, o] : gameObjectGroups[i]) {
 			GameObject* const obj{ o.get() };
 			if(false == IsValidObj(obj))
@@ -187,14 +191,19 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 				continue;
 
 			if(IsTargetInAttackRange(obj)) {
+				std::cout << "Handle_CS_PLAYER_ATTACK - Set Target! ID : " << obj->GetID() << std::endl;
 				SetTarget(static_cast<Creature*>(obj));
-				break;
-			}
-			else {
-				SetTarget(nullptr);
+				findTarget = true;
 			}
 		}
+
+		if(findTarget)
+			break;
 	}
+
+	if(false == findTarget)
+		SetTarget(nullptr);
+
 	auto const fsm{ GetComponent<Server::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY, worldDT, true);
 

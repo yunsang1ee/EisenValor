@@ -283,6 +283,10 @@ table SC_END_ANIMATION {
 	anim_name: string;
 }
 
+table CS_GEN_NPC_GENERAL_PACKET {
+
+}
+
 // ================================================
 //					    TEST
 // ================================================

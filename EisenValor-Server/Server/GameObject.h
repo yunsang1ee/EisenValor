@@ -117,6 +117,7 @@ namespace Server {
 			const Vec3& GetPos() const  { return m_posInfo.pos; }
 			const Vec3& GetRotation() const  { return m_posInfo.rot; }
 			const Vec3& GetScale() const  { return m_scale; }
+			const Vec3& GetLook() const { return m_look; }
 #ifdef LEGACY_CODE
 			std::shared_ptr<GameRoom> GetGameRoom() const  { return m_room.lock(); }
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }

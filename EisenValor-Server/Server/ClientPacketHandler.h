@@ -145,6 +145,8 @@ enum class PACKET_TYPE : uint16 {
 	SC_RESPAWN_GENERAL_PKT = 10030,
 	SC_DEAD_PKT = 10031,
 
+	CS_GEN_NPC_GENERAL_PACKET = 10040,
+
 #pragma endregion
 
 	// 테스트
