@@ -13,6 +13,7 @@
 #include "MeshResource.h"
 #include "SkinnedMeshComponent.h"
 #include "SkinnedMeshResource.h"
+#include "MaterialResource.h"
 
 #include "CameraComponent.h"
 #include "MovementComponent.h"
@@ -413,7 +414,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
 					if (nullptr != meshRes)
 					{
-						mesh->SetSkinnedMeshResource(meshRes);
+						mesh->SetSkinnedMeshResource(meshRes, true);
 					}
 				}
 			);
