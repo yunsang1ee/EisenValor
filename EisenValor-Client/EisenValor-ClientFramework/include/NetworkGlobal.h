@@ -36,7 +36,7 @@ public:
 
 	void ProcessIO();
 
-	void Terminate();
+	void Release();
 
 	template <typename Packet>
 	void Send(Packet&& sendPkt) noexcept

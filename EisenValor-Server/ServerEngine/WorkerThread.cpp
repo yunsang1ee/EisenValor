@@ -65,4 +65,6 @@ void ServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 	if(false == m_ioCore->Register(session)) {
 		return;
 	}
+
+	// EnterWorld(session);
 }

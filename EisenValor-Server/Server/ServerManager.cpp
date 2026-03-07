@@ -49,6 +49,8 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
+	// -------------------------여기까지 문제 없음
+
 #ifdef LEGACY_CODE
 	LOG_INFO("LEGACY_CODE");
 	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {

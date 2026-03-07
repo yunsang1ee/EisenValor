@@ -189,6 +189,9 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
+	if(false == IsValidObj(owner))
+		return;
+
 	auto const target = owner->GetTarget();
 
 	if(false == IsValidObj(target)) {

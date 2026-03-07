@@ -56,7 +56,7 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 	{
 		DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: SwapChain already exists!\n");
 		return;
-	}
+	}	
 
 	if (!m_rtvDescriptorHeap)
 	{

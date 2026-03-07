@@ -34,10 +34,10 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::FindOZ::DoAction(const 
 		if(oz) {
 			const auto& ozPos{ obj->GetPos() };
 			if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
-				std::cout << "Find OZ!" << std::endl;
+			// 	std::cout << "Find OZ!" << std::endl;
 				owner->SetLook(obj->GetPos());
 				tree->GetBlackboard()->SetValue("OZ_ID", o->GetID());
-				std::cout << "SetDestPos" << std::endl;
+			//	std::cout << "SetDestPos" << std::endl;
 				owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(ozPos);
 				return Server::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 			}
@@ -104,7 +104,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::MoveToOZ::DoAction(cons
 		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
 
 	if(ozObj->IsTargetInRange(owner, oz->GetRangeSq())) {
-		std::cout << "Target In OZ!" << std::endl;
+	//	std::cout << "Target In OZ!" << std::endl;
 		return Server::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 	}
 	else {

@@ -105,12 +105,14 @@ void NetBridge::NetworkGlobal::ProcessIO()
 	}
 }
 
-void NetBridge::NetworkGlobal::Terminate()
+void NetBridge::NetworkGlobal::Release()
 {
-	shutdown(m_socket, SD_BOTH);
+	shutdown(m_socket, SD_SEND);
+	char buf;
+	while (recv(m_socket, &buf, 1, 0) > 0) {}
 	closesocket(m_socket);
 	WSACleanup();
-	std::cout << "NetworkGlobal Terminate!" << std::endl;
+	std::cout << "NetworkGlobal Release!" << std::endl;
 }
 
 uint32 NetBridge::NetworkGlobal::AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept

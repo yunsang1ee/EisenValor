@@ -204,11 +204,14 @@ namespace ServerEngine {
 		private:
 			RIOWorker*													m_owner;
 			RIO_RQ														m_rq;
-			RIORecvBuffer												m_recvBuffer;
+			// RIORecvBuffer												m_recvBuffer;
+			RIORingRecvBuffer											m_recvBuffer;
+
 			RIORecvContext												m_recvContext;
 			uint32														m_deferCount;
 			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
-			RIOSendBuffer												m_sendBuffer;
+			// RIOSendBuffer												m_sendBuffer;
+			RIORingSendBuffer											m_sendBuffer;
 			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
 			uint32														m_outstandingSendCount;
 
