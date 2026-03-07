@@ -15,8 +15,6 @@ namespace Server {
 
 		class GameWorldTest;
 
-
-
 		struct GameObjectTemplate {
 			uint32						id;
 			PosInfo						posInfo;

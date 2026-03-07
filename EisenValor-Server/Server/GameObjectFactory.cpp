@@ -140,8 +140,8 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;				
-	params.maxSpeed = 20.0f;			
-	params.maxAcceleration = 10.f;		
+	params.maxSpeed = 1.0f;			
+	params.maxAcceleration = 1.f;		
 
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
@@ -155,21 +155,20 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	
 	auto fsm{ soldier->AddComponent<Server::Contents::FSM>() };
 	
-	auto idleState = Server::Contents::SoldierIdleState::Create(t.gameObjectData->enemyDetectionRange);
-	auto moveState = Server::Contents::SoldierMoveState::Create();
+	auto spawnState = Server::Contents::SoldierSpawnState::Create();
+	auto moveState = Server::Contents::SoldierMoveState::Create(5.f);
+	auto searchState = Server::Contents::SoldierSearchState::Create(5.f);
 	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.gameObjectData->enemyCombatRange);
 	auto attackState = Server::Contents::SoldierAttackState::Create(t.gameObjectData->enemyCombatRange, std::chrono::seconds(t.gameObjectData->attackCycleTime));
-	auto defenseState = Server::Contents::SoldierDefenseState::Create();
-	auto damagedState = Server::Contents::SoldierStunState::Create(0.f);
+	auto deadState = Server::Contents::SoldierDeadState::Create();
 
-	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(spawnState));
 	fsm->AddState(std::move(moveState));
 	fsm->AddState(std::move(chaseState));
 	fsm->AddState(std::move(attackState));
-	fsm->AddState(std::move(defenseState));
-	fsm->AddState(std::move(damagedState));
+	fsm->AddState(std::move(deadState));
 
-	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN));
 
 	return soldier;
 }

@@ -10,12 +10,12 @@ namespace Server {
 		// ============================================
 		//					IDLE
 		// ============================================
-		class SoldierIdleState : public State {
+		class SoldierSpawnState : public State {
 		private:
-			DECLARE_CREATE_FUNC(SoldierIdleState)
+			DECLARE_CREATE_FUNC(SoldierSpawnState)
 		private:
-			explicit SoldierIdleState(const float enemyDetectionRange);
-			virtual ~SoldierIdleState();
+			explicit SoldierSpawnState();
+			virtual ~SoldierSpawnState();
 		
 		public:
 			virtual void Enter(const float dt) override final;
@@ -23,9 +23,9 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		private:
-			float m_enemyDetectionRangeSq{};
+			float m_accDT;
+			friend class GameObjectFactory;
 		};
-
 
 		// ============================================
 		//					MOVE
@@ -34,14 +34,35 @@ namespace Server {
 		private:
 			DECLARE_CREATE_FUNC(SoldierMoveState)
 		private:
-			SoldierMoveState();
+			explicit SoldierMoveState(const float viewRange);
 			virtual ~SoldierMoveState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float				m_viewRangeSq{};
+			float				m_accDTForSearch;
+			std::queue<Vec3>	m_wayPoints;
+
 			friend class GameObjectFactory;
+		};
+
+		class SoldierSearchState : public State {
+			DECLARE_CREATE_FUNC(SoldierSearchState)
+		private:
+			explicit SoldierSearchState(const float attackRange);
+			virtual ~SoldierSearchState();
+
+		public:
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
+
+		private:
+			float m_attackRangeSq;
 		};
 
 
@@ -92,53 +113,21 @@ namespace Server {
 			static constexpr float ATTACK_PROB{ 0.7f };
 		};
 
+		class SoldierDeadState : public State {
+			DECLARE_CREATE_FUNC(SoldierDeadState)
 
-		// ============================================
-		//					DEFENSE
-		// ============================================
-		class SoldierDefenseState : public State {
 		private:
-			DECLARE_CREATE_FUNC(SoldierDefenseState)
-		private:
-			SoldierDefenseState();
-			virtual ~SoldierDefenseState();
+			explicit SoldierDeadState();
+			virtual ~SoldierDeadState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDT;
 			friend class GameObjectFactory;
-
-		private:
-			float					m_accDT;
-			static constexpr auto	DEFENSE_TIME = 1s;
-			static constexpr float	ATTACK_PROB{ 0.7f };
-		};
-
-
-		// ============================================
-		//					DAMAGED
-		// ============================================
-		class SoldierStunState : public State {
-		private:
-			DECLARE_CREATE_FUNC(SoldierStunState)
-		private:
-			explicit SoldierStunState(const float stunTime);
-			virtual ~SoldierStunState();
-
-		public:
-			virtual void Enter(const float dt) override final;
-			virtual void Exit(const float dt) override final;
-			virtual void Update(const float dt) override final;
-		
-		public:
-			void SetStunTime(const float stunTime){ m_stunTime = stunTime; }
-			friend class GameObjectFactory;
-
-		private:
-			float m_stunTime;
-			float m_accForStun;
-
 		};
 
 	}

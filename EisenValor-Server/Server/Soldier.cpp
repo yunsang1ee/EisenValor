@@ -3,7 +3,7 @@
 
 #include "GameWorld.h"
 #include "Player.h"
-
+#include "FSM.h"
 Server::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 	:Creature{teamType, FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER}
 {
@@ -39,7 +39,9 @@ void Server::Contents::Soldier::Update(const float dt)
 void Server::Contents::Soldier::OnDeath()
 {
 	const auto& gameWorld{ GetGameWorld() };
-	gameWorld->RemoveGameObject(this);
+	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	const float dt{ gameWorld->GetGameWorldDT() };
+	fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD, dt, true);
 }
 
 bool Server::Contents::Soldier::OnDamaged(Creature* const attacker, const float dt)

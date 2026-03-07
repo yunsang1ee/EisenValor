@@ -87,12 +87,11 @@ enum PLAYER_STATE_TYPE: ubyte {
 
 enum SOLDIER_STATE_TYPE : ubyte {
 	NONE = 0,
-	IDLE,
+	SPAWN,
 	MOVE,
+	SEARCH,
 	CHASE,
 	ATTACK,
-	DEFENSE,
-	STUN,
 	DEAD,
 
 	END

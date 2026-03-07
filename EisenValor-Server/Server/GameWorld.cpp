@@ -1207,7 +1207,7 @@ const Server::Contents::GameObjects& Server::Contents::GameWorldTest::GetGameObj
 void Server::Contents::GameWorldTest::CreateGameWorldObjects()
 {
 	// Spanwer로 옮겨야 함
-	for(int i = 0; i < 10; ++i) {
+	for(int i = 0; i < 1; ++i) {
 		static bool flag{ false };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
 		SoldierTemplate t;
