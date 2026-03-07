@@ -130,6 +130,9 @@
     <ClInclude Include="RenderData\GeoTableRenderData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Component\StressTestComponent.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -187,6 +190,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\SkinningPass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\StressTestComponent.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -62,7 +62,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// TODO: 로비 씬으로 전환
 
 	// 테스트용으로 바로 게임 월드 진입
-	
+
 	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
 
@@ -467,11 +467,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// FSMComponent
 			scene->CreateComponentWithInit<FSMComponent>(
-				playerObjHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE); }
-				playerObjHandle,
-				[](FSMComponent* fsm) {
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-				}
+				playerObjHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
 			);
 
 			// 애니메이션 컴포넌트 추가
@@ -479,7 +475,8 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle,
 				[](AnimationComponent* anim)
 				{
-					auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+					auto animRes =
+						GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
 					if (animRes)
 					{
 						anim->Play(animRes, false);
@@ -609,7 +606,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
+			bool isGeneral =
+				(objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
@@ -669,7 +667,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			// StaminaComponent (Player Only)
 			if (isGeneral)
 			{
-				scene->CreateComponentWithInit<StaminaComponent>(	
+				scene->CreateComponentWithInit<StaminaComponent>(
 					objHandle,
 					[maxStamina, currentStamina](StaminaComponent* stamina)
 					{
@@ -711,8 +709,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
-	//		// 공격 범위 디버깅
-			//if (isGeneral)
+			//		// 공격 범위 디버깅
+			// if (isGeneral)
 			//{
 			//	scene->ReserveGameObject(
 			//		"AttackRangeIndicator", std::nullopt,
@@ -1009,7 +1007,7 @@ bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
 {
 	// 플레이어 공격 방향 표시
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
-	
+
 	const uint32 id = recvPkt.obj_id();
 	const uint32 localID = scene->GetLocalID();
 

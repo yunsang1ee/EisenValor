@@ -202,6 +202,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
     <ClInclude Include="Component\StaminaComponent.h" />
+    <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
@@ -232,6 +233,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\HealthComponent.cpp" />
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
     <ClCompile Include="Component\StaminaComponent.cpp" />
+    <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
     <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
