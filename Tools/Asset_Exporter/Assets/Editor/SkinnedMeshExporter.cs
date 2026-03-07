@@ -85,26 +85,21 @@ public class SkinnedMeshExporter
 
             foreach (var mat in materials)
             {
-                if (mat == null)
-                {
-                    bw.Write(new byte[16]); // Write a zeroed-out GUID
-                    continue;
-                }
-
-                string materialPath = AssetDatabase.GetAssetPath(mat);
-                string guidString = AssetDatabase.AssetPathToGUID(materialPath);
-
-                if (string.IsNullOrEmpty(guidString))
-                {
-                    bw.Write(new byte[16]);
-                }
-                else
-                {
-                    Guid guid = new Guid(guidString);
-                    bw.Write(guid.ToByteArray());
-                }
+                string guidString = (mat != null) ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mat)) : "";
+                WriteGuidBytes(bw, guidString);
             }
             return ms.ToArray();
+        }
+    }
+
+
+    private static void WriteGuidBytes(BinaryWriter bw, string guidStr)
+    {
+        if (string.IsNullOrEmpty(guidStr) || 32 != guidStr.Length) { bw.Write(0UL); bw.Write(0UL); return; }
+        for (int i = 0; 16 > i; i++)
+        {
+            byte b = System.Convert.ToByte(guidStr.Substring(i * 2, 2), 16);
+            bw.Write(b);
         }
     }
 
