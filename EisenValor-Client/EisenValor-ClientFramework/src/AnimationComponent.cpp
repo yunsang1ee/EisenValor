@@ -33,6 +33,24 @@ void AnimationComponent::OnUpdate(float dt)
 	UpdateBoneMatrices();
 }
 
+void AnimationComponent::AddAnimation(uint8_t key, std::shared_ptr<AnimationResource> animation)
+{
+	m_animations[key] = animation;
+}
+
+void AnimationComponent::Play(uint8_t key, bool loop)
+{
+	auto it = m_animations.find(key);
+	if (it != m_animations.end())
+	{
+		Play(it->second, loop);
+	}
+	else
+	{
+		DEBUG_LOG_FMT("[AnimationComponent] Cannot find animation for key: {}\n", key);
+	}
+}
+
 void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool loop)
 {
 	m_currentAnimation = animation;
@@ -201,4 +219,13 @@ void AnimationComponent::UpdateBoneMatrices()
 	}
 
 	skinnedMesh->SetFinalMatrices(m_finalPalette);
+}
+
+bool AnimationComponent::IsAnimationEnd() const
+{
+	if (!m_currentAnimation || m_isLooping) 
+	{
+		return false;
+	}
+	return m_currentTime >= m_currentAnimation->GetDuration();
 }

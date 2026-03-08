@@ -18,6 +18,11 @@ public:
 	void OnUpdate(float deltaTime);
 
 	// 상태 전이, 현재 상태 조회
+	//서버
+	void SetServerState(uint8_t serverState);
+	uint8_t GetServerState() const { return m_serverState; }
+
+	//클라
 	void ChangeState(uint8_t nextStateType);
 	uint8_t GetCurStateType() const { return m_curStateType; }
 
@@ -36,7 +41,8 @@ public:
 
 private:
 	// 캐릭터별 데이터
-	uint8_t m_curStateType = 0; 
+	uint8_t m_serverState = 0;   // 서버에서 보낸 상태 (GENERAL_STATE_TYPE)
+	uint8_t m_curStateType = 0;  // 클라이언트 애니메이션 상태 (PLAYER_STATE_TYPE)
 	uint8_t m_curAttackType = 0; // 현재 수행 중인 공격 종류
 	float   m_stateTimer = 0.0f; // 상태별 시간 추적용
 	std::vector<StateChangeListener> m_listeners;

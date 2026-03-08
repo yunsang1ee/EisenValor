@@ -14,7 +14,7 @@ void HealthComponent::SetHealth(int health)
 		// FSM 상태를 DEAD로 변경
 		if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 		{
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD);
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
 		}
 
 		// 바로 비활성화하면 애니메이션이 보이지 않음(일단 주석처리)
