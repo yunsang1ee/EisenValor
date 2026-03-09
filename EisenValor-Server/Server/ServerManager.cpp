@@ -114,8 +114,6 @@ void Server::ServerManager::Shutdown()
 #ifdef MODERN_CODE
 	MANAGER(ServerEngine::ServerEngineCore)->Shutdown();
 #endif
-	
-	
 	WSACleanup();
 	LOG_SAVE();
 }

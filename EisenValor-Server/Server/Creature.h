@@ -9,7 +9,7 @@ namespace Server {
 			virtual ~Creature();
 
 		public:
-			virtual bool OnDamaged(Creature* const attacker, const float dt) { return false; }
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt) { return false; }
 			virtual void OnDeath() {}
 			virtual void OnRespawn() {}
 		
@@ -22,8 +22,8 @@ namespace Server {
 			void	SetStamina(const uint32 stamina, const bool broadcast = false);
 			void	IncStamina(const uint32 amount, const bool broadcast = true);
 			virtual void	DecStamina(const uint32 amount, const bool broadcast = true);
-			void	SetTarget(Creature* target) { m_target = target; }
-			Creature* GetTarget() { return m_target; }
+			void	SetTarget(std::shared_ptr<Creature> target) { m_target = target; }
+			std::shared_ptr<Creature> GetTarget() { return m_target.lock(); }
 			int		GetHP() const { return m_statInfo.currentHP; }
 			int32	GetStamina() const { return m_statInfo.currentStamina; }
 
@@ -37,7 +37,7 @@ namespace Server {
 		private:
 			// TODO: Component로 뺴는것도 생각해보자
 			Stat						m_statInfo;
-			Creature*					m_target;
+			std::weak_ptr<Creature>		m_target;
 
 		};
 	}

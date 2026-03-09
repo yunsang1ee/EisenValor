@@ -56,11 +56,11 @@ void Server::Contents::OccupationZone::Update(const float dt)
 		for(const auto& [id, o] : groups[i]) {
 			auto obj{ o.get() };
 
-			if(false == IsValidObj(obj)) continue;
+			if(false == IsValidObj(o)) continue;
 
 			if(owner->GetTeamType() == o->GetTeamType()) continue;
 
-			if(owner->IsTargetInRange(obj)) {
+			if(owner->IsTargetInRange(o)) {
 				m_accDT += dt;
 			}
 

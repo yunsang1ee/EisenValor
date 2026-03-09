@@ -18,7 +18,7 @@ namespace Server {
 		class Collider;
 		class OBBCollider;
 
-		class GameObject {
+		class GameObject : public std::enable_shared_from_this<GameObject> {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
 			using Scripts = std::vector<std::unique_ptr<Script>>;
@@ -66,7 +66,7 @@ namespace Server {
 			auto AddComponent(Args&&... args)
 			{
 				auto component = std::make_unique<T>(std::forward<Args>(args)...);
-				component->SetOwner(this);
+				component->SetOwner(shared_from_this());
 
 				if constexpr(std::is_same_v<FSM, T>) {
 					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
@@ -134,8 +134,8 @@ namespace Server {
 			bool IsActive() const { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 			
-			bool IsTargetInRange(const GameObject* const target, const float rangeSq = 2.f * 2.f);
-			bool IsSameTeam(const GameObject* const other);
+			bool IsTargetInRange(std::shared_ptr<GameObject> const target, const float rangeSq = 2.f * 2.f);
+			bool IsSameTeam(std::shared_ptr<GameObject> const other);
 
 		private:
 			std::wstring							m_name;

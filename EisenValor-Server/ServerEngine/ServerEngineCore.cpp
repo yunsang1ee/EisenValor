@@ -55,7 +55,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, 
 	flags = WSA_FLAG_REGISTERED_IO;
 	
 	// WorkerThread 생성
-	for(int i = 0; i < m_workerThreads.size(); ++i) {
+	for(int i = 0; i < 1; ++i) {
 		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
 		m_workerThreads[i] = (std::make_unique<WorkerThread>(worldFunc, std::move(rioCore)));
 

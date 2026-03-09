@@ -16,9 +16,9 @@
 #include "BattleRam.h"
 #include "OccupationZone.h"
 
-std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = std::make_unique<Server::Contents::Player>(t.teamType);
+	auto player = std::make_shared<Server::Contents::Player>(t.teamType);
 	player->SetID(t.id);
 
 #ifdef LEGACY_CODE
@@ -58,9 +58,9 @@ std::unique_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	return player;
 }
 
-std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
+std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
-	auto general = std::make_unique<Server::Contents::General>(t.teamType);
+	auto general = std::make_shared<Server::Contents::General>(t.teamType);
 	general->SetID(t.id);
 #ifdef LEGACY_CODE
 	general->SetGameWorld(t.gameWorld.lock());
@@ -114,9 +114,9 @@ std::unique_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	return general;
 }
 
-std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
+std::shared_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
-	auto soldier{ std::make_unique<Server::Contents::Soldier>(t.teamType) };
+	auto soldier{ std::make_shared<Server::Contents::Soldier>(t.teamType) };
 	soldier->SetID(t.id);
 #ifdef LEGACY_CODE
 	soldier->SetGameWorld(t.gameWorld.lock());
@@ -156,14 +156,17 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	auto fsm{ soldier->AddComponent<Server::Contents::FSM>() };
 	
 	auto spawnState = Server::Contents::SoldierSpawnState::Create();
-	auto moveState = Server::Contents::SoldierMoveState::Create(5.f);
-	auto searchState = Server::Contents::SoldierSearchState::Create(5.f);
-	auto chaseState = Server::Contents::SoldierChaseState::Create(2.f, t.gameObjectData->enemyCombatRange);
-	auto attackState = Server::Contents::SoldierAttackState::Create(t.gameObjectData->enemyCombatRange, std::chrono::seconds(t.gameObjectData->attackCycleTime));
-	auto deadState = Server::Contents::SoldierDeadState::Create();
+	auto idleState = Server::Contents::SoldierIdleState::Create();
+	auto moveState = Server::Contents::SoldierMoveState::Create(5.f/*viewRange*/);
+	// auto searchState = Server::Contents::SoldierSearchState::Create(3.f/*attackRange*/);
+	auto chaseState = Server::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
+	auto attackState = Server::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
+	auto deadState = Server::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
 
 	fsm->AddState(std::move(spawnState));
+	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(moveState));
+	// fsm->AddState(std::move(searchState));
 	fsm->AddState(std::move(chaseState));
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(deadState));
@@ -173,9 +176,9 @@ std::unique_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	return soldier;
 }
 
-std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory::CreateBattleRam(const BattleRamTemplate& t)
+std::shared_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory::CreateBattleRam(const BattleRamTemplate& t)
 {
-	auto battleRam{ std::make_unique<BattleRam>(t.detectionRange, t.finalDestPos) };
+	auto battleRam{ std::make_shared<BattleRam>(t.detectionRange, t.finalDestPos) };
 	battleRam->SetID(t.id);
 #ifdef LEGACY_CODE
 	battleRam->SetGameWorld(t.gameWorld.lock());
@@ -216,9 +219,9 @@ std::unique_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 	return battleRam;
 }
 
-std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
-	auto spawnObj = std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	spawnObj->SetID(t.id);
 #ifdef LEGACY_CODE
 	spawnObj->SetGameWorld(t.gameWorld.lock());
@@ -231,14 +234,14 @@ std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 	
 	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>());
 	spawner->SetName("Spawner");
-	spawner->SetOwner(spawnObj.get());
+	spawner->SetOwner(spawnObj);
 	
 	return spawnObj;
 }
 
-std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
 {
-	auto ozObj{ std::make_unique<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);
 #ifdef LEGACY_CODE
 	ozObj->SetGameWorld(t.gameWorld.lock());
@@ -251,7 +254,7 @@ std::unique_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 	
 	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.range * t.range, t.time))};
 	oz->SetName("OZ");
-	oz->SetOwner(ozObj.get());
+	oz->SetOwner(ozObj);
 	
 	return ozObj;
 }

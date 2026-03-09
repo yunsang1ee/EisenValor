@@ -5,9 +5,9 @@
 #include "General.h"
 #include "FSM.h"
 
-static Server::Contents::General* GetGeneral(Server::Contents::FSM* fsm)
+static std::shared_ptr<Server::Contents::General> GetGeneral(Server::Contents::FSM* fsm)
 {
-	return static_cast<Server::Contents::General*>(fsm->GetOwner());
+	return std::static_pointer_cast<Server::Contents::General>(fsm->GetOwner());
 }
 
 // ==================================
@@ -227,7 +227,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 				const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
 				// 무장해제 공격일 시, 상대 플레이어의 상태를 IDLE로...
 				if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
-					auto const obj{ static_cast<General*>(target) };
+					auto const obj{ std::static_pointer_cast<General>(target) };
 					auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
 					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt, true);
 				}

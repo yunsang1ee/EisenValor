@@ -58,7 +58,7 @@ static inline float GetDistSq(const Vec3& v1, const Vec3& v2)
 	return (v1 - v2).LengthSquared();
 }
 
-bool IsValidObj(const Server::Contents::GameObject* const obj);
+bool IsValidObj(const std::shared_ptr<Server::Contents::GameObject> obj);
 
 template<typename Enum> requires std::is_enum_v<Enum>
 static inline constexpr uint8 etou8(const Enum e)

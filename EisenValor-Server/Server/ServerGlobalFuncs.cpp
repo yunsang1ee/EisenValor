@@ -25,9 +25,12 @@ std::unique_ptr<ServerEngine::IRoom> MakeGameLobbyTest()
 }
 #endif
 
-bool IsValidObj(const Server::Contents::GameObject* const obj)
+bool IsValidObj(const std::shared_ptr<Server::Contents::GameObject> obj)
 {
-	if(nullptr == obj || false == obj->IsActive())
+	if(nullptr == obj)
+		return false;
+
+	if(false == obj->IsActive())
 		return false;
 
 	return true;

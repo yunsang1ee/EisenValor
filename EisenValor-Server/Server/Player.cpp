@@ -13,6 +13,7 @@ Server::Contents::Player::Player(const FB_ENUMS::TEAM_TYPE teamType)
 
 Server::Contents::Player::~Player()
 {
+	std::cout << "~Player" << std::endl;
 }
 
 void Server::Contents::Player::Update(const float dt)
@@ -28,7 +29,7 @@ void Server::Contents::Player::Update(const float dt)
 	// std::cout << std::format("Pos: {}. {}. {}", pos.x, pos.y, pos.z) << std::endl;
 }
 
-bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float dt)
+bool Server::Contents::Player::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
 {
 	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
@@ -37,8 +38,8 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 
 	m_startStunDelay = worldFrame;
 	
-	if(FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType())
-		return false;
+	//if(FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType())
+	//	return false;
 
 	//if(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE == fsm->GetCurState()->GetStateType()) {
 	//	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt);
@@ -50,7 +51,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 
 	// 공격자가 플레이어인 경우
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
-		auto attackerPlayer = static_cast<Player*>(attacker);
+		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) {
@@ -70,7 +71,7 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 	// 공격자가 NPC 장수 일경우
 	else if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == attacker->GetObjType()) {
 		// std::cout << "Attacker Is General!" << std::endl;
-		auto attackGeneral{ static_cast<General*>(attacker) };
+		auto attackGeneral{ std::static_pointer_cast<General>(attacker) };
 		const AttackInfo& attackerAtkInfo{ attackGeneral->GetAtkInfo() };
 
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) {
@@ -86,6 +87,9 @@ bool Server::Contents::Player::OnDamaged(Creature* const attacker, const float d
 		else {
 			damage = attackerAtkInfo.skillData->damage;
 		}
+	}
+	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
+		damage = 10;
 	}
 
 	// when hit during the first delay, stun delay and damage are doubled
@@ -177,22 +181,23 @@ void Server::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::General
 		const auto& gameObjectGroups = GetGameWorld()->GetGameObjectGroups();
 
 		for(const auto& [id, o] : gameObjectGroups[i]) {
-			GameObject* const obj{ o.get() };
-			if(false == IsValidObj(obj))
+			if(false == IsValidObj(o))
 				continue;
 			
 			if(id == GetID())
 				continue;
 
-			if(false == obj->IsCreature()) 
+			if(false == o->IsCreature()) 
 				continue;
+
+			std::shared_ptr<Creature> const obj{ std::static_pointer_cast<Creature>(o) };
 
 			if(GetTeamType() == obj->GetTeamType()) 
 				continue;
 
 			if(IsTargetInAttackRange(obj)) {
 				std::cout << "Handle_CS_PLAYER_ATTACK - Set Target! ID : " << obj->GetID() << std::endl;
-				SetTarget(static_cast<Creature*>(obj));
+				SetTarget(obj);
 				findTarget = true;
 			}
 		}

@@ -15,7 +15,7 @@ namespace Server {
 			virtual void OnCollisionExit(Collider* const other) override final;
 			virtual void Update(const float dt) override final;
 			virtual void OnDeath() override final;
-			virtual bool OnDamaged(Creature* const attacker, const float dt) override final;
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt) override final;
 
 		private:
 			friend class GameWorld;

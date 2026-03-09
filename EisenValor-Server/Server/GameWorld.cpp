@@ -192,7 +192,7 @@ void Server::Contents::GameWorld::LeaveGameWorld(const std::shared_ptr<ClientSes
 	const uint32 id{ clientSession->GetID() };
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(id) != playerGroup.end()) {
-		auto player = playerGroup[id].get();
+		auto player = playerGroup[id];
 		RemoveGameObject(player);
 	}
 }
@@ -346,20 +346,20 @@ bool Server::Contents::GameWorld::IsFinish()
 	return false;
 }
 
-Server::Contents::Player* Server::Contents::GameWorld::IDToPlayer(const uint32 sessionID)
+std::shared_ptr<Server::Contents::Player> Server::Contents::GameWorld::IDToPlayer(const uint32 sessionID)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(sessionID) == playerGroup.end()) return nullptr;
-	auto player = static_cast<Server::Contents::Player*>(playerGroup[sessionID].get());
+	auto player = std::static_pointer_cast<Server::Contents::Player>(playerGroup[sessionID]);
 	return player;
 }
 
-Server::Contents::GameObject* Server::Contents::GameWorld::FindObjectByID(const uint32 targetID)
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameWorld::FindObjectByID(const uint32 targetID)
 {
 	for(int i = 0; i < m_gameObjectsGroups.size(); ++i) {
 		for(const auto& [id, obj] : m_gameObjectsGroups[i]) {
 			if(targetID == id) {
-				return obj.get();
+				return obj;
 			}
 		}
 	}
@@ -862,7 +862,7 @@ void Server::Contents::GameWorldTest::LeaveSession(std::shared_ptr<ServerEngine:
 	const uint32 id{ session->GetID() };
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(id) != playerGroup.end()) {
-		auto player = playerGroup[id].get();
+		auto player = playerGroup[id];
 		RemoveGameObject(player);
 	}
 }
@@ -1174,21 +1174,21 @@ bool Server::Contents::GameWorldTest::IsFinish()
 	return false;
 }
 
-Server::Contents::Player* Server::Contents::GameWorldTest::IDToPlayer(const uint32 sessionID)
+std::shared_ptr<Server::Contents::Player> Server::Contents::GameWorldTest::IDToPlayer(const uint32 sessionID)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(sessionID) == playerGroup.end()) return nullptr;
-	auto player = static_cast<Server::Contents::Player*>(playerGroup[sessionID].get());
+	auto player = std::static_pointer_cast<Player>(playerGroup[sessionID]);
 	return player;
 }
 
 
-Server::Contents::GameObject* Server::Contents::GameWorldTest::FindObjectByID(const uint32 targetID)
+std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameWorldTest::FindObjectByID(const uint32 targetID)
 {
 	for(int i = 0; i < m_gameObjectsGroups.size(); ++i) {
 		for(const auto& [id, obj] : m_gameObjectsGroups[i]) {
 			if(targetID == id) {
-				return obj.get();
+				return obj;
 			}
 		}
 	}
@@ -1208,7 +1208,7 @@ void Server::Contents::GameWorldTest::CreateGameWorldObjects()
 {
 	// Spanwer로 옮겨야 함
 	for(int i = 0; i < 1; ++i) {
-		static bool flag{ false };
+		static bool flag{ true };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
 		SoldierTemplate t;
 		t.id = m_npcIdGen++;

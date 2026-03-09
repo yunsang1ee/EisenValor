@@ -10,7 +10,7 @@ namespace Server {
 		// ============================================
 		//					IDLE
 		// ============================================
-		class SoldierSpawnState : public State {
+		class SoldierSpawnState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierSpawnState)
 		private:
@@ -27,10 +27,26 @@ namespace Server {
 			friend class GameObjectFactory;
 		};
 
+		class SoldierIdleState final : public State {
+			DECLARE_CREATE_FUNC(SoldierIdleState)
+
+		private:
+			explicit SoldierIdleState();
+			virtual ~SoldierIdleState();
+
+		public:
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
+
+		private:
+			friend class GameObjectFactory;
+		};
+
 		// ============================================
 		//					MOVE
 		// ============================================
-		class SoldierMoveState : public State {
+		class SoldierMoveState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierMoveState)
 		private:
@@ -45,12 +61,13 @@ namespace Server {
 		private:
 			float				m_viewRangeSq{};
 			float				m_accDTForSearch;
-			std::queue<Vec3>	m_wayPoints;
+			std::vector<Vec3>	m_wayPoints;
+			uint32				m_currentWaypointIndex;
 
 			friend class GameObjectFactory;
 		};
 
-		class SoldierSearchState : public State {
+		class SoldierSearchState final : public State {
 			DECLARE_CREATE_FUNC(SoldierSearchState)
 		private:
 			explicit SoldierSearchState(const float attackRange);
@@ -69,11 +86,11 @@ namespace Server {
 		// ============================================
 		//					CHASE
 		// ============================================
-		class SoldierChaseState : public State {
+		class SoldierChaseState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierChaseState)
 		private:
-			explicit SoldierChaseState(const float chaseSpeed, const float combatRange);
+			explicit SoldierChaseState(const float chaseRange, const float attackRange);
 			virtual ~SoldierChaseState();
 
 		public:
@@ -83,9 +100,8 @@ namespace Server {
 			friend class GameObjectFactory;
 
 		private:
-			static constexpr float COMBAT_PROB{ 0.7f };
-			float m_chaseSpeed;
-			float m_combatRange;
+			float m_attackRangeSq;
+			float m_chaseRangeSq;
 
 		};
 
@@ -93,31 +109,30 @@ namespace Server {
 		// ============================================
 		//					ATTACK
 		// ============================================
-		class SoldierAttackState : public State {
+		class SoldierAttackState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierAttackState)
 		private:
-			explicit SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime);
+			explicit SoldierAttackState(const float attackRange);
 			virtual ~SoldierAttackState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
-			friend class GameObjectFactory;
 
 		private:
-			float					m_accDt;
-			float					m_combatRange;
-			std::chrono::seconds	m_attackCycleTime;
-			static constexpr float ATTACK_PROB{ 0.7f };
+			float m_accDTForAttack;
+			float m_attackRangeSq;
+
+			friend class GameObjectFactory;
 		};
 
-		class SoldierDeadState : public State {
+		class SoldierDeadState  final : public State {
 			DECLARE_CREATE_FUNC(SoldierDeadState)
 
 		private:
-			explicit SoldierDeadState();
+			explicit SoldierDeadState(const float deadAnimTime);
 			virtual ~SoldierDeadState();
 
 		public:
@@ -127,6 +142,7 @@ namespace Server {
 
 		private:
 			float m_accDT;
+			float m_deadAnimTime;
 			friend class GameObjectFactory;
 		};
 

@@ -11,10 +11,13 @@ namespace Server {
 			explicit GeneralState(const uint8 stateType, FSM* const fsm);
 			virtual  ~GeneralState() = default;
 
+		public:
+			std::shared_ptr<General> GetOwner() const { return m_owner.lock(); }
+
 		protected:
 			std::unique_ptr<BehaviorNode>	m_root;
 			BehaviorTree*					m_bt;
-			General*						m_owner;
+			std::weak_ptr<General>			m_owner;
 
 #ifdef LEGACY_CODE
 			std::shared_ptr<GameWorld>		m_gameWorld;
