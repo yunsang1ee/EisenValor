@@ -78,7 +78,7 @@ void AnimationComponent::UpdateBoneMatrices()
 		// [DEBUG] 매칭 확인
 		const auto& tracks = m_currentAnimation->GetTracks();
 		size_t matchCount = 0;
-		for (const auto& track : tracks) {
+		for (const auto& track : tracks) {  
 			for (size_t i = 0; i < boneCount; ++i) {
 				if (track.BoneNameHash == bones[i].nameHash) {
 					matchCount++;

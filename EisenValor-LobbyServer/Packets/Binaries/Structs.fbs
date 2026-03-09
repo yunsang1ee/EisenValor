@@ -1,0 +1,33 @@
+include "Enums.fbs";
+
+namespace FB_STRUCTS;
+
+struct Vec3 {
+	x: float;
+	y: float;
+	z: float;
+}
+
+struct PosInfo {
+	pos: Vec3;
+	rot: Vec3;
+}
+
+struct RoomInfo {
+	id: uint16;
+	state: FB_ENUMS.ROOM_STATE_TYPE;
+	current_participants: ubyte;
+	max_marticipants: ubyte;
+}
+
+struct ParticipantInfo {
+	id: uint;
+	type: FB_ENUMS.PARTICIPANT_TYPE;
+	state_type: FB_ENUMS.PARTICIPANT_STATE_TYPE;
+	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+struct GeneralAttackInfo {
+	attack_type: FB_ENUMS.GENERAL_ATTACK_TYPE;
+	attack_dir: FB_ENUMS.GENERAL_ATTACK_DIR_TYPE;
+}

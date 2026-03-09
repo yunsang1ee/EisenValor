@@ -284,6 +284,38 @@ void Server::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32
 	}
 }
 
+void Server::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID)
+{
+	auto const player = IDToPlayer(sessionID);
+
+	const Vec3 playerPos = player->GetPos();
+	Vec3 playerLook = player->GetLook();
+	playerLook.Normalize();
+	const auto teamType = player->GetTeamType();
+
+	constexpr float distance{ 5.0f };
+
+	Vec3 spawnPos;
+	spawnPos.x = playerPos.x + (playerLook.x * distance);
+	spawnPos.y = playerPos.y;
+	spawnPos.z = playerPos.z + (playerLook.z * distance);
+
+	GeneralTemplate t;
+	t.id = m_npcIdGen++;
+	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	t.teamType = teamType;
+	t.posInfo = PosInfo{
+	.pos = spawnPos,
+	.rot = Vec3{}
+	};
+#ifdef LEGACY_CODE
+	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
+#endif
+
+	auto general{ Server::Contents::GameObjectFactory::CreateGeneral(t) };
+	AddGameObject(std::move(general));
+}
+
 #ifndef ENABLE_LOBBY
 void Server::Contents::GameWorld::Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession)
 {

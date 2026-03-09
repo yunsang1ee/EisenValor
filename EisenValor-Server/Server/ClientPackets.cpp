@@ -435,7 +435,7 @@ namespace ClientPackets {
 		auto world = clientSession->GetGameWorld();
 
 		if(world)
-			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR, id, static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(recvPkt.attack_dir()));
+			world->ExecAsync(&Server::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL, id);
 #endif
 
 #ifdef MODERN_CODE

@@ -239,7 +239,7 @@ void Server::Contents::SoldierChaseState::Enter(const float dt)
 {
 	std::cout << "SoldierChaseState Enter" << std::endl;
 	
-	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
+	 const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
 }
 

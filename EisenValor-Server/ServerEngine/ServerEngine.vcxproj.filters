@@ -341,9 +341,6 @@
     <Filter Include="95. Managers\TaskQueueManager\TaskQueue\Task">
       <UniqueIdentifier>{d386b0b1-1de0-4c05-a24e-165e6da0ce1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="97. Headers\98. Scripts">
-      <UniqueIdentifier>{9bc071bf-9497-472d-a613-e880df0af6ee}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Test">
       <UniqueIdentifier>{1f6092f4-0048-462d-889e-fdf1ee7dc060}</UniqueIdentifier>
     </Filter>
@@ -388,6 +385,9 @@
     </Filter>
     <Filter Include="95. Managers\ThreadManager">
       <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Scripts">
+      <UniqueIdentifier>{9bc071bf-9497-472d-a613-e880df0af6ee}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

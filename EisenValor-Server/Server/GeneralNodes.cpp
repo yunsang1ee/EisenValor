@@ -22,20 +22,18 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::FindOZ::DoAction(const 
 
 	for(const auto& [id, o] : gameObjectGroup) {
 
-		auto const obj{ o.get() };
-
-		if(false == IsValidObj(obj))
+		if(false == IsValidObj(o))
 			continue;
 
-		if(owner->IsSameTeam(obj))
+		if(owner->IsSameTeam(o))
 			continue;
 
-		auto oz{ static_cast<OccupationZone*>(obj->GetScript("OZ")) };
+		auto oz{ static_cast<OccupationZone*>(o->GetScript("OZ")) };
 		if(oz) {
-			const auto& ozPos{ obj->GetPos() };
+			const auto& ozPos{ o->GetPos() };
 			if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
 			// 	std::cout << "Find OZ!" << std::endl;
-				owner->SetLook(obj->GetPos());
+				owner->SetLook(o->GetPos());
 				tree->GetBlackboard()->SetValue("OZ_ID", o->GetID());
 			//	std::cout << "SetDestPos" << std::endl;
 				owner->GetComponent<Server::Contents::NavAgent>()->SetDestPos(ozPos);
@@ -149,7 +147,7 @@ bool Server::Contents::IsTargetAttacking::Check(const float dt)
 {
 #ifdef LEGACY_CODE
 	auto const tree{ GetTree() };
-	auto const owner{ static_cast<General*>(tree->GetOwner()) };
+	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
 	auto const world{ owner->GetGameWorld() };
 
 	const uint32 targetID = tree->GetBlackboard()->GetValue<uint32>("Target", -1);
@@ -226,7 +224,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::DefaultDefense::DoActio
 {
 #ifdef LEGACY_CODE
 	auto const tree{ GetTree() };
-	auto const owner{ static_cast<General*>(tree->GetOwner()) };
+	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
 	auto const world{ owner->GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const bb{ tree->GetBlackboard() };
@@ -239,7 +237,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::DefaultDefense::DoActio
 		return Server::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 	}
 
-	auto target{ static_cast<General*>(world->FindObjectByID(targetID)) };
+	auto target{ std::static_pointer_cast<General>(world->FindObjectByID(targetID)) };
 
 	if(false == IsValidObj(target)) {
 		bb->Erase("Target");
@@ -388,7 +386,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::Parrying::DoAction(cons
 {
 #ifdef LEGACY_CODE
 	auto const tree{ GetTree() };
-	auto const owner{ static_cast<General*>(tree->GetOwner()) };
+	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
 	auto const bb{ tree->GetBlackboard() };
 	auto const world{ owner->GetGameWorld() };
 
@@ -481,7 +479,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::AttackTry::DoAction(con
 #ifdef LEGACY_CODE
 	auto const tree{ GetTree() };
 	auto const bb{ tree->GetBlackboard() };
-	auto const owner{ static_cast<General*>(tree->GetOwner()) };
+	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
 	const auto& ownerPos{ owner->GetPos() };
 	auto const world{ owner->GetGameWorld() };
 
@@ -535,7 +533,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::AttackTry::DoAction(con
 			}
 		}
 	
-		auto target{ static_cast<Server::Contents::Creature*>(obj) };
+		auto target{ std::static_pointer_cast<Server::Contents::Creature>(obj) };
 		const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 		const auto& targetPos{ target->GetPos() };
@@ -663,7 +661,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::CombatMovement::DoActio
 {
 #ifdef LEGACY_CODE
 	auto const tree{ GetTree() };
-	auto const owner{ static_cast<General*>(tree->GetOwner()) };
+	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
 	auto const world{ owner->GetGameWorld() };
 	auto const bb{ tree->GetBlackboard() };
 
@@ -674,7 +672,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::CombatMovement::DoActio
 		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;
 	}
 
-	auto target = static_cast<Creature*>(world->FindObjectByID(targetID));
+	auto target = std::static_pointer_cast<Creature>(world->FindObjectByID(targetID));
 
 	if(false == IsValidObj(target))
 		return BEHAVIOR_NODE_STATUS::FAIL;

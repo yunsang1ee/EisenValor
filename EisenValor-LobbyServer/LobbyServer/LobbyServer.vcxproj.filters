@@ -15,10 +15,42 @@
     <Filter Include="99. pch">
       <UniqueIdentifier>{52126dc0-8731-4f94-9762-5e29ee4e53f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="01. ClientSession">
+      <UniqueIdentifier>{64c87cfe-f852-4d32-bf71-7eb7fef75cba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents">
+      <UniqueIdentifier>{54b44b3e-0eac-407b-b3dc-c5f7886b0398}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets">
+      <UniqueIdentifier>{b50cf835-ac47-4a58-ab3c-3ff6855bb6b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameLobby">
+      <UniqueIdentifier>{e20b2b31-7496-4ee4-b926-21538d30d430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Contents\GameLobby\GameRoom">
+      <UniqueIdentifier>{69979e3a-a3b7-4a7f-a448-65b7eaa0c168}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\FBS">
+      <UniqueIdentifier>{6ba592fb-f8f4-4310-9cbb-0ec463ab9eec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler">
+      <UniqueIdentifier>{4baba5c4-2810-4a5e-84f0-a8bbe2fcbe0d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>99. pch</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs">
+      <Filter>03. Packets\FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Structs.fbs">
+      <Filter>03. Packets\FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Tables.fbs">
+      <Filter>03. Packets\FBS</Filter>
+    </None>
   </ItemGroup>
 </Project>

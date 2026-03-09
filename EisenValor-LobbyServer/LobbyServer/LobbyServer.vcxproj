@@ -129,6 +129,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>LobbyServerEngine_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -147,6 +150,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>LobbyServerEngine_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -159,6 +165,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs" />
+    <None Include="..\Packets\Binaries\Structs.fbs" />
+    <None Include="..\Packets\Binaries\Tables.fbs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
