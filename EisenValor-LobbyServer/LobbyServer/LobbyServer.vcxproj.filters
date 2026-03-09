@@ -7,6 +7,21 @@
     <ClCompile Include="pch.cpp">
       <Filter>99. pch</Filter>
     </ClCompile>
+    <ClCompile Include="ServerManager.cpp">
+      <Filter>00. Main\ServerManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSession.cpp">
+      <Filter>01. ClientSession</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLobby.cpp">
+      <Filter>02. GameLobby</Filter>
+    </ClCompile>
+    <ClCompile Include="GameRoom.cpp">
+      <Filter>02. GameLobby\GameRoom</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyServerGlobalFuncs.cpp">
+      <Filter>97. Global</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="00. Main">
@@ -15,20 +30,8 @@
     <Filter Include="99. pch">
       <UniqueIdentifier>{52126dc0-8731-4f94-9762-5e29ee4e53f6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. ClientSession">
-      <UniqueIdentifier>{64c87cfe-f852-4d32-bf71-7eb7fef75cba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents">
-      <UniqueIdentifier>{54b44b3e-0eac-407b-b3dc-c5f7886b0398}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Packets">
       <UniqueIdentifier>{b50cf835-ac47-4a58-ab3c-3ff6855bb6b5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameLobby">
-      <UniqueIdentifier>{e20b2b31-7496-4ee4-b926-21538d30d430}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="02. Contents\GameLobby\GameRoom">
-      <UniqueIdentifier>{69979e3a-a3b7-4a7f-a448-65b7eaa0c168}</UniqueIdentifier>
     </Filter>
     <Filter Include="03. Packets\FBS">
       <UniqueIdentifier>{6ba592fb-f8f4-4310-9cbb-0ec463ab9eec}</UniqueIdentifier>
@@ -36,10 +39,40 @@
     <Filter Include="03. Packets\PacketHandler">
       <UniqueIdentifier>{4baba5c4-2810-4a5e-84f0-a8bbe2fcbe0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="00. Main\ServerManager">
+      <UniqueIdentifier>{5fa57acd-bbbd-47ee-adea-4b9727c783e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. ClientSession">
+      <UniqueIdentifier>{64c87cfe-f852-4d32-bf71-7eb7fef75cba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Global">
+      <UniqueIdentifier>{8fff0c23-b574-4897-be49-96e275f383bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameLobby">
+      <UniqueIdentifier>{e20b2b31-7496-4ee4-b926-21538d30d430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameLobby\GameRoom">
+      <UniqueIdentifier>{69979e3a-a3b7-4a7f-a448-65b7eaa0c168}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>99. pch</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientSession.h">
+      <Filter>01. ClientSession</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLobby.h">
+      <Filter>02. GameLobby</Filter>
+    </ClInclude>
+    <ClInclude Include="GameRoom.h">
+      <Filter>02. GameLobby\GameRoom</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerGlobalFuncs.h">
+      <Filter>97. Global</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerManager.h">
+      <Filter>00. Main\ServerManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -52,5 +85,6 @@
     <None Include="..\Packets\Binaries\Tables.fbs">
       <Filter>03. Packets\FBS</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
