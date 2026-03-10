@@ -221,6 +221,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
+    <ClInclude Include="Util\AnimationLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\FSM\FSMComponent.cpp" />
@@ -254,6 +255,7 @@ exit /b 0</Command>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Component\BattleUIControllerComponent.cpp" />
+    <ClCompile Include="Util\AnimationLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />

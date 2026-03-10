@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "Transform.h"
+#include "Util/AnimationLoader.h"
 
 // Resource
 #include "ResourceGlobal.h"
@@ -482,11 +483,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle,
 				[](AnimationComponent* anim)
 				{
-					auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
-					if (animRes)
-					{
-						anim->Play(animRes, false);
-					}
+					AnimationLoader::AnimationApply(anim, "HumanM");
 				}
 			);
 
@@ -689,6 +686,18 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					objHandle,
 					[](VitalUIControllerComponent* vital) {
 						// Init 제거->OnStart에서 자동 판단
+					}
+				);
+			}
+
+			// Animation Component
+			if (isGeneral)
+			{
+				scene->CreateComponentWithInit<AnimationComponent>(
+					objHandle,
+					[](AnimationComponent* anim)
+					{
+						AnimationLoader::AnimationApply(anim, "HumanM");
 					}
 				);
 			}
