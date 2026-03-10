@@ -6,7 +6,7 @@
 BOOL __stdcall ConsoleHandler(DWORD signal)
 {
 	if(signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT) {
-		LOG_SAVE();
+		LOG_SAVE;
 		return TRUE;
 	}
 	return FALSE;
@@ -23,7 +23,7 @@ bool LobbyServer::ServerManager::Init()
 		return false;
 	}
 
-	if(false == MANAGER(LobbyServerEngine::LobbyServerEngineCore)->Init(MakeClientSessionFunc)) {
+	if(false == MANAGER(LobbyServerEngine::LobbyServerEngineCore)->Init(MakeGameServerSessionFunc, MakeClientSessionFunc)) {
 		LOG_ERROR("LobbyServerEngineCore Init Failed");
 		return false;
 	}

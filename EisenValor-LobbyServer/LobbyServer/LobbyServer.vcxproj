@@ -156,10 +156,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="GameServerSession.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="LobbyServerGlobalFuncs.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PacketHandler.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -170,9 +173,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="GameServerSession.h" />
+    <ClInclude Include="SessionManager.h" />
     <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="LobbyServerGlobalFuncs.h" />
+    <ClInclude Include="PacketHandler.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ServerManager.h" />
   </ItemGroup>

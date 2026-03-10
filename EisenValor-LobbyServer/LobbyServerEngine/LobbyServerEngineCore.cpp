@@ -1,12 +1,12 @@
 #include "pch.h"
 #include "LobbyServerEngineCore.h"
 
-#include "GameServerSessionThread.h"
 #include "WorkerThread.h"
 #include "ThreadManager.h"
+#include "Session.h"
+#include "Listener.h"
 
 LobbyServerEngine::LobbyServerEngineCore::LobbyServerEngineCore()
-	:m_handle{INVALID_HANDLE_VALUE}
 {
 }
 
@@ -14,31 +14,34 @@ LobbyServerEngine::LobbyServerEngineCore::~LobbyServerEngineCore()
 {
 }
 
-bool LobbyServerEngine::LobbyServerEngineCore::Init(const SessionFactoryFunc func)
+bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFactoryFunc gameServerSessionFunc, const ClientSessionFactoryFunc clientSessionFunc)
 {
-	m_func = func;
+	m_gameServerSessionFunc = gameServerSessionFunc;
+	m_clientSessionFunc = clientSessionFunc;
 
-	WSADATA wsaData;
-	if(0 != WSAStartup(MAKEWORD(2, 2), &wsaData)) {
-		LobbyServerEngine::LogManager::PrintLastError();
+	if(false == SocketUtils::Init())
+		return false;
+
+	if(false == MANAGER(LobbyServerEngine::ThreadManager)->Init()) {
+		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
+	
+	m_gameServerSession = gameServerSessionFunc();
+	m_gameServerSession->SetID(10000);
 
-	m_gameServerSessionThread = std::make_unique<LobbyServerEngine::GameServerSessionThread>();
-	if(false == m_gameServerSessionThread->Init()) {
-		LOG_ERROR("GameServerSessionThread Init Fail!");
+	if(false == m_iocpCore.Register(m_gameServerSession))
+		return false;
+
+	if(false == m_gameServerSession->Connect("127.0.0.1", 9999)) {
 		return false;
 	}
+	
+	m_listener = std::make_shared<Listener>();
 
-	m_handle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
-
-	for(int i = 0; i < 10; ++i) {
-		auto worker{ std::make_unique<WorkerThread>(m_handle) };
-		if(false == worker->Init()) {
-			LOG_ERROR("WorkerThread Init Fail!");
-			return false;
-		}
-		m_workerThreads.emplace_back(std::move(worker));
+	if(false == m_listener->StartAccept(8888)) {
+		LOG_ERROR("Listener Accept Failed");
+		return false;
 	}
 
 	return true;
@@ -46,17 +49,28 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const SessionFactoryFunc fun
 
 void LobbyServerEngine::LobbyServerEngineCore::Run()
 {
-	// TODO: GameServerSessionThread Work
-
-	MANAGER(LobbyServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st) {
-		for(auto& worker : m_workerThreads)
-			worker->Work(st);
-		});
+	for(const auto& worker : m_workerThreads) {
+		MANAGER(LobbyServerEngine::ThreadManager)->EnqueueTask([this, &worker](const std::stop_token st)
+			{
+				TLS_THREAD_NAME = "Worker_" + std::to_string(TLS_THREAD_ID);
+				worker->Work(st);
+			});
+	}
 }
 
 void LobbyServerEngine::LobbyServerEngineCore::Shutdown()
 {
-	CloseHandle(m_handle);
+	MANAGER(LobbyServerEngine::ThreadManager)->Join();
 	WSACleanup();
-	LOG_SAVE();
+	LOG_SAVE;
+}
+
+std::shared_ptr<LobbyServerEngine::Session> LobbyServerEngine::LobbyServerEngineCore::CreateClientSession()
+{
+	std::shared_ptr<Session> session = m_clientSessionFunc();
+	
+	if(false == m_iocpCore.Register(session))
+		return nullptr;
+
+	return session;
 }

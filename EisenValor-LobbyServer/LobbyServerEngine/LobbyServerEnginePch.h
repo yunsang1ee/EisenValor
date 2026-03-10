@@ -56,6 +56,8 @@ namespace fs = std::filesystem;
 #include "LobbyServerEngineTypes.h"
 #include "LobbyServerEngineEnums.h"
 
+#include "SocketUtils.h"
+
 #include "ObjectPool.h"
 
 #include "LobbyServerTLS.h"
@@ -68,4 +70,5 @@ namespace LobbyServerEngine {
 	class Session;
 }
 
-using SessionFactoryFunc = std::function<std::shared_ptr<LobbyServerEngine::Session>()>;
+using ClientSessionFactoryFunc = std::function<std::shared_ptr<LobbyServerEngine::Session>()>;
+using GameServerSessionFactoryFunc = std::function<std::shared_ptr<LobbyServerEngine::Session>()>;

@@ -4,8 +4,8 @@
 #define LOG_INFO(fmt, ...) LobbyServerEngine::LogManager::WriteLog(LobbyServerEngine::LogManager::LOG_LEVEL::INFO, fmt, ##__VA_ARGS__)
 #define LOG_WARNING(fmt, ...) LobbyServerEngine::LogManager::WriteLog(LobbyServerEngine::LogManager::LOG_LEVEL::WARNING, fmt, ##__VA_ARGS__)
 #define LOG_TRACE(fmt, ...) LobbyServerEngine::LogManager::WriteLog(LobbyServerEngine::LogManager::LOG_LEVEL::TRACE, fmt, ##__VA_ARGS__)
-#define LOG_WSA_GET_LAST_ERROR	LobbyServerEngine::LogManager::PrintLastError
-#define LOG_SAVE	LobbyServerEngine::LogManager::Save
+#define LOG_WSA_GET_LAST_ERROR	LobbyServerEngine::LogManager::PrintLastError()
+#define LOG_SAVE	LobbyServerEngine::LogManager::Save()
 
 namespace LobbyServerEngine {
 	class LogManager {

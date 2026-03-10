@@ -1,8 +1,18 @@
 #pragma once
 enum class IO_CONTEXT_TYPE : uint8 {
+	CONNECT,
 	ACCEPT,
 	RECV,
 	SEND,
+
+	END
+};
+
+enum class SESSION_TYPE : uint8 {
+	CLIENT,
+	GAME_SERVER,
+
+	END
 };
 
 enum class SESSION_STATE : uint8 {
@@ -11,4 +21,6 @@ enum class SESSION_STATE : uint8 {
 	IN_GAME_LOBBY,			// 클라로부터 로그인 패킷 받고 접속하면 Lobby 입장
 	IN_GAME_ROOM,			// Room 입장 시
 	TRANSFERRING,
+
+	END
 };
