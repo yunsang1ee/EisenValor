@@ -8,9 +8,10 @@
 #include "IOCoreTest.h"
 
 #ifdef  MODERN_CODE
-ServerEngine::AcceptThread::AcceptThread()
-	: m_listenSocket{ INVALID_SOCKET }, m_serverAddress{}
+ServerEngine::AcceptThread::AcceptThread(const SessionFactoryFunc func, const DWORD listenSocketFlags, WorkerThread* const ownerWorker)
+	: m_serverAddress{}, m_func{func}, m_ownerWorker{ownerWorker}
 {
+	m_listenSocket = CreateSocket(listenSocketFlags);
 }
 
 ServerEngine::AcceptThread::~AcceptThread()
@@ -21,11 +22,8 @@ ServerEngine::AcceptThread::~AcceptThread()
 	}
 }
 
-bool ServerEngine::AcceptThread::Init(const SessionFactoryFunc func, const uint16 port, const DWORD listenSocketFlags)
+bool ServerEngine::AcceptThread::Init(const uint16 port)
 {
-	m_func = func;
-
-	m_listenSocket = CreateSocket(listenSocketFlags);
 
 	if(m_listenSocket == INVALID_SOCKET)
 		return false;
@@ -37,6 +35,9 @@ bool ServerEngine::AcceptThread::Init(const SessionFactoryFunc func, const uint1
 
 	constexpr int opt{ 1 };
 	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
+
+	u_long mode = 1;
+	ioctlsocket(m_listenSocket, FIONBIO, &mode);
 
 	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
 		LOG_WSA_GET_LAST_ERROR();
@@ -99,11 +100,14 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 		//		continue;
 		//}*/
 		
+
 		// 지금은 바로 월드로...
-		auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
-		if(worker) {
-			worker->PushJob(&ServerEngine::WorkerThread::Register, (session));
-		}
+		//auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
+		//if(worker) {
+		//	worker->PushJob(&ServerEngine::WorkerThread::Register, (session));
+		//}
+
+		m_ownerWorker->PushJob(&ServerEngine::WorkerThread::Register, (session));
 	}
 }
 

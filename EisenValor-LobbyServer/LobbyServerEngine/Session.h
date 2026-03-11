@@ -7,6 +7,7 @@
 namespace LobbyServerEngine {
 	class IOContext;
 	class PacketBuffer;
+	class PacketHandler;
 
 	class Session : public IOCPObject {
 	public:
@@ -17,6 +18,7 @@ namespace LobbyServerEngine {
 		virtual void OnConnected() abstract;
 		virtual void OnDisconnected(const std::string_view reason) abstract;
 		virtual void OnSend(const uint32 bytesTransferred) abstract;
+		virtual uint32 OnRecv(std::span<const char> buf) { return static_cast<uint32>(buf.size()); }
 
 	public:
 		void Send(std::shared_ptr<PacketBuffer> pb);
@@ -43,8 +45,6 @@ namespace LobbyServerEngine {
 		void PostSend();
 		void ProcessSend(const uint32 bytesTransferred);
 
-		uint32 AssembleReceivedData(std::span<const char> buf);
-
 		void Clean();
 
 	private:
@@ -65,5 +65,21 @@ namespace LobbyServerEngine {
 		tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>	m_packetBufferQueue;
 		
 		friend class Listener;
+	};
+
+	class PacketSession : public Session {
+	public:
+		PacketSession(const SESSION_TYPE type);
+		virtual ~PacketSession();
+
+	public:
+		virtual uint32	OnRecv(std::span<const char> buf) override;
+		virtual void	OnRecvPacket(const std::span<const char>& buf) abstract;
+
+		std::shared_ptr<PacketSession> GetPacketSession() { return std::static_pointer_cast<PacketSession>(shared_from_this()); }
+
+	protected:
+		std::unique_ptr<LobbyServerEngine::PacketHandler>				m_packetHandler;
+
 	};
 }

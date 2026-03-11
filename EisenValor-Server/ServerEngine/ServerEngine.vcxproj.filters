@@ -104,7 +104,7 @@
       <Filter>Test\ServerEngineCore</Filter>
     </ClInclude>
     <ClInclude Include="AcceptThread.h">
-      <Filter>Test\Network\Thread\AcceptThread</Filter>
+      <Filter>Test\Network\Thread\WorkerThread\AcceptThread</Filter>
     </ClInclude>
     <ClInclude Include="LobbyThread.h">
       <Filter>Test\Network\Thread\LobbyThread</Filter>
@@ -220,7 +220,7 @@
       <Filter>Test\ServerEngineCore</Filter>
     </ClCompile>
     <ClCompile Include="AcceptThread.cpp">
-      <Filter>Test\Network\Thread\AcceptThread</Filter>
+      <Filter>Test\Network\Thread\WorkerThread\AcceptThread</Filter>
     </ClCompile>
     <ClCompile Include="LobbyThread.cpp">
       <Filter>Test\Network\Thread\LobbyThread</Filter>
@@ -371,9 +371,6 @@
     <Filter Include="Test\Network\Thread">
       <UniqueIdentifier>{c66e3896-1eed-4ccc-952f-e9829262ab5e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Test\Network\Thread\AcceptThread">
-      <UniqueIdentifier>{1ef05aae-e0e7-472a-ab5e-aa8e57644be0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Test\Network\Thread\LobbyThread">
       <UniqueIdentifier>{561c8dea-80a2-4950-9ac6-07079098b6b3}</UniqueIdentifier>
     </Filter>
@@ -388,6 +385,9 @@
     </Filter>
     <Filter Include="98. Scripts">
       <UniqueIdentifier>{9bc071bf-9497-472d-a613-e880df0af6ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\Network\Thread\WorkerThread\AcceptThread">
+      <UniqueIdentifier>{1ef05aae-e0e7-472a-ab5e-aa8e57644be0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

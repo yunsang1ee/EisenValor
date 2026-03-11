@@ -4,18 +4,19 @@
 #include "IRoom.h"
 #include "IOCoreTest.h"
 
+#include "AcceptThread.h"
 #include "Session.h"
 
-ServerEngine::WorkerThread::WorkerThread(const GameWorldTestFactoryFunc	func, std::unique_ptr<IOCoreTest>&& ioCore)
-	:m_func{ func }, m_ioCore{ std::move(ioCore) }
+ServerEngine::WorkerThread::WorkerThread(const SessionFactoryFunc sessionFunc, const GameWorldTestFactoryFunc worldFunc, std::unique_ptr<IOCoreTest>&& ioCore)
+	:m_sessionFunc{ sessionFunc }, m_worldFunc{ worldFunc },m_ioCore { std::move(ioCore) }
 {
 }
 
 ServerEngine::WorkerThread::~WorkerThread()
-{
+{ 
 }
 
-bool ServerEngine::WorkerThread::Init()
+bool ServerEngine::WorkerThread::Init(const uint16 port)
 {
 	if(nullptr == m_ioCore)
 		return false;
@@ -23,9 +24,14 @@ bool ServerEngine::WorkerThread::Init()
 	if(false == m_ioCore->Init())
 		return false;
 
+	m_acceptThread = std::make_unique<AcceptThread>(m_sessionFunc, WSA_FLAG_REGISTERED_IO, this);
+
+	if(false == m_acceptThread->Init(port))
+		return false;
+
 	// TODO: 나중엔 Lobby의 응답을 받고 월드 생성
 	for(int i = 0; i < 1; ++i) {
-		m_worlds.insert(std::make_pair(i, m_func()));
+		m_worlds.insert(std::make_pair(i, m_worldFunc()));
 		m_worlds[i]->Init();
 	}
 
@@ -34,6 +40,10 @@ bool ServerEngine::WorkerThread::Init()
 
 void ServerEngine::WorkerThread::Run(const std::stop_token st)
 {
+	MANAGER(ThreadManager)->EnqueueTask([this](const std::stop_token st) {
+		m_acceptThread->Run(st);
+		});
+
 	auto last{ std::chrono::high_resolution_clock::now() };
 	while(false == st.stop_requested()) {
 		const auto now{ std::chrono::high_resolution_clock::now() };
@@ -41,6 +51,7 @@ void ServerEngine::WorkerThread::Run(const std::stop_token st)
 		const std::chrono::duration<float> elapsed{ now - last };
 		const float dt{ elapsed.count() };
 		last = now;
+
 		FlushJobQueue();
 		
 		// LobbyThread에서 WorldThread JobQueue에 방 삭제 알림 넣기
@@ -50,7 +61,7 @@ void ServerEngine::WorkerThread::Run(const std::stop_token st)
 		// -> 바로 적용하는게 나은듯
 		
 		// 월드에서 무한루프돌면 I/O 안됨 조심
-		for(const auto& [id, world] : m_worlds)	// 나의 관리하는 게임 월드
+		for(const auto& [id, world] : m_worlds)	// 내가 관리하는 게임 월드
 			world->Update(dt);
 	}
 }
@@ -66,5 +77,5 @@ void ServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 		return;
 	}
 
-	// EnterWorld(session);
+	EnterWorld(session);
 }

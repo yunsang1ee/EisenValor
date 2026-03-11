@@ -19,9 +19,6 @@
     <ClCompile Include="SessionManager.cpp">
       <Filter>01. SessionManager</Filter>
     </ClCompile>
-    <ClCompile Include="PacketHandler.cpp">
-      <Filter>03. Packets\PacketHandler</Filter>
-    </ClCompile>
     <ClCompile Include="ClientSession.cpp">
       <Filter>01. SessionManager\ClientSession</Filter>
     </ClCompile>
@@ -30,6 +27,15 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>00. Main</Filter>
+    </ClCompile>
+    <ClCompile Include="GameServerPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler\GameServerPacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler\ClientPacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="SendPackets.cpp">
+      <Filter>03. Packets\SendPackets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -69,6 +75,18 @@
     <Filter Include="01. SessionManager\GameServerSession">
       <UniqueIdentifier>{7180490d-5a9d-415e-8cec-1d9731fa33b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="03. Packets\PacketHandler\ClientPacketHandler">
+      <UniqueIdentifier>{70d5da9e-d630-45ad-ab8f-efcbde4cba7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler\GameServerPacketHandler">
+      <UniqueIdentifier>{b6a69420-c3f5-4b1b-abca-81bf4c87918d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\SendPackets">
+      <UniqueIdentifier>{ceb8731a-bbde-42c9-a85e-0c915db32a9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Headers">
+      <UniqueIdentifier>{584dd1f9-a6be-4856-8459-2be812d72fa7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -89,14 +107,23 @@
     <ClInclude Include="SessionManager.h">
       <Filter>01. SessionManager</Filter>
     </ClInclude>
-    <ClInclude Include="PacketHandler.h">
-      <Filter>03. Packets\PacketHandler</Filter>
-    </ClInclude>
     <ClInclude Include="ClientSession.h">
       <Filter>01. SessionManager\ClientSession</Filter>
     </ClInclude>
     <ClInclude Include="GameServerSession.h">
       <Filter>01. SessionManager\GameServerSession</Filter>
+    </ClInclude>
+    <ClInclude Include="GameServerPacketHandler.h">
+      <Filter>03. Packets\PacketHandler\GameServerPacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientPacketHandler.h">
+      <Filter>03. Packets\PacketHandler\ClientPacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="SendPackets.h">
+      <Filter>03. Packets\SendPackets</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerEnums.h">
+      <Filter>98. Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

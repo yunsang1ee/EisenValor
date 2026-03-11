@@ -53,6 +53,8 @@
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
+#include "flatbuffers/flatbuffers.h"
+
 #include "LobbyServerEngineTypes.h"
 #include "LobbyServerEngineEnums.h"
 

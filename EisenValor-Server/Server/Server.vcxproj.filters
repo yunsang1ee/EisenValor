@@ -58,9 +58,6 @@
     <ClCompile Include="ClientSessionManager.cpp">
       <Filter>01. ClientSessionManager</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>00. main</Filter>
-    </ClCompile>
     <ClCompile Include="Participant.cpp">
       <Filter>02. Contents\GameRoom\Participant</Filter>
     </ClCompile>
@@ -153,6 +150,9 @@
     </ClCompile>
     <ClCompile Include="ServerGlobalVariables.cpp">
       <Filter>97. Global</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>01. ClientSessionManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

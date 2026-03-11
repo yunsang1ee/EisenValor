@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Session.h"
 
+#include "PacketHandler.h"
+
 LobbyServerEngine::Session::Session(const SESSION_TYPE type)
 	:m_type{type}, m_state{SESSION_STATE::FREE}, m_isConnected{false}
 {
@@ -37,6 +39,7 @@ void LobbyServerEngine::Session::Dispatch(IOContext* const ioContext, const uint
 {
 	switch(ioContext->GetType()) {
 		case IO_CONTEXT_TYPE::CONNECT:
+			ProcessConnect();
 			break;
 		case IO_CONTEXT_TYPE::RECV:
 			ProcessRecv(bytesTransferred);
@@ -64,10 +67,6 @@ bool LobbyServerEngine::Session::PostConnect(const std::string_view ip, const ui
 	if(IsConnected())
 		return false;
 
-	//constexpr int opt{ 1 };
-	//if(SOCKET_ERROR == setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int)))
-	//	return false;
-
 	m_connectedContext.Init();
 	m_connectedContext.SetOwner(shared_from_this());
 	
@@ -81,6 +80,7 @@ bool LobbyServerEngine::Session::PostConnect(const std::string_view ip, const ui
 	m_netAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 	m_netAddress.sin_port = htons(0);
 
+	/// ConnectEx는 호출하기 전에 반드시 소켓이 로컬 주소에 bind 되어 있어야함.
 	if(SOCKET_ERROR == ::bind(m_socket, (SOCKADDR*)&m_netAddress, sizeof(m_netAddress))) {
 		return false;
 	}
@@ -88,6 +88,7 @@ bool LobbyServerEngine::Session::PostConnect(const std::string_view ip, const ui
 	DWORD numOfBytes{};
 	if(false == SocketUtils::ConnectEx(m_socket, reinterpret_cast<SOCKADDR*>(&serverAddr), sizeof(serverAddr), nullptr, 0, &numOfBytes, &m_connectedContext)) {
 		int32 errCode = ::WSAGetLastError();
+		std::cout << errCode << std::endl;
 		if(errCode != WSA_IO_PENDING) {
 			m_connectedContext.SetOwner(nullptr);
 			return false;
@@ -100,6 +101,8 @@ bool LobbyServerEngine::Session::PostConnect(const std::string_view ip, const ui
 void LobbyServerEngine::Session::ProcessConnect()
 {
 	m_connectedContext.SetOwner(nullptr);
+
+	m_isConnected = true;
 
 	OnConnected();
 
@@ -146,7 +149,7 @@ void LobbyServerEngine::Session::ProcessRecv(const uint32 bytesTransferred)
 	}
 
 	const uint32 remainDataSize{ static_cast<uint32>(m_recvBuffer.DataSize()) };
-	const uint32 processLen{ AssembleReceivedData({m_recvBuffer.ReadPos(), remainDataSize}) };
+	const uint32 processLen{ OnRecv({m_recvBuffer.ReadPos(), remainDataSize}) };
 
 	if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
 		Disconnect("OnRead Overflow");
@@ -163,8 +166,8 @@ void LobbyServerEngine::Session::PostSend()
 	if(false == IsConnected())
 		return;
 
-	m_recvContext.Init();
-	m_recvContext.SetOwner(std::static_pointer_cast<LobbyServerEngine::Session>(shared_from_this()));
+	m_sendContext.Init();
+	m_sendContext.SetOwner(std::static_pointer_cast<LobbyServerEngine::Session>(shared_from_this()));
 
 	int32 writeSize{};
 
@@ -217,7 +220,23 @@ void LobbyServerEngine::Session::ProcessSend(const uint32 bytesTransferred)
 		PostSend();
 }
 
-uint32 LobbyServerEngine::Session::AssembleReceivedData(std::span<const char> buf)
+void LobbyServerEngine::Session::Clean()
+{
+	m_socket = INVALID_SOCKET;
+	m_isConnected = false;
+	m_state = SESSION_STATE::FREE;
+}
+
+LobbyServerEngine::PacketSession::PacketSession(const SESSION_TYPE type)
+	:Session{type}
+{
+}
+
+LobbyServerEngine::PacketSession::~PacketSession()
+{
+}
+
+uint32 LobbyServerEngine::PacketSession::OnRecv(std::span<const char> buf)
 {
 	uint32 processed{};
 
@@ -226,18 +245,11 @@ uint32 LobbyServerEngine::Session::AssembleReceivedData(std::span<const char> bu
 		if(buf.size() < header.packetSize)
 			break;
 
-		// ProcessPacket(buf);
+		OnRecvPacket(buf);
 
 		buf = buf.subspan(header.packetSize);
 		processed += header.packetSize;
 	}
 
 	return processed;
-}
-
-void LobbyServerEngine::Session::Clean()
-{
-	m_socket = INVALID_SOCKET;
-	m_isConnected = false;
-	m_state = SESSION_STATE::FREE;
 }

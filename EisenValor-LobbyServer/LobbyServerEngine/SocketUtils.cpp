@@ -29,3 +29,8 @@ bool LobbyServerEngine::SocketUtils::BindWindowsFunction(SOCKET socket, GUID gui
 	DWORD bytes{};
 	return SOCKET_ERROR != ::WSAIoctl(socket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), fn, sizeof(*fn),  &bytes, NULL, NULL);
 }
+
+bool LobbyServerEngine::SocketUtils::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)
+{
+	return SetSockOpt(socket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, listenSocket);
+}

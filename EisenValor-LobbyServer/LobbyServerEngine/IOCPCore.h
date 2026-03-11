@@ -10,6 +10,8 @@ namespace LobbyServerEngine {
 
 		IOCPCore(const IOCPCore&) = delete;
 		IOCPCore& operator=(const IOCPCore&) = delete;
+		IOCPCore(IOCPCore&&) noexcept = delete;
+		IOCPCore& operator=(IOCPCore&&) noexcept = delete;
 
 	public:
 		bool Register(std::shared_ptr<IOCPObject> iocpObject);

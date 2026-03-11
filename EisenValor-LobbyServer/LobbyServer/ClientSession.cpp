@@ -3,8 +3,9 @@
 
 #include "SessionManager.h"
 
+#include "ClientPacketHandler.h"
 LobbyServer::ClientSession::ClientSession()
-	:Session{SESSION_TYPE::CLIENT}
+	:PacketSession{SESSION_TYPE::CLIENT}
 {
 }
 
@@ -17,6 +18,9 @@ void LobbyServer::ClientSession::OnConnected()
 {
 	LOG_INFO("Session ID:{}, OnConnected!", GetID());
 	MANAGER(LobbyServer::SessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
+
+	m_packetHandler = std::make_unique<ClientPacketHandler>();
+	m_packetHandler->Init();
 }
 
 void LobbyServer::ClientSession::OnDisconnected(const std::string_view reason)
@@ -27,4 +31,15 @@ void LobbyServer::ClientSession::OnDisconnected(const std::string_view reason)
 
 void LobbyServer::ClientSession::OnSend(const uint32 bytesTrasnferred)
 {
+}
+
+void LobbyServer::ClientSession::OnRecvPacket(const std::span<const char>& buf)
+{
+	if(nullptr == m_packetHandler) 
+		return;
+
+	auto const packetSession{ GetPacketSession() };
+	if(false == m_packetHandler->HandlePacket(packetSession, buf.data())) {
+		LOG_ERROR("Invalid Handle Packet!");
+	}
 }

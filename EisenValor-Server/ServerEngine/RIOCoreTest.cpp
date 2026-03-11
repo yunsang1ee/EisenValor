@@ -133,7 +133,8 @@ void ServerEngine::RIO::RIOCoreTest::DequeueCompletion()
 		memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
 
 		const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
-		if(0 == numResults) return;
+		if(0 == numResults)
+			return;
 		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
 			return;

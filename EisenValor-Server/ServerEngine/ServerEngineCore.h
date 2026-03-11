@@ -26,6 +26,7 @@ namespace ServerEngine {
 
 	public:
 		WorkerThread* GetLeisurelyWorker();
+		WorkerThread* GetWorkerThread(const uint32 index);
 		LobbyThread* GetLobbyThread() const { return m_lobbyThread.get(); }
 	};
 #endif

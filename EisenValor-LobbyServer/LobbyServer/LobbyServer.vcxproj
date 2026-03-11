@@ -155,14 +155,16 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="GameServerPacketHandler.cpp" />
     <ClCompile Include="GameServerSession.cpp" />
+    <ClCompile Include="SendPackets.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="LobbyServerGlobalFuncs.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PacketHandler.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -172,13 +174,16 @@
     <ClCompile Include="ServerManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="GameServerPacketHandler.h" />
     <ClInclude Include="GameServerSession.h" />
+    <ClInclude Include="LobbyServerEnums.h" />
+    <ClInclude Include="SendPackets.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="LobbyServerGlobalFuncs.h" />
-    <ClInclude Include="PacketHandler.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ServerManager.h" />
   </ItemGroup>

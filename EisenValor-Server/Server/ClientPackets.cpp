@@ -105,9 +105,9 @@ namespace ClientPackets {
 			//if(lobby)
 			//	lobby->EnterLobby(session);
 #ifdef MODERN_CODE
-			auto worker = MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker();
-			if(worker)
-				worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, clientSession);
+			//auto worker = MANAGER(ServerEngine::ServerEngineCore)->GetWorkerThread(1);
+			//if(worker)
+			//	worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, clientSession);
 #endif
 		}
 		else {

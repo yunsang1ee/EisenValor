@@ -27,8 +27,8 @@ void LobbyServerEngine::IOCPCore::Dispatch(const uint32 timeoutMS)
 	IOContext* ioContext{ nullptr };
 
 	if(::GetQueuedCompletionStatus(m_iocpHandle, &numOfBytes, &key, reinterpret_cast<LPOVERLAPPED*>(&ioContext), timeoutMS)) {
-		auto session = ioContext->GetOwner();
-		session->Dispatch(ioContext, numOfBytes);
+		auto iocpObject = ioContext->GetOwner();
+		iocpObject->Dispatch(ioContext, numOfBytes);
 	}
 	else {
 		int32 errCode = ::WSAGetLastError();

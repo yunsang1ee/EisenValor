@@ -1,0 +1,79 @@
+#pragma once
+
+enum class PACKET_TYPE : uint16 {
+	// ==================
+	//		세션
+	// ==================
+#pragma region SESSION_PACKETS
+	CS_PONG_PKT = 0,
+	SC_PING_PKT = 1,
+	CS_CHAT_PKT = 2,
+	SC_CHAT_PKT = 3,
+#pragma endregion
+
+	// ==================
+	//		로그인
+	// ==================
+#pragma region LOGIN_PACKETS
+	CS_LOGIN_PKT = 10,
+	SC_LOGIN_FAIL_PKT = 11,
+	SC_LOGIN_SUCCESS_PKT = 12,
+
+	// TODO: 회원가입
+	CS_SIGN_UP_PKT = 13,
+	SC_SIGN_UP_FAIL_PKT = 14,
+	SC_SIGN_UP_SUCCESS_PKT = 15,
+#pragma endregion
+
+	// ==================
+	//		로비
+	// ==================
+#pragma region LOBBY_PACKETS
+	CS_ENTER_GAME_LOBBY_PKT = 100,
+	SC_ENTER_GAME_LOBBY_PKT = 101,			// To me
+
+	CS_LEAVE_GAME_LOBBY_PKT = 102,
+	SC_LEAVE_GAME_LOBBY_PKT = 103,			// To me
+
+	SC_ADD_USER_IN_GAME_LOBBY_PKT = 104,
+	SC_REMOVE_USER_IN_GAME_LOBBY_PKT = 105,
+
+	CS_MAKE_GAME_ROOM_PKT = 106,
+	SC_MAKE_GAME_ROOM_PKT = 107,
+#pragma endregion
+
+
+	// ==================
+	//		룸
+	// ==================
+#pragma region ROOM_PACKETS
+	CS_JOIN_GAME_ROOM_PKT = 1000,
+	SC_JOIN_GAME_ROOM_FAIL_PKT = 1001,		// To me
+	SC_JOIN_GAME_ROOM_SUCCESS_PKT = 1002,	// To me
+
+	CS_LEAVE_GAME_ROOM_PKT = 1003,
+	SC_LEAVE_GAME_ROOM_PKT = 1004,			// To me
+
+	SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT = 1005,
+	SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT = 1006,
+
+	CS_CHANGE_TEAM_PKT = 1007,
+	SC_CHANGE_TEAM_PKT = 1008,
+
+	CS_ADD_BOT_PKT = 1009,
+	CS_REMOVE_BOT_PKT = 1010,
+
+	CS_READY_GAME_PKT = 1011,
+	SC_READY_GAME_PKT = 1012,
+
+	CS_START_GAME_PKT = 1013,
+	SC_LOADING_GAME_WORLD_PKT = 1014,
+
+	CS_COMPLETE_LOADING_GAME_WORLD_PKT = 1015,
+	SC_START_GAME_FAIL_PKT = 1016,
+	SC_START_GAME_SUCCESS_PKT = 1017,
+
+	SC_CHANGE_GAME_ROOM_STATE_PKT = 1018,
+#pragma endregion
+
+};

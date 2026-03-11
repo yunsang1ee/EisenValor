@@ -6,7 +6,7 @@ namespace ServerEngine {
 
 	class AcceptThread {
 	public:
-		AcceptThread();
+		explicit AcceptThread(const SessionFactoryFunc func, const DWORD listenSocketFlags, WorkerThread* const ownerWorker);
 		~AcceptThread();
 
 	public:
@@ -16,7 +16,7 @@ namespace ServerEngine {
 		AcceptThread& operator=(AcceptThread&&) = delete;
 
 	public:
-		bool Init(const SessionFactoryFunc func, const uint16 port, const DWORD listenSocketFlags);
+		bool Init(const uint16 port);
 		void Run(const std::stop_token st);
 
 	private:
@@ -25,7 +25,8 @@ namespace ServerEngine {
 	private:
 		SOCKET					m_listenSocket;
 		SOCKADDR_IN				m_serverAddress;
-		SessionFactoryFunc		m_func;
+		const SessionFactoryFunc		m_func;
+		WorkerThread*			m_ownerWorker;
 
 		friend class ServerEngineCore;
 	};

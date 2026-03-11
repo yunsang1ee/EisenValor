@@ -19,8 +19,10 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 	m_gameServerSessionFunc = gameServerSessionFunc;
 	m_clientSessionFunc = clientSessionFunc;
 
-	if(false == SocketUtils::Init())
+	if(false == SocketUtils::Init()) {
+		LOG_ERROR("SocketUtils Init Failed");
 		return false;
+	}
 
 	if(false == MANAGER(LobbyServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
@@ -30,10 +32,13 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 	m_gameServerSession = gameServerSessionFunc();
 	m_gameServerSession->SetID(10000);
 
-	if(false == m_iocpCore.Register(m_gameServerSession))
+	if(false == m_iocpCore.Register(m_gameServerSession)) {
+		LOG_ERROR("GameServerSession Register Failed");
 		return false;
+	}
 
-	if(false == m_gameServerSession->Connect("127.0.0.1", 9999)) {
+	if(false == m_gameServerSession->Connect("127.0.0.1", 40001)) {
+		LOG_ERROR("Connect To GameServer Failed");
 		return false;
 	}
 	
@@ -43,6 +48,11 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 		LOG_ERROR("Listener Accept Failed");
 		return false;
 	}
+
+	const uint32 MAX_WORKER_THREAD_COUNT{ 10 };
+
+	for(uint32 i = 0; i < MAX_WORKER_THREAD_COUNT; ++i)
+		m_workerThreads.emplace_back(std::make_unique<WorkerThread>());
 
 	return true;
 }

@@ -4,9 +4,6 @@
     <Filter Include="99. pch">
       <UniqueIdentifier>{b0115222-e7c7-476c-8c7a-03b379699398}</UniqueIdentifier>
     </Filter>
-    <Filter Include="02. PacketBuffer">
-      <UniqueIdentifier>{2c6eb4a7-7401-481c-a838-e6a5752f12e3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="04. Thread">
       <UniqueIdentifier>{947ebbf3-7a5c-4de8-97de-cf84b7793249}</UniqueIdentifier>
     </Filter>
@@ -70,6 +67,9 @@
     <Filter Include="97. Utils">
       <UniqueIdentifier>{80396be0-2b3f-45f4-85a7-56613a4c0c6c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. Packet">
+      <UniqueIdentifier>{2c6eb4a7-7401-481c-a838-e6a5752f12e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -118,7 +118,7 @@
       <Filter>07. MemoryPool</Filter>
     </ClCompile>
     <ClCompile Include="PacketBuffer.cpp">
-      <Filter>02. PacketBuffer</Filter>
+      <Filter>02. Packet</Filter>
     </ClCompile>
     <ClCompile Include="IOContext.cpp">
       <Filter>04. Thread\WorkerThread\IOContext</Filter>
@@ -137,6 +137,9 @@
     </ClCompile>
     <ClCompile Include="SocketUtils.cpp">
       <Filter>97. Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketHandler.cpp">
+      <Filter>02. Packet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -189,7 +192,7 @@
       <Filter>07. MemoryPool</Filter>
     </ClInclude>
     <ClInclude Include="PacketBuffer.h">
-      <Filter>02. PacketBuffer</Filter>
+      <Filter>02. Packet</Filter>
     </ClInclude>
     <ClInclude Include="PacketHeader.h">
       <Filter>98. Headers</Filter>
@@ -220,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="SocketUtils.h">
       <Filter>97. Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketHandler.h">
+      <Filter>02. Packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

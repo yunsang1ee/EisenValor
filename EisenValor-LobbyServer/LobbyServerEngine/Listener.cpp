@@ -81,18 +81,18 @@ void LobbyServerEngine::Listener::PostAccept(AcceptContext* const acceptContext)
 void LobbyServerEngine::Listener::ProcessAccept(AcceptContext* const acceptContext)
 {
 	std::shared_ptr<Session> session = acceptContext->GetSession();
+	session->SetID(2);
 
 	SOCKADDR_IN sockAddress;
 	int32 sizeOfSockAddr = sizeof(sockAddress);
 
-	if(SOCKET_ERROR == ::getpeername(session->GetSocket(), OUT reinterpret_cast<SOCKADDR*>(&sockAddress), &sizeOfSockAddr)) {
+	if(false == SocketUtils::SetUpdateAcceptSocket(session->GetSocket(), m_listenSocket)) {
+		// 실패했더라도 Register 해줘야함.
 		PostAccept(acceptContext);
 		return;
 	}
 
-	// AcceptEx 썼으면 필수로 해줘야 함.
-	if(false == setsockopt(session->GetSocket(), SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT,
-		(char*)&m_listenSocket, sizeof(m_listenSocket))) {
+	if(SOCKET_ERROR == ::getpeername(session->GetSocket(), OUT reinterpret_cast<SOCKADDR*>(&sockAddress), &sizeOfSockAddr)) {
 		PostAccept(acceptContext);
 		return;
 	}
