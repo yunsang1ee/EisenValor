@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "Transform.h"
+#include "Util/AnimationLoader.h"
 
 // Resource
 #include "ResourceGlobal.h"
@@ -13,6 +14,7 @@
 #include "MeshResource.h"
 #include "SkinnedMeshComponent.h"
 #include "SkinnedMeshResource.h"
+#include "MaterialResource.h"
 
 #include "CameraComponent.h"
 #include "MovementComponent.h"
@@ -50,6 +52,9 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 
 	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
 
+	// SampleScene으로 장면 전환
+	GLOBAL(SceneGlobal).LoadScene("SampleScene");
+
 	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
 	const uint16 roomID{1};
 
@@ -72,7 +77,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	//	GLOBAL(NetworkGlobal).Send(std::move(pb));
 	//}
 
-	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}\n", id);
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
 	return true;
 }
 
@@ -414,7 +419,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 						GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
 					if (nullptr != meshRes)
 					{
-						mesh->SetSkinnedMeshResource(meshRes);
+						mesh->SetSkinnedMeshResource(meshRes, true);
 					}
 				}
 			);
@@ -475,12 +480,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle,
 				[](AnimationComponent* anim)
 				{
-					auto animRes =
-						GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
-					if (animRes)
-					{
-						anim->Play(animRes, false);
-					}
+					AnimationLoader::AnimationApply(anim, "HumanM");
 				}
 			);
 
@@ -689,6 +689,18 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
+			// Animation Component
+			if (isGeneral)
+			{
+				scene->CreateComponentWithInit<AnimationComponent>(
+					objHandle,
+					[](AnimationComponent* anim)
+					{
+						AnimationLoader::AnimationApply(anim, "HumanM");
+					}
+				);
+			}
+
 			DEBUG_LOG_FMT(
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
 				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
@@ -713,23 +725,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			scene->CreateComponentWithInit<FSMComponent>(
 				objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
 			);
-
-			// 애니메이션 컴포넌트 추가
-			scene->CreateComponentWithInit<AnimationComponent>(
-				objHandle,
-				[](AnimationComponent* anim)
-				{
-					auto animRes =
-						GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
-					if (animRes)
-					{
-						anim->Play(animRes, false);
-					}
-				}
-			);
-			
-			//		// 공격 범위 디버깅
-			// if (isGeneral)
+	//		// 공격 범위 디버깅
+			//if (isGeneral)
 			//{
 			//	scene->ReserveGameObject(
 			//		"AttackRangeIndicator", std::nullopt,

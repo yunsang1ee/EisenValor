@@ -347,24 +347,17 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	if (instanceBufferData.empty())
 		return;
 
-	// 4. GPU에 데이터 업로드 및 드로우 콜
+	// 4. GPU에 데이터 업로드 및 드로우 콜 (직접 업로드 힙 참조)
 	auto* cmdList = frame->GetMainContext()->CommandList();
 	auto* uploadHeap = frame->GetUploadHeap();
 
 	auto allocation =
 		uploadHeap->UploadRawData(instanceBufferData.data(), instanceBufferData.size() * sizeof(UIInstanceData), 16);
-	cmdList->CopyBufferRegion(
-		m_instanceBuffer->GetResource(), 0, uploadHeap->GetResource(), allocation.offset, allocation.size
-	);
-
-	D3D12_RESOURCE_BARRIER barrier = DxUtils::CreateTransitionBarrier(
-		m_instanceBuffer->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
-	);
-	cmdList->ResourceBarrier(1, &barrier);
 
 	D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {
 		m_vertexBuffer->GetVertexBufferView(sizeof(UIVertex)),
-		m_instanceBuffer->GetVertexBufferView(sizeof(UIInstanceData))
+		{uploadHeap->GetResource()->GetGPUVirtualAddress() + allocation.offset, (UINT)allocation.size,
+		 sizeof(UIInstanceData)}
 	};
 	cmdList->IASetVertexBuffers(0, 2, vbvs);
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

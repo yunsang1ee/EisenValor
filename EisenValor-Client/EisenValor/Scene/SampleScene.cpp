@@ -58,7 +58,7 @@ void SampleScene::CreateSceneObjects()
 		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
-			tr.SetPosition(0.0f, -1.0f, 0.0f);
+			tr.SetPosition(0.0f, 0.0f, 0.0f);
 			tr.SetScale(20.0f);
 
 			CreateComponentWithInit<MeshComponent>(
@@ -80,7 +80,7 @@ void SampleScene::CreateSceneObjects()
 		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
-			tr.SetPosition(0.0f, 1.0f, 0.0f);
+			tr.SetPosition(0.0f, 2.0f, 0.0f);
 			tr.SetScale(2.0f);
 
 			CreateComponentWithInit<MeshComponent>(

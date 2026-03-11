@@ -35,17 +35,15 @@ public class SkinnedMeshExporter
         }
 
         Debug.Log($"[SkinnedMeshExporter] '{target.name}' 추출 준비 완료. (정점: {mesh.vertexCount})");
-
+        
         // --- 검증 로그 추가 ---
         int[] triangles = mesh.triangles;
         int totalSubMeshIndexCount = 0;
-        for (int i = 0; i < mesh.subMeshCount; i++)
-        {
+        for (int i = 0; i < mesh.subMeshCount; i++) {
             totalSubMeshIndexCount += (int)mesh.GetSubMesh(i).indexCount;
         }
         Debug.Log($"[SkinnedMeshExporter] Verification - triangles.Length: {triangles.Length}, SubMesh Sum: {totalSubMeshIndexCount}");
-        if (triangles.Length != totalSubMeshIndexCount)
-        {
+        if (triangles.Length != totalSubMeshIndexCount) {
             Debug.LogError("[CRITICAL] 인덱스 개수 불일치 발견!");
         }
         // -----------------------
@@ -61,7 +59,7 @@ public class SkinnedMeshExporter
         byte[] boneData = CreateBoneChunk(smr);
         byte[] offsetData = CreateOffsetChunk(mesh);
         byte[] depsData = CreateDepsChunk(smr);
-
+        
         // --- 파일 저장 (AssetWriter 활용) ---
         string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mesh));
         AssetWriter writer = new AssetWriter("EVSK", guid);
@@ -72,7 +70,7 @@ public class SkinnedMeshExporter
         writer.AddChunk("BONE", 1, boneData);
         writer.AddChunk("OFFS", 1, offsetData);
         writer.AddChunk("DEPS", 1, depsData);
-
+        
         writer.WriteToFile(savePath);
         Debug.Log($"[SkinnedMeshExporter] 파일 저장 완료: {savePath}");
     }
@@ -87,42 +85,21 @@ public class SkinnedMeshExporter
 
             foreach (var mat in materials)
             {
-                if (mat == null)
-                {
-                    bw.Write(new byte[16]); // Write a zeroed-out GUID
-                    continue;
-                }
-
-    private static byte[] CreateDepsChunk(SkinnedMeshRenderer smr)
-    {
-        using (MemoryStream ms = new MemoryStream())
-        using (BinaryWriter bw = new BinaryWriter(ms))
-        {
-            Material[] materials = smr.sharedMaterials;
-            bw.Write((uint)materials.Length);
-
-            foreach (var mat in materials)
-            {
-                if (mat == null)
-                {
-                    bw.Write(new byte[16]); // Write a zeroed-out GUID
-                    continue;
-                }
-
-                string materialPath = AssetDatabase.GetAssetPath(mat);
-                string guidString = AssetDatabase.AssetPathToGUID(materialPath);
-
-                if (string.IsNullOrEmpty(guidString))
-                {
-                    bw.Write(new byte[16]);
-                }
-                else
-                {
-                    Guid guid = new Guid(guidString);
-                    bw.Write(guid.ToByteArray());
-                }
+                string guidString = (mat != null) ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mat)) : "";
+                WriteGuidBytes(bw, guidString);
             }
             return ms.ToArray();
+        }
+    }
+
+
+    private static void WriteGuidBytes(BinaryWriter bw, string guidStr)
+    {
+        if (string.IsNullOrEmpty(guidStr) || 32 != guidStr.Length) { bw.Write(0UL); bw.Write(0UL); return; }
+        for (int i = 0; 16 > i; i++)
+        {
+            byte b = System.Convert.ToByte(guidStr.Substring(i * 2, 2), 16);
+            bw.Write(b);
         }
     }
 
@@ -187,10 +164,10 @@ public class SkinnedMeshExporter
         using (BinaryWriter bw = new BinaryWriter(ms))
         {
             int[] triangles = mesh.triangles;
-
+            
             bw.Write((uint)32);             // IndexFormat: 32-bit
             bw.Write((uint)triangles.Length); // IndexCount
-
+            
             foreach (int idx in triangles)
             {
                 bw.Write((uint)idx);
@@ -220,9 +197,9 @@ public class SkinnedMeshExporter
             {
                 // 1. Static Vertex Data (명세서 4.1)
                 bw.Write(vertices[i].x); bw.Write(vertices[i].y); bw.Write(vertices[i].z);
-                bw.Write(normals[i].x); bw.Write(normals[i].y); bw.Write(normals[i].z);
+                bw.Write(normals[i].x);  bw.Write(normals[i].y);  bw.Write(normals[i].z);
                 bw.Write(tangents[i].x); bw.Write(tangents[i].y); bw.Write(tangents[i].z); bw.Write(tangents[i].w);
-                bw.Write(uvs[i].x); bw.Write(1.0f - uvs[i].y); // V Flip
+                bw.Write(uvs[i].x);      bw.Write(1.0f - uvs[i].y); // V Flip
 
                 // 2. Skinning Data (명세서 4.4)
                 // Bone Indices (byte[4])
@@ -252,7 +229,7 @@ public class SkinnedMeshExporter
             for (int i = 0; i < bones.Length; i++)
             {
                 Transform bone = bones[i];
-
+                
                 // 1. 이름 해시 (FNV-1a 64-bit)
                 bw.Write(HashFNV1a(bone.name));
 
