@@ -1,13 +1,15 @@
 #include "stdafxClient.h"
 #include "CopyToBackBufferPass.h"
+#include "RenderData/RaytracingOutputRenderData.h"
 #include <DxFrameResource.h>
+#include <RenderContext.h>
 #include <DxSwapChain.h>
 #include <DxCommandContext.h>
 #include <DxTexture.h>
 #include <DxUtils.h>
 
-CopyToBackBufferPass::CopyToBackBufferPass(DxTexture* srcTexture, DxSwapChain* swapChain)
-	: m_srcTexture(srcTexture), m_swapChain(swapChain)
+CopyToBackBufferPass::CopyToBackBufferPass(DxSwapChain* swapChain)
+	: m_swapChain(swapChain)
 {
 }
 
@@ -21,14 +23,24 @@ void CopyToBackBufferPass::Release()
 
 void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
-	if (!m_srcTexture || !m_swapChain)
+	if (!m_swapChain || !renderContext)
+	{
 		return;
+	}
 
-	if (m_srcTexture->GetWidth() != m_swapChain->GetWidth() || m_srcTexture->GetHeight() != m_swapChain->GetHeight())
+	auto outputData = renderContext->GetData<RaytracingOutputRenderData>();
+	if (!outputData || !outputData->outputTexture)
+	{
+		return;
+	}
+
+	auto* srcTexture = outputData->outputTexture.get();
+
+	if (srcTexture->GetWidth() != m_swapChain->GetWidth() || srcTexture->GetHeight() != m_swapChain->GetHeight())
 	{
 		DEBUG_LOG_FMT(
-			"[CopyToBackBufferPass] ERROR: Size mismatch! Src: {}x{}, BackBuffer: {}x{}\n", m_srcTexture->GetWidth(),
-			m_srcTexture->GetHeight(), m_swapChain->GetWidth(), m_swapChain->GetHeight()
+			"[CopyToBackBufferPass] ERROR: Size mismatch! Src: {}x{}, BackBuffer: {}x{}\n", srcTexture->GetWidth(),
+			srcTexture->GetHeight(), m_swapChain->GetWidth(), m_swapChain->GetHeight()
 		);
 		return;
 	}
@@ -36,7 +48,7 @@ void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene, RenderC
 	auto* context = frame->GetMainContext();
 	auto* cmdList = context->CommandList();
 	auto* backBuffer = m_swapChain->GetCurrentBackBuffer();
-	auto* srcResource = m_srcTexture->GetResource();
+	auto* srcResource = srcTexture->GetResource();
 	
 	D3D12_RESOURCE_BARRIER barriers[2];
 	barriers[0] = DxUtils::CreateTransitionBarrier(

@@ -84,12 +84,18 @@ void SkinnedMeshComponent::SetFinalMatrices(const std::vector<DirectX::XMFLOAT4X
 	m_finalMatrices = matrices;
 }
 
-void SkinnedMeshComponent::SetSkinnedVertexBuffer(std::unique_ptr<class DxBuffer>&& buffer)
+void SkinnedMeshComponent::SetSkinnedVertexBuffer(uint32_t frameIndex, std::unique_ptr<DxBuffer>&& buffer)
 {
-	m_skinnedVertexBuffer = std::move(buffer);
+	if (frameIndex < 3)
+	{
+		m_skinnedVertexBuffer[frameIndex] = std::move(buffer);
+	}
 }
 
-void SkinnedMeshComponent::SetBLAS(std::unique_ptr<class DxBLAS>&& blas)
+void SkinnedMeshComponent::SetBLAS(uint32_t frameIndex, std::unique_ptr<DxBLAS>&& blas)
 {
-	m_blas = std::move(blas);
+	if (frameIndex < 3)
+	{
+		m_blas[frameIndex] = std::move(blas);
+	}
 }

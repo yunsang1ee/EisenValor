@@ -2,6 +2,7 @@
 #include "DxSwapChain.h"
 #include "DxUtils.h"
 #include <DxCommandQueueGlobal.h>
+#include <DxDeviceGlobal.h>
 
 DxSwapChain::DxSwapChain(
 	ID3D12Device*				device,
@@ -102,7 +103,22 @@ void DxSwapChain::Present(UINT syncInterval, UINT flags)
 		presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
 
-	ThrowIfFailed(m_swapChain->Present(syncInterval, presentFlags));
+	HRESULT hr = m_swapChain->Present(syncInterval, presentFlags);
+	if (FAILED(hr))
+	{
+		DEBUG_LOG_FMT("[DxSwapChain] Present failed (0x{:X}).\n", static_cast<uint32_t>(hr));
+
+		HRESULT removedReason = m_device->GetDeviceRemovedReason();
+		DEBUG_LOG_FMT("[DxSwapChain] Device removed reason: 0x{:X}\n", static_cast<uint32_t>(removedReason));
+
+		if (FAILED(removedReason))
+		{
+			GLOBAL(DxDeviceGlobal).GetMonitor().DumpDred(m_device);
+		}
+
+		ThrowIfFailed(hr);
+	}
+
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 	++m_frameCount;
 }
@@ -574,8 +590,8 @@ DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForCurrentMonitor() const
 	uint32_t		maxRefreshRate = 0;
 	uint32_t		maxPixels = m_nativeDisplayMode.width * m_nativeDisplayMode.height;
 
-	
-    for (const auto& mode : m_supportedModes)
+
+	for (const auto& mode : m_supportedModes)
 	{
 		const uint32_t pixels = mode.width * mode.height;
 		const uint32_t refreshRate =

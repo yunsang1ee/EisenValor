@@ -611,7 +611,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
-			{
+			{	
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[](SkinnedMeshComponent* mesh)
@@ -709,6 +709,25 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
+			// FSMComponent
+			scene->CreateComponentWithInit<FSMComponent>(
+				objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
+			);
+
+			// 애니메이션 컴포넌트 추가
+			scene->CreateComponentWithInit<AnimationComponent>(
+				objHandle,
+				[](AnimationComponent* anim)
+				{
+					auto animRes =
+						GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
+					if (animRes)
+					{
+						anim->Play(animRes, false);
+					}
+				}
+			);
+			
 			//		// 공격 범위 디버깅
 			// if (isGeneral)
 			//{

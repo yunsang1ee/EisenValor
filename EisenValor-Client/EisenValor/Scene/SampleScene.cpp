@@ -41,8 +41,6 @@ void SampleScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");
 
-	GLOBAL(ResourceGlobal).LoadRegistry("Resource/AssetRegistry.evreg");
-
 	CreateSceneObjects();
 
 	// 서버 없이 테스트를 위한 스트레스 테스트 오브젝트 생성

@@ -21,7 +21,10 @@ void SkinningPass::Initialize()
 
 void SkinningPass::Release()
 {
-	m_boneMatrixBuffer.Clear();
+	for (int i = 0; i < 3; ++i)
+	{
+		m_boneMatrixBuffer[i].Clear();
+	}
 	m_pso.Reset();
 	m_rootSignature.Reset();
 	m_initialized = false;
@@ -41,6 +44,9 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 		return;
 	}
 
+	const uint32_t frameIndex = frame->GetFrameIndex();
+	auto&		   boneBuffer = m_boneMatrixBuffer[frameIndex];
+
 	auto& deviceG = GLOBAL(DxDeviceGlobal);
 	auto* device = deviceG.GetDevice();
 	auto* cmdContext = frame->GetMainContext();
@@ -50,7 +56,7 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
-	m_boneMatrixBuffer.Clear();
+	boneBuffer.Clear();
 	for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
 		if (false == skinnedMeshComp.IsValid())
@@ -58,22 +64,26 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			continue;
 		}
 
+		if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
+		{
+			continue;
+		}
+
 		const auto& finalMatrices = skinnedMeshComp.GetFinalMatrices();
 		for (const auto& mat : finalMatrices)
 		{
-			m_boneMatrixBuffer.Register(mat);
+			boneBuffer.Register(mat);
 		}
 	}
 
-	if (m_boneMatrixBuffer.Size() == 0)
+	if (boneBuffer.Size() == 0)
 	{
 		return;
 	}
 
-	m_boneMatrixBuffer.SyncToGPU(device, *cmdContext, *uploadHeap);
+	boneBuffer.SyncToGPU(device, *cmdContext, *uploadHeap);
 
 	cmdList->SetComputeRootSignature(m_rootSignature.Get());
-
 	cmdList4->SetPipelineState(m_pso.Get());
 
 	uint32_t currentBoneBase = 0;
@@ -85,10 +95,15 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			continue;
 		}
 
+		if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
+		{
+			continue;
+		}
+
 		auto*	 meshRes = skinnedMeshComp.GetSkinnedMeshResource();
 		uint32_t vertexCount = meshRes->GetVertexCount();
 
-		auto* outVB = skinnedMeshComp.GetSkinnedVertexBuffer();
+		auto* outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
 		if (nullptr == outVB)
 		{
 			auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
@@ -96,12 +111,12 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			buffer->Initialize(
 				device, sizeof(EvAsset::Vertex) * vertexCount, EBufferUsage::RawBuffer,
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
-				meshRes->GetName() + "_SkinnedVB"
+				meshRes->GetName() + "_SkinnedVB_" + std::to_string(frameIndex)
 			);
 
 			buffer->CreateSRV(device, descHeap, vertexCount, sizeof(EvAsset::Vertex));
-			skinnedMeshComp.SetSkinnedVertexBuffer(std::move(buffer));
-			outVB = skinnedMeshComp.GetSkinnedVertexBuffer();
+			skinnedMeshComp.SetSkinnedVertexBuffer(frameIndex, std::move(buffer));
+			outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
 		}
 
 		auto* inVB = meshRes->GetVertexBuffer();
@@ -115,9 +130,7 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 		uint32_t constants[4] = {vertexCount, currentBoneBase, 0, 0};
 		cmdList->SetComputeRoot32BitConstants(0, 4, constants, 0);
 		cmdList->SetComputeRootShaderResourceView(1, inVB->GetResource()->GetGPUVirtualAddress());
-		cmdList->SetComputeRootShaderResourceView(
-			2, m_boneMatrixBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
-		);
+		cmdList->SetComputeRootShaderResourceView(2, boneBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress());
 		cmdList->SetComputeRootUnorderedAccessView(3, outVB->GetResource()->GetGPUVirtualAddress());
 
 		cmdList->Dispatch((vertexCount + 255) / 256, 1, 1);
@@ -138,11 +151,6 @@ void SkinningPass::CreatePipeline()
 {
 	auto& device = GLOBAL(DxDeviceGlobal);
 
-	// 1. Root Signature 정의
-	// Param 0: Root Constants (b0) - VertexCount, BoneBaseIndex
-	// Param 1: SRV (t0) - SkinnedVertex
-	// Param 2: SRV (t1) - BoneMatrices
-	// Param 3: UAV (u0) - Vertex
 	D3D12_ROOT_PARAMETER rootParams[4] = {};
 
 	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
@@ -177,7 +185,7 @@ void SkinningPass::CreatePipeline()
 	{
 		if (errorBlob)
 		{
-			DEBUG_LOG_FMT("[DxrRenderPass] RootSig Error: {}\n", (const char*)errorBlob->GetBufferPointer());
+			DEBUG_LOG_FMT("[SkinningPass] RootSig Error: {}\n", (const char*)errorBlob->GetBufferPointer());
 		}
 		return;
 	}
@@ -185,14 +193,12 @@ void SkinningPass::CreatePipeline()
 		0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)
 	));
 
-
-	// 2. Compute Shader 컴파일
 	auto& compiler = GLOBAL(DxShaderCompilerGlobal);
 	auto  csBlob =
 		compiler.CompileShaderFromFile(L"SkinningCompute", L"Resource/Shader/SkinningCompute.hlsl", "main", "cs_6_6");
 	if (!csBlob)
 	{
-		DEBUG_LOG_FMT("[DxrRenderPass] ERROR: Failed to compile SkinningCompute.hlsl\n");
+		DEBUG_LOG_FMT("[SkinningPass] ERROR: Failed to compile SkinningCompute.hlsl\n");
 		return;
 	}
 
@@ -203,5 +209,5 @@ void SkinningPass::CreatePipeline()
 
 	ThrowIfFailed(device.GetDevice()->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pso)));
 
-	DEBUG_LOG_FMT("[DxrRenderPass] Skinning compute pipeline created successfully\n");
+	DEBUG_LOG_FMT("[SkinningPass] Skinning compute pipeline created successfully\n");
 }

@@ -590,6 +590,7 @@ void DxDescriptorHeapGlobal::SweepFreeSlotsIntoRanges()
 		return;
 
 	std::sort(m_freeSlots.begin(), m_freeSlots.end());
+	m_freeSlots.erase(std::unique(m_freeSlots.begin(), m_freeSlots.end()), m_freeSlots.end());
 
 	uint32_t b = m_freeSlots[0], e = b + 1;
 	for (size_t i = 1; i < m_freeSlots.size(); ++i)

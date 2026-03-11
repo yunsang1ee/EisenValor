@@ -9,6 +9,7 @@
 #include "RenderData/InstanceRenderData.h"
 #include "RenderData/MaterialRenderData.h"
 #include "RenderData/GeoTableRenderData.h"
+#include "RenderData/RaytracingOutputRenderData.h"
 
 class MeshComponent;
 class MeshResource;
@@ -27,8 +28,6 @@ public:
 	void		OnResize(uint32_t width, uint32_t height) override;
 	const char* GetName() const override { return "DXR"; }
 
-	DxTexture* GetOutputTexture() { return &m_raytracingOutput; }
-
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
@@ -36,10 +35,16 @@ private:
 	void PrepareRenderData(DxFrameResource* frame, Scene* scene);
 
 	void CollectStaticMeshData(
-		Scene* scene, ID3D12GraphicsCommandList4* cmdList, std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances
+		Scene*										  scene,
+		ID3D12GraphicsCommandList4*					  cmdList,
+		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+		uint32_t									  frameIndex
 	);
 	void CollectSkinnedMeshData(
-		Scene* scene, ID3D12GraphicsCommandList4* cmdList, std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances
+		Scene*										  scene,
+		ID3D12GraphicsCommandList4*					  cmdList,
+		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+		uint32_t									  frameIndex
 	);
 
 private:
@@ -49,13 +54,14 @@ private:
 	std::unique_ptr<DxRtShaderTable>   m_rtLiteShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_rtShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_ptShaderTable;
-	std::unique_ptr<DxTLAS>			   m_tlas;
+	
+	std::unique_ptr<DxTLAS>			   m_tlas[3];
 
-	DxTexture m_raytracingOutput;
+	std::shared_ptr<RaytracingOutputRenderData> m_outputData[3];
 
-	std::shared_ptr<InstanceRenderData> m_instanceData;
-	std::shared_ptr<MaterialRenderData> m_materialData;
-	std::shared_ptr<GeoTableRenderData> m_geoTableData;
+	std::shared_ptr<InstanceRenderData> m_instanceData[3];
+	std::shared_ptr<MaterialRenderData> m_materialData[3];
+	std::shared_ptr<GeoTableRenderData> m_geoTableData[3];
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;

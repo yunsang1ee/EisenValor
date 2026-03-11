@@ -3,6 +3,7 @@
 #include "DxUtils.h"
 #include "DxGarbageCollectorGlobal.h"
 #include "DxCommandQueueGlobal.h"
+#include "DxDeviceGlobal.h"
 
 DxResource::~DxResource()
 {
@@ -69,9 +70,22 @@ void DxResource::InitializeResource(
 	const D3D12_CLEAR_VALUE*	 clearValue
 )
 {
-	ThrowIfFailed(device->CreateCommittedResource(
+	if (m_resource)
+	{
+		ReleaseResource();
+	}
+
+	HRESULT hr = device->CreateCommittedResource(
 		&heapProps, heapFlags, &resourceDesc, initialState, clearValue, IID_PPV_ARGS(&m_resource)
-	));
+	);
+	if (FAILED(hr))
+	{
+		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_HUNG)
+		{
+			GLOBAL(DxDeviceGlobal).GetMonitor().DumpDred(device);
+		}
+		ThrowIfFailed(hr);
+	}
 
 	if (resourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
 	{
@@ -99,7 +113,9 @@ void DxResource::InitializeResource(
 void DxResource::ReleaseResource()
 {
 	if (!m_resource)
+	{
 		return;
+	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 
@@ -118,7 +134,7 @@ void DxResource::ReleaseResource()
 		//	break;
 	}
 
-	FenceHandle currentFence(m_lastUsedQueue, fenceValue);
+	FenceHandle currentFence(m_lastUsedQueue, fenceValue + 3);
 	gc.DeferResourceRelease(std::move(m_resource), currentFence, m_name);
 
 	if (!m_name.empty())

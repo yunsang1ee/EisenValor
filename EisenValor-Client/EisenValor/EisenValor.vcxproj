@@ -217,6 +217,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\GeoTableRenderData.h" />
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
+    <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />

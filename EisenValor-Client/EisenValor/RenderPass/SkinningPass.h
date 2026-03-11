@@ -23,7 +23,7 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12PipelineState> m_pso;
 
-	RenderDataSync<DirectX::XMFLOAT4X4> m_boneMatrixBuffer;
+	RenderDataSync<DirectX::XMFLOAT4X4> m_boneMatrixBuffer[3];
 
 	bool m_initialized = false;
 };

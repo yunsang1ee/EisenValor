@@ -73,8 +73,14 @@ void DxBLAS::Build(
 	m_scratchBuffer = std::make_unique<DxBuffer>();
 	m_scratchBuffer->Initialize(
 		device, prebuildInfo.ScratchDataSizeInBytes, EBufferUsage::RawBuffer,
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, "BLAS_Scratch_" + name
+		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, "BLAS_Scratch_" + name
 	);
+
+	if (m_scratchBuffer->GetCurrentState() != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+	{
+		auto barrier = DxUtils::CreateAutoTransitionBarrier(*m_scratchBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		cmdList->ResourceBarrier(1, &barrier);
+	}
 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = inputs;

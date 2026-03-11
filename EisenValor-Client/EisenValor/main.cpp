@@ -196,11 +196,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 			// DXR Pass 생성
 			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
-			auto* outputTexture = dxrPass->GetOutputTexture();
 			renderer.AddRenderPass("DXR", std::move(dxrPass));
 
 			// CopyToBackBuffer Pass 생성
-			auto copyPass = std::make_unique<CopyToBackBufferPass>(outputTexture, renderer.GetSwapChain());
+			auto copyPass = std::make_unique<CopyToBackBufferPass>(swapChain);
 			renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
 
 			// UI Pass 생성
