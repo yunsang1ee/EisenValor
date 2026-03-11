@@ -49,9 +49,16 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 
+	// FUTURE: LocalNetworkID 세팅 나중에 옮겨야 함.
 	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
 
 	// SampleScene으로 장면 전환
+	// GLOBAL(SceneGlobal).LoadScene("SampleScene");
+
+	// To Lobby Scene
+	// GLOBAL(SceneGlobal).LoadScene("LobbyScene");
+
+	GLOBAL(NetworkGlobal).Connect("127.0.0.1", 40002);
 	GLOBAL(SceneGlobal).LoadScene("SampleScene");
 
 	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
@@ -66,8 +73,8 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// TODO: 로비 씬으로 전환
 
 	// 테스트용으로 바로 게임 월드 진입
-	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
-	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	//auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
+	//GLOBAL(NetworkGlobal).Send(std::move(pb));
 
 	// 테스트용으로 바로 게임 월드 진입
 	//{
@@ -384,7 +391,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
-
 	// TODO: stanceType 사용하기
 
 	// 로컬 플레이어 오브젝트 생성

@@ -32,7 +32,9 @@ public:
 	}
 
 	[[nodiscard("DO NOT IGNORE RETURN VALUE.")]]
-	bool Init(const std::string_view ip = "127.0.0.1", const uint16 port = 7777);
+	bool Init(const std::string_view ip, const uint16 port);
+
+	bool Connect(const std::string_view ip, const uint16 port);
 
 	void ProcessIO();
 

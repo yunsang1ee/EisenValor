@@ -31,7 +31,7 @@ public:
 	bool OnWrite(const uint32 numOfBytes);
 	bool OnRead(const uint32 numOfBytes);
 	void Clean();
-
+	void		Reset();
 	uint32		GetDataSize() const noexcept { return m_writePos - m_readPos; }
 	uint32		GetFreeSize() const noexcept { return m_capacity - m_writePos; }
 	char*		GetWritePos() noexcept { return &m_buffer[m_writePos]; }

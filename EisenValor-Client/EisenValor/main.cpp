@@ -14,6 +14,9 @@
 // Scene
 #include "Scene/SampleScene.h"
 #include "Scene/LoginScene.h"
+#include "Scene/LobbyScene.h"
+#include "Scene/RoomScene.h"
+#include "Scene/LoadingScene.h"
 
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/CopyToBackBufferPass.h"
@@ -217,6 +220,9 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	{
 		GLOBAL(SceneGlobal).RegisterScene<LoginScene>("LoginScene");
 		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
+		GLOBAL(SceneGlobal).RegisterScene<LobbyScene>("LobbyScene");
+		GLOBAL(SceneGlobal).RegisterScene<RoomScene>("RoomScene");
+		GLOBAL(SceneGlobal).RegisterScene<LoadingScene>("LoadingScene");
 
 		GLOBAL(SceneGlobal).LoadScene("LoginScene");
 	}
