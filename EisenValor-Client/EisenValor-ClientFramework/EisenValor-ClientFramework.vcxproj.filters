@@ -91,6 +91,9 @@
     <Filter Include="Input">
       <UniqueIdentifier>{af564647-90d4-4e9c-9ca1-071a7e59ba49}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Renderer\RenderData">
+      <UniqueIdentifier>{56c984da-7b98-4f14-a69b-918e1f3b9d57}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -235,9 +238,6 @@
     <ClInclude Include="include\RenderContext.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="include\IRenderData.h">
-      <Filter>Graphics\Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="include\CommonInclude.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -291,6 +291,15 @@
     </ClInclude>
     <ClInclude Include="include\DxSamplerHeapGlobal.h">
       <Filter>Graphics\Resource\Heap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IRenderData.h">
+      <Filter>Graphics\Renderer\RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CameraRenderData.h">
+      <Filter>Graphics\Renderer\RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FrameRenderData.h">
+      <Filter>Graphics\Renderer\RenderData</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

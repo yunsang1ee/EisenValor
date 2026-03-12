@@ -175,6 +175,7 @@
     <ClInclude Include="include\AnimationComponent.h" />
     <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
+    <ClInclude Include="include\CameraRenderData.h" />
     <ClInclude Include="include\CommonInclude.h" />
     <ClInclude Include="include\CommonUtils.h" />
     <ClInclude Include="include\ComponentStorage.h" />
@@ -201,6 +202,7 @@
     <ClInclude Include="include\DxUploadHeap.h" />
     <ClInclude Include="include\DxUtils.h" />
     <ClInclude Include="include\EngineComponents.h" />
+    <ClInclude Include="include\FrameRenderData.h" />
     <ClInclude Include="include\GameFramework.h" />
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />

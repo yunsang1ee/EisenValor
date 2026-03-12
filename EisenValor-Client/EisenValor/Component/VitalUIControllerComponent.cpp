@@ -45,7 +45,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 	Scene* scene = owner->GetScene();
 	if (!scene) return;
 
-	// 깃발 텍스처 지연 로딩 처리 (팀 정보 동기화 대기)
+	// 깃발 텍스처 지연 로딩 처리
 	if (!m_flagInitialized)
 	{
 		if (auto teamComp = owner->GetComponent<TeamComponent>())

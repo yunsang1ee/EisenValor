@@ -153,6 +153,9 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	std::filesystem::path includePath = Utils::ExeDir() / L"Resource/Shader";
 	stringStorage.emplace_back(includePath.wstring());
 
+	stringStorage.emplace_back(L"-I");
+	stringStorage.emplace_back((Utils::ExeDir()).wstring());
+
 	std::vector<const wchar_t*> args;
 	args.reserve(stringStorage.size());
 	for (const auto& str : stringStorage)

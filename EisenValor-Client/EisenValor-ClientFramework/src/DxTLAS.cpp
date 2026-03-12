@@ -81,6 +81,13 @@ void DxTLAS::BuildInternal(
 			continue;
 		}
 
+		D3D12_GPU_VIRTUAL_ADDRESS blasAddr = blas->GetGPUAddress();
+		if (blasAddr == 0)
+		{
+			DEBUG_LOG_FMT("[DxTLAS] WARNING: BLAS for object '{}' is not built. Skipping instance.\n", obj->GetName());
+			continue;
+		}
+
 		D3D12_RAYTRACING_INSTANCE_DESC desc = {};
 
 		auto	   worldMatrix = obj->GetWorldMatrix();
@@ -103,7 +110,7 @@ void DxTLAS::BuildInternal(
 			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		}
 
-		desc.AccelerationStructure = blas->GetGPUAddress();
+		desc.AccelerationStructure = blasAddr;
 
 		instanceDescs.push_back(desc);
 	}

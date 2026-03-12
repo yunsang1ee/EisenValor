@@ -115,10 +115,34 @@
     <ClInclude Include="Component\FSM\StatePool.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="RaytracingCommon.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\SkinningPass.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\InstanceRenderData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\MaterialRenderData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\GeoTableRenderData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\StressTestComponent.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="Scene\LoginScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Component\Login\LoginControllerComponent.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\AnimationLoader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -177,10 +201,19 @@
     <ClCompile Include="Component\FSM\StatePool.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\SkinningPass.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\StressTestComponent.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
     <ClCompile Include="Scene\LoginScene.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Component\Login\LoginControllerComponent.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Util\AnimationLoader.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -215,12 +248,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Resource\Shader\UIPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\VertexShader.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingLibrary.hlsl">
