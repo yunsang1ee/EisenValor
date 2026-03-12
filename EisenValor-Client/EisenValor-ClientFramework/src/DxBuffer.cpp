@@ -11,7 +11,7 @@ DxBuffer::~DxBuffer()
 	{
 		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
 
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue());
+		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
 		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
 
 		ReleaseAllViews(heap, fence);
@@ -33,7 +33,7 @@ void DxBuffer::Initialize(
 	if (IsValid() && (HasSRV() || HasUAV() || HasCBV()))
 	{
 		auto&		queue = GLOBAL(DxGfxCommandQueueGlobal);
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue());
+		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
 		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
 
 		ReleaseAllViews(heap, fence);
@@ -139,7 +139,7 @@ void DxBuffer::Initialize(
 	if (IsValid() && (HasSRV() || HasUAV() || HasCBV()))
 	{
 		auto&		queue = GLOBAL(DxGfxCommandQueueGlobal);
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue());
+		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
 		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
 
 		ReleaseAllViews(heap, fence);

@@ -58,12 +58,12 @@ void main(uint3 dtid : SV_DispatchThreadID)
     }
     else
     {
-        m = float4x4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+        m = float4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
     }
 
     Vertex outV;
     outV.position = mul(float4(pos, 1.0f), m).xyz;
-    float3x3 m3x3 = (float3x3)m;
+    float3x3 m3x3 = (float3x3) m;
     outV.normal = normalize(mul(normal, m3x3));
     outV.tangent = float4(normalize(mul(tangent, m3x3)), v.tangent.w);
     outV.uv = v.uv;

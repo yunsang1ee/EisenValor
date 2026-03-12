@@ -22,6 +22,7 @@ public:
 	ID3D12CommandQueue* GetQueue() const { return m_commandQueue.Get(); }
 	uint64_t			GetCompletedFenceValue() const { return m_fence->GetCompletedValue(); }
 	uint64_t			GetCurrentFenceValue() const { return m_fenceValue; }
+	ID3D12Fence*		GetFence() const { return m_fence.Get(); }
 
 	uint64_t SignalFence()
 	{
@@ -33,7 +34,7 @@ public:
 private:
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 
-	ComPtr<ID3D12Fence>		   m_fence;
-	uint64_t				   m_fenceValue = 0;
-	HANDLE					   m_fenceEvent = nullptr;
+	ComPtr<ID3D12Fence> m_fence;
+	uint64_t			m_fenceValue = 0;
+	HANDLE				m_fenceEvent = nullptr;
 };

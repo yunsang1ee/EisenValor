@@ -22,27 +22,65 @@ public class AssetExporter
     private const uint SHADING_MODEL_UNLIT = 1;
 
     // --- Material Flags (Engine Spec v2.1) ---
-    private const uint FLAG_NONE = 0;
-    private const uint FLAG_USE_UNITY_PACKING = 1 << 0;
-    private const uint FLAG_ALPHA_TEST = 1 << 1;
-    private const uint FLAG_DOUBLE_SIDED = 1 << 2;
+    private const uint MATERIAL_FLAG_NONE = 0;
+    private const uint MATERIAL_FLAG_USE_ALBEDO_MAP = 1 << 0;
+    private const uint MATERIAL_FLAG_USE_NORMAL_MAP = 1 << 1;
+    private const uint MATERIAL_FLAG_USE_ORM_MAP = 1 << 2;
+    private const uint MATERIAL_FLAG_UNITY_PACKING = 1 << 3;
+    private const uint MATERIAL_FLAG_ALPHA_TEST = 1 << 4;
+    private const uint MATERIAL_FLAG_DOUBLE_SIDED = 1 << 5;
+    private const uint MATERIAL_FLAG_EMISSIVE_MAP = 1 << 6;
+    private const uint MATERIAL_FLAG_TRANSPARENT = 1 << 7;
+    private const uint MATERIAL_FLAG_IGNORE_LIGHTING = 1 << 8;
+
     private static uint BuildMaterialFlags(Material mat)
     {
-        uint flags = FLAG_NONE;
+        uint flags = MATERIAL_FLAG_NONE;
 
         if (mat.shader.name.Contains("Lit") || mat.shader.name.Contains("Standard"))
         {
-            flags |= FLAG_USE_UNITY_PACKING;
+            flags |= MATERIAL_FLAG_UNITY_PACKING;
         }
 
-        if (mat.IsKeywordEnabled("_ALPHATEST_ON") || mat.renderQueue >= 2450)
+        if ((mat.HasProperty("_BaseMap") && mat.GetTexture("_BaseMap") != null) ||
+            (mat.HasProperty("_MainTex") && mat.GetTexture("_MainTex") != null))
         {
-            flags |= FLAG_ALPHA_TEST;
+            flags |= MATERIAL_FLAG_USE_ALBEDO_MAP;
+        }
+
+        if (mat.HasProperty("_BumpMap") && mat.GetTexture("_BumpMap") != null)
+        {
+            flags |= MATERIAL_FLAG_USE_NORMAL_MAP;
+        }
+
+        if (mat.HasProperty("_MaskMap") && mat.GetTexture("_MaskMap") != null)
+        {
+            flags |= MATERIAL_FLAG_USE_ORM_MAP;
+        }
+
+        if (mat.HasProperty("_EmissionMap") && mat.GetTexture("_EmissionMap") != null)
+        {
+            flags |= MATERIAL_FLAG_EMISSIVE_MAP;
+        }
+
+        if (mat.IsKeywordEnabled("_ALPHATEST_ON") || mat.renderQueue == (int)UnityEngine.Rendering.RenderQueue.AlphaTest)
+        {
+            flags |= MATERIAL_FLAG_ALPHA_TEST;
+        }
+
+        if (mat.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.Transparent)
+        {
+            flags |= MATERIAL_FLAG_TRANSPARENT;
         }
 
         if (mat.HasProperty("_Cull") && mat.GetInt("_Cull") == (int)UnityEngine.Rendering.CullMode.Off)
         {
-            flags |= FLAG_DOUBLE_SIDED;
+            flags |= MATERIAL_FLAG_DOUBLE_SIDED;
+        }
+
+        if (mat.shader.name.Contains("Unlit"))
+        {
+            flags |= MATERIAL_FLAG_IGNORE_LIGHTING;
         }
 
         return flags;
@@ -354,7 +392,8 @@ public class AssetExporter
         {
             { "ALBD", "_BaseMap" },
             { "NRML", "_BumpMap" },
-            { "ORMS", "_MaskMap" }
+            { "ORMS", "_MaskMap" },
+            { "EMSV", "_EmissionMap" }
         };
 
         using MemoryStream ms = new();

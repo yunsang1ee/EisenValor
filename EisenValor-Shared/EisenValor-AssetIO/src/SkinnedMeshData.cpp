@@ -60,9 +60,9 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 			std::print("[SkinnedMeshData] INDX Loaded: {} indices\n", count);
 		}
 	}
-	
+
 	// 4. BNDS (Global Mesh Bounds)
-	size_t bndsSize = 0;
+	size_t		bndsSize = 0;
 	const void* bndsPtr = file.GetChunkDataPtr("BNDS", bndsSize);
 	if (bndsPtr && sizeof(Bounds) <= bndsSize)
 	{
@@ -71,12 +71,12 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 	}
 
 	// 5. SUBM (SubMesh Data)
-	size_t subSize = 0;
+	size_t		   subSize = 0;
 	const uint8_t* subPtr = static_cast<const uint8_t*>(file.GetChunkDataPtr("SUBM", subSize));
 	if (subPtr && subSize >= 4)
 	{
 		uint32_t count = ReadUnaligned<uint32_t>(subPtr);
-		size_t requiredSize = 4 + (count * sizeof(SubMesh));
+		size_t	 requiredSize = 4 + (count * sizeof(SubMesh));
 		if (requiredSize <= subSize)
 		{
 			subMeshes.resize(count);
@@ -108,7 +108,7 @@ bool SkinnedMeshData::Deserialize(AssetFile& file)
 	}
 
 	// 8. DEPS 청크 파싱 (머터리얼)
-	size_t depSize = 0;
+	size_t		   depSize = 0;
 	const uint8_t* depPtr = static_cast<const uint8_t*>(file.GetChunkDataPtr("DEPS", depSize));
 	if (depPtr && depSize >= 4)
 	{

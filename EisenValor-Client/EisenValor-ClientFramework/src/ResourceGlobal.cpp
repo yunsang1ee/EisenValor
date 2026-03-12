@@ -27,6 +27,7 @@
 #include "DxUploadHeap.h"
 #include "CommonInclude.h"
 #include "DxUtils.h"
+#include "DxBLAS.h"
 #include "DxCommandQueueGlobal.h"
 #include "InputGlobal.h"
 
@@ -52,14 +53,6 @@ void ResourceGlobal::InitializeDefaultResources()
 {
 	m_defaultMaterial = std::make_shared<MaterialResource>();
 	m_defaultMaterial->SetName("DefaultMaterial");
-
-	// UI 리소스 프리캐싱
-	Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex");
-	Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
-	Load<TextureResource>(L"Resource\\Texture\\HPback.evtex");
-	Load<TextureResource>(L"Resource\\Texture\\HPfill.evtex");
-	Load<TextureResource>(L"Resource\\Texture\\Staminaback.evtex");
-	Load<TextureResource>(L"Resource\\Texture\\Staminafill.evtex");
 }
 
 bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)
@@ -171,21 +164,26 @@ void ResourceGlobal::ProcessPendingLoads()
 			vb->CreateSRV(device, heap, static_cast<uint32_t>(data.vertices.size()), sizeof(EvAsset::Vertex));
 			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0, DXGI_FORMAT_R32_UINT);
 
-			meshRes->SetGPUResources(std::move(vb), std::move(ib));
+			ComPtr<ID3D12Device5> m_device5;
+			ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_device5)));
+			ComPtr<ID3D12GraphicsCommandList4> cmdList4;
+			ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
+
+			auto blas = std::make_unique<DxBLAS>();
+			blas->Build(
+				m_device5.Get(), cmdList4.Get(), vb->GetGPUAddress(), static_cast<uint32_t>(data.vertices.size()),
+				sizeof(EvAsset::Vertex), ib->GetGPUAddress(), meshRes->GetSubMeshes(),
+				false, data.name + "_BLAS"
+			);
+
+			meshRes->SetGPUResources(std::move(vb), std::move(ib), std::move(blas));
 		}
 		else if (task.typeID == SkinnedMeshResource::StaticRuntimeTypeID())
 		{
 			EvAsset::SkinnedMeshData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
+			{
 				continue;
-
-			// --- INDEX VALIDATION ---
-			uint32_t maxV = (uint32_t)data.vertices.size();
-			for (uint32_t idx : data.indices) {
-				if (idx >= maxV) {
-					DEBUG_LOG_FMT("[CRITICAL] SkinnedMesh '{}' has BAD INDEX: {} (Max: {})\n", data.name, idx, maxV - 1);
-					break; 
-				}
 			}
 
 			auto		 skinnedRes = std::static_pointer_cast<SkinnedMeshResource>(task.targetResource);
@@ -340,8 +338,8 @@ std::shared_ptr<SkinnedMeshResource> ResourceGlobal::LoadInternal<SkinnedMeshRes
 	res->SetName(data.name);
 	res->SetMetadata(
 		data.boundsInfo, std::move(data.subMeshes), static_cast<uint32_t>(data.vertices.size()),
-		static_cast<uint32_t>(data.indices.size()), data.indexFormat,
-		std::move(data.bones), std::move(data.offsetMatrices), std::move(data.materialGuids)
+		static_cast<uint32_t>(data.indices.size()), data.indexFormat, std::move(data.bones),
+		std::move(data.offsetMatrices), std::move(data.materialGuids)
 	);
 
 	m_pendingLoads.push({res, data.assetGuid, path, SkinnedMeshResource::StaticRuntimeTypeID()});
