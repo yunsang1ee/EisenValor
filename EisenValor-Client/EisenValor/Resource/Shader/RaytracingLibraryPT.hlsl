@@ -314,6 +314,10 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 	
 	float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
+    // DirectXMath stores matrices in column-major order, while HLSL interprets them as row-major.
+    // Uploading inst.worldInverse (column-major) to HLSL causes it to be read as its transpose.
+    // Therefore mul(normalObj, worldInverse) in HLSL is equivalent to normalObj * transpose(worldInverse),
+    // which is the correct inverse-transpose transformation for normals under non-uniform scale.
     float3 normal = normalize(mul(normalObj, (float3x3) inst.worldInverse));
 	if (dot(normal, WorldRayDirection()) > 0.0f)
 	{
