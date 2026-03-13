@@ -23,10 +23,10 @@ namespace ServerEngine {
 		void SetSocketOptions(SOCKET& socket);
 
 	private:
-		SOCKET					m_listenSocket;
-		SOCKADDR_IN				m_serverAddress;
-		const SessionFactoryFunc		m_func;
-		WorkerThread*			m_ownerWorker;
+		SOCKET						m_listenSocket;
+		SOCKADDR_IN					m_serverAddress;
+		const SessionFactoryFunc	m_func;
+		WorkerThread*				m_ownerWorker;
 
 		friend class ServerEngineCore;
 	};

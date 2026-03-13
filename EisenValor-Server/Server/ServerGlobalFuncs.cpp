@@ -2,15 +2,21 @@
 #include "ServerGlobalFuncs.h"
 
 #include "ClientSession.h"
+#include "LobbyServerSession.h"
 #include "GameLobby.h"
 #include "GameWorld.h"
 #include "GameObject.h"
 
 std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 
-std::shared_ptr<ClientSession> MakeClientSessionFunc()
+std::shared_ptr<ServerEngine::Session> MakeClientSessionFunc()
 {
 	return ServerEngine::ObjectPool<ClientSession>::MakeShared();
+}
+
+std::shared_ptr<ServerEngine::Session> MakeLobbyServerSessionFunc()
+{
+	return ServerEngine::ObjectPool<LobbyServerSession>::MakeShared();
 }
 
 #ifdef MODERN_CODE

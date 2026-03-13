@@ -22,8 +22,7 @@ void LobbyServer::SessionManager::AddSession(std::shared_ptr<LobbyServerEngine::
 			if(m_gameServerSession)
 				return;
 
-			auto gameServerSession{ std::static_pointer_cast<GameServerSession>(session) };
-			m_gameServerSession = gameServerSession;
+			m_gameServerSession = std::static_pointer_cast<GameServerSession>(session);
 			break;
 		}
 		default:

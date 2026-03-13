@@ -54,12 +54,12 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MAKE_GAME_ROOM_PACKET()
 // =================
 //		룸
 // =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_JOIN_GAME_ROOM_PACKET(uint16_t roomId)
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_ROOM_PACKET(uint16_t roomId)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_JOIN_GAME_ROOM_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_JOIN_GAME_ROOM_PACKET, roomId)
+		PACKET_TYPE::CS_ENTER_GAME_ROOM_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_ROOM_PACKET, roomId)
 	);
 }
 
@@ -104,7 +104,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_START_GAME_PACKET()
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_START_GAME_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_START_GAME_PACKET)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_START_GAME_PACKET)
 	);
 }
 

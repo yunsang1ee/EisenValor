@@ -8,7 +8,7 @@
       <Filter>00. main\ServerManager</Filter>
     </ClCompile>
     <ClCompile Include="ClientSession.cpp">
-      <Filter>01. ClientSessionManager\ClientSession</Filter>
+      <Filter>01. SessionManager\ClientSession</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
       <Filter>02. Contents\GameWorld\GameObject</Filter>
@@ -53,10 +53,10 @@
       <Filter>02. Contents\GameWorld</Filter>
     </ClCompile>
     <ClCompile Include="ServerPackets.cpp">
-      <Filter>03. Packets\ServerPackets</Filter>
+      <Filter>03. Packets\SendPackets</Filter>
     </ClCompile>
-    <ClCompile Include="ClientSessionManager.cpp">
-      <Filter>01. ClientSessionManager</Filter>
+    <ClCompile Include="SessionManager.cpp">
+      <Filter>01. SessionManager</Filter>
     </ClCompile>
     <ClCompile Include="Participant.cpp">
       <Filter>02. Contents\GameRoom\Participant</Filter>
@@ -127,9 +127,6 @@
     <ClCompile Include="DetourProximityGrid.cpp">
       <Filter>02. Contents\GameWorld\NavSystem\DetourCrowd</Filter>
     </ClCompile>
-    <ClCompile Include="ClientPackets.cpp">
-      <Filter>03. Packets\ClientPackets</Filter>
-    </ClCompile>
     <ClCompile Include="BattleRam.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
     </ClCompile>
@@ -145,14 +142,20 @@
     <ClCompile Include="Component.cpp">
       <Filter>02. Contents\GameWorld\GameObject\Component</Filter>
     </ClCompile>
-    <ClCompile Include="ClientPacketHandler.cpp">
-      <Filter>03. Packets\PacketHandler</Filter>
-    </ClCompile>
     <ClCompile Include="ServerGlobalVariables.cpp">
       <Filter>97. Global</Filter>
     </ClCompile>
+    <ClCompile Include="LobbyServerSession.cpp">
+      <Filter>01. SessionManager\LobbyServerSession</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler\ClientPacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyServerPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler\LobbyServerPacketHandler</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>01. ClientSessionManager</Filter>
+      <Filter>00. main</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -168,23 +171,8 @@
     <Filter Include="96. Headers">
       <UniqueIdentifier>{1745fc1b-553c-4224-825e-7cefc9cd4c15}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. ClientSessionManager">
-      <UniqueIdentifier>{e7bed467-3e89-4a3b-877a-09b6eba0ec3b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="01. ClientSessionManager\ClientSession">
-      <UniqueIdentifier>{cbaaff46-38ff-49d6-afed-319281533012}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Packets\Schema">
       <UniqueIdentifier>{2b95e60b-2a18-4e25-8e90-c47c9b9dd645}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="00. main">
-      <UniqueIdentifier>{cd2a2db3-f1f0-4a1b-bf92-80e83ed3fdb2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="00. main\ServerManager">
-      <UniqueIdentifier>{f1701da0-3397-403e-ba78-5576bbec78d9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Packets\ServerPackets">
-      <UniqueIdentifier>{910abdf7-2458-4bb2-9644-8eaa1c718eda}</UniqueIdentifier>
     </Filter>
     <Filter Include="03. Packets\PacketHandler">
       <UniqueIdentifier>{9cf6da8a-19bb-4a9d-a126-f1a4dba6e24a}</UniqueIdentifier>
@@ -261,9 +249,6 @@
     <Filter Include="02. Contents\GameWorld\NavSystem\NavMeshData">
       <UniqueIdentifier>{6c641479-31f8-4405-978a-787b01791411}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Packets\ClientPackets">
-      <UniqueIdentifier>{6599864d-637d-496b-8f7b-9048f39ad1fb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Contents\GameData">
       <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
     </Filter>
@@ -294,6 +279,30 @@
     <Filter Include="02. Contents\GameRoom\Participant">
       <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="00. main">
+      <UniqueIdentifier>{cd2a2db3-f1f0-4a1b-bf92-80e83ed3fdb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. main\ServerManager">
+      <UniqueIdentifier>{f1701da0-3397-403e-ba78-5576bbec78d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager">
+      <UniqueIdentifier>{e7bed467-3e89-4a3b-877a-09b6eba0ec3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\ClientSession">
+      <UniqueIdentifier>{cbaaff46-38ff-49d6-afed-319281533012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\LobbyServerSession">
+      <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler\ClientPacketHandler">
+      <UniqueIdentifier>{013a9899-f3e7-4a73-8453-f0bacf08c96f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler\LobbyServerPacketHandler">
+      <UniqueIdentifier>{eee24834-0749-4663-abd8-362d86ed5d93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\SendPackets">
+      <UniqueIdentifier>{910abdf7-2458-4bb2-9644-8eaa1c718eda}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -303,13 +312,10 @@
       <Filter>00. main\ServerManager</Filter>
     </ClInclude>
     <ClInclude Include="ClientSession.h">
-      <Filter>01. ClientSessionManager\ClientSession</Filter>
+      <Filter>01. SessionManager\ClientSession</Filter>
     </ClInclude>
-    <ClInclude Include="ClientSessionManager.h">
-      <Filter>01. ClientSessionManager</Filter>
-    </ClInclude>
-    <ClInclude Include="ClientPacketHandler.h">
-      <Filter>03. Packets\PacketHandler</Filter>
+    <ClInclude Include="SessionManager.h">
+      <Filter>01. SessionManager</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>02. Contents\GameWorld\GameObject</Filter>
@@ -363,7 +369,7 @@
       <Filter>02. Contents\GameWorld</Filter>
     </ClInclude>
     <ClInclude Include="ServerPackets.h">
-      <Filter>03. Packets\ServerPackets</Filter>
+      <Filter>03. Packets\SendPackets</Filter>
     </ClInclude>
     <ClInclude Include="Participant.h">
       <Filter>02. Contents\GameRoom\Participant</Filter>
@@ -446,9 +452,6 @@
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>98. Utils</Filter>
     </ClInclude>
-    <ClInclude Include="ClientPackets.h">
-      <Filter>03. Packets\ClientPackets</Filter>
-    </ClInclude>
     <ClInclude Include="BattleRam.h">
       <Filter>02. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
     </ClInclude>
@@ -463,6 +466,15 @@
     </ClInclude>
     <ClInclude Include="ServerGlobalVariables.h">
       <Filter>97. Global</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientPacketHandler.h">
+      <Filter>03. Packets\PacketHandler\ClientPacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerPacketHandler.h">
+      <Filter>03. Packets\PacketHandler\LobbyServerPacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerSession.h">
+      <Filter>01. SessionManager\LobbyServerSession</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

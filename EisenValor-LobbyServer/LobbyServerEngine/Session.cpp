@@ -104,6 +104,8 @@ void LobbyServerEngine::Session::ProcessConnect()
 
 	m_isConnected = true;
 
+	m_state = SESSION_STATE::ACCEPTED;
+
 	OnConnected();
 
 	PostRecv();

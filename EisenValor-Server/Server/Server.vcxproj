@@ -433,9 +433,9 @@
     <ClCompile Include="BehaviorNode.cpp" />
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
-    <ClCompile Include="ClientPackets.cpp" />
     <ClCompile Include="ClientSession.cpp" />
-    <ClCompile Include="ClientSessionManager.cpp" />
+    <ClCompile Include="LobbyServerPacketHandler.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
     <ClCompile Include="Component.cpp" />
@@ -554,6 +554,7 @@
     <ClCompile Include="General.cpp" />
     <ClCompile Include="GeneralNodes.cpp" />
     <ClCompile Include="GeneralStates.cpp" />
+    <ClCompile Include="LobbyServerSession.cpp" />
     <ClCompile Include="OccupationZone.cpp" />
     <ClCompile Include="PlayerStates.cpp" />
     <ClCompile Include="NavAgent.cpp" />
@@ -591,9 +592,9 @@
     <ClInclude Include="BehaviorNode.h" />
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
-    <ClInclude Include="ClientPackets.h" />
     <ClInclude Include="ClientSession.h" />
-    <ClInclude Include="ClientSessionManager.h" />
+    <ClInclude Include="LobbyServerPacketHandler.h" />
+    <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="CollisionDetector.h" />
     <ClInclude Include="Component.h" />
@@ -623,6 +624,7 @@
     <ClInclude Include="General.h" />
     <ClInclude Include="GeneralNodes.h" />
     <ClInclude Include="GeneralStates.h" />
+    <ClInclude Include="LobbyServerSession.h" />
     <ClInclude Include="OccupationZone.h" />
     <ClInclude Include="PlayerStates.h" />
     <ClInclude Include="NavAgent.h" />

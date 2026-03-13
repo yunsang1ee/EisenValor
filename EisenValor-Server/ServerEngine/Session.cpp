@@ -10,6 +10,7 @@
 #include "ServerEngineConfigManager.h"
 #include "NetworkManager.h"
 #include "IOCPRecvBuffer.h"
+#include "PacketHandler.h"
 
 #ifdef LEGACY_CODE
 ServerEngine::Session::Session()
@@ -81,36 +82,18 @@ void ServerEngine::Session::Handle_CS_PONG()
 
 #ifdef MODERN_CODE
 // ===================================================================================================================================================================
-ServerEngine::Session::Session()
-	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_pingInterval{ std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS) },
+
+
+ServerEngine::Session::Session(const SESSION_TYPE type)
+	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_type{ type }, m_pingInterval { std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
 	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
 {
-	//static std::atomic_uint32_t idGen{ 1 };
-	//m_id = idGen++;
 }
 
 ServerEngine::Session::~Session()
 {
 	std::cout << std::format("~Session, ID = {}", m_id) << std::endl;
 	CloseSocket();
-}
-
-uint32 ServerEngine::Session::AssembleReceivedData(std::span<const char> buf)
-{
-	uint32 processed{};
-
-	while(buf.size() >= sizeof(PacketHeader)) {
-		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
-		if(buf.size() < header.packetSize)
-			break;
-
-		ProcessPacket(buf);
-
-		buf = buf.subspan(header.packetSize);
-		processed += header.packetSize;
-	}
-
-	return processed;
 }
 
 void ServerEngine::Session::CloseSocket()
@@ -760,8 +743,8 @@ void ServerEngine::RIO::RIOSession::Clean()
 
 // ===========================================================================================================================================================
 #ifdef MODERN_CODE
-ServerEngine::RIO::RIOSession::RIOSession()
-	: m_rq{ RIO_INVALID_RQ }, m_deferCount{}, m_maxSendRQSize{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION }
+ServerEngine::RIO::RIOSession::RIOSession(const SESSION_TYPE type)
+	:Session{ type }, m_rq {RIO_INVALID_RQ}, m_deferCount{}, m_maxSendRQSize{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION }
 	, m_commitSendMS{ std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS) }, m_outstandingSendCount{}
 {
 }
@@ -969,7 +952,7 @@ void ServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
 	}
 
 	const uint32 remainDataSize = m_recvBuffer.GetUsedSize();
-	const uint32 processLen = AssembleReceivedData({ m_recvBuffer.GetReadCursor(), remainDataSize });
+	const uint32 processLen = OnRecv({ m_recvBuffer.GetReadCursor(), remainDataSize });
 
 	if(processLen < 0 || remainDataSize < processLen || false == m_recvBuffer.OnRead(processLen)) {
 		Disconnect("OnRead Overflow");
@@ -1109,25 +1092,19 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 		uint32 packetSize = packetBuffer->GetDataSize();
 		uint32 sendOffset = m_sendBuffer.GetSendOffset();
 
-		// 1. 링버퍼에 패킷 복사
 		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
 
-			// 2. 만약 패킷이 링버퍼 끝에 걸쳐서 쪼개졌다면? 
 			// RIO_BUF는 하나의 연속된 영역만 가리킬 수 있으므로 두 번에 나눠서 DeferSend 해야 함
 			uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
 
 			if(packetSize <= contiguousSize) {
-				// 한 번에 예약 가능
 				if(DeferSend(sendOffset, packetSize)) {
 					m_packetBufferQueue.pop();
 					deferCount++;
 				}
 			}
 			else {
-				// 두 번에 나누어 예약 (Wrap-around 처리)
-				// 1차: 끝부분까지
 				if(DeferSend(sendOffset, contiguousSize)) {
-					// 2차: 맨 앞부분부터 나머지
 					if(DeferSend(0, packetSize - contiguousSize)) {
 						m_packetBufferQueue.pop();
 						deferCount += 2; // 예약 횟수 2회 증가
@@ -1136,12 +1113,10 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 			}
 		}
 		else {
-			// 버퍼가 꽉 찼다면 다음 Flush를 기약하거나 로그 출력
 			break;
 		}
 	}
 
-	// 조건 충족 시 커널에 일괄 전송 명령
 	if(deferCount > 0 && (deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= std::chrono::milliseconds(m_commitSendMS))) {
 		CommitSend();
 		m_lastSendTime = currentTime;
@@ -1160,3 +1135,30 @@ bool ServerEngine::RIO::RIOSession::RegisterBuffer()
 	return true;
 }
 #endif
+
+ServerEngine::PacketSession::PacketSession(const SESSION_TYPE type)
+	:ServerEngine::RIO::RIOSession{type}
+{
+}
+
+ServerEngine::PacketSession::~PacketSession()
+{
+}
+
+uint32 ServerEngine::PacketSession::OnRecv(std::span<const char> buf)
+{
+	uint32 processed{};
+
+	while(buf.size() >= sizeof(PacketHeader)) {
+		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
+		if(buf.size() < header.packetSize)
+			break;
+
+		OnRecvPacket(buf);
+
+		buf = buf.subspan(header.packetSize);
+		processed += header.packetSize;
+	}
+
+	return processed;
+}

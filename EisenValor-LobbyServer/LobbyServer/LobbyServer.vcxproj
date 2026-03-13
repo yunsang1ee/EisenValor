@@ -159,6 +159,7 @@
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="GameServerPacketHandler.cpp" />
     <ClCompile Include="GameServerSession.cpp" />
+    <ClCompile Include="Participant.cpp" />
     <ClCompile Include="SendPackets.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="GameLobby.cpp" />
@@ -179,6 +180,8 @@
     <ClInclude Include="GameServerPacketHandler.h" />
     <ClInclude Include="GameServerSession.h" />
     <ClInclude Include="LobbyServerEnums.h" />
+    <ClInclude Include="LobbyServerStructs.h" />
+    <ClInclude Include="Participant.h" />
     <ClInclude Include="SendPackets.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="GameLobby.h" />

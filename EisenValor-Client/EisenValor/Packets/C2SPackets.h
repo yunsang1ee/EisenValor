@@ -21,7 +21,7 @@ std::shared_ptr<PacketBuffer> Make_CS_MAKE_GAME_ROOM_PACKET();
 // =================
 //		룸
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_JOIN_GAME_ROOM_PACKET(uint16_t roomId);
+std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_ROOM_PACKET(uint16_t roomId);
 std::shared_ptr<PacketBuffer> Make_CS_LEAVE_GAME_ROOM_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_TEAM_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_ADD_BOT_PACKET(FB_ENUMS::TEAM_TYPE teamType);

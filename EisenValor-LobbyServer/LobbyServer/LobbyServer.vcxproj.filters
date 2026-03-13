@@ -37,6 +37,9 @@
     <ClCompile Include="SendPackets.cpp">
       <Filter>03. Packets\SendPackets</Filter>
     </ClCompile>
+    <ClCompile Include="Participant.cpp">
+      <Filter>02. GameLobby\GameRoom\Participant</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="00. Main">
@@ -87,6 +90,9 @@
     <Filter Include="98. Headers">
       <UniqueIdentifier>{584dd1f9-a6be-4856-8459-2be812d72fa7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. GameLobby\GameRoom\Participant">
+      <UniqueIdentifier>{a112d0d4-356d-44ad-989d-94d7060629fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -123,6 +129,12 @@
       <Filter>03. Packets\SendPackets</Filter>
     </ClInclude>
     <ClInclude Include="LobbyServerEnums.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Participant.h">
+      <Filter>02. GameLobby\GameRoom\Participant</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerStructs.h">
       <Filter>98. Headers</Filter>
     </ClInclude>
   </ItemGroup>

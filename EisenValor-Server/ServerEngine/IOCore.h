@@ -7,7 +7,7 @@ namespace ServerEngine {
 		virtual ~IOCore()=default;
 
 	public:
-		virtual bool Init(const SessionFactoryFunc func);
+		virtual bool Init(const ClientSessionFactoryFunc func);
 		virtual bool StartAccept();
 		virtual void Run() abstract;
 		virtual void Shutdown() abstract;
@@ -22,7 +22,7 @@ namespace ServerEngine {
 		SOCKET									m_listenSocket;
 		SOCKADDR_IN								m_serverAddress;
 		uint16									m_workerThreadCount;
-		SessionFactoryFunc						m_sessionFactoryFunc;
+		ClientSessionFactoryFunc						m_sessionFactoryFunc;
 
 	};
 }

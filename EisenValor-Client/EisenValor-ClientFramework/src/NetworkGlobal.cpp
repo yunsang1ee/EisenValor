@@ -77,6 +77,14 @@ bool NetBridge::NetworkGlobal::Connect(const std::string_view ip, const uint16 p
 {
 	m_recvBuffer->Reset();
 
+	if (INVALID_SOCKET != m_socket)
+	{
+		shutdown(m_socket, SD_SEND);
+		char buf;
+		while (recv(m_socket, &buf, 1, 0) > 0) {}
+		closesocket(m_socket);
+	}
+
 	m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if (INVALID_SOCKET == m_socket)

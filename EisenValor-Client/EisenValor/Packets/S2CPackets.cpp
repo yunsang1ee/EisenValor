@@ -58,8 +58,8 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// To Lobby Scene
 	// GLOBAL(SceneGlobal).LoadScene("LobbyScene");
 
-	GLOBAL(NetworkGlobal).Connect("127.0.0.1", 40002);
-	GLOBAL(SceneGlobal).LoadScene("SampleScene");
+	// GLOBAL(NetworkGlobal).Connect("127.0.0.1", 40002);
+	// GLOBAL(SceneGlobal).LoadScene("SampleScene");
 
 	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
 	const uint16 roomID{1};
@@ -67,8 +67,8 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	// auto pb = NetBridge::C2S::Make_CS_JOIN_GAME_ROOM_PACKET(1000);
 	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
 
-	// auto pb = NetBridge::C2S::Make_CS_ENTER_GAME_LOBBY_PACKET();
-	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
+	auto pb = NetBridge::C2S::Make_CS_ENTER_GAME_LOBBY_PACKET();
+	GLOBAL(NetworkGlobal).Send(std::move(pb));
 
 	// TODO: 로비 씬으로 전환
 
@@ -82,7 +82,7 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	//	GLOBAL(NetworkGlobal).Send(std::move(pb));
 	//}
 
-	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
+	// DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
 	return true;
 }
 
@@ -105,7 +105,6 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	}
 
 	// 로비에 성공적으로 입장
-	// TODO: 로비 씬으로 전환
 	// TODO: 로비 씬 안에서 방 목록 및 유저 목록을 화면에 보여주기
 
 	for (const auto* room : *rooms)
@@ -113,6 +112,9 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 		auto roomId = room->id();
 		DEBUG_LOG_FMT("Room ID: {}\n", roomId);
 	}
+
+	if (rooms->size() == 0)
+		std::cout << "Zero Room" << std::endl;
 
 	for (flatbuffers::uoffset_t i = 0; i < users->size(); ++i)
 	{
@@ -127,11 +129,14 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	// auto pb = NetBridge::C2S::Make_CS_JOIN_GAME_ROOM_PACKET(1000);
 	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));/
 
+	GLOBAL(SceneGlobal).LoadScene("LobbyScene");
+
+
 	return true;
 }
 
 bool NetBridge::S2C::Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ADD_USER_IN_GAME_LOBBY_PACKET& recvPkt
+	const SOCKET& socket, const FB_TABLES::SC_ENTER_USER_IN_GAME_LOBBY_PACKET& recvPkt
 )
 {
 	// 로비에 새로운 유저가 입장
@@ -150,11 +155,12 @@ bool NetBridge::S2C::Handle_SC_LEAVE_GAME_LOBBY_PACKET(
 	DEBUG_LOG_FMT("[SC_LEAVE_GAME_LOBBY_PACKET] ");
 	DEBUG_LOG_FMT("Leave Lobby!\n");
 	// TODO: 로그인 Scene으로 다시...
-	return false;
+	GLOBAL(SceneGlobal).LoadScene("LoginScene");
+	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_REMOVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_LEAVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
 )
 {
 	// 로비에서 유저가 퇴장
@@ -187,8 +193,8 @@ bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_FAIL_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_JOIN_GAME_ROOM_SUCCESS_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_ROOM_SUCCESS_PACKET& recvPkt
 )
 {
 	// 게임 룸 입장 성공
@@ -260,8 +266,7 @@ bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(
 			DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
 	}
 
-	// auto pb{NetBridge::C2S::Make_CS_START_GAME_PACKET()};
-	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));
+	GLOBAL(SceneGlobal).LoadScene("RoomScene");
 
 	return true;
 }

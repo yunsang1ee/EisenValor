@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "AcceptThread.h"
 
-#include "LobbyThread.h"
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
 #include "Session.h"
@@ -24,7 +23,6 @@ ServerEngine::AcceptThread::~AcceptThread()
 
 bool ServerEngine::AcceptThread::Init(const uint16 port)
 {
-
 	if(m_listenSocket == INVALID_SOCKET)
 		return false;
 
@@ -75,37 +73,12 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 
 		auto session = m_func();
 
-		static uint32 idGen{ 1 };
+		static uint32 idGen{ 50123 };
 		session->SetID(idGen);
 		idGen++;
 
 		if(false == session->AcceptCompleted(clientSocket, clientAddr))
 			continue;
-
-		// Accept직후 로비쓰레드로 I/O, 로그인 성공 시 로비로 입장
-
-		// 클라이언트
-		// - 로그인 씬
-
-		// 로비로
-		//auto lobby = MANAGER(ServerEngineCore)->GetLobbyThread();
-		//if(lobby) {
-		//	lobby->PushJob(&ServerEngine::LobbyThread::Register, (session));
-		//	// lobby->PushJob(& ServerEngine::LobbyThread::EnterLobby, session);
-		//}
-		// 월드로
-		///*auto ioCore{ worker->GetIoCore() };
-		//if(ioCore) {
-		//	if(false == ioCore->Register(session))
-		//		continue;
-		//}*/
-		
-
-		// 지금은 바로 월드로...
-		//auto worker{ MANAGER(ServerEngineCore)->GetLeisurelyWorker() };
-		//if(worker) {
-		//	worker->PushJob(&ServerEngine::WorkerThread::Register, (session));
-		//}
 
 		m_ownerWorker->PushJob(&ServerEngine::WorkerThread::Register, (session));
 	}

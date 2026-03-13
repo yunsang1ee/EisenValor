@@ -14,3 +14,10 @@ enum class SESSION_STATE : uint8 {
 	TRANSFERRING,		
 	IN_GAME_WORLD,			// 게임 시작 직후
 };
+
+enum class SESSION_TYPE : uint8 {
+	CLIENT,
+	LOBBY_SERVER,
+
+	END
+};

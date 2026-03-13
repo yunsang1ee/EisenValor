@@ -5,6 +5,7 @@
 
 #include "RioCore.h"
 #include "ClientSession.h"
+#include "LobbyServerSession.h"
 #include "GameObjectFactory.h"
 #include "GameLobby.h"
 #include "ServerEngineConfigManager.h"
@@ -42,8 +43,6 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
-	ClientPacketHandler::Init();
-
 	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
@@ -64,7 +63,7 @@ bool Server::ServerManager::Init()
 
 #ifdef MODERN_CODE
 	LOG_INFO("MODERN_CODE");
-	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
+	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;
 	}

@@ -4,7 +4,6 @@ namespace ServerEngine {
 
 	namespace RIO {
 		class RIOSession;
-		class RIOSessionTest;
 
 #ifdef _USE_RIO
 		class RIOContext : public RIO_BUF {

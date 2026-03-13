@@ -17,6 +17,8 @@ void LobbyServer::GameServerSession::OnConnected()
 {
 	LOG_INFO("GameServerSession ID:{}, OnConnected!", GetID());
 
+	MANAGER(LobbyServer::SessionManager)->AddSession(std::static_pointer_cast<GameServerSession>(shared_from_this()));
+	
 	m_packetHandler = std::make_unique<GameServerPacketHandler>();
 	m_packetHandler->Init();
 }
@@ -38,6 +40,6 @@ void LobbyServer::GameServerSession::OnRecvPacket(const std::span<const char>& b
 
 	auto const packetSession{ GetPacketSession() };
 	if(false == m_packetHandler->HandlePacket(packetSession, buf.data())) {
-		LOG_ERROR("Invalid Handle Packet!");
+		LOG_ERROR("GameServerSession Invalid Handle Packet!");
 	}
 }

@@ -22,7 +22,7 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_LOBBY_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_LOBBY_SUCCESS_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
 		return HandlePacket<FB_TABLES::SC_ENTER_GAME_LOBBY_PACKET>(
@@ -30,10 +30,10 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ADD_USER_IN_GAME_LOBBY_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_USER_IN_GAME_LOBBY_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_ADD_USER_IN_GAME_LOBBY_PACKET>(
+		return HandlePacket<FB_TABLES::SC_ENTER_USER_IN_GAME_LOBBY_PACKET>(
 			S2C::Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
 		);
 	};
@@ -46,11 +46,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_REMOVE_USER_IN_GAME_LOBBY_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LEAVE_USER_IN_GAME_LOBBY_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_REMOVE_USER_IN_GAME_LOBBY_PACKET>(
-			S2C::Handle_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_LEAVE_USER_IN_GAME_LOBBY_PACKET>(
+			S2C::Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
 		);
 	};
 
@@ -62,7 +62,7 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_JOIN_GAME_ROOM_FAIL_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_ROOM_FAIL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
 		return HandlePacket<FB_TABLES::SC_JOIN_GAME_ROOM_FAIL_PACKET>(
@@ -70,11 +70,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_JOIN_GAME_ROOM_SUCCESS_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_ROOM_SUCCESS_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_JOIN_GAME_ROOM_SUCCESS_PACKET>(
-			S2C::Handle_SC_JOIN_GAME_ROOM_SUCCESS_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::SC_ENTER_GAME_ROOM_SUCCESS_PACKET>(
+			S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET, socket, buffer, header
 		);
 	};
 

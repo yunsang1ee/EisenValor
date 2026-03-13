@@ -5,7 +5,6 @@
 #include "GameRoom.h"
 
 #include "ServerEngineCore.h"
-#include "LobbyThread.h"
 #include "WorkerThread.h"
 #ifdef LEGACY_CODE
 
@@ -180,7 +179,7 @@ void Server::Contents::GameLobbyTest::EnterSession(std::shared_ptr<ServerEngine:
 {
 	auto clientSession = std::static_pointer_cast<ClientSession>(session);
 	
-	clientSession->SetGameLobby(this);
+	// clientSession->SetGameLobby(this);
 
 	const uint32 id{ clientSession->GetID() };
 
@@ -190,7 +189,7 @@ void Server::Contents::GameLobbyTest::EnterSession(std::shared_ptr<ServerEngine:
 	clientSession->SetState(SESSION_STATE::IN_GAME_LOBBY);
 	std::cout << std::format("ID: {}, EnterSession In Lobby!", id) << std::endl;
 
-	auto worker{ MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker() };
+	/*auto worker{ MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker() };
 	if(worker) {
 		auto lobbyThread{ MANAGER(ServerEngine::ServerEngineCore)->GetLobbyThread() };
 		
@@ -202,7 +201,7 @@ void Server::Contents::GameLobbyTest::EnterSession(std::shared_ptr<ServerEngine:
 
 		worker->PushJob(&ServerEngine::WorkerThread::Register, session);
 		worker->PushJob(&ServerEngine::WorkerThread::EnterWorld, session);
-	}
+	}*/
 }
 
 void Server::Contents::GameLobbyTest::LeaveSession(std::shared_ptr<ServerEngine::Session> session)

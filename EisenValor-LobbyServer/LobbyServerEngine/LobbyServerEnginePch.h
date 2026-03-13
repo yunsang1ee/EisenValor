@@ -70,6 +70,7 @@ namespace fs = std::filesystem;
 
 namespace LobbyServerEngine {
 	class Session;
+	class PacketBuffer;
 }
 
 using ClientSessionFactoryFunc = std::function<std::shared_ptr<LobbyServerEngine::Session>()>;

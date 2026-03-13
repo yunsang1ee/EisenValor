@@ -1,13 +1,33 @@
 #include "pch.h"
 #include "ClientPacketHandler.h"
 
+#include "GameLobby.h"
 #include "ClientSession.h"
 
 void LobbyServer::ClientPacketHandler::Init()
 {
-   REGISTER_PACKET(PACKET_TYPE::CS_LOGIN_PKT, FB_TABLES::CS_LOGIN_PACKET, ClientPacketHandler::Handle_CS_LOGIN_PACKET);
+#pragma region SESSION_PACKETS
+	REGISTER_PACKET(PACKET_TYPE::CS_LOGIN_PKT, FB_TABLES::CS_LOGIN_PACKET, ClientPacketHandler::Handle_CS_LOGIN_PACKET);
+#pragma endregion
+
+#pragma region LOBBY_PACKETS
+	REGISTER_PACKET(PACKET_TYPE::CS_ENTER_GAME_LOBBY_PKT, FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET, ClientPacketHandler::Handle_CS_ENTER_GAME_LOBBY_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_LEAVE_GAME_LOBBY_PKT, FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET, ClientPacketHandler::Handle_CS_LEAVE_GAME_LOBBY_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_MAKE_GAME_ROOM_PKT, FB_TABLES::CS_MAKE_GAME_ROOM_PACKET, ClientPacketHandler::Handle_CS_MAKE_GAME_ROOM_PACKET);
+#pragma endregion
+
+#pragma region ROOM_PACKETS
+	REGISTER_PACKET(PACKET_TYPE::CS_ENTER_GAME_ROOM_PKT, FB_TABLES::CS_ENTER_GAME_ROOM_PACKET, ClientPacketHandler::Handle_CS_ENTER_GAME_ROOM_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_LEAVE_GAME_ROOM_PKT, FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET, ClientPacketHandler::Handle_CS_LEAVE_GAME_ROOM_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_CHANGE_TEAM_PKT, FB_TABLES::CS_CHANGE_TEAM_PACKET, ClientPacketHandler::Handle_CS_CHANGE_TEAM_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_ADD_BOT_PKT, FB_TABLES::CS_ADD_BOT_PACKET, ClientPacketHandler::Handle_CS_ADD_BOT_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_REMOVE_BOT_PKT, FB_TABLES::CS_REMOVE_BOT_PACKET, ClientPacketHandler::Handle_CS_REMOVE_BOT_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_READY_GAME_PKT, FB_TABLES::CS_READY_GAME_PACKET, ClientPacketHandler::Handle_CS_READY_GAME_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_START_GAME_PKT, FB_TABLES::CL_START_GAME_PACKET, ClientPacketHandler::Handle_CL_START_GAME_PACKET);
+#pragma endregion
 }
 
+#pragma region SESSION_PACKETS
 bool LobbyServer::ClientPacketHandler::Handle_CS_LOGIN_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_LOGIN_PACKET& recvPkt)
 {
 	std::cout << "Handle_CS_LOGIN_PACKET" << std::endl;
@@ -22,3 +42,130 @@ bool LobbyServer::ClientPacketHandler::Handle_CS_LOGIN_PACKET(const std::shared_
 
 	return true;
 }
+#pragma endregion
+
+
+#pragma region LOBBY_PACKETS
+bool LobbyServer::ClientPacketHandler::Handle_CS_ENTER_GAME_LOBBY_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_LOBBY_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_ENTER_GAME_LOBBY, clientSession);
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CS_LEAVE_GAME_LOBBY_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_LEAVE_GAME_LOBBY_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_LEAVE_GAME_LOBBY, clientSession);
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CS_MAKE_GAME_ROOM_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_MAKE_GAME_ROOM_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_MAKE_GAME_ROOM, clientSession);
+
+	return true;
+}
+#pragma endregion
+
+
+#pragma region ROOM_PACKETS
+bool LobbyServer::ClientPacketHandler::Handle_CS_ENTER_GAME_ROOM_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_ROOM_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_ENTER_GAME_ROOM, clientSession, recvPkt.room_id());
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CS_LEAVE_GAME_ROOM_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_LEAVE_GAME_ROOM_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_LEAVE_GAME_ROOM, clientSession);
+
+	return true;
+}
+bool LobbyServer::ClientPacketHandler::Handle_CS_CHANGE_TEAM_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_TEAM_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_CHANGE_TEAM, clientSession);
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CS_ADD_BOT_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_ADD_BOT_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_ADD_BOT, clientSession, recvPkt.team_type());
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CS_REMOVE_BOT_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_REMOVE_BOT_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_REMOVE_BOT, clientSession, recvPkt.bot_id());
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CS_READY_GAME_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CS_READY_GAME_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_READY_GAME, clientSession);
+
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CL_START_GAME_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_START_GAME_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_START_GAME, clientSession);
+	
+	return true;
+}
+
+#pragma endregion

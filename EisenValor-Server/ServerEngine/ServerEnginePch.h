@@ -56,6 +56,8 @@
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
+#include "flatbuffers/flatbuffers.h"
+
 // headers
 #include "ServerEngineTypes.h"
 #include "ServerEngineGlobalVariables.h"
@@ -90,13 +92,18 @@ namespace Server {
 	class RIOClientSession;
 	class IOCPClientSession;
 
+	class RIOLobbyServerSession;
+	class IOCPLobbyServerSession;
+
 	class GameWorldTest;
 }
 
 #ifdef _USE_RIO
 using ClientSession = Server::RIOClientSession;
+using LobbyServerSession = Server::RIOLobbyServerSession;
 #endif
 
 #ifdef _USE_IOCP
 using ClientSession = Server::IOCPClientSession;
+using LobbyServerSession = Server::IOCPLobbyServerSession;
 #endif

@@ -22,3 +22,10 @@ friend class Singleton;
 #define LOG_TRACE(fmt, ...) ServerEngine::LogManager::WriteLog(ServerEngine::LogManager::LOG_LEVEL::TRACE, fmt, ##__VA_ARGS__)
 #define LOG_WSA_GET_LAST_ERROR	ServerEngine::LogManager::PrintLastError
 #define LOG_SAVE	ServerEngine::LogManager::Save
+
+#ifdef _USE_RIO
+#define REGISTER_PACKET(pkt, type, handler) \
+m_packetHandlerFuncs[static_cast<uint16>(pkt)] = \
+[](const std::shared_ptr<ServerEngine::PacketSession>& session, const char* buffer) \
+{ return PacketHandler::HandlePacket<type>(handler, session, buffer); };
+#endif

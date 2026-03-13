@@ -8,6 +8,8 @@
 
 #include "LobbyServerEnums.h"
 #include "LobbyServerGlobalFuncs.h"
+#include "LobbyServerStructs.h"
+
 namespace LobbyServer {
 	class GameLobby;
 }

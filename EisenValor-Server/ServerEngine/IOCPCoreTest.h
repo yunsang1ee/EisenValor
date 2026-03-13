@@ -3,8 +3,6 @@
 #include "IOCoreTest.h"
 
 namespace ServerEngine {
-	class SessionTest;
-
 	class IOCPCoreTest : public IOCoreTest {
 	public:
 		IOCPCoreTest();

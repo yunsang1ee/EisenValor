@@ -6,6 +6,7 @@ namespace ServerEngine {
 	class AcceptThread;
 	class LobbyThread;
 	class WorkerThread;
+	class GameWorldThread;
 	class IRoom;
 #ifdef MODERN_CODE
 	class ServerEngineCore : public Singleton<ServerEngineCore> {
@@ -14,20 +15,19 @@ namespace ServerEngine {
 		~ServerEngineCore();
 
 	public:
-		bool Init(const SessionFactoryFunc sessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc);
+		bool Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc);
 		void Run();
 		void Shutdown();
 	
 	private:
-		std::unique_ptr<AcceptThread>								m_acceptThread;
-		std::unique_ptr<LobbyThread>								m_lobbyThread;
+		WorkerThread*												m_lobbyServerSessionThread;
 		std::vector<std::unique_ptr<WorkerThread>>					m_workerThreads;
 		std::atomic_uint16_t										m_nextWorkerIndex;
 
 	public:
-		WorkerThread* GetLeisurelyWorker();
-		WorkerThread* GetWorkerThread(const uint32 index);
-		LobbyThread* GetLobbyThread() const { return m_lobbyThread.get(); }
+		WorkerThread* GetLobbyServerSessionThread() const { return m_lobbyServerSessionThread; }
+		GameWorldThread* GetLeisurelyWorker();
+		GameWorldThread* GetWorkerThread(const uint32 index);
 	};
 #endif
 }

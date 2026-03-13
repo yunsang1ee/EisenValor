@@ -11,11 +11,12 @@
 
 #include "ServerTypes.h"
 #include "ServerEnums.h"
+#include "../Packets/Binaries/PacketEnums.h"
+
 #include "ServerStructs.h"
 #include "ServerGlobalVariables.h"
 #include "ServerGlobalFuncs.h"
 #include "GameDataManager.h"
-#include "ClientPacketHandler.h"
 #include "ServerPackets.h"
 #include "GameObjectFactory.h"
 

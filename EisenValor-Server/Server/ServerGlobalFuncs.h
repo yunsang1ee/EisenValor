@@ -6,10 +6,18 @@ namespace ServerEngine {
 
 namespace Server {
 	class RIOClientSession;
+	class RIOLobbyServerSession;
 	class IOCPClientSession;
 }
 
-std::shared_ptr<ClientSession> MakeClientSessionFunc();
+namespace ServerEngine {
+	class Session;
+}
+
+
+std::shared_ptr<ServerEngine::Session> MakeClientSessionFunc();
+std::shared_ptr<ServerEngine::Session> MakeLobbyServerSessionFunc();
+
 #ifdef MODERN_CODE
 std::unique_ptr<ServerEngine::IRoom> MakeGameWorldTest();
 std::unique_ptr<ServerEngine::IRoom> MakeGameLobbyTest();

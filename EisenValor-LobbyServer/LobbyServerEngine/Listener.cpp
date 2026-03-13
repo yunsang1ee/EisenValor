@@ -81,7 +81,8 @@ void LobbyServerEngine::Listener::PostAccept(AcceptContext* const acceptContext)
 void LobbyServerEngine::Listener::ProcessAccept(AcceptContext* const acceptContext)
 {
 	std::shared_ptr<Session> session = acceptContext->GetSession();
-	session->SetID(2);
+	static uint32 idGen{ 1 };
+	session->SetID(idGen++);
 
 	SOCKADDR_IN sockAddress;
 	int32 sizeOfSockAddr = sizeof(sockAddress);

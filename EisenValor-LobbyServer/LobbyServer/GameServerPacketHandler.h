@@ -7,6 +7,10 @@ namespace LobbyServer {
 	public:
 		virtual void Init() override final;
 
+	public:
+		static bool Handle_SC_PING_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::SC_PING_PACKET& recvPkt);
+
+
 	};
 }
 

@@ -4,6 +4,9 @@
 #include "SessionManager.h"
 
 #include "ClientPacketHandler.h"
+#include "GameLobby.h"
+#include "GameRoom.h"
+
 LobbyServer::ClientSession::ClientSession()
 	:PacketSession{SESSION_TYPE::CLIENT}
 {
@@ -26,7 +29,30 @@ void LobbyServer::ClientSession::OnConnected()
 void LobbyServer::ClientSession::OnDisconnected(const std::string_view reason)
 {
 	LOG_INFO("Session ID:{}, OnDisconnected!", GetID());
-	MANAGER(LobbyServer::SessionManager)->RemoveSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
+	const auto& clientSession{ GetClientSession() };
+	
+	MANAGER(LobbyServer::SessionManager)->RemoveSession(GetClientSession());
+
+	switch(GetState()) {
+		case SESSION_STATE::IN_GAME_LOBBY:
+		{
+			if(!G_GAME_LOBBY)
+				return;
+
+			G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::LeaveGameLobby, clientSession);
+			break;
+		}
+		case SESSION_STATE::IN_GAME_ROOM:
+		{
+			if(!G_GAME_LOBBY)
+				return;
+
+			G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_LeaveGameRoom, clientSession);
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 void LobbyServer::ClientSession::OnSend(const uint32 bytesTrasnferred)

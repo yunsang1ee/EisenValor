@@ -1,12 +1,13 @@
 #include "pch.h"
 #include "ClientSession.h"
 
-#include "ClientSessionManager.h"
+#include "SessionManager.h"
 #include "Player.h"
 #include "GameRoom.h"
 #include "GameLobby.h"
 #include "GameWorld.h"
 #include "ServerEngineConfigManager.h"
+#include "ClientPacketHandler.h"
 
 // ========================================================
 //					IOCP CLIENT SESSION
@@ -163,6 +164,8 @@ void Server::RIOClientSession::ProcessPacket(const std::span<const char>& buffer
 	}
 }
 
+
+
 void Server::RIOClientSession::OnSend(const uint32 bytesTransferred)
 {
 	// std::println("OnSend, Len = {}", bytesTransferred);
@@ -176,7 +179,7 @@ void Server::RIOClientSession::SendPing()
 #endif 
 #ifdef MODERN_CODE
 Server::RIOClientSession::RIOClientSession()
-	:m_gameWorld{nullptr}
+	:ServerEngine::PacketSession{ SESSION_TYPE::CLIENT }, m_gameWorld{nullptr}
 {
 
 }
@@ -189,7 +192,11 @@ Server::RIOClientSession::~RIOClientSession()
 void Server::RIOClientSession::OnConnected()
 {
 	LOG_INFO("Session ID:{}, OnConnected!", GetID());
-	MANAGER(Server::ClientSessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
+	MANAGER(Server::SessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
+	
+	m_packetHandler = std::make_unique<ClientPacketHandler>();
+	m_packetHandler->Init();
+
 	m_lastPong = std::chrono::high_resolution_clock::now();
 	CheckPing();
 }
@@ -197,7 +204,7 @@ void Server::RIOClientSession::OnConnected()
 void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 {
 	auto clientSession = std::static_pointer_cast<ClientSession>(shared_from_this());
-	MANAGER(Server::ClientSessionManager)->RemoveSession(clientSession);
+	MANAGER(Server::SessionManager)->RemoveSession(clientSession);
 
 	LOG_INFO("Session ID:{}, OnDisconnected!, Reason: {}", GetID(), reason.data());
 
@@ -207,12 +214,6 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 		case SESSION_STATE::ACCEPTED:
 		{
 			SetState(SESSION_STATE::FREE);
-			break;
-		}
-		case SESSION_STATE::IN_GAME_LOBBY:
-		{
-			if(m_gameLobby)
-				m_gameLobby->LeaveSession(clientSession);
 			break;
 		}
 		case SESSION_STATE::IN_GAME_ROOM:
@@ -233,10 +234,10 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 	}
 }
 
-void Server::RIOClientSession::ProcessPacket(const std::span<const char>& buffer)
+void Server::RIOClientSession::OnRecvPacket(const std::span<const char>& buf)
 {
-	if(false == ClientPacketHandler::HandlePacket(std::static_pointer_cast<ClientSession>(shared_from_this()), buffer.data())) {
-		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer.data());
+	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf.data())) {
+		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
 		LOG_ERROR("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 		Disconnect("Recv Invalid Packet");
 	}

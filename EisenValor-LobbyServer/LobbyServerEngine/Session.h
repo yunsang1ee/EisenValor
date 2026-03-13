@@ -30,6 +30,7 @@ namespace LobbyServerEngine {
 	public:
 		void SetID(const uint32 id) { m_id = id; }
 		void SetNetAddress(const SOCKADDR_IN& netAddress) { m_netAddress = netAddress; }
+		void SetState(const SESSION_STATE state) { m_state = state; }
 		uint32			GetID() const { return m_id; }
 		SESSION_STATE	GetState() const { return m_state; }
 		HANDLE GetHandle() const override final { return reinterpret_cast<HANDLE>(m_socket); }

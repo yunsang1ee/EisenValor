@@ -106,12 +106,6 @@
     <ClInclude Include="AcceptThread.h">
       <Filter>Test\Network\Thread\WorkerThread\AcceptThread</Filter>
     </ClInclude>
-    <ClInclude Include="LobbyThread.h">
-      <Filter>Test\Network\Thread\LobbyThread</Filter>
-    </ClInclude>
-    <ClInclude Include="WorkerThread.h">
-      <Filter>Test\Network\Thread\WorkerThread</Filter>
-    </ClInclude>
     <ClInclude Include="IRoom.h">
       <Filter>Test\Interfaces\IRoom</Filter>
     </ClInclude>
@@ -135,6 +129,15 @@
     </ClInclude>
     <ClInclude Include="RIORingBuffer.h">
       <Filter>Test\RingBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkerThread.h">
+      <Filter>Test\Network\Thread\WorkerThread</Filter>
+    </ClInclude>
+    <ClInclude Include="GameWorldThread.h">
+      <Filter>Test\Network\Thread\WorldThread</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketHandler.h">
+      <Filter>Test\Network\PacketHandler</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -222,9 +225,6 @@
     <ClCompile Include="AcceptThread.cpp">
       <Filter>Test\Network\Thread\WorkerThread\AcceptThread</Filter>
     </ClCompile>
-    <ClCompile Include="LobbyThread.cpp">
-      <Filter>Test\Network\Thread\LobbyThread</Filter>
-    </ClCompile>
     <ClCompile Include="IRoom.cpp">
       <Filter>Test\Interfaces\IRoom</Filter>
     </ClCompile>
@@ -246,11 +246,17 @@
     <ClCompile Include="TaskQueueManager.cpp">
       <Filter>95. Managers\TaskQueueManager\TaskQueue</Filter>
     </ClCompile>
+    <ClCompile Include="RIORingBuffer.cpp">
+      <Filter>Test\RingBuffer</Filter>
+    </ClCompile>
     <ClCompile Include="WorkerThread.cpp">
       <Filter>Test\Network\Thread\WorkerThread</Filter>
     </ClCompile>
-    <ClCompile Include="RIORingBuffer.cpp">
-      <Filter>Test\RingBuffer</Filter>
+    <ClCompile Include="GameWorldThread.cpp">
+      <Filter>Test\Network\Thread\WorldThread</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketHandler.cpp">
+      <Filter>Test\Network\PacketHandler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -371,9 +377,6 @@
     <Filter Include="Test\Network\Thread">
       <UniqueIdentifier>{c66e3896-1eed-4ccc-952f-e9829262ab5e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Test\Network\Thread\LobbyThread">
-      <UniqueIdentifier>{561c8dea-80a2-4950-9ac6-07079098b6b3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Test\Network\Thread\WorkerThread">
       <UniqueIdentifier>{6875bbd8-eee7-47be-b76c-276e02a4b1a1}</UniqueIdentifier>
     </Filter>
@@ -388,6 +391,12 @@
     </Filter>
     <Filter Include="Test\Network\Thread\WorkerThread\AcceptThread">
       <UniqueIdentifier>{1ef05aae-e0e7-472a-ab5e-aa8e57644be0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\Network\Thread\WorldThread">
+      <UniqueIdentifier>{ff95a3fa-3593-42f6-9a65-fde0e1415856}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test\Network\PacketHandler">
+      <UniqueIdentifier>{823932bf-90ee-4fa5-a3fb-fc113e8fefb3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

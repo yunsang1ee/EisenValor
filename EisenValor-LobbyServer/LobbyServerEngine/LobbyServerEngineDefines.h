@@ -13,6 +13,6 @@ friend class Singleton;
 #define MANAGER(classname) (classname::GetInstance())
 
 #define REGISTER_PACKET(pkt, type, handler) \
-m_packetHandlerFuncs[(uint16)pkt] = \
-[](const std::shared_ptr<LobbyServerEngine::PacketSession>& s, const char* b) \
-{ return PacketHandler::HandlePacket<type>(handler, s, b); };
+m_packetHandlerFuncs[static_cast<uint16>(pkt)] = \
+[](const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const char* buffer) \
+{ return PacketHandler::HandlePacket<type>(handler, session, buffer); };
