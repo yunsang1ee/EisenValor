@@ -15,8 +15,8 @@ struct UIVertex
 // 인스턴스 데이터 구조체 (슬롯 1) - 128바이트 정렬 (GPU 최적화)
 struct UIInstanceData
 {
-	DirectX::XMFLOAT4X4 transform;    // 64바이트
-	DirectX::XMFLOAT4	color;        // 16바이트
+	DirectX::XMFLOAT4X4 transform;	  // 64바이트
+	DirectX::XMFLOAT4	color;		  // 16바이트
 	DirectX::XMFLOAT2	uvMin;		  // 8바이트
 	DirectX::XMFLOAT2	uvMax;		  // 8바이트
 	uint32_t			textureIndex; // 4바이트
@@ -61,4 +61,3 @@ private:
 	bool m_initialized = false;
 	bool m_vertexDataUploaded = false;
 };
-

@@ -154,7 +154,11 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_GENERAL_ATTACK_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{ return HandlePacket<FB_TABLES::SC_GENERAL_ATTACK_PACKET>(S2C::Handle_SC_GENERAL_ATTACK_PACKET, socket, buffer, header); };
+	{
+		return HandlePacket<FB_TABLES::SC_GENERAL_ATTACK_PACKET>(
+			S2C::Handle_SC_GENERAL_ATTACK_PACKET, socket, buffer, header
+		);
+	};
 
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_UPDATE_VITAL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -164,7 +168,7 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
 		return HandlePacket<FB_TABLES::SC_CHANGE_GENERAL_STANCE_PACKET>(
@@ -212,13 +216,9 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_DEAD_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_DEAD_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{
-		return HandlePacket<FB_TABLES::SC_DEAD_PACKET>(
-			S2C::Handle_SC_DEAD_PACKET, socket, buffer, header
-		);
-	};
+	{ return HandlePacket<FB_TABLES::SC_DEAD_PACKET>(S2C::Handle_SC_DEAD_PACKET, socket, buffer, header); };
 
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PING_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -237,4 +237,3 @@ std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePac
 	memcpy_s(&header[1], packetBuffer->GetCapacity() - sizeof(PacketHeader), packetData.data(), packetData.size());
 	return packetBuffer;
 }
-

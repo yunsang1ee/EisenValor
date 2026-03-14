@@ -11,7 +11,7 @@ public:
 	~RenderContext() = default;
 
 	template <IsValidRenderData T>
-	void SetData(T* data, uint32_t lifetime = 0)
+	void SetData(std::shared_ptr<T> data, uint32_t lifetime = 0)
 	{
 		if (nullptr == data)
 		{
@@ -28,15 +28,15 @@ public:
 		auto& history = m_histories[typeID];
 
 		DataEntry entry;
-		entry.data = data;
+		entry.data = std::static_pointer_cast<IRenderData>(data);
 		entry.maxLifetime = lifetime;
 		entry.currentAge = 0;
 
-		history.push_front(entry);
+		history.push_front(std::move(entry));
 	}
 
 	template <IsValidRenderData T>
-	T* GetData(uint32_t offset = 0) const
+	std::shared_ptr<T> GetData(uint32_t offset = 0) const
 	{
 		const uint32_t typeID = T::StaticRuntimeTypeID();
 
@@ -51,7 +51,7 @@ public:
 			return nullptr;
 		}
 
-		return static_cast<T*>(history[offset].data);
+		return std::static_pointer_cast<T>(history[offset].data);
 	}
 
 	void UpdateLifetimes()
@@ -63,7 +63,8 @@ public:
 				continue;
 			}
 
-			for (auto it = history.begin(); it != history.end();)
+			auto it = history.begin();
+			while (it != history.end())
 			{
 				if (it->currentAge >= it->maxLifetime)
 				{
@@ -81,9 +82,9 @@ public:
 private:
 	struct DataEntry
 	{
-		IRenderData* data;
-		uint32_t	 maxLifetime;
-		uint32_t	 currentAge;
+		std::shared_ptr<IRenderData> data;
+		uint32_t					 maxLifetime;
+		uint32_t					 currentAge;
 	};
 
 	std::vector<std::deque<DataEntry>> m_histories;

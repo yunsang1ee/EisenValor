@@ -10,6 +10,7 @@
 #include "Component/StaminaComponent.h"
 #include "Component/FSM/FSMComponent.h"
 #include "Component/FSM/StatePool.h"
+#include "Component/StressTestComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -25,7 +26,6 @@
 
 #include "MeshLoader.h"
 #include "MeshComponent.h"
-#include "SkinnedMeshComponent.h"
 
 using Vertex = EvAsset::Vertex;
 
@@ -33,7 +33,7 @@ void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent,
-		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent>();
+		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -41,9 +41,12 @@ void SampleScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");
 
-	GLOBAL(ResourceGlobal).LoadRegistry("Resource/AssetRegistry.evreg");
-
 	CreateSceneObjects();
+
+	// 서버 없이 테스트를 위한 스트레스 테스트 오브젝트 생성
+	ReserveGameObject("StressTester", std::nullopt, [this](GameObject* obj) {
+		CreateComponent<StressTestComponent>(obj->GetHandle());
+	});
 }
 
 void SampleScene::CreateSceneObjects()
@@ -73,7 +76,7 @@ void SampleScene::CreateSceneObjects()
 	);
 
 	ReserveGameObject(
-		"Sphere", std::nullopt,
+		"TestSphere", std::nullopt,
 		[this](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
@@ -87,7 +90,7 @@ void SampleScene::CreateSceneObjects()
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
 					if (nullptr != meshRes)
 					{
-						mesh->SetMeshResource(meshRes, true);
+						mesh->SetMeshResource(meshRes);
 					}
 				}
 			);

@@ -19,6 +19,14 @@ PlayerlIdleState::PlayerlIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
 void PlayerlIdleState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] IDLE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), true);
+		}
+	}
 }
 
 void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
@@ -40,6 +48,14 @@ PlayerMoveState::PlayerMoveState(): State(FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
 void PlayerMoveState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] MOVE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_MOVE), true);
+		}
+	}
 }
 
 void PlayerMoveState::Update(FSMComponent* fsm, float dt)
@@ -102,16 +118,12 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 	DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
 
-	// 애니메이션 한 번 재생
+	// 애니메이션 Key로 재생
 	if (auto* go = fsm->GetGameObject())
 	{
 		if (auto* anim = go->GetComponent<AnimationComponent>())
 		{
-			auto animRes = GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
-			if (animRes)
-			{
-				anim->Play(animRes, false);
-			}
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), false);
 		}
 	}
 }
@@ -206,6 +218,14 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] STUN Enter (Hit!)\n");
 	fsm->SetStateTimer(0.0f);
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false);
+		}
+	}
 }
 
 void PlayerStunState::Update(FSMComponent* fsm, float dt)
@@ -233,6 +253,14 @@ PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
 void PlayerDeadState::Enter(FSMComponent* fsm)
 {
 	DEBUG_LOG_FMT("[FSM] DEAD Enter (Killed)\n");
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD), false);
+		}
+	}
 }
 
 void PlayerDeadState::Update(FSMComponent* fsm, float dt)

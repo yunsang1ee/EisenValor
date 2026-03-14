@@ -138,9 +138,9 @@ void NetBridge::NetworkGlobal::ProcessIO()
 
 	if (recvLen == 0)
 	{
-		// assert(false && "Recv Zero");
+		assert(false && "Recv Zero");
 		std::cout << "Recv Zero" << std::endl;
-		exit(-1);
+		//exit(-1);
 	}
 	else if (recvLen < 0)
 	{
@@ -149,7 +149,7 @@ void NetBridge::NetworkGlobal::ProcessIO()
 		{
 			assert(false && "Recv Error");
 			std::println("Recv Error = {}", errCode);
-			exit(-1);
+			//exit(-1);
 		}
 		return;
 	}

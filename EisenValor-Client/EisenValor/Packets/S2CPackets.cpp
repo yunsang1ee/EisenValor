@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "GameObject.h"
 #include "Transform.h"
+#include "Util/AnimationLoader.h"
 
 // Resource
 #include "ResourceGlobal.h"
@@ -490,16 +491,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// 애니메이션 컴포넌트 추가
 			scene->CreateComponentWithInit<AnimationComponent>(
-				playerObjHandle,
-				[](AnimationComponent* anim)
-				{
-					auto animRes =
-						GLOBAL(ResourceGlobal).Load<AnimationResource>("Resource/Animation/HumanM@Attack1H01_L.evanim");
-					if (animRes)
-					{
-						anim->Play(animRes, false);
-					}
-				}
+				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "HumanM"); }
 			);
 
 			//// 공격 범위 디버깅용
@@ -553,7 +545,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 					cam->SetEnableLookAtRotation(false);
 					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 1.0f, -5.0f});
+					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 2.5f, -5.0f});
 					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
 				}
 			);
@@ -707,6 +699,14 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
+			// Animation Component
+			if (isGeneral)
+			{
+				scene->CreateComponentWithInit<AnimationComponent>(
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "HumanM"); }
+				);
+			}
+
 			DEBUG_LOG_FMT(
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
 				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
@@ -727,6 +727,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
+			// FSMComponent
+			scene->CreateComponentWithInit<FSMComponent>(
+				objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
+			);
 			//		// 공격 범위 디버깅
 			// if (isGeneral)
 			//{
@@ -833,7 +837,9 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 
 	const auto attackInfo = recvPkt.attack_info();
 	if (!attackInfo)
+	{
 		return false;
+	}
 
 	const auto type = attackInfo->attack_type();
 	const auto dir = attackInfo->attack_dir();
@@ -922,7 +928,9 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
+	{
 		return false;
+	}
 
 	const uint32 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
@@ -977,7 +985,9 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	auto cameraComp = CameraComponent::GetMainCamera();
 
 	if (!cameraComp)
+	{
 		return false;
+	}
 
 	const uint32 cameraTargetID = recvPkt.camera_target_id();
 

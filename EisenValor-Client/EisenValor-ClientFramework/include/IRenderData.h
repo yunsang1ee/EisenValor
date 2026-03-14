@@ -27,15 +27,6 @@ public:
 	virtual RenderDataTypeID GetRuntimeTypeID() const = 0;
 	virtual const char*		 GetTypeName() const = 0;
 	virtual bool			 IsValid() const = 0;
-
-	enum class Lifetime
-	{
-		Transient,	// 프레임 내에서만 유효
-		Persistent, // 프레임 간 유지 (N-1 프레임)
-		Temporal	// 여러 프레임 유지 (N-1, N-2, ...)
-	};
-
-	virtual Lifetime GetLifetime() const = 0;
 };
 
 template <typename Derived>
@@ -45,6 +36,8 @@ public:
 	RenderDataTypeID		GetRuntimeTypeID() const override { return RenderTypeInternal::GetTypeID<Derived>(); }
 	static RenderDataTypeID StaticRuntimeTypeID() { return RenderTypeInternal::GetTypeID<Derived>(); }
 	const char*				GetTypeName() const override { return typeid(Derived).name(); }
+
+	virtual bool IsValid() const override { return false; }
 };
 
 template <typename T>

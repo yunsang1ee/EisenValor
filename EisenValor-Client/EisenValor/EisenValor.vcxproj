@@ -205,6 +205,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\PlayerControllerComponent.h" />
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
     <ClInclude Include="Component\StaminaComponent.h" />
+    <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
@@ -215,8 +216,14 @@ exit /b 0</Command>
     <ClInclude Include="Packets\ServerEnum.h" />
     <ClInclude Include="Packets\Structs_generated.h" />
     <ClInclude Include="Packets\Tables_generated.h" />
+    <ClInclude Include="RaytracingCommon.h" />
+    <ClInclude Include="RenderData\GeoTableRenderData.h" />
+    <ClInclude Include="RenderData\InstanceRenderData.h" />
+    <ClInclude Include="RenderData\MaterialRenderData.h" />
+    <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\SkinningPass.h" />
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\LoadingScene.h" />
@@ -226,6 +233,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
+    <ClInclude Include="Util\AnimationLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\FSM\FSMComponent.cpp" />
@@ -237,6 +245,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
     <ClCompile Include="Component\StaminaComponent.cpp" />
+    <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
     <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
@@ -249,6 +258,7 @@ exit /b 0</Command>
     <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\LoadingScene.cpp" />
     <ClCompile Include="Scene\LobbyScene.cpp" />
@@ -264,6 +274,7 @@ exit /b 0</Command>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafxClient.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Component\BattleUIControllerComponent.cpp" />
+    <ClCompile Include="Util\AnimationLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />
@@ -283,8 +294,6 @@ exit /b 0</Command>
   <ItemGroup>
     <None Include="..\.clang-format" />
     <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
-    <None Include="Resource\Shader\PixelShader.hlsl" />
-    <None Include="Resource\Shader\VertexShader.hlsl" />
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
     <None Include="Resource\Shader\RaytracingCommon.hlsli" />

@@ -4,6 +4,7 @@
 #include <memory>
 
 class DxBuffer;
+class DxBLAS;
 
 namespace EvAsset
 {
@@ -16,11 +17,12 @@ class MeshResource final : public ResourceBase<MeshResource>
 public:
 	static constexpr const char* GetStaticResourceName() { return "MeshResource"; }
 
-	MeshResource() = default;
+	MeshResource();
 	~MeshResource() override;
 
 	DxBuffer* GetVertexBuffer() const { return m_vertexBuffer.get(); }
 	DxBuffer* GetIndexBuffer() const { return m_indexBuffer.get(); }
+	DxBLAS*	  GetBLAS() const { return m_blas.get(); }
 
 	const EvAsset::Bounds&				 GetBounds() const { return m_bounds; }
 	const std::vector<EvAsset::SubMesh>& GetSubMeshes() const { return m_subMeshes; }
@@ -30,7 +32,8 @@ public:
 	uint32_t GetIndexCount() const { return m_indexCount; }
 	uint32_t GetIndexFormat() const { return m_indexFormat; }
 
-	void SetGPUResources(std::unique_ptr<DxBuffer> vb, std::unique_ptr<DxBuffer> ib);
+	void SetGPUResources(std::unique_ptr<DxBuffer> vb, std::unique_ptr<DxBuffer> ib, std::unique_ptr<DxBLAS> blas);
+
 	void SetMetadata(
 		const EvAsset::Bounds&			bounds,
 		std::vector<EvAsset::SubMesh>&& subMeshes,
@@ -43,6 +46,7 @@ public:
 private:
 	std::unique_ptr<DxBuffer> m_vertexBuffer;
 	std::unique_ptr<DxBuffer> m_indexBuffer;
+	std::unique_ptr<DxBLAS>	  m_blas;
 
 	std::vector<EvAsset::SubMesh> m_subMeshes;
 	std::vector<EvAsset::Guid>	  m_defaultMaterialGuids;
