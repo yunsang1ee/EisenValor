@@ -132,7 +132,7 @@ namespace Server {
 			virtual ~GameWorldTest();
 
 		public:
-			virtual void Init() override final;
+			virtual void Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info) override final;
 			virtual void Update(const float dt) override final;
 			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
 			virtual void LeaveSession(std::shared_ptr<ServerEngine::Session> session)  override final;
@@ -196,6 +196,9 @@ namespace Server {
 			NavSystem																m_navSystem;
 			uint32																	m_npcIdGen;
 			float																	m_dt;
+
+
+			std::unordered_map<uint32, GameWorldParticipantInfo> m_reservedParticipantInfo;
 
 		};
 #endif

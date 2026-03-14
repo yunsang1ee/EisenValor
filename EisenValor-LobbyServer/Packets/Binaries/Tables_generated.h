@@ -114,6 +114,12 @@ struct CL_START_GAME_PACKETBuilder;
 struct LS_CREATE_GAME_WORLD_PACKET;
 struct LS_CREATE_GAME_WORLD_PACKETBuilder;
 
+struct SL_CREATE_GAME_WORLD_PACKET;
+struct SL_CREATE_GAME_WORLD_PACKETBuilder;
+
+struct LC_CONNECT_TO_GAME_SERVER_PACKET;
+struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder;
+
 struct SC_LOADING_GAME_WORLD_PACKET;
 struct SC_LOADING_GAME_WORLD_PACKETBuilder;
 
@@ -1647,6 +1653,108 @@ inline ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET> CreateLS_CREATE_GAME_W
       participants__);
 }
 
+struct SL_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SL_CREATE_GAME_WORLD_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_WORLD_ID = 4,
+    VT_PORT = 6
+  };
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  uint16_t port() const {
+    return GetField<uint16_t>(VT_PORT, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyField<uint16_t>(verifier, VT_PORT, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct SL_CREATE_GAME_WORLD_PACKETBuilder {
+  typedef SL_CREATE_GAME_WORLD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(SL_CREATE_GAME_WORLD_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_port(uint16_t port) {
+    fbb_.AddElement<uint16_t>(SL_CREATE_GAME_WORLD_PACKET::VT_PORT, port, 0);
+  }
+  explicit SL_CREATE_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> CreateSL_CREATE_GAME_WORLD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    uint16_t port = 0) {
+  SL_CREATE_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_port(port);
+  builder_.add_world_id(world_id);
+  return builder_.Finish();
+}
+
+struct LC_CONNECT_TO_GAME_SERVER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_CONNECT_TO_GAME_SERVER_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_WORLD_ID = 4,
+    VT_PORT = 6
+  };
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  uint16_t port() const {
+    return GetField<uint16_t>(VT_PORT, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyField<uint16_t>(verifier, VT_PORT, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder {
+  typedef LC_CONNECT_TO_GAME_SERVER_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_port(uint16_t port) {
+    fbb_.AddElement<uint16_t>(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_PORT, port, 0);
+  }
+  explicit LC_CONNECT_TO_GAME_SERVER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> CreateLC_CONNECT_TO_GAME_SERVER_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    uint16_t port = 0) {
+  LC_CONNECT_TO_GAME_SERVER_PACKETBuilder builder_(_fbb);
+  builder_.add_port(port);
+  builder_.add_world_id(world_id);
+  return builder_.Finish();
+}
+
 struct SC_LOADING_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SC_LOADING_GAME_WORLD_PACKETBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
@@ -3066,14 +3174,19 @@ inline ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> CreateCS_GEN_NPC_GENERAL
 struct CS_ENTER_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_ENTER_GAME_WORLD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ROOM_ID = 4
+    VT_ROOM_ID = 4,
+    VT_PLAYER_ID = 6
   };
   uint16_t room_id() const {
     return GetField<uint16_t>(VT_ROOM_ID, 0);
   }
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            verifier.EndTable();
   }
 };
@@ -3084,6 +3197,9 @@ struct CS_ENTER_GAME_WORLD_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_room_id(uint16_t room_id) {
     fbb_.AddElement<uint16_t>(CS_ENTER_GAME_WORLD_PACKET::VT_ROOM_ID, room_id, 0);
+  }
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(CS_ENTER_GAME_WORLD_PACKET::VT_PLAYER_ID, player_id, 0);
   }
   explicit CS_ENTER_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -3098,8 +3214,10 @@ struct CS_ENTER_GAME_WORLD_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> CreateCS_ENTER_GAME_WORLD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t room_id = 0) {
+    uint16_t room_id = 0,
+    uint32_t player_id = 0) {
   CS_ENTER_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
   builder_.add_room_id(room_id);
   return builder_.Finish();
 }

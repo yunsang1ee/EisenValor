@@ -6,9 +6,10 @@
 
 #include "AcceptThread.h"
 #include "Session.h"
+#include "GameWorldThread.h"
 
-ServerEngine::WorkerThread::WorkerThread(std::unique_ptr<IOCoreTest>&& ioCore)
-	: m_ioCore{std::move(ioCore)}
+ServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore)
+	: m_type{ type }, m_ioCore { std::move(ioCore) }
 {
 }
 
@@ -62,5 +63,17 @@ void ServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 		return;
 	}
 
-	// TODO: 로비없을 시 바로 EnterWorld
+#ifndef APPLY_LOBBY_SERVER
+	static uint32 idGen{ 1 };
+	session->SetID(idGen);
+	idGen++;
+	if(m_type == WORKER_THREAD_TYPE::WORLD) {
+		static_cast<GameWorldThread*>(this)->EnterWorld(session);
+	}
+#endif
+}
+
+uint16 ServerEngine::WorkerThread::GetPort() const
+{
+	return m_acceptThread->GetPort();
 }

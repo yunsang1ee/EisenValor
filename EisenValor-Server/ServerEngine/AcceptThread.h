@@ -19,6 +19,9 @@ namespace ServerEngine {
 		bool Init(const uint16 port);
 		void Run(const std::stop_token st);
 
+	public:
+		uint16 GetPort() const { return m_port; }
+
 	private:
 		void SetSocketOptions(SOCKET& socket);
 
@@ -27,6 +30,7 @@ namespace ServerEngine {
 		SOCKADDR_IN					m_serverAddress;
 		const SessionFactoryFunc	m_func;
 		WorkerThread*				m_ownerWorker;
+		uint16						m_port;
 
 		friend class ServerEngineCore;
 	};

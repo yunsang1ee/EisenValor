@@ -122,6 +122,14 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
+		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET>(
+			S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET, socket, buffer, header
+		);
+	};
+
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{

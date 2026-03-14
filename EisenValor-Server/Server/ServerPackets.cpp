@@ -15,7 +15,7 @@ namespace ServerPackets {
 		return Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_PING_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PING_PACKET));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg) 
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		return Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHAT_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
@@ -163,6 +163,12 @@ namespace ServerPackets {
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		return Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GAME_ROOM_STATE_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GAME_ROOM_STATE_PACKET, id, stateType));
+	}
+
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SL_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const uint16 port)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_CREATE_GAME_WORLD_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_CREATE_GAME_WORLD_PACKET, worldID, port));
 	}
 #pragma endregion
 	

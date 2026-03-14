@@ -3,6 +3,9 @@
 
 #include "ClientSession.h"
 #include "GameWorld.h"
+
+#include "GameWorldThread.h"
+
 void Server::ClientPacketHandler::Init()
 {
 #pragma region SESSION_PACKETS
@@ -18,6 +21,7 @@ void Server::ClientPacketHandler::Init()
 	REGISTER_PACKET(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT, FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET, ClientPacketHandler::Handle_CS_CHANGE_CAMERA_TARGET_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT, FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET, ClientPacketHandler::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET, FB_TABLES::CS_GEN_NPC_GENERAL_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_ENTER_GAME_WORLD_PKT, FB_TABLES::CS_ENTER_GAME_WORLD_PACKET, ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET);
 #pragma endregion
 
 	LOG_INFO("ClientPacketHandler Init");
@@ -141,4 +145,24 @@ bool Server::ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET(const std::sh
 
 	return true;
 }
+
+bool Server::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt)
+{
+	const uint16 roomID{ recvPkt.room_id() };
+	
+	auto world = static_cast<Server::Contents::GameWorldTest*>(static_cast<ServerEngine::GameWorldThread*>(TLS_WOREKR_THREAD)->FindGameWorld(roomID));
+
+	if(world) {
+		std::cout << "CS_ENTER_GAME_WORLD_PACKET" << std::endl;
+		session->SetID(recvPkt.player_id());
+		std::cout << "Session ID: " << session->GetID() << std::endl;
+		world->EnterSession(session);
+	}
+	else {
+		std::cout << "Failed Handle CS ENTER GAME WORLD" << std::endl;
+	}
+
+	return true;
+}
+
 #pragma endregion

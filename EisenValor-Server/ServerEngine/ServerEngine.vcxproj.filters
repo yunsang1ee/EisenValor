@@ -139,6 +139,9 @@
     <ClInclude Include="PacketHandler.h">
       <Filter>Test\Network\PacketHandler</Filter>
     </ClInclude>
+    <ClInclude Include="ServerEngineStruct.h">
+      <Filter>97. Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -402,7 +405,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="..\Binaries\Server\Config\ServerEngineConfig.json">
-      <Filter>94. Config</Filter>
+      <Filter>95. Managers</Filter>
     </None>
   </ItemGroup>
 </Project>

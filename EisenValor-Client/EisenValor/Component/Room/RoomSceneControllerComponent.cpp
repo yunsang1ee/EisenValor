@@ -32,7 +32,8 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 	}
 	
 	// TODO: 게임 시작하기
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F5)) {
+	if (GLOBAL(InputGlobal).GetInputDown('R'))
+	{
 		auto pb{NetBridge::C2S::Make_CS_START_GAME_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}

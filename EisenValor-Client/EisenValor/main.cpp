@@ -30,6 +30,8 @@
 #include "Packets/C2SPackets.h"
 #include <TimerGlobal.h>
 
+// #define APPLY_LOBBY_SERVER
+
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR			 szTitle[MAX_LOADSTRING];
 WCHAR			 szWindowClass[MAX_LOADSTRING];
@@ -110,7 +112,15 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
-	if (!g_Framework->Initialize(hInstance, hWnd /*, "100.90.51.106"*/ /*, 7777*/))
+	std::string_view ipAddress{"127.0.0.1"};
+	
+	#ifdef APPLY_LOBBY_SERVER
+		const uint16 port{8888};	// lobby port
+	#else
+		const uint16 port{40002};	// game server 1st worldThread port
+	#endif
+
+	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port))
 	{
 		return FALSE;
 	}

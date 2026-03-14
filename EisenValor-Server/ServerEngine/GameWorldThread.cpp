@@ -5,8 +5,8 @@
 #include "AcceptThread.h"
 #include "IOCoreTest.h"
 
-ServerEngine::GameWorldThread::GameWorldThread(std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc)
-	: ServerEngine::WorkerThread{ std::move(ioCore) }, m_worldFunc{worldFunc}
+ServerEngine::GameWorldThread::GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc)
+	: ServerEngine::WorkerThread{ type, std::move(ioCore) }, m_worldFunc{worldFunc}
 {
 }
 
@@ -19,10 +19,10 @@ bool ServerEngine::GameWorldThread::Init(const SessionFactoryFunc func, const ui
 	if(false == WorkerThread::Init(func, port))
 		return false;
 	
-	for(int i = 0; i < 1; ++i) {
-		m_worlds.insert(std::make_pair(i, m_worldFunc()));
-		m_worlds[i]->Init();
-	}
+	//for(int i = 0; i < 1; ++i) {
+	//	m_worlds.insert(std::make_pair(i, m_worldFunc()));
+	//	// m_worlds[i]->Init();
+	//}
 	return true;
 }
 
@@ -54,7 +54,32 @@ void ServerEngine::GameWorldThread::Run(const std::stop_token st)
 	}
 }
 
+void ServerEngine::GameWorldThread::CreateWorld(const uint16 roomID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
+{
+	if(m_worlds.contains(roomID))
+		return;
+
+	auto world{ m_worldFunc() };
+	world->SetID(roomID);
+	world->SetGameWorldThread(this);
+	world->Init(info);
+	m_worlds.insert(std::make_pair(roomID, std::move(world)));
+}
+
 void ServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> session)
 {
-	m_worlds[0]->EnterSession(session);
+	const uint16 roomID{ 1 };
+	std::unordered_map<uint32, GameWorldParticipantInfo> u;
+	if(false == m_worlds.contains(roomID))
+		CreateWorld(roomID, u);
+	
+	m_worlds[roomID]->EnterSession(session);
+}
+
+ServerEngine::IRoom* ServerEngine::GameWorldThread::FindGameWorld(const uint16 worldID)
+{
+	if(false == m_worlds.contains(worldID))
+		return nullptr;
+
+	return m_worlds[worldID].get();
 }

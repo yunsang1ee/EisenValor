@@ -165,7 +165,7 @@ Server::Contents::GameLobbyTest::~GameLobbyTest()
 {
 }
 
-void Server::Contents::GameLobbyTest::Init()
+void Server::Contents::GameLobbyTest::Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
 {
 }
 

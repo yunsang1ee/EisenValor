@@ -1,6 +1,8 @@
 #pragma once
 // define ENABLE_LOBBY
 
+#define APLLY_LOBBY_SERVER
+
 #pragma warning(disable: 4819)
 
 #include "ServerEnginePch.h"

@@ -29,6 +29,7 @@ namespace Server {
 		static bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt);
 		static bool Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt);
 		static bool Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt);
+		static bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt);
 #pragma endregion
 	};
 }

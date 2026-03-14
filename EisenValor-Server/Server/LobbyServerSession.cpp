@@ -11,11 +11,13 @@ Server::RIOLobbyServerSession::RIOLobbyServerSession()
 
 Server::RIOLobbyServerSession::~RIOLobbyServerSession()
 {
-	std::cout << "~RIOLobbyServerSession" << std::endl;
+	std::cout << "~LobbyServerSession" << std::endl;
 }
 
 void Server::RIOLobbyServerSession::OnConnected()
 {
+	SetID(0);
+
 	LOG_INFO("LobbySession ID:{}, OnConnected!", GetID());
 	MANAGER(Server::SessionManager)->AddSession(std::static_pointer_cast<LobbyServerSession>(shared_from_this()));
 
@@ -25,7 +27,7 @@ void Server::RIOLobbyServerSession::OnConnected()
 	m_lastPong = std::chrono::high_resolution_clock::now();
 	CheckPing();
 }
-
+	
 void Server::RIOLobbyServerSession::OnDisconnected(const std::string_view reason)
 {
 	auto lobbyServerSession = std::static_pointer_cast<LobbyServerSession>(shared_from_this());
@@ -37,7 +39,7 @@ void Server::RIOLobbyServerSession::OnRecvPacket(const std::span<const char>& bu
 {
 	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf.data())) {
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
-		LOG_ERROR("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
+		LOG_WARNING("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 		Disconnect("Recv Invalid Packet");
 	}
 }

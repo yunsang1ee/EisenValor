@@ -9,7 +9,7 @@ namespace ServerEngine {
 
 	class WorkerThread : public JobQueue {
 	public:
-		explicit WorkerThread(std::unique_ptr<IOCoreTest>&& ioCore);
+		explicit WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore);
 		virtual ~WorkerThread();
 
 	public:
@@ -21,9 +21,11 @@ namespace ServerEngine {
 
 	public:
 		IOCoreTest* GetIoCore() const { return m_ioCore.get(); }
+		uint16 GetPort() const;
 
 	protected:
 		std::unique_ptr<IOCoreTest>					m_ioCore;
 		std::unique_ptr<AcceptThread>				m_acceptThread;
+		const WORKER_THREAD_TYPE					m_type;
 	};
 }

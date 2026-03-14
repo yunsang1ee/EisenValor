@@ -96,6 +96,15 @@ void LobbyServer::GameLobby::EnterGameLobby(std::shared_ptr<ClientSession> clien
 	std::cout << std::format("User: {}, Enter Lobby!", id) << std::endl;
 }
 
+void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint16 port)
+{
+	if(false == m_gameRooms.contains(roomID))
+		return;
+
+	auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, port) };
+	m_gameRooms[roomID]->Broadcast(std::move(pb));
+}
+
 void LobbyServer::GameLobby::LeaveGameLobby(const std::shared_ptr<ClientSession>& clientSession)
 {
 	const uint32 id{ clientSession->GetID() };

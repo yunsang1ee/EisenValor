@@ -33,6 +33,7 @@ std::shared_ptr<PacketBuffer> Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
 // =================
 //		월드
 // =================
+std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_WORLD_PACKET(const uint16 worldID, const uint32 localID);
 std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerState);
 std::shared_ptr<PacketBuffer> Make_CS_GENERAL_ATTACK_PACKET(const FB_STRUCTS::GeneralAttackInfo* attackInfo);
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_STANCE_PACKET();
@@ -50,7 +51,7 @@ std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
 // =================
 //		테스트
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept;
+std::shared_ptr<PacketBuffer> Make_TEST_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept;
 std::shared_ptr<PacketBuffer> Make_CS_GO_WORLD_PACKET() noexcept;
 } // namespace C2S
 } // namespace NetBridge

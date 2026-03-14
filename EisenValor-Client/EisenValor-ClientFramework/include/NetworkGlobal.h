@@ -69,6 +69,7 @@ public:
 			if (WSAEWOULDBLOCK == errCode)
 			{
 				std::cout << "WSAEWOULDBLOCK" << std::endl;
+				assert(nullptr);
 				return;
 			}
 			else

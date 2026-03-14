@@ -88,7 +88,7 @@ bool LobbyServerEngine::Session::PostConnect(const std::string_view ip, const ui
 	DWORD numOfBytes{};
 	if(false == SocketUtils::ConnectEx(m_socket, reinterpret_cast<SOCKADDR*>(&serverAddr), sizeof(serverAddr), nullptr, 0, &numOfBytes, &m_connectedContext)) {
 		int32 errCode = ::WSAGetLastError();
-		std::cout << errCode << std::endl;
+		// std::cout << errCode << std::endl;
 		if(errCode != WSA_IO_PENDING) {
 			m_connectedContext.SetOwner(nullptr);
 			return false;

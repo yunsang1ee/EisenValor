@@ -117,14 +117,18 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 
 		std::vector<ParticipantInfo> particinpants;
 
-		for(const auto& [id, user] : m_users)
+		for(const auto& [id, user] : m_users) {
 			particinpants.emplace_back(user->GetInfo());
+			std::cout << "Start Game User ID = " << id << std::endl;
+		}
 
 		for(const auto& [id, bot] : m_bots)
 			particinpants.emplace_back(bot->GetInfo());
 
 		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(m_info.id, particinpants) };
 		gameServerSession->Send(std::move(pb));
+
+		gameServerSession->AddReservedStartRoom(m_info.id);
 	}
 }
 

@@ -12,6 +12,8 @@
 
 #include "GameWorldThread.h"
 
+#define APPLY_LOBBY_SERVER
+
 #ifdef MODERN_CODE
 
 ServerEngine::ServerEngineCore::ServerEngineCore()
@@ -59,7 +61,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSession
 	// lobbySesionThread 생성
 	{
 		auto rioCOre{ std::make_unique<RIO::RIOCoreTest>() };
-		auto lobbyServerSessionThread =  std::make_unique<WorkerThread>(std::move(rioCOre));
+		auto lobbyServerSessionThread =  std::make_unique<WorkerThread>(WORKER_THREAD_TYPE::LOBBY_SESSION, std::move(rioCOre));
 		
 		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, 40001))
 			return false;
@@ -69,12 +71,12 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSession
 	}
 	
 	// WorkerThread 생성
-	int arr[2]{ 40002, 40003 };
+	int port[2]{ 40002, 40003 };
 	for(int i = 1; i < 3; ++i) {
 		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
-		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(std::move(rioCore), worldFunc));
+		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::WORLD, std::move(rioCore), worldFunc));
 
-		if(false == m_workerThreads[i]->Init(clientSessionFunc, arr[i]))
+		if(false == m_workerThreads[i]->Init(clientSessionFunc, port[i-1]))
 			return false;
 	}
 
@@ -93,6 +95,7 @@ void ServerEngine::ServerEngineCore::Run()
 				else {
 					TLS_THREAD_NAME = "GameWorldThread_" + std::to_string(TLS_THREAD_ID);
 				}
+				TLS_WOREKR_THREAD = m_workerThreads[i].get();
 				m_workerThreads[i]->Run(st);
 			});
 	}

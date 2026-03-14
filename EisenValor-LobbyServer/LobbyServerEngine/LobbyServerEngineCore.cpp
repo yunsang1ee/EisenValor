@@ -30,7 +30,7 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 	}
 	
 	m_gameServerSession = gameServerSessionFunc();
-	m_gameServerSession->SetID(10000);
+	m_gameServerSession->SetID(0);
 
 	if(false == m_iocpCore.Register(m_gameServerSession)) {
 		LOG_ERROR("GameServerSession Register Failed");

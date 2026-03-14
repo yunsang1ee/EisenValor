@@ -66,6 +66,7 @@ void LobbyServer::ClientSession::OnRecvPacket(const std::span<const char>& buf)
 
 	auto const packetSession{ GetPacketSession() };
 	if(false == m_packetHandler->HandlePacket(packetSession, buf.data())) {
-		LOG_ERROR("Invalid Handle Packet!");
+		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
+		LOG_WARNING("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 	}
 }

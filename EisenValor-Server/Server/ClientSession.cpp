@@ -191,7 +191,7 @@ Server::RIOClientSession::~RIOClientSession()
 
 void Server::RIOClientSession::OnConnected()
 {
-	LOG_INFO("Session ID:{}, OnConnected!", GetID());
+	LOG_INFO("Session, OnConnected!");
 	MANAGER(Server::SessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
 	
 	m_packetHandler = std::make_unique<ClientPacketHandler>();
@@ -238,7 +238,7 @@ void Server::RIOClientSession::OnRecvPacket(const std::span<const char>& buf)
 {
 	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf.data())) {
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
-		LOG_ERROR("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
+		LOG_WARNING("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 		Disconnect("Recv Invalid Packet");
 	}
 }

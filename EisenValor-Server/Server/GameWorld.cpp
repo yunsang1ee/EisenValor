@@ -12,6 +12,11 @@
 #include "GameObject.h"
 #include "Collider.h"
 #include "BattleRam.h"
+#include "ServerEngineCore.h"
+#include "WorkerThread.h"
+#include "GameWorldThread.h"
+#include "SessionManager.h"
+#include "LobbyServerSession.h"
 
 Server::Contents::GameWorld::GameWorld()
 	:FIXED_UPDATE_TICK_MS{ 16 }, FIXED_DT_SEC{ 0.016f }, m_lag{}, m_worldFrameCount{},
@@ -797,13 +802,31 @@ Server::Contents::GameWorldTest::~GameWorldTest()
 
 }
 
-void Server::Contents::GameWorldTest::Init()
+void Server::Contents::GameWorldTest::Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
 {
+	for(const auto& [id, i] : info)
+		m_reservedParticipantInfo.insert(std::make_pair(id, i));
+
 	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
 
 	CreateGameWorldObjects();
+
+	//auto lobbyServerSessionThread = MANAGER(ServerEngine::ServerEngineCore)->GetLobbyServerSessionThread();
+	//if(lobbyServerSessionThread) {
+	//	const uint16 port{ GetGameWorldThread()->GetPort() };
+	//	const uint16 worldID{ GetID() };
+	//	lobbyServerSessionThread->PushJob(&ServerEngine::WorkerThread::FinishCreateGameWorld, worldID, port);
+	//}
+
+	auto lobbyServerSession = MANAGER(Server::SessionManager)->GetLobbyServerSession();
+	if(lobbyServerSession) {
+		const uint16 port{ GetGameWorldThread()->GetPort() };
+		const uint16 worldID{ GetID() };
+		auto pb{ ServerPackets::Make_SL_CREATE_GAME_WORLD_PACKET(worldID, port) };
+		lobbyServerSession->Send(std::move(pb));
+	}
 }
 
 void Server::Contents::GameWorldTest::Update(const float dt)
@@ -868,20 +891,26 @@ void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine:
 	const uint32 id{ session->GetID() };
 
 	std::cout << "Enter Game World!" << std::endl;
-
 	static const Vec3 offset{ 3.f, 0.f, 3.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
 
+
 	PlayerTemplate t;
 	t.posInfo = PosInfo{ startPos, rot };
-	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+	
+	if(m_reservedParticipantInfo.contains(session->GetID())) {
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
+	}
+	else {
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+		flag = !flag;
+	}
+	
 	t.gameWorld = this;
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
-	flag = !flag;
-
 	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
 	player->SetID(clientSession->GetID());
 	player->SetSession(clientSession);

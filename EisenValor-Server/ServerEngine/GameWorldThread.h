@@ -7,7 +7,7 @@ namespace ServerEngine {
 
 	class GameWorldThread : public WorkerThread {
 	public:
-		explicit GameWorldThread(std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc);
+		explicit GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc);
 		virtual ~GameWorldThread();
 
 	public:
@@ -15,8 +15,9 @@ namespace ServerEngine {
 		virtual void Run(const std::stop_token st) override final;
 
 	public:
+		void CreateWorld(const uint16 roomID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info);
 		void EnterWorld(std::shared_ptr<Session> session);
-
+		IRoom* FindGameWorld(const uint16 worldID);
 
 	private:
 		const GameWorldTestFactoryFunc					m_worldFunc;

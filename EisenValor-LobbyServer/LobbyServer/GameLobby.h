@@ -38,8 +38,10 @@ namespace LobbyServer {
 		void LeaveGameLobby(const std::shared_ptr<ClientSession>& clientSession);
 		void Handle_LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession);
 
+		void ConnectToGameServer(const uint16 roomID, const uint16 port);
 	private:
 		void EnterGameLobby(std::shared_ptr<ClientSession> clientSession);
+
 
 	private:
 		std::unordered_map<uint32, std::shared_ptr<ClientSession>>	m_users;

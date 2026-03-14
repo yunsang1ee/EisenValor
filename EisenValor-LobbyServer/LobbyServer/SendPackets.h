@@ -21,6 +21,7 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(const ParticipantInfo& user, const std::vector<ParticipantInfo>& participants);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_SC_ENTER_PARTICIPANT_IN_GAME_ROOM_PACKET(const ParticipantInfo& participant);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 roomID, const std::vector<ParticipantInfo>& participants);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CONNECT_TO_GAME_SERVER_PACKET(const uint16 worldID, const uint16 port);
 #pragma endregion
 
 }

@@ -26,6 +26,8 @@ bool ServerEngine::AcceptThread::Init(const uint16 port)
 	if(m_listenSocket == INVALID_SOCKET)
 		return false;
 
+	m_port = port;
+
 	memset(&m_serverAddress, 0, sizeof(m_serverAddress));
 	m_serverAddress.sin_family = AF_INET;
 	m_serverAddress.sin_port = htons(port);
@@ -73,12 +75,10 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 
 		auto session = m_func();
 
-		static uint32 idGen{ 50123 };
-		session->SetID(idGen);
-		idGen++;
-
-		if(false == session->AcceptCompleted(clientSocket, clientAddr))
+		if(false == session->AcceptCompleted(clientSocket, clientAddr)) {
+			std::cout << "Failed AcceptCompleted" << std::endl;
 			continue;
+		}
 
 		m_ownerWorker->PushJob(&ServerEngine::WorkerThread::Register, (session));
 	}

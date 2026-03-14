@@ -21,3 +21,10 @@ enum class SESSION_TYPE : uint8 {
 
 	END
 };
+
+enum class WORKER_THREAD_TYPE : uint8 {
+	LOBBY_SESSION,
+	WORLD,
+
+	END
+};

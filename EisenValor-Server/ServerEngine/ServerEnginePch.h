@@ -62,6 +62,7 @@ namespace fs = std::filesystem;
 #include "ServerEngineTypes.h"
 #include "ServerEngineGlobalVariables.h"
 #include "ServerEngineEnums.h"
+#include "ServerEngineStruct.h"
 #include "ServerEngineTLS.h"
 
 #include "LogManager.h"

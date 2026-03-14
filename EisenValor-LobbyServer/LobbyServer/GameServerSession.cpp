@@ -40,6 +40,25 @@ void LobbyServer::GameServerSession::OnRecvPacket(const std::span<const char>& b
 
 	auto const packetSession{ GetPacketSession() };
 	if(false == m_packetHandler->HandlePacket(packetSession, buf.data())) {
-		LOG_ERROR("GameServerSession Invalid Handle Packet!");
+		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
+		LOG_WARNING("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 	}
+}
+
+void LobbyServer::GameServerSession::AddReservedStartRoom(const uint16 roomID)
+{
+	if(m_reservedStartRoomId.contains(roomID))
+		return;
+
+	m_reservedStartRoomId.insert(roomID);
+}
+
+uint16 LobbyServer::GameServerSession::GetReservedStartRoom(const uint16 roomID)
+{
+	if(false == m_reservedStartRoomId.contains(roomID))
+		return 3147039274;
+
+	m_reservedStartRoomId.unsafe_erase(roomID);
+
+	return roomID;
 }

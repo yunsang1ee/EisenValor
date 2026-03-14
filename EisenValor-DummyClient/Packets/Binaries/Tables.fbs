@@ -153,6 +153,16 @@ table LS_CREATE_GAME_WORLD_PACKET {
 	participants: [FB_STRUCTS.ParticipantInfo];
 }
 
+table SL_CREATE_GAME_WORLD_PACKET {
+	world_id: uint16;
+	port: uint16;
+}
+
+table LC_CONNECT_TO_GAME_SERVER_PACKET {
+	world_id: uint16;
+	port: uint16;
+}
+
 table SC_LOADING_GAME_WORLD_PACKET {
 
 }
@@ -178,6 +188,8 @@ table SC_CHANGE_GAME_ROOM_STATE_PACKET{
 // ================================================
 //					  GAME_WORLD
 // ================================================
+
+
 table SC_GAME_FINISH_PACKET {
 
 }
@@ -308,6 +320,7 @@ table CS_GEN_NPC_GENERAL_PACKET {
 // ================================================
 table CS_ENTER_GAME_WORLD_PACKET {
 	room_id: ushort;
+	player_id: uint32;
 }
 
 table CS_GO_WORLD_PACKET{

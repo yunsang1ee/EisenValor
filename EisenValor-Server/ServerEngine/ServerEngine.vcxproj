@@ -470,6 +470,7 @@
     <ClInclude Include="ServerEngineEnums.h" />
     <ClInclude Include="ServerEngineGlobalVariables.h" />
     <ClInclude Include="ServerEnginePch.h" />
+    <ClInclude Include="ServerEngineStruct.h" />
     <ClInclude Include="ServerEngineTLS.h" />
     <ClInclude Include="ServerEngineTypes.h" />
     <ClInclude Include="Session.h" />

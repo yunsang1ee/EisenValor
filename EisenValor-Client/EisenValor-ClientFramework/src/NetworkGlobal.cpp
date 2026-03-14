@@ -80,8 +80,8 @@ bool NetBridge::NetworkGlobal::Connect(const std::string_view ip, const uint16 p
 	if (INVALID_SOCKET != m_socket)
 	{
 		shutdown(m_socket, SD_SEND);
-		char buf;
-		while (recv(m_socket, &buf, 1, 0) > 0) {}
+		// char buf;
+		// while (recv(m_socket, &buf, 1, 0) > 0) {}
 		closesocket(m_socket);
 	}
 
