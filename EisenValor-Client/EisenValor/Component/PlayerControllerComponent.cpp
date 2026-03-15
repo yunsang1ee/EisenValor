@@ -127,6 +127,8 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 		}
 	}
 
+	//DEBUG_LOG_FMT("[Debug] Sending to Server - State: {}\n", (int)stateToSend);
+
 	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, stateToSend);
 	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
