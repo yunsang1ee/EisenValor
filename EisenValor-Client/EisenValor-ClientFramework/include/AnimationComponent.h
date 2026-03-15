@@ -26,6 +26,7 @@ public:
 	void Resume();
 
 	bool IsPlaying() const { return m_isPlaying; }
+	bool IsAnimationEnd() const;
 
 private:
 	void UpdateBoneMatrices();
