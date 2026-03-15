@@ -118,6 +118,7 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 	DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
 
+	// 애니메이션 Key로 재생
 	if (auto* go = fsm->GetGameObject())
 	{
 		if (auto* anim = go->GetComponent<AnimationComponent>())

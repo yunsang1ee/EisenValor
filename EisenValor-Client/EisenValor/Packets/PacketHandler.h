@@ -29,21 +29,21 @@ public:
 		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
 	}
 
-	//template <typename PacketType, typename HandleFunc>
-	//static bool HandlePacket(
+	// template <typename PacketType, typename HandleFunc>
+	// static bool HandlePacket(
 	//	HandleFunc handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader
 	//)
 	//{
 	//	const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
 	//	return handleFunc(socket, *packet);
-	//}
+	// }
 
 	template <typename T, typename Func>
 	static bool HandlePacket(
 		const Func handleFunc, const SOCKET& socket, const char* const buffer, const PacketHeader& header
 	)
 	{
-		const size_t fbSize = header.packetSize - sizeof(PacketHeader);
+		const size_t		  fbSize = header.packetSize - sizeof(PacketHeader);
 		flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(buffer), fbSize);
 
 		if (!verifier.VerifyBuffer<T>(nullptr))
@@ -61,7 +61,9 @@ public:
 
 	// 패킷 만드는 부분
 	template <typename PacketFunc, typename... Args>
-	static flatbuffers::DetachedBuffer Serialization(flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args)
+	static flatbuffers::DetachedBuffer Serialization(
+		flatbuffers::FlatBufferBuilder& builder, PacketFunc func, Args&&... args
+	)
 	{
 		auto offset = func(builder, std::forward<Args>(args)...);
 		builder.Finish(offset);

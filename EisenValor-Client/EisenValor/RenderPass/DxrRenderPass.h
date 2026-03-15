@@ -1,56 +1,20 @@
 #pragma once
 #include <IRenderPass.h>
-#include <RenderDataSync.h>
 #include <DxRtPipelineState.h>
 #include <DxRtShaderTable.h>
 #include <DxTLAS.h>
 #include <DxTexture.h>
 #include <memory>
 #include "AssetFormat.h"
+#include "RenderData/InstanceRenderData.h"
+#include "RenderData/MaterialRenderData.h"
+#include "RenderData/GeoTableRenderData.h"
+#include "RenderData/RaytracingOutputRenderData.h"
 
 class MeshComponent;
 class MeshResource;
 class MaterialResource;
 class DxBLAS;
-
-struct alignas(16) GeoInfo
-{
-	uint32_t vertexBase;
-	uint32_t indexBase;
-	uint32_t materialIdx;
-	uint32_t pad0;
-};
-
-struct alignas(16) InstanceData
-{
-	DirectX::XMFLOAT4X4 worldMatrix;
-	DirectX::XMFLOAT4X4 worldIT;
-	uint32_t			vertexBufferIdx;
-	uint32_t			indexBufferIdx;
-	uint32_t			geoInfoBaseIdx;
-	uint32_t			instanceID;
-
-	uint32_t instanceFlags;
-	uint32_t boneMatrixBaseIdx;
-	uint32_t pad0;
-	uint32_t pad1;
-};
-static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData size must be multiple of 16 bytes");
-
-struct alignas(16) MaterialGPUData
-{
-	DirectX::XMFLOAT4 albedo;
-	float			  roughness;
-	float			  metallic;
-	uint32_t		  shadingModel;
-	uint32_t		  materialFlags;
-
-	uint32_t albedoTextureIdx;
-	uint32_t normalTextureIdx;
-	uint32_t ormTextureIdx;
-	uint32_t pad0;
-};
-static_assert(sizeof(MaterialGPUData) % 16 == 0, "MaterialGPUData size must be multiple of 16 bytes");
 
 class DxrRenderPass : public IRenderPass
 {
@@ -64,44 +28,47 @@ public:
 	void		OnResize(uint32_t width, uint32_t height) override;
 	const char* GetName() const override { return "DXR"; }
 
-	DxTexture* GetOutputTexture() { return &m_raytracingOutput; }
-
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
-	void CreateSkinningPipeline(); // 스키닝 전용 파이프라인 (Compute Shader)
-	void UpdateSkinning(DxFrameResource* frame, Scene* scene); // 매 프레임 정점 Skinning
 
-	void CollectRenderData(Scene* scene);
-	void BuildAccelerationStructures(DxFrameResource* frame, Scene* scene);
+	void PrepareRenderData(DxFrameResource* frame, Scene* scene);
+
+	void CollectStaticMeshData(
+		Scene*										  scene,
+		ID3D12GraphicsCommandList4*					  cmdList,
+		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+		uint32_t									  frameIndex
+	);
+	void CollectSkinnedMeshData(
+		Scene*										  scene,
+		ID3D12GraphicsCommandList4*					  cmdList,
+		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+		uint32_t									  frameIndex
+	);
 
 private:
-	// Skinning Compute Shader Resources
-	ComPtr<ID3D12RootSignature> m_skinningRootSignature;
-	ComPtr<ID3D12PipelineState> m_skinningPSO;
-
 	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
 	std::unique_ptr<DxRtPipelineState> m_rtPipeline;
 	std::unique_ptr<DxRtPipelineState> m_ptPipeline;
 	std::unique_ptr<DxRtShaderTable>   m_rtLiteShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_rtShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_ptShaderTable;
-	std::unique_ptr<DxTLAS>			   m_tlas;
+	
+	std::unique_ptr<DxTLAS>			   m_tlas[3];
 
-	DxTexture m_raytracingOutput;
+	std::shared_ptr<RaytracingOutputRenderData> m_outputData[3];
 
-	std::unordered_map<EvAsset::Guid, std::unique_ptr<DxBLAS>, EvAsset::GuidHash> m_blasCache;
-
-	RenderDataSync<InstanceData>		m_instanceBuffer;
-	RenderDataSync<MaterialGPUData>		m_materialConstants;
-	RenderDataSync<GeoInfo>				m_geoTable;
-	RenderDataSync<DirectX::XMFLOAT4X4> m_boneMatrixBuffer;
+	std::shared_ptr<InstanceRenderData> m_instanceData[3];
+	std::shared_ptr<MaterialRenderData> m_materialData[3];
+	std::shared_ptr<GeoTableRenderData> m_geoTableData[3];
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;
 
+	ComPtr<ID3D12Device5> m_device5;
+
 	bool m_initialized = false;
-	bool m_needsRebuild = false;
 	bool m_usePathTracing = false;
 	bool m_useLiteRT = false;
 };

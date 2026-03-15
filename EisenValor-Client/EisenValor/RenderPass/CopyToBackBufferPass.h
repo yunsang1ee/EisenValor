@@ -1,13 +1,11 @@
 #pragma once
 #include <IRenderPass.h>
-
-class DxTexture;
 class DxSwapChain;
 
 class CopyToBackBufferPass : public IRenderPass
 {
 public:
-	CopyToBackBufferPass(DxTexture* srcTexture, DxSwapChain* swapChain);
+	CopyToBackBufferPass(DxSwapChain* swapChain);
 	~CopyToBackBufferPass() override = default;
 
 	void		Initialize() override;
@@ -17,6 +15,5 @@ public:
 	const char* GetName() const override { return "CopyToBackBuffer"; }
 
 private:
-	DxTexture*	 m_srcTexture = nullptr;
 	DxSwapChain* m_swapChain = nullptr;
 };

@@ -4,11 +4,23 @@
 void DxDebugGlobal::Initialize()
 {
 #ifdef _DEBUG
-	ComPtr<ID3D12Debug> debugController;
-	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
+	ComPtr<ID3D12Debug1> debugController;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+	{
+		debugController->EnableDebugLayer();
 
-	debugController->EnableDebugLayer();
-	DEBUG_LOG_FMT("[DxDebug] D3D12 Debug Layer Enabled.\n");
+		debugController->SetEnableGPUBasedValidation(TRUE);
+		DEBUG_LOG_FMT("[DxDebug] D3D12 Debug Layer & GPU Validation Enabled.\n");
+	}
+
+	ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings))))
+	{
+		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		dredSettings->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		DEBUG_LOG_FMT("[DxDebug] DRED tracking enabled.\n");
+	}
 #endif //_DEBUG
 }
 
