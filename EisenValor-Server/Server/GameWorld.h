@@ -4,6 +4,7 @@
 #include "CollisionDetector.h"
 #include "NavSystem.h"
 #include "IRoom.h"
+#include "IDGenerator.h"
 
 namespace Server {
 	namespace Contents {
@@ -194,12 +195,12 @@ namespace Server {
 			std::map<uint64, bool>													m_mapColInfo;
 
 			NavSystem																m_navSystem;
-			uint32																	m_npcIdGen;
 			float																	m_dt;
 
+			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
 
-			std::unordered_map<uint32, GameWorldParticipantInfo> m_reservedParticipantInfo;
 
+			IDGenerator																m_idGenerator;
 		};
 #endif
 	}

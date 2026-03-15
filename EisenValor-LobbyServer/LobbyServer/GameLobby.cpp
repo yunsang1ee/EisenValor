@@ -101,7 +101,7 @@ void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint
 	if(false == m_gameRooms.contains(roomID))
 		return;
 
-	auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, port) };
+	auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, "127.0.0.1", port)};
 	m_gameRooms[roomID]->Broadcast(std::move(pb));
 }
 

@@ -12,8 +12,6 @@
 
 #include "GameWorldThread.h"
 
-#define APPLY_LOBBY_SERVER
-
 #ifdef MODERN_CODE
 
 ServerEngine::ServerEngineCore::ServerEngineCore()

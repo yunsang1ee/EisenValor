@@ -34,8 +34,6 @@
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 
-// #define APPLY_LOBBY_SERVER
-
 using namespace NetBridge;
 
 bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const PacketHeader&)
@@ -380,13 +378,14 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 {
 	DEBUG_LOG_FMT("Handle_LC_CONNECT_TO_GAME_SERVER");
 
-	if (false == GLOBAL(NetworkGlobal).Connect("127.0.0.1", recvPkt.port()))
+	std::string ip{recvPkt.ip()->c_str()};
+	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), recvPkt.port()))
 		assert(nullptr);
 
 	const uint32 localID = GLOBAL(SceneGlobal).GetLocalNetworkID();
-
+	const uint16 roomID{1};
 	{
-		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(1, localID)};
+		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, localID)};
 		GLOBAL(NetworkGlobal).Send(std::move(pb));
 	}
 	return true;
@@ -397,9 +396,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
-#ifndef APPLY_LOBBY_SERVER
 	GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
-#endif
 	// TODO: stanceType 사용하기
 	GLOBAL(SceneGlobal).LoadScene("SampleScene");
 	// 로컬 플레이어 오브젝트 생성

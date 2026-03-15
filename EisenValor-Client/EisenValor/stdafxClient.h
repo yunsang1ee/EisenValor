@@ -11,3 +11,5 @@
 #include "Packets/Enums_generated.h"
 #include "Packets/Structs_generated.h"
 #include "Packets/Tables_generated.h"
+
+#define APPLY_LOBBY_SERVER

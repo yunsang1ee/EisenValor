@@ -1657,10 +1657,14 @@ struct SL_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffe
   typedef SL_CREATE_GAME_WORLD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_WORLD_ID = 4,
-    VT_PORT = 6
+    VT_IP = 6,
+    VT_PORT = 8
   };
   uint16_t world_id() const {
     return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  const ::flatbuffers::String *ip() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_IP);
   }
   uint16_t port() const {
     return GetField<uint16_t>(VT_PORT, 0);
@@ -1668,6 +1672,8 @@ struct SL_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffe
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyOffset(verifier, VT_IP) &&
+           verifier.VerifyString(ip()) &&
            VerifyField<uint16_t>(verifier, VT_PORT, 2) &&
            verifier.EndTable();
   }
@@ -1679,6 +1685,9 @@ struct SL_CREATE_GAME_WORLD_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_world_id(uint16_t world_id) {
     fbb_.AddElement<uint16_t>(SL_CREATE_GAME_WORLD_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_ip(::flatbuffers::Offset<::flatbuffers::String> ip) {
+    fbb_.AddOffset(SL_CREATE_GAME_WORLD_PACKET::VT_IP, ip);
   }
   void add_port(uint16_t port) {
     fbb_.AddElement<uint16_t>(SL_CREATE_GAME_WORLD_PACKET::VT_PORT, port, 0);
@@ -1697,21 +1706,40 @@ struct SL_CREATE_GAME_WORLD_PACKETBuilder {
 inline ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> CreateSL_CREATE_GAME_WORLD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint16_t world_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> ip = 0,
     uint16_t port = 0) {
   SL_CREATE_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_ip(ip);
   builder_.add_port(port);
   builder_.add_world_id(world_id);
   return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> CreateSL_CREATE_GAME_WORLD_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    const char *ip = nullptr,
+    uint16_t port = 0) {
+  auto ip__ = ip ? _fbb.CreateString(ip) : 0;
+  return FB_TABLES::CreateSL_CREATE_GAME_WORLD_PACKET(
+      _fbb,
+      world_id,
+      ip__,
+      port);
 }
 
 struct LC_CONNECT_TO_GAME_SERVER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef LC_CONNECT_TO_GAME_SERVER_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_WORLD_ID = 4,
-    VT_PORT = 6
+    VT_IP = 6,
+    VT_PORT = 8
   };
   uint16_t world_id() const {
     return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  const ::flatbuffers::String *ip() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_IP);
   }
   uint16_t port() const {
     return GetField<uint16_t>(VT_PORT, 0);
@@ -1719,6 +1747,8 @@ struct LC_CONNECT_TO_GAME_SERVER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flat
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyOffset(verifier, VT_IP) &&
+           verifier.VerifyString(ip()) &&
            VerifyField<uint16_t>(verifier, VT_PORT, 2) &&
            verifier.EndTable();
   }
@@ -1730,6 +1760,9 @@ struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_world_id(uint16_t world_id) {
     fbb_.AddElement<uint16_t>(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_ip(::flatbuffers::Offset<::flatbuffers::String> ip) {
+    fbb_.AddOffset(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_IP, ip);
   }
   void add_port(uint16_t port) {
     fbb_.AddElement<uint16_t>(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_PORT, port, 0);
@@ -1748,11 +1781,26 @@ struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder {
 inline ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> CreateLC_CONNECT_TO_GAME_SERVER_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint16_t world_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> ip = 0,
     uint16_t port = 0) {
   LC_CONNECT_TO_GAME_SERVER_PACKETBuilder builder_(_fbb);
+  builder_.add_ip(ip);
   builder_.add_port(port);
   builder_.add_world_id(world_id);
   return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> CreateLC_CONNECT_TO_GAME_SERVER_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    const char *ip = nullptr,
+    uint16_t port = 0) {
+  auto ip__ = ip ? _fbb.CreateString(ip) : 0;
+  return FB_TABLES::CreateLC_CONNECT_TO_GAME_SERVER_PACKET(
+      _fbb,
+      world_id,
+      ip__,
+      port);
 }
 
 struct SC_LOADING_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

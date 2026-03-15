@@ -31,7 +31,6 @@
 #include "Packets/C2SPackets.h"
 #include <TimerGlobal.h>
 
-// #define APPLY_LOBBY_SERVER
 
 constexpr size_t MAX_LOADSTRING = 100;
 WCHAR			 szTitle[MAX_LOADSTRING];

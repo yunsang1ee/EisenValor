@@ -792,7 +792,7 @@ void Server::Contents::GameWorld::CreateGameWorldObjects()
 
 #ifdef MODERN_CODE
 Server::Contents::GameWorldTest::GameWorldTest()
-	:m_check{}, m_npcIdGen{ 100000 }, m_dt{}, m_accDT{}, m_worldFrameCount{}
+	:m_check{}, m_dt{}, m_accDT{}, m_worldFrameCount{}
 {
 	std::cout << "GameWorldTest!" << std::endl;
 }
@@ -804,6 +804,8 @@ Server::Contents::GameWorldTest::~GameWorldTest()
 
 void Server::Contents::GameWorldTest::Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
 {
+	m_idGenerator.SetWorldID(GetID());
+
 	for(const auto& [id, i] : info)
 		m_reservedParticipantInfo.insert(std::make_pair(id, i));
 
@@ -824,7 +826,7 @@ void Server::Contents::GameWorldTest::Init(const std::unordered_map<uint32, Game
 	if(lobbyServerSession) {
 		const uint16 port{ GetGameWorldThread()->GetPort() };
 		const uint16 worldID{ GetID() };
-		auto pb{ ServerPackets::Make_SL_CREATE_GAME_WORLD_PACKET(worldID, port) };
+		auto pb{ ServerPackets::Make_SL_CREATE_GAME_WORLD_PACKET(worldID, "127.0.0.1", port)};
 		lobbyServerSession->Send(std::move(pb));
 	}
 }
@@ -888,8 +890,6 @@ void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine:
 
 	clientSession->SetGameWorld(this);
 
-	const uint32 id{ session->GetID() };
-
 	std::cout << "Enter Game World!" << std::endl;
 	static const Vec3 offset{ 3.f, 0.f, 3.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
@@ -897,10 +897,13 @@ void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine:
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
 
-
 	PlayerTemplate t;
 	t.posInfo = PosInfo{ startPos, rot };
 	
+	// TODO: 이 부분 수정해야함
+	// 세션 아이디 != 게임 오브젝트 아이디 분리해서...
+	// 로비 세션 아이디 != 게임 서버 세션 아이디
+
 	if(m_reservedParticipantInfo.contains(session->GetID())) {
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
 	}
@@ -912,7 +915,7 @@ void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine:
 	t.gameWorld = this;
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
-	player->SetID(clientSession->GetID());
+	player->SetID(m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER));
 	player->SetSession(clientSession);
 	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	AddGameObject(std::move(player));
@@ -1012,7 +1015,13 @@ void Server::Contents::GameWorldTest::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	const Vec3 playerPos = player->GetPos();
 	Vec3 playerLook = player->GetLook();
 	playerLook.Normalize();
-	const auto teamType = player->GetTeamType();
+
+	FB_ENUMS::TEAM_TYPE teamType{};
+
+	if(FB_ENUMS::TEAM_TYPE_OFFENSE == player->GetTeamType())
+		teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+	else
+		teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
 
 	constexpr float distance{ 5.0f };
 
@@ -1022,7 +1031,7 @@ void Server::Contents::GameWorldTest::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	spawnPos.z = playerPos.z + (playerLook.z * distance);
 
 	GeneralTemplate t;
-	t.id = m_npcIdGen++;
+	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 	t.teamType = teamType;
 	t.posInfo = PosInfo{
@@ -1267,12 +1276,18 @@ const Server::Contents::GameObjects& Server::Contents::GameWorldTest::GetGameObj
 
 void Server::Contents::GameWorldTest::CreateGameWorldObjects()
 {
+	m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+	m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+	m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
+		
 	// Spanwer로 옮겨야 함
 	for(int i = 0; i < 1; ++i) {
 		static bool flag{ true };
 		static Vec3 startPos{ 0.f, 0.f, 0.f };
 		SoldierTemplate t;
-		t.id = m_npcIdGen++;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 		t.posInfo = PosInfo{
@@ -1291,7 +1306,7 @@ void Server::Contents::GameWorldTest::CreateGameWorldObjects()
 		static Vec3 startPos{ 5.f, 0.f, 5.f };
 
 		GeneralTemplate t;
-		t.id = m_npcIdGen++;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 		t.posInfo = PosInfo{
@@ -1325,7 +1340,7 @@ void Server::Contents::GameWorldTest::CreateGameWorldObjects()
 	 // 점령지 생성
 	{
 		OccupationZoneTemplate t;
-		t.id = m_npcIdGen++;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
 		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 		t.posInfo = PosInfo{
 		.pos = Vec3{30.f, 0.f, 30.f},

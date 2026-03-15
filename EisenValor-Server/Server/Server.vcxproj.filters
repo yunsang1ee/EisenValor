@@ -157,6 +157,9 @@
     <ClCompile Include="main.cpp">
       <Filter>00. main</Filter>
     </ClCompile>
+    <ClCompile Include="IDGenerator.cpp">
+      <Filter>03. Contents\GameWorld\IdGenerator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -302,6 +305,9 @@
     </Filter>
     <Filter Include="03. Contents\GameRoom\Participant">
       <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameWorld\IdGenerator">
+      <UniqueIdentifier>{8479f22d-f173-4a22-bd64-9b1406680302}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -475,6 +481,9 @@
     </ClInclude>
     <ClInclude Include="LobbyServerSession.h">
       <Filter>01. SessionManager\LobbyServerSession</Filter>
+    </ClInclude>
+    <ClInclude Include="IDGenerator.h">
+      <Filter>03. Contents\GameWorld\IdGenerator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

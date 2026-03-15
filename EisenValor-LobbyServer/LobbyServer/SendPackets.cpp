@@ -95,10 +95,10 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAM
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LS_CREATE_GAME_WORLD_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKETDirect, roomID, &participantsInfo));
 
 }
-std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(const uint16 worldID, const uint16 port)
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	
-	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CONNECT_TO_GAME_SERVER_PACKET, worldID, port));
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CONNECT_TO_GAME_SERVER_PACKETDirect, worldID, ip.data(), port));
 }
 #pragma endregion

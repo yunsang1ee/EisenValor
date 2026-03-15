@@ -1,6 +1,8 @@
 #pragma once
 #pragma warning(disable: 4819)
 
+#define APPLY_LOBBY_SERVER
+
 // #define LEGACY_CODE
 #define MODERN_CODE
 

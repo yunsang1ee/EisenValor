@@ -434,6 +434,7 @@
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="IDGenerator.cpp" />
     <ClCompile Include="LobbyServerPacketHandler.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Collider.cpp" />
@@ -593,6 +594,7 @@
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="IDGenerator.h" />
     <ClInclude Include="LobbyServerPacketHandler.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Collider.h" />
