@@ -13,7 +13,7 @@ ServerEngine::IOCore::IOCore()
 {
 }
 
-bool ServerEngine::IOCore::Init(const SessionFactoryFunc func)
+bool ServerEngine::IOCore::Init(const ClientSessionFactoryFunc func)
 {
 	m_sessionFactoryFunc = func;
 

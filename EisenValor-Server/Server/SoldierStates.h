@@ -10,12 +10,12 @@ namespace Server {
 		// ============================================
 		//					IDLE
 		// ============================================
-		class SoldierIdleState : public State {
+		class SoldierSpawnState final : public State {
 		private:
-			DECLARE_CREATE_FUNC(SoldierIdleState)
+			DECLARE_CREATE_FUNC(SoldierSpawnState)
 		private:
-			explicit SoldierIdleState(const float enemyDetectionRange);
-			virtual ~SoldierIdleState();
+			explicit SoldierSpawnState();
+			virtual ~SoldierSpawnState();
 		
 		public:
 			virtual void Enter(const float dt) override final;
@@ -23,36 +23,74 @@ namespace Server {
 			virtual void Update(const float dt) override final;
 
 		private:
-			float m_enemyDetectionRangeSq{};
+			float m_accDT;
+			friend class GameObjectFactory;
 		};
 
+		class SoldierIdleState final : public State {
+			DECLARE_CREATE_FUNC(SoldierIdleState)
+
+		private:
+			explicit SoldierIdleState();
+			virtual ~SoldierIdleState();
+
+		public:
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
+
+		private:
+			friend class GameObjectFactory;
+		};
 
 		// ============================================
 		//					MOVE
 		// ============================================
-		class SoldierMoveState : public State {
+		class SoldierMoveState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierMoveState)
 		private:
-			SoldierMoveState();
+			explicit SoldierMoveState(const float viewRange);
 			virtual ~SoldierMoveState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float				m_viewRangeSq{};
+			float				m_accDTForSearch;
+			std::vector<Vec3>	m_wayPoints;
+			uint32				m_currentWaypointIndex;
+
 			friend class GameObjectFactory;
+		};
+
+		class SoldierSearchState final : public State {
+			DECLARE_CREATE_FUNC(SoldierSearchState)
+		private:
+			explicit SoldierSearchState(const float attackRange);
+			virtual ~SoldierSearchState();
+
+		public:
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
+
+		private:
+			float m_attackRangeSq;
 		};
 
 
 		// ============================================
 		//					CHASE
 		// ============================================
-		class SoldierChaseState : public State {
+		class SoldierChaseState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierChaseState)
 		private:
-			explicit SoldierChaseState(const float chaseSpeed, const float combatRange);
+			explicit SoldierChaseState(const float chaseRange, const float attackRange);
 			virtual ~SoldierChaseState();
 
 		public:
@@ -62,9 +100,8 @@ namespace Server {
 			friend class GameObjectFactory;
 
 		private:
-			static constexpr float COMBAT_PROB{ 0.7f };
-			float m_chaseSpeed;
-			float m_combatRange;
+			float m_attackRangeSq;
+			float m_chaseRangeSq;
 
 		};
 
@@ -72,73 +109,41 @@ namespace Server {
 		// ============================================
 		//					ATTACK
 		// ============================================
-		class SoldierAttackState : public State {
+		class SoldierAttackState final : public State {
 		private:
 			DECLARE_CREATE_FUNC(SoldierAttackState)
 		private:
-			explicit SoldierAttackState(const float combatRange, const std::chrono::seconds attackCycleTime);
+			explicit SoldierAttackState(const float attackRange);
 			virtual ~SoldierAttackState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
-			friend class GameObjectFactory;
 
 		private:
-			float					m_accDt;
-			float					m_combatRange;
-			std::chrono::seconds	m_attackCycleTime;
-			static constexpr float ATTACK_PROB{ 0.7f };
+			float m_accDTForAttack;
+			float m_attackRangeSq;
+
+			friend class GameObjectFactory;
 		};
 
+		class SoldierDeadState  final : public State {
+			DECLARE_CREATE_FUNC(SoldierDeadState)
 
-		// ============================================
-		//					DEFENSE
-		// ============================================
-		class SoldierDefenseState : public State {
 		private:
-			DECLARE_CREATE_FUNC(SoldierDefenseState)
-		private:
-			SoldierDefenseState();
-			virtual ~SoldierDefenseState();
+			explicit SoldierDeadState(const float deadAnimTime);
+			virtual ~SoldierDeadState();
 
 		public:
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDT;
+			float m_deadAnimTime;
 			friend class GameObjectFactory;
-
-		private:
-			float					m_accDT;
-			static constexpr auto	DEFENSE_TIME = 1s;
-			static constexpr float	ATTACK_PROB{ 0.7f };
-		};
-
-
-		// ============================================
-		//					DAMAGED
-		// ============================================
-		class SoldierStunState : public State {
-		private:
-			DECLARE_CREATE_FUNC(SoldierStunState)
-		private:
-			explicit SoldierStunState(const float stunTime);
-			virtual ~SoldierStunState();
-
-		public:
-			virtual void Enter(const float dt) override final;
-			virtual void Exit(const float dt) override final;
-			virtual void Update(const float dt) override final;
-		
-		public:
-			void SetStunTime(const float stunTime){ m_stunTime = stunTime; }
-			friend class GameObjectFactory;
-
-		private:
-			float m_stunTime;
-			float m_accForStun;
-
 		};
 
 	}

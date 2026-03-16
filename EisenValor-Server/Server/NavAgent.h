@@ -17,6 +17,7 @@ namespace Server {
 		public:
 			void SetDestPos(const Vec3& destPos);
 			void StopMove();
+			void Remove();
 			
 		private:
 			NavSystem*			m_navSystem;

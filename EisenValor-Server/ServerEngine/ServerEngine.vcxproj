@@ -447,8 +447,8 @@
     <ClInclude Include="IRoom.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="JobQueue.h" />
-    <ClInclude Include="LobbyThread.h" />
     <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="PacketHandler.h" />
     <ClInclude Include="RIOCoreTest.h" />
     <ClInclude Include="RIORingBuffer.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
@@ -470,6 +470,7 @@
     <ClInclude Include="ServerEngineEnums.h" />
     <ClInclude Include="ServerEngineGlobalVariables.h" />
     <ClInclude Include="ServerEnginePch.h" />
+    <ClInclude Include="ServerEngineStruct.h" />
     <ClInclude Include="ServerEngineTLS.h" />
     <ClInclude Include="ServerEngineTypes.h" />
     <ClInclude Include="Session.h" />
@@ -482,6 +483,7 @@
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WorkerThread.h" />
+    <ClInclude Include="GameWorldThread.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AcceptThread.cpp" />
@@ -494,8 +496,8 @@
     <ClCompile Include="IRoom.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="JobQueue.cpp" />
-    <ClCompile Include="LobbyThread.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
+    <ClCompile Include="PacketHandler.cpp" />
     <ClCompile Include="RIOCoreTest.cpp" />
     <ClCompile Include="RIORingBuffer.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
@@ -535,6 +537,7 @@
     <ClCompile Include="ThreadManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WorkerThread.cpp" />
+    <ClCompile Include="GameWorldThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Binaries\Server\Config\ServerEngineConfig.json" />

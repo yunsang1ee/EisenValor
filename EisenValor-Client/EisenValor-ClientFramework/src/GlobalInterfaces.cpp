@@ -79,6 +79,8 @@ void Shutdown()
 
 	GLOBAL(TimerGlobal).Release();
 	GLOBAL(InputGlobal).Release();
+
+	GLOBAL(NetBridge::NetworkGlobal).Release();
 }
 
 } // namespace Globals

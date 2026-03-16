@@ -15,8 +15,6 @@ namespace Server {
 
 		class GameWorldTest;
 
-
-
 		struct GameObjectTemplate {
 			uint32						id;
 			PosInfo						posInfo;
@@ -68,12 +66,12 @@ namespace Server {
 			GameObjectFactory operator=(GameObjectFactory&&) = delete;
 
 		public:
-			static std::unique_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
-			static std::unique_ptr<General>		CreateGeneral(const GeneralTemplate& t);
-			static std::unique_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
-			static std::unique_ptr<BattleRam>	CreateBattleRam(const BattleRamTemplate& t);
-			static std::unique_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
-			static std::unique_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
+			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
+			static std::shared_ptr<General>		CreateGeneral(const GeneralTemplate& t);
+			static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
+			static std::shared_ptr<BattleRam>	CreateBattleRam(const BattleRamTemplate& t);
+			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
+			static std::shared_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
 
 		};
 	}

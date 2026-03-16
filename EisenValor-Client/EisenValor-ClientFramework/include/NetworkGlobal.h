@@ -32,11 +32,13 @@ public:
 	}
 
 	[[nodiscard("DO NOT IGNORE RETURN VALUE.")]]
-	bool Init(const std::string_view ip = "127.0.0.1", const uint16 port = 7777);
+	bool Init(const std::string_view ip, const uint16 port);
+
+	bool Connect(const std::string_view ip, const uint16 port);
 
 	void ProcessIO();
 
-	void Terminate();
+	void Release();
 
 	template <typename Packet>
 	void Send(Packet&& sendPkt) noexcept
@@ -60,18 +62,14 @@ public:
 
 	void Send(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 	{
-	retry:
-		const int32 sendBytes =
-			send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
+		const int32 sendBytes = send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
 		if (SOCKET_ERROR == sendBytes)
 		{
 			const int32 errCode = WSAGetLastError();
 			if (WSAEWOULDBLOCK == errCode)
 			{
-				// 내부 송신 버퍼가 가득 찼을 경우
-				assert("WSAEWOULDBLOCK");
-				goto retry;
 				std::cout << "WSAEWOULDBLOCK" << std::endl;
+				assert(nullptr);
 				return;
 			}
 			else

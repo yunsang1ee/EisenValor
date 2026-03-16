@@ -34,7 +34,6 @@
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 
-
 using namespace NetBridge;
 
 bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const PacketHeader&)
@@ -50,34 +49,23 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 
+	std::cout << std::format("ID: {}", id) << std::endl;
 	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
 
-	// SampleScene으로 장면 전환
-	GLOBAL(SceneGlobal).LoadScene("SampleScene");
-
-	// TODO: 들어갈 수 Room 목록 중, ROOM 선택해서 들어갈 수 있게끔..
-	const uint16 roomID{1};
-
-	// auto pb = NetBridge::C2S::Make_CS_JOIN_GAME_ROOM_PACKET(1000);
-	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-
-	// auto pb = NetBridge::C2S::Make_CS_ENTER_GAME_LOBBY_PACKET();
-	// MANAGER(NetBridge::NetworkManager)->Send(std::move(pb));
-
-	// TODO: 로비 씬으로 전환
-
-	// 테스트용으로 바로 게임 월드 진입
-
-	auto pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID);
+#ifdef APPLY_LOBBY_SERVER
+	auto pb = NetBridge::C2S::Make_CS_ENTER_GAME_LOBBY_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to LobbyScene\n", id);
+#endif
 
-	// 테스트용으로 바로 게임 월드 진입
-	//{
-	//	auto pb = C2S::Make_CS_GO_WORLD_PACKET();
-	//	GLOBAL(NetworkGlobal).Send(std::move(pb));
-	//}
-
+#ifndef APPLY_LOBBY_SERVER
+	const uint16 roomID{1};
+	auto		 pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, id);
+	GLOBAL(NetworkGlobal).Send(std::move(pb));
 	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
+
+#endif // !APPLY_LOBBY_SERVER
+
 	return true;
 }
 
@@ -100,7 +88,6 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	}
 
 	// 로비에 성공적으로 입장
-	// TODO: 로비 씬으로 전환
 	// TODO: 로비 씬 안에서 방 목록 및 유저 목록을 화면에 보여주기
 
 	for (const auto* room : *rooms)
@@ -108,6 +95,9 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 		auto roomId = room->id();
 		DEBUG_LOG_FMT("Room ID: {}\n", roomId);
 	}
+
+	if (rooms->size() == 0)
+		std::cout << "Zero Room" << std::endl;
 
 	for (flatbuffers::uoffset_t i = 0; i < users->size(); ++i)
 	{
@@ -122,11 +112,14 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	// auto pb = NetBridge::C2S::Make_CS_JOIN_GAME_ROOM_PACKET(1000);
 	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));/
 
+	GLOBAL(SceneGlobal).LoadScene("LobbyScene");
+
+
 	return true;
 }
 
 bool NetBridge::S2C::Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ADD_USER_IN_GAME_LOBBY_PACKET& recvPkt
+	const SOCKET& socket, const FB_TABLES::SC_ENTER_USER_IN_GAME_LOBBY_PACKET& recvPkt
 )
 {
 	// 로비에 새로운 유저가 입장
@@ -145,11 +138,12 @@ bool NetBridge::S2C::Handle_SC_LEAVE_GAME_LOBBY_PACKET(
 	DEBUG_LOG_FMT("[SC_LEAVE_GAME_LOBBY_PACKET] ");
 	DEBUG_LOG_FMT("Leave Lobby!\n");
 	// TODO: 로그인 Scene으로 다시...
-	return false;
+	GLOBAL(SceneGlobal).LoadScene("LoginScene");
+	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_REMOVE_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_REMOVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_LEAVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
 )
 {
 	// 로비에서 유저가 퇴장
@@ -182,8 +176,8 @@ bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_FAIL_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_JOIN_GAME_ROOM_SUCCESS_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_ROOM_SUCCESS_PACKET& recvPkt
 )
 {
 	// 게임 룸 입장 성공
@@ -255,9 +249,7 @@ bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_SUCCESS_PACKET(
 			DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
 	}
 
-	// auto pb{NetBridge::C2S::Make_CS_START_GAME_PACKET()};
-	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));
-
+	GLOBAL(SceneGlobal).LoadScene("RoomScene");
 	return true;
 }
 
@@ -380,14 +372,33 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GAME_ROOM_STATE_PACKET(
 	}
 	return true;
 }
+bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("Handle_LC_CONNECT_TO_GAME_SERVER");
+
+	std::string ip{recvPkt.ip()->c_str()};
+	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), recvPkt.port()))
+		assert(nullptr);
+
+	const uint32 localID = GLOBAL(SceneGlobal).GetLocalNetworkID();
+	const uint16 roomID{1};
+	{
+		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, localID)};
+		GLOBAL(NetworkGlobal).Send(std::move(pb));
+	}
+	return true;
+}
 #pragma endregion
 
 bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
+	GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
 	// TODO: stanceType 사용하기
-
+	GLOBAL(SceneGlobal).LoadScene("SampleScene");
 	// 로컬 플레이어 오브젝트 생성
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
@@ -937,14 +948,19 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		return false;
 	}
 
+	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
 	const uint32 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
+	uint8_t		 nextState = recvPkt.next_state();
+	
+	if(localID == objID) {
+		goto SET_LOCAL;
+	}
+
 	if (!obj)
 	{
 		return false;
 	}
-
-	uint8_t nextState = recvPkt.next_state();
 
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
@@ -953,15 +969,32 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		fsm->SetServerState(nextState);
 	}
 
-	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
-	if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+SET_LOCAL:
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (obj->GetComponent<StaminaComponent>() == nullptr)
-		{
-			// 병사는 즉시 메모리에서 삭제
-			scene->DestroyGameObject(obj->GetHandle());
+		if(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN) {
+			if(obj->GetComponent<StaminaComponent>() != nullptr) {
+				fsm->SetServerState(nextState);
+				return true;
+			}
 		}
-		// 장수(플레이어)는 삭제하지 않음
+	}
+
+	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		{
+			if (obj->GetComponent<StaminaComponent>() == nullptr)
+			{
+				// 병사는 즉시 메모리에서 삭제
+				scene->DestroyGameObject(obj->GetHandle());
+			}
+			else
+			{
+				fsm->SetServerState(nextState);
+			}
+		}
 	}
 
 	return true;

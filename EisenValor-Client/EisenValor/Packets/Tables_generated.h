@@ -45,17 +45,23 @@ struct CS_ENTER_GAME_LOBBY_PACKETBuilder;
 struct SC_ENTER_GAME_LOBBY_PACKET;
 struct SC_ENTER_GAME_LOBBY_PACKETBuilder;
 
+struct SC_ENTER_GAME_LOBBY_SUCCESS_PACKET;
+struct SC_ENTER_GAME_LOBBY_SUCCESS_PACKETBuilder;
+
+struct SC_ENTER_GAME_LOBBY_FAIL_PACKET;
+struct SC_ENTER_GAME_LOBBY_FAIL_PACKETBuilder;
+
 struct CS_LEAVE_GAME_LOBBY_PACKET;
 struct CS_LEAVE_GAME_LOBBY_PACKETBuilder;
 
 struct SC_LEAVE_GAME_LOBBY_PACKET;
 struct SC_LEAVE_GAME_LOBBY_PACKETBuilder;
 
-struct SC_ADD_USER_IN_GAME_LOBBY_PACKET;
-struct SC_ADD_USER_IN_GAME_LOBBY_PACKETBuilder;
+struct SC_ENTER_USER_IN_GAME_LOBBY_PACKET;
+struct SC_ENTER_USER_IN_GAME_LOBBY_PACKETBuilder;
 
-struct SC_REMOVE_USER_IN_GAME_LOBBY_PACKET;
-struct SC_REMOVE_USER_IN_GAME_LOBBY_PACKETBuilder;
+struct SC_LEAVE_USER_IN_GAME_LOBBY_PACKET;
+struct SC_LEAVE_USER_IN_GAME_LOBBY_PACKETBuilder;
 
 struct CS_MAKE_GAME_ROOM_PACKET;
 struct CS_MAKE_GAME_ROOM_PACKETBuilder;
@@ -63,14 +69,14 @@ struct CS_MAKE_GAME_ROOM_PACKETBuilder;
 struct SC_MAKE_GAME_ROOM_PACKET;
 struct SC_MAKE_GAME_ROOM_PACKETBuilder;
 
-struct CS_JOIN_GAME_ROOM_PACKET;
-struct CS_JOIN_GAME_ROOM_PACKETBuilder;
+struct CS_ENTER_GAME_ROOM_PACKET;
+struct CS_ENTER_GAME_ROOM_PACKETBuilder;
 
 struct SC_JOIN_GAME_ROOM_FAIL_PACKET;
 struct SC_JOIN_GAME_ROOM_FAIL_PACKETBuilder;
 
-struct SC_JOIN_GAME_ROOM_SUCCESS_PACKET;
-struct SC_JOIN_GAME_ROOM_SUCCESS_PACKETBuilder;
+struct SC_ENTER_GAME_ROOM_SUCCESS_PACKET;
+struct SC_ENTER_GAME_ROOM_SUCCESS_PACKETBuilder;
 
 struct CS_LEAVE_GAME_ROOM_PACKET;
 struct CS_LEAVE_GAME_ROOM_PACKETBuilder;
@@ -102,8 +108,17 @@ struct CS_READY_GAME_PACKETBuilder;
 struct SC_READY_GAME_PACKET;
 struct SC_READY_GAME_PACKETBuilder;
 
-struct CS_START_GAME_PACKET;
-struct CS_START_GAME_PACKETBuilder;
+struct CL_START_GAME_PACKET;
+struct CL_START_GAME_PACKETBuilder;
+
+struct LS_CREATE_GAME_WORLD_PACKET;
+struct LS_CREATE_GAME_WORLD_PACKETBuilder;
+
+struct SL_CREATE_GAME_WORLD_PACKET;
+struct SL_CREATE_GAME_WORLD_PACKETBuilder;
+
+struct LC_CONNECT_TO_GAME_SERVER_PACKET;
+struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder;
 
 struct SC_LOADING_GAME_WORLD_PACKET;
 struct SC_LOADING_GAME_WORLD_PACKETBuilder;
@@ -185,6 +200,12 @@ struct SC_START_ANIMATIONBuilder;
 
 struct SC_END_ANIMATION;
 struct SC_END_ANIMATIONBuilder;
+
+struct CS_GEN_NPC_GENERAL_PACKET;
+struct CS_GEN_NPC_GENERAL_PACKETBuilder;
+
+struct CS_UPDATE_PLAYER_STATE_PACKET;
+struct CS_UPDATE_PLAYER_STATE_PACKETBuilder;
 
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
@@ -643,6 +664,137 @@ inline ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_PACKET> CreateSC_ENTER_GAME_LOB
       vec_user_id__);
 }
 
+struct SC_ENTER_GAME_LOBBY_SUCCESS_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_GAME_LOBBY_SUCCESS_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ROOMS = 4,
+    VT_USERS = 6,
+    VT_VEC_USER_ID = 8
+  };
+  const ::flatbuffers::Vector<const FB_STRUCTS::RoomInfo *> *rooms() const {
+    return GetPointer<const ::flatbuffers::Vector<const FB_STRUCTS::RoomInfo *> *>(VT_ROOMS);
+  }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *users() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *>(VT_USERS);
+  }
+  const ::flatbuffers::Vector<uint32_t> *vec_user_id() const {
+    return GetPointer<const ::flatbuffers::Vector<uint32_t> *>(VT_VEC_USER_ID);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_ROOMS) &&
+           verifier.VerifyVector(rooms()) &&
+           VerifyOffset(verifier, VT_USERS) &&
+           verifier.VerifyVector(users()) &&
+           verifier.VerifyVectorOfStrings(users()) &&
+           VerifyOffset(verifier, VT_VEC_USER_ID) &&
+           verifier.VerifyVector(vec_user_id()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_ENTER_GAME_LOBBY_SUCCESS_PACKETBuilder {
+  typedef SC_ENTER_GAME_LOBBY_SUCCESS_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_rooms(::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::RoomInfo *>> rooms) {
+    fbb_.AddOffset(SC_ENTER_GAME_LOBBY_SUCCESS_PACKET::VT_ROOMS, rooms);
+  }
+  void add_users(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> users) {
+    fbb_.AddOffset(SC_ENTER_GAME_LOBBY_SUCCESS_PACKET::VT_USERS, users);
+  }
+  void add_vec_user_id(::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> vec_user_id) {
+    fbb_.AddOffset(SC_ENTER_GAME_LOBBY_SUCCESS_PACKET::VT_VEC_USER_ID, vec_user_id);
+  }
+  explicit SC_ENTER_GAME_LOBBY_SUCCESS_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_SUCCESS_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_SUCCESS_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_SUCCESS_PACKET> CreateSC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::RoomInfo *>> rooms = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> users = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> vec_user_id = 0) {
+  SC_ENTER_GAME_LOBBY_SUCCESS_PACKETBuilder builder_(_fbb);
+  builder_.add_vec_user_id(vec_user_id);
+  builder_.add_users(users);
+  builder_.add_rooms(rooms);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_SUCCESS_PACKET> CreateSC_ENTER_GAME_LOBBY_SUCCESS_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<FB_STRUCTS::RoomInfo> *rooms = nullptr,
+    const std::vector<::flatbuffers::Offset<::flatbuffers::String>> *users = nullptr,
+    const std::vector<uint32_t> *vec_user_id = nullptr) {
+  auto rooms__ = rooms ? _fbb.CreateVectorOfStructs<FB_STRUCTS::RoomInfo>(*rooms) : 0;
+  auto users__ = users ? _fbb.CreateVector<::flatbuffers::Offset<::flatbuffers::String>>(*users) : 0;
+  auto vec_user_id__ = vec_user_id ? _fbb.CreateVector<uint32_t>(*vec_user_id) : 0;
+  return FB_TABLES::CreateSC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
+      _fbb,
+      rooms__,
+      users__,
+      vec_user_id__);
+}
+
+struct SC_ENTER_GAME_LOBBY_FAIL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_GAME_LOBBY_FAIL_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FAIL_MSG = 4
+  };
+  const ::flatbuffers::String *fail_msg() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_FAIL_MSG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_FAIL_MSG) &&
+           verifier.VerifyString(fail_msg()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_ENTER_GAME_LOBBY_FAIL_PACKETBuilder {
+  typedef SC_ENTER_GAME_LOBBY_FAIL_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_fail_msg(::flatbuffers::Offset<::flatbuffers::String> fail_msg) {
+    fbb_.AddOffset(SC_ENTER_GAME_LOBBY_FAIL_PACKET::VT_FAIL_MSG, fail_msg);
+  }
+  explicit SC_ENTER_GAME_LOBBY_FAIL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_FAIL_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_FAIL_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_FAIL_PACKET> CreateSC_ENTER_GAME_LOBBY_FAIL_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> fail_msg = 0) {
+  SC_ENTER_GAME_LOBBY_FAIL_PACKETBuilder builder_(_fbb);
+  builder_.add_fail_msg(fail_msg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SC_ENTER_GAME_LOBBY_FAIL_PACKET> CreateSC_ENTER_GAME_LOBBY_FAIL_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *fail_msg = nullptr) {
+  auto fail_msg__ = fail_msg ? _fbb.CreateString(fail_msg) : 0;
+  return FB_TABLES::CreateSC_ENTER_GAME_LOBBY_FAIL_PACKET(
+      _fbb,
+      fail_msg__);
+}
+
 struct CS_LEAVE_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_LEAVE_GAME_LOBBY_PACKETBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
@@ -701,8 +853,8 @@ inline ::flatbuffers::Offset<SC_LEAVE_GAME_LOBBY_PACKET> CreateSC_LEAVE_GAME_LOB
   return builder_.Finish();
 }
 
-struct SC_ADD_USER_IN_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_ADD_USER_IN_GAME_LOBBY_PACKETBuilder Builder;
+struct SC_ENTER_USER_IN_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_USER_IN_GAME_LOBBY_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_USER_NAME = 4,
     VT_USER_ID = 6
@@ -722,50 +874,50 @@ struct SC_ADD_USER_IN_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flat
   }
 };
 
-struct SC_ADD_USER_IN_GAME_LOBBY_PACKETBuilder {
-  typedef SC_ADD_USER_IN_GAME_LOBBY_PACKET Table;
+struct SC_ENTER_USER_IN_GAME_LOBBY_PACKETBuilder {
+  typedef SC_ENTER_USER_IN_GAME_LOBBY_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_user_name(::flatbuffers::Offset<::flatbuffers::String> user_name) {
-    fbb_.AddOffset(SC_ADD_USER_IN_GAME_LOBBY_PACKET::VT_USER_NAME, user_name);
+    fbb_.AddOffset(SC_ENTER_USER_IN_GAME_LOBBY_PACKET::VT_USER_NAME, user_name);
   }
   void add_user_id(int32_t user_id) {
-    fbb_.AddElement<int32_t>(SC_ADD_USER_IN_GAME_LOBBY_PACKET::VT_USER_ID, user_id, 0);
+    fbb_.AddElement<int32_t>(SC_ENTER_USER_IN_GAME_LOBBY_PACKET::VT_USER_ID, user_id, 0);
   }
-  explicit SC_ADD_USER_IN_GAME_LOBBY_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_ENTER_USER_IN_GAME_LOBBY_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_ADD_USER_IN_GAME_LOBBY_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_ENTER_USER_IN_GAME_LOBBY_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_ADD_USER_IN_GAME_LOBBY_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_ENTER_USER_IN_GAME_LOBBY_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_ADD_USER_IN_GAME_LOBBY_PACKET> CreateSC_ADD_USER_IN_GAME_LOBBY_PACKET(
+inline ::flatbuffers::Offset<SC_ENTER_USER_IN_GAME_LOBBY_PACKET> CreateSC_ENTER_USER_IN_GAME_LOBBY_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> user_name = 0,
     int32_t user_id = 0) {
-  SC_ADD_USER_IN_GAME_LOBBY_PACKETBuilder builder_(_fbb);
+  SC_ENTER_USER_IN_GAME_LOBBY_PACKETBuilder builder_(_fbb);
   builder_.add_user_id(user_id);
   builder_.add_user_name(user_name);
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<SC_ADD_USER_IN_GAME_LOBBY_PACKET> CreateSC_ADD_USER_IN_GAME_LOBBY_PACKETDirect(
+inline ::flatbuffers::Offset<SC_ENTER_USER_IN_GAME_LOBBY_PACKET> CreateSC_ENTER_USER_IN_GAME_LOBBY_PACKETDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *user_name = nullptr,
     int32_t user_id = 0) {
   auto user_name__ = user_name ? _fbb.CreateString(user_name) : 0;
-  return FB_TABLES::CreateSC_ADD_USER_IN_GAME_LOBBY_PACKET(
+  return FB_TABLES::CreateSC_ENTER_USER_IN_GAME_LOBBY_PACKET(
       _fbb,
       user_name__,
       user_id);
 }
 
-struct SC_REMOVE_USER_IN_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_REMOVE_USER_IN_GAME_LOBBY_PACKETBuilder Builder;
+struct SC_LEAVE_USER_IN_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_LEAVE_USER_IN_GAME_LOBBY_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_USER_ID = 4
   };
@@ -779,28 +931,28 @@ struct SC_REMOVE_USER_IN_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::f
   }
 };
 
-struct SC_REMOVE_USER_IN_GAME_LOBBY_PACKETBuilder {
-  typedef SC_REMOVE_USER_IN_GAME_LOBBY_PACKET Table;
+struct SC_LEAVE_USER_IN_GAME_LOBBY_PACKETBuilder {
+  typedef SC_LEAVE_USER_IN_GAME_LOBBY_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_user_id(uint32_t user_id) {
-    fbb_.AddElement<uint32_t>(SC_REMOVE_USER_IN_GAME_LOBBY_PACKET::VT_USER_ID, user_id, 0);
+    fbb_.AddElement<uint32_t>(SC_LEAVE_USER_IN_GAME_LOBBY_PACKET::VT_USER_ID, user_id, 0);
   }
-  explicit SC_REMOVE_USER_IN_GAME_LOBBY_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_LEAVE_USER_IN_GAME_LOBBY_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_REMOVE_USER_IN_GAME_LOBBY_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_LEAVE_USER_IN_GAME_LOBBY_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_REMOVE_USER_IN_GAME_LOBBY_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_LEAVE_USER_IN_GAME_LOBBY_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_REMOVE_USER_IN_GAME_LOBBY_PACKET> CreateSC_REMOVE_USER_IN_GAME_LOBBY_PACKET(
+inline ::flatbuffers::Offset<SC_LEAVE_USER_IN_GAME_LOBBY_PACKET> CreateSC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t user_id = 0) {
-  SC_REMOVE_USER_IN_GAME_LOBBY_PACKETBuilder builder_(_fbb);
+  SC_LEAVE_USER_IN_GAME_LOBBY_PACKETBuilder builder_(_fbb);
   builder_.add_user_id(user_id);
   return builder_.Finish();
 }
@@ -875,8 +1027,8 @@ inline ::flatbuffers::Offset<SC_MAKE_GAME_ROOM_PACKET> CreateSC_MAKE_GAME_ROOM_P
   return builder_.Finish();
 }
 
-struct CS_JOIN_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_JOIN_GAME_ROOM_PACKETBuilder Builder;
+struct CS_ENTER_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_ENTER_GAME_ROOM_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ROOM_ID = 4
   };
@@ -890,28 +1042,28 @@ struct CS_JOIN_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers:
   }
 };
 
-struct CS_JOIN_GAME_ROOM_PACKETBuilder {
-  typedef CS_JOIN_GAME_ROOM_PACKET Table;
+struct CS_ENTER_GAME_ROOM_PACKETBuilder {
+  typedef CS_ENTER_GAME_ROOM_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_room_id(uint16_t room_id) {
-    fbb_.AddElement<uint16_t>(CS_JOIN_GAME_ROOM_PACKET::VT_ROOM_ID, room_id, 0);
+    fbb_.AddElement<uint16_t>(CS_ENTER_GAME_ROOM_PACKET::VT_ROOM_ID, room_id, 0);
   }
-  explicit CS_JOIN_GAME_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CS_ENTER_GAME_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_JOIN_GAME_ROOM_PACKET> Finish() {
+  ::flatbuffers::Offset<CS_ENTER_GAME_ROOM_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_JOIN_GAME_ROOM_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CS_ENTER_GAME_ROOM_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_JOIN_GAME_ROOM_PACKET> CreateCS_JOIN_GAME_ROOM_PACKET(
+inline ::flatbuffers::Offset<CS_ENTER_GAME_ROOM_PACKET> CreateCS_ENTER_GAME_ROOM_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint16_t room_id = 0) {
-  CS_JOIN_GAME_ROOM_PACKETBuilder builder_(_fbb);
+  CS_ENTER_GAME_ROOM_PACKETBuilder builder_(_fbb);
   builder_.add_room_id(room_id);
   return builder_.Finish();
 }
@@ -967,8 +1119,8 @@ inline ::flatbuffers::Offset<SC_JOIN_GAME_ROOM_FAIL_PACKET> CreateSC_JOIN_GAME_R
       fail_msg__);
 }
 
-struct SC_JOIN_GAME_ROOM_SUCCESS_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_JOIN_GAME_ROOM_SUCCESS_PACKETBuilder Builder;
+struct SC_ENTER_GAME_ROOM_SUCCESS_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_ENTER_GAME_ROOM_SUCCESS_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_USER = 4,
     VT_PARTICIPANTS = 6
@@ -988,43 +1140,43 @@ struct SC_JOIN_GAME_ROOM_SUCCESS_PACKET FLATBUFFERS_FINAL_CLASS : private ::flat
   }
 };
 
-struct SC_JOIN_GAME_ROOM_SUCCESS_PACKETBuilder {
-  typedef SC_JOIN_GAME_ROOM_SUCCESS_PACKET Table;
+struct SC_ENTER_GAME_ROOM_SUCCESS_PACKETBuilder {
+  typedef SC_ENTER_GAME_ROOM_SUCCESS_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_user(const FB_STRUCTS::ParticipantInfo *user) {
-    fbb_.AddStruct(SC_JOIN_GAME_ROOM_SUCCESS_PACKET::VT_USER, user);
+    fbb_.AddStruct(SC_ENTER_GAME_ROOM_SUCCESS_PACKET::VT_USER, user);
   }
   void add_participants(::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *>> participants) {
-    fbb_.AddOffset(SC_JOIN_GAME_ROOM_SUCCESS_PACKET::VT_PARTICIPANTS, participants);
+    fbb_.AddOffset(SC_ENTER_GAME_ROOM_SUCCESS_PACKET::VT_PARTICIPANTS, participants);
   }
-  explicit SC_JOIN_GAME_ROOM_SUCCESS_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_ENTER_GAME_ROOM_SUCCESS_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_JOIN_GAME_ROOM_SUCCESS_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_ENTER_GAME_ROOM_SUCCESS_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_JOIN_GAME_ROOM_SUCCESS_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_ENTER_GAME_ROOM_SUCCESS_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_JOIN_GAME_ROOM_SUCCESS_PACKET> CreateSC_JOIN_GAME_ROOM_SUCCESS_PACKET(
+inline ::flatbuffers::Offset<SC_ENTER_GAME_ROOM_SUCCESS_PACKET> CreateSC_ENTER_GAME_ROOM_SUCCESS_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const FB_STRUCTS::ParticipantInfo *user = nullptr,
     ::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *>> participants = 0) {
-  SC_JOIN_GAME_ROOM_SUCCESS_PACKETBuilder builder_(_fbb);
+  SC_ENTER_GAME_ROOM_SUCCESS_PACKETBuilder builder_(_fbb);
   builder_.add_participants(participants);
   builder_.add_user(user);
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<SC_JOIN_GAME_ROOM_SUCCESS_PACKET> CreateSC_JOIN_GAME_ROOM_SUCCESS_PACKETDirect(
+inline ::flatbuffers::Offset<SC_ENTER_GAME_ROOM_SUCCESS_PACKET> CreateSC_ENTER_GAME_ROOM_SUCCESS_PACKETDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const FB_STRUCTS::ParticipantInfo *user = nullptr,
     const std::vector<FB_STRUCTS::ParticipantInfo> *participants = nullptr) {
   auto participants__ = participants ? _fbb.CreateVectorOfStructs<FB_STRUCTS::ParticipantInfo>(*participants) : 0;
-  return FB_TABLES::CreateSC_JOIN_GAME_ROOM_SUCCESS_PACKET(
+  return FB_TABLES::CreateSC_ENTER_GAME_ROOM_SUCCESS_PACKET(
       _fbb,
       user,
       participants__);
@@ -1412,33 +1564,246 @@ inline ::flatbuffers::Offset<SC_READY_GAME_PACKET> CreateSC_READY_GAME_PACKET(
   return builder_.Finish();
 }
 
-struct CS_START_GAME_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_START_GAME_PACKETBuilder Builder;
+struct CL_START_GAME_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CL_START_GAME_PACKETBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            verifier.EndTable();
   }
 };
 
-struct CS_START_GAME_PACKETBuilder {
-  typedef CS_START_GAME_PACKET Table;
+struct CL_START_GAME_PACKETBuilder {
+  typedef CL_START_GAME_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  explicit CS_START_GAME_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit CL_START_GAME_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_START_GAME_PACKET> Finish() {
+  ::flatbuffers::Offset<CL_START_GAME_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_START_GAME_PACKET>(end);
+    auto o = ::flatbuffers::Offset<CL_START_GAME_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_START_GAME_PACKET> CreateCS_START_GAME_PACKET(
+inline ::flatbuffers::Offset<CL_START_GAME_PACKET> CreateCL_START_GAME_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb) {
-  CS_START_GAME_PACKETBuilder builder_(_fbb);
+  CL_START_GAME_PACKETBuilder builder_(_fbb);
   return builder_.Finish();
+}
+
+struct LS_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LS_CREATE_GAME_WORLD_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ROOM_ID = 4,
+    VT_PARTICIPANTS = 6
+  };
+  uint16_t room_id() const {
+    return GetField<uint16_t>(VT_ROOM_ID, 0);
+  }
+  const ::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *> *participants() const {
+    return GetPointer<const ::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *> *>(VT_PARTICIPANTS);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
+           VerifyOffset(verifier, VT_PARTICIPANTS) &&
+           verifier.VerifyVector(participants()) &&
+           verifier.EndTable();
+  }
+};
+
+struct LS_CREATE_GAME_WORLD_PACKETBuilder {
+  typedef LS_CREATE_GAME_WORLD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_room_id(uint16_t room_id) {
+    fbb_.AddElement<uint16_t>(LS_CREATE_GAME_WORLD_PACKET::VT_ROOM_ID, room_id, 0);
+  }
+  void add_participants(::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *>> participants) {
+    fbb_.AddOffset(LS_CREATE_GAME_WORLD_PACKET::VT_PARTICIPANTS, participants);
+  }
+  explicit LS_CREATE_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET> CreateLS_CREATE_GAME_WORLD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t room_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *>> participants = 0) {
+  LS_CREATE_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_participants(participants);
+  builder_.add_room_id(room_id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET> CreateLS_CREATE_GAME_WORLD_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t room_id = 0,
+    const std::vector<FB_STRUCTS::ParticipantInfo> *participants = nullptr) {
+  auto participants__ = participants ? _fbb.CreateVectorOfStructs<FB_STRUCTS::ParticipantInfo>(*participants) : 0;
+  return FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKET(
+      _fbb,
+      room_id,
+      participants__);
+}
+
+struct SL_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SL_CREATE_GAME_WORLD_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_WORLD_ID = 4,
+    VT_IP = 6,
+    VT_PORT = 8
+  };
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  const ::flatbuffers::String *ip() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_IP);
+  }
+  uint16_t port() const {
+    return GetField<uint16_t>(VT_PORT, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyOffset(verifier, VT_IP) &&
+           verifier.VerifyString(ip()) &&
+           VerifyField<uint16_t>(verifier, VT_PORT, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct SL_CREATE_GAME_WORLD_PACKETBuilder {
+  typedef SL_CREATE_GAME_WORLD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(SL_CREATE_GAME_WORLD_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_ip(::flatbuffers::Offset<::flatbuffers::String> ip) {
+    fbb_.AddOffset(SL_CREATE_GAME_WORLD_PACKET::VT_IP, ip);
+  }
+  void add_port(uint16_t port) {
+    fbb_.AddElement<uint16_t>(SL_CREATE_GAME_WORLD_PACKET::VT_PORT, port, 0);
+  }
+  explicit SL_CREATE_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> CreateSL_CREATE_GAME_WORLD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> ip = 0,
+    uint16_t port = 0) {
+  SL_CREATE_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_ip(ip);
+  builder_.add_port(port);
+  builder_.add_world_id(world_id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SL_CREATE_GAME_WORLD_PACKET> CreateSL_CREATE_GAME_WORLD_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    const char *ip = nullptr,
+    uint16_t port = 0) {
+  auto ip__ = ip ? _fbb.CreateString(ip) : 0;
+  return FB_TABLES::CreateSL_CREATE_GAME_WORLD_PACKET(
+      _fbb,
+      world_id,
+      ip__,
+      port);
+}
+
+struct LC_CONNECT_TO_GAME_SERVER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_CONNECT_TO_GAME_SERVER_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_WORLD_ID = 4,
+    VT_IP = 6,
+    VT_PORT = 8
+  };
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  const ::flatbuffers::String *ip() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_IP);
+  }
+  uint16_t port() const {
+    return GetField<uint16_t>(VT_PORT, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyOffset(verifier, VT_IP) &&
+           verifier.VerifyString(ip()) &&
+           VerifyField<uint16_t>(verifier, VT_PORT, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder {
+  typedef LC_CONNECT_TO_GAME_SERVER_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_ip(::flatbuffers::Offset<::flatbuffers::String> ip) {
+    fbb_.AddOffset(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_IP, ip);
+  }
+  void add_port(uint16_t port) {
+    fbb_.AddElement<uint16_t>(LC_CONNECT_TO_GAME_SERVER_PACKET::VT_PORT, port, 0);
+  }
+  explicit LC_CONNECT_TO_GAME_SERVER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> CreateLC_CONNECT_TO_GAME_SERVER_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> ip = 0,
+    uint16_t port = 0) {
+  LC_CONNECT_TO_GAME_SERVER_PACKETBuilder builder_(_fbb);
+  builder_.add_ip(ip);
+  builder_.add_port(port);
+  builder_.add_world_id(world_id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> CreateLC_CONNECT_TO_GAME_SERVER_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    const char *ip = nullptr,
+    uint16_t port = 0) {
+  auto ip__ = ip ? _fbb.CreateString(ip) : 0;
+  return FB_TABLES::CreateLC_CONNECT_TO_GAME_SERVER_PACKET(
+      _fbb,
+      world_id,
+      ip__,
+      port);
 }
 
 struct SC_LOADING_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -1913,19 +2278,14 @@ inline ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> CreateSC_REMOVE_OBJ_PACKET(
 struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_POS_INFO = 4,
-    VT_PLAYER_STATE = 6
+    VT_POS_INFO = 4
   };
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
   }
-  uint8_t player_state() const {
-    return GetField<uint8_t>(VT_PLAYER_STATE, 0);
-  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
-           VerifyField<uint8_t>(verifier, VT_PLAYER_STATE, 1) &&
            verifier.EndTable();
   }
 };
@@ -1936,9 +2296,6 @@ struct CS_MOVE_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(CS_MOVE_PACKET::VT_POS_INFO, pos_info);
-  }
-  void add_player_state(uint8_t player_state) {
-    fbb_.AddElement<uint8_t>(CS_MOVE_PACKET::VT_PLAYER_STATE, player_state, 0);
   }
   explicit CS_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1953,11 +2310,9 @@ struct CS_MOVE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_MOVE_PACKET> CreateCS_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    uint8_t player_state = 0) {
+    const FB_STRUCTS::PosInfo *pos_info = nullptr) {
   CS_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_pos_info(pos_info);
-  builder_.add_player_state(player_state);
   return builder_.Finish();
 }
 
@@ -1966,17 +2321,13 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_POS_INFO = 6,
-    VT_STATE = 8,
-    VT_SUB_STATE = 10
+    VT_SUB_STATE = 8
   };
   uint32_t obj_id() const {
     return GetField<uint32_t>(VT_OBJ_ID, 0);
   }
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
-  }
-  uint8_t state() const {
-    return GetField<uint8_t>(VT_STATE, 0);
   }
   uint8_t sub_state() const {
     return GetField<uint8_t>(VT_SUB_STATE, 0);
@@ -1985,7 +2336,6 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
-           VerifyField<uint8_t>(verifier, VT_STATE, 1) &&
            VerifyField<uint8_t>(verifier, VT_SUB_STATE, 1) &&
            verifier.EndTable();
   }
@@ -2000,9 +2350,6 @@ struct SC_MOVE_PACKETBuilder {
   }
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(SC_MOVE_PACKET::VT_POS_INFO, pos_info);
-  }
-  void add_state(uint8_t state) {
-    fbb_.AddElement<uint8_t>(SC_MOVE_PACKET::VT_STATE, state, 0);
   }
   void add_sub_state(uint8_t sub_state) {
     fbb_.AddElement<uint8_t>(SC_MOVE_PACKET::VT_SUB_STATE, sub_state, 0);
@@ -2022,13 +2369,11 @@ inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    uint8_t state = 0,
     uint8_t sub_state = 0) {
   SC_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_pos_info(pos_info);
   builder_.add_obj_id(obj_id);
   builder_.add_sub_state(sub_state);
-  builder_.add_state(state);
   return builder_.Finish();
 }
 
@@ -2828,17 +3173,92 @@ inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATIONDirect(
       anim_name__);
 }
 
+struct CS_GEN_NPC_GENERAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GEN_NPC_GENERAL_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_GEN_NPC_GENERAL_PACKETBuilder {
+  typedef CS_GEN_NPC_GENERAL_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_GEN_NPC_GENERAL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> CreateCS_GEN_NPC_GENERAL_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_GEN_NPC_GENERAL_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CS_UPDATE_PLAYER_STATE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_UPDATE_PLAYER_STATE_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_STATE = 4
+  };
+  uint8_t player_state() const {
+    return GetField<uint8_t>(VT_PLAYER_STATE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_PLAYER_STATE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_UPDATE_PLAYER_STATE_PACKETBuilder {
+  typedef CS_UPDATE_PLAYER_STATE_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_state(uint8_t player_state) {
+    fbb_.AddElement<uint8_t>(CS_UPDATE_PLAYER_STATE_PACKET::VT_PLAYER_STATE, player_state, 0);
+  }
+  explicit CS_UPDATE_PLAYER_STATE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET> CreateCS_UPDATE_PLAYER_STATE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint8_t player_state = 0) {
+  CS_UPDATE_PLAYER_STATE_PACKETBuilder builder_(_fbb);
+  builder_.add_player_state(player_state);
+  return builder_.Finish();
+}
+
 struct CS_ENTER_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_ENTER_GAME_WORLD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ROOM_ID = 4
+    VT_ROOM_ID = 4,
+    VT_PLAYER_ID = 6
   };
   uint16_t room_id() const {
     return GetField<uint16_t>(VT_ROOM_ID, 0);
   }
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
            verifier.EndTable();
   }
 };
@@ -2849,6 +3269,9 @@ struct CS_ENTER_GAME_WORLD_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_room_id(uint16_t room_id) {
     fbb_.AddElement<uint16_t>(CS_ENTER_GAME_WORLD_PACKET::VT_ROOM_ID, room_id, 0);
+  }
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(CS_ENTER_GAME_WORLD_PACKET::VT_PLAYER_ID, player_id, 0);
   }
   explicit CS_ENTER_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -2863,8 +3286,10 @@ struct CS_ENTER_GAME_WORLD_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> CreateCS_ENTER_GAME_WORLD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t room_id = 0) {
+    uint16_t room_id = 0,
+    uint32_t player_id = 0) {
   CS_ENTER_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
   builder_.add_room_id(room_id);
   return builder_.Finish();
 }

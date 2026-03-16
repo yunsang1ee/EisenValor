@@ -3,7 +3,8 @@
 
 #include "GameWorld.h"
 #include "Player.h"
-
+#include "FSM.h"
+#include "NavAgent.h"
 Server::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 	:Creature{teamType, FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER}
 {
@@ -32,22 +33,27 @@ void Server::Contents::Soldier::OnCollisionExit(Collider* const other)
 void Server::Contents::Soldier::Update(const float dt)
 {
 	GameObject::Update(dt);
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), GetComponent<Server::Contents::FSM>()->GetCurState()->GetStateType(), 0) };
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
 void Server::Contents::Soldier::OnDeath()
 {
 	const auto& gameWorld{ GetGameWorld() };
-	gameWorld->RemoveGameObject(this);
+	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	const float dt{ gameWorld->GetGameWorldDT() };
+	fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD, dt, true);
+	const auto ag{ GetComponent<Server::Contents::NavAgent>() };
+	if(ag)
+		ag->Remove();
 }
 
-bool Server::Contents::Soldier::OnDamaged(Creature* const attacker, const float dt)
+bool Server::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
 {
 	uint32 damage{};
 
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
-		auto attackerPlayer = static_cast<Player*>(attacker);
+		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {

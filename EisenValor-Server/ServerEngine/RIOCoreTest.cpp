@@ -74,10 +74,15 @@ bool ServerEngine::RIO::RIOCoreTest::Register(std::shared_ptr<Session> session)
 
 	const uint32 id{ rioSession->GetID() };
 
-	if(false == m_connectedSessions.contains(id))
-		m_connectedSessions.insert(std::make_pair(rioSession->GetID(), rioSession));
-	else
+	//if(false == m_connectedSessions.contains(id))
+	//	m_connectedSessions.insert(std::make_pair(rioSession->GetID(), rioSession));
+	//else
+	//	return false;
+
+	if(m_connectedSessions.contains(rioSession))
 		return false;
+
+	m_connectedSessions.insert(rioSession);
 
 	rioSession->PostRecv();
 	return true;
@@ -94,8 +99,11 @@ bool ServerEngine::RIO::RIOCoreTest::Deregister(std::shared_ptr<Session> session
 
 	const uint32 id{ rioSession->GetID() };
 
-	if(m_connectedSessions.contains(id))
-		m_connectedSessions.erase(id);
+	/*if(m_connectedSessions.contains(id))
+		m_connectedSessions.erase(id);*/
+
+	if(m_connectedSessions.contains(rioSession))
+		m_connectedSessions.erase(rioSession);
 
 	DequeueCompletion();
 
@@ -114,7 +122,8 @@ void ServerEngine::RIO::RIOCoreTest::FlushPacketQueue()
 	auto iter{ m_connectedSessions.begin() };
 
 	while(iter != m_connectedSessions.end()) {
-		auto& session = iter->second;
+		// auto& session = *iter->second;
+		auto& session = *iter;
 
 		if(session == nullptr || session->GetState() == SESSION_STATE::FREE) {
 			iter = m_connectedSessions.erase(iter);
@@ -133,7 +142,8 @@ void ServerEngine::RIO::RIOCoreTest::DequeueCompletion()
 		memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
 
 		const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
-		if(0 == numResults) return;
+		if(0 == numResults)
+			return;
 		else if(RIO_CORRUPT_CQ == numResults) {
 			std::cout << "RIO_CORRUPT_CQ" << std::endl;
 			return;

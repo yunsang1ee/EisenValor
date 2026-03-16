@@ -12,8 +12,8 @@ namespace Server {
 			virtual void Update(const float dt) override;
 			virtual void OnDeath() override;
 			virtual void OnRespawn() override;
-			virtual bool OnDamaged(Creature* const attacker, const float dt) override;
-			bool IsTargetInAttackRange(GameObject* const target);
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt) override;
+			bool IsTargetInAttackRange(std::shared_ptr<GameObject> const target);
 
 		public:
 			void AddSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType |= subStateType; }

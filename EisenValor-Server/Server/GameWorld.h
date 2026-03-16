@@ -4,6 +4,7 @@
 #include "CollisionDetector.h"
 #include "NavSystem.h"
 #include "IRoom.h"
+#include "IDGenerator.h"
 
 namespace Server {
 	namespace Contents {
@@ -19,7 +20,7 @@ namespace Server {
 		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
 		using Bots = std::unordered_map<uint32, std::shared_ptr<Bot>>;
 
-		using GameObjects = std::map<uint32, std::unique_ptr<Server::Contents::GameObject>>;
+		using GameObjects = std::map<uint32, std::shared_ptr<Server::Contents::GameObject>>;
 
 		class GameWorld : public ServerEngine::TaskQueue {
 		public:
@@ -43,6 +44,7 @@ namespace Server {
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
 #ifndef ENABLE_LOBBY
 			void Handle_CS_ENTER_GAME_WORLD(const std::shared_ptr<ClientSession>& clientSession);
 #endif // DEVELO
@@ -60,11 +62,11 @@ namespace Server {
 			const auto& GetGameObjectGroups() const { return m_gameObjectsGroups; }
 			const GameObjects& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
-			GameObject*	FindObjectByID(const uint32 targetID);
+			std::shared_ptr<GameObject>	FindObjectByID(const uint32 targetID);
 	
 		public:
-			void AddGameObject(std::unique_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
-			void RemoveGameObject(GameObject* gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
+			void AddGameObject(std::shared_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
+			void RemoveGameObject(std::shared_ptr<GameObject> gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
 		
 		private:
 			void Update();
@@ -83,7 +85,7 @@ namespace Server {
 			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			bool IsFinish();
 
-			Player*		IDToPlayer(const uint32 sessionID);
+			std::shared_ptr<Player>		IDToPlayer(const uint32 sessionID);
 	
 
 			friend class GameRoom;
@@ -97,8 +99,8 @@ namespace Server {
 
 			// PENDING
 			std::queue<std::function<void()>>										m_pendingEventFpQueue;
-			std::queue<std::unique_ptr<GameObject>>									m_pendingAddObjectQueue;
-			std::queue<GameObject*>													m_pendingRemoveObjectQueue;
+			std::queue<std::shared_ptr<GameObject>>									m_pendingAddObjectQueue;
+			std::queue<std::shared_ptr<GameObject>>									m_pendingRemoveObjectQueue;
 
 			// UPDATE & TIME
 			bool																	m_firstUpdate;
@@ -131,7 +133,7 @@ namespace Server {
 			virtual ~GameWorldTest();
 
 		public:
-			virtual void Init() override final;
+			virtual void Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info) override final;
 			virtual void Update(const float dt) override final;
 			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
 			virtual void LeaveSession(std::shared_ptr<ServerEngine::Session> session)  override final;
@@ -141,12 +143,14 @@ namespace Server {
 			void AddEvent(const std::function<void()>& eve) { m_pendingEventFpQueue.push(eve); }
 
 		public:
-			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState);
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo);
 			void Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
 			void Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID);
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
+			void Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state);
 
 		public:
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
@@ -154,15 +158,15 @@ namespace Server {
 			void Reset() { memset(m_check.data(), 0, m_check.size() * sizeof(uint32)); }
 
 		public:
-			void AddGameObject(std::unique_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
-			void RemoveGameObject(GameObject* gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
+			void AddGameObject(std::shared_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
+			void RemoveGameObject(std::shared_ptr<GameObject> gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
 			void LeaveGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 			float GetGameWorldDT() const { return m_dt; }
 			uint64 GetGameWorldFrameCount() const { return m_worldFrameCount; }
 			const auto& GetGameObjectGroups() const { return m_gameObjectsGroups; }
 			const GameObjects& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
-			GameObject* FindObjectByID(const uint32 targetID);
+			std::shared_ptr<GameObject> FindObjectByID(const uint32 targetID);
 
 		private:
 			void ProcessEvents();
@@ -171,7 +175,7 @@ namespace Server {
 			void CheckGameTime(const float dt);
 			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			bool IsFinish();
-			Player* IDToPlayer(const uint32 sessionID);
+			std::shared_ptr<Player> IDToPlayer(const uint32 sessionID);
 			void CreateGameWorldObjects();
 		private:
 			Users																	m_users;
@@ -180,8 +184,8 @@ namespace Server {
 			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>					m_gameObjectsGroups;
 
 			std::queue<std::function<void()>>										m_pendingEventFpQueue;
-			std::queue<std::unique_ptr<GameObject>>									m_pendingAddObjectQueue;
-			std::queue<GameObject*>													m_pendingRemoveObjectQueue;
+			std::queue<std::shared_ptr<GameObject>>									m_pendingAddObjectQueue;
+			std::queue<std::shared_ptr<GameObject>>									m_pendingRemoveObjectQueue;
 
 			uint64																	m_worldFrameCount;
 	
@@ -192,11 +196,13 @@ namespace Server {
 			std::map<uint64, bool>													m_mapColInfo;
 
 			NavSystem																m_navSystem;
+			float																	m_dt;
 
-			uint32																	m_npcIdGen;
+			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
+			std::unordered_map<uint32, uint64>										m_sessionToPlayer;
 
-			float m_dt;
 
+			IDGenerator																m_idGenerator;
 		};
 #endif
 	}

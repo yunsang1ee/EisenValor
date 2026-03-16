@@ -316,7 +316,7 @@ Server::Contents::GameRoomTest::~GameRoomTest()
 {
 }
 
-void Server::Contents::GameRoomTest::Init()
+void Server::Contents::GameRoomTest::Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
 {
 }
 

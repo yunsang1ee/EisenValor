@@ -52,3 +52,9 @@ void Server::Contents::NavAgent::StopMove()
 		m_navSystem->ResetMoveTarget(m_agentIdx);
 	}
 }
+
+void Server::Contents::NavAgent::Remove()
+{
+	if(m_agentIdx != -1)
+		m_navSystem->RemoveAgent(m_agentIdx);
+}

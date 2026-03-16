@@ -16,7 +16,7 @@ Server::Contents::General::~General()
 
 }
 
-bool Server::Contents::General::IsTargetInAttackRange(GameObject* const target)
+bool Server::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameObject> const target)
 {
 	if(!target) return false;
 
@@ -54,7 +54,7 @@ void Server::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0, 0) };
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
@@ -95,7 +95,7 @@ void Server::Contents::General::OnRespawn()
 	std::cout << "General NPC Respawn!" << std::endl;
 }
 
-bool Server::Contents::General::OnDamaged(Creature* const attacker, const float dt)
+bool Server::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
 	auto const world{ GetGameWorld() };
@@ -115,7 +115,7 @@ bool Server::Contents::General::OnDamaged(Creature* const attacker, const float 
 
 	// 상대가 플레이어인 경우
 	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
-		auto attackerPlayer = static_cast<Player*>(attacker);
+		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 		switch(stateType) {

@@ -2,15 +2,21 @@
 #include "ServerGlobalFuncs.h"
 
 #include "ClientSession.h"
+#include "LobbyServerSession.h"
 #include "GameLobby.h"
 #include "GameWorld.h"
 #include "GameObject.h"
 
 std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;
 
-std::shared_ptr<ClientSession> MakeClientSessionFunc()
+std::shared_ptr<ServerEngine::Session> MakeClientSessionFunc()
 {
 	return ServerEngine::ObjectPool<ClientSession>::MakeShared();
+}
+
+std::shared_ptr<ServerEngine::Session> MakeLobbyServerSessionFunc()
+{
+	return ServerEngine::ObjectPool<LobbyServerSession>::MakeShared();
 }
 
 #ifdef MODERN_CODE
@@ -25,9 +31,12 @@ std::unique_ptr<ServerEngine::IRoom> MakeGameLobbyTest()
 }
 #endif
 
-bool IsValidObj(const Server::Contents::GameObject* const obj)
+bool IsValidObj(const std::shared_ptr<Server::Contents::GameObject> obj)
 {
-	if(nullptr == obj || false == obj->IsActive())
+	if(nullptr == obj)
+		return false;
+
+	if(false == obj->IsActive())
 		return false;
 
 	return true;
