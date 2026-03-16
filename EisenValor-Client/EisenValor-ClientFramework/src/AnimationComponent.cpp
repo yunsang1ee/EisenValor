@@ -257,3 +257,12 @@ void AnimationComponent::UpdateBoneMatrices()
 
 	skinnedMesh->SetFinalMatrices(m_finalPalette);
 }
+
+bool AnimationComponent::IsAnimationEnd() const
+{
+	if (!m_currentAnimation || m_isLooping) 
+	{
+		return false;
+	}
+	return m_currentTime >= m_currentAnimation->GetDuration();
+}

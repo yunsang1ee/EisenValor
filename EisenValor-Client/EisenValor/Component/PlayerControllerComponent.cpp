@@ -115,13 +115,19 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
 
 	// FSM에서 현재 상태 가져오기
-	// uint8_t curState = FB_ENUMS::GENERAL_STATE_TYPE_IDLE;
-	/*if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	uint8_t stateToSend = FB_ENUMS::GENERAL_STATE_TYPE_NONE;
+	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
 	{
-		curState = fsm->GetCurStateType();
-	}*/
+		uint8_t curState = fsm->GetCurStateType();
+		// MOVE, IDLE일 때만 서버에 보고
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_IDLE || 
+			curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
+		{
+			stateToSend = curState;
+		}
+	}
 
-	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::GENERAL_STATE_TYPE_NONE);
+	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, stateToSend);
 	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
 
@@ -205,12 +211,14 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		uint8_t curState = fsm->GetCurStateType();
 
-		// 공격 관련 상태인 경우 이동/대기로의 전환 방지
-		bool isAttackCycle = (curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-							  curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
-							  curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+		// 공격, 스턴, 사망 상태인 경우 이동/대기로의 전환 방지
+		bool isRestrictedState = (curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+								  curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
+								  curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
+								  curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN ||
+								  curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
 
-		if (!isAttackCycle)
+		if (!isRestrictedState)
 		{
 			if (isMoving)
 			{

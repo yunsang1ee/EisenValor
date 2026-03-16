@@ -123,7 +123,11 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = go->GetComponent<AnimationComponent>())
 		{
-			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), false);
+			// 공격 타입에 따라 다른 애니메이션 키 계산 (100번 구역 사용)
+			uint8_t attackType = static_cast<uint8_t>(fsm->GetCurAttackType());
+			uint8_t animationKey = 100 + attackType;
+
+			anim->Play(animationKey, false);
 		}
 	}
 }
@@ -231,8 +235,18 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 void PlayerStunState::Update(FSMComponent* fsm, float dt)
 {
 	fsm->AddStateTimer(dt);
-	// 피격 경직 시간 (1초)
-	if (fsm->GetStateTimer() >= 1.0f)
+
+	bool isAnimEnd = false;
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			isAnimEnd = anim->IsAnimationEnd();
+		}
+	}
+
+	// 애니메이션이 실제 끝났을 때만 전환
+	if (isAnimEnd || fsm->GetStateTimer() >= 1.5f)
 	{
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 	}
@@ -246,7 +260,7 @@ void PlayerStunState::Exit(FSMComponent* fsm)
 // ==================================
 //		  GENERAL_DEAD_STATE
 // ==================================
-PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 {
 }
 

@@ -1,5 +1,6 @@
 #include "stdafxClient.h"
 #include "FSMComponent.h"
+#include <Packets/Enums_generated.h>
 
 void FSMComponent::OnUpdate(float deltaTime)
 {
@@ -12,8 +13,27 @@ void FSMComponent::OnUpdate(float deltaTime)
 	}
 }
 
+void FSMComponent::SetServerState(uint8_t serverState)
+{
+	// 서버에서 오는 상태 기록
+	m_serverState = serverState;
+
+	// 서버에서 온 패킷 무시
+	if (m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
+		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
+		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+	{
+		return;
+	}
+
+	// 그 외 경우 서버 상태로 변경
+	ChangeState(serverState);
+}
+
 void FSMComponent::ChangeState(uint8_t nextStateType)
 {
+	// 같은 상태로 다시 ChangeState가 불렸을 때 애니메이션을 다시 틀지 않도록 방어
 	if (m_curStateType == nextStateType) return;
 
 	// 1. 기존 상태 Exit

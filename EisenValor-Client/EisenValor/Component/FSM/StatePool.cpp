@@ -11,15 +11,17 @@ void StatePool::Initialize()
 	// 이미 초기화된 경우 무시
 	if (!s_instanceMap.empty()) return;
 
-	// General States 등록
+	// General States 
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_IDLE] = std::make_unique<PlayerlIdleState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_MOVE] = std::make_unique<PlayerMoveState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<PlayerStunState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<PlayerDeadState>();
+
+	// 클라용
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY] = std::make_unique<PlayerPreDelayState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_ATTACK] = std::make_unique<PlayerAttackState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY] = std::make_unique<PlayerPostDelayState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE] = std::make_unique<PlayerDefenseState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<PlayerStunState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<PlayerDeadState>();
 	// 상태 추가 시 여기에 등록
 }
 

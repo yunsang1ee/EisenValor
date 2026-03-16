@@ -475,9 +475,13 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				playerObjHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
 			);
 
-			// 애니메이션 컴포넌트 추가
+			// Animation Component
 			scene->CreateComponentWithInit<AnimationComponent>(
-				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "HumanM"); }
+				playerObjHandle,
+				[](AnimationComponent* anim)
+				{
+					AnimationLoader::AnimationApply(anim, "HumanM");
+				}
 			);
 
 			//// 공격 범위 디버깅용
@@ -689,7 +693,22 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "HumanM"); }
+					objHandle,
+					[](AnimationComponent* anim)
+					{
+						AnimationLoader::AnimationApply(anim, "HumanM");
+					}
+				);
+			}
+
+			// FSMComponent
+			if (isGeneral)
+			{
+				scene->CreateComponentWithInit<FSMComponent>(
+					objHandle,
+					[](FSMComponent* fsm) {
+						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+					}
 				);
 			}
 
@@ -930,7 +949,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		fsm->ChangeState(nextState);
+		DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		fsm->SetServerState(nextState);
 	}
 
 	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
