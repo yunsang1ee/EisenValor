@@ -37,8 +37,7 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	// 서버에서 온 패킷 무시
 	if (m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
 		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
-		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
-		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
 	{
 		return;
 	}

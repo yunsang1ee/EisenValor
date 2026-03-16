@@ -978,12 +978,8 @@ SET_LOCAL:
 				return true;
 			}
 		}
-	}
 
-	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
-	if (auto* fsm = obj->GetComponent<FSMComponent>())
-	{
-		if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
 		{
 			if (obj->GetComponent<StaminaComponent>() == nullptr)
 			{
