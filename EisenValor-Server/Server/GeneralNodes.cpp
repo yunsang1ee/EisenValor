@@ -116,7 +116,7 @@ Server::Contents::BEHAVIOR_NODE_STATUS Server::Contents::MoveToOZ::DoAction(cons
 	const auto& ownerPos{ owner->GetPos() };
 	auto const world{ owner->GetGameWorld() };
 
-	auto const ozObj{ world->FindObjectByID(tree->GetBlackboard()->GetValue<uint32>("OZ_ID")) };
+	auto const ozObj{ world->FindObjectByID(tree->GetBlackboard()->GetValue<uint64>("OZ_ID")) };
 
 	if(false == IsValidObj(ozObj))
 		return Server::Contents::BEHAVIOR_NODE_STATUS::FAIL;

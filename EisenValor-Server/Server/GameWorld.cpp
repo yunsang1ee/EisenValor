@@ -244,7 +244,7 @@ void Server::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSes
 	}
 
 	if(fsm) {
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, fsm->GetCurState()->GetStateType(), etou8(player->GetSubState()));
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, etou8(player->GetSubState()));
 		Broadcast(std::move(pb));
 	}
 }
@@ -504,7 +504,7 @@ void Server::Contents::GameWorld::ProcessPendingAddObjectList()
 		auto newGameObject = std::move(m_pendingAddObjectQueue.front());
 		m_pendingAddObjectQueue.pop();
 
-		const uint32 id{ newGameObject->GetID() };
+		const uint64 id{ newGameObject->GetID() };
 		const uint8 type{ etou8(newGameObject->GetObjType()) };
 		const Vec3 pos{ newGameObject->GetPos() };
 		const Vec3 rot{ newGameObject->GetRotation() };
@@ -617,7 +617,7 @@ void Server::Contents::GameWorld::ProcessPendingRemoveObjectList()
 		// 퇴장 사실을 퇴장하는 플레이어에게 알린다
 		// 퇴장 사실을 모든 유저에게 알린다
 		const auto type = gameObject->GetObjType();
-		const uint32 id{ gameObject->GetID() };
+		const uint64 id{ gameObject->GetID() };
 		assert(type < FB_ENUMS::GAME_OBJECT_TYPE_END);
 		auto& gameObjectMap = m_gameObjectsGroups[type];
 		if(gameObjectMap.end() != gameObjectMap.find(id)) {
@@ -815,13 +815,6 @@ void Server::Contents::GameWorldTest::Init(const std::unordered_map<uint32, Game
 
 	CreateGameWorldObjects();
 
-	//auto lobbyServerSessionThread = MANAGER(ServerEngine::ServerEngineCore)->GetLobbyServerSessionThread();
-	//if(lobbyServerSessionThread) {
-	//	const uint16 port{ GetGameWorldThread()->GetPort() };
-	//	const uint16 worldID{ GetID() };
-	//	lobbyServerSessionThread->PushJob(&ServerEngine::WorkerThread::FinishCreateGameWorld, worldID, port);
-	//}
-
 	auto lobbyServerSession = MANAGER(Server::SessionManager)->GetLobbyServerSession();
 	if(lobbyServerSession) {
 		const uint16 port{ GetGameWorldThread()->GetPort() };
@@ -911,22 +904,30 @@ void Server::Contents::GameWorldTest::EnterSession(std::shared_ptr<ServerEngine:
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
 		flag = !flag;
 	}
-	
+	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	t.gameWorld = this;
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	auto player = (Server::Contents::GameObjectFactory::CreatePlayer(t));
-	player->SetID(m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER));
 	player->SetSession(clientSession);
 	player->GetComponent<Server::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+	if(false == m_sessionToPlayer.contains(session->GetID())) {
+		m_sessionToPlayer.insert(std::make_pair(session->GetID(), player->GetID()));
+	}
 	AddGameObject(std::move(player));
 }
 
 void Server::Contents::GameWorldTest::LeaveSession(std::shared_ptr<ServerEngine::Session> session)
 {
 	const uint32 id{ session->GetID() };
+
+	if(false == m_sessionToPlayer.contains(id))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[id] };
+
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	if(playerGroup.find(id) != playerGroup.end()) {
-		auto player = playerGroup[id];
+	if(playerGroup.find(playerID) != playerGroup.end()) {
+		auto player = playerGroup[playerID];
 		RemoveGameObject(player);
 	}
 }
@@ -941,14 +942,19 @@ void Server::Contents::GameWorldTest::Broadcast(std::shared_ptr<ServerEngine::Pa
 	}
 }
 
-void Server::Contents::GameWorldTest::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState)
+void Server::Contents::GameWorldTest::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 
-	auto it = playerGroup.find(clientSession->GetID());
+	if(false == m_sessionToPlayer.contains(clientSession->GetID()))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[clientSession->GetID()] };
+
+	auto it = playerGroup.find(playerID);
 	if(it == playerGroup.end() || !it->second) return;
 
-	auto player = static_cast<Player*>(playerGroup[clientSession->GetID()].get());
+	auto player = static_cast<Player*>(playerGroup[playerID].get());
 
 	if(nullptr == player) return;
 
@@ -958,35 +964,59 @@ void Server::Contents::GameWorldTest::Handle_CS_MOVE(const std::shared_ptr<Clien
 	player->SetRotation(kinematicInfo.rot);
 
 	auto fsm{ player->GetComponent<FSM>() };
-	if(fsm) {
-		if(FB_ENUMS::GENERAL_STATE_TYPE_NONE != playerState)
-			fsm->SetState(playerState);
-	}
+	//if(fsm) {
+	//	if(FB_ENUMS::PLAYER_STATE_TYPE_MOVE == playerState || FB_ENUMS::PLAYER_STATE_TYPE_IDLE) {
+	//		const auto curState{ fsm->GetCurState()->GetStateType() };
+	//		if(curState != FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY && curState != FB_ENUMS::PLAYER_STATE_TYPE_ATTACK && curState != FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
+	//			fsm->ChangeState(playerState, true);
+	//	}
+	//}
 
 	if(fsm) {
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, fsm->GetCurState()->GetStateType(), etou8(player->GetSubState()));
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, etou8(player->GetSubState()));
 		Broadcast(std::move(pb));
+
+		//{
+		//	auto pb = ServerPackets::Make_SC_UPDATE_STATE_PACKET(player->GetID(), playerState);
+		//	Broadcast(std::move(pb));
+		//}
 	}
 }
 void Server::Contents::GameWorldTest::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	if(playerGroup.find(sessionID) != playerGroup.end()) {
-		auto player = static_cast<Player*>(playerGroup[sessionID].get());
+
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	if(playerGroup.find(playerID) != playerGroup.end()) {
+		auto player = static_cast<Player*>(playerGroup[playerID].get());
 		player->Handle_CS_PLAYER_ATTACK(attackInfo);
 	}
 }
 
 void Server::Contents::GameWorldTest::Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID)
 {
-	auto const player = IDToPlayer(sessionID);
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	auto const player = IDToPlayer(playerID);
 	if(player)
 		player->Handle_CS_PLAYER_GENERAL_STANCE();
 }
 
 void Server::Contents::GameWorldTest::Handle_CS_PLAYER_FAKE(const uint32 sessionID)
 {
-	auto const player = IDToPlayer(sessionID);
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	auto const player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_PLAYER_FAKE();
 	}
@@ -994,7 +1024,12 @@ void Server::Contents::GameWorldTest::Handle_CS_PLAYER_FAKE(const uint32 session
 
 void Server::Contents::GameWorldTest::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID)
 {
-	auto const player = IDToPlayer(sessionID);
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	auto const player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_CHANGE_CAMERA_TARGET(prevTargetID);
 	}
@@ -1002,7 +1037,12 @@ void Server::Contents::GameWorldTest::Handle_CS_CHANGE_CAMERA_TARGET(const uint3
 
 void Server::Contents::GameWorldTest::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
-	auto const player = IDToPlayer(sessionID);
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	auto const player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
 	}
@@ -1010,7 +1050,12 @@ void Server::Contents::GameWorldTest::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const ui
 
 void Server::Contents::GameWorldTest::Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID)
 {
-	auto const player = IDToPlayer(sessionID);
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	auto const player = IDToPlayer(playerID);
 
 	const Vec3 playerPos = player->GetPos();
 	Vec3 playerLook = player->GetLook();
@@ -1042,6 +1087,25 @@ void Server::Contents::GameWorldTest::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 
 	auto general{ Server::Contents::GameObjectFactory::CreateGeneral(t) };
 	AddGameObject(std::move(general));
+}
+
+void Server::Contents::GameWorldTest::Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state)
+{
+	if(false == m_sessionToPlayer.contains(sessionID))
+		return;
+
+	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+
+	auto const player = IDToPlayer(playerID);
+	auto fsm{ player->GetComponent<FSM>() };
+	if(fsm) {
+		const auto curState{ fsm->GetCurState()->GetStateType() };
+		// const auto prevState{ fsm->GetPrevStateType()};
+		if(curState != FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY && curState != FB_ENUMS::PLAYER_STATE_TYPE_ATTACK && curState != FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
+			if(curState != state)
+				fsm->ChangeState(state, true);
+	}
+
 }
 
 void Server::Contents::GameWorldTest::RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
@@ -1090,7 +1154,7 @@ void Server::Contents::GameWorldTest::ProcessPendingAddObjectList()
 		auto newGameObject = std::move(m_pendingAddObjectQueue.front());
 		m_pendingAddObjectQueue.pop();
 
-		const uint32 id{ newGameObject->GetID() };
+		const uint64 id{ newGameObject->GetID() };
 		const uint8 type{ etou8(newGameObject->GetObjType()) };
 		const Vec3 pos{ newGameObject->GetPos() };
 		const Vec3 rot{ newGameObject->GetRotation() };
@@ -1203,7 +1267,7 @@ void Server::Contents::GameWorldTest::ProcessPendingRemoveObjectList()
 		// 퇴장 사실을 퇴장하는 플레이어에게 알린다
 		// 퇴장 사실을 모든 유저에게 알린다
 		const auto type = gameObject->GetObjType();
-		const uint32 id{ gameObject->GetID() };
+		const uint64 id{ gameObject->GetID() };
 		assert(type < FB_ENUMS::GAME_OBJECT_TYPE_END);
 		auto& gameObjectMap = m_gameObjectsGroups[type];
 		if(gameObjectMap.end() != gameObjectMap.find(id)) {

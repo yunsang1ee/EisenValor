@@ -948,14 +948,19 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		return false;
 	}
 
+	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
 	const uint32 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
+	uint8_t		 nextState = recvPkt.next_state();
+	
+	if(localID == objID) {
+		goto SET_LOCAL;
+	}
+
 	if (!obj)
 	{
 		return false;
 	}
-
-	uint8_t nextState = recvPkt.next_state();
 
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
@@ -964,15 +969,32 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		fsm->SetServerState(nextState);
 	}
 
-	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
-	if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+SET_LOCAL:
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (obj->GetComponent<StaminaComponent>() == nullptr)
-		{
-			// 병사는 즉시 메모리에서 삭제
-			scene->DestroyGameObject(obj->GetHandle());
+		if(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN) {
+			if(obj->GetComponent<StaminaComponent>() != nullptr) {
+				fsm->SetServerState(nextState);
+				return true;
+			}
 		}
-		// 장수(플레이어)는 삭제하지 않음
+	}
+
+	// 사망 시 조건부 삭제 (StaminaComponent 유무로 장수 여부 판별)
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		{
+			if (obj->GetComponent<StaminaComponent>() == nullptr)
+			{
+				// 병사는 즉시 메모리에서 삭제
+				scene->DestroyGameObject(obj->GetHandle());
+			}
+			else
+			{
+				fsm->SetServerState(nextState);
+			}
+		}
 	}
 
 	return true;

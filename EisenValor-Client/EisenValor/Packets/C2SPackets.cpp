@@ -133,13 +133,13 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(
 //		월드
 // =================
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(
-	const FB_STRUCTS::PosInfo* posInfo, const uint8 playerstate
+	const FB_STRUCTS::PosInfo* posInfo
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_MOVE_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo, playerstate)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo)
 	);
 }
 
@@ -200,6 +200,19 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
 		PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET,
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_GENERAL_PACKET)
 	);
+}
+
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS::PLAYER_STATE_TYPE state
+)
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_UPDATE_PLAYER_STATE_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_UPDATE_PLAYER_STATE_PACKET, state)
+	);
+
+	return nullptr;
 }
 
 

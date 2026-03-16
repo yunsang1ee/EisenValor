@@ -264,16 +264,16 @@ void Server::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevT
 	const auto& gameObjectsGroups{ gameWorld->GetGameObjectGroups() };
 
 	const Vec3& myPos{ GetPos() };
-	const uint32 myID{ GetID() };
+	const uint64 myID{ GetID() };
 
-	uint32 bestTargetID{};
+	uint64 bestTargetID{};
 	float bestDistSq{ std::numeric_limits<float>::max() };
 
 	const auto considerFp = [&](General* const target)
 		{
 			if(!target) return;
 
-			const uint32 targetID{ target->GetID() };
+			const uint64 targetID{ target->GetID() };
 			if(targetID == myID) return;
 			if(targetID == prevTargetID)return;
 

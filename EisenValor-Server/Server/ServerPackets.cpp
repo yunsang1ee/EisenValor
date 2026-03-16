@@ -208,7 +208,7 @@ namespace ServerPackets {
 		return  Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_REMOVE_OBJ_IN_GAME_WORLD_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 
-	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform, const uint8 state, const uint8 subState)
+	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint32 id, const PosInfo& transform, const uint8 subState)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -216,7 +216,7 @@ namespace ServerPackets {
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
-		return Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo, state, subState));
+		return Server::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT), Server::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, id, &posInfo, subState));
 	}
 
 	std::shared_ptr<ServerEngine::PacketBuffer> Make_SC_GENERAL_ATTACK_PACKET(const uint32 id, const FB_STRUCTS::GeneralAttackInfo& atkInfo)

@@ -224,13 +224,11 @@ table SC_REMOVE_OBJ_PACKET {
 
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
-	player_state: uint8;
 }
 
 table SC_MOVE_PACKET {
 	obj_id: uint;
 	pos_info: FB_STRUCTS.PosInfo;
-	state: uint8;
 	sub_state: uint8;
 }
 
@@ -315,6 +313,10 @@ table SC_END_ANIMATION {
 
 table CS_GEN_NPC_GENERAL_PACKET {
 
+}
+
+table CS_UPDATE_PLAYER_STATE_PACKET {
+	player_state: uint8;
 }
 
 // ================================================

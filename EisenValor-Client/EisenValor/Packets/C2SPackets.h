@@ -34,7 +34,7 @@ std::shared_ptr<PacketBuffer> Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
 //		월드
 // =================
 std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_WORLD_PACKET(const uint16 worldID, const uint32 localID);
-std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerState);
+std::shared_ptr<PacketBuffer> Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo);
 std::shared_ptr<PacketBuffer> Make_CS_GENERAL_ATTACK_PACKET(const FB_STRUCTS::GeneralAttackInfo* attackInfo);
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_FAKE_PACKET();
@@ -42,6 +42,7 @@ std::shared_ptr<PacketBuffer> Make_CS_CHANGE_CAMERA_TARGET_PACKET(uint32_t targe
 std::shared_ptr<PacketBuffer> Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 std::shared_ptr<PacketBuffer> Make_CS_GEN_NPC_GENREAL_PACKET();
 	//std::shared_ptr<PacketBuffer> Make_CS_CHAT_PACKET(const std::string& message);
+std::shared_ptr<PacketBuffer> Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS::PLAYER_STATE_TYPE state);
 
 // =================
 //		세션

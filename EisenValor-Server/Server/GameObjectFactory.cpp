@@ -42,6 +42,7 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	const auto fsm = player->AddComponent<Server::Contents::FSM>();
 	
 	auto idleState =  Server::Contents::PlayerIdleState::Create();
+	auto moveState =  Server::Contents::PlayerMoveState::Create();
 	auto preDelayState = Server::Contents::PlayerPredelayState::Create();
 	auto attackState = Server::Contents::PlayerAttackState::Create();
 	auto postDelayState = Server::Contents::PlayerPostdelayState::Create();
@@ -49,6 +50,7 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	auto deadState = Server::Contents::PlayerDeadState::Create();
 
 	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(moveState));
 	fsm->AddState(std::move(preDelayState));
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(postDelayState));

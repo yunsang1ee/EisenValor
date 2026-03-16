@@ -156,6 +156,9 @@ enum class PACKET_TYPE : uint16_t
 
 	CS_ENTER_GAME_WORLD_PKT = 10041,
 
+CS_UPDATE_PLAYER_STATE_PKT = 10042,
+
+
 #pragma endregion
 
 // 테스트

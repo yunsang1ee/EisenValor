@@ -143,13 +143,14 @@ namespace Server {
 			void AddEvent(const std::function<void()>& eve) { m_pendingEventFpQueue.push(eve); }
 
 		public:
-			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo, const uint8 playerState);
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo);
 			void Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
 			void Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID);
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
+			void Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state);
 
 		public:
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
@@ -198,6 +199,7 @@ namespace Server {
 			float																	m_dt;
 
 			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
+			std::unordered_map<uint32, uint64>										m_sessionToPlayer;
 
 
 			IDGenerator																m_idGenerator;

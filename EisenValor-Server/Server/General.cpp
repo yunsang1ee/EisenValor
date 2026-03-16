@@ -54,7 +54,7 @@ void Server::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0, 0) };
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 

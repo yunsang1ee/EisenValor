@@ -20,7 +20,7 @@ Server::Contents::SoldierSpawnState::~SoldierSpawnState()
 void Server::Contents::SoldierSpawnState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
-	const uint32 id{ owner->GetID() };
+	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
 	m_accDT = 0.f;
 }
@@ -28,7 +28,7 @@ void Server::Contents::SoldierSpawnState::Enter(const float dt)
 void Server::Contents::SoldierSpawnState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
-	const uint32 id{ owner->GetID() };
+	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Exit Soldier Idle", id) << std::endl;
 	m_accDT = 0.f;
 }
@@ -85,7 +85,7 @@ Server::Contents::SoldierMoveState::~SoldierMoveState()
 void Server::Contents::SoldierMoveState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
-	const uint32 id{ owner->GetID() };
+	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Enter SoldierMoveState", id) << std::endl;
 
 	if(m_currentWaypointIndex >= m_wayPoints.size()) {
@@ -104,7 +104,7 @@ void Server::Contents::SoldierMoveState::Enter(const float dt)
 void Server::Contents::SoldierMoveState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
-	const uint32 id{ owner->GetID() };
+	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Exit SoldierMoveState", id) << std::endl;
 }
 
@@ -295,7 +295,7 @@ Server::Contents::SoldierAttackState::~SoldierAttackState()
 void Server::Contents::SoldierAttackState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
-	const uint32 id{ owner->GetID() };
+	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Enter SoldierAttackState", id) << std::endl;
 	m_accDTForAttack = 0.f;
 	const auto ag{ owner->GetComponent<Server::Contents::NavAgent>() };
@@ -306,7 +306,7 @@ void Server::Contents::SoldierAttackState::Enter(const float dt)
 void Server::Contents::SoldierAttackState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
-	const uint32 id{ owner->GetID() };
+	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Exit SoldierAttackState", id) << std::endl;
 	m_accDTForAttack = 0.f;
 }

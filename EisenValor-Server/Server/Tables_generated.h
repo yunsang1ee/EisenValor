@@ -204,6 +204,9 @@ struct SC_END_ANIMATIONBuilder;
 struct CS_GEN_NPC_GENERAL_PACKET;
 struct CS_GEN_NPC_GENERAL_PACKETBuilder;
 
+struct CS_UPDATE_PLAYER_STATE_PACKET;
+struct CS_UPDATE_PLAYER_STATE_PACKETBuilder;
+
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
@@ -2275,19 +2278,14 @@ inline ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> CreateSC_REMOVE_OBJ_PACKET(
 struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_POS_INFO = 4,
-    VT_PLAYER_STATE = 6
+    VT_POS_INFO = 4
   };
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
   }
-  uint8_t player_state() const {
-    return GetField<uint8_t>(VT_PLAYER_STATE, 0);
-  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
-           VerifyField<uint8_t>(verifier, VT_PLAYER_STATE, 1) &&
            verifier.EndTable();
   }
 };
@@ -2298,9 +2296,6 @@ struct CS_MOVE_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(CS_MOVE_PACKET::VT_POS_INFO, pos_info);
-  }
-  void add_player_state(uint8_t player_state) {
-    fbb_.AddElement<uint8_t>(CS_MOVE_PACKET::VT_PLAYER_STATE, player_state, 0);
   }
   explicit CS_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -2315,11 +2310,9 @@ struct CS_MOVE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_MOVE_PACKET> CreateCS_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    uint8_t player_state = 0) {
+    const FB_STRUCTS::PosInfo *pos_info = nullptr) {
   CS_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_pos_info(pos_info);
-  builder_.add_player_state(player_state);
   return builder_.Finish();
 }
 
@@ -2328,17 +2321,13 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_POS_INFO = 6,
-    VT_STATE = 8,
-    VT_SUB_STATE = 10
+    VT_SUB_STATE = 8
   };
   uint32_t obj_id() const {
     return GetField<uint32_t>(VT_OBJ_ID, 0);
   }
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
-  }
-  uint8_t state() const {
-    return GetField<uint8_t>(VT_STATE, 0);
   }
   uint8_t sub_state() const {
     return GetField<uint8_t>(VT_SUB_STATE, 0);
@@ -2347,7 +2336,6 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
-           VerifyField<uint8_t>(verifier, VT_STATE, 1) &&
            VerifyField<uint8_t>(verifier, VT_SUB_STATE, 1) &&
            verifier.EndTable();
   }
@@ -2362,9 +2350,6 @@ struct SC_MOVE_PACKETBuilder {
   }
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(SC_MOVE_PACKET::VT_POS_INFO, pos_info);
-  }
-  void add_state(uint8_t state) {
-    fbb_.AddElement<uint8_t>(SC_MOVE_PACKET::VT_STATE, state, 0);
   }
   void add_sub_state(uint8_t sub_state) {
     fbb_.AddElement<uint8_t>(SC_MOVE_PACKET::VT_SUB_STATE, sub_state, 0);
@@ -2384,13 +2369,11 @@ inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t obj_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    uint8_t state = 0,
     uint8_t sub_state = 0) {
   SC_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_pos_info(pos_info);
   builder_.add_obj_id(obj_id);
   builder_.add_sub_state(sub_state);
-  builder_.add_state(state);
   return builder_.Finish();
 }
 
@@ -3216,6 +3199,47 @@ struct CS_GEN_NPC_GENERAL_PACKETBuilder {
 inline ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> CreateCS_GEN_NPC_GENERAL_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb) {
   CS_GEN_NPC_GENERAL_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CS_UPDATE_PLAYER_STATE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_UPDATE_PLAYER_STATE_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER_STATE = 4
+  };
+  uint8_t player_state() const {
+    return GetField<uint8_t>(VT_PLAYER_STATE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_PLAYER_STATE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_UPDATE_PLAYER_STATE_PACKETBuilder {
+  typedef CS_UPDATE_PLAYER_STATE_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_player_state(uint8_t player_state) {
+    fbb_.AddElement<uint8_t>(CS_UPDATE_PLAYER_STATE_PACKET::VT_PLAYER_STATE, player_state, 0);
+  }
+  explicit CS_UPDATE_PLAYER_STATE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET> CreateCS_UPDATE_PLAYER_STATE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint8_t player_state = 0) {
+  CS_UPDATE_PLAYER_STATE_PACKETBuilder builder_(_fbb);
+  builder_.add_player_state(player_state);
   return builder_.Finish();
 }
 

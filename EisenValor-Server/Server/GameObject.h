@@ -95,7 +95,7 @@ namespace Server {
 			Script* GetScript(const std::string_view name);
 
 		public:
-			void SetID(const uint32 id)  { m_id = id; }
+			void SetID(const uint64 id)  { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
 			void SetPosInfo(const PosInfo& transform) { m_posInfo = transform; }
 			void SetPos(const Vec3& pos) { m_posInfo.pos = pos; }
@@ -111,7 +111,7 @@ namespace Server {
 			void SetRotateSpeed(const float rotateSpeed) { m_rotateSpeed = rotateSpeed; }
 
 			const std::wstring& GetName() const { return m_name; }
-			uint32 GetID() const { return m_id; }
+			uint64 GetID() const { return m_id; }
 			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_type; }
 			const PosInfo& GetPosInfo() const { return m_posInfo; }
 			const Vec3& GetPos() const  { return m_posInfo.pos; }
@@ -139,7 +139,7 @@ namespace Server {
 
 		private:
 			std::wstring							m_name;
-			uint32									m_id;
+			uint64									m_id;
 			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
 			const FB_ENUMS::TEAM_TYPE				m_teamType;
 

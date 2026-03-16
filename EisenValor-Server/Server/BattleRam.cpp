@@ -101,7 +101,7 @@ void Server::Contents::BattleRam::Update(const float dt)
 					// std::cout << std::format("NextPos: {}. {}. {}", nextPos.x, nextPos.y, nextPos.z) << std::endl;
 					GetComponent<Server::Contents::NavAgent>()->SetDestPos(nextPos);
 
-					auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0, 0) };
+					auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
 					GetGameWorld()->Broadcast(std::move(pb));
 				}
 			}

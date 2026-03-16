@@ -22,6 +22,7 @@ void Server::ClientPacketHandler::Init()
 	REGISTER_PACKET(PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT, FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET, ClientPacketHandler::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET, FB_TABLES::CS_GEN_NPC_GENERAL_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_ENTER_GAME_WORLD_PKT, FB_TABLES::CS_ENTER_GAME_WORLD_PACKET, ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_UPDATE_PLAYER_STATE_PKT, FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET, ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET);
 #pragma endregion
 
 	LOG_INFO("ClientPacketHandler Init");
@@ -57,7 +58,7 @@ bool Server::ClientPacketHandler::Handle_CS_MOVE_PACKET(const std::shared_ptr<Se
 
 	auto world = clientSession->GetGameWorld();
 	if(world)
-		world->Handle_CS_MOVE(clientSession, info, recvPkt.player_state());
+		world->Handle_CS_MOVE(clientSession, info);
 #endif
 
 	return true;
@@ -161,6 +162,20 @@ bool Server::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::s
 	else {
 		std::cout << "Failed Handle CS ENTER GAME WORLD" << std::endl;
 	}
+
+	return true;
+}
+
+bool Server::ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET& recvPkt)
+{
+#ifdef MODERN_CODE
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+
+	if(world)
+		world->Handle_CS_UPDATE_PLAYER_STATE(id, static_cast<FB_ENUMS::PLAYER_STATE_TYPE>(recvPkt.player_state()));
+#endif
 
 	return true;
 }
