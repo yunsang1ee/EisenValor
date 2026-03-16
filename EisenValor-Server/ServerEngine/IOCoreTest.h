@@ -1,8 +1,6 @@
 #pragma once
 
 namespace ServerEngine {
-	class SessionTest;
-
 	class IOCoreTest {
 	protected:
 

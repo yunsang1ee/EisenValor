@@ -18,7 +18,7 @@ namespace Server {
 		class Collider;
 		class OBBCollider;
 
-		class GameObject {
+		class GameObject : public std::enable_shared_from_this<GameObject> {
 		private:
 			using ComponentGroup = std::array<std::unique_ptr<Component>, etou8(COMPONENT_TYPE::END)>;
 			using Scripts = std::vector<std::unique_ptr<Script>>;
@@ -66,7 +66,7 @@ namespace Server {
 			auto AddComponent(Args&&... args)
 			{
 				auto component = std::make_unique<T>(std::forward<Args>(args)...);
-				component->SetOwner(this);
+				component->SetOwner(shared_from_this());
 
 				if constexpr(std::is_same_v<FSM, T>) {
 					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
@@ -95,7 +95,7 @@ namespace Server {
 			Script* GetScript(const std::string_view name);
 
 		public:
-			void SetID(const uint32 id)  { m_id = id; }
+			void SetID(const uint64 id)  { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
 			void SetPosInfo(const PosInfo& transform) { m_posInfo = transform; }
 			void SetPos(const Vec3& pos) { m_posInfo.pos = pos; }
@@ -111,12 +111,13 @@ namespace Server {
 			void SetRotateSpeed(const float rotateSpeed) { m_rotateSpeed = rotateSpeed; }
 
 			const std::wstring& GetName() const { return m_name; }
-			uint32 GetID() const { return m_id; }
+			uint64 GetID() const { return m_id; }
 			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_type; }
 			const PosInfo& GetPosInfo() const { return m_posInfo; }
 			const Vec3& GetPos() const  { return m_posInfo.pos; }
 			const Vec3& GetRotation() const  { return m_posInfo.rot; }
 			const Vec3& GetScale() const  { return m_scale; }
+			const Vec3& GetLook() const { return m_look; }
 #ifdef LEGACY_CODE
 			std::shared_ptr<GameRoom> GetGameRoom() const  { return m_room.lock(); }
 			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
@@ -133,12 +134,12 @@ namespace Server {
 			bool IsActive() const { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
 			
-			bool IsTargetInRange(const GameObject* const target, const float rangeSq = 2.f * 2.f);
-			bool IsSameTeam(const GameObject* const other);
+			bool IsTargetInRange(std::shared_ptr<GameObject> const target, const float rangeSq = 2.f * 2.f);
+			bool IsSameTeam(std::shared_ptr<GameObject> const other);
 
 		private:
 			std::wstring							m_name;
-			uint32									m_id;
+			uint64									m_id;
 			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
 			const FB_ENUMS::TEAM_TYPE				m_teamType;
 

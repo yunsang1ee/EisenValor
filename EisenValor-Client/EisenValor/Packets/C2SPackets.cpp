@@ -51,16 +51,15 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MAKE_GAME_ROOM_PACKET()
 }
 
 
-
 // =================
 //		룸
 // =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_JOIN_GAME_ROOM_PACKET(uint16_t roomId)
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_ROOM_PACKET(uint16_t roomId)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_JOIN_GAME_ROOM_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_JOIN_GAME_ROOM_PACKET, roomId)
+		PACKET_TYPE::CS_ENTER_GAME_ROOM_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_ROOM_PACKET, roomId)
 	);
 }
 
@@ -93,7 +92,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ADD_BOT_PACKET(FB_ENUMS::T
 
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_READY_GAME_PACKET()
 {
-	flatbuffers::FlatBufferBuilder builder;	
+	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_READY_GAME_PKT,
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_READY_GAME_PACKET)
@@ -105,7 +104,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_START_GAME_PACKET()
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_START_GAME_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_START_GAME_PACKET)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_START_GAME_PACKET)
 	);
 }
 
@@ -119,15 +118,28 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_COMPLETE_LOADING_GAME_WORL
 }
 
 
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(
+	const uint16 worldID, const uint32 localID
+)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_ENTER_GAME_WORLD_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_WORLD_PACKET, worldID, localID)
+	);
+}
+
 // =================
 //		월드
 // =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(const FB_STRUCTS::PosInfo* posInfo, const uint8 playerstate)
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(
+	const FB_STRUCTS::PosInfo* posInfo
+)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_MOVE_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo, playerstate)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo)
 	);
 }
 
@@ -144,7 +156,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(
 
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET()
 {
-	flatbuffers::FlatBufferBuilder builder;	
+	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_CHANGE_GENERAL_STANCE_PKT,
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_CHANGE_GENERAL_STANCE_PACKET)
@@ -180,6 +192,29 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PA
 	);
 }
 
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_GENERAL_PACKET)
+	);
+}
+
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS::PLAYER_STATE_TYPE state
+)
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_UPDATE_PLAYER_STATE_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_UPDATE_PLAYER_STATE_PACKET, state)
+	);
+
+	return nullptr;
+}
+
 
 // =================
 //		세션
@@ -196,13 +231,15 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PONG_PACKET() noexcept
 // =================
 //		테스트
 // =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_TEST_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept
 {
-	flatbuffers::FlatBufferBuilder builder;
-	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::TEST_CS_ENTER_GAME_WORLD_PACKET,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_WORLD_PACKET, roomID)
-	);
+	//flatbuffers::FlatBufferBuilder builder;
+	//return ServerPacketHandler::MakePacketBuffer(
+	//	PACKET_TYPE::TEST_CS_ENTER_GAME_WORLD_PACKET,
+	//	ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_WORLD_PACKET, roomID)
+	//);
+
+	return nullptr;
 }
 
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GO_WORLD_PACKET() noexcept
@@ -211,5 +248,6 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GO_WORLD_PACKET() noexcept
 
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_GO_WORLD_PACKET,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GO_WORLD_PACKET));
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GO_WORLD_PACKET)
+	);
 }

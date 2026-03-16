@@ -1,6 +1,8 @@
 #pragma once
 // define ENABLE_LOBBY
 
+#define APLLY_LOBBY_SERVER
+
 #pragma warning(disable: 4819)
 
 #include "ServerEnginePch.h"
@@ -11,11 +13,12 @@
 
 #include "ServerTypes.h"
 #include "ServerEnums.h"
+#include "../Packets/Binaries/PacketEnums.h"
+
 #include "ServerStructs.h"
 #include "ServerGlobalVariables.h"
 #include "ServerGlobalFuncs.h"
 #include "GameDataManager.h"
-#include "ClientPacketHandler.h"
 #include "ServerPackets.h"
 #include "GameObjectFactory.h"
 

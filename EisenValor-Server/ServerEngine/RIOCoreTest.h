@@ -29,7 +29,7 @@ namespace ServerEngine {
 			RIO_CQ															m_cq;
 			std::vector<RIORESULT>											m_ioResults;
 			RIO_EXTENSION_FUNCTION_TABLE									m_rioExtfuncTable;
-			std::unordered_map<uint32, std::shared_ptr<RIOSession>>			m_connectedSessions;
+			std::unordered_set<std::shared_ptr<RIOSession>>			m_connectedSessions;
 
 		};
 #endif

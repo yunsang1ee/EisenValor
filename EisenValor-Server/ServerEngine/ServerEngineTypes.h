@@ -27,10 +27,18 @@ namespace ServerEngine {
 
 namespace Server {
 	class GameWorldTest;
+
+#ifdef _USE_RIO
+	class RIOClientSession;
+	class RIOLobbyServerSession;
+#endif
 }
 
 #ifdef  _USE_RIO
-using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
+using ClientSessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
+using LobbyServerSessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
+
+using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::Session>()>;
 #endif
 
 #ifdef	_USE_IOCP

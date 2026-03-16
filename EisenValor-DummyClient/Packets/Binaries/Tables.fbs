@@ -52,6 +52,16 @@ table SC_ENTER_GAME_LOBBY_PACKET {
 	vec_user_id: [uint];
 }
 
+table SC_ENTER_GAME_LOBBY_SUCCESS_PACKET {
+	rooms: [FB_STRUCTS.RoomInfo];
+	users: [string];
+	vec_user_id: [uint];
+}
+
+table SC_ENTER_GAME_LOBBY_FAIL_PACKET {
+	fail_msg: string;
+}
+
 table CS_LEAVE_GAME_LOBBY_PACKET {
 
 }
@@ -59,12 +69,13 @@ table CS_LEAVE_GAME_LOBBY_PACKET {
 table SC_LEAVE_GAME_LOBBY_PACKET{
 }
 
-table SC_ADD_USER_IN_GAME_LOBBY_PACKET {
+
+table SC_ENTER_USER_IN_GAME_LOBBY_PACKET {
 	user_name: string;
 	user_id: int;
 }
 
-table SC_REMOVE_USER_IN_GAME_LOBBY_PACKET {
+table SC_LEAVE_USER_IN_GAME_LOBBY_PACKET{
 	user_id: uint;
 }
 
@@ -79,7 +90,7 @@ table SC_MAKE_GAME_ROOM_PACKET {
 // ================================================
 //					  GAME_ROOM
 // ================================================
-table CS_JOIN_GAME_ROOM_PACKET {
+table CS_ENTER_GAME_ROOM_PACKET {
 	room_id: uint16;
 }
 
@@ -87,7 +98,7 @@ table SC_JOIN_GAME_ROOM_FAIL_PACKET {
 	fail_msg: string;
 }
 
-table SC_JOIN_GAME_ROOM_SUCCESS_PACKET {
+table SC_ENTER_GAME_ROOM_SUCCESS_PACKET{
 	user: FB_STRUCTS.ParticipantInfo;
 	participants: [FB_STRUCTS.ParticipantInfo];
 }
@@ -133,8 +144,25 @@ table SC_READY_GAME_PACKET {
 	participant_state: FB_ENUMS.PARTICIPANT_STATE_TYPE;
 }
 
-table CS_START_GAME_PACKET {
+table CL_START_GAME_PACKET {
 
+}
+
+table LS_CREATE_GAME_WORLD_PACKET {
+	room_id: uint16;
+	participants: [FB_STRUCTS.ParticipantInfo];
+}
+
+table SL_CREATE_GAME_WORLD_PACKET {
+	world_id: uint16;
+	ip: string;
+	port: uint16;
+}
+
+table LC_CONNECT_TO_GAME_SERVER_PACKET {
+	world_id: uint16;
+	ip: string;
+	port: uint16;
 }
 
 table SC_LOADING_GAME_WORLD_PACKET {
@@ -162,6 +190,8 @@ table SC_CHANGE_GAME_ROOM_STATE_PACKET{
 // ================================================
 //					  GAME_WORLD
 // ================================================
+
+
 table SC_GAME_FINISH_PACKET {
 
 }
@@ -194,13 +224,11 @@ table SC_REMOVE_OBJ_PACKET {
 
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
-	player_state: uint8;
 }
 
 table SC_MOVE_PACKET {
 	obj_id: uint;
 	pos_info: FB_STRUCTS.PosInfo;
-	state: uint8;
 	sub_state: uint8;
 }
 
@@ -283,11 +311,20 @@ table SC_END_ANIMATION {
 	anim_name: string;
 }
 
+table CS_GEN_NPC_GENERAL_PACKET {
+
+}
+
+table CS_UPDATE_PLAYER_STATE_PACKET {
+	player_state: uint8;
+}
+
 // ================================================
 //					    TEST
 // ================================================
 table CS_ENTER_GAME_WORLD_PACKET {
 	room_id: ushort;
+	player_id: uint32;
 }
 
 table CS_GO_WORLD_PACKET{

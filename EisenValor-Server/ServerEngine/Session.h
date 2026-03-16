@@ -21,6 +21,8 @@ namespace ServerEngine {
 
 	class RIORingRecvBuffer;
 	class RIORingSendBuffer;
+
+	class PacketHandler;
 	
 
 	namespace RIO {
@@ -86,7 +88,7 @@ namespace ServerEngine {
 #ifdef MODERN_CODE
 	class Session : public std::enable_shared_from_this<Session> {
 	public:
-		Session();
+		explicit Session(const SESSION_TYPE type);
 		virtual ~Session();
 
 	public:
@@ -109,9 +111,10 @@ namespace ServerEngine {
 		bool IsConnected() { return m_connected; }
 		SOCKET GetSocket() const { return m_socket; }
 		void SetID(const uint32 id) { m_id = id; }
+		const SESSION_TYPE GetType() const { return m_type; }
 
 	public:
-		uint32 AssembleReceivedData(std::span<const char> buf);
+		virtual uint32 OnRecv(std::span<const char> buf) { return static_cast<uint32>(buf.size()); }
 		virtual void ProcessPacket(const std::span<const char>& buf) {};
 		virtual void OnSend(const uint32 bytesTransferred) {}
 
@@ -128,11 +131,13 @@ namespace ServerEngine {
 		std::atomic_bool													m_connected;
 		SOCKADDR_IN															m_clientAddr;
 		std::atomic<SESSION_STATE>											m_state;
+		const SESSION_TYPE													m_type;
 
 		std::chrono::high_resolution_clock::time_point						m_lastPong;
 		std::chrono::high_resolution_clock::time_point						m_lastPing;
 		const std::chrono::milliseconds										m_pingInterval;
 		const std::chrono::milliseconds										m_timeoutInterval;
+		std::unique_ptr<PacketHandler>										m_packetHandler;
 
 	};
 #endif
@@ -204,11 +209,14 @@ namespace ServerEngine {
 		private:
 			RIOWorker*													m_owner;
 			RIO_RQ														m_rq;
-			RIORecvBuffer												m_recvBuffer;
+			// RIORecvBuffer												m_recvBuffer;
+			RIORingRecvBuffer											m_recvBuffer;
+
 			RIORecvContext												m_recvContext;
 			uint32														m_deferCount;
 			tbb::concurrent_queue<std::shared_ptr<PacketBuffer>>		m_packetBufferQueue;
-			RIOSendBuffer												m_sendBuffer;
+			// RIOSendBuffer												m_sendBuffer;
+			RIORingSendBuffer											m_sendBuffer;
 			std::chrono::high_resolution_clock::time_point				m_lastSendTime{};
 			uint32														m_outstandingSendCount;
 
@@ -221,7 +229,7 @@ namespace ServerEngine {
 #ifdef MODERN_CODE
 		class RIOSession : public Session {
 		public:
-			RIOSession();
+			explicit RIOSession(const SESSION_TYPE type);
 			virtual ~RIOSession();
 
 		public:
@@ -262,8 +270,40 @@ namespace ServerEngine {
 			const std::chrono::milliseconds								m_commitSendMS;
 			const uint32												m_maxSendRQSize;
 		};
+
+		class PacketSession : public RIOSession {
+		public:
+			PacketSession(const SESSION_TYPE type);
+			virtual ~PacketSession();
+
+		public:
+			virtual uint32	OnRecv(std::span<const char> buf) override;
+			virtual void	OnRecvPacket(const std::span<const char>& buf) abstract;
+
+			std::shared_ptr<PacketSession> GetPacketSession() { return std::static_pointer_cast<PacketSession>(shared_from_this()); }
+
+		protected:
+			std::unique_ptr<ServerEngine::PacketHandler>	m_packetHandler;
+
+		};
 #endif
 	}
+
+	class PacketSession : public RIO::RIOSession {
+	public:
+		PacketSession(const SESSION_TYPE type);
+		virtual ~PacketSession();
+
+	public:
+		virtual uint32	OnRecv(std::span<const char> buf) override;
+		virtual void	OnRecvPacket(const std::span<const char>& buf) abstract;
+
+		std::shared_ptr<PacketSession> GetPacketSession() { return std::static_pointer_cast<PacketSession>(shared_from_this()); }
+
+	protected:
+		std::unique_ptr<ServerEngine::PacketHandler>	m_packetHandler;
+
+	};
 #endif
 }
 

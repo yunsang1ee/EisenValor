@@ -2,7 +2,6 @@
 
 namespace ServerEngine {
 	class Session;
-	class SessionTest;
 }
 
 namespace Server {
@@ -13,9 +12,6 @@ namespace Server {
 
 	class RIOClientSession;
 	class IOCPClientSession;
-
-	class RIOClientSessionTest;
-	class IOCPClientSessionTest;
 }
 
 extern std::shared_ptr<Server::Contents::GameLobby> G_GAME_LOBBY;

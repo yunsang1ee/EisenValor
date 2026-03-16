@@ -5,11 +5,13 @@
 #include "ServerEngineConfigManager.h"
 
 #include "AcceptThread.h"
-#include "LobbyThread.h"
 #include "WorkerThread.h"
 
 #include "IOCPCoreTest.h"
 #include "RIOCoreTest.h"
+
+#include "GameWorldThread.h"
+
 #ifdef MODERN_CODE
 
 ServerEngine::ServerEngineCore::ServerEngineCore()
@@ -20,7 +22,7 @@ ServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc)
+bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc)
 {
 	m_nextWorkerIndex = 0;
 
@@ -31,7 +33,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, 
 	}
 
 	const uint32 workerCount{ MANAGER(ServerEngineConfigManager)->GetThreadConfig().MAX_WORKER_THREAD_COUNT };
-	m_workerThreads.resize(workerCount);
+	// m_workerThreads.resize(workerCount);
 
 	DWORD flags{};
 
@@ -53,62 +55,45 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc sessionFunc, 
 
 #ifdef _USE_RIO
 	flags = WSA_FLAG_REGISTERED_IO;
+
+	// lobbySesionThread 생성
+	{
+		auto rioCOre{ std::make_unique<RIO::RIOCoreTest>() };
+		auto lobbyServerSessionThread =  std::make_unique<WorkerThread>(WORKER_THREAD_TYPE::LOBBY_SESSION, std::move(rioCOre));
+		
+		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, 40001))
+			return false;
+
+		m_workerThreads.emplace_back(std::move(lobbyServerSessionThread));
+		m_lobbyServerSessionThread = m_workerThreads.back().get();
+	}
 	
 	// WorkerThread 생성
-	for(int i = 0; i < m_workerThreads.size(); ++i) {
+	int port[2]{ 40002, 40003 };
+	for(int i = 1; i < 3; ++i) {
 		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
-		m_workerThreads[i] = (std::make_unique<WorkerThread>(worldFunc, std::move(rioCore)));
+		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::WORLD, std::move(rioCore), worldFunc));
 
-		if(false == m_workerThreads[i]->Init())
+		if(false == m_workerThreads[i]->Init(clientSessionFunc, port[i-1]))
 			return false;
 	}
-
-	// LobbyThread 초기화
-	// -> RIO인 경우 LobbyThread I/O도 RIO로...
-	// TOOD: Lobby는 LobbyServer로 옮기기...
-	{
-		auto rioCore{ std::make_unique<RIO::RIOCoreTest>() };
-		m_lobbyThread = std::make_unique<ServerEngine::LobbyThread>(lobbyFunc, std::move(rioCore));
-
-		if(false == m_lobbyThread->Init())
-			return false;
-	}
-#endif
-	
-	// acceptor 초기화
-	m_acceptThread = std::make_unique<ServerEngine::AcceptThread>();
- 	const uint16 port{ MANAGER(ServerEngineConfigManager)->GetNetworkConfig().port };
-	if(false == m_acceptThread->Init(sessionFunc, port, flags))
-		return false;
 
 	return true;
 }
 
 void ServerEngine::ServerEngineCore::Run()
 {
-	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st)
-		{
-			TLS_THREAD_NAME = "Accept";
-			m_acceptThread->Run(st);
-		});
-
-	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token st)
-		{
-			TLS_THREAD_NAME = "Lobby";
-			m_lobbyThread->Run(st);
-		});
-
-	//for(const auto& worker : m_workerThreads) {
-	//	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, &worker](const std::stop_token st)
-	//		{
-	//			worker->Run(st);
-	//		});
-	//}
-
-	for(int i = 0; i < 1; ++i) {
+	for(int i = 0; i < 3; ++i) {
 		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
 			{
-				TLS_THREAD_NAME = "Worker_" + std::to_string(TLS_THREAD_ID);
+				TLS_THREAD_ID = i;
+				if(0 == i) {
+					TLS_THREAD_NAME = "LobbyServerSessionThread";
+				}
+				else {
+					TLS_THREAD_NAME = "GameWorldThread_" + std::to_string(TLS_THREAD_ID);
+				}
+				TLS_WOREKR_THREAD = m_workerThreads[i].get();
 				m_workerThreads[i]->Run(st);
 			});
 	}
@@ -119,11 +104,19 @@ void ServerEngine::ServerEngineCore::Shutdown()
 	MANAGER(ServerEngine::ThreadManager)->Join();
 }
 
-ServerEngine::WorkerThread* ServerEngine::ServerEngineCore::GetLeisurelyWorker()
+ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetLeisurelyWorker()
 {
 	// TODO: WorkerThread가 현재 얼마나 바쁜지 판단해서 가장 여유로운애를 반환해줘야함.
 	// 판단? WorkerThread::Run에서 DT가 가장 짧은 얘로..?
-	uint16 index = 0;
-	return m_workerThreads[index].get();
+	uint16 index = 1;
+	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
 }
+
+ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetWorkerThread(const uint32 index)
+{
+	assert(index >= 1);
+	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
+}
+
+#endif
 #endif

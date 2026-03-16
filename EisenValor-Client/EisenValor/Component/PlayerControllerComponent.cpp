@@ -110,25 +110,9 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	auto  pos = transform.GetPosition();
 	auto  rot = transform.GetRotation();
 
-	FB_STRUCTS::Vec3 posVec{pos.x, pos.y, pos.z};
-	FB_STRUCTS::Vec3 rotVec{rot.x, rot.y, rot.z};
+	FB_STRUCTS::Vec3	posVec{pos.x, pos.y, pos.z};
+	FB_STRUCTS::Vec3	rotVec{rot.x, rot.y, rot.z};
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
-
-	// FSM에서 현재 상태 가져오기
-	uint8_t stateToSend = FB_ENUMS::GENERAL_STATE_TYPE_NONE;
-	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
-	{
-		uint8_t curState = fsm->GetCurStateType();
-		// MOVE, IDLE일 때만 서버에 보고
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_IDLE || 
-			curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
-		{
-			stateToSend = curState;
-		}
-	}
-
-	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, stateToSend);
-	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
 
 void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
@@ -170,11 +154,45 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 
 	if (fabsf(deltaX) > kMinMouseDelta)
 	{
+		auto* myGameObject = GetGameObject();
+		if (!myGameObject)
+			return;
+
+		auto* fsm = myGameObject->GetComponent<FSMComponent>();
+		if (!fsm)
+			return;
+
+		auto&				transform = myGameObject->GetTransform();
+		auto				pos = transform.GetPosition();
+		auto				rot = transform.GetRotation();
+		FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+
+		const auto curState{fsm->GetCurStateType()};
+
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+			return;
+
+		auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	
 		RotateYaw(deltaX);
 	}
 
 	if (m_cameraObjectHandle.IsValid() && fabsf(deltaY) > kMinMouseDelta)
 	{
+		auto* myGameObject = GetGameObject();
+		if (!myGameObject)
+			return;
+
+		auto* fsm = myGameObject->GetComponent<FSMComponent>();
+		if (!fsm)
+			return;
+
+		const auto curState{fsm->GetCurStateType()};
+
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+			return;
+		
 		RotatePitch(deltaY);
 	}
 }
@@ -182,53 +200,84 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 {
 	if (!m_movementHandle.IsValid())
-	{
 		return;
-	}
 
 	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
-	{
 		return;
-	}
 
 	auto* movement = myGameObject->GetComponent<MovementComponent>();
-	if (!movement)
-	{
+	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+	if (!movement || !fsm)
 		return;
-	}
+
+	uint8_t curState = fsm->GetCurStateType();
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+		return;
 
 	auto& input = GLOBAL(InputGlobal);
+	bool  w = input.GetInput('W');
+	bool  s = input.GetInput('S');
+	bool  a = input.GetInput('A');
+	bool  d = input.GetInput('D');
 
-	bool isMoving = input.GetInput('W') || input.GetInput('S') || input.GetInput('A') || input.GetInput('D');
+	bool isMovingInput = (w || s || a || d);
 
-	movement->SetInputForward(input.GetInput('W'));
-	movement->SetInputBackward(input.GetInput('S'));
-	movement->SetInputLeft(input.GetInput('A'));
-	movement->SetInputRight(input.GetInput('D'));
+	bool hasJustReleased =
+		input.GetInputUp('W') || input.GetInputUp('A') || input.GetInputUp('S') || input.GetInputUp('D');
 
-	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	bool hasJustPressed =
+		input.GetInputDown('W') || input.GetInputDown('A') || input.GetInputDown('S') || input.GetInputDown('D');
+
+	movement->SetInputForward(w);
+	movement->SetInputBackward(s);
+	movement->SetInputLeft(a);
+	movement->SetInputRight(d);
+
+	bool isRestricted =
+		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
+		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+
+	if (isRestricted)
+		return;
+
+	auto&				transform = myGameObject->GetTransform();
+	auto				pos = transform.GetPosition();
+	auto				rot = transform.GetRotation();
+	FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+
+	if (isMovingInput)
 	{
-		uint8_t curState = fsm->GetCurStateType();
-
-		// 공격, 스턴, 사망 상태인 경우 이동/대기로의 전환 방지
-		bool isRestrictedState = (curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-								  curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
-								  curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
-								  curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN ||
-								  curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
-
-		if (!isRestrictedState)
+		if (curState != FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustPressed)
 		{
-			if (isMoving)
-			{
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-			}
-			else
-			{
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-			}
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+
+			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 		}
+
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
+	}
+	else
+	{
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustReleased)
+		{
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+
+			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+
+			auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
+		}
+	}
+
+	// 6. 기타 상호작용
+	if (input.GetInputDown('F'))
+	{
+		auto pb = NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET();
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 }
 
@@ -347,12 +396,13 @@ void PlayerControllerComponent::InitializePitchFromCamera()
 void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camComp)
 {
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (!scene) return;
+	if (!scene)
+		return;
 
 	auto* trStorage = scene->GetStorage<Transform>();
 	auto* playerTr = GetGameObject()->GetComponent<Transform>();
-	
-	auto lookAtHandle = camComp->GetLookAtTarget();
+
+	auto  lookAtHandle = camComp->GetLookAtTarget();
 	auto* enemyTr = trStorage->Get(lookAtHandle);
 
 	if (playerTr && enemyTr)
@@ -366,8 +416,8 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		// 적 방향 계산 (수평)
 		XMVECTOR dirToTarget = XMVectorSubtract(enemyPos, playerPos);
 		XMVECTOR dirH = XMVector3Normalize(XMVectorSetY(dirToTarget, 0.0f));
-		
-		if (XMVector3LengthSq(dirH).m128_f32[0] < 1e-6f) 
+
+		if (XMVector3LengthSq(dirH).m128_f32[0] < 1e-6f)
 		{
 			XMFLOAT3 fwd = playerTr->GetForward();
 			dirH = XMLoadFloat3(&fwd);
@@ -389,12 +439,13 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 void PlayerControllerComponent::RotatePlayerToTarget(CameraComponent* camComp)
 {
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (!scene) return;
+	if (!scene)
+		return;
 
 	auto* trStorage = scene->GetStorage<Transform>();
 	auto* playerTr = GetGameObject()->GetComponent<Transform>();
 
-	auto lookAtHandle = camComp->GetLookAtTarget();
+	auto  lookAtHandle = camComp->GetLookAtTarget();
 	auto* enemyTr = trStorage->Get(lookAtHandle);
 
 	if (playerTr && enemyTr)
@@ -407,7 +458,8 @@ void PlayerControllerComponent::RotatePlayerToTarget(CameraComponent* camComp)
 		float dz = ePos.z - pPos.z;
 
 		// 거리 체크
-		if (dx * dx + dz * dz < 1e-4f) return;
+		if (dx * dx + dz * dz < 1e-4f)
+			return;
 
 		// 타겟 방향 Yaw 계산
 		float targetYaw = atan2f(dx, dz);
@@ -415,19 +467,21 @@ void PlayerControllerComponent::RotatePlayerToTarget(CameraComponent* camComp)
 		// 현재 플레이어의 Yaw 가져오기
 		// forward 벡터
 		XMFLOAT3 fwd = playerTr->GetForward();
-		float currentYaw = atan2f(fwd.x, fwd.z);
+		float	 currentYaw = atan2f(fwd.x, fwd.z);
 
 		// 각도 최단 경로 보간
 		float diff = targetYaw - currentYaw;
-		while (diff <= -XM_PI) diff += XM_2PI;
-		while (diff > XM_PI)  diff -= XM_2PI;
+		while (diff <= -XM_PI)
+			diff += XM_2PI;
+		while (diff > XM_PI)
+			diff -= XM_2PI;
 
 		// 보간
 		float newYaw = currentYaw + diff * 0.2f;
 
 		// Yaw 회전
 		XMVECTOR newRotQ = XMQuaternionRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), newYaw);
-		
+
 		XMFLOAT4 newRotQF;
 		XMStoreFloat4(&newRotQF, newRotQ);
 		playerTr->SetRotationQuaternion(newRotQF);

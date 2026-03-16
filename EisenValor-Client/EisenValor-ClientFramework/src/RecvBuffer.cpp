@@ -65,3 +65,9 @@ void NetBridge::RecvBuffer::Clean()
 		}
 	}
 }
+
+void NetBridge::RecvBuffer::Reset() 
+{
+	memset(m_buffer.data(), 0, m_buffer.capacity());
+	m_size = m_readPos = m_writePos = 0;
+}

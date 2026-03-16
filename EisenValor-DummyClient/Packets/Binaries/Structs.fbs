@@ -1,4 +1,4 @@
-include "Enums.fbs";
+	include "Enums.fbs";
 
 namespace FB_STRUCTS;
 

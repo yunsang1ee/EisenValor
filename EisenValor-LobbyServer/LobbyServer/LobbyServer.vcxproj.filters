@@ -1,24 +1,153 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>00. Main</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>99. pch</Filter>
     </ClCompile>
+    <ClCompile Include="ServerManager.cpp">
+      <Filter>00. main\ServerManager</Filter>
+    </ClCompile>
+    <ClCompile Include="GameRoom.cpp">
+      <Filter>02. GameLobby\GameRoom</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyServerGlobalFuncs.cpp">
+      <Filter>97. Global</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLobby.cpp">
+      <Filter>02. GameLobby</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionManager.cpp">
+      <Filter>01. SessionManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSession.cpp">
+      <Filter>01. SessionManager\ClientSession</Filter>
+    </ClCompile>
+    <ClCompile Include="GameServerSession.cpp">
+      <Filter>01. SessionManager\GameServerSession</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>00. main</Filter>
+    </ClCompile>
+    <ClCompile Include="GameServerPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler\GameServerPacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientPacketHandler.cpp">
+      <Filter>03. Packets\PacketHandler\ClientPacketHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="SendPackets.cpp">
+      <Filter>03. Packets\SendPackets</Filter>
+    </ClCompile>
+    <ClCompile Include="Participant.cpp">
+      <Filter>02. GameLobby\GameRoom\Participant</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="00. Main">
-      <UniqueIdentifier>{6b97cb42-8c0f-4f1b-adc9-c94833337831}</UniqueIdentifier>
-    </Filter>
     <Filter Include="99. pch">
       <UniqueIdentifier>{52126dc0-8731-4f94-9762-5e29ee4e53f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets">
+      <UniqueIdentifier>{b50cf835-ac47-4a58-ab3c-3ff6855bb6b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\FBS">
+      <UniqueIdentifier>{6ba592fb-f8f4-4310-9cbb-0ec463ab9eec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler">
+      <UniqueIdentifier>{4baba5c4-2810-4a5e-84f0-a8bbe2fcbe0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Global">
+      <UniqueIdentifier>{8fff0c23-b574-4897-be49-96e275f383bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameLobby">
+      <UniqueIdentifier>{e20b2b31-7496-4ee4-b926-21538d30d430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameLobby\GameRoom">
+      <UniqueIdentifier>{69979e3a-a3b7-4a7f-a448-65b7eaa0c168}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager">
+      <UniqueIdentifier>{64c87cfe-f852-4d32-bf71-7eb7fef75cba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\ClientSession">
+      <UniqueIdentifier>{f2d71af9-51d4-4b0e-a363-359412a712e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\GameServerSession">
+      <UniqueIdentifier>{7180490d-5a9d-415e-8cec-1d9731fa33b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler\ClientPacketHandler">
+      <UniqueIdentifier>{70d5da9e-d630-45ad-ab8f-efcbde4cba7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler\GameServerPacketHandler">
+      <UniqueIdentifier>{b6a69420-c3f5-4b1b-abca-81bf4c87918d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\SendPackets">
+      <UniqueIdentifier>{ceb8731a-bbde-42c9-a85e-0c915db32a9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Headers">
+      <UniqueIdentifier>{584dd1f9-a6be-4856-8459-2be812d72fa7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameLobby\GameRoom\Participant">
+      <UniqueIdentifier>{a112d0d4-356d-44ad-989d-94d7060629fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. main">
+      <UniqueIdentifier>{6b97cb42-8c0f-4f1b-adc9-c94833337831}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. main\ServerManager">
+      <UniqueIdentifier>{5fa57acd-bbbd-47ee-adea-4b9727c783e3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>99. pch</Filter>
     </ClInclude>
+    <ClInclude Include="LobbyServerGlobalFuncs.h">
+      <Filter>97. Global</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerManager.h">
+      <Filter>00. main\ServerManager</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLobby.h">
+      <Filter>02. GameLobby</Filter>
+    </ClInclude>
+    <ClInclude Include="GameRoom.h">
+      <Filter>02. GameLobby\GameRoom</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionManager.h">
+      <Filter>01. SessionManager</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientSession.h">
+      <Filter>01. SessionManager\ClientSession</Filter>
+    </ClInclude>
+    <ClInclude Include="GameServerSession.h">
+      <Filter>01. SessionManager\GameServerSession</Filter>
+    </ClInclude>
+    <ClInclude Include="GameServerPacketHandler.h">
+      <Filter>03. Packets\PacketHandler\GameServerPacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientPacketHandler.h">
+      <Filter>03. Packets\PacketHandler\ClientPacketHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="SendPackets.h">
+      <Filter>03. Packets\SendPackets</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerEnums.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Participant.h">
+      <Filter>02. GameLobby\GameRoom\Participant</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerStructs.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Packets\Binaries\Enums.fbs">
+      <Filter>03. Packets\FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Structs.fbs">
+      <Filter>03. Packets\FBS</Filter>
+    </None>
+    <None Include="..\Packets\Binaries\Tables.fbs">
+      <Filter>03. Packets\FBS</Filter>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
