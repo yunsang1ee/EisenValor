@@ -111,6 +111,8 @@ void PlayerPreDelayState::Exit(FSMComponent* fsm)
 // ==================================
 PlayerAttackState::PlayerAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
+	SetHasExitTime(true);
+	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 }
 
 void PlayerAttackState::Enter(FSMComponent* fsm)
@@ -134,12 +136,7 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 
 void PlayerAttackState::Update(FSMComponent* fsm, float dt)
 {
-	fsm->AddStateTimer(dt);
-	// 임시로 1.0초 후 POST_DELAY 전환
-	if (fsm->GetStateTimer() >= 1.0f) 
-	{
-		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
-	}
+	// Onupdate에서 자동 체크
 }
 
 void PlayerAttackState::Exit(FSMComponent* fsm)
@@ -216,6 +213,8 @@ void PlayerDefenseState::Exit(FSMComponent* fsm)
 // ==================================
 PlayerStunState::PlayerStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
+	SetHasExitTime(true);
+	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 }
 
 void PlayerStunState::Enter(FSMComponent* fsm)
@@ -234,22 +233,7 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 
 void PlayerStunState::Update(FSMComponent* fsm, float dt)
 {
-	fsm->AddStateTimer(dt);
-
-	bool isAnimEnd = false;
-	if (auto* obj = fsm->GetGameObject())
-	{
-		if (auto* anim = obj->GetComponent<AnimationComponent>())
-		{
-			isAnimEnd = anim->IsAnimationEnd();
-		}
-	}
-
-	// 애니메이션이 실제 끝났을 때만 전환
-	if (isAnimEnd || fsm->GetStateTimer() >= 1.5f)
-	{
-		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	}
+	// OnUpdate에서 자동 체크
 }
 
 void PlayerStunState::Exit(FSMComponent* fsm)
@@ -262,6 +246,7 @@ void PlayerStunState::Exit(FSMComponent* fsm)
 // ==================================
 PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 {
+	SetHasExitTime(true);
 }
 
 void PlayerDeadState::Enter(FSMComponent* fsm)
@@ -279,7 +264,7 @@ void PlayerDeadState::Enter(FSMComponent* fsm)
 
 void PlayerDeadState::Update(FSMComponent* fsm, float dt)
 {
-	// 죽은 상태는 별도의 전이 없이 서버의 리스폰 패킷을 기다림
+	// DEAD는 전이 없이 서버의 리스폰 패킷을 기다림
 }
 
 void PlayerDeadState::Exit(FSMComponent* fsm)
