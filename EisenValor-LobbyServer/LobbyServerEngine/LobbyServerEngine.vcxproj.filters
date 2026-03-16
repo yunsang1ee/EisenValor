@@ -4,6 +4,72 @@
     <Filter Include="99. pch">
       <UniqueIdentifier>{b0115222-e7c7-476c-8c7a-03b379699398}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. Thread">
+      <UniqueIdentifier>{947ebbf3-7a5c-4de8-97de-cf84b7793249}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Thread\WorkerThread">
+      <UniqueIdentifier>{7bc70a50-e7f0-4480-898c-2a52655b27cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="98. Headers">
+      <UniqueIdentifier>{45aa5681-3255-4fdb-b976-707e2af9bb84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="07. MemoryPool">
+      <UniqueIdentifier>{1e353550-6329-489f-8b5c-fa440d3d70fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers">
+      <UniqueIdentifier>{52e96ed5-033c-4bba-9beb-89ecf2a4f63a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers\LogManager">
+      <UniqueIdentifier>{04a058ab-b26a-448b-af05-8508855fdb72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers\ThreadManager">
+      <UniqueIdentifier>{7fa3e316-01ed-4a09-b8bb-4397d70dbad2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers\TaskQueueManager">
+      <UniqueIdentifier>{05c88ba5-608d-46fc-9f96-9f9acdd7f82c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers\TaskQueueManager\TaskQueue">
+      <UniqueIdentifier>{ec8ef651-2bd6-4b26-b131-bbd0f7480727}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers\TaskQueueManager\TaskQueue\Task">
+      <UniqueIdentifier>{c69f6d15-9148-4b91-a558-e15ce772ffe0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="06. Managers\TaskTimer">
+      <UniqueIdentifier>{88e96048-be53-4e9d-9b55-ae1708a683eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. Core">
+      <UniqueIdentifier>{3bfcf169-3246-4dae-8bc6-f36412ec1c2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Thread\WorkerThread\IOContext">
+      <UniqueIdentifier>{48b149c3-3e85-40bd-bff1-dbdebd8dc0fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Thread\JobQueue">
+      <UniqueIdentifier>{a3c44973-eb88-418e-97f9-4d3088a43868}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Thread\JobQueue\Job">
+      <UniqueIdentifier>{c5274284-683c-43e3-99ad-b2cb84b93e33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Session">
+      <UniqueIdentifier>{f8877c87-2689-416f-b922-235ad237b720}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Session\RecvBuffer">
+      <UniqueIdentifier>{5dcb9dd1-c985-451f-8fb8-2c870018ccbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. Core\IOCPCore">
+      <UniqueIdentifier>{915ec1f9-5e18-4ded-8b48-70f9cff1bb7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. IOCPObject">
+      <UniqueIdentifier>{b8d7b624-a411-4fbd-83d6-eb066e4baa63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. IOCPObject\Listener">
+      <UniqueIdentifier>{74d41935-66be-4bc6-873c-d2eb702346a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Utils">
+      <UniqueIdentifier>{80396be0-2b3f-45f4-85a7-56613a4c0c6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Packet">
+      <UniqueIdentifier>{2c6eb4a7-7401-481c-a838-e6a5752f12e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -11,6 +77,69 @@
     </ClCompile>
     <ClCompile Include="LobbyServerEnginePch.cpp">
       <Filter>99. pch</Filter>
+    </ClCompile>
+    <ClCompile Include="JobQueue.cpp">
+      <Filter>04. Thread\JobQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="LogManager.cpp">
+      <Filter>06. Managers\LogManager</Filter>
+    </ClCompile>
+    <ClCompile Include="WorkerThread.cpp">
+      <Filter>04. Thread\WorkerThread</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyServerEngineCore.cpp">
+      <Filter>00. Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Job.cpp">
+      <Filter>04. Thread\JobQueue\Job</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadManager.cpp">
+      <Filter>06. Managers\ThreadManager</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyServerTLS.cpp">
+      <Filter>98. Headers</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>03. Session</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskQueueManager.cpp">
+      <Filter>06. Managers\TaskQueueManager</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskTimer.cpp">
+      <Filter>06. Managers\TaskTimer</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskQueue.cpp">
+      <Filter>06. Managers\TaskQueueManager\TaskQueue</Filter>
+    </ClCompile>
+    <ClCompile Include="Task.cpp">
+      <Filter>06. Managers\TaskQueueManager\TaskQueue\Task</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectPool.cpp">
+      <Filter>07. MemoryPool</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketBuffer.cpp">
+      <Filter>02. Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="IOContext.cpp">
+      <Filter>04. Thread\WorkerThread\IOContext</Filter>
+    </ClCompile>
+    <ClCompile Include="RecvBuffer.cpp">
+      <Filter>03. Session\RecvBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCPCore.cpp">
+      <Filter>00. Core\IOCPCore</Filter>
+    </ClCompile>
+    <ClCompile Include="IOCPObject.cpp">
+      <Filter>01. IOCPObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Listener.cpp">
+      <Filter>01. IOCPObject\Listener</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketUtils.cpp">
+      <Filter>97. Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketHandler.cpp">
+      <Filter>02. Packet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -20,5 +149,86 @@
     <ClInclude Include="LobbyServerEnginePch.h">
       <Filter>99. pch</Filter>
     </ClInclude>
+    <ClInclude Include="JobQueue.h">
+      <Filter>04. Thread\JobQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="LogManager.h">
+      <Filter>06. Managers\LogManager</Filter>
+    </ClInclude>
+    <ClInclude Include="WorkerThread.h">
+      <Filter>04. Thread\WorkerThread</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerEngineCore.h">
+      <Filter>00. Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>04. Thread\JobQueue\Job</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerEngineDefines.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Singleton.hpp">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadManager.h">
+      <Filter>06. Managers\ThreadManager</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerTLS.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskQueueManager.h">
+      <Filter>06. Managers\TaskQueueManager</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskTimer.h">
+      <Filter>06. Managers\TaskTimer</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskQueue.h">
+      <Filter>06. Managers\TaskQueueManager\TaskQueue</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>06. Managers\TaskQueueManager\TaskQueue\Task</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectPool.h">
+      <Filter>07. MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketBuffer.h">
+      <Filter>02. Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketHeader.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>03. Session</Filter>
+    </ClInclude>
+    <ClInclude Include="IOContext.h">
+      <Filter>04. Thread\WorkerThread\IOContext</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerEngineEnums.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyServerEngineTypes.h">
+      <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RecvBuffer.h">
+      <Filter>03. Session\RecvBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPCore.h">
+      <Filter>00. Core\IOCPCore</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPObject.h">
+      <Filter>01. IOCPObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Listener.h">
+      <Filter>01. IOCPObject\Listener</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketUtils.h">
+      <Filter>97. Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketHandler.h">
+      <Filter>02. Packet</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

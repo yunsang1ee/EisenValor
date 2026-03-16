@@ -103,3 +103,13 @@ void Server::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
 	//	std::cout << "resetMoveTarget" << std::endl;
 	}
 }
+
+void Server::Contents::NavSystem::RemoveAgent(const int32 agentIdx)
+{
+	if(!m_crowd) return;
+
+	const dtCrowdAgent* ag = m_crowd->getAgent(agentIdx);
+	if(!ag || !ag->active) return;
+
+	m_crowd->removeAgent(agentIdx);
+}

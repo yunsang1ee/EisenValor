@@ -101,7 +101,7 @@ void GameFramework::Release()
 	auto* queue = GLOBAL(DxGfxCommandQueueGlobal).GetQueue();
 	if (!queue)
 		return;
-
+	
 	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
 	GLOBAL(DxGfxCommandQueueGlobal).WaitForIdle();
 	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");

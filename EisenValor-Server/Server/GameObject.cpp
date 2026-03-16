@@ -38,7 +38,7 @@ Vec3 Server::Contents::GameObject::GetForwardDir()
 	return forward;
 }
 
-bool Server::Contents::GameObject::IsTargetInRange(const GameObject* const target, const float rangeSq)
+bool Server::Contents::GameObject::IsTargetInRange(std::shared_ptr<GameObject> const target, const float rangeSq)
 {
 	if(nullptr == target)
 		return false;
@@ -57,7 +57,7 @@ bool Server::Contents::GameObject::IsTargetInRange(const GameObject* const targe
 	return false;
 }
 
-bool Server::Contents::GameObject::IsSameTeam(const GameObject* const other)
+bool Server::Contents::GameObject::IsSameTeam(std::shared_ptr<GameObject> const other)
 {
 	const auto otherTeamType{ other->GetTeamType() };
 

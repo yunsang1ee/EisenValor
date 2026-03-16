@@ -69,7 +69,6 @@ namespace ServerEngine {
 		tbb::concurrent_queue<std::shared_ptr<Task>>	m_tasks;
 		std::atomic_int									m_taskCount;
 		bool											m_active;
-
 	};
 }
 

@@ -200,8 +200,10 @@ exit /b 0</Command>
     <ClInclude Include="Component\FSM\GeneralStates.h" />
     <ClInclude Include="Component\FSM\StatePool.h" />
     <ClInclude Include="Component\HealthComponent.h" />
+    <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
     <ClInclude Include="Component\Login\LoginControllerComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
+    <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
     <ClInclude Include="Component\StaminaComponent.h" />
     <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
@@ -224,7 +226,10 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\SkinningPass.h" />
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Scene\LoadingScene.h" />
+    <ClInclude Include="Scene\LobbyScene.h" />
     <ClInclude Include="Scene\LoginScene.h" />
+    <ClInclude Include="Scene\RoomScene.h" />
     <ClInclude Include="Scene\SampleScene.h" />
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
@@ -235,8 +240,10 @@ exit /b 0</Command>
     <ClCompile Include="Component\FSM\GeneralStates.cpp" />
     <ClCompile Include="Component\FSM\StatePool.cpp" />
     <ClCompile Include="Component\HealthComponent.cpp" />
+    <ClCompile Include="Component\Lobby\LobbySceneControllerComponent.cpp" />
     <ClCompile Include="Component\Login\LoginControllerComponent.cpp" />
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
+    <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
     <ClCompile Include="Component\StaminaComponent.cpp" />
     <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
@@ -253,7 +260,10 @@ exit /b 0</Command>
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
     <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
+    <ClCompile Include="Scene\LoadingScene.cpp" />
+    <ClCompile Include="Scene\LobbyScene.cpp" />
     <ClCompile Include="Scene\LoginScene.cpp" />
+    <ClCompile Include="Scene\RoomScene.cpp" />
     <ClCompile Include="Scene\SampleScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

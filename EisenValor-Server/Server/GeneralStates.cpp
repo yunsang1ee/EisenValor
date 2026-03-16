@@ -14,9 +14,9 @@ Server::Contents::GeneralState::GeneralState(const uint8 stateType, FSM* const f
 {
 	SetFSM(fsm);
 
-	m_owner = static_cast<General*>(fsm->GetOwner());
-	m_bt = m_owner->GetComponent<Server::Contents::BehaviorTree>();
-	m_gameWorld = m_owner->GetGameWorld();
+	m_owner = std::static_pointer_cast<General>(fsm->GetOwner());
+	m_bt = GetOwner()->GetComponent<Server::Contents::BehaviorTree>();
+	m_gameWorld = GetOwner()->GetGameWorld();
 }
 
 Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
@@ -45,13 +45,13 @@ void Server::Contents::GeneralRoamingState::Enter(const float dt)
 	auto const fsm{ GetFSM() };
 
 	// 로밍상태 들어올 때 중립태세로 전환
-	m_owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(m_owner->GetID(), m_owner->GetStanceType()) };
+	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
 	m_gameWorld->Broadcast(std::move(pb));
 
 	std::cout << "General GeneralRoamingState Enter!" << std::endl;
 	
-	m_bt = m_owner->GetComponent<Server::Contents::BehaviorTree>();
+	m_bt = GetOwner()->GetComponent<Server::Contents::BehaviorTree>();
 	
 	if(m_bt) {
 		m_bt->SetRoot(m_root.get());
@@ -74,14 +74,14 @@ void Server::Contents::GeneralRoamingState::Update(const float dt)
 
 void Server::Contents::GeneralRoamingState::RecoveryStamina(const float dt)
 {
-	const auto& statInfo = m_owner->GetStat();
+	const auto& statInfo = m_owner.lock()->GetStat();
 	if(statInfo.currentStamina < statInfo.maxStamina) {
 		m_accDTForStaminaRecovery += dt;
 
 		if(m_accDTForStaminaRecovery >= 3.f) {
 			m_accDTForStaminaRecovery = 0.F;
 
-			m_owner->IncStamina(m_owner->GetGameObjectData()->staminaRecoveryPerSec);
+			m_owner.lock()->IncStamina(GetOwner()->GetGameObjectData()->staminaRecoveryPerSec);
 		}
 	}
 	else {
@@ -99,20 +99,18 @@ void Server::Contents::GeneralRoamingState::FindGeneral(const float dt)
 
 		for(const auto& [id, o] : groups[i]) {
 
-			auto obj{ o.get() };
-
-			if(false == IsValidObj(obj))
+			if(false == IsValidObj(o))
 				continue;
 
-			if(m_owner->GetID() == id)
+			if(GetOwner()->GetID() == id)
 				continue;
 
-			if(obj->GetTeamType() == m_owner->GetTeamType()) continue;
+			if(o->GetTeamType() == GetOwner()->GetTeamType()) continue;
 
-			const auto& targetPos{ obj->GetPos() };
+			const auto& targetPos{ o->GetPos() };
 
-			if(m_owner->IsTargetInRange(obj, 2.f * 2.f)) {
-				m_owner->GetComponent<Server::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", obj->GetID());
+			if(GetOwner()->IsTargetInRange(o, 2.f * 2.f)) {
+				GetOwner()->GetComponent<Server::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", id);
 				GetFSM()->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
 				return;
 			}
@@ -162,15 +160,15 @@ void Server::Contents::GeneralDuelingState::Enter(const float dt)
 {
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
 
-	m_owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(m_owner->GetID(), m_owner->GetStanceType()) };
+	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
 	m_gameWorld->Broadcast(std::move(pb));
 
 	if(m_bt) {
 		m_bt->SetRoot(m_root.get());
 	}
 
-	m_owner->GetComponent<NavAgent>()->StopMove();
+	GetOwner()->GetComponent<NavAgent>()->StopMove();
 }
 
 void Server::Contents::GeneralDuelingState::Exit(const float dt)
@@ -204,8 +202,8 @@ void Server::Contents::GeneralStunState::Enter(const float dt)
 	std::cout << "General GeneralStunState Enter!" << std::endl;
 	m_accDTForStunState = 0.f;
 
-	m_owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(m_owner->GetID(), m_owner->GetStanceType()) };
+	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType()) };
 	m_gameWorld->Broadcast(std::move(pb));
 }
 
@@ -255,10 +253,10 @@ void Server::Contents::GeneralDeadState::Exit(const float dt)
 void Server::Contents::GeneralDeadState::Update(const float dt)
 {
 	m_accDTForRespawn += dt;
-	auto const data{ m_owner->GetGameObjectData() };
+	auto const data{ GetOwner()->GetGameObjectData() };
 
 	if(m_accDTForRespawn >= data->respawnTimeSec) {
-		m_owner->OnRespawn();
+		GetOwner()->OnRespawn();
 	}
 }
 
