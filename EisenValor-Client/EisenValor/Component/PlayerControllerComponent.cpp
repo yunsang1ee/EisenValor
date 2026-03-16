@@ -113,18 +113,6 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	FB_STRUCTS::Vec3	posVec{pos.x, pos.y, pos.z};
 	FB_STRUCTS::Vec3	rotVec{rot.x, rot.y, rot.z};
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
-
-	// FSM에서 현재 상태 가져오기
-	uint8_t stateToSend = FB_ENUMS::GENERAL_STATE_TYPE_NONE;
-	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
-	{
-		uint8_t curState = fsm->GetCurStateType();
-		// MOVE, IDLE일 때만 서버에 보고
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_IDLE || curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
-		{
-			stateToSend = curState;
-		}
-	}
 }
 
 void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)

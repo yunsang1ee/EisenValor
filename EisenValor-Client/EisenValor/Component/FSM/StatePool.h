@@ -12,6 +12,8 @@ class FSMComponent;
 class State {
 protected:
 	uint8_t m_type;
+	bool	m_hasExitTime = false; // 애니메이션 종료 대기 여부
+	uint8_t m_nextStateOnEnd = 0;  // 자동 전이
 
 public:
 	explicit State(uint8_t type) : m_type(type) {}
@@ -23,6 +25,14 @@ public:
 	virtual void Exit(FSMComponent* fsm) = 0;
 
 	uint8_t GetStateType() const { return m_type; }
+
+	// HasExitTime
+	void SetHasExitTime(bool value) { m_hasExitTime = value; }
+	bool HasExitTime() const { return m_hasExitTime; }
+
+	// NextStateOnEnd
+	void	SetNextStateOnEnd(uint8_t type) { m_nextStateOnEnd = type; }
+	uint8_t GetNextStateOnEnd() const { return m_nextStateOnEnd; }
 };
 
 
