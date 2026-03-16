@@ -113,23 +113,6 @@ void PlayerControllerComponent::OnFixedUpdate(float deltaTime)
 	FB_STRUCTS::Vec3	posVec{pos.x, pos.y, pos.z};
 	FB_STRUCTS::Vec3	rotVec{rot.x, rot.y, rot.z};
 	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
-
-	// FSM에서 현재 상태 가져오기
-	uint8_t stateToSend = FB_ENUMS::GENERAL_STATE_TYPE_NONE;
-	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
-	{
-		uint8_t curState = fsm->GetCurStateType();
-		// MOVE, IDLE일 때만 서버에 보고
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_IDLE || curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
-		{
-			stateToSend = curState;
-		}
-	}
-
-	//DEBUG_LOG_FMT("[Debug] Sending to Server - State: {}\n", (int)stateToSend);
-
-	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, stateToSend);
-	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 }
 
 void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
@@ -171,202 +154,51 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 
 	if (fabsf(deltaX) > kMinMouseDelta)
 	{
-		{
-			auto* myGameObject = GetGameObject();
-			if (!myGameObject)
-				return;
-			auto* fsm = myGameObject->GetComponent<FSMComponent>();
-			if (!fsm)
-				return;
-			auto&				transform = myGameObject->GetTransform();
-			auto				pos = transform.GetPosition();
-			auto				rot = transform.GetRotation();
-			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+		auto* myGameObject = GetGameObject();
+		if (!myGameObject)
+			return;
 
-			auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-		}
+		auto* fsm = myGameObject->GetComponent<FSMComponent>();
+		if (!fsm)
+			return;
+
+		auto&				transform = myGameObject->GetTransform();
+		auto				pos = transform.GetPosition();
+		auto				rot = transform.GetRotation();
+		FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+
+		const auto curState{fsm->GetCurStateType()};
+
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+			return;
+
+		auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	
 		RotateYaw(deltaX);
 	}
 
 	if (m_cameraObjectHandle.IsValid() && fabsf(deltaY) > kMinMouseDelta)
 	{
-		{
-			auto* myGameObject = GetGameObject();
-			if (!myGameObject)
-				return;
-			auto* fsm = myGameObject->GetComponent<FSMComponent>();
-			if (!fsm)
-				return;
-			auto&				transform = myGameObject->GetTransform();
-			auto				pos = transform.GetPosition();
-			auto				rot = transform.GetRotation();
-			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+		auto* myGameObject = GetGameObject();
+		if (!myGameObject)
+			return;
 
-		}
+		auto* fsm = myGameObject->GetComponent<FSMComponent>();
+		if (!fsm)
+			return;
+
+		const auto curState{fsm->GetCurStateType()};
+
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+			return;
+		
 		RotatePitch(deltaY);
 	}
 }
 
 void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 {
-	// if (!m_movementHandle.IsValid())
-	//{
-	//	return;
-	// }
-
-	// auto* myGameObject = GetGameObject();
-	// if (!myGameObject)
-	//{
-	//	return;
-	// }
-
-	// auto* movement = myGameObject->GetComponent<MovementComponent>();
-	// if (!movement)
-	//{
-	//	return;
-	// }
-
-	// auto& input = GLOBAL(InputGlobal);
-
-	// bool isMoving = input.GetInput('W') || input.GetInput('S') || input.GetInput('A') || input.GetInput('D');
-
-	// movement->SetInputForward(input.GetInput('W'));
-	// movement->SetInputBackward(input.GetInput('S'));
-	// movement->SetInputLeft(input.GetInput('A'));
-	// movement->SetInputRight(input.GetInput('D'));
-
-	// if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
-	//{
-	//	uint8_t curState = fsm->GetCurStateType();
-
-	//	// 공격, 스턴, 사망 상태인 경우 이동/대기로의 전환 방지
-	//	bool isRestrictedState = (curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-	//							  curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
-	//							  curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
-	//							  curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN ||
-	//							  curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
-	//	auto& transform = myGameObject->GetTransform();
-	//	auto  pos = transform.GetPosition();
-	//	auto  rot = transform.GetRotation();
-
-	//	FB_STRUCTS::Vec3	posVec{pos.x, pos.y, pos.z};
-	//	FB_STRUCTS::Vec3	rotVec{rot.x, rot.y, rot.z};
-	//	FB_STRUCTS::PosInfo posInfo{posVec, rotVec};
-	//	if (!isRestrictedState)
-	//	{
-	//		if (isMoving)
-	//		{
-	//			if (fsm->GetCurStateType() != FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
-	//				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-	//			auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-	//			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	//		}
-	//		else
-	//		{
-	//			if(fsm->GetCurStateType() == FB_ENUMS::PLAYER_STATE_TYPE_IDLE) {
-
-	//			}
-	//			else
-	//			{
-	//				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	//				auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	//				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	//			}
-	//		}
-	//	}
-	//}
-
-	// if (input.GetInputDown('F')) {
-	//	auto pb{NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()};
-	//	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	// }
-	//
-	//
-	//
-
-	// if (!m_movementHandle.IsValid())
-	//	return;
-
-	// auto* myGameObject = GetGameObject();
-	// if (!myGameObject)
-	//	return;
-
-	// auto* movement = myGameObject->GetComponent<MovementComponent>();
-	// if (!movement)
-	//	return;
-
-	// auto& input = GLOBAL(InputGlobal);
-	// auto* fsm = myGameObject->GetComponent<FSMComponent>();
-	// if (!fsm)
-	//	return;
-
-	// if (fsm->GetCurStateType() == FB_ENUMS::PLAYER_STATE_TYPE_STUN || fsm->GetCurStateType() ==
-	// FB_ENUMS::PLAYER_STATE_TYPE_DEAD) 	return;
-
-
-	// bool w = input.GetInput('W');
-	// bool s = input.GetInput('S');
-	// bool a = input.GetInput('A');
-	// bool d = input.GetInput('D');
-
-	// bool isMovingNow = (w || s || a || d);
-
-	// movement->SetInputForward(w);
-	// movement->SetInputBackward(s);
-	// movement->SetInputLeft(a);
-	// movement->SetInputRight(d);
-
-	// uint8_t curState = fsm->GetCurStateType();
-	// bool	isRestrictedState =
-	//	(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
-	//	 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN ||
-	//	 curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
-
-	// if (isRestrictedState)
-	//	return;
-
-	// auto&				transform = myGameObject->GetTransform();
-	// auto				pos = transform.GetPosition();
-	// auto				rot = transform.GetRotation();
-	// FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-
-	// if (isMovingNow)
-	//{
-	//	bool hasJustPressed = input.GetInputDown('W') || input.GetInputDown('A') || input.GetInputDown('S') ||
-	//input.GetInputDown('D');
-
-	//	if (curState != FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustPressed)
-	//	{
-	//		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-	//		auto pb = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-	//		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	//	}
-
-	//	auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-	//	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	//}
-	// else
-	//{
-	//	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
-	//	{
-	//		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	//		{
-	//			auto pb = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	//			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	//		}
-	//		auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	//		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	//	}
-	//}
-
-	// if (input.GetInputDown('F'))
-	//{
-	//	auto pb{NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()};
-	//	GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	// }
-
-
 	if (!m_movementHandle.IsValid())
 		return;
 
