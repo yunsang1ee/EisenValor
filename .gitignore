@@ -366,6 +366,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+/MarkDown
 /EisenValor-Client/SettingMarkDown
 /EisenValor-Client/EisenValor/Build/ShaderCache
 /.gemini
@@ -394,3 +395,17 @@ FodyWeavers.xsd
 /[Tt]ools/*/*.pdb
 /[Tt]ools/*/*.opendb
 /[Tt]ools/*/*.VC.db
+
+# Resource and Asset Exclusions
+# Ignore raw assets in Unity and Asset Exporter
+**/Resources/*
+**/Assets/*
+
+# Preserve folder structure for ignored folders
+!**/Resources/.gitkeep
+!**/Assets/.gitkeep
+
+# Special exception for Asset_Exporter Editor logic
+!**/Assets/Editor/
+!**/Assets/Editor/**
+!**/Assets/Editor.meta
