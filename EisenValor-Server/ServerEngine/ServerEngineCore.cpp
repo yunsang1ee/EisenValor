@@ -7,8 +7,8 @@
 #include "AcceptThread.h"
 #include "WorkerThread.h"
 
-#include "IOCPCoreTest.h"
-#include "RIOCoreTest.h"
+#include "IOCPCore.h"
+#include "RIOCore.h"
 
 #include "GameWorldThread.h"
 
@@ -22,7 +22,7 @@ ServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc)
+bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameWorldFactoryFunc worldFunc)
 {
 	m_nextWorkerIndex = 0;
 
@@ -58,7 +58,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSession
 
 	// lobbySesionThread 생성
 	{
-		auto rioCOre{ std::make_unique<RIO::RIOCoreTest>() };
+		auto rioCOre{ std::make_unique<RIO::RIOCore>() };
 		auto lobbyServerSessionThread =  std::make_unique<WorkerThread>(WORKER_THREAD_TYPE::LOBBY_SESSION, std::move(rioCOre));
 		
 		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, 40001))
@@ -71,7 +71,7 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSession
 	// WorkerThread 생성
 	int port[2]{ 40002, 40003 };
 	for(int i = 1; i < 3; ++i) {
-		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
+		auto rioCore = std::make_unique<RIO::RIOCore>();
 		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::WORLD, std::move(rioCore), worldFunc));
 
 		if(false == m_workerThreads[i]->Init(clientSessionFunc, port[i-1]))

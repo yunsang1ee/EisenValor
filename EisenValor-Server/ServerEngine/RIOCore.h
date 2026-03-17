@@ -1,44 +1,37 @@
 #pragma once
 
 #include "IOCore.h"
-#include "RIOWorker.h"
 
 namespace ServerEngine {
 	namespace RIO {
-		class RIOWorker;
-
-#ifdef _USE_RIO
-#ifdef LEGACY_CODE
+		class RIOSession;
+#ifdef MODERN_CODE
 		class RIOCore : public IOCore {
 		public:
 			RIOCore();
-			virtual ~RIOCore() = default;
-
-			RIOCore(const RIOCore&) = delete;
-			RIOCore(RIOCore&&) = default;
-			RIOCore& operator=(const RIOCore&) = delete;
-			RIOCore& operator=(RIOCore&&) = default;
+			virtual ~RIOCore();
 
 		public:
-			[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
-			virtual bool	Init(const SessionFactoryFunc sessionFunc) override final;
-			[[nodiscard("DO NOT IGNORE RETURN VALUE")]]
-			virtual bool	StartAccept() override final;
-			virtual void	Run() override final;
+			virtual bool Init() override final;
+			virtual bool Register(std::shared_ptr<Session> session) override final;
+			virtual bool Deregister(std::shared_ptr<Session> session) override final;
+
+			virtual void ProcessIO() override final;
 
 		public:
-			const auto&		GetRioExtFuncTB() const { return m_rioExtfuncTable; }
-			virtual void	Shutdown() override final;
+			const auto& GetRioExtFuncTable() const { return m_rioExtfuncTable; }
 
 		private:
-			void			DoAcceptLoop();
+			void FlushPacketQueue();
+			void DequeueCompletion();
 
 		private:
-			RIO_EXTENSION_FUNCTION_TABLE			m_rioExtfuncTable;
-			uint16									m_acceptThreadNum;
-			std::vector<std::unique_ptr<RIOWorker>>	m_rioWorkers;
+			RIO_CQ															m_cq;
+			std::vector<RIORESULT>											m_ioResults;
+			RIO_EXTENSION_FUNCTION_TABLE									m_rioExtfuncTable;
+			std::unordered_set<std::shared_ptr<RIOSession>>					m_connectedSessions;
+
 		};
-#endif
 #endif
 	}
 }

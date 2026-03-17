@@ -3,9 +3,9 @@
 
 #include "IRoom.h"
 #include "AcceptThread.h"
-#include "IOCoreTest.h"
+#include "IOCore.h"
 
-ServerEngine::GameWorldThread::GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc)
+ServerEngine::GameWorldThread::GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore, const GameWorldFactoryFunc worldFunc)
 	: ServerEngine::WorkerThread{ type, std::move(ioCore) }, m_worldFunc{worldFunc}
 {
 }

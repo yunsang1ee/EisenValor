@@ -2,13 +2,13 @@
 #include "WorkerThread.h"
 
 #include "IRoom.h"
-#include "IOCoreTest.h"
+#include "IOCore.h"
 
 #include "AcceptThread.h"
 #include "Session.h"
 #include "GameWorldThread.h"
 
-ServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore)
+ServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore)
 	: m_type{ type }, m_ioCore { std::move(ioCore) }
 {
 }

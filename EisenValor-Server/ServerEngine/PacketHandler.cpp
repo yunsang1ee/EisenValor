@@ -2,6 +2,7 @@
 #include "PacketHandler.h"
 
 ServerEngine::PacketHandler::PacketHandler()
+	:m_packetHandlerFuncs{}
 {
 	for(auto& func : m_packetHandlerFuncs)
 		func = Handle_INVALID;

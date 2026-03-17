@@ -7,20 +7,6 @@ bool ServerEngine::ThreadManager::Init()
 {
 	m_workerThreadCount = MANAGER(ServerEngineConfigManager)->GetThreadConfig().MAX_WORKER_THREAD_COUNT;
 
-#ifdef LEGACY_CODE
-	// 0th: Main Thread
-	// 1st: Listen Thread
-	// 2nd ~ Nth: RioWorker
-#endif
-
-#ifdef MODERN_CODE
-	// TODO: ThreadManager 수정
-	// 0th: Main Thread
-	// 1st: Listen Thread
-	// 2nd: Lobby Thread
-	// 3nd ~ Nth: Worker Thread
-#endif
-
 	InitTLS();
 
 	return true;
@@ -61,7 +47,6 @@ void ServerEngine::ThreadManager::InitTLS()
 void ServerEngine::ThreadManager::DestroyTLS()
 {
 	std::osyncstream oss{ std::cout };
-	// oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
 	oss << TLS_THREAD_NAME << " Thread DestroyTLS" << std::endl;
 }
 

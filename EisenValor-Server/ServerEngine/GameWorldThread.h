@@ -7,7 +7,7 @@ namespace ServerEngine {
 
 	class GameWorldThread : public WorkerThread {
 	public:
-		explicit GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc);
+		explicit GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore, const GameWorldFactoryFunc worldFunc);
 		virtual ~GameWorldThread();
 
 	public:
@@ -20,7 +20,7 @@ namespace ServerEngine {
 		IRoom* FindGameWorld(const uint16 worldID);
 
 	private:
-		const GameWorldTestFactoryFunc					m_worldFunc;
+		const GameWorldFactoryFunc					m_worldFunc;
 		std::map<uint32, std::unique_ptr<IRoom>>		m_worlds;
 	};
 }

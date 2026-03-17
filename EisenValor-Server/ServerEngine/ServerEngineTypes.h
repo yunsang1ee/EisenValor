@@ -26,7 +26,7 @@ namespace ServerEngine {
 }
 
 namespace Server {
-	class GameWorldTest;
+	class GameWorld;
 
 #ifdef _USE_RIO
 	class RIOClientSession;
@@ -46,5 +46,5 @@ using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::IOCP::IOC
 #endif
 
 
-using GameWorldTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
+using GameWorldFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
 using GameLobbyTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;

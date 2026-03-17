@@ -3,7 +3,6 @@
 
 // #define APPLY_LOBBY_SERVER
 
-// #define LEGACY_CODE
 #define MODERN_CODE
 
 #include "ServerEngineDefines.h"
@@ -98,7 +97,7 @@ namespace Server {
 	class RIOLobbyServerSession;
 	class IOCPLobbyServerSession;
 
-	class GameWorldTest;
+	class GameWorld;
 }
 
 #ifdef _USE_RIO

@@ -4,11 +4,11 @@
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
 #include "Session.h"
-#include "IOCoreTest.h"
+#include "IOCore.h"
 
 #ifdef  MODERN_CODE
 ServerEngine::AcceptThread::AcceptThread(const SessionFactoryFunc func, const DWORD listenSocketFlags, WorkerThread* const ownerWorker)
-	: m_serverAddress{}, m_func{func}, m_ownerWorker{ownerWorker}
+	: m_serverAddress{}, m_func{ func }, m_ownerWorker{ ownerWorker }, m_port{}
 {
 	m_listenSocket = CreateSocket(listenSocketFlags);
 }

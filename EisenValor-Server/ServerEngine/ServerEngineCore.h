@@ -15,7 +15,7 @@ namespace ServerEngine {
 		~ServerEngineCore();
 
 	public:
-		bool Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc);
+		bool Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameWorldFactoryFunc worldFunc);
 		void Run();
 		void Shutdown();
 	
