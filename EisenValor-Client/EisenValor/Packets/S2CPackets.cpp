@@ -44,12 +44,9 @@ bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const Pack
 bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOGIN_SUCCESS_PACKET& recvPkt
 )
-{
-	const uint32 id = recvPkt.player_id();
 
+{const uint32 id = recvPkt.player_id();
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
-
-	std::cout << std::format("ID: {}", id) << std::endl;
 	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
 
 #ifdef APPLY_LOBBY_SERVER
@@ -76,8 +73,6 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 {
 	std::cout << "[SC_ENTER_GAME_LOBBY_PACKET] " << std::endl;
 
-	const uint32 localID = GLOBAL(SceneGlobal).GetLocalNetworkID();
-
 	const auto& rooms = recvPkt.rooms();
 	const auto& users = recvPkt.users();
 	const auto& vecUserID = recvPkt.vec_user_id();
@@ -102,10 +97,6 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	for (flatbuffers::uoffset_t i = 0; i < users->size(); ++i)
 	{
 		const auto* user = users->Get(i);
-		if (vecUserID->Get(i) == localID)
-		{
-			continue;
-		}
 		DEBUG_LOG_FMT("-Name:{}, ID:{}\n", user->c_str(), vecUserID->Get(i));
 	}
 
@@ -405,8 +396,8 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.player_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.player_id();
+	const uint64 localID = scene->GetLocalID();
 	if (id != localID)
 	{
 		DEBUG_LOG_FMT("is not LocalPlayer, id:{}, LocalID: {}\n", id, localID);
@@ -575,8 +566,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	if (id == localID)
 	{
@@ -785,8 +776,8 @@ bool NetBridge::S2C::Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_
 	// TODO: 원격 플레이어 또는 봇 오브젝트를 게임 씬에서 제거하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	if (id == localID)
 	{
@@ -818,8 +809,8 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	// TODO: 원격 플레이어 또는 봇 오브젝트의 위치 및 회전을 업데이트하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	if (id == localID)
 	{
@@ -842,8 +833,8 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 )
 {
 	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	// 서버 Echo 방지 (로컬 플레이어는 이미 입력 시점에 처리)
 	if (id == localID)
@@ -885,7 +876,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	// TODO: 해당 오브젝트의 HealthComponent를 찾아서 바이탈 정보 업데이트하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 objID = recvPkt.obj_id();
+	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 
 	if (obj)
@@ -917,7 +908,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 )
 {
 	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
-	const uint32 id = recvPkt.obj_id();
+	const uint64 id = recvPkt.obj_id();
 	const auto	 stance = recvPkt.stance_type();
 
 	// 서버 Echo 방지
@@ -949,7 +940,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	}
 
 	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
-	const uint32 objID = recvPkt.obj_id();
+	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 	uint8_t		 nextState = recvPkt.next_state();
 	

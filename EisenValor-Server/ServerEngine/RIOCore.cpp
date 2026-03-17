@@ -146,5 +146,4 @@ void ServerEngine::RIO::RIOCore::DequeueCompletion()
 		}
 	}
 }
-
 #endif

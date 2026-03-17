@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "JobQueue.h"
 
-#include "Job.h"
 void ServerEngine::JobQueue::FlushJobQueue()
 {
     MoveReservedJobs();

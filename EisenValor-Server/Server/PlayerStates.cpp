@@ -136,13 +136,8 @@ Server::Contents::PlayerPredelayState::~PlayerPredelayState()
 void Server::Contents::PlayerPredelayState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-#ifdef LEGACY_CODE
-	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-#endif
 
-#ifdef MODERN_CODE
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-#endif
 
 	std::cout << "Enter Player Predelay State" << std::endl;
 }

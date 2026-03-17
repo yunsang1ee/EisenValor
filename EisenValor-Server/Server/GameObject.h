@@ -14,7 +14,7 @@ namespace Server {
 		class NavAgent;
 		class Script;
 		class GameWorld;
-		class GameWorldTest;
+		class GameWorld;
 		class Collider;
 		class OBBCollider;
 
@@ -101,10 +101,6 @@ namespace Server {
 			void SetPos(const Vec3& pos) { m_posInfo.pos = pos; }
 			void SetRotation(const Vec3& rotation) { m_posInfo.rot = rotation; }
 			void SetLook(const Vec3& look) { m_look = look; }
-#ifdef LEGACY_CODE
-			void SetRoom(std::weak_ptr<GameRoom> match) { m_room = match; }
-			void SetGameWorld(std::shared_ptr<GameWorld> gameWorld) { m_gameWorld = gameWorld; }
-#endif
 			void SetCreature(bool flag) { m_isCreature = flag; }
 			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
 			void SetActive(const bool active) { m_active = active; }
@@ -118,15 +114,9 @@ namespace Server {
 			const Vec3& GetRotation() const  { return m_posInfo.rot; }
 			const Vec3& GetScale() const  { return m_scale; }
 			const Vec3& GetLook() const { return m_look; }
-#ifdef LEGACY_CODE
-			std::shared_ptr<GameRoom> GetGameRoom() const  { return m_room.lock(); }
-			std::shared_ptr<GameWorld> GetGameWorld() { return m_gameWorld.lock(); }
-#endif
 
-#ifdef MODERN_CODE
-			void SetGameWorld(GameWorldTest* const gameWorld) { m_gameWorld = gameWorld; }
-			GameWorldTest* GetGameWorld() const { return m_gameWorld; }
-#endif
+			void SetGameWorld(GameWorld* const gameWorld) { m_gameWorld = gameWorld; }
+			GameWorld* GetGameWorld() const { return m_gameWorld; }
 
 			FB_ENUMS::TEAM_TYPE GetTeamType() const  { return m_teamType; }
 			Vec3 GetForwardDir();
@@ -146,14 +136,7 @@ namespace Server {
 			ComponentGroup							m_components;
 			Scripts									m_scripts;
 
-#ifdef LEGACY_CODE
-			std::weak_ptr<GameRoom>					m_room;
-			std::weak_ptr<GameWorld>				m_gameWorld;
-#endif
-
-#ifdef MODERN_CODE
-			GameWorldTest*							m_gameWorld;
-#endif
+			GameWorld*							m_gameWorld;
 
 			PosInfo									m_posInfo;
 			Vec3									m_scale;

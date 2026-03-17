@@ -11,43 +11,40 @@
       <Filter>01. SessionManager\ClientSession</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
-      <Filter>03. Contents\GameWorld\GameObject</Filter>
+      <Filter>03. Contents\GameObject</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Player</Filter>
+      <Filter>03. Contents\GameObject\Creature\Player</Filter>
     </ClCompile>
     <ClCompile Include="GameObjectFactory.cpp">
       <Filter>03. Contents\GameWorld\GameObjectFactory</Filter>
     </ClCompile>
     <ClCompile Include="FSM.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\FSM</Filter>
+      <Filter>03. Contents\Component\FSM</Filter>
     </ClCompile>
     <ClCompile Include="State.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\FSM\State</Filter>
+      <Filter>03. Contents\Component\FSM\State</Filter>
     </ClCompile>
     <ClCompile Include="Creature.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature</Filter>
+      <Filter>03. Contents\GameObject\Creature</Filter>
     </ClCompile>
     <ClCompile Include="Script.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Scripts</Filter>
+      <Filter>03. Contents\Component\Scripts</Filter>
     </ClCompile>
     <ClCompile Include="BehaviorTree.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\BehaviorTree</Filter>
-    </ClCompile>
-    <ClCompile Include="GameRoom.cpp">
-      <Filter>03. Contents\GameRoom</Filter>
+      <Filter>03. Contents\Component\BehaviorTree</Filter>
     </ClCompile>
     <ClCompile Include="BehaviorNode.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode</Filter>
+      <Filter>03. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalFuncs.cpp">
       <Filter>96. Headers\97. Global</Filter>
     </ClCompile>
     <ClCompile Include="SoldierStates.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Soldier\State</Filter>
+      <Filter>03. Contents\GameObject\Creature\Soldier\State</Filter>
     </ClCompile>
     <ClCompile Include="Spawner.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Scripts\Spawner</Filter>
+      <Filter>03. Contents\Component\Scripts\Spawner</Filter>
     </ClCompile>
     <ClCompile Include="GameWorld.cpp">
       <Filter>03. Contents\GameWorld</Filter>
@@ -59,25 +56,22 @@
       <Filter>01. SessionManager</Filter>
     </ClCompile>
     <ClCompile Include="Participant.cpp">
-      <Filter>03. Contents\GameRoom\Participant</Filter>
-    </ClCompile>
-    <ClCompile Include="GameLobby.cpp">
-      <Filter>03. Contents\GameLobby</Filter>
+      <Filter>03. Contents\GameWorld\Participant</Filter>
     </ClCompile>
     <ClCompile Include="General.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\General</Filter>
+      <Filter>03. Contents\GameObject\Creature\General</Filter>
     </ClCompile>
     <ClCompile Include="Soldier.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Soldier</Filter>
+      <Filter>03. Contents\GameObject\Creature\Soldier</Filter>
     </ClCompile>
     <ClCompile Include="PlayerStates.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Player\State</Filter>
+      <Filter>03. Contents\GameObject\Creature\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="NavAgent.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\NavAgent</Filter>
+      <Filter>03. Contents\Component\NavAgent</Filter>
     </ClCompile>
     <ClCompile Include="Collider.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Collider</Filter>
+      <Filter>03. Contents\Component\Collider</Filter>
     </ClCompile>
     <ClCompile Include="GameDataManager.cpp">
       <Filter>03. Contents\GameData</Filter>
@@ -128,19 +122,19 @@
       <Filter>03. Contents\GameWorld\NavSystem\DetourCrowd</Filter>
     </ClCompile>
     <ClCompile Include="BattleRam.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
+      <Filter>03. Contents\GameObject\Creature\BattleRam</Filter>
     </ClCompile>
     <ClCompile Include="GeneralStates.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\General\States</Filter>
+      <Filter>03. Contents\GameObject\Creature\General\States</Filter>
     </ClCompile>
     <ClCompile Include="OccupationZone.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+      <Filter>03. Contents\Component\Scripts\OccupationZone</Filter>
     </ClCompile>
     <ClCompile Include="GeneralNodes.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\General\Nodes</Filter>
+      <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
     </ClCompile>
     <ClCompile Include="Component.cpp">
-      <Filter>03. Contents\GameWorld\GameObject\Component</Filter>
+      <Filter>03. Contents\Component</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalVariables.cpp">
       <Filter>96. Headers\97. Global</Filter>
@@ -210,74 +204,8 @@
     <Filter Include="03. Contents">
       <UniqueIdentifier>{85f57f8d-80af-4c06-b994-2090cf297ef8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Contents\GameLobby">
-      <UniqueIdentifier>{8f998587-e972-469f-b22b-bb3809c30d17}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Contents\GameWorld">
       <UniqueIdentifier>{2176b3bb-d56a-43f0-b9f6-c43bb61eef63}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject">
-      <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature">
-      <UniqueIdentifier>{a1679b21-ef3b-4ca5-a378-cf378cc19360}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\Player">
-      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\Player\State">
-      <UniqueIdentifier>{e2f15a41-5300-4a54-81ed-a762c62508d5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\Soldier">
-      <UniqueIdentifier>{7027c05f-9aa7-4c46-985a-089f18d6b6a4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\Soldier\State">
-      <UniqueIdentifier>{c7011f14-058b-45b6-a67f-204400f62173}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\General">
-      <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\General\States">
-      <UniqueIdentifier>{f9c531da-b829-44b2-9675-b04fbcba0f54}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\General\Nodes">
-      <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\BattleRam">
-      <UniqueIdentifier>{53307cfa-15b5-4eb7-b314-bf6bf5eac919}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Creature\BattleRam\State">
-      <UniqueIdentifier>{1b61b4d6-a179-4a29-9691-9483ee05422d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component">
-      <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\FSM">
-      <UniqueIdentifier>{f20ae024-7961-4a6e-8686-68c37a4f8f2c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\FSM\State">
-      <UniqueIdentifier>{58ad9f7e-1090-4462-93aa-c2cfb4cd20d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\Scripts">
-      <UniqueIdentifier>{b2863369-6965-4965-9878-bf03752897d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\Scripts\Spawner">
-      <UniqueIdentifier>{8e7cd877-ec7c-4e85-8736-18ea789260b0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone">
-      <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\BehaviorTree">
-      <UniqueIdentifier>{c7c49975-d6a6-485d-bffc-5b9fcc6f0b6a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode">
-      <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\NavAgent">
-      <UniqueIdentifier>{8bfe2cf1-67ed-42e0-afdd-54f3a9faf857}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameWorld\GameObject\Component\Collider">
-      <UniqueIdentifier>{a667c614-f8b1-41f3-b089-90afa67bee80}</UniqueIdentifier>
     </Filter>
     <Filter Include="03. Contents\GameWorld\CollisionDetector">
       <UniqueIdentifier>{55044845-55da-40aa-ab93-10bc906ce7cf}</UniqueIdentifier>
@@ -300,14 +228,74 @@
     <Filter Include="03. Contents\GameData">
       <UniqueIdentifier>{9e3cfc65-db12-4641-8aa9-c92ea1dc4e90}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Contents\GameRoom">
-      <UniqueIdentifier>{f8639cf2-9f08-4559-829f-f8e190b4bf13}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameRoom\Participant">
-      <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Contents\GameWorld\IdGenerator">
       <UniqueIdentifier>{8479f22d-f173-4a22-bd64-9b1406680302}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameWorld\Participant">
+      <UniqueIdentifier>{406722ee-63c7-40a6-8bb4-4027697b4c6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject">
+      <UniqueIdentifier>{f3345a1e-7527-4640-85f9-b9e90538ceba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature">
+      <UniqueIdentifier>{a1679b21-ef3b-4ca5-a378-cf378cc19360}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\Player">
+      <UniqueIdentifier>{f811921f-5768-4b9f-a0cf-5adbdd7b2aa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\Player\State">
+      <UniqueIdentifier>{e2f15a41-5300-4a54-81ed-a762c62508d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\Soldier">
+      <UniqueIdentifier>{7027c05f-9aa7-4c46-985a-089f18d6b6a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\Soldier\State">
+      <UniqueIdentifier>{c7011f14-058b-45b6-a67f-204400f62173}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\General">
+      <UniqueIdentifier>{7bda2055-a189-4f32-a23f-bb29c0330b06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\General\States">
+      <UniqueIdentifier>{f9c531da-b829-44b2-9675-b04fbcba0f54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\General\Nodes">
+      <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\BattleRam">
+      <UniqueIdentifier>{53307cfa-15b5-4eb7-b314-bf6bf5eac919}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Creature\BattleRam\State">
+      <UniqueIdentifier>{1b61b4d6-a179-4a29-9691-9483ee05422d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component">
+      <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\FSM">
+      <UniqueIdentifier>{f20ae024-7961-4a6e-8686-68c37a4f8f2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\FSM\State">
+      <UniqueIdentifier>{58ad9f7e-1090-4462-93aa-c2cfb4cd20d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\Scripts">
+      <UniqueIdentifier>{b2863369-6965-4965-9878-bf03752897d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\Scripts\Spawner">
+      <UniqueIdentifier>{8e7cd877-ec7c-4e85-8736-18ea789260b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\Scripts\OccupationZone">
+      <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\BehaviorTree">
+      <UniqueIdentifier>{c7c49975-d6a6-485d-bffc-5b9fcc6f0b6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\BehaviorTree\BehaviorNode">
+      <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\NavAgent">
+      <UniqueIdentifier>{8bfe2cf1-67ed-42e0-afdd-54f3a9faf857}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\Collider">
+      <UniqueIdentifier>{a667c614-f8b1-41f3-b089-90afa67bee80}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -324,10 +312,10 @@
       <Filter>01. SessionManager</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
-      <Filter>03. Contents\GameWorld\GameObject</Filter>
+      <Filter>03. Contents\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="Player.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Player</Filter>
+      <Filter>03. Contents\GameObject\Creature\Player</Filter>
     </ClInclude>
     <ClInclude Include="ServerEnums.h">
       <Filter>96. Headers</Filter>
@@ -342,34 +330,34 @@
       <Filter>96. Headers</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component</Filter>
+      <Filter>03. Contents\Component</Filter>
     </ClInclude>
     <ClInclude Include="FSM.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\FSM</Filter>
+      <Filter>03. Contents\Component\FSM</Filter>
     </ClInclude>
     <ClInclude Include="State.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\FSM\State</Filter>
+      <Filter>03. Contents\Component\FSM\State</Filter>
     </ClInclude>
     <ClInclude Include="Creature.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature</Filter>
+      <Filter>03. Contents\GameObject\Creature</Filter>
     </ClInclude>
     <ClInclude Include="Script.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Scripts</Filter>
+      <Filter>03. Contents\Component\Scripts</Filter>
     </ClInclude>
     <ClInclude Include="BehaviorTree.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\BehaviorTree</Filter>
+      <Filter>03. Contents\Component\BehaviorTree</Filter>
     </ClInclude>
     <ClInclude Include="BehaviorNode.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\BehaviorTree\BehaviorNode</Filter>
+      <Filter>03. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalFuncs.h">
       <Filter>96. Headers\97. Global</Filter>
     </ClInclude>
     <ClInclude Include="SoldierStates.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Soldier\State</Filter>
+      <Filter>03. Contents\GameObject\Creature\Soldier\State</Filter>
     </ClInclude>
     <ClInclude Include="Spawner.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Scripts\Spawner</Filter>
+      <Filter>03. Contents\Component\Scripts\Spawner</Filter>
     </ClInclude>
     <ClInclude Include="GameWorld.h">
       <Filter>03. Contents\GameWorld</Filter>
@@ -378,25 +366,22 @@
       <Filter>02. Packets\SendPackets</Filter>
     </ClInclude>
     <ClInclude Include="Participant.h">
-      <Filter>03. Contents\GameRoom\Participant</Filter>
-    </ClInclude>
-    <ClInclude Include="GameLobby.h">
-      <Filter>03. Contents\GameLobby</Filter>
+      <Filter>03. Contents\GameWorld\Participant</Filter>
     </ClInclude>
     <ClInclude Include="General.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\General</Filter>
+      <Filter>03. Contents\GameObject\Creature\General</Filter>
     </ClInclude>
     <ClInclude Include="Soldier.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Soldier</Filter>
+      <Filter>03. Contents\GameObject\Creature\Soldier</Filter>
     </ClInclude>
     <ClInclude Include="PlayerStates.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\Player\State</Filter>
+      <Filter>03. Contents\GameObject\Creature\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="NavAgent.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\NavAgent</Filter>
+      <Filter>03. Contents\Component\NavAgent</Filter>
     </ClInclude>
     <ClInclude Include="Collider.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Collider</Filter>
+      <Filter>03. Contents\Component\Collider</Filter>
     </ClInclude>
     <ClInclude Include="GameDataManager.h">
       <Filter>03. Contents\GameData</Filter>
@@ -406,9 +391,6 @@
     </ClInclude>
     <ClInclude Include="NavSystem.h">
       <Filter>03. Contents\GameWorld\NavSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="GameRoom.h">
-      <Filter>03. Contents\GameRoom</Filter>
     </ClInclude>
     <ClInclude Include="DetourAlloc.h">
       <Filter>03. Contents\GameWorld\NavSystem\Detour</Filter>
@@ -459,16 +441,16 @@
       <Filter>98. Utils</Filter>
     </ClInclude>
     <ClInclude Include="BattleRam.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\BattleRam</Filter>
+      <Filter>03. Contents\GameObject\Creature\BattleRam</Filter>
     </ClInclude>
     <ClInclude Include="OccupationZone.h">
-      <Filter>03. Contents\GameWorld\GameObject\Component\Scripts\OccupationZone</Filter>
+      <Filter>03. Contents\Component\Scripts\OccupationZone</Filter>
     </ClInclude>
     <ClInclude Include="GeneralNodes.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\General\Nodes</Filter>
+      <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
     </ClInclude>
     <ClInclude Include="GeneralStates.h">
-      <Filter>03. Contents\GameWorld\GameObject\Creature\General\States</Filter>
+      <Filter>03. Contents\GameObject\Creature\General\States</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalVariables.h">
       <Filter>96. Headers\97. Global</Filter>

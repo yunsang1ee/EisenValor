@@ -9,7 +9,7 @@
 class Scene
 {
 public:
-	using ServerID = uint32_t;
+	using ServerID = uint64_t;
 	using ComponentRawHandle = uint64_t;
 
 public:

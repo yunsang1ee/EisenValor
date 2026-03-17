@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "SoldierStates.h"
 
-#include "GameRoom.h"
 #include "Player.h"
 #include "FSM.h"
 #include "NavAgent.h"

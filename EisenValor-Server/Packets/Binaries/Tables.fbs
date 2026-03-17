@@ -115,7 +115,7 @@ table SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT {
 }
 
 table SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT {
-	participant_id: uint;
+	participant_id: uint64;
 }
 
 table CS_CHANGE_TEAM_PACKET {
@@ -196,7 +196,7 @@ table SC_GAME_FINISH_PACKET {
 
 }
 table SC_LOCAL_PLAYER_PACKET {
-	player_id: uint;
+	player_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	team_type: FB_ENUMS.TEAM_TYPE;
 	max_hp: uint;
@@ -207,7 +207,7 @@ table SC_LOCAL_PLAYER_PACKET {
 }
 
 table SC_ADD_OBJ_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
 	pos_info: FB_STRUCTS.PosInfo;
@@ -219,7 +219,7 @@ table SC_ADD_OBJ_PACKET {
 }
 
 table SC_REMOVE_OBJ_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 }
 
 table CS_MOVE_PACKET {
@@ -227,7 +227,7 @@ table CS_MOVE_PACKET {
 }
 
 table SC_MOVE_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	sub_state: uint8;
 }
@@ -237,7 +237,7 @@ table CS_CHANGE_GENERAL_STANCE_PACKET {
 }
 
 table SC_CHANGE_GENERAL_STANCE_PACKET {
-	obj_id : uint;
+	obj_id : uint64;
 	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
@@ -246,18 +246,18 @@ table CS_GENERAL_ATTACK_PACKET {
 }
 
 table SC_GENERAL_ATTACK_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
 
 table SC_UPDATE_VITAL_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	current_hp: uint;
 	current_stamina: uint;
 }
 
 table SC_UPDATE_STATE_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	next_state: uint8;
 }
 
@@ -274,7 +274,7 @@ table CS_CHANGE_CAMERA_TARGET_PACKET {
 }
 
 table SC_CHANGE_CAMERA_TARGET_PACKET {
-	camera_target_id: uint;
+	camera_target_id: uint64;
 }
 
 table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
@@ -282,12 +282,12 @@ table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
 }
 
 table SC_SHOW_GENERAL_ATTACK_DIR_PACKET{
-	obj_id: uint32;
+	obj_id: uint64;
 	attack_dir: uint8;
 }
 
 table SC_RESPAWN_GENERAL_PACKET {
-	obj_id : uint32;
+	obj_id : uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	max_hp: uint;
 	current_hp: uint;
@@ -298,16 +298,16 @@ table SC_RESPAWN_GENERAL_PACKET {
 
 
 table SC_DEAD_PACKET {
-	obj_id: uint32;
+	obj_id: uint64;
 }
 
 table SC_START_ANIMATION {
-	obj_id: uint32;
+	obj_id: uint64;
 	anim_name: string;
 }
 
 table SC_END_ANIMATION {
-	obj_id: uint32;
+	obj_id: uint64;
 	anim_name: string;
 }
 

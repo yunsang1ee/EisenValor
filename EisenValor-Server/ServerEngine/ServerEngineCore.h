@@ -8,7 +8,6 @@ namespace ServerEngine {
 	class WorkerThread;
 	class GameWorldThread;
 	class IRoom;
-#ifdef MODERN_CODE
 	class ServerEngineCore : public Singleton<ServerEngineCore> {
 	public:	
 		ServerEngineCore();
@@ -29,5 +28,4 @@ namespace ServerEngine {
 		GameWorldThread* GetLeisurelyWorker();
 		GameWorldThread* GetWorkerThread(const uint32 index);
 	};
-#endif
 }

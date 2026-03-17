@@ -1286,12 +1286,12 @@ struct SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT FLATBUFFERS_FINAL_CLASS : private :
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_PARTICIPANT_ID = 4
   };
-  uint32_t participant_id() const {
-    return GetField<uint32_t>(VT_PARTICIPANT_ID, 0);
+  uint64_t participant_id() const {
+    return GetField<uint64_t>(VT_PARTICIPANT_ID, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_PARTICIPANT_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_PARTICIPANT_ID, 8) &&
            verifier.EndTable();
   }
 };
@@ -1300,8 +1300,8 @@ struct SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKTBuilder {
   typedef SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_participant_id(uint32_t participant_id) {
-    fbb_.AddElement<uint32_t>(SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT::VT_PARTICIPANT_ID, participant_id, 0);
+  void add_participant_id(uint64_t participant_id) {
+    fbb_.AddElement<uint64_t>(SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT::VT_PARTICIPANT_ID, participant_id, 0);
   }
   explicit SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKTBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1316,7 +1316,7 @@ struct SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKTBuilder {
 
 inline ::flatbuffers::Offset<SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT> CreateSC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t participant_id = 0) {
+    uint64_t participant_id = 0) {
   SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKTBuilder builder_(_fbb);
   builder_.add_participant_id(participant_id);
   return builder_.Finish();
@@ -2014,8 +2014,8 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
     VT_CURRENT_STAMINA = 16,
     VT_STANCE_TYPE = 18
   };
-  uint32_t player_id() const {
-    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  uint64_t player_id() const {
+    return GetField<uint64_t>(VT_PLAYER_ID, 0);
   }
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
@@ -2040,7 +2040,7 @@ struct SC_LOCAL_PLAYER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_PLAYER_ID, 8) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            VerifyField<uint32_t>(verifier, VT_MAX_HP, 4) &&
@@ -2056,8 +2056,8 @@ struct SC_LOCAL_PLAYER_PACKETBuilder {
   typedef SC_LOCAL_PLAYER_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(SC_LOCAL_PLAYER_PACKET::VT_PLAYER_ID, player_id, 0);
+  void add_player_id(uint64_t player_id) {
+    fbb_.AddElement<uint64_t>(SC_LOCAL_PLAYER_PACKET::VT_PLAYER_ID, player_id, 0);
   }
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(SC_LOCAL_PLAYER_PACKET::VT_POS_INFO, pos_info);
@@ -2093,7 +2093,7 @@ struct SC_LOCAL_PLAYER_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t player_id = 0,
+    uint64_t player_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
     uint32_t max_hp = 0,
@@ -2102,12 +2102,12 @@ inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKE
     uint32_t current_stamina = 0,
     FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) {
   SC_LOCAL_PLAYER_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
   builder_.add_current_stamina(current_stamina);
   builder_.add_max_stamina(max_stamina);
   builder_.add_current_hp(current_hp);
   builder_.add_max_hp(max_hp);
   builder_.add_pos_info(pos_info);
-  builder_.add_player_id(player_id);
   builder_.add_stance_type(stance_type);
   builder_.add_team_type(team_type);
   return builder_.Finish();
@@ -2126,8 +2126,8 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     VT_CURRENT_STAMINA = 18,
     VT_STANCE_TYPE = 20
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   FB_ENUMS::GAME_OBJECT_TYPE obj_type() const {
     return static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(GetField<uint8_t>(VT_OBJ_TYPE, 0));
@@ -2155,7 +2155,7 @@ struct SC_ADD_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint8_t>(verifier, VT_OBJ_TYPE, 1) &&
            VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
@@ -2172,8 +2172,8 @@ struct SC_ADD_OBJ_PACKETBuilder {
   typedef SC_ADD_OBJ_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_ADD_OBJ_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_ADD_OBJ_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_obj_type(FB_ENUMS::GAME_OBJECT_TYPE obj_type) {
     fbb_.AddElement<uint8_t>(SC_ADD_OBJ_PACKET::VT_OBJ_TYPE, static_cast<uint8_t>(obj_type), 0);
@@ -2212,7 +2212,7 @@ struct SC_ADD_OBJ_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
     FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
@@ -2222,12 +2222,12 @@ inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     uint32_t current_stamina = 0,
     FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) {
   SC_ADD_OBJ_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
   builder_.add_current_stamina(current_stamina);
   builder_.add_max_stamina(max_stamina);
   builder_.add_current_hp(current_hp);
   builder_.add_max_hp(max_hp);
   builder_.add_pos_info(pos_info);
-  builder_.add_obj_id(obj_id);
   builder_.add_stance_type(stance_type);
   builder_.add_team_type(team_type);
   builder_.add_obj_type(obj_type);
@@ -2239,12 +2239,12 @@ struct SC_REMOVE_OBJ_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Tab
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            verifier.EndTable();
   }
 };
@@ -2253,8 +2253,8 @@ struct SC_REMOVE_OBJ_PACKETBuilder {
   typedef SC_REMOVE_OBJ_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_REMOVE_OBJ_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_REMOVE_OBJ_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   explicit SC_REMOVE_OBJ_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -2269,7 +2269,7 @@ struct SC_REMOVE_OBJ_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> CreateSC_REMOVE_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0) {
+    uint64_t obj_id = 0) {
   SC_REMOVE_OBJ_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
   return builder_.Finish();
@@ -2323,8 +2323,8 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_POS_INFO = 6,
     VT_SUB_STATE = 8
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
@@ -2334,7 +2334,7 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
            VerifyField<uint8_t>(verifier, VT_SUB_STATE, 1) &&
            verifier.EndTable();
@@ -2345,8 +2345,8 @@ struct SC_MOVE_PACKETBuilder {
   typedef SC_MOVE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_MOVE_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_MOVE_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(SC_MOVE_PACKET::VT_POS_INFO, pos_info);
@@ -2367,12 +2367,12 @@ struct SC_MOVE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
     uint8_t sub_state = 0) {
   SC_MOVE_PACKETBuilder builder_(_fbb);
-  builder_.add_pos_info(pos_info);
   builder_.add_obj_id(obj_id);
+  builder_.add_pos_info(pos_info);
   builder_.add_sub_state(sub_state);
   return builder_.Finish();
 }
@@ -2412,15 +2412,15 @@ struct SC_CHANGE_GENERAL_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatb
     VT_OBJ_ID = 4,
     VT_STANCE_TYPE = 6
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   FB_ENUMS::GENERAL_STANCE_TYPE stance_type() const {
     return static_cast<FB_ENUMS::GENERAL_STANCE_TYPE>(GetField<uint8_t>(VT_STANCE_TYPE, 0));
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint8_t>(verifier, VT_STANCE_TYPE, 1) &&
            verifier.EndTable();
   }
@@ -2430,8 +2430,8 @@ struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder {
   typedef SC_CHANGE_GENERAL_STANCE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_stance_type(FB_ENUMS::GENERAL_STANCE_TYPE stance_type) {
     fbb_.AddElement<uint8_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_STANCE_TYPE, static_cast<uint8_t>(stance_type), 0);
@@ -2449,7 +2449,7 @@ struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_CHANGE_GENERAL_STANCE_PACKET> CreateSC_CHANGE_GENERAL_STANCE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) {
   SC_CHANGE_GENERAL_STANCE_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
@@ -2504,15 +2504,15 @@ struct SC_GENERAL_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers:
     VT_OBJ_ID = 4,
     VT_ATTACK_INFO = 6
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   const FB_STRUCTS::GeneralAttackInfo *attack_info() const {
     return GetStruct<const FB_STRUCTS::GeneralAttackInfo *>(VT_ATTACK_INFO);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<FB_STRUCTS::GeneralAttackInfo>(verifier, VT_ATTACK_INFO, 1) &&
            verifier.EndTable();
   }
@@ -2522,8 +2522,8 @@ struct SC_GENERAL_ATTACK_PACKETBuilder {
   typedef SC_GENERAL_ATTACK_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_GENERAL_ATTACK_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_GENERAL_ATTACK_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_attack_info(const FB_STRUCTS::GeneralAttackInfo *attack_info) {
     fbb_.AddStruct(SC_GENERAL_ATTACK_PACKET::VT_ATTACK_INFO, attack_info);
@@ -2541,11 +2541,11 @@ struct SC_GENERAL_ATTACK_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_GENERAL_ATTACK_PACKET> CreateSC_GENERAL_ATTACK_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     const FB_STRUCTS::GeneralAttackInfo *attack_info = nullptr) {
   SC_GENERAL_ATTACK_PACKETBuilder builder_(_fbb);
-  builder_.add_attack_info(attack_info);
   builder_.add_obj_id(obj_id);
+  builder_.add_attack_info(attack_info);
   return builder_.Finish();
 }
 
@@ -2556,8 +2556,8 @@ struct SC_UPDATE_VITAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
     VT_CURRENT_HP = 6,
     VT_CURRENT_STAMINA = 8
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   uint32_t current_hp() const {
     return GetField<uint32_t>(VT_CURRENT_HP, 0);
@@ -2567,7 +2567,7 @@ struct SC_UPDATE_VITAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint32_t>(verifier, VT_CURRENT_HP, 4) &&
            VerifyField<uint32_t>(verifier, VT_CURRENT_STAMINA, 4) &&
            verifier.EndTable();
@@ -2578,8 +2578,8 @@ struct SC_UPDATE_VITAL_PACKETBuilder {
   typedef SC_UPDATE_VITAL_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_UPDATE_VITAL_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_UPDATE_VITAL_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_current_hp(uint32_t current_hp) {
     fbb_.AddElement<uint32_t>(SC_UPDATE_VITAL_PACKET::VT_CURRENT_HP, current_hp, 0);
@@ -2600,13 +2600,13 @@ struct SC_UPDATE_VITAL_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_UPDATE_VITAL_PACKET> CreateSC_UPDATE_VITAL_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     uint32_t current_hp = 0,
     uint32_t current_stamina = 0) {
   SC_UPDATE_VITAL_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
   builder_.add_current_stamina(current_stamina);
   builder_.add_current_hp(current_hp);
-  builder_.add_obj_id(obj_id);
   return builder_.Finish();
 }
 
@@ -2616,15 +2616,15 @@ struct SC_UPDATE_STATE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
     VT_OBJ_ID = 4,
     VT_NEXT_STATE = 6
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   uint8_t next_state() const {
     return GetField<uint8_t>(VT_NEXT_STATE, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint8_t>(verifier, VT_NEXT_STATE, 1) &&
            verifier.EndTable();
   }
@@ -2634,8 +2634,8 @@ struct SC_UPDATE_STATE_PACKETBuilder {
   typedef SC_UPDATE_STATE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_UPDATE_STATE_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_UPDATE_STATE_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_next_state(uint8_t next_state) {
     fbb_.AddElement<uint8_t>(SC_UPDATE_STATE_PACKET::VT_NEXT_STATE, next_state, 0);
@@ -2653,7 +2653,7 @@ struct SC_UPDATE_STATE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_UPDATE_STATE_PACKET> CreateSC_UPDATE_STATE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     uint8_t next_state = 0) {
   SC_UPDATE_STATE_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
@@ -2777,12 +2777,12 @@ struct SC_CHANGE_CAMERA_TARGET_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbu
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_CAMERA_TARGET_ID = 4
   };
-  uint32_t camera_target_id() const {
-    return GetField<uint32_t>(VT_CAMERA_TARGET_ID, 0);
+  uint64_t camera_target_id() const {
+    return GetField<uint64_t>(VT_CAMERA_TARGET_ID, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_CAMERA_TARGET_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_CAMERA_TARGET_ID, 8) &&
            verifier.EndTable();
   }
 };
@@ -2791,8 +2791,8 @@ struct SC_CHANGE_CAMERA_TARGET_PACKETBuilder {
   typedef SC_CHANGE_CAMERA_TARGET_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_camera_target_id(uint32_t camera_target_id) {
-    fbb_.AddElement<uint32_t>(SC_CHANGE_CAMERA_TARGET_PACKET::VT_CAMERA_TARGET_ID, camera_target_id, 0);
+  void add_camera_target_id(uint64_t camera_target_id) {
+    fbb_.AddElement<uint64_t>(SC_CHANGE_CAMERA_TARGET_PACKET::VT_CAMERA_TARGET_ID, camera_target_id, 0);
   }
   explicit SC_CHANGE_CAMERA_TARGET_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -2807,7 +2807,7 @@ struct SC_CHANGE_CAMERA_TARGET_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_CHANGE_CAMERA_TARGET_PACKET> CreateSC_CHANGE_CAMERA_TARGET_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t camera_target_id = 0) {
+    uint64_t camera_target_id = 0) {
   SC_CHANGE_CAMERA_TARGET_PACKETBuilder builder_(_fbb);
   builder_.add_camera_target_id(camera_target_id);
   return builder_.Finish();
@@ -2860,15 +2860,15 @@ struct SC_SHOW_GENERAL_ATTACK_DIR_PACKET FLATBUFFERS_FINAL_CLASS : private ::fla
     VT_OBJ_ID = 4,
     VT_ATTACK_DIR = 6
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   uint8_t attack_dir() const {
     return GetField<uint8_t>(VT_ATTACK_DIR, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint8_t>(verifier, VT_ATTACK_DIR, 1) &&
            verifier.EndTable();
   }
@@ -2878,8 +2878,8 @@ struct SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder {
   typedef SC_SHOW_GENERAL_ATTACK_DIR_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_SHOW_GENERAL_ATTACK_DIR_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_SHOW_GENERAL_ATTACK_DIR_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_attack_dir(uint8_t attack_dir) {
     fbb_.AddElement<uint8_t>(SC_SHOW_GENERAL_ATTACK_DIR_PACKET::VT_ATTACK_DIR, attack_dir, 0);
@@ -2897,7 +2897,7 @@ struct SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_SHOW_GENERAL_ATTACK_DIR_PACKET> CreateSC_SHOW_GENERAL_ATTACK_DIR_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     uint8_t attack_dir = 0) {
   SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
@@ -2916,8 +2916,8 @@ struct SC_RESPAWN_GENERAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers
     VT_CURRENT_STAMINA = 14,
     VT_STANCE_TYPE = 16
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
@@ -2939,7 +2939,7 @@ struct SC_RESPAWN_GENERAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
            VerifyField<uint32_t>(verifier, VT_MAX_HP, 4) &&
            VerifyField<uint32_t>(verifier, VT_CURRENT_HP, 4) &&
@@ -2954,8 +2954,8 @@ struct SC_RESPAWN_GENERAL_PACKETBuilder {
   typedef SC_RESPAWN_GENERAL_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_RESPAWN_GENERAL_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_RESPAWN_GENERAL_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(SC_RESPAWN_GENERAL_PACKET::VT_POS_INFO, pos_info);
@@ -2988,7 +2988,7 @@ struct SC_RESPAWN_GENERAL_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_RESPAWN_GENERAL_PACKET> CreateSC_RESPAWN_GENERAL_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
     uint32_t max_hp = 0,
     uint32_t current_hp = 0,
@@ -2996,12 +2996,12 @@ inline ::flatbuffers::Offset<SC_RESPAWN_GENERAL_PACKET> CreateSC_RESPAWN_GENERAL
     uint32_t current_stamina = 0,
     FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) {
   SC_RESPAWN_GENERAL_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
   builder_.add_current_stamina(current_stamina);
   builder_.add_max_stamina(max_stamina);
   builder_.add_current_hp(current_hp);
   builder_.add_max_hp(max_hp);
   builder_.add_pos_info(pos_info);
-  builder_.add_obj_id(obj_id);
   builder_.add_stance_type(stance_type);
   return builder_.Finish();
 }
@@ -3011,12 +3011,12 @@ struct SC_DEAD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            verifier.EndTable();
   }
 };
@@ -3025,8 +3025,8 @@ struct SC_DEAD_PACKETBuilder {
   typedef SC_DEAD_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_DEAD_PACKET::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_DEAD_PACKET::VT_OBJ_ID, obj_id, 0);
   }
   explicit SC_DEAD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -3041,7 +3041,7 @@ struct SC_DEAD_PACKETBuilder {
 
 inline ::flatbuffers::Offset<SC_DEAD_PACKET> CreateSC_DEAD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0) {
+    uint64_t obj_id = 0) {
   SC_DEAD_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
   return builder_.Finish();
@@ -3053,15 +3053,15 @@ struct SC_START_ANIMATION FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table
     VT_OBJ_ID = 4,
     VT_ANIM_NAME = 6
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   const ::flatbuffers::String *anim_name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_ANIM_NAME);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyOffset(verifier, VT_ANIM_NAME) &&
            verifier.VerifyString(anim_name()) &&
            verifier.EndTable();
@@ -3072,8 +3072,8 @@ struct SC_START_ANIMATIONBuilder {
   typedef SC_START_ANIMATION Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_START_ANIMATION::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_START_ANIMATION::VT_OBJ_ID, obj_id, 0);
   }
   void add_anim_name(::flatbuffers::Offset<::flatbuffers::String> anim_name) {
     fbb_.AddOffset(SC_START_ANIMATION::VT_ANIM_NAME, anim_name);
@@ -3091,17 +3091,17 @@ struct SC_START_ANIMATIONBuilder {
 
 inline ::flatbuffers::Offset<SC_START_ANIMATION> CreateSC_START_ANIMATION(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     ::flatbuffers::Offset<::flatbuffers::String> anim_name = 0) {
   SC_START_ANIMATIONBuilder builder_(_fbb);
-  builder_.add_anim_name(anim_name);
   builder_.add_obj_id(obj_id);
+  builder_.add_anim_name(anim_name);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<SC_START_ANIMATION> CreateSC_START_ANIMATIONDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     const char *anim_name = nullptr) {
   auto anim_name__ = anim_name ? _fbb.CreateString(anim_name) : 0;
   return FB_TABLES::CreateSC_START_ANIMATION(
@@ -3116,15 +3116,15 @@ struct SC_END_ANIMATION FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_OBJ_ID = 4,
     VT_ANIM_NAME = 6
   };
-  uint32_t obj_id() const {
-    return GetField<uint32_t>(VT_OBJ_ID, 0);
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
   }
   const ::flatbuffers::String *anim_name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_ANIM_NAME);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_OBJ_ID, 4) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyOffset(verifier, VT_ANIM_NAME) &&
            verifier.VerifyString(anim_name()) &&
            verifier.EndTable();
@@ -3135,8 +3135,8 @@ struct SC_END_ANIMATIONBuilder {
   typedef SC_END_ANIMATION Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_obj_id(uint32_t obj_id) {
-    fbb_.AddElement<uint32_t>(SC_END_ANIMATION::VT_OBJ_ID, obj_id, 0);
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_END_ANIMATION::VT_OBJ_ID, obj_id, 0);
   }
   void add_anim_name(::flatbuffers::Offset<::flatbuffers::String> anim_name) {
     fbb_.AddOffset(SC_END_ANIMATION::VT_ANIM_NAME, anim_name);
@@ -3154,17 +3154,17 @@ struct SC_END_ANIMATIONBuilder {
 
 inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATION(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     ::flatbuffers::Offset<::flatbuffers::String> anim_name = 0) {
   SC_END_ANIMATIONBuilder builder_(_fbb);
-  builder_.add_anim_name(anim_name);
   builder_.add_obj_id(obj_id);
+  builder_.add_anim_name(anim_name);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATIONDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t obj_id = 0,
+    uint64_t obj_id = 0,
     const char *anim_name = nullptr) {
   auto anim_name__ = anim_name ? _fbb.CreateString(anim_name) : 0;
   return FB_TABLES::CreateSC_END_ANIMATION(

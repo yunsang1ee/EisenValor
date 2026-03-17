@@ -12,8 +12,6 @@
 
 #include "GameWorldThread.h"
 
-#ifdef MODERN_CODE
-
 ServerEngine::ServerEngineCore::ServerEngineCore()
 {
 }
@@ -117,6 +115,4 @@ ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetWorkerThread(c
 	assert(index >= 1);
 	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
 }
-
-#endif
 #endif

@@ -1,13 +1,9 @@
 #include "pch.h"
 #include "ServerManager.h"
 
-#include "NetworkManager.h"
-
-#include "RioCore.h"
 #include "ClientSession.h"
 #include "LobbyServerSession.h"
 #include "GameObjectFactory.h"
-#include "GameLobby.h"
 #include "ServerEngineConfigManager.h"
 #include "GameDataManager.h"
 #include "ServerEngineCore.h"
@@ -48,40 +44,19 @@ bool Server::ServerManager::Init()
 		return false;
 	}
 
-	// -------------------------여기까지 문제 없음
-
-#ifdef LEGACY_CODE
-	LOG_INFO("LEGACY_CODE");
-	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
-		LOG_ERROR("NetworkManager Init Failed");
-		return false;
-	}
-
-	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
-	G_GAME_LOBBY->Init();
-#endif
-
-#ifdef MODERN_CODE
 	LOG_INFO("MODERN_CODE");
-	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
+	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameWorldFunc)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;
 	}
-#endif
 
 	return true;
 }
 
 bool Server::ServerManager::Run()
 {
-#ifdef LEGACY_CODE
-	MANAGER(ServerEngine::NetworkManager)->Run();
-#endif
-
-#ifdef MODERN_CODE
 	MANAGER(ServerEngine::ServerEngineCore)->Run();
-#endif
-
+	
 	char ch;
 	constexpr int8 ESC = 27;
 
@@ -106,13 +81,7 @@ bool Server::ServerManager::Run()
 
 void Server::ServerManager::Shutdown()
 {
-#ifdef LEGACY_CODE
-	MANAGER(ServerEngine::NetworkManager)->Shutdown();
-#endif
-
-#ifdef MODERN_CODE
 	MANAGER(ServerEngine::ServerEngineCore)->Shutdown();
-#endif
 	WSACleanup();
 	LOG_SAVE();
 }

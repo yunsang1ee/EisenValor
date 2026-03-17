@@ -13,19 +13,14 @@ namespace Server {
 		class Soldier;
 		class BattleRam;
 
-		class GameWorldTest;
+		class GameWorld;
 
 		struct GameObjectTemplate {
-			uint32						id;
+			uint64						id;
 			PosInfo						posInfo;
 			FB_ENUMS::TEAM_TYPE			teamType;
 			const GameObjectData*		gameObjectData;
-#ifdef LEGACY_CODE
-			std::weak_ptr<GameWorld>	gameWorld;
-#endif
-#ifdef MODERN_CODE
-			GameWorldTest* gameWorld;
-#endif
+			GameWorld*					gameWorld;
 		};
 
 		struct CreatureTemplate : public GameObjectTemplate {

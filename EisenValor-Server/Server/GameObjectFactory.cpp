@@ -20,15 +20,7 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 {
 	auto player = std::make_shared<Server::Contents::Player>(t.teamType);
 	player->SetID(t.id);
-
-#ifdef LEGACY_CODE
-	player->SetGameWorld(t.gameWorld.lock());
-#endif
-
-#ifdef MODERN_CODE
 	player->SetGameWorld(t.gameWorld);
-#endif
-
 	player->SetPosInfo(t.posInfo);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
@@ -64,12 +56,7 @@ std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 {
 	auto general = std::make_shared<Server::Contents::General>(t.teamType);
 	general->SetID(t.id);
-#ifdef LEGACY_CODE
-	general->SetGameWorld(t.gameWorld.lock());
-#endif
-#ifdef MODERN_CODE
 	general->SetGameWorld(t.gameWorld);
-#endif
 	general->SetPosInfo(t.posInfo);
 	general->SetGameObjectData(t.gameObjectData);
 	general->SetStat(Stat{
@@ -120,12 +107,7 @@ std::shared_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 {
 	auto soldier{ std::make_shared<Server::Contents::Soldier>(t.teamType) };
 	soldier->SetID(t.id);
-#ifdef LEGACY_CODE
-	soldier->SetGameWorld(t.gameWorld.lock());
-#endif
-#ifdef MODERN_CODE
 	soldier->SetGameWorld(t.gameWorld);
-#endif
 	soldier->SetPosInfo(t.posInfo);
 	soldier->SetGameObjectData(t.gameObjectData);
 	soldier->SetStat(Stat{
@@ -182,12 +164,7 @@ std::shared_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 {
 	auto battleRam{ std::make_shared<BattleRam>(t.detectionRange, t.finalDestPos) };
 	battleRam->SetID(t.id);
-#ifdef LEGACY_CODE
-	battleRam->SetGameWorld(t.gameWorld.lock());
-#endif
-#ifdef MODERN_CODE
 	battleRam->SetGameWorld(t.gameWorld);
-#endif
 	battleRam->SetPosInfo(t.posInfo);
 	battleRam->SetGameObjectData(t.gameObjectData);
 	battleRam->SetStat(Stat{
@@ -225,12 +202,7 @@ std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 {
 	auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	spawnObj->SetID(t.id);
-#ifdef LEGACY_CODE
-	spawnObj->SetGameWorld(t.gameWorld.lock());
-#endif
-#ifdef MODERN_CODE
 	spawnObj->SetGameWorld(t.gameWorld);
-#endif
 	spawnObj->SetPosInfo(t.posInfo);
 	spawnObj->SetGameObjectData(t.gameObjectData);
 	
@@ -245,12 +217,7 @@ std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 {
 	auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);
-#ifdef LEGACY_CODE
-	ozObj->SetGameWorld(t.gameWorld.lock());
-#endif
-#ifdef MODERN_CODE
 	ozObj->SetGameWorld(t.gameWorld);
-#endif
 	ozObj->SetPosInfo(t.posInfo);
 	ozObj->SetGameObjectData(t.gameObjectData);
 	

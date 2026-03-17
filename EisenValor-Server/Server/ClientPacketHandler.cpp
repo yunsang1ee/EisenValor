@@ -45,7 +45,6 @@ bool Server::ClientPacketHandler::Handle_CS_CHAT_PACKET(const std::shared_ptr<Se
 #pragma region WORLD_PACKETS
 bool Server::ClientPacketHandler::Handle_CS_MOVE_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_MOVE_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 	if(clientSession->GetState() != SESSION_STATE::IN_GAME_WORLD) {
@@ -59,13 +58,11 @@ bool Server::ClientPacketHandler::Handle_CS_MOVE_PACKET(const std::shared_ptr<Se
 	auto world = clientSession->GetGameWorld();
 	if(world)
 		world->Handle_CS_MOVE(clientSession, info);
-#endif
 
 	return true;
 }
 bool Server::ClientPacketHandler::Handle_CS_GENERAL_ATTACK_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_GENERAL_ATTACK_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
 	const uint32 id{ clientSession->GetID() };
@@ -73,76 +70,66 @@ bool Server::ClientPacketHandler::Handle_CS_GENERAL_ATTACK_PACKET(const std::sha
 
 	if(world)
 		world->Handle_CS_GENERAL_ATTACK(id, *recvPkt.attack_info());
-#endif
+
 	return true;
 }
 
 bool Server::ClientPacketHandler::Handle_CS_CHANGE_GENERAL_STANCE_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
 		world->Handle_CS_GENERAL_CHANGE_STANCE(id);
-#endif
 
 	return true;
 }
 
 bool Server::ClientPacketHandler::Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
 		world->Handle_CS_PLAYER_FAKE(id);
-#endif
 
 	return true;
 }
 
 bool Server::ClientPacketHandler::Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
 		world->Handle_CS_CHANGE_CAMERA_TARGET(id, recvPkt.camera_target_id());
-#endif
 
 	return true;
 }
 
 bool Server::ClientPacketHandler::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
 		world->Handle_CS_SHOW_GENERAL_ATTACK_DIR(id, static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(recvPkt.attack_dir()));
-#endif
 
 	return true;
 }
 
 bool Server::ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
 		world->Handle_CS_GEN_NPC_GENERAL(id);
-#endif
 
 	return true;
 }
@@ -151,7 +138,7 @@ bool Server::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::s
 {
 	const uint16 roomID{ recvPkt.room_id() };
 	
-	auto world = static_cast<Server::Contents::GameWorldTest*>(static_cast<ServerEngine::GameWorldThread*>(TLS_WOREKR_THREAD)->FindGameWorld(roomID));
+	auto world = static_cast<Server::Contents::GameWorld*>(static_cast<ServerEngine::GameWorldThread*>(TLS_WOREKR_THREAD)->FindGameWorld(roomID));
 
 	if(world) {
 		std::cout << "CS_ENTER_GAME_WORLD_PACKET" << std::endl;
@@ -168,14 +155,12 @@ bool Server::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::s
 
 bool Server::ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET& recvPkt)
 {
-#ifdef MODERN_CODE
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 
 	if(world)
 		world->Handle_CS_UPDATE_PLAYER_STATE(id, static_cast<FB_ENUMS::PLAYER_STATE_TYPE>(recvPkt.player_state()));
-#endif
 
 	return true;
 }
