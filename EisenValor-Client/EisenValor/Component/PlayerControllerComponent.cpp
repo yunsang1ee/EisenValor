@@ -216,6 +216,26 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		return;
 
 	auto& input = GLOBAL(InputGlobal);
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
+
+	// 락온 상태 & 카메라 방향 확인
+	bool isLockOn = false;
+	XMVECTOR camFwd = XMVectorSet(0, 0, 1, 0);
+
+	if (m_cameraObjectHandle.IsValid())
+	{
+		if (auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle))
+		{
+			if (auto* camComp = camObj->GetComponent<CameraComponent>())
+			{
+				isLockOn = camComp->IsLookAtRotationEnabled();
+				XMFLOAT3 f = camComp->GetGameObject()->GetTransform().GetForward();
+				camFwd = XMLoadFloat3(&f);
+			}
+		}
+	}
+
 	bool  w = input.GetInput('W');
 	bool  s = input.GetInput('S');
 	bool  a = input.GetInput('A');
@@ -229,10 +249,57 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	bool hasJustPressed =
 		input.GetInputDown('W') || input.GetInputDown('A') || input.GetInputDown('S') || input.GetInputDown('D');
 
-	movement->SetInputForward(w);
-	movement->SetInputBackward(s);
-	movement->SetInputLeft(a);
-	movement->SetInputRight(d);
+	if (isLockOn)
+	{
+		// 락온
+		movement->SetInputForward(w);
+		movement->SetInputBackward(s);
+		movement->SetInputLeft(a);
+		movement->SetInputRight(d);
+	}
+	else
+	{
+		// 일반
+		if (isMovingInput)
+		{
+			XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
+			if (XMVector3LengthSq(baseFwd).m128_f32[0] < 1e-6f)
+			{
+				baseFwd = XMVectorSet(0, 0, 1, 0);
+			}
+			XMVECTOR baseRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), baseFwd));
+
+			XMVECTOR moveDir = XMVectorZero();
+			if (w) moveDir = XMVectorAdd(moveDir, baseFwd);
+			if (s) moveDir = XMVectorSubtract(moveDir, baseFwd);
+			if (a) moveDir = XMVectorSubtract(moveDir, baseRight);
+			if (d) moveDir = XMVectorAdd(moveDir, baseRight);
+
+			moveDir = XMVector3Normalize(moveDir);
+
+			// 캐릭터 몸 회전
+			float targetYaw = atan2f(XMVectorGetX(moveDir), XMVectorGetZ(moveDir));
+			XMVECTOR targetRotQ = XMQuaternionRotationAxis(XMVectorSet(0, 1, 0, 0), targetYaw);
+			
+			auto& tr = myGameObject->GetTransform();
+			XMVECTOR curRotQ = XMLoadFloat4(&tr.GetRotationQuaternion());
+			XMVECTOR nextRotQ = XMQuaternionSlerp(curRotQ, targetRotQ, 0.2f);
+			
+			XMFLOAT4 nextRotF;
+			XMStoreFloat4(&nextRotF, nextRotQ);
+			tr.SetRotationQuaternion(nextRotF);
+
+			movement->SetInputForward(true);
+		}
+		// 입력이 없음
+		else	
+		{
+			movement->SetInputForward(false);
+		}
+		movement->SetInputBackward(false);
+		movement->SetInputLeft(false);
+		movement->SetInputRight(false);
+	}
 
 	bool isRestricted =
 		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
