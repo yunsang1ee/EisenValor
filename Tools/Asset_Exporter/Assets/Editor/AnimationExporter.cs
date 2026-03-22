@@ -98,7 +98,14 @@ public class AnimationExporter
             for (int i = 0; i < bones.Length; i++)
             {
                 tracks[i].Positions.Add(bones[i].localPosition);
-                tracks[i].Rotations.Add(bones[i].localRotation);
+                
+                Quaternion rot = bones[i].localRotation;
+                if (i == 0) // 루트 본 애니메이션 180도 회전 보정
+                {
+                    rot = rot * Quaternion.Euler(0, 180, 0);
+                }
+                tracks[i].Rotations.Add(rot);
+                
                 tracks[i].Scales.Add(bones[i].localScale);
             }
         }

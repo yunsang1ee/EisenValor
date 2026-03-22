@@ -422,6 +422,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
+			// 모델 크기
+			playerObj->GetTransform().SetScale(2.0f);
+
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 				playerObjHandle,
 				[](SkinnedMeshComponent* mesh)
@@ -628,7 +631,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					[](SkinnedMeshComponent* mesh)
 					{
 						auto meshRes =
-							GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+							GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Cursed_Knight.evskin");
 						if (nullptr != meshRes)
 						{
 							mesh->SetSkinnedMeshResource(meshRes);
@@ -707,7 +710,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					objHandle,
 					[](AnimationComponent* anim)
 					{
-						AnimationLoader::AnimationApply(anim, "HumanM");
+						AnimationLoader::AnimationApply(anim, "CursedKnight");
 					}
 				);
 			}

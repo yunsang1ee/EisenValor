@@ -139,7 +139,7 @@ void AnimationComponent::UpdateBoneMatrices()
 		{
 			if (track.BoneNameHash == bones[i].nameHash)
 			{
-				// Position 보정 (Unity -> DX)
+				// Position
 				if (track.Flags & EvAsset::HasPos)
 				{
 					XMVECTOR p;
@@ -159,11 +159,12 @@ void AnimationComponent::UpdateBoneMatrices()
 						);
 						p = XMVectorLerp(p0, p1, alpha);
 					}
-					// 유니티와 DX의 X축 반전 보정
-					pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
+					//// 유니티와 DX의 X축 반전 보정
+					//pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
+					pos = p;
 				}
 
-				// Rotation 보정 (Unity -> DX)
+				// Rotation
 				if (track.Flags & EvAsset::HasRot)
 				{
 					XMVECTOR r;
@@ -183,8 +184,9 @@ void AnimationComponent::UpdateBoneMatrices()
 						);
 						r = XMQuaternionSlerp(r0, r1, alpha);
 					}
-					// 유니티 Quaternion 성분 보정 (Y, Z 반전)
-					rot = XMVectorSet(XMVectorGetX(r), -XMVectorGetY(r), -XMVectorGetZ(r), XMVectorGetW(r));
+					//// 유니티 Quaternion 성분 보정 (Y, Z 반전)
+					//rot = XMVectorSet(XMVectorGetX(r), -XMVectorGetY(r), -XMVectorGetZ(r), XMVectorGetW(r));
+					rot = r;
 				}
 
 				if (track.Flags & EvAsset::HasScale)
