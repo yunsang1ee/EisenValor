@@ -2,17 +2,17 @@
 
 #include "Singleton.hpp"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class TaskQueue;
 	class TaskQueueManager : public Singleton<TaskQueueManager> {
 		SINGLETON(TaskQueueManager)
 	public:
-		void EnqueTaskQueue(std::shared_ptr<ServerEngine::TaskQueue> taskQueue);
-		std::shared_ptr<ServerEngine::TaskQueue> DequeTaskQueue();
+		void EnqueTaskQueue(std::shared_ptr<GameServerEngine::TaskQueue> taskQueue);
+		std::shared_ptr<GameServerEngine::TaskQueue> DequeTaskQueue();
 		void Clear();
 
 	private:
-		tbb::concurrent_queue<std::shared_ptr<ServerEngine::TaskQueue>> m_taskQueues;
+		tbb::concurrent_queue<std::shared_ptr<GameServerEngine::TaskQueue>> m_taskQueues;
 
 		
 	};

@@ -1,7 +1,7 @@
 #pragma once
 #include "Collider.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		
 		union COLLIDER_ID {

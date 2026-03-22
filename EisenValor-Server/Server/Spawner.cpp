@@ -5,7 +5,7 @@
 #include "GameWorld.h"
 #include "Soldier.h"
 
-void Server::Contents::Spawner::Update(const float dt)
+void GameServer::Contents::Spawner::Update(const float dt)
 {
 	m_accDT += dt;
 #ifdef LEGACY_CODE

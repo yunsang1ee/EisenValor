@@ -2,8 +2,8 @@
 
 #include "Session.h"
 
-namespace Server {
-	class RIOLobbyServerSession final : public ServerEngine::PacketSession {
+namespace GameServer {
+	class RIOLobbyServerSession final : public GameServerEngine::PacketSession {
 	public:
 		RIOLobbyServerSession();
 		virtual ~RIOLobbyServerSession();

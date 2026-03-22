@@ -5,7 +5,7 @@ struct GameObjectDeleter;
 struct GameObjectData;
 #include "GameObject.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameObject;
 		class General;

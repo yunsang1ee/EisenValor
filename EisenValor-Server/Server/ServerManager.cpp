@@ -18,34 +18,34 @@ BOOL __stdcall ConsoleHandler(DWORD signal)
 	return FALSE;
 }
 
-bool Server::ServerManager::Init()
+bool GameServer::ServerManager::Init()
 {
 	std::wcout.imbue(std::locale("korean"));
 
-	ServerEngine::LogManager::Init();
+	GameServerEngine::LogManager::Init();
 	
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
 		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
 		return false;
 	}
 
-	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("../Config/ServerEngineConfig.json")) {
+	if(false == MANAGER(GameServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("../Config/ServerEngineConfig.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("../GameData/GameData.json")) {
+	if(false == MANAGER(GameServer::Contents::GameDataManager)->LoadDataFromFile("../GameData/GameData.json")) {
 		LOG_ERROR("GameDataManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
+	if(false == MANAGER(GameServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
 
 	LOG_INFO("MODERN_CODE");
-	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameWorldFunc)) {
+	if(false == MANAGER(GameServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameWorldFunc)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;
 	}
@@ -53,9 +53,9 @@ bool Server::ServerManager::Init()
 	return true;
 }
 
-bool Server::ServerManager::Run()
+bool GameServer::ServerManager::Run()
 {
-	MANAGER(ServerEngine::ServerEngineCore)->Run();
+	MANAGER(GameServerEngine::ServerEngineCore)->Run();
 	
 	char ch;
 	constexpr int8 ESC = 27;
@@ -79,9 +79,9 @@ bool Server::ServerManager::Run()
 	return true;
 }
 
-void Server::ServerManager::Shutdown()
+void GameServer::ServerManager::Shutdown()
 {
-	MANAGER(ServerEngine::ServerEngineCore)->Shutdown();
+	MANAGER(GameServerEngine::ServerEngineCore)->Shutdown();
 	WSACleanup();
 	LOG_SAVE();
 }

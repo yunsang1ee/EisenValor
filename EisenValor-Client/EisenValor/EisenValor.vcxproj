@@ -211,9 +211,9 @@ exit /b 0</Command>
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
+    <ClInclude Include="Packets\PacketEnums.h" />
     <ClInclude Include="Packets\PacketHandler.h" />
     <ClInclude Include="Packets\S2CPackets.h" />
-    <ClInclude Include="Packets\ServerEnum.h" />
     <ClInclude Include="Packets\Structs_generated.h" />
     <ClInclude Include="Packets\Tables_generated.h" />
     <ClInclude Include="RaytracingCommon.h" />

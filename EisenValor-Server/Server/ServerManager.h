@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Server {
+namespace GameServer {
 	class ServerManager {
 	private:
 		ServerManager() = delete;

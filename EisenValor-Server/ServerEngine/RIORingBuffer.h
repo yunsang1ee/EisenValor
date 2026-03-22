@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class RIORingBuffer {
 	protected:
 		RIO_BUFFERID	m_bufferId;  

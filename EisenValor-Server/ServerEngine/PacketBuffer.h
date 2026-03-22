@@ -2,7 +2,7 @@
 
 #include "PacketHeader.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class PacketBuffer {
 	public:
 		explicit PacketBuffer(const PacketHeader& header);

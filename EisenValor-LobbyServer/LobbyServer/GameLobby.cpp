@@ -19,7 +19,7 @@ void LobbyServer::GameLobby::Broadcast(std::shared_ptr<LobbyServerEngine::Packet
 }
 
 #pragma region LOBBY_PACKETS
-void LobbyServer::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
+void LobbyServer::GameLobby::Handle_CL_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
 	clientSession->SetState(SESSION_STATE::IN_GAME_LOBBY);
 
@@ -38,7 +38,7 @@ void LobbyServer::GameLobby::Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<Cl
 	}
 
 	// 나에게 로비 정보 보내줌
-	auto pb = LobbyServer::Make_SC_ENTER_GAME_LOBBY_SUCCESS_PACKET(rooms, users, vecUserID);
+	auto pb = LobbyServer::Make_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(rooms, users, vecUserID);
 	clientSession->Send(std::move(pb));
 
 	EnterGameLobby(clientSession);
@@ -49,7 +49,7 @@ void LobbyServer::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<Cl
 	if(SESSION_STATE::IN_GAME_LOBBY != clientSession->GetState())
 		return;
 
-	auto pb{ LobbyServer::Make_SC_LEAVE_GAME_LOBBY_PACKET() };
+	auto pb{ LobbyServer::Make_LC_LEAVE_GAME_LOBBY_PACKET() };
 	clientSession->Send(std::move(pb));
 
 	LeaveGameLobby(clientSession);
@@ -74,6 +74,13 @@ void LobbyServer::GameLobby::Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<Clie
 
 	gameRoom->EnterGameRoom(clientSession);
 
+	std::cout << std::format("Session: {}, Make Game Room! RoomID: {}", clientSession->GetID(), idGen) << std::endl;
+
+	// 로비에 있는 유저들에게 새로 방 만들어졌다고 알림
+	{
+		auto pb{ LobbyServer::Make_LC_MAKE_GAME_ROOM_PACKET(gameRoom->GetRoomInfo()) };
+		Broadcast(std::move(pb));
+	}
 	m_gameRooms.insert(std::make_pair(idGen, std::move(gameRoom)));
 }
 #pragma endregion
@@ -87,7 +94,7 @@ void LobbyServer::GameLobby::EnterGameLobby(std::shared_ptr<ClientSession> clien
 
 	// 로비에 있는 유저들에게 내가 들어왔다고 알림
 	{
-		auto pb = LobbyServer::Make_SC_ENTER_USER_IN_GAME_LOBBY_PACKET(clientSession->GetName().c_str(), id);
+		auto pb = LobbyServer::Make_LC_ENTER_USER_IN_GAME_LOBBY_PACKET(clientSession->GetName().c_str(), id);
 		Broadcast(std::move(pb));
 	}
 
@@ -117,7 +124,7 @@ void LobbyServer::GameLobby::LeaveGameLobby(const std::shared_ptr<ClientSession>
 	// 로비에 있는 유저들에게 내가 나갔다고 알림
 	{
 		m_users.erase(id);
-		auto pb{ LobbyServer::Make_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET(id) };
+		auto pb{ LobbyServer::Make_LC_LEAVE_USER_IN_GAME_LOBBY_PACKET(id) };
 		Broadcast(std::move(pb));
 	}
 }
@@ -187,5 +194,27 @@ void LobbyServer::GameLobby::Handle_CS_START_GAME(const std::shared_ptr<ClientSe
 
 	if(gameRoom)
 		gameRoom->StartGame(clientSession);
+}
+void LobbyServer::GameLobby::Handle_CL_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg)
+{
+	switch(clientSession->GetState()) {
+		case SESSION_STATE::IN_GAME_LOBBY:
+		{
+			auto pb{ LobbyServer::Make_LC_CHAT_PACKET(clientSession->GetID(), msg) };
+			Broadcast(std::move(pb));
+			break;
+		}
+		case SESSION_STATE::IN_GAME_ROOM:
+		{
+			auto gameRoom{ clientSession->GetGameRoom() };
+			if(gameRoom) {
+				auto pb{ LobbyServer::Make_LC_CHAT_PACKET(clientSession->GetID(), msg) };
+				gameRoom->Broadcast(std::move(pb));
+			}
+			break;
+		}
+		default:
+			break;
+	}
 }
 #pragma endregion

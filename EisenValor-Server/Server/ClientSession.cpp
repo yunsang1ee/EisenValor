@@ -95,21 +95,21 @@ void Server::IOCPClientSession::SendPing()
 // ========================================================
 
 #ifdef _USE_RIO
-Server::RIOClientSession::RIOClientSession()
-	:ServerEngine::PacketSession{ SESSION_TYPE::CLIENT }, m_gameWorld{nullptr}
+GameServer::RIOClientSession::RIOClientSession()
+	:GameServerEngine::PacketSession{ SESSION_TYPE::CLIENT }, m_gameWorld{nullptr}
 {
 
 }
 
-Server::RIOClientSession::~RIOClientSession()
+GameServer::RIOClientSession::~RIOClientSession()
 {
 	std::cout << "~ClientSesion" << std::endl;
 }
 
-void Server::RIOClientSession::OnConnected()
+void GameServer::RIOClientSession::OnConnected()
 {
 	LOG_INFO("Session, OnConnected!");
-	MANAGER(Server::SessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
+	MANAGER(GameServer::SessionManager)->AddSession(std::static_pointer_cast<ClientSession>(shared_from_this()));
 	
 	m_packetHandler = std::make_unique<ClientPacketHandler>();
 	m_packetHandler->Init();
@@ -118,10 +118,10 @@ void Server::RIOClientSession::OnConnected()
 	CheckPing();
 }
 
-void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
+void GameServer::RIOClientSession::OnDisconnected(const std::string_view reason)
 {
 	auto clientSession = std::static_pointer_cast<ClientSession>(shared_from_this());
-	MANAGER(Server::SessionManager)->RemoveSession(clientSession);
+	MANAGER(GameServer::SessionManager)->RemoveSession(clientSession);
 
 	LOG_INFO("Session ID:{}, OnDisconnected!, Reason: {}", GetID(), reason.data());
 
@@ -151,7 +151,7 @@ void Server::RIOClientSession::OnDisconnected(const std::string_view reason)
 	}
 }
 
-void Server::RIOClientSession::OnRecvPacket(const std::span<const char>& buf)
+void GameServer::RIOClientSession::OnRecvPacket(const std::span<const char>& buf)
 {
 	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf.data())) {
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
@@ -160,12 +160,12 @@ void Server::RIOClientSession::OnRecvPacket(const std::span<const char>& buf)
 	}
 }
 
-void Server::RIOClientSession::OnSend(const uint32 bytesTransferred)
+void GameServer::RIOClientSession::OnSend(const uint32 bytesTransferred)
 {
 	// std::println("OnSend, Len = {}", bytesTransferred);
 }
 
-void Server::RIOClientSession::SendPing()
+void GameServer::RIOClientSession::SendPing()
 {
 	auto pb{ ServerPackets::Make_SC_PING_PACKET() };
 	Send(std::move(pb));

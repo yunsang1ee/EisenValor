@@ -8,16 +8,16 @@
 #include "Session.h"
 #include "GameWorldThread.h"
 
-ServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore)
+GameServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore)
 	: m_type{ type }, m_ioCore { std::move(ioCore) }
 {
 }
 
-ServerEngine::WorkerThread::~WorkerThread()
+GameServerEngine::WorkerThread::~WorkerThread()
 { 
 }
 
-bool ServerEngine::WorkerThread::Init(const SessionFactoryFunc func, const uint16 port)
+bool GameServerEngine::WorkerThread::Init(const SessionFactoryFunc func, const uint16 port)
 {
 	if(nullptr == m_ioCore)
 		return false;
@@ -33,7 +33,7 @@ bool ServerEngine::WorkerThread::Init(const SessionFactoryFunc func, const uint1
 	return true;
 }
 
-void ServerEngine::WorkerThread::Run(const std::stop_token st)
+void GameServerEngine::WorkerThread::Run(const std::stop_token st)
 {
 	MANAGER(ThreadManager)->EnqueueTask([this](const std::stop_token st) {
 		m_acceptThread->Run(st);
@@ -57,7 +57,7 @@ void ServerEngine::WorkerThread::Run(const std::stop_token st)
 	}
 }
 
-void ServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
+void GameServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 {
 	if(false == m_ioCore->Register(session)) {
 		return;
@@ -73,7 +73,7 @@ void ServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 #endif
 }
 
-uint16 ServerEngine::WorkerThread::GetPort() const
+uint16 GameServerEngine::WorkerThread::GetPort() const
 {
 	return m_acceptThread->GetPort();
 }

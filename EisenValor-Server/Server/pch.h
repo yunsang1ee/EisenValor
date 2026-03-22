@@ -11,7 +11,7 @@
 
 #include "ServerTypes.h"
 #include "ServerEnums.h"
-#include "../Packets/Binaries/PacketEnums.h"
+#include "PacketEnums.h"
 
 #include "ServerStructs.h"
 #include "ServerGlobalVariables.h"

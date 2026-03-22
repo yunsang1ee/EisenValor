@@ -2,7 +2,7 @@
 
 #include "Script.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class Spawner : public Script {
 		public:

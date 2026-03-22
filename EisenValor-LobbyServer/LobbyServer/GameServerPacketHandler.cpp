@@ -20,7 +20,7 @@ bool LobbyServer::GameServerPacketHandler::Handle_SC_PING_PACKET(const std::shar
 bool LobbyServer::GameServerPacketHandler::Handle_SL_CREATE_GAME_WORLD_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::SL_CREATE_GAME_WORLD_PACKET& recvPkt)
 {
 	std::cout << std::format("World ID:{}, Port: {}", recvPkt.world_id(), recvPkt.port()) << std::endl;
-	
+
 	const auto& gameServerSession{ std::static_pointer_cast<GameServerSession>(session) };
 
 	const uint16 roomID{ gameServerSession->GetReservedStartRoom(recvPkt.world_id()) };
@@ -29,6 +29,6 @@ bool LobbyServer::GameServerPacketHandler::Handle_SL_CREATE_GAME_WORLD_PACKET(co
 		return false;
 
 	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::ConnectToGameServer, roomID, recvPkt.port());
-	
+
 	return true;
 }

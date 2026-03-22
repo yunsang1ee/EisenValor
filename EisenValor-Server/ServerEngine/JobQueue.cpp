@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "JobQueue.h"
 
-void ServerEngine::JobQueue::FlushJobQueue()
+void GameServerEngine::JobQueue::FlushJobQueue()
 {
     MoveReservedJobs();
 
@@ -15,7 +15,7 @@ void ServerEngine::JobQueue::FlushJobQueue()
     }
 }
 
-void ServerEngine::JobQueue::MoveReservedJobs()
+void GameServerEngine::JobQueue::MoveReservedJobs()
 {
     if(m_reservedJobs.empty())
         return;

@@ -4,7 +4,7 @@ namespace ServerEngine {
 	class Session;
 }
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameLobby;
 		class GameObject;

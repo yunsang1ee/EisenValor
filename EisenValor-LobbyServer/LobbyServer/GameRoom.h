@@ -30,6 +30,11 @@ namespace LobbyServer {
 		void ReadyGame(const std::shared_ptr<ClientSession>& clientSession);
 		void StartGame(const std::shared_ptr<ClientSession>& clientSession);
 
+		std::shared_ptr<User> GetSessionUser(const std::shared_ptr<ClientSession>& clientSession);
+
+	public:
+		uint32 GetNewBotID() { return ++m_idGenerator; }
+
 	public:
 		void SetRoomInfo(const RoomInfo& info) { m_info = info; }
 		const RoomInfo& GetRoomInfo() const { return m_info; }
@@ -39,6 +44,7 @@ namespace LobbyServer {
 
 	private:
 		RoomInfo													m_info;
+		uint32														m_idGenerator;
 
 		Users														m_users;
 		Bots														m_bots;

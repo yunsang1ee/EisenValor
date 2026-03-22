@@ -5,6 +5,7 @@
 #include "ThreadManager.h"
 #include "Session.h"
 #include "Listener.h"
+#include "ConfigManager.h"
 
 LobbyServerEngine::LobbyServerEngineCore::LobbyServerEngineCore()
 {
@@ -28,6 +29,9 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
+
+	MANAGER(LobbyServerEngine::ConfigManager).LoadFile("lobbyserver_config.json");
+
 	
 	m_gameServerSession = gameServerSessionFunc();
 	m_gameServerSession->SetID(0);
@@ -37,19 +41,24 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 		return false;
 	}
 
-	if(false == m_gameServerSession->Connect("127.0.0.1", 40001)) {
+	const std::string_view ip{ MANAGER(LobbyServerEngine::ConfigManager).GetString("GameServer", "IP")};
+	const uint16 gameServerPort{ MANAGER(LobbyServerEngine::ConfigManager).GetUInt16("GameServer", "Port") };
+
+	if(false == m_gameServerSession->Connect(ip, gameServerPort)) {
 		LOG_ERROR("Connect To GameServer Failed");
 		return false;
 	}
 	
 	m_listener = std::make_shared<Listener>();
 
-	if(false == m_listener->StartAccept(8888)) {
+	const uint16 listenPort{ MANAGER(LobbyServerEngine::ConfigManager).GetUInt16("LobbyServer", "Port") };
+
+	if(false == m_listener->StartAccept(listenPort)) {
 		LOG_ERROR("Listener Accept Failed");
 		return false;
 	}
 
-	const uint32 MAX_WORKER_THREAD_COUNT{ 10 };
+	const uint32 MAX_WORKER_THREAD_COUNT{ MANAGER(LobbyServerEngine::ConfigManager).GetWorkerThreadCount()};
 
 	for(uint32 i = 0; i < MAX_WORKER_THREAD_COUNT; ++i)
 		m_workerThreads.emplace_back(std::make_unique<WorkerThread>());

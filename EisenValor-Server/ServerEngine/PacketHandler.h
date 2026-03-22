@@ -1,12 +1,12 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class PacketSession;
 }
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class PacketHandler {
-		using PacketHandlerFunc = bool (*)(const std::shared_ptr<ServerEngine::PacketSession>&, const char*);
+		using PacketHandlerFunc = bool (*)(const std::shared_ptr<GameServerEngine::PacketSession>&, const char*);
 	public:
 		PacketHandler();
 		virtual ~PacketHandler();
@@ -15,13 +15,13 @@ namespace ServerEngine {
 		virtual void Init() abstract;
 
 	public:
-		bool HandlePacket(const std::shared_ptr<ServerEngine::PacketSession>& session, const char* const buffer);
+		bool HandlePacket(const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer);
 
 	public:
-		static bool Handle_INVALID(const std::shared_ptr<ServerEngine::PacketSession>& session, const char* const buffer) { return false; }
+		static bool Handle_INVALID(const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer) { return false; }
 
 		template<typename PacketType, typename HandleFunc>
-		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<ServerEngine::PacketSession>& session, const char* const buffer)
+		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer)
 		{
 			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
 			return handleFunc(session, *packet);
@@ -34,7 +34,7 @@ namespace ServerEngine {
 			builder.Finish(offset);
 			return builder.Release();
 		}
-		static std::shared_ptr<ServerEngine::PacketBuffer> MakePacketBuffer(const uint16 packetType, const flatbuffers::DetachedBuffer& packetData);
+		static std::shared_ptr<GameServerEngine::PacketBuffer> MakePacketBuffer(const uint16 packetType, const flatbuffers::DetachedBuffer& packetData);
 
 	protected:
 		std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> m_packetHandlerFuncs;

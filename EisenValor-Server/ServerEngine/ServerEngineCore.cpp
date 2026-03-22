@@ -12,21 +12,21 @@
 
 #include "GameWorldThread.h"
 
-ServerEngine::ServerEngineCore::ServerEngineCore()
+GameServerEngine::ServerEngineCore::ServerEngineCore()
 {
 }
 
-ServerEngine::ServerEngineCore::~ServerEngineCore()
+GameServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameWorldFactoryFunc worldFunc)
+bool GameServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameWorldFactoryFunc worldFunc)
 {
 	m_nextWorkerIndex = 0;
 
 	WSADATA wsaData;
 	if(0 != WSAStartup(MAKEWORD(2, 2), &wsaData)) {
-		ServerEngine::LogManager::PrintLastError();
+		GameServerEngine::LogManager::PrintLastError();
 		return false;
 	}
 
@@ -79,10 +79,10 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSession
 	return true;
 }
 
-void ServerEngine::ServerEngineCore::Run()
+void GameServerEngine::ServerEngineCore::Run()
 {
 	for(int i = 0; i < 3; ++i) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
+		MANAGER(GameServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
 			{
 				TLS_THREAD_ID = i;
 				if(0 == i) {
@@ -97,12 +97,12 @@ void ServerEngine::ServerEngineCore::Run()
 	}
 }
 
-void ServerEngine::ServerEngineCore::Shutdown()
+void GameServerEngine::ServerEngineCore::Shutdown()
 {
-	MANAGER(ServerEngine::ThreadManager)->Join();
+	MANAGER(GameServerEngine::ThreadManager)->Join();
 }
 
-ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetLeisurelyWorker()
+GameServerEngine::GameWorldThread* GameServerEngine::ServerEngineCore::GetLeisurelyWorker()
 {
 	// TODO: WorkerThread가 현재 얼마나 바쁜지 판단해서 가장 여유로운애를 반환해줘야함.
 	// 판단? WorkerThread::Run에서 DT가 가장 짧은 얘로..?
@@ -110,7 +110,7 @@ ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetLeisurelyWorke
 	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
 }
 
-ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetWorkerThread(const uint32 index)
+GameServerEngine::GameWorldThread* GameServerEngine::ServerEngineCore::GetWorkerThread(const uint32 index)
 {
 	assert(index >= 1);
 	return static_cast<GameWorldThread*>(m_workerThreads[index].get());

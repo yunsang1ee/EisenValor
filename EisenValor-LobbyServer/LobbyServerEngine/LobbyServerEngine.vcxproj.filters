@@ -70,6 +70,9 @@
     <Filter Include="02. Packet">
       <UniqueIdentifier>{2c6eb4a7-7401-481c-a838-e6a5752f12e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="08. Config">
+      <UniqueIdentifier>{15f764f5-6d97-45b6-af6f-86671741ffeb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -140,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="PacketHandler.cpp">
       <Filter>02. Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigManager.cpp">
+      <Filter>08. Config</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -227,8 +233,14 @@
     <ClInclude Include="PacketHandler.h">
       <Filter>02. Packet</Filter>
     </ClInclude>
+    <ClInclude Include="ConfigManager.h">
+      <Filter>08. Config</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\LobbyServer\lobbyserver_config.json">
+      <Filter>08. Config</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -16,9 +16,9 @@
 #include "BattleRam.h"
 #include "OccupationZone.h"
 
-std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
+std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = std::make_shared<Server::Contents::Player>(t.teamType);
+	auto player = std::make_shared<GameServer::Contents::Player>(t.teamType);
 	player->SetID(t.id);
 	player->SetGameWorld(t.gameWorld);
 	player->SetPosInfo(t.posInfo);
@@ -31,15 +31,15 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
 
-	const auto fsm = player->AddComponent<Server::Contents::FSM>();
+	const auto fsm = player->AddComponent<GameServer::Contents::FSM>();
 	
-	auto idleState =  Server::Contents::PlayerIdleState::Create();
-	auto moveState =  Server::Contents::PlayerMoveState::Create();
-	auto preDelayState = Server::Contents::PlayerPredelayState::Create();
-	auto attackState = Server::Contents::PlayerAttackState::Create();
-	auto postDelayState = Server::Contents::PlayerPostdelayState::Create();
-	auto stunState = Server::Contents::PlayerStunState::Create();
-	auto deadState = Server::Contents::PlayerDeadState::Create();
+	auto idleState =  GameServer::Contents::PlayerIdleState::Create();
+	auto moveState =  GameServer::Contents::PlayerMoveState::Create();
+	auto preDelayState = GameServer::Contents::PlayerPredelayState::Create();
+	auto attackState = GameServer::Contents::PlayerAttackState::Create();
+	auto postDelayState = GameServer::Contents::PlayerPostdelayState::Create();
+	auto stunState = GameServer::Contents::PlayerStunState::Create();
+	auto deadState = GameServer::Contents::PlayerDeadState::Create();
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(moveState));
@@ -52,9 +52,9 @@ std::shared_ptr<Server::Contents::Player> Server::Contents::GameObjectFactory::C
 	return player;
 }
 
-std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
+std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
-	auto general = std::make_shared<Server::Contents::General>(t.teamType);
+	auto general = std::make_shared<GameServer::Contents::General>(t.teamType);
 	general->SetID(t.id);
 	general->SetGameWorld(t.gameWorld);
 	general->SetPosInfo(t.posInfo);
@@ -69,7 +69,7 @@ std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	const auto bt = general->AddComponent<BehaviorTree>();
 	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);
 
-	auto navAgenet = general->AddComponent<Server::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
+	auto navAgenet = general->AddComponent<GameServer::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
 	params.radius = 0.6f;				// collision radius
@@ -87,11 +87,11 @@ std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	if(false == navAgenet->Init(params))
 		return nullptr;
 
-	const auto fsm = general->AddComponent<Server::Contents::FSM>();
-	auto roamingState = Server::Contents::GeneralRoamingState::Create(fsm);
-	auto duelingState = Server::Contents::GeneralDuelingState::Create(fsm);
-	auto stunState = Server::Contents::GeneralStunState::Create(fsm);
-	auto deadState = Server::Contents::GeneralDeadState::Create(fsm);
+	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
+	auto roamingState = GameServer::Contents::GeneralRoamingState::Create(fsm);
+	auto duelingState = GameServer::Contents::GeneralDuelingState::Create(fsm);
+	auto stunState = GameServer::Contents::GeneralStunState::Create(fsm);
+	auto deadState = GameServer::Contents::GeneralDeadState::Create(fsm);
 	
 	fsm->AddState(std::move(roamingState));
 	fsm->AddState(std::move(duelingState));
@@ -103,9 +103,9 @@ std::shared_ptr<Server::Contents::General> Server::Contents::GameObjectFactory::
 	return general;
 }
 
-std::shared_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
+std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
-	auto soldier{ std::make_shared<Server::Contents::Soldier>(t.teamType) };
+	auto soldier{ std::make_shared<GameServer::Contents::Soldier>(t.teamType) };
 	soldier->SetID(t.id);
 	soldier->SetGameWorld(t.gameWorld);
 	soldier->SetPosInfo(t.posInfo);
@@ -118,7 +118,7 @@ std::shared_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 		.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
 
-	auto navAgenet = soldier->AddComponent<Server::Contents::NavAgent>(soldier->GetGameWorld()->GetNavSystem());
+	auto navAgenet = soldier->AddComponent<GameServer::Contents::NavAgent>(soldier->GetGameWorld()->GetNavSystem());
 	
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
@@ -137,15 +137,15 @@ std::shared_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	if(false == navAgenet->Init(params))
 		return nullptr;
 	
-	auto fsm{ soldier->AddComponent<Server::Contents::FSM>() };
+	auto fsm{ soldier->AddComponent<GameServer::Contents::FSM>() };
 	
-	auto spawnState = Server::Contents::SoldierSpawnState::Create();
-	auto idleState = Server::Contents::SoldierIdleState::Create();
-	auto moveState = Server::Contents::SoldierMoveState::Create(5.f/*viewRange*/);
+	auto spawnState = GameServer::Contents::SoldierSpawnState::Create();
+	auto idleState = GameServer::Contents::SoldierIdleState::Create();
+	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/);
 	// auto searchState = Server::Contents::SoldierSearchState::Create(3.f/*attackRange*/);
-	auto chaseState = Server::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
-	auto attackState = Server::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
-	auto deadState = Server::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
+	auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
+	auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
+	auto deadState = GameServer::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
 
 	fsm->AddState(std::move(spawnState));
 	fsm->AddState(std::move(idleState));
@@ -160,7 +160,7 @@ std::shared_ptr<Server::Contents::Soldier> Server::Contents::GameObjectFactory::
 	return soldier;
 }
 
-std::shared_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory::CreateBattleRam(const BattleRamTemplate& t)
+std::shared_ptr<GameServer::Contents::BattleRam> GameServer::Contents::GameObjectFactory::CreateBattleRam(const BattleRamTemplate& t)
 {
 	auto battleRam{ std::make_shared<BattleRam>(t.detectionRange, t.finalDestPos) };
 	battleRam->SetID(t.id);
@@ -176,7 +176,7 @@ std::shared_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 		});
 	
 
-	auto navAgenet = battleRam->AddComponent<Server::Contents::NavAgent>(battleRam->GetGameWorld()->GetNavSystem());
+	auto navAgenet = battleRam->AddComponent<GameServer::Contents::NavAgent>(battleRam->GetGameWorld()->GetNavSystem());
 
 	dtCrowdAgentParams params;
 	memset(&params, 0, sizeof(params));
@@ -198,7 +198,7 @@ std::shared_ptr<Server::Contents::BattleRam> Server::Contents::GameObjectFactory
 	return battleRam;
 }
 
-std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
+std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
 	auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	spawnObj->SetID(t.id);
@@ -213,7 +213,7 @@ std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactor
 	return spawnObj;
 }
 
-std::shared_ptr<Server::Contents::GameObject> Server::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
+std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
 {
 	auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);

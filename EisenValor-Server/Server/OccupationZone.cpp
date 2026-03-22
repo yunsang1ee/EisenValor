@@ -3,12 +3,12 @@
 
 #include "GameWorld.h"
 
-Server::Contents::OccupationZone::OccupationZone(const float rangeSq, const int64 time)
+GameServer::Contents::OccupationZone::OccupationZone(const float rangeSq, const int64 time)
 	:m_accDT{}, m_stateType{FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED}, m_rangeSq{rangeSq}, m_time{time}
 {
 }
 
-void Server::Contents::OccupationZone::Update(const float dt)
+void GameServer::Contents::OccupationZone::Update(const float dt)
 {
 	if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_OCCUPIED == m_stateType) 
 		return;

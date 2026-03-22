@@ -6,7 +6,7 @@
 #include "IRoom.h"
 #include "IDGenerator.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameRoom;
 		class GameObject;
@@ -20,9 +20,9 @@ namespace Server {
 		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
 		using Bots = std::unordered_map<uint64, std::shared_ptr<Bot>>;
 
-		using GameObjects = std::map<uint64, std::shared_ptr<Server::Contents::GameObject>>;
+		using GameObjects = std::map<uint64, std::shared_ptr<GameServer::Contents::GameObject>>;
 
-		class GameWorld : public ServerEngine::IRoom {
+		class GameWorld : public GameServerEngine::IRoom {
 		public:
 			GameWorld();
 			virtual ~GameWorld();
@@ -30,9 +30,9 @@ namespace Server {
 		public:
 			virtual void Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info) override final;
 			virtual void Update(const float dt) override final;
-			virtual void EnterSession(std::shared_ptr<ServerEngine::Session> session) override final;
-			virtual void LeaveSession(std::shared_ptr<ServerEngine::Session> session)  override final;
-			virtual void Broadcast(std::shared_ptr <ServerEngine::PacketBuffer> pb) override final;
+			virtual void EnterSession(std::shared_ptr<GameServerEngine::Session> session) override final;
+			virtual void LeaveSession(std::shared_ptr<GameServerEngine::Session> session)  override final;
+			virtual void Broadcast(std::shared_ptr <GameServerEngine::PacketBuffer> pb) override final;
 
 		public:
 			void AddEvent(const std::function<void()>& eve) { m_pendingEventFpQueue.push(eve); }
@@ -46,6 +46,7 @@ namespace Server {
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
 			void Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state);
+			void Handle_CS_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg);
 
 		public:
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
@@ -55,7 +56,6 @@ namespace Server {
 		public:
 			void AddGameObject(std::shared_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void RemoveGameObject(std::shared_ptr<GameObject> gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
-			void LeaveGameWorld(const std::shared_ptr<ClientSession>& clientSession);
 			float GetGameWorldDT() const { return m_dt; }
 			uint64 GetGameWorldFrameCount() const { return m_worldFrameCount; }
 			const auto& GetGameObjectGroups() const { return m_gameObjectsGroups; }
@@ -96,8 +96,6 @@ namespace Server {
 			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
 			std::unordered_map<uint32, uint64>										m_sessionToPlayer;
 			std::unordered_map<uint64, uint32>										m_playerToSession;
-
-
 			IDGenerator																m_idGenerator;
 		};
 	}

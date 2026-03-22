@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Server {
+namespace GameServer {
     namespace Contents {
         namespace IDConfig {
             const uint64 TYPE_SHIFT = 60;

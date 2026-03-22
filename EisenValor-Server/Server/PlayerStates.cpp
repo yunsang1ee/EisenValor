@@ -5,37 +5,37 @@
 #include "General.h"
 #include "FSM.h"
 
-static std::shared_ptr<Server::Contents::General> GetGeneral(Server::Contents::FSM* fsm)
+static std::shared_ptr<GameServer::Contents::General> GetGeneral(GameServer::Contents::FSM* fsm)
 {
-	return std::static_pointer_cast<Server::Contents::General>(fsm->GetOwner());
+	return std::static_pointer_cast<GameServer::Contents::General>(fsm->GetOwner());
 }
 
 // ==================================
 //		  GENERAL_IDLE_STATE
 // ==================================
-Server::Contents::PlayerIdleState::PlayerIdleState()
+GameServer::Contents::PlayerIdleState::PlayerIdleState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), m_accDTForStaminaRecovery{}, m_accDTForExhaustedRecovery{}
 {
 }
 
-Server::Contents::PlayerIdleState::~PlayerIdleState()
+GameServer::Contents::PlayerIdleState::~PlayerIdleState()
 {
 }
 
-void Server::Contents::PlayerIdleState::Enter(const float dt)
+void GameServer::Contents::PlayerIdleState::Enter(const float dt)
 {
 	m_accDTForStaminaRecovery = 0.f;
 	std::cout << "Enter Player Idle State" << std::endl;
 }
 
-void Server::Contents::PlayerIdleState::Exit(const float dt)
+void GameServer::Contents::PlayerIdleState::Exit(const float dt)
 {
 	m_accDTForStaminaRecovery = 0.f;
 	m_accDTForExhaustedRecovery = 0.f;
 	std::cout << "Exit Player Idle State" << std::endl;
 }
 
-void Server::Contents::PlayerIdleState::Update(const float dt)
+void GameServer::Contents::PlayerIdleState::Update(const float dt)
 {
 	//m_accDTForStaminaRecovery += dt;
 	//auto const owner{ GetGeneral(GetFSM()) };
@@ -95,28 +95,28 @@ void Server::Contents::PlayerIdleState::Update(const float dt)
 // ==================================
 //		  GENERAL_MOVE_STATE
 // ==================================
-Server::Contents::PlayerMoveState::PlayerMoveState()
+GameServer::Contents::PlayerMoveState::PlayerMoveState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
 {
 
 }
 
-Server::Contents::PlayerMoveState::~PlayerMoveState()
+GameServer::Contents::PlayerMoveState::~PlayerMoveState()
 {
 
 }
 
-void Server::Contents::PlayerMoveState::Enter(const float dt)
+void GameServer::Contents::PlayerMoveState::Enter(const float dt)
 {
 	std::cout << "Enter Player Move State" << std::endl;
 }
 
-void Server::Contents::PlayerMoveState::Exit(const float dt)
+void GameServer::Contents::PlayerMoveState::Exit(const float dt)
 {
 	std::cout << "Exit Player Move State" << std::endl;
 }
 
-void Server::Contents::PlayerMoveState::Update(const float dt)
+void GameServer::Contents::PlayerMoveState::Update(const float dt)
 {
 	// TODO: General Move State
 }
@@ -124,16 +124,16 @@ void Server::Contents::PlayerMoveState::Update(const float dt)
 // ==================================
 //		 GENERAL_PRE_DELAY_STATE
 // ==================================
-Server::Contents::PlayerPredelayState::PlayerPredelayState()
+GameServer::Contents::PlayerPredelayState::PlayerPredelayState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY), m_startFrame{}
 {
 }
 
-Server::Contents::PlayerPredelayState::~PlayerPredelayState()
+GameServer::Contents::PlayerPredelayState::~PlayerPredelayState()
 {
 }
 
-void Server::Contents::PlayerPredelayState::Enter(const float dt)
+void GameServer::Contents::PlayerPredelayState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 
@@ -142,12 +142,12 @@ void Server::Contents::PlayerPredelayState::Enter(const float dt)
 	std::cout << "Enter Player Predelay State" << std::endl;
 }
 
-void Server::Contents::PlayerPredelayState::Exit(const float dt)
+void GameServer::Contents::PlayerPredelayState::Exit(const float dt)
 {
 	std::cout << "Exit Player Predelay State" << std::endl;
 }
 
-void Server::Contents::PlayerPredelayState::Update(const float dt)
+void GameServer::Contents::PlayerPredelayState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 
@@ -160,40 +160,40 @@ void Server::Contents::PlayerPredelayState::Update(const float dt)
 	//	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
 	//}
 	auto const world{ owner->GetGameWorld() };
-	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
 }
 
 // ==================================
 //		 GENERAL_ATTACK_STATE
 // ==================================
-Server::Contents::PlayerAttackState::PlayerAttackState()
+GameServer::Contents::PlayerAttackState::PlayerAttackState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
 }
 
-Server::Contents::PlayerAttackState::~PlayerAttackState()
+GameServer::Contents::PlayerAttackState::~PlayerAttackState()
 {
 }
 
-void Server::Contents::PlayerAttackState::Enter(const float dt)
+void GameServer::Contents::PlayerAttackState::Enter(const float dt)
 {
 	std::cout << "Enter Player Attack State" << std::endl;
 }
 
-void Server::Contents::PlayerAttackState::Exit(const float dt)
+void GameServer::Contents::PlayerAttackState::Exit(const float dt)
 {
 	std::cout << "Exit Player Attack State" << std::endl;
 }
 
-void Server::Contents::PlayerAttackState::Update(const float dt)
+void GameServer::Contents::PlayerAttackState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
 	if(false == IsValidObj(owner)) {
-		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+		auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 		return;
 	}
@@ -204,7 +204,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 		owner->SetTarget(nullptr);
 		// std::cout << "PlayerAttackState! - false == IsValidObj(target)" << std::endl;
 
-		auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+		auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 		return;
 	}
@@ -214,7 +214,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 	if(owner->IsTargetInAttackRange(target)) {
 		
 		if(false == IsValidObj(target)) {
-			auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+			auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 			return;
 		}
@@ -226,7 +226,7 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 				// 무장해제 공격일 시, 상대 플레이어의 상태를 IDLE로...
 				if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
 					auto const obj{ std::static_pointer_cast<General>(target) };
-					auto const fsm{ obj->GetComponent<Server::Contents::FSM>() };
+					auto const fsm{ obj->GetComponent<GameServer::Contents::FSM>() };
 					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt, true);
 					return;
 				}
@@ -237,35 +237,35 @@ void Server::Contents::PlayerAttackState::Update(const float dt)
 		}
 	}
 
-	auto const fsm{ owner->GetComponent<Server::Contents::FSM>() };
+	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
 }
 
 // ==================================
 //		 GENERAL_POST_DELAY_STATE
 // ==================================
-Server::Contents::PlayerPostdelayState::PlayerPostdelayState()
+GameServer::Contents::PlayerPostdelayState::PlayerPostdelayState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY), m_startFrame{}
 {
 }
 
-Server::Contents::PlayerPostdelayState::~PlayerPostdelayState()
+GameServer::Contents::PlayerPostdelayState::~PlayerPostdelayState()
 {
 }
 
-void Server::Contents::PlayerPostdelayState::Enter(const float dt)
+void GameServer::Contents::PlayerPostdelayState::Enter(const float dt)
 {
 	std::cout << "Enter Player Postdelay State" << std::endl;
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 }
 
-void Server::Contents::PlayerPostdelayState::Exit(const float dt)
+void GameServer::Contents::PlayerPostdelayState::Exit(const float dt)
 {
 	std::cout << "Exit Player Postdelay State" << std::endl;
 }
 
-void Server::Contents::PlayerPostdelayState::Update(const float dt)
+void GameServer::Contents::PlayerPostdelayState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	auto const world{ owner->GetGameWorld() };
@@ -284,16 +284,16 @@ void Server::Contents::PlayerPostdelayState::Update(const float dt)
 // ==================================
 //		 GENERAL_STUN_STATE
 // ==================================
-Server::Contents::PlayerStunState::PlayerStunState()
+GameServer::Contents::PlayerStunState::PlayerStunState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_STUN), m_startFrame{}, m_stunDuration{}
 {
 }
 
-Server::Contents::PlayerStunState::~PlayerStunState()
+GameServer::Contents::PlayerStunState::~PlayerStunState()
 {
 }
 
-void Server::Contents::PlayerStunState::Enter(const float dt)
+void GameServer::Contents::PlayerStunState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
@@ -303,14 +303,14 @@ void Server::Contents::PlayerStunState::Enter(const float dt)
 	std::cout << "Enter Player Stun State" << std::endl;
 }
 
-void Server::Contents::PlayerStunState::Exit(const float dt)
+void GameServer::Contents::PlayerStunState::Exit(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_stunDuration = owner->GetGameObjectData()->stunDelay;
 	std::cout << "Exit Player Stun State" << std::endl;
 }
 
-void Server::Contents::PlayerStunState::Update(const float dt)
+void GameServer::Contents::PlayerStunState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	auto const world{ owner->GetGameWorld() };
@@ -322,28 +322,28 @@ void Server::Contents::PlayerStunState::Update(const float dt)
 // ==================================
 //		 GENERAL_DEAD_STATE
 // ==================================
-Server::Contents::PlayerDeadState::PlayerDeadState()
+GameServer::Contents::PlayerDeadState::PlayerDeadState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD), m_accDTForRespawn{}
 {
 }
 
-Server::Contents::PlayerDeadState::~PlayerDeadState()
+GameServer::Contents::PlayerDeadState::~PlayerDeadState()
 {
 }
 
-void Server::Contents::PlayerDeadState::Enter(const float dt)
+void GameServer::Contents::PlayerDeadState::Enter(const float dt)
 {
 	m_accDTForRespawn = 0.f;
 	std::cout << "Enter Player Dead State" << std::endl;
 }
 
-void Server::Contents::PlayerDeadState::Exit(const float dt)
+void GameServer::Contents::PlayerDeadState::Exit(const float dt)
 {
 	m_accDTForRespawn = 0.f;
 	std::cout << "Exit Player Dead State" << std::endl;
 }
 
-void Server::Contents::PlayerDeadState::Update(const float dt)
+void GameServer::Contents::PlayerDeadState::Update(const float dt)
 {
 	m_accDTForRespawn += dt;
 	auto const owner{ GetGeneral(GetFSM()) };

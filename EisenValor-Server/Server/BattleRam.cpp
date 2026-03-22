@@ -4,21 +4,21 @@
 #include "GameWorld.h"
 #include "NavAgent.h"
 
-Server::Contents::BattleRam::BattleRam(const float detecionRange, const Vec3& finalDestPos)
-	:Server::Contents::Creature(FB_ENUMS::TEAM_TYPE_OFFENSE, FB_ENUMS::GAME_OBJECT_TYPE_GENERAL), m_detectionRangeSq{ detecionRange * detecionRange }, m_finalDestPos{ finalDestPos }
+GameServer::Contents::BattleRam::BattleRam(const float detecionRange, const Vec3& finalDestPos)
+	:GameServer::Contents::Creature(FB_ENUMS::TEAM_TYPE_OFFENSE, FB_ENUMS::GAME_OBJECT_TYPE_GENERAL), m_detectionRangeSq{ detecionRange * detecionRange }, m_finalDestPos{ finalDestPos }
 {
 }
 
-Server::Contents::BattleRam::~BattleRam()
+GameServer::Contents::BattleRam::~BattleRam()
 {
 }
 
-void Server::Contents::BattleRam::OnDeath()
+void GameServer::Contents::BattleRam::OnDeath()
 {
 	// TODO: BattleRam::OnDeath()
 }
 
-void Server::Contents::BattleRam::Update(const float dt)
+void GameServer::Contents::BattleRam::Update(const float dt)
 {
 	GameObject::Update(dt);
 
@@ -53,7 +53,7 @@ void Server::Contents::BattleRam::Update(const float dt)
 					const Vec3 nextPos{ myPos + (direction * moveSpeed * dt) };
 					// std::cout << "BattleRam Move!" << std::endl;
 					// std::cout << std::format("NextPos: {}. {}. {}", nextPos.x, nextPos.y, nextPos.z) << std::endl;
-					GetComponent<Server::Contents::NavAgent>()->SetDestPos(nextPos);
+					GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(nextPos);
 
 					auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
 					GetGameWorld()->Broadcast(std::move(pb));

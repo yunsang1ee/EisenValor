@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		struct NavMeshSetHeader {
 			int32 magic;

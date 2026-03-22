@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "IOCore.h"
 
-ServerEngine::IOCore::IOCore()
+GameServerEngine::IOCore::IOCore()
 {
 }
 
-ServerEngine::IOCore::~IOCore()
+GameServerEngine::IOCore::~IOCore()
 {
 }

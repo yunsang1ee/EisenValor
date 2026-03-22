@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class WorkerThread;
 #ifdef  MODERN_CODE
 

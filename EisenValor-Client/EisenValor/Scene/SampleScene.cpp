@@ -44,9 +44,9 @@ void SampleScene::OnStartImpl()
 	CreateSceneObjects();
 
 	// 서버 없이 테스트를 위한 스트레스 테스트 오브젝트 생성
-	ReserveGameObject("StressTester", std::nullopt, [this](GameObject* obj) {
-		CreateComponent<StressTestComponent>(obj->GetHandle());
-	});
+	//ReserveGameObject("StressTester", std::nullopt, [this](GameObject* obj) {
+	//	CreateComponent<StressTestComponent>(obj->GetHandle());
+	//});
 }
 
 void SampleScene::CreateSceneObjects()
@@ -75,7 +75,7 @@ void SampleScene::CreateSceneObjects()
 		}
 	);
 
-	ReserveGameObject(
+	/*ReserveGameObject(
 		"TestSphere", std::nullopt,
 		[this](GameObject* obj)
 		{
@@ -95,7 +95,7 @@ void SampleScene::CreateSceneObjects()
 				}
 			);
 		}
-	);
+	);*/
 
 	DEBUG_LOG_FMT("[SampleScene] Scene objects created and assets linked\n");
 }

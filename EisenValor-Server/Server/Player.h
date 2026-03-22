@@ -2,7 +2,7 @@
 
 #include "General.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class NPC;
 

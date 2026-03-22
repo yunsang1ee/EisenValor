@@ -4,25 +4,25 @@
 #include "ServerEngineConfigManager.h"
 #include "PacketHandler.h"
 
-ServerEngine::Session::Session(const SESSION_TYPE type)
-	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_type{ type }, m_pingInterval { std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
-	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(ServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
+GameServerEngine::Session::Session(const SESSION_TYPE type)
+	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_type{ type }, m_pingInterval { std::chrono::milliseconds(MANAGER(GameServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
+	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(GameServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
 {
 }
 
-ServerEngine::Session::~Session()
+GameServerEngine::Session::~Session()
 {
 	std::cout << std::format("~Session, ID = {}", m_id) << std::endl;
 	CloseSocket();
 }
 
-void ServerEngine::Session::CloseSocket()
+void GameServerEngine::Session::CloseSocket()
 {
 	shutdown(m_socket, SD_BOTH);
 	closesocket(m_socket);
 }
 
-void ServerEngine::Session::CheckPing()
+void GameServerEngine::Session::CheckPing()
 {
 	if(SESSION_STATE::FREE == m_state) return;
 
@@ -44,7 +44,7 @@ void ServerEngine::Session::CheckPing()
 	SendPing();
 }
 
-void ServerEngine::Session::Handle_CS_PONG()
+void GameServerEngine::Session::Handle_CS_PONG()
 {
 	// std::cout << "Pong!" << std::endl;
 	m_lastPong = std::chrono::high_resolution_clock::now();
@@ -255,19 +255,19 @@ void ServerEngine::IOCP::IOCPSession::PostSend()
 // =============================================
 
 #ifdef _USE_RIO
-ServerEngine::RIO::RIOSession::RIOSession(const SESSION_TYPE type)
+GameServerEngine::RIO::RIOSession::RIOSession(const SESSION_TYPE type)
 	:Session{ type }, m_rq {RIO_INVALID_RQ}, m_deferCount{}, m_maxSendRQSize{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION }
 	, m_commitSendMS{ std::chrono::milliseconds(MANAGER(ServerEngineConfigManager)->GetSessionConfig().COMMIT_SEND_MS) }, m_outstandingSendCount{}
 {
 }
 
-ServerEngine::RIO::RIOSession::~RIOSession()
+GameServerEngine::RIO::RIOSession::~RIOSession()
 {
 	m_table.RIODeregisterBuffer(m_recvBuffer.GetID());
 	m_table.RIODeregisterBuffer(m_sendBuffer.GetID());
 }
 
-bool ServerEngine::RIO::RIOSession::Init()
+bool GameServerEngine::RIO::RIOSession::Init()
 {
 	// RIO BUFFER 등록
 	// const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
@@ -281,7 +281,7 @@ bool ServerEngine::RIO::RIOSession::Init()
 	return true;
 }
 
-void ServerEngine::RIO::RIOSession::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
+void GameServerEngine::RIO::RIOSession::Dispatch(RIOContext* const context, const uint32 bytesTransferred)
 {
 	switch(const auto type{ context->GetType() }) {
 		case IO_CONTEXT_TYPE::RECV:
@@ -302,7 +302,7 @@ void ServerEngine::RIO::RIOSession::Dispatch(RIOContext* const context, const ui
 	}
 }
 
-bool ServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
+bool GameServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const SOCKADDR_IN& addr)
 {
 	m_socket = socket;
 
@@ -315,7 +315,7 @@ bool ServerEngine::RIO::RIOSession::AcceptCompleted(const SOCKET& socket, const 
 	return true;
 }
 
-void ServerEngine::RIO::RIOSession::Disconnect(const std::string_view reason)
+void GameServerEngine::RIO::RIOSession::Disconnect(const std::string_view reason)
 {
 	if(false == IsConnected())
 		return;
@@ -333,12 +333,12 @@ void ServerEngine::RIO::RIOSession::Disconnect(const std::string_view reason)
 	Clean();
 }
 
-void ServerEngine::RIO::RIOSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)
+void GameServerEngine::RIO::RIOSession::Send(std::shared_ptr<PacketBuffer> packetBuffer)
 {
 	m_packetBufferQueue.push(std::move(packetBuffer));
 }
 
-void ServerEngine::RIO::RIOSession::PostRecv()
+void GameServerEngine::RIO::RIOSession::PostRecv()
 {
 	//if(false == IsConnected()) {
 	//	Disconnect("IsConnected False");
@@ -398,7 +398,7 @@ void ServerEngine::RIO::RIOSession::PostRecv()
 	}
 
 	m_recvContext.Init();
-	m_recvContext.SetOwner(std::static_pointer_cast<ServerEngine::RIO::RIOSession>(shared_from_this()));
+	m_recvContext.SetOwner(std::static_pointer_cast<GameServerEngine::RIO::RIOSession>(shared_from_this()));
 
 	if(m_recvBuffer.GetContiguousFreeSize() < 100) {
 		m_recvBuffer.AdjustPos();
@@ -418,7 +418,7 @@ void ServerEngine::RIO::RIOSession::PostRecv()
 
 }
 
-void ServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
+void GameServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
 {
 	//m_recvContext.SetOwner(nullptr);
 
@@ -476,14 +476,14 @@ void ServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
 	PostRecv();
 }
 
-void ServerEngine::RIO::RIOSession::ProcessSend(const uint32 bytesTransferred)
+void GameServerEngine::RIO::RIOSession::ProcessSend(const uint32 bytesTransferred)
 {
 	m_sendBuffer.OnRead(bytesTransferred);
 	OnSend(bytesTransferred);
 	m_sendBuffer.CleanBuffer();
 }
 
-bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 size)
+bool GameServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 size)
 {
 	RIOSendContext* sendContext = ObjectPool<RIOSendContext>::Pop();
 	sendContext->Init();
@@ -495,7 +495,7 @@ bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 
 
 	// RIO 송신 예약
 	if(false == m_table.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
-		ServerEngine::LogManager::PrintLastError();
+		GameServerEngine::LogManager::PrintLastError();
 		sendContext->SetOwner(nullptr);
 		ObjectPool<RIOSendContext>::Push(sendContext);
 		Disconnect("RIOSend Fail");
@@ -509,15 +509,15 @@ bool ServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uint32 
 	return true;
 }
 
-void ServerEngine::RIO::RIOSession::CommitSend()
+void GameServerEngine::RIO::RIOSession::CommitSend()
 {
 	if(false == m_table.RIOSend(m_rq, nullptr, 0, RIO_MSG_COMMIT_ONLY, nullptr)) {
-		ServerEngine::LogManager::PrintLastError();
+		GameServerEngine::LogManager::PrintLastError();
 		Disconnect("CommitSend Fail");
 	}
 }
 
-void ServerEngine::RIO::RIOSession::Clean()
+void GameServerEngine::RIO::RIOSession::Clean()
 {
 	m_socket = INVALID_SOCKET;
 
@@ -538,7 +538,7 @@ void ServerEngine::RIO::RIOSession::Clean()
 	m_lastSendTime = std::chrono::high_resolution_clock::time_point{};
 }
 
-void ServerEngine::RIO::RIOSession::FlushPacketQueue()
+void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 {
 	//if(false == IsConnected())
 	//	return;
@@ -636,7 +636,7 @@ void ServerEngine::RIO::RIOSession::FlushPacketQueue()
 
 }
 
-bool ServerEngine::RIO::RIOSession::RegisterBuffer()
+bool GameServerEngine::RIO::RIOSession::RegisterBuffer()
 {
 	if(false == m_recvBuffer.RegisterBuffer(m_table))
 		return false;
@@ -648,16 +648,16 @@ bool ServerEngine::RIO::RIOSession::RegisterBuffer()
 }
 #endif
 
-ServerEngine::PacketSession::PacketSession(const SESSION_TYPE type)
-	:ServerEngine::RIO::RIOSession{type}
+GameServerEngine::PacketSession::PacketSession(const SESSION_TYPE type)
+	:GameServerEngine::RIO::RIOSession{type}
 {
 }
 
-ServerEngine::PacketSession::~PacketSession()
+GameServerEngine::PacketSession::~PacketSession()
 {
 }
 
-uint32 ServerEngine::PacketSession::OnRecv(std::span<const char> buf)
+uint32 GameServerEngine::PacketSession::OnRecv(std::span<const char> buf)
 {
 	uint32 processed{};
 

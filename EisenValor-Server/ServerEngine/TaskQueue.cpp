@@ -4,17 +4,17 @@
 #include "Task.h"
 #include "TaskQueueManager.h"
 
-ServerEngine::TaskQueue::TaskQueue()
+GameServerEngine::TaskQueue::TaskQueue()
 	:m_taskCount{}, m_active{true}
 {
 }
 
-ServerEngine::TaskQueue::~TaskQueue()
+GameServerEngine::TaskQueue::~TaskQueue()
 {
 	// std::cout << "~TaskQueue" << std::endl;
 }
 
-void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, bool pushOnly)
+void GameServerEngine::TaskQueue::Push(std::shared_ptr<GameServerEngine::Task> task, bool pushOnly)
 {
 	const int32 prevCount = m_taskCount.fetch_add(1);
 	m_tasks.push(std::move(task));
@@ -29,7 +29,7 @@ void ServerEngine::TaskQueue::Push(std::shared_ptr<ServerEngine::Task> task, boo
 	}
 }
 
-void ServerEngine::TaskQueue::FlushTask()
+void GameServerEngine::TaskQueue::FlushTask()
 {
 	TLS_CURRENT_TASK_QUEUE = this;
 
@@ -50,7 +50,7 @@ void ServerEngine::TaskQueue::FlushTask()
 	}
 }
 
-void ServerEngine::TaskQueue::ClearTaskQueue()
+void GameServerEngine::TaskQueue::ClearTaskQueue()
 {
 	std::shared_ptr<Task> task;
 	while(m_tasks.try_pop(task));

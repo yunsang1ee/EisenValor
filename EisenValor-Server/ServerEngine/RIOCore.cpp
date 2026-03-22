@@ -5,15 +5,15 @@
 #include "ServerEngineConfigManager.h"
 #ifdef MODERN_CODE
 
-ServerEngine::RIO::RIOCore::RIOCore()
+GameServerEngine::RIO::RIOCore::RIOCore()
 {
 }
 
-ServerEngine::RIO::RIOCore::~RIOCore()
+GameServerEngine::RIO::RIOCore::~RIOCore()
 {
 }
 
-bool ServerEngine::RIO::RIOCore::Init()
+bool GameServerEngine::RIO::RIOCore::Init()
 {
 	const SOCKET dummySocket{ CreateSocket(WSA_FLAG_REGISTERED_IO) };
 
@@ -41,7 +41,7 @@ bool ServerEngine::RIO::RIOCore::Init()
 	return true;
 }
 
-bool ServerEngine::RIO::RIOCore::Register(std::shared_ptr<Session> session)
+bool GameServerEngine::RIO::RIOCore::Register(std::shared_ptr<Session> session)
 {
 	auto rioSession{ std::static_pointer_cast<RIOSession>(session) };
 
@@ -79,7 +79,7 @@ bool ServerEngine::RIO::RIOCore::Register(std::shared_ptr<Session> session)
 	return true;
 }
  
-bool ServerEngine::RIO::RIOCore::Deregister(std::shared_ptr<Session> session)
+bool GameServerEngine::RIO::RIOCore::Deregister(std::shared_ptr<Session> session)
 {
 	if(!session) 
 		return false;
@@ -98,13 +98,13 @@ bool ServerEngine::RIO::RIOCore::Deregister(std::shared_ptr<Session> session)
 	return true;
 }
 
-void ServerEngine::RIO::RIOCore::ProcessIO()
+void GameServerEngine::RIO::RIOCore::ProcessIO()
 {
 	FlushPacketQueue();
 	DequeueCompletion();
 }
 
-void ServerEngine::RIO::RIOCore::FlushPacketQueue()
+void GameServerEngine::RIO::RIOCore::FlushPacketQueue()
 {
 	// TODO: Send 방식 수정
 	auto iter{ m_connectedSessions.begin() };
@@ -123,7 +123,7 @@ void ServerEngine::RIO::RIOCore::FlushPacketQueue()
 	}
 }
 
-void ServerEngine::RIO::RIOCore::DequeueCompletion()
+void GameServerEngine::RIO::RIOCore::DequeueCompletion()
 {
 	while(true) {
 		memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));

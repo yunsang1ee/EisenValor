@@ -5,50 +5,50 @@
 #include "Player.h"
 #include "FSM.h"
 #include "NavAgent.h"
-Server::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
+GameServer::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 	:Creature{teamType, FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER}
 {
 }
 
-Server::Contents::Soldier::~Soldier()
+GameServer::Contents::Soldier::~Soldier()
 {
 	std::cout << "~Soldier" << std::endl;
 }
 
-void Server::Contents::Soldier::OnCollisionEnter(Collider* const other)
+void GameServer::Contents::Soldier::OnCollisionEnter(Collider* const other)
 {
 
 }
 
-void Server::Contents::Soldier::OnCollisionStay(Collider* const other)
+void GameServer::Contents::Soldier::OnCollisionStay(Collider* const other)
 {
 
 }
 
-void Server::Contents::Soldier::OnCollisionExit(Collider* const other)
+void GameServer::Contents::Soldier::OnCollisionExit(Collider* const other)
 {
 
 }
 
-void Server::Contents::Soldier::Update(const float dt)
+void GameServer::Contents::Soldier::Update(const float dt)
 {
 	GameObject::Update(dt);
 	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
-void Server::Contents::Soldier::OnDeath()
+void GameServer::Contents::Soldier::OnDeath()
 {
 	const auto& gameWorld{ GetGameWorld() };
-	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 	const float dt{ gameWorld->GetGameWorldDT() };
 	fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD, dt, true);
-	const auto ag{ GetComponent<Server::Contents::NavAgent>() };
+	const auto ag{ GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->Remove();
 }
 
-bool Server::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
 {
 	uint32 damage{};
 

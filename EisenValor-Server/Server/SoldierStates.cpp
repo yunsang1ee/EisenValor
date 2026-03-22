@@ -7,16 +7,16 @@
 #include "GameWorld.h"
 #include "Soldier.h"
 
-Server::Contents::SoldierSpawnState::SoldierSpawnState()
+GameServer::Contents::SoldierSpawnState::SoldierSpawnState()
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN }, m_accDT{}
 {
 }
 
-Server::Contents::SoldierSpawnState::~SoldierSpawnState()
+GameServer::Contents::SoldierSpawnState::~SoldierSpawnState()
 {
 }
 
-void Server::Contents::SoldierSpawnState::Enter(const float dt)
+void GameServer::Contents::SoldierSpawnState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
@@ -24,7 +24,7 @@ void Server::Contents::SoldierSpawnState::Enter(const float dt)
 	m_accDT = 0.f;
 }
 
-void Server::Contents::SoldierSpawnState::Exit(const float dt)
+void GameServer::Contents::SoldierSpawnState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
@@ -32,7 +32,7 @@ void Server::Contents::SoldierSpawnState::Exit(const float dt)
 	m_accDT = 0.f;
 }
 
-void Server::Contents::SoldierSpawnState::Update(const float dt)
+void GameServer::Contents::SoldierSpawnState::Update(const float dt)
 {
 	m_accDT += dt;
 
@@ -42,29 +42,29 @@ void Server::Contents::SoldierSpawnState::Update(const float dt)
 	}
 }
 
-Server::Contents::SoldierIdleState::SoldierIdleState()
+GameServer::Contents::SoldierIdleState::SoldierIdleState()
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_IDLE }
 {
 
 }
 
-Server::Contents::SoldierIdleState::~SoldierIdleState()
+GameServer::Contents::SoldierIdleState::~SoldierIdleState()
 {
 }
 
-void Server::Contents::SoldierIdleState::Enter(const float dt)
+void GameServer::Contents::SoldierIdleState::Enter(const float dt)
 {
 }
 
-void Server::Contents::SoldierIdleState::Exit(const float dt)
+void GameServer::Contents::SoldierIdleState::Exit(const float dt)
 {
 }
 
-void Server::Contents::SoldierIdleState::Update(const float dt)
+void GameServer::Contents::SoldierIdleState::Update(const float dt)
 {
 }
 
-Server::Contents::SoldierMoveState::SoldierMoveState(const float viewRange)
+GameServer::Contents::SoldierMoveState::SoldierMoveState(const float viewRange)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_MOVE }, m_viewRangeSq{ viewRange * viewRange }, m_accDTForSearch{ 0.f }, m_currentWaypointIndex{}
 {
 	m_wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
@@ -77,11 +77,11 @@ Server::Contents::SoldierMoveState::SoldierMoveState(const float viewRange)
 	m_wayPoints.push_back(Vec3{ 160.f, 0.f, 0.f });
 }
 
-Server::Contents::SoldierMoveState::~SoldierMoveState()
+GameServer::Contents::SoldierMoveState::~SoldierMoveState()
 {
 }
 
-void Server::Contents::SoldierMoveState::Enter(const float dt)
+void GameServer::Contents::SoldierMoveState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
@@ -93,27 +93,27 @@ void Server::Contents::SoldierMoveState::Enter(const float dt)
 
 	const Vec3& dest = m_wayPoints[m_currentWaypointIndex];
 
-	const auto ag{ owner->GetComponent<Server::Contents::NavAgent>() };
+	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag) {
 		owner->SetLook(dest);
 		ag->SetDestPos(dest);
 	}
 }
 
-void Server::Contents::SoldierMoveState::Exit(const float dt)
+void GameServer::Contents::SoldierMoveState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Exit SoldierMoveState", id) << std::endl;
 }
 
-void Server::Contents::SoldierMoveState::Update(const float dt)
+void GameServer::Contents::SoldierMoveState::Update(const float dt)
 {
 	const auto owner = std::static_pointer_cast<Soldier>(GetFSM()->GetOwner());
 	if(!IsValidObj(owner) || m_wayPoints.empty())
 		return;
 
-	const auto ag = owner->GetComponent<Server::Contents::NavAgent>();
+	const auto ag = owner->GetComponent<GameServer::Contents::NavAgent>();
 	const auto& curPos = owner->GetPos();
 
 	const Vec3& destPos = m_wayPoints[m_currentWaypointIndex];
@@ -184,27 +184,27 @@ void Server::Contents::SoldierMoveState::Update(const float dt)
 	}
 }
 
-Server::Contents::SoldierSearchState::SoldierSearchState(const float attackRange)
+GameServer::Contents::SoldierSearchState::SoldierSearchState(const float attackRange)
 	:State{FB_ENUMS::SOLDIER_STATE_TYPE_SEARCH}, m_attackRangeSq{attackRange * attackRange}
 {
 
 }
 
-Server::Contents::SoldierSearchState::~SoldierSearchState()
+GameServer::Contents::SoldierSearchState::~SoldierSearchState()
 {
 }
 
-void Server::Contents::SoldierSearchState::Enter(const float dt)
+void GameServer::Contents::SoldierSearchState::Enter(const float dt)
 {
 	std::cout << "Soldier Search State Enter" << std::endl;
 }
 
-void Server::Contents::SoldierSearchState::Exit(const float dt)
+void GameServer::Contents::SoldierSearchState::Exit(const float dt)
 {
 	std::cout << "Soldier Search State Exit" << std::endl;
 }
 
-void Server::Contents::SoldierSearchState::Update(const float dt)
+void GameServer::Contents::SoldierSearchState::Update(const float dt)
 {
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
@@ -225,16 +225,16 @@ void Server::Contents::SoldierSearchState::Update(const float dt)
 }
 
 
-Server::Contents::SoldierChaseState::SoldierChaseState(const float chaseRange, const float attackRange)
+GameServer::Contents::SoldierChaseState::SoldierChaseState(const float chaseRange, const float attackRange)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_CHASE }, m_chaseRangeSq{ chaseRange * chaseRange }, m_attackRangeSq{attackRange * attackRange}
 {
 }
 
-Server::Contents::SoldierChaseState::~SoldierChaseState()
+GameServer::Contents::SoldierChaseState::~SoldierChaseState()
 {
 }
 
-void Server::Contents::SoldierChaseState::Enter(const float dt)
+void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 {
 	std::cout << "SoldierChaseState Enter" << std::endl;
 	
@@ -242,12 +242,12 @@ void Server::Contents::SoldierChaseState::Enter(const float dt)
 	const auto target{ owner->GetTarget() };
 }
 
-void Server::Contents::SoldierChaseState::Exit(const float dt)
+void GameServer::Contents::SoldierChaseState::Exit(const float dt)
 {
 	std::cout << "SoldierChaseState Exit" << std::endl;
 }
 
-void Server::Contents::SoldierChaseState::Update(const float dt)
+void GameServer::Contents::SoldierChaseState::Update(const float dt)
 {
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
@@ -277,32 +277,32 @@ void Server::Contents::SoldierChaseState::Update(const float dt)
 
 	// 추격
 	const Vec3& targetPos{ target->GetPos() };
-	const auto ag{ owner->GetComponent<Server::Contents::NavAgent>() };
+	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->SetDestPos(targetPos);
 }
 
-Server::Contents::SoldierAttackState::SoldierAttackState(const float attackRange)
+GameServer::Contents::SoldierAttackState::SoldierAttackState(const float attackRange)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDTForAttack{ }, m_attackRangeSq{attackRange * attackRange}
 {
 }
 
-Server::Contents::SoldierAttackState::~SoldierAttackState()
+GameServer::Contents::SoldierAttackState::~SoldierAttackState()
 {
 }
 
-void Server::Contents::SoldierAttackState::Enter(const float dt)
+void GameServer::Contents::SoldierAttackState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
 	std::cout << std::format("ID = {}, Enter SoldierAttackState", id) << std::endl;
 	m_accDTForAttack = 0.f;
-	const auto ag{ owner->GetComponent<Server::Contents::NavAgent>() };
+	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->StopMove();
 }
 
-void Server::Contents::SoldierAttackState::Exit(const float dt)
+void GameServer::Contents::SoldierAttackState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
@@ -310,7 +310,7 @@ void Server::Contents::SoldierAttackState::Exit(const float dt)
 	m_accDTForAttack = 0.f;
 }
 
-void Server::Contents::SoldierAttackState::Update(const float dt)
+void GameServer::Contents::SoldierAttackState::Update(const float dt)
 {
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
@@ -350,27 +350,27 @@ void Server::Contents::SoldierAttackState::Update(const float dt)
 	}
 }
 
-Server::Contents::SoldierDeadState::SoldierDeadState(const float deadAnimTime)
+GameServer::Contents::SoldierDeadState::SoldierDeadState(const float deadAnimTime)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_DEAD }, m_accDT{}, m_deadAnimTime{ deadAnimTime }
 {
 
 }
 
-Server::Contents::SoldierDeadState::~SoldierDeadState()
+GameServer::Contents::SoldierDeadState::~SoldierDeadState()
 {
 }
 
-void Server::Contents::SoldierDeadState::Enter(const float dt)
-{
-	m_accDT = 0.f;
-}
-
-void Server::Contents::SoldierDeadState::Exit(const float dt)
+void GameServer::Contents::SoldierDeadState::Enter(const float dt)
 {
 	m_accDT = 0.f;
 }
 
-void Server::Contents::SoldierDeadState::Update(const float dt)
+void GameServer::Contents::SoldierDeadState::Exit(const float dt)
+{
+	m_accDT = 0.f;
+}
+
+void GameServer::Contents::SoldierDeadState::Update(const float dt)
 {
 	m_accDT += dt;
 	

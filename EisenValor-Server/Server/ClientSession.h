@@ -2,7 +2,7 @@
 #include "Session.h"
 
 #include "TaskQueue.h"
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameRoom;
 		class GameWorld;
@@ -40,9 +40,8 @@ namespace Server {
 		std::weak_ptr<Server::Contents::GameWorld>							m_gameWorld;		// ClientSession
 	};
 #endif
-
 #ifdef _USE_RIO
-	class RIOClientSession final : public ServerEngine::PacketSession {
+	class RIOClientSession final : public GameServerEngine::PacketSession {
 	public:
 		RIOClientSession();
 		virtual ~RIOClientSession();
@@ -58,14 +57,13 @@ namespace Server {
 		void SetName(const std::string_view name) { m_name = name.data(); }
 		const std::string& GetName() const { return m_name; }
 
-		void SetGameWorld(Server::Contents::GameWorld* world) { m_gameWorld = world; }
-		Server::Contents::GameWorld* GetGameWorld() const { return m_gameWorld; }
+		void SetGameWorld(GameServer::Contents::GameWorld* world) { m_gameWorld = world; }
+		GameServer::Contents::GameWorld* GetGameWorld() const { return m_gameWorld; }
 
 	private:
 		std::string															m_name;			
-		Server::Contents::GameWorld*									m_gameWorld;
+		GameServer::Contents::GameWorld*									m_gameWorld;
 	};
-
 #endif
 
 }

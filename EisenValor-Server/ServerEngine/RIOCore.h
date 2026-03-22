@@ -2,7 +2,7 @@
 
 #include "IOCore.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	namespace RIO {
 		class RIOSession;
 #ifdef MODERN_CODE

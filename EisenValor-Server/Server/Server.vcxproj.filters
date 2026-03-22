@@ -467,6 +467,9 @@
     <ClInclude Include="IDGenerator.h">
       <Filter>03. Contents\GameWorld\IdGenerator</Filter>
     </ClInclude>
+    <ClInclude Include="PacketEnums.h">
+      <Filter>02. Packets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -2,7 +2,7 @@
 
 #include "WorkerThread.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class IRoom;
 
 	class GameWorldThread : public WorkerThread {

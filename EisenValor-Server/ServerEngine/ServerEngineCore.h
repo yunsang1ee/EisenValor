@@ -2,7 +2,7 @@
 
 #include "Singleton.hpp"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class AcceptThread;
 	class LobbyThread;
 	class WorkerThread;

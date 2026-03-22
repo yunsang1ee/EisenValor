@@ -4,7 +4,7 @@
 
 using namespace rapidjson;
 
-bool ServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::string_view filePath)
+bool GameServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::string_view filePath)
 {
 	std::ifstream ifs{ filePath.data() };
 	

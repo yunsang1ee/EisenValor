@@ -2,7 +2,7 @@
 
 #include "Job.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
     class Job;
     using Clock = std::chrono::high_resolution_clock;
 

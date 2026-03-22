@@ -1,22 +1,22 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class IRoom;
 }
 
-namespace Server {
+namespace GameServer {
 	class RIOClientSession;
 	class RIOLobbyServerSession;
 	class IOCPClientSession;
 }
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Session;
 }
 
-std::shared_ptr<ServerEngine::Session> MakeClientSessionFunc();
-std::shared_ptr<ServerEngine::Session> MakeLobbyServerSessionFunc();
-std::unique_ptr<ServerEngine::IRoom> MakeGameWorldFunc();
+std::shared_ptr<GameServerEngine::Session> MakeClientSessionFunc();
+std::shared_ptr<GameServerEngine::Session> MakeLobbyServerSessionFunc();
+std::unique_ptr<GameServerEngine::IRoom> MakeGameWorldFunc();
 
 static inline FB_STRUCTS::Vec3 Vec3ToFlatVec3(const Vec3& v)
 {
@@ -61,7 +61,7 @@ static inline float GetDistSq(const Vec3& v1, const Vec3& v2)
 	return (v1 - v2).LengthSquared();
 }
 
-bool IsValidObj(const std::shared_ptr<Server::Contents::GameObject> obj);
+bool IsValidObj(const std::shared_ptr<GameServer::Contents::GameObject> obj);
 
 template<typename Enum> requires std::is_enum_v<Enum>
 static inline constexpr uint8 etou8(const Enum e)

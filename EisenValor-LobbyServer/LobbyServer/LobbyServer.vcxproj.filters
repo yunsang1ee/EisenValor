@@ -75,9 +75,6 @@
     <Filter Include="03. Packets\PacketHandler\ClientPacketHandler">
       <UniqueIdentifier>{70d5da9e-d630-45ad-ab8f-efcbde4cba7a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Packets\PacketHandler\GameServerPacketHandler">
-      <UniqueIdentifier>{b6a69420-c3f5-4b1b-abca-81bf4c87918d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Packets\SendPackets">
       <UniqueIdentifier>{ceb8731a-bbde-42c9-a85e-0c915db32a9c}</UniqueIdentifier>
     </Filter>
@@ -92,6 +89,9 @@
     </Filter>
     <Filter Include="00. main\ServerManager">
       <UniqueIdentifier>{5fa57acd-bbbd-47ee-adea-4b9727c783e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Packets\PacketHandler\GameServerPacketHandler">
+      <UniqueIdentifier>{b6a69420-c3f5-4b1b-abca-81bf4c87918d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +136,9 @@
     </ClInclude>
     <ClInclude Include="LobbyServerStructs.h">
       <Filter>98. Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketEnums.h">
+      <Filter>03. Packets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

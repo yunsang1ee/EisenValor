@@ -3,7 +3,7 @@
 
 using namespace rapidjson;
 
-bool Server::Contents::GameDataManager::LoadDataFromFile(const std::string_view filePath)
+bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_view filePath)
 {
 	std::ifstream ifs{ filePath.data() };
 
@@ -95,7 +95,7 @@ bool Server::Contents::GameDataManager::LoadDataFromFile(const std::string_view 
 	return true;
 }
 
-const GameObjectData* Server::Contents::GameDataManager::GetGameObjectData(const uint8 objTypeID)
+const GameObjectData* GameServer::Contents::GameDataManager::GetGameObjectData(const uint8 objTypeID)
 {
     if(objTypeID < FB_ENUMS::GAME_OBJECT_TYPE_END)
         return &m_gameObjectDataMap[objTypeID];
@@ -103,7 +103,7 @@ const GameObjectData* Server::Contents::GameDataManager::GetGameObjectData(const
         return nullptr;
 }
 
-const SkillData* Server::Contents::GameDataManager::GetSkillData(const uint8 skillTypeID)
+const SkillData* GameServer::Contents::GameDataManager::GetSkillData(const uint8 skillTypeID)
 {
     if(skillTypeID < FB_ENUMS::GENERAL_ATTACK_TYPE_END)
         return &m_skillDataMap[skillTypeID];

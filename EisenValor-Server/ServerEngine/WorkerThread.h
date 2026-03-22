@@ -2,7 +2,7 @@
 
 #include "JobQueue.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class IRoom;
 	class IOCore;
 	class AcceptThread;

@@ -600,6 +600,7 @@
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="IDGenerator.h" />
     <ClInclude Include="LobbyServerPacketHandler.h" />
+    <ClInclude Include="PacketEnums.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="CollisionDetector.h" />

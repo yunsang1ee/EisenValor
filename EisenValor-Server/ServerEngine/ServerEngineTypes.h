@@ -10,7 +10,7 @@ using uint16 = unsigned __int16;
 using uint32 = unsigned __int32;
 using uint64 = unsigned __int64;
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Session;
 	class Task;
 	class TaskQueue;
@@ -25,7 +25,7 @@ namespace ServerEngine {
 	}
 }
 
-namespace Server {
+namespace GameServer {
 	class GameWorld;
 
 #ifdef _USE_RIO
@@ -35,10 +35,10 @@ namespace Server {
 }
 
 #ifdef  _USE_RIO
-using ClientSessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
-using LobbyServerSessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::RIO::RIOSession>()>;
+using ClientSessionFactoryFunc = std::function<std::shared_ptr<GameServerEngine::RIO::RIOSession>()>;
+using LobbyServerSessionFactoryFunc = std::function<std::shared_ptr<GameServerEngine::RIO::RIOSession>()>;
 
-using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::Session>()>;
+using SessionFactoryFunc = std::function<std::shared_ptr<GameServerEngine::Session>()>;
 #endif
 
 #ifdef	_USE_IOCP
@@ -46,5 +46,5 @@ using SessionFactoryFunc = std::function<std::shared_ptr<ServerEngine::IOCP::IOC
 #endif
 
 
-using GameWorldFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
-using GameLobbyTestFactoryFunc = std::function<std::unique_ptr<ServerEngine::IRoom>()>;
+using GameWorldFactoryFunc = std::function<std::unique_ptr<GameServerEngine::IRoom>()>;
+using GameLobbyTestFactoryFunc = std::function<std::unique_ptr<GameServerEngine::IRoom>()>;

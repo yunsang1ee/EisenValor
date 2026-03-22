@@ -3,7 +3,7 @@
 #include "RIOContext.h"
 #include "RIORingBuffer.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class RIOWorker;
 	class RIORecvBuffer;
 	class RioContext;
@@ -172,7 +172,7 @@ namespace ServerEngine {
 			std::shared_ptr<PacketSession> GetPacketSession() { return std::static_pointer_cast<PacketSession>(shared_from_this()); }
 
 		protected:
-			std::unique_ptr<ServerEngine::PacketHandler>	m_packetHandler;
+			std::unique_ptr<GameServerEngine::PacketHandler>	m_packetHandler;
 
 		};
 #endif
@@ -190,7 +190,7 @@ namespace ServerEngine {
 		std::shared_ptr<PacketSession> GetPacketSession() { return std::static_pointer_cast<PacketSession>(shared_from_this()); }
 
 	protected:
-		std::unique_ptr<ServerEngine::PacketHandler>	m_packetHandler;
+		std::unique_ptr<GameServerEngine::PacketHandler>	m_packetHandler;
 
 	};
 #endif

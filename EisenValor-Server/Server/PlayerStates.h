@@ -2,7 +2,7 @@
 
 #include "State.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 
 		// ==================================

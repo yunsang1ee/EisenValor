@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class LogManager {
 	public:
 		enum class LOG_LEVEL : uint8 {

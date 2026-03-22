@@ -3,12 +3,12 @@
 
 #include "Collider.h"
 
-Server::Contents::CollisionDetector::CollisionDetector()
+GameServer::Contents::CollisionDetector::CollisionDetector()
 {
 	Init();
 }
 
-bool Server::Contents::CollisionDetector::CheckCollision(const Collider* const left, const Collider* const right)
+bool GameServer::Contents::CollisionDetector::CheckCollision(const Collider* const left, const Collider* const right)
 {
 	const uint8 leftType{ static_cast<uint8>(left->GetType()) };
 	const uint8 rightType{ static_cast<uint8>(right->GetType()) };
@@ -18,7 +18,7 @@ bool Server::Contents::CollisionDetector::CheckCollision(const Collider* const l
 	return m_collisionTable[leftType][rightType](left, right);
 }
 
-void Server::Contents::CollisionDetector::Init()
+void GameServer::Contents::CollisionDetector::Init()
 {
 	for(uint8 i = 0; i < MAX_TYPE_COUNT; ++i) {
 		for(uint8 j = 0; j < MAX_TYPE_COUNT; ++j) {
@@ -29,7 +29,7 @@ void Server::Contents::CollisionDetector::Init()
 	m_collisionTable[etou8(COLLIDER_TYPE::OBB)][etou8(COLLIDER_TYPE::OBB)] = Check_OBB_OBB;
 }
 
-bool Server::Contents::CollisionDetector::Check_OBB_OBB(const Collider* const left, const Collider* const right)
+bool GameServer::Contents::CollisionDetector::Check_OBB_OBB(const Collider* const left, const Collider* const right)
 {
 	const OBBCollider* const leftCol{ static_cast<const OBBCollider*>(left) };
 	const OBBCollider* const rightCol{ static_cast<const OBBCollider*>(right) };
@@ -83,7 +83,7 @@ bool Server::Contents::CollisionDetector::Check_OBB_OBB(const Collider* const le
 	return true;
 }
 
-bool Server::Contents::CollisionDetector::OverlapOnAxis(const OBBCollider* const box1, const OBBCollider* const box2, const Matrix& mat1, const Matrix& mat2, const Vec3& axis)
+bool GameServer::Contents::CollisionDetector::OverlapOnAxis(const OBBCollider* const box1, const OBBCollider* const box2, const Matrix& mat1, const Matrix& mat2, const Vec3& axis)
 {
 	// 축의 길이가 너무 작으면(0에 가까우면) 검사할 필요 없음 (Pass)
 // (평행한 축끼리 외적했을 때 발생)

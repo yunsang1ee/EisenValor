@@ -4,22 +4,22 @@
 #include "SessionManager.h"
 #include "LobbyServerPacketHandler.h"
 
-Server::RIOLobbyServerSession::RIOLobbyServerSession()
+GameServer::RIOLobbyServerSession::RIOLobbyServerSession()
 	:PacketSession{SESSION_TYPE::LOBBY_SERVER}
 {
 }
 
-Server::RIOLobbyServerSession::~RIOLobbyServerSession()
+GameServer::RIOLobbyServerSession::~RIOLobbyServerSession()
 {
 	std::cout << "~LobbyServerSession" << std::endl;
 }
 
-void Server::RIOLobbyServerSession::OnConnected()
+void GameServer::RIOLobbyServerSession::OnConnected()
 {
 	SetID(0);
 
 	LOG_INFO("LobbySession ID:{}, OnConnected!", GetID());
-	MANAGER(Server::SessionManager)->AddSession(std::static_pointer_cast<LobbyServerSession>(shared_from_this()));
+	MANAGER(GameServer::SessionManager)->AddSession(std::static_pointer_cast<LobbyServerSession>(shared_from_this()));
 
 	m_packetHandler = std::make_unique<LobbyServerPacketHandler>();
 	m_packetHandler->Init();
@@ -28,14 +28,14 @@ void Server::RIOLobbyServerSession::OnConnected()
 	CheckPing();
 }
 	
-void Server::RIOLobbyServerSession::OnDisconnected(const std::string_view reason)
+void GameServer::RIOLobbyServerSession::OnDisconnected(const std::string_view reason)
 {
 	auto lobbyServerSession = std::static_pointer_cast<LobbyServerSession>(shared_from_this());
-	MANAGER(Server::SessionManager)->RemoveSession(lobbyServerSession);
+	MANAGER(GameServer::SessionManager)->RemoveSession(lobbyServerSession);
 	LOG_INFO("LobbySession ID:{}, OnDisconnected!, Reason: {}", GetID(), reason.data());
 }
 
-void Server::RIOLobbyServerSession::OnRecvPacket(const std::span<const char>& buf)
+void GameServer::RIOLobbyServerSession::OnRecvPacket(const std::span<const char>& buf)
 {
 	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf.data())) {
 		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
@@ -44,11 +44,11 @@ void Server::RIOLobbyServerSession::OnRecvPacket(const std::span<const char>& bu
 	}
 }
 
-void Server::RIOLobbyServerSession::OnSend(const uint32 bytesTransferred)
+void GameServer::RIOLobbyServerSession::OnSend(const uint32 bytesTransferred)
 {
 }
 
-void Server::RIOLobbyServerSession::SendPing()
+void GameServer::RIOLobbyServerSession::SendPing()
 {
 	auto pb{ ServerPackets::Make_SC_PING_PACKET() };
 	Send(std::move(pb));

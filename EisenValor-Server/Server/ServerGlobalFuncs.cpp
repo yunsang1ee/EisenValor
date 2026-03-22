@@ -6,22 +6,22 @@
 #include "GameWorld.h"
 #include "GameObject.h"
 
-std::shared_ptr<ServerEngine::Session> MakeClientSessionFunc()
+std::shared_ptr<GameServerEngine::Session> MakeClientSessionFunc()
 {
-	return ServerEngine::ObjectPool<ClientSession>::MakeShared();
+	return GameServerEngine::ObjectPool<ClientSession>::MakeShared();
 }
 
-std::shared_ptr<ServerEngine::Session> MakeLobbyServerSessionFunc()
+std::shared_ptr<GameServerEngine::Session> MakeLobbyServerSessionFunc()
 {
-	return ServerEngine::ObjectPool<LobbyServerSession>::MakeShared();
+	return GameServerEngine::ObjectPool<LobbyServerSession>::MakeShared();
 }
 
-std::unique_ptr<ServerEngine::IRoom> MakeGameWorldFunc()
+std::unique_ptr<GameServerEngine::IRoom> MakeGameWorldFunc()
 {
-	return std::make_unique<Server::Contents::GameWorld>();
+	return std::make_unique<GameServer::Contents::GameWorld>();
 }
 
-bool IsValidObj(const std::shared_ptr<Server::Contents::GameObject> obj)
+bool IsValidObj(const std::shared_ptr<GameServer::Contents::GameObject> obj)
 {
 	if(nullptr == obj)
 		return false;

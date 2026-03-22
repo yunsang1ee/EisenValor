@@ -5,7 +5,7 @@
 
 struct GameObjectData;
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameRoom;
 		class Component;
