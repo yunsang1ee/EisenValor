@@ -185,66 +185,96 @@ public class AssetExporter
     [MenuItem("Tools/EisenValor/Export Selected Texture (v2.1)")]
     public static void ExportSelectedTexture()
     {
-        Texture2D tex = Selection.activeObject as Texture2D;
-        if (null == tex) { UnityEngine.Debug.LogError("Select a Texture2D asset."); return; }
-
-        string inputPath = AssetDatabase.GetAssetPath(tex);
-        string outputPath = EditorUtility.SaveFilePanel("Save Texture", "", tex.name, "evtex");
-        if (string.IsNullOrEmpty(outputPath))
+        Object[] selectedObjects = Selection.objects;
+        if (selectedObjects.Length == 0)
         {
+            UnityEngine.Debug.LogError("Select one or more Texture2D assets.");
             return;
         }
 
-        string tempFileName = tex.name + "_temp";
-        string tempDdsPath = Path.Combine(Path.GetDirectoryName(outputPath), tempFileName + ".dds");
+        int totalCount = selectedObjects.Length;
+        int currentCount = 0;
 
-        if (false == RunTexConv(Path.GetFullPath(inputPath), Path.GetDirectoryName(outputPath), tempFileName, IsNormalMap(tex)))
+        foreach (Object obj in selectedObjects)
         {
-            UnityEngine.Debug.LogError("Failed to convert texture to DDS using texconv.");
-            return;
-        }
+            Texture2D tex = obj as Texture2D;
+            if (null == tex) continue;
 
-        try
-        {
-            string guid = AssetDatabase.AssetPathToGUID(inputPath);
-            var writer = new AssetWriter("EVTX", guid);
+            currentCount++;
+            UnityEngine.Debug.Log($"<b>[Export]</b> Processing Texture [{currentCount}/{totalCount}]: {tex.name}");
 
-            writer.AddChunk("META", 1, BuildTextureMetaChunk(tex));
-            writer.AddChunk("DATA", 1, File.ReadAllBytes(tempDdsPath));
+            string inputPath = AssetDatabase.GetAssetPath(tex);
+            string outputPath = EditorUtility.SaveFilePanel($"Save Texture [{currentCount}/{totalCount}]", "", tex.name, "evtex");
+            if (string.IsNullOrEmpty(outputPath))
+            {
+                UnityEngine.Debug.Log($"<b>[Export]</b> Canceled export for: {tex.name}");
+                continue;
+            }
 
-            writer.WriteToFile(outputPath);
-            UnityEngine.Debug.Log($"<b>[Export]</b> Saved Texture: {Path.GetFileName(outputPath)}");
-        }
-        finally
-        {
-            if (File.Exists(tempDdsPath)) File.Delete(tempDdsPath);
+            string tempFileName = tex.name + "_temp_" + System.Guid.NewGuid().ToString().Substring(0, 8);
+            string tempDdsPath = Path.Combine(Path.GetDirectoryName(outputPath), tempFileName + ".dds");
+
+            if (false == RunTexConv(Path.GetFullPath(inputPath), Path.GetDirectoryName(outputPath), tempFileName, IsNormalMap(tex)))
+            {
+                UnityEngine.Debug.LogError($"Failed to convert texture {tex.name} to DDS using texconv.");
+                continue;
+            }
+
+            try
+            {
+                string guid = AssetDatabase.AssetPathToGUID(inputPath);
+                var writer = new AssetWriter("EVTX", guid);
+
+                writer.AddChunk("META", 1, BuildTextureMetaChunk(tex));
+                writer.AddChunk("DATA", 1, File.ReadAllBytes(tempDdsPath));
+
+                writer.WriteToFile(outputPath);
+                UnityEngine.Debug.Log($"<b>[Export]</b> Saved Texture: {Path.GetFileName(outputPath)}");
+            }
+            finally
+            {
+                if (File.Exists(tempDdsPath)) File.Delete(tempDdsPath);
+            }
         }
     }
 
     [MenuItem("Tools/EisenValor/Export Selected Material (v2.1)")]
     public static void ExportSelectedMaterial()
     {
-        Material mat = Selection.activeObject as Material;
-        if (null == mat)
+        Object[] selectedObjects = Selection.objects;
+        if (selectedObjects.Length == 0)
         {
-            UnityEngine.Debug.LogError("Select a Material asset.");
+            UnityEngine.Debug.LogError("Select one or more Material assets.");
             return;
         }
 
-        string path = EditorUtility.SaveFilePanel("Save Material", "", mat.name, "evmat");
-        if (string.IsNullOrEmpty(path))
+        int totalCount = selectedObjects.Length;
+        int currentCount = 0;
+
+        foreach (Object obj in selectedObjects)
         {
-            return;
+            Material mat = obj as Material;
+            if (null == mat) continue;
+
+            currentCount++;
+            UnityEngine.Debug.Log($"<b>[Export]</b> Processing Material [{currentCount}/{totalCount}]: {mat.name}");
+
+            string path = EditorUtility.SaveFilePanel($"Save Material [{currentCount}/{totalCount}]", "", mat.name, "evmat");
+            if (string.IsNullOrEmpty(path))
+            {
+                UnityEngine.Debug.Log($"<b>[Export]</b> Canceled export for: {mat.name}");
+                continue;
+            }
+
+            string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mat));
+            var writer = new AssetWriter("EVMT", guid);
+
+            writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
+            writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
+
+            writer.WriteToFile(path);
+            UnityEngine.Debug.Log($"<b>[Export]</b> Saved Material: {Path.GetFileName(path)}");
         }
-
-        string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mat));
-        var writer = new AssetWriter("EVMT", guid);
-
-        writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
-        writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
-
-        writer.WriteToFile(path);
-        UnityEngine.Debug.Log($"<b>[Export]</b> Saved Material: {Path.GetFileName(path)}");
     }
 
     // --- Chunk Builders ---
