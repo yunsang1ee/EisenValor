@@ -239,8 +239,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\LobbyServer\lobbyserver_config.json">
-      <Filter>08. Config</Filter>
-    </None>
   </ItemGroup>
 </Project>

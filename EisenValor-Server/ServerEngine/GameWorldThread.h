@@ -20,7 +20,7 @@ namespace GameServerEngine {
 		IRoom* FindGameWorld(const uint16 worldID);
 
 	private:
-		const GameWorldFactoryFunc					m_worldFunc;
+		const GameWorldFactoryFunc						m_worldFunc;
 		std::map<uint32, std::unique_ptr<IRoom>>		m_worlds;
 	};
 }

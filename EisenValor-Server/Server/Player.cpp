@@ -224,11 +224,8 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_GENERAL_STANCE()
 
 	// std::cout << "Handle_CS_GENERAL_CHANGE_STATNCE" << std::endl;
 	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-#ifdef LEGACY_CODE
 	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(),GetStanceType());
-	GetSession()->GetGameWorld()->ExecAsync(&Server::Contents::GameWorld::Broadcast, std::move(pb));
-#endif
-
+	GetSession()->GetGameWorld()->Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
@@ -306,11 +303,10 @@ void GameServer::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 p
 
 void GameServer::Contents::Player::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
-#ifdef LEGACY_CODE
 	SetAtkDir(dirType);
-
 	auto const world{ GetGameWorld() };
 	auto pb{ ServerPackets::Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(GetID(), etou8(dirType)) };
 	world->Broadcast(std::move(pb));
-#endif
+
+	std::cout << "Handle_CS_SHOW_GENERAL_ATTACK_DIR" << std::endl;
 }

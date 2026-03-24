@@ -101,8 +101,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
 			//}
 
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+			
 
 			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
 			{
@@ -141,6 +140,8 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 					}
 				}
 			}
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 		}
 
 		// 2. NEUTRAL에서 공격 처리

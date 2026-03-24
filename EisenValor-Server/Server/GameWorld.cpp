@@ -17,7 +17,7 @@
 #include "LobbyServerSession.h"
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_accDT{}, m_worldFrameCount{}
+	:m_check{}, m_dt{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime(20min)
 {
 	std::cout << "GameWorldTest!" << std::endl;
 }
@@ -44,33 +44,13 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 	if(lobbyServerSession) {
 		const uint16 port{ GetGameWorldThread()->GetPort() };
 		const uint16 worldID{ GetID() };
-		auto pb{ ServerPackets::Make_SL_CREATE_GAME_WORLD_PACKET(worldID, "127.0.0.1", port)};
+		auto pb{ ServerPackets::Make_SL_CREATE_GAME_WORLD_PACKET(worldID, "127.0.0.1", port) };
 		lobbyServerSession->Send(std::move(pb));
 	}
 }
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
-	//m_dt = dt;
-	//m_accDT += dt;
-
-	//if(m_accDT >= 0.016f) {
-	//	m_accDT = 0.f;
-	//	
-	//	ProcessEvents();
-	//	m_navSystem.Update(dt);
-
-	//	for(const auto& group : m_gameObjectsGroups) {
-	//		for(const auto& [id, obj] : group) {
-	//			if(obj) obj->Update(dt);
-	//		}
-	//	}
-
-	//	CheckCollision();
-
-	//	m_worldFrameCount++;
-	//	CheckGameTime(dt);
-	//}
 	m_dt = dt;
 	m_accDT += dt;
 
@@ -117,7 +97,7 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 
 	PlayerTemplate t;
 	t.posInfo = PosInfo{ startPos, rot };
-	
+
 	if(m_reservedParticipantInfo.contains(session->GetID())) {
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
 	}
@@ -131,7 +111,7 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 	auto player = (GameServer::Contents::GameObjectFactory::CreatePlayer(t));
 	player->SetSession(clientSession);
 	player->GetComponent<GameServer::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	
+
 	if(false == m_sessionToPlayer.contains(session->GetID())) {
 		m_sessionToPlayer.insert(std::make_pair(session->GetID(), player->GetID()));
 	}
@@ -505,7 +485,7 @@ void GameServer::Contents::GameWorld::ProcessPendingRemoveObjectList()
 
 			if(false == m_playerToSession.contains(id))
 				return;
-			
+
 			const auto sessionID{ m_playerToSession[id] };
 
 			if(m_users.find(sessionID) != m_users.end())
@@ -522,15 +502,97 @@ void GameServer::Contents::GameWorld::ProcessPendingRemoveObjectList()
 }
 void GameServer::Contents::GameWorld::CheckGameTime(const float dt)
 {
-	// TODO: Server::Contents::GameWorldTest::CheckGameTime(const float dt)
+	m_accGameTime += dt;
+
+	while(m_accGameTime >= 1.f) {
+		m_accGameTime = 0.f;
+
+		if(m_remainingTime.count() > 0) {
+			m_remainingTime -= std::chrono::milliseconds(1000);
+
+			const auto remainTime = static_cast<uint32>(m_remainingTime.count());
+			const uint32_t totalSeconds = remainTime / 1000;
+
+			const uint32_t minutes = totalSeconds / 60;
+			const uint32_t seconds = totalSeconds % 60;
+
+			std::cout << std::format("{}M {}S", minutes, seconds) << std::endl;
+
+			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
+			Broadcast(std::move(pb));
+		}
+	}
 }
 
 void GameServer::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
 {
-	for(int row = 0; row < FB_ENUMS::GAME_OBJECT_TYPE_END; ++row) {
-		for(int col = row; col < FB_ENUMS::GAME_OBJECT_TYPE_END; ++col) {
-			if(m_check[row] & (1 << col)) {
-				CollisionUpdateGroup(static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(row), static_cast<FB_ENUMS::GAME_OBJECT_TYPE>(col));
+	const auto& leftGroup{ m_gameObjectsGroups[etou8(left)] };
+	const auto& rightGroup{ m_gameObjectsGroups[etou8(right)] };
+
+	std::map<ULONGLONG, bool>::iterator iter;
+
+	for(const auto& [id, leftObj] : leftGroup) {
+		if(nullptr == leftObj->GetComponent<GameServer::Contents::Collider>()) continue;
+
+		for(const auto& [id, rightObj] : rightGroup) {
+			if(nullptr == rightObj->GetComponent<GameServer::Contents::Collider>() || leftObj == rightObj) continue;
+
+			auto leftCol{ leftObj->GetComponent<GameServer::Contents::Collider>() };
+			auto rightCol{ rightObj->GetComponent<GameServer::Contents::Collider>() };
+
+			COLLIDER_ID colID{};
+			if(leftCol->GetID() < rightCol->GetID()) {
+				colID.leftID = leftCol->GetID();
+				colID.rightID = rightCol->GetID();
+			}
+			else {
+				colID.leftID = rightCol->GetID();
+				colID.rightID = leftCol->GetID();
+			}
+
+			iter = m_mapColInfo.find(colID.id);
+
+			if(m_mapColInfo.end() == iter) {
+				m_mapColInfo.insert(std::make_pair(colID.id, false));
+				iter = m_mapColInfo.find(colID.id);
+			}
+
+			bool isColliding{ m_collisionDetector.CheckCollision(leftCol, rightCol) };
+
+			// 지금 충돌
+			if(isColliding) {
+				// 이전에도 충돌
+				if(iter->second) {
+					// 누군가 죽었다면
+					if(false == leftObj->IsActive() || false == rightObj->IsActive()) {
+						leftCol->OnCollisionExit(rightCol);
+						rightCol->OnCollisionExit(leftCol);
+						iter->second = false;
+					}
+					// 충돌 유지
+					else {
+						leftCol->OnCollisionStay(rightCol);
+						rightCol->OnCollisionStay(leftCol);
+					}
+				}
+				// 이전엔 충돌 X 
+				else {
+					// 둘 다 살아있다면 최초 충돌
+					if(leftObj->IsActive() && rightObj->IsActive()) {
+						leftCol->OnCollisionEnter(rightCol);
+						rightCol->OnCollisionEnter(leftCol);
+						iter->second = true;
+					}
+				}
+			}
+			// 지금은 충돌 X 
+			else {
+				// 이전에는 충돌
+				if(iter->second) {
+					leftCol->OnCollisionExit(rightCol);
+					rightCol->OnCollisionExit(leftCol);
+					iter->second = false;
+				}
 			}
 		}
 	}
@@ -594,7 +656,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			AddGameObject(std::move(general));
 		}
 	}
-		
+
 	// Spanwer로 옮겨야 함
 	//for(int i = 0; i < 1; ++i) {
 	//	static bool flag{ true };
@@ -667,8 +729,30 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	AddGameObject(std::move(oz));
 	//}
 
-	// 스포너 생성
+	// 공격팀 스포너 생성
 	{
+		SpanwerTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.posInfo = PosInfo{};
+		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+		t.gameWorld = this;
 
+		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
+		AddGameObject(std::move(spawner));
+	}
+
+	// 방어팀 스포너 생성
+	{
+		SpanwerTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.posInfo = PosInfo{
+			.pos = Vec3{ 30.f, 0.f, 30.f },
+			.rot = Vec3{}
+		};
+		t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+		t.gameWorld = this;
+
+		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
+		AddGameObject(std::move(spawner));
 	}
 }

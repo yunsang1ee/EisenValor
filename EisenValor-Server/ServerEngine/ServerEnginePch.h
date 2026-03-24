@@ -3,8 +3,6 @@
 
 // #define APPLY_LOBBY_SERVER
 
-#define MODERN_CODE
-
 #include "ServerEngineDefines.h"
 
 #include <WS2tcpip.h>

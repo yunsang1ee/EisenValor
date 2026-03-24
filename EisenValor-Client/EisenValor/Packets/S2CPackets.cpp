@@ -1040,7 +1040,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		return false;
 	}
 
-	const uint32 cameraTargetID = recvPkt.camera_target_id();
+	const auto cameraTargetID = recvPkt.camera_target_id();
 
 	if (cameraTargetID == 0)
 	{
@@ -1083,8 +1083,8 @@ bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
 	// 플레이어 공격 방향 표시
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const auto id = recvPkt.obj_id();
+	const auto localID = scene->GetLocalID();
 
 	// 서버 Echo 방지
 	if (id == localID)
@@ -1115,7 +1115,7 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 )
 {
 	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
-	const uint32 objID = recvPkt.obj_id();
+	const auto objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 
 	if (obj)

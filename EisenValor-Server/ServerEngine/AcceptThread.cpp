@@ -6,7 +6,6 @@
 #include "Session.h"
 #include "IOCore.h"
 
-#ifdef  MODERN_CODE
 GameServerEngine::AcceptThread::AcceptThread(const SessionFactoryFunc func, const DWORD listenSocketFlags, WorkerThread* const ownerWorker)
 	: m_serverAddress{}, m_func{ func }, m_ownerWorker{ ownerWorker }, m_port{}
 {
@@ -93,4 +92,3 @@ void GameServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
 	int opt{ 1 };
 	setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int));
 }
-#endif //  MODERN_CODE

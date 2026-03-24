@@ -10,11 +10,8 @@ namespace GameServer {
 
 		private:
 			float					m_accDT;
-			static constexpr auto	SOLDIER_SPAWN_TIME = 5s;
+			static constexpr auto	SOLDIER_SPAWN_TIME = 15s;
 			static constexpr int	SPAWN_NPC_COUNT = 1;
 		};
 	}
 }
-
-
-

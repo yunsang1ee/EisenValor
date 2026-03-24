@@ -4,7 +4,7 @@
 #include "Creature.h"
 
 GameServer::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_type{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}, m_rotateSpeed{1.f}
+	:m_objType{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}, m_look{}, m_rotateSpeed{1.f}
 {
 }
 
@@ -15,7 +15,7 @@ GameServer::Contents::GameObject::~GameObject()
 
 GameServer::Contents::Script* GameServer::Contents::GameObject::GetScript(const std::string_view name)
 {
-	auto iter = std::find_if(m_scripts.begin(), m_scripts.end(), [name](const auto& script) {
+	const auto iter = std::find_if(m_scripts.begin(), m_scripts.end(), [name](const auto& script) {
 		return script->GetName() == name.data();
 		});
 
@@ -91,6 +91,6 @@ void GameServer::Contents::GameObject::LookAt(const Vec3& lookAt, const float dt
 	const float targetYaw{ Rad2Deg(atan2f(dir.x, dir.z))};
 	const float currentYaw{ m_posInfo.rot.y };
 
-	float deltaYaw{ NormalizeAngle(targetYaw - currentYaw) };
+	const float deltaYaw{ NormalizeAngle(targetYaw - currentYaw) };
 	m_posInfo.rot.y = NormalizeAngle(currentYaw + (deltaYaw * dt * m_rotateSpeed));
 }

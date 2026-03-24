@@ -62,6 +62,7 @@ namespace GameServer {
 			const GameObjects& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
 			std::shared_ptr<GameObject> FindObjectByID(const uint64 targetID);
+			uint64 GenerateID(const uint8 type) { return m_idGenerator.Generate(type); }
 
 		private:
 			void ProcessEvents();
@@ -78,25 +79,26 @@ namespace GameServer {
 
 			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>					m_gameObjectsGroups;
 
+			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
+			std::unordered_map<uint32, uint64>										m_sessionToPlayer;
+			std::unordered_map<uint64, uint32>										m_playerToSession;
+			IDGenerator																m_idGenerator;
+
 			std::queue<std::function<void()>>										m_pendingEventFpQueue;
 			std::queue<std::shared_ptr<GameObject>>									m_pendingAddObjectQueue;
 			std::queue<std::shared_ptr<GameObject>>									m_pendingRemoveObjectQueue;
 
+			float																	m_dt;
+			float																	m_accDT;
+			float																	m_accGameTime;
+			std::chrono::milliseconds												m_remainingTime;
 			uint64																	m_worldFrameCount;
 	
-			float m_accDT;
-
 			CollisionDetector														m_collisionDetector;
 			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>	m_check;
 			std::map<uint64, bool>													m_mapColInfo;
 
 			NavSystem																m_navSystem;
-			float																	m_dt;
-
-			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
-			std::unordered_map<uint32, uint64>										m_sessionToPlayer;
-			std::unordered_map<uint64, uint32>										m_playerToSession;
-			IDGenerator																m_idGenerator;
 		};
 	}
 }

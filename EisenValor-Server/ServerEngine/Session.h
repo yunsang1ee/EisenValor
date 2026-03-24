@@ -115,7 +115,6 @@ namespace GameServerEngine {
 #ifdef _USE_RIO
 	namespace RIO {
 
-#ifdef MODERN_CODE
 		class RIOSession : public Session {
 		public:
 			explicit RIOSession(const SESSION_TYPE type);
@@ -175,7 +174,6 @@ namespace GameServerEngine {
 			std::unique_ptr<GameServerEngine::PacketHandler>	m_packetHandler;
 
 		};
-#endif
 	}
 
 	class PacketSession : public RIO::RIOSession {

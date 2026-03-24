@@ -194,6 +194,7 @@
     <ClInclude Include="ServerManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Binaries\LobbyServer\Release\Config\lobbyserver_config.json" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />

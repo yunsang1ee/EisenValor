@@ -18,11 +18,7 @@ bool GameServerEngine::GameWorldThread::Init(const SessionFactoryFunc func, cons
 {
 	if(false == WorkerThread::Init(func, port))
 		return false;
-	
-	//for(int i = 0; i < 1; ++i) {
-	//	m_worlds.insert(std::make_pair(i, m_worldFunc()));
-	//	// m_worlds[i]->Init();
-	//}
+
 	return true;
 }
 

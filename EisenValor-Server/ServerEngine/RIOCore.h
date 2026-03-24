@@ -5,7 +5,6 @@
 namespace GameServerEngine {
 	namespace RIO {
 		class RIOSession;
-#ifdef MODERN_CODE
 		class RIOCore : public IOCore {
 		public:
 			RIOCore();
@@ -32,6 +31,5 @@ namespace GameServerEngine {
 			std::unordered_set<std::shared_ptr<RIOSession>>					m_connectedSessions;
 
 		};
-#endif
 	}
 }

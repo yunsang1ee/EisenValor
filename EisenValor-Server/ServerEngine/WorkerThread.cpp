@@ -14,7 +14,8 @@ GameServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std:
 }
 
 GameServerEngine::WorkerThread::~WorkerThread()
-{ 
+{
+
 }
 
 bool GameServerEngine::WorkerThread::Init(const SessionFactoryFunc func, const uint16 port)
@@ -29,6 +30,8 @@ bool GameServerEngine::WorkerThread::Init(const SessionFactoryFunc func, const u
 
 	if(false == m_acceptThread->Init(port))
 		return false;
+
+	LOG_INFO("WorkerThread Init Success! Port: {}", port);
 
 	return true;
 }
@@ -67,7 +70,7 @@ void GameServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 	static uint32 idGen{ 1 };
 	session->SetID(idGen);
 	idGen++;
-	if(m_type == WORKER_THREAD_TYPE::WORLD) {
+	if(m_type == WORKER_THREAD_TYPE::GAME_WORLD) {
 		static_cast<GameWorldThread*>(this)->EnterWorld(session);
 	}
 #endif

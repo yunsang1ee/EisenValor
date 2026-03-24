@@ -108,7 +108,7 @@ namespace GameServer {
 
 			const std::wstring& GetName() const { return m_name; }
 			uint64 GetID() const { return m_id; }
-			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_type; }
+			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_objType; }
 			const PosInfo& GetPosInfo() const { return m_posInfo; }
 			const Vec3& GetPos() const  { return m_posInfo.pos; }
 			const Vec3& GetRotation() const  { return m_posInfo.rot; }
@@ -130,13 +130,13 @@ namespace GameServer {
 		private:
 			std::wstring							m_name;
 			uint64									m_id;
-			const FB_ENUMS::GAME_OBJECT_TYPE		m_type;
+			const FB_ENUMS::GAME_OBJECT_TYPE		m_objType;
 			const FB_ENUMS::TEAM_TYPE				m_teamType;
 
 			ComponentGroup							m_components;
 			Scripts									m_scripts;
 
-			GameWorld*							m_gameWorld;
+			GameWorld*								m_gameWorld;
 
 			PosInfo									m_posInfo;
 			Vec3									m_scale;

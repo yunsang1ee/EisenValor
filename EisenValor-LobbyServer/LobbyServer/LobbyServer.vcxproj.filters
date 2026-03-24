@@ -152,5 +152,8 @@
       <Filter>03. Packets\FBS</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="..\Binaries\LobbyServer\Release\Config\lobbyserver_config.json">
+      <Filter>98. Headers</Filter>
+    </None>
   </ItemGroup>
 </Project>

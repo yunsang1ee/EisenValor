@@ -54,25 +54,25 @@ bool GameServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSes
 #ifdef _USE_RIO
 	flags = WSA_FLAG_REGISTERED_IO;
 
+	const auto& networkConfig = MANAGER(ServerEngineConfigManager)->GetNetworkConfig();
+
 	// lobbySesionThread 생성
 	{
 		auto rioCOre{ std::make_unique<RIO::RIOCore>() };
 		auto lobbyServerSessionThread =  std::make_unique<WorkerThread>(WORKER_THREAD_TYPE::LOBBY_SESSION, std::move(rioCOre));
 		
-		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, 40001))
+		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, networkConfig.LobbySessionThreadPort))
 			return false;
 
 		m_workerThreads.emplace_back(std::move(lobbyServerSessionThread));
 		m_lobbyServerSessionThread = m_workerThreads.back().get();
 	}
 	
-	// WorkerThread 생성
-	int port[2]{ 40002, 40003 };
-	for(int i = 1; i < 3; ++i) {
+	for(int i = 1; i <= networkConfig.GameWorldThreadCount; ++i) {
 		auto rioCore = std::make_unique<RIO::RIOCore>();
-		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::WORLD, std::move(rioCore), worldFunc));
+		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::GAME_WORLD, std::move(rioCore), worldFunc));
 
-		if(false == m_workerThreads[i]->Init(clientSessionFunc, port[i-1]))
+		if(false == m_workerThreads[i]->Init(clientSessionFunc, MANAGER(ServerEngineConfigManager)->GetGameWorldThreadPort(i-1)))
 			return false;
 	}
 

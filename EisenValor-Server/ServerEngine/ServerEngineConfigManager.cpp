@@ -27,10 +27,23 @@ bool GameServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::
         const Value& network = doc["NetworkConfigure"];
         std::cout << "[NetworkConfigure]" << std::endl;
 
-        if(network.HasMember("port") && network["port"].IsInt()) {
-            m_networkConfig.port = network["port"].GetInt();
-            std::cout << " - Port: " << m_networkConfig.port << std::endl;
+        if(network.HasMember("LobbySessionThreadPort") && network["LobbySessionThreadPort"].IsInt()) {
+            m_networkConfig.LobbySessionThreadPort = static_cast<uint16>(network["LobbySessionThreadPort"].GetInt());
+            std::cout << " - LobbySessionThreadPort: " << m_networkConfig.LobbySessionThreadPort << std::endl;
         }
+        else return false;
+
+        if(network.HasMember("GameWorldThreadStartPort") && network["GameWorldThreadStartPort"].IsInt()) {
+            m_networkConfig.GameWorldThreadStartPort = static_cast<uint16>(network["GameWorldThreadStartPort"].GetInt());
+            std::cout << " - GameWorldThreadStartPort: " << m_networkConfig.GameWorldThreadStartPort << std::endl;
+        }
+        else return false;
+
+        if(network.HasMember("GameWorldThreadCount") && network["GameWorldThreadCount"].IsInt()) {
+            m_networkConfig.GameWorldThreadCount = static_cast<uint16>(network["GameWorldThreadCount"].GetInt());
+            std::cout << " - GameWorldThreadCount: " << m_networkConfig.GameWorldThreadCount << std::endl;
+        }
+        else return false;
     }
 
     if(doc.HasMember("RIOWorkerConfigure")) {

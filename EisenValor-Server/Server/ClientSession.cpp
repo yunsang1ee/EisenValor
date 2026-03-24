@@ -133,13 +133,6 @@ void GameServer::RIOClientSession::OnDisconnected(const std::string_view reason)
 			SetState(SESSION_STATE::FREE);
 			break;
 		}
-		case SESSION_STATE::IN_GAME_ROOM:
-		{
-			// auto room = GetGameRoom();
-			//if(room)
-			//	room->ExecAsync(&Server::Contents::GameRoom::LeaveGameRoom, clientSession);
-			break;
-		}
 		case SESSION_STATE::IN_GAME_WORLD:
 		{
 			if(m_gameWorld)

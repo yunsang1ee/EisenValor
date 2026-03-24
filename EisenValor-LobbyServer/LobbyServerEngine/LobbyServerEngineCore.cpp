@@ -30,9 +30,8 @@ bool LobbyServerEngine::LobbyServerEngineCore::Init(const GameServerSessionFacto
 		return false;
 	}
 
-	MANAGER(LobbyServerEngine::ConfigManager).LoadFile("lobbyserver_config.json");
+	MANAGER(LobbyServerEngine::ConfigManager).LoadFile("Config/lobbyserver_config.json");
 
-	
 	m_gameServerSession = gameServerSessionFunc();
 	m_gameServerSession->SetID(0);
 

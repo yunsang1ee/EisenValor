@@ -3,7 +3,6 @@
 
 #include "Session.h"
 #include "ServerEngineConfigManager.h"
-#ifdef MODERN_CODE
 
 GameServerEngine::RIO::RIOCore::RIOCore()
 {
@@ -11,6 +10,7 @@ GameServerEngine::RIO::RIOCore::RIOCore()
 
 GameServerEngine::RIO::RIOCore::~RIOCore()
 {
+	m_rioExtfuncTable.RIOCloseCompletionQueue(m_cq);
 }
 
 bool GameServerEngine::RIO::RIOCore::Init()
@@ -146,4 +146,3 @@ void GameServerEngine::RIO::RIOCore::DequeueCompletion()
 		}
 	}
 }
-#endif

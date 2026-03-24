@@ -2,7 +2,6 @@
 
 namespace GameServerEngine {
 	class WorkerThread;
-#ifdef  MODERN_CODE
 
 	class AcceptThread {
 	public:
@@ -34,6 +33,4 @@ namespace GameServerEngine {
 
 		friend class ServerEngineCore;
 	};
-#endif //  MODERN_CODE
-
 }
