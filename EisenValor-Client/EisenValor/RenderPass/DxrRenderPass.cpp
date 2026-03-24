@@ -218,6 +218,8 @@ void DxrRenderPass::CollectStaticMeshData(
 					matRes->GetTexture("ORMS") ? matRes->GetTexture("ORMS")->GetTexture()->GetSRVIndex() : ~0u;
 				gpuMat.emissiveTextureIdx =
 					matRes->GetTexture("EMSV") ? matRes->GetTexture("EMSV")->GetTexture()->GetSRVIndex() : ~0u;
+				gpuMat.frameIndex = matRes->GetFrameIndex();
+				gpuMat.atlasCols = matRes->GetAtlasCols();
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;
@@ -329,14 +331,34 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.metallic = matRes->GetMetallic();
 				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
 				gpuMat.materialFlags = matRes->GetMaterialFlags();
-				gpuMat.albedoTextureIdx =
-					matRes->GetTexture("ALBD") ? matRes->GetTexture("ALBD")->GetTexture()->GetSRVIndex() : ~0u;
+
+				if (auto albedoTexRes = matRes->GetTexture("ALBD"))
+				{
+					if (auto dxTex = albedoTexRes->GetTexture())
+					{
+						gpuMat.albedoTextureIdx = dxTex->GetSRVIndex();
+						DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD Index: {}\n", matRes->GetName().c_str(), gpuMat.albedoTextureIdx);
+					}
+					else
+					{
+						gpuMat.albedoTextureIdx = ~0u;
+						DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD slot exists but DxTexture is NULL\n", matRes->GetName().c_str());
+					}
+				}
+				else
+				{
+					gpuMat.albedoTextureIdx = ~0u;
+					DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD slot NOT FOUND\n", matRes->GetName().c_str());
+				}
+
 				gpuMat.normalTextureIdx =
 					matRes->GetTexture("NRML") ? matRes->GetTexture("NRML")->GetTexture()->GetSRVIndex() : ~0u;
 				gpuMat.ormTextureIdx =
 					matRes->GetTexture("ORMS") ? matRes->GetTexture("ORMS")->GetTexture()->GetSRVIndex() : ~0u;
 				gpuMat.emissiveTextureIdx =
 					matRes->GetTexture("EMSV") ? matRes->GetTexture("EMSV")->GetTexture()->GetSRVIndex() : ~0u;
+				gpuMat.frameIndex = matRes->GetFrameIndex();
+				gpuMat.atlasCols = matRes->GetAtlasCols();
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;

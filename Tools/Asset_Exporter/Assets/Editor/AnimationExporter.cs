@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class AnimationExporter
 {
-    [MenuItem("Tools/Export Animation (.evanim)")]
+    [MenuItem("Tools/EisenValor/Export Animation (.evanim)")]
     public static void ExportAnimation()
     {
         // 1. Select AnimationClip & Target GameObject

@@ -380,6 +380,9 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetData(data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic);
+	// propagate atlas/frame metadata
+	res->SetFrameIndex(data.frameIndex);
+	res->SetAtlasCols(data.atlasCols);
 
 	for (const auto& dep : data.dependencies)
 	{

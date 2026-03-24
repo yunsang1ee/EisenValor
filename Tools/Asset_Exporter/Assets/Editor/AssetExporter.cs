@@ -37,32 +37,35 @@ public class AssetExporter
     {
         uint flags = MATERIAL_FLAG_NONE;
 
+        // 표준 유니티 PBR 셰이더는 ORM 텍스처를 사용하므로, 해당 플래그를 설정합니다.
         if (mat.shader.name.Contains("Lit") || mat.shader.name.Contains("Standard"))
         {
             flags |= MATERIAL_FLAG_UNITY_PACKING;
         }
 
-        if ((mat.HasProperty("_BaseMap") && mat.GetTexture("_BaseMap") != null) ||
-            (mat.HasProperty("_MainTex") && mat.GetTexture("_MainTex") != null))
+        // 'FindTexture'를 사용하여 각종 텍스처 맵의 존재 여부를 지능적으로 확인하고 플래그를 설정합니다.
+        if (null != FindTexture(mat, new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1" }, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" }))
         {
             flags |= MATERIAL_FLAG_USE_ALBEDO_MAP;
         }
 
-        if (mat.HasProperty("_BumpMap") && mat.GetTexture("_BumpMap") != null)
-        {
+        if (null != FindTexture(mat, new[] { "_BumpMap", "Material_VirtualTexturePhysical_0" }, new[] { "Normal" }))
+        {            
             flags |= MATERIAL_FLAG_USE_NORMAL_MAP;
         }
 
-        if (mat.HasProperty("_MaskMap") && mat.GetTexture("_MaskMap") != null)
+        // ORM 맵 플래그는 이제 마스크, 메탈릭, 러프니스 관련 텍스처가 있을 때 설정됩니다.
+        if (null != FindTexture(mat, new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3" }, new[] { "Mask", "ORM", "Metallic" }))
         {
             flags |= MATERIAL_FLAG_USE_ORM_MAP;
         }
 
-        if (mat.HasProperty("_EmissionMap") && mat.GetTexture("_EmissionMap") != null)
+        if (null != FindTexture(mat, new[] { "_EmissionMap" }, new[] { "Emission", "Emissive" }))
         {
             flags |= MATERIAL_FLAG_EMISSIVE_MAP;
         }
 
+        // --- 기타 머티리얼 속성 플래그 ---
         if (mat.IsKeywordEnabled("_ALPHATEST_ON") || mat.renderQueue == (int)UnityEngine.Rendering.RenderQueue.AlphaTest)
         {
             flags |= MATERIAL_FLAG_ALPHA_TEST;
@@ -77,8 +80,7 @@ public class AssetExporter
         {
             flags |= MATERIAL_FLAG_DOUBLE_SIDED;
         }
-
-        if (mat.shader.name.Contains("Unlit"))
+        if (mat.shader.name.IndexOf("Unlit", System.StringComparison.OrdinalIgnoreCase) >= 0)
         {
             flags |= MATERIAL_FLAG_IGNORE_LIGHTING;
         }
@@ -395,22 +397,61 @@ public class AssetExporter
         using (MemoryStream ms = new())
         using (BinaryWriter bw = new(ms))
         {
-            uint shadingModel = SHADING_MODEL_LIT_PBR;
-            if (mat.shader.name.Contains("Unlit"))
-            {
-                shadingModel = SHADING_MODEL_UNLIT;
-            }
+            // 셰이딩 모델 결정 (Unlit 키워드 포함 시 UNLIT)
+            uint shadingModel = mat.shader.name.IndexOf("Unlit", System.StringComparison.OrdinalIgnoreCase) >= 0
+                ? SHADING_MODEL_UNLIT
+                : SHADING_MODEL_LIT_PBR;
             bw.Write(shadingModel);
             bw.Write(BuildMaterialFlags(mat)); // Material Flags
 
-            Color color = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : (mat.HasProperty("_Color") ? mat.color : Color.white);
-            bw.Write(color.r); bw.Write(color.g); bw.Write(color.b); bw.Write(color.a);
+            // --- 지능형 속성 검색 사용 ---
+            // BaseColor: "_BaseColor", "_Color" 등을 검색. 없으면 흰색.
+            Color baseColor = FindColor(mat, new[] { "_BaseColor", "_Color" }, new[] { "Albedo", "BaseColor" }, Color.white);
+            bw.Write(baseColor.r); bw.Write(baseColor.g); bw.Write(baseColor.b); bw.Write(baseColor.a);
 
-            float smooth = mat.HasProperty("_Smoothness") ? mat.GetFloat("_Smoothness") : (mat.HasProperty("_Glossiness") ? mat.GetFloat("_Glossiness") : 0.5f);
-            bw.Write(1.0f - smooth);
+            // Roughness: PBR 표준 Roughness를 직접 찾거나, 유니티의 Smoothness/Glossiness에서 변환.
+            float roughness;
+            // -1을 기본값으로 하여 속성을 실제로 찾았는지 아니면 기본값이 반환되었는지 구분합니다.
+            float roughnessProbe = FindFloat(mat, new[] { "_Roughness" }, new[] { "Roughness" }, -1.0f);
+            if (roughnessProbe >= 0.0f) // Roughness 속성을 직접 찾은 경우
+            {
+                roughness = roughnessProbe;
+            }
+            else // Roughness 속성이 없으면, Smoothness를 찾아 변환
+            {
+                float smoothness = FindFloat(mat, new[] { "_Smoothness", "_Glossiness" }, new[] { "Smoothness", "Gloss" }, 0.5f);
+                roughness = 1.0f - smoothness;
+            }
+            bw.Write(roughness);
 
-            float metallic = mat.HasProperty("_Metallic") ? mat.GetFloat("_Metallic") : 0f;
+            // Metallic: "_Metallic" 등을 검색. 없으면 0.
+            float metallic = FindFloat(mat, new[] { "_Metallic" }, new[] { "Metallic" }, 0f);
             bw.Write(metallic);
+
+            // Emissive Color: "_EmissionColor" 등을 검색. 없으면 검은색.
+            Color emissiveColor = FindColor(mat, new[] { "_EmissionColor" }, new[] { "Emission", "Emissive" }, Color.black);
+            bw.Write(emissiveColor.r); bw.Write(emissiveColor.g); bw.Write(emissiveColor.b);
+
+            // Frame Index (for Atlas): "_FrameIndex"를 검색. 없으면 0.
+            float frameIndex = FindFloat(mat, new[] { "_FrameIndex" }, new[] { "FrameIndex", "AtlasIndex" }, 0f);
+            bw.Write(frameIndex);
+
+            // Atlas columns: try to read "_AtlasCols" (or similar). If not present, use shader-specific default (Cursed_Set -> 6)
+            float atlasColsF = FindFloat(mat, new[] { "_AtlasCols" }, new[] { "AtlasCols", "AtlasColumns" }, -1f);
+            if (atlasColsF < 0.0f)
+            {
+                if (mat.shader != null && !string.IsNullOrEmpty(mat.shader.name) && mat.shader.name.IndexOf("Cursed_Set", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    atlasColsF = 6.0f;
+                }
+                else
+                {
+                    atlasColsF = 1.0f;
+                }
+            }
+            // Debug log to help diagnose exporter property reads
+            UnityEngine.Debug.Log($"[AssetExporter] Exporting Material '{mat.name}' Shader='{(mat.shader!=null?mat.shader.name:"<null>")}' FrameIndex={frameIndex} AtlasCols={atlasColsF}");
+            bw.Write((uint)atlasColsF);
 
             return ms.ToArray();
         }
@@ -418,35 +459,49 @@ public class AssetExporter
 
     private static byte[] BuildMaterialDepsChunk(Material mat)
     {
-        var slotMap = new Dictionary<string, string>
-        {
-            { "ALBD", "_BaseMap" },
-            { "NRML", "_BumpMap" },
-            { "ORMS", "_MaskMap" },
-            { "EMSV", "_EmissionMap" }
-        };
-
         using MemoryStream ms = new();
         using BinaryWriter bw = new(ms);
         var validSlots = new List<(string key, string guid)>();
-        foreach (var slot in slotMap)
-        {
-            string propName = slot.Value;
-            if (!mat.HasProperty(propName) && "ALBD" == slot.Key)
-            {
-                propName = "_MainTex";
-            }
 
-            if (mat.HasProperty(propName))
-            {
-                Texture tex = mat.GetTexture(propName);
-                if (null != tex)
-                {
-                    validSlots.Add((slot.Key, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(tex))));
-                }
-            }
+        // Albedo / BaseColor Map
+        Texture albedoTex = FindTexture(mat, new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1" }, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" });
+        
+        if (albedoTex != null)
+        {
+            UnityEngine.Debug.Log($"[AssetExporter] Material '{mat.name}' found Albedo Texture: '{albedoTex.name}'");
+        }
+        else
+        {
+            UnityEngine.Debug.LogWarning($"[AssetExporter] Material '{mat.name}' did NOT find any Albedo Texture from candidates.");
         }
 
+        if (albedoTex != null)
+        {
+            validSlots.Add(("ALBD", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(albedoTex))));
+        }
+
+        // Normal Map
+        Texture normalTex = FindTexture(mat, new[] { "_BumpMap", "Material_VirtualTexturePhysical_0" }, new[] { "Normal", "NormalMap" });
+        if (normalTex != null)
+        {
+            validSlots.Add(("NRML", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(normalTex))));
+        }
+
+        // ORM / Mask / Metallic Gloss Map
+        Texture ormTex = FindTexture(mat, new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3" }, new[] { "Mask", "ORM", "Metallic" });
+        if (ormTex != null)
+        {
+            validSlots.Add(("ORMS", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(ormTex))));
+        }
+
+        // Emissive Map
+        Texture emissiveTex = FindTexture(mat, new[] { "_EmissionMap" }, new[] { "Emission", "Emissive" });
+        if (emissiveTex != null)
+        {
+            validSlots.Add(("EMSV", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(emissiveTex))));
+        }
+
+        // --- Write out dependencies ---
         bw.Write((uint)validSlots.Count);
 
         foreach (var (key, guid) in validSlots)
@@ -530,5 +585,81 @@ public class AssetExporter
     {
         var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex)) as TextureImporter;
         return null != importer && importer.textureType == TextureImporterType.NormalMap;
+    }
+
+    // --- 지능형 속성 검색 헬퍼 (Smart Property Search) ---
+    // 표준 유니티 셰이더와 커스텀 셰이더(아틀라스 포함)를 모두 지원하기 위한 헬퍼 함수들입니다.
+
+    private static Texture FindTexture(Material mat, string[] candidates, string[] keywords)
+    {
+        // 1. 우선순위 후보 이름으로 직접 검색
+        foreach (var name in candidates)
+        {
+            if (mat.HasProperty(name))
+            {
+                var tex = mat.GetTexture(name);
+                if (tex != null) return tex;
+            }
+        }
+
+        // 2. 키워드 기반 패턴 검색 (셰이더의 모든 프로퍼티 전수 조사)
+        int propCount = mat.shader.GetPropertyCount();
+        for (int i = 0; i < propCount; i++)
+        {
+            if (mat.shader.GetPropertyType(i) != UnityEngine.Rendering.ShaderPropertyType.Texture) continue;
+            string propName = mat.shader.GetPropertyName(i);
+            foreach (var kw in keywords)
+            {
+                if (propName.IndexOf(kw, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var tex = mat.GetTexture(propName);
+                    if (tex != null) return tex;
+                }
+            }
+        }
+        return null;
+    }
+
+    // 숫자 값 찾기
+    private static float FindFloat(Material mat, string[] candidates, string[] keywords, float defaultValue)
+    {
+        foreach (var name in candidates)
+        {
+            if (mat.HasProperty(name)) return mat.GetFloat(name);
+        }
+
+        int propCount = mat.shader.GetPropertyCount();
+        for (int i = 0; i < propCount; i++)
+        {
+            var type = mat.shader.GetPropertyType(i);
+            if (type != UnityEngine.Rendering.ShaderPropertyType.Float && type != UnityEngine.Rendering.ShaderPropertyType.Range) continue;
+            string propName = mat.shader.GetPropertyName(i);
+            foreach (var kw in keywords)
+            {
+                if (propName.IndexOf(kw, System.StringComparison.OrdinalIgnoreCase) >= 0) return mat.GetFloat(propName);
+            }
+        }
+        return defaultValue;
+    }
+
+    // 
+    private static Color FindColor(Material mat, string[] candidates, string[] keywords, Color defaultValue)
+    {
+        foreach (var name in candidates)
+        {
+            if (mat.HasProperty(name)) return mat.GetColor(name);
+        }
+
+        int propCount = mat.shader.GetPropertyCount();
+        for (int i = 0; i < propCount; i++)
+        {
+            if (mat.shader.GetPropertyType(i) != UnityEngine.Rendering.ShaderPropertyType.Color) continue;
+            string propName = mat.shader.GetPropertyName(i);
+            foreach (var kw in keywords)
+            {
+                if (propName.IndexOf(kw, System.StringComparison.OrdinalIgnoreCase) >= 0) return mat.GetColor(propName);
+            }
+        }
+        return defaultValue;
     }
 }

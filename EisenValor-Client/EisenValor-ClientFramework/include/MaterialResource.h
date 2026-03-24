@@ -31,6 +31,16 @@ public:
 	std::shared_ptr<TextureResource> GetTexture(std::string_view slotName) const;
 	const std::vector<TextureSlot>&	 GetTextureSlots() const { return textures; }
 
+	uint32_t GetFrameIndex() const { return frameIndex; }
+	void SetFrameIndex(uint32_t v) { frameIndex = v; }
+
+	uint32_t GetAtlasCols() const { return atlasCols; }
+	void SetAtlasCols(uint32_t v) { atlasCols = v; }
+
+private:
+	uint32_t	frameIndex = 0;
+	uint32_t	atlasCols = 1;
+
 private:
 	EvAsset::ShadingModel shadingModelId = EvAsset::ShadingModel::LitPbr;
 	uint32_t			  materialFlags = 0;
