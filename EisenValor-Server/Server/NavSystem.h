@@ -29,6 +29,8 @@ namespace GameServer {
 
 			dtCrowd* GetCrowd() const { return m_crowd; }
 
+			dtNavMeshQuery* GetNavMeshQuery() const { return m_navMeshQuery; }
+
 		private:
 			dtNavMesh*		m_navMesh;
 

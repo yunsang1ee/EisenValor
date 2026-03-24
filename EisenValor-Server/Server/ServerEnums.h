@@ -1,6 +1,7 @@
 #pragma once
 
 enum class COMPONENT_TYPE : uint8 {
+	MOVEMENT,
 	FSM,
 	BEHAVIOR_TREE,
 	NAV_AGENT,

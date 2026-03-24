@@ -107,7 +107,7 @@ void GameServer::Contents::GeneralRoamingState::FindGeneral(const float dt)
 
 			if(o->GetTeamType() == GetOwner()->GetTeamType()) continue;
 
-			const auto& targetPos{ o->GetPos() };
+			const auto& targetPos{ o->GetPosition() };
 
 			if(GetOwner()->IsTargetInRange(o, 2.f * 2.f)) {
 				GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", id);

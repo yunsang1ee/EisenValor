@@ -58,11 +58,11 @@ bool GameServer::ClientPacketHandler::Handle_CS_MOVE_PACKET(const std::shared_pt
 
 	const Vec3 pos{ FlatVec3ToVec3(recvPkt.pos_info()->pos()) };
 	const Vec3 rot{ FlatVec3ToVec3(recvPkt.pos_info()->rot()) };
-	const PosInfo info{ pos, rot };
+	const Transform tramsform{ pos, rot };
 
 	auto world = clientSession->GetGameWorld();
 	if(world)
-		world->Handle_CS_MOVE(clientSession, info);
+		world->Handle_CS_MOVE(clientSession, tramsform);
 
 	return true;
 }

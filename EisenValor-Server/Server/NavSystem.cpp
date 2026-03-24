@@ -10,7 +10,9 @@ GameServer::Contents::NavSystem::NavSystem()
 
 GameServer::Contents::NavSystem::~NavSystem()
 {
-	if(m_crowd) dtFreeCrowd(m_crowd);
+	if(m_crowd) 
+		dtFreeCrowd(m_crowd);
+	
 	dtFreeNavMeshQuery(m_navMeshQuery);
 	dtFreeNavMesh(m_navMesh);
 }
@@ -70,10 +72,12 @@ void GameServer::Contents::NavSystem::Update(const float dt)
 
 void GameServer::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3& targetPos)
 {
-	if(!m_crowd) return;
+	if(!m_crowd) 
+		return;
 
 	const dtCrowdAgent* ag{ m_crowd->getAgent(agentIdx) };
-	if(!ag || !ag->active) return;
+	if(!ag || !ag->active) 
+		return;
 
 	float pos[3] = { targetPos.x, targetPos.y, targetPos.z };
 	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f };	// search range

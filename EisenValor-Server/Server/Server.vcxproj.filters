@@ -154,6 +154,12 @@
     <ClCompile Include="IDGenerator.cpp">
       <Filter>03. Contents\GameWorld\IdGenerator</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>03. Contents\GameObject\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="Movement.cpp">
+      <Filter>03. Contents\Component\Movement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -296,6 +302,12 @@
     </Filter>
     <Filter Include="03. Contents\Component\Collider">
       <UniqueIdentifier>{a667c614-f8b1-41f3-b089-90afa67bee80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameObject\Transform">
+      <UniqueIdentifier>{bea7e919-c632-41aa-800d-54072aa079d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\Movement">
+      <UniqueIdentifier>{5489b01f-732e-483e-a373-405f30274667}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -469,6 +481,12 @@
     </ClInclude>
     <ClInclude Include="PacketEnums.h">
       <Filter>02. Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>03. Contents\GameObject\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Movement.h">
+      <Filter>03. Contents\Component\Movement</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

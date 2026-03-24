@@ -130,7 +130,7 @@ void GameServer::Contents::Player::OnRespawn()
 
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT, true);
-	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
+	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType())};
 	world->Broadcast(std::move(pb));
 
 	std::cout << "Player Respawn!" << std::endl;
@@ -161,15 +161,6 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::Gen
 	SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
 	DecStamina(skillData->staminaCost);
 
-	const float attackRadius = skillData->attackRadius;
-	const float attackDegree = skillData->attackDegree;
-	const float radiusSq = attackRadius * attackRadius;
-
-	const Vec3& playerPos = GetPos();
-	const float yaw{ GetRotation().y };
-	Vec3 playerDir{ sinf(Deg2Rad(yaw)), 0.f, cosf(Deg2Rad(yaw)) };
-	playerDir.Normalize();
-	
 	bool findTarget{ false };
 
 	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
@@ -258,7 +249,7 @@ void GameServer::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 p
 
 	const auto& gameObjectsGroups{ gameWorld->GetGameObjectGroups() };
 
-	const Vec3& myPos{ GetPos() };
+	const Vec3& myPos{ GetPosition() };
 	const uint64 myID{ GetID() };
 
 	uint64 bestTargetID{};
@@ -272,7 +263,7 @@ void GameServer::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 p
 			if(targetID == myID) return;
 			if(targetID == prevTargetID)return;
 
-			const auto d{ target->GetPos() - myPos };
+			const auto d{ target->GetPosition() - myPos };
 			const float distSq{ d.LengthSquared() };
 
 			if(distSq < bestDistSq) {

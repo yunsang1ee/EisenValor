@@ -442,6 +442,7 @@
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="IDGenerator.cpp" />
     <ClCompile Include="LobbyServerPacketHandler.cpp" />
+    <ClCompile Include="Movement.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
@@ -590,6 +591,7 @@
     <ClCompile Include="SoldierStates.cpp" />
     <ClCompile Include="Spawner.cpp" />
     <ClCompile Include="State.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
@@ -600,6 +602,7 @@
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="IDGenerator.h" />
     <ClInclude Include="LobbyServerPacketHandler.h" />
+    <ClInclude Include="Movement.h" />
     <ClInclude Include="PacketEnums.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Collider.h" />
@@ -649,6 +652,7 @@
     <ClInclude Include="SoldierStates.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="State.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Binaries\Server\GameData\GameData.json" />

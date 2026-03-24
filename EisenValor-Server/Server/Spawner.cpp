@@ -20,7 +20,7 @@ void GameServer::Contents::Spawner::Update(const float dt)
 			t.id = world->GenerateID(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 			t.teamType = owner->GetTeamType();
 			t.gameWorld = world;
-			t.posInfo = owner->GetPosInfo();
+			t.transform = owner->GetTransform();
 			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
 
 			auto soldier = GameServer::Contents::GameObjectFactory::CreateSoldier(t);

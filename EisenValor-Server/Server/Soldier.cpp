@@ -33,7 +33,7 @@ void GameServer::Contents::Soldier::OnCollisionExit(Collider* const other)
 void GameServer::Contents::Soldier::Update(const float dt)
 {
 	GameObject::Update(dt);
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0)};
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 

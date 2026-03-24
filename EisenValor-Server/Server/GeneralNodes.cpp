@@ -31,10 +31,10 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindOZ::DoActio
 
 		auto oz{ static_cast<OccupationZone*>(obj->GetScript("OZ")) };
 		if(oz) {
-			const auto& ozPos{ obj->GetPos() };
+			const auto& ozPos{ obj->GetPosition() };
 			if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
 				// std::cout << "Find OZ!" << std::endl;
-				owner->SetLook(obj->GetPos());
+				owner->LookAt(obj->GetPosition());
 				tree->GetBlackboard()->SetValue("OZ_ID", o->GetID());
 				// std::cout << "SetDestPos" << std::endl;
 				owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(ozPos);
@@ -52,7 +52,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::MoveToOZ::DoAct
 {
 	auto const tree{ GetTree() };
 	auto const owner{ tree->GetOwner() };
-	const auto& ownerPos{ owner->GetPos() };
+	const auto& ownerPos{ owner->GetPosition() };
 	auto const world{ owner->GetGameWorld() };
 
 	auto const ozObj{ world->FindObjectByID(tree->GetBlackboard()->GetValue<uint64>("OZ_ID")) };
@@ -60,7 +60,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::MoveToOZ::DoAct
 	if(false == IsValidObj(ozObj))
 		return GameServer::Contents::BEHAVIOR_NODE_STATUS::FAIL;
 
-	const auto& ozPos{ ozObj->GetPos() };
+	const auto& ozPos{ ozObj->GetPosition() };
 
 	auto oz{ static_cast<OccupationZone*>(ozObj->GetScript("OZ")) };
 
@@ -103,7 +103,7 @@ bool GameServer::Contents::IsTargetAttacking::Check(const float dt)
 		return false;
 	}
 
-	owner->SetLook(target->GetPos());
+	owner->LookAt(target->GetPosition());
 
 	const auto targetObjType{ target->GetObjType() };
 
@@ -254,7 +254,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::AttackTry::DoAc
 	auto const tree{ GetTree() };
 	auto const bb{ tree->GetBlackboard() };
 	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
-	const auto& ownerPos{ owner->GetPos() };
+	const auto& ownerPos{ owner->GetPosition() };
 	auto const world{ owner->GetGameWorld() };
 
 	const uint64 targetID = tree->GetBlackboard()->GetValue<uint64>("Target", -1);
@@ -310,7 +310,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::AttackTry::DoAc
 		auto target{ std::static_pointer_cast<GameServer::Contents::Creature>(obj) };
 		const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
-		const auto& targetPos{ target->GetPos() };
+		const auto& targetPos{ target->GetPosition() };
 
 		if(owner->IsTargetInRange(target, 3.f * 3.f)) {
 			std::uniform_int_distribution<int> uid{ FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_MIN, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_MAX - 1 };
@@ -363,7 +363,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::CombatMovement:
 	if(false == IsValidObj(target))
 		return BEHAVIOR_NODE_STATUS::FAIL;
 
-	const auto& targetPos{ target->GetPos() };
+	const auto& targetPos{ target->GetPosition() };
 
 	m_accDTForChangeAttackDir += dt;
 
@@ -376,7 +376,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::CombatMovement:
 		world->Broadcast(std::move(pb));
 	}
 
-	const auto& ownerPos{ owner->GetPos() };
+	const auto& ownerPos{ owner->GetPosition() };
 
 	auto dir{ targetPos - ownerPos };
 	dir.Normalize();
@@ -390,15 +390,15 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::CombatMovement:
 	constexpr float maxRangeSq{ maxRange * maxRange };
 	constexpr float minRangeSq{ minRange * minRange };
 
-	const float distToSq{ (targetPos - owner->GetPos()).LengthSquared() };
+	const float distToSq{ (targetPos - owner->GetPosition()).LengthSquared() };
 
 	if(distToSq > maxRangeSq) {
-		Vec3 nextPos{ owner->GetPos() + dir * 1.5f };
+		Vec3 nextPos{ owner->GetPosition() + dir * 1.5f };
 		owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(nextPos);
 		std::cout << "DistToSq > maxRangeSq" << std::endl;
 	}
 	else if(distToSq < minRangeSq) {
-		Vec3 nextPos{ owner->GetPos() - dir * 1.5f };
+		Vec3 nextPos{ owner->GetPosition() - dir * 1.5f };
 		owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(nextPos);
 		std::cout << "distToSq < minRangeSq" << std::endl;
 	}
@@ -410,7 +410,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::CombatMovement:
 		static bool moveRight{ true };
 
 		Vec3 sideDir{ moveRight ? rightDir : (rightDir * -1.0f) };
-		Vec3 nextPos{ owner->GetPos() + (sideDir * 1.0f) };
+		Vec3 nextPos{ owner->GetPosition() + (sideDir * 1.0f) };
 
 		owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(nextPos);
 	}

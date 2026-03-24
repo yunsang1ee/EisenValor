@@ -33,12 +33,12 @@ static inline Vec3 FlatVec3ToVec3(const FB_STRUCTS::Vec3* v)
 	return Vec3{ v->x(), v->y(), v->z() };
 }
 
-static inline float Deg2Rad(const float degree)
+constexpr float Deg2Rad(float degree)
 {
 	return degree * (DirectX::XM_PI / 180.f);
 }
 
-static inline float Rad2Deg(const float radian)
+constexpr float Rad2Deg(float radian)
 {
 	return radian * (180.f / DirectX::XM_PI);
 }

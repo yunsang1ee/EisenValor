@@ -15,9 +15,10 @@
 #include "GameWorldThread.h"
 #include "SessionManager.h"
 #include "LobbyServerSession.h"
+#include "Movement.h"
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime(20min)
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime(20min)
 {
 	std::cout << "GameWorldTest!" << std::endl;
 }
@@ -51,32 +52,61 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
+	//m_dt = dt;
+	//m_accDT += dt;
+
+	//const float fixedInterval = 0.01667f;
+
+	//int loopCount = 0;
+	//while(m_accDT >= fixedInterval && loopCount < 5) {
+
+	//	m_accDT -= fixedInterval;
+
+	//	ProcessEvents();
+
+	//	m_navSystem.Update(fixedInterval);
+
+	//	for(const auto& group : m_gameObjectsGroups) {
+	//		for(const auto& [id, obj] : group) {
+	//			if(obj) obj->Update(fixedInterval);
+	//		}
+	//	}
+
+	//	CheckCollision();
+
+	//	m_worldFrameCount++;
+	//	CheckGameTime(fixedInterval);
+
+	//	loopCount++;
+	//}
+	//m_lastDT = dt;
+
+	constexpr float kFixedInterval = 1.0f / 60.0f;
+	constexpr int   kMaxSubSteps = 5;
+
+	m_lastDT = m_dt;  
 	m_dt = dt;
 	m_accDT += dt;
 
-	const float fixedInterval = 0.01667f;
-
 	int loopCount = 0;
-	while(m_accDT >= fixedInterval && loopCount < 5) {
-
-		m_accDT -= fixedInterval;
-
+	while(m_accDT >= kFixedInterval && loopCount < kMaxSubSteps) {
+		m_accDT -= kFixedInterval;
 		ProcessEvents();
-
-		m_navSystem.Update(fixedInterval);
-
+		m_navSystem.Update(kFixedInterval);
 		for(const auto& group : m_gameObjectsGroups) {
 			for(const auto& [id, obj] : group) {
-				if(obj) obj->Update(fixedInterval);
+				if(obj) obj->Update(kFixedInterval);
 			}
 		}
-
 		CheckCollision();
-
 		m_worldFrameCount++;
-		CheckGameTime(fixedInterval);
-
+		CheckGameTime(kFixedInterval);
 		loopCount++;
+	}
+
+	// 프레임 드랍 폭주 방지
+	if(m_accDT > kFixedInterval * kMaxSubSteps) {
+		m_accDT = 0.0f;
 	}
 }
 
@@ -89,14 +119,14 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 	clientSession->SetGameWorld(this);
 
 	std::cout << "Enter Game World!" << std::endl;
-	static const Vec3 offset{ 3.f, 0.f, 3.f };
+	static const Vec3 offset{ 0.f, 0.f, 0.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
 
 	PlayerTemplate t;
-	t.posInfo = PosInfo{ startPos, rot };
+	t.transform = Transform{ startPos, rot };
 
 	if(m_reservedParticipantInfo.contains(session->GetID())) {
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
@@ -127,10 +157,10 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 {
 	const uint32 id{ session->GetID() };
 
-	if(false == m_sessionToPlayer.contains(id))
-		return;
+	auto it = m_sessionToPlayer.find(id);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[id] };
+	const uint64 playerID{ it->second };
 
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
 	if(playerGroup.find(playerID) != playerGroup.end()) {
@@ -149,42 +179,101 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo)
+void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform)
 {
-	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+	auto it = m_sessionToPlayer.find(clientSession->GetID());
+	if(it == m_sessionToPlayer.end()) return;
 
-	if(false == m_sessionToPlayer.contains(clientSession->GetID()))
+	const uint64 playerID{ it->second };
+
+	auto const player = IDToPlayer(playerID);
+
+	if(!player) return;
+
+	if(false == player->IsActive()) return;
+
+	auto fsm = player->GetComponent<FSM>();
+	if(!fsm) return;
+
+	uint8_t curState = fsm->GetCurState()->GetStateType();
+	if(FB_ENUMS::PLAYER_STATE_TYPE_DEAD == curState) return;
+
+	auto& t = player->GetTransform();
+	Vec3 prevPos{ t.GetPosition() };
+	Vec3 newPos{ transform.GetPosition() };
+
+	//auto movement = player->GetComponent<Movement>();
+	//if(!movement) return;
+
+	//constexpr float networkErrorMargin{ 3.f };
+	//const float maxSpeed{ movement->GetMaxSpeed() };
+	//const float maxMoveDistSq{ maxSpeed * maxSpeed * m_lastDT * m_lastDT * networkErrorMargin * networkErrorMargin };
+	//const float dx{ newPos.x - prevPos.x };
+	//const float dz{newPos.z - prevPos.z};
+	//const float distSq{ dx * dx + dz * dz };
+
+	//if(distSq > maxMoveDistSq) {
+	//	SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
+	//	return;
+	//}
+
+	auto const navQuery = m_navSystem.GetNavMeshQuery();
+	if(!navQuery) return;
+
+	dtQueryFilter filter;
+	float extents[3] = { 0.5f, 1.0f, 0.5f };	// 검색범위
+
+	// 3-1. 목표 위치가 NavMesh 위에 있는가?
+	float      newPosArr[3] = { newPos.x, newPos.y, newPos.z };
+	dtPolyRef  newPoly = 0;
+	float newNearestPt[3];
+
+	// findNearestPoly: 가장 가까운 NavMesh 폴리곤ID인 newPoly를 반환, nearestPt에 가장 가까운 점의 좌표 반환
+	navQuery->findNearestPoly(newPosArr, extents, &filter, &newPoly, newNearestPt);
+
+	if(newPoly == 0) {
+		// NavMesh 밖 → 보정 후 차단
+		SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
 		return;
+	}
 
-	const uint64 playerID{ m_sessionToPlayer[clientSession->GetID()] };
+	// 3-2. Raycast: 이전 위치 → 새 위치 사이에 벽이 있는가?
+	float     prevPosArr[3] = { prevPos.x, prevPos.y, prevPos.z };
+	dtPolyRef prevPoly = 0;
+	float prevNearestPt[3];
+	navQuery->findNearestPoly(prevPosArr, extents, &filter, &prevPoly, prevNearestPt);
 
-	auto it = playerGroup.find(playerID);
-	if(it == playerGroup.end() || !it->second) return;
+	if(prevPoly != 0) {
+		float t, hitNormal[3];
+		dtStatus rayStatus = navQuery->raycast(prevPoly, prevPosArr, newPosArr, &filter, &t, hitNormal, nullptr, nullptr, 0);
 
-	auto player = static_cast<Player*>(playerGroup[playerID].get());
+		if(dtStatusSucceed(rayStatus) && t < 1.0f) {
+			// 벽 통과 시도 → 차단
+			SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
+			return;
+		}
+	}
 
-	if(nullptr == player) return;
+	// 3-3. NavMesh에 스냅 (Y축 보정)
+	const Vec3 snapPos{ newNearestPt[0], newNearestPt[1], newNearestPt[2] };
 
-	if(player && false == player->IsActive()) return;
+	// ── 4. 위치 확정 ───────────────────────────────────────────
+	player->SetPosition(snapPos);
+	player->SetRotation(transform.GetRotationDegree());
 
-	player->SetPos(kinematicInfo.pos);
-	player->SetRotation(kinematicInfo.rot);
-
-	auto fsm{ player->GetComponent<FSM>() };
-
-	if(fsm) {
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), kinematicInfo, etou8(player->GetSubState()));
+	{
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()));
 		Broadcast(std::move(pb));
 	}
 }
 void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
+	
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
-
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	if(playerGroup.find(playerID) != playerGroup.end()) {
 		auto player = static_cast<Player*>(playerGroup[playerID].get());
@@ -194,10 +283,10 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sess
 
 void GameServer::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID)
 {
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	auto const player = IDToPlayer(playerID);
 	if(player)
@@ -206,10 +295,10 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE(const uint
 
 void GameServer::Contents::GameWorld::Handle_CS_PLAYER_FAKE(const uint32 sessionID)
 {
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	auto const player = IDToPlayer(playerID);
 	if(player) {
@@ -219,10 +308,10 @@ void GameServer::Contents::GameWorld::Handle_CS_PLAYER_FAKE(const uint32 session
 
 void GameServer::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID)
 {
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	auto const player = IDToPlayer(playerID);
 	if(player) {
@@ -232,10 +321,10 @@ void GameServer::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint3
 
 void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	auto const player = IDToPlayer(playerID);
 	if(player) {
@@ -245,15 +334,15 @@ void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const ui
 
 void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID)
 {
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	auto const player = IDToPlayer(playerID);
 
-	const Vec3 playerPos = player->GetPos();
-	Vec3 playerLook = player->GetLook();
+	const Vec3 playerPos = player->GetPosition();
+	Vec3 playerLook = player->GetForward();
 	playerLook.Normalize();
 
 	FB_ENUMS::TEAM_TYPE teamType{};
@@ -274,10 +363,7 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 	t.teamType = teamType;
-	t.posInfo = PosInfo{
-	.pos = spawnPos,
-	.rot = Vec3{}
-	};
+	t.transform = Transform{ spawnPos, Vec3{} };
 	t.gameWorld = this;
 
 	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
@@ -286,10 +372,10 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 
 void GameServer::Contents::GameWorld::Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state)
 {
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
 
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	const uint64 playerID{ it->second };
 
 	auto const player = IDToPlayer(playerID);
 	auto fsm{ player->GetComponent<FSM>() };
@@ -304,9 +390,12 @@ void GameServer::Contents::GameWorld::Handle_CS_UPDATE_PLAYER_STATE(const uint32
 void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg)
 {
 	const uint32 sessionID{ clientSession->GetID() };
-	if(false == m_sessionToPlayer.contains(sessionID))
-		return;
-	const uint64 playerID{ m_sessionToPlayer[sessionID] };
+	
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
+
+	const uint64 playerID{ it->second };
+
 	auto const player = IDToPlayer(playerID);
 	if(player) {
 		std::cout << "Player " << playerID << " says: " << msg << std::endl;
@@ -364,9 +453,9 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 
 		const uint64 id{ newGameObject->GetID() };
 		const uint8 type{ etou8(newGameObject->GetObjType()) };
-		const Vec3 pos{ newGameObject->GetPos() };
+		const Vec3 pos{ newGameObject->GetPosition() };
 		const Vec3 rot{ newGameObject->GetRotation() };
-		const PosInfo kInfo{ pos, rot };
+		const Transform kInfo{ pos, rot };
 
 		if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == newGameObject->GetObjType()) {
 			auto newPlayer = static_cast<Player*>(newGameObject.get());
@@ -381,9 +470,9 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 			}
 
 			// 패킷으로 보낼 나의 데이터 정의
-			auto startPos = newPlayer->GetPos();
+			auto startPos = newPlayer->GetPosition();
 			auto rot = newPlayer->GetRotation();
-			const PosInfo kInfo{ startPos, rot };
+			const Transform kInfo{ startPos, rot };
 
 			// 나에게 내 정보 전송
 			const Stat& statInfo{ newPlayer->GetStat() };
@@ -394,7 +483,7 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 
 			// 남들에게 내 정보 전송
 			{
-				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(newPlayer->GetID(), newPlayer->GetObjType(), newPlayer->GetTeamType(), newPlayer->GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
+				auto pb = ServerPackets::Make_SC_ADD_OBJ_PACKET(newPlayer->GetID(), newPlayer->GetObjType(), newPlayer->GetTeamType(), newPlayer->GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, newPlayer->GetStanceType());
 				Broadcast(std::move(pb));
 			}
 
@@ -405,9 +494,9 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 					if(otherID == id) continue;
 					if(obj.get()) {
 						const uint8 type{ etou8(obj->GetObjType()) };
-						const Vec3 pos{ obj->GetPos() };
+						const Vec3 pos{ obj->GetPosition() };
 						const Vec3 rot{ obj->GetRotation() };
-						const PosInfo kInfo{ pos, rot };
+						const Transform kInfo{ pos, rot };
 
 						uint32 maxHp{};
 						uint32 hp{};
@@ -644,10 +733,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(participant.teamType);
-			t.posInfo = PosInfo{
-			.pos = startPos,
-			.rot = Vec3{}
-			};
+			t.transform = Transform{ startPos, Vec3{} };
 			t.gameWorld = this;
 			flag = !flag;
 			startPos.x += 5.f;
@@ -733,7 +819,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.posInfo = PosInfo{};
+		t.transform = Transform{ Vec3{ 5.f, 0.f, 5.f }, Vec3{} };
 		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
 		t.gameWorld = this;
 
@@ -745,14 +831,18 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.posInfo = PosInfo{
-			.pos = Vec3{ 30.f, 0.f, 30.f },
-			.rot = Vec3{}
-		};
+		t.transform = Transform{ Vec3{ 30.f, 0.f, 30.f }, Vec3{} };
 		t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
 		t.gameWorld = this;
 
 		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
 		AddGameObject(std::move(spawner));
 	}
+}
+
+void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)
+{
+	const Transform transform{ correctPos, correctRot };
+	auto pb = ServerPackets::Make_SC_MOVE_PACKET(objID, transform, 0);
+	session->Send(std::move(pb));
 }

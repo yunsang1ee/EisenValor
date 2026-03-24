@@ -22,15 +22,15 @@ bool GameServer::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameOb
 
 	const auto& atkInfo{ GetAtkInfo() };
 	const float radiusSq{ atkInfo.skillData->attackRadius * atkInfo.skillData->attackRadius };
-	const Vec3& myPos{ GetPos() };
+	const Vec3& myPos{ GetPosition() };
 
 	const Vec3& myRot{ GetRotation() };
-	Vec3 myDir{ sinf(Deg2Rad(myRot.y)), 0.f, cosf(Deg2Rad(myRot.y)) };
+	Vec3 myDir{ sin(myRot.y), 0.f, cosf(myRot.y) };
 	myDir.Normalize();
 
 	const float degree{ atkInfo.skillData->attackDegree * 0.5f };
 	const float cosHalfAngle{ std::cosf(Deg2Rad(degree)) };
-	const Vec3& targetPos{ target->GetPos() };
+	const Vec3& targetPos{ target->GetPosition() };
 	const Vec3 toTargetDir{ targetPos - myPos };
 	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
 
@@ -54,7 +54,7 @@ void GameServer::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
@@ -84,12 +84,12 @@ void GameServer::Contents::General::OnRespawn()
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, worldDT, true);
 
 	// TODO: General Respawn 시 부활 위치 설정 해야함.
-	Vec3 pos{ GetPos() };
+	Vec3 pos{ GetPosition() };
 	pos.x += 10.f;
 	pos.z += 10.f;
 	GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(pos);
 
-	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
+	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));
 
 	std::cout << "General NPC Respawn!" << std::endl;

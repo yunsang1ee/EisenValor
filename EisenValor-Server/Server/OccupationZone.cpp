@@ -14,7 +14,7 @@ void GameServer::Contents::OccupationZone::Update(const float dt)
 		return;
 
 	auto const owner{ GetOwner() };
-	auto const ownerPos{ owner->GetPos() };
+	auto const ownerPos{ owner->GetPosition() };
 	auto const world{ owner->GetGameWorld() };
 	const auto& groups{ world->GetGameObjectGroups() };
 

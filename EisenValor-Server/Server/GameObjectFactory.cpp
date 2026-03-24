@@ -3,6 +3,7 @@
 
 #include "Player.h"
 #include "Soldier.h"
+#include "Movement.h"
 #include "FSM.h"
 #include "GeneralStates.h"
 #include "PlayerStates.h"
@@ -21,7 +22,7 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	auto player = std::make_shared<GameServer::Contents::Player>(t.teamType);
 	player->SetID(t.id);
 	player->SetGameWorld(t.gameWorld);
-	player->SetPosInfo(t.posInfo);
+	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
 			.currentHP = t.gameObjectData->maxHp,
@@ -30,6 +31,10 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 			.maxStamina = t.gameObjectData->maxStamina,
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
+
+	const auto movement = player->AddComponent<GameServer::Contents::Movement>();
+	movement->SetMaxSpeed(20.f);
+	movement->SetAcceleration(10.f);
 
 	const auto fsm = player->AddComponent<GameServer::Contents::FSM>();
 	
@@ -57,7 +62,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	auto general = std::make_shared<GameServer::Contents::General>(t.teamType);
 	general->SetID(t.id);
 	general->SetGameWorld(t.gameWorld);
-	general->SetPosInfo(t.posInfo);
+	general->SetTransform(t.transform);
 	general->SetGameObjectData(t.gameObjectData);
 	general->SetStat(Stat{
 			.currentHP = t.gameObjectData->maxHp,
@@ -108,7 +113,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	auto soldier{ std::make_shared<GameServer::Contents::Soldier>(t.teamType) };
 	soldier->SetID(t.id);
 	soldier->SetGameWorld(t.gameWorld);
-	soldier->SetPosInfo(t.posInfo);
+	soldier->SetTransform(t.transform);
 	soldier->SetGameObjectData(t.gameObjectData);
 	soldier->SetStat(Stat{
 		.currentHP = t.gameObjectData->maxHp,
@@ -165,7 +170,7 @@ std::shared_ptr<GameServer::Contents::BattleRam> GameServer::Contents::GameObjec
 	auto battleRam{ std::make_shared<BattleRam>(t.detectionRange, t.finalDestPos) };
 	battleRam->SetID(t.id);
 	battleRam->SetGameWorld(t.gameWorld);
-	battleRam->SetPosInfo(t.posInfo);
+	battleRam->SetTransform(t.transform);
 	battleRam->SetGameObjectData(t.gameObjectData);
 	battleRam->SetStat(Stat{
 		.currentHP = t.gameObjectData->maxHp,
@@ -203,7 +208,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	spawnObj->SetID(t.id);
 	spawnObj->SetGameWorld(t.gameWorld);
-	spawnObj->SetPosInfo(t.posInfo);
+	spawnObj->SetTransform(t.transform);
 	spawnObj->SetGameObjectData(t.gameObjectData);
 	
 	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>());
@@ -218,7 +223,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);
 	ozObj->SetGameWorld(t.gameWorld);
-	ozObj->SetPosInfo(t.posInfo);
+	ozObj->SetTransform(t.transform);
 	ozObj->SetGameObjectData(t.gameObjectData);
 	
 	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.range * t.range, t.time))};

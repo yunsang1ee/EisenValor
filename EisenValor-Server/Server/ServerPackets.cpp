@@ -28,29 +28,28 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_CREATE_GAME_WORLD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_CREATE_GAME_WORLD_PACKETDirect, worldID, ip.data(), port));
 	}
 	
-	
 	// ==================
 	//		월드
 	// ==================
 #pragma region WORLD_PACKETS
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint64 id, const PosInfo& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint64 id, const Transform& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.pos) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.GetPosition()) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot};
 		std::cout << "SC_MY_PLAYER" << std::endl;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &posInfo, teamType, maxHp, currentHp, maxStamina, currentStamina, stanceType));
 	}
 
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint64 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const PosInfo& transform, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_ADD_OBJ_PACKET(const uint64 id, const FB_ENUMS::GAME_OBJECT_TYPE objType, const FB_ENUMS::TEAM_TYPE teamType, const Transform& transform, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.pos) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.GetPosition()) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
 		std::cout << "SC_ADD_OBJ" << std::endl;
@@ -64,12 +63,12 @@ namespace ServerPackets {
 		return  GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_REMOVE_OBJ_IN_GAME_WORLD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint64 objID, const PosInfo& transform, const uint8 subState)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint64 objID, const Transform& transform, const uint8 subState)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.pos) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.rot) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.GetPosition()) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, objID, &posInfo, subState));
@@ -124,12 +123,12 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_SHOW_GENERAL_ATTACK_DIR_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_GENERAL_ATTACK_DIR_PACKET, generalID, attackDir));
 
 	}
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint64 id, const PosInfo& posInfo, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint64 id, const Transform& transform, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(posInfo.pos) };
-		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(posInfo.rot) };
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.GetPosition()) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo fbPosInfo{ pos, rot };
 

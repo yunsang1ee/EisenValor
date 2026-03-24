@@ -38,7 +38,7 @@ namespace GameServer {
 			void AddEvent(const std::function<void()>& eve) { m_pendingEventFpQueue.push(eve); }
 
 		public:
-			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const PosInfo& kinematicInfo);
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform);
 			void Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
 			void Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID);
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
@@ -73,6 +73,9 @@ namespace GameServer {
 			bool IsFinish();
 			std::shared_ptr<Player> IDToPlayer(const uint64 sessionID);
 			void CreateGameWorldObjects();
+
+			void SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot);
+
 		private:
 			Users																	m_users;
 			Bots																	m_bots;
@@ -89,6 +92,7 @@ namespace GameServer {
 			std::queue<std::shared_ptr<GameObject>>									m_pendingRemoveObjectQueue;
 
 			float																	m_dt;
+			float																	m_lastDT;
 			float																	m_accDT;
 			float																	m_accGameTime;
 			std::chrono::milliseconds												m_remainingTime;

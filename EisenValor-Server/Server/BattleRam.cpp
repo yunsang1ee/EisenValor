@@ -35,14 +35,14 @@ void GameServer::Contents::BattleRam::Update(const float dt)
 			if(false == obj->IsActive()) continue;
 			if(GetTeamType() != obj->GetTeamType()) continue;
 
-			auto objPos{ obj->GetPos() };
+			auto objPos{ obj->GetPosition() };
 			objPos.y = 0.f;
-			auto myPos{ GetPos() };
+			auto myPos{ GetPosition() };
 			myPos.y = 0.f;
 			const auto distToTargetSq{ (objPos - myPos).LengthSquared() };
 
 			if(distToTargetSq <= m_detectionRangeSq) {
-				const auto myPos{ GetPos() };
+				const auto myPos{ GetPosition() };
 				Vec3 direction{ m_finalDestPos - myPos };
 				const float distToDestSq{ direction.LengthSquared() };
 
@@ -55,7 +55,7 @@ void GameServer::Contents::BattleRam::Update(const float dt)
 					// std::cout << std::format("NextPos: {}. {}. {}", nextPos.x, nextPos.y, nextPos.z) << std::endl;
 					GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(nextPos);
 
-					auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
+					auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0) };
 					GetGameWorld()->Broadcast(std::move(pb));
 				}
 			}

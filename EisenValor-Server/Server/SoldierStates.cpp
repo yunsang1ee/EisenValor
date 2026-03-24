@@ -95,7 +95,7 @@ void GameServer::Contents::SoldierMoveState::Enter(const float dt)
 
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag) {
-		owner->SetLook(dest);
+		owner->LookAt(dest);
 		ag->SetDestPos(dest);
 	}
 }
@@ -114,7 +114,7 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 		return;
 
 	const auto ag = owner->GetComponent<GameServer::Contents::NavAgent>();
-	const auto& curPos = owner->GetPos();
+	const auto& curPos = owner->GetPosition();
 
 	const Vec3& destPos = m_wayPoints[m_currentWaypointIndex];
 	float distToDestSq = (destPos - curPos).LengthSquared();
@@ -161,7 +161,7 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 					if(owner->GetTeamType() == obj->GetTeamType())
 						continue;
 
-					const Vec3 diff{ obj->GetPos() - owner->GetPos() };
+					const Vec3 diff{ obj->GetPosition() - owner->GetPosition() };
 					const float distToTargetSq{ diff.LengthSquared() };
 
 					if(distToTargetSq < closestDistSq) {
@@ -213,7 +213,7 @@ void GameServer::Contents::SoldierSearchState::Update(const float dt)
 		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
 	}
 	else {
-		const auto distToTargetSq{ (target->GetPos() - owner->GetPos()).LengthSquared() };
+		const auto distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
 
 		if(distToTargetSq < m_attackRangeSq)
 			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt, true);
@@ -258,9 +258,9 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 	}
 
 	if(target)
-		owner->SetLook(target->GetPos());
+		owner->LookAt(target->GetPosition());
 
-	const float distToTargetSq{ (target->GetPos() - owner->GetPos()).LengthSquared() };
+	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
 
 	// 추격 시, 공격 범위 안에 있으면 공격상태로 전환
 	if(distToTargetSq < m_attackRangeSq) {
@@ -276,7 +276,7 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 	}
 
 	// 추격
-	const Vec3& targetPos{ target->GetPos() };
+	const Vec3& targetPos{ target->GetPosition() };
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->SetDestPos(targetPos);
@@ -321,18 +321,18 @@ void GameServer::Contents::SoldierAttackState::Update(const float dt)
 	}
 
 	if(target)
-		owner->SetLook(target->GetPos());
+		owner->LookAt(target->GetPosition());
 
 	if(target) {
 		m_accDTForAttack += dt;
 
 		if(m_accDTForAttack >= 1.f) {
 			m_accDTForAttack = 0.f;
-			const float distToTargetSq{ (target->GetPos() - owner->GetPos()).LengthSquared() };
+			const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
 
 			if(distToTargetSq < m_attackRangeSq) {
 				if(target->OnDamaged(owner, dt)) {
-					const auto& ownerPos{ owner->GetPos() };
+					const auto& ownerPos{ owner->GetPosition() };
 					std::cout << ownerPos.x << ", " << ownerPos.y << ", " << ownerPos.z << std::endl;
 					std::cout << "Soldier Attack Success!" << std::endl;
 					m_accDTForAttack = 0.f;

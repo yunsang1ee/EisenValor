@@ -51,7 +51,7 @@ void GameServer::Contents::OBBCollider::Update(const float dt)
 	const auto owner{ GetOwner() };
 	if(!owner) return;
 
-	const auto& curPos{ owner->GetPos() };
+	const auto& curPos{ owner->GetPosition() };
 	const auto& curRot{ owner->GetRotation() };
 	const auto& curScale{ owner->GetScale() };
 

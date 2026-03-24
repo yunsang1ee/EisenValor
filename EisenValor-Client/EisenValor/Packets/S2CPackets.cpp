@@ -837,10 +837,7 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const uint64 id = recvPkt.obj_id();
 	const uint64 localID = scene->GetLocalID();
 
-	if (id == localID)
-	{
-		return false;
-	}
+	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
 
 	auto obj = scene->FindGameObjectByServerID(id);
 	if (obj)

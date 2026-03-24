@@ -15,7 +15,7 @@ bool GameServer::Contents::NavAgent::Init(const dtCrowdAgentParams& params)
 	m_params = params;
 	auto const dtCrowd{ m_navSystem->GetCrowd() };
 	
-	const Vec3& pos{ GetOwner()->GetPos() };
+	const Vec3& pos{ GetOwner()->GetPosition() };
 	const float arrPos[3]{pos.x, pos.y, pos.z};
 	m_agentIdx = dtCrowd->addAgent(arrPos, &params);
 
@@ -33,7 +33,7 @@ void GameServer::Contents::NavAgent::Update(const float dt)
 	if(ag && ag->active) {
 		Vec3 curPos{ ag->npos[0], ag->npos[1], ag->npos[2] };
 		auto const owner{ GetOwner() };
-		owner->SetPos(curPos);
+		owner->SetPosition(curPos);
 	}
 }
 

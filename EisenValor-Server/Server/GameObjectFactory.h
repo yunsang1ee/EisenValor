@@ -17,7 +17,7 @@ namespace GameServer {
 
 		struct GameObjectTemplate {
 			uint64						id;
-			PosInfo						posInfo;
+			Transform					transform;
 			FB_ENUMS::TEAM_TYPE			teamType;
 			const GameObjectData*		gameObjectData;
 			GameWorld*					gameWorld;

@@ -2,6 +2,7 @@
 #include "TaskQueue.h"
 #include "FSM.h"
 #include "Script.h"
+#include "Transform.h"
 
 struct GameObjectData;
 
@@ -9,6 +10,7 @@ namespace GameServer {
 	namespace Contents {
 		class GameRoom;
 		class Component;
+		class Movement;
 		class FSM;
 		class BehaviorTree;
 		class NavAgent;
@@ -46,7 +48,10 @@ namespace GameServer {
 			template<std::derived_from<Component> T>
 			T* GetComponent()
 			{
-				if constexpr(std::is_same_v<FSM, T>) {
+				if constexpr(std::derived_from<T, Movement>) {
+					return static_cast<Movement*>(m_components[etou8(COMPONENT_TYPE::MOVEMENT)].get());
+				}
+				else if constexpr(std::is_same_v<FSM, T>) {
 					return static_cast<FSM*>(m_components[etou8(COMPONENT_TYPE::FSM)].get());
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
@@ -68,7 +73,10 @@ namespace GameServer {
 				auto component = std::make_unique<T>(std::forward<Args>(args)...);
 				component->SetOwner(shared_from_this());
 
-				if constexpr(std::is_same_v<FSM, T>) {
+				if constexpr(std::derived_from<T, Movement>) {
+					m_components[etou8(COMPONENT_TYPE::MOVEMENT)] = std::move(component);
+				}
+				else if constexpr(std::is_same_v<FSM, T>) {
 					m_components[etou8(COMPONENT_TYPE::FSM)] = std::move(component);
 				}
 				else if constexpr(std::is_same_v<BehaviorTree, T>) {
@@ -97,29 +105,37 @@ namespace GameServer {
 		public:
 			void SetID(const uint64 id)  { m_id = id; }
 			void SetName(std::wstring_view name) { m_name = name.data(); }
-			void SetPosInfo(const PosInfo& transform) { m_posInfo = transform; }
-			void SetPos(const Vec3& pos) { m_posInfo.pos = pos; }
-			void SetRotation(const Vec3& rotation) { m_posInfo.rot = rotation; }
-			void SetLook(const Vec3& look) { m_look = look; }
 			void SetCreature(bool flag) { m_isCreature = flag; }
 			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
 			void SetActive(const bool active) { m_active = active; }
-			void SetRotateSpeed(const float rotateSpeed) { m_rotateSpeed = rotateSpeed; }
-
+			void SetTransform(const Transform& transform) { m_transform = transform; }
 			const std::wstring& GetName() const { return m_name; }
 			uint64 GetID() const { return m_id; }
 			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_objType; }
-			const PosInfo& GetPosInfo() const { return m_posInfo; }
-			const Vec3& GetPos() const  { return m_posInfo.pos; }
-			const Vec3& GetRotation() const  { return m_posInfo.rot; }
+
+			void        SetPosition(const Vec3& pos) { m_transform.SetPosition(pos); }
+			const Vec3& GetPosition() const { return m_transform.GetPosition(); }
+
+			void        SetRotation(const Vec3& rotDegree) { m_transform.SetRotation(rotDegree); }
+			const Vec3& GetRotation() const { return m_transform.GetRotation(); }  // Radian
+			Vec3        GetRotationDegree() const { return m_transform.GetRotationDegree(); }
+
+			Transform& GetTransform() { return m_transform; }
+			const Transform& GetTransform() const { return m_transform; }
+
+			Vec3 GetForward() const { return m_transform.GetForward(); }
+			Vec3 GetRight()   const { return m_transform.GetRight(); }
+			Vec3 GetBack()    const { return m_transform.GetBack(); }
+			Vec3 GetLeft()    const { return m_transform.GetLeft(); }
+
+			void LookAt(const Vec3& target) { m_transform.LookAt(target); }
+
 			const Vec3& GetScale() const  { return m_scale; }
-			const Vec3& GetLook() const { return m_look; }
 
 			void SetGameWorld(GameWorld* const gameWorld) { m_gameWorld = gameWorld; }
 			GameWorld* GetGameWorld() const { return m_gameWorld; }
 
 			FB_ENUMS::TEAM_TYPE GetTeamType() const  { return m_teamType; }
-			Vec3 GetForwardDir();
 			bool IsCreature() const  { return m_isCreature; }
 			bool IsActive() const { return m_active; }
 			const GameObjectData* GetGameObjectData() const { return m_gameObjectData; }
@@ -138,11 +154,9 @@ namespace GameServer {
 
 			GameWorld*								m_gameWorld;
 
-			PosInfo									m_posInfo;
 			Vec3									m_scale;
-			Vec3									m_look;
 
-			float									m_rotateSpeed;
+			Transform								m_transform;
 
 			bool									m_isCreature;
 			const GameObjectData*					m_gameObjectData;

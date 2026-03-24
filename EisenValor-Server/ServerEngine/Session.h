@@ -158,23 +158,8 @@ namespace GameServerEngine {
 			const std::chrono::milliseconds								m_commitSendMS;
 			const uint32												m_maxSendRQSize;
 		};
-
-		class PacketSession : public RIOSession {
-		public:
-			PacketSession(const SESSION_TYPE type);
-			virtual ~PacketSession();
-
-		public:
-			virtual uint32	OnRecv(std::span<const char> buf) override;
-			virtual void	OnRecvPacket(const std::span<const char>& buf) abstract;
-
-			std::shared_ptr<PacketSession> GetPacketSession() { return std::static_pointer_cast<PacketSession>(shared_from_this()); }
-
-		protected:
-			std::unique_ptr<GameServerEngine::PacketHandler>	m_packetHandler;
-
-		};
 	}
+#endif
 
 	class PacketSession : public RIO::RIOSession {
 	public:
@@ -191,6 +176,5 @@ namespace GameServerEngine {
 		std::unique_ptr<GameServerEngine::PacketHandler>	m_packetHandler;
 
 	};
-#endif
 }
 
