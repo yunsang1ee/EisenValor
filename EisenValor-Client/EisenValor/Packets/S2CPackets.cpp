@@ -351,6 +351,17 @@ bool NetBridge::S2C::Handle_LC_READY_GAME_PACKET(const SOCKET& socket, const FB_
 	return true;
 }
 
+bool NetBridge::S2C::Handle_LC_START_GAME_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_START_GAME_FAIL_PACKET& recvPkt
+)
+{
+	// 게임 시작 실패
+	DEBUG_LOG_FMT("[LC_START_GAME_FAIL_PACKET] ");
+	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+
+	return true;
+}
+
 bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_TEAM_PACKET& recvPkt)
 {
 	// 참가자가 팀을 변경함

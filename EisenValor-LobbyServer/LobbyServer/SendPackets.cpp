@@ -114,6 +114,11 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_READY_GAME
 
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_READY_GAME_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_READY_GAME_PACKET, participantID, state));
 }
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_START_GAME_FAIL_PACKET(const std::string_view failMsg)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_START_GAME_FAIL_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_START_GAME_FAIL_PACKETDirect, failMsg.data()));
+}
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CHANGE_TEAM_PACKET(const uint32 participantID, const FB_ENUMS::TEAM_TYPE teamType)
 {
 	flatbuffers::FlatBufferBuilder builder;

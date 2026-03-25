@@ -32,7 +32,7 @@ namespace GameServer {
 			float	m_acceleration;
 			float	m_roatationSpeed;
 
-			Vec3	m_curVelocity;			// 현재 속도
+			Vec3	m_curVelocity;
 		};
 	}
 }

@@ -24,8 +24,8 @@ namespace GameServerEngine {
 		std::atomic_uint16_t										m_nextWorkerIndex;
 
 	public:
-		WorkerThread* GetLobbyServerSessionThread() const { return m_lobbyServerSessionThread; }
-		GameWorldThread* GetLeisurelyWorker();
-		GameWorldThread* GetWorkerThread(const uint32 index);
+		WorkerThread*		GetLobbyServerSessionThread() const { return m_lobbyServerSessionThread; }
+		GameWorldThread*	GetLeisurelyWorker();
+		GameWorldThread*	GetWorkerThread(const uint32 index);
 	};
 }

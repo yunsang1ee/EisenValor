@@ -54,6 +54,9 @@ bool Handle_LC_REMOVE_BOT_PACKET(const SOCKET& socket, const FB_TABLES::LC_REMOV
 
 bool Handle_LC_READY_GAME_PACKET(const SOCKET& socket, const FB_TABLES::LC_READY_GAME_PACKET& recvPkt);
 
+bool Handle_LC_START_GAME_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_START_GAME_FAIL_PACKET& recvPkt);
+
 bool Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET& recvPkt
 );

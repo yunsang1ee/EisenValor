@@ -21,8 +21,8 @@ enum class PACKET_TYPE : uint16 {
 	//		룸
 	// ==================
 #pragma region ROOM_PACKETS
-	LS_CREATE_GAME_WORLD_PKT = 1016,
-	SL_CREATE_GAME_WORLD_PKT = 1017,
+	LS_CREATE_GAME_WORLD_PKT = 1017,
+	SL_CREATE_GAME_WORLD_PKT = 1018,
 #pragma endregion
 
 	// ==================

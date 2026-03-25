@@ -13,6 +13,7 @@ struct ParticipantInfo {
 	FB_ENUMS::PARTICIPANT_STATE_TYPE	stateType;
 	FB_ENUMS::TEAM_TYPE					teamType;
 };
+
 struct Stat {
 	uint32 currentHP;
 	uint32 maxHP;

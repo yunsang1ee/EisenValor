@@ -186,8 +186,23 @@ void LobbyServer::GameRoom::ReadyGame(const std::shared_ptr<ClientSession>& clie
 
 void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clientSession)
 {
+	if(GetSessionUser(clientSession) != m_host) {
+		std::cout << "나는 방장이 아니야" << std::endl;
+		return;
+	}
+
 	auto gameServerSession = MANAGER(LobbyServer::SessionManager)->GetGameServerSession();
 	if(gameServerSession) {
+		// 모든 유저가 Ready 상태인지 체크
+
+		for(const auto& [id, user] : m_users) {
+			if(user->GetStateType() != FB_ENUMS::PARTICIPANT_STATE_TYPE_READY) {
+				auto pb{ LobbyServer::Make_LC_START_GAME_FAIL_PACKET("Not all users are ready") };
+				Broadcast(std::move(pb));
+				return;
+			}
+		}
+
 		std::vector<ParticipantInfo> particinpants;
 
 		for(const auto& [id, user] : m_users) {

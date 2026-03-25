@@ -146,6 +146,10 @@ table CL_START_GAME_PACKET {
 
 }
 
+table LC_START_GAME_FAIL_PACKET {
+	fail_msg: string;
+}
+
 table LS_CREATE_GAME_WORLD_PACKET {
 	room_id: uint16;
 	participants: [FB_STRUCTS.ParticipantInfo];

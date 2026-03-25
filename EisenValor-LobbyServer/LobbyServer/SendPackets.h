@@ -31,6 +31,7 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHANGE_TEAM_PACKET(const uint32 participantID, const FB_ENUMS::TEAM_TYPE teamType);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_ADD_BOT_PACKET(const ParticipantInfo& bot);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_READY_GAME_PACKET(const uint32 participantID, const FB_ENUMS::PARTICIPANT_STATE_TYPE state);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_START_GAME_FAIL_PACKET(const std::string_view failMsg);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 roomID, const std::vector<ParticipantInfo>& participants);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CONNECT_TO_GAME_SERVER_PACKET	(const uint16 worldID, const std::string_view ip, const uint16 port);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHAT_PACKET(const uint32 sessionID, const std::string_view msg);

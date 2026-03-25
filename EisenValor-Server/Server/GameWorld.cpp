@@ -104,7 +104,6 @@ void GameServer::Contents::GameWorld::Update(const float dt)
 		loopCount++;
 	}
 
-	// 프레임 드랍 폭주 방지
 	if(m_accDT > kFixedInterval * kMaxSubSteps) {
 		m_accDT = 0.0f;
 	}

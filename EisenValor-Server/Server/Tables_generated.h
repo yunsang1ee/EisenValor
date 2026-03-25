@@ -108,6 +108,9 @@ struct LC_READY_GAME_PACKETBuilder;
 struct CL_START_GAME_PACKET;
 struct CL_START_GAME_PACKETBuilder;
 
+struct LC_START_GAME_FAIL_PACKET;
+struct LC_START_GAME_FAIL_PACKETBuilder;
+
 struct LS_CREATE_GAME_WORLD_PACKET;
 struct LS_CREATE_GAME_WORLD_PACKETBuilder;
 
@@ -1501,6 +1504,57 @@ inline ::flatbuffers::Offset<CL_START_GAME_PACKET> CreateCL_START_GAME_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb) {
   CL_START_GAME_PACKETBuilder builder_(_fbb);
   return builder_.Finish();
+}
+
+struct LC_START_GAME_FAIL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_START_GAME_FAIL_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FAIL_MSG = 4
+  };
+  const ::flatbuffers::String *fail_msg() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_FAIL_MSG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_FAIL_MSG) &&
+           verifier.VerifyString(fail_msg()) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_START_GAME_FAIL_PACKETBuilder {
+  typedef LC_START_GAME_FAIL_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_fail_msg(::flatbuffers::Offset<::flatbuffers::String> fail_msg) {
+    fbb_.AddOffset(LC_START_GAME_FAIL_PACKET::VT_FAIL_MSG, fail_msg);
+  }
+  explicit LC_START_GAME_FAIL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_START_GAME_FAIL_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_START_GAME_FAIL_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_START_GAME_FAIL_PACKET> CreateLC_START_GAME_FAIL_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> fail_msg = 0) {
+  LC_START_GAME_FAIL_PACKETBuilder builder_(_fbb);
+  builder_.add_fail_msg(fail_msg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<LC_START_GAME_FAIL_PACKET> CreateLC_START_GAME_FAIL_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *fail_msg = nullptr) {
+  auto fail_msg__ = fail_msg ? _fbb.CreateString(fail_msg) : 0;
+  return FB_TABLES::CreateLC_START_GAME_FAIL_PACKET(
+      _fbb,
+      fail_msg__);
 }
 
 struct LS_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
