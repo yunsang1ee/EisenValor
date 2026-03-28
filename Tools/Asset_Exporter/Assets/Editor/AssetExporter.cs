@@ -442,7 +442,7 @@ public class AssetExporter
             {
                 if (mat.shader != null && !string.IsNullOrEmpty(mat.shader.name) && mat.shader.name.IndexOf("Cursed_Set", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    atlasColsF = 6.0f;
+                    atlasColsF = 3.0f;
                 }
                 else
                 {
