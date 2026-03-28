@@ -626,6 +626,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
 			{
+				tr.SetScale(2.0f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[](SkinnedMeshComponent* mesh)
