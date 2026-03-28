@@ -337,18 +337,18 @@ void DxrRenderPass::CollectSkinnedMeshData(
 					if (auto dxTex = albedoTexRes->GetTexture())
 					{
 						gpuMat.albedoTextureIdx = dxTex->GetSRVIndex();
-						DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD Index: {}\n", matRes->GetName().c_str(), gpuMat.albedoTextureIdx);
+						//DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD Index: {}\n", matRes->GetName().c_str(), gpuMat.albedoTextureIdx);
 					}
 					else
 					{
 						gpuMat.albedoTextureIdx = ~0u;
-						DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD slot exists but DxTexture is NULL\n", matRes->GetName().c_str());
+						//DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD slot exists but DxTexture is NULL\n", matRes->GetName().c_str());
 					}
 				}
 				else
 				{
 					gpuMat.albedoTextureIdx = ~0u;
-					DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD slot NOT FOUND\n", matRes->GetName().c_str());
+					//DEBUG_LOG_FMT("[DxrDebug] SkinnedMesh Material '{}' ALBD slot NOT FOUND\n", matRes->GetName().c_str());
 				}
 
 				gpuMat.normalTextureIdx =
