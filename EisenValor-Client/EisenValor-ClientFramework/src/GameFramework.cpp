@@ -240,6 +240,11 @@ void GameFramework::Update(float delta)
 		// FUTURE: Runtime Shader Compilation
 	}
 
+	// if (input.GetInputDown(VK_F6))
+	// {
+	// 	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
+	// }
+	
 	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
 	{
 		if (input.GetInputDown(VK_F11))
