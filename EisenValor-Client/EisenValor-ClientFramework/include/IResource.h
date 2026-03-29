@@ -37,9 +37,15 @@ public:
 	void			   SetName(const std::string& name) { m_name = name; }
 	const std::string& GetName() const { return m_name; }
 
+	bool IsReady() const { return m_isReady; }
+	void MarkReady(bool ready = true) { m_isReady = ready; }
+
 protected:
+	void SetReady(bool ready) { m_isReady = ready; }
+
 	EvAsset::Guid m_guid;
 	std::string	  m_name;
+	bool		  m_isReady = false;
 };
 
 template <typename Derived>

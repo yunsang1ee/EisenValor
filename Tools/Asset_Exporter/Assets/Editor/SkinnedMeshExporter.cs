@@ -61,7 +61,12 @@ public class SkinnedMeshExporter
         byte[] depsData = CreateDepsChunk(smr);
         
         // --- 파일 저장 (AssetWriter 활용) ---
-        string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(mesh));
+        string guid = AssetExporter.GetStableMeshGuidOrEmpty(mesh);
+        if (string.IsNullOrEmpty(guid))
+        {
+            Debug.LogError("[SkinnedMeshExporter] Failed to build stable mesh GUID.");
+            return;
+        }
         AssetWriter writer = new AssetWriter("EVSK", guid);
         writer.AddChunk("VERT", 1, vertData);
         writer.AddChunk("INDX", 1, indxData);

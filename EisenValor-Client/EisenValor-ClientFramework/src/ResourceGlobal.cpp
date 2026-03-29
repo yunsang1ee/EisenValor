@@ -114,21 +114,56 @@ void ResourceGlobal::ProcessPendingLoads()
 
 	DEBUG_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
 
+	const uint64_t reservedFrameUploadBudget = 64ull * 1024ull * 1024ull;
+	const uint64_t maxUploadBudget =
+		(uploadHeap->Capacity() > reservedFrameUploadBudget) ? (uploadHeap->Capacity() - reservedFrameUploadBudget)
+															 : uploadHeap->Capacity();
+
+	auto canFitAllocation = [maxUploadBudget](uint64_t& simulatedOffset, uint64_t sizeInBytes, uint64_t alignment)
+	{
+		const uint64_t alignedOffset = DxUtils::AlignUp(simulatedOffset, alignment);
+		const uint64_t alignedSize = DxUtils::AlignUp(sizeInBytes, alignment);
+		if (alignedOffset + alignedSize > maxUploadBudget)
+		{
+			return false;
+		}
+
+		simulatedOffset = alignedOffset + alignedSize;
+		return true;
+	};
+
 	// ���� data �ε��� GPU ���ε�
 	while (!m_pendingLoads.empty())
 	{
 		LoadingTask task = m_pendingLoads.front();
-		m_pendingLoads.pop();
 
 		if (task.typeID == MeshResource::StaticRuntimeTypeID())
 		{
 			EvAsset::MeshData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
+			{
+				m_pendingLoads.pop();
 				continue;
+			}
 
 			auto		 meshRes = std::static_pointer_cast<MeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::Vertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
+			uint64_t	simulatedOffset = uploadHeap->Used();
+
+			if (!canFitAllocation(simulatedOffset, vSize, 16) || !canFitAllocation(simulatedOffset, iSize, 4))
+			{
+				uint64_t freshOffset = 0;
+				if (!canFitAllocation(freshOffset, vSize, 16) || !canFitAllocation(freshOffset, iSize, 4))
+				{
+					DEBUG_LOG_FMT("[ResourceGlobal] ERROR: Mesh upload exceeds upload heap capacity: {}\n", task.path.string());
+					m_pendingLoads.pop();
+					continue;
+				}
+
+				DEBUG_LOG_FMT("[ResourceGlobal] Deferring mesh upload to next frame: {}\n", task.path.string());
+				break;
+			}
 
 			auto vb = std::make_unique<DxBuffer>();
 			vb->Initialize(device, vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE, data.name + "_VB");
@@ -172,23 +207,43 @@ void ResourceGlobal::ProcessPendingLoads()
 			auto blas = std::make_unique<DxBLAS>();
 			blas->Build(
 				m_device5.Get(), cmdList4.Get(), vb->GetGPUAddress(), static_cast<uint32_t>(data.vertices.size()),
-				sizeof(EvAsset::Vertex), ib->GetGPUAddress(), meshRes->GetSubMeshes(),
+				sizeof(EvAsset::Vertex), ib->GetGPUAddress(), static_cast<uint32_t>(data.indices.size()), meshRes->GetSubMeshes(),
 				false, data.name + "_BLAS"
 			);
 
 			meshRes->SetGPUResources(std::move(vb), std::move(ib), std::move(blas));
+			m_pendingLoads.pop();
 		}
 		else if (task.typeID == SkinnedMeshResource::StaticRuntimeTypeID())
 		{
 			EvAsset::SkinnedMeshData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
 			{
+				m_pendingLoads.pop();
 				continue;
 			}
 
 			auto		 skinnedRes = std::static_pointer_cast<SkinnedMeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::SkinnedVertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
+			uint64_t	simulatedOffset = uploadHeap->Used();
+
+			if (!canFitAllocation(simulatedOffset, vSize, 16) || !canFitAllocation(simulatedOffset, iSize, 4))
+			{
+				uint64_t freshOffset = 0;
+				if (!canFitAllocation(freshOffset, vSize, 16) || !canFitAllocation(freshOffset, iSize, 4))
+				{
+					DEBUG_LOG_FMT(
+						"[ResourceGlobal] ERROR: Skinned mesh upload exceeds upload heap capacity: {}\n",
+						task.path.string()
+					);
+					m_pendingLoads.pop();
+					continue;
+				}
+
+				DEBUG_LOG_FMT("[ResourceGlobal] Deferring skinned mesh upload to next frame: {}\n", task.path.string());
+				break;
+			}
 
 			auto vb = std::make_unique<DxBuffer>();
 			vb->Initialize(device, vSize, EBufferUsage::Vertex, D3D12_RESOURCE_FLAG_NONE, data.name + "_SkinnedVB");
@@ -225,12 +280,16 @@ void ResourceGlobal::ProcessPendingLoads()
 			ib->CreateSRV(device, heap, static_cast<uint32_t>(data.indices.size()), 0, DXGI_FORMAT_R32_UINT);
 
 			skinnedRes->SetGPUResources(std::move(vb), std::move(ib));
+			m_pendingLoads.pop();
 		}
 		else if (task.typeID == TextureResource::StaticRuntimeTypeID())
 		{
 			EvAsset::TextureData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
+			{
+				m_pendingLoads.pop();
 				continue;
+			}
 
 			auto texRes = std::static_pointer_cast<TextureResource>(task.targetResource);
 
@@ -240,7 +299,10 @@ void ResourceGlobal::ProcessPendingLoads()
 					reinterpret_cast<const uint8_t*>(data.ddsBuffer.data()), data.ddsBuffer.size(),
 					DirectX::DDS_FLAGS_NONE, &metadata, image
 				)))
+			{
+				m_pendingLoads.pop();
 				continue;
+			}
 
 			D3D12_RESOURCE_DESC texDesc = {};
 			texDesc.Dimension =
@@ -255,15 +317,57 @@ void ResourceGlobal::ProcessPendingLoads()
 			texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 			texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
+			const uint32_t numSubresources = static_cast<uint32_t>(metadata.mipLevels * metadata.arraySize);
+			uint64_t	   simulatedOffset = uploadHeap->Used();
+			uint64_t	   freshOffset = 0;
+			bool		   fitsCurrentFrame = true;
+			bool		   fitsFreshFrame = true;
+
+			for (uint32_t i = 0; i < numSubresources; ++i)
+			{
+				const uint32_t subresourceIndex = D3D12CalcSubresource(
+					i % static_cast<uint32_t>(metadata.mipLevels), i / static_cast<uint32_t>(metadata.mipLevels), 0,
+					texDesc.MipLevels, texDesc.DepthOrArraySize
+				);
+				uint64_t totalBytes = 0;
+				device->GetCopyableFootprints(&texDesc, subresourceIndex, 1, 0, nullptr, nullptr, nullptr, &totalBytes);
+
+				if (fitsCurrentFrame &&
+					!canFitAllocation(simulatedOffset, totalBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT))
+				{
+					fitsCurrentFrame = false;
+				}
+
+				if (fitsFreshFrame &&
+					!canFitAllocation(freshOffset, totalBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT))
+				{
+					fitsFreshFrame = false;
+				}
+			}
+
+			if (!fitsCurrentFrame)
+			{
+				if (!fitsFreshFrame)
+				{
+					DEBUG_LOG_FMT("[ResourceGlobal] ERROR: Texture upload exceeds upload heap capacity: {}\n", task.path.string());
+					m_pendingLoads.pop();
+					continue;
+				}
+
+				DEBUG_LOG_FMT("[ResourceGlobal] Deferring texture upload to next frame: {}\n", task.path.string());
+				break;
+			}
+
 			D3D12_HEAP_PROPERTIES  heapProps = {.Type = D3D12_HEAP_TYPE_DEFAULT};
 			ComPtr<ID3D12Resource> rawTex;
 			if (FAILED(device->CreateCommittedResource(
 					&heapProps, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
 					IID_PPV_ARGS(&rawTex)
 				)))
+			{
+				m_pendingLoads.pop();
 				continue;
-
-			const uint32_t numSubresources = static_cast<uint32_t>(metadata.mipLevels * metadata.arraySize);
+			}
 			for (uint32_t i = 0; numSubresources > i; ++i)
 			{
 				const auto&						subImage = image.GetImages()[i];
@@ -295,6 +399,11 @@ void ResourceGlobal::ProcessPendingLoads()
 			auto dxTex = std::make_unique<DxTexture>();
 			dxTex->InitializeFromResource(device, rawTex, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, data.name);
 			texRes->SetTexture(std::move(dxTex));
+			m_pendingLoads.pop();
+		}
+		else
+		{
+			m_pendingLoads.pop();
 		}
 	}
 }
@@ -392,6 +501,8 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 		}
 	}
 
+	res->MarkReady(true);
+
 	return res;
 }
 
@@ -409,6 +520,7 @@ std::shared_ptr<AnimationResource> ResourceGlobal::LoadInternal<AnimationResourc
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetData(data);
+	res->MarkReady(true);
 
 	DEBUG_LOG_FMT("[ResourceGlobal] COMPLETED: Animation: {} (Tracks: {})\n", data.name, (uint32_t)data.tracks.size());
 
@@ -429,6 +541,7 @@ std::shared_ptr<SceneResource> ResourceGlobal::LoadInternal<SceneResource>(const
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetData(std::move(data));
+	res->MarkReady(true);
 
 	DEBUG_LOG_FMT(
 		"[ResourceGlobal] COMPLETED: Scene: {} (Nodes: {}, Components: {})\n", res->GetName(),

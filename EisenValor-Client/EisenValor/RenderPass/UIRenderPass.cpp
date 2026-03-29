@@ -56,9 +56,10 @@ void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 		return;
 	}
 
-	auto* context = frame->GetMainContext();
-	auto* cmdList = context->CommandList();
+	auto& context = *frame->GetMainContext();
+	auto* cmdList = context.CommandList();
 	auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
+	DxScopedGpuEvent passEvent(context, L"UIRenderPass");
 
 	// 1. 백버퍼 상태 전환 (Present -> RenderTarget)
 	auto*				   backBuffer = swapChain->GetCurrentBackBuffer();
@@ -119,7 +120,7 @@ void UIRenderPass::CreateUIPipelineState()
 	// Param 0: 텍스처 테이블 (Bindless)
 	D3D12_DESCRIPTOR_RANGE textureRange = {};
 	textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	textureRange.NumDescriptors = 1000;
+	textureRange.NumDescriptors = GLOBAL(DxDescriptorHeapGlobal).GetCapacity();
 	textureRange.BaseShaderRegister = 0;
 	textureRange.RegisterSpace = 0;
 	textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -321,7 +322,7 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 			inst.uvMax = rData.uvMax;
 
 			// 텍스처 바인딩 (Lazy-Resolving)
-			if (rData.textureResource && rData.textureResource->GetTexture())
+			if (rData.textureResource && rData.textureResource->IsReady() && rData.textureResource->GetTexture())
 			{
 				inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
 

@@ -23,6 +23,7 @@ public:
 		uint32_t							 vertexCount,
 		uint32_t							 vertexStride,
 		D3D12_GPU_VIRTUAL_ADDRESS			 indexBuffer,
+		uint32_t							 totalIndexCount,
 		const std::vector<EvAsset::SubMesh>& subMeshes,
 		bool								 allowUpdate = false,
 		const std::string&					 name = ""
@@ -34,6 +35,7 @@ public:
 		uint32_t							 vertexCount,
 		uint32_t							 vertexStride,
 		D3D12_GPU_VIRTUAL_ADDRESS			 indexBuffer,
+		uint32_t							 totalIndexCount,
 		const std::vector<EvAsset::SubMesh>& subMeshes
 	);
 
@@ -46,4 +48,5 @@ private:
 	std::unique_ptr<DxBuffer> m_scratchBuffer;
 
 	bool m_allowUpdate = false;
+	bool m_isBuilt = false;
 };
