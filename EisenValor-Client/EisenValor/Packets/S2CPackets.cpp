@@ -468,7 +468,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 			addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 			addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-			addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+			//addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 			addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 			scene->CreateComponentWithInit<MovementComponent>(
