@@ -44,6 +44,7 @@ void AnimationComponent::Play(uint8_t key, bool loop)
 	auto it = m_animations.find(key);
 	if (it != m_animations.end())
 	{
+		m_currentKey = key;
 		Play(it->second, loop);
 	}
 	else

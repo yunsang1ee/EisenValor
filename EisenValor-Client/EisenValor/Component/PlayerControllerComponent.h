@@ -47,4 +47,7 @@ private:
 	float m_minPitch = -89.0f;
 	float m_maxPitch = 89.0f;
 
+	// Shoulder view camera vertical offset (raise/lower camera height)
+	static constexpr float kShoulderViewVertical = 1.5f;
+
 };

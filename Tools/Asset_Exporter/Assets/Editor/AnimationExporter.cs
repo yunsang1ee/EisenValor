@@ -9,25 +9,47 @@ public class AnimationExporter
     public static void ExportAnimation()
     {
         // 1. Select AnimationClip & Target GameObject
-        AnimationClip clip = null;
+        List<AnimationClip> clips = new List<AnimationClip>();
         GameObject target = null;
 
         foreach (Object obj in Selection.objects)
         {
-            if (clip == null && obj is AnimationClip) clip = obj as AnimationClip;
-            if (target == null && obj is GameObject) target = obj as GameObject;
+            if (obj is AnimationClip clip) clips.Add(clip);
+            if (target == null && obj is GameObject go) target = go;
         }
 
-        if (clip == null || target == null)
+        if (clips.Count == 0 || target == null)
         {
-            Debug.LogError("[AnimationExporter] AnimationClip과 타겟 GameObject를 동시에 선택하세요.");
+            Debug.LogError("[AnimationExporter] AnimationClip(들)과 타겟 GameObject를 동시에 선택하세요.");
             return;
         }
 
         // 2. 저장 경로 지정
-        string savePath = EditorUtility.SaveFilePanel("Save Animation", "", clip.name, "evanim");
-        if (string.IsNullOrEmpty(savePath)) return;
+        if (clips.Count == 1)
+        {
+            string savePath = EditorUtility.SaveFilePanel("Save Animation", "", clips[0].name, "evanim");
+            if (!string.IsNullOrEmpty(savePath))
+            {
+                ExportSingleClip(clips[0], target, savePath);
+            }
+        }
+        else
+        {
+            string folderPath = EditorUtility.OpenFolderPanel("Select Output Folder", "", "");
+            if (!string.IsNullOrEmpty(folderPath))
+            {
+                foreach (var clip in clips)
+                {
+                    string savePath = Path.Combine(folderPath, clip.name + ".evanim");
+                    ExportSingleClip(clip, target, savePath);
+                }
+                Debug.Log($"[AnimationExporter] 총 {clips.Count}개의 애니메이션 추출 완료.");
+            }
+        }
+    }
 
+    private static void ExportSingleClip(AnimationClip clip, GameObject target, string savePath)
+    {
         // 3. 메타데이터 수집 및 AssetWriter 준비
         string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(clip));
         AssetWriter writer = new AssetWriter("EVAN", guid);
@@ -49,9 +71,9 @@ public class AnimationExporter
             if (!string.IsNullOrEmpty(binding.path))
                 bonePaths.Add(binding.path);
         }
-
+        
         Debug.Log($"[AnimationExporter] 추출된 트랙 수: {bonePaths.Count}");
-
+        
         // 6. AMET Chunk
         ulong nameHash = HashFNV1a(clip.name);
         string skeletonGuid = "00000000000000000000000000000000";
@@ -60,12 +82,12 @@ public class AnimationExporter
         if (smr != null && smr.sharedMesh != null)
         {
             skeletonGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(smr.sharedMesh));
-            Debug.Log($"[AnimationExporter] 타겟 스켈레톤 GUID: {skeletonGuid}");
+             Debug.Log($"[AnimationExporter] 타겟 스켈레톤 GUID: {skeletonGuid}");
         }
 
         if (smr == null)
         {
-            Debug.LogError("[AnimationExporter] 선택된 오브젝트에서 SkinnedMeshRenderer를 찾을 수 없습니다.");
+            Debug.LogError($"[AnimationExporter] '{clip.name}' 추출 실패: SkinnedMeshRenderer를 찾을 수 없습니다.");
             return;
         }
 
@@ -73,13 +95,7 @@ public class AnimationExporter
         writer.AddChunk("AMET", 1, ametData);
 
         // 7. bone Path-index 매칭
-        Dictionary<string, ushort> boneToIndex = new Dictionary<string, ushort>();
         Transform[] bones = smr.bones;
-        for (ushort i = 0; i < bones.Length; i++)
-        {
-            string path = GetGameObjectPath(bones[i], target.transform);
-            boneToIndex[path] = i;
-        }
 
         Debug.Log($"[AnimationExporter] 모델에서 추출할 총 Bone 수: {bones.Length}");
 

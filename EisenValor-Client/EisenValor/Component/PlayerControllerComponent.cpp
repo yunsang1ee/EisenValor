@@ -221,6 +221,37 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	bool  a = input.GetInput('A');
 	bool  d = input.GetInput('D');
 
+	// 락온 상태 업데이트
+	bool isLockOn = false;
+	if (m_cameraObjectHandle.IsValid())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		if (scene)
+		{
+			if (auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle))
+			{
+				if (auto* camComp = camObj->GetComponent<CameraComponent>())
+				{
+					isLockOn = camComp->IsLookAtRotationEnabled();
+				}
+			}
+		}
+	}
+	fsm->SetLockOn(isLockOn);
+
+	// 이동 방향 설정
+	if (isLockOn)
+	{
+		if (w) fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		else if (s) fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+		else if (a) fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+		else if (d) fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+	}
+	else
+	{
+		fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+	}
+
 	bool isMovingInput = (w || s || a || d);
 
 	bool hasJustReleased =
@@ -427,7 +458,7 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), dirH));
 
 		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
-		XMVECTOR offset = XMVectorScale(rightH, 2.0f) + XMVectorSet(0, 1.2f, 0, 0) + XMVectorScale(dirH, -3.0f);
+		XMVECTOR offset = XMVectorScale(rightH, 2.0f) + XMVectorSet(0, kShoulderViewVertical, 0, 0) + XMVectorScale(dirH, -3.0f);
 
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);
