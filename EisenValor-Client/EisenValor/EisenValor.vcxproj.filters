@@ -44,6 +44,24 @@
     <Filter Include="Component\UI">
       <UniqueIdentifier>{7e1b3462-47a3-4408-bc83-5a8dcbceb848}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\FSM">
+      <UniqueIdentifier>{a1b2c3d4-e5f6-4789-8012-3456789abcde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Login">
+      <UniqueIdentifier>{b2c3d4e5-f6a7-4890-9123-456789abcdef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Lobby">
+      <UniqueIdentifier>{c3d4e5f6-a7b8-4901-a234-56789abcdef0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Room">
+      <UniqueIdentifier>{d4e5f6a7-b8c9-4a12-b345-6789abcdef01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{e5f6a7b8-c9d0-4b23-c456-789abcdef012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderData">
+      <UniqueIdentifier>{f6a7b8c9-d0e1-4c34-d567-89abcdef0123}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -107,56 +125,58 @@
       <Filter>Component\Vital</Filter>
     </ClInclude>
     <ClInclude Include="Component\FSM\FSMComponent.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component\FSM</Filter>
     </ClInclude>
     <ClInclude Include="Component\FSM\GeneralStates.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component\FSM</Filter>
     </ClInclude>
     <ClInclude Include="Component\FSM\StatePool.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component\FSM</Filter>
     </ClInclude>
     <ClInclude Include="RaytracingCommon.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\SkinningPass.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\InstanceRenderData.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\MaterialRenderData.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\GeoTableRenderData.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="Component\StressTestComponent.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="Scene\LoginScene.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Component\Login\LoginControllerComponent.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component\Login</Filter>
     </ClInclude>
     <ClInclude Include="Util\AnimationLoader.h">
+      <Filter>Util</Filter>
+    </ClInclude>
     <ClInclude Include="Scene\LobbyScene.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Scene\RoomScene.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Scene\LoadingScene.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component\Lobby</Filter>
     </ClInclude>
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Component\Room</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -206,41 +226,43 @@
       <Filter>Component\Vital</Filter>
     </ClCompile>
     <ClCompile Include="Component\FSM\FSMComponent.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component\FSM</Filter>
     </ClCompile>
     <ClCompile Include="Component\FSM\GeneralStates.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component\FSM</Filter>
     </ClCompile>
     <ClCompile Include="Component\FSM\StatePool.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component\FSM</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\SkinningPass.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="Component\StressTestComponent.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Scene\LoginScene.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Component\Login\LoginControllerComponent.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component\Login</Filter>
     </ClCompile>
     <ClCompile Include="Util\AnimationLoader.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
     <ClCompile Include="Scene\LobbyScene.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Scene\RoomScene.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Scene\LoadingScene.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Component\Lobby\LobbySceneControllerComponent.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component\Lobby</Filter>
     </ClCompile>
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>Component\Room</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

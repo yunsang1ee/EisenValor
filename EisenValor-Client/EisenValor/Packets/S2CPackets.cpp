@@ -23,6 +23,7 @@
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "../Util/CameraConfig.h"
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
@@ -582,7 +583,11 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 					cam->SetEnableLookAtRotation(false);
 					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 2.5f, -5.0f});
+					cam->SetFollowOffsetLocal(DX::XMFLOAT3{
+						CameraConfig::kDefaultLocalOffsetX,
+						CameraConfig::kCameraHeight,
+						CameraConfig::kDefaultLocalOffsetZ
+					});
 					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
 				}
 			);
@@ -1103,7 +1108,11 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		{
 			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
 			cameraComp->SetEnableLookAtRotation(false);			   // 자유 시점
-			cameraComp->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f}); // 오프셋 복구
+			cameraComp->SetFollowOffsetLocal({
+				CameraConfig::kDefaultLocalOffsetX,
+				CameraConfig::kCameraHeight,
+				CameraConfig::kDefaultLocalOffsetZ
+			}); // 오프셋 복구 (공유 상수 사용)
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
 		}
 		else

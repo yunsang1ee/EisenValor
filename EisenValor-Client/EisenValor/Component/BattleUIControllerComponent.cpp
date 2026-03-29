@@ -17,6 +17,7 @@
 #include "Packets/C2SPackets.h"
 #include "CameraComponent.h"
 #include "Component/FSM/FSMComponent.h"
+#include "Util/CameraConfig.h"
 #include <algorithm> // for std::clamp
 
 void BattleUIControllerComponent::OnAttach()
@@ -129,7 +130,11 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 						mainCamera->SetLookAtTarget(owner->GetComponentHandle<Transform>());
 						mainCamera->SetEnableLookAtRotation(false);
 						// 원래 오프셋으로 복구
-						mainCamera->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f});
+						mainCamera->SetFollowOffsetLocal({
+							CameraConfig::kDefaultLocalOffsetX,
+							CameraConfig::kCameraHeight,
+							CameraConfig::kDefaultLocalOffsetZ
+						});
 						DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Reset Camera to LocalPlayer\n");
 					}
 					// 죽었을 때(일단 Clear로 해둠)

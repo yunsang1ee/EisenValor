@@ -7,6 +7,8 @@
 #include "Scene.h"
 #include "Component/FSM/FSMComponent.h"
 
+#include "../Util/CameraConfig.h"
+
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 #include "Packets/Structs_generated.h"
@@ -516,7 +518,7 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), dirH));
 
 		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
-		XMVECTOR offset = XMVectorScale(rightH, 2.0f) + XMVectorSet(0, kShoulderViewVertical, 0, 0) + XMVectorScale(dirH, -3.0f);
+		XMVECTOR offset = XMVectorScale(rightH, 2.0f) + XMVectorSet(0, 1.5f, 0, 0) + XMVectorScale(dirH, -3.0f);
 
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);
