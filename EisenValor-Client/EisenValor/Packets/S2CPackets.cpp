@@ -426,6 +426,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			playerObj->GetTransform().SetScale(2.0f);
 
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
+
 				playerObjHandle,
 				[](SkinnedMeshComponent* mesh)
 				{
@@ -438,29 +439,37 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				}
 			);
 
-			// Add Belts
-			auto beltHandle = scene->ReserveGameObject("LocalPlayer_Belts");
-			scene->CreateComponentWithInit<SkinnedMeshComponent>(
-				beltHandle,
-				[scene, playerObjHandle](SkinnedMeshComponent* mesh)
-				{
-					// 메시
-					auto beltRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Belts.evskin");
-					if (beltRes)
+			// Add Equipment (Belts, Armors, Scarf)
+			auto addEquipment = [scene, playerObjHandle](const std::string& name, const std::string& resPath)
+			{
+				auto handle = scene->ReserveGameObject("LocalPlayer_" + name);
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+					handle,
+					[scene, playerObjHandle, resPath](SkinnedMeshComponent* mesh)
 					{
-						mesh->SetSkinnedMeshResource(beltRes);
-					}
+						auto res = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>(resPath);
+						if (res)
+						{
+							mesh->SetSkinnedMeshResource(res);
+						}
 
-					if (auto* player = scene->TryGetGameObject(playerObjHandle))
-					{
-						auto* beltObj = mesh->GetGameObject();
-						beltObj->GetTransform().SetParent(player->GetTransform().GetHandle());
-						//beltObj->GetTransform().SetScale(2.0f);
-						beltObj->GetTransform().SetPosition(0, 0, 0);
-						beltObj->GetTransform().SetRotation(0, 0, 0);
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0, 0, 0);
+							obj->GetTransform().SetRotation(0, 0, 0);
+						}
 					}
-				}
-			);
+				);
+			};
+
+			addEquipment("Belts", "Resource/Models/Belts.evskin");
+			addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
+			addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
+			addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
+			addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+			addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 			scene->CreateComponentWithInit<MovementComponent>(
 				playerObjHandle,
@@ -636,7 +645,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(),
 		 maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(),
-		 stance = recvPkt.stance_type()](GameObject* obj)
+		 stance = recvPkt.stance_type(), objectName](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -663,6 +672,38 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
+
+				// Add Equipment (Belts, Armors, Dress)
+				auto addEquipment = [scene, objHandle, objectName](const std::string& name, const std::string& resPath)
+				{
+					auto handle = scene->ReserveGameObject(objectName + "_" + name);
+					scene->CreateComponentWithInit<SkinnedMeshComponent>(
+						handle,
+						[scene, objHandle, resPath](SkinnedMeshComponent* mesh)
+						{
+							auto res = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>(resPath);
+							if (res)
+							{
+								mesh->SetSkinnedMeshResource(res);
+							}
+
+							if (auto* parentObj = scene->TryGetGameObject(objHandle))
+							{
+								auto* obj = mesh->GetGameObject();
+								obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+								obj->GetTransform().SetPosition(0, 0, 0);
+								obj->GetTransform().SetRotation(0, 0, 0);
+							}
+						}
+					);
+				};
+
+				addEquipment("Belts", "Resource/Models/Belts.evskin");
+				addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
+				addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
+				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
+				addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+				addEquipment("Dress", "Resource/Models/Dress.evskin");
 			}
 			else
 			{
