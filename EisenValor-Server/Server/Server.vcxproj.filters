@@ -317,9 +317,6 @@
     <ClInclude Include="ServerManager.h">
       <Filter>00. main\ServerManager</Filter>
     </ClInclude>
-    <ClInclude Include="SessionManager.h">
-      <Filter>01. SessionManager</Filter>
-    </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>03. Contents\GameObject</Filter>
     </ClInclude>
@@ -487,6 +484,9 @@
     </ClInclude>
     <ClInclude Include="ClientSession.h">
       <Filter>01. SessionManager\ClientSession</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionManager.h">
+      <Filter>02. Packets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

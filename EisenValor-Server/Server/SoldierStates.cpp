@@ -7,6 +7,8 @@
 #include "GameWorld.h"
 #include "Soldier.h"
 
+// #define PRINT_SOLDIER_STATE_LOG
+
 GameServer::Contents::SoldierSpawnState::SoldierSpawnState()
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN }, m_accDT{}
 {
@@ -20,7 +22,9 @@ void GameServer::Contents::SoldierSpawnState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
+#endif
 	m_accDT = 0.f;
 }
 
@@ -28,7 +32,10 @@ void GameServer::Contents::SoldierSpawnState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Exit Soldier Idle", id) << std::endl;
+#endif
+
 	m_accDT = 0.f;
 }
 
@@ -78,7 +85,9 @@ void GameServer::Contents::SoldierMoveState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Enter SoldierMoveState", id) << std::endl;
+#endif
 
 	if(m_currentWaypointIndex >= m_wayPoints.size()) {
 		return;
@@ -97,7 +106,9 @@ void GameServer::Contents::SoldierMoveState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Exit SoldierMoveState", id) << std::endl;
+#endif
 }
 
 void GameServer::Contents::SoldierMoveState::Update(const float dt)
@@ -112,7 +123,9 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 
 	if(distToDestSq < 1.0f) {
 		m_currentWaypointIndex++;
+#ifdef PRINT_SOLDIER_STATE_LOG
 		std::cout << "Waypoint Index Increase!" << std::endl;
+#endif
 
 		if(m_currentWaypointIndex < m_wayPoints.size()) {
 			if(ag)
@@ -176,12 +189,16 @@ GameServer::Contents::SoldierSearchState::~SoldierSearchState()
 
 void GameServer::Contents::SoldierSearchState::Enter(const float dt)
 {
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << "Soldier Search State Enter" << std::endl;
+#endif
 }
 
 void GameServer::Contents::SoldierSearchState::Exit(const float dt)
 {
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << "Soldier Search State Exit" << std::endl;
+#endif
 }
 
 void GameServer::Contents::SoldierSearchState::Update(const float dt)
@@ -216,7 +233,9 @@ GameServer::Contents::SoldierChaseState::~SoldierChaseState()
 
 void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 {
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << "SoldierChaseState Enter" << std::endl;
+#endif
 	
 	 const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
@@ -231,7 +250,9 @@ void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 
 void GameServer::Contents::SoldierChaseState::Exit(const float dt)
 {
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << "SoldierChaseState Exit" << std::endl;
+#endif
 }
 
 void GameServer::Contents::SoldierChaseState::Update(const float dt)
@@ -281,7 +302,9 @@ void GameServer::Contents::SoldierAttackState::Enter(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Enter SoldierAttackState", id) << std::endl;
+#endif
 	m_accDTForAttack = 0.f;
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
@@ -292,7 +315,9 @@ void GameServer::Contents::SoldierAttackState::Exit(const float dt)
 {
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Exit SoldierAttackState", id) << std::endl;
+#endif
 	m_accDTForAttack = 0.f;
 }
 
@@ -318,8 +343,10 @@ void GameServer::Contents::SoldierAttackState::Update(const float dt)
 	if(distToTargetSq < m_attackRangeSq) {
 		if(target->OnDamaged(owner, dt)) {
 			const auto& p{ owner->GetPosition() };
+#ifdef PRINT_SOLDIER_STATE_LOG
 			std::cout << std::format("{}, {}, {}", p.x, p.y, p.z) << std::endl;
 			std::cout << "Soldier Attack Success!" << std::endl;
+#endif
 		}
 	}
 	else {
@@ -353,7 +380,9 @@ void GameServer::Contents::SoldierDeadState::Update(const float dt)
 	
 	// TODO: 죽는 애니메이션 시간동안 대기
 	if(m_accDT >= m_deadAnimTime) {
+#ifdef PRINT_SOLDIER_STATE_LOG
 		std::cout << "Soldier Dead!" << std::endl;
+#endif
 		const auto owner{ GetFSM()->GetOwner() };
 		const auto world{ owner->GetGameWorld() };
 		world->RemoveGameObject(owner);

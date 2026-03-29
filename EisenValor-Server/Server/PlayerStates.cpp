@@ -5,6 +5,8 @@
 #include "General.h"
 #include "FSM.h"
 
+// #define PRINT_PLAYER_STATE_LOG
+
 static std::shared_ptr<GameServer::Contents::General> GetGeneral(GameServer::Contents::FSM* fsm)
 {
 	return std::static_pointer_cast<GameServer::Contents::General>(fsm->GetOwner());
@@ -25,14 +27,19 @@ GameServer::Contents::PlayerIdleState::~PlayerIdleState()
 void GameServer::Contents::PlayerIdleState::Enter(const float dt)
 {
 	m_accDTForStaminaRecovery = 0.f;
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Idle State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerIdleState::Exit(const float dt)
 {
 	m_accDTForStaminaRecovery = 0.f;
 	m_accDTForExhaustedRecovery = 0.f;
+
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Idle State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerIdleState::Update(const float dt)
@@ -108,12 +115,16 @@ GameServer::Contents::PlayerMoveState::~PlayerMoveState()
 
 void GameServer::Contents::PlayerMoveState::Enter(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Move State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerMoveState::Exit(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Move State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerMoveState::Update(const float dt)
@@ -139,12 +150,16 @@ void GameServer::Contents::PlayerPredelayState::Enter(const float dt)
 
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Predelay State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerPredelayState::Exit(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Predelay State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerPredelayState::Update(const float dt)
@@ -178,12 +193,16 @@ GameServer::Contents::PlayerAttackState::~PlayerAttackState()
 
 void GameServer::Contents::PlayerAttackState::Enter(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Attack State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerAttackState::Exit(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Attack State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerAttackState::Update(const float dt)
@@ -255,14 +274,18 @@ GameServer::Contents::PlayerPostdelayState::~PlayerPostdelayState()
 
 void GameServer::Contents::PlayerPostdelayState::Enter(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Postdelay State" << std::endl;
+#endif
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 }
 
 void GameServer::Contents::PlayerPostdelayState::Exit(const float dt)
 {
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Postdelay State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerPostdelayState::Update(const float dt)
@@ -300,14 +323,18 @@ void GameServer::Contents::PlayerStunState::Enter(const float dt)
 	if(m_stunDuration == 0) {
 		m_stunDuration = owner->GetGameObjectData()->stunDelay;
 	}
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Stun State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerStunState::Exit(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	m_stunDuration = owner->GetGameObjectData()->stunDelay;
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Stun State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerStunState::Update(const float dt)
@@ -334,13 +361,19 @@ GameServer::Contents::PlayerDeadState::~PlayerDeadState()
 void GameServer::Contents::PlayerDeadState::Enter(const float dt)
 {
 	m_accDTForRespawn = 0.f;
+
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Dead State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerDeadState::Exit(const float dt)
 {
 	m_accDTForRespawn = 0.f;
+
+#ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Dead State" << std::endl;
+#endif
 }
 
 void GameServer::Contents::PlayerDeadState::Update(const float dt)

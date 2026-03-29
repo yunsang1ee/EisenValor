@@ -17,10 +17,14 @@
 #include "LobbyServerSession.h"
 #include "Movement.h"
 
+// #define PRINT_GAME_WORLD_LOG
+
 GameServer::Contents::GameWorld::GameWorld()
 	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime(20min)
 {
+#ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
+#endif
 }
 
 GameServer::Contents::GameWorld::~GameWorld()
@@ -111,13 +115,17 @@ void GameServer::Contents::GameWorld::Update(const float dt)
 
 void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEngine::Session> session)
 {
+#ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorld EnterSession!" << std::endl;
+#endif
 
 	const auto clientSession{ std::static_pointer_cast<ClientSession>(session) };
 
 	clientSession->SetGameWorld(this);
 
+#ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "Enter Game World!" << std::endl;
+#endif
 	static const Vec3 offset{ 0.f, 0.f, 0.f };
 	static Vec3 startPos{ 0.f, 0.f, 0.f };
 	startPos += offset;
@@ -397,7 +405,9 @@ void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<Clien
 
 	auto const player = IDToPlayer(playerID);
 	if(player) {
+#ifdef PRINT_GAME_WORLD_LOG
 		std::cout << "Player " << playerID << " says: " << msg << std::endl;
+#endif
 	}
 
 	auto pb = ServerPackets::Make_SC_CHAT_PACKET(msg);
@@ -723,6 +733,7 @@ const GameServer::Contents::GameObjects& GameServer::Contents::GameWorld::GetGam
 
 void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 {
+#ifdef APPLY_LOBBY_SERVER
 	for(const auto& [id, participant] : m_reservedParticipantInfo) {
 		if(FB_ENUMS::PARTICIPANT_TYPE_BOT == participant.type) {
 			static bool flag{ true };
@@ -741,6 +752,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			AddGameObject(std::move(general));
 		}
 	}
+#endif
 
 	// Spanwer로 옮겨야 함
 	//for(int i = 0; i < 1; ++i) {
@@ -761,25 +773,22 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	AddGameObject(std::move(soldier));
 	//}
 
-	//for(int i = 0; i < 1; ++i) {
-	//	static bool flag{ true };
-	//	static Vec3 startPos{ 5.f, 0.f, 5.f };
+	for(int i = 0; i < 2; ++i) {
+		static bool flag{ true };
+		static Vec3 startPos{ -5.f  + 10.f * i, 0.f, -5.f };
 
-	//	GeneralTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-	//	t.posInfo = PosInfo{
-	//	.pos = startPos,
-	//	.rot = Vec3{}
-	//	};
-	//	t.gameWorld = this;
-	//	flag = !flag;
-	//	startPos.x += 5.f;
+		GeneralTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+		t.transform = Transform{ startPos, Vec3{} };
+		t.gameWorld = this;
+		flag = !flag;
+		startPos.x += 5.f;
 
-	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
-	//	AddGameObject(std::move(general));
-	//}
+		auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
+		AddGameObject(std::move(general));
+	}
 
 	// - 배틀램 생성
 	//{

@@ -3,6 +3,8 @@
 
 #include "GameObject.h"
 
+// #define PRINT_COLLIDER_LOG
+
 GameServer::Contents::Collider::Collider(COLLIDER_TYPE type)
 	:m_type{type}
 {
@@ -17,7 +19,9 @@ GameServer::Contents::Collider::~Collider()
 void GameServer::Contents::Collider::OnCollisionEnter(Collider* const other)
 {
 	const auto owner{ GetOwner() };
+#ifdef PRINT_COLLIDER_LOG	
 	std::cout << std::format("OnCollisionEnter! Me:{}, Other:{}", owner->GetID(), other->GetOwner()->GetID()) << std::endl;
+#endif
 	if(owner)
 		owner->OnCollisionEnter(other);
 }
@@ -30,8 +34,10 @@ void GameServer::Contents::Collider::OnCollisionStay(Collider* const other)
 
 void GameServer::Contents::Collider::OnCollisionExit(Collider* const other)
 {
+#ifdef PRINT_COLLIDER_LOG	
 	std::cout << std::format("OnCollisionExit! Me:{}, Other:{}", GetOwner()->GetID(), other->GetOwner()->GetID()) << std::endl;;
-	
+#endif
+
 	const auto owner{ GetOwner() };
 	owner->OnCollisionExit(other);
 }

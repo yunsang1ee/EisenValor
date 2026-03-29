@@ -40,7 +40,6 @@ namespace ServerPackets {
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot};
-		std::cout << "SC_MY_PLAYER" << std::endl;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_LOCAL_PLAYER_PACKET, id, &posInfo, teamType, maxHp, currentHp, maxStamina, currentStamina, stanceType));
 	}
 
@@ -52,7 +51,6 @@ namespace ServerPackets {
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
-		std::cout << "SC_ADD_OBJ" << std::endl;
 		return  GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_ADD_OBJ_IN_GAME_WORLD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_ADD_OBJ_PACKET, id, objType, teamType, &posInfo, maxHp, currentHp, maxStamina, currentStamina, stanceType));
 	}
 

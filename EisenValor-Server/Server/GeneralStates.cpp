@@ -9,6 +9,8 @@
 #include "GeneralNodes.h"
 #include "NavAgent.h"
 
+// #define PRINT_GENERAL_STATE_LOG
+
 GameServer::Contents::GeneralState::GeneralState(const uint8 stateType, FSM* const fsm)
 	:State{stateType}
 {
@@ -49,8 +51,10 @@ void GameServer::Contents::GeneralRoamingState::Enter(const float dt)
 	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
 	m_gameWorld->Broadcast(std::move(pb));
 
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralRoamingState Enter!" << std::endl;
-	
+#endif
+
 	m_bt = GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>();
 	
 	if(m_bt) {
@@ -60,7 +64,10 @@ void GameServer::Contents::GeneralRoamingState::Enter(const float dt)
 
 void GameServer::Contents::GeneralRoamingState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralRoamingState Exit!" << std::endl;
+#endif
+
 	if(m_bt) {
 		m_bt->Reset();
 	}
@@ -158,7 +165,9 @@ GameServer::Contents::GeneralDuelingState::~GeneralDuelingState()
 
 void GameServer::Contents::GeneralDuelingState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
+#endif
 
 	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
 	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
@@ -173,7 +182,10 @@ void GameServer::Contents::GeneralDuelingState::Enter(const float dt)
 
 void GameServer::Contents::GeneralDuelingState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDuelingState Exit!" << std::endl;
+#endif
+
 	if(m_bt) {
 		m_bt->Reset();
 	}
@@ -199,7 +211,10 @@ GameServer::Contents::GeneralStunState::~GeneralStunState()
 
 void GameServer::Contents::GeneralStunState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralStunState Enter!" << std::endl;
+#endif
+
 	m_accDTForStunState = 0.f;
 
 	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
@@ -209,7 +224,9 @@ void GameServer::Contents::GeneralStunState::Enter(const float dt)
 
 void GameServer::Contents::GeneralStunState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralStunState Exit!" << std::endl;
+#endif
 	m_accDTForStunState = 0.f;
 }
 
@@ -238,7 +255,10 @@ GameServer::Contents::GeneralDeadState::~GeneralDeadState()
 
 void GameServer::Contents::GeneralDeadState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDeadState Enter!" << std::endl;
+#endif
+
 	m_accDTForRespawn = 0.f;
 	if(m_bt)
 		m_bt->Reset();	
@@ -246,9 +266,11 @@ void GameServer::Contents::GeneralDeadState::Enter(const float dt)
 
 void GameServer::Contents::GeneralDeadState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDeadState Exit!" << std::endl;
+#endif
 	m_accDTForRespawn = 0.f;
-}
+}	
 
 void GameServer::Contents::GeneralDeadState::Update(const float dt)
 {

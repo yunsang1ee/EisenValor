@@ -6,6 +6,8 @@
 #include "BehaviorTree.h"
 #include "NavAgent.h"
 
+// #define PRINT_GENERAL_LOG
+
 GameServer::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
 {
@@ -60,7 +62,10 @@ void GameServer::Contents::General::Update(const float dt)
 
 void GameServer::Contents::General::OnDeath()
 {
+#ifdef PRINT_GENERAL_LOG
 	std::cout << "General::OnDeath()" << std::endl;
+#endif
+
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
@@ -92,7 +97,9 @@ void GameServer::Contents::General::OnRespawn()
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));
 
+#ifdef PRINT_GENERAL_LOG
 	std::cout << "General NPC Respawn!" << std::endl;
+#endif
 }
 
 bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
@@ -134,7 +141,9 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 
 					// 방어 성공
 					if(frameDiff <= 10) {
+#ifdef PRINT_GENERAL_LOG
 						std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
+#endif
 						bb->SetValue("LastDefendedFrame", 0UI64);
 						return false;
 					}
