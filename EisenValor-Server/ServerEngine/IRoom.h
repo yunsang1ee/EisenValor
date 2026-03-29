@@ -2,7 +2,7 @@
 
 #include "ServerEngineStruct.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class GameWorldThread;
 	class IRoom {
 	public:
@@ -14,7 +14,7 @@ namespace ServerEngine {
 		virtual void Update(const float dt) abstract;
 		virtual void EnterSession(std::shared_ptr<Session> session) abstract;
 		virtual void LeaveSession(std::shared_ptr<Session> session) abstract;
-		virtual void Broadcast(std::shared_ptr<ServerEngine::PacketBuffer> pb) abstract;
+		virtual void Broadcast(std::shared_ptr<GameServerEngine::PacketBuffer> pb) abstract;
 
 	public:
 		void SetID(const uint16 id) { m_id = id; }

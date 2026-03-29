@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameObject;
 

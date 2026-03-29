@@ -9,26 +9,28 @@
 #include "GeneralNodes.h"
 #include "NavAgent.h"
 
-Server::Contents::GeneralState::GeneralState(const uint8 stateType, FSM* const fsm)
+// #define PRINT_GENERAL_STATE_LOG
+
+GameServer::Contents::GeneralState::GeneralState(const uint8 stateType, FSM* const fsm)
 	:State{stateType}
 {
 	SetFSM(fsm);
 
 	m_owner = std::static_pointer_cast<General>(fsm->GetOwner());
-	m_bt = GetOwner()->GetComponent<Server::Contents::BehaviorTree>();
+	m_bt = GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>();
 	m_gameWorld = GetOwner()->GetGameWorld();
 }
 
-Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
+GameServer::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
 	:GeneralState{ FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, fsm}, m_accDTForStaminaRecovery{}
 {
-	auto rootSelector = std::make_unique<Server::Contents::SelectorNode>();
-	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
+	auto rootSelector = std::make_unique<GameServer::Contents::SelectorNode>();
+	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>());
 	{
 		// 점령지를 찾고, 점령지를 향해 달려가는 시퀀스 노드
-		auto findOZAndMoveSeq = std::make_unique<Server::Contents::SequenceNode>();
-		findOZAndMoveSeq->AddChild(std::make_unique<Server::Contents::FindOZ>()); 			//	- 1. Action -  점령지를 찾는다.
-		findOZAndMoveSeq->AddChild(std::make_unique<Server::Contents::MoveToOZ>()); 		//	- 2. Action - 점령지를 찾았으면 점령지를 향해 달려간다
+		auto findOZAndMoveSeq = std::make_unique<GameServer::Contents::SequenceNode>();
+		findOZAndMoveSeq->AddChild(std::make_unique<GameServer::Contents::FindOZ>()); 			//	- 1. Action -  점령지를 찾는다.
+		findOZAndMoveSeq->AddChild(std::make_unique<GameServer::Contents::MoveToOZ>()); 		//	- 2. Action - 점령지를 찾았으면 점령지를 향해 달려간다
 
 		rootSelector->AddChild(std::move(findOZAndMoveSeq));
 	}
@@ -36,11 +38,11 @@ Server::Contents::GeneralRoamingState::GeneralRoamingState(FSM* const fsm)
 	m_root = std::move(rootSelector);
 }
 
-Server::Contents::GeneralRoamingState::~GeneralRoamingState()
+GameServer::Contents::GeneralRoamingState::~GeneralRoamingState()
 {
 }
 
-void Server::Contents::GeneralRoamingState::Enter(const float dt)
+void GameServer::Contents::GeneralRoamingState::Enter(const float dt)
 {
 	auto const fsm{ GetFSM() };
 
@@ -49,30 +51,35 @@ void Server::Contents::GeneralRoamingState::Enter(const float dt)
 	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
 	m_gameWorld->Broadcast(std::move(pb));
 
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralRoamingState Enter!" << std::endl;
-	
-	m_bt = GetOwner()->GetComponent<Server::Contents::BehaviorTree>();
+#endif
+
+	m_bt = GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>();
 	
 	if(m_bt) {
 		m_bt->SetRoot(m_root.get());
 	}
 }
 
-void Server::Contents::GeneralRoamingState::Exit(const float dt)
+void GameServer::Contents::GeneralRoamingState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralRoamingState Exit!" << std::endl;
+#endif
+
 	if(m_bt) {
 		m_bt->Reset();
 	}
 }
 
-void Server::Contents::GeneralRoamingState::Update(const float dt)
+void GameServer::Contents::GeneralRoamingState::Update(const float dt)
 {
 	RecoveryStamina(dt);
 	FindGeneral(dt);
 }
 
-void Server::Contents::GeneralRoamingState::RecoveryStamina(const float dt)
+void GameServer::Contents::GeneralRoamingState::RecoveryStamina(const float dt)
 {
 	const auto& statInfo = m_owner.lock()->GetStat();
 	if(statInfo.currentStamina < statInfo.maxStamina) {
@@ -89,7 +96,7 @@ void Server::Contents::GeneralRoamingState::RecoveryStamina(const float dt)
 	}
 }
 
-void Server::Contents::GeneralRoamingState::FindGeneral(const float dt)
+void GameServer::Contents::GeneralRoamingState::FindGeneral(const float dt)
 {
 	const auto& groups{ m_gameWorld->GetGameObjectGroups() };
 
@@ -107,10 +114,10 @@ void Server::Contents::GeneralRoamingState::FindGeneral(const float dt)
 
 			if(o->GetTeamType() == GetOwner()->GetTeamType()) continue;
 
-			const auto& targetPos{ o->GetPos() };
+			const auto& targetPos{ o->GetPosition() };
 
 			if(GetOwner()->IsTargetInRange(o, 2.f * 2.f)) {
-				GetOwner()->GetComponent<Server::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", id);
+				GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>()->GetBlackboard()->SetValue("Target", id);
 				GetFSM()->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
 				return;
 			}
@@ -118,20 +125,20 @@ void Server::Contents::GeneralRoamingState::FindGeneral(const float dt)
 	}
 }
 
-Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
+GameServer::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
 	:GeneralState{ FB_ENUMS::GENERAL_STATE_TYPE_DUELING , fsm}
 {
-	auto rootSelector = std::make_unique<Server::Contents::SelectorNode>();
-	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<Server::Contents::BehaviorTree>());
+	auto rootSelector = std::make_unique<GameServer::Contents::SelectorNode>();
+	rootSelector->SetTree(GetFSM()->GetOwner()->GetComponent<GameServer::Contents::BehaviorTree>());
 
 	// DefenseSeq
 	{
-		auto defenseSeq{ std::make_unique<Server::Contents::SequenceNode>() };
+		auto defenseSeq{ std::make_unique<GameServer::Contents::SequenceNode>() };
 		{
-			defenseSeq->AddChild(std::make_unique<Server::Contents::IsTargetAttacking>());
+			defenseSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetAttacking>());
 
-			auto defOrParrySel = std::make_unique<Server::Contents::SelectorNode>();
-			defOrParrySel->AddChild(std::make_unique<Server::Contents::DefaultDefense>());
+			auto defOrParrySel = std::make_unique<GameServer::Contents::SelectorNode>();
+			defOrParrySel->AddChild(std::make_unique<GameServer::Contents::DefaultDefense>());
 			// defOrParrySel->AddChild(std::make_unique<Server::Contents::Parrying>());
 
 			defenseSeq->AddChild(std::move(defOrParrySel));
@@ -142,9 +149,9 @@ Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
 
 	// AttackSel
 	{
-		auto attackSel{ std::make_unique<Server::Contents::SelectorNode>() };
-		attackSel->AddChild(std::make_unique<Server::Contents::AttackTry>());
-		attackSel->AddChild(std::make_unique<Server::Contents::CombatMovement>());
+		auto attackSel{ std::make_unique<GameServer::Contents::SelectorNode>() };
+		attackSel->AddChild(std::make_unique<GameServer::Contents::AttackTry>());
+		attackSel->AddChild(std::make_unique<GameServer::Contents::CombatMovement>());
 
 		rootSelector->AddChild(std::move(attackSel));
 	}
@@ -152,13 +159,15 @@ Server::Contents::GeneralDuelingState::GeneralDuelingState(FSM* const fsm)
 	m_root = std::move(rootSelector);
 }
 
-Server::Contents::GeneralDuelingState::~GeneralDuelingState()
+GameServer::Contents::GeneralDuelingState::~GeneralDuelingState()
 {
 }
 
-void Server::Contents::GeneralDuelingState::Enter(const float dt)
+void GameServer::Contents::GeneralDuelingState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
+#endif
 
 	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
 	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
@@ -171,35 +180,41 @@ void Server::Contents::GeneralDuelingState::Enter(const float dt)
 	GetOwner()->GetComponent<NavAgent>()->StopMove();
 }
 
-void Server::Contents::GeneralDuelingState::Exit(const float dt)
+void GameServer::Contents::GeneralDuelingState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDuelingState Exit!" << std::endl;
+#endif
+
 	if(m_bt) {
 		m_bt->Reset();
 	}
 }
 
-void Server::Contents::GeneralDuelingState::Update(const float dt)
+void GameServer::Contents::GeneralDuelingState::Update(const float dt)
 {
 	const auto bb{ m_bt->GetBlackboard() };
 
-	if(false == bb->HasKey("Target") || -1 == bb->GetValue<uint32>("Target")) {
+	if(false == bb->HasKey("Target") || -1 == bb->GetValue<uint64>("Target")) {
 		GetFSM()->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, dt, true);
 	}
 }
 
-Server::Contents::GeneralStunState::GeneralStunState(FSM* const fsm)
+GameServer::Contents::GeneralStunState::GeneralStunState(FSM* const fsm)
 	:GeneralState{ FB_ENUMS::GENERAL_STATE_TYPE_STUN, fsm }, m_accDTForStunState{}
 {
 }
 
-Server::Contents::GeneralStunState::~GeneralStunState()
+GameServer::Contents::GeneralStunState::~GeneralStunState()
 {
 }
 
-void Server::Contents::GeneralStunState::Enter(const float dt)
+void GameServer::Contents::GeneralStunState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralStunState Enter!" << std::endl;
+#endif
+
 	m_accDTForStunState = 0.f;
 
 	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
@@ -207,13 +222,15 @@ void Server::Contents::GeneralStunState::Enter(const float dt)
 	m_gameWorld->Broadcast(std::move(pb));
 }
 
-void Server::Contents::GeneralStunState::Exit(const float dt)
+void GameServer::Contents::GeneralStunState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralStunState Exit!" << std::endl;
+#endif
 	m_accDTForStunState = 0.f;
 }
 
-void Server::Contents::GeneralStunState::Update(const float dt)
+void GameServer::Contents::GeneralStunState::Update(const float dt)
 {
 	const auto fsm{ GetFSM() };
 
@@ -227,30 +244,35 @@ void Server::Contents::GeneralStunState::Update(const float dt)
 }
 
 
-Server::Contents::GeneralDeadState::GeneralDeadState(FSM* const fsm)
+GameServer::Contents::GeneralDeadState::GeneralDeadState(FSM* const fsm)
 	:GeneralState{ FB_ENUMS::GENERAL_STATE_TYPE_DEAD, fsm }, m_accDTForRespawn{}
 {
 }
 
-Server::Contents::GeneralDeadState::~GeneralDeadState()
+GameServer::Contents::GeneralDeadState::~GeneralDeadState()
 {
 }
 
-void Server::Contents::GeneralDeadState::Enter(const float dt)
+void GameServer::Contents::GeneralDeadState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDeadState Enter!" << std::endl;
+#endif
+
 	m_accDTForRespawn = 0.f;
 	if(m_bt)
 		m_bt->Reset();	
 }
 
-void Server::Contents::GeneralDeadState::Exit(const float dt)
+void GameServer::Contents::GeneralDeadState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralDeadState Exit!" << std::endl;
+#endif
 	m_accDTForRespawn = 0.f;
-}
+}	
 
-void Server::Contents::GeneralDeadState::Update(const float dt)
+void GameServer::Contents::GeneralDeadState::Update(const float dt)
 {
 	m_accDTForRespawn += dt;
 	auto const data{ GetOwner()->GetGameObjectData() };

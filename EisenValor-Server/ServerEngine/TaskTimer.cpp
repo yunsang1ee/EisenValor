@@ -3,7 +3,7 @@
 
 #include "TaskQueue.h"
 
-void ServerEngine::TaskTimer::Reserve(const std::chrono::milliseconds ms, std::weak_ptr<ServerEngine::TaskQueue> owner, std::shared_ptr<Task> task)
+void GameServerEngine::TaskTimer::Reserve(const std::chrono::milliseconds ms, std::weak_ptr<GameServerEngine::TaskQueue> owner, std::shared_ptr<Task> task)
 {
 	const auto now = (high_resolution_clock::now());
 	const auto next = ms;
@@ -14,7 +14,7 @@ void ServerEngine::TaskTimer::Reserve(const std::chrono::milliseconds ms, std::w
 	m_items.push(TimerItem{ executeTick, taskData });
 }
 
-void ServerEngine::TaskTimer::DistributeReservedTask(high_resolution_clock::time_point now)
+void GameServerEngine::TaskTimer::DistributeReservedTask(high_resolution_clock::time_point now)
 {
 	if(m_distributing.exchange(true) == true)
 		return;
@@ -47,7 +47,7 @@ void ServerEngine::TaskTimer::DistributeReservedTask(high_resolution_clock::time
 	m_distributing.store(false);
 }
 
-void ServerEngine::TaskTimer::Clear()
+void GameServerEngine::TaskTimer::Clear()
 {
 	std::lock_guard<std::mutex> lk{ m_mutex };
 

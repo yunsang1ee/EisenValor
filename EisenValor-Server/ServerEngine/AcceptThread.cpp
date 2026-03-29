@@ -4,16 +4,15 @@
 #include "WorkerThread.h"
 #include "ServerEngineCore.h"
 #include "Session.h"
-#include "IOCoreTest.h"
+#include "IOCore.h"
 
-#ifdef  MODERN_CODE
-ServerEngine::AcceptThread::AcceptThread(const SessionFactoryFunc func, const DWORD listenSocketFlags, WorkerThread* const ownerWorker)
-	: m_serverAddress{}, m_func{func}, m_ownerWorker{ownerWorker}
+GameServerEngine::AcceptThread::AcceptThread(const SessionFactoryFunc func, const DWORD listenSocketFlags, WorkerThread* const ownerWorker)
+	: m_serverAddress{}, m_func{ func }, m_ownerWorker{ ownerWorker }, m_port{}
 {
 	m_listenSocket = CreateSocket(listenSocketFlags);
 }
 
-ServerEngine::AcceptThread::~AcceptThread()
+GameServerEngine::AcceptThread::~AcceptThread()
 {
 	if(m_listenSocket != INVALID_SOCKET) {
 		closesocket(m_listenSocket);
@@ -21,7 +20,7 @@ ServerEngine::AcceptThread::~AcceptThread()
 	}
 }
 
-bool ServerEngine::AcceptThread::Init(const uint16 port)
+bool GameServerEngine::AcceptThread::Init(const uint16 port)
 {
 	if(m_listenSocket == INVALID_SOCKET)
 		return false;
@@ -52,7 +51,7 @@ bool ServerEngine::AcceptThread::Init(const uint16 port)
 	return true;
 }
 
-void ServerEngine::AcceptThread::Run(const std::stop_token st)
+void GameServerEngine::AcceptThread::Run(const std::stop_token st)
 {
 	while(false == st.stop_requested()) {
 		sockaddr_in clientAddr;
@@ -80,11 +79,11 @@ void ServerEngine::AcceptThread::Run(const std::stop_token st)
 			continue;
 		}
 
-		m_ownerWorker->PushJob(&ServerEngine::WorkerThread::Register, (session));
+		m_ownerWorker->PushJob(&GameServerEngine::WorkerThread::Register, (session));
 	}
 }
 
-void ServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
+void GameServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
 {
 	u_long arg{ 1 };
 	ioctlsocket(socket, FIONBIO, &arg);
@@ -93,4 +92,3 @@ void ServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
 	int opt{ 1 };
 	setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int));
 }
-#endif //  MODERN_CODE

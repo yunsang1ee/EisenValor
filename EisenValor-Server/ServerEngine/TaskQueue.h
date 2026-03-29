@@ -3,9 +3,9 @@
 #include "Task.h"
 #include "TaskTimer.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Task;
-	class TaskQueue : public std::enable_shared_from_this<ServerEngine::TaskQueue> {
+	class TaskQueue : public std::enable_shared_from_this<GameServerEngine::TaskQueue> {
 	public:
 		TaskQueue();
 		virtual ~TaskQueue();
@@ -31,13 +31,13 @@ namespace ServerEngine {
 		template<typename Func>
 		void ExecTimer(const std::chrono::milliseconds ms, Func&& func)
 		{
-			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(std::forward<Func>(func)));
+			MANAGER(GameServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(std::forward<Func>(func)));
 		}
 
 		template<typename T, typename Ret, typename... FArgs, typename... CallArgs>
 		void ExecTimer(const std::chrono::milliseconds ms, Ret(T::* memFunc)(FArgs...), CallArgs&&... args)
 		{
-			MANAGER(ServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(memFunc, std::forward<CallArgs>(args)...));
+			MANAGER(GameServerEngine::TaskTimer)->Reserve(ms, shared_from_this(), MakeTask(memFunc, std::forward<CallArgs>(args)...));
 		}
 
 	public:

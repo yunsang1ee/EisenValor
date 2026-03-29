@@ -5,7 +5,7 @@ struct GameObjectDeleter;
 struct GameObjectData;
 #include "GameObject.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameObject;
 		class General;
@@ -13,19 +13,14 @@ namespace Server {
 		class Soldier;
 		class BattleRam;
 
-		class GameWorldTest;
+		class GameWorld;
 
 		struct GameObjectTemplate {
-			uint32						id;
-			PosInfo						posInfo;
+			uint64						id;
+			Transform					transform;
 			FB_ENUMS::TEAM_TYPE			teamType;
 			const GameObjectData*		gameObjectData;
-#ifdef LEGACY_CODE
-			std::weak_ptr<GameWorld>	gameWorld;
-#endif
-#ifdef MODERN_CODE
-			GameWorldTest* gameWorld;
-#endif
+			GameWorld*					gameWorld;
 		};
 
 		struct CreatureTemplate : public GameObjectTemplate {

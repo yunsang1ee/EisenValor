@@ -1,15 +1,15 @@
 #pragma once
 #include "Singleton.hpp"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class TaskQueue;
 	struct TaskData {
-		TaskData(std::weak_ptr<ServerEngine::TaskQueue> _owner, std::shared_ptr<Task> _task)
+		TaskData(std::weak_ptr<GameServerEngine::TaskQueue> _owner, std::shared_ptr<Task> _task)
 			:owner{ _owner }, task{ _task }
 		{
 		}
 
-		std::weak_ptr<ServerEngine::TaskQueue>	owner;
+		std::weak_ptr<GameServerEngine::TaskQueue>	owner;
 		std::shared_ptr<Task>					task;
 	};
 
@@ -23,7 +23,7 @@ namespace ServerEngine {
 	class TaskTimer : public Singleton<TaskTimer> {
 		SINGLETON(TaskTimer)
 	public:
-		void Reserve(const std::chrono::milliseconds ms, std::weak_ptr<ServerEngine::TaskQueue> owner, std::shared_ptr<Task> task);
+		void Reserve(const std::chrono::milliseconds ms, std::weak_ptr<GameServerEngine::TaskQueue> owner, std::shared_ptr<Task> task);
 		void DistributeReservedTask(high_resolution_clock::time_point now);
 		void Clear();
 

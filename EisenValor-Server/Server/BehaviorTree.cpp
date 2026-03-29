@@ -3,26 +3,26 @@
 
 #include "BehaviorNode.h"
 
-Server::Contents::BehaviorTree::BehaviorTree()
+GameServer::Contents::BehaviorTree::BehaviorTree()
 	:m_root{nullptr}
 {
 
 }
 
-void Server::Contents::BehaviorTree::SetRoot(BehaviorNode* const root)
+void GameServer::Contents::BehaviorTree::SetRoot(BehaviorNode* const root)
 {
 	Reset();
 
 	m_root = root;
 }
 
-void Server::Contents::BehaviorTree::Update(const float dt)
+void GameServer::Contents::BehaviorTree::Update(const float dt)
 {
 	if(m_root)
 		m_root->Execute(dt);
 }
 
-void Server::Contents::BehaviorTree::Reset()
+void GameServer::Contents::BehaviorTree::Reset()
 {
 	if(m_root)
 		m_root->Reset();

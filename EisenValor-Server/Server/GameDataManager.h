@@ -40,7 +40,7 @@ struct GameObjectData {
     std::vector<uint32> skills;
 };
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class GameDataManager : public Singleton<GameDataManager> {
 			SINGLETON(GameDataManager)

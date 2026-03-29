@@ -1,17 +1,17 @@
 #include "pch.h"
 #include "RIORingBuffer.h"
 
-ServerEngine::RIORingBuffer::RIORingBuffer(const uint32 capacity)
+GameServerEngine::RIORingBuffer::RIORingBuffer(const uint32 capacity)
 	:m_bufferId(RIO_INVALID_BUFFERID), m_buffer{ nullptr }, m_capacity{ capacity }, m_usedSize{}, m_readOffset{}, m_writeOffset{}
 {
 	Alloc();
 }
 
-ServerEngine::RIORingBuffer::~RIORingBuffer()
+GameServerEngine::RIORingBuffer::~RIORingBuffer()
 {
 }
 
-bool ServerEngine::RIORingBuffer::RegisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable)
+bool GameServerEngine::RIORingBuffer::RegisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable)
 {
 	m_bufferId = rioFuncTable.RIORegisterBuffer(m_buffer, m_capacity);
 
@@ -22,7 +22,7 @@ bool ServerEngine::RIORingBuffer::RegisterBuffer(const RIO_EXTENSION_FUNCTION_TA
 	return true;
 }
 
-bool ServerEngine::RIORingBuffer::OnWrite(const uint32 len)
+bool GameServerEngine::RIORingBuffer::OnWrite(const uint32 len)
 {
     if(len > GetFreeSize())
         return false;
@@ -33,7 +33,7 @@ bool ServerEngine::RIORingBuffer::OnWrite(const uint32 len)
     return true;
 }
 
-bool ServerEngine::RIORingBuffer::OnRead(const uint32 len)
+bool GameServerEngine::RIORingBuffer::OnRead(const uint32 len)
 {
     if(len > m_usedSize) 
         return false;
@@ -44,7 +44,7 @@ bool ServerEngine::RIORingBuffer::OnRead(const uint32 len)
     return true;
 }
 
-void ServerEngine::RIORingBuffer::AdjustPos()
+void GameServerEngine::RIORingBuffer::AdjustPos()
 {
     if(m_usedSize == 0) {
         m_readOffset = m_writeOffset = 0;
@@ -74,7 +74,7 @@ void ServerEngine::RIORingBuffer::AdjustPos()
     }
 }
 
-uint32 ServerEngine::RIORingBuffer::GetContiguousReadSize() const
+uint32 GameServerEngine::RIORingBuffer::GetContiguousReadSize() const
 {
     if(m_writeOffset >= m_readOffset)
         return m_writeOffset - m_readOffset;
@@ -82,7 +82,7 @@ uint32 ServerEngine::RIORingBuffer::GetContiguousReadSize() const
     return m_capacity - m_readOffset;
 }
 
-uint32 ServerEngine::RIORingBuffer::GetContiguousFreeSize() const
+uint32 GameServerEngine::RIORingBuffer::GetContiguousFreeSize() const
 {
     if(m_writeOffset >= m_readOffset)
         return m_capacity - m_writeOffset;
@@ -90,7 +90,7 @@ uint32 ServerEngine::RIORingBuffer::GetContiguousFreeSize() const
     return m_readOffset - m_writeOffset;
 }
 
-void ServerEngine::RIORingBuffer::CleanBuffer()
+void GameServerEngine::RIORingBuffer::CleanBuffer()
 {
     if(GetUsedSize() == 0) {
         m_readOffset = m_writeOffset = 0;
@@ -100,7 +100,7 @@ void ServerEngine::RIORingBuffer::CleanBuffer()
     }
 }
 
-void ServerEngine::RIORingBuffer::Alloc()
+void GameServerEngine::RIORingBuffer::Alloc()
 {
 	m_buffer = reinterpret_cast<char*>(VirtualAllocEx(GetCurrentProcess(), 0, m_capacity, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 
@@ -108,23 +108,23 @@ void ServerEngine::RIORingBuffer::Alloc()
 		LOG_ERROR("RIORingBuffer Alloc Failed!");
 }
 
-ServerEngine::RIORingRecvBuffer::RIORingRecvBuffer()
+GameServerEngine::RIORingRecvBuffer::RIORingRecvBuffer()
 {
 }
 
-ServerEngine::RIORingRecvBuffer::~RIORingRecvBuffer()
+GameServerEngine::RIORingRecvBuffer::~RIORingRecvBuffer()
 {
 }
 
-ServerEngine::RIORingSendBuffer::RIORingSendBuffer()
+GameServerEngine::RIORingSendBuffer::RIORingSendBuffer()
 {
 }
 
-ServerEngine::RIORingSendBuffer::~RIORingSendBuffer()
+GameServerEngine::RIORingSendBuffer::~RIORingSendBuffer()
 {
 }
 
-bool ServerEngine::RIORingSendBuffer::Append(const char* const data, const uint32 size)
+bool GameServerEngine::RIORingSendBuffer::Append(const char* const data, const uint32 size)
 {
     if(GetFreeSize() < size) return false;
 
@@ -138,7 +138,7 @@ bool ServerEngine::RIORingSendBuffer::Append(const char* const data, const uint3
     return true;
 }
 
-void ServerEngine::RIORingSendBuffer::moveSendOffset(const uint32 size)
+void GameServerEngine::RIORingSendBuffer::moveSendOffset(const uint32 size)
 {
     m_writeOffset = (m_writeOffset + size) % m_capacity;
     m_usedSize += size;

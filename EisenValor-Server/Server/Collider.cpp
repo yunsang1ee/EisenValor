@@ -3,55 +3,61 @@
 
 #include "GameObject.h"
 
-Server::Contents::Collider::Collider(COLLIDER_TYPE type)
+// #define PRINT_COLLIDER_LOG
+
+GameServer::Contents::Collider::Collider(COLLIDER_TYPE type)
 	:m_type{type}
 {
 	static uint32 idGen{ 0 };
 	m_id = idGen++;
 }
 
-Server::Contents::Collider::~Collider()
+GameServer::Contents::Collider::~Collider()
 {
 }
 
-void Server::Contents::Collider::OnCollisionEnter(Collider* const other)
+void GameServer::Contents::Collider::OnCollisionEnter(Collider* const other)
 {
 	const auto owner{ GetOwner() };
+#ifdef PRINT_COLLIDER_LOG	
 	std::cout << std::format("OnCollisionEnter! Me:{}, Other:{}", owner->GetID(), other->GetOwner()->GetID()) << std::endl;
+#endif
 	if(owner)
 		owner->OnCollisionEnter(other);
 }
 
-void Server::Contents::Collider::OnCollisionStay(Collider* const other)
+void GameServer::Contents::Collider::OnCollisionStay(Collider* const other)
 {
 	const auto owner{ GetOwner() };
 	owner->OnCollisionStay(other);
 }
 
-void Server::Contents::Collider::OnCollisionExit(Collider* const other)
+void GameServer::Contents::Collider::OnCollisionExit(Collider* const other)
 {
+#ifdef PRINT_COLLIDER_LOG	
 	std::cout << std::format("OnCollisionExit! Me:{}, Other:{}", GetOwner()->GetID(), other->GetOwner()->GetID()) << std::endl;;
-	
+#endif
+
 	const auto owner{ GetOwner() };
 	owner->OnCollisionExit(other);
 }
 
-Server::Contents::OBBCollider::OBBCollider()
+GameServer::Contents::OBBCollider::OBBCollider()
 	:Collider{ COLLIDER_TYPE::OBB }, m_center{}, m_extents(0.f, 0.f, 0.f), m_orientation{}, m_localOffset{0.f, 0.0f, 0.f}, m_localExtents{ 0.5f },
 	m_prevPos{}, m_prevRot{}, m_prevScale{}, m_isDirty{false}
 {
 }
 
-Server::Contents::OBBCollider::~OBBCollider()
+GameServer::Contents::OBBCollider::~OBBCollider()
 {
 }
 
-void Server::Contents::OBBCollider::Update(const float dt)
+void GameServer::Contents::OBBCollider::Update(const float dt)
 {
 	const auto owner{ GetOwner() };
 	if(!owner) return;
 
-	const auto& curPos{ owner->GetPos() };
+	const auto& curPos{ owner->GetPosition() };
 	const auto& curRot{ owner->GetRotation() };
 	const auto& curScale{ owner->GetScale() };
 

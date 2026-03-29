@@ -7,28 +7,26 @@
 #include "AcceptThread.h"
 #include "WorkerThread.h"
 
-#include "IOCPCoreTest.h"
-#include "RIOCoreTest.h"
+#include "IOCPCore.h"
+#include "RIOCore.h"
 
 #include "GameWorldThread.h"
 
-#ifdef MODERN_CODE
-
-ServerEngine::ServerEngineCore::ServerEngineCore()
+GameServerEngine::ServerEngineCore::ServerEngineCore()
 {
 }
 
-ServerEngine::ServerEngineCore::~ServerEngineCore()
+GameServerEngine::ServerEngineCore::~ServerEngineCore()
 {
 }
 
-bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc)
+bool GameServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameWorldFactoryFunc worldFunc)
 {
 	m_nextWorkerIndex = 0;
 
 	WSADATA wsaData;
 	if(0 != WSAStartup(MAKEWORD(2, 2), &wsaData)) {
-		ServerEngine::LogManager::PrintLastError();
+		GameServerEngine::LogManager::PrintLastError();
 		return false;
 	}
 
@@ -56,35 +54,35 @@ bool ServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSession
 #ifdef _USE_RIO
 	flags = WSA_FLAG_REGISTERED_IO;
 
+	const auto& networkConfig = MANAGER(ServerEngineConfigManager)->GetNetworkConfig();
+
 	// lobbySesionThread 생성
 	{
-		auto rioCOre{ std::make_unique<RIO::RIOCoreTest>() };
+		auto rioCOre{ std::make_unique<RIO::RIOCore>() };
 		auto lobbyServerSessionThread =  std::make_unique<WorkerThread>(WORKER_THREAD_TYPE::LOBBY_SESSION, std::move(rioCOre));
 		
-		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, 40001))
+		if(false == lobbyServerSessionThread->Init(lobbySessionFunc, networkConfig.LobbySessionThreadPort))
 			return false;
 
 		m_workerThreads.emplace_back(std::move(lobbyServerSessionThread));
 		m_lobbyServerSessionThread = m_workerThreads.back().get();
 	}
 	
-	// WorkerThread 생성
-	int port[2]{ 40002, 40003 };
-	for(int i = 1; i < 3; ++i) {
-		auto rioCore = std::make_unique<RIO::RIOCoreTest>();
-		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::WORLD, std::move(rioCore), worldFunc));
+	for(int i = 1; i <= networkConfig.GameWorldThreadCount; ++i) {
+		auto rioCore = std::make_unique<RIO::RIOCore>();
+		m_workerThreads.emplace_back(std::make_unique<GameWorldThread>(WORKER_THREAD_TYPE::GAME_WORLD, std::move(rioCore), worldFunc));
 
-		if(false == m_workerThreads[i]->Init(clientSessionFunc, port[i-1]))
+		if(false == m_workerThreads[i]->Init(clientSessionFunc, MANAGER(ServerEngineConfigManager)->GetGameWorldThreadPort(i-1)))
 			return false;
 	}
 
 	return true;
 }
 
-void ServerEngine::ServerEngineCore::Run()
+void GameServerEngine::ServerEngineCore::Run()
 {
 	for(int i = 0; i < 3; ++i) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
+		MANAGER(GameServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
 			{
 				TLS_THREAD_ID = i;
 				if(0 == i) {
@@ -99,12 +97,12 @@ void ServerEngine::ServerEngineCore::Run()
 	}
 }
 
-void ServerEngine::ServerEngineCore::Shutdown()
+void GameServerEngine::ServerEngineCore::Shutdown()
 {
-	MANAGER(ServerEngine::ThreadManager)->Join();
+	MANAGER(GameServerEngine::ThreadManager)->Join();
 }
 
-ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetLeisurelyWorker()
+GameServerEngine::GameWorldThread* GameServerEngine::ServerEngineCore::GetLeisurelyWorker()
 {
 	// TODO: WorkerThread가 현재 얼마나 바쁜지 판단해서 가장 여유로운애를 반환해줘야함.
 	// 판단? WorkerThread::Run에서 DT가 가장 짧은 얘로..?
@@ -112,11 +110,9 @@ ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetLeisurelyWorke
 	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
 }
 
-ServerEngine::GameWorldThread* ServerEngine::ServerEngineCore::GetWorkerThread(const uint32 index)
+GameServerEngine::GameWorldThread* GameServerEngine::ServerEngineCore::GetWorkerThread(const uint32 index)
 {
 	assert(index >= 1);
 	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
 }
-
-#endif
 #endif

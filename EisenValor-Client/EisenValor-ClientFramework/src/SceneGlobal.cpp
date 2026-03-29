@@ -53,7 +53,7 @@ Scene* SceneGlobal::GetScene(const std::string& sceneName) const
 	return nullptr;
 }
 
-void SceneGlobal::SetLocalNetworkID(uint32_t networkID) 
+void SceneGlobal::SetLocalNetworkID(uint64_t networkID) 
 {
 	m_localNetworkID = networkID;
 

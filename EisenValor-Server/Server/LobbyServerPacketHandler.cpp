@@ -5,7 +5,7 @@
 #include "ServerEngineCore.h"
 #include "GameWorldThread.h"
 
-void Server::LobbyServerPacketHandler::Init()
+void GameServer::LobbyServerPacketHandler::Init()
 {
 #pragma region SESSION_PACKETS
 	REGISTER_PACKET(PACKET_TYPE::CS_PONG_PKT, FB_TABLES::CS_PONG_PACKET, LobbyServerPacketHandler::Handle_CS_PONG_PACKET);
@@ -17,7 +17,7 @@ void Server::LobbyServerPacketHandler::Init()
 
 }
 
-bool Server::LobbyServerPacketHandler::Handle_CS_PONG_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt)
+bool GameServer::LobbyServerPacketHandler::Handle_CS_PONG_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_PONG_PACKET& recvPkt)
 {
 	const auto& lobbyServerSession = std::static_pointer_cast<LobbyServerSession>(session);
 	lobbyServerSession->Handle_CS_PONG();
@@ -25,22 +25,25 @@ bool Server::LobbyServerPacketHandler::Handle_CS_PONG_PACKET(const std::shared_p
 	return true;
 }
 
-bool Server::LobbyServerPacketHandler::Handle_LS_CREATE_GAME_WORLD_PACKET(const std::shared_ptr<ServerEngine::PacketSession>& session, const FB_TABLES::LS_CREATE_GAME_WORLD_PACKET& recvPkt)
+bool GameServer::LobbyServerPacketHandler::Handle_LS_CREATE_GAME_WORLD_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::LS_CREATE_GAME_WORLD_PACKET& recvPkt)
 {
 	std::cout << "LS_CREATE_GAME_WORLD_PACKET" << std::endl;
 
-	auto const worker = MANAGER(ServerEngine::ServerEngineCore)->GetLeisurelyWorker();
+	auto const worker = MANAGER(GameServerEngine::ServerEngineCore)->GetLeisurelyWorker();
 
 	std::unordered_map<uint32, GameWorldParticipantInfo> info;
 
-	if(recvPkt.participants()) {
-		for(auto it : *recvPkt.participants()) {
-			info.insert(std::make_pair(it->id(), GameWorldParticipantInfo{ .type = it->type(), .teamType = it->team_type() }));
-		}
+	auto participants = recvPkt.participants();
+	for(auto participant : *participants) {
+		GameWorldParticipantInfo participantInfo;
+		std::cout << "participant id: " << participant->id() << std::endl;
+		participantInfo.type = participant->type();
+		participantInfo.teamType = participant->team_type();
+		info.insert(std::make_pair(participant->id(), participantInfo));
 	}
 
 	if(worker) {
-		worker->PushJob(&ServerEngine::GameWorldThread::CreateWorld, recvPkt.room_id(), info);
+		worker->PushJob(&GameServerEngine::GameWorldThread::CreateWorld, recvPkt.room_id(), info);
 	}
 
 	return true;

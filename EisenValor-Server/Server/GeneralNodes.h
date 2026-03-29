@@ -1,7 +1,7 @@
 #pragma once
 #include "BehaviorNode.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 			
 		// ====================================

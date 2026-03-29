@@ -1,295 +1,96 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="리소스 파일">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{99e1086d-2675-4837-bbf4-511fdd0d0603}</UniqueIdentifier>
-      <Extensions>hlsl;hlsli</Extensions>
-    </Filter>
-    <Filter Include="RenderPass">
-      <UniqueIdentifier>{c60e310a-9a7a-433c-8fa8-e607c81fdd65}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Scene">
-      <UniqueIdentifier>{38e8648f-026b-47d2-a991-c96122ed006b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Component">
-      <UniqueIdentifier>{99f2ac79-69d0-41c3-9f93-f4e84ec9a503}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Packets">
-      <UniqueIdentifier>{43ff6f2b-6884-403e-b9e4-7cd1773a46d6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Packets\FBS">
-      <UniqueIdentifier>{74fef24a-8fa9-4d18-afb6-90e1024ac089}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Packets\PacketHandler">
-      <UniqueIdentifier>{344dd69f-16c8-4ce6-ad4b-2d95a9fae30e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="UI">
-      <UniqueIdentifier>{343191af-0f9a-4c0c-b11b-5ba9df649a5e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Component\Vital">
-      <UniqueIdentifier>{990ceb67-0df0-4224-988a-2ecb5abf5557}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Component\UI">
-      <UniqueIdentifier>{7e1b3462-47a3-4408-bc83-5a8dcbceb848}</UniqueIdentifier>
-    </Filter>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Resource.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="EisenValor.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="stdafxClient.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\PacketHandler.h">
-      <Filter>Packets\PacketHandler</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPass\CopyToBackBufferPass.h">
-      <Filter>RenderPass</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPass\DxrRenderPass.h">
-      <Filter>RenderPass</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene\SampleScene.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\C2SPackets.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\S2CPackets.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\ServerEnum.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\Enums_generated.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\Structs_generated.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="Packets\Tables_generated.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPass\UIRenderPass.h">
-      <Filter>RenderPass</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\HealthComponent.h">
-      <Filter>Component\Vital</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\StaminaComponent.h">
-      <Filter>Component\Vital</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\TeamComponent.h">
-      <Filter>Component\Vital</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\BattleUIControllerComponent.h">
-      <Filter>Component\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\VitalUIControllerComponent.h">
-      <Filter>Component\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\PlayerControllerComponent.h">
-      <Filter>Component\Vital</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\FSM\FSMComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\FSM\GeneralStates.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\FSM\StatePool.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="RaytracingCommon.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPass\SkinningPass.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderData\InstanceRenderData.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderData\MaterialRenderData.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderData\GeoTableRenderData.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\StressTestComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene\LoginScene.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\Login\LoginControllerComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Util\AnimationLoader.h">
-    <ClInclude Include="Scene\LobbyScene.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene\RoomScene.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene\LoadingScene.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\Room\RoomSceneControllerComponent.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
+    <ClCompile Include="Component\FSM\FSMComponent.cpp" />
+    <ClCompile Include="Component\FSM\GeneralStates.cpp" />
+    <ClCompile Include="Component\FSM\StatePool.cpp" />
+    <ClCompile Include="Component\HealthComponent.cpp" />
+    <ClCompile Include="Component\Lobby\LobbySceneControllerComponent.cpp" />
+    <ClCompile Include="Component\Login\LoginControllerComponent.cpp" />
+    <ClCompile Include="Component\PlayerControllerComponent.cpp" />
+    <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
+    <ClCompile Include="Component\StaminaComponent.cpp" />
+    <ClCompile Include="Component\StressTestComponent.cpp" />
+    <ClCompile Include="Component\TeamComponent.cpp" />
+    <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Packets\C2SPackets.cpp" />
+    <ClCompile Include="Packets\PacketHandler.cpp" />
+    <ClCompile Include="Packets\S2CPackets.cpp" />
+    <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp" />
+    <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\SkinningPass.cpp" />
+    <ClCompile Include="RenderPass\UIRenderPass.cpp" />
+    <ClCompile Include="Scene\LoadingScene.cpp" />
+    <ClCompile Include="Scene\LobbyScene.cpp" />
+    <ClCompile Include="Scene\LoginScene.cpp" />
+    <ClCompile Include="Scene\RoomScene.cpp" />
+    <ClCompile Include="Scene\SampleScene.cpp" />
+    <ClCompile Include="stdafxClient.cpp" />
+    <ClCompile Include="Component\BattleUIControllerComponent.cpp" />
+    <ClCompile Include="Util\AnimationLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafxClient.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Packets\PacketHandler.cpp">
-      <Filter>Packets\PacketHandler</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp">
-      <Filter>RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPass\DxrRenderPass.cpp">
-      <Filter>RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene\SampleScene.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="Packets\C2SPackets.cpp">
-      <Filter>Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="Packets\S2CPackets.cpp">
-      <Filter>Packets</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPass\UIRenderPass.cpp">
-      <Filter>RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\HealthComponent.cpp">
-      <Filter>Component\Vital</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\StaminaComponent.cpp">
-      <Filter>Component\Vital</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\TeamComponent.cpp">
-      <Filter>Component\Vital</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
-      <Filter>Component\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\VitalUIControllerComponent.cpp">
-      <Filter>Component\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\PlayerControllerComponent.cpp">
-      <Filter>Component\Vital</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\FSM\FSMComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\FSM\GeneralStates.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\FSM\StatePool.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPass\SkinningPass.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\StressTestComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene\LoginScene.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\Login\LoginControllerComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Util\AnimationLoader.cpp">
-    <ClCompile Include="Scene\LobbyScene.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene\RoomScene.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene\LoadingScene.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\Lobby\LobbySceneControllerComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
+    <ClInclude Include="Component\FSM\FSMComponent.h" />
+    <ClInclude Include="Component\FSM\GeneralStates.h" />
+    <ClInclude Include="Component\FSM\StatePool.h" />
+    <ClInclude Include="Component\HealthComponent.h" />
+    <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
+    <ClInclude Include="Component\Login\LoginControllerComponent.h" />
+    <ClInclude Include="Component\PlayerControllerComponent.h" />
+    <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
+    <ClInclude Include="Component\StaminaComponent.h" />
+    <ClInclude Include="Component\StressTestComponent.h" />
+    <ClInclude Include="Component\TeamComponent.h" />
+    <ClInclude Include="Component\VitalUIControllerComponent.h" />
+    <ClInclude Include="EisenValor.h" />
+    <ClInclude Include="Packets\C2SPackets.h" />
+    <ClInclude Include="Packets\Enums_generated.h" />
+    <ClInclude Include="Packets\PacketHandler.h" />
+    <ClInclude Include="Packets\S2CPackets.h" />
+    <ClInclude Include="Packets\Structs_generated.h" />
+    <ClInclude Include="Packets\Tables_generated.h" />
+    <ClInclude Include="RaytracingCommon.h" />
+    <ClInclude Include="RenderData\GeoTableRenderData.h" />
+    <ClInclude Include="RenderData\InstanceRenderData.h" />
+    <ClInclude Include="RenderData\MaterialRenderData.h" />
+    <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
+    <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />
+    <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\SkinningPass.h" />
+    <ClInclude Include="RenderPass\UIRenderPass.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="Scene\LoadingScene.h" />
+    <ClInclude Include="Scene\LobbyScene.h" />
+    <ClInclude Include="Scene\LoginScene.h" />
+    <ClInclude Include="Scene\RoomScene.h" />
+    <ClInclude Include="Scene\SampleScene.h" />
+    <ClInclude Include="stdafxClient.h" />
+    <ClInclude Include="Component\BattleUIControllerComponent.h" />
+    <ClInclude Include="Util\AnimationLoader.h" />
+    <ClInclude Include="Packets\PacketEnums.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="EisenValor.rc">
-      <Filter>리소스 파일</Filter>
-    </ResourceCompile>
+    <ResourceCompile Include="EisenValor.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
-      <Filter>리소스 파일</Filter>
-    </Image>
-    <Image Include="EisenValor.ico">
-      <Filter>리소스 파일</Filter>
-    </Image>
+    <Image Include="EisenValor.ico" />
+    <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resource\Shader\RaytracingCommon.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Enums.fbs">
-      <Filter>Packets\FBS</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Structs.fbs">
-      <Filter>Packets\FBS</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Tables.fbs">
-      <Filter>Packets\FBS</Filter>
-    </None>
-    <None Include="packages.config" />
-    <None Include="Resource\Shader\UIVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\UIPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\RaytracingLibrary.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\.clang-format" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
+    <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="Resource\Shader\RaytracingCommon.hlsli" />
+    <None Include="Resource\Shader\UIVertexShader.hlsl" />
+    <None Include="Resource\Shader\UIPixelShader.hlsl" />
+    <None Include="..\Packets\Binaries\Enums.fbs" />
+    <None Include="..\Packets\Binaries\Structs.fbs" />
+    <None Include="..\Packets\Binaries\Tables.fbs" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

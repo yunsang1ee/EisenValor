@@ -3,7 +3,7 @@
 #include <tbb/memory_pool.h>
 #include <tbb/scalable_allocator.h>
 
-namespace ServerEngine {
+namespace GameServerEngine {
     template<typename Type>
     class ObjectPool {
     public:

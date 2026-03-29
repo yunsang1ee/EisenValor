@@ -1,7 +1,12 @@
 #include "pch.h"
 #include "IDGenerator.h"
 
-uint64 Server::Contents::IDGenerator::Generate(uint8 type)
+GameServer::Contents::IDGenerator::IDGenerator()
+    : m_worldID{}, m_seqCounter{ 1 }
+{
+}
+
+uint64 GameServer::Contents::IDGenerator::Generate(uint8 type)
 {
     uint64 currentSeq = m_seqCounter++;
 

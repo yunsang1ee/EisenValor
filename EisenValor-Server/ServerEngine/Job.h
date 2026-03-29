@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	using JobFuncCB = std::function<void()>;
 
 	class Job {

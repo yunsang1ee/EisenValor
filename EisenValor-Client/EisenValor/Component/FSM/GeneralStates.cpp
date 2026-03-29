@@ -8,6 +8,9 @@
 #include <GameObject.h>
 #include <GameObject.inl>
 #include <Packets/Enums_generated.h>
+#include <InputGlobal.h>
+#include <Packets/C2SPackets.h>
+#include <Component/FSM/FSMComponent.h>
 
 // ==================================
 //		  GENERAL_IDLE_STATE
@@ -167,6 +170,7 @@ void PlayerPostDelayState::Update(FSMComponent* fsm, float dt)
 	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
 
 	// 약공격: 5FPS, 강공격: 10FPS
+	// ?
 	float targetTime = (type == GENERAL_ATTACK_TYPE_HEAVY) ? (10.0f / 60.0f) : (5.0f / 60.0f);
 
 	if (fsm->GetStateTimer() >= targetTime)

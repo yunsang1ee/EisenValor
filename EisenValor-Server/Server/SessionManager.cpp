@@ -4,7 +4,7 @@
 #include "ClientSession.h"
 #include "LobbyServerSession.h"
 
-void Server::SessionManager::AddSession(std::shared_ptr<ServerEngine::Session> session)
+void GameServer::SessionManager::AddSession(std::shared_ptr<GameServerEngine::Session> session)
 {
 	const SESSION_TYPE sessionType{ session->GetType() };
 
@@ -32,7 +32,7 @@ void Server::SessionManager::AddSession(std::shared_ptr<ServerEngine::Session> s
 	}
 }
 
-void Server::SessionManager::RemoveSession(std::shared_ptr<ServerEngine::Session> session)
+void GameServer::SessionManager::RemoveSession(std::shared_ptr<GameServerEngine::Session> session)
 {
 	const SESSION_TYPE sessionType{ session->GetType() };
 
@@ -57,7 +57,7 @@ void Server::SessionManager::RemoveSession(std::shared_ptr<ServerEngine::Session
 	}
 }
 
-void Server::SessionManager::Broadcast(std::shared_ptr<ServerEngine::Session> session, std::shared_ptr<ServerEngine::PacketBuffer> buffer)
+void GameServer::SessionManager::Broadcast(std::shared_ptr<GameServerEngine::Session> session, std::shared_ptr<GameServerEngine::PacketBuffer> buffer)
 {
 	for(const auto& clientSession : m_clientSessions) {
 		if(session != clientSession && SESSION_STATE::FREE != session->GetState()) {

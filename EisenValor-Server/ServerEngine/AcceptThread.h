@@ -1,8 +1,7 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class WorkerThread;
-#ifdef  MODERN_CODE
 
 	class AcceptThread {
 	public:
@@ -34,6 +33,4 @@ namespace ServerEngine {
 
 		friend class ServerEngineCore;
 	};
-#endif //  MODERN_CODE
-
 }

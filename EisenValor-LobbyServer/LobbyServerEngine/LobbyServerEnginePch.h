@@ -16,6 +16,10 @@
 #include <fstream>
 #include <format>
 #include <bitset>
+#include <string>
+#include <string_view>
+#include <stdexcept>
+#include <sstream>
 
 // STL
 #include <array>
@@ -67,6 +71,13 @@ namespace fs = std::filesystem;
 
 #include "PacketHeader.h"
 #include "PacketBuffer.h"
+
+// inc
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/error/en.h"
 
 namespace LobbyServerEngine {
 	class Session;

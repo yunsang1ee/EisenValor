@@ -6,31 +6,33 @@
 #include "BehaviorTree.h"
 #include "NavAgent.h"
 
-Server::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
+// #define PRINT_GENERAL_LOG
+
+GameServer::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
 {
 }
 
-Server::Contents::General::~General()
+GameServer::Contents::General::~General()
 {
 
 }
 
-bool Server::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameObject> const target)
+bool GameServer::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameObject> const target)
 {
 	if(!target) return false;
 
 	const auto& atkInfo{ GetAtkInfo() };
 	const float radiusSq{ atkInfo.skillData->attackRadius * atkInfo.skillData->attackRadius };
-	const Vec3& myPos{ GetPos() };
+	const Vec3& myPos{ GetPosition() };
 
 	const Vec3& myRot{ GetRotation() };
-	Vec3 myDir{ sinf(Deg2Rad(myRot.y)), 0.f, cosf(Deg2Rad(myRot.y)) };
+	Vec3 myDir{ sin(myRot.y), 0.f, cosf(myRot.y) };
 	myDir.Normalize();
 
 	const float degree{ atkInfo.skillData->attackDegree * 0.5f };
 	const float cosHalfAngle{ std::cosf(Deg2Rad(degree)) };
-	const Vec3& targetPos{ target->GetPos() };
+	const Vec3& targetPos{ target->GetPosition() };
 	const Vec3 toTargetDir{ targetPos - myPos };
 	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;
 
@@ -50,26 +52,29 @@ bool Server::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameObject
 	return false;
 }
 
-void Server::Contents::General::Update(const float dt)
+void GameServer::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetPosInfo(), 0) };
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
-void Server::Contents::General::OnDeath()
+void GameServer::Contents::General::OnDeath()
 {
+#ifdef PRINT_GENERAL_LOG
 	std::cout << "General::OnDeath()" << std::endl;
+#endif
+
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
-	auto const fsm{ GetComponent<Server::Contents::FSM>() };
+	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT, true);
 
-	GetComponent<Server::Contents::BehaviorTree>()->Reset();
+	GetComponent<GameServer::Contents::BehaviorTree>()->Reset();
 }
 
-void Server::Contents::General::OnRespawn()
+void GameServer::Contents::General::OnRespawn()
 {
 	auto& statInfo{ GetStat() };
 	auto const world{ GetGameWorld() };
@@ -80,28 +85,30 @@ void Server::Contents::General::OnRespawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
-	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, worldDT, true);
 
 	// TODO: General Respawn 시 부활 위치 설정 해야함.
-	Vec3 pos{ GetPos() };
+	Vec3 pos{ GetPosition() };
 	pos.x += 10.f;
 	pos.z += 10.f;
-	GetComponent<Server::Contents::NavAgent>()->SetDestPos(pos);
+	GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(pos);
 
-	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetPosInfo(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
+	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));
 
+#ifdef PRINT_GENERAL_LOG
 	std::cout << "General NPC Respawn!" << std::endl;
+#endif
 }
 
-bool Server::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
 	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
-	const auto fsm{ GetComponent<Server::Contents::FSM>() };
+	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 	const auto stateType{ fsm->GetCurState()->GetStateType() };
 
 	if(FB_ENUMS::GENERAL_STATE_TYPE_DEAD == stateType)
@@ -134,7 +141,9 @@ bool Server::Contents::General::OnDamaged(std::shared_ptr<Creature> const attack
 
 					// 방어 성공
 					if(frameDiff <= 10) {
+#ifdef PRINT_GENERAL_LOG
 						std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
+#endif
 						bb->SetValue("LastDefendedFrame", 0UI64);
 						return false;
 					}

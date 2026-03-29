@@ -12,4 +12,4 @@
 #include "Packets/Structs_generated.h"
 #include "Packets/Tables_generated.h"
 
-// #define APPLY_LOBBY_SERVER
+#define APPLY_LOBBY_SERVER
