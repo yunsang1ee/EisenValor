@@ -21,6 +21,11 @@ namespace AnimationLoader
 			anim->AddAnimation(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN),  res.Load<AnimationResource>("Resource/Animation/HumanM@CombatDamage01.evanim"));
 			anim->AddAnimation(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD),  res.Load<AnimationResource>("Resource/Animation/HumanM@Death01.evanim"));
 
+			// 락온 이동 (21~23)
+			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_F_Seq"));
+			anim->AddAnimation(22, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_L_Seq"));
+			anim->AddAnimation(23, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_R_Seq"));
+
 			// 2. 공격 (100~)
 			// 약공격 (100 + 0)
 			anim->AddAnimation(100 + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT), 

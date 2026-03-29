@@ -18,6 +18,8 @@ public:
 	SkinnedMeshComponent(SkinnedMeshComponent&&) noexcept;
 	SkinnedMeshComponent& operator=(SkinnedMeshComponent&&) noexcept;
 
+	void OnUpdate(float dt);
+
 	void SetSkinnedMeshResource(std::shared_ptr<SkinnedMeshResource> resource, bool loadDefaultMaterials = true);
 	void SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialResource> material);
 

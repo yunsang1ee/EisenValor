@@ -438,6 +438,30 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				}
 			);
 
+			// Add Belts
+			auto beltHandle = scene->ReserveGameObject("LocalPlayer_Belts");
+			scene->CreateComponentWithInit<SkinnedMeshComponent>(
+				beltHandle,
+				[scene, playerObjHandle](SkinnedMeshComponent* mesh)
+				{
+					// 메시
+					auto beltRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Belts.evskin");
+					if (beltRes)
+					{
+						mesh->SetSkinnedMeshResource(beltRes);
+					}
+
+					if (auto* player = scene->TryGetGameObject(playerObjHandle))
+					{
+						auto* beltObj = mesh->GetGameObject();
+						beltObj->GetTransform().SetParent(player->GetTransform().GetHandle());
+						//beltObj->GetTransform().SetScale(2.0f);
+						beltObj->GetTransform().SetPosition(0, 0, 0);
+						beltObj->GetTransform().SetRotation(0, 0, 0);
+					}
+				}
+			);
+
 			scene->CreateComponentWithInit<MovementComponent>(
 				playerObjHandle,
 				[](MovementComponent* move)

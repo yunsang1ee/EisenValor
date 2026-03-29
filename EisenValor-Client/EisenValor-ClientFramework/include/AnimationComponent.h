@@ -28,6 +28,9 @@ public:
 	bool IsPlaying() const { return m_isPlaying; }
 	bool IsAnimationEnd() const;
 
+	// Final Bone Palette
+	const std::vector<DirectX::XMFLOAT4X4>& GetFinalPalette() const { return m_finalPalette; }
+
 private:
 	void UpdateBoneMatrices();
 
