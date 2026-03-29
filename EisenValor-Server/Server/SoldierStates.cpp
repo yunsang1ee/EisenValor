@@ -36,7 +36,7 @@ void GameServer::Contents::SoldierSpawnState::Update(const float dt)
 {
 	m_accDT += dt;
 
-	if(m_accDT >= 2.f) {
+	if(m_accDT >= SPAWN_DELAY) {
 		auto const fsm = GetFSM();
 		fsm->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
 	}
@@ -64,17 +64,10 @@ void GameServer::Contents::SoldierIdleState::Update(const float dt)
 {
 }
 
-GameServer::Contents::SoldierMoveState::SoldierMoveState(const float viewRange)
+GameServer::Contents::SoldierMoveState::SoldierMoveState(const float viewRange, const std::vector<Vec3>& wayPoints)
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_MOVE }, m_viewRangeSq{ viewRange * viewRange }, m_accDTForSearch{ 0.f }, m_currentWaypointIndex{}
 {
-	m_wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 40.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 60.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 80.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 100.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 120.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 140.f, 0.f, 0.f });
-	m_wayPoints.push_back(Vec3{ 160.f, 0.f, 0.f });
+	m_wayPoints = wayPoints;
 }
 
 GameServer::Contents::SoldierMoveState::~SoldierMoveState()
@@ -113,74 +106,61 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 	if(!IsValidObj(owner) || m_wayPoints.empty())
 		return;
 
-	const auto ag = owner->GetComponent<GameServer::Contents::NavAgent>();
-	const auto& curPos = owner->GetPosition();
-
+	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	const Vec3& destPos = m_wayPoints[m_currentWaypointIndex];
-	float distToDestSq = (destPos - curPos).LengthSquared();
+	const float distToDestSq = (destPos - owner->GetPosition()).LengthSquared();
 
 	if(distToDestSq < 1.0f) {
 		m_currentWaypointIndex++;
 		std::cout << "Waypoint Index Increase!" << std::endl;
+
 		if(m_currentWaypointIndex < m_wayPoints.size()) {
-			if(ag) 
+			if(ag)
 				ag->SetDestPos(m_wayPoints[m_currentWaypointIndex]);
 		}
-		else
+		else {
 			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt, true);
+		}
 		return;
 	}
 
 	m_accDTForSearch += dt;
+	if(m_accDTForSearch < SEARCH_INTERVAL)
+		return;
 
-	if(m_accDTForSearch >= 0.1f) {
-		m_accDTForSearch = 0.f;
-		
-		const auto world{ owner->GetGameWorld() };
-		std::shared_ptr<Creature> target;
+	m_accDTForSearch = 0.f;
 
-		float closestDistSq{ m_viewRangeSq };
+	const auto world{ owner->GetGameWorld() };
+	if(!world)
+		return;
 
-		if(world) {
-			const auto& groups{ world->GetGameObjectGroups() };
-			
-			for(const auto& group : groups) {
-				for(const auto& [id, o] : group) {
+	std::shared_ptr<Creature> target;
+	float closestDistSq{ m_viewRangeSq };
 
-					if(false == IsValidObj(o))
-						continue;
+	for(const auto& group : world->GetGameObjectGroups()) {
+		for(const auto& [id, o] : group) {
+			if(!IsValidObj(o) || !o->IsCreature())
+				continue;
 
-					if(false == o->IsCreature())
-						continue;
+			auto obj{ std::static_pointer_cast<Creature>(o) };
 
-					std::shared_ptr<Creature> obj{ std::static_pointer_cast<Creature>(o) };
+			if(id == owner->GetID() || owner->GetTeamType() == obj->GetTeamType())
+				continue;
 
-					if(id == owner->GetID())
-						continue;
-
-					if(owner->GetTeamType() == obj->GetTeamType())
-						continue;
-
-					const Vec3 diff{ obj->GetPosition() - owner->GetPosition() };
-					const float distToTargetSq{ diff.LengthSquared() };
-
-					if(distToTargetSq < closestDistSq) {
-						closestDistSq = distToTargetSq;
-						target = obj;
-					}
-				}
-
-				if(target)
-					break;
+			const float distSq{ (obj->GetPosition() - owner->GetPosition()).LengthSquared() };
+			if(distSq < closestDistSq) {
+				closestDistSq = distSq;
+				target = obj;
 			}
-
-			if(target) {
-				GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
-				owner->SetTarget(target);
-			}
-			else
-				owner->SetTarget(nullptr);
 		}
+	}
+
+	if(target) {
+		owner->SetTarget(target);
+		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
+	}
+	else {
+		owner->SetTarget(nullptr);
 	}
 }
 
@@ -240,6 +220,13 @@ void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 	
 	 const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
+
+	if(!IsValidObj(target))
+		return;
+
+	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
+	if(ag)
+		ag->SetDestPos(target->GetPosition());
 }
 
 void GameServer::Contents::SoldierChaseState::Exit(const float dt)
@@ -252,13 +239,14 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
 
-	if(false == IsValidObj(target)) {
+	if(!IsValidObj(target)) {
 		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
 		return;
 	}
 
-	if(target)
-		owner->LookAt(target->GetPosition());
+	// 추격
+	const Vec3& targetPos{ target->GetPosition() };
+	owner->LookAt(targetPos);
 
 	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
 
@@ -275,8 +263,6 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 		return;
 	}
 
-	// 추격
-	const Vec3& targetPos{ target->GetPosition() };
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->SetDestPos(targetPos);
@@ -315,38 +301,29 @@ void GameServer::Contents::SoldierAttackState::Update(const float dt)
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
 
-	if(false == IsValidObj(target)) {
+	if(!IsValidObj(target)) {
 		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
 		return;
 	}
 
-	if(target)
-		owner->LookAt(target->GetPosition());
+	owner->LookAt(target->GetPosition());
+	m_accDTForAttack += dt;
 
-	if(target) {
-		m_accDTForAttack += dt;
+	if(m_accDTForAttack < 1.f)
+		return;
 
-		if(m_accDTForAttack >= 1.f) {
-			m_accDTForAttack = 0.f;
-			const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+	m_accDTForAttack = 0.f;
 
-			if(distToTargetSq < m_attackRangeSq) {
-				if(target->OnDamaged(owner, dt)) {
-					const auto& ownerPos{ owner->GetPosition() };
-					std::cout << ownerPos.x << ", " << ownerPos.y << ", " << ownerPos.z << std::endl;
-					std::cout << "Soldier Attack Success!" << std::endl;
-					m_accDTForAttack = 0.f;
-				}
-			}
-			else {
-				GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
-			}
+	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+	if(distToTargetSq < m_attackRangeSq) {
+		if(target->OnDamaged(owner, dt)) {
+			const auto& p{ owner->GetPosition() };
+			std::cout << std::format("{}, {}, {}", p.x, p.y, p.z) << std::endl;
+			std::cout << "Soldier Attack Success!" << std::endl;
 		}
 	}
 	else {
-		m_accDTForAttack = 0.f;
-		owner->SetTarget(nullptr);
-		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
+		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
 	}
 }
 

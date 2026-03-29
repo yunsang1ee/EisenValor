@@ -7,7 +7,7 @@
 #include "GameServerSession.h"
 
 LobbyServer::GameRoom::GameRoom()
-	:m_offenseCount{}, m_defenseCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000}
+	:m_offenseCount{}, m_defenseCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }
 {
 }
 
@@ -24,7 +24,7 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 		clientSession->Send(std::move(pb));
 		return;
 	}
-	
+
 	if(m_info.currentParticipants >= m_info.maxParticipants) {
 		auto pb{ LobbyServer::Make_LC_ENTER_GAME_ROOM_FAIL_PACKET("Over max participants") };
 		clientSession->Send(std::move(pb));
@@ -34,7 +34,7 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 	FB_ENUMS::PARTICIPANT_TYPE participantType;
 	if(m_info.currentParticipants == 0)
 		participantType = FB_ENUMS::PARTICIPANT_TYPE_HOST;
-	else 
+	else
 		participantType = FB_ENUMS::PARTICIPANT_TYPE_USER;
 
 	m_info.currentParticipants++;
@@ -60,7 +60,7 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 	}
 
 	auto newUser = std::make_shared<User>(sessionID, participantType, teamType, clientSession);
-	if(newUser->GetType() == FB_ENUMS::PARTICIPANT_TYPE_HOST && nullptr == m_host) 
+	if(newUser->GetType() == FB_ENUMS::PARTICIPANT_TYPE_HOST && nullptr == m_host)
 		m_host = newUser;
 
 	std::vector<ParticipantInfo> particinpants;
@@ -142,17 +142,19 @@ void LobbyServer::GameRoom::AddBot(const std::shared_ptr<ClientSession>& clientS
 {
 	auto user{ GetSessionUser(clientSession) };
 
-	if(user == m_host) {
-		const auto botID{ GetNewBotID() };
-		auto newBot{ std::make_shared<Bot>(botID, botTeamType) };
-		
-		{
-			auto pb{ LobbyServer::Make_LC_ENTER_PARTICIPANT_IN_GAME_ROOM_PACKET(newBot->GetInfo()) };
-			Broadcast(std::move(pb));
-		}
+	if(user != m_host) return;
 
-		EnterParticipant(newBot);
+	const auto botID{ GetNewBotID() };
+	auto newBot{ std::make_shared<Bot>(botID, botTeamType) };
+
+	{
+		auto pb{ LobbyServer::Make_LC_ENTER_PARTICIPANT_IN_GAME_ROOM_PACKET(newBot->GetInfo()) };
+		Broadcast(std::move(pb));
 	}
+
+	EnterParticipant(newBot);
+
+	std::cout << std::format("BotID: {}, Add Bot! Team: {}", botID, botTeamType == FB_ENUMS::TEAM_TYPE_OFFENSE ? "Offense" : "Defense") << std::endl;
 }
 
 void LobbyServer::GameRoom::RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID)
@@ -170,11 +172,11 @@ void LobbyServer::GameRoom::ReadyGame(const std::shared_ptr<ClientSession>& clie
 
 	if(user->GetStateType() == FB_ENUMS::PARTICIPANT_STATE_TYPE_READY) {
 		user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
-		std::cout << std::format("UserID: {}, Ready Cancel Game!", userID) << std::endl;
+		std::cout << std::format("User ID: {}, Ready Cancel Game!", userID) << std::endl;
 	}
 	else {
 		user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_READY);
-		std::cout << std::format("UserID: {}, Ready Game!", userID) << std::endl;
+		std::cout << std::format("User ID: {}, Ready Game!", userID) << std::endl;
 	}
 
 	// 방에 있는 유저들에게 이 유저가 준비 상태 바꿨다고 알림
@@ -219,13 +221,13 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 	}
 }
 
-std::shared_ptr<LobbyServer::User> LobbyServer::GameRoom::GetSessionUser(const std::shared_ptr<ClientSession>&clientSession)
+std::shared_ptr<LobbyServer::User> LobbyServer::GameRoom::GetSessionUser(const std::shared_ptr<ClientSession>& clientSession)
 {
 	const uint32 sessionID{ clientSession->GetID() };
-	
+
 	if(false == m_users.contains(sessionID))
 		return nullptr;
-	
+
 	return m_users[sessionID];
 }
 
@@ -246,7 +248,7 @@ void LobbyServer::GameRoom::EnterParticipant(std::shared_ptr<Participant> partic
 	}
 
 	m_info.currentParticipants++;
-	// TODO: lobby에 있는 유저들에게 이 방 인원 늘렸다고 보내줘야 함.ㅋ
+	// TODO: lobby에 있는 유저들에게 이 방 인원 늘렸다고 보내줘야 함.
 }
 
 void LobbyServer::GameRoom::Broadcast(std::shared_ptr<LobbyServerEngine::PacketBuffer> pb)

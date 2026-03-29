@@ -7,6 +7,8 @@ namespace GameServer {
 		class GameObjectFactory;
 		class GameObject;
 
+		// TOOD: 구조체 형태의 데이터로 만들어서 각 State 클래스의 생성자에 전달하는 형태로 변경해야함.
+
 		// ============================================
 		//					IDLE
 		// ============================================
@@ -23,6 +25,7 @@ namespace GameServer {
 			virtual void Update(const float dt) override final;
 
 		private:
+			static constexpr float SPAWN_DELAY{ 2.f };
 			float m_accDT;
 			friend class GameObjectFactory;
 		};
@@ -50,7 +53,7 @@ namespace GameServer {
 		private:
 			DECLARE_CREATE_FUNC(SoldierMoveState)
 		private:
-			explicit SoldierMoveState(const float viewRange);
+			explicit SoldierMoveState(const float viewRange, const std::vector<Vec3>& wayPoints);
 			virtual ~SoldierMoveState();
 
 		public:
@@ -59,6 +62,7 @@ namespace GameServer {
 			virtual void Update(const float dt) override final;
 
 		private:
+			static constexpr float SEARCH_INTERVAL{ 0.1f };
 			float				m_viewRangeSq{};
 			float				m_accDTForSearch;
 			std::vector<Vec3>	m_wayPoints;

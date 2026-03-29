@@ -146,7 +146,31 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	
 	auto spawnState = GameServer::Contents::SoldierSpawnState::Create();
 	auto idleState = GameServer::Contents::SoldierIdleState::Create();
-	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/);
+
+	std::vector<Vec3> wayPoints;
+
+	if(FB_ENUMS::TEAM_TYPE_OFFENSE == soldier->GetTeamType()) {
+		wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 40.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 60.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 80.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 100.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 120.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 140.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 160.f, 0.f, 0.f });
+	}
+	else {
+		wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 40.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 60.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 80.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 100.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 120.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 140.f, 0.f, 0.f });
+		wayPoints.push_back(Vec3{ 160.f, 0.f, 0.f });
+	}
+
+	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, wayPoints);
 	// auto searchState = Server::Contents::SoldierSearchState::Create(3.f/*attackRange*/);
 	auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
 	auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
@@ -210,7 +234,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	spawnObj->SetGameWorld(t.gameWorld);
 	spawnObj->SetTransform(t.transform);
 	spawnObj->SetGameObjectData(t.gameObjectData);
-	
+
 	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>());
 	spawner->SetName("Spawner");
 	spawner->SetOwner(spawnObj);

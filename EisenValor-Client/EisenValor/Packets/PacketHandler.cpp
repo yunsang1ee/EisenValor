@@ -28,7 +28,6 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	};
 #pragma endregion
 
-
 #pragma region LOBBY_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ENTER_GAME_LOBBY_FAIL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
@@ -162,7 +161,7 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 
 #pragma endregion
 
-
+#pragma region WORLD_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
@@ -256,6 +255,8 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PING_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{ return HandlePacket<FB_TABLES::SC_PING_PACKET>(S2C::Handle_SC_PING_PACKET, socket, buffer, header); };
+
+#pragma endregion
 }
 
 std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePacketBuffer(

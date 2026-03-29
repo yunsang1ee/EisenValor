@@ -818,7 +818,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.transform = Transform{ Vec3{ 5.f, 0.f, 5.f }, Vec3{} };
+		t.transform = Transform{ Vec3{ -5.f, 0.f, 5.f }, Vec3{} };
 		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
 		t.gameWorld = this;
 
@@ -830,7 +830,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.transform = Transform{ Vec3{ 30.f, 0.f, 30.f }, Vec3{} };
+		t.transform = Transform{ Vec3{ 5.f, 0.f, 5.f}, Vec3{} };
 		t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
 		t.gameWorld = this;
 
