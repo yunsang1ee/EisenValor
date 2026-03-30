@@ -315,12 +315,31 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
 	float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
     float3 normal = normalize(mul(normalObj, (float3x3) inst.worldInverse));
+	float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
+	float3 tangentObj = tangentPacked.xyz;
+	float tangentSign = tangentPacked.w;
+	float3 tangent = normalize(mul(tangentObj, (float3x3) inst.worldMatrix));
+	tangent = normalize(tangent - normal * dot(tangent, normal));
+	float3 bitangent = normalize(cross(normal, tangent) * tangentSign);
 	if (dot(normal, WorldRayDirection()) > 0.0f)
 	{
 		normal = -normal;
 	}
 	
 	float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
+	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_NORMAL_MAP))
+	{
+		Texture2D normalTexture = ResourceDescriptorHeap[mat.normalTextureIdx];
+		float2 encodedXY = normalTexture.SampleLevel(g_sampler, uv, 0).xy * 2.0f - 1.0f;
+		float3 normalSample;
+		normalSample.xy = encodedXY;
+		normalSample.z = sqrt(saturate(1.0f - dot(encodedXY, encodedXY)));
+		normal = normalize(
+			tangent * normalSample.x +
+			bitangent * normalSample.y +
+			normal * normalSample.z
+		);
+	}
 	
 	float3 albedo = mat.albedo.rgb;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
@@ -459,4 +478,9 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	);
 	
 	payload.color = weight * child.color;
+	if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
+	{
+		Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
+		payload.color += emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
+	}
 }

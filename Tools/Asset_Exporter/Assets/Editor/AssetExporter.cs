@@ -59,7 +59,9 @@ public class AssetExporter
             flags |= MATERIAL_FLAG_USE_NORMAL_MAP;
         }
 
-        if (mat.HasProperty("_MaskMap") && mat.GetTexture("_MaskMap") != null)
+        bool hasMaskMap = mat.HasProperty("_MaskMap") && mat.GetTexture("_MaskMap") != null;
+        bool hasMetallicGlossMap = mat.HasProperty("_MetallicGlossMap") && mat.GetTexture("_MetallicGlossMap") != null;
+        if (hasMaskMap || hasMetallicGlossMap)
         {
             flags |= MATERIAL_FLAG_USE_ORM_MAP;
         }
@@ -1452,6 +1454,10 @@ public class AssetExporter
             {
                 propName = "_MainTex";
             }
+            else if (!mat.HasProperty(propName) && "ORMS" == slot.Key)
+            {
+                propName = "_MetallicGlossMap";
+            }
 
             if (mat.HasProperty(propName))
             {
@@ -1507,7 +1513,7 @@ public class AssetExporter
 
     private static IEnumerable<Texture2D> EnumerateMaterialTextures(Material mat)
     {
-        string[] propertyNames = { "_BaseMap", "_MainTex", "_BumpMap", "_MaskMap", "_EmissionMap" };
+        string[] propertyNames = { "_BaseMap", "_MainTex", "_BumpMap", "_MaskMap", "_MetallicGlossMap", "_EmissionMap" };
         foreach (string propertyName in propertyNames)
         {
             if (!mat.HasProperty(propertyName))
