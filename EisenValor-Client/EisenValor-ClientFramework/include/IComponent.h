@@ -95,7 +95,7 @@ public:
 
 	ComponentBase() : m_handle(Handle::Invalid()) {}
 
-	static constexpr ComponentTypeHash StaticStableTypeHash() { return Utils::HashString(GetStaticTypeName()); }
+	static constexpr ComponentTypeHash StaticStableTypeHash() { return Utils::HashString(Derived::GetStaticTypeName()); }
 	static constexpr const char*	   GetStaticTypeName() { return "UnknownComponent"; }
 
 	ComponentTypeID		   GetRuntimeTypeID() const override { return Internal::GetComponentTypeID<Derived>(); }

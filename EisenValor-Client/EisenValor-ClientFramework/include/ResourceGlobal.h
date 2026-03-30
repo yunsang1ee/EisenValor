@@ -96,6 +96,7 @@ public:
 
 	void ProcessPendingLoads();	// 리소스 예약
 	void CheckForReload();	//Hot Reload
+	bool HasPendingLoads() const { return !m_pendingLoads.empty(); }
 
 	std::shared_ptr<MaterialResource> GetDefaultMaterial() const { return m_defaultMaterial; }
 

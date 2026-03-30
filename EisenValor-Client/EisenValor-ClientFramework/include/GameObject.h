@@ -30,6 +30,7 @@ public:
 	bool IsActive() const { return m_isActive; }
 	bool IsActiveInHierarchy() const;
 	void SetActive(bool active);
+	void RefreshActiveState();
 
 	template <IsValidComponent T>
 	void AddComponentHandle(HandleOf<T> handle)

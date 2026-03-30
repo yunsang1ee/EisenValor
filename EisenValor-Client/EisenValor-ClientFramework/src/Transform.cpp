@@ -3,6 +3,7 @@
 #include "IComponent.h"
 #include "Scene.h"
 #include "SceneGlobal.h"
+#include "GameObject.h"
 
 using namespace DirectX;
 
@@ -198,6 +199,17 @@ void Transform::SetScale(float uniformScale)
 	MarkDirty();
 }
 
+void Transform::SetScale(float x, float y, float z)
+{
+	SetScale(XMFLOAT3(x, y, z));
+}
+
+void Transform::SetScale(const XMFLOAT3& scale)
+{
+	m_localScale = scale;
+	MarkDirty();
+}
+
 XMFLOAT3 Transform::GetWorldScale()
 {
 	XMVECTOR sx = XMVector3Length(XMVectorSet(m_worldMatrix._11, m_worldMatrix._12, m_worldMatrix._13, 0.0f));
@@ -271,6 +283,14 @@ void Transform::SetParent(Handle parentHandle)
 	}
 
 	MarkDirty();
+
+	if (scene)
+	{
+		if (auto* owner = scene->TryGetGameObject(m_owner))
+		{
+			owner->RefreshActiveState();
+		}
+	}
 }
 
 void Transform::AddChild(Handle child)

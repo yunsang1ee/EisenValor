@@ -12,6 +12,7 @@ void MeshResource::SetGPUResources(std::unique_ptr<DxBuffer> vb, std::unique_ptr
 	m_vertexBuffer = std::move(vb);
 	m_indexBuffer = std::move(ib);
 	m_blas = std::move(blas);
+	SetReady(m_vertexBuffer != nullptr && m_indexBuffer != nullptr && m_blas != nullptr);
 }
 
 void MeshResource::SetMetadata(

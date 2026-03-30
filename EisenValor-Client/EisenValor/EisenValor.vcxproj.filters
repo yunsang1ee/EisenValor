@@ -71,6 +71,7 @@
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="Util\AnimationLoader.h" />
+    <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
     <ClInclude Include="Packets\PacketEnums.h" />
   </ItemGroup>
   <ItemGroup>

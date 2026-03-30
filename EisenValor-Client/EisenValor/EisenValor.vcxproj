@@ -231,6 +231,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
     <ClInclude Include="Scene\SampleScene.h" />
+    <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="Util\AnimationLoader.h" />
