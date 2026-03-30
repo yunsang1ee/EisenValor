@@ -35,7 +35,17 @@ public class SkinnedMeshExporter
         }
 
         Debug.Log($"[SkinnedMeshExporter] '{target.name}' 추출 준비 완료. (정점: {mesh.vertexCount})");
-        
+
+        // --- 데이터 일관성 검사 추가 ---
+        int boneCount = smr.bones.Length;
+        int bindPoseCount = mesh.bindposes.Length;
+        Debug.Log($"[SkinnedMeshExporter] Stats - Bones: {boneCount}, BindPoses: {bindPoseCount}");
+        if (boneCount != bindPoseCount)
+        {
+            Debug.LogWarning($"[SkinnedMeshExporter] 뼈 개수와 BindPose 개수가 일치하지 않습니다! (B:{boneCount}, P:{bindPoseCount})");
+        }
+        // ------------------------------
+
         // --- 검증 로그 추가 ---
         int[] triangles = mesh.triangles;
         int totalSubMeshIndexCount = 0;
@@ -253,10 +263,16 @@ public class SkinnedMeshExporter
                 bw.Write(bone.localPosition.y);
                 bw.Write(bone.localPosition.z);
 
-                bw.Write(bone.localRotation.x);
-                bw.Write(bone.localRotation.y);
-                bw.Write(bone.localRotation.z);
-                bw.Write(bone.localRotation.w);
+                Quaternion rot = bone.localRotation;
+                if (i == 0) // 루트 본에 180도 회전 적용
+                {
+                    rot = rot * Quaternion.Euler(0, 180, 0);
+                }
+
+                bw.Write(rot.x);
+                bw.Write(rot.y);
+                bw.Write(rot.z);
+                bw.Write(rot.w);
 
                 bw.Write(bone.localScale.x);
                 bw.Write(bone.localScale.y);

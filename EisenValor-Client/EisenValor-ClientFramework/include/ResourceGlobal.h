@@ -97,6 +97,9 @@ public:
 	void ProcessPendingLoads();	// 리소스 예약
 	void CheckForReload();	//Hot Reload
 
+	// Debug helper: dump loaded material resources to log
+	void DumpLoadedMaterials();
+
 	std::shared_ptr<MaterialResource> GetDefaultMaterial() const { return m_defaultMaterial; }
 
 private:

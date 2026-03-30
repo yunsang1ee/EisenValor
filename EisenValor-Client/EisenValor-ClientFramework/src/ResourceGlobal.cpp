@@ -299,6 +299,36 @@ void ResourceGlobal::ProcessPendingLoads()
 	}
 }
 
+#ifdef _DEBUG
+void ResourceGlobal::DumpLoadedMaterials()
+{
+	size_t total = 0;
+	for (auto& [g, r] : m_resourceCache)
+	{
+		if (r && r->GetRuntimeTypeID() == MaterialResource::StaticRuntimeTypeID())
+			++total;
+	}
+
+	DEBUG_LOG_FMT("[ResourceGlobal] Dumping loaded materials: {} entries\n", total);
+
+	for (auto& [guid, res] : m_resourceCache)
+	{
+		if (!res) continue;
+		if (res->GetRuntimeTypeID() != MaterialResource::StaticRuntimeTypeID()) continue;
+
+		auto mat = std::static_pointer_cast<MaterialResource>(res);
+		DEBUG_LOG_FMT("[Material] Name='{}' GUID={} FrameIndex={} AtlasCols={} Flags=0x{:X}\n",
+			mat->GetName().c_str(), guid, mat->GetFrameIndex(), mat->GetAtlasCols(), mat->GetMaterialFlags());
+
+		for (const auto& slot : mat->GetTextureSlots())
+		{
+			const char* texName = slot.resource ? slot.resource->GetName().c_str() : "<null>";
+			DEBUG_LOG_FMT("  Slot '{}' Tex='{}' Ready={}\n", slot.name.c_str(), texName, (slot.resource != nullptr));
+		}
+	}
+}
+#endif
+
 template <>
 std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const std::filesystem::path& path)
 {
@@ -380,6 +410,9 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetData(data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic);
+	// propagate atlas/frame metadata
+	res->SetFrameIndex(data.frameIndex);
+	res->SetAtlasCols(data.atlasCols);
 
 	for (const auto& dep : data.dependencies)
 	{

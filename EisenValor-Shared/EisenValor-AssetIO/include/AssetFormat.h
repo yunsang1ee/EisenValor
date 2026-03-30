@@ -157,6 +157,11 @@ struct MaterialProp
 	float		 albedo[4];
 	float		 roughness;
 	float		 metallic;
+	// Emissive color (written by exporter)
+	float       emissive[3];
+
+	uint32_t    frameIndex; // 0-based atlas frame index
+	uint32_t    atlasCols;  // number of frames across (cols). default 1
 };
 
 struct MaterialDepEntry
