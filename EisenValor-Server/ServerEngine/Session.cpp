@@ -269,15 +269,6 @@ GameServerEngine::RIO::RIOSession::~RIOSession()
 
 bool GameServerEngine::RIO::RIOSession::Init()
 {
-	// RIO BUFFER 등록
-	// const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
-
-	// m_recvBuffer.SetTable(m_table);
-	// m_sendBuffer.SetTable(m_table);
-
-	// m_recvBuffer.Init(bufferSize);
-	// m_sendBuffer.Init(bufferSize * 10);
-
 	return true;
 }
 
@@ -665,8 +656,9 @@ uint32 GameServerEngine::PacketSession::OnRecv(std::span<const char> buf)
 		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
 		if(buf.size() < header.packetSize)
 			break;
-
-		OnRecvPacket(buf);
+		
+		// OnRecvPacket(buf);
+		OnRecvPacket(buf.first(header.packetSize));
 
 		buf = buf.subspan(header.packetSize);
 		processed += header.packetSize;
