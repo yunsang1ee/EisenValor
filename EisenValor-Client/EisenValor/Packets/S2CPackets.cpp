@@ -422,9 +422,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		{
 			auto playerObjHandle = playerObj->GetHandle();
 
-			auto& tr = playerObj->GetTransform();
-			tr.SetWorldPosition(DX::XMFLOAT3{0.0f, 30.0f, 0.0f});
-
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 				playerObjHandle,
 				[](SkinnedMeshComponent* mesh)

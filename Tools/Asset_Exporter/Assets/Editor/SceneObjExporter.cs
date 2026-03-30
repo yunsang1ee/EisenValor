@@ -13,6 +13,12 @@ public static class SceneObjExporter
     private const string PreviewPointLightObjectName = "Preview_PointLight";
     private const int TerrainChunkCellCount = 16;
 
+    private enum ObjCoordinateMode
+    {
+        UnityLeftHandedYUp,
+        RightHandedYUp
+    }
+
     private sealed class ExportEntry
     {
         public string Name;
@@ -33,6 +39,17 @@ public static class SceneObjExporter
 
     [MenuItem("Tools/EisenValor/Export Active Scene To OBJ")]
     public static void ExportActiveSceneToObj()
+    {
+        ExportActiveSceneToObjInternal(ObjCoordinateMode.UnityLeftHandedYUp);
+    }
+
+    [MenuItem("Tools/EisenValor/Export Active Scene To OBJ (Right-Handed Y-Up)")]
+    public static void ExportActiveSceneToRightHandedObj()
+    {
+        ExportActiveSceneToObjInternal(ObjCoordinateMode.RightHandedYUp);
+    }
+
+    private static void ExportActiveSceneToObjInternal(ObjCoordinateMode coordinateMode)
     {
         Scene activeScene = SceneManager.GetActiveScene();
         if (!activeScene.IsValid() || !activeScene.isLoaded)
@@ -56,11 +73,11 @@ public static class SceneObjExporter
                 CollectSceneEntriesRecursive(rootObject.transform, context);
             }
 
-            WriteObjFile(outputPath, context);
+            WriteObjFile(outputPath, context, coordinateMode);
 
             Debug.Log(
                 $"<b>[SceneOBJ]</b> Saved OBJ: {Path.GetFileName(outputPath)} " +
-                $"(Meshes={context.ExportedMeshCount}, TerrainChunks={context.ExportedTerrainChunkCount}, " +
+                $"(Mode={coordinateMode}, Meshes={context.ExportedMeshCount}, TerrainChunks={context.ExportedTerrainChunkCount}, " +
                 $"SkippedHigherLodRenderers={context.SkippedHigherLodRendererCount}, " +
                 $"SkippedNonTriangleSubMeshes={context.SkippedNonTriangleSubMeshCount})"
             );
@@ -248,7 +265,7 @@ public static class SceneObjExporter
         }
     }
 
-    private static void WriteObjFile(string outputPath, ExportContext context)
+    private static void WriteObjFile(string outputPath, ExportContext context, ObjCoordinateMode coordinateMode)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? ".");
 
@@ -280,6 +297,7 @@ public static class SceneObjExporter
             for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 worldPosition = entry.LocalToWorld.MultiplyPoint3x4(vertices[i]);
+                worldPosition = ConvertPosition(worldPosition, coordinateMode);
                 writer.WriteLine(
                     string.Format(
                         CultureInfo.InvariantCulture,
@@ -308,6 +326,7 @@ public static class SceneObjExporter
             {
                 Vector3 normal = (normals != null && i < normals.Length) ? normals[i] : Vector3.up;
                 Vector3 worldNormal = normalMatrix.MultiplyVector(normal).normalized;
+                worldNormal = ConvertDirection(worldNormal, coordinateMode);
                 writer.WriteLine(
                     string.Format(
                         CultureInfo.InvariantCulture,
@@ -334,7 +353,14 @@ public static class SceneObjExporter
                     int i0 = baseIndex + indices[index];
                     int i1 = baseIndex + indices[index + 1];
                     int i2 = baseIndex + indices[index + 2];
-                    writer.WriteLine($"f {i0}/{i0}/{i0} {i1}/{i1}/{i1} {i2}/{i2}/{i2}");
+                    if (coordinateMode == ObjCoordinateMode.RightHandedYUp)
+                    {
+                        writer.WriteLine($"f {i0}/{i0}/{i0} {i2}/{i2}/{i2} {i1}/{i1}/{i1}");
+                    }
+                    else
+                    {
+                        writer.WriteLine($"f {i0}/{i0}/{i0} {i1}/{i1}/{i1} {i2}/{i2}/{i2}");
+                    }
                 }
             }
 
@@ -388,6 +414,26 @@ public static class SceneObjExporter
         }
 
         return builder.ToString();
+    }
+
+    private static Vector3 ConvertPosition(Vector3 position, ObjCoordinateMode coordinateMode)
+    {
+        if (coordinateMode == ObjCoordinateMode.RightHandedYUp)
+        {
+            position.z = -position.z;
+        }
+
+        return position;
+    }
+
+    private static Vector3 ConvertDirection(Vector3 direction, ObjCoordinateMode coordinateMode)
+    {
+        if (coordinateMode == ObjCoordinateMode.RightHandedYUp)
+        {
+            direction.z = -direction.z;
+        }
+
+        return direction;
     }
 
     private static Mesh BuildTerrainChunkMesh(
