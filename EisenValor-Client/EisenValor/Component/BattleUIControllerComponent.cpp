@@ -446,6 +446,7 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	Transform& playerTr = owner->GetTransform();
 	// 1. 타겟의 월드 위치 가져오기
 	DirectX::XMFLOAT3 vPos = playerTr.GetWorldPosition();
+	vPos.y += 2.0f;
 	DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&vPos);
 
 	// 2. 뷰포트 정보 가져오기
