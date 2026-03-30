@@ -141,6 +141,13 @@ public class AssetExporter
         public bool DestroyAfterExport;
     }
 
+    private sealed class TextureExportRecord
+    {
+        public Texture2D Texture;
+        public bool IsSRGB = true;
+        public bool IsNormalMap;
+    }
+
     private sealed class SceneExportContext
     {
         public readonly string RootDir;
@@ -148,7 +155,7 @@ public class AssetExporter
         public readonly List<SceneComponentEntryRecord> Components = new List<SceneComponentEntryRecord>();
         public readonly Dictionary<string, MeshExportRecord> MeshExports = new Dictionary<string, MeshExportRecord>();
         public readonly HashSet<Material> MaterialDependencies = new HashSet<Material>();
-        public readonly HashSet<Texture2D> TextureDependencies = new HashSet<Texture2D>();
+        public readonly Dictionary<Texture2D, TextureExportRecord> TextureDependencies = new Dictionary<Texture2D, TextureExportRecord>();
         public readonly Dictionary<string, GeneratedMaterialExportRecord> GeneratedMaterialExports = new Dictionary<string, GeneratedMaterialExportRecord>();
         public readonly Dictionary<string, GeneratedTextureExportRecord> GeneratedTextureExports = new Dictionary<string, GeneratedTextureExportRecord>();
         public readonly Dictionary<LODGroup, HashSet<Renderer>> LowestLodRendererCache = new Dictionary<LODGroup, HashSet<Renderer>>();
@@ -217,7 +224,7 @@ public class AssetExporter
                 ExportGeneratedMaterialAssetToRoot(material, rootDir);
             }
 
-            foreach (Texture2D texture in context.TextureDependencies)
+            foreach (TextureExportRecord texture in context.TextureDependencies.Values)
             {
                 ExportTextureAssetToRoot(texture, rootDir);
             }
@@ -321,7 +328,10 @@ public class AssetExporter
         string tempFileName = tex.name + "_temp";
         string tempDdsPath = Path.Combine(Path.GetDirectoryName(outputPath), tempFileName + ".dds");
 
-        if (false == RunTexConv(Path.GetFullPath(inputPath), Path.GetDirectoryName(outputPath), tempFileName, IsNormalMap(tex)))
+        bool isNormalMap = IsNormalMap(tex);
+        bool isSRGB = IsSrgbTexture(tex);
+
+        if (false == RunTexConv(Path.GetFullPath(inputPath), Path.GetDirectoryName(outputPath), tempFileName, isNormalMap, isSRGB))
         {
             UnityEngine.Debug.LogError("Failed to convert texture to DDS using texconv.");
             return;
@@ -332,7 +342,7 @@ public class AssetExporter
             string guid = AssetDatabase.AssetPathToGUID(inputPath);
             var writer = new AssetWriter("EVTX", guid);
 
-            writer.AddChunk("META", 1, BuildTextureMetaChunk(tex));
+            writer.AddChunk("META", 1, BuildTextureMetaChunk(isSRGB, isNormalMap));
             writer.AddChunk("DATA", 1, File.ReadAllBytes(tempDdsPath));
 
             writer.WriteToFile(outputPath);
@@ -686,11 +696,41 @@ public class AssetExporter
             }
 
             context.MaterialDependencies.Add(material);
-            foreach (Texture2D texture in EnumerateMaterialTextures(material))
-            {
-                context.TextureDependencies.Add(texture);
-            }
+            RegisterMaterialTextureDependency(material, "_BaseMap", false, true, context);
+            RegisterMaterialTextureDependency(material, "_MainTex", false, true, context);
+            RegisterMaterialTextureDependency(material, "_BumpMap", true, false, context);
+            RegisterMaterialTextureDependency(material, "_MaskMap", false, false, context);
+            RegisterMaterialTextureDependency(material, "_MetallicGlossMap", false, false, context);
+            RegisterMaterialTextureDependency(material, "_OcclusionMap", false, false, context);
+            RegisterMaterialTextureDependency(material, "_EmissionMap", false, true, context);
         }
+    }
+
+    private static void RegisterMaterialTextureDependency(Material material, string propertyName, bool isNormalMap, bool isSRGB, SceneExportContext context)
+    {
+        if (!material.HasProperty(propertyName))
+        {
+            return;
+        }
+
+        if (material.GetTexture(propertyName) is not Texture2D texture)
+        {
+            return;
+        }
+
+        if (!context.TextureDependencies.TryGetValue(texture, out TextureExportRecord record))
+        {
+            context.TextureDependencies.Add(texture, new TextureExportRecord
+            {
+                Texture = texture,
+                IsNormalMap = isNormalMap,
+                IsSRGB = isSRGB
+            });
+            return;
+        }
+
+        record.IsNormalMap |= isNormalMap;
+        record.IsSRGB &= isSRGB;
     }
 
     private static string[] BuildMaterialGuidArray(Material[] materials)
@@ -759,8 +799,9 @@ public class AssetExporter
         writer.WriteToFile(outputPath);
     }
 
-    private static void ExportTextureAssetToRoot(Texture2D tex, string rootDir)
+    private static void ExportTextureAssetToRoot(TextureExportRecord record, string rootDir)
     {
+        Texture2D tex = record.Texture;
         string inputPath = AssetDatabase.GetAssetPath(tex);
         string guid = string.IsNullOrEmpty(inputPath) ? "" : AssetDatabase.AssetPathToGUID(inputPath);
         if (string.IsNullOrEmpty(guid))
@@ -780,7 +821,7 @@ public class AssetExporter
         string tempFileName = tex.name + "_temp";
         string tempDdsPath = Path.Combine(textureDir, tempFileName + ".dds");
 
-        if (false == RunTexConv(Path.GetFullPath(inputPath), textureDir, tempFileName, IsNormalMap(tex)))
+        if (false == RunTexConv(Path.GetFullPath(inputPath), textureDir, tempFileName, record.IsNormalMap, record.IsSRGB))
         {
             UnityEngine.Debug.LogError($"[SceneExport] Failed to convert texture '{tex.name}' to DDS.");
             return;
@@ -789,7 +830,7 @@ public class AssetExporter
         try
         {
             AssetWriter writer = new AssetWriter("EVTX", guid);
-            writer.AddChunk("META", 1, BuildTextureMetaChunk(tex));
+            writer.AddChunk("META", 1, BuildTextureMetaChunk(record.IsSRGB, record.IsNormalMap));
             writer.AddChunk("DATA", 1, File.ReadAllBytes(tempDdsPath));
             writer.WriteToFile(outputPath);
         }
@@ -846,7 +887,7 @@ public class AssetExporter
 
         File.WriteAllBytes(tempPngPath, texture.Texture.EncodeToPNG());
 
-        if (false == RunTexConv(tempPngPath, textureDir, tempFileName, texture.IsNormalMap))
+        if (false == RunTexConv(tempPngPath, textureDir, tempFileName, texture.IsNormalMap, texture.IsSRGB))
         {
             if (File.Exists(tempPngPath))
             {
@@ -1536,7 +1577,7 @@ public class AssetExporter
         return Path.Combine(toolsPath, "texconv.exe");
     }
 
-    private static bool RunTexConv(string inputPath, string outputDir, string outFileName, bool isNormalMap)
+    private static bool RunTexConv(string inputPath, string outputDir, string outFileName, bool isNormalMap, bool isSRGB)
     {
         string texConv = GetTexConvPath();
         if (false == File.Exists(texConv))
@@ -1545,11 +1586,7 @@ public class AssetExporter
             return false;
         }
 
-        string format = isNormalMap ? "BC5_UNORM" : "BC7_UNORM";
-        if (QualitySettings.activeColorSpace == ColorSpace.Linear && false == isNormalMap)
-        {
-            format += "_SRGB";
-        }
+        string format = isNormalMap ? "BC5_UNORM" : (isSRGB ? "BC7_UNORM_SRGB" : "BC7_UNORM");
 
         string args = $"-f {format} -y -o \"{outputDir}\" \"{inputPath}\"";
 
@@ -1748,5 +1785,11 @@ public class AssetExporter
     {
         var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex)) as TextureImporter;
         return null != importer && importer.textureType == TextureImporterType.NormalMap;
+    }
+
+    private static bool IsSrgbTexture(Texture2D tex)
+    {
+        var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex)) as TextureImporter;
+        return null != importer && importer.sRGBTexture;
     }
 }

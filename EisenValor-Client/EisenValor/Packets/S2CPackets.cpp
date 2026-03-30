@@ -416,11 +416,14 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
-		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
+		[scene, pos = recvPkt.pos_info(), stance = recvPkt.stance_type(), teamType = recvPkt.team_type(),
+		 maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
+
+			auto& tr = playerObj->GetTransform();
+			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
 
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 				playerObjHandle,
@@ -488,11 +491,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// Animation Component
 			scene->CreateComponentWithInit<AnimationComponent>(
-				playerObjHandle,
-				[](AnimationComponent* anim)
-				{
-					AnimationLoader::AnimationApply(anim, "HumanM");
-				}
+				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "HumanM"); }
 			);
 
 			//// 공격 범위 디버깅용
@@ -704,11 +703,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle,
-					[](AnimationComponent* anim)
-					{
-						AnimationLoader::AnimationApply(anim, "HumanM");
-					}
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "HumanM"); }
 				);
 			}
 
@@ -716,10 +711,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle,
-					[](FSMComponent* fsm) {
-						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-					}
+					objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
 				);
 			}
 
@@ -948,12 +940,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		return false;
 	}
 
-	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
 	const uint32 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 	uint8_t		 nextState = recvPkt.next_state();
-	
-	if(localID == objID) {
+
+	if (localID == objID)
+	{
 		goto SET_LOCAL;
 	}
 
@@ -972,8 +965,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN) {
-			if(obj->GetComponent<StaminaComponent>() != nullptr) {
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+		{
+			if (obj->GetComponent<StaminaComponent>() != nullptr)
+			{
 				fsm->SetServerState(nextState);
 				return true;
 			}
