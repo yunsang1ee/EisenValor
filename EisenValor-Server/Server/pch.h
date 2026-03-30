@@ -1,8 +1,6 @@
 #pragma once
 #pragma warning(disable: 4819)
 
-#define APLLY_LOBBY_SERVER
-
 #include "ServerEnginePch.h"
 
 #include "flatbuffers\\flatbuffers.h"
