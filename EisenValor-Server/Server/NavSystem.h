@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		struct NavMeshSetHeader {
 			int32 magic;
@@ -28,6 +28,8 @@ namespace Server {
 			void RemoveAgent(const int32 agentIdx);
 
 			dtCrowd* GetCrowd() const { return m_crowd; }
+
+			dtNavMeshQuery* GetNavMeshQuery() const { return m_navMeshQuery; }
 
 		private:
 			dtNavMesh*		m_navMesh;

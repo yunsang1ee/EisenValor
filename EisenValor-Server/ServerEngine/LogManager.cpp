@@ -1,17 +1,17 @@
 #include "pch.h"
 #include "LogManager.h"
 
-std::ostringstream ServerEngine::LogManager::s_oss;
-std::mutex ServerEngine::LogManager::s_logMutex;
+std::ostringstream GameServerEngine::LogManager::s_oss;
+std::mutex GameServerEngine::LogManager::s_logMutex;
 
-void ServerEngine::LogManager::Init()
+void GameServerEngine::LogManager::Init()
 {
 	std::string filePath{ "LOG/" };
 	if(false == std::filesystem::exists(filePath))
 		std::filesystem::create_directory(filePath);
 }
 
-void ServerEngine::LogManager::PrintLastError(const std::source_location& loc)
+void GameServerEngine::LogManager::PrintLastError(const std::source_location& loc)
 {
 	const fs::path file_path = loc.file_name();
 
@@ -29,7 +29,7 @@ void ServerEngine::LogManager::PrintLastError(const std::source_location& loc)
 	std::wcout << lpMsgBuf;
 }
 
-void ServerEngine::LogManager::Save()
+void GameServerEngine::LogManager::Save()
 {
 	const auto now = std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
 	const auto localTime = std::chrono::zoned_time(std::chrono::current_zone(), now);

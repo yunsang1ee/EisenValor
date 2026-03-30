@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Server {
+namespace GameServer {
     namespace Contents {
         namespace IDConfig {
             const uint64 TYPE_SHIFT = 60;
@@ -14,9 +14,8 @@ namespace Server {
 
         class IDGenerator {
         public:
-            IDGenerator() 
-                : m_seqCounter{ 1 } {}
-
+            IDGenerator();
+       
         public:
             void SetWorldID(uint16 worldID) { m_worldID = worldID; }
             uint64 Generate(uint8 type);

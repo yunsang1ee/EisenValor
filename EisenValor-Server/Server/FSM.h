@@ -3,7 +3,7 @@
 #include "Component.h"
 #include "State.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class State;
 		class Creature;

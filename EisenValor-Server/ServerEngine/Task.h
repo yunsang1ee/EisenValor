@@ -2,7 +2,7 @@
 
 using TaskFuncCB = std::function<void()>;
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Task {
 	public:
 		explicit Task(TaskFuncCB&& cbFunc)

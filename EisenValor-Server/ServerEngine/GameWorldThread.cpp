@@ -3,30 +3,26 @@
 
 #include "IRoom.h"
 #include "AcceptThread.h"
-#include "IOCoreTest.h"
+#include "IOCore.h"
 
-ServerEngine::GameWorldThread::GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore, const GameWorldTestFactoryFunc worldFunc)
-	: ServerEngine::WorkerThread{ type, std::move(ioCore) }, m_worldFunc{worldFunc}
+GameServerEngine::GameWorldThread::GameWorldThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore, const GameWorldFactoryFunc worldFunc)
+	: GameServerEngine::WorkerThread{ type, std::move(ioCore) }, m_worldFunc{worldFunc}
 {
 }
 
-ServerEngine::GameWorldThread::~GameWorldThread()
+GameServerEngine::GameWorldThread::~GameWorldThread()
 {
 }
 
-bool ServerEngine::GameWorldThread::Init(const SessionFactoryFunc func, const uint16 port)
+bool GameServerEngine::GameWorldThread::Init(const SessionFactoryFunc func, const uint16 port)
 {
 	if(false == WorkerThread::Init(func, port))
 		return false;
-	
-	//for(int i = 0; i < 1; ++i) {
-	//	m_worlds.insert(std::make_pair(i, m_worldFunc()));
-	//	// m_worlds[i]->Init();
-	//}
+
 	return true;
 }
 
-void ServerEngine::GameWorldThread::Run(const std::stop_token st)
+void GameServerEngine::GameWorldThread::Run(const std::stop_token st)
 {
 	MANAGER(ThreadManager)->EnqueueTask([this](const std::stop_token st)
 		{
@@ -54,7 +50,7 @@ void ServerEngine::GameWorldThread::Run(const std::stop_token st)
 	}
 }
 
-void ServerEngine::GameWorldThread::CreateWorld(const uint16 roomID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
+void GameServerEngine::GameWorldThread::CreateWorld(const uint16 roomID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
 {
 	if(m_worlds.contains(roomID))
 		return;
@@ -66,7 +62,7 @@ void ServerEngine::GameWorldThread::CreateWorld(const uint16 roomID, const std::
 	m_worlds.insert(std::make_pair(roomID, std::move(world)));
 }
 
-void ServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> session)
+void GameServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> session)
 {
 	const uint16 roomID{ 1 };
 	std::unordered_map<uint32, GameWorldParticipantInfo> u;
@@ -76,7 +72,7 @@ void ServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> session)
 	m_worlds[roomID]->EnterSession(session);
 }
 
-ServerEngine::IRoom* ServerEngine::GameWorldThread::FindGameWorld(const uint16 worldID)
+GameServerEngine::IRoom* GameServerEngine::GameWorldThread::FindGameWorld(const uint16 worldID)
 {
 	if(false == m_worlds.contains(worldID))
 		return nullptr;

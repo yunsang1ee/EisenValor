@@ -56,7 +56,7 @@ void LobbyServer::GameServerSession::AddReservedStartRoom(const uint16 roomID)
 uint16 LobbyServer::GameServerSession::GetReservedStartRoom(const uint16 roomID)
 {
 	if(false == m_reservedStartRoomId.contains(roomID))
-		return 3147039274;
+		return 0;
 
 	m_reservedStartRoomId.unsafe_erase(roomID);
 

@@ -2,7 +2,7 @@
 
 #include "Component.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class Script : public Component {
 		public:

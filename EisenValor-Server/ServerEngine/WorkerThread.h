@@ -2,14 +2,14 @@
 
 #include "JobQueue.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class IRoom;
-	class IOCoreTest;
+	class IOCore;
 	class AcceptThread;
 
 	class WorkerThread : public JobQueue {
 	public:
-		explicit WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCoreTest>&& ioCore);
+		explicit WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore);
 		virtual ~WorkerThread();
 
 	public:
@@ -20,12 +20,12 @@ namespace ServerEngine {
 		void Register(std::shared_ptr<Session> session);
 
 	public:
-		IOCoreTest* GetIoCore() const { return m_ioCore.get(); }
+		IOCore* GetIoCore() const { return m_ioCore.get(); }
 		uint16 GetPort() const;
 
 	protected:
-		std::unique_ptr<IOCoreTest>					m_ioCore;
-		std::unique_ptr<AcceptThread>				m_acceptThread;
-		const WORKER_THREAD_TYPE					m_type;
+		std::unique_ptr<IOCore>		m_ioCore;
+		std::unique_ptr<AcceptThread>	m_acceptThread;
+		const WORKER_THREAD_TYPE		m_type;
 	};
 }

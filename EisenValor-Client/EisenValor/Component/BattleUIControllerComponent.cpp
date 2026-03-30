@@ -102,8 +102,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
 			//}
 
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+			
 
 			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
 			{
@@ -146,6 +145,8 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 					}
 				}
 			}
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 		}
 
 		// 2. NEUTRAL에서 공격 처리
@@ -187,6 +188,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			// Alt 키: 카메라 락온 타겟 변경 요청
 			if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
 			{
+				// TODO: 수정
 				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(0);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			}

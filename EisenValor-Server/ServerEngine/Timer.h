@@ -1,6 +1,6 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Timer {
 	public:
 		Timer();

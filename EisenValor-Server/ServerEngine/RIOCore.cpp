@@ -1,132 +1,148 @@
 #include "pch.h"
 #include "RIOCore.h"
 
-#include "ThreadManager.h"
-#include "RIOWorker.h"
-#include "TaskQueueManager.h"
-#include "TaskQueue.h"
+#include "Session.h"
 #include "ServerEngineConfigManager.h"
 
-#ifdef _USE_RIO
-#ifdef LEGACY_CODE
-
-ServerEngine::RIO::RIOCore::RIOCore()
-	:m_rioExtfuncTable{}
+GameServerEngine::RIO::RIOCore::RIOCore()
 {
 }
 
-bool ServerEngine::RIO::RIOCore::Init(const SessionFactoryFunc sessionFunc)
+GameServerEngine::RIO::RIOCore::~RIOCore()
 {
-	m_acceptThreadNum = 0;
+	m_rioExtfuncTable.RIOCloseCompletionQueue(m_cq);
+}
 
-	if(false == IOCore::Init(sessionFunc)) return false;
-	
-	m_listenSocket = CreateSocket(WSA_FLAG_REGISTERED_IO);
-
-	if(m_listenSocket == INVALID_SOCKET) {
-		ServerEngine::LogManager::PrintLastError();
-		return false;
-	}
-
-	constexpr int opt{ 1 };
-	setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
+bool GameServerEngine::RIO::RIOCore::Init()
+{
+	const SOCKET dummySocket{ CreateSocket(WSA_FLAG_REGISTERED_IO) };
 
 	GUID functionTableId = WSAID_MULTIPLE_RIO;
 	DWORD bytes{};
 
-	if(0 != WSAIoctl(m_listenSocket, SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER, &functionTableId, sizeof(GUID), (void**)&m_rioExtfuncTable, sizeof(m_rioExtfuncTable), &bytes, NULL, NULL)) {
+	if(0 != WSAIoctl(dummySocket, SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER, &functionTableId, sizeof(GUID), (void**)&m_rioExtfuncTable, sizeof(m_rioExtfuncTable), &bytes, NULL, NULL)) {
 		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
 
-	// 4. Bind
-	if(SOCKET_ERROR == bind(m_listenSocket, (SOCKADDR*)&m_serverAddress, sizeof(m_serverAddress))) {
+	const auto& rioConfig = MANAGER(ServerEngineConfigManager)->GetRIOWorkerConfig();
+
+	m_ioResults.resize(rioConfig.MAX_RIO_RESULT);
+
+	// SEND/RECV CQ 따로 만들 수 있다. 지금은 공용
+	const uint32 MAX_CQ_SIZE{ rioConfig.MAX_CQ_SIZE };
+	m_cq = m_rioExtfuncTable.RIOCreateCompletionQueue(MAX_CQ_SIZE, nullptr);
+
+	if(m_cq == RIO_INVALID_CQ) {
 		LOG_WSA_GET_LAST_ERROR();
 		return false;
 	}
 
-	// 5. Create RIOWorker
-	m_workerThreadCount = MANAGER(ServerEngine::ThreadManager)->GetWorkerThreadCount();
-	m_rioWorkers.reserve(m_workerThreadCount);
-
-	LISTEN_THREAD_ID = MANAGER(ThreadManager)->IssueID();
-
-	for(int i = 0; i < m_workerThreadCount; ++i) {
-		const uint16 id{ MANAGER(ThreadManager)->IssueID() };
-		auto rioWorker = std::make_unique<RIOWorker>(id) ;
-		if(false == rioWorker->Init(m_sessionFactoryFunc))
-			return false;
-		m_rioWorkers.emplace_back(std::move(rioWorker));
-	}
-
-	LOG_INFO("RioCore Init, Core Count = {}", m_workerThreadCount);
 	return true;
 }
 
-bool ServerEngine::RIO::RIOCore::StartAccept()
+bool GameServerEngine::RIO::RIOCore::Register(std::shared_ptr<Session> session)
 {
-	if(false == IOCore::StartAccept()) return false;
+	auto rioSession{ std::static_pointer_cast<RIOSession>(session) };
 
-	// 2. Accept
-	MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this](const std::stop_token& st)
-		{
-			TLS_THREAD_ID = LISTEN_THREAD_ID;
-			while(false == st.stop_requested())
-				DoAcceptLoop();
-		});
+	// RQ 생성
+	const uint32 MAX_RECV_RQ_SIZE_PER_SESSION{MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RECV_RQ_SIZE_PER_SESSION};
+	const uint32 MAX_SEND_RQ_SIZE_PER_SESSION{ MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_SEND_RQ_SIZE_PER_SESSION };
 
-	return true;
-}
-
-void ServerEngine::RIO::RIOCore::Run()
-{
-	for(int i = 0; i < m_workerThreadCount; ++i) {
-		MANAGER(ServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token& st)
-			{
-				TLS_RIO_WORKER = m_rioWorkers[i].get();
-				TLS_THREAD_ID = TLS_RIO_WORKER->GetID();
-
-				while(false == st.stop_requested()) {
-					TLS_WORK_END_TIME = high_resolution_clock::now() + TLS_ALLOCATED_WORK_TIME;
-					TLS_RIO_WORKER->Work();
-					DistributeReservedTask();
-					FlushTaskQueue();
-				}
-			});
+	if(m_rioExtfuncTable.RIOCreateRequestQueue == nullptr) {
+		LOG_ERROR("RIO Function Table is NULL in this Worker!");
+		return false;
 	}
-}
-
-void ServerEngine::RIO::RIOCore::DoAcceptLoop()
-{
-ACCEPT_RETRY:
-	const SOCKET clientSocket{ accept(m_listenSocket, NULL, NULL) };
-	if(INVALID_SOCKET == clientSocket) return;
-
-	SOCKADDR_IN clientaddr;
-	int32 addrlen{ sizeof(clientaddr) };
-	if(SOCKET_ERROR == GetPeerName(clientSocket, reinterpret_cast<SOCKADDR*>(&clientaddr), &addrlen)) {
-		closesocket(clientSocket);
-		LOG_ERROR("GetPeerName Failed");
-		goto ACCEPT_RETRY;
-	}
-
-	std::wstring ipAddress;
-	ipAddress.resize(100);
-	InetNtopW(AF_INET, &clientaddr.sin_addr, ipAddress.data(), ipAddress.size());
-
-	LOG_INFO("Session Connected! IP = {}, PORT = {}", WStringToString(ipAddress.c_str()), clientaddr.sin_port);
 	
-	ServerEngine::RIO::RIOWorker* const rioWorker{ m_rioWorkers[m_acceptThreadNum].get() };
-	if(rioWorker->ProcessAccept(clientSocket, clientaddr))
-		m_acceptThreadNum = (m_acceptThreadNum + 1) % m_workerThreadCount;
-	else
-		closesocket(clientSocket);
+	const RIO_RQ rq = m_rioExtfuncTable.RIOCreateRequestQueue(session->GetSocket(), MAX_RECV_RQ_SIZE_PER_SESSION, 1, MAX_SEND_RQ_SIZE_PER_SESSION, 1, m_cq, m_cq, 0);
+	if(rq == RIO_INVALID_RQ) {
+		LOG_WSA_GET_LAST_ERROR();
+		return false;
+	}
+
+	rioSession->SetRQ(rq);
+	rioSession->SetTable(m_rioExtfuncTable);
+
+	if(false == rioSession->RegisterBuffer())
+		return false;
+	
+	rioSession->SetState(SESSION_STATE::ACCEPTED);
+
+	const uint32 id{ rioSession->GetID() };
+
+	if(m_connectedSessions.contains(rioSession))
+		return false;
+
+	m_connectedSessions.insert(rioSession);
+
+	rioSession->PostRecv();
+	return true;
+}
+ 
+bool GameServerEngine::RIO::RIOCore::Deregister(std::shared_ptr<Session> session)
+{
+	if(!session) 
+		return false;
+	
+	auto rioSession = std::static_pointer_cast<RIOSession>(session);
+
+	rioSession->SetState(SESSION_STATE::TRANSFERRING);
+
+	const uint32 id{ rioSession->GetID() };
+
+	if(m_connectedSessions.contains(rioSession))
+		m_connectedSessions.erase(rioSession);
+
+	DequeueCompletion();
+
+	return true;
 }
 
-void ServerEngine::RIO::RIOCore::Shutdown()
+void GameServerEngine::RIO::RIOCore::ProcessIO()
 {
-	shutdown(m_listenSocket, SD_BOTH);
-	closesocket(m_listenSocket);
+	FlushPacketQueue();
+	DequeueCompletion();
 }
-#endif
-#endif
+
+void GameServerEngine::RIO::RIOCore::FlushPacketQueue()
+{
+	// TODO: Send 방식 수정
+	auto iter{ m_connectedSessions.begin() };
+
+	while(iter != m_connectedSessions.end()) {
+		auto& session = *iter;
+
+		if(session == nullptr || session->GetState() == SESSION_STATE::FREE) {
+			iter = m_connectedSessions.erase(iter);
+			continue;
+		}
+
+		session->CheckPing();
+		session->FlushPacketQueue();
+		++iter;
+	}
+}
+
+void GameServerEngine::RIO::RIOCore::DequeueCompletion()
+{
+	while(true) {
+		memset(m_ioResults.data(), 0, m_ioResults.size() * sizeof(RIORESULT));
+
+		const uint32 numResults{ m_rioExtfuncTable.RIODequeueCompletion(m_cq, m_ioResults.data(), static_cast<uint32>(m_ioResults.size())) };
+		if(0 == numResults)
+			return;
+		else if(RIO_CORRUPT_CQ == numResults) {
+			std::cout << "RIO_CORRUPT_CQ" << std::endl;
+			return;
+		}
+		else {
+			for(uint32 i = 0; i < numResults; ++i) {
+				RIO::RIOContext* const context{ reinterpret_cast<RIO::RIOContext*>(m_ioResults[i].RequestContext) };
+				auto session{ context->GetOwner() };
+				assert(context && session);
+				const uint32 bytesTransferred{ m_ioResults[i].BytesTransferred };
+				session->Dispatch(context, bytesTransferred);
+			}
+		}
+	}
+}

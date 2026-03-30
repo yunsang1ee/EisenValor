@@ -1,13 +1,9 @@
 #include "pch.h"
 #include "ServerManager.h"
 
-#include "NetworkManager.h"
-
-#include "RioCore.h"
 #include "ClientSession.h"
 #include "LobbyServerSession.h"
 #include "GameObjectFactory.h"
-#include "GameLobby.h"
 #include "ServerEngineConfigManager.h"
 #include "GameDataManager.h"
 #include "ServerEngineCore.h"
@@ -22,66 +18,45 @@ BOOL __stdcall ConsoleHandler(DWORD signal)
 	return FALSE;
 }
 
-bool Server::ServerManager::Init()
+bool GameServer::ServerManager::Init()
 {
 	std::wcout.imbue(std::locale("korean"));
 
-	ServerEngine::LogManager::Init();
+	GameServerEngine::LogManager::Init();
 	
 	if(false == SetConsoleCtrlHandler(ConsoleHandler, TRUE)) {
 		LOG_ERROR("Regist ConsoleCtrlHandler Failed");
 		return false;
 	}
 
-	if(false == MANAGER(ServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("../Config/ServerEngineConfig.json")) {
+	if(false == MANAGER(GameServerEngine::ServerEngineConfigManager)->LoadConfigFromFile("../Config/ServerEngineConfig.json")) {
 		LOG_ERROR("ServerEngineConFigureManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(Server::Contents::GameDataManager)->LoadDataFromFile("../GameData/GameData.json")) {
+	if(false == MANAGER(GameServer::Contents::GameDataManager)->LoadDataFromFile("../GameData/GameData.json")) {
 		LOG_ERROR("GameDataManager Load Failed");
 		return false;
 	}
 
-	if(false == MANAGER(ServerEngine::ThreadManager)->Init()) {
+	if(false == MANAGER(GameServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;
 	}
 
-	// -------------------------여기까지 문제 없음
-
-#ifdef LEGACY_CODE
-	LOG_INFO("LEGACY_CODE");
-	if(false == MANAGER(ServerEngine::NetworkManager)->Init(MakeClientSessionFunc)) {
-		LOG_ERROR("NetworkManager Init Failed");
-		return false;
-	}
-
-	G_GAME_LOBBY = std::make_shared<Server::Contents::GameLobby>();
-	G_GAME_LOBBY->Init();
-#endif
-
-#ifdef MODERN_CODE
 	LOG_INFO("MODERN_CODE");
-	if(false == MANAGER(ServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameLobbyTest, MakeGameWorldTest)) {
+	if(false == MANAGER(GameServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameWorldFunc)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;
 	}
-#endif
 
 	return true;
 }
 
-bool Server::ServerManager::Run()
+bool GameServer::ServerManager::Run()
 {
-#ifdef LEGACY_CODE
-	MANAGER(ServerEngine::NetworkManager)->Run();
-#endif
-
-#ifdef MODERN_CODE
-	MANAGER(ServerEngine::ServerEngineCore)->Run();
-#endif
-
+	MANAGER(GameServerEngine::ServerEngineCore)->Run();
+	
 	char ch;
 	constexpr int8 ESC = 27;
 
@@ -104,15 +79,9 @@ bool Server::ServerManager::Run()
 	return true;
 }
 
-void Server::ServerManager::Shutdown()
+void GameServer::ServerManager::Shutdown()
 {
-#ifdef LEGACY_CODE
-	MANAGER(ServerEngine::NetworkManager)->Shutdown();
-#endif
-
-#ifdef MODERN_CODE
-	MANAGER(ServerEngine::ServerEngineCore)->Shutdown();
-#endif
+	MANAGER(GameServerEngine::ServerEngineCore)->Shutdown();
 	WSACleanup();
 	LOG_SAVE();
 }

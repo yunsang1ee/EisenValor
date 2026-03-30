@@ -2,7 +2,7 @@
 
 #include "Component.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class NavSystem;
 		class NavAgent : public Component {

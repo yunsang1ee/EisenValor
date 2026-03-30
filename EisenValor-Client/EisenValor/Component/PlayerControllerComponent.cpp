@@ -96,6 +96,19 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		}
 	}
 
+	auto* myGameObject = GetGameObject();
+	if (!myGameObject)
+	{
+		return;
+	}
+
+	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+	if (!fsm)
+		return;
+
+
+	const auto curState{fsm->GetCurStateType()};
+
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
 }
@@ -171,7 +184,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 
 		const auto curState{fsm->GetCurStateType()};
 
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 			return;
 
 		auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
@@ -192,7 +205,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 
 		const auto curState{fsm->GetCurStateType()};
 
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD || curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 			return;
 
 		RotatePitch(deltaY);
@@ -214,7 +227,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		return;
 
 	uint8_t curState = fsm->GetCurStateType();
-	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 		return;
 
 	auto& input = GLOBAL(InputGlobal);
@@ -337,6 +350,18 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	auto				rot = transform.GetRotation();
 	FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
 
+	if (isRestricted)
+	{
+		if (isMovingInput)
+		{
+			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+		}
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
+		return;
+	}
+	
 	if (isMovingInput)
 	{
 		if (curState != FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustPressed)
@@ -364,7 +389,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		}
 	}
 
-	// 6. 기타 상호작용
 	if (input.GetInputDown('F'))
 	{
 		auto pb = NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET();

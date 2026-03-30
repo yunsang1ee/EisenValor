@@ -3,16 +3,19 @@
 
 int main()
 {
+	SetConsoleOutputCP(CP_UTF8);
+	SetConsoleCP(CP_UTF8);
+
 	TLS_THREAD_NAME = "Main";
 
-	if(false == Server::ServerManager::Init()) {
+	if(false == GameServer::ServerManager::Init()) {
 		LOG_ERROR("ServerManager Init Failed");
 		LOG_SAVE();
 		return EXIT_FAILURE;
 	}
 	
-	if(false == Server::ServerManager::Run())
+	if(false == GameServer::ServerManager::Run())
 		LOG_ERROR("ServerManager Run Failed");
 
-	Server::ServerManager::Shutdown();
+	GameServer::ServerManager::Shutdown();
 }

@@ -3,17 +3,17 @@
 
 #include "GameWorld.h"
 
-Server::Contents::Creature::Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
+GameServer::Contents::Creature::Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
 	:GameObject(teamType, type)
 {
 	SetCreature(true);
 }
 
-Server::Contents::Creature::~Creature()
+GameServer::Contents::Creature::~Creature()
 {
 }
 
-void Server::Contents::Creature::SetHp(const uint32 hp, const bool broadcast)
+void GameServer::Contents::Creature::SetHp(const uint32 hp, const bool broadcast)
 {
 	if(0 == hp) 
 		return;
@@ -30,7 +30,7 @@ void Server::Contents::Creature::SetHp(const uint32 hp, const bool broadcast)
 	}
 }
 
-void Server::Contents::Creature::IncHP(const uint32 amount, const bool broadcast)
+void GameServer::Contents::Creature::IncHP(const uint32 amount, const bool broadcast)
 {
 	if(0 == amount) 
 		return;
@@ -43,7 +43,7 @@ void Server::Contents::Creature::IncHP(const uint32 amount, const bool broadcast
 	}
 }
 
-void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
+void GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
 {
 	if(0 == amount)
 		return;
@@ -63,7 +63,7 @@ void Server::Contents::Creature::DecHP(const uint32 amount, const bool broadcast
 	}
 }
 
-void Server::Contents::Creature::SetStamina(const uint32 stamina, const bool broadcast)
+void GameServer::Contents::Creature::SetStamina(const uint32 stamina, const bool broadcast)
 {
 	if(0 == stamina)
 		return;
@@ -80,7 +80,7 @@ void Server::Contents::Creature::SetStamina(const uint32 stamina, const bool bro
 	}
 }
 
-void Server::Contents::Creature::IncStamina(const uint32 amount, const bool broadcast)
+void GameServer::Contents::Creature::IncStamina(const uint32 amount, const bool broadcast)
 {
 	if(0 == amount)
 		return;
@@ -93,7 +93,7 @@ void Server::Contents::Creature::IncStamina(const uint32 amount, const bool broa
 	}
 }
 
-void Server::Contents::Creature::DecStamina(const uint32 amount, const bool broadcast)
+void GameServer::Contents::Creature::DecStamina(const uint32 amount, const bool broadcast)
 {
 	if(0 == amount)
 		return;
@@ -106,12 +106,12 @@ void Server::Contents::Creature::DecStamina(const uint32 amount, const bool broa
 	}
 }
 
-void Server::Contents::Creature::IncRespawnTime()
+void GameServer::Contents::Creature::IncRespawnTime()
 {
 	m_statInfo.respawnTimeSec += GetGameObjectData()->respawnTimeIncAmount;
 }
 
-void Server::Contents::Creature::BroadcastUpdateVital()
+void GameServer::Contents::Creature::BroadcastUpdateVital()
 {
 	auto pb{ ServerPackets::Make_SC_UPDATE_VITAL_PACKET(GetID(), m_statInfo.currentHP, m_statInfo.currentStamina) };
 	const auto& world{ GetGameWorld() };

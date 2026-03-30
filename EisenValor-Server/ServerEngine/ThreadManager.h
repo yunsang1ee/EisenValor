@@ -2,7 +2,7 @@
 
 #include "Singleton.hpp"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class TaskQueue;
 
 	class ThreadManager : public Singleton<ThreadManager> {
@@ -29,5 +29,3 @@ namespace ServerEngine {
 
 	};
 }
-
-

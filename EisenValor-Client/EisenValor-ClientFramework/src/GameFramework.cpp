@@ -71,6 +71,8 @@ void GameFramework::Run()
 		frameCount = 0;
 	}
 
+	// BeginFrame -> FixedUpdate -> Update -> LateUpate -> Render -> EndFrame -> AfterUpdate
+
 	GLOBAL(SceneGlobal).OnBeginFrame();
 
 	while (GLOBAL(TimerGlobal).ShouldFixedUpdate())

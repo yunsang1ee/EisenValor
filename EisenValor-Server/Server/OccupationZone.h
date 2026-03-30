@@ -2,7 +2,7 @@
 
 #include "Script.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class OccupationZone : public Script {
 		public:

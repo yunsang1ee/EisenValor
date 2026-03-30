@@ -1,21 +1,23 @@
 #include "pch.h"
 #include "NavSystem.h"
 
-Server::Contents::NavSystem::NavSystem()
+GameServer::Contents::NavSystem::NavSystem()
 	:m_navMesh{ nullptr }, m_navMeshQuery{ nullptr }, m_crowd{nullptr}
 {
 	m_queryFilter.setIncludeFlags(0xFFFF);
 	m_queryFilter.setExcludeFlags(0);
 }
 
-Server::Contents::NavSystem::~NavSystem()
+GameServer::Contents::NavSystem::~NavSystem()
 {
-	if(m_crowd) dtFreeCrowd(m_crowd);
+	if(m_crowd) 
+		dtFreeCrowd(m_crowd);
+	
 	dtFreeNavMeshQuery(m_navMeshQuery);
 	dtFreeNavMesh(m_navMesh);
 }
 
-bool Server::Contents::NavSystem::Load(const std::string_view filePath)
+bool GameServer::Contents::NavSystem::Load(const std::string_view filePath)
 {
 	std::ifstream ifs{ filePath.data(), std::ios::binary };
 	if(!ifs) return false;
@@ -62,18 +64,20 @@ bool Server::Contents::NavSystem::Load(const std::string_view filePath)
 	return true;
 }
 
-void Server::Contents::NavSystem::Update(const float dt)
+void GameServer::Contents::NavSystem::Update(const float dt)
 {
 	if(m_crowd)
 		m_crowd->update(dt, nullptr);
 }
 
-void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3& targetPos)
+void GameServer::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3& targetPos)
 {
-	if(!m_crowd) return;
+	if(!m_crowd) 
+		return;
 
 	const dtCrowdAgent* ag{ m_crowd->getAgent(agentIdx) };
-	if(!ag || !ag->active) return;
+	if(!ag || !ag->active) 
+		return;
 
 	float pos[3] = { targetPos.x, targetPos.y, targetPos.z };
 	constexpr float searchRange[3] = { 2.0f, 10.0f, 2.0f };	// search range
@@ -87,7 +91,7 @@ void Server::Contents::NavSystem::SetMoveTarget(const int32 agentIdx, const Vec3
 	}
 }
 
-void Server::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
+void GameServer::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
 {
 	if(!m_crowd) return;
 
@@ -104,7 +108,7 @@ void Server::Contents::NavSystem::ResetMoveTarget(const int32 agentIdx)
 	}
 }
 
-void Server::Contents::NavSystem::RemoveAgent(const int32 agentIdx)
+void GameServer::Contents::NavSystem::RemoveAgent(const int32 agentIdx)
 {
 	if(!m_crowd) return;
 

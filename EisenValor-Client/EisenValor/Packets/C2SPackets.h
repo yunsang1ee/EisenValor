@@ -9,26 +9,25 @@ namespace C2S
 // =================
 //		로그인
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_LOGIN_PACKET(const std::string_view id, const std::string_view pw) noexcept;
+std::shared_ptr<PacketBuffer> Make_CL_LOGIN_PACKET(const std::string_view id, const std::string_view pw) noexcept;
 
 // =================
 //		로비
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_LOBBY_PACKET();
-std::shared_ptr<PacketBuffer> Make_CS_LEAVE_GAME_LOBBY_PACKET();
-std::shared_ptr<PacketBuffer> Make_CS_MAKE_GAME_ROOM_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_ENTER_GAME_LOBBY_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_LEAVE_GAME_LOBBY_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_MAKE_GAME_ROOM_PACKET();
 
 // =================
 //		룸
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_ENTER_GAME_ROOM_PACKET(uint16_t roomId);
-std::shared_ptr<PacketBuffer> Make_CS_LEAVE_GAME_ROOM_PACKET();
-std::shared_ptr<PacketBuffer> Make_CS_CHANGE_TEAM_PACKET();
-std::shared_ptr<PacketBuffer> Make_CS_ADD_BOT_PACKET(FB_ENUMS::TEAM_TYPE teamType);
-//std::shared_ptr<PacketBuffer> Make_CS_REMOVE_BOT_PACKET(uint32_t botId);
-std::shared_ptr<PacketBuffer> Make_CS_READY_GAME_PACKET();
-std::shared_ptr<PacketBuffer> Make_CS_START_GAME_PACKET();
-std::shared_ptr<PacketBuffer> Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_ENTER_GAME_ROOM_PACKET(uint16_t roomId);
+std::shared_ptr<PacketBuffer> Make_CL_LEAVE_GAME_ROOM_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_CHANGE_TEAM_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_ADD_BOT_PACKET(FB_ENUMS::TEAM_TYPE teamType);
+std::shared_ptr<PacketBuffer> Make_CL_REMOVE_BOT_PACKET(uint32_t botId);
+std::shared_ptr<PacketBuffer> Make_CL_READY_GAME_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_START_GAME_PACKET();
 
 // =================
 //		월드
@@ -49,10 +48,5 @@ std::shared_ptr<PacketBuffer> Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS:
 // =================
 std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
 
-// =================
-//		테스트
-// =================
-std::shared_ptr<PacketBuffer> Make_TEST_CS_ENTER_GAME_WORLD_PACKET(const uint16 roomID) noexcept;
-std::shared_ptr<PacketBuffer> Make_CS_GO_WORLD_PACKET() noexcept;
 } // namespace C2S
 } // namespace NetBridge

@@ -2,7 +2,7 @@
 
 #include "Creature.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class BattleRam : public Creature {
 		public:

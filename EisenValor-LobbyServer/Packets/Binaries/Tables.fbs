@@ -4,85 +4,71 @@ include "Structs.fbs";
 namespace FB_TABLES;
 
 // ================================================
-//					  SESSION
+//				  SESSION_PACKETS
 // ================================================
-table CS_PONG_PACKET {
+table CL_PONG_PACKET {
 
 }
 
-table SC_PING_PACKET {
+table LC_PING_PACKET{
 
-}
-
-table CS_CHAT_PACKET {
-	msg: string;				
-}
-
-table SC_CHAT_PACKET {
-	msg: string;
 }
 
 // ================================================
-//					  LOGIN
+//			     LOGIN_PACKETS
 // ================================================
-table CS_LOGIN_PACKET {
+table CL_LOGIN_PACKET {
 	id: string;
 	pw: string;
 }
 
-table SC_LOGIN_SUCCESS_PACKET {
-	player_id : uint;
+table LC_LOGIN_SUCCESS_PACKET {
+	lobby_session_id : uint;
 	name: string;
 }
 
-table SC_LOGIN_FAIL_PACKET {
+table LC_LOGIN_FAIL_PACKET {
 	fail_msg: string;
 }
 
 // ================================================
-//					    LOBBY
+//				LOBBY_PACKETS
 // ================================================
-table CS_ENTER_GAME_LOBBY_PACKET {
+table CL_ENTER_GAME_LOBBY_PACKET {
 	
 }
 
-table SC_ENTER_GAME_LOBBY_PACKET {
+table LC_ENTER_GAME_LOBBY_SUCCESS_PACKET {
 	rooms: [FB_STRUCTS.RoomInfo];
 	users: [string];
 	vec_user_id: [uint];
 }
 
-table SC_ENTER_GAME_LOBBY_SUCCESS_PACKET {
-	rooms: [FB_STRUCTS.RoomInfo];
-	users: [string];
-	vec_user_id: [uint];
-}
-
-table SC_ENTER_GAME_LOBBY_FAIL_PACKET {
+table LC_ENTER_GAME_LOBBY_FAIL_PACKET {
 	fail_msg: string;
 }
 
-table CS_LEAVE_GAME_LOBBY_PACKET {
+table CL_LEAVE_GAME_LOBBY_PACKET {
 
 }
 
-table SC_LEAVE_GAME_LOBBY_PACKET{
+table LC_LEAVE_GAME_LOBBY_PACKET{
 }
 
 
-table SC_ENTER_USER_IN_GAME_LOBBY_PACKET {
+table LC_ENTER_USER_IN_GAME_LOBBY_PACKET {
 	user_name: string;
 	user_id: int;
 }
 
-table SC_LEAVE_USER_IN_GAME_LOBBY_PACKET{
+table LC_LEAVE_USER_IN_GAME_LOBBY_PACKET{
 	user_id: uint;
 }
 
-table CS_MAKE_GAME_ROOM_PACKET {
+table CL_MAKE_GAME_ROOM_PACKET {
 }
 
-table SC_MAKE_GAME_ROOM_PACKET {
+table LC_MAKE_GAME_ROOM_PACKET {
 	room_info: FB_STRUCTS.RoomInfo;
 }
 
@@ -90,62 +76,78 @@ table SC_MAKE_GAME_ROOM_PACKET {
 // ================================================
 //					  GAME_ROOM
 // ================================================
-table CS_ENTER_GAME_ROOM_PACKET {
+table CL_ENTER_GAME_ROOM_PACKET {
 	room_id: uint16;
 }
 
-table SC_JOIN_GAME_ROOM_FAIL_PACKET {
+table LC_ENTER_GAME_ROOM_FAIL_PACKET {
 	fail_msg: string;
 }
 
-table SC_ENTER_GAME_ROOM_SUCCESS_PACKET{
+table LC_ENTER_GAME_ROOM_SUCCESS_PACKET{
 	user: FB_STRUCTS.ParticipantInfo;
 	participants: [FB_STRUCTS.ParticipantInfo];
 }
 
-table CS_LEAVE_GAME_ROOM_PACKET {
+// 내가 나가려고 할 때
+table CL_LEAVE_GAME_ROOM_PACKET {
 }
 
-table SC_LEAVE_GAME_ROOM_PACKET{
-
+// 내가 나가려고 할 때
+table LC_LEAVE_GAME_ROOM_PACKET{
 }
 
-table SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT {
+// 남이 들어왔을 때
+table LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET {
 	participant : FB_STRUCTS.ParticipantInfo;
 }
 
-table SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT {
-	participant_id: uint;
+// 남이 나갈 때
+table LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET {
+	participant_id: uint32;
 }
 
-table CS_CHANGE_TEAM_PACKET {
+table CL_CHANGE_TEAM_PACKET {
 
 }
 
-table SC_CHANGE_TEAM_PACKET{
+table LC_CHANGE_TEAM_PACKET{
 	user_id: uint;
 	team_type: FB_ENUMS.TEAM_TYPE;
 }
 
-table CS_ADD_BOT_PACKET {
+table CL_ADD_BOT_PACKET {
 	team_type: FB_ENUMS.TEAM_TYPE;
 }
 
-table CS_REMOVE_BOT_PACKET {
+table LC_ADD_BOT_PACKET {
+	bot_id: uint;
+	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+table CL_REMOVE_BOT_PACKET {
 	bot_id: uint;
 }
 
-table CS_READY_GAME_PACKET{
+table LC_REMOVE_BOT_PACKET {
+	bot_id: uint;
+}
+
+table CL_READY_GAME_PACKET{
 
 }
 
-table SC_READY_GAME_PACKET {
+table LC_READY_GAME_PACKET {
 	user_id: uint;
 	participant_state: FB_ENUMS.PARTICIPANT_STATE_TYPE;
 }
 
 table CL_START_GAME_PACKET {
 
+}
+
+table LC_START_GAME_FAIL_PACKET {
+	fail_msg: string;
 }
 
 table LS_CREATE_GAME_WORLD_PACKET {
@@ -165,38 +167,40 @@ table LC_CONNECT_TO_GAME_SERVER_PACKET {
 	port: uint16;
 }
 
-table SC_LOADING_GAME_WORLD_PACKET {
-
+table CL_CHAT_PACKET {
+	msg: string;
 }
 
-table CS_COMPLETE_LOADING_GAME_WORLD_PACKET {
-
-}
-
-
-table SC_START_GAME_FAIL_PACKET {
-
-}
-
-table SC_START_GAME_SUCCESS_PACKET {
-
-}
-
-table SC_CHANGE_GAME_ROOM_STATE_PACKET{
-	room_id: uint16;
-	room_state: FB_ENUMS.ROOM_STATE_TYPE;
+table LC_CHAT_PACKET {
+	session_id: uint;
+	msg: string;
 }
 
 // ================================================
 //					  GAME_WORLD
 // ================================================
 
+table CS_CHAT_PACKET {
+	msg: string;				
+}
+
+table SC_CHAT_PACKET {
+	msg: string;
+}
+
+table CS_PONG_PACKET {
+
+}
+
+table SC_PING_PACKET {
+
+}
 
 table SC_GAME_FINISH_PACKET {
 
 }
 table SC_LOCAL_PLAYER_PACKET {
-	player_id: uint;
+	player_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	team_type: FB_ENUMS.TEAM_TYPE;
 	max_hp: uint;
@@ -207,7 +211,7 @@ table SC_LOCAL_PLAYER_PACKET {
 }
 
 table SC_ADD_OBJ_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	obj_type: FB_ENUMS.GAME_OBJECT_TYPE;
 	team_type : FB_ENUMS.TEAM_TYPE;
 	pos_info: FB_STRUCTS.PosInfo;
@@ -219,7 +223,7 @@ table SC_ADD_OBJ_PACKET {
 }
 
 table SC_REMOVE_OBJ_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 }
 
 table CS_MOVE_PACKET {
@@ -227,7 +231,7 @@ table CS_MOVE_PACKET {
 }
 
 table SC_MOVE_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	sub_state: uint8;
 }
@@ -237,7 +241,7 @@ table CS_CHANGE_GENERAL_STANCE_PACKET {
 }
 
 table SC_CHANGE_GENERAL_STANCE_PACKET {
-	obj_id : uint;
+	obj_id : uint64;
 	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
@@ -246,18 +250,18 @@ table CS_GENERAL_ATTACK_PACKET {
 }
 
 table SC_GENERAL_ATTACK_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	attack_info: FB_STRUCTS.GeneralAttackInfo;
 }
 
 table SC_UPDATE_VITAL_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	current_hp: uint;
 	current_stamina: uint;
 }
 
 table SC_UPDATE_STATE_PACKET {
-	obj_id: uint;
+	obj_id: uint64;
 	next_state: uint8;
 }
 
@@ -274,7 +278,7 @@ table CS_CHANGE_CAMERA_TARGET_PACKET {
 }
 
 table SC_CHANGE_CAMERA_TARGET_PACKET {
-	camera_target_id: uint;
+	camera_target_id: uint64;
 }
 
 table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
@@ -282,12 +286,12 @@ table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
 }
 
 table SC_SHOW_GENERAL_ATTACK_DIR_PACKET{
-	obj_id: uint32;
+	obj_id: uint64;
 	attack_dir: uint8;
 }
 
 table SC_RESPAWN_GENERAL_PACKET {
-	obj_id : uint32;
+	obj_id : uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	max_hp: uint;
 	current_hp: uint;
@@ -298,16 +302,16 @@ table SC_RESPAWN_GENERAL_PACKET {
 
 
 table SC_DEAD_PACKET {
-	obj_id: uint32;
+	obj_id: uint64;
 }
 
 table SC_START_ANIMATION {
-	obj_id: uint32;
+	obj_id: uint64;
 	anim_name: string;
 }
 
 table SC_END_ANIMATION {
-	obj_id: uint32;
+	obj_id: uint64;
 	anim_name: string;
 }
 

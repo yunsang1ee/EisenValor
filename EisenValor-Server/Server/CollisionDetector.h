@@ -1,7 +1,7 @@
 #pragma once
 #include "Collider.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		
 		union COLLIDER_ID {
@@ -13,7 +13,7 @@ namespace Server {
 		};
 
 		class GameWorld;
-		class GameWorldTest;
+		class GameWorld;
 
 		class Collider;
 		class OBBCollider;
@@ -39,7 +39,7 @@ namespace Server {
 			static bool OverlapOnAxis(const OBBCollider* const box1, const OBBCollider* const box2, const Matrix& mat1, const Matrix& mat2, const Vec3& axis);
 		
 			friend class GameWorld;
-			friend class GameWorldTest;
+			friend class GameWorld;
 
 		private:
 			using CollisionFunc = bool(*)(const Collider* const, const Collider* const);

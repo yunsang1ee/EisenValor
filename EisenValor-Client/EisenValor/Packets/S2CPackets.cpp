@@ -23,7 +23,7 @@
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
-#include "../Util/CameraConfig.h"
+#include "Util/CameraConfig.h"
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
@@ -42,19 +42,26 @@ bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const Pack
 	return false;
 }
 
-bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_LOGIN_SUCCESS_PACKET& recvPkt
+#pragma region LOGIN_PACKETS
+bool NetBridge::S2C::Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt)
+{
+	// TODO: 로그인 실패 알림
+	DEBUG_LOG_FMT("[SC_LOGIN_FAIL_PACKET] ");
+	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LOGIN_SUCCESS_PACKET& recvPkt
 )
 {
-	const uint32 id = recvPkt.player_id();
-
-	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
-
-	std::cout << std::format("ID: {}", id) << std::endl;
-	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
+	// 여기서 ID는 Lobby Session ID
+	const uint32 id = recvPkt.lobby_session_id();
+	auto		 device = GLOBAL(DxDeviceGlobal).GetDevice();
 
 #ifdef APPLY_LOBBY_SERVER
-	auto pb = NetBridge::C2S::Make_CS_ENTER_GAME_LOBBY_PACKET();
+	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
+	auto pb = NetBridge::C2S::Make_CL_ENTER_GAME_LOBBY_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
 	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to LobbyScene\n", id);
 #endif
@@ -69,15 +76,23 @@ bool NetBridge::S2C::Handle_SC_LOGIN_SUCCESS_PACKET(
 
 	return true;
 }
+#pragma endregion
 
-#pragma region LOBBY & ROOM
-bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_LOBBY_PACKET& recvPkt
+#pragma region LOBBY_PACKETS
+bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_LOBBY_FAIL_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("[SC_ENTER_GAME_LOBBY_FAIL_PACKET] ");
+	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+	
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_LOBBY_SUCCESS_PACKET& recvPkt
 )
 {
 	std::cout << "[SC_ENTER_GAME_LOBBY_PACKET] " << std::endl;
-
-	const uint32 localID = GLOBAL(SceneGlobal).GetLocalNetworkID();
 
 	const auto& rooms = recvPkt.rooms();
 	const auto& users = recvPkt.users();
@@ -103,10 +118,6 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	for (flatbuffers::uoffset_t i = 0; i < users->size(); ++i)
 	{
 		const auto* user = users->Get(i);
-		if (vecUserID->Get(i) == localID)
-		{
-			continue;
-		}
 		DEBUG_LOG_FMT("-Name:{}, ID:{}\n", user->c_str(), vecUserID->Get(i));
 	}
 
@@ -119,8 +130,19 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ENTER_USER_IN_GAME_LOBBY_PACKET& recvPkt
+bool NetBridge::S2C::Handle_LC_LEAVE_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LEAVE_GAME_LOBBY_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("[SC_LEAVE_GAME_LOBBY_PACKET] ");
+	DEBUG_LOG_FMT("Leave Lobby!\n");
+	// TODO: 로그인 Scene으로 다시...
+	GLOBAL(SceneGlobal).LoadScene("LoginScene");
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_ENTER_USER_IN_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_USER_IN_GAME_LOBBY_PACKET& recvPkt
 )
 {
 	// 로비에 새로운 유저가 입장
@@ -132,19 +154,9 @@ bool NetBridge::S2C::Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_LEAVE_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_LEAVE_GAME_LOBBY_PACKET& recvPkt
-)
-{
-	DEBUG_LOG_FMT("[SC_LEAVE_GAME_LOBBY_PACKET] ");
-	DEBUG_LOG_FMT("Leave Lobby!\n");
-	// TODO: 로그인 Scene으로 다시...
-	GLOBAL(SceneGlobal).LoadScene("LoginScene");
-	return true;
-}
 
-bool NetBridge::S2C::Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_LEAVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
+bool NetBridge::S2C::Handle_LC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LEAVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
 )
 {
 	// 로비에서 유저가 퇴장
@@ -154,8 +166,8 @@ bool NetBridge::S2C::Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
 	return false;
 }
 
-bool NetBridge::S2C::Handle_SC_MAKE_GAME_ROOM_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_MAKE_GAME_ROOM_PACKET& recvPkt
+bool NetBridge::S2C::Handle_LC_MAKE_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_MAKE_GAME_ROOM_PACKET& recvPkt
 )
 {
 	// 게임 룸이 성공적으로 생성됨
@@ -165,9 +177,11 @@ bool NetBridge::S2C::Handle_SC_MAKE_GAME_ROOM_PACKET(
 	DEBUG_LOG_FMT("Room ID: {}\n", roomInfo->id());
 	return true;
 }
+#pragma endregion
 
-bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_FAIL_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_JOIN_GAME_ROOM_FAIL_PACKET& recvPkt
+#pragma region ROOM_PACKETS
+bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_ROOM_FAIL_PACKET& recvPkt
 )
 {
 	// 게임 룸 입장 실패
@@ -177,8 +191,8 @@ bool NetBridge::S2C::Handle_SC_JOIN_GAME_ROOM_FAIL_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_ROOM_SUCCESS_PACKET& recvPkt
+bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_ROOM_SUCCESS_PACKET& recvPkt
 )
 {
 	// 게임 룸 입장 성공
@@ -188,6 +202,8 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 
 	DEBUG_LOG_FMT("[SC_JOIN_GAME_ROOM_SUCCESS_PACKET] ");
 	auto user = recvPkt.user();
+	GLOBAL(SceneGlobal).SetLocalNetworkID(user->id());
+
 	DEBUG_LOG_FMT("User ID:{}\n", user->id());
 
 	if (user->type() == FB_ENUMS::PARTICIPANT_TYPE_USER)
@@ -254,8 +270,8 @@ bool NetBridge::S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_LEAVE_GAME_ROOM_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_LEAVE_GAME_ROOM_PACKET& recvPkt
+bool NetBridge::S2C::Handle_LC_LEAVE_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LEAVE_GAME_ROOM_PACKET& recvPkt
 )
 {
 	// 게임 룸 퇴장 성공
@@ -264,14 +280,14 @@ bool NetBridge::S2C::Handle_SC_LEAVE_GAME_ROOM_PACKET(
 	DEBUG_LOG_FMT("[SC_LEAVE_GAME_ROOM_PACKET] ");
 	DEBUG_LOG_FMT("Leave Game Room!\n");
 
-	// auto pb = NetBridge::C2S::Make_CS_ENTER_GAME_LOBBY_PACKET();
-	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));
+	auto pb = NetBridge::C2S::Make_CL_ENTER_GAME_LOBBY_PACKET();
+	GLOBAL(NetworkGlobal).Send(std::move(pb));
 
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT& recvPkt
+bool NetBridge::S2C::Handle_LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET& recvPkt
 )
 {
 	// 게임 룸에 새로운 참가자가 입장
@@ -310,7 +326,17 @@ bool NetBridge::S2C::Handle_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_READY_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_READY_GAME_PACKET& recvPkt)
+bool NetBridge::S2C::Handle_LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET& recvPkt
+)
+{
+	// 게임 룸에서 참가자가 퇴장
+	DEBUG_LOG_FMT("[SC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET] ");
+	DEBUG_LOG_FMT("Participant ID:{} Leave Game Room!\n", recvPkt.participant_id());
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_READY_GAME_PACKET(const SOCKET& socket, const FB_TABLES::LC_READY_GAME_PACKET& recvPkt)
 {
 	// 참가자가 준비 상태로 변경됨
 	// TODO: 참가자가 준비 상태로 변경되었음을 화면에 보여주기
@@ -326,7 +352,18 @@ bool NetBridge::S2C::Handle_SC_READY_GAME_PACKET(const SOCKET& socket, const FB_
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHANGE_TEAM_PACKET& recvPkt)
+bool NetBridge::S2C::Handle_LC_START_GAME_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_START_GAME_FAIL_PACKET& recvPkt
+)
+{
+	// 게임 시작 실패
+	DEBUG_LOG_FMT("[LC_START_GAME_FAIL_PACKET] ");
+	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_TEAM_PACKET& recvPkt)
 {
 	// 참가자가 팀을 변경함
 	// TODO: 참가자가 팀을 변경했음을 화면에 보여주기
@@ -341,38 +378,23 @@ bool NetBridge::S2C::Handle_SC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_LOADING_GAME_WORLD_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_LOADING_GAME_WORLD_PACKET& recvPkt
-)
+bool NetBridge::S2C::Handle_LC_ADD_BOT_PACKET(const SOCKET& socket, const FB_TABLES::LC_ADD_BOT_PACKET& recvPkt)
 {
-	// TODO: 로딩 중 메시지 화면에 보여주기
-	DEBUG_LOG_FMT("[SC_LOADING_GAME_WORLD_PACKET] ");
-	Sleep(3000);
-	// TODO: 여기서 게임 씬으로 전환
-	auto pb = C2S::Make_CS_COMPLETE_LOADING_GAME_WORLD_PACKET();
-	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	// 게임 룸에 새로운 봇이 추가됨
+	DEBUG_LOG_FMT("[LC_ADD_BOT_PACKET] ");
+	// DEBUG_LOG_FMT("Bot ID: {}, TeamType: {}\n", recvPkt.bot_id(), recvPkt.team_type());
 
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_CHANGE_GAME_ROOM_STATE_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GAME_ROOM_STATE_PACKET& recvPkt
-)
+bool NetBridge::S2C::Handle_LC_REMOVE_BOT_PACKET(const SOCKET& socket, const FB_TABLES::LC_REMOVE_BOT_PACKET& recvPkt)
 {
-	// 게임 룸의 상태가 변경됨
-	// TODO: 게임 룸의 상태가 변경되었음을 화면에 보여주기
-	DEBUG_LOG_FMT("[SC_CHANGE_GAME_ROOM_STATE_PACKET] ");
-	DEBUG_LOG_FMT("Game Room ID: {}\n", recvPkt.room_id());
-	if (recvPkt.room_state() == FB_ENUMS::ROOM_STATE_TYPE_WATING)
-	{
-		DEBUG_LOG_FMT("State Type: WAITING\n");
-	}
-	else if (recvPkt.room_state() == FB_ENUMS::ROOM_STATE_TYPE_PLAYING)
-	{
-		DEBUG_LOG_FMT("State Type: PLAYING\n");
-	}
+	// 게임 룸에서 봇이 제거됨
+	DEBUG_LOG_FMT("[LC_REMOVE_BOT_PACKET] ");
+	// DEBUG_LOG_FMT("Bot ID: {} Remove From Game Room!\n", recvPkt.bot_id());
 	return true;
 }
+
 bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET& recvPkt
 )
@@ -383,12 +405,19 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), recvPkt.port()))
 		assert(nullptr);
 
+	// 로비서버로부터 받은 세션 아이디
 	const uint32 localID = GLOBAL(SceneGlobal).GetLocalNetworkID();
 	const uint16 roomID{1};
 	{
 		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, localID)};
 		GLOBAL(NetworkGlobal).Send(std::move(pb));
 	}
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET& recvPkt)
+{
+	DEBUG_LOG_FMT("[LC_CHAT_PACKET] ");
+	DEBUG_LOG_FMT("User ID: {}, Message: {}\n", recvPkt.session_id(), recvPkt.msg()->c_str());
 	return true;
 }
 #pragma endregion
@@ -406,8 +435,8 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.player_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.player_id();
+	const uint64 localID = scene->GetLocalID();
 	if (id != localID)
 	{
 		DEBUG_LOG_FMT("is not LocalPlayer, id:{}, LocalID: {}\n", id, localID);
@@ -616,8 +645,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	if (id == localID)
 	{
@@ -723,6 +752,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
+				tr.SetScale(2.0f);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
@@ -859,8 +889,8 @@ bool NetBridge::S2C::Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_
 	// TODO: 원격 플레이어 또는 봇 오브젝트를 게임 씬에서 제거하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	if (id == localID)
 	{
@@ -888,17 +918,12 @@ bool NetBridge::S2C::Handle_SC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES
 
 bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES::SC_MOVE_PACKET& recvPkt)
 {
-	// 원격 플레이어 또는 봇 오브젝트 이동 처리
-	// TODO: 원격 플레이어 또는 봇 오브젝트의 위치 및 회전을 업데이트하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
-	if (id == localID)
-	{
-		return false;
-	}
+	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
 
 	auto obj = scene->FindGameObjectByServerID(id);
 	if (obj)
@@ -906,7 +931,7 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 		obj->GetTransform().SetPosition(pos);
-		obj->GetTransform().SetRotation(rot); // TODO: degree인지 quaternion인지 확인 필요
+		obj->GetTransform().SetRotation(rot);
 	}
 	return true;
 }
@@ -916,8 +941,8 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 )
 {
 	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
 
 	// 서버 Echo 방지 (로컬 플레이어는 이미 입력 시점에 처리)
 	if (id == localID)
@@ -959,7 +984,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 	// TODO: 해당 오브젝트의 HealthComponent를 찾아서 바이탈 정보 업데이트하기
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 objID = recvPkt.obj_id();
+	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 
 	if (obj)
@@ -991,7 +1016,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 )
 {
 	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
-	const uint32 id = recvPkt.obj_id();
+	const uint64 id = recvPkt.obj_id();
 	const auto	 stance = recvPkt.stance_type();
 
 	// 서버 Echo 방지
@@ -1023,7 +1048,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	}
 
 	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
-	const uint32 objID = recvPkt.obj_id();
+	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 	uint8_t		 nextState = recvPkt.next_state();
 	
@@ -1098,7 +1123,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		return false;
 	}
 
-	const uint32 cameraTargetID = recvPkt.camera_target_id();
+	const auto cameraTargetID = recvPkt.camera_target_id();
 
 	if (cameraTargetID == 0)
 	{
@@ -1145,8 +1170,8 @@ bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
 	// 플레이어 공격 방향 표시
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
-	const uint32 id = recvPkt.obj_id();
-	const uint32 localID = scene->GetLocalID();
+	const auto id = recvPkt.obj_id();
+	const auto localID = scene->GetLocalID();
 
 	// 서버 Echo 방지
 	if (id == localID)
@@ -1177,7 +1202,7 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 )
 {
 	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
-	const uint32 objID = recvPkt.obj_id();
+	const auto objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 
 	if (obj)

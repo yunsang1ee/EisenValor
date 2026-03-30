@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="소스 파일">
@@ -269,52 +269,23 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="EisenValor.rc">
-      <Filter>리소스 파일</Filter>
-    </ResourceCompile>
+    <ResourceCompile Include="EisenValor.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
-      <Filter>리소스 파일</Filter>
-    </Image>
-    <Image Include="EisenValor.ico">
-      <Filter>리소스 파일</Filter>
-    </Image>
+    <Image Include="EisenValor.ico" />
+    <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resource\Shader\RaytracingCommon.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Enums.fbs">
-      <Filter>Packets\FBS</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Structs.fbs">
-      <Filter>Packets\FBS</Filter>
-    </None>
-    <None Include="..\Packets\Binaries\Tables.fbs">
-      <Filter>Packets\FBS</Filter>
-    </None>
-    <None Include="packages.config" />
-    <None Include="Resource\Shader\UIVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\UIPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\RaytracingLibrary.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\.clang-format" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
+    <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="Resource\Shader\RaytracingCommon.hlsli" />
+    <None Include="Resource\Shader\UIVertexShader.hlsl" />
+    <None Include="Resource\Shader\UIPixelShader.hlsl" />
+    <None Include="..\Packets\Binaries\Enums.fbs" />
+    <None Include="..\Packets\Binaries\Structs.fbs" />
+    <None Include="..\Packets\Binaries\Tables.fbs" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

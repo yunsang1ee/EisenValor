@@ -15,7 +15,7 @@ LobbyServer::User::User(const uint32 id, const FB_ENUMS::PARTICIPANT_TYPE type, 
 		SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_READY);
 
 	else if(type == FB_ENUMS::PARTICIPANT_TYPE_USER)
-		SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_READY);
+		SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
 }
 
 LobbyServer::Bot::Bot(const uint32 id, const FB_ENUMS::TEAM_TYPE teamType)

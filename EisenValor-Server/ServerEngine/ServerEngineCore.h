@@ -2,20 +2,19 @@
 
 #include "Singleton.hpp"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class AcceptThread;
 	class LobbyThread;
 	class WorkerThread;
 	class GameWorldThread;
 	class IRoom;
-#ifdef MODERN_CODE
 	class ServerEngineCore : public Singleton<ServerEngineCore> {
 	public:	
 		ServerEngineCore();
 		~ServerEngineCore();
 
 	public:
-		bool Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameLobbyTestFactoryFunc lobbyFunc, const GameWorldTestFactoryFunc worldFunc);
+		bool Init(const SessionFactoryFunc clientSessionFunc, const SessionFactoryFunc lobbySessionFunc, const GameWorldFactoryFunc worldFunc);
 		void Run();
 		void Shutdown();
 	
@@ -25,9 +24,8 @@ namespace ServerEngine {
 		std::atomic_uint16_t										m_nextWorkerIndex;
 
 	public:
-		WorkerThread* GetLobbyServerSessionThread() const { return m_lobbyServerSessionThread; }
-		GameWorldThread* GetLeisurelyWorker();
-		GameWorldThread* GetWorkerThread(const uint32 index);
+		WorkerThread*		GetLobbyServerSessionThread() const { return m_lobbyServerSessionThread; }
+		GameWorldThread*	GetLeisurelyWorker();
+		GameWorldThread*	GetWorkerThread(const uint32 index);
 	};
-#endif
 }

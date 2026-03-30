@@ -1,7 +1,7 @@
 #pragma once
 #include "TaskTimer.h"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	template<typename T>
 	class LockQueue {
 	public:

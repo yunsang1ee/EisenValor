@@ -20,7 +20,7 @@ namespace LobbyServer {
 
 	public:
 #pragma region LOBBY_PACKETS
-		void Handle_CS_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession);
+		void Handle_CL_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession);
 		void Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession);
 		void Handle_CS_MAKE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession);
 #pragma endregion
@@ -28,11 +28,16 @@ namespace LobbyServer {
 #pragma region ROOM_PACKETS
 		void Handle_CS_ENTER_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID);
 		void Handle_CS_LEAVE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession);
+
 		void Handle_CS_CHANGE_TEAM(const std::shared_ptr<ClientSession>& clientSession);
+	
 		void Handle_CS_ADD_BOT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE botTeamType);
 		void Handle_CS_REMOVE_BOT(const std::shared_ptr<ClientSession>& clientSession, const uint32 id);
+		
 		void Handle_CS_READY_GAME(const std::shared_ptr<ClientSession>& clientSession);
 		void Handle_CS_START_GAME(const std::shared_ptr<ClientSession>& clientSession);
+
+		void Handle_CL_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg);
 #pragma endregion
 
 		void LeaveGameLobby(const std::shared_ptr<ClientSession>& clientSession);

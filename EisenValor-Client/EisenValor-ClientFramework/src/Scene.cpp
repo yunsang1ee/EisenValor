@@ -92,7 +92,7 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 }
 
 GameObject::Handle Scene::ReserveGameObject(
-	std::string name, std::optional<uint32> serverID, std::function<void(GameObject*)> onCreated
+	std::string name, std::optional<ServerID> serverID, std::function<void(GameObject*)> onCreated
 )
 {
 	GameObject::Handle handle = m_gameObjects.ReserveHandle();
