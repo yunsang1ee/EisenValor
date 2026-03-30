@@ -178,6 +178,9 @@
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h">
       <Filter>Component\Room</Filter>
     </ClInclude>
+    <ClInclude Include="Util\CameraConfig.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
