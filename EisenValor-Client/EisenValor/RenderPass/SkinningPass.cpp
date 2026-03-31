@@ -64,10 +64,10 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			continue;
 		}
 
-		if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
-		{
-			continue;
-		}
+		// if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
+		// {
+		// 	continue;
+		// }
 
 		const auto& finalMatrices = skinnedMeshComp.GetFinalMatrices();
 		for (const auto& mat : finalMatrices)
@@ -95,10 +95,10 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			continue;
 		}
 
-		if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
-		{
-			continue;
-		}
+		// if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
+		// {
+		// 	continue;
+		// }
 
 		auto*	 meshRes = skinnedMeshComp.GetSkinnedMeshResource();
 		uint32_t vertexCount = meshRes->GetVertexCount();

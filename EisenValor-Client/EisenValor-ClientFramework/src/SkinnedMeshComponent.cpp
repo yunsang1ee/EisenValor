@@ -1,7 +1,11 @@
 #include "stdafxClientFramework.h"
 #include "SkinnedMeshComponent.h"
+#include "GameObject.h"
+#include "AnimationComponent.h"
 #include "MaterialResource.h"
 #include "ResourceGlobal.h"
+#include "Transform.h"
+#include "Scene.h"
 #include "DxMath.h"
 #include "DxBuffer.h"
 #include "DxBLAS.h"
@@ -11,6 +15,36 @@ SkinnedMeshComponent::~SkinnedMeshComponent() = default;
 
 SkinnedMeshComponent::SkinnedMeshComponent(SkinnedMeshComponent&&) noexcept = default;
 SkinnedMeshComponent& SkinnedMeshComponent::operator=(SkinnedMeshComponent&&) noexcept = default;
+
+void SkinnedMeshComponent::OnUpdate(float dt)
+{
+	// 자신에게 Animation Component가 있다면 UpdateBoneMatrices에서 처리
+	// 자신에게 없고 부모에게 있다면, 부모의 본 팔레트 복사
+	auto* myObj = GetGameObject();
+	auto* myAnim = myObj->GetComponent<AnimationComponent>();
+	if (myAnim == nullptr)
+	{
+		auto parentTrHandle = myObj->GetTransform().GetParent();	// 부모 Transform 핸들 획득
+		if (parentTrHandle.IsValid())
+		{
+			auto* scene = myObj->GetScene();
+			auto* transformStorage = scene->GetStorage<Transform>();
+			auto* parentTr = transformStorage->Get(parentTrHandle);	// 실제 Transform 객체 획득   
+			if (parentTr)
+			{
+				auto* parentGameObj = parentTr->GetGameObject();	// 부모 GameObject 획득
+				if (parentGameObj)
+				{
+					if (auto* parentAnim = parentGameObj->GetComponent<AnimationComponent>())
+					{
+						SetFinalMatrices(parentAnim->GetFinalPalette());
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void SkinnedMeshComponent::SetSkinnedMeshResource(
 	std::shared_ptr<SkinnedMeshResource> resource, bool loadDefaultMaterials

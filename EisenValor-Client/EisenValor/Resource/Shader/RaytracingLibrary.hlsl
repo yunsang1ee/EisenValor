@@ -372,6 +372,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
 	float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
 
+    
+
 	float3 albedo = mat.albedo.rgb;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
 	{

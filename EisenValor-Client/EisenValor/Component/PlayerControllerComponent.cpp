@@ -7,6 +7,8 @@
 #include "Scene.h"
 #include "Component/FSM/FSMComponent.h"
 
+#include "../Util/CameraConfig.h"
+
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 #include "Packets/Structs_generated.h"
@@ -234,7 +236,101 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	bool  a = input.GetInput('A');
 	bool  d = input.GetInput('D');
 
+	// 락온 상태 & 카메라 방향 업데이트
+	bool isLockOn = false;
+	XMVECTOR camFwd = XMVectorSet(0, 0, 1, 0);
+
+	if (m_cameraObjectHandle.IsValid())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		if (scene)
+		{
+			if (auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle))
+			{
+				if (auto* camComp = camObj->GetComponent<CameraComponent>())
+				{
+					isLockOn = camComp->IsLookAtRotationEnabled();
+					XMFLOAT3 f = camComp->GetGameObject()->GetTransform().GetForward();
+					camFwd = XMLoadFloat3(&f);
+				}
+			}
+		}
+	}
+	fsm->SetLockOn(isLockOn);
+
 	bool isMovingInput = (w || s || a || d);
+
+	// 이동 방향 및 캐릭터 회전 설정
+	if (isLockOn)
+	{
+		if (w) fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		else if (s) fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+		else if (a) fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+		else if (d) fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+
+		movement->SetInputForward(w);
+		movement->SetInputBackward(s);
+		movement->SetInputLeft(a);
+		movement->SetInputRight(d);
+	}
+	else
+	{
+		if (w)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		else if (s)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+		else if (a)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+		else if (d)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+
+		movement->SetInputForward(w);
+		movement->SetInputBackward(s);
+		movement->SetInputLeft(a);
+		movement->SetInputRight(d);
+
+		//fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+
+		//if (isMovingInput)
+		//{
+		//	// 카메라 기준 방향 계산
+		//	XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
+		//	if (XMVector3LengthSq(baseFwd).m128_f32[0] < 1e-6f)
+		//		baseFwd = XMVectorSet(0, 0, 1, 0);
+
+		//	XMVECTOR baseRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), baseFwd));
+
+		//	XMVECTOR moveDir = XMVectorZero();
+		//	if (w) moveDir = XMVectorAdd(moveDir, baseFwd);
+		//	if (s) moveDir = XMVectorSubtract(moveDir, baseFwd);
+		//	if (a) moveDir = XMVectorSubtract(moveDir, baseRight);
+		//	if (d) moveDir = XMVectorAdd(moveDir, baseRight);
+
+		//	moveDir = XMVector3Normalize(moveDir);
+
+		//	// 캐릭터 몸 회전 (Slerp)
+		//	float targetYaw = atan2f(XMVectorGetX(moveDir), XMVectorGetZ(moveDir));
+		//	XMVECTOR targetRotQ = XMQuaternionRotationAxis(XMVectorSet(0, 1, 0, 0), targetYaw);
+		//	
+		//	auto& tr = myGameObject->GetTransform();
+		//	auto q = tr.GetRotationQuaternion();
+		//	XMVECTOR curRotQ = XMLoadFloat4(&q);
+		//	XMVECTOR nextRotQ = XMQuaternionSlerp(curRotQ, targetRotQ, 0.2f);
+		//	
+		//	XMFLOAT4 nextRotF;
+		//	XMStoreFloat4(&nextRotF, nextRotQ);
+		//	tr.SetRotationQuaternion(nextRotF);
+
+		//	movement->SetInputForward(true);
+		//}
+		//else
+		//{
+		//	movement->SetInputForward(false);
+		//}
+		//movement->SetInputBackward(false);
+		//movement->SetInputLeft(false);
+		//movement->SetInputRight(false);
+	}
 
 	bool hasJustReleased =
 		input.GetInputUp('W') || input.GetInputUp('A') || input.GetInputUp('S') || input.GetInputUp('D');
@@ -242,19 +338,17 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	bool hasJustPressed =
 		input.GetInputDown('W') || input.GetInputDown('A') || input.GetInputDown('S') || input.GetInputDown('D');
 
-	movement->SetInputForward(w);
-	movement->SetInputBackward(s);
-	movement->SetInputLeft(a);
-	movement->SetInputRight(d);
+	bool isRestricted =
+		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
+		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+
+	if (isRestricted)
+		return;
 
 	auto&				transform = myGameObject->GetTransform();
 	auto				pos = transform.GetPosition();
 	auto				rot = transform.GetRotation();
 	FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-
-	bool isRestricted =
-		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
-		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 
 	if (isRestricted)
 	{
@@ -448,7 +542,7 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), dirH));
 
 		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
-		XMVECTOR offset = XMVectorScale(rightH, 2.0f) + XMVectorSet(0, 1.2f, 0, 0) + XMVectorScale(dirH, -3.0f);
+		XMVECTOR offset = XMVectorScale(rightH, 3.0f) + XMVectorSet(0, 3.5f, 0, 0) + XMVectorScale(dirH, -3.5f);
 
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);

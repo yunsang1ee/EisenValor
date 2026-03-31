@@ -5,6 +5,8 @@
 #include "AnimationComponent.h"
 #include "ResourceGlobal.h"
 #include "AnimationResource.h"
+#include "SceneGlobal.h"
+#include "CameraComponent.h"
 #include <GameObject.h>
 #include <GameObject.inl>
 #include <Packets/Enums_generated.h>
@@ -63,6 +65,35 @@ void PlayerMoveState::Enter(FSMComponent* fsm)
 
 void PlayerMoveState::Update(FSMComponent* fsm, float dt)
 {
+	if (!fsm) return;
+
+	auto* obj = fsm->GetGameObject();
+	if (!obj) return;
+
+	auto* anim = obj->GetComponent<AnimationComponent>();
+	if (!anim) return;
+
+	// 기본 애니메이션 키 (전진:2)
+	uint8_t targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+
+	// 락온 상태일 경우 방향별 애니메이션 키 결정
+	//if (fsm->IsLockOn())
+	{
+		auto dir = fsm->GetMoveDirection();
+		switch (dir)
+		{
+		case FSMComponent::MoveDirection::BWD: targetKey = 21; break;
+		case FSMComponent::MoveDirection::LFT: targetKey = 22; break;
+		case FSMComponent::MoveDirection::RGT: targetKey = 23; break;
+		default:                               targetKey = 2;  break;
+		}
+	}
+
+	// 현재 재생 중인 애니메이션과 다를 때만 재생
+	if (anim->GetCurrentKey() != targetKey)
+	{
+		anim->Play(targetKey, true);
+	}
 }
 
 void PlayerMoveState::Exit(FSMComponent* fsm)

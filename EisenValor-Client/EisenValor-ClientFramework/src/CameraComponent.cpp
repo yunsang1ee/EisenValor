@@ -269,7 +269,7 @@ void CameraComponent::SetFollowOffset(const DX::XMFLOAT3& offset)
 	m_follow.useLocalOffset = false;
 	m_viewDirty = true;
 
-	DEBUG_LOG_FMT("[CameraComponent] Follow offset set (World): ({}, {}, {})\n", offset.x, offset.y, offset.z);
+	// DEBUG_LOG_FMT("[CameraComponent] Follow offset set (World): ({}, {}, {})\n", offset.x, offset.y, offset.z);
 }
 
 void CameraComponent::SetFollowOffsetLocal(const DX::XMFLOAT3& localOffset)
@@ -278,9 +278,9 @@ void CameraComponent::SetFollowOffsetLocal(const DX::XMFLOAT3& localOffset)
 	m_follow.useLocalOffset = true;
 	m_viewDirty = true;
 
-	DEBUG_LOG_FMT(
+	/*DEBUG_LOG_FMT(
 		"[CameraComponent] Follow offset set (Local): ({}, {}, {})\n", localOffset.x, localOffset.y, localOffset.z
-	);
+	);*/
 }
 
 void CameraComponent::SetSmoothFollow(bool enable, float positionSpeed, float rotationSpeed)

@@ -157,6 +157,8 @@ struct MaterialProp
 	float		 albedo[4];
 	float		 roughness;
 	float		 metallic;
+	// Emissive color (written by exporter)
+	float       emissive[3];
 };
 
 struct MaterialDepEntry
