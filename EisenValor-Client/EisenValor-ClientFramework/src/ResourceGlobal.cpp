@@ -408,9 +408,9 @@ void ResourceGlobal::ProcessPendingLoads()
 	}
 }
 
-#ifdef _DEBUG
 void ResourceGlobal::DumpLoadedMaterials()
 {
+#ifdef _DEBUG
 	size_t total = 0;
 	for (auto& [g, r] : m_resourceCache)
 	{
@@ -435,8 +435,8 @@ void ResourceGlobal::DumpLoadedMaterials()
 			DEBUG_LOG_FMT("  Slot '{}' Tex='{}' Ready={}\n", slot.name.c_str(), texName, (slot.resource != nullptr));
 		}
 	}
-}
 #endif
+}
 
 template <>
 std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const std::filesystem::path& path)

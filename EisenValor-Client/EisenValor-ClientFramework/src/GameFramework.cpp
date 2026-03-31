@@ -103,7 +103,7 @@ void GameFramework::Release()
 	auto* queue = GLOBAL(DxGfxCommandQueueGlobal).GetQueue();
 	if (!queue)
 		return;
-	
+
 	DEBUG_LOG_FMT("[GameFramework] Releasing resources...\n");
 	GLOBAL(DxGfxCommandQueueGlobal).WaitForIdle();
 	DEBUG_LOG_FMT("[GameFramework] Resource release complete\n");
@@ -242,11 +242,11 @@ void GameFramework::Update(float delta)
 		// FUTURE: Runtime Shader Compilation
 	}
 
-	// if (input.GetInputDown(VK_F6))
-	// {
-	// 	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
-	// }
-	
+	//if (input.GetInputDown(VK_F9))
+	//{
+	//	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
+	//}
+
 	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
 	{
 		if (input.GetInputDown(VK_F11))

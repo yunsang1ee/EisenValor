@@ -365,6 +365,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
 	float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
 	float3 normal = normalize(mul(normalObj, (float3x3) inst.worldInverse));
+	float3 geometricNormal = normal;
 	float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
 	float3 tangentObj = tangentPacked.xyz;
 	float tangentSign = tangentPacked.w;
@@ -385,6 +386,10 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 			bitangent * normalSample.y +
 			normal * normalSample.z
 		);
+	}
+	if (dot(normal, geometricNormal) < 0.0f)
+	{
+		normal = geometricNormal;
 	}
 	if (dot(normal, WorldRayDirection()) > 0.0f)
 	{
@@ -418,18 +423,19 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	roughness = max(roughness, 0.04);
 	
 	float3 V = -normalize(WorldRayDirection());
+	float NdotVGeom = saturate(dot(geometricNormal, V));
+	float NdotVShading = saturate(dot(normal, V));
 	float3 H = normalize(V + lightDir);
 	float3 F0 = lerp(0.04f.xxx, albedo, metallic);
 	
 	float NdotL = saturate(dot(normal, lightDir));
-	float NdotV = saturate(dot(normal, V));
 	
 	float NDF = DistributionGGX(normal, H, roughness);
 	float G = GeometrySmith(normal, V, lightDir, roughness);
 	float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
 
 	float3 numerator = NDF * G * F;
-	float denominator = 4.0 * NdotL * NdotV;
+	float denominator = 4.0 * NdotL * NdotVShading;
 	float3 specular = numerator / max(denominator, EPSILON);
 	float3 kD = (1.0 - F) * (1.0 - metallic);
 	float3 Lo = (kD * albedo / PI + specular) * lightColor * NdotL;
@@ -465,15 +471,15 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		float3 reflectDir;
 		if (roughness < 0.15f)
 		{
-			reflectDir = reflect(WorldRayDirection(), normal);
+			reflectDir = reflect(WorldRayDirection(), geometricNormal);
 		}
 		else
 		{
-			reflectDir = SampleGGXReflection(V, normal, roughness, rngSeed);
+			reflectDir = SampleGGXReflection(V, geometricNormal, roughness, rngSeed);
 		}
 		
 		RayDesc reflectRay;
-		reflectRay.Origin = hitPos + normal * 0.1f;
+		reflectRay.Origin = hitPos + geometricNormal * 0.1f;
 		reflectRay.Direction = reflectDir;
 		reflectRay.TMin = RAY_TMIN;
 		reflectRay.TMax = RAY_TMAX;
@@ -493,7 +499,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 			reflectPayload
 		);
 		
-		float3 reflectF = FresnelSchlick(NdotV, F0);
+		float3 reflectF = FresnelSchlick(NdotVGeom, F0);
 		reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
 	}
 	
