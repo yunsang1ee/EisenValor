@@ -19,6 +19,8 @@ public:
 	void Execute(class DxGfxCommandQueueGlobal& queue);
 	void MarkAsCompleted();
 	void MarkAsExecuting();
+	void BeginEvent(const wchar_t* name);
+	void EndEvent();
 
 	ID3D12GraphicsCommandList* CommandList() { return m_commandList.Get(); }
 	ID3D12CommandAllocator*	   Allocator() { return m_allocator.Get(); }
@@ -35,4 +37,24 @@ private:
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
 	D3D12_COMMAND_LIST_TYPE			  m_type;
 	DxCommandContextState			  m_state = DxCommandContextState::Idle;
+};
+
+class DxScopedGpuEvent
+{
+public:
+	DxScopedGpuEvent(DxCommandContext& context, const wchar_t* name) : m_context(context)
+	{
+		m_context.BeginEvent(name);
+	}
+
+	~DxScopedGpuEvent()
+	{
+		m_context.EndEvent();
+	}
+
+	DxScopedGpuEvent(const DxScopedGpuEvent&) = delete;
+	DxScopedGpuEvent& operator=(const DxScopedGpuEvent&) = delete;
+
+private:
+	DxCommandContext& m_context;
 };

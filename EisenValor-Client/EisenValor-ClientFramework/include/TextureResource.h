@@ -13,7 +13,6 @@ public:
 	~TextureResource() override;
 
 	DxTexture* GetTexture() const { return m_texture.get(); }
-	bool	   IsReady() const { return m_texture != nullptr; }	//m_texture 가 있는지
 
 	bool				  IsSRGB() const { return m_isSRGB; }
 	EvAsset::TextureUsage GetUsage() const { return m_usage; }

@@ -85,7 +85,7 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET(
 {
 	DEBUG_LOG_FMT("[SC_ENTER_GAME_LOBBY_FAIL_PACKET] ");
 	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
-	
+
 	return true;
 }
 bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
@@ -446,11 +446,14 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
-		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
+		[scene, pos = recvPkt.pos_info(), stance = recvPkt.stance_type(), teamType = recvPkt.team_type(),
+		 maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
 			auto playerObjHandle = playerObj->GetHandle();
+
+			auto& tr = playerObj->GetTransform();
+			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
 
 			// 모델 크기
 			playerObj->GetTransform().SetScale(2.0f);
@@ -498,7 +501,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 			addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 			addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-			//addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+			// addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 			addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 			scene->CreateComponentWithInit<MovementComponent>(
@@ -554,11 +557,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// Animation Component
 			scene->CreateComponentWithInit<AnimationComponent>(
-				playerObjHandle,
-				[](AnimationComponent* anim)
-				{
-					AnimationLoader::AnimationApply(anim, "CursedKnight");
-				}
+				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 			);
 
 			//// 공격 범위 디버깅용
@@ -613,8 +612,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					cam->SetEnableLookAtRotation(false);
 					cam->SetSmoothFollow(true, 10.0f, 10.0f);
 					cam->SetFollowOffsetLocal(DX::XMFLOAT3{
-						CameraConfig::kDefaultLocalOffsetX,
-						CameraConfig::kCameraHeight,
+						CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight,
 						CameraConfig::kDefaultLocalOffsetZ
 					});
 					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
@@ -678,8 +676,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(),
-		 maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(),
-		 stance = recvPkt.stance_type(), objectName](GameObject* obj)
+		 maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(), stance = recvPkt.stance_type(),
+		 objectName](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -808,11 +806,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle,
-					[](AnimationComponent* anim)
-					{
-						AnimationLoader::AnimationApply(anim, "CursedKnight");
-					}
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 				);
 			}
 
@@ -820,10 +814,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle,
-					[](FSMComponent* fsm) {
-						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-					}
+					objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
 				);
 			}
 
@@ -1047,12 +1038,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		return false;
 	}
 
-	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
 	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 	uint8_t		 nextState = recvPkt.next_state();
-	
-	if(localID == objID) {
+
+	if (localID == objID)
+	{
 		goto SET_LOCAL;
 	}
 
@@ -1071,8 +1063,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN) {
-			if(obj->GetComponent<StaminaComponent>() != nullptr) {
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+		{
+			if (obj->GetComponent<StaminaComponent>() != nullptr)
+			{
 				fsm->SetServerState(nextState);
 				return true;
 			}
@@ -1132,12 +1126,10 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
 		{
 			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
-			cameraComp->SetEnableLookAtRotation(false);			   // 자유 시점
-			cameraComp->SetFollowOffsetLocal({
-				CameraConfig::kDefaultLocalOffsetX,
-				CameraConfig::kCameraHeight,
-				CameraConfig::kDefaultLocalOffsetZ
-			}); // 오프셋 복구 (공유 상수 사용)
+			cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+			cameraComp->SetFollowOffsetLocal(
+				{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ}
+			); // 오프셋 복구 (공유 상수 사용)
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
 		}
 		else
@@ -1201,9 +1193,9 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt
 )
 {
-	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
+	auto	   scene = GLOBAL(SceneGlobal).GetActiveScene();
 	const auto objID = recvPkt.obj_id();
-	auto		 obj = scene->FindGameObjectByServerID(objID);
+	auto	   obj = scene->FindGameObjectByServerID(objID);
 
 	if (obj)
 	{

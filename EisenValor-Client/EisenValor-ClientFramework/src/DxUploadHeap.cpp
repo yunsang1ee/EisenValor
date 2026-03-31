@@ -103,7 +103,7 @@ DxUploadHeap::TextureAllocation DxUploadHeap::AllocateTexture(const TextureUploa
 
 	Allocation alloc = Allocate(total, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
 
-	m_device->GetCopyableFootprints(&desc.texDesc, subresourceIndex, 1, alloc.offset, &fp, &numRows, &rowSize, &total);
+	m_device->GetCopyableFootprints(&desc.texDesc, subresourceIndex, 1, 0, &fp, &numRows, &rowSize, &total);
 
 	TextureAllocation ta{};
 	ta.allocation = alloc;

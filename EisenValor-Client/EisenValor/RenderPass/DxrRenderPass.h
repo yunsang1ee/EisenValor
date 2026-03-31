@@ -44,7 +44,8 @@ private:
 		Scene*										  scene,
 		ID3D12GraphicsCommandList4*					  cmdList,
 		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
-		uint32_t									  frameIndex
+		uint32_t									  frameIndex,
+		bool&										  hasAnimatedInstances
 	);
 
 private:
@@ -62,6 +63,9 @@ private:
 	std::shared_ptr<InstanceRenderData> m_instanceData[3];
 	std::shared_ptr<MaterialRenderData> m_materialData[3];
 	std::shared_ptr<GeoTableRenderData> m_geoTableData[3];
+	uint32_t m_lastTlasInstanceCount[3] = {};
+	uint32_t m_tlasStableFrameCount[3] = {};
+	uint64_t m_lastTlasTopologyHash[3] = {};
 
 	uint32_t m_width = 0;
 	uint32_t m_height = 0;

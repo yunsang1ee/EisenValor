@@ -1,6 +1,7 @@
 #include "stdafxClientFramework.h"
 #include "DxCommandContext.h"
 #include "DxCommandQueueGlobal.h"
+#include <pix3.h>
 
 DxCommandContext::DxCommandContext(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type) : m_type(type)
 {
@@ -106,4 +107,24 @@ void DxCommandContext::MarkAsExecuting()
 
 	m_state = DxCommandContextState::Executing;
 	// DEBUG_LOG_FMT("[DxCommandContext] Executed successfully (state: Executing).\n");
+}
+
+void DxCommandContext::BeginEvent(const wchar_t* name)
+{
+	if (nullptr == name || nullptr == m_commandList)
+	{
+		return;
+	}
+
+	PIXBeginEvent(m_commandList.Get(), PIX_COLOR_DEFAULT, "%ls", name);
+}
+
+void DxCommandContext::EndEvent()
+{
+	if (nullptr == m_commandList)
+	{
+		return;
+	}
+
+	PIXEndEvent(m_commandList.Get());
 }

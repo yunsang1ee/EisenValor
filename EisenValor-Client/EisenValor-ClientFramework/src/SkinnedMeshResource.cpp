@@ -5,6 +5,7 @@ void SkinnedMeshResource::SetGPUResources(std::unique_ptr<DxBuffer>&& vb, std::u
 {
 	m_vb = std::move(vb);
 	m_ib = std::move(ib);
+	SetReady(m_vb != nullptr && m_ib != nullptr);
 }
 void SkinnedMeshResource::SetMetadata(
 	const EvAsset::Bounds&			bounds,

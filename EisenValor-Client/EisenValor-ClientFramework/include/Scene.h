@@ -2,6 +2,7 @@
 #include "GameObject.h"
 #include "DenseList.h"
 #include "ComponentStorage.h"
+#include "SceneComponentData.h"
 #include "EngineComponents.h"
 #include <tuple>
 #include <queue>
@@ -101,10 +102,10 @@ public:
 					(*init)(comp);
 				}
 
-				DEBUG_LOG_FMT(
-					"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
-					ownerHandle.GetValue(), componentHandle.GetValue()
-				);
+				//DEBUG_LOG_FMT(
+				//	"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
+				//	ownerHandle.GetValue(), componentHandle.GetValue()
+				//);
 			}
 		});
 
@@ -199,8 +200,30 @@ protected:
 	// Add user-defined components in derived Scene classes
 	//========================================================================
 	virtual void OnRegisterCustomComponents() = 0;
+	virtual void OnRegisterCustomSceneComponentDecoders() {}
 	virtual void OnStartImpl() {}
 	virtual void OnEndImpl() {}
+
+	template <SceneComponentPayload Payload, typename Fn>
+		requires std::invocable<Fn, const Payload&, const SceneComponentLoadContext&>
+	void RegisterSceneComponentDecoder(Fn&& decoder)
+	{
+		m_sceneComponentDecoders[Payload::StaticTypeId()] =
+			[callback = std::forward<Fn>(decoder
+			 )](uint32_t version, const std::vector<std::byte>& data, const SceneComponentLoadContext& context) mutable
+		{
+			Payload payload{};
+			if (false == payload.Deserialize(version, data))
+			{
+				DEBUG_LOG_FMT(
+					"[Scene] Failed to deserialize scene component payload (TypeId={})\n", Payload::StaticTypeId()
+				);
+				return;
+			}
+
+			callback(payload, context);
+		};
+	}
 
 	//========================================================================
 	// ComponentStorage Registration
@@ -312,6 +335,10 @@ private:
 	std::queue<ComponentCreateRequest>	m_pendingComponentCreates;
 	std::queue<ComponentDestroyRequest> m_pendingComponentDestroys;
 	std::queue<PendingStartComponent>	m_pendingStartComponents;
+	std::unordered_map<
+		uint64_t,
+		std::function<void(uint32_t, const std::vector<std::byte>&, const SceneComponentLoadContext&)>>
+		m_sceneComponentDecoders;
 
 	bool m_isProcessingDeferred = false;
 	bool m_isStarted = false;

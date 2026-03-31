@@ -45,10 +45,11 @@ void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene, RenderC
 		return;
 	}
 
-	auto* context = frame->GetMainContext();
-	auto* cmdList = context->CommandList();
+	auto& context = *frame->GetMainContext();
+	auto* cmdList = context.CommandList();
 	auto* backBuffer = m_swapChain->GetCurrentBackBuffer();
 	auto* srcResource = srcTexture->GetResource();
+	DxScopedGpuEvent passEvent(context, L"CopyToBackBufferPass");
 	
 	D3D12_RESOURCE_BARRIER barriers[2];
 	barriers[0] = DxUtils::CreateTransitionBarrier(
