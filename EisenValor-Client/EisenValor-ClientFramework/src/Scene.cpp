@@ -144,12 +144,12 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 }
 
 GameObject::Handle Scene::ReserveGameObject(
-	std::string name, std::optional<uint32> serverID, std::function<void(GameObject*)> onCreated
+	std::string name, std::optional<ServerID> serverID, std::function<void(GameObject*)> onCreated
 )
 {
 	GameObject::Handle handle = m_gameObjects.ReserveHandle();
 
-	DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
+	//DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
 
 	if (serverID.has_value())
 	{
@@ -342,7 +342,7 @@ void Scene::CreateGameObjectInternal(const CreateRequest& req)
 		req.onCreated(&object);
 	}
 
-	DEBUG_LOG_FMT("[Scene] GameObject created: {} (Handle={})\n", object.GetName(), req.handle.GetValue());
+	//DEBUG_LOG_FMT("[Scene] GameObject created: {} (Handle={})\n", object.GetName(), req.handle.GetValue());
 }
 
 void Scene::DestroyGameObjectImmediate(GameObject::Handle handle)

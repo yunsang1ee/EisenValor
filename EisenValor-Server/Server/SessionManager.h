@@ -2,17 +2,17 @@
 
 #include "Singleton.hpp"
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Session;
 }
 
-namespace Server {
+namespace GameServer {
 	class SessionManager : public Singleton<SessionManager> {
 		SINGLETON(SessionManager)
 	public:
-		void AddSession(std::shared_ptr<ServerEngine::Session> session);
-		void RemoveSession(std::shared_ptr<ServerEngine::Session> session);
-		void Broadcast(std::shared_ptr<ServerEngine::Session> session, std::shared_ptr<ServerEngine::PacketBuffer> buffer);
+		void AddSession(std::shared_ptr<GameServerEngine::Session> session);
+		void RemoveSession(std::shared_ptr<GameServerEngine::Session> session);
+		void Broadcast(std::shared_ptr<GameServerEngine::Session> session, std::shared_ptr<GameServerEngine::PacketBuffer> buffer);
 
 	public:
 		std::shared_ptr<LobbyServerSession> GetLobbyServerSession() const { return m_lobbyServerSession; }

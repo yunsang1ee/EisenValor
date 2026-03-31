@@ -64,11 +64,6 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			return false;
 		}
 
-		if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
-		{
-			return false;
-		}
-
 		auto* meshRes = skinnedMeshComp.GetSkinnedMeshResource();
 		if (nullptr == meshRes || !meshRes->IsReady())
 		{

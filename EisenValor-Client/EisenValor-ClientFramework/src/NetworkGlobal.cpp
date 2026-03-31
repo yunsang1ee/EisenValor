@@ -138,7 +138,7 @@ void NetBridge::NetworkGlobal::ProcessIO()
 
 	if (recvLen == 0)
 	{
-		assert(false && "Recv Zero");
+		//assert(false && "Recv Zero");
 		std::cout << "Recv Zero" << std::endl;
 		//exit(-1);
 	}
@@ -147,7 +147,7 @@ void NetBridge::NetworkGlobal::ProcessIO()
 		const int32 errCode = ::WSAGetLastError();
 		if (WSAEWOULDBLOCK != errCode)
 		{
-			assert(false && "Recv Error");
+			//assert(false && "Recv Error");
 			std::println("Recv Error = {}", errCode);
 			//exit(-1);
 		}

@@ -123,6 +123,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +145,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -181,6 +183,7 @@
     <ClInclude Include="GameServerSession.h" />
     <ClInclude Include="LobbyServerEnums.h" />
     <ClInclude Include="LobbyServerStructs.h" />
+    <ClInclude Include="PacketEnums.h" />
     <ClInclude Include="Participant.h" />
     <ClInclude Include="SendPackets.h" />
     <ClInclude Include="SessionManager.h" />
@@ -191,6 +194,7 @@
     <ClInclude Include="ServerManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Binaries\LobbyServer\Release\Config\lobbyserver_config.json" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />

@@ -319,6 +319,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -337,6 +338,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -356,6 +358,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -377,6 +380,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -397,6 +401,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -418,6 +423,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -436,6 +442,7 @@
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="IDGenerator.cpp" />
     <ClCompile Include="LobbyServerPacketHandler.cpp" />
+    <ClCompile Include="Movement.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="CollisionDetector.cpp" />
@@ -547,8 +554,6 @@
     </ClCompile>
     <ClCompile Include="GameDataManager.cpp" />
     <ClCompile Include="FSM.cpp" />
-    <ClCompile Include="GameLobby.cpp" />
-    <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectFactory.cpp" />
     <ClCompile Include="GameWorld.cpp" />
@@ -586,6 +591,7 @@
     <ClCompile Include="SoldierStates.cpp" />
     <ClCompile Include="Spawner.cpp" />
     <ClCompile Include="State.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
@@ -596,6 +602,8 @@
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="IDGenerator.h" />
     <ClInclude Include="LobbyServerPacketHandler.h" />
+    <ClInclude Include="Movement.h" />
+    <ClInclude Include="PacketEnums.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="CollisionDetector.h" />
@@ -618,8 +626,6 @@
     <ClInclude Include="DetourStatus.h" />
     <ClInclude Include="GameDataManager.h" />
     <ClInclude Include="FSM.h" />
-    <ClInclude Include="GameLobby.h" />
-    <ClInclude Include="GameRoom.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectFactory.h" />
     <ClInclude Include="GameWorld.h" />
@@ -646,6 +652,7 @@
     <ClInclude Include="SoldierStates.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="State.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Binaries\Server\GameData\GameData.json" />

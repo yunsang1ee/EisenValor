@@ -319,6 +319,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -339,6 +340,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -359,6 +361,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -381,6 +384,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -403,6 +407,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -425,6 +430,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -439,17 +445,12 @@
   <ItemGroup>
     <ClInclude Include="AcceptThread.h" />
     <ClInclude Include="IOCore.h" />
-    <ClInclude Include="IOCoreTest.h" />
-    <ClInclude Include="IOCPContext.h" />
     <ClInclude Include="IOCPCore.h" />
-    <ClInclude Include="IOCPCoreTest.h" />
-    <ClInclude Include="IOCPRecvBuffer.h" />
     <ClInclude Include="IRoom.h" />
     <ClInclude Include="Job.h" />
     <ClInclude Include="JobQueue.h" />
-    <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="PacketHandler.h" />
-    <ClInclude Include="RIOCoreTest.h" />
+    <ClInclude Include="RIOCore.h" />
     <ClInclude Include="RIORingBuffer.h" />
     <ClInclude Include="ServerEngineConfigManager.h" />
     <ClInclude Include="LockQueue.h" />
@@ -458,12 +459,7 @@
     <ClInclude Include="PacketBuffer.h" />
     <ClInclude Include="PacketHeader.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="RIORecvBuffer.h" />
-    <ClInclude Include="RIOBuffer.h" />
     <ClInclude Include="RIOContext.h" />
-    <ClInclude Include="RIOCore.h" />
-    <ClInclude Include="RIOWorker.h" />
-    <ClInclude Include="RIOSendBuffer.h" />
     <ClInclude Include="ServerEngineContainers.h" />
     <ClInclude Include="ServerEngineCore.h" />
     <ClInclude Include="ServerEngineDefines.h" />
@@ -474,7 +470,6 @@
     <ClInclude Include="ServerEngineTLS.h" />
     <ClInclude Include="ServerEngineTypes.h" />
     <ClInclude Include="Session.h" />
-    <ClInclude Include="SessionPool.h" />
     <ClInclude Include="Singleton.hpp" />
     <ClInclude Include="Task.h" />
     <ClInclude Include="TaskQueue.h" />
@@ -488,17 +483,12 @@
   <ItemGroup>
     <ClCompile Include="AcceptThread.cpp" />
     <ClCompile Include="IOCore.cpp" />
-    <ClCompile Include="IOCoreTest.cpp" />
-    <ClCompile Include="IOCPContext.cpp" />
     <ClCompile Include="IOCPCore.cpp" />
-    <ClCompile Include="IOCPCoreTest.cpp" />
-    <ClCompile Include="IOCPRecvBuffer.cpp" />
     <ClCompile Include="IRoom.cpp" />
     <ClCompile Include="Job.cpp" />
     <ClCompile Include="JobQueue.cpp" />
-    <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="PacketHandler.cpp" />
-    <ClCompile Include="RIOCoreTest.cpp" />
+    <ClCompile Include="RIOCore.cpp" />
     <ClCompile Include="RIORingBuffer.cpp" />
     <ClCompile Include="ServerEngineConfigManager.cpp" />
     <ClCompile Include="LockQueue.cpp" />
@@ -519,17 +509,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RIO-Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='IOCP-Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="RIORecvBuffer.cpp" />
-    <ClCompile Include="RIOBuffer.cpp" />
     <ClCompile Include="RIOContext.cpp" />
-    <ClCompile Include="RIOCore.cpp" />
-    <ClCompile Include="RIOWorker.cpp" />
-    <ClCompile Include="RIOSendBuffer.cpp" />
     <ClCompile Include="ServerEngineCore.cpp" />
     <ClCompile Include="ServerEnginePch.cpp" />
     <ClCompile Include="ServerEngineTLS.cpp" />
     <ClCompile Include="Session.cpp" />
-    <ClCompile Include="SessionPool.cpp" />
     <ClCompile Include="Task.cpp" />
     <ClCompile Include="TaskQueue.cpp" />
     <ClCompile Include="TaskQueueManager.cpp" />

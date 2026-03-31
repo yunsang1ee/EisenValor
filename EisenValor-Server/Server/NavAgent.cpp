@@ -4,18 +4,18 @@
 #include "NavSystem.h"
 #include "GameObject.h"
 
-Server::Contents::NavAgent::NavAgent(NavSystem* const navSystem)
+GameServer::Contents::NavAgent::NavAgent(NavSystem* const navSystem)
 	:m_navSystem{navSystem}, m_agentIdx{-1}, m_destPos{}, m_hasTarget{false}
 {
 	::memset(&m_params, 0, sizeof(m_params));
 }
 
-bool Server::Contents::NavAgent::Init(const dtCrowdAgentParams& params)
+bool GameServer::Contents::NavAgent::Init(const dtCrowdAgentParams& params)
 {
 	m_params = params;
 	auto const dtCrowd{ m_navSystem->GetCrowd() };
 	
-	const Vec3& pos{ GetOwner()->GetPos() };
+	const Vec3& pos{ GetOwner()->GetPosition() };
 	const float arrPos[3]{pos.x, pos.y, pos.z};
 	m_agentIdx = dtCrowd->addAgent(arrPos, &params);
 
@@ -24,7 +24,7 @@ bool Server::Contents::NavAgent::Init(const dtCrowdAgentParams& params)
 	return true;
 }
 
-void Server::Contents::NavAgent::Update(const float dt)
+void GameServer::Contents::NavAgent::Update(const float dt)
 {
 	if(m_agentIdx == -1) return;
 
@@ -33,11 +33,11 @@ void Server::Contents::NavAgent::Update(const float dt)
 	if(ag && ag->active) {
 		Vec3 curPos{ ag->npos[0], ag->npos[1], ag->npos[2] };
 		auto const owner{ GetOwner() };
-		owner->SetPos(curPos);
+		owner->SetPosition(curPos);
 	}
 }
 
-void Server::Contents::NavAgent::SetDestPos(const Vec3& destPos)
+void GameServer::Contents::NavAgent::SetDestPos(const Vec3& destPos)
 {
 	if(m_agentIdx != -1) {
 		m_destPos = destPos;
@@ -46,14 +46,14 @@ void Server::Contents::NavAgent::SetDestPos(const Vec3& destPos)
 	}
 }
 
-void Server::Contents::NavAgent::StopMove()
+void GameServer::Contents::NavAgent::StopMove()
 {
 	if(m_agentIdx != -1) {
 		m_navSystem->ResetMoveTarget(m_agentIdx);
 	}
 }
 
-void Server::Contents::NavAgent::Remove()
+void GameServer::Contents::NavAgent::Remove()
 {
 	if(m_agentIdx != -1)
 		m_navSystem->RemoveAgent(m_agentIdx);

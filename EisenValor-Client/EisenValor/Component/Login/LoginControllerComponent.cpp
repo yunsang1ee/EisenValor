@@ -12,7 +12,7 @@ void LoginControllerComponent::OnUpdate(float deltaTime)
 		DEBUG_LOG_FMT("[LoginControllerComponent] 'R' Key Detected! Sending CS_LOGIN...\n");
 
 		// 테스트용 ID/PW로 로그인 패킷 전송
-		auto pb = NetBridge::C2S::Make_CS_LOGIN_PACKET("TestID", "TestPW");
+		auto pb = NetBridge::C2S::Make_CL_LOGIN_PACKET("TestID", "TestPW");
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 		m_isLoginRequested = true;

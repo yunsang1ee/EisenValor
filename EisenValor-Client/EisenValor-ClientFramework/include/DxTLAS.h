@@ -17,7 +17,7 @@ public:
 	DxTLAS(DxTLAS&&) noexcept = default;
 	DxTLAS& operator=(DxTLAS&&) noexcept = default;
 
-	void Initialize(ID3D12Device5* device, uint32_t maxInstances = 6000);
+	void Initialize(ID3D12Device5* device, uint32_t maxInstances = 50'000);
 
 	void Build(
 		struct ID3D12Device5*											device,

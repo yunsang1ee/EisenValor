@@ -10,7 +10,7 @@
 class Scene
 {
 public:
-	using ServerID = uint32_t;
+	using ServerID = uint64_t;
 	using ComponentRawHandle = uint64_t;
 
 public:
@@ -102,10 +102,10 @@ public:
 					(*init)(comp);
 				}
 
-				DEBUG_LOG_FMT(
-					"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
-					ownerHandle.GetValue(), componentHandle.GetValue()
-				);
+				//DEBUG_LOG_FMT(
+				//	"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
+				//	ownerHandle.GetValue(), componentHandle.GetValue()
+				//);
 			}
 		});
 

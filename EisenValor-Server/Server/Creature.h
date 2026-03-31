@@ -1,7 +1,7 @@
 #pragma once
 #include "GameObject.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class Creature : public GameObject {
 		public:

@@ -3,30 +3,16 @@
 
 #include "ServerEngineConfigManager.h"
 
-bool ServerEngine::ThreadManager::Init()
+bool GameServerEngine::ThreadManager::Init()
 {
 	m_workerThreadCount = MANAGER(ServerEngineConfigManager)->GetThreadConfig().MAX_WORKER_THREAD_COUNT;
-
-#ifdef LEGACY_CODE
-	// 0th: Main Thread
-	// 1st: Listen Thread
-	// 2nd ~ Nth: RioWorker
-#endif
-
-#ifdef MODERN_CODE
-	// TODO: ThreadManager 수정
-	// 0th: Main Thread
-	// 1st: Listen Thread
-	// 2nd: Lobby Thread
-	// 3nd ~ Nth: Worker Thread
-#endif
 
 	InitTLS();
 
 	return true;
 }
 
-void ServerEngine::ThreadManager::EnqueueTask(std::function<void(const std::stop_token&)> task)
+void GameServerEngine::ThreadManager::EnqueueTask(std::function<void(const std::stop_token&)> task)
 {
 	std::lock_guard<std::mutex> lk{ m_mutex };
 
@@ -38,7 +24,7 @@ void ServerEngine::ThreadManager::EnqueueTask(std::function<void(const std::stop
 		});
 }
 
-void ServerEngine::ThreadManager::Join()
+void GameServerEngine::ThreadManager::Join()
 {
 	for(auto& t : m_threads)
 		if(false == t.request_stop())
@@ -46,22 +32,21 @@ void ServerEngine::ThreadManager::Join()
 	DestroyTLS();
 }
 
-uint16 ServerEngine::ThreadManager::IssueID()
+uint16 GameServerEngine::ThreadManager::IssueID()
 {
 	uint16 id = m_threadIDCounter;
 	m_threadIDCounter++;
 	return id;
 }
 
-void ServerEngine::ThreadManager::InitTLS()
+void GameServerEngine::ThreadManager::InitTLS()
 {
 	TLS_THREAD_ID = IssueID();
 }
 
-void ServerEngine::ThreadManager::DestroyTLS()
+void GameServerEngine::ThreadManager::DestroyTLS()
 {
 	std::osyncstream oss{ std::cout };
-	// oss << std::format("{}th Thread DestroyTLS", TLS_THREAD_ID) << std::endl;
 	oss << TLS_THREAD_NAME << " Thread DestroyTLS" << std::endl;
 }
 

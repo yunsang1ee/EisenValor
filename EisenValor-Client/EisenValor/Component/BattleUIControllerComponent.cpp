@@ -17,6 +17,7 @@
 #include "Packets/C2SPackets.h"
 #include "CameraComponent.h"
 #include "Component/FSM/FSMComponent.h"
+#include "Util/CameraConfig.h"
 #include <algorithm> // for std::clamp
 
 void BattleUIControllerComponent::OnAttach()
@@ -101,8 +102,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
 			//}
 
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+			
 
 			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
 			{
@@ -129,7 +129,11 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 						mainCamera->SetLookAtTarget(owner->GetComponentHandle<Transform>());
 						mainCamera->SetEnableLookAtRotation(false);
 						// 원래 오프셋으로 복구
-						mainCamera->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f});
+						mainCamera->SetFollowOffsetLocal({
+							CameraConfig::kDefaultLocalOffsetX,
+							CameraConfig::kCameraHeight,
+							CameraConfig::kDefaultLocalOffsetZ
+						});
 						DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Reset Camera to LocalPlayer\n");
 					}
 					// 죽었을 때(일단 Clear로 해둠)
@@ -141,6 +145,8 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 					}
 				}
 			}
+			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 		}
 
 		// 2. NEUTRAL에서 공격 처리
@@ -182,6 +188,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			// Alt 키: 카메라 락온 타겟 변경 요청
 			if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
 			{
+				// TODO: 수정
 				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(0);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			}
@@ -441,6 +448,7 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	Transform& playerTr = owner->GetTransform();
 	// 1. 타겟의 월드 위치 가져오기
 	DirectX::XMFLOAT3 vPos = playerTr.GetWorldPosition();
+	vPos.y += 2.0f;
 	DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&vPos);
 
 	// 2. 뷰포트 정보 가져오기

@@ -1,7 +1,7 @@
 #include "stdafxClient.h"
 #include "PacketHandler.h"
 #include "NetworkGlobal.h"
-#include "ServerEnum.h"
+#include "PacketEnums.h"
 #include "Packets/S2CPackets.h"
 
 using namespace NetBridge;
@@ -14,115 +14,140 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	for (auto& packetHandlerFunc : PacketHandlerFuncs)
 		packetHandlerFunc = S2C::Handle_Invalid;
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOGIN_SUCCESS_PKT)] =
+#pragma region LOGIN_PACKETS
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_LOGIN_FAIL_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{ return HandlePacket<FB_TABLES::LC_LOGIN_FAIL_PACKET>(S2C::Handle_LC_LOGIN_FAIL_PACKET, socket, buffer, header); };
+
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_LOGIN_SUCCESS_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_LOGIN_SUCCESS_PACKET>(
-			S2C::Handle_SC_LOGIN_SUCCESS_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_LOGIN_SUCCESS_PACKET>(
+			S2C::Handle_LC_LOGIN_SUCCESS_PACKET, socket, buffer, header
+		);
+	};
+#pragma endregion
+
+#pragma region LOBBY_PACKETS
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ENTER_GAME_LOBBY_FAIL_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::LC_ENTER_GAME_LOBBY_FAIL_PACKET>(
+			S2C::Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_LOBBY_SUCCESS_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ENTER_GAME_LOBBY_SUCCESS_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_ENTER_GAME_LOBBY_PACKET>(
-			S2C::Handle_SC_ENTER_GAME_LOBBY_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_ENTER_GAME_LOBBY_SUCCESS_PACKET>(
+			S2C::Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_USER_IN_GAME_LOBBY_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_LEAVE_GAME_LOBBY_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_ENTER_USER_IN_GAME_LOBBY_PACKET>(
-			S2C::Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_LEAVE_GAME_LOBBY_PACKET>(
+			S2C::Handle_LC_LEAVE_GAME_LOBBY_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LEAVE_GAME_LOBBY_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ENTER_USER_IN_GAME_LOBBY_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_LEAVE_GAME_LOBBY_PACKET>(
-			S2C::Handle_SC_LEAVE_GAME_LOBBY_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_ENTER_USER_IN_GAME_LOBBY_PACKET>(
+			S2C::Handle_LC_ENTER_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LEAVE_USER_IN_GAME_LOBBY_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_LEAVE_USER_IN_GAME_LOBBY_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_LEAVE_USER_IN_GAME_LOBBY_PACKET>(
-			S2C::Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_LEAVE_USER_IN_GAME_LOBBY_PACKET>(
+			S2C::Handle_LC_LEAVE_USER_IN_GAME_LOBBY_PACKET, socket, buffer, header
+		);
+	};
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_MAKE_GAME_ROOM_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::LC_MAKE_GAME_ROOM_PACKET>(
+			S2C::Handle_LC_MAKE_GAME_ROOM_PACKET, socket, buffer, header
+		);
+	};
+#pragma endregion
+
+#pragma region ROOM_PACKETS
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ENTER_GAME_ROOM_FAIL_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{
+		return HandlePacket<FB_TABLES::LC_ENTER_GAME_ROOM_FAIL_PACKET>(
+			S2C::Handle_LC_ENTER_GAME_ROOM_FAIL_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_MAKE_GAME_ROOM_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ENTER_GAME_ROOM_SUCCESS_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_MAKE_GAME_ROOM_PACKET>(
-			S2C::Handle_SC_MAKE_GAME_ROOM_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_ENTER_GAME_ROOM_SUCCESS_PACKET>(
+			S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_ROOM_FAIL_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_LEAVE_GAME_ROOM_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_JOIN_GAME_ROOM_FAIL_PACKET>(
-			S2C::Handle_SC_JOIN_GAME_ROOM_FAIL_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_LEAVE_GAME_ROOM_PACKET>(
+			S2C::Handle_LC_LEAVE_GAME_ROOM_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_ENTER_GAME_ROOM_SUCCESS_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_ENTER_GAME_ROOM_SUCCESS_PACKET>(
-			S2C::Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET>(
+			S2C::Handle_LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LEAVE_GAME_ROOM_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_LEAVE_GAME_ROOM_PACKET>(
-			S2C::Handle_SC_LEAVE_GAME_ROOM_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET>(
+			S2C::Handle_LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_READY_GAME_PKT)] =
-		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{ return HandlePacket<FB_TABLES::SC_READY_GAME_PACKET>(S2C::Handle_SC_READY_GAME_PACKET, socket, buffer, header); };
-
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_CHANGE_TEAM_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT>(
-			S2C::Handle_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_CHANGE_TEAM_PACKET>(
+			S2C::Handle_LC_CHANGE_TEAM_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHANGE_TEAM_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_ADD_BOT_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{ return HandlePacket<FB_TABLES::LC_ADD_BOT_PACKET>(S2C::Handle_LC_ADD_BOT_PACKET, socket, buffer, header); };
+
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_REMOVE_BOT_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{ return HandlePacket<FB_TABLES::LC_REMOVE_BOT_PACKET>(S2C::Handle_LC_REMOVE_BOT_PACKET, socket, buffer, header); };
+
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_READY_GAME_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{ return HandlePacket<FB_TABLES::LC_READY_GAME_PACKET>(S2C::Handle_LC_READY_GAME_PACKET, socket, buffer, header); };
+
+
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_START_GAME_FAIL_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
-		return HandlePacket<FB_TABLES::SC_CHANGE_TEAM_PACKET>(
-			S2C::Handle_SC_CHANGE_TEAM_PACKET, socket, buffer, header
+		return HandlePacket<FB_TABLES::LC_START_GAME_FAIL_PACKET>(
+			S2C::Handle_LC_START_GAME_FAIL_PACKET, socket, buffer, header
 		);
 	};
 
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOADING_GAME_WORLD_PKT)] =
-		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{
-		return HandlePacket<FB_TABLES::SC_LOADING_GAME_WORLD_PACKET>(
-			S2C::Handle_SC_LOADING_GAME_WORLD_PACKET, socket, buffer, header
-		);
-	};
-
-	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GAME_ROOM_STATE_PKT)] =
-		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
-	{
-		return HandlePacket<FB_TABLES::SC_CHANGE_GAME_ROOM_STATE_PACKET>(
-			S2C::Handle_SC_CHANGE_GAME_ROOM_STATE_PACKET, socket, buffer, header
-		);
-	};
-
-		PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT)] =
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
 		return HandlePacket<FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET>(
@@ -130,6 +155,13 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		);
 	};
 
+	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::LC_CHAT_PKT)] =
+		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+	{ return HandlePacket<FB_TABLES::LC_CHAT_PACKET>(S2C::Handle_LC_CHAT_PACKET, socket, buffer, header); };
+
+#pragma endregion
+
+#pragma region WORLD_PACKETS
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_LOCAL_PLAYER_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{
@@ -223,6 +255,8 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 	PacketHandlerFuncs[static_cast<uint16>(PACKET_TYPE::SC_PING_PKT)] =
 		[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
 	{ return HandlePacket<FB_TABLES::SC_PING_PACKET>(S2C::Handle_SC_PING_PACKET, socket, buffer, header); };
+
+#pragma endregion
 }
 
 std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePacketBuffer(

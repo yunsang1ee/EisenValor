@@ -24,7 +24,7 @@ enum class SESSION_TYPE : uint8 {
 
 enum class WORKER_THREAD_TYPE : uint8 {
 	LOBBY_SESSION,
-	WORLD,
+	GAME_WORLD,
 
 	END
 };

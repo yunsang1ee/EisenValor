@@ -1,7 +1,7 @@
 #pragma once
 #include "Creature.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class General : public Creature {
 		public:

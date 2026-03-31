@@ -6,46 +6,64 @@ namespace NetBridge
 namespace S2C
 {
 bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const PacketHeader& header);
-// bool Handle_SC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_FAIL_PACKET& recvPkt);
-bool Handle_SC_LOGIN_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOGIN_SUCCESS_PACKET& recvPkt);
 
-bool Handle_SC_ENTER_GAME_LOBBY_PACKET(const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_LOBBY_PACKET& recvPkt);
-bool Handle_SC_ENTER_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ENTER_USER_IN_GAME_LOBBY_PACKET& recvPkt
+#pragma region LOGIN_PACKETS
+bool Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt);
+bool Handle_LC_LOGIN_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_SUCCESS_PACKET& recvPkt);
+#pragma endregion
+
+
+#pragma region LOBBY_PACKETS
+bool Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_LOBBY_FAIL_PACKET& recvPkt);
+bool Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_LOBBY_SUCCESS_PACKET& recvPkt);
+bool Handle_LC_LEAVE_GAME_LOBBY_PACKET(const SOCKET& socket, const FB_TABLES::LC_LEAVE_GAME_LOBBY_PACKET& recvPkt);
+
+bool Handle_LC_ENTER_USER_IN_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_USER_IN_GAME_LOBBY_PACKET& recvPkt
 );
-bool Handle_SC_LEAVE_GAME_LOBBY_PACKET(const SOCKET& socket, const FB_TABLES::SC_LEAVE_GAME_LOBBY_PACKET& recvPkt);
-bool Handle_SC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_LEAVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
-);
-
-bool Handle_SC_MAKE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_MAKE_GAME_ROOM_PACKET& recvPkt);
-
-bool Handle_SC_JOIN_GAME_ROOM_FAIL_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_JOIN_GAME_ROOM_FAIL_PACKET& recvPkt
-);
-
-bool Handle_SC_ENTER_GAME_ROOM_SUCCESS_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_ENTER_GAME_ROOM_SUCCESS_PACKET& recvPkt
+bool Handle_LC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LEAVE_USER_IN_GAME_LOBBY_PACKET& recvPkt
 );
 
-bool Handle_SC_LEAVE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::SC_LEAVE_GAME_ROOM_PACKET& recvPkt);
+bool Handle_LC_MAKE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::LC_MAKE_GAME_ROOM_PACKET& recvPkt);
+#pragma endregion
 
-bool Handle_SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_JOIN_PARTICIPANT_IN_GAME_ROOM_PKT& recvPkt
+#pragma region ROOM_PACKETS
+bool Handle_LC_ENTER_GAME_ROOM_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_ROOM_FAIL_PACKET& recvPkt
 );
 
-bool Handle_SC_READY_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_READY_GAME_PACKET& recvPkt);
-
-bool Handle_SC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB_TABLES::SC_CHANGE_TEAM_PACKET& recvPkt);
-bool Handle_SC_LOADING_GAME_WORLD_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOADING_GAME_WORLD_PACKET& recvPkt);
-
-bool Handle_SC_CHANGE_GAME_ROOM_STATE_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GAME_ROOM_STATE_PACKET& recvPkt
+bool Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_ROOM_SUCCESS_PACKET& recvPkt
 );
+
+bool Handle_LC_LEAVE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::LC_LEAVE_GAME_ROOM_PACKET& recvPkt);
+
+bool Handle_LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET& recvPkt
+);
+
+bool Handle_LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET& recvPkt
+);
+bool Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_TEAM_PACKET& recvPkt);
+
+bool Handle_LC_ADD_BOT_PACKET(const SOCKET& socket, const FB_TABLES::LC_ADD_BOT_PACKET& recvPkt);
+
+bool Handle_LC_REMOVE_BOT_PACKET(const SOCKET& socket, const FB_TABLES::LC_REMOVE_BOT_PACKET& recvPkt);
+
+bool Handle_LC_READY_GAME_PACKET(const SOCKET& socket, const FB_TABLES::LC_READY_GAME_PACKET& recvPkt);
+
+bool Handle_LC_START_GAME_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_START_GAME_FAIL_PACKET& recvPkt);
 
 bool Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET& recvPkt
 );
+
+bool Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET& recvPkt);
+
+#pragma endregion
 
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);

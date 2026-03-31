@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "IRoom.h"
 
-ServerEngine::IRoom::IRoom()
+GameServerEngine::IRoom::IRoom()
 {
 }
 
-ServerEngine::IRoom::~IRoom()
+GameServerEngine::IRoom::~IRoom()
 {
 }

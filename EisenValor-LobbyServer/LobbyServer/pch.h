@@ -9,6 +9,7 @@
 #include "LobbyServerEnums.h"
 #include "LobbyServerGlobalFuncs.h"
 #include "LobbyServerStructs.h"
+#include "PacketEnums.h"
 
 namespace LobbyServer {
 	class GameLobby;

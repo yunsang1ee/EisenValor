@@ -47,4 +47,6 @@ private:
 	float m_minPitch = -89.0f;
 	float m_maxPitch = 89.0f;
 
+	// Shoulder view vertical now provided by CameraConfig::kCameraHeight
+
 };

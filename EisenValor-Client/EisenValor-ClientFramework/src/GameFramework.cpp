@@ -71,6 +71,8 @@ void GameFramework::Run()
 		frameCount = 0;
 	}
 
+	// BeginFrame -> FixedUpdate -> Update -> LateUpate -> Render -> EndFrame -> AfterUpdate
+
 	GLOBAL(SceneGlobal).OnBeginFrame();
 
 	while (GLOBAL(TimerGlobal).ShouldFixedUpdate())
@@ -240,6 +242,11 @@ void GameFramework::Update(float delta)
 		// FUTURE: Runtime Shader Compilation
 	}
 
+	// if (input.GetInputDown(VK_F6))
+	// {
+	// 	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
+	// }
+	
 	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
 	{
 		if (input.GetInputDown(VK_F11))

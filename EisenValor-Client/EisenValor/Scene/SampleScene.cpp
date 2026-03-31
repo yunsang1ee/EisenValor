@@ -42,8 +42,8 @@ constexpr std::string_view kTorchPreviewSphereMaterialPath = "Resource/Material/
 void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
-		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent,
-		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent>();
+		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
+		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -68,7 +68,8 @@ void SampleScene::OnRegisterCustomSceneComponentDecoders()
 						obj->GetHandle(),
 						[](MeshComponent* mesh)
 						{
-							auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(kTorchPreviewSphereMeshPath.data());
+							auto meshRes =
+								GLOBAL(ResourceGlobal).Load<MeshResource>(kTorchPreviewSphereMeshPath.data());
 							if (!meshRes)
 							{
 								return;
@@ -76,7 +77,8 @@ void SampleScene::OnRegisterCustomSceneComponentDecoders()
 
 							mesh->SetMeshResource(meshRes, false);
 
-							auto material = GLOBAL(ResourceGlobal).Load<MaterialResource>(kTorchPreviewSphereMaterialPath.data());
+							auto material =
+								GLOBAL(ResourceGlobal).Load<MaterialResource>(kTorchPreviewSphereMaterialPath.data());
 							if (material)
 							{
 								mesh->SetMaterialResource(0, std::move(material));
@@ -108,9 +110,10 @@ void SampleScene::OnStartImpl()
 		CreateSceneObjects();
 
 		// 서버 없이 테스트를 위한 스트레스 테스트 오브젝트 생성
-		ReserveGameObject("StressTester", std::nullopt, [this](GameObject* obj) {
-			CreateComponent<StressTestComponent>(obj->GetHandle());
-		});
+		// ReserveGameObject(
+		//	"StressTester", std::nullopt,
+		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
+		//);
 	}
 }
 
@@ -140,7 +143,7 @@ void SampleScene::CreateSceneObjects()
 		}
 	);
 
-	ReserveGameObject(
+	/*ReserveGameObject(
 		"TestSphere", std::nullopt,
 		[this](GameObject* obj)
 		{
@@ -160,12 +163,12 @@ void SampleScene::CreateSceneObjects()
 				}
 			);
 		}
-	);
+	);*/
 
 	DEBUG_LOG_FMT("[SampleScene] Scene objects created and assets linked\n");
 }
 
-void SampleScene::OnEndImpl() 
+void SampleScene::OnEndImpl()
 {
 	DEBUG_LOG_FMT("[SampleScene] OnEnd called\n");
 }

@@ -1,27 +1,22 @@
 #pragma once
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class IRoom;
 }
 
-namespace Server {
+namespace GameServer {
 	class RIOClientSession;
 	class RIOLobbyServerSession;
 	class IOCPClientSession;
 }
 
-namespace ServerEngine {
+namespace GameServerEngine {
 	class Session;
 }
 
-
-std::shared_ptr<ServerEngine::Session> MakeClientSessionFunc();
-std::shared_ptr<ServerEngine::Session> MakeLobbyServerSessionFunc();
-
-#ifdef MODERN_CODE
-std::unique_ptr<ServerEngine::IRoom> MakeGameWorldTest();
-std::unique_ptr<ServerEngine::IRoom> MakeGameLobbyTest();
-#endif
+std::shared_ptr<GameServerEngine::Session> MakeClientSessionFunc();
+std::shared_ptr<GameServerEngine::Session> MakeLobbyServerSessionFunc();
+std::unique_ptr<GameServerEngine::IRoom> MakeGameWorldFunc();
 
 static inline FB_STRUCTS::Vec3 Vec3ToFlatVec3(const Vec3& v)
 {
@@ -38,12 +33,12 @@ static inline Vec3 FlatVec3ToVec3(const FB_STRUCTS::Vec3* v)
 	return Vec3{ v->x(), v->y(), v->z() };
 }
 
-static inline float Deg2Rad(const float degree)
+constexpr float Deg2Rad(float degree)
 {
 	return degree * (DirectX::XM_PI / 180.f);
 }
 
-static inline float Rad2Deg(const float radian)
+constexpr float Rad2Deg(float radian)
 {
 	return radian * (180.f / DirectX::XM_PI);
 }
@@ -66,7 +61,7 @@ static inline float GetDistSq(const Vec3& v1, const Vec3& v2)
 	return (v1 - v2).LengthSquared();
 }
 
-bool IsValidObj(const std::shared_ptr<Server::Contents::GameObject> obj);
+bool IsValidObj(const std::shared_ptr<GameServer::Contents::GameObject> obj);
 
 template<typename Enum> requires std::is_enum_v<Enum>
 static inline constexpr uint8 etou8(const Enum e)

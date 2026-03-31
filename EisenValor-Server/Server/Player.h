@@ -2,7 +2,7 @@
 
 #include "General.h"
 
-namespace Server {
+namespace GameServer {
 	namespace Contents {
 		class NPC;
 
@@ -30,7 +30,7 @@ namespace Server {
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 			
 			friend class GameWorld;
-			friend class GameWorldTest;
+			friend class GameWorld;
 			friend class GameObjectFactory;
 
 		private:

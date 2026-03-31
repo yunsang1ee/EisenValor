@@ -3,9 +3,6 @@
 
 // #define APPLY_LOBBY_SERVER
 
-// #define LEGACY_CODE
-#define MODERN_CODE
-
 #include "ServerEngineDefines.h"
 
 #include <WS2tcpip.h>
@@ -91,19 +88,19 @@ std::string WStringToString(const std::wstring_view wstr);
 std::wstring StringToWString(const std::string_view str);
 SOCKET CreateSocket(const DWORD flags);
 
-namespace Server {
+namespace GameServer {
 	class RIOClientSession;
 	class IOCPClientSession;
 
 	class RIOLobbyServerSession;
 	class IOCPLobbyServerSession;
 
-	class GameWorldTest;
+	class GameWorld;
 }
 
 #ifdef _USE_RIO
-using ClientSession = Server::RIOClientSession;
-using LobbyServerSession = Server::RIOLobbyServerSession;
+using ClientSession = GameServer::RIOClientSession;
+using LobbyServerSession = GameServer::RIOLobbyServerSession;
 #endif
 
 #ifdef _USE_IOCP

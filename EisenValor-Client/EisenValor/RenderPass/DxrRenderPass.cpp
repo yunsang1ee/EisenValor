@@ -228,20 +228,20 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 		if (!canRefit)
 		{
 			DxScopedGpuEvent buildEvent(context, L"DXR.BuildTLAS");
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] TLAS Build requested: Frame={}, Instances={}, PreviousBuilt={}, PreviousCount={}, PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
-				frameIndex, tlasInstances.size(), tlas->IsBuilt(), tlas->GetInstanceCount(), pendingLoadsActive,
-				hasAnimatedInstances, m_tlasStableFrameCount[frameIndex], m_lastTlasTopologyHash[frameIndex], topologyHash
-			);
+			//DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] TLAS Build requested: Frame={}, Instances={}, PreviousBuilt={}, PreviousCount={}, PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
+			//	frameIndex, tlasInstances.size(), tlas->IsBuilt(), tlas->GetInstanceCount(), pendingLoadsActive,
+			//	hasAnimatedInstances, m_tlasStableFrameCount[frameIndex], m_lastTlasTopologyHash[frameIndex], topologyHash
+			//);
 			tlas->Build(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
 		}
 		else
 		{
 			DxScopedGpuEvent refitEvent(context, L"DXR.RefitTLAS");
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] TLAS Refit requested: Frame={}, Instances={}, StableFrames={}, AnimatedInstances={}, TopologyHash={}\n",
-				frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex], hasAnimatedInstances, topologyHash
-			);
+			//DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] TLAS Refit requested: Frame={}, Instances={}, StableFrames={}, AnimatedInstances={}, TopologyHash={}\n",
+			//	frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex], hasAnimatedInstances, topologyHash
+			//);
 			tlas->Refit(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
 		}
 
@@ -387,9 +387,9 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		auto* blas = skinnedMeshComp.GetBLAS(frameIndex);
 		if (nullptr == blas)
 		{
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] Animated BLAS initial build: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
-			);
+			//DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] Animated BLAS initial build: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
+			//);
 			auto newBlas = std::make_unique<DxBLAS>();
 			newBlas->Build(
 				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
@@ -403,9 +403,9 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		}
 		else if (false == blas->IsBuilt())
 		{
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] Animated BLAS rebuild: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
-			);
+			//DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] Animated BLAS rebuild: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
+			//);
 			blas->Build(
 				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
 				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(),
@@ -415,9 +415,9 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		}
 		else
 		{
-			DEBUG_LOG_FMT(
-				"[DxrRenderPass] Animated BLAS refit: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
-			);
+			//DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] Animated BLAS refit: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
+			//);
 			blas->Refit(
 				cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(), sizeof(EvAsset::Vertex),
 				meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(), meshRes->GetSubMeshes()
