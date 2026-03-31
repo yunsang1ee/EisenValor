@@ -21,10 +21,6 @@ bool MaterialData::Deserialize(AssetFile& file)
 			std::memcpy(albedo, prop.albedo, sizeof(float) * 4);
 			roughness = prop.roughness;
 			metallic = prop.metallic;
-			// copy emissive color if present in asset prop
-			std::memcpy(emissive, prop.emissive, sizeof(float) * 3);
-			frameIndex = prop.frameIndex;
-			atlasCols = prop.atlasCols;
 		}
 	}
 

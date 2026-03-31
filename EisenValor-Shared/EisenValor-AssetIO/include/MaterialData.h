@@ -13,10 +13,7 @@ struct MaterialData : public AssetData
 	float		 albedo[4]{1.0f, 1.0f, 1.0f, 1.0f};
 	float		 roughness = 1.0f;
 	float	 	 metallic = 0.0f;
-	float           emissive[3]{0.0f, 0.0f, 0.0f};
-
-	uint32_t	frameIndex = 0;
-	uint32_t	atlasCols = 1;
+	float        emissive[3]{0.0f, 0.0f, 0.0f};
 
 	struct Dependency
 	{

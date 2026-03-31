@@ -175,7 +175,10 @@ public class AssetExporter
         UnityEngine.Debug.Log($"Mesh GUID: {guid}");
         var writer = new AssetWriter("EVMH", guid);
 
-        writer.AddChunk("VERT", 1, BuildVertexChunk(mesh));
+        Renderer renderer = go.GetComponent<Renderer>();
+        Material mat = (renderer != null) ? renderer.sharedMaterial : null;
+
+        writer.AddChunk("VERT", 1, BuildVertexChunk(mesh, mat));
         writer.AddChunk("INDX", 1, BuildIndexChunk(mesh));
         writer.AddChunk("SUBM", 1, BuildSubMeshChunk(mesh));
         writer.AddChunk("BNDS", 1, BuildBoundsChunk(mesh));
@@ -299,12 +302,24 @@ public class AssetExporter
         }
     }
 
-    private static byte[] BuildVertexChunk(Mesh mesh)
+    private static byte[] BuildVertexChunk(Mesh mesh, Material mat)
     {
         var pos = mesh.vertices;
         var norm = mesh.normals;
         var tan = mesh.tangents;
         var uv = mesh.uv;
+
+        // Atlas UV Mapping (Pre-calculated: 1 x N layout)
+        int atlasCols = 1;
+        int frameIndex = 0;
+
+        if (mat != null)
+        {
+            // _AtlasCols 사용하여 아틀라스 가로 개수 결정
+            atlasCols = Mathf.Max(1, (int)FindFloat(mat, new[] { "_AtlasCols" }, new[] { "AtlasCols", "AtlasColumns" }, 1.0f));
+            // _FrameIndex 사용하여 현재 프레임 결정
+            frameIndex = (int)FindFloat(mat, new[] { "_FrameIndex" }, new[] { "FrameIndex" }, 0.0f);
+        }
 
         using (MemoryStream ms = new())
         using (BinaryWriter bw = new(ms))
@@ -319,7 +334,32 @@ public class AssetExporter
                 if (tan != null && tan.Length > i) { bw.Write(tan[i].x); bw.Write(tan[i].y); bw.Write(tan[i].z); bw.Write(tan[i].w); } // Tan
                 else { bw.Write(1f); bw.Write(0f); bw.Write(0f); bw.Write(1f); }
 
-                if (uv != null && uv.Length > i) { bw.Write(uv[i].x); bw.Write(1.0f - uv[i].y); } // UV (Flip V)
+                if (uv != null && uv.Length > i) 
+                { 
+                    // [Bake Atlas UV] Shaders/Cursed_Set.hlsl 로직 이식
+                    float rawU = uv[i].x;
+                    float rawV = uv[i].y;
+
+                    // 아틀라스 가로 칸 수 결정 (Cursed_Set이면 3, 아니면 설정값 혹은 1)
+                    float currentAtlasCols = (float)atlasCols;
+                    if (mat != null && mat.shader != null && mat.shader.name.Contains("Cursed_Set"))
+                    {
+                        currentAtlasCols = 3.0f;
+                    }
+
+                    float frameWidth = 1.0f / currentAtlasCols;
+                    
+                    // FrameIndex에 따른 오프셋 계산 (HLSL의 fmod/col 로직과 동일)
+                    float col = (float)(frameIndex % (int)currentAtlasCols);
+                    float offset = col * frameWidth;
+
+                    // 최종 공식 적용: (원본 U * 폭) + 시작 오프셋
+                    float finalX = (rawU * frameWidth) + offset; 
+                    float finalY = 1.0f - rawV; // V Flip
+
+                    bw.Write(finalX); 
+                    bw.Write(finalY); 
+                }
                 else { bw.Write(0f); bw.Write(0f); }
             }
             return ms.ToArray();
@@ -432,26 +472,8 @@ public class AssetExporter
             Color emissiveColor = FindColor(mat, new[] { "_EmissionColor" }, new[] { "Emission", "Emissive" }, Color.black);
             bw.Write(emissiveColor.r); bw.Write(emissiveColor.g); bw.Write(emissiveColor.b);
 
-            // Frame Index (for Atlas): "_FrameIndex"를 검색. 없으면 0.
-            float frameIndex = FindFloat(mat, new[] { "_FrameIndex" }, new[] { "FrameIndex", "AtlasIndex" }, 0f);
-            bw.Write(frameIndex);
-
-            // Atlas columns: try to read "_AtlasCols" (or similar). If not present, use shader-specific default (Cursed_Set -> 6)
-            float atlasColsF = FindFloat(mat, new[] { "_AtlasCols" }, new[] { "AtlasCols", "AtlasColumns" }, -1f);
-            if (atlasColsF < 0.0f)
-            {
-                if (mat.shader != null && !string.IsNullOrEmpty(mat.shader.name) && mat.shader.name.IndexOf("Cursed_Set", System.StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    atlasColsF = 3.0f;
-                }
-                else
-                {
-                    atlasColsF = 1.0f;
-                }
-            }
-            // Debug log to help diagnose exporter property reads
-            UnityEngine.Debug.Log($"[AssetExporter] Exporting Material '{mat.name}' Shader='{(mat.shader!=null?mat.shader.name:"<null>")}' FrameIndex={frameIndex} AtlasCols={atlasColsF}");
-            bw.Write((uint)atlasColsF);
+            // Deprecated: Atlas mapping is now baked into UVs (UDIM-based) at export time.
+            // No longer writing FrameIndex or multiple Atlas properties.
 
             return ms.ToArray();
         }

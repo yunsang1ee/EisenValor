@@ -218,8 +218,6 @@ void DxrRenderPass::CollectStaticMeshData(
 					matRes->GetTexture("ORMS") ? matRes->GetTexture("ORMS")->GetTexture()->GetSRVIndex() : ~0u;
 				gpuMat.emissiveTextureIdx =
 					matRes->GetTexture("EMSV") ? matRes->GetTexture("EMSV")->GetTexture()->GetSRVIndex() : ~0u;
-				gpuMat.frameIndex = matRes->GetFrameIndex();
-				gpuMat.atlasCols = matRes->GetAtlasCols();
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;
@@ -357,8 +355,6 @@ void DxrRenderPass::CollectSkinnedMeshData(
 					matRes->GetTexture("ORMS") ? matRes->GetTexture("ORMS")->GetTexture()->GetSRVIndex() : ~0u;
 				gpuMat.emissiveTextureIdx =
 					matRes->GetTexture("EMSV") ? matRes->GetTexture("EMSV")->GetTexture()->GetSRVIndex() : ~0u;
-				gpuMat.frameIndex = matRes->GetFrameIndex();
-				gpuMat.atlasCols = matRes->GetAtlasCols();
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;

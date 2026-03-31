@@ -136,17 +136,6 @@ float3 SampleGGXReflection(float3 V, float3 N, float roughness, inout uint seed)
 	return reflect(-V, H);
 }
 
-	// Apply per-material atlas/frame indexing using Unity-style mapping (scale + frame offset)
-	// This keeps behavior consistent with Unity shaders (no frac), matching exporter/artist expectations.
-	inline float2 ApplyMaterialAtlasUV(float2 uv, in MaterialGPUData mat)
-	{
-		float cols = max((float)mat.atlasCols, 1.0);
-		float frameW = 1.0 / cols;
-		float col = fmod((float)mat.frameIndex, cols);
-		float2 offset = float2(col * frameW, 0.0);
-		return uv * float2(frameW, 1.0) + offset;
-	}
-
 inline float ShadowVisibility(
 	RaytracingAccelerationStructure accel,
 	float3 origin, float3 dir,
@@ -389,8 +378,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
 	{
 		Texture2D albedoTexture = ResourceDescriptorHeap[mat.albedoTextureIdx];
-		float2 sampleUV = ApplyMaterialAtlasUV(uv, mat);
-		albedo *= albedoTexture.SampleLevel(g_sampler, sampleUV, 0).rgb;
+		albedo *= albedoTexture.SampleLevel(g_sampler, uv, 0).rgb;
 	}
 
 	float metallic = mat.metallic;
@@ -398,8 +386,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ORM_MAP))
 	{
 		Texture2D ormTexture = ResourceDescriptorHeap[mat.ormTextureIdx];
-		float2 sampleUV = ApplyMaterialAtlasUV(uv, mat);
-		float4 p = ormTexture.SampleLevel(g_sampler, sampleUV, 0);
+		float4 p = ormTexture.SampleLevel(g_sampler, uv, 0);
 		if (0 != (mat.materialFlags & MATERIAL_FLAG_UNITY_PACKING))
 		{
 			metallic = p.r;

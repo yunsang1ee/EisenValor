@@ -317,8 +317,8 @@ void ResourceGlobal::DumpLoadedMaterials()
 		if (res->GetRuntimeTypeID() != MaterialResource::StaticRuntimeTypeID()) continue;
 
 		auto mat = std::static_pointer_cast<MaterialResource>(res);
-		DEBUG_LOG_FMT("[Material] Name='{}' GUID={} FrameIndex={} AtlasCols={} Flags=0x{:X}\n",
-			mat->GetName().c_str(), guid, mat->GetFrameIndex(), mat->GetAtlasCols(), mat->GetMaterialFlags());
+		DEBUG_LOG_FMT("[Material] Name='{}' GUID={} Flags=0x{:X}\n",
+			mat->GetName().c_str(), guid, mat->GetMaterialFlags());
 
 		for (const auto& slot : mat->GetTextureSlots())
 		{
@@ -410,9 +410,6 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetData(data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic);
-	// propagate atlas/frame metadata
-	res->SetFrameIndex(data.frameIndex);
-	res->SetAtlasCols(data.atlasCols);
 
 	for (const auto& dep : data.dependencies)
 	{

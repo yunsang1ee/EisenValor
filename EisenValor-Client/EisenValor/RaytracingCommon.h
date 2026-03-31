@@ -89,8 +89,6 @@ struct MaterialGPUData
 	RAY_UINT normalTextureIdx;
 	RAY_UINT ormTextureIdx;
 	RAY_UINT emissiveTextureIdx;
-	RAY_UINT frameIndex; // 0-based frame index for atlas
-	RAY_UINT atlasCols;  // number of columns in atlas (default 1)
 };
 
 #ifdef __cplusplus
