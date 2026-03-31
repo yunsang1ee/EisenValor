@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "GameObject.inl"
 #include "SkinnedMeshComponent.h"
+#include "AssetFormat.h"
 #include "DxMath.h"
 #include <cmath>
 #include <algorithm>
@@ -39,13 +40,13 @@ void AnimationComponent::AddAnimation(uint8_t key, std::shared_ptr<AnimationReso
 	m_animations[key] = animation;
 }
 
-void AnimationComponent::Play(uint8_t key, bool loop)
+void AnimationComponent::Play(uint8_t key, bool loop, bool rootMotion)
 {
 	auto it = m_animations.find(key);
 	if (it != m_animations.end())
 	{
 		m_currentKey = key;
-		Play(it->second, loop);
+		Play(it->second, loop, rootMotion);
 	}
 	else
 	{
@@ -53,12 +54,17 @@ void AnimationComponent::Play(uint8_t key, bool loop)
 	}
 }
 
-void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool loop)
+void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool loop, bool rootMotion)
 {
 	m_currentAnimation = animation;
 	m_isLooping = loop;
+	m_enableRootMotion = rootMotion;
 	m_currentTime = 0.0f;
 	m_isPlaying = true;
+
+	// 루트모션 초기화
+	m_lastRootPos = { 0.0f, 0.0f, 0.0f };
+	m_rootMotionFirstFrame = true;
 }
 
 void AnimationComponent::Stop()
@@ -78,6 +84,39 @@ void AnimationComponent::Resume()
 		m_isPlaying = true;
 }
 
+bool AnimationComponent::GetBoneIndexByName(const std::string& boneName, uint32_t& outIndex) const
+{
+	auto* skinnedMesh = GetGameObject()->GetComponent<SkinnedMeshComponent>();
+	if (!skinnedMesh || !skinnedMesh->IsValid())
+		return false;
+
+	auto meshRes = skinnedMesh->GetSkinnedMeshResource();
+	if (!meshRes)
+		return false;
+
+	uint64_t targetHash = EvAsset::HashString(boneName);
+	const auto& bones = meshRes->GetBones();
+	for (size_t i = 0; i < bones.size(); ++i)
+	{
+		if (bones[i].nameHash == targetHash)
+		{
+			outIndex = static_cast<uint32_t>(i);
+			return true;
+		}
+	}
+	return false;
+}
+
+// 뼈의 인덱스를 받아 해당 뼈의 모델 행렬을 반환 (소켓 시스템용)
+bool AnimationComponent::GetSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& outMatrix) const
+{
+	if (boneIndex >= m_globalMatrices.size())
+		return false;
+
+	outMatrix = DirectX::XMLoadFloat4x4(&m_globalMatrices[boneIndex]);
+	return true;
+}
+
 void AnimationComponent::UpdateBoneMatrices()
 {
 	if (!m_currentAnimation)
@@ -85,7 +124,8 @@ void AnimationComponent::UpdateBoneMatrices()
 		return;
 	}
 
-	auto* skinnedMesh = GetGameObject()->GetComponent<SkinnedMeshComponent>();
+	auto* myGameObject = GetGameObject();
+	auto* skinnedMesh = myGameObject->GetComponent<SkinnedMeshComponent>();
 	if (!skinnedMesh || !skinnedMesh->IsValid())
 	{
 		return;
@@ -185,8 +225,6 @@ void AnimationComponent::UpdateBoneMatrices()
 						);
 						r = XMQuaternionSlerp(r0, r1, alpha);
 					}
-					//// 유니티 Quaternion 성분 보정 (Y, Z 반전)
-					//rot = XMVectorSet(XMVectorGetX(r), -XMVectorGetY(r), -XMVectorGetZ(r), XMVectorGetW(r));
 					rot = r;
 				}
 
@@ -211,6 +249,45 @@ void AnimationComponent::UpdateBoneMatrices()
 				}
 				break;
 			}
+		}
+
+		// Root Motion 처리
+		if (i == 0 && m_enableRootMotion && m_isPlaying)
+		{
+			XMFLOAT3 currentRootPos;
+			XMStoreFloat3(&currentRootPos, pos);
+
+			if (m_rootMotionFirstFrame)
+			{
+				// 첫 프레임: 기준점만 잡고 이동은 하지 않음
+				m_lastRootPos = currentRootPos;
+				m_rootMotionFirstFrame = false;
+			}
+			else
+			{
+				// Delta 계산 (현재 위치 - 이전 위치)
+				XMVECTOR deltaVec = XMVectorSubtract(pos, XMLoadFloat3(&m_lastRootPos));
+				XMFLOAT3 delta;
+				XMStoreFloat3(&delta, deltaVec);
+
+				// 캐릭터의 현재 회전값을 가져와서 Delta를 월드 방향으로 회전
+				auto&	 transform = myGameObject->GetTransform();
+				XMFLOAT4 q = transform.GetRotationQuaternion();
+				XMVECTOR rotQuat = XMLoadFloat4(&q);
+				XMVECTOR rotatedDelta = XMVector3Rotate(XMLoadFloat3(&delta), rotQuat);
+
+				// 캐릭터 위치 업데이트
+				XMFLOAT3 currentWorldPos = transform.GetPosition();
+				XMVECTOR newPos = XMVectorAdd(XMLoadFloat3(&currentWorldPos), rotatedDelta);
+				XMStoreFloat3(&currentWorldPos, newPos);
+				transform.SetPosition(currentWorldPos);
+
+				// 기준점 업데이트
+				m_lastRootPos = currentRootPos;
+			}
+
+			// 메시 위치 초기화 (메시는 오브젝트 중심에 고정)
+			pos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 		}
 
 		XMMATRIX local = XMMatrixAffineTransformation(scale, XMVectorZero(), rot, pos);

@@ -32,6 +32,7 @@
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "Component/SocketComponent.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 
@@ -561,6 +562,52 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				}
 			);
 
+			// Shield
+			{
+				auto shieldHandle = scene->ReserveGameObject("LocalPlayer_Shield");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					shieldHandle,
+					[scene, playerObjHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					shieldHandle,
+					[scene, playerObjHandle](SocketComponent* socket)
+					{
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							socket->SetTarget(player, "lowerarm_l");
+							// Offset
+							float tx = 0.1634455f;
+							float ty = 0.02278341f;
+							float tz = 0.101984f;
+							float rx = DirectX::XMConvertToRadians(-10.853f);
+							float ry = DirectX::XMConvertToRadians(135.113f);
+							float rz = DirectX::XMConvertToRadians(-251.105f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+			}
+
 			//// 공격 범위 디버깅용
 			// scene->ReserveGameObject(
 			//	"AttackRangeIndicator", std::nullopt,
@@ -812,6 +859,53 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					[](AnimationComponent* anim)
 					{
 						AnimationLoader::AnimationApply(anim, "CursedKnight");
+					}
+				);
+			}
+
+			// Shield
+			if (isGeneral)
+			{
+				auto shieldHandle = scene->ReserveGameObject(objectName + "_Shield");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					shieldHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					shieldHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "lowerarm_l");
+							// Offset
+							float tx = 0.1634455f;
+							float ty = 0.02278341f;
+							float tz = 0.101984f;
+							float rx = DirectX::XMConvertToRadians(-10.853f);
+							float ry = DirectX::XMConvertToRadians(135.113f);
+							float rz = DirectX::XMConvertToRadians(-251.105f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
 					}
 				);
 			}

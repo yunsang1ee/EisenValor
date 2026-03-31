@@ -7,7 +7,7 @@
 #include "Scene.h"
 #include "Component/FSM/FSMComponent.h"
 
-#include "../Util/CameraConfig.h"
+#include "Util/CameraConfig.h"
 
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"

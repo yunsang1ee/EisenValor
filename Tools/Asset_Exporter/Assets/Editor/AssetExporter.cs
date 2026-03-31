@@ -36,55 +36,92 @@ public class AssetExporter
     private static uint BuildMaterialFlags(Material mat)
     {
         uint flags = MATERIAL_FLAG_NONE;
+        // Debug header
+        UnityEngine.Debug.Log($"[AssetExporter] BuildMaterialFlags for '{mat.name}' (shader='{mat.shader.name}')");
 
         // 표준 유니티 PBR 셰이더는 ORM 텍스처를 사용하므로, 해당 플래그를 설정합니다.
         if (mat.shader.name.Contains("Lit") || mat.shader.name.Contains("Standard"))
         {
             flags |= MATERIAL_FLAG_UNITY_PACKING;
+            UnityEngine.Debug.Log("[AssetExporter]  - Shader indicates Unity packing (UNITY_PACKING)");
         }
 
-        // 'FindTexture'를 사용하여 각종 텍스처 맵의 존재 여부를 지능적으로 확인하고 플래그를 설정합니다.
-        if (null != FindTexture(mat, new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1" }, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" }))
+        // Check candidate albedo properties
+        string[] albedoCandidates = new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1", "Material_Texture2D_1", "_BaseColorMap" };
+        var albedoTex = FindTexture(mat, albedoCandidates, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" });
+        if (albedoTex != null)
         {
             flags |= MATERIAL_FLAG_USE_ALBEDO_MAP;
+            UnityEngine.Debug.Log($"[AssetExporter]  - Albedo found: {albedoTex.name}");
+        }
+        else
+        {
+            UnityEngine.Debug.Log("[AssetExporter]  - Albedo NOT found on candidates: " + string.Join(",", albedoCandidates));
         }
 
-        if (null != FindTexture(mat, new[] { "_BumpMap", "Material_VirtualTexturePhysical_0" }, new[] { "Normal" }))
-        {            
+        // Normal
+        string[] normalCandidates = new[] { "_BumpMap", "Material_VirtualTexturePhysical_0", "Material_Texture2D_0", "_NormalMap" };
+        var normalTex = FindTexture(mat, normalCandidates, new[] { "Normal", "NormalMap" });
+        if (normalTex != null)
+        {
             flags |= MATERIAL_FLAG_USE_NORMAL_MAP;
+            UnityEngine.Debug.Log($"[AssetExporter]  - Normal found: {normalTex.name}");
+        }
+        else
+        {
+            UnityEngine.Debug.Log("[AssetExporter]  - Normal NOT found on candidates: " + string.Join(",", normalCandidates));
         }
 
-        // ORM 맵 플래그는 이제 마스크, 메탈릭, 러프니스 관련 텍스처가 있을 때 설정됩니다.
-        if (null != FindTexture(mat, new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3" }, new[] { "Mask", "ORM", "Metallic" }))
+        // ORM / Mask / Metallic
+        string[] ormCandidates = new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3", "Material_Texture2D_2", "Material_Texture2D_3", "_ORM" };
+        var ormTex = FindTexture(mat, ormCandidates, new[] { "Mask", "ORM", "Metallic" });
+        if (ormTex != null)
         {
             flags |= MATERIAL_FLAG_USE_ORM_MAP;
+            UnityEngine.Debug.Log($"[AssetExporter]  - ORM found: {ormTex.name}");
+        }
+        else
+        {
+            UnityEngine.Debug.Log("[AssetExporter]  - ORM NOT found on candidates: " + string.Join(",", ormCandidates));
         }
 
-        if (null != FindTexture(mat, new[] { "_EmissionMap" }, new[] { "Emission", "Emissive" }))
+        // Emissive
+        var emissiveTex = FindTexture(mat, new[] { "_EmissionMap", "_EmissiveMap" }, new[] { "Emission", "Emissive" });
+        if (emissiveTex != null)
         {
             flags |= MATERIAL_FLAG_EMISSIVE_MAP;
+            UnityEngine.Debug.Log($"[AssetExporter]  - Emissive found: {emissiveTex.name}");
+        }
+        else
+        {
+            UnityEngine.Debug.Log("[AssetExporter]  - Emissive NOT found");
         }
 
         // --- 기타 머티리얼 속성 플래그 ---
         if (mat.IsKeywordEnabled("_ALPHATEST_ON") || mat.renderQueue == (int)UnityEngine.Rendering.RenderQueue.AlphaTest)
         {
             flags |= MATERIAL_FLAG_ALPHA_TEST;
+            UnityEngine.Debug.Log("[AssetExporter]  - Alpha test enabled");
         }
 
         if (mat.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.Transparent)
         {
             flags |= MATERIAL_FLAG_TRANSPARENT;
+            UnityEngine.Debug.Log("[AssetExporter]  - Transparent render queue");
         }
 
         if (mat.HasProperty("_Cull") && mat.GetInt("_Cull") == (int)UnityEngine.Rendering.CullMode.Off)
         {
             flags |= MATERIAL_FLAG_DOUBLE_SIDED;
+            UnityEngine.Debug.Log("[AssetExporter]  - Double sided (Cull Off)");
         }
         if (mat.shader.name.IndexOf("Unlit", System.StringComparison.OrdinalIgnoreCase) >= 0)
         {
             flags |= MATERIAL_FLAG_IGNORE_LIGHTING;
+            UnityEngine.Debug.Log("[AssetExporter]  - Unlit shader -> ignore lighting");
         }
 
+        UnityEngine.Debug.Log($"[AssetExporter]  => Flags=0x{flags:X}");
         return flags;
     }
 
@@ -486,7 +523,7 @@ public class AssetExporter
         var validSlots = new List<(string key, string guid)>();
 
         // Albedo / BaseColor Map
-        Texture albedoTex = FindTexture(mat, new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1" }, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" });
+        Texture albedoTex = FindTexture(mat, new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1", "Material_Texture2D_1" }, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" });
         
         if (albedoTex != null)
         {
@@ -503,14 +540,14 @@ public class AssetExporter
         }
 
         // Normal Map
-        Texture normalTex = FindTexture(mat, new[] { "_BumpMap", "Material_VirtualTexturePhysical_0" }, new[] { "Normal", "NormalMap" });
+        Texture normalTex = FindTexture(mat, new[] { "_BumpMap", "Material_VirtualTexturePhysical_0", "Material_Texture2D_0" }, new[] { "Normal", "NormalMap" });
         if (normalTex != null)
         {
             validSlots.Add(("NRML", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(normalTex))));
         }
 
         // ORM / Mask / Metallic Gloss Map
-        Texture ormTex = FindTexture(mat, new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3" }, new[] { "Mask", "ORM", "Metallic" });
+        Texture ormTex = FindTexture(mat, new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3", "Material_Texture2D_2", "Material_Texture2D_3" }, new[] { "Mask", "ORM", "Metallic" });
         if (ormTex != null)
         {
             validSlots.Add(("ORMS", AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(ormTex))));
