@@ -442,13 +442,18 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		return false;
 	}
 	DEBUG_LOG_FMT("Created LocalPlayer: {} \n", id);
-
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
+		[pos, rot, scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
 		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
+			  auto& tr = playerObj->GetTransform();
+			tr.SetPosition(pos.x, pos.y, pos.z);
+			tr.SetRotation(rot.x, rot.y, rot.z);
+
 			auto playerObjHandle = playerObj->GetHandle();
 
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(

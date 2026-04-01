@@ -252,6 +252,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	auto				rot = transform.GetRotation();
 	FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
 
+
 	bool isRestricted =
 		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
 		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
