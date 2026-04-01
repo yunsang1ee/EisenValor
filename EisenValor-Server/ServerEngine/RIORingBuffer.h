@@ -16,6 +16,7 @@ namespace GameServerEngine {
 
 	public:
 		bool RegisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable);
+		void DeregisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable);
 		uint32 GetFreeSize() const { return m_capacity - m_usedSize; }
 		uint32 GetUsedSize() const { return m_usedSize; }
 		
@@ -43,6 +44,7 @@ namespace GameServerEngine {
 
 	private:
 		void Alloc();
+		void Free();
 	};
 
 	class RIORingRecvBuffer : public RIORingBuffer {

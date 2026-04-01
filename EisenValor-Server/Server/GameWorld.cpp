@@ -783,29 +783,29 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	AddGameObject(std::move(soldier));
 	//}
 
-	for(int i = 0; i < 2; ++i) {
-		static bool flag{ true };
+	//for(int i = 0; i < 2; ++i) {
+	//	static bool flag{ true };
 
-		GeneralTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-		if(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) {
-			static Vec3 startPos{ -12.f, -9.f, -10.f };
-			t.transform = Transform{ startPos, Vec3{} };
-			startPos.z += 1.f;
-		}
-		else {
-			static Vec3 startPos{ -37.f, -9.f, -6.f };
-			startPos.x += 1.f;
-			startPos.z -= 1.f;
-			t.transform = Transform{ startPos, Vec3{} };
-		}
-		t.gameWorld = this;
-		flag = !flag;
-		auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
-		AddGameObject(std::move(general));
-	}
+	//	GeneralTemplate t;
+	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+	//	if(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) {
+	//		static Vec3 startPos{ -12.f, -9.f, -10.f };
+	//		t.transform = Transform{ startPos, Vec3{} };
+	//		startPos.z += 1.f;
+	//	}
+	//	else {
+	//		static Vec3 startPos{ -37.f, -9.f, -6.f };
+	//		startPos.x += 1.f;
+	//		startPos.z -= 1.f;
+	//		t.transform = Transform{ startPos, Vec3{} };
+	//	}
+	//	t.gameWorld = this;
+	//	flag = !flag;
+	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
+	//	AddGameObject(std::move(general));
+	//}
 
 	// - 배틀램 생성
 	//{
@@ -841,28 +841,28 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//}
 
 	// 공격팀 스포너 생성
-	//{
-	//	SpanwerTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-	//	t.transform = Transform{ Vec3{ -5.f, 0.f, 5.f }, Vec3{} };
-	//	t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
-	//	t.gameWorld = this;
+	{
+		SpanwerTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
+		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+		t.gameWorld = this;
 
-	//	auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
-	//	AddGameObject(std::move(spawner));
-	//}
+		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
+		AddGameObject(std::move(spawner));
+	}
 
-	//// 방어팀 스포너 생성
-	//{
-	//	SpanwerTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-	//	t.transform = Transform{ Vec3{ 5.f, 0.f, 5.f}, Vec3{} };
-	//	t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
-	//	t.gameWorld = this;
+	// 방어팀 스포너 생성
+	{
+		SpanwerTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.transform = Transform{ Vec3{ -25.f, -9.f, -12.f}, Vec3{} };
+		t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+		t.gameWorld = this;
 
-	//	auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
-	//	AddGameObject(std::move(spawner));
-	//}
+		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
+		AddGameObject(std::move(spawner));
+	}
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

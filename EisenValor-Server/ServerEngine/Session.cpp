@@ -667,9 +667,7 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 		}
 	}
 
-	if(deferCount > 0 &&
-		(deferCount >= (m_maxSendRQSize / 2) ||
-			lastSendElapsed >= std::chrono::milliseconds(m_commitSendMS))) {
+	if(deferCount > 0 && (deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= std::chrono::milliseconds(m_commitSendMS))) {
 		CommitSend();
 		m_lastSendTime = currentTime;
 	}

@@ -452,13 +452,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
 			  auto& tr = playerObj->GetTransform();
-			tr.SetPosition(pos.x, pos.y, pos.z);
+			  tr.SetWorldPosition(DX::XMFLOAT3(pos.x, pos.y, pos.z));
 			tr.SetRotation(rot.x, rot.y, rot.z);
 
 			auto playerObjHandle = playerObj->GetHandle();
-
-			auto& tr = playerObj->GetTransform();
-			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
 
 			// 모델 크기
 			playerObj->GetTransform().SetScale(2.0f);
