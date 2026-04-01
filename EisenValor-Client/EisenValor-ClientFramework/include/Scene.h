@@ -102,10 +102,10 @@ public:
 					(*init)(comp);
 				}
 
-				DEBUG_LOG_FMT(
-					"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
-					ownerHandle.GetValue(), componentHandle.GetValue()
-				);
+				//DEBUG_LOG_FMT(
+				//	"[Scene] Component created: {} (Owner={}, Handle={})\n", Component::GetStaticTypeName(),
+				//	ownerHandle.GetValue(), componentHandle.GetValue()
+				//);
 			}
 		});
 

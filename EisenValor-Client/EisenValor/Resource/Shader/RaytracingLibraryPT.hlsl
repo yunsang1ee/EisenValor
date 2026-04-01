@@ -315,16 +315,13 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
 	float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
     float3 normal = normalize(mul(normalObj, (float3x3) inst.worldInverse));
+	float3 geometricNormal = normal;
 	float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
 	float3 tangentObj = tangentPacked.xyz;
 	float tangentSign = tangentPacked.w;
 	float3 tangent = normalize(mul(tangentObj, (float3x3) inst.worldMatrix));
 	tangent = normalize(tangent - normal * dot(tangent, normal));
 	float3 bitangent = normalize(cross(normal, tangent) * tangentSign);
-	if (dot(normal, WorldRayDirection()) > 0.0f)
-	{
-		normal = -normal;
-	}
 	
 	float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_NORMAL_MAP))
@@ -339,6 +336,14 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 			bitangent * normalSample.y +
 			normal * normalSample.z
 		);
+	}
+	if (dot(normal, geometricNormal) < 0.0f)
+	{
+		normal = geometricNormal;
+	}
+	if (dot(normal, WorldRayDirection()) > 0.0f)
+	{
+		normal = -normal;
 	}
 	
 	float3 albedo = mat.albedo.rgb;
@@ -368,7 +373,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	roughness = max(roughness, 0.04);
 
 	float3 V = -normalize(WorldRayDirection());
-	float NdotV = max(dot(normal, V), 0.0f);
+	float NdotVGeom = max(dot(geometricNormal, V), 0.0f);
+	float NdotVShading = max(dot(normal, V), 0.0f);
 	float3 F0 = lerp(0.04f.xxx, albedo, metallic);
 	
 	if (payload.recursionDepth >= MAX_RECURSION_DEPTH)
@@ -387,7 +393,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	rngSeed *= 0x846ca68b;
 	rngSeed ^= rngSeed >> 16;
 	
-	float3 indirectF = FresnelSchlick(NdotV, F0);
+	float3 indirectF = FresnelSchlick(NdotVGeom, F0);
 	float3 kS_indirect = indirectF;
 	float3 kD_indirect = (1.0 - kS_indirect) * (1.0 - metallic);
 	
@@ -408,8 +414,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
 	if (!chooseSpec)
 	{
-		L = CosineHemisphere(normal, rngSeed);
-		float NdotL = max(dot(normal, L), 0.0f);
+		L = CosineHemisphere(geometricNormal, rngSeed);
+		float NdotL = max(dot(geometricNormal, L), 0.0f);
 		if (NdotL <= 0.0f)
 		{
 			return;
@@ -439,7 +445,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
 
 		float3 numerator = NDF * G * F;
-		float denominator = 4.0f * NdotV * NdotL;
+		float denominator = 4.0f * NdotVShading * NdotL;
 		float3 f_s = numerator / max(denominator, EPSILON);
 		
 		float pdf_lobe = GGX_PDF(normal, H, V, L, roughness);
@@ -451,13 +457,19 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	}
 	
 	float maxW = max(weight.x, max(weight.y, weight.z));
-	if (maxW < 1e-3f)
+	if (maxW < 1e-5f)
 	{
+		payload.color = kD_indirect * albedo;
+		if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
+		{
+			Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
+			payload.color += emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
+		}
 		return;
 	}
-	
+
 	RayDesc nextRay;
-	nextRay.Origin = hitPos + normal * 0.01f;
+	nextRay.Origin = hitPos + geometricNormal * 0.01f;
 	nextRay.Direction = normalize(L);
 	nextRay.TMin = RAY_TMIN;
 	nextRay.TMax = RAY_TMAX;
@@ -476,7 +488,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		nextRay,
 		child
 	);
-	
+
 	payload.color = weight * child.color;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
 	{

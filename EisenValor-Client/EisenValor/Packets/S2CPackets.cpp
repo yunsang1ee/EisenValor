@@ -23,6 +23,7 @@
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "Util/CameraConfig.h"
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
@@ -84,7 +85,7 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET(
 {
 	DEBUG_LOG_FMT("[SC_ENTER_GAME_LOBBY_FAIL_PACKET] ");
 	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
-	
+
 	return true;
 }
 bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
@@ -456,18 +457,57 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			auto playerObjHandle = playerObj->GetHandle();
 
+			auto& tr = playerObj->GetTransform();
+			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
+
+			// 모델 크기
+			playerObj->GetTransform().SetScale(2.0f);
+
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
+
 				playerObjHandle,
 				[](SkinnedMeshComponent* mesh)
 				{
 					auto meshRes =
-						GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+						GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Cursed_Knight.evskin");
 					if (nullptr != meshRes)
 					{
 						mesh->SetSkinnedMeshResource(meshRes, true);
 					}
 				}
 			);
+
+			// Add Equipment (Belts, Armors, Scarf)
+			auto addEquipment = [scene, playerObjHandle](const std::string& name, const std::string& resPath)
+			{
+				auto handle = scene->ReserveGameObject("LocalPlayer_" + name);
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+					handle,
+					[scene, playerObjHandle, resPath](SkinnedMeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>(resPath);
+						if (res)
+						{
+							mesh->SetSkinnedMeshResource(res);
+						}
+
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0, 0, 0);
+							obj->GetTransform().SetRotation(0, 0, 0);
+						}
+					}
+				);
+			};
+
+			addEquipment("Belts", "Resource/Models/Belts.evskin");
+			addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
+			addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
+			addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
+			// addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+			addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 			scene->CreateComponentWithInit<MovementComponent>(
 				playerObjHandle,
@@ -522,11 +562,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// Animation Component
 			scene->CreateComponentWithInit<AnimationComponent>(
-				playerObjHandle,
-				[](AnimationComponent* anim)
-				{
-					AnimationLoader::AnimationApply(anim, "HumanM");
-				}
+				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 			);
 
 			//// 공격 범위 디버깅용
@@ -580,7 +616,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 					cam->SetEnableLookAtRotation(false);
 					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{1.0f, 2.5f, -5.0f});
+					cam->SetFollowOffsetLocal(DX::XMFLOAT3{
+						CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight,
+						CameraConfig::kDefaultLocalOffsetZ
+					});
 					cam->SetFovAnimated(DX::XM_PI / 3.0f, 0.5f);
 				}
 			);
@@ -642,8 +681,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(),
-		 maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(),
-		 stance = recvPkt.stance_type()](GameObject* obj)
+		 maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(), stance = recvPkt.stance_type(),
+		 objectName](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -657,18 +696,51 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
 			{
+				tr.SetScale(2.0f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[](SkinnedMeshComponent* mesh)
 					{
 						auto meshRes =
-							GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/HumanM_Model.evskin");
+							GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Cursed_Knight.evskin");
 						if (nullptr != meshRes)
 						{
 							mesh->SetSkinnedMeshResource(meshRes);
 						}
 					}
 				);
+
+				// Add Equipment (Belts, Armors, Dress)
+				auto addEquipment = [scene, objHandle, objectName](const std::string& name, const std::string& resPath)
+				{
+					auto handle = scene->ReserveGameObject(objectName + "_" + name);
+					scene->CreateComponentWithInit<SkinnedMeshComponent>(
+						handle,
+						[scene, objHandle, resPath](SkinnedMeshComponent* mesh)
+						{
+							auto res = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>(resPath);
+							if (res)
+							{
+								mesh->SetSkinnedMeshResource(res);
+							}
+
+							if (auto* parentObj = scene->TryGetGameObject(objHandle))
+							{
+								auto* obj = mesh->GetGameObject();
+								obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+								obj->GetTransform().SetPosition(0, 0, 0);
+								obj->GetTransform().SetRotation(0, 0, 0);
+							}
+						}
+					);
+				};
+
+				addEquipment("Belts", "Resource/Models/Belts.evskin");
+				addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
+				addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
+				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
+				addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+				addEquipment("Dress", "Resource/Models/Dress.evskin");
 			}
 			else
 			{
@@ -683,6 +755,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
+				tr.SetScale(2.0f);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
@@ -738,11 +811,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle,
-					[](AnimationComponent* anim)
-					{
-						AnimationLoader::AnimationApply(anim, "HumanM");
-					}
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 				);
 			}
 
@@ -750,10 +819,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle,
-					[](FSMComponent* fsm) {
-						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-					}
+					objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
 				);
 			}
 
@@ -977,12 +1043,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		return false;
 	}
 
-	auto localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
 	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 	uint8_t		 nextState = recvPkt.next_state();
-	
-	if(localID == objID) {
+
+	if (localID == objID)
+	{
 		goto SET_LOCAL;
 	}
 
@@ -1001,8 +1068,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN) {
-			if(obj->GetComponent<StaminaComponent>() != nullptr) {
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+		{
+			if (obj->GetComponent<StaminaComponent>() != nullptr)
+			{
 				fsm->SetServerState(nextState);
 				return true;
 			}
@@ -1062,8 +1131,10 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
 		{
 			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
-			cameraComp->SetEnableLookAtRotation(false);			   // 자유 시점
-			cameraComp->SetFollowOffsetLocal({1.0f, 1.0f, -5.0f}); // 오프셋 복구
+			cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+			cameraComp->SetFollowOffsetLocal(
+				{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ}
+			); // 오프셋 복구 (공유 상수 사용)
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
 		}
 		else
@@ -1127,9 +1198,9 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt
 )
 {
-	auto		 scene = GLOBAL(SceneGlobal).GetActiveScene();
+	auto	   scene = GLOBAL(SceneGlobal).GetActiveScene();
 	const auto objID = recvPkt.obj_id();
-	auto		 obj = scene->FindGameObjectByServerID(objID);
+	auto	   obj = scene->FindGameObjectByServerID(objID);
 
 	if (obj)
 	{

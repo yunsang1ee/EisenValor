@@ -258,11 +258,11 @@ void DxBLAS::Refit(
 	refitDesc.DestAccelerationStructureData = m_blasBuffer->GetGPUAddress();
 	refitDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetGPUAddress();
 
-	DEBUG_LOG_FMT(
-		"[DxBLAS] RefitRTAS: GeoDescs={}, VB={}, IB={}, VertexCount={}, IndexCount={}, Source={}, Dest={}, Scratch={}\n",
-		geoDescs.size(), vertexBuffer, indexBuffer, vertexCount, totalIndexCount, refitDesc.SourceAccelerationStructureData,
-		refitDesc.DestAccelerationStructureData, refitDesc.ScratchAccelerationStructureData
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxBLAS] RefitRTAS: GeoDescs={}, VB={}, IB={}, VertexCount={}, IndexCount={}, Source={}, Dest={}, Scratch={}\n",
+	//	geoDescs.size(), vertexBuffer, indexBuffer, vertexCount, totalIndexCount, refitDesc.SourceAccelerationStructureData,
+	//	refitDesc.DestAccelerationStructureData, refitDesc.ScratchAccelerationStructureData
+	//);
 
 	cmdList->BuildRaytracingAccelerationStructure(&refitDesc, 0, nullptr);
 

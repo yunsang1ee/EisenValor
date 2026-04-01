@@ -28,12 +28,18 @@ public:
 	bool IsPlaying() const { return m_isPlaying; }
 	bool IsAnimationEnd() const;
 
+	uint8_t GetCurrentKey() const { return m_currentKey; }
+
+	// Final Bone Palette
+	const std::vector<DirectX::XMFLOAT4X4>& GetFinalPalette() const { return m_finalPalette; }
+
 private:
 	void UpdateBoneMatrices();
 
 private:
 	std::unordered_map<uint8_t, std::shared_ptr<AnimationResource>> m_animations;
 	std::shared_ptr<AnimationResource> m_currentAnimation;
+	uint8_t m_currentKey = 0;
 	float m_currentTime = 0.0f;
 	bool m_isPlaying = false;
 	bool m_isLooping = true;

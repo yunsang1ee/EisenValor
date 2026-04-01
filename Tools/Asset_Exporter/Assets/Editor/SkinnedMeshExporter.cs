@@ -35,7 +35,17 @@ public class SkinnedMeshExporter
         }
 
         Debug.Log($"[SkinnedMeshExporter] '{target.name}' 추출 준비 완료. (정점: {mesh.vertexCount})");
-        
+
+        // --- 데이터 일관성 검사 추가 ---
+        int boneCount = smr.bones.Length;
+        int bindPoseCount = mesh.bindposes.Length;
+        Debug.Log($"[SkinnedMeshExporter] Stats - Bones: {boneCount}, BindPoses: {bindPoseCount}");
+        if (boneCount != bindPoseCount)
+        {
+            Debug.LogWarning($"[SkinnedMeshExporter] 뼈 개수와 BindPose 개수가 일치하지 않습니다! (B:{boneCount}, P:{bindPoseCount})");
+        }
+        // ------------------------------
+
         // --- 검증 로그 추가 ---
         int[] triangles = mesh.triangles;
         int totalSubMeshIndexCount = 0;
@@ -52,7 +62,7 @@ public class SkinnedMeshExporter
         if (string.IsNullOrEmpty(savePath)) return;
 
         // --- 데이터 추출 ---
-        byte[] vertData = CreateVertChunk(mesh);
+        byte[] vertData = CreateVertChunk(mesh, smr);
         byte[] indxData = CreateIndexChunk(mesh);
         byte[] boundsData = CreateBoundsChunk(mesh);
         byte[] subMeshData = CreateSubMeshChunk(mesh);
@@ -181,7 +191,7 @@ public class SkinnedMeshExporter
         }
     }
 
-    private static byte[] CreateVertChunk(Mesh mesh)
+    private static byte[] CreateVertChunk(Mesh mesh, SkinnedMeshRenderer smr)
     {
         using (MemoryStream ms = new MemoryStream())
         using (BinaryWriter bw = new BinaryWriter(ms))
@@ -191,6 +201,45 @@ public class SkinnedMeshExporter
             Vector4[] tangents = mesh.tangents;
             Vector2[] uvs = mesh.uv;
             BoneWeight[] weights = mesh.boneWeights;
+
+            // Get Atlas settings from materials (Handle multiple materials/sub-meshes)
+            float atlasCols = 1.0f;
+            int frameIndex = 0;
+
+            if (smr != null && smr.sharedMaterials != null && smr.sharedMaterials.Length > 0)
+            {
+                // 모든 머티리얼을 검사하여 아틀라스 설정이 있는지 확인
+                foreach (var mat in smr.sharedMaterials)
+                {
+                    if (mat == null) continue;
+
+                    if (mat.HasProperty("_AtlasCols"))
+                    {
+                        atlasCols = mat.GetFloat("_AtlasCols");
+                        
+                        // _AtlasCols를 찾았다면 해당 머티리얼의 _FrameIndex도 가져옴
+                        if (mat.HasProperty("_FrameIndex"))
+                        {
+                            frameIndex = mat.GetInt("_FrameIndex");
+                        }
+                        
+                        // 유효한 설정을 찾았으므로 루프 종료
+                        break;
+                    }
+                    else if (mat.shader != null && mat.shader.name.Contains("Cursed_Set"))
+                    {
+                        atlasCols = 3.0f;
+                        break;
+                    }
+                }
+            }
+            if (atlasCols < 1.0f) atlasCols = 1.0f;
+
+            // 디버깅: 찾은 최종 아틀라스 설정 출력
+            if (smr != null)
+            {
+                Debug.Log($"[SkinnedMeshExporter] Mesh: {smr.name}, Materials Count: {smr.sharedMaterials.Length}, Final _AtlasCols: {atlasCols}, Final _FrameIndex: {frameIndex}");
+            }
 
             // 데이터가 없는 경우를 대비한 기본값 처리
             if (normals == null || normals.Length == 0) normals = new Vector3[vertices.Length];
@@ -204,7 +253,25 @@ public class SkinnedMeshExporter
                 bw.Write(vertices[i].x); bw.Write(vertices[i].y); bw.Write(vertices[i].z);
                 bw.Write(normals[i].x);  bw.Write(normals[i].y);  bw.Write(normals[i].z);
                 bw.Write(tangents[i].x); bw.Write(tangents[i].y); bw.Write(tangents[i].z); bw.Write(tangents[i].w);
-                bw.Write(uvs[i].x);      bw.Write(1.0f - uvs[i].y); // V Flip
+                
+                // [Bake Atlas UV] Shaders/Cursed_Set.hlsl 로직 이식
+                float rawU = uvs[i].x;
+                float rawV = uvs[i].y;
+
+                // 아틀라스 가로 칸 수 결정
+                float currentAtlasCols = (float)atlasCols;
+                float frameWidth = 1.0f / currentAtlasCols;
+
+                // FrameIndex에 따른 오프셋 계산 (HLSL의 fmod/col 로직과 동일)
+                float col = (float)(frameIndex % (int)currentAtlasCols);
+                float offset = col * frameWidth;
+
+                // 최종 공식 적용: (원본 U * 폭) + 시작 오프셋
+                float finalX = (rawU * frameWidth) + offset; 
+                float finalY = 1.0f - rawV; // V Flip
+
+                bw.Write(finalX);
+                bw.Write(finalY); 
 
                 // 2. Skinning Data (명세서 4.4)
                 // Bone Indices (byte[4])
@@ -258,10 +325,16 @@ public class SkinnedMeshExporter
                 bw.Write(bone.localPosition.y);
                 bw.Write(bone.localPosition.z);
 
-                bw.Write(bone.localRotation.x);
-                bw.Write(bone.localRotation.y);
-                bw.Write(bone.localRotation.z);
-                bw.Write(bone.localRotation.w);
+                Quaternion rot = bone.localRotation;
+                if (i == 0) // 루트 본에 180도 회전 적용
+                {
+                    rot = rot * Quaternion.Euler(0, 180, 0);
+                }
+
+                bw.Write(rot.x);
+                bw.Write(rot.y);
+                bw.Write(rot.z);
+                bw.Write(rot.w);
 
                 bw.Write(bone.localScale.x);
                 bw.Write(bone.localScale.y);

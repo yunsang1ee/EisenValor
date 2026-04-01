@@ -98,6 +98,9 @@ public:
 	void CheckForReload();	//Hot Reload
 	bool HasPendingLoads() const { return !m_pendingLoads.empty(); }
 
+	// Debug helper: dump loaded material resources to log
+	void DumpLoadedMaterials();
+
 	std::shared_ptr<MaterialResource> GetDefaultMaterial() const { return m_defaultMaterial; }
 
 private:

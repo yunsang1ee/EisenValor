@@ -409,3 +409,4 @@ FodyWeavers.xsd
 !**/Assets/Editor/
 !**/Assets/Editor/**
 !**/Assets/Editor.meta
+/Tools/Character_Export

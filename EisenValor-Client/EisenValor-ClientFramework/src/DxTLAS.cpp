@@ -267,13 +267,13 @@ void DxTLAS::BuildInternal(
 		buildDesc.SourceAccelerationStructureData = sourceTlasBuffer->GetGPUAddress();
 	}
 
-	DEBUG_LOG_FMT(
-		"[DxTLAS] {}RTAS: Instances={}, InstanceBuffer={}, Dest={}, Scratch={}, Source={}, ActiveBuffer={}, DestBuffer={}, BuildResultSize={}, UpdateResultSize={}, ActiveSize={}, DestSize={}\n",
-		isRefit ? "Refit" : "Build", m_instanceCount, inputs.InstanceDescs, buildDesc.DestAccelerationStructureData,
-		buildDesc.ScratchAccelerationStructureData, buildDesc.SourceAccelerationStructureData, m_activeTlasBufferIndex,
-		destTlasBufferIndex, buildPrebuildInfo.ResultDataMaxSizeInBytes, updatePrebuildInfo.ResultDataMaxSizeInBytes,
-		sourceTlasBuffer->GetSizeInBytes(), destTlasBuffer->GetSizeInBytes()
-	);
+	//DEBUG_LOG_FMT(
+	//	"[DxTLAS] {}RTAS: Instances={}, InstanceBuffer={}, Dest={}, Scratch={}, Source={}, ActiveBuffer={}, DestBuffer={}, BuildResultSize={}, UpdateResultSize={}, ActiveSize={}, DestSize={}\n",
+	//	isRefit ? "Refit" : "Build", m_instanceCount, inputs.InstanceDescs, buildDesc.DestAccelerationStructureData,
+	//	buildDesc.ScratchAccelerationStructureData, buildDesc.SourceAccelerationStructureData, m_activeTlasBufferIndex,
+	//	destTlasBufferIndex, buildPrebuildInfo.ResultDataMaxSizeInBytes, updatePrebuildInfo.ResultDataMaxSizeInBytes,
+	//	sourceTlasBuffer->GetSizeInBytes(), destTlasBuffer->GetSizeInBytes()
+	//);
 
 	cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 

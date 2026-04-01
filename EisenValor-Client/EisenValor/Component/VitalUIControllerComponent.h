@@ -38,6 +38,7 @@ private:
 	static constexpr float kStaminaBarHeight = 17.5f;
 	static constexpr float kFlagSize = 70.0f;
 	static constexpr float kPadding = -1.0f;
+    static constexpr float kVerticalOffset = 4.0f;
 
 	bool m_isPlayer = false;
 	bool m_flagInitialized = false; // 깃발 초기화 여부
