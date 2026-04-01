@@ -13,6 +13,7 @@
 #include "GameWorldThread.h"
 
 GameServerEngine::ServerEngineCore::ServerEngineCore()
+	:m_lobbyServerSessionThread{nullptr}
 {
 }
 

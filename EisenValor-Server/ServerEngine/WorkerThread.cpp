@@ -9,7 +9,7 @@
 #include "GameWorldThread.h"
 
 GameServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore)
-	: m_type{ type }, m_ioCore { std::move(ioCore) }
+	: m_type{ type }, m_ioCore{ std::move(ioCore) }
 {
 }
 
@@ -38,8 +38,9 @@ bool GameServerEngine::WorkerThread::Init(const SessionFactoryFunc func, const u
 
 void GameServerEngine::WorkerThread::Run(const std::stop_token st)
 {
-	MANAGER(ThreadManager)->EnqueueTask([this](const std::stop_token st) {
-		m_acceptThread->Run(st);
+	MANAGER(ThreadManager)->EnqueueTask([this](const std::stop_token st)
+		{
+			m_acceptThread->Run(st);
 		});
 
 	auto last{ std::chrono::high_resolution_clock::now() };
@@ -47,11 +48,11 @@ void GameServerEngine::WorkerThread::Run(const std::stop_token st)
 		const auto now{ std::chrono::high_resolution_clock::now() };
 
 		const std::chrono::duration<float> elapsed{ now - last };
-		const float dt{ elapsed.count() };
+		m_dt = elapsed.count();
 		last = now;
 
 		FlushJobQueue();
-		
+
 		// LobbyThread에서 WorldThread JobQueue에 방 삭제 알림 넣기
 		m_ioCore->ProcessIO();					// 내가 관리하는 게임 월드 안에 있는 세션들의 Send/Recv (패킷 받고 보내기)
 

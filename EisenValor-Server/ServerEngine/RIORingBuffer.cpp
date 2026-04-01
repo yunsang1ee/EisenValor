@@ -9,6 +9,7 @@ GameServerEngine::RIORingBuffer::RIORingBuffer(const uint32 capacity)
 
 GameServerEngine::RIORingBuffer::~RIORingBuffer()
 {
+	Free();
 }
 
 bool GameServerEngine::RIORingBuffer::RegisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable)
@@ -20,6 +21,14 @@ bool GameServerEngine::RIORingBuffer::RegisterBuffer(const RIO_EXTENSION_FUNCTIO
 		return false;
 	}
 	return true;
+}
+
+void GameServerEngine::RIORingBuffer::DeregisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable)
+{
+    if(m_bufferId != RIO_INVALID_BUFFERID) {
+        rioFuncTable.RIODeregisterBuffer(m_bufferId);
+        m_bufferId = RIO_INVALID_BUFFERID;
+	}
 }
 
 bool GameServerEngine::RIORingBuffer::OnWrite(const uint32 len)
@@ -61,14 +70,23 @@ void GameServerEngine::RIORingBuffer::AdjustPos()
     }
     else {
         std::cout << "AdjustPos: m_readOffset > m_writeOffset" << std::endl;
-        char* temp = (char*)_malloca(m_usedSize);
+        //char* temp = (char*)_malloca(m_usedSize);
+        //uint32 firstPart = m_capacity - m_readOffset;
+        //uint32 secondPart = m_writeOffset;
+
+        //::memcpy(temp, m_buffer + m_readOffset, firstPart);
+        //::memcpy(temp + firstPart, m_buffer, secondPart);
+        //::memcpy(m_buffer, temp, m_usedSize);
+
+        //m_readOffset = 0;
+        //m_writeOffset = m_usedSize;
+
+        std::vector<char> temp(m_usedSize);
         uint32 firstPart = m_capacity - m_readOffset;
         uint32 secondPart = m_writeOffset;
-
-        ::memcpy(temp, m_buffer + m_readOffset, firstPart);
-        ::memcpy(temp + firstPart, m_buffer, secondPart);
-        ::memcpy(m_buffer, temp, m_usedSize);
-
+        ::memcpy(temp.data(), m_buffer + m_readOffset, firstPart);
+        ::memcpy(temp.data() + firstPart, m_buffer, secondPart);
+        ::memcpy(m_buffer, temp.data(), m_usedSize);
         m_readOffset = 0;
         m_writeOffset = m_usedSize;
     }
@@ -76,6 +94,9 @@ void GameServerEngine::RIORingBuffer::AdjustPos()
 
 uint32 GameServerEngine::RIORingBuffer::GetContiguousReadSize() const
 {
+    if(m_usedSize == m_capacity)
+        return 0;
+
     if(m_writeOffset >= m_readOffset)
         return m_writeOffset - m_readOffset;
 
@@ -95,7 +116,8 @@ void GameServerEngine::RIORingBuffer::CleanBuffer()
     if(GetUsedSize() == 0) {
         m_readOffset = m_writeOffset = 0;
     }
-    else if(GetFreeSize() < (m_capacity / 4)) {
+    else if(GetFreeSize() < (m_capacity / 16)) {
+		std::cout << "CleanBuffer AdjustPos, UsedSize: " << GetUsedSize() << ", FreeSize: " << GetFreeSize() << std::endl;
         AdjustPos();
     }
 }
@@ -106,6 +128,14 @@ void GameServerEngine::RIORingBuffer::Alloc()
 
 	if(nullptr == m_buffer)
 		LOG_ERROR("RIORingBuffer Alloc Failed!");
+}
+
+void GameServerEngine::RIORingBuffer::Free()
+{
+    if(m_buffer) {
+        VirtualFreeEx(GetCurrentProcess(), m_buffer, 0, MEM_RELEASE);
+        m_buffer = nullptr;
+    }
 }
 
 GameServerEngine::RIORingRecvBuffer::RIORingRecvBuffer()

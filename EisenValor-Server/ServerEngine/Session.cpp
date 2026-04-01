@@ -269,15 +269,6 @@ GameServerEngine::RIO::RIOSession::~RIOSession()
 
 bool GameServerEngine::RIO::RIOSession::Init()
 {
-	// RIO BUFFER 등록
-	// const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
-
-	// m_recvBuffer.SetTable(m_table);
-	// m_sendBuffer.SetTable(m_table);
-
-	// m_recvBuffer.Init(bufferSize);
-	// m_sendBuffer.Init(bufferSize * 10);
-
 	return true;
 }
 
@@ -588,14 +579,62 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 	//	m_lastSendTime = currentTime;
 	//}
 
+
+	// 260401
+
+	//if(false == IsConnected()) return;
+
+	//const auto currentTime = std::chrono::high_resolution_clock::now();
+	//const auto lastSendElapsed = currentTime - m_lastSendTime;
+
+	//uint32 deferCount = 0;
+
+	//while(deferCount < m_maxSendRQSize) {
+	//	if(m_packetBufferQueue.empty()) break;
+
+	//	std::shared_ptr<PacketBuffer> packetBuffer = m_packetBufferQueue.front();
+	//	if(packetBuffer == nullptr) break;
+
+	//	uint32 packetSize = packetBuffer->GetDataSize();
+	//	uint32 sendOffset = m_sendBuffer.GetSendOffset();
+
+	//	if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
+
+	//		// RIO_BUF는 하나의 연속된 영역만 가리킬 수 있으므로 두 번에 나눠서 DeferSend 해야 함
+	//		uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
+
+	//		if(packetSize <= contiguousSize) {
+	//			if(DeferSend(sendOffset, packetSize)) {
+	//				m_packetBufferQueue.pop();
+	//				deferCount++;
+	//			}
+	//		}
+	//		else {
+	//			if(DeferSend(sendOffset, contiguousSize)) {
+	//				if(DeferSend(0, packetSize - contiguousSize)) {
+	//					m_packetBufferQueue.pop();
+	//					deferCount += 2; // 예약 횟수 2회 증가
+	//				}
+	//			}
+	//		}
+	//	}
+	//	else {
+	//		break;
+	//	}
+	//}
+
+	//if(deferCount > 0 && (deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= std::chrono::milliseconds(m_commitSendMS))) {
+	//	CommitSend();
+	//	m_lastSendTime = currentTime;
+	//}
+
 	if(false == IsConnected()) return;
 
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
-
 	uint32 deferCount = 0;
 
-	while(deferCount < m_maxSendRQSize) {
+	while(true) {
 		if(m_packetBufferQueue.empty()) break;
 
 		std::shared_ptr<PacketBuffer> packetBuffer = m_packetBufferQueue.front();
@@ -603,29 +642,28 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 
 		uint32 packetSize = packetBuffer->GetDataSize();
 		uint32 sendOffset = m_sendBuffer.GetSendOffset();
+		uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
+		uint32 needed = (packetSize <= contiguousSize) ? 1 : 2;
 
-		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
+		// outstanding + 이번 플러시 예약 수가 RQ 한도를 초과하면 중단
+		if(m_outstandingSendCount + deferCount + needed > m_maxSendRQSize) break;
 
-			// RIO_BUF는 하나의 연속된 영역만 가리킬 수 있으므로 두 번에 나눠서 DeferSend 해야 함
-			uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
+		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
+			// 버퍼 풀 → 지금까지 예약된 것만 커밋하고 다음 플러시에서 재시도
+			break;
+		}
 
-			if(packetSize <= contiguousSize) {
-				if(DeferSend(sendOffset, packetSize)) {
-					m_packetBufferQueue.pop();
-					deferCount++;
-				}
-			}
-			else {
-				if(DeferSend(sendOffset, contiguousSize)) {
-					if(DeferSend(0, packetSize - contiguousSize)) {
-						m_packetBufferQueue.pop();
-						deferCount += 2; // 예약 횟수 2회 증가
-					}
-				}
-			}
+		if(packetSize <= contiguousSize) {
+			if(false == DeferSend(sendOffset, packetSize)) return; // Disconnect 내부 처리
+			m_packetBufferQueue.pop();
+			deferCount++;
 		}
 		else {
-			break;
+			// 링버퍼 경계 걸침 → 두 조각으로 분할 전송
+			if(false == DeferSend(sendOffset, contiguousSize)) return;
+			if(false == DeferSend(0, packetSize - contiguousSize)) return;
+			m_packetBufferQueue.pop();
+			deferCount += 2;
 		}
 	}
 
@@ -633,7 +671,6 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 		CommitSend();
 		m_lastSendTime = currentTime;
 	}
-
 }
 
 bool GameServerEngine::RIO::RIOSession::RegisterBuffer()
@@ -665,8 +702,9 @@ uint32 GameServerEngine::PacketSession::OnRecv(std::span<const char> buf)
 		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
 		if(buf.size() < header.packetSize)
 			break;
-
-		OnRecvPacket(buf);
+		
+		// OnRecvPacket(buf);
+		OnRecvPacket(buf.first(header.packetSize));
 
 		buf = buf.subspan(header.packetSize);
 		processed += header.packetSize;

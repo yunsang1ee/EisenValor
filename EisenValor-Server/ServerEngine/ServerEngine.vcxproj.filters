@@ -242,9 +242,6 @@
     <Filter Include="03. Network\Thread\WorkerThread">
       <UniqueIdentifier>{6875bbd8-eee7-47be-b76c-276e02a4b1a1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Network\Thread\WorkerThread\AcceptThread">
-      <UniqueIdentifier>{1ef05aae-e0e7-472a-ab5e-aa8e57644be0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Network\Thread\WorkerThread\WorldThread">
       <UniqueIdentifier>{ff95a3fa-3593-42f6-9a65-fde0e1415856}</UniqueIdentifier>
     </Filter>
@@ -283,6 +280,9 @@
     </Filter>
     <Filter Include="95. Managers\ThreadManager">
       <UniqueIdentifier>{2f44d5a8-32ba-4447-83df-a70db6f8fb2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Network\Thread\WorkerThread\AcceptThread">
+      <UniqueIdentifier>{1ef05aae-e0e7-472a-ab5e-aa8e57644be0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

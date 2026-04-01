@@ -44,7 +44,6 @@ bool GameServer::ServerManager::Init()
 		return false;
 	}
 
-	LOG_INFO("MODERN_CODE");
 	if(false == MANAGER(GameServerEngine::ServerEngineCore)->Init(MakeClientSessionFunc, MakeLobbyServerSessionFunc, MakeGameWorldFunc)) {
 		LOG_ERROR("ServerEngineCore Init Failed");
 		return false;

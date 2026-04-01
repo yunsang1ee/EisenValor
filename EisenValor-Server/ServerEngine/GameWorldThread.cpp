@@ -34,7 +34,7 @@ void GameServerEngine::GameWorldThread::Run(const std::stop_token st)
 		const auto now{ std::chrono::high_resolution_clock::now() };
 
 		const std::chrono::duration<float> elapsed{ now - last };
-		const float dt{ elapsed.count() };
+		m_dt = elapsed.count();
 		last = now;
 
 		FlushJobQueue();
@@ -46,7 +46,7 @@ void GameServerEngine::GameWorldThread::Run(const std::stop_token st)
 
 		// 월드에서 무한루프돌면 I/O 안됨 조심
 		for(const auto& [id, world] : m_worlds)	// 내가 관리하는 게임 월드
-			world->Update(dt);
+			world->Update(m_dt);
 	}
 }
 
