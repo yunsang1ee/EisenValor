@@ -132,8 +132,8 @@ namespace GameServerEngine {
 
 		public:
 			void SetRQ(const RIO_RQ rq) { m_rq = rq; }
-			void SetTable(const RIO_EXTENSION_FUNCTION_TABLE& table) { m_table = table; }
 
+		public:
 			void FlushPacketQueue();
 			// flags: RIO_MSG_DEFER
 			bool DeferSend(const uint32 offset, const uint32 size);
@@ -141,12 +141,13 @@ namespace GameServerEngine {
 			void CommitSend();
 			// SessionPool에 반납하기 전 정리
 			void Clean();
+			void SetOwnerWorker(WorkerThread* const owner) { m_ownerWorker = owner; }
 
 		public:
 			bool RegisterBuffer();
 
 		private:
-			RIO_EXTENSION_FUNCTION_TABLE								m_table;
+			WorkerThread*												m_ownerWorker;
 			RIO_RQ														m_rq;
 			RIORingRecvBuffer											m_recvBuffer;
 			RIORingSendBuffer											m_sendBuffer;

@@ -9,7 +9,6 @@
 #include "GameDataManager.h"
 #include "GameObject.h"
 #include "Collider.h"
-#include "BattleRam.h"
 #include "ServerEngineCore.h"
 #include "WorkerThread.h"
 #include "GameWorldThread.h"
@@ -56,37 +55,8 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
-	//m_dt = dt;
-	//m_accDT += dt;
-
-	//const float fixedInterval = 0.01667f;
-
-	//int loopCount = 0;
-	//while(m_accDT >= fixedInterval && loopCount < 5) {
-
-	//	m_accDT -= fixedInterval;
-
-	//	ProcessEvents();
-
-	//	m_navSystem.Update(fixedInterval);
-
-	//	for(const auto& group : m_gameObjectsGroups) {
-	//		for(const auto& [id, obj] : group) {
-	//			if(obj) obj->Update(fixedInterval);
-	//		}
-	//	}
-
-	//	CheckCollision();
-
-	//	m_worldFrameCount++;
-	//	CheckGameTime(fixedInterval);
-
-	//	loopCount++;
-	//}
-	//m_lastDT = dt;
-
-	constexpr float kFixedInterval = 1.0f / 60.0f;
-	constexpr int   kMaxSubSteps = 5;
+	constexpr float kFixedInterval{ 1.0f / 60.0f };
+	constexpr int   kMaxSubSteps{ 5 };
 
 	m_lastDT = m_dt;  
 	m_dt = dt;
@@ -706,9 +676,9 @@ bool GameServer::Contents::GameWorld::IsFinish()
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameWorld::IDToPlayer(const uint64 sessionID)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	if(playerGroup.find(sessionID) == playerGroup.end()) return nullptr;
-	auto player = std::static_pointer_cast<Player>(playerGroup[sessionID]);
-	return player;
+	auto it = playerGroup.find(sessionID);
+	if(it == playerGroup.end()) return nullptr;
+	return std::static_pointer_cast<Player>(it->second);
 }
 
 
@@ -806,23 +776,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
 	//	AddGameObject(std::move(general));
 	//}
-
-	// - 배틀램 생성
-	//{
-	//	BattleRamTemplate t;
-	//	t.id = m_npcIdGen++;
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-	//	t.posInfo = PosInfo{
-	//	.pos = Vec3{},
-	//	.rot = Vec3{}
-	//	};
-	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-	//	t.detectionRange = 2.5f;
-	//	t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
-	//	auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
-	//	AddGameObject(std::move(battleRam));
-	//}
-
+	
 	 // 점령지 생성
 	//{
 	//	OccupationZoneTemplate t;

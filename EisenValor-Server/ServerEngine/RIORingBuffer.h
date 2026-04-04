@@ -11,7 +11,7 @@ namespace GameServerEngine {
 		uint32			m_writeOffset;      
 	
 	public:
-		explicit RIORingBuffer(const uint32 capacity = 65536);
+		explicit RIORingBuffer(const uint32 capacity = 655360);
 		virtual ~RIORingBuffer();
 
 	public:
@@ -47,12 +47,19 @@ namespace GameServerEngine {
 		void Free();
 	};
 
+
+	// ==========================================
+	// 				RIORingRecvBuffer
+	// ==========================================
 	class RIORingRecvBuffer : public RIORingBuffer {
 	public:
 		RIORingRecvBuffer();
 		virtual ~RIORingRecvBuffer();
 	};
 
+	// ==========================================
+	// 				RIORingSendBuffer
+	// ==========================================
 	class RIORingSendBuffer : public RIORingBuffer {
 	public:
 		RIORingSendBuffer();

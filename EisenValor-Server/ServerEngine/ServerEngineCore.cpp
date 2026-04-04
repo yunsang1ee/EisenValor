@@ -82,7 +82,7 @@ bool GameServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSes
 
 void GameServerEngine::ServerEngineCore::Run()
 {
-	for(int i = 0; i < 3; ++i) {
+	for(int i = 0; i < m_workerThreads.size(); ++i) {
 		MANAGER(GameServerEngine::ThreadManager)->EnqueueTask([this, i](const std::stop_token st)
 			{
 				TLS_THREAD_ID = i;

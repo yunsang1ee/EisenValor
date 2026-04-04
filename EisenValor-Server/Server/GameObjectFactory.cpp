@@ -14,7 +14,6 @@
 #include "Collider.h"
 #include "GameWorld.h"
 #include "NavAgent.h"
-#include "BattleRam.h"
 #include "OccupationZone.h"
 
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
@@ -187,44 +186,6 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN));
 
 	return soldier;
-}
-
-std::shared_ptr<GameServer::Contents::BattleRam> GameServer::Contents::GameObjectFactory::CreateBattleRam(const BattleRamTemplate& t)
-{
-	auto battleRam{ std::make_shared<BattleRam>(t.detectionRange, t.finalDestPos) };
-	battleRam->SetID(t.id);
-	battleRam->SetGameWorld(t.gameWorld);
-	battleRam->SetTransform(t.transform);
-	battleRam->SetGameObjectData(t.gameObjectData);
-	battleRam->SetStat(Stat{
-		.currentHP = t.gameObjectData->maxHp,
-		.maxHP = t.gameObjectData->maxHp,
-		.currentStamina = t.gameObjectData->maxStamina,
-		.maxStamina = t.gameObjectData->maxStamina,
-		.respawnTimeSec = t.gameObjectData->respawnTimeSec
-		});
-	
-
-	auto navAgenet = battleRam->AddComponent<GameServer::Contents::NavAgent>(battleRam->GetGameWorld()->GetNavSystem());
-
-	dtCrowdAgentParams params;
-	memset(&params, 0, sizeof(params));
-	params.radius = 0.6f;       // collision radius
-	params.height = 1.f;			
-	params.maxSpeed = 20.0f;		
-	params.maxAcceleration = 10.f;	
-	
-	// set collision avoidance
-	params.collisionQueryRange = params.radius * 12.0f;
-	params.pathOptimizationRange = params.radius * 30.0f;
-	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
-	params.obstacleAvoidanceType = 0; 
-	params.separationWeight = 2.0f;   // seperation force for other agent 
-
-	if(false == navAgenet->Init(params))
-		return nullptr;
-
-	return battleRam;
 }
 
 std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)

@@ -63,6 +63,10 @@ void GameServerEngine::WorkerThread::Run(const std::stop_token st)
 
 void GameServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 {
+#ifdef _USE_RIO
+	std::static_pointer_cast<RIO::RIOSession>(session)->SetOwnerWorker(this);
+#endif
+
 	if(false == m_ioCore->Register(session)) {
 		return;
 	}
