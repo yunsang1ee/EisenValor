@@ -13,7 +13,6 @@ namespace GameServerEngine {
 		void Join();
 
 	public:
-		uint16 GetWorkerThreadCount() const { return m_workerThreadCount; }
 		uint16 IssueID();
 
 	private:
@@ -21,7 +20,6 @@ namespace GameServerEngine {
 		void DestroyTLS();
 
 	private:
-		uint16						m_workerThreadCount;
 		std::mutex					m_mutex;
 		std::vector<std::jthread>	m_threads;
 

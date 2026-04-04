@@ -187,10 +187,17 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 			return;
 
-		auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
 		RotateYaw(deltaX);
+
+		{
+			// 회전 후 transform에서 값을 읽어 패킷 전송
+			auto&				transform = myGameObject->GetTransform();
+			auto				pos = transform.GetPosition();
+			auto				rot = transform.GetRotation(); // 이제 회전된 값
+			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		}
 	}
 
 	if (m_cameraObjectHandle.IsValid() && fabsf(deltaY) > kMinMouseDelta)

@@ -55,32 +55,71 @@ bool GameServerEngine::RIORingBuffer::OnRead(const uint32 len)
 
 void GameServerEngine::RIORingBuffer::AdjustPos()
 {
+    //if(m_usedSize == 0) {
+    //    m_readOffset = m_writeOffset = 0;
+    //    return;
+    //}
+
+    //if(m_writeOffset >= m_readOffset) {
+    //    if(m_readOffset > 0) {
+    //        std::cout << "AdjustPos: m_writeOffset >= m_readOffset && m_readOffset > 0" << std::endl;
+    //        ::memmove(m_buffer, m_buffer + m_readOffset, m_usedSize);
+    //        m_readOffset = 0;
+    //        m_writeOffset = m_usedSize;
+    //    }
+    //}
+    //else {
+    //    std::cout << "AdjustPos: m_readOffset > m_writeOffset" << std::endl;
+    //    //char* temp = (char*)_malloca(m_usedSize);
+    //    //uint32 firstPart = m_capacity - m_readOffset;
+    //    //uint32 secondPart = m_writeOffset;
+
+    //    //::memcpy(temp, m_buffer + m_readOffset, firstPart);
+    //    //::memcpy(temp + firstPart, m_buffer, secondPart);
+    //    //::memcpy(m_buffer, temp, m_usedSize);
+
+    //    //m_readOffset = 0;
+    //    //m_writeOffset = m_usedSize;
+
+    //    std::vector<char> temp(m_usedSize);
+    //    uint32 firstPart = m_capacity - m_readOffset;
+    //    uint32 secondPart = m_writeOffset;
+    //    ::memcpy(temp.data(), m_buffer + m_readOffset, firstPart);
+    //    ::memcpy(temp.data() + firstPart, m_buffer, secondPart);
+    //    ::memcpy(m_buffer, temp.data(), m_usedSize);
+    //    m_readOffset = 0;
+    //    m_writeOffset = m_usedSize;
+    //}
+
+	// 260403
     if(m_usedSize == 0) {
         m_readOffset = m_writeOffset = 0;
         return;
     }
 
-    if(m_writeOffset >= m_readOffset) {
+    // Full 상태: writeOffset == readOffset && usedSize == capacity
+    if(m_usedSize == m_capacity) {
+        if(m_readOffset == 0) return; // 이미 정렬됨
+        // wrap 케이스와 동일하게 처리
+        std::vector<char> temp(m_usedSize);
+        uint32 firstPart = m_capacity - m_readOffset;
+        uint32 secondPart = m_writeOffset; // == m_readOffset
+        ::memcpy(temp.data(), m_buffer + m_readOffset, firstPart);
+        ::memcpy(temp.data() + firstPart, m_buffer, secondPart);
+        ::memcpy(m_buffer, temp.data(), m_usedSize);
+        m_readOffset = 0;
+        m_writeOffset = m_usedSize % m_capacity; // == 0 (full이므로)
+        return;
+    }
+
+    if(m_writeOffset > m_readOffset) {  // > 로 변경 (== 은 위에서 처리)
         if(m_readOffset > 0) {
-            std::cout << "AdjustPos: m_writeOffset >= m_readOffset && m_readOffset > 0" << std::endl;
             ::memmove(m_buffer, m_buffer + m_readOffset, m_usedSize);
             m_readOffset = 0;
             m_writeOffset = m_usedSize;
         }
     }
-    else {
-        std::cout << "AdjustPos: m_readOffset > m_writeOffset" << std::endl;
-        //char* temp = (char*)_malloca(m_usedSize);
-        //uint32 firstPart = m_capacity - m_readOffset;
-        //uint32 secondPart = m_writeOffset;
-
-        //::memcpy(temp, m_buffer + m_readOffset, firstPart);
-        //::memcpy(temp + firstPart, m_buffer, secondPart);
-        //::memcpy(m_buffer, temp, m_usedSize);
-
-        //m_readOffset = 0;
-        //m_writeOffset = m_usedSize;
-
+    else { // readOffset > writeOffset (wrap)
         std::vector<char> temp(m_usedSize);
         uint32 firstPart = m_capacity - m_readOffset;
         uint32 secondPart = m_writeOffset;
@@ -94,20 +133,37 @@ void GameServerEngine::RIORingBuffer::AdjustPos()
 
 uint32 GameServerEngine::RIORingBuffer::GetContiguousReadSize() const
 {
-    if(m_usedSize == m_capacity)
+    //if(m_usedSize == m_capacity)
+    //    return 0;
+
+    //if(m_writeOffset >= m_readOffset)
+    //    return m_writeOffset - m_readOffset;
+
+    //return m_capacity - m_readOffset;
+
+    // 260403
+    if(m_usedSize == 0)
         return 0;
-
-    if(m_writeOffset >= m_readOffset)
+    if(m_writeOffset > m_readOffset)
         return m_writeOffset - m_readOffset;
-
+ 
     return m_capacity - m_readOffset;
 }
 
 uint32 GameServerEngine::RIORingBuffer::GetContiguousFreeSize() const
 {
+    //if(m_writeOffset >= m_readOffset)
+    //    return m_capacity - m_writeOffset;
+
+    //return m_readOffset - m_writeOffset;
+
+	// 260403
+    if(m_usedSize == m_capacity) 
+        return 0;
+
     if(m_writeOffset >= m_readOffset)
         return m_capacity - m_writeOffset;
-
+    
     return m_readOffset - m_writeOffset;
 }
 
@@ -120,6 +176,19 @@ void GameServerEngine::RIORingBuffer::CleanBuffer()
 		std::cout << "CleanBuffer AdjustPos, UsedSize: " << GetUsedSize() << ", FreeSize: " << GetFreeSize() << std::endl;
         AdjustPos();
     }
+
+	// 260403
+    //if(GetUsedSize() == 0) {
+    //    m_readOffset = m_writeOffset = 0;
+    //    return;
+    //}
+    //if(GetFreeSize() == 0) {
+    //    LOG_ERROR("CleanBuffer: Buffer is Full!");
+    //    return;  // AdjustPos 호출 방지
+    //}
+    //if(GetFreeSize() < (m_capacity / 16)) {
+    //    AdjustPos();
+    //}
 }
 
 void GameServerEngine::RIORingBuffer::Alloc()
@@ -138,6 +207,9 @@ void GameServerEngine::RIORingBuffer::Free()
     }
 }
 
+// ==========================================
+// 				RIORingRecvBuffer
+// ==========================================
 GameServerEngine::RIORingRecvBuffer::RIORingRecvBuffer()
 {
 }
@@ -146,6 +218,9 @@ GameServerEngine::RIORingRecvBuffer::~RIORingRecvBuffer()
 {
 }
 
+// ==========================================
+// 				RIORingSendBuffer
+// ==========================================
 GameServerEngine::RIORingSendBuffer::RIORingSendBuffer()
 {
 }

@@ -66,16 +66,26 @@ void GameServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> sess
 {
 	const uint16 roomID{ 1 };
 	std::unordered_map<uint32, GameWorldParticipantInfo> u;
-	if(false == m_worlds.contains(roomID))
+
+	auto gameworld{ FindGameWorld(roomID) };
+
+	if(nullptr == gameworld)
 		CreateWorld(roomID, u);
+
+	gameworld = FindGameWorld(roomID);
 	
-	m_worlds[roomID]->EnterSession(session);
+	if(nullptr == gameworld)
+		return;
+
+	gameworld->EnterSession(session);
 }
 
 GameServerEngine::IRoom* GameServerEngine::GameWorldThread::FindGameWorld(const uint16 worldID)
 {
-	if(false == m_worlds.contains(worldID))
+	auto iter{ m_worlds.find(worldID) };
+
+	if(m_worlds.end() == iter)
 		return nullptr;
 
-	return m_worlds[worldID].get();
+	return iter->second.get();
 }

@@ -61,7 +61,6 @@ bool GameServerEngine::RIO::RIOCore::Register(std::shared_ptr<Session> session)
 	}
 
 	rioSession->SetRQ(rq);
-	rioSession->SetTable(m_rioExtfuncTable);
 
 	if(false == rioSession->RegisterBuffer())
 		return false;

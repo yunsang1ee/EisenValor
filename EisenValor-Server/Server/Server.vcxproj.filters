@@ -121,9 +121,6 @@
     <ClCompile Include="DetourProximityGrid.cpp">
       <Filter>03. Contents\GameWorld\NavSystem\DetourCrowd</Filter>
     </ClCompile>
-    <ClCompile Include="BattleRam.cpp">
-      <Filter>03. Contents\GameObject\Creature\BattleRam</Filter>
-    </ClCompile>
     <ClCompile Include="GeneralStates.cpp">
       <Filter>03. Contents\GameObject\Creature\General\States</Filter>
     </ClCompile>
@@ -263,12 +260,6 @@
     </Filter>
     <Filter Include="03. Contents\GameObject\Creature\General\Nodes">
       <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameObject\Creature\BattleRam">
-      <UniqueIdentifier>{53307cfa-15b5-4eb7-b314-bf6bf5eac919}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameObject\Creature\BattleRam\State">
-      <UniqueIdentifier>{1b61b4d6-a179-4a29-9691-9483ee05422d}</UniqueIdentifier>
     </Filter>
     <Filter Include="03. Contents\Component">
       <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
@@ -445,9 +436,6 @@
     </ClInclude>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>98. Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="BattleRam.h">
-      <Filter>03. Contents\GameObject\Creature\BattleRam</Filter>
     </ClInclude>
     <ClInclude Include="OccupationZone.h">
       <Filter>03. Contents\Component\Scripts\OccupationZone</Filter>
