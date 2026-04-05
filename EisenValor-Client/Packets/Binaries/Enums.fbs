@@ -22,7 +22,6 @@ enum GAME_OBJECT_TYPE : ubyte{
 	GENERAL,
 	PLAYER,
 	SOLDIER,
-	BATTLERAM,
 	SPAWNER,
 	OCCUPATION_ZONE,
 	
@@ -37,26 +36,26 @@ enum TEAM_TYPE: ubyte{
 }
 
 enum GENERAL_ATTACK_TYPE : ubyte {
-	LIGHT,	// �����
-	HEAVY,	// ������
-	AREA,	// ��������
-	DISARM,	// �������� ����
+	LIGHT,	// 약공격
+	HEAVY,	// 강공격
+	AREA,	// 범위공격
+	DISARM,	// 무장해제공격
 
 	END
 }
 
 enum GENERAL_ATTACK_DIR_TYPE : ubyte {
 	NONE,
-	TOP,	// ���
-	LEFT,	// ��
-	RIGHT,	// ��
+	TOP,
+	LEFT,
+	RIGHT,
 
 	END
 }
 
 enum GENERAL_STANCE_TYPE : ubyte{
-	NEUTRAL = 0,	// �߸� �¼�
-	COMBAT,			// ���� �¼�
+	NEUTRAL = 0,
+	COMBAT,		
 
 	END
 }

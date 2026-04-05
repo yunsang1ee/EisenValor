@@ -5,8 +5,6 @@
 
 bool GameServerEngine::ThreadManager::Init()
 {
-	m_workerThreadCount = MANAGER(ServerEngineConfigManager)->GetThreadConfig().MAX_WORKER_THREAD_COUNT;
-
 	InitTLS();
 
 	return true;

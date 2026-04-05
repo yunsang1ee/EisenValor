@@ -3,6 +3,8 @@
 
 #include "ServerEngineConfigManager.h"
 #include "PacketHandler.h"
+#include "WorkerThread.h"
+#include "RIOCore.h"
 
 GameServerEngine::Session::Session(const SESSION_TYPE type)
 	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_type{ type }, m_pingInterval { std::chrono::milliseconds(MANAGER(GameServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
@@ -263,21 +265,21 @@ GameServerEngine::RIO::RIOSession::RIOSession(const SESSION_TYPE type)
 
 GameServerEngine::RIO::RIOSession::~RIOSession()
 {
-	m_table.RIODeregisterBuffer(m_recvBuffer.GetID());
-	m_table.RIODeregisterBuffer(m_sendBuffer.GetID());
+	auto const ioCore{ static_cast<RIOCore*>(m_ownerWorker->GetIoCore()) };
+	
+	if(!ioCore) {
+		LOG_ERROR("RIO Session Destructor: Owner Worker has no IO Core!");
+		return;
+	}
+
+	const auto& rioExtFuncTable{ ioCore->GetRioExtFuncTable() };
+
+	rioExtFuncTable.RIODeregisterBuffer(m_recvBuffer.GetID());
+	rioExtFuncTable.RIODeregisterBuffer(m_sendBuffer.GetID());
 }
 
 bool GameServerEngine::RIO::RIOSession::Init()
 {
-	// RIO BUFFER 등록
-	// const uint32 bufferSize = MANAGER(ServerEngineConfigManager)->GetSessionConfig().MAX_RIO_BUFFER_SIZE;
-
-	// m_recvBuffer.SetTable(m_table);
-	// m_sendBuffer.SetTable(m_table);
-
-	// m_recvBuffer.Init(bufferSize);
-	// m_sendBuffer.Init(bufferSize * 10);
-
 	return true;
 }
 
@@ -401,6 +403,7 @@ void GameServerEngine::RIO::RIOSession::PostRecv()
 	m_recvContext.SetOwner(std::static_pointer_cast<GameServerEngine::RIO::RIOSession>(shared_from_this()));
 
 	if(m_recvBuffer.GetContiguousFreeSize() < 100) {
+		std::cout << "m_recvBuffer GetContiguousFreeSize() < 100, Adjusting buffer position. UsedSize: " << m_recvBuffer.GetUsedSize() << ", FreeSize: " << m_recvBuffer.GetFreeSize() << std::endl;
 		m_recvBuffer.AdjustPos();
 	}
 
@@ -410,12 +413,19 @@ void GameServerEngine::RIO::RIOSession::PostRecv()
 
 	const DWORD flags{};
 
-	if(false == m_table.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
+	auto const ioCore{ static_cast<RIOCore*>(m_ownerWorker->GetIoCore()) };
+	if(!ioCore) {
+		LOG_ERROR("RIO Session PostRecv: Owner Worker has no IO Core!");
+		return;
+	}
+
+	const auto& rioExtFuncTable{ ioCore->GetRioExtFuncTable() };
+
+	if(false == rioExtFuncTable.RIOReceive(m_rq, static_cast<PRIO_BUF>(&m_recvContext), 1, flags, &m_recvContext)) {
 		LOG_WSA_GET_LAST_ERROR();
 		m_recvContext.SetOwner(nullptr);
 		Disconnect("RioReceive Fail");
 	}
-
 }
 
 void GameServerEngine::RIO::RIOSession::ProcessRecv(const uint32 bytesTransferred)
@@ -493,8 +503,18 @@ bool GameServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uin
 	sendContext->Offset = offset;
 	sendContext->Length = size;
 
+
+	auto const ioCore{ static_cast<RIOCore*>(m_ownerWorker->GetIoCore()) };
+	if(!ioCore) {
+		LOG_ERROR("RIO Session DeferSend: Owner Worker has no IO Core!");
+		sendContext->SetOwner(nullptr);
+		ObjectPool<RIOSendContext>::Push(sendContext);
+		return false;
+	}
+	const auto& rioExtFuncTable{ ioCore->GetRioExtFuncTable() };
+
 	// RIO 송신 예약
-	if(false == m_table.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
+	if(false == rioExtFuncTable.RIOSend(m_rq, static_cast<PRIO_BUF>(sendContext), 1, RIO_MSG_DEFER, sendContext)) {
 		GameServerEngine::LogManager::PrintLastError();
 		sendContext->SetOwner(nullptr);
 		ObjectPool<RIOSendContext>::Push(sendContext);
@@ -511,7 +531,15 @@ bool GameServerEngine::RIO::RIOSession::DeferSend(const uint32 offset, const uin
 
 void GameServerEngine::RIO::RIOSession::CommitSend()
 {
-	if(false == m_table.RIOSend(m_rq, nullptr, 0, RIO_MSG_COMMIT_ONLY, nullptr)) {
+	auto const ioCore{ static_cast<RIOCore*>(m_ownerWorker->GetIoCore()) };
+	if(!ioCore) {
+		LOG_ERROR("RIO Session CommitSend: Owner Worker has no IO Core!");
+		return;
+	}
+	
+	const auto& rioExtFuncTable{ ioCore->GetRioExtFuncTable() };
+
+	if(false == rioExtFuncTable.RIOSend(m_rq, nullptr, 0, RIO_MSG_COMMIT_ONLY, nullptr)) {
 		GameServerEngine::LogManager::PrintLastError();
 		Disconnect("CommitSend Fail");
 	}
@@ -519,14 +547,12 @@ void GameServerEngine::RIO::RIOSession::CommitSend()
 
 void GameServerEngine::RIO::RIOSession::Clean()
 {
-	m_socket = INVALID_SOCKET;
-
 	m_connected = false;
 	memset(&m_clientAddr, 0, sizeof(m_clientAddr));
 	m_rq = RIO_INVALID_RQ;
 
 	// m_recvBuffer.CleanBuffer();
-	m_sendBuffer.CleanBuffer();
+	// m_sendBuffer.CleanBuffer();
 	m_deferCount = 0;
 
 	// m_packetBufferQueue.clear();
@@ -588,14 +614,62 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 	//	m_lastSendTime = currentTime;
 	//}
 
+
+	// 260401
+
+	//if(false == IsConnected()) return;
+
+	//const auto currentTime = std::chrono::high_resolution_clock::now();
+	//const auto lastSendElapsed = currentTime - m_lastSendTime;
+
+	//uint32 deferCount = 0;
+
+	//while(deferCount < m_maxSendRQSize) {
+	//	if(m_packetBufferQueue.empty()) break;
+
+	//	std::shared_ptr<PacketBuffer> packetBuffer = m_packetBufferQueue.front();
+	//	if(packetBuffer == nullptr) break;
+
+	//	uint32 packetSize = packetBuffer->GetDataSize();
+	//	uint32 sendOffset = m_sendBuffer.GetSendOffset();
+
+	//	if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
+
+	//		// RIO_BUF는 하나의 연속된 영역만 가리킬 수 있으므로 두 번에 나눠서 DeferSend 해야 함
+	//		uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
+
+	//		if(packetSize <= contiguousSize) {
+	//			if(DeferSend(sendOffset, packetSize)) {
+	//				m_packetBufferQueue.pop();
+	//				deferCount++;
+	//			}
+	//		}
+	//		else {
+	//			if(DeferSend(sendOffset, contiguousSize)) {
+	//				if(DeferSend(0, packetSize - contiguousSize)) {
+	//					m_packetBufferQueue.pop();
+	//					deferCount += 2; // 예약 횟수 2회 증가
+	//				}
+	//			}
+	//		}
+	//	}
+	//	else {
+	//		break;
+	//	}
+	//}
+
+	//if(deferCount > 0 && (deferCount >= (m_maxSendRQSize / 2) || lastSendElapsed >= std::chrono::milliseconds(m_commitSendMS))) {
+	//	CommitSend();
+	//	m_lastSendTime = currentTime;
+	//}
+
 	if(false == IsConnected()) return;
 
 	const auto currentTime = std::chrono::high_resolution_clock::now();
 	const auto lastSendElapsed = currentTime - m_lastSendTime;
-
 	uint32 deferCount = 0;
 
-	while(deferCount < m_maxSendRQSize) {
+	while(true) {
 		if(m_packetBufferQueue.empty()) break;
 
 		std::shared_ptr<PacketBuffer> packetBuffer = m_packetBufferQueue.front();
@@ -603,29 +677,28 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 
 		uint32 packetSize = packetBuffer->GetDataSize();
 		uint32 sendOffset = m_sendBuffer.GetSendOffset();
+		uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
+		uint32 needed = (packetSize <= contiguousSize) ? 1 : 2;
 
-		if(m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
+		// outstanding + 이번 플러시 예약 수가 RQ 한도를 초과하면 중단
+		if(m_outstandingSendCount + deferCount + needed > m_maxSendRQSize) break;
 
-			// RIO_BUF는 하나의 연속된 영역만 가리킬 수 있으므로 두 번에 나눠서 DeferSend 해야 함
-			uint32 contiguousSize = m_sendBuffer.GetCapacity() - sendOffset;
+		if(false == m_sendBuffer.Append(packetBuffer->GetBuffer(), packetSize)) {
+			// 버퍼 풀 → 지금까지 예약된 것만 커밋하고 다음 플러시에서 재시도
+			break;
+		}
 
-			if(packetSize <= contiguousSize) {
-				if(DeferSend(sendOffset, packetSize)) {
-					m_packetBufferQueue.pop();
-					deferCount++;
-				}
-			}
-			else {
-				if(DeferSend(sendOffset, contiguousSize)) {
-					if(DeferSend(0, packetSize - contiguousSize)) {
-						m_packetBufferQueue.pop();
-						deferCount += 2; // 예약 횟수 2회 증가
-					}
-				}
-			}
+		if(packetSize <= contiguousSize) {
+			if(false == DeferSend(sendOffset, packetSize)) return; // Disconnect 내부 처리
+			m_packetBufferQueue.pop();
+			deferCount++;
 		}
 		else {
-			break;
+			// 링버퍼 경계 걸침 → 두 조각으로 분할 전송
+			if(false == DeferSend(sendOffset, contiguousSize)) return;
+			if(false == DeferSend(0, packetSize - contiguousSize)) return;
+			m_packetBufferQueue.pop();
+			deferCount += 2;
 		}
 	}
 
@@ -633,15 +706,22 @@ void GameServerEngine::RIO::RIOSession::FlushPacketQueue()
 		CommitSend();
 		m_lastSendTime = currentTime;
 	}
-
 }
 
 bool GameServerEngine::RIO::RIOSession::RegisterBuffer()
 {
-	if(false == m_recvBuffer.RegisterBuffer(m_table))
+	auto const ioCore{ static_cast<RIOCore*>(m_ownerWorker->GetIoCore()) };
+	if(!ioCore) {
+		LOG_ERROR("RIO Session RegisterBuffer: Owner Worker has no IO Core!");
+		return false;
+	}
+
+	const auto& rioExtFuncTable{ ioCore->GetRioExtFuncTable() };
+
+	if(false == m_recvBuffer.RegisterBuffer(rioExtFuncTable))
 		return false;
 
-	if(false == m_sendBuffer.RegisterBuffer(m_table))
+	if(false == m_sendBuffer.RegisterBuffer(rioExtFuncTable))
 		return false;
 
 	return true;
@@ -665,8 +745,9 @@ uint32 GameServerEngine::PacketSession::OnRecv(std::span<const char> buf)
 		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
 		if(buf.size() < header.packetSize)
 			break;
-
-		OnRecvPacket(buf);
+		
+		// OnRecvPacket(buf);
+		OnRecvPacket(buf.first(header.packetSize));
 
 		buf = buf.subspan(header.packetSize);
 		processed += header.packetSize;

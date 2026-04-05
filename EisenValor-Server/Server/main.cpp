@@ -5,7 +5,7 @@ int main()
 {
 	SetConsoleOutputCP(CP_UTF8);
 	SetConsoleCP(CP_UTF8);
-
+		
 	TLS_THREAD_NAME = "Main";
 
 	if(false == GameServer::ServerManager::Init()) {

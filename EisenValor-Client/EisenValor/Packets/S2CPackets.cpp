@@ -443,17 +443,19 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		return false;
 	}
 	DEBUG_LOG_FMT("Created LocalPlayer: {} \n", id);
-
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, pos = recvPkt.pos_info(), stance = recvPkt.stance_type(), teamType = recvPkt.team_type(),
-		 maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
+		[pos, rot, scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
+		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
-			auto playerObjHandle = playerObj->GetHandle();
+			  auto& tr = playerObj->GetTransform();
+			  tr.SetWorldPosition(DX::XMFLOAT3(pos.x, pos.y, pos.z));
+			tr.SetRotation(rot.x, rot.y, rot.z);
 
-			auto& tr = playerObj->GetTransform();
-			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
+			auto playerObjHandle = playerObj->GetHandle();
 
 			// 모델 크기
 			playerObj->GetTransform().SetScale(2.0f);

@@ -34,7 +34,7 @@ void GameServerEngine::GameWorldThread::Run(const std::stop_token st)
 		const auto now{ std::chrono::high_resolution_clock::now() };
 
 		const std::chrono::duration<float> elapsed{ now - last };
-		const float dt{ elapsed.count() };
+		m_dt = elapsed.count();
 		last = now;
 
 		FlushJobQueue();
@@ -46,7 +46,7 @@ void GameServerEngine::GameWorldThread::Run(const std::stop_token st)
 
 		// 월드에서 무한루프돌면 I/O 안됨 조심
 		for(const auto& [id, world] : m_worlds)	// 내가 관리하는 게임 월드
-			world->Update(dt);
+			world->Update(m_dt);
 	}
 }
 
@@ -66,16 +66,26 @@ void GameServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> sess
 {
 	const uint16 roomID{ 1 };
 	std::unordered_map<uint32, GameWorldParticipantInfo> u;
-	if(false == m_worlds.contains(roomID))
+
+	auto gameworld{ FindGameWorld(roomID) };
+
+	if(nullptr == gameworld)
 		CreateWorld(roomID, u);
+
+	gameworld = FindGameWorld(roomID);
 	
-	m_worlds[roomID]->EnterSession(session);
+	if(nullptr == gameworld)
+		return;
+
+	gameworld->EnterSession(session);
 }
 
 GameServerEngine::IRoom* GameServerEngine::GameWorldThread::FindGameWorld(const uint16 worldID)
 {
-	if(false == m_worlds.contains(worldID))
+	auto iter{ m_worlds.find(worldID) };
+
+	if(m_worlds.end() == iter)
 		return nullptr;
 
-	return m_worlds[worldID].get();
+	return iter->second.get();
 }

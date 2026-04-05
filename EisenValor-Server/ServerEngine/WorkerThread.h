@@ -22,10 +22,12 @@ namespace GameServerEngine {
 	public:
 		IOCore* GetIoCore() const { return m_ioCore.get(); }
 		uint16 GetPort() const;
+		float GetDT() const { return m_dt; }
 
 	protected:
-		std::unique_ptr<IOCore>		m_ioCore;
+		std::unique_ptr<IOCore>			m_ioCore;
 		std::unique_ptr<AcceptThread>	m_acceptThread;
 		const WORKER_THREAD_TYPE		m_type;
+		float							m_dt;
 	};
 }
