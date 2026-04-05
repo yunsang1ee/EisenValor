@@ -955,6 +955,54 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
+			// Sword
+			if (isGeneral)
+			{
+				auto swordHandle = scene->ReserveGameObject(objectName + "_Sword");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					swordHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					swordHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "hand_r");
+
+							// Offset
+							constexpr float tx = -0.095f;
+							constexpr float ty = 0.125f;
+							constexpr float tz = -0.043f;
+							constexpr float rx = DirectX::XMConvertToRadians(40.563f);
+							constexpr float ry = DirectX::XMConvertToRadians(49.596f);
+							constexpr float rz = DirectX::XMConvertToRadians(89.208f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+			}
+
 			// FSMComponent
 			if (isGeneral)
 			{
