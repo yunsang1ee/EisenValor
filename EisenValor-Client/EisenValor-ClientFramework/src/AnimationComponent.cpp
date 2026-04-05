@@ -259,7 +259,7 @@ void AnimationComponent::UpdateBoneMatrices()
 
 			if (m_rootMotionFirstFrame)
 			{
-				// 첫 프레임: 기준점만 잡고 이동은 하지 않음
+				// 첫번째 프레임: 기준점만 잡고 이동은 하지 않음
 				m_lastRootPos = currentRootPos;
 				m_rootMotionFirstFrame = false;
 			}
@@ -268,35 +268,43 @@ void AnimationComponent::UpdateBoneMatrices()
 				// Delta 계산 (현재 위치 - 이전 위치)
 				XMVECTOR deltaVec = XMVectorSubtract(pos, XMLoadFloat3(&m_lastRootPos));
 
-				// 방향 보정: 애니메이션 데이터 Z축이 반대
+				// 현재 회전 및 스케일
+				auto&	 transform = myGameObject->GetTransform();
+				XMFLOAT3 worldScale = transform.GetWorldScale();
+				XMFLOAT4 worldRotQ = transform.GetWorldRotationQuaternion();
+				
 				XMFLOAT3 delta;
 				XMStoreFloat3(&delta, deltaVec);
 				delta.z = -delta.z; // Z축 반전
-				deltaVec = XMLoadFloat3(&delta);
 
-				// 캐릭터의 현재 회전값을 가져와서 Delta를 월드 방향으로 회전
-				auto&	 transform = myGameObject->GetTransform();
-				XMFLOAT4 q = transform.GetWorldRotationQuaternion();
-				XMVECTOR rotQuat = XMLoadFloat4(&q);
-				XMVECTOR rotatedDelta = XMVector3Rotate(deltaVec, rotQuat);
+				XMVECTOR scaledDeltaVec = XMVectorSet(
+					delta.x * worldScale.x,
+					delta.y * worldScale.y,
+					delta.z * worldScale.z,
+					0.0f
+				);
 
-				//  델타 누적(직접 위치 업데이트하지 않음)
+				// 캐릭터 회전
+				XMVECTOR rotQuat = XMLoadFloat4(&worldRotQ);
+				XMVECTOR rotatedDelta = XMVector3Rotate(scaledDeltaVec, rotQuat);
+
+				// 델타 누적
 				XMVECTOR currentAccDelta = XMLoadFloat3(&m_accumulatedRootDelta);
 				XMStoreFloat3(&m_accumulatedRootDelta, XMVectorAdd(currentAccDelta, rotatedDelta));
 
-				// [DEBUG] 루트 모션 발생 확인 로그
-				XMFLOAT3 rDelta; XMStoreFloat3(&rDelta, rotatedDelta);
-				if (std::abs(delta.x) > 0.0001f || std::abs(delta.z) > 0.0001f)
-				{
-					DEBUG_LOG_FMT("[RootMotion] AnimDelta:({:.3f}, {:.3f}) -> WorldDelta:({:.3f}, {:.3f}) Accumulated\n",
-						delta.x, delta.z, rDelta.x, rDelta.z);
-				}
+				//// [DEBUG] 최종 이동량 확인 로그
+				//XMFLOAT3 rDelta; XMStoreFloat3(&rDelta, rotatedDelta);
+				//if (XMVector3LengthSq(rotatedDelta).m128_f32[0] > 0.000001f)
+				//{
+				//	DEBUG_LOG_FMT("[RootMotion] Scale:{:.1f} FinalWorldDelta:({:.3f}, {:.3f})\n",
+				//		worldScale.z, rDelta.x, rDelta.z);
+				//}
 
 				// 기준점 업데이트
 				m_lastRootPos = currentRootPos;
 			}
 
-			// 메시 위치 초기화 (메시는 오브젝트 중심에 고정)
+			// 메시 위치 초기화
 			pos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 		}
 
