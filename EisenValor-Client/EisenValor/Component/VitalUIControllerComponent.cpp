@@ -360,7 +360,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				img->SetOrder(13);
 				// 관리 목록 등록 (Fill)
 				m_managedImages.push_back({img->GetHandle(), 13});
-				auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\Staminafill.evtex");
+				auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\HP_fill.evtex");
 				img->SetNormalTextureResource(texRes);
 				img->SetNormalColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 하얀색
 			});
