@@ -23,7 +23,7 @@ PlayerlIdleState::PlayerlIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
 
 void PlayerlIdleState::Enter(FSMComponent* fsm)
 {
-	DEBUG_LOG_FMT("[FSM] IDLE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
+	//DEBUG_LOG_FMT("[FSM] IDLE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
 
 	if (auto* obj = fsm->GetGameObject())
 	{
@@ -163,7 +163,9 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 			uint8_t attackType = static_cast<uint8_t>(fsm->GetCurAttackType());
 			uint8_t animationKey = 100 + attackType;
 
-			anim->Play(animationKey, false);
+			// 강공격일 경우 루트모션 활성화 (true)
+			bool useRootMotion = (attackType == FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY);
+			anim->Play(animationKey, false, useRootMotion);
 		}
 	}
 }
@@ -304,5 +306,5 @@ void PlayerDeadState::Update(FSMComponent* fsm, float dt)
 
 void PlayerDeadState::Exit(FSMComponent* fsm)
 {
-	DEBUG_LOG_FMT("[FSM] DEAD Exit (Respawned)\n");
+	//DEBUG_LOG_FMT("[FSM] DEAD Exit (Respawned)\n");
 }

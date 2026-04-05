@@ -91,9 +91,6 @@
     <ClInclude Include="Packets\S2CPackets.h">
       <Filter>Packets</Filter>
     </ClInclude>
-    <ClInclude Include="Packets\ServerEnum.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
     <ClInclude Include="Packets\Enums_generated.h">
       <Filter>Packets</Filter>
     </ClInclude>
@@ -181,6 +178,12 @@
     <ClInclude Include="Util\CameraConfig.h">
       <Filter>Util</Filter>
     </ClInclude>
+    <ClInclude Include="Packets\PacketEnums.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\SocketComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -267,6 +270,9 @@
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp">
       <Filter>Component\Room</Filter>
     </ClCompile>
+    <ClCompile Include="Component\SocketComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EisenValor.rc" />
@@ -287,5 +293,10 @@
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
