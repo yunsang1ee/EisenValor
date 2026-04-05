@@ -6,6 +6,8 @@
 #include "SceneGlobal.h"
 #include "Scene.h"
 #include "Component/FSM/FSMComponent.h"
+#include "AnimationComponent.h"
+#include "DxMath.h"
 
 #include "Util/CameraConfig.h"
 
@@ -76,6 +78,39 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		input.ToggleMouseLock();
 	}
 
+	auto* myGameObject = GetGameObject();
+	if (!myGameObject)
+	{
+		return;
+	}
+
+	// Root Motion Delta
+	if (auto* animComp = myGameObject->GetComponent<AnimationComponent>())
+	{
+		XMVECTOR rootDelta = animComp->ConsumeRootMotionDelta();
+
+		// 델타가 유효하다면 이동 적용
+		if (XMVector3LengthSq(rootDelta).m128_f32[0] > 1e-6f)
+		{
+			auto&	 transform = myGameObject->GetTransform();
+			XMFLOAT3 currentWorldPos = transform.GetWorldPosition();
+			XMVECTOR newWorldPos = XMVectorAdd(XMLoadFloat3(&currentWorldPos), rootDelta);
+
+			XMFLOAT3 finalPos;
+			XMStoreFloat3(&finalPos, newWorldPos);
+			transform.SetWorldPosition(finalPos);
+
+			// 이동 후 서버 패킷 보내기
+			auto				rot = transform.GetRotation();
+			FB_STRUCTS::PosInfo posInfo{{finalPos.x, finalPos.y, finalPos.z}, {rot.x, rot.y, rot.z}};
+			auto				pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
+
+			// DEBUG_LOG_FMT("[PlayerController] RootMotion Applied. NewPos:({:.2f}, {:.2f}, {:.2f})\n", 
+			//	finalPos.x, finalPos.y, finalPos.z);
+		}
+	}
+
 	// 락온 상태 시 숄더뷰 갱신
 	if (m_cameraObjectHandle.IsValid())
 	{
@@ -96,11 +131,6 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		}
 	}
 
-	auto* myGameObject = GetGameObject();
-	if (!myGameObject)
-	{
-		return;
-	}
 
 	auto* fsm = myGameObject->GetComponent<FSMComponent>();
 	if (!fsm)
@@ -348,9 +378,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	bool isRestricted =
 		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
 		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
-
-	if (isRestricted)
-		return;
 
 	auto&				transform = myGameObject->GetTransform();
 	auto				pos = transform.GetPosition();

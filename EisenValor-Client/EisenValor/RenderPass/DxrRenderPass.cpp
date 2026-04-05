@@ -170,7 +170,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 
 	{
 		DxScopedGpuEvent staticEvent(context, L"DXR.CollectStaticMeshData");
-		CollectStaticMeshData(scene, cmdList4.Get(), tlasInstances, frameIndex);
+	//	CollectStaticMeshData(scene, cmdList4.Get(), tlasInstances, frameIndex);
 	}
 	{
 		DxScopedGpuEvent skinnedEvent(context, L"DXR.CollectSkinnedMeshData");

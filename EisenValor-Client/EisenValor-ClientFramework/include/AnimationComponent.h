@@ -30,6 +30,14 @@ public:
 
 	uint8_t GetCurrentKey() const { return m_currentKey; }
 
+	// 루트 모션 이동량 가져오기 및 초기화
+	DirectX::XMVECTOR ConsumeRootMotionDelta() 
+	{ 
+		DirectX::XMVECTOR delta = DirectX::XMLoadFloat3(&m_accumulatedRootDelta);
+		m_accumulatedRootDelta = { 0.0f, 0.0f, 0.0f };
+		return delta;
+	}
+
 	// Final Bone Palette
 	const std::vector<DirectX::XMFLOAT4X4>& GetFinalPalette() const { return m_finalPalette; }
 	
@@ -53,6 +61,7 @@ private:
 	bool m_enableRootMotion = false;
 	bool m_rootMotionFirstFrame = true;
 	DirectX::XMFLOAT3 m_lastRootPos = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_accumulatedRootDelta = { 0.0f, 0.0f, 0.0f };
 
 	// 계산용 임시 버퍼들
 	std::vector<DirectX::XMFLOAT4X4> m_localMatrices;

@@ -162,10 +162,7 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 			// 공격 타입에 따라 다른 애니메이션 키 계산 (100번 구역 사용)
 			uint8_t attackType = static_cast<uint8_t>(fsm->GetCurAttackType());
 			uint8_t animationKey = 100 + attackType;
-
-			// 강공격일 경우 루트모션 활성화 (true)
-			bool useRootMotion = (attackType == FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY);
-			anim->Play(animationKey, false, useRootMotion);
+			anim->Play(animationKey, false, true);
 		}
 	}
 }
@@ -263,7 +260,7 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false);
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
 		}
 	}
 }
