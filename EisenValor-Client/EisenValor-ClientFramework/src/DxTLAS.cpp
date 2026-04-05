@@ -44,6 +44,26 @@ void DxTLAS::Refit(
 	BuildInternal(device, cmdList, uploadHeap, instances, true);
 }
 
+void DxTLAS::EnsureTlasResultBuffer(
+	DxBuffer& deviceBuffer, ID3D12Device5* device, uint64_t requiredSizeInBytes, std::string_view name
+)
+{
+	if (!deviceBuffer.IsValid() || deviceBuffer.GetSizeInBytes() < requiredSizeInBytes)
+	{
+		deviceBuffer.Initialize(
+			device, requiredSizeInBytes, EBufferUsage::RawBuffer, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, std::string(name)
+		);
+
+		if (!deviceBuffer.HasSRV())
+		{
+			auto& heap = GLOBAL(DxDescriptorHeapGlobal);
+			deviceBuffer.CreateSRVWithAutoRecreate(device, heap, SRVDescription{.type = SRVDescription::Type::TLAS});
+			DEBUG_LOG_FMT("[DxTLAS] TLAS SRV created with auto-recreate enabled for '{}'\n", name);
+		}
+	}
+}
+
 void DxTLAS::BuildInternal(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
@@ -58,8 +78,6 @@ void DxTLAS::BuildInternal(
 	{
 		return;
 	}
-
-	const bool isFirstBuild = !m_isBuilt;
 
 	if (isRefit && m_instanceCount != instances.size())
 	{
@@ -123,16 +141,23 @@ void DxTLAS::BuildInternal(
 	const uint64_t instanceDescSize = instanceDescs.size() * sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
 	const uint64_t requiredSize = DxUtils::AlignUp(instanceDescSize, D3D12_RAYTRACING_INSTANCE_DESCS_BYTE_ALIGNMENT);
 
+	if (m_maxInstances > 0 && instanceDescs.size() > m_maxInstances)
+	{
+		DEBUG_LOG_FMT(
+			"[DxTLAS] WARNING: Instance count {} exceeds configured max {}.\n", instanceDescs.size(), m_maxInstances
+		);
+	}
+
 	m_instanceCount = static_cast<uint32_t>(instanceDescs.size());
 
 	auto instanceUpload = uploadHeap->UploadRawData(
 		instanceDescs.data(), instanceDescSize, D3D12_RAYTRACING_INSTANCE_DESCS_BYTE_ALIGNMENT
 	);
 
-	if (!m_instanceDescBuffer.IsValid() || m_instanceDescBuffer.GetSizeInBytes() < instanceDescSize)
+	if (!m_instanceDescBuffer.IsValid() || m_instanceDescBuffer.GetSizeInBytes() < requiredSize)
 	{
 		m_instanceDescBuffer.Initialize(
-			device, instanceDescSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "TLAS_InstanceDescs"
+			device, requiredSize, EBufferUsage::Structured, D3D12_RESOURCE_FLAG_NONE, "TLAS_InstanceDescs"
 		);
 	}
 
@@ -140,6 +165,12 @@ void DxTLAS::BuildInternal(
 	{
 		auto barrierToCopy = DxUtils::CreateAutoTransitionBarrier(m_instanceDescBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
 		cmdList->ResourceBarrier(1, &barrierToCopy);
+	}
+
+	if (0 == m_instanceDescBuffer.GetGPUAddress())
+	{
+		DEBUG_LOG_FMT("[DxTLAS] ERROR: Instance desc buffer has null GPU address. Skipping TLAS build.\n");
+		return;
 	}
 
 	cmdList->CopyBufferRegion(
@@ -150,55 +181,49 @@ void DxTLAS::BuildInternal(
 		DxUtils::CreateAutoTransitionBarrier(m_instanceDescBuffer, D3D12_RESOURCE_STATE_GENERIC_READ);
 	cmdList->ResourceBarrier(1, &transitionBarrier);
 
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
-	inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-	inputs.NumDescs = m_instanceCount;
-	inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	inputs.InstanceDescs = m_instanceDescBuffer.GetGPUAddress();
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS buildInputs = {};
+	buildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+	buildInputs.NumDescs = m_instanceCount;
+	buildInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	buildInputs.InstanceDescs = m_instanceDescBuffer.GetGPUAddress();
+	buildInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE |
+						D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS updateInputs = buildInputs;
+	updateInputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = isRefit ? updateInputs : buildInputs;
+
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO buildPrebuildInfo = {};
+	device->GetRaytracingAccelerationStructurePrebuildInfo(&buildInputs, &buildPrebuildInfo);
+
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO updatePrebuildInfo = buildPrebuildInfo;
+	if (isRefit)
+	{
+		device->GetRaytracingAccelerationStructurePrebuildInfo(&updateInputs, &updatePrebuildInfo);
+	}
+
+	auto& activeTlasBuffer = GetActiveTlasBuffer();
+	EnsureTlasResultBuffer(activeTlasBuffer, device, buildPrebuildInfo.ResultDataMaxSizeInBytes, "TLAS_Result_A");
 
 	if (isRefit)
 	{
-		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE |
-					   D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-	}
-	else
-	{
-		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE |
-					   D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-
-		// DEBUG_LOG_FMT("[DxTLAS] Build with {} instances\n", m_instanceCount);
+		auto& inactiveTlasBuffer = GetInactiveTlasBuffer();
+		const uint64_t minRefitResultSize =
+			std::max(buildPrebuildInfo.ResultDataMaxSizeInBytes, activeTlasBuffer.GetSizeInBytes());
+		EnsureTlasResultBuffer(inactiveTlasBuffer, device, minRefitResultSize, "TLAS_Result_B");
 	}
 
-	if (isFirstBuild || !isRefit)
+	const uint64_t requiredScratchSize =
+		isRefit ? std::max(buildPrebuildInfo.ScratchDataSizeInBytes, updatePrebuildInfo.UpdateScratchDataSizeInBytes)
+				: buildPrebuildInfo.ScratchDataSizeInBytes;
+
+	if (!m_scratchBuffer.IsValid() || m_scratchBuffer.GetSizeInBytes() < requiredScratchSize)
 	{
-		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
-		device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
-
-		if (!m_tlasBuffer.IsValid() || m_tlasBuffer.GetSizeInBytes() < prebuildInfo.ResultDataMaxSizeInBytes)
-		{
-			m_tlasBuffer.Initialize(
-				device, prebuildInfo.ResultDataMaxSizeInBytes, EBufferUsage::RawBuffer,
-				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-				"TLAS_Result"
-			);
-
-			if (!m_tlasBuffer.HasSRV())
-			{
-				auto& heap = GLOBAL(DxDescriptorHeapGlobal);
-				m_tlasBuffer.CreateSRVWithAutoRecreate(
-					device, heap, SRVDescription{.type = SRVDescription::Type::TLAS}
-				);
-				DEBUG_LOG_FMT("[DxTLAS] TLAS SRV created with auto-recreate enabled\n");
-			}
-		}
-
-		if (!m_scratchBuffer.IsValid() || m_scratchBuffer.GetSizeInBytes() < prebuildInfo.ScratchDataSizeInBytes)
-		{
-			m_scratchBuffer.Initialize(
-				device, prebuildInfo.ScratchDataSizeInBytes, EBufferUsage::RawBuffer,
-				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, "TLAS_Scratch"
-			);
-		}
+		m_scratchBuffer.Initialize(
+			device, requiredScratchSize, EBufferUsage::RawBuffer, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			"TLAS_Scratch"
+		);
 	}
 
 	if (m_scratchBuffer.GetCurrentState() != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
@@ -207,20 +232,54 @@ void DxTLAS::BuildInternal(
 		cmdList->ResourceBarrier(1, &barrier);
 	}
 
+	DxBuffer* sourceTlasBuffer = &GetActiveTlasBuffer();
+	DxBuffer* destTlasBuffer = sourceTlasBuffer;
+	uint32_t destTlasBufferIndex = m_activeTlasBufferIndex;
+
+	if (isRefit)
+	{
+		destTlasBufferIndex = 1 - m_activeTlasBufferIndex;
+		destTlasBuffer = &m_tlasBuffers[destTlasBufferIndex];
+	}
+
+	if (0 == destTlasBuffer->GetGPUAddress() || 0 == m_scratchBuffer.GetGPUAddress())
+	{
+		DEBUG_LOG_FMT(
+			"[DxTLAS] ERROR: TLAS build resources have null GPU address. Result={}, Scratch={}. Skipping build.\n",
+			destTlasBuffer->GetGPUAddress(), m_scratchBuffer.GetGPUAddress()
+		);
+		return;
+	}
+
+	if (isRefit && 0 == sourceTlasBuffer->GetGPUAddress())
+	{
+		DEBUG_LOG_FMT("[DxTLAS] ERROR: TLAS refit source buffer has null GPU address. Skipping refit.\n");
+		return;
+	}
+
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
 	buildDesc.Inputs = inputs;
-	buildDesc.DestAccelerationStructureData = m_tlasBuffer.GetGPUAddress();
+	buildDesc.DestAccelerationStructureData = destTlasBuffer->GetGPUAddress();
 	buildDesc.ScratchAccelerationStructureData = m_scratchBuffer.GetGPUAddress();
 
 	if (isRefit)
 	{
-		buildDesc.SourceAccelerationStructureData = m_tlasBuffer.GetGPUAddress();
+		buildDesc.SourceAccelerationStructureData = sourceTlasBuffer->GetGPUAddress();
 	}
+
+	//DEBUG_LOG_FMT(
+	//	"[DxTLAS] {}RTAS: Instances={}, InstanceBuffer={}, Dest={}, Scratch={}, Source={}, ActiveBuffer={}, DestBuffer={}, BuildResultSize={}, UpdateResultSize={}, ActiveSize={}, DestSize={}\n",
+	//	isRefit ? "Refit" : "Build", m_instanceCount, inputs.InstanceDescs, buildDesc.DestAccelerationStructureData,
+	//	buildDesc.ScratchAccelerationStructureData, buildDesc.SourceAccelerationStructureData, m_activeTlasBufferIndex,
+	//	destTlasBufferIndex, buildPrebuildInfo.ResultDataMaxSizeInBytes, updatePrebuildInfo.ResultDataMaxSizeInBytes,
+	//	sourceTlasBuffer->GetSizeInBytes(), destTlasBuffer->GetSizeInBytes()
+	//);
 
 	cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
-	D3D12_RESOURCE_BARRIER uavBarrier = DxUtils::CreateUAVBarrier(m_tlasBuffer.GetResource());
+	D3D12_RESOURCE_BARRIER uavBarrier = DxUtils::CreateUAVBarrier(destTlasBuffer->GetResource());
 	cmdList->ResourceBarrier(1, &uavBarrier);
 
+	m_activeTlasBufferIndex = destTlasBufferIndex;
 	m_isBuilt = true;
 }

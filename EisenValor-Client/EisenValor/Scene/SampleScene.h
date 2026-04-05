@@ -4,6 +4,7 @@ class SampleScene final : public Scene
 {
 protected:
 	void OnRegisterCustomComponents();
+	void OnRegisterCustomSceneComponentDecoders() override;
 
 public:
 	void OnStartImpl() override;

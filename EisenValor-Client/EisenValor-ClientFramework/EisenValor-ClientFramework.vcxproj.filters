@@ -94,6 +94,12 @@
     <Filter Include="Graphics\Renderer\RenderData">
       <UniqueIdentifier>{56c984da-7b98-4f14-a69b-918e1f3b9d57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\UI">
+      <UniqueIdentifier>{0f8665af-ca41-4594-9497-ff5a1243c64f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Mesh">
+      <UniqueIdentifier>{8756c9ba-3deb-44b5-99e7-bbec44e463ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -187,9 +193,6 @@
     <ClInclude Include="include\DxUploadHeap.h">
       <Filter>Graphics\Resource\Upload/Readback</Filter>
     </ClInclude>
-    <ClInclude Include="include\MeshComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="include\DxRtPipelineState.h">
       <Filter>Graphics\Raytracing</Filter>
     </ClInclude>
@@ -244,21 +247,6 @@
     <ClInclude Include="include\CommonUtils.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="include\UIComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ButtonUIComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ImageUIComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="include\RectTransformComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SkinnedMeshComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="include\UIGlobal.h">
       <Filter>Common\Global</Filter>
     </ClInclude>
@@ -300,6 +288,24 @@
     </ClInclude>
     <ClInclude Include="include\FrameRenderData.h">
       <Filter>Graphics\Renderer\RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ImageUIComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UIComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RectTransformComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ButtonUIComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshComponent.h">
+      <Filter>Component\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SkinnedMeshComponent.h">
+      <Filter>Component\Mesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -376,9 +382,6 @@
     <ClCompile Include="src\DxUploadHeap.cpp">
       <Filter>Graphics\Resource\Upload/Readback</Filter>
     </ClCompile>
-    <ClCompile Include="src\MeshComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="src\DxRtPipelineState.cpp">
       <Filter>Graphics\Raytracing</Filter>
     </ClCompile>
@@ -409,20 +412,8 @@
     <ClCompile Include="src\CommonUtils.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="src\ButtonUIComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ImageUIComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
-    <ClCompile Include="src\RectTransformComponent.cpp">
-      <Filter>Component</Filter>
-    </ClCompile>
     <ClCompile Include="src\UIGlobal.cpp">
       <Filter>Common\Global</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SkinnedMeshComponent.cpp">
-      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="src\IResource.cpp">
       <Filter>Resource</Filter>
@@ -456,6 +447,21 @@
     </ClCompile>
     <ClCompile Include="src\AnimationComponent.cpp">
       <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImageUIComponent.cpp">
+      <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RectTransformComponent.cpp">
+      <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ButtonUIComponent.cpp">
+      <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MeshComponent.cpp">
+      <Filter>Component\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SkinnedMeshComponent.cpp">
+      <Filter>Component\Mesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

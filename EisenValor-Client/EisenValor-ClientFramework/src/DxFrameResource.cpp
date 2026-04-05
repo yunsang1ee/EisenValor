@@ -87,7 +87,7 @@ void DxFrameResource::ExecuteAndSignal(ID3D12CommandQueue* queue)
 		queue->GetDevice(IID_PPV_ARGS(&device));
 		if (device)
 		{
-			HRESULT removedReason = device->GetDeviceRemovedReason();
+			HRESULT removedReason = device->GetDeviceRemovedReason(); 
 			DEBUG_LOG_FMT(
 				"[DxFrameResource] Signal failed! DeviceRemovedReason=0x{:08X}\n", static_cast<uint32_t>(removedReason)
 			);

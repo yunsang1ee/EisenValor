@@ -75,14 +75,16 @@ void GameObject::SetActive(bool active)
 	}
 
 	m_isActive = active;
-
-	UpdateActiveInHierarchyCache();
-
-	UpdateComponentActiveCache();
-
-	PropagateActiveStateToChildren();
+	RefreshActiveState();
 
 	DEBUG_LOG_FMT("[GameObject] {} set to {}\n", m_name, active ? "active" : "inactive");
+}
+
+void GameObject::RefreshActiveState()
+{
+	UpdateActiveInHierarchyCache();
+	UpdateComponentActiveCache();
+	PropagateActiveStateToChildren();
 }
 
 void GameObject::UpdateActiveInHierarchyCache()

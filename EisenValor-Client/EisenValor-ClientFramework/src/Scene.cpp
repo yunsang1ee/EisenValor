@@ -1,6 +1,9 @@
 #include "stdafxClientFramework.h"
 #include "Scene.h"
 #include "SceneResource.h"
+#include "MeshComponent.h"
+#include "MeshResource.h"
+#include "ResourceGlobal.h"
 
 void Scene::Initialize()
 {
@@ -12,6 +15,7 @@ void Scene::Initialize()
 
 	RegisterGroupFromType<EngineComponents>();
 	OnRegisterCustomComponents();
+	OnRegisterCustomSceneComponentDecoders();
 	SortComponentsByPriority();
 
 	m_updateList.shrink_to_fit();
@@ -46,11 +50,12 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 	// 2. 예약된 핸들로 실제 생성 요청
 	for (size_t i = 0; i < nodes.size(); ++i)
 	{
-		const auto& nodeData = nodes[i];
+		const auto&		   nodeData = nodes[i];
 		GameObject::Handle myHandle = nodeHandles[i];
-		
+
 		// 부모 핸들 미리 알려줌
-		GameObject::Handle parentHandle = (nodeData.ParentIndex != -1) ? nodeHandles[nodeData.ParentIndex] : GameObject::Handle::Invalid();
+		GameObject::Handle parentHandle =
+			(nodeData.ParentIndex != -1) ? nodeHandles[nodeData.ParentIndex] : GameObject::Handle::Invalid();
 
 		std::string nodeName = std::format("Node_{}", i);
 
@@ -58,15 +63,19 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 			.name = std::move(nodeName),
 			.handle = myHandle,
 			.serverID = std::nullopt,
-			.onCreated = [this, nodeData, parentHandle](GameObject* obj) {
+			.onCreated =
+				[this, nodeData, parentHandle](GameObject* obj)
+			{
 				auto& tr = obj->GetTransform();
-				
+
 				tr.SetPosition(nodeData.LocalPos[0], nodeData.LocalPos[1], nodeData.LocalPos[2]);
-				
-				DX::XMFLOAT4 rot(nodeData.LocalRot[0], nodeData.LocalRot[1], nodeData.LocalRot[2], nodeData.LocalRot[3]);
+
+				DX::XMFLOAT4 rot(
+					nodeData.LocalRot[0], nodeData.LocalRot[1], nodeData.LocalRot[2], nodeData.LocalRot[3]
+				);
 				tr.SetRotationQuaternion(rot);
-				
-				tr.SetScale(nodeData.LocalScale[0]);
+
+				tr.SetScale(nodeData.LocalScale[0], nodeData.LocalScale[1], nodeData.LocalScale[2]);
 
 				if (parentHandle.IsValid())
 				{
@@ -81,13 +90,56 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 
 	for (const auto& entry : componentEntries)
 	{
-		if (entry.NodeIndex >= nodeHandles.size()) continue;
+		if (entry.NodeIndex >= nodeHandles.size())
+		{
+			DEBUG_LOG_FMT("[Scene] Skip component with invalid node index: {}\n", entry.NodeIndex);
+			continue;
+		}
 
 		GameObject::Handle ownerHandle = nodeHandles[entry.NodeIndex];
-		
-		if (entry.ComponentVersion == 0) {
+
+		if (entry.ComponentVersion == 0)
+		{
 			DEBUG_LOG_FMT("[Scene] Warning: Component version 0 for node index {}\n", entry.NodeIndex);
 		}
+
+		if (entry.TypeID == MeshComponent::StaticStableTypeHash())
+		{
+			if (entry.ComponentVersion != 1 || entry.Size != sizeof(EvAsset::Guid) ||
+				entry.Data.size() != sizeof(EvAsset::Guid))
+			{
+				DEBUG_LOG_FMT("[Scene] Failed to parse mesh scene component payload for node {}\n", entry.NodeIndex);
+				continue;
+			}
+
+			EvAsset::Guid meshGuid{};
+			std::memcpy(&meshGuid, entry.Data.data(), sizeof(EvAsset::Guid));
+
+			CreateComponentWithInit<MeshComponent>(
+				ownerHandle,
+				[meshGuid](MeshComponent* mesh)
+				{
+					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(meshGuid);
+					if (nullptr == meshRes)
+					{
+						DEBUG_LOG_FMT("[Scene] Failed to load MeshResource with GUID {} for MeshComponent\n", meshGuid);
+						return;
+					}
+
+					mesh->SetMeshResource(meshRes);
+				}
+			);
+			continue;
+		}
+
+		auto decoderIt = m_sceneComponentDecoders.find(entry.TypeID);
+		if (decoderIt == m_sceneComponentDecoders.end())
+		{
+			DEBUG_LOG_FMT("[Scene] No decoder for custom scene component TypeId={}\n", entry.TypeID);
+			continue;
+		}
+
+		decoderIt->second(entry.ComponentVersion, entry.Data, SceneComponentLoadContext{ownerHandle, entry.NodeIndex});
 	}
 }
 
@@ -97,7 +149,7 @@ GameObject::Handle Scene::ReserveGameObject(
 {
 	GameObject::Handle handle = m_gameObjects.ReserveHandle();
 
-	DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
+	//DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
 
 	if (serverID.has_value())
 	{
@@ -290,7 +342,7 @@ void Scene::CreateGameObjectInternal(const CreateRequest& req)
 		req.onCreated(&object);
 	}
 
-	DEBUG_LOG_FMT("[Scene] GameObject created: {} (Handle={})\n", object.GetName(), req.handle.GetValue());
+	//DEBUG_LOG_FMT("[Scene] GameObject created: {} (Handle={})\n", object.GetName(), req.handle.GetValue());
 }
 
 void Scene::DestroyGameObjectImmediate(GameObject::Handle handle)

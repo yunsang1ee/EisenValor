@@ -31,6 +31,8 @@ public:
 	DX::XMFLOAT4 GetWorldRotationQuaternion();
 
 	void		 SetScale(float uniformScale);
+	void		 SetScale(float x, float y, float z);
+	void		 SetScale(const DX::XMFLOAT3& scale);
 	DX::XMFLOAT3 GetScale() const { return m_localScale; }
 	DX::XMFLOAT3 GetWorldScale();
 

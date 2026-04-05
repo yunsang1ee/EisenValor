@@ -49,25 +49,37 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 
 	auto& deviceG = GLOBAL(DxDeviceGlobal);
 	auto* device = deviceG.GetDevice();
-	auto* cmdContext = frame->GetMainContext();
+	auto& cmdContext = *frame->GetMainContext();
 	auto* uploadHeap = frame->GetUploadHeap();
-	auto* cmdList = cmdContext->CommandList();
+	auto* cmdList = cmdContext.CommandList();
+	DxScopedGpuEvent passEvent(cmdContext, L"SkinningPass");
 
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
+	auto isReadyForSkinning = [](SkinnedMeshComponent& skinnedMeshComp)
+	{
+		if (!skinnedMeshComp.IsValid())
+		{
+			return false;
+		}
+
+		auto* meshRes = skinnedMeshComp.GetSkinnedMeshResource();
+		if (nullptr == meshRes || !meshRes->IsReady())
+		{
+			return false;
+		}
+
+		return nullptr != meshRes->GetVertexBuffer();
+	};
+
 	boneBuffer.Clear();
 	for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
-		if (false == skinnedMeshComp.IsValid())
+		if (!isReadyForSkinning(skinnedMeshComp))
 		{
 			continue;
 		}
-
-		// if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
-		// {
-		// 	continue;
-		// }
 
 		const auto& finalMatrices = skinnedMeshComp.GetFinalMatrices();
 		for (const auto& mat : finalMatrices)
@@ -81,7 +93,7 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 		return;
 	}
 
-	boneBuffer.SyncToGPU(device, *cmdContext, *uploadHeap);
+	boneBuffer.SyncToGPU(device, cmdContext, *uploadHeap);
 
 	cmdList->SetComputeRootSignature(m_rootSignature.Get());
 	cmdList4->SetPipelineState(m_pso.Get());
@@ -90,17 +102,17 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 
 	for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
-		if (false == skinnedMeshComp.IsValid())
+		if (!isReadyForSkinning(skinnedMeshComp))
 		{
 			continue;
 		}
 
-		// if (!skinnedMeshComp.GetGameObject()->GetComponent<AnimationComponent>())
-		// {
-		// 	continue;
-		// }
-
 		auto*	 meshRes = skinnedMeshComp.GetSkinnedMeshResource();
+		auto*	 inVB = meshRes->GetVertexBuffer();
+		if (nullptr == inVB)
+		{
+			continue;
+		}
 		uint32_t vertexCount = meshRes->GetVertexCount();
 
 		auto* outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
@@ -118,8 +130,6 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 			skinnedMeshComp.SetSkinnedVertexBuffer(frameIndex, std::move(buffer));
 			outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
 		}
-
-		auto* inVB = meshRes->GetVertexBuffer();
 
 		D3D12_RESOURCE_BARRIER preBarrier = DxUtils::CreateTransitionBarrier(
 			outVB->GetResource(), outVB->GetCurrentState(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS

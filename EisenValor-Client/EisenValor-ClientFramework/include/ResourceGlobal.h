@@ -96,6 +96,7 @@ public:
 
 	void ProcessPendingLoads();	// 리소스 예약
 	void CheckForReload();	//Hot Reload
+	bool HasPendingLoads() const { return !m_pendingLoads.empty(); }
 
 	// Debug helper: dump loaded material resources to log
 	void DumpLoadedMaterials();
