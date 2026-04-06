@@ -66,8 +66,6 @@ void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool
 	// 루트모션 초기화
 	m_lastRootPos = { 0.0f, 0.0f, 0.0f };
 	m_rootMotionFirstFrame = true;
-
-	m_accumulatedRootDelta = { 0.0f, 0.0f, 0.0f }; 
 }
 
 void AnimationComponent::Stop()
@@ -255,10 +253,11 @@ void AnimationComponent::UpdateBoneMatrices()
 		}
 
 		// Root Motion 처리
-		if (i == 0 && m_enableRootMotion && m_isPlaying)
+		if (i == 0 && m_enableRootMotion)
 		{
 			XMFLOAT3 currentRootPos;
 			XMStoreFloat3(&currentRootPos, pos);
+
 
 			if (m_rootMotionFirstFrame)
 			{
@@ -287,15 +286,13 @@ void AnimationComponent::UpdateBoneMatrices()
 
 				// 델타 누적
 				XMVECTOR currentAccDelta = XMLoadFloat3(&m_accumulatedRootDelta);
-				XMStoreFloat3(&m_accumulatedRootDelta, XMVectorAdd(currentAccDelta, rotatedDelta));
+				XMVECTOR nextAccDelta = XMVectorAdd(currentAccDelta, rotatedDelta);
+				XMStoreFloat3(&m_accumulatedRootDelta, nextAccDelta);
 
-				//// [DEBUG] 최종 이동량 확인 로그
-				//XMFLOAT3 rDelta; XMStoreFloat3(&rDelta, rotatedDelta);
-				//if (XMVector3LengthSq(rotatedDelta).m128_f32[0] > 0.000001f)
-				//{
-				//	DEBUG_LOG_FMT("[RootMotion] Scale:{:.1f} FinalWorldDelta:({:.3f}, {:.3f})\n",
-				//		worldScale.z, rDelta.x, rDelta.z);
-				//}
+				// [DEBUG] 누적 이동량 확인 로그
+				XMFLOAT3 acc;
+				XMStoreFloat3(&acc, nextAccDelta);
+				DEBUG_LOG_FMT("[RootMotion] Accumulated Delta: ({:.3f}, {:.3f}, {:.3f})\n", acc.x, acc.y, acc.z);
 
 				// 기준점 업데이트
 				m_lastRootPos = currentRootPos;

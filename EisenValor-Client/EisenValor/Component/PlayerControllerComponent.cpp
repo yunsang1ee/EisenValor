@@ -131,11 +131,9 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		}
 	}
 
-
 	auto* fsm = myGameObject->GetComponent<FSMComponent>();
 	if (!fsm)
 		return;
-
 
 	const auto curState{fsm->GetCurStateType()};
 
