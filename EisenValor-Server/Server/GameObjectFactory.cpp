@@ -15,16 +15,18 @@
 #include "GameWorld.h"
 #include "NavAgent.h"
 #include "OccupationZone.h"
+#include "HealZone.h"
 
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
-	auto player = std::make_shared<GameServer::Contents::Player>(t.teamType);
+	const auto player = std::make_shared<GameServer::Contents::Player>(t.teamType);
 	player->SetID(t.id);
 	player->SetGameWorld(t.gameWorld);
 	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
-			.currentHP = t.gameObjectData->maxHp,
+			// .currentHP = t.gameObjectData->maxHp,
+			.currentHP = 50,
 			.maxHP = t.gameObjectData->maxHp,
 			.currentStamina = t.gameObjectData->maxStamina,
 			.maxStamina = t.gameObjectData->maxStamina,
@@ -58,7 +60,7 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 
 std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectFactory::CreateGeneral(const GeneralTemplate& t)
 {
-	auto general = std::make_shared<GameServer::Contents::General>(t.teamType);
+	const auto general = std::make_shared<GameServer::Contents::General>(t.teamType);
 	general->SetID(t.id);
 	general->SetGameWorld(t.gameWorld);
 	general->SetTransform(t.transform);
@@ -109,7 +111,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 
 std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectFactory::CreateSoldier(const SoldierTemplate& t)
 {
-	auto soldier{ std::make_shared<GameServer::Contents::Soldier>(t.teamType) };
+	const auto soldier{ std::make_shared<GameServer::Contents::Soldier>(t.teamType) };
 	soldier->SetID(t.id);
 	soldier->SetGameWorld(t.gameWorld);
 	soldier->SetTransform(t.transform);
@@ -148,7 +150,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 
 	std::vector<Vec3> wayPoints;
 
-	if(FB_ENUMS::TEAM_TYPE_OFFENSE == soldier->GetTeamType()) {
+	if(FB_ENUMS::TEAM_TYPE_BLUE == soldier->GetTeamType()) {
 		wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
 		wayPoints.push_back(Vec3{ 40.f, 0.f, 0.f });
 		wayPoints.push_back(Vec3{ 60.f, 0.f, 0.f });
@@ -190,7 +192,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 
 std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
 {
-	auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	const auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	spawnObj->SetID(t.id);
 	spawnObj->SetGameWorld(t.gameWorld);
 	spawnObj->SetTransform(t.transform);
@@ -205,7 +207,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 
 std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
 {
-	auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	const auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);
 	ozObj->SetGameWorld(t.gameWorld);
 	ozObj->SetTransform(t.transform);
@@ -216,4 +218,19 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	oz->SetOwner(ozObj);
 	
 	return ozObj;
+}
+
+std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateHealZone(const HealZoneTemplate& t)
+{
+	const auto hzObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_HEAL_ZONE) };
+	hzObj->SetID(t.id);
+	hzObj->SetGameWorld(t.gameWorld);
+	hzObj->SetTransform(t.transform);
+	hzObj->SetGameObjectData(t.gameObjectData);
+	
+	auto const hz{ hzObj->AddScript(std::make_unique<HealZone>(t.range * t.range, t.time, t.healAmount)) };
+	hz->SetName("HZ");
+	hz->SetOwner(hzObj);
+	
+	return hzObj;
 }

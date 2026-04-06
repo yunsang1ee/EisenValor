@@ -1216,7 +1216,7 @@ struct LC_CHANGE_TEAM_PACKETBuilder {
 inline ::flatbuffers::Offset<LC_CHANGE_TEAM_PACKET> CreateLC_CHANGE_TEAM_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t user_id = 0,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
   LC_CHANGE_TEAM_PACKETBuilder builder_(_fbb);
   builder_.add_user_id(user_id);
   builder_.add_team_type(team_type);
@@ -1258,7 +1258,7 @@ struct CL_ADD_BOT_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CL_ADD_BOT_PACKET> CreateCL_ADD_BOT_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
   CL_ADD_BOT_PACKETBuilder builder_(_fbb);
   builder_.add_team_type(team_type);
   return builder_.Finish();
@@ -1308,7 +1308,7 @@ struct LC_ADD_BOT_PACKETBuilder {
 inline ::flatbuffers::Offset<LC_ADD_BOT_PACKET> CreateLC_ADD_BOT_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t bot_id = 0,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
   LC_ADD_BOT_PACKETBuilder builder_(_fbb);
   builder_.add_bot_id(bot_id);
   builder_.add_team_type(team_type);
@@ -2166,7 +2166,7 @@ inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKE
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t player_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE,
     uint32_t max_hp = 0,
     uint32_t current_hp = 0,
     uint32_t max_stamina = 0,
@@ -2285,7 +2285,7 @@ inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t obj_id = 0,
     FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
     uint32_t max_hp = 0,
     uint32_t current_hp = 0,

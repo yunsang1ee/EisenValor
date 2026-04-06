@@ -24,13 +24,15 @@ enum GAME_OBJECT_TYPE : ubyte{
 	SOLDIER,
 	SPAWNER,
 	OCCUPATION_ZONE,
+	HEAL_ZONE,
 	
 	END
 }
 
 enum TEAM_TYPE: ubyte{
-	OFFENSE = 0,
-	DEFENSE,
+	NONE = 0,
+	BLUE,
+	RED,
 
 	END
 }

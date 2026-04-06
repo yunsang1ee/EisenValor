@@ -95,18 +95,6 @@
       "enemy_detection_range": 3.0,
       "enemy_combat_range": 1.5,
       "attack_cycle_time": 2
-    },
-    {
-      "obj_type_id": 4,
-      "type": "BattleRam",
-      "max_hp": 10000,
-      "max_stamina": 0,
-      "stamina_cost": 0,
-      "extra_stamina": 0,
-      "stun_delay": 0,
-      "stamina_reg": 0,
-      "respawn_time_min": 0,
-      "respawn_time_max": 0
     }
   ]
 }

@@ -43,9 +43,9 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 	teamFlag = !teamFlag;
 	FB_ENUMS::TEAM_TYPE teamType{ static_cast<uint8>(teamFlag) };
 
-	if(teamType == FB_ENUMS::TEAM_TYPE_OFFENSE) {
+	if(teamType == FB_ENUMS::TEAM_TYPE_BLUE) {
 		if(m_offenseCount >= m_info.maxParticipants / 2) {
-			teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+			teamType = FB_ENUMS::TEAM_TYPE_RED;
 			m_defenseCount++;
 		}
 		else
@@ -53,7 +53,7 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 	}
 	else {
 		if(m_defenseCount >= m_info.maxParticipants / 2) {
-			teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+			teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 			m_offenseCount++;
 		}
 		else m_defenseCount++;
@@ -117,15 +117,15 @@ void LobbyServer::GameRoom::ChangeTeam(const std::shared_ptr<ClientSession>& cli
 	auto user{ GetSessionUser(clientSession) };
 	const auto userID{ user->GetID() };
 
-	if(user->GetTeamType() == FB_ENUMS::TEAM_TYPE_OFFENSE) {
-		user->SetTeamType(FB_ENUMS::TEAM_TYPE_DEFENSE);
+	if(user->GetTeamType() == FB_ENUMS::TEAM_TYPE_BLUE) {
+		user->SetTeamType(FB_ENUMS::TEAM_TYPE_RED);
 		m_offenseCount--;
 		m_defenseCount++;
 
 		std::cout << std::format("UserID: {}, Change Team! Team: Defense", userID) << std::endl;
 	}
 	else {
-		user->SetTeamType(FB_ENUMS::TEAM_TYPE_OFFENSE);
+		user->SetTeamType(FB_ENUMS::TEAM_TYPE_BLUE);
 		m_offenseCount++;
 		m_defenseCount--;
 		std::cout << std::format("UserID: {}, Change Team! Team: Offense", userID) << std::endl;
@@ -154,7 +154,7 @@ void LobbyServer::GameRoom::AddBot(const std::shared_ptr<ClientSession>& clientS
 
 	EnterParticipant(newBot);
 
-	std::cout << std::format("BotID: {}, Add Bot! Team: {}", botID, botTeamType == FB_ENUMS::TEAM_TYPE_OFFENSE ? "Offense" : "Defense") << std::endl;
+	std::cout << std::format("BotID: {}, Add Bot! Team: {}", botID, botTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "BLUE" : "RED") << std::endl;
 }
 
 void LobbyServer::GameRoom::RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID)

@@ -31,9 +31,6 @@ bool GameServerEngine::ServerEngineCore::Init(const SessionFactoryFunc clientSes
 		return false;
 	}
 
-	const uint32 workerCount{ MANAGER(ServerEngineConfigManager)->GetThreadConfig().MAX_WORKER_THREAD_COUNT };
-	// m_workerThreads.resize(workerCount);
-
 	DWORD flags{};
 
 #ifdef _USE_IOCP

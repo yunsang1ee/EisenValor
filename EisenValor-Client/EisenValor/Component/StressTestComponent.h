@@ -131,7 +131,7 @@ public:
 
 						scene->CreateComponentWithInit<TeamComponent>(
 							obj->GetHandle(),
-							[](TeamComponent* team) { team->SetTeamType(FB_ENUMS::TEAM_TYPE_OFFENSE); }
+							[](TeamComponent* team) { team->SetTeamType(FB_ENUMS::TEAM_TYPE_BLUE); }
 						);
 
 						scene->CreateComponentWithInit<VitalUIControllerComponent>(

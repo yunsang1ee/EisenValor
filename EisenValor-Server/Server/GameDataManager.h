@@ -26,6 +26,7 @@ struct SkillData {
 struct GameObjectData {
     uint8 objTypeID;
     std::string name;
+
     uint32 maxHp;
     uint32 maxStamina;
     uint32 staminaCost;

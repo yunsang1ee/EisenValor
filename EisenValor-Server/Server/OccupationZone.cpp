@@ -11,7 +11,7 @@ GameServer::Contents::OccupationZone::OccupationZone(const float rangeSq, const 
 void GameServer::Contents::OccupationZone::Update(const float dt)
 {
 	if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_OCCUPIED == m_stateType)
-		return;
+		return;	
 
 	auto const owner{ GetOwner() };
 	auto const ownerPos{ owner->GetPosition() };
@@ -27,7 +27,7 @@ void GameServer::Contents::OccupationZone::Update(const float dt)
 
 			if(false == IsValidObj(o)) continue;
 
-			if(owner->GetTeamType() == o->GetTeamType()) continue;
+			// TODO: 아무 팀이나 점령 가능하게 바꿔야 함.
 
 			if(owner->IsTargetInRange(o)) {
 				m_accDT += dt;

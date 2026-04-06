@@ -157,6 +157,9 @@
     <ClCompile Include="Movement.cpp">
       <Filter>03. Contents\Component\Movement</Filter>
     </ClCompile>
+    <ClCompile Include="HealZone.cpp">
+      <Filter>03. Contents\Component\Scripts\HealZone</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -299,6 +302,9 @@
     </Filter>
     <Filter Include="97. Global">
       <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\Component\Scripts\HealZone">
+      <UniqueIdentifier>{3a015e9b-dd46-49e5-824e-8120f825e034}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -475,6 +481,9 @@
     </ClInclude>
     <ClInclude Include="SessionManager.h">
       <Filter>01. SessionManager</Filter>
+    </ClInclude>
+    <ClInclude Include="HealZone.h">
+      <Filter>03. Contents\Component\Scripts\HealZone</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

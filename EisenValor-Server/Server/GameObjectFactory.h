@@ -46,6 +46,12 @@ namespace GameServer {
 			float	range;
 		};
 
+		struct HealZoneTemplate : public GameObjectTemplate {
+			int64	time;
+			float	range;
+			uint32	healAmount;
+		};
+
 		class GameObjectFactory {
 		private:
 			GameObjectFactory() = delete;
@@ -61,6 +67,7 @@ namespace GameServer {
 			static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
 			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
 			static std::shared_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
+			static std::shared_ptr<GameObject>	CreateHealZone(const HealZoneTemplate& t);
 
 		};
 	}

@@ -19,7 +19,7 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime(20min)
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime{ 20min }
 {
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
@@ -44,7 +44,7 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 	CreateGameWorldObjects();
 
-	auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
+	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
 	if(lobbyServerSession) {
 		const uint16 port{ GetGameWorldThread()->GetPort() };
 		const uint16 worldID{ GetID() };
@@ -100,7 +100,7 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 	static const Vec3 offset{ 0.f, 0.f, 0.f };
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
-	static bool flag{ false };
+	static FB_ENUMS::TEAM_TYPE teamFlag{ FB_ENUMS::TEAM_TYPE_BLUE };
 
 	PlayerTemplate t;
 	t.transform = Transform{ startPos, rot };
@@ -109,9 +109,16 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
 	}
 	else {
-		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-		flag = !flag;
+		t.teamType = teamFlag;
+
+		if(t.teamType == FB_ENUMS::TEAM_TYPE_BLUE) {
+			teamFlag = FB_ENUMS::TEAM_TYPE_RED;
+		}
+		else if(t.teamType == FB_ENUMS::TEAM_TYPE_RED) {
+			teamFlag = FB_ENUMS::TEAM_TYPE_BLUE;
+		}
 	}
+	
 	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	t.gameWorld = this;
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
@@ -326,10 +333,10 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 
 	FB_ENUMS::TEAM_TYPE teamType{};
 
-	if(FB_ENUMS::TEAM_TYPE_OFFENSE == player->GetTeamType())
-		teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+	if(FB_ENUMS::TEAM_TYPE_BLUE == player->GetTeamType())
+		teamType = FB_ENUMS::TEAM_TYPE_RED;
 	else
-		teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 
 	constexpr float distance{ 5.0f };
 
@@ -776,30 +783,43 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
 	//	AddGameObject(std::move(general));
 	//}
+
+	// 회복소 생성
+	{
+		HealZoneTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_HEAL_ZONE);
+		t.gameObjectData = nullptr;
+		t.transform = Transform{ Vec3{ -24.9313736f,-8.80016708f,-5.53999329f }, Vec3{} };
+		t.gameWorld = this;
+		t.range = 3.f;
+		t.healAmount = 10;
+		t.time = 5;
+		t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
+		auto healZone{ GameServer::Contents::GameObjectFactory::CreateHealZone(t) };
+		AddGameObject(std::move(healZone));
+	}
 	
 	 // 점령지 생성
-	//{
-	//	OccupationZoneTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-	//	t.posInfo = PosInfo{
-	//	.pos = Vec3{30.f, 0.f, 30.f},
-	//	.rot = Vec3{}
-	//	};
-	//	t.gameWorld = this;
-	//	t.range = 0.5f;
-	//	t.time = 10;
-	//	t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
-	//	auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
-	//	AddGameObject(std::move(oz));
-	//}
+	{
+		OccupationZoneTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
+		t.gameObjectData = nullptr;
+		t.transform = Transform{ Vec3{30.f, 0.f, 30.f}, Vec3{} };
+		t.gameWorld = this;
+		t.range = 0.5f;
+		t.time = 10;
+		t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
+		auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
+		AddGameObject(std::move(oz));
+	}
 
 	// 공격팀 스포너 생성
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.gameObjectData = nullptr;
 		t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
-		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+		t.teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 		t.gameWorld = this;
 
 		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
@@ -810,8 +830,9 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.gameObjectData = nullptr;
 		t.transform = Transform{ Vec3{ -25.f, -9.f, -12.f}, Vec3{} };
-		t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
+		t.teamType = FB_ENUMS::TEAM_TYPE_RED;
 		t.gameWorld = this;
 
 		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };

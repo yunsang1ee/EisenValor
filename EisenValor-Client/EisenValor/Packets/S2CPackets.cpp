@@ -227,9 +227,9 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 	else
 		DEBUG_LOG_FMT("User State: READY\n");
 
-	if (user->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (user->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("User TeamType: OFFENSE\n");
+		DEBUG_LOG_FMT("User TeamType: BLUE\n");
 	}
 	else
 		DEBUG_LOG_FMT("User TeamType: DEFENSE\n");
@@ -258,12 +258,12 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 		}
 		else
 			DEBUG_LOG_FMT("Participant State: READY\n");
-		if (participant->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+		if (participant->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 		{
-			DEBUG_LOG_FMT("Participant TeamType: OFFENSE\n");
+			DEBUG_LOG_FMT("Participant TeamType: BLUE\n");
 		}
 		else
-			DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
+			DEBUG_LOG_FMT("Participant TeamType: RED\n");
 	}
 
 	GLOBAL(SceneGlobal).LoadScene("RoomScene");
@@ -315,12 +315,12 @@ bool NetBridge::S2C::Handle_LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
 	else
 		DEBUG_LOG_FMT("Participant State: READY\n");
 
-	if (participant->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (participant->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("Participant TeamType: OFFENSE\n");
+		DEBUG_LOG_FMT("Participant TeamType: BLUE\n");
 	}
 	else
-		DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
+		DEBUG_LOG_FMT("Participant TeamType: RED\n");
 
 
 	return true;
@@ -367,13 +367,13 @@ bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB
 {
 	// 참가자가 팀을 변경함
 	// TODO: 참가자가 팀을 변경했음을 화면에 보여주기
-	if (recvPkt.team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (recvPkt.team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("User ID: {} Change Team To OFFENSE\n", recvPkt.user_id());
+		DEBUG_LOG_FMT("User ID: {} Change Team To BLUE\n", recvPkt.user_id());
 	}
 	else
 	{
-		DEBUG_LOG_FMT("User ID: {} Change Team To DEFENSE\n", recvPkt.user_id());
+		DEBUG_LOG_FMT("User ID: {} Change Team To RED\n", recvPkt.user_id());
 	}
 	return true;
 }
