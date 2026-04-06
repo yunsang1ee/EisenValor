@@ -458,9 +458,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			auto playerObjHandle = playerObj->GetHandle();
 
-			// 모델 크기
-			playerObj->GetTransform().SetScale(2.0f);
-
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 
 				playerObjHandle,
@@ -789,7 +786,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
 			{
-				tr.SetScale(2.0f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[](SkinnedMeshComponent* mesh)
@@ -848,7 +844,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
-				tr.SetScale(2.0f);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)

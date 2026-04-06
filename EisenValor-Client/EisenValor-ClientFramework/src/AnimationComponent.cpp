@@ -24,6 +24,7 @@ void AnimationComponent::OnUpdate(float dt)
 		if (m_isLooping)
 		{
 			m_currentTime = std::fmod(m_currentTime, duration);
+			m_rootMotionFirstFrame = true;
 		}
 		else
 		{
@@ -65,6 +66,8 @@ void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool
 	// 루트모션 초기화
 	m_lastRootPos = { 0.0f, 0.0f, 0.0f };
 	m_rootMotionFirstFrame = true;
+
+	m_accumulatedRootDelta = { 0.0f, 0.0f, 0.0f }; 
 }
 
 void AnimationComponent::Stop()
@@ -268,25 +271,19 @@ void AnimationComponent::UpdateBoneMatrices()
 				// Delta 계산 (현재 위치 - 이전 위치)
 				XMVECTOR deltaVec = XMVectorSubtract(pos, XMLoadFloat3(&m_lastRootPos));
 
-				// 현재 회전 및 스케일
+				// 현재 회전
 				auto&	 transform = myGameObject->GetTransform();
-				XMFLOAT3 worldScale = transform.GetWorldScale();
 				XMFLOAT4 worldRotQ = transform.GetWorldRotationQuaternion();
 				
 				XMFLOAT3 delta;
 				XMStoreFloat3(&delta, deltaVec);
 				delta.z = -delta.z; // Z축 반전
 
-				XMVECTOR scaledDeltaVec = XMVectorSet(
-					delta.x * worldScale.x,
-					delta.y * worldScale.y,
-					delta.z * worldScale.z,
-					0.0f
-				);
+				XMVECTOR DeltaVec = XMVectorSet(delta.x, delta.y, delta.z, 0.0f);
 
 				// 캐릭터 회전
 				XMVECTOR rotQuat = XMLoadFloat4(&worldRotQ);
-				XMVECTOR rotatedDelta = XMVector3Rotate(scaledDeltaVec, rotQuat);
+				XMVECTOR rotatedDelta = XMVector3Rotate(DeltaVec, rotQuat);
 
 				// 델타 누적
 				XMVECTOR currentAccDelta = XMLoadFloat3(&m_accumulatedRootDelta);

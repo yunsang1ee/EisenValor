@@ -448,7 +448,7 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	Transform& playerTr = owner->GetTransform();
 	// 1. 타겟의 월드 위치 가져오기
 	DirectX::XMFLOAT3 vPos = playerTr.GetWorldPosition();
-	vPos.y += 2.0f;
+	vPos.y += 1.0f;
 	DirectX::XMVECTOR worldPos = DirectX::XMLoadFloat3(&vPos);
 
 	// 2. 뷰포트 정보 가져오기
@@ -541,7 +541,7 @@ void BattleUIControllerComponent::UpdateUIPosition()
 		if (auto* rectTr = rootObj->GetComponent<RectTransformComponent>()) {
 			float offsetX = (screenPos.x - 0.5f) * (float)Variable::kDefaultWindowWidth;
 			float offsetY = (screenPos.y - 0.5f) * (float)Variable::kDefaultWindowHeight;
-			float containerHalfSize = 50.0f * scale; 
+			float containerHalfSize = kcontainerHalfSize * scale; 
 			rectTr->SetOffsetMin({offsetX - containerHalfSize, offsetY - containerHalfSize});
 			rectTr->SetOffsetMax({offsetX + containerHalfSize, offsetY + containerHalfSize});
 
