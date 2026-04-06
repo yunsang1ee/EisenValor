@@ -833,14 +833,14 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			}
 			else
 			{
-				scene->CreateComponentWithInit<MeshComponent>(
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
-					[teamType](MeshComponent* mesh)
+					[teamType](SkinnedMeshComponent* mesh)
 					{
-						auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+						auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Knight_Armored.evskin");
 						if (nullptr != meshRes)
 						{
-							mesh->SetMeshResource(meshRes);
+							mesh->SetSkinnedMeshResource(meshRes);
 						}
 					}
 				);
@@ -895,13 +895,28 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 			}
 
-			// Animation Component
 			if (isGeneral)
 			{
 				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
+					objHandle, [](AnimationComponent* anim) 
+					{ AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 				);
 			}
+
+			//// Animation Component
+			//if (isGeneral)
+			//{
+			//	scene->CreateComponentWithInit<AnimationComponent>(
+			//		objHandle,
+			//		[](AnimationComponent* anim)
+			//		{
+			//			if (isGeneral)
+			//				AnimationLoader::AnimationApply(anim, "CursedKnight");
+			//			// else
+			//			// 	AnimationLoader::AnimationApply(anim, "Knight_Armored");
+			//		}
+			//	);
+			//}
 
 			// Shield
 			if (isGeneral)

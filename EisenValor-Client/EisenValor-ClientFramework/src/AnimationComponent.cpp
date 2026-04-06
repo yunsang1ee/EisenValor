@@ -289,10 +289,10 @@ void AnimationComponent::UpdateBoneMatrices()
 				XMVECTOR nextAccDelta = XMVectorAdd(currentAccDelta, rotatedDelta);
 				XMStoreFloat3(&m_accumulatedRootDelta, nextAccDelta);
 
-				// [DEBUG] 누적 이동량 확인 로그
-				XMFLOAT3 acc;
-				XMStoreFloat3(&acc, nextAccDelta);
-				DEBUG_LOG_FMT("[RootMotion] Accumulated Delta: ({:.3f}, {:.3f}, {:.3f})\n", acc.x, acc.y, acc.z);
+				//// [DEBUG] 누적 이동량 확인 로그
+				//XMFLOAT3 acc;
+				//XMStoreFloat3(&acc, nextAccDelta);
+				//DEBUG_LOG_FMT("[RootMotion] Accumulated Delta: ({:.3f}, {:.3f}, {:.3f})\n", acc.x, acc.y, acc.z);
 
 				// 기준점 업데이트
 				m_lastRootPos = currentRootPos;
