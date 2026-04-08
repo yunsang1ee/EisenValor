@@ -13,6 +13,7 @@
 #include <InputGlobal.h>
 #include <Packets/C2SPackets.h>
 #include <Component/FSM/FSMComponent.h>
+#include "Util/GameConstants.h"
 
 // ==================================
 //		  GENERAL_IDLE_STATE
@@ -358,36 +359,34 @@ void SoldierMoveState::Exit(FSMComponent* fsm)
 {
 }
 
-// Soldier Stun
-SoldierStunState::SoldierStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
-{
-	SetHasExitTime(true);
-	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
-}
+//// Soldier Stun
+//SoldierStunState::SoldierStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+//{
+//	SetHasExitTime(true);
+//	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+//}
+//
+//void SoldierStunState::Enter(FSMComponent* fsm)
+//{
+//	if (auto* obj = fsm->GetGameObject())
+//	{
+//		if (auto* anim = obj->GetComponent<AnimationComponent>())
+//		{
+//			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
+//		}
+//	}
+//}
 
-void SoldierStunState::Enter(FSMComponent* fsm)
-{
-	if (auto* obj = fsm->GetGameObject())
-	{
-		if (auto* anim = obj->GetComponent<AnimationComponent>())
-		{
-			anim->Play(
-				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true
-			);
-		}
-	}
-}
-
-void SoldierStunState::Update(FSMComponent* fsm, float dt)
-{
-}
-
-void SoldierStunState::Exit(FSMComponent* fsm)
-{
-}
+//void SoldierStunState::Update(FSMComponent* fsm, float dt)
+//{
+//}
+//
+//void SoldierStunState::Exit(FSMComponent* fsm)
+//{
+//}
 
 // Soldier Dead
-SoldierDeadState::SoldierDeadState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
+SoldierDeadState::SoldierDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 {
 	SetHasExitTime(true);
 }
@@ -408,5 +407,55 @@ void SoldierDeadState::Update(FSMComponent* fsm, float dt)
 }
 
 void SoldierDeadState::Exit(FSMComponent* fsm)
+{
+}
+
+// Soldier Chase
+SoldierChaseState::SoldierChaseState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE)
+{
+}
+
+void SoldierChaseState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE), true);
+		}
+	}
+}
+
+void SoldierChaseState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void SoldierChaseState::Exit(FSMComponent* fsm)
+{
+}
+
+// Soldier Attack
+SoldierAttackState::SoldierAttackState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+{
+	SetHasExitTime(true);
+	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE));
+}
+
+void SoldierAttackState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK), false, true);
+		}
+	}
+}
+
+void SoldierAttackState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void SoldierAttackState::Exit(FSMComponent* fsm)
 {
 }

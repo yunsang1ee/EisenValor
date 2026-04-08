@@ -3,6 +3,7 @@
 #include "AnimationComponent.h"
 #include "AnimationResource.h"
 #include "ResourceGlobal.h"
+#include "Util/GameConstants.h"
 #include <Packets/Enums_generated.h>
 
 namespace AnimationLoader
@@ -58,22 +59,26 @@ namespace AnimationLoader
 		{
 			// 병사용 상태 키로 애니메이션 등록 (오프셋 50)
 			anim->AddAnimation(
-				50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE),
+				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE),
 				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Idle_Seq.evanim")
 			);
 			anim->AddAnimation(
-				50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE),
+				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE),
 				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Jog/Jog_F_Seq.evanim")
 			);
-			// anim->AddAnimation(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_STUN),
+			// anim->AddAnimation(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_STUN),
 			// res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Hurt_Light_FW_Seq.evanim"));
 			anim->AddAnimation(
-				50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD),
+				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD),
 				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Die_Seq.evanim")
+			);
+			anim->AddAnimation(
+				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK),
+				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Attack/Attack_01_Seq.evanim")
 			);
 
 			// 기본 애니메이션 재생
-			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE), true);
+			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE), true);
 		}
 	}
 }

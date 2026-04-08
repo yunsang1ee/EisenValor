@@ -1,8 +1,8 @@
 #include "stdafxClient.h"
 #include "StatePool.h"
 #include "GeneralStates.h"
-#include "Util/GameConstants.h"
 #include <Packets/Enums_generated.h>
+#include "Util/GameConstants.h"
 
 // 정적 멤버 초기화
 std::map<uint8_t, std::unique_ptr<State>> StatePool::s_instanceMap;
@@ -25,14 +25,13 @@ void StatePool::Initialize()
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE] = std::make_unique<PlayerDefenseState>();
 
 	// Soldier States
-	s_instanceMap[StateOffset::kSoldierOffset + FB_ENUMS::SOLDIER_STATE_TYPE_IDLE] =
-		std::make_unique<SoldierIdleState>();
-	s_instanceMap[StateOffset::kSoldierOffset + FB_ENUMS::SOLDIER_STATE_TYPE_MOVE] =
-		std::make_unique<SoldierMoveState>();
-	s_instanceMap[StateOffset::kSoldierOffset + FB_ENUMS::PLAYER_STATE_TYPE_STUN] =
-		std::make_unique<SoldierStunState>();
-	s_instanceMap[StateOffset::kSoldierOffset + FB_ENUMS::SOLDIER_STATE_TYPE_DEAD] =
-		std::make_unique<SoldierDeadState>();
+	uint8_t offset = StateOffset::kSoldierOffset;
+	s_instanceMap[offset + FB_ENUMS::SOLDIER_STATE_TYPE_IDLE] = std::make_unique<SoldierIdleState>();
+	s_instanceMap[offset + FB_ENUMS::SOLDIER_STATE_TYPE_MOVE] = std::make_unique<SoldierMoveState>();
+	//s_instanceMap[offset + FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<SoldierStunState>();
+	s_instanceMap[offset + FB_ENUMS::SOLDIER_STATE_TYPE_DEAD] = std::make_unique<SoldierDeadState>();
+	s_instanceMap[offset + FB_ENUMS::SOLDIER_STATE_TYPE_CHASE] = std::make_unique<SoldierChaseState>();
+	s_instanceMap[offset + FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK] = std::make_unique<SoldierAttackState>();
 
 	// 상태 추가 시 여기에 등록
 }
