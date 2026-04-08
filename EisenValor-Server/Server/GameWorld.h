@@ -94,7 +94,9 @@ namespace GameServer {
 			float																	m_lastDT;
 			float																	m_accDT;
 			float																	m_accGameTime;
-			std::chrono::milliseconds												m_remainingTime;
+			float																	m_fixedUpdateTick;
+			uint32																	m_maxUpdateStep;
+			std::chrono::seconds													m_remainingTimeSec;
 			uint64																	m_worldFrameCount;
 	
 			CollisionDetector														m_collisionDetector;

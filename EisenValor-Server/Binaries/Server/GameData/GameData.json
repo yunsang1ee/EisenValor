@@ -4,8 +4,9 @@
   },
 
   "GameWorldData": {
-    "GAME_TIME_MIN": 20,
-    "GAME_UPDATE_TIME_MS": 100
+    "GAME_TIME_SEC": 1800,
+    "GAME_UPDATE_TICK": 60.0,
+    "MAX_UPDATE_STEP": 5
   },
 
   "SkillData": [

@@ -7,8 +7,9 @@ struct GameRoomData {
 };
 
 struct GameWorldData {
-    uint32	gameTimeMin;
-    uint32	gameUpdateTimeMs;
+    uint32	gameTimeSec;
+    float   gameUpdateTick;
+    uint32  maxUpdateStep;
 };
 
 struct SkillData {

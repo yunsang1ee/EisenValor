@@ -33,11 +33,14 @@ bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_v
 	if(doc.HasMember("GameWorldData")) {
 		const Value& data = doc["GameWorldData"];
 
-		if(data.HasMember("GAME_TIME_MIN") && data["GAME_TIME_MIN"].IsUint())
-			m_gameWorldData.gameTimeMin = data["GAME_TIME_MIN"].GetUint();
+		if(data.HasMember("GAME_TIME_SEC") && data["GAME_TIME_SEC"].IsUint())
+			m_gameWorldData.gameTimeSec = data["GAME_TIME_SEC"].GetUint();
 
-		if(data.HasMember("GAME_UPDATE_TIME_MS") && data["GAME_UPDATE_TIME_MS"].IsUint())
-			m_gameWorldData.gameUpdateTimeMs = data["GAME_UPDATE_TIME_MS"].GetUint();
+		if(data.HasMember("GAME_UPDATE_TICK") && data["GAME_UPDATE_TICK"].IsFloat())
+			m_gameWorldData.gameUpdateTick = data["GAME_UPDATE_TICK"].GetFloat();
+
+		if(data.HasMember("MAX_UPDATE_STEP") && data["MAX_UPDATE_STEP"].IsUint())
+			m_gameWorldData.maxUpdateStep = data["MAX_UPDATE_STEP"].GetUint();
 	}
 
     if(doc.HasMember("SkillData") && doc["SkillData"].IsArray()) {

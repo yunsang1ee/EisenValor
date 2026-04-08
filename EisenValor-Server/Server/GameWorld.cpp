@@ -20,11 +20,14 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_remainingTime{ 20min }
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}
 {
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
 #endif
+	m_remainingTimeSec = std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec };
+	m_fixedUpdateTick = 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick;
+	m_maxUpdateStep = MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep;
 }
 
 GameServer::Contents::GameWorld::~GameWorld()
@@ -56,31 +59,28 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
-	static constexpr float kFixedInterval{ 1.0f / 60.0f };
-	static constexpr int32 kMaxSubSteps{ 5 };
-
 	m_lastDT = m_dt;  
 	m_dt = dt;
 	m_accDT += dt;
 
 	int loopCount = 0;
 	
-	while(m_accDT >= kFixedInterval && loopCount < kMaxSubSteps) {
-		m_accDT -= kFixedInterval;
+	while(m_accDT >= m_fixedUpdateTick && loopCount < m_maxUpdateStep) {
+		m_accDT -= m_fixedUpdateTick;
 		ProcessEvents();
-		m_navSystem.Update(kFixedInterval);
+		m_navSystem.Update(m_fixedUpdateTick);
 		for(const auto& group : m_gameObjectsGroups) {
 			for(const auto& [id, obj] : group) {
-				if(obj) obj->Update(kFixedInterval);
+				if(obj) obj->Update(m_fixedUpdateTick);
 			}
 		}
 		CheckCollision();
 		m_worldFrameCount++;
-		CheckGameTime(kFixedInterval);
+		CheckGameTime(m_fixedUpdateTick);
 		loopCount++;
 	}
 
-	if(m_accDT > kFixedInterval * kMaxSubSteps) {
+	if(m_accDT > m_fixedUpdateTick * m_maxUpdateStep) {
 		m_accDT = 0.0f;
 	}
 }
@@ -589,22 +589,15 @@ void GameServer::Contents::GameWorld::ProcessPendingRemoveObjectList()
 void GameServer::Contents::GameWorld::CheckGameTime(const float dt)
 {
 	m_accGameTime += dt;
-
 	while(m_accGameTime >= 1.f) {
-		m_accGameTime = 0.f;
-
-		if(m_remainingTime.count() > 0) {
-			m_remainingTime -= std::chrono::milliseconds(1000);
-
-			const auto remainTime = static_cast<uint32>(m_remainingTime.count());
-			const uint32_t totalSeconds = remainTime / 1000;
-
+		m_accGameTime -= 1.f;
+		if(m_remainingTimeSec.count() > 0) {
+			m_remainingTimeSec -= std::chrono::seconds(1);
+			const uint32_t totalSeconds = static_cast<uint32_t>(m_remainingTimeSec.count());
 			const uint32_t minutes = totalSeconds / 60;
 			const uint32_t seconds = totalSeconds % 60;
-
 			std::cout << std::format("{}M {}S", minutes, seconds) << std::endl;
-
-			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(remainTime);
+			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(totalSeconds);
 			Broadcast(std::move(pb));
 		}
 	}
