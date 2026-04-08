@@ -12,6 +12,7 @@
 #include "Component/FSM/FSMComponent.h"
 #include "Component/FSM/StatePool.h"
 #include "Component/StressTestComponent.h"
+#include "Component/SocketComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -42,8 +43,8 @@ constexpr std::string_view kTorchPreviewSphereMaterialPath = "Resource/Material/
 void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
-		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
-		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent>();
+		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent,
+		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 

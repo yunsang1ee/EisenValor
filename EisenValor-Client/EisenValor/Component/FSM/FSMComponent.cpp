@@ -4,6 +4,7 @@
 #include "GameObject.h"
 #include "GameObject.inl"
 #include <Packets/Enums_generated.h>
+#include "Util/GameConstants.h"
 
 void FSMComponent::OnUpdate(float deltaTime)
 {
@@ -34,6 +35,13 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	// 서버에서 오는 상태 기록
 	m_serverState = serverState;
 
+	// 병사 오프셋 적용
+	uint8_t targetState = serverState;
+	if (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+	{
+		targetState += StateOffset::kSoldierOffset;
+	}
+
 	// 서버에서 온 패킷 무시
 	if (m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
 		m_curStateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
@@ -43,11 +51,14 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	}
 
 	// 그 외 경우 서버 상태로 변경
-	ChangeState(serverState);
+	ChangeState(targetState);
 }
 
 void FSMComponent::ChangeState(uint8_t nextStateType)
 {
+	// 디버깅 로그
+	DEBUG_LOG_FMT("[FSM] ChangeState: {} -> {} (ObjType: {})\n", (int)m_curStateType, (int)nextStateType, (int)m_objType);
+
 	// 같은 상태로 다시 ChangeState가 불렸을 때 애니메이션을 다시 틀지 않도록 방어
 	if (m_curStateType == nextStateType) return;
 
@@ -87,3 +98,4 @@ void FSMComponent::ChangeState(uint8_t nextStateType)
 		}
 	}
 }
+

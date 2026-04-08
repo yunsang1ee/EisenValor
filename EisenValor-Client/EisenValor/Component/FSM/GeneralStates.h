@@ -1,6 +1,9 @@
 #pragma once
 #include "StatePool.h"
 
+// ==================================
+//            PLAYER_STATES
+// ==================================
 // idle
 // 서버 로직에 맞게 이식
 // 데이터 없이 로직만 수행
@@ -90,3 +93,74 @@ public:
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;
 };
+
+// ==================================
+//            SOLDIER STATES
+// ==================================
+
+// Soldier Idle
+class SoldierIdleState : public State {
+public:
+	SoldierIdleState();
+	virtual ~SoldierIdleState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Soldier Move
+class SoldierMoveState : public State {
+public:
+	SoldierMoveState();
+	virtual ~SoldierMoveState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Soldier Stun
+class SoldierStunState : public State {
+public:
+	SoldierStunState();
+	virtual ~SoldierStunState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Soldier Dead
+class SoldierDeadState : public State {
+public:
+	SoldierDeadState();
+	virtual ~SoldierDeadState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Soldier Chase
+class SoldierChaseState : public State {
+public:
+	SoldierChaseState();
+	virtual ~SoldierChaseState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Soldier Attack
+class SoldierAttackState : public State {
+public:
+	SoldierAttackState();
+	virtual ~SoldierAttackState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+

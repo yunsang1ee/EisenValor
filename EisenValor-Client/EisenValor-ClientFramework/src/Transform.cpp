@@ -104,6 +104,10 @@ void Transform::SetWorldPosition(const DX::XMFLOAT3& worldPosition)
 
 XMFLOAT3 Transform::GetWorldPosition()
 {
+	if (m_isDirty)
+	{
+		UpdateWorldMatrix();
+	}
 	return {m_worldMatrix._41, m_worldMatrix._42, m_worldMatrix._43};
 }
 
