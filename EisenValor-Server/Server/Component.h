@@ -12,7 +12,7 @@ namespace GameServer {
 			virtual void Update(const float dt) abstract;
 	
 		public:
-			void		SetOwner(std::shared_ptr<GameObject> const owner) { m_owner = owner; }
+			void SetOwner(std::shared_ptr<GameObject> const owner) { m_owner = owner; }
 			std::shared_ptr<GameObject> GetOwner() const { return m_owner.lock(); }
 
 		private:

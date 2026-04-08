@@ -15,6 +15,7 @@
 #include "SessionManager.h"
 #include "LobbyServerSession.h"
 #include "Movement.h"
+#include "NavAgent.h"
 
 // #define PRINT_GAME_WORLD_LOG
 
@@ -55,14 +56,15 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
-	constexpr float kFixedInterval{ 1.0f / 60.0f };
-	constexpr int   kMaxSubSteps{ 5 };
+	static constexpr float kFixedInterval{ 1.0f / 60.0f };
+	static constexpr int32 kMaxSubSteps{ 5 };
 
 	m_lastDT = m_dt;  
 	m_dt = dt;
 	m_accDT += dt;
 
 	int loopCount = 0;
+	
 	while(m_accDT >= kFixedInterval && loopCount < kMaxSubSteps) {
 		m_accDT -= kFixedInterval;
 		ProcessEvents();
@@ -247,11 +249,18 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	player->SetPosition(snapPos);
 	player->SetRotation(transform.GetRotationDegree());
 
+	// ── 5. Crowd에 플레이어 위치 동기화 ──────────────────────────
+	auto navAgent = player->GetComponent<NavAgent>();
+	if(navAgent) {
+		navAgent->SyncPosition(snapPos, prevPos, m_lastDT);
+	}
+
 	{
 		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()));
 		Broadcast(std::move(pb));
 	}
 }
+
 void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
@@ -715,13 +724,11 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 #ifdef APPLY_LOBBY_SERVER
 	for(const auto& [id, participant] : m_reservedParticipantInfo) {
 		if(FB_ENUMS::PARTICIPANT_TYPE_BOT == participant.type) {
-			static bool flag{ true };
-
 			GeneralTemplate t;
 			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(participant.teamType);
-			if(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) {
+			if(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) {
 				static Vec3 startPos{ -12.f, -9.f, -10.f };
 				t.transform = Transform{ startPos, Vec3{} };
 				startPos.z += 1.f;
@@ -733,8 +740,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 				t.transform = Transform{ startPos, Vec3{} };
 			}
 			t.gameWorld = this;
-			flag = !flag;
-
+			
 			auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
 			AddGameObject(std::move(general));
 		}

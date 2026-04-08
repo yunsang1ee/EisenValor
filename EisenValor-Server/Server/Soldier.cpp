@@ -63,6 +63,10 @@ bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const at
 			damage = attackerAtkInfo.skillData->damage;
 		}
 	}
+	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
+		damage = 10;
+	}
+
 	DecHP(damage);
 
 	return true;

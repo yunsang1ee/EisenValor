@@ -183,9 +183,6 @@
     <Filter Include="01. SessionManager\ClientSession">
       <UniqueIdentifier>{cbaaff46-38ff-49d6-afed-319281533012}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. SessionManager\LobbyServerSession">
-      <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
-    </Filter>
     <Filter Include="02. Packets">
       <UniqueIdentifier>{a72fea0a-efab-4482-a77f-c526fc498cbd}</UniqueIdentifier>
     </Filter>
@@ -306,13 +303,13 @@
     <Filter Include="03. Contents\Component\Scripts\HealZone">
       <UniqueIdentifier>{3a015e9b-dd46-49e5-824e-8120f825e034}</UniqueIdentifier>
     </Filter>
+    <Filter Include="01. SessionManager\LobbyServerSession">
+      <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>99. pch</Filter>
-    </ClInclude>
-    <ClInclude Include="ServerManager.h">
-      <Filter>00. main\ServerManager</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
       <Filter>03. Contents\GameObject</Filter>
@@ -484,6 +481,9 @@
     </ClInclude>
     <ClInclude Include="HealZone.h">
       <Filter>03. Contents\Component\Scripts\HealZone</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerManager.h">
+      <Filter>00. main\ServerManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -75,7 +75,6 @@ namespace GameServer {
 			void CreateGameWorldObjects();
 
 			void SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot);
-
 		private:
 			Users																	m_users;
 			Bots																	m_bots;
