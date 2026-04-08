@@ -32,13 +32,13 @@ private:
 	HandleOf<ImageUIComponent> m_flagIcon;
 
 	// UI 설정 상수
-	static constexpr float kHPBarWidth = 160.0f;
-	static constexpr float kHPBarHeight = 20.0f;
-	static constexpr float kStaminaBarWidth = 140.0f;
-	static constexpr float kStaminaBarHeight = 17.5f;
-	static constexpr float kFlagSize = 70.0f;
+	static constexpr float kHPBarWidth = 120.0f;
+	static constexpr float kHPBarHeight = 15.0f;
+	static constexpr float kStaminaBarWidth = 105.0f;
+	static constexpr float kStaminaBarHeight = 13.125f;
+	static constexpr float kFlagSize = 52.5f;
 	static constexpr float kPadding = -1.0f;
-    static constexpr float kVerticalOffset = 4.0f;
+    static constexpr float kVerticalOffset = 2.0f;
 
 	bool m_isPlayer = false;
 	bool m_flagInitialized = false; // 깃발 초기화 여부

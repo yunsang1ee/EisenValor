@@ -315,7 +315,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 		});
 
 		m_flagIcon = scene->CreateComponentWithInit<ImageUIComponent>(flagHandle, [this, &resGlobal](ImageUIComponent* img) {
-			img->SetOrder(14);
+			img->SetOrder(16);
 			// 관리 목록 등록
 			m_managedImages.push_back({img->GetHandle(), 14});
 		});
@@ -357,7 +357,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			});
 
 			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &resGlobal](ImageUIComponent* img) {
-				img->SetOrder(13);
+				img->SetOrder(14);
 				// 관리 목록 등록 (Fill)
 				m_managedImages.push_back({img->GetHandle(), 13});
 				auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\HP_fill.evtex");
@@ -405,7 +405,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				});
 
 				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &resGlobal](ImageUIComponent* img) {
-					img->SetOrder(11);
+					img->SetOrder(12);
 					// 관리 목록 등록 (Fill)
 					m_managedImages.push_back({img->GetHandle(), 11});
 					auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\Staminafill.evtex");
