@@ -321,7 +321,7 @@ void SoldierIdleState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE), true);
+			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE), true);
 		}
 	}
 }
@@ -345,7 +345,7 @@ void SoldierMoveState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE), true);
+			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE), true);
 		}
 	}
 }
@@ -362,7 +362,7 @@ void SoldierMoveState::Exit(FSMComponent* fsm)
 SoldierStunState::SoldierStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
 	SetHasExitTime(true);
-	SetNextStateOnEnd(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 }
 
 void SoldierStunState::Enter(FSMComponent* fsm)
@@ -371,7 +371,9 @@ void SoldierStunState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
+			anim->Play(
+				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true
+			);
 		}
 	}
 }
@@ -396,7 +398,7 @@ void SoldierDeadState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD), false);
+			anim->Play(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD), false);
 		}
 	}
 }

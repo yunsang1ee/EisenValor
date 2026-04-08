@@ -237,6 +237,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="Util\AnimationLoader.h" />
     <ClInclude Include="Util\CameraConfig.h" />
+    <ClInclude Include="Util\GameConstants.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\FSM\FSMComponent.cpp" />

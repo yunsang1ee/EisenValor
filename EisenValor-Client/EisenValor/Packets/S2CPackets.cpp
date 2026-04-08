@@ -984,7 +984,9 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				scene->CreateComponentWithInit<FSMComponent>(
 					objHandle, [objType](FSMComponent* fsm) { 
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
-						fsm->ChangeState(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)); 
+						fsm->ChangeState(
+							StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)
+						); 
 					}
 				);
 			}

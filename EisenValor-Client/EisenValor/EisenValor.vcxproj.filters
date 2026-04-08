@@ -184,6 +184,12 @@
     <ClInclude Include="Component\SocketComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\GameConstants.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -282,7 +288,6 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\.clang-format" />
     <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
@@ -293,6 +298,9 @@
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
+    <None Include="..\.clang-format">
+      <Filter>Util</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">

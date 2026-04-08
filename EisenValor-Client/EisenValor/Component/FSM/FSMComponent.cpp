@@ -38,7 +38,7 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	uint8_t targetState = serverState;
 	if (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
 	{
-		targetState += 50;
+		targetState += StateOffset::kSoldierOffset;
 	}
 
 	// 서버에서 온 패킷 무시

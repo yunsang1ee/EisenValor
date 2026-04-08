@@ -4,15 +4,12 @@
 #include <vector>
 #include <IComponent.h>
 #include "StatePool.h"
+#include "Util/GameConstants.h"
 
 // 캐릭터의 상태 데이터를 보유하고 관리하는 컴포넌트
 // 실제 행동 로직은 StatePool에서 가져옴
 class FSMComponent : public ComponentBase<FSMComponent> {
 public:
-
-	// Offset
-	static constexpr uint8_t kSoldierOffset = 50; // 병사 전용 오프셋
-	
 	static constexpr const char* GetStaticTypeName() { return "FSMComponent"; }
 
 	FSMComponent() = default;
