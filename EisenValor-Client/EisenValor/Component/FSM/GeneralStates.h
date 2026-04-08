@@ -142,3 +142,25 @@ public:
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
+// Soldier Chase
+class SoldierChaseState : public State {
+public:
+	SoldierChaseState();
+	virtual ~SoldierChaseState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
+// Soldier Attack
+class SoldierAttackState : public State {
+public:
+	SoldierAttackState();
+	virtual ~SoldierAttackState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
