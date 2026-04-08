@@ -552,7 +552,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// FSMComponent
 			scene->CreateComponentWithInit<FSMComponent>(
-				playerObjHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
+				playerObjHandle, [](FSMComponent* fsm) { 
+					fsm->SetObjectType(static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER));
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); 
+				}
 			);
 
 			// Animation Component
@@ -758,10 +761,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	switch (objType)
 	{
 	case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
-		objectName = "RemotePlayer_" + std::to_string(id);
+		objectName = "RemotePlayer_" + std::to_string(id);	// 다른 플레이어
 		break;
 	case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
-		objectName = "Bot_" + std::to_string(id);
+		objectName = "Bot_" + std::to_string(id);	// NPC 장수
 		break;
 	default:
 		objectName = "GameObject_" + std::to_string(id);
@@ -830,49 +833,20 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
 				addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 				addEquipment("Dress", "Resource/Models/Dress.evskin");
-			}
-			else
-			{
-				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+
+				// BattleUIControllerComponent
+				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
-					[teamType](SkinnedMeshComponent* mesh)
+					[stance](BattleUIControllerComponent* ui)
 					{
-						auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Knight_Armored.evskin");
-						if (nullptr != meshRes)
-						{
-							mesh->SetSkinnedMeshResource(meshRes);
-						}
+						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
+						ui->InitStance(stance);
+						// DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n",
+						// static_cast<int>(stance));
 					}
 				);
-			}
 
-			// MovementComponent 추가 (네트워크 보간을 위해)
-			scene->CreateComponentWithInit<MovementComponent>(
-				objHandle,
-				[](MovementComponent* movement)
-				{
-					movement->SetMovementMode(MovementMode::Physics);
-					movement->SetMoveSpeed(5.0f);
-				}
-			);
-
-			scene->CreateComponentWithInit<HealthComponent>(
-				objHandle,
-				[maxHP, currentHP](HealthComponent* health)
-				{
-					health->SetMaxHealth(maxHP);
-					health->SetHealth(currentHP);
-				}
-			);
-
-			// TeamComponent
-			scene->CreateComponentWithInit<TeamComponent>(
-				objHandle, [teamType](TeamComponent* team) { team->SetTeamType(teamType); }
-			);
-
-			// StaminaComponent (Player Only)
-			if (isGeneral)
-			{
+				// StaminaComponent
 				scene->CreateComponentWithInit<StaminaComponent>(
 					objHandle,
 					[maxStamina, currentStamina](StaminaComponent* stamina)
@@ -881,46 +855,14 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						stamina->SetStamina(currentStamina);
 					}
 				);
-			}
 
-			// VitalUIControllerComponent
-			if (isGeneral || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
-			{
-				scene->CreateComponentWithInit<VitalUIControllerComponent>(
-					objHandle,
-					[](VitalUIControllerComponent* vital)
-					{
-						// Init 제거->OnStart에서 자동 판단
-					}
-				);
-			}
-
-			if (isGeneral)
-			{
+				// Animation Component
 				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle, [](AnimationComponent* anim) 
-					{ AnimationLoader::AnimationApply(anim, "CursedKnight"); }
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 				);
-			}
 
-			//// Animation Component
-			//if (isGeneral)
-			//{
-			//	scene->CreateComponentWithInit<AnimationComponent>(
-			//		objHandle,
-			//		[](AnimationComponent* anim)
-			//		{
-			//			if (isGeneral)
-			//				AnimationLoader::AnimationApply(anim, "CursedKnight");
-			//			// else
-			//			// 	AnimationLoader::AnimationApply(anim, "Knight_Armored");
-			//		}
-			//	);
-			//}
 
-			// Shield
-			if (isGeneral)
-			{
+				// Shield
 				auto shieldHandle = scene->ReserveGameObject(objectName + "_Shield");
 
 				scene->CreateComponentWithInit<MeshComponent>(
@@ -963,11 +905,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
-			}
 
-			// Sword
-			if (isGeneral)
-			{
 				auto swordHandle = scene->ReserveGameObject(objectName + "_Sword");
 
 				scene->CreateComponentWithInit<MeshComponent>(
@@ -988,6 +926,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					}
 				);
 
+				// Sword
 				scene->CreateComponentWithInit<SocketComponent>(
 					swordHandle,
 					[scene, objHandle](SocketComponent* socket)
@@ -1011,41 +950,84 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
-			}
 
-			// FSMComponent
-			if (isGeneral)
-			{
+				// FSMComponent
 				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
+					objHandle, [objType](FSMComponent* fsm) { 
+						fsm->SetObjectType(static_cast<uint8_t>(objType));
+						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); 
+					}
 				);
 			}
+
+			////////////////// isGeneral ///////////////////
+
+			else ////// Soldier
+			{
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+					objHandle,
+					[teamType](SkinnedMeshComponent* mesh)
+					{
+						auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Knight_Armored.evskin");
+						if (nullptr != meshRes)
+						{
+							mesh->SetSkinnedMeshResource(meshRes);
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<AnimationComponent>(
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "Knight_Armored"); }
+				);
+
+				// FSMComponent
+				scene->CreateComponentWithInit<FSMComponent>(
+					objHandle, [objType](FSMComponent* fsm) { 
+						fsm->SetObjectType(static_cast<uint8_t>(objType));
+						fsm->ChangeState(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)); 
+					}
+				);
+			}
+
+			// MovementComponent 추가 (네트워크 보간을 위해)
+			scene->CreateComponentWithInit<MovementComponent>(
+				objHandle,
+				[](MovementComponent* movement)
+				{
+					movement->SetMovementMode(MovementMode::Physics);
+					movement->SetMoveSpeed(5.0f);
+				}
+			);
+
+			scene->CreateComponentWithInit<HealthComponent>(
+				objHandle,
+				[maxHP, currentHP](HealthComponent* health)
+				{
+					health->SetMaxHealth(maxHP);
+					health->SetHealth(currentHP);
+				}
+			);
+
+			// TeamComponent
+			scene->CreateComponentWithInit<TeamComponent>(
+				objHandle, [teamType](TeamComponent* team) { team->SetTeamType(teamType); }
+			);
+
+			// VitalUIControllerComponent
+			scene->CreateComponentWithInit<VitalUIControllerComponent>(
+				objHandle,
+				[](VitalUIControllerComponent* vital)
+				{
+					// Init 제거->OnStart에서 자동 판단
+				}
+			);
 
 			DEBUG_LOG_FMT(
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
 				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
 			);
 
-			// BattleUIControllerComponent 부착
-			if (isGeneral)
-			{
-				scene->CreateComponentWithInit<BattleUIControllerComponent>(
-					objHandle,
-					[stance](BattleUIControllerComponent* ui)
-					{
-						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
-						ui->InitStance(stance);
-						// DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n",
-						// static_cast<int>(stance));
-					}
-				);
-			}
-
-			// FSMComponent
-			scene->CreateComponentWithInit<FSMComponent>(
-				objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
-			);
-			//		// 공격 범위 디버깅
+			// 공격 범위 디버깅
 			// if (isGeneral)
 			//{
 			//	scene->ReserveGameObject(
@@ -1126,6 +1108,16 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 		obj->GetTransform().SetPosition(pos);
 		obj->GetTransform().SetRotation(rot);
+
+		// 서버에서 보내준 state를 FSM에 전달
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
+		{
+			uint8_t subState = recvPkt.sub_state();
+			if (subState == 21) fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+			else if (subState == 22) fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+			else if (subState == 23) fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+			else fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		}
 	}
 	return true;
 }
@@ -1159,10 +1151,16 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 		// 2. 컴포넌트 가져오기
 		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
 		{
-			// 3. UI 갱신
+			// UI 갱신
 			uiController->TriggerAttackRemote(type, dir);
 			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type),
 			// static_cast<int>(dir));
+
+			 // FSM 상태 동기화: 공격 타입 설정
+			if (auto* fsm = obj->GetComponent<FSMComponent>())
+			{
+				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
+			}
 			return true;
 		}
 	}
@@ -1387,6 +1385,7 @@ bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
 			uiController->UpdateUISelection(dir, std::nullopt);
 			return true;
 		}
+
 	}
 
 	return false;

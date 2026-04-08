@@ -305,3 +305,106 @@ void PlayerDeadState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] DEAD Exit (Respawned)\n");
 }
+
+// ==================================
+//          SOLDIER_STATES
+// ==================================
+
+// Soldier Idle
+SoldierIdleState::SoldierIdleState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)
+{
+}
+
+void SoldierIdleState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE), true);
+		}
+	}
+}
+
+void SoldierIdleState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void SoldierIdleState::Exit(FSMComponent* fsm)
+{
+}
+
+// Soldier Move
+SoldierMoveState::SoldierMoveState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE)
+{
+}
+
+void SoldierMoveState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE), true);
+		}
+	}
+}
+
+void SoldierMoveState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void SoldierMoveState::Exit(FSMComponent* fsm)
+{
+}
+
+// Soldier Stun
+SoldierStunState::SoldierStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+{
+	SetHasExitTime(true);
+	SetNextStateOnEnd(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+}
+
+void SoldierStunState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
+		}
+	}
+}
+
+void SoldierStunState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void SoldierStunState::Exit(FSMComponent* fsm)
+{
+}
+
+// Soldier Dead
+SoldierDeadState::SoldierDeadState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
+{
+	SetHasExitTime(true);
+}
+
+void SoldierDeadState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(50 + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD), false);
+		}
+	}
+}
+
+void SoldierDeadState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void SoldierDeadState::Exit(FSMComponent* fsm)
+{
+}
