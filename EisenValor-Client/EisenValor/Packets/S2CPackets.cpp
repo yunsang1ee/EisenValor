@@ -962,7 +962,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			////////////////// isGeneral ///////////////////
 
-			else ////// Soldier
+			else if(objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)////// Soldier
 			{
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
@@ -1025,8 +1025,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			DEBUG_LOG_FMT(
-				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
-				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
+				"Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
+				pos.x, pos.y, pos.z, currentHP, maxHP
 			);
 
 			// 공격 범위 디버깅
@@ -1261,6 +1261,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	{
 		//DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
 		fsm->SetServerState(nextState);
+		return true;
 	}
 
 SET_LOCAL:
@@ -1274,18 +1275,21 @@ SET_LOCAL:
 				return true;
 			}
 		}
-
-		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		//else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		//{
+		//	if (obj->GetComponent<StaminaComponent>() == nullptr)
+		//	{
+		//		// 병사는 즉시 메모리에서 삭제
+		//		scene->DestroyGameObject(obj->GetHandle());
+		//	}
+		//	else
+		//	{
+		//		fsm->SetServerState(nextState);
+		//	}
+		//}
+		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD || nextState == FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
 		{
-			if (obj->GetComponent<StaminaComponent>() == nullptr)
-			{
-				// 병사는 즉시 메모리에서 삭제
-				scene->DestroyGameObject(obj->GetHandle());
-			}
-			else
-			{
-				fsm->SetServerState(nextState);
-			}
+			fsm->SetServerState(nextState);
 		}
 	}
 
@@ -1456,5 +1460,14 @@ bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES
 	// Ping 패킷 수신 시, Pong 패킷 전송
 	auto pb = C2S::Make_CS_PONG_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
+)
+{
+	// 팀 점수 업데이트
+	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
 	return true;
 }

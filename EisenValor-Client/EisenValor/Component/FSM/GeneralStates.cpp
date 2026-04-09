@@ -386,7 +386,7 @@ void SoldierMoveState::Exit(FSMComponent* fsm)
 //}
 
 // Soldier Dead
-SoldierDeadState::SoldierDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+SoldierDeadState::SoldierDeadState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
 {
 	SetHasExitTime(true);
 }

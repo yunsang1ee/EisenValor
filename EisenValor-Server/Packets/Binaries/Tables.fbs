@@ -323,6 +323,11 @@ table CS_UPDATE_PLAYER_STATE_PACKET {
 	player_state: uint8;
 }
 
+table SC_UPDATE_TEAM_SCORE_PACKET {
+	blue_score: uint8;
+	red_score: uint8;
+}
+
 // ================================================
 //					    TEST
 // ================================================

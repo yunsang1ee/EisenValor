@@ -35,6 +35,7 @@ namespace ServerPackets {
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(const uint64 generalID, const uint8 attackDir);
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint64 id, const Transform& transform, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_DEAD_PACKET(const uint64 id);
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_UPDATE_TEAM_SCORE_PACKET(const uint8 blueTeamScore, const uint8 redTeamScore);
 #pragma endregion
 
 	

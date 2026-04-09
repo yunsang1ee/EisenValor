@@ -64,6 +64,8 @@ namespace GameServer {
 			std::shared_ptr<GameObject> FindObjectByID(const uint64 targetID);
 			uint64 GenerateID(const uint8 type) { return m_idGenerator.Generate(type); }
 
+			void AddScore(const FB_ENUMS::TEAM_TYPE teamType, const uint8 amount);
+
 		private:
 			void ProcessEvents();
 			void ProcessPendingAddObjectList();
@@ -104,6 +106,9 @@ namespace GameServer {
 			std::map<uint64, bool>													m_mapColInfo;
 
 			NavSystem																m_navSystem;
+
+			uint8																	m_redTeamScore;
+			uint8																	m_blueTeamScore;
 		};
 	}
 }

@@ -7,7 +7,7 @@
 #include "GameWorld.h"
 #include "Soldier.h"
 
-// #define PRINT_SOLDIER_STATE_LOG
+#define PRINT_SOLDIER_STATE_LOG
 
 GameServer::Contents::SoldierSpawnState::SoldierSpawnState()
 	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN }, m_accDT{}
@@ -23,7 +23,7 @@ void GameServer::Contents::SoldierSpawnState::Enter(const float dt)
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
 #ifdef PRINT_SOLDIER_STATE_LOG
-	std::cout << std::format("ID = {}, Enter Soldier Idle", id) << std::endl;
+	std::cout << std::format("ID = {}, Enter Soldier Spawn", id) << std::endl;
 #endif
 	m_accDT = 0.f;
 }
@@ -33,7 +33,7 @@ void GameServer::Contents::SoldierSpawnState::Exit(const float dt)
 	const auto& owner = GetFSM()->GetOwner();
 	const uint64 id{ owner->GetID() };
 #ifdef PRINT_SOLDIER_STATE_LOG
-	std::cout << std::format("ID = {}, Exit Soldier Idle", id) << std::endl;
+	std::cout << std::format("ID = {}, Exit Soldier Spawn", id) << std::endl;
 #endif
 
 	m_accDT = 0.f;
@@ -190,14 +190,14 @@ GameServer::Contents::SoldierSearchState::~SoldierSearchState()
 void GameServer::Contents::SoldierSearchState::Enter(const float dt)
 {
 #ifdef PRINT_SOLDIER_STATE_LOG
-	std::cout << "Soldier Search State Enter" << std::endl;
+	std::cout << std::format("ID = {}, Enter Soldier Search State", GetFSM()->GetOwner()->GetID()) << std::endl;
 #endif
 }
 
 void GameServer::Contents::SoldierSearchState::Exit(const float dt)
 {
 #ifdef PRINT_SOLDIER_STATE_LOG
-	std::cout << "Soldier Search State Exit" << std::endl;
+	std::cout << std::format("ID = {}, Exit Soldier Search State", GetFSM()->GetOwner()->GetID()) << std::endl;
 #endif
 }
 
@@ -234,7 +234,7 @@ GameServer::Contents::SoldierChaseState::~SoldierChaseState()
 void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 {
 #ifdef PRINT_SOLDIER_STATE_LOG
-	std::cout << "SoldierChaseState Enter" << std::endl;
+	std::cout << std::format("ID = {}, Enter SoldierChaseState", GetFSM()->GetOwner()->GetID()) << std::endl;
 #endif
 	
 	 const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
@@ -251,7 +251,7 @@ void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 void GameServer::Contents::SoldierChaseState::Exit(const float dt)
 {
 #ifdef PRINT_SOLDIER_STATE_LOG
-	std::cout << "SoldierChaseState Exit" << std::endl;
+	std::cout << std::format("ID = {}, Exit SoldierChaseState", GetFSM()->GetOwner()->GetID()) << std::endl;
 #endif
 }
 
@@ -367,11 +367,13 @@ GameServer::Contents::SoldierDeadState::~SoldierDeadState()
 void GameServer::Contents::SoldierDeadState::Enter(const float dt)
 {
 	m_accDT = 0.f;
+	std::cout << std::format("ID = {}, Enter Soldier Dead State", GetFSM()->GetOwner()->GetID()) << std::endl;
 }
 
 void GameServer::Contents::SoldierDeadState::Exit(const float dt)
 {
 	m_accDT = 0.f;
+	std::cout << std::format("ID = {}, Exit Soldier Dead State", GetFSM()->GetOwner()->GetID()) << std::endl;
 }
 
 void GameServer::Contents::SoldierDeadState::Update(const float dt)

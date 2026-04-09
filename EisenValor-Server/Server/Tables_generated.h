@@ -210,6 +210,9 @@ struct CS_GEN_NPC_GENERAL_PACKETBuilder;
 struct CS_UPDATE_PLAYER_STATE_PACKET;
 struct CS_UPDATE_PLAYER_STATE_PACKETBuilder;
 
+struct SC_UPDATE_TEAM_SCORE_PACKET;
+struct SC_UPDATE_TEAM_SCORE_PACKETBuilder;
+
 struct CS_ENTER_GAME_WORLD_PACKET;
 struct CS_ENTER_GAME_WORLD_PACKETBuilder;
 
@@ -3311,6 +3314,57 @@ inline ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET> CreateCS_UPDATE_PLAY
     uint8_t player_state = 0) {
   CS_UPDATE_PLAYER_STATE_PACKETBuilder builder_(_fbb);
   builder_.add_player_state(player_state);
+  return builder_.Finish();
+}
+
+struct SC_UPDATE_TEAM_SCORE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_UPDATE_TEAM_SCORE_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_BLUE_SCORE = 4,
+    VT_RED_SCORE = 6
+  };
+  uint8_t blue_score() const {
+    return GetField<uint8_t>(VT_BLUE_SCORE, 0);
+  }
+  uint8_t red_score() const {
+    return GetField<uint8_t>(VT_RED_SCORE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_BLUE_SCORE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_RED_SCORE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_UPDATE_TEAM_SCORE_PACKETBuilder {
+  typedef SC_UPDATE_TEAM_SCORE_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_blue_score(uint8_t blue_score) {
+    fbb_.AddElement<uint8_t>(SC_UPDATE_TEAM_SCORE_PACKET::VT_BLUE_SCORE, blue_score, 0);
+  }
+  void add_red_score(uint8_t red_score) {
+    fbb_.AddElement<uint8_t>(SC_UPDATE_TEAM_SCORE_PACKET::VT_RED_SCORE, red_score, 0);
+  }
+  explicit SC_UPDATE_TEAM_SCORE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_UPDATE_TEAM_SCORE_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_UPDATE_TEAM_SCORE_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_UPDATE_TEAM_SCORE_PACKET> CreateSC_UPDATE_TEAM_SCORE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint8_t blue_score = 0,
+    uint8_t red_score = 0) {
+  SC_UPDATE_TEAM_SCORE_PACKETBuilder builder_(_fbb);
+  builder_.add_red_score(red_score);
+  builder_.add_blue_score(blue_score);
   return builder_.Finish();
 }
 

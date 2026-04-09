@@ -191,18 +191,18 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 		wayPoints.push_back({ -24.9313736f, -8.80016708f, -5.53999329f });
 	}
 
-	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, wayPoints);
+	//auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, wayPoints);
 	// auto searchState = Server::Contents::SoldierSearchState::Create(3.f/*attackRange*/);
-	auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
-	auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
+	//auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
+	//auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
 	auto deadState = GameServer::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
 
 	fsm->AddState(std::move(spawnState));
 	fsm->AddState(std::move(idleState));
-	fsm->AddState(std::move(moveState));
+	//fsm->AddState(std::move(moveState));
 	// fsm->AddState(std::move(searchState));
-	fsm->AddState(std::move(chaseState));
-	fsm->AddState(std::move(attackState));
+	// fsm->AddState(std::move(chaseState));
+	// sfsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(deadState));
 
 	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN));

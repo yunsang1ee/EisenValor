@@ -63,7 +63,7 @@ void GameServer::Contents::GameWorld::Update(const float dt)
 	m_dt = dt;
 	m_accDT += dt;
 
-	int loopCount = 0;
+	uint32 loopCount{};
 	
 	while(m_accDT >= m_fixedUpdateTick && loopCount < m_maxUpdateStep) {
 		m_accDT -= m_fixedUpdateTick;
@@ -188,7 +188,9 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	Vec3 prevPos{ t.GetPosition() };
 	Vec3 newPos{ transform.GetPosition() };
 
+#ifdef PRINT_GAME_WORLD_LOG
 	std::cout << newPos.x << ", " << newPos.y << ", " << newPos.z << std::endl;
+#endif
 
 	//auto movement = player->GetComponent<Movement>();
 	//if(!movement) return;
@@ -704,6 +706,19 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameWorl
 	return nullptr;
 }
 
+void GameServer::Contents::GameWorld::AddScore(const FB_ENUMS::TEAM_TYPE teamType, const uint8 amount)
+{
+	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) {
+		m_blueTeamScore += amount;
+	}
+	else if(FB_ENUMS::TEAM_TYPE_RED == teamType) {
+		m_redTeamScore += amount;
+	}
+
+	auto pb = ServerPackets::Make_SC_UPDATE_TEAM_SCORE_PACKET(m_blueTeamScore, m_redTeamScore);
+	Broadcast(std::move(pb));
+}
+
 const GameServer::Contents::GameObjects& GameServer::Contents::GameWorld::GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type)
 {
 	const uint8 index{ etou8(type) };
@@ -812,20 +827,20 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 		AddGameObject(std::move(oz));
 	}
 
-	// 공격팀 스포너 생성
-	{
-		SpanwerTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.gameObjectData = nullptr;
-		t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
-		t.teamType = FB_ENUMS::TEAM_TYPE_BLUE;
-		t.gameWorld = this;
+	// 블루팀 스포너 생성
+	//{
+	//	SpanwerTemplate t;
+	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	//	t.gameObjectData = nullptr;
+	//	t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
+	//	t.teamType = FB_ENUMS::TEAM_TYPE_BLUE;
+	//	t.gameWorld = this;
 
-		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
-		AddGameObject(std::move(spawner));
-	}
+	//	auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
+	//	AddGameObject(std::move(spawner));
+	//}
 
-	// 방어팀 스포너 생성
+	// 레드팀 스포너 생성
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
