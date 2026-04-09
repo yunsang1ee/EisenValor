@@ -989,6 +989,51 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						); 
 					}
 				);
+
+				// Sword
+				auto swordHandle = scene->ReserveGameObject(objectName + "_Sword");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					swordHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					swordHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "hand_r");
+
+							// Offset
+							constexpr float tx = -0.102f;
+							constexpr float ty = 0.106f;
+							constexpr float tz = -0.033f;
+							constexpr float rx = DirectX::XMConvertToRadians(43.896f);
+							constexpr float ry = DirectX::XMConvertToRadians(65.171f);
+							constexpr float rz = DirectX::XMConvertToRadians(76.545f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
