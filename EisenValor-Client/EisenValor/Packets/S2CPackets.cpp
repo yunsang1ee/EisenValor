@@ -1275,17 +1275,9 @@ SET_LOCAL:
 			}
 		}
 
-		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD || nextState == FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
 		{
-			if (obj->GetComponent<StaminaComponent>() == nullptr)
-			{
-				// 병사는 즉시 메모리에서 삭제
-				scene->DestroyGameObject(obj->GetHandle());
-			}
-			else
-			{
-				fsm->SetServerState(nextState);
-			}
+			fsm->SetServerState(nextState);
 		}
 	}
 
