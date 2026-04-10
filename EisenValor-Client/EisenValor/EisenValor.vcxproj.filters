@@ -91,9 +91,6 @@
     <ClInclude Include="Packets\S2CPackets.h">
       <Filter>Packets</Filter>
     </ClInclude>
-    <ClInclude Include="Packets\ServerEnum.h">
-      <Filter>Packets</Filter>
-    </ClInclude>
     <ClInclude Include="Packets\Enums_generated.h">
       <Filter>Packets</Filter>
     </ClInclude>
@@ -180,6 +177,12 @@
     </ClInclude>
     <ClInclude Include="Util\CameraConfig.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\PacketEnums.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -280,12 +283,16 @@
     <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
-    <None Include="Resource\Shader\RaytracingCommon.hlsli" />
     <None Include="Resource\Shader\UIVertexShader.hlsl" />
     <None Include="Resource\Shader\UIPixelShader.hlsl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

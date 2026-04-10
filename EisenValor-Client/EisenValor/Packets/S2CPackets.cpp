@@ -456,7 +456,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
 
 			// 모델 크기
-			playerObj->GetTransform().SetScale(2.0f);
+			playerObj->GetTransform().SetScale(1.5f);
 
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 

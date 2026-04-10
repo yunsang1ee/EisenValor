@@ -16,7 +16,7 @@ SkinnedMeshComponent::~SkinnedMeshComponent() = default;
 SkinnedMeshComponent::SkinnedMeshComponent(SkinnedMeshComponent&&) noexcept = default;
 SkinnedMeshComponent& SkinnedMeshComponent::operator=(SkinnedMeshComponent&&) noexcept = default;
 
-void SkinnedMeshComponent::OnUpdate(float dt)
+void SkinnedMeshComponent::OnLateUpdate(float dt)
 {
 	// 자신에게 Animation Component가 있다면 UpdateBoneMatrices에서 처리
 	// 자신에게 없고 부모에게 있다면, 부모의 본 팔레트 복사

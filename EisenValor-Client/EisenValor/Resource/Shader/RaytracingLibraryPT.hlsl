@@ -355,6 +355,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
 	float metallic = mat.metallic;
 	float roughness = mat.roughness;
+	float ao = 1.0f;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ORM_MAP))
 	{
 		Texture2D ormTexture = ResourceDescriptorHeap[mat.ormTextureIdx];
@@ -362,13 +363,15 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		if (0 != (mat.materialFlags & MATERIAL_FLAG_UNITY_PACKING))
 		{
 			metallic = p.r;
+			ao = p.g;
 			roughness = 1.0 - p.a;
 		}
 		else
-		{
-			metallic = p.b;
-			roughness = p.g;
-		}
+        {
+            ao = p.r;
+            metallic = p.b;
+            roughness = p.g;
+        }
 	}
 	roughness = max(roughness, 0.04);
 
@@ -421,7 +424,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 			return;
 		}
 
-		float3 f_d = kD_indirect * albedo / PI;
+		float3 f_d = kD_indirect * albedo * ao / PI;
 		float pdf_lobe = NdotL / PI;
 		float branchProb = 1.0f - specProb;
 
@@ -459,7 +462,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	float maxW = max(weight.x, max(weight.y, weight.z));
 	if (maxW < 1e-5f)
 	{
-		payload.color = kD_indirect * albedo;
+		payload.color = kD_indirect * albedo * ao;
 		if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
 		{
 			Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];

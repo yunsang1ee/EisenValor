@@ -24,7 +24,6 @@ public class AssetExporter
     private const uint SHADING_MODEL_LIT_PBR = 0;
     private const uint SHADING_MODEL_UNLIT = 1;
     private const string SceneMeshComponentTypeName = "MeshComponent";
-    private const string TorchEmitterMetadataTypeName = "TorchEmitterMetadata";
     private const string PreviewPointLightObjectName = "Preview_PointLight";
 
     // --- Material Flags (Engine Spec v2.1) ---
@@ -430,12 +429,50 @@ public class AssetExporter
         });
 
         TryAddMeshComponent(nodeIndex, transform.gameObject, context);
-        TryAddTorchEmitterMetadata(nodeIndex, transform.gameObject, context);
+        TryAddSceneComponentAuthoring(nodeIndex, transform.gameObject, context);
         TryAddTerrainChunks(nodeIndex, transform.gameObject, context);
 
         foreach (Transform child in transform)
         {
             ExportSceneNodeRecursive(child, nodeIndex, context);
+        }
+    }
+
+    private static void TryAddSceneComponentAuthoring(int nodeIndex, GameObject gameObject, SceneExportContext context)
+    {
+        SceneComponentAuthoring[] authoringComponents = gameObject.GetComponents<SceneComponentAuthoring>();
+        foreach (SceneComponentAuthoring authoring in authoringComponents)
+        {
+            if (authoring == null)
+            {
+                continue;
+            }
+
+            string typeName = authoring.ExportTypeName;
+            if (string.IsNullOrEmpty(typeName))
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[SceneExport] Skip authoring '{authoring.GetType().Name}' on '{gameObject.name}': empty export type name."
+                );
+                continue;
+            }
+
+            byte[] payload = authoring.BuildExportPayload();
+            if (payload == null)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[SceneExport] Skip authoring '{authoring.GetType().Name}' on '{gameObject.name}': null export payload."
+                );
+                continue;
+            }
+
+            context.Components.Add(new SceneComponentEntryRecord
+            {
+                NodeIndex = (uint)nodeIndex,
+                TypeId = HashFNV1a(typeName),
+                Version = authoring.ExportVersion,
+                Payload = payload
+            });
         }
     }
 
@@ -542,23 +579,6 @@ public class AssetExporter
         }
 
         return allowedRenderers.Contains(renderer);
-    }
-
-    private static void TryAddTorchEmitterMetadata(int nodeIndex, GameObject gameObject, SceneExportContext context)
-    {
-        TorchAnchor anchor = gameObject.GetComponent<TorchAnchor>();
-        if (anchor == null)
-        {
-            return;
-        }
-
-        context.Components.Add(new SceneComponentEntryRecord
-        {
-            NodeIndex = (uint)nodeIndex,
-            TypeId = HashFNV1a(TorchEmitterMetadataTypeName),
-            Version = 1,
-            Payload = BuildTorchEmitterPayload(anchor)
-        });
     }
 
     private static void TryAddTerrainChunks(int nodeIndex, GameObject gameObject, SceneExportContext context)
@@ -1004,24 +1024,6 @@ public class AssetExporter
         using (BinaryWriter bw = new BinaryWriter(ms))
         {
             WriteGuidBytes(bw, meshGuid);
-            return ms.ToArray();
-        }
-    }
-
-    private static byte[] BuildTorchEmitterPayload(TorchAnchor anchor)
-    {
-        using (MemoryStream ms = new MemoryStream())
-        using (BinaryWriter bw = new BinaryWriter(ms))
-        {
-            Color color = anchor.LightColor;
-            bw.Write(color.r);
-            bw.Write(color.g);
-            bw.Write(color.b);
-            bw.Write(anchor.Intensity);
-            bw.Write(anchor.Range);
-            bw.Write(anchor.SourceRadius);
-            bw.Write(anchor.FlickerAmplitude);
-            bw.Write(anchor.FlickerFrequency);
             return ms.ToArray();
         }
     }

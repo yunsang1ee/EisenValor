@@ -405,6 +405,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
 	float metallic = mat.metallic;
 	float roughness = mat.roughness;
+	float ao = 1.0f;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ORM_MAP))
 	{
 		Texture2D ormTexture = ResourceDescriptorHeap[mat.ormTextureIdx];
@@ -412,13 +413,15 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		if (0 != (mat.materialFlags & MATERIAL_FLAG_UNITY_PACKING))
 		{
 			metallic = p.r;
+			ao = p.g;
 			roughness = 1.0 - p.a;
 		}
 		else
 		{
-			metallic = p.b;
-			roughness = p.g;
-		}
+			ao = p.r;
+            metallic = p.b;
+            roughness = p.g;
+        }
 	}
 	roughness = max(roughness, 0.04);
 	
@@ -503,7 +506,6 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
 	}
 	
-	float ao = 1.0f;
 	float3 ambient = kD * albedo * 0.15f * ao;
 	float3 emissive = 0.0f.xxx;
 	if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))

@@ -366,7 +366,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-/MarkDown
+/MarkDown_codex
+/AGENTS.md
 /EisenValor-Client/SettingMarkDown
 /EisenValor-Client/EisenValor/Build/ShaderCache
 /.gemini
@@ -409,4 +410,6 @@ FodyWeavers.xsd
 !**/Assets/Editor/
 !**/Assets/Editor/**
 !**/Assets/Editor.meta
+!Tools/Asset_Exporter/Assets/Scripts/
 /Tools/Character_Export
+/GEMINI.md

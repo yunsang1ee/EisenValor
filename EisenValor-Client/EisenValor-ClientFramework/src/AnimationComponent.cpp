@@ -10,7 +10,7 @@
 
 using namespace DirectX;
 
-void AnimationComponent::OnUpdate(float dt)
+void AnimationComponent::OnLateUpdate(float dt)
 {
 	if (!m_isPlaying || !m_currentAnimation)
 		return;
