@@ -34,7 +34,7 @@ using Vertex = EvAsset::Vertex;
 
 namespace
 {
-constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/MCastle_Blockout_Demo.evscene";
+constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/Map.evscene";
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
 constexpr std::string_view kTorchPreviewSphereMaterialPath = "Resource/Material/sphere.evmat";
 } // namespace

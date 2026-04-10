@@ -16,7 +16,7 @@ public static class ServerConfigExporter
         public int version;
         public RecoveryPointJson[] recoveryPoints;
         public CapturePointJson[] capturePoints;
-        public SoldierSpawnJson[] soldierSpawns;
+        public SoldierSpawnsJson soldierSpawns;
         public TeamBasesJson teamBases;
     }
 
@@ -45,9 +45,18 @@ public static class ServerConfigExporter
     {
         public string name;
         public string path;
+        public string destinationPath;
         public int exportOrder;
         public ServerConfigVector3 position;
+        public ServerConfigVector3 destinationPosition;
         public int soldierCount;
+    }
+
+    [Serializable]
+    private sealed class SoldierSpawnsJson
+    {
+        public SoldierSpawnJson[] red;
+        public SoldierSpawnJson[] blue;
     }
 
     [Serializable]
@@ -115,7 +124,8 @@ public static class ServerConfigExporter
         Debug.Log(
             $"[ServerConfigExport] Saved {Path.GetFileName(outputPath)} " +
             $"(RecoveryPoints={root.recoveryPoints.Length}, CapturePoints={root.capturePoints.Length}, " +
-            $"SoldierSpawns={root.soldierSpawns.Length}, TeamBases={(root.teamBases.red != null ? 1 : 0) + (root.teamBases.blue != null ? 1 : 0)})"
+            $"SoldierSpawns={(root.soldierSpawns.red != null ? root.soldierSpawns.red.Length : 0) + (root.soldierSpawns.blue != null ? root.soldierSpawns.blue.Length : 0)}, " +
+            $"TeamBases={(root.teamBases.red != null ? 1 : 0) + (root.teamBases.blue != null ? 1 : 0)})"
         );
     }
 
@@ -181,7 +191,8 @@ public static class ServerConfigExporter
     {
         List<RecoveryPointJson> recoveryPoints = new List<RecoveryPointJson>();
         List<CapturePointJson> capturePoints = new List<CapturePointJson>();
-        List<SoldierSpawnJson> soldierSpawns = new List<SoldierSpawnJson>();
+        List<SoldierSpawnJson> redSoldierSpawns = new List<SoldierSpawnJson>();
+        List<SoldierSpawnJson> blueSoldierSpawns = new List<SoldierSpawnJson>();
         TeamBasesJson teamBases = new TeamBasesJson();
 
         foreach (CollectedRecord record in records)
@@ -211,14 +222,25 @@ public static class ServerConfigExporter
                     break;
 
                 case ServerConfigKind.SoldierSpawn:
-                    soldierSpawns.Add(new SoldierSpawnJson
+                    SoldierSpawnJson soldierSpawn = new SoldierSpawnJson
                     {
                         name = record.Record.name,
                         path = record.Record.path,
+                        destinationPath = record.Record.destinationPath,
                         exportOrder = record.Record.exportOrder,
                         position = record.Record.position,
+                        destinationPosition = record.Record.destinationPosition,
                         soldierCount = record.Record.soldierCount
-                    });
+                    };
+
+                    if (record.Record.team == TeamSide.Red)
+                    {
+                        redSoldierSpawns.Add(soldierSpawn);
+                    }
+                    else
+                    {
+                        blueSoldierSpawns.Add(soldierSpawn);
+                    }
                     break;
 
                 case ServerConfigKind.TeamBase:
@@ -249,7 +271,11 @@ public static class ServerConfigExporter
             version = 1,
             recoveryPoints = recoveryPoints.ToArray(),
             capturePoints = capturePoints.ToArray(),
-            soldierSpawns = soldierSpawns.ToArray(),
+            soldierSpawns = new SoldierSpawnsJson
+            {
+                red = redSoldierSpawns.ToArray(),
+                blue = blueSoldierSpawns.ToArray()
+            },
             teamBases = teamBases
         };
     }

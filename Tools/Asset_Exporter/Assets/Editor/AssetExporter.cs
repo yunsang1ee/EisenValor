@@ -150,6 +150,7 @@ public class AssetExporter
     private sealed class SceneExportContext
     {
         public readonly string RootDir;
+        public readonly string SceneFolderName;
         public readonly List<SceneNodeRecord> Nodes = new List<SceneNodeRecord>();
         public readonly List<SceneComponentEntryRecord> Components = new List<SceneComponentEntryRecord>();
         public readonly Dictionary<string, MeshExportRecord> MeshExports = new Dictionary<string, MeshExportRecord>();
@@ -163,9 +164,10 @@ public class AssetExporter
         public int ExcludedHigherLodRenderers;
         public int ExportedTerrainChunks;
 
-        public SceneExportContext(string rootDir)
+        public SceneExportContext(string rootDir, string sceneFolderName)
         {
             RootDir = rootDir;
+            SceneFolderName = sceneFolderName;
         }
     }
 
@@ -200,7 +202,8 @@ public class AssetExporter
 
         Directory.CreateDirectory(rootDir);
 
-        SceneExportContext context = new SceneExportContext(rootDir);
+        string sceneFolderName = SanitizeFileName(activeScene.name);
+        SceneExportContext context = new SceneExportContext(rootDir, sceneFolderName);
         foreach (GameObject rootObject in activeScene.GetRootGameObjects())
         {
             ExportSceneNodeRecursive(rootObject.transform, -1, context);
@@ -210,27 +213,27 @@ public class AssetExporter
         {
             foreach (MeshExportRecord meshExport in context.MeshExports.Values)
             {
-                ExportMeshAssetToRoot(meshExport, rootDir);
+                ExportMeshAssetToRoot(meshExport, context);
             }
 
             foreach (Material material in context.MaterialDependencies)
             {
-                ExportMaterialAssetToRoot(material, rootDir);
+                ExportMaterialAssetToRoot(material, context);
             }
 
             foreach (GeneratedMaterialExportRecord material in context.GeneratedMaterialExports.Values)
             {
-                ExportGeneratedMaterialAssetToRoot(material, rootDir);
+                ExportGeneratedMaterialAssetToRoot(material, context);
             }
 
             foreach (TextureExportRecord texture in context.TextureDependencies.Values)
             {
-                ExportTextureAssetToRoot(texture, rootDir);
+                ExportTextureAssetToRoot(texture, context);
             }
 
             foreach (GeneratedTextureExportRecord texture in context.GeneratedTextureExports.Values)
             {
-                ExportGeneratedTextureAssetToRoot(texture, rootDir);
+                ExportGeneratedTextureAssetToRoot(texture, context);
             }
         }
         finally
@@ -255,7 +258,7 @@ public class AssetExporter
         string sceneDir = Path.Combine(rootDir, "Scenes");
         Directory.CreateDirectory(sceneDir);
 
-        string scenePath = Path.Combine(sceneDir, SanitizeFileName(activeScene.name) + ".evscene");
+        string scenePath = Path.Combine(sceneDir, sceneFolderName + ".evscene");
         string sceneGuid = string.IsNullOrEmpty(activeScene.path) ? "" : AssetDatabase.AssetPathToGUID(activeScene.path);
 
         AssetWriter writer = new AssetWriter("EVSN", sceneGuid);
@@ -803,14 +806,14 @@ public class AssetExporter
         return guids;
     }
 
-    private static void ExportMeshAssetToRoot(MeshExportRecord record, string rootDir)
+    private static void ExportMeshAssetToRoot(MeshExportRecord record, SceneExportContext context)
     {
         if (record == null || record.Mesh == null || string.IsNullOrEmpty(record.Guid))
         {
             return;
         }
 
-        string modelDir = Path.Combine(rootDir, "Models");
+        string modelDir = GetSceneResourceExportDirectory(context.RootDir, "Models", context.SceneFolderName);
         Directory.CreateDirectory(modelDir);
 
         string outputPath = Path.Combine(modelDir, SanitizeFileName(record.ExportName) + "_" + record.Guid[..8] + ".evmesh");
@@ -828,7 +831,7 @@ public class AssetExporter
         writer.WriteToFile(outputPath);
     }
 
-    private static void ExportMaterialAssetToRoot(Material mat, string rootDir)
+    private static void ExportMaterialAssetToRoot(Material mat, SceneExportContext context)
     {
         string assetPath = AssetDatabase.GetAssetPath(mat);
         string guid = string.IsNullOrEmpty(assetPath) ? "" : AssetDatabase.AssetPathToGUID(assetPath);
@@ -837,7 +840,7 @@ public class AssetExporter
             return;
         }
 
-        string materialDir = Path.Combine(rootDir, "Material");
+        string materialDir = GetSceneResourceExportDirectory(context.RootDir, "Material", context.SceneFolderName);
         Directory.CreateDirectory(materialDir);
 
         string outputPath = Path.Combine(materialDir, SanitizeFileName(mat.name) + "_" + guid[..8] + ".evmat");
@@ -852,7 +855,7 @@ public class AssetExporter
         writer.WriteToFile(outputPath);
     }
 
-    private static void ExportTextureAssetToRoot(TextureExportRecord record, string rootDir)
+    private static void ExportTextureAssetToRoot(TextureExportRecord record, SceneExportContext context)
     {
         Texture2D tex = record.Texture;
         string inputPath = AssetDatabase.GetAssetPath(tex);
@@ -862,7 +865,7 @@ public class AssetExporter
             return;
         }
 
-        string textureDir = Path.Combine(rootDir, "Texture");
+        string textureDir = GetSceneResourceExportDirectory(context.RootDir, "Texture", context.SceneFolderName);
         Directory.CreateDirectory(textureDir);
 
         string outputPath = Path.Combine(textureDir, SanitizeFileName(tex.name) + "_" + guid[..8] + ".evtex");
@@ -896,14 +899,14 @@ public class AssetExporter
         }
     }
 
-    private static void ExportGeneratedMaterialAssetToRoot(GeneratedMaterialExportRecord material, string rootDir)
+    private static void ExportGeneratedMaterialAssetToRoot(GeneratedMaterialExportRecord material, SceneExportContext context)
     {
         if (material == null || string.IsNullOrEmpty(material.Guid))
         {
             return;
         }
 
-        string materialDir = Path.Combine(rootDir, "Material");
+        string materialDir = GetSceneResourceExportDirectory(context.RootDir, "Material", context.SceneFolderName);
         Directory.CreateDirectory(materialDir);
 
         string outputPath = Path.Combine(materialDir, SanitizeFileName(material.ExportName) + "_" + material.Guid[..8] + ".evmat");
@@ -918,14 +921,14 @@ public class AssetExporter
         writer.WriteToFile(outputPath);
     }
 
-    private static void ExportGeneratedTextureAssetToRoot(GeneratedTextureExportRecord texture, string rootDir)
+    private static void ExportGeneratedTextureAssetToRoot(GeneratedTextureExportRecord texture, SceneExportContext context)
     {
         if (texture == null || texture.Texture == null || string.IsNullOrEmpty(texture.Guid))
         {
             return;
         }
 
-        string textureDir = Path.Combine(rootDir, "Texture");
+        string textureDir = GetSceneResourceExportDirectory(context.RootDir, "Texture", context.SceneFolderName);
         Directory.CreateDirectory(textureDir);
 
         string outputPath = Path.Combine(textureDir, SanitizeFileName(texture.ExportName) + "_" + texture.Guid[..8] + ".evtex");
@@ -1822,6 +1825,11 @@ public class AssetExporter
 
         parts.Reverse();
         return string.Join("/", parts);
+    }
+
+    private static string GetSceneResourceExportDirectory(string rootDir, string resourceFolder, string sceneFolderName)
+    {
+        return Path.Combine(rootDir, resourceFolder, "Map", sceneFolderName);
     }
 
     public static bool TryGetStableMeshGuid(Mesh mesh, out string guidHex)
