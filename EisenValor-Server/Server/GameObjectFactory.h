@@ -36,11 +36,6 @@ namespace GameServer {
 
 		};
 
-		struct BattleRamTemplate : public CreatureTemplate {
-			float	detectionRange;
-			Vec3	finalDestPos;
-		};
-
 		struct SpanwerTemplate : public GameObjectTemplate {
 			// TODO: 스폰 시간
 			// TODO: 스폰되는 병사의 수
@@ -64,7 +59,6 @@ namespace GameServer {
 			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::shared_ptr<General>		CreateGeneral(const GeneralTemplate& t);
 			static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
-			static std::shared_ptr<BattleRam>	CreateBattleRam(const BattleRamTemplate& t);
 			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
 			static std::shared_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
 

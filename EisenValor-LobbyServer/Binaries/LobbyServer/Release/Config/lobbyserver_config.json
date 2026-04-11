@@ -1,0 +1,11 @@
+{
+  "GameServer": {
+    "IP": "127.0.0.1",
+    "Port": 40001
+  },
+  "LobbyServer": {
+    "Port": 8888,
+    "WorkerThread": 16,
+    "MaxSession": 1000
+  }
+}

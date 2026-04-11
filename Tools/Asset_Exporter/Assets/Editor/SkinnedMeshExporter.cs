@@ -231,6 +231,18 @@ public class SkinnedMeshExporter
                         atlasCols = 3.0f;
                         break;
                     }
+
+                    else if (mat.shader != null && mat.shader.name.Contains("Outfit_Clean"))
+                    {
+                        atlasCols = 4.0f;
+                        break;
+                    }
+
+                    else if (mat.shader != null && mat.shader.name.Contains("Outfit_Damaged"))
+                    {
+                        atlasCols = 4.0f;
+                        break;
+                    }
                 }
             }
             if (atlasCols < 1.0f) atlasCols = 1.0f;

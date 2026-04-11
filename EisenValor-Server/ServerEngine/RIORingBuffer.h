@@ -11,11 +11,12 @@ namespace GameServerEngine {
 		uint32			m_writeOffset;      
 	
 	public:
-		explicit RIORingBuffer(const uint32 capacity = 65536);
+		explicit RIORingBuffer(const uint32 capacity = 655360);
 		virtual ~RIORingBuffer();
 
 	public:
 		bool RegisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable);
+		void DeregisterBuffer(const RIO_EXTENSION_FUNCTION_TABLE& rioFuncTable);
 		uint32 GetFreeSize() const { return m_capacity - m_usedSize; }
 		uint32 GetUsedSize() const { return m_usedSize; }
 		
@@ -43,14 +44,22 @@ namespace GameServerEngine {
 
 	private:
 		void Alloc();
+		void Free();
 	};
 
+
+	// ==========================================
+	// 				RIORingRecvBuffer
+	// ==========================================
 	class RIORingRecvBuffer : public RIORingBuffer {
 	public:
 		RIORingRecvBuffer();
 		virtual ~RIORingRecvBuffer();
 	};
 
+	// ==========================================
+	// 				RIORingSendBuffer
+	// ==========================================
 	class RIORingSendBuffer : public RIORingBuffer {
 	public:
 		RIORingSendBuffer();

@@ -59,7 +59,7 @@ private:
 	void EnsureWorldMatrixUpdated();
 	void MarkDirty();
 	void UpdateLocalMatrix();
-	void UpdateWorldDecomposition();
+	void UpdateWorldDerivedData();
 	void UpdateWorldMatrix();
 
 	DX::XMFLOAT3 m_localPosition = {0.0f, 0.0f, 0.0f};

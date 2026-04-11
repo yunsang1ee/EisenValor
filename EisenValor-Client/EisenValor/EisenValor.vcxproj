@@ -204,6 +204,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\Login\LoginControllerComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
+    <ClInclude Include="Component\SocketComponent.h" />
     <ClInclude Include="Component\StaminaComponent.h" />
     <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
@@ -236,6 +237,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="Util\AnimationLoader.h" />
     <ClInclude Include="Util\CameraConfig.h" />
+    <ClInclude Include="Util\GameConstants.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\FSM\FSMComponent.cpp" />
@@ -246,6 +248,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\Login\LoginControllerComponent.cpp" />
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
+    <ClCompile Include="Component\SocketComponent.cpp" />
     <ClCompile Include="Component\StaminaComponent.cpp" />
     <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />

@@ -9,14 +9,6 @@ using namespace DirectX;
 
 namespace
 {
-bool DecomposeWorldMatrix(
-	const XMFLOAT4X4& worldMatrix, XMVECTOR& outScale, XMVECTOR& outRotationQuat, XMVECTOR& outTranslation
-)
-{
-	XMMATRIX world = XMLoadFloat4x4(&worldMatrix);
-	return XMMatrixDecompose(&outScale, &outRotationQuat, &outTranslation, world);
-}
-
 XMFLOAT3 RotateBasisVector(const XMFLOAT4& rotationQuat, FXMVECTOR basisVector)
 {
 	XMVECTOR quat = XMLoadFloat4(&rotationQuat);
@@ -26,6 +18,11 @@ XMFLOAT3 RotateBasisVector(const XMFLOAT4& rotationQuat, FXMVECTOR basisVector)
 	XMFLOAT3 result;
 	XMStoreFloat3(&result, rotated);
 	return result;
+}
+
+XMFLOAT3 MultiplyScale(const XMFLOAT3& lhs, const XMFLOAT3& rhs)
+{
+	return {lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z};
 }
 } // namespace
 
@@ -40,11 +37,15 @@ Transform::~Transform()
 {
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
+	{
 		return;
+	}
 
 	auto* storage = scene->GetStorage<Transform>();
 	if (!storage)
+	{
 		return;
+	}
 
 	// 부모와의 연결 끊기
 	if (m_parent.IsValid())
@@ -115,6 +116,7 @@ void Transform::SetWorldPosition(const DX::XMFLOAT3& worldPosition)
 		return;
 	}
 
+	parent->EnsureWorldMatrixUpdated();
 	XMMATRIX parentWorldInv = XMMatrixInverse(nullptr, XMLoadFloat4x4(&parent->m_worldMatrix));
 
 	XMVECTOR worldPosVec = XMLoadFloat3(&worldPosition);
@@ -259,7 +261,7 @@ void Transform::UpdateWorldMatrix()
 
 			XMMATRIX parentWorldMtx = XMLoadFloat4x4(&parentTransform->m_worldMatrix);
 			XMStoreFloat4x4(&m_worldMatrix, localMtx * parentWorldMtx);
-			UpdateWorldDecomposition();
+			UpdateWorldDerivedData();
 			m_isDirty = false;
 			return;
 		}
@@ -271,38 +273,26 @@ void Transform::UpdateWorldMatrix()
 	m_isDirty = false;
 }
 
-void Transform::UpdateWorldDecomposition()
+void Transform::UpdateWorldDerivedData()
 {
-	XMVECTOR worldScale;
-	XMVECTOR worldQuat;
-	XMVECTOR worldPos;
-	if (DecomposeWorldMatrix(m_worldMatrix, worldScale, worldQuat, worldPos))
-	{
-		worldQuat = XMQuaternionNormalize(worldQuat);
-		XMStoreFloat4(&m_worldRotationQuat, worldQuat);
-		XMStoreFloat3(&m_worldScale, worldScale);
-		return;
-	}
-
 	XMVECTOR localQuat = XMLoadFloat4(&m_localRotationQuat);
+	m_worldScale = m_localScale;
+
 	if (m_parent.IsValid())
 	{
 		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 		if (auto* parent = storage ? storage->Get(m_parent) : nullptr)
 		{
+			parent->EnsureWorldMatrixUpdated();
 			XMVECTOR parentQuat = XMLoadFloat4(&parent->m_worldRotationQuat);
 			localQuat = XMQuaternionMultiply(parentQuat, localQuat);
+			m_worldScale = MultiplyScale(parent->m_worldScale, m_localScale);
 		}
 	}
 
 	localQuat = XMQuaternionNormalize(localQuat);
 	XMStoreFloat4(&m_worldRotationQuat, localQuat);
-
-	XMVECTOR sx = XMVector3Length(XMVectorSet(m_worldMatrix._11, m_worldMatrix._12, m_worldMatrix._13, 0.0f));
-	XMVECTOR sy = XMVector3Length(XMVectorSet(m_worldMatrix._21, m_worldMatrix._22, m_worldMatrix._23, 0.0f));
-	XMVECTOR sz = XMVector3Length(XMVectorSet(m_worldMatrix._31, m_worldMatrix._32, m_worldMatrix._33, 0.0f));
-	m_worldScale = {XMVectorGetX(sx), XMVectorGetX(sy), XMVectorGetX(sz)};
 }
 
 void Transform::EnsureWorldMatrixUpdated()

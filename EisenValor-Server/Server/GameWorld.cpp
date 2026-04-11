@@ -9,7 +9,6 @@
 #include "GameDataManager.h"
 #include "GameObject.h"
 #include "Collider.h"
-#include "BattleRam.h"
 #include "ServerEngineCore.h"
 #include "WorkerThread.h"
 #include "GameWorldThread.h"
@@ -39,7 +38,7 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 	for(const auto& [id, i] : info)
 		m_reservedParticipantInfo.insert(std::make_pair(id, i));
 
-	if(false == m_navSystem.Load("../NavData/solo_navmesh.bin")) {
+	if(false == m_navSystem.Load("../NavData/nav.bin")) {
 		LOG_ERROR("Nav Data Load Failed!");
 	}
 
@@ -56,37 +55,8 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
-	//m_dt = dt;
-	//m_accDT += dt;
-
-	//const float fixedInterval = 0.01667f;
-
-	//int loopCount = 0;
-	//while(m_accDT >= fixedInterval && loopCount < 5) {
-
-	//	m_accDT -= fixedInterval;
-
-	//	ProcessEvents();
-
-	//	m_navSystem.Update(fixedInterval);
-
-	//	for(const auto& group : m_gameObjectsGroups) {
-	//		for(const auto& [id, obj] : group) {
-	//			if(obj) obj->Update(fixedInterval);
-	//		}
-	//	}
-
-	//	CheckCollision();
-
-	//	m_worldFrameCount++;
-	//	CheckGameTime(fixedInterval);
-
-	//	loopCount++;
-	//}
-	//m_lastDT = dt;
-
-	constexpr float kFixedInterval = 1.0f / 60.0f;
-	constexpr int   kMaxSubSteps = 5;
+	constexpr float kFixedInterval{ 1.0f / 60.0f };
+	constexpr int   kMaxSubSteps{ 5 };
 
 	m_lastDT = m_dt;  
 	m_dt = dt;
@@ -126,8 +96,8 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "Enter Game World!" << std::endl;
 #endif
+	static Vec3 startPos{ -24.9313736f,-8.80016708f,-5.53999329f };
 	static const Vec3 offset{ 0.f, 0.f, 0.f };
-	static Vec3 startPos{ 0.f, 0.f, 0.f };
 	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static bool flag{ false };
@@ -209,6 +179,8 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	Vec3 prevPos{ t.GetPosition() };
 	Vec3 newPos{ transform.GetPosition() };
 
+	std::cout << newPos.x << ", " << newPos.y << ", " << newPos.z << std::endl;
+
 	//auto movement = player->GetComponent<Movement>();
 	//if(!movement) return;
 
@@ -228,7 +200,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	if(!navQuery) return;
 
 	dtQueryFilter filter;
-	float extents[3] = { 0.5f, 1.0f, 0.5f };	// 검색범위
+	float extents[3] = { 0.5f, 2.5f, 0.5f };  // 계단 높이에 맞게 조정
 
 	// 3-1. 목표 위치가 NavMesh 위에 있는가?
 	float      newPosArr[3] = { newPos.x, newPos.y, newPos.z };
@@ -245,21 +217,21 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	}
 
 	// 3-2. Raycast: 이전 위치 → 새 위치 사이에 벽이 있는가?
-	float     prevPosArr[3] = { prevPos.x, prevPos.y, prevPos.z };
-	dtPolyRef prevPoly = 0;
-	float prevNearestPt[3];
-	navQuery->findNearestPoly(prevPosArr, extents, &filter, &prevPoly, prevNearestPt);
+	//float     prevPosArr[3] = { prevPos.x, prevPos.y, prevPos.z };
+	//dtPolyRef prevPoly = 0;
+	//float prevNearestPt[3];
+	//navQuery->findNearestPoly(prevPosArr, extents, &filter, &prevPoly, prevNearestPt);
 
-	if(prevPoly != 0) {
-		float t, hitNormal[3];
-		dtStatus rayStatus = navQuery->raycast(prevPoly, prevPosArr, newPosArr, &filter, &t, hitNormal, nullptr, nullptr, 0);
+	//if(prevPoly != 0) {
+	//	float t, hitNormal[3];
+	//	dtStatus rayStatus = navQuery->raycast(prevPoly, prevPosArr, newPosArr, &filter, &t, hitNormal, nullptr, nullptr, 0);
 
-		if(dtStatusSucceed(rayStatus) && t < 1.0f) {
-			// 벽 통과 시도 → 차단
-			SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
-			return;
-		}
-	}
+	//	if(dtStatusSucceed(rayStatus) && t < 1.0f) {
+	//		// 벽 통과 시도 → 차단
+	//		SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
+	//		return;
+	//	}
+	//}
 
 	// 3-3. NavMesh에 스냅 (Y축 보정)
 	const Vec3 snapPos{ newNearestPt[0], newNearestPt[1], newNearestPt[2] };
@@ -704,9 +676,9 @@ bool GameServer::Contents::GameWorld::IsFinish()
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameWorld::IDToPlayer(const uint64 sessionID)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	if(playerGroup.find(sessionID) == playerGroup.end()) return nullptr;
-	auto player = std::static_pointer_cast<Player>(playerGroup[sessionID]);
-	return player;
+	auto it = playerGroup.find(sessionID);
+	if(it == playerGroup.end()) return nullptr;
+	return std::static_pointer_cast<Player>(it->second);
 }
 
 
@@ -737,16 +709,24 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	for(const auto& [id, participant] : m_reservedParticipantInfo) {
 		if(FB_ENUMS::PARTICIPANT_TYPE_BOT == participant.type) {
 			static bool flag{ true };
-			static Vec3 startPos{ 5.f, 0.f, 5.f };
 
 			GeneralTemplate t;
 			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(participant.teamType);
-			t.transform = Transform{ startPos, Vec3{} };
+			if(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) {
+				static Vec3 startPos{ -12.f, -9.f, -10.f };
+				t.transform = Transform{ startPos, Vec3{} };
+				startPos.z += 1.f;
+			}
+			else {
+				static Vec3 startPos{ -37.f, -9.f, -6.f };
+				startPos.x += 1.f;
+				startPos.z -= 1.f;
+				t.transform = Transform{ startPos, Vec3{} };
+			}
 			t.gameWorld = this;
 			flag = !flag;
-			startPos.x += 5.f;
 
 			auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
 			AddGameObject(std::move(general));
@@ -773,39 +753,30 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	AddGameObject(std::move(soldier));
 	//}
 
-	for(int i = 0; i < 2; ++i) {
-		static bool flag{ true };
-		static Vec3 startPos{ -5.f  + 10.f * i, 0.f, -5.f };
+	//for(int i = 0; i < 2; ++i) {
+	//	static bool flag{ true };
 
-		GeneralTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-		t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-		t.transform = Transform{ startPos, Vec3{} };
-		t.gameWorld = this;
-		flag = !flag;
-		startPos.x += 5.f;
-
-		auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
-		AddGameObject(std::move(general));
-	}
-
-	// - 배틀램 생성
-	//{
-	//	BattleRamTemplate t;
-	//	t.id = m_npcIdGen++;
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-	//	t.posInfo = PosInfo{
-	//	.pos = Vec3{},
-	//	.rot = Vec3{}
-	//	};
-	//	t.gameWorld = std::static_pointer_cast<GameWorld>(shared_from_this());
-	//	t.detectionRange = 2.5f;
-	//	t.finalDestPos = Vec3{ 25.f, 0.f, 5.f };
-	//	auto battleRam{ Server::Contents::GameObjectFactory::CreateBattleRam(t) };
-	//	AddGameObject(std::move(battleRam));
+	//	GeneralTemplate t;
+	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
+	//	if(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) {
+	//		static Vec3 startPos{ -12.f, -9.f, -10.f };
+	//		t.transform = Transform{ startPos, Vec3{} };
+	//		startPos.z += 1.f;
+	//	}
+	//	else {
+	//		static Vec3 startPos{ -37.f, -9.f, -6.f };
+	//		startPos.x += 1.f;
+	//		startPos.z -= 1.f;
+	//		t.transform = Transform{ startPos, Vec3{} };
+	//	}
+	//	t.gameWorld = this;
+	//	flag = !flag;
+	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
+	//	AddGameObject(std::move(general));
 	//}
-
+	
 	 // 점령지 생성
 	//{
 	//	OccupationZoneTemplate t;
@@ -827,7 +798,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.transform = Transform{ Vec3{ -5.f, 0.f, 5.f }, Vec3{} };
+		t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
 		t.teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
 		t.gameWorld = this;
 
@@ -839,7 +810,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	{
 		SpanwerTemplate t;
 		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.transform = Transform{ Vec3{ 5.f, 0.f, 5.f}, Vec3{} };
+		t.transform = Transform{ Vec3{ -25.f, -9.f, -12.f}, Vec3{} };
 		t.teamType = FB_ENUMS::TEAM_TYPE_DEFENSE;
 		t.gameWorld = this;
 

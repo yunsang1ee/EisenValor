@@ -38,7 +38,7 @@
       <Filter>03. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalFuncs.cpp">
-      <Filter>96. Headers\97. Global</Filter>
+      <Filter>97. Global</Filter>
     </ClCompile>
     <ClCompile Include="SoldierStates.cpp">
       <Filter>03. Contents\GameObject\Creature\Soldier\State</Filter>
@@ -121,9 +121,6 @@
     <ClCompile Include="DetourProximityGrid.cpp">
       <Filter>03. Contents\GameWorld\NavSystem\DetourCrowd</Filter>
     </ClCompile>
-    <ClCompile Include="BattleRam.cpp">
-      <Filter>03. Contents\GameObject\Creature\BattleRam</Filter>
-    </ClCompile>
     <ClCompile Include="GeneralStates.cpp">
       <Filter>03. Contents\GameObject\Creature\General\States</Filter>
     </ClCompile>
@@ -137,7 +134,7 @@
       <Filter>03. Contents\Component</Filter>
     </ClCompile>
     <ClCompile Include="ServerGlobalVariables.cpp">
-      <Filter>96. Headers\97. Global</Filter>
+      <Filter>97. Global</Filter>
     </ClCompile>
     <ClCompile Include="LobbyServerSession.cpp">
       <Filter>01. SessionManager\LobbyServerSession</Filter>
@@ -185,9 +182,6 @@
     </Filter>
     <Filter Include="01. SessionManager\LobbyServerSession">
       <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="96. Headers\97. Global">
-      <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
     </Filter>
     <Filter Include="02. Packets">
       <UniqueIdentifier>{a72fea0a-efab-4482-a77f-c526fc498cbd}</UniqueIdentifier>
@@ -267,12 +261,6 @@
     <Filter Include="03. Contents\GameObject\Creature\General\Nodes">
       <UniqueIdentifier>{ce68bfa7-8fc7-4d77-821c-cd58c3a63746}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Contents\GameObject\Creature\BattleRam">
-      <UniqueIdentifier>{53307cfa-15b5-4eb7-b314-bf6bf5eac919}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\GameObject\Creature\BattleRam\State">
-      <UniqueIdentifier>{1b61b4d6-a179-4a29-9691-9483ee05422d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Contents\Component">
       <UniqueIdentifier>{3e867b65-716a-4eda-abdd-0b953408e4e7}</UniqueIdentifier>
     </Filter>
@@ -308,6 +296,9 @@
     </Filter>
     <Filter Include="03. Contents\Component\Movement">
       <UniqueIdentifier>{5489b01f-732e-483e-a373-405f30274667}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="97. Global">
+      <UniqueIdentifier>{5e0f8ec5-81d3-4603-b9d2-3d96749fdcf3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -357,7 +348,7 @@
       <Filter>03. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalFuncs.h">
-      <Filter>96. Headers\97. Global</Filter>
+      <Filter>97. Global</Filter>
     </ClInclude>
     <ClInclude Include="SoldierStates.h">
       <Filter>03. Contents\GameObject\Creature\Soldier\State</Filter>
@@ -446,9 +437,6 @@
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>98. Utils</Filter>
     </ClInclude>
-    <ClInclude Include="BattleRam.h">
-      <Filter>03. Contents\GameObject\Creature\BattleRam</Filter>
-    </ClInclude>
     <ClInclude Include="OccupationZone.h">
       <Filter>03. Contents\Component\Scripts\OccupationZone</Filter>
     </ClInclude>
@@ -459,7 +447,7 @@
       <Filter>03. Contents\GameObject\Creature\General\States</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalVariables.h">
-      <Filter>96. Headers\97. Global</Filter>
+      <Filter>97. Global</Filter>
     </ClInclude>
     <ClInclude Include="ClientPacketHandler.h">
       <Filter>02. Packets\PacketHandler\ClientPacketHandler</Filter>
@@ -486,7 +474,7 @@
       <Filter>01. SessionManager\ClientSession</Filter>
     </ClInclude>
     <ClInclude Include="SessionManager.h">
-      <Filter>02. Packets</Filter>
+      <Filter>01. SessionManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

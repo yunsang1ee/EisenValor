@@ -32,6 +32,7 @@
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "Component/SocketComponent.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 
@@ -443,20 +444,20 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 		return false;
 	}
 	DEBUG_LOG_FMT("Created LocalPlayer: {} \n", id);
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
-		[scene, pos = recvPkt.pos_info(), stance = recvPkt.stance_type(), teamType = recvPkt.team_type(),
-		 maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
+		[pos, rot, scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
+		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
-			auto playerObjHandle = playerObj->GetHandle();
-
 			auto& tr = playerObj->GetTransform();
-			tr.SetWorldPosition(DX::XMFLOAT3{pos->pos().x(), pos->pos().y(), pos->pos().z()});
+			tr.SetWorldPosition(DX::XMFLOAT3(pos.x, pos.y, pos.z));
+			tr.SetRotation(rot.x, rot.y, rot.z);
 
-			// 모델 크기
-			playerObj->GetTransform().SetScale(1.5f);
+			auto playerObjHandle = playerObj->GetHandle();
 
 			scene->CreateComponentWithInit<SkinnedMeshComponent>(
 
@@ -552,13 +553,113 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// FSMComponent
 			scene->CreateComponentWithInit<FSMComponent>(
-				playerObjHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
+				playerObjHandle,
+				[](FSMComponent* fsm)
+				{
+					fsm->SetObjectType(static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER));
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+				}
 			);
 
 			// Animation Component
 			scene->CreateComponentWithInit<AnimationComponent>(
 				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 			);
+
+			// Shield
+			{
+				auto shieldHandle = scene->ReserveGameObject("LocalPlayer_Shield");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					shieldHandle,
+					[scene, playerObjHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					shieldHandle,
+					[scene, playerObjHandle](SocketComponent* socket)
+					{
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							socket->SetTarget(player, "lowerarm_l");
+							// Offset
+							float			tx = 0.1634455f;
+							float			ty = 0.02278341f;
+							float			tz = 0.101984f;
+							constexpr float rx = DirectX::XMConvertToRadians(-10.853f);
+							constexpr float ry = DirectX::XMConvertToRadians(135.113f);
+							constexpr float rz = DirectX::XMConvertToRadians(-251.105f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+			}
+
+
+			// Sword
+			{
+				auto swordHandle = scene->ReserveGameObject("LocalPlayer_Sword");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					swordHandle,
+					[scene, playerObjHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+						}
+					}
+				);
+
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					swordHandle,
+					[scene, playerObjHandle](SocketComponent* socket)
+					{
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							socket->SetTarget(player, "hand_r");
+
+							// Offset
+							float			tx = -0.095f;
+							float			ty = 0.125f;
+							float			tz = -0.043f;
+							constexpr float rx = DirectX::XMConvertToRadians(40.563f);
+							constexpr float ry = DirectX::XMConvertToRadians(49.596f);
+							constexpr float rz = DirectX::XMConvertToRadians(89.208f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+			}
 
 			//// 공격 범위 디버깅용
 			// scene->ReserveGameObject(
@@ -663,10 +764,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	switch (objType)
 	{
 	case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
-		objectName = "RemotePlayer_" + std::to_string(id);
+		objectName = "RemotePlayer_" + std::to_string(id); // 다른 플레이어
 		break;
 	case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
-		objectName = "Bot_" + std::to_string(id);
+		objectName = "Bot_" + std::to_string(id); // NPC 장수
 		break;
 	default:
 		objectName = "GameObject_" + std::to_string(id);
@@ -691,7 +792,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
 			{
-				tr.SetScale(2.0f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[](SkinnedMeshComponent* mesh)
@@ -736,21 +836,212 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
 				addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 				addEquipment("Dress", "Resource/Models/Dress.evskin");
-			}
-			else
-			{
-				scene->CreateComponentWithInit<MeshComponent>(
+
+				// BattleUIControllerComponent
+				scene->CreateComponentWithInit<BattleUIControllerComponent>(
 					objHandle,
-					[teamType](MeshComponent* mesh)
+					[stance](BattleUIControllerComponent* ui)
 					{
-						auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
-						if (nullptr != meshRes)
+						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
+						ui->InitStance(stance);
+						// DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n",
+						// static_cast<int>(stance));
+					}
+				);
+
+				// StaminaComponent
+				scene->CreateComponentWithInit<StaminaComponent>(
+					objHandle,
+					[maxStamina, currentStamina](StaminaComponent* stamina)
+					{
+						stamina->SetMaxStamina(maxStamina);
+						stamina->SetStamina(currentStamina);
+					}
+				);
+
+				// Animation Component
+				scene->CreateComponentWithInit<AnimationComponent>(
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
+				);
+
+
+				// Shield
+				auto shieldHandle = scene->ReserveGameObject(objectName + "_Shield");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					shieldHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						if (res)
 						{
-							mesh->SetMeshResource(meshRes);
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
 						}
 					}
 				);
-				tr.SetScale(2.0f);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					shieldHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "lowerarm_l");
+							// Offset
+							float			tx = 0.1634455f;
+							float			ty = 0.02278341f;
+							float			tz = 0.101984f;
+							constexpr float rx = DirectX::XMConvertToRadians(-10.853f);
+							constexpr float ry = DirectX::XMConvertToRadians(135.113f);
+							constexpr float rz = DirectX::XMConvertToRadians(-251.105f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+
+				auto swordHandle = scene->ReserveGameObject(objectName + "_Sword");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					swordHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				// Sword
+				scene->CreateComponentWithInit<SocketComponent>(
+					swordHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "hand_r");
+
+							// Offset
+							constexpr float tx = -0.095f;
+							constexpr float ty = 0.125f;
+							constexpr float tz = -0.043f;
+							constexpr float rx = DirectX::XMConvertToRadians(40.563f);
+							constexpr float ry = DirectX::XMConvertToRadians(49.596f);
+							constexpr float rz = DirectX::XMConvertToRadians(89.208f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+
+				// FSMComponent
+				scene->CreateComponentWithInit<FSMComponent>(
+					objHandle,
+					[objType](FSMComponent* fsm)
+					{
+						fsm->SetObjectType(static_cast<uint8_t>(objType));
+						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+					}
+				);
+			}
+
+			////////////////// isGeneral ///////////////////
+
+			else ////// Soldier
+			{
+				scene->CreateComponentWithInit<SkinnedMeshComponent>(
+					objHandle,
+					[teamType](SkinnedMeshComponent* mesh)
+					{
+						auto meshRes =
+							GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Knight_Armored.evskin");
+						if (nullptr != meshRes)
+						{
+							mesh->SetSkinnedMeshResource(meshRes);
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<AnimationComponent>(
+					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "Knight_Armored"); }
+				);
+
+				// FSMComponent
+				scene->CreateComponentWithInit<FSMComponent>(
+					objHandle,
+					[objType](FSMComponent* fsm)
+					{
+						fsm->SetObjectType(static_cast<uint8_t>(objType));
+						fsm->ChangeState(
+							StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)
+						);
+					}
+				);
+
+				// Sword
+				auto swordHandle = scene->ReserveGameObject(objectName + "_Sword");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					swordHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					swordHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "hand_r");
+
+							// Offset
+							constexpr float tx = -0.102f;
+							constexpr float ty = 0.106f;
+							constexpr float tz = -0.033f;
+							constexpr float rx = DirectX::XMConvertToRadians(43.896f);
+							constexpr float ry = DirectX::XMConvertToRadians(65.171f);
+							constexpr float rz = DirectX::XMConvertToRadians(76.545f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
@@ -777,72 +1068,21 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				objHandle, [teamType](TeamComponent* team) { team->SetTeamType(teamType); }
 			);
 
-			// StaminaComponent (Player Only)
-			if (isGeneral)
-			{
-				scene->CreateComponentWithInit<StaminaComponent>(
-					objHandle,
-					[maxStamina, currentStamina](StaminaComponent* stamina)
-					{
-						stamina->SetMaxStamina(maxStamina);
-						stamina->SetStamina(currentStamina);
-					}
-				);
-			}
-
 			// VitalUIControllerComponent
-			if (isGeneral || objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
-			{
-				scene->CreateComponentWithInit<VitalUIControllerComponent>(
-					objHandle,
-					[](VitalUIControllerComponent* vital)
-					{
-						// Init 제거->OnStart에서 자동 판단
-					}
-				);
-			}
-
-			// Animation Component
-			if (isGeneral)
-			{
-				scene->CreateComponentWithInit<AnimationComponent>(
-					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
-				);
-			}
-
-			// FSMComponent
-			if (isGeneral)
-			{
-				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
-				);
-			}
+			scene->CreateComponentWithInit<VitalUIControllerComponent>(
+				objHandle,
+				[](VitalUIControllerComponent* vital)
+				{
+					// Init 제거->OnStart에서 자동 판단
+				}
+			);
 
 			DEBUG_LOG_FMT(
 				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
 				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
 			);
 
-			// BattleUIControllerComponent 부착
-			if (isGeneral)
-			{
-				scene->CreateComponentWithInit<BattleUIControllerComponent>(
-					objHandle,
-					[stance](BattleUIControllerComponent* ui)
-					{
-						ui->SetControlMode(BattleUIControllerComponent::ControlType::Remote);
-						ui->InitStance(stance);
-						// DEBUG_LOG_FMT("[BattleUI] Component attached to RemotePlayer. InitStance: {}\n",
-						// static_cast<int>(stance));
-					}
-				);
-			}
-
-			// FSMComponent
-			scene->CreateComponentWithInit<FSMComponent>(
-				objHandle, [](FSMComponent* fsm) { fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); }
-			);
-			//		// 공격 범위 디버깅
+			// 공격 범위 디버깅
 			// if (isGeneral)
 			//{
 			//	scene->ReserveGameObject(
@@ -923,6 +1163,20 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 		obj->GetTransform().SetPosition(pos);
 		obj->GetTransform().SetRotation(rot);
+
+		// 서버에서 보내준 state를 FSM에 전달
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
+		{
+			uint8_t subState = recvPkt.sub_state();
+			if (subState == 21)
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+			else if (subState == 22)
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+			else if (subState == 23)
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+			else
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		}
 	}
 	return true;
 }
@@ -956,10 +1210,16 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 		// 2. 컴포넌트 가져오기
 		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
 		{
-			// 3. UI 갱신
+			// UI 갱신
 			uiController->TriggerAttackRemote(type, dir);
 			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type),
 			// static_cast<int>(dir));
+
+			// FSM 상태 동기화: 공격 타입 설정
+			if (auto* fsm = obj->GetComponent<FSMComponent>())
+			{
+				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
+			}
 			return true;
 		}
 	}
@@ -1056,7 +1316,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
 		fsm->SetServerState(nextState);
 	}
 
@@ -1072,17 +1332,9 @@ SET_LOCAL:
 			}
 		}
 
-		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD)
+		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD || nextState == FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
 		{
-			if (obj->GetComponent<StaminaComponent>() == nullptr)
-			{
-				// 병사는 즉시 메모리에서 삭제
-				scene->DestroyGameObject(obj->GetHandle());
-			}
-			else
-			{
-				fsm->SetServerState(nextState);
-			}
+			fsm->SetServerState(nextState);
 		}
 	}
 

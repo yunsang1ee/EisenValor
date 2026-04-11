@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "GameObject.inl"
 #include "SkinnedMeshComponent.h"
+#include "AssetFormat.h"
 #include "DxMath.h"
 #include <cmath>
 #include <algorithm>
@@ -23,6 +24,7 @@ void AnimationComponent::OnLateUpdate(float dt)
 		if (m_isLooping)
 		{
 			m_currentTime = std::fmod(m_currentTime, duration);
+			m_rootMotionFirstFrame = true;
 		}
 		else
 		{
@@ -39,13 +41,13 @@ void AnimationComponent::AddAnimation(uint8_t key, std::shared_ptr<AnimationReso
 	m_animations[key] = animation;
 }
 
-void AnimationComponent::Play(uint8_t key, bool loop)
+void AnimationComponent::Play(uint8_t key, bool loop, bool rootMotion)
 {
 	auto it = m_animations.find(key);
 	if (it != m_animations.end())
 	{
 		m_currentKey = key;
-		Play(it->second, loop);
+		Play(it->second, loop, rootMotion);
 	}
 	else
 	{
@@ -53,12 +55,17 @@ void AnimationComponent::Play(uint8_t key, bool loop)
 	}
 }
 
-void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool loop)
+void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool loop, bool rootMotion)
 {
 	m_currentAnimation = animation;
 	m_isLooping = loop;
+	m_enableRootMotion = rootMotion;
 	m_currentTime = 0.0f;
 	m_isPlaying = true;
+
+	// 루트모션 초기화
+	m_lastRootPos = {0.0f, 0.0f, 0.0f};
+	m_rootMotionFirstFrame = true;
 }
 
 void AnimationComponent::Stop()
@@ -78,6 +85,39 @@ void AnimationComponent::Resume()
 		m_isPlaying = true;
 }
 
+bool AnimationComponent::GetBoneIndexByName(const std::string& boneName, uint32_t& outIndex) const
+{
+	auto* skinnedMesh = GetGameObject()->GetComponent<SkinnedMeshComponent>();
+	if (!skinnedMesh || !skinnedMesh->IsValid())
+		return false;
+
+	auto meshRes = skinnedMesh->GetSkinnedMeshResource();
+	if (!meshRes)
+		return false;
+
+	uint64_t	targetHash = EvAsset::HashString(boneName);
+	const auto& bones = meshRes->GetBones();
+	for (size_t i = 0; i < bones.size(); ++i)
+	{
+		if (bones[i].nameHash == targetHash)
+		{
+			outIndex = static_cast<uint32_t>(i);
+			return true;
+		}
+	}
+	return false;
+}
+
+// 뼈의 인덱스를 받아 해당 뼈의 모델 행렬을 반환 (소켓 시스템용)
+bool AnimationComponent::GetSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& outMatrix) const
+{
+	if (boneIndex >= m_globalMatrices.size())
+		return false;
+
+	outMatrix = DirectX::XMLoadFloat4x4(&m_globalMatrices[boneIndex]);
+	return true;
+}
+
 void AnimationComponent::UpdateBoneMatrices()
 {
 	if (!m_currentAnimation)
@@ -85,7 +125,8 @@ void AnimationComponent::UpdateBoneMatrices()
 		return;
 	}
 
-	auto* skinnedMesh = GetGameObject()->GetComponent<SkinnedMeshComponent>();
+	auto* myGameObject = GetGameObject();
+	auto* skinnedMesh = myGameObject->GetComponent<SkinnedMeshComponent>();
 	if (!skinnedMesh || !skinnedMesh->IsValid())
 	{
 		return;
@@ -161,7 +202,7 @@ void AnimationComponent::UpdateBoneMatrices()
 						p = XMVectorLerp(p0, p1, alpha);
 					}
 					//// 유니티와 DX의 X축 반전 보정
-					//pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
+					// pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
 					pos = p;
 				}
 
@@ -185,8 +226,6 @@ void AnimationComponent::UpdateBoneMatrices()
 						);
 						r = XMQuaternionSlerp(r0, r1, alpha);
 					}
-					//// 유니티 Quaternion 성분 보정 (Y, Z 반전)
-					//rot = XMVectorSet(XMVectorGetX(r), -XMVectorGetY(r), -XMVectorGetZ(r), XMVectorGetW(r));
 					rot = r;
 				}
 
@@ -211,6 +250,56 @@ void AnimationComponent::UpdateBoneMatrices()
 				}
 				break;
 			}
+		}
+
+		// Root Motion 처리
+		if (i == 0 && m_enableRootMotion)
+		{
+			XMFLOAT3 currentRootPos;
+			XMStoreFloat3(&currentRootPos, pos);
+
+
+			if (m_rootMotionFirstFrame)
+			{
+				// 첫번째 프레임: 기준점만 잡고 이동은 하지 않음
+				m_lastRootPos = currentRootPos;
+				m_rootMotionFirstFrame = false;
+			}
+			else
+			{
+				// Delta 계산 (현재 위치 - 이전 위치)
+				XMVECTOR deltaVec = XMVectorSubtract(pos, XMLoadFloat3(&m_lastRootPos));
+
+				// 현재 회전
+				auto&	 transform = myGameObject->GetTransform();
+				XMFLOAT4 worldRotQ = transform.GetWorldRotationQuaternion();
+
+				XMFLOAT3 delta;
+				XMStoreFloat3(&delta, deltaVec);
+				delta.z = -delta.z; // Z축 반전
+
+				XMVECTOR DeltaVec = XMVectorSet(delta.x, delta.y, delta.z, 0.0f);
+
+				// 캐릭터 회전
+				XMVECTOR rotQuat = XMLoadFloat4(&worldRotQ);
+				XMVECTOR rotatedDelta = XMVector3Rotate(DeltaVec, rotQuat);
+
+				// 델타 누적
+				XMVECTOR currentAccDelta = XMLoadFloat3(&m_accumulatedRootDelta);
+				XMVECTOR nextAccDelta = XMVectorAdd(currentAccDelta, rotatedDelta);
+				XMStoreFloat3(&m_accumulatedRootDelta, nextAccDelta);
+
+				//// [DEBUG] 누적 이동량 확인 로그
+				// XMFLOAT3 acc;
+				// XMStoreFloat3(&acc, nextAccDelta);
+				// DEBUG_LOG_FMT("[RootMotion] Accumulated Delta: ({:.3f}, {:.3f}, {:.3f})\n", acc.x, acc.y, acc.z);
+
+				// 기준점 업데이트
+				m_lastRootPos = currentRootPos;
+			}
+
+			// 메시 위치 초기화
+			pos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 		}
 
 		XMMATRIX local = XMMatrixAffineTransformation(scale, XMVectorZero(), rot, pos);
@@ -263,7 +352,7 @@ void AnimationComponent::UpdateBoneMatrices()
 
 bool AnimationComponent::IsAnimationEnd() const
 {
-	if (!m_currentAnimation || m_isLooping) 
+	if (!m_currentAnimation || m_isLooping)
 	{
 		return false;
 	}
