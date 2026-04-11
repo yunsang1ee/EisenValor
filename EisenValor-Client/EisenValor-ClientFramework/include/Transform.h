@@ -12,11 +12,11 @@ public:
 	Transform();
 	~Transform();
 
-	void		 OnUpdate(float deltaTime);
+	void OnUpdate(float deltaTime);
 
-	void		 SetPosition(float x, float y, float z);
-	void		 SetPosition(const DX::XMFLOAT3& position);
-	void		 SetWorldPosition(const DX::XMFLOAT3& worldPosition);
+	void SetPosition(float x, float y, float z);
+	void SetPosition(const DX::XMFLOAT3& position);
+	void SetWorldPosition(const DX::XMFLOAT3& worldPosition);
 
 	DX::XMFLOAT3 GetPosition() const { return m_localPosition; }
 	DX::XMFLOAT3 GetWorldPosition();
@@ -37,7 +37,7 @@ public:
 	DX::XMFLOAT3 GetWorldScale();
 
 	DX::XMFLOAT4X4 GetLocalMatrix() const { return m_localMatrix; }
-	DX::XMFLOAT4X4 GetWorldMatrix() const { return m_worldMatrix; }
+	DX::XMFLOAT4X4 GetWorldMatrix() const;
 
 	void   SetParent(Handle parent);
 	Handle GetParent() const { return m_parent; }
@@ -56,9 +56,11 @@ public:
 
 private:
 	void AddChildInternal(Handle child);
+	void EnsureWorldMatrixUpdated() const;
 	void MarkDirty();
-	void UpdateLocalMatrix();
-	void UpdateWorldMatrix();
+	void UpdateLocalMatrix() const;
+	void UpdateWorldDerivedData() const;
+	void UpdateWorldMatrix() const;
 
 	DX::XMFLOAT3 m_localPosition = {0.0f, 0.0f, 0.0f};
 	DX::XMFLOAT4 m_localRotationQuat = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -67,10 +69,12 @@ private:
 	mutable DX::XMFLOAT3 m_cachedEulerAngles = {0.0f, 0.0f, 0.0f}; // degrees
 	mutable bool		 m_eulerCacheDirty = true;
 
-	DX::XMFLOAT4X4 m_localMatrix;
-	DX::XMFLOAT4X4 m_worldMatrix;
+	mutable DX::XMFLOAT4X4 m_localMatrix;
+	mutable DX::XMFLOAT4X4 m_worldMatrix;
+	mutable DX::XMFLOAT4   m_worldRotationQuat = {0.0f, 0.0f, 0.0f, 1.0f};
+	mutable DX::XMFLOAT3   m_worldScale = {1.0f, 1.0f, 1.0f};
 
-	bool m_isDirty = true;
+	mutable bool m_isDirty = true;
 
 	Handle				m_parent = Handle::Invalid();
 	std::vector<Handle> m_children;

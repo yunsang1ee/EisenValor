@@ -446,14 +446,15 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	DEBUG_LOG_FMT("Created LocalPlayer: {} \n", id);
 	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+
 	auto playerObjHandle = scene->ReserveGameObject(
 		"LocalPlayer", id,
 		[pos, rot, scene, stance = recvPkt.stance_type(), teamType = recvPkt.team_type(), maxHP = recvPkt.max_hp(),
 		 currentHP = recvPkt.current_hp(), maxStamina = recvPkt.max_stamina(),
 		 currentStamina = recvPkt.current_stamina()](GameObject* playerObj)
 		{
-			  auto& tr = playerObj->GetTransform();
-			  tr.SetWorldPosition(DX::XMFLOAT3(pos.x, pos.y, pos.z));
+			auto& tr = playerObj->GetTransform();
+			tr.SetWorldPosition(DX::XMFLOAT3(pos.x, pos.y, pos.z));
 			tr.SetRotation(rot.x, rot.y, rot.z);
 
 			auto playerObjHandle = playerObj->GetHandle();
@@ -552,9 +553,11 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// FSMComponent
 			scene->CreateComponentWithInit<FSMComponent>(
-				playerObjHandle, [](FSMComponent* fsm) { 
+				playerObjHandle,
+				[](FSMComponent* fsm)
+				{
 					fsm->SetObjectType(static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER));
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); 
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 				}
 			);
 
@@ -593,9 +596,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 						{
 							socket->SetTarget(player, "lowerarm_l");
 							// Offset
-							float tx = 0.1634455f;
-							float ty = 0.02278341f;
-							float tz = 0.101984f;
+							float			tx = 0.1634455f;
+							float			ty = 0.02278341f;
+							float			tz = 0.101984f;
 							constexpr float rx = DirectX::XMConvertToRadians(-10.853f);
 							constexpr float ry = DirectX::XMConvertToRadians(135.113f);
 							constexpr float rz = DirectX::XMConvertToRadians(-251.105f);
@@ -762,10 +765,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	switch (objType)
 	{
 	case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
-		objectName = "RemotePlayer_" + std::to_string(id);	// 다른 플레이어
+		objectName = "RemotePlayer_" + std::to_string(id); // 다른 플레이어
 		break;
 	case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
-		objectName = "Bot_" + std::to_string(id);	// NPC 장수
+		objectName = "Bot_" + std::to_string(id); // NPC 장수
 		break;
 	default:
 		objectName = "GameObject_" + std::to_string(id);
@@ -958,9 +961,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 				// FSMComponent
 				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle, [objType](FSMComponent* fsm) { 
+					objHandle,
+					[objType](FSMComponent* fsm)
+					{
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
-						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE); 
+						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 					}
 				);
 			}
@@ -973,7 +978,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					objHandle,
 					[teamType](SkinnedMeshComponent* mesh)
 					{
-						auto meshRes = GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Knight_Armored.evskin");
+						auto meshRes =
+							GLOBAL(ResourceGlobal).Load<SkinnedMeshResource>("Resource/Models/Knight_Armored.evskin");
 						if (nullptr != meshRes)
 						{
 							mesh->SetSkinnedMeshResource(meshRes);
@@ -987,11 +993,13 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 				// FSMComponent
 				scene->CreateComponentWithInit<FSMComponent>(
-					objHandle, [objType](FSMComponent* fsm) { 
+					objHandle,
+					[objType](FSMComponent* fsm)
+					{
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
 						fsm->ChangeState(
 							StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)
-						); 
+						);
 					}
 				);
 
@@ -1165,10 +1173,14 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
 			uint8_t subState = recvPkt.sub_state();
-			if (subState == 21) fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
-			else if (subState == 22) fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
-			else if (subState == 23) fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
-			else fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+			if (subState == 21)
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+			else if (subState == 22)
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+			else if (subState == 23)
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+			else
+				fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
 		}
 	}
 	return true;
@@ -1208,7 +1220,7 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type),
 			// static_cast<int>(dir));
 
-			 // FSM 상태 동기화: 공격 타입 설정
+			// FSM 상태 동기화: 공격 타입 설정
 			if (auto* fsm = obj->GetComponent<FSMComponent>())
 			{
 				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
@@ -1433,7 +1445,6 @@ bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
 			uiController->UpdateUISelection(dir, std::nullopt);
 			return true;
 		}
-
 	}
 
 	return false;

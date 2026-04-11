@@ -11,7 +11,7 @@
 
 using namespace DirectX;
 
-void AnimationComponent::OnUpdate(float dt)
+void AnimationComponent::OnLateUpdate(float dt)
 {
 	if (!m_isPlaying || !m_currentAnimation)
 		return;
@@ -64,7 +64,7 @@ void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool
 	m_isPlaying = true;
 
 	// 루트모션 초기화
-	m_lastRootPos = { 0.0f, 0.0f, 0.0f };
+	m_lastRootPos = {0.0f, 0.0f, 0.0f};
 	m_rootMotionFirstFrame = true;
 }
 
@@ -95,7 +95,7 @@ bool AnimationComponent::GetBoneIndexByName(const std::string& boneName, uint32_
 	if (!meshRes)
 		return false;
 
-	uint64_t targetHash = EvAsset::HashString(boneName);
+	uint64_t	targetHash = EvAsset::HashString(boneName);
 	const auto& bones = meshRes->GetBones();
 	for (size_t i = 0; i < bones.size(); ++i)
 	{
@@ -202,7 +202,7 @@ void AnimationComponent::UpdateBoneMatrices()
 						p = XMVectorLerp(p0, p1, alpha);
 					}
 					//// 유니티와 DX의 X축 반전 보정
-					//pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
+					// pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
 					pos = p;
 				}
 
@@ -273,7 +273,7 @@ void AnimationComponent::UpdateBoneMatrices()
 				// 현재 회전
 				auto&	 transform = myGameObject->GetTransform();
 				XMFLOAT4 worldRotQ = transform.GetWorldRotationQuaternion();
-				
+
 				XMFLOAT3 delta;
 				XMStoreFloat3(&delta, deltaVec);
 				delta.z = -delta.z; // Z축 반전
@@ -290,9 +290,9 @@ void AnimationComponent::UpdateBoneMatrices()
 				XMStoreFloat3(&m_accumulatedRootDelta, nextAccDelta);
 
 				//// [DEBUG] 누적 이동량 확인 로그
-				//XMFLOAT3 acc;
-				//XMStoreFloat3(&acc, nextAccDelta);
-				//DEBUG_LOG_FMT("[RootMotion] Accumulated Delta: ({:.3f}, {:.3f}, {:.3f})\n", acc.x, acc.y, acc.z);
+				// XMFLOAT3 acc;
+				// XMStoreFloat3(&acc, nextAccDelta);
+				// DEBUG_LOG_FMT("[RootMotion] Accumulated Delta: ({:.3f}, {:.3f}, {:.3f})\n", acc.x, acc.y, acc.z);
 
 				// 기준점 업데이트
 				m_lastRootPos = currentRootPos;
@@ -352,7 +352,7 @@ void AnimationComponent::UpdateBoneMatrices()
 
 bool AnimationComponent::IsAnimationEnd() const
 {
-	if (!m_currentAnimation || m_isLooping) 
+	if (!m_currentAnimation || m_isLooping)
 	{
 		return false;
 	}

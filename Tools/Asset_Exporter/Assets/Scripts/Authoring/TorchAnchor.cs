@@ -1,10 +1,13 @@
+using System.IO;
 using UnityEngine;
 
 [ExecuteAlways]
 [DisallowMultipleComponent]
 [AddComponentMenu("EisenValor/Authoring/Torch Anchor")]
-public sealed class TorchAnchor : MonoBehaviour
+public sealed class TorchAnchor : SceneComponentAuthoring
 {
+    private const string ExportedTypeName = "TorchEmitterMetadata";
+
     [Header("Anchor Data")]
     [Tooltip("횃불 빛의 색상입니다. 익스포트용 불꽃 색과 유니티 미리보기 색의 기준값으로 사용합니다.")]
     [SerializeField] private Color lightColor = new Color(1.0f, 0.72f, 0.38f, 1.0f);
@@ -79,6 +82,9 @@ public sealed class TorchAnchor : MonoBehaviour
 
     public Vector3 AnchorPosition => transform.position;
     public Vector3 AnchorDirection => transform.forward;
+
+    public override string ExportTypeName => ExportedTypeName;
+    public override uint ExportVersion => 1;
 
     private void Reset()
     {
@@ -198,5 +204,22 @@ public sealed class TorchAnchor : MonoBehaviour
         Gizmos.color = outlineColor;
         Gizmos.DrawWireSphere(transform.position, range);
         Gizmos.DrawLine(transform.position, transform.position + transform.forward * Mathf.Max(sourceRadius * 2.0f, 0.4f));
+    }
+
+    public override byte[] BuildExportPayload()
+    {
+        using MemoryStream ms = new MemoryStream();
+        using BinaryWriter bw = new BinaryWriter(ms);
+
+        bw.Write(lightColor.r);
+        bw.Write(lightColor.g);
+        bw.Write(lightColor.b);
+        bw.Write(intensity);
+        bw.Write(range);
+        bw.Write(sourceRadius);
+        bw.Write(flickerAmplitude);
+        bw.Write(flickerFrequency);
+
+        return ms.ToArray();
     }
 }
