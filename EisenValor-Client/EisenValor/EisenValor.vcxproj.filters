@@ -62,6 +62,15 @@
     <Filter Include="RenderData">
       <UniqueIdentifier>{f6a7b8c9-d0e1-4c34-d567-89abcdef0123}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Raytracing">
+      <UniqueIdentifier>{1cbc23a3-4a25-4684-a764-6079b6173e2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\UI">
+      <UniqueIdentifier>{23bf07f2-367c-4343-a7b1-8a039ca77519}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\ComponentMetadata">
+      <UniqueIdentifier>{c267c778-8330-446a-876e-ed36154e056e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -184,11 +193,11 @@
     <ClInclude Include="Component\SocketComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Util\GameConstants.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h">
+      <Filter>Component\ComponentMetadata</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -288,17 +297,27 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
-    <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
-    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
-    <None Include="Resource\Shader\UIVertexShader.hlsl" />
-    <None Include="Resource\Shader\UIPixelShader.hlsl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />
     <None Include="..\Packets\Binaries\Structs.fbs" />
     <None Include="..\Packets\Binaries\Tables.fbs" />
     <None Include="packages.config" />
     <None Include="..\.clang-format">
       <Filter>Util</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLibrary.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\UIPixelShader.hlsl">
+      <Filter>Shaders\UI</Filter>
+    </None>
+    <None Include="Resource\Shader\UIVertexShader.hlsl">
+      <Filter>Shaders\UI</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
