@@ -20,9 +20,12 @@ XMFLOAT3 RotateBasisVector(const XMFLOAT4& rotationQuat, FXMVECTOR basisVector)
 	return result;
 }
 
-XMFLOAT3 MultiplyScale(const XMFLOAT3& lhs, const XMFLOAT3& rhs)
+XMFLOAT3 ExtractBasisLengths(const XMFLOAT4X4& matrix)
 {
-	return {lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z};
+	return {
+		std::sqrt(matrix._11 * matrix._11 + matrix._12 * matrix._12 + matrix._13 * matrix._13),
+		std::sqrt(matrix._21 * matrix._21 + matrix._22 * matrix._22 + matrix._23 * matrix._23),
+		std::sqrt(matrix._31 * matrix._31 + matrix._32 * matrix._32 + matrix._33 * matrix._33)};
 }
 } // namespace
 
@@ -270,7 +273,6 @@ void Transform::UpdateWorldMatrix() const
 void Transform::UpdateWorldDerivedData() const
 {
 	XMVECTOR localQuat = XMLoadFloat4(&m_localRotationQuat);
-	m_worldScale = m_localScale;
 
 	if (m_parent.IsValid())
 	{
@@ -281,12 +283,12 @@ void Transform::UpdateWorldDerivedData() const
 			parent->EnsureWorldMatrixUpdated();
 			XMVECTOR parentQuat = XMLoadFloat4(&parent->m_worldRotationQuat);
 			localQuat = XMQuaternionMultiply(parentQuat, localQuat);
-			m_worldScale = MultiplyScale(parent->m_worldScale, m_localScale);
 		}
 	}
 
 	localQuat = XMQuaternionNormalize(localQuat);
 	XMStoreFloat4(&m_worldRotationQuat, localQuat);
+	m_worldScale = ExtractBasisLengths(m_worldMatrix);
 }
 
 void Transform::EnsureWorldMatrixUpdated() const
