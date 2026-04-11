@@ -35,7 +35,7 @@ using Vertex = EvAsset::Vertex;
 
 namespace
 {
-constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/MCastle_Blockout_Demo.evscene";
+constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/Map.evscene";
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
 constexpr std::string_view kTorchPreviewSphereMaterialPath = "Resource/Material/sphere.evmat";
 } // namespace
@@ -43,8 +43,8 @@ constexpr std::string_view kTorchPreviewSphereMaterialPath = "Resource/Material/
 void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
-		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent,
-		TeamComponent, VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent>();
+		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
+		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 

@@ -11,6 +11,7 @@ class SkinnedMeshComponent : public ComponentBase<SkinnedMeshComponent>
 {
 public:
 	static constexpr const char* GetStaticTypeName() { return "SkinnedMeshComponent"; }
+	static constexpr int		 kPriority = 100;
 
 	SkinnedMeshComponent();
 	~SkinnedMeshComponent() override;
@@ -18,7 +19,7 @@ public:
 	SkinnedMeshComponent(SkinnedMeshComponent&&) noexcept;
 	SkinnedMeshComponent& operator=(SkinnedMeshComponent&&) noexcept;
 
-	void OnUpdate(float dt);
+	void OnLateUpdate(float dt);
 
 	void SetSkinnedMeshResource(std::shared_ptr<SkinnedMeshResource> resource, bool loadDefaultMaterials = true);
 	void SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialResource> material);
