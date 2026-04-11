@@ -48,7 +48,7 @@ void GameServer::Contents::Soldier::OnDeath()
 		ag->Remove();
 }
 
-bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	uint32 damage{};
 
@@ -67,7 +67,7 @@ bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const at
 		damage = 10;
 	}
 
-	DecHP(damage);
+	DecHP(damage, broadcast);
 
 	return true;
 }

@@ -42,9 +42,6 @@ namespace GameServer {
 			virtual void Update(const float dt);
 
 		public:
-			void LookAt(const Vec3& lookAt, const float dt);
-
-		public:
 			template<std::derived_from<Component> T>
 			T* GetComponent()
 			{

@@ -738,6 +738,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 	// TODO: stanceType 사용하기
 
+
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
@@ -770,6 +771,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		objectName = "GameObject_" + std::to_string(id);
 		break;
 	}
+
+	// TODO: objType이 점령지일 경우, 내부적으로 dominantTeamType을 가지고 있어야 합니다.(현재 점령중인 팀)
+	// SC_OCCUPATION_ZONE_GAUGE_PACKET이 오면 해당 점령지의 게이지 값을 바로 업데이트 해주면 됩니다.
+	// 그게 아니라면 매 프레임마다 점령지 오브젝트가 자신의 dominantTeamType을 확인해서 게이지를 5.f만큼 업데이트 해주면 됩니다.
 
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
@@ -1304,7 +1309,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		//DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+		{
+			return true;
+		}
 		fsm->SetServerState(nextState);
 		return true;
 	}
@@ -1503,5 +1511,58 @@ bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
 {
 	// 팀 점수 업데이트
 	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_OCCUPIED_PACKET& recvPkt
+)
+{
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 상태 업데이트하기
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt
+)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	const uint64 objID = recvPkt.obj_id();
+	auto		 obj = scene->FindGameObjectByServerID(objID);
+
+	if (localID == objID)
+	{
+		return false;
+	}
+
+	if (!obj)
+	{
+		return false;
+	}
+
+	// FSM 상태 동기화
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		fsm->SetServerState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK);
+		return true;
+	}
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
+)
+{
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트하기
+
 	return true;
 }

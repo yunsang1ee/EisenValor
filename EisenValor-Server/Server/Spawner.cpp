@@ -26,5 +26,7 @@ void GameServer::Contents::Spawner::Update(const float dt)
 			auto soldier = GameServer::Contents::GameObjectFactory::CreateSoldier(t);
 			world->AddGameObject(std::move(soldier));
 		}
+
+		SOLDIER_SPAWN_TIME += 50s;
 	}
 }

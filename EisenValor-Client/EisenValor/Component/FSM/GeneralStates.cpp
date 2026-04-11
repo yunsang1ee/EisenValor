@@ -40,7 +40,7 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 }
 
 void PlayerlIdleState::Exit(FSMComponent* fsm)
-{
+{	
 	//DEBUG_LOG_FMT("[FSM] IDLE Exit\n");
 }
 

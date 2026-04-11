@@ -38,8 +38,14 @@ public:
     void CommitPosition() { m_prevPosition = m_position; }
     void LookAt(const Vec3& target);
 
+    bool  UpdateRotation(const float dt, const float speed = 5.f); 
+    bool  IsTurning() const { return m_isTurning; }
+
 private:
     Vec3 m_position;
     Vec3 m_prevPosition;
     Vec3 m_rotation;    // Radian
+
+    float m_targetYaw = 0.f;
+    bool  m_isTurning = false;
 };

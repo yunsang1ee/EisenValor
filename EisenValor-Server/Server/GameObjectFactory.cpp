@@ -25,8 +25,7 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
-			// .currentHP = t.gameObjectData->maxHp,
-			.currentHP = 50,
+			 .currentHP = t.gameObjectData->maxHp,
 			.maxHP = t.gameObjectData->maxHp,
 			.currentStamina = t.gameObjectData->maxStamina,
 			.maxStamina = t.gameObjectData->maxStamina,
@@ -37,25 +36,25 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	movement->SetMaxSpeed(20.f);
 	movement->SetAcceleration(10.f);
 
-	auto navAgent = player->AddComponent<GameServer::Contents::NavAgent>(player->GetGameWorld()->GetNavSystem());
-	
-	dtCrowdAgentParams params{};
-	params.radius = 0.6f;
-	params.height = 1.8f;
-	params.maxSpeed = 0.0f;
-	params.maxAcceleration = 0.0f;
-	
-	// set collision avoidance
-	params.collisionQueryRange = params.radius * 12.0f;
-	params.pathOptimizationRange = 0.0f;
-	params.updateFlags = DT_CROWD_SEPARATION; 
-	params.separationWeight = 2.0f;
-	
-	if(false == navAgent->Init(params))
-		return nullptr;
+	//auto navAgent = player->AddComponent<GameServer::Contents::NavAgent>(player->GetGameWorld()->GetNavSystem());
+	//
+	//dtCrowdAgentParams params{};
+	//params.radius = 0.6f;
+	//params.height = 1.8f;
+	//params.maxSpeed = 0.0f;
+	//params.maxAcceleration = 0.0f;
+	//
+	//// set collision avoidance
+	//params.collisionQueryRange = params.radius * 12.0f;
+	//params.pathOptimizationRange = 0.0f;
+	//params.updateFlags = DT_CROWD_SEPARATION; 
+	//params.separationWeight = 2.0f;
+	//
+	//if(false == navAgent->Init(params))
+	//	return nullptr;
 
-	navAgent->SetPlayerMode(true);
-	navAgent->SetAsStaticObstacle();
+	//navAgent->SetPlayerMode(true);
+	//navAgent->SetAsStaticObstacle();
 
 	const auto fsm = player->AddComponent<GameServer::Contents::FSM>();
 	
@@ -148,8 +147,8 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	dtCrowdAgentParams params{};
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;				
-	params.maxSpeed = 1.0f;			
-	params.maxAcceleration = 1.f;		
+	params.maxSpeed = 3.0f;			
+	params.maxAcceleration = 3.f;		
 
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
@@ -163,49 +162,21 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	
 	auto fsm{ soldier->AddComponent<GameServer::Contents::FSM>() };
 	
-	auto spawnState = GameServer::Contents::SoldierSpawnState::Create();
 	auto idleState = GameServer::Contents::SoldierIdleState::Create();
-
-	std::vector<Vec3> wayPoints;
-
-	if(FB_ENUMS::TEAM_TYPE_BLUE == soldier->GetTeamType()) {
-		// wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 40.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 60.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 80.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 100.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 120.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 140.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 160.f, 0.f, 0.f });
-		wayPoints.push_back({ -24.9313736f, -8.80016708f, -5.53999329f });
-	}
-	else {
-		// wayPoints.push_back(Vec3{ 20.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 40.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 60.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 80.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 100.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 120.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 140.f, 0.f, 0.f });
-		// wayPoints.push_back(Vec3{ 160.f, 0.f, 0.f });
-		wayPoints.push_back({ -24.9313736f, -8.80016708f, -5.53999329f });
-	}
-
-	//auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, wayPoints);
-	// auto searchState = Server::Contents::SoldierSearchState::Create(3.f/*attackRange*/);
-	//auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
-	//auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
+	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, Vec3{ -24.9313736f, -8.80016708f, -5.53999329f });
+	auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
+	auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
 	auto deadState = GameServer::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
 
-	fsm->AddState(std::move(spawnState));
 	fsm->AddState(std::move(idleState));
-	//fsm->AddState(std::move(moveState));
-	// fsm->AddState(std::move(searchState));
-	// fsm->AddState(std::move(chaseState));
-	// sfsm->AddState(std::move(attackState));
+	fsm->AddState(std::move(moveState));
+	fsm->AddState(std::move(chaseState));
+	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(deadState));
 
-	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_SPAWN));
+	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+
+	soldier->LookAt(Vec3{ -24.9313736f, -8.80016708f, -5.53999329f });
 
 	return soldier;
 }

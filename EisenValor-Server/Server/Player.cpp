@@ -28,7 +28,7 @@ void GameServer::Contents::Player::Update(const float dt)
 	// std::cout << std::format("Pos: {}. {}. {}", pos.x, pos.y, pos.z) << std::endl;
 }
 
-bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
@@ -98,7 +98,7 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 			m_stunDelay *= 2;
 		}
 	}
-	DecHP(damage);
+	DecHP(damage, broadcast);
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 	
 	if(IsActive())

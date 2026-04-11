@@ -440,6 +440,14 @@ void GameServer::Contents::GameWorld::ProcessEvents()
 		eve();
 		m_pendingEventFpQueue.pop();
 	}
+	const auto now = std::chrono::steady_clock::now();
+	
+	while(false == m_timedEventQueue.empty() && m_timedEventQueue.top().executeTime <= now) {
+		auto eve = m_timedEventQueue.top().eveFunc;
+		m_timedEventQueue.pop();
+		eve();
+	}
+
 	ProcessPendingRemoveObjectList();
 	ProcessPendingAddObjectList();
 }
@@ -828,17 +836,17 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	}
 
 	// 블루팀 스포너 생성
-	//{
-	//	SpanwerTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-	//	t.gameObjectData = nullptr;
-	//	t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
-	//	t.teamType = FB_ENUMS::TEAM_TYPE_BLUE;
-	//	t.gameWorld = this;
+	{
+		SpanwerTemplate t;
+		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+		t.gameObjectData = nullptr;
+		t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
+		t.teamType = FB_ENUMS::TEAM_TYPE_BLUE;
+		t.gameWorld = this;
 
-	//	auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
-	//	AddGameObject(std::move(spawner));
-	//}
+		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
+		AddGameObject(std::move(spawner));
+	}
 
 	// 레드팀 스포너 생성
 	{
