@@ -999,6 +999,50 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					}
 				);
 
+				// Shield
+				auto shieldHandle = scene->ReserveGameObject(objectName + "_Shield");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					shieldHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					shieldHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "lowerarm_l");
+							// Offset
+							float			tx = 0.1634455f;
+							float			ty = 0.02278341f;
+							float			tz = 0.101984f;
+							constexpr float rx = DirectX::XMConvertToRadians(-10.853f);
+							constexpr float ry = DirectX::XMConvertToRadians(135.113f);
+							constexpr float rz = DirectX::XMConvertToRadians(-251.105f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
+					}
+				);
+
 				// Sword
 				auto swordHandle = scene->ReserveGameObject(objectName + "_Sword");
 
