@@ -501,7 +501,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 			addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 			addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-			// addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+			//addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 			addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 			scene->CreateComponentWithInit<MovementComponent>(
@@ -571,7 +571,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					shieldHandle,
 					[scene, playerObjHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -831,7 +831,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 				addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-				addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+				//addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 				addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 				// BattleUIControllerComponent
@@ -869,7 +869,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					shieldHandle,
 					[scene, objHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -964,6 +964,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			else ////// Soldier
 			{
+				tr.SetScale(0.9f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[teamType](SkinnedMeshComponent* mesh)
