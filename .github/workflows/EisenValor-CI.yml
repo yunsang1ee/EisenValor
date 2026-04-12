@@ -41,7 +41,7 @@ jobs:
             platform: "x64"
             upload_artifacts: true
             
-          # EisenValor-Server (Debug / IOCP-Release / RIO-Release)
+          # EisenValor-Server (Debug / RIO-Release)
           - project: "EisenValor-Server"
             solution_path: "EisenValor-Server"
             solution_file: "EisenValor-Server.sln"
@@ -49,13 +49,6 @@ jobs:
             configuration: "Debug"
             platform: "x64"
             upload_artifacts: false
-          - project: "EisenValor-Server"
-            solution_path: "EisenValor-Server"
-            solution_file: "EisenValor-Server.sln"
-            cache_key: "nuget-server-iocp"
-            configuration: "IOCP-Release"
-            platform: "x64"
-            upload_artifacts: true
           - project: "EisenValor-Server"
             solution_path: "EisenValor-Server"
             solution_file: "EisenValor-Server.sln"
