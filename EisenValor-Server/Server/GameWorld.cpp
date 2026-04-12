@@ -124,7 +124,7 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 	}
 
 	const Vec3& startPos =
-		(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) ? kBluePlayerStartPos : kRedPlayerStartPos;
+		(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) ? kBluePlayerStartPos : kRedPlayerStartPos;
 	t.transform = Transform{ startPos, rot };
 
 	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);

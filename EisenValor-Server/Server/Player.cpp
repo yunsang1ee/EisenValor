@@ -128,7 +128,7 @@ void GameServer::Contents::Player::OnRespawn()
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
 	SetPosition(
-		(FB_ENUMS::TEAM_TYPE_OFFENSE == GetTeamType())
+		(FB_ENUMS::TEAM_TYPE_BLUE == GetTeamType())
 			? Vec3{ 0.f, 0.f, -149.5679931640625f }
 			: Vec3{ 0.f, 0.f, 149.5679931640625f }
 	);
