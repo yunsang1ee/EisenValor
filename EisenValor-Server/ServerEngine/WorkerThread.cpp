@@ -9,7 +9,7 @@
 #include "GameWorldThread.h"
 
 GameServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore)
-	: m_type{ type }, m_ioCore{ std::move(ioCore) }
+	: m_type{ type }, m_ioCore{ std::move(ioCore) }, m_dt{}
 {
 }
 

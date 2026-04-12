@@ -115,12 +115,13 @@ enum GAME_OBJECT_TYPE : uint8_t {
   GAME_OBJECT_TYPE_SOLDIER = 3,
   GAME_OBJECT_TYPE_SPAWNER = 4,
   GAME_OBJECT_TYPE_OCCUPATION_ZONE = 5,
-  GAME_OBJECT_TYPE_END = 6,
+  GAME_OBJECT_TYPE_HEAL_ZONE = 6,
+  GAME_OBJECT_TYPE_END = 7,
   GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NONE,
   GAME_OBJECT_TYPE_MAX = GAME_OBJECT_TYPE_END
 };
 
-inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[7] {
+inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[8] {
   static const GAME_OBJECT_TYPE values[] = {
     GAME_OBJECT_TYPE_NONE,
     GAME_OBJECT_TYPE_GENERAL,
@@ -128,19 +129,21 @@ inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[7] {
     GAME_OBJECT_TYPE_SOLDIER,
     GAME_OBJECT_TYPE_SPAWNER,
     GAME_OBJECT_TYPE_OCCUPATION_ZONE,
+    GAME_OBJECT_TYPE_HEAL_ZONE,
     GAME_OBJECT_TYPE_END
   };
   return values;
 }
 
 inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
-  static const char * const names[8] = {
+  static const char * const names[9] = {
     "NONE",
     "GENERAL",
     "PLAYER",
     "SOLDIER",
     "SPAWNER",
     "OCCUPATION_ZONE",
+    "HEAL_ZONE",
     "END",
     nullptr
   };
@@ -154,26 +157,29 @@ inline const char *EnumNameGAME_OBJECT_TYPE(GAME_OBJECT_TYPE e) {
 }
 
 enum TEAM_TYPE : uint8_t {
-  TEAM_TYPE_OFFENSE = 0,
-  TEAM_TYPE_DEFENSE = 1,
-  TEAM_TYPE_END = 2,
-  TEAM_TYPE_MIN = TEAM_TYPE_OFFENSE,
+  TEAM_TYPE_NONE = 0,
+  TEAM_TYPE_BLUE = 1,
+  TEAM_TYPE_RED = 2,
+  TEAM_TYPE_END = 3,
+  TEAM_TYPE_MIN = TEAM_TYPE_NONE,
   TEAM_TYPE_MAX = TEAM_TYPE_END
 };
 
-inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[3] {
+inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[4] {
   static const TEAM_TYPE values[] = {
-    TEAM_TYPE_OFFENSE,
-    TEAM_TYPE_DEFENSE,
+    TEAM_TYPE_NONE,
+    TEAM_TYPE_BLUE,
+    TEAM_TYPE_RED,
     TEAM_TYPE_END
   };
   return values;
 }
 
 inline const char * const *EnumNamesTEAM_TYPE() {
-  static const char * const names[4] = {
-    "OFFENSE",
-    "DEFENSE",
+  static const char * const names[5] = {
+    "NONE",
+    "BLUE",
+    "RED",
     "END",
     nullptr
   };
@@ -181,7 +187,7 @@ inline const char * const *EnumNamesTEAM_TYPE() {
 }
 
 inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_OFFENSE, TEAM_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_NONE, TEAM_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTEAM_TYPE()[index];
 }
@@ -480,6 +486,45 @@ inline const char *EnumNameOCCUPATION_ZONE_STATE_TYPE(OCCUPATION_ZONE_STATE_TYPE
   if (::flatbuffers::IsOutRange(e, OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED, OCCUPATION_ZONE_STATE_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesOCCUPATION_ZONE_STATE_TYPE()[index];
+}
+
+enum MOVE_DIRECTION_TYPE : uint8_t {
+  MOVE_DIRECTION_TYPE_FWD = 0,
+  MOVE_DIRECTION_TYPE_BWD = 1,
+  MOVE_DIRECTION_TYPE_LFT = 2,
+  MOVE_DIRECTION_TYPE_RGT = 3,
+  MOVE_DIRECTION_TYPE_END = 4,
+  MOVE_DIRECTION_TYPE_MIN = MOVE_DIRECTION_TYPE_FWD,
+  MOVE_DIRECTION_TYPE_MAX = MOVE_DIRECTION_TYPE_END
+};
+
+inline const MOVE_DIRECTION_TYPE (&EnumValuesMOVE_DIRECTION_TYPE())[5] {
+  static const MOVE_DIRECTION_TYPE values[] = {
+    MOVE_DIRECTION_TYPE_FWD,
+    MOVE_DIRECTION_TYPE_BWD,
+    MOVE_DIRECTION_TYPE_LFT,
+    MOVE_DIRECTION_TYPE_RGT,
+    MOVE_DIRECTION_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMOVE_DIRECTION_TYPE() {
+  static const char * const names[6] = {
+    "FWD",
+    "BWD",
+    "LFT",
+    "RGT",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMOVE_DIRECTION_TYPE(MOVE_DIRECTION_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, MOVE_DIRECTION_TYPE_FWD, MOVE_DIRECTION_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMOVE_DIRECTION_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS

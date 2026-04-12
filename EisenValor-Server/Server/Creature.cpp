@@ -53,7 +53,7 @@ void GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broad
 		BroadcastUpdateVital();
 	}
 
-	if(m_statInfo.currentHP == 0  && IsActive()) {
+	if(m_statInfo.currentHP == 0 && IsActive()) {
 		SetActive(false);
 		OnDeath();
 		auto pb{ ServerPackets::Make_SC_DEAD_PACKET(GetID()) };

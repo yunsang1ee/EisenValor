@@ -17,11 +17,22 @@ namespace GameServer {
 			float GetRangeSq() const { return m_rangeSq; }
 
 		private:
+			FB_ENUMS::TEAM_TYPE GetDominantTeamType();
+			void CheckOccupationState(const float prev, const float curr);
+			void BroadcastGauge(const FB_ENUMS::TEAM_TYPE dominantTeamType);
+
+		private:
+			FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE	m_stateType;
+			FB_ENUMS::TEAM_TYPE						m_prevDominantTeamType;
+
 			float									m_rangeSq;
 			std::chrono::milliseconds				m_time;
-			float									m_accDT;
-			FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE	m_stateType;
+			float									m_gauge;
+			float									m_rateOfGaugeIncrease;
 
+			float									m_lastSentGauge;
+			float									m_syncAccDT;
+			float									m_dominantAccDT;
 		};
 	}
 }

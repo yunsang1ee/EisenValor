@@ -7,8 +7,9 @@ struct GameRoomData {
 };
 
 struct GameWorldData {
-    uint32	gameTimeMin;
-    uint32	gameUpdateTimeMs;
+    uint32	gameTimeSec;
+    float   gameUpdateTick;
+    uint32  maxUpdateStep;
 };
 
 struct SkillData {
@@ -26,6 +27,7 @@ struct SkillData {
 struct GameObjectData {
     uint8 objTypeID;
     std::string name;
+
     uint32 maxHp;
     uint32 maxStamina;
     uint32 staminaCost;

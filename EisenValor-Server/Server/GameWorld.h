@@ -20,13 +20,22 @@ namespace GameServer {
 		using Users = std::unordered_map<uint32, std::shared_ptr<User>>;
 		using Bots = std::unordered_map<uint64, std::shared_ptr<Bot>>;
 
+		struct TimedEvent {
+			std::chrono::high_resolution_clock::time_point executeTime;
+			std::function<void()> eveFunc;
+
+			bool operator>(const TimedEvent& other) const {
+				return executeTime > other.executeTime;
+			}
+		};
+
 		using GameObjects = std::map<uint64, std::shared_ptr<GameServer::Contents::GameObject>>;
 
 		class GameWorld : public GameServerEngine::IRoom {
 		public:
 			GameWorld();
 			virtual ~GameWorld();
-
+				
 		public:
 			virtual void Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info) override final;
 			virtual void Update(const float dt) override final;
@@ -36,6 +45,11 @@ namespace GameServer {
 
 		public:
 			void AddEvent(const std::function<void()>& eve) { m_pendingEventFpQueue.push(eve); }
+			
+			void AddTimedEvent(const std::function<void()>& eve, float delaySeconds) {
+				const auto executeAt = steady_clock::now() + duration_cast<nanoseconds>( duration<float>(delaySeconds));
+				m_timedEventQueue.push({ executeAt, eve });
+			}
 
 		public:
 			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform);
@@ -64,6 +78,8 @@ namespace GameServer {
 			std::shared_ptr<GameObject> FindObjectByID(const uint64 targetID);
 			uint64 GenerateID(const uint8 type) { return m_idGenerator.Generate(type); }
 
+			void AddScore(const FB_ENUMS::TEAM_TYPE teamType, const uint8 amount);
+
 		private:
 			void ProcessEvents();
 			void ProcessPendingAddObjectList();
@@ -75,34 +91,42 @@ namespace GameServer {
 			void CreateGameWorldObjects();
 
 			void SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot);
-
 		private:
-			Users																	m_users;
-			Bots																	m_bots;
+			Users																				m_users;
+			Bots																				m_bots;
 
-			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>					m_gameObjectsGroups;
+			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>								m_gameObjectsGroups;
 
-			std::unordered_map<uint32, GameWorldParticipantInfo>					m_reservedParticipantInfo;
-			std::unordered_map<uint32, uint64>										m_sessionToPlayer;
-			std::unordered_map<uint64, uint32>										m_playerToSession;
-			IDGenerator																m_idGenerator;
+			std::unordered_map<uint32, GameWorldParticipantInfo>								m_reservedParticipantInfo;
+			std::unordered_map<uint32, uint64>													m_sessionToPlayer;
+			std::unordered_map<uint64, uint32>													m_playerToSession;
+			IDGenerator																			m_idGenerator;
 
-			std::queue<std::function<void()>>										m_pendingEventFpQueue;
-			std::queue<std::shared_ptr<GameObject>>									m_pendingAddObjectQueue;
-			std::queue<std::shared_ptr<GameObject>>									m_pendingRemoveObjectQueue;
+			std::queue<std::function<void()>>													m_pendingEventFpQueue;
+			std::priority_queue<TimedEvent, std::vector<TimedEvent>, std::greater<TimedEvent>>	m_timedEventQueue;
+			std::queue<std::shared_ptr<GameObject>>												m_pendingAddObjectQueue;
+			std::queue<std::shared_ptr<GameObject>>												m_pendingRemoveObjectQueue;
 
-			float																	m_dt;
-			float																	m_lastDT;
-			float																	m_accDT;
-			float																	m_accGameTime;
-			std::chrono::milliseconds												m_remainingTime;
-			uint64																	m_worldFrameCount;
+			float																				m_dt;
+			float																				m_lastDT;
+			float																				m_accDT;
+			float																				m_accGameTime;
+			float																				m_fixedUpdateTick;
+			uint32																				m_maxUpdateStep;
+			std::chrono::seconds																m_remainingTimeSec;
+			uint64																				m_worldFrameCount;
 	
-			CollisionDetector														m_collisionDetector;
-			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>	m_check;
-			std::map<uint64, bool>													m_mapColInfo;
+			CollisionDetector																	m_collisionDetector;
+			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>				m_check;
+			std::map<uint64, bool>																m_mapColInfo;
 
-			NavSystem																m_navSystem;
+			NavSystem																			m_navSystem;
+
+			uint8																				m_redTeamScore;
+			uint8																				m_blueTeamScore;
+		
+			Vec3																				m_blueTeamLastBasePos;
+			Vec3																				m_redTeamLastBasePos;
 		};
 	}
 }

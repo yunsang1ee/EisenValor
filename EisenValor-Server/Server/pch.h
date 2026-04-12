@@ -18,6 +18,7 @@
 #include "Transform.h"
 
 #include "GameDataManager.h"
+#include "MapDataManager.h"
 #include "ServerPackets.h"
 #include "GameObjectFactory.h"
 

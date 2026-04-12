@@ -6,12 +6,18 @@ namespace GameServer {
 	namespace Contents {
 		class Spawner : public Script {
 		public:
+			explicit Spawner(const Vec3& destPos, const uint32 spawnTimeSec, const uint32 spawnCount);
+			virtual ~Spawner() = default;
+
+		public:
 			virtual void Update(const float dt) override;
 
 		private:
-			float					m_accDT;
-			static constexpr auto	SOLDIER_SPAWN_TIME = 30s;
-			static constexpr int	SPAWN_NPC_COUNT = 1;
+			const Vec3					m_soldierDestPos;
+			const std::chrono::seconds	m_spawnTimeSec;
+			const uint32				m_spawnCount;
+
+			float						m_accDT;
 		};
 	}
 }

@@ -15,10 +15,16 @@ namespace GameServer {
 			virtual void Update(const float dt) override final;
 
 		public:
+			void SetPlayerMode(bool isPlayer) { m_isPlayerMode = isPlayer; }
 			void SetDestPos(const Vec3& destPos);
+			int32 GetAgentIdx() const { return m_agentIdx; }
+			
 			void StopMove();
 			void Remove();
-			
+
+			void SyncPosition(const Vec3& newPos, const Vec3& prevPos, float dt);
+			void SetAsStaticObstacle();
+
 		private:
 			NavSystem*			m_navSystem;
 			int32				m_agentIdx;
@@ -26,6 +32,8 @@ namespace GameServer {
 
 			Vec3				m_destPos;
 			bool				m_hasTarget;
+
+			bool				m_isPlayerMode;
 
 		};
 	}

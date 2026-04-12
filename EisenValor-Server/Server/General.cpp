@@ -102,7 +102,7 @@ void GameServer::Contents::General::OnRespawn()
 #endif
 }
 
-bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
 	auto const world{ GetGameWorld() };
@@ -168,7 +168,7 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 		else {
 			damage = attackerAtkInfo.skillData->damage;
 		}
-		DecHP(damage);
+		DecHP(damage, broadcast);
 	}
 	return true;
 }
