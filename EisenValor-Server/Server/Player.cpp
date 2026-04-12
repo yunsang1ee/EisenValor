@@ -127,6 +127,11 @@ void GameServer::Contents::Player::OnRespawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
+	SetPosition(
+		(FB_ENUMS::TEAM_TYPE_OFFENSE == GetTeamType())
+			? Vec3{ 0.f, 0.f, -149.5679931640625f }
+			: Vec3{ 0.f, 0.f, 149.5679931640625f }
+	);
 
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT, true);

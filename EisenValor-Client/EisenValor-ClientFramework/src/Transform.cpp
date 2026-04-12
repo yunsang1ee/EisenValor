@@ -7,21 +7,48 @@
 
 using namespace DirectX;
 
+namespace
+{
+XMFLOAT3 RotateBasisVector(const XMFLOAT4& rotationQuat, FXMVECTOR basisVector)
+{
+	XMVECTOR quat = XMLoadFloat4(&rotationQuat);
+	XMVECTOR rotated = XMVector3Rotate(basisVector, quat);
+	rotated = XMVector3Normalize(rotated);
+
+	XMFLOAT3 result;
+	XMStoreFloat3(&result, rotated);
+	return result;
+}
+
+XMFLOAT3 ExtractBasisLengths(const XMFLOAT4X4& matrix)
+{
+	return {
+		std::sqrt(matrix._11 * matrix._11 + matrix._12 * matrix._12 + matrix._13 * matrix._13),
+		std::sqrt(matrix._21 * matrix._21 + matrix._22 * matrix._22 + matrix._23 * matrix._23),
+		std::sqrt(matrix._31 * matrix._31 + matrix._32 * matrix._32 + matrix._33 * matrix._33)};
+}
+} // namespace
+
 Transform::Transform()
 {
 	XMStoreFloat4x4(&m_localMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&m_worldMatrix, XMMatrixIdentity());
+	XMStoreFloat4(&m_worldRotationQuat, XMQuaternionIdentity());
 }
 
 Transform::~Transform()
 {
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
+	{
 		return;
+	}
 
 	auto* storage = scene->GetStorage<Transform>();
 	if (!storage)
+	{
 		return;
+	}
 
 	// 부모와의 연결 끊기
 	if (m_parent.IsValid())
@@ -92,6 +119,7 @@ void Transform::SetWorldPosition(const DX::XMFLOAT3& worldPosition)
 		return;
 	}
 
+	parent->EnsureWorldMatrixUpdated();
 	XMMATRIX parentWorldInv = XMMatrixInverse(nullptr, XMLoadFloat4x4(&parent->m_worldMatrix));
 
 	XMVECTOR worldPosVec = XMLoadFloat3(&worldPosition);
@@ -104,10 +132,7 @@ void Transform::SetWorldPosition(const DX::XMFLOAT3& worldPosition)
 
 XMFLOAT3 Transform::GetWorldPosition()
 {
-	if (m_isDirty)
-	{
-		UpdateWorldMatrix();
-	}
+	EnsureWorldMatrixUpdated();
 	return {m_worldMatrix._41, m_worldMatrix._42, m_worldMatrix._43};
 }
 
@@ -177,24 +202,8 @@ XMFLOAT3 Transform::GetWorldRotation()
 
 XMFLOAT4 Transform::GetWorldRotationQuaternion()
 {
-	XMVECTOR worldQuat = XMLoadFloat4(&m_localRotationQuat);
-
-	if (m_parent.IsValid())
-	{
-		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
-		if (auto* parent = storage ? storage->Get(m_parent) : nullptr)
-		{
-			XMFLOAT4 parentQuat = parent->GetWorldRotationQuaternion();
-			XMVECTOR parentQuatVec = XMLoadFloat4(&parentQuat);
-			worldQuat = XMQuaternionMultiply(parentQuatVec, worldQuat);
-			worldQuat = XMQuaternionNormalize(worldQuat);
-		}
-	}
-
-	XMFLOAT4 result;
-	XMStoreFloat4(&result, worldQuat);
-	return result;
+	EnsureWorldMatrixUpdated();
+	return m_worldRotationQuat;
 }
 
 void Transform::SetScale(float uniformScale)
@@ -216,14 +225,17 @@ void Transform::SetScale(const XMFLOAT3& scale)
 
 XMFLOAT3 Transform::GetWorldScale()
 {
-	XMVECTOR sx = XMVector3Length(XMVectorSet(m_worldMatrix._11, m_worldMatrix._12, m_worldMatrix._13, 0.0f));
-	XMVECTOR sy = XMVector3Length(XMVectorSet(m_worldMatrix._21, m_worldMatrix._22, m_worldMatrix._23, 0.0f));
-	XMVECTOR sz = XMVector3Length(XMVectorSet(m_worldMatrix._31, m_worldMatrix._32, m_worldMatrix._33, 0.0f));
-
-	return {XMVectorGetX(sx), XMVectorGetX(sy), XMVectorGetX(sz)};
+	EnsureWorldMatrixUpdated();
+	return m_worldScale;
 }
 
-void Transform::UpdateLocalMatrix()
+XMFLOAT4X4 Transform::GetWorldMatrix() const
+{
+	EnsureWorldMatrixUpdated();
+	return m_worldMatrix;
+}
+
+void Transform::UpdateLocalMatrix() const
 {
 	XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&m_localPosition));
 	XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&m_localRotationQuat));
@@ -233,7 +245,7 @@ void Transform::UpdateLocalMatrix()
 	XMStoreFloat4x4(&m_localMatrix, localMatrix);
 }
 
-void Transform::UpdateWorldMatrix()
+void Transform::UpdateWorldMatrix() const
 {
 	UpdateLocalMatrix();
 	XMMATRIX localMtx = XMLoadFloat4x4(&m_localMatrix);
@@ -244,21 +256,47 @@ void Transform::UpdateWorldMatrix()
 		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
 		if (auto* parentTransform = storage ? storage->Get(m_parent) : nullptr)
 		{
-			if (parentTransform->m_isDirty)
-			{
-				parentTransform->UpdateWorldMatrix();
-				parentTransform->m_isDirty = false;
-			}
-
+			parentTransform->EnsureWorldMatrixUpdated();
 			XMMATRIX parentWorldMtx = XMLoadFloat4x4(&parentTransform->m_worldMatrix);
 			XMStoreFloat4x4(&m_worldMatrix, localMtx * parentWorldMtx);
+			UpdateWorldDerivedData();
 			m_isDirty = false;
 			return;
 		}
 	}
 
 	m_worldMatrix = m_localMatrix;
+	UpdateWorldDerivedData();
 	m_isDirty = false;
+}
+
+void Transform::UpdateWorldDerivedData() const
+{
+	XMVECTOR localQuat = XMLoadFloat4(&m_localRotationQuat);
+
+	if (m_parent.IsValid())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		auto* storage = scene ? scene->GetStorage<Transform>() : nullptr;
+		if (auto* parent = storage ? storage->Get(m_parent) : nullptr)
+		{
+			parent->EnsureWorldMatrixUpdated();
+			XMVECTOR parentQuat = XMLoadFloat4(&parent->m_worldRotationQuat);
+			localQuat = XMQuaternionMultiply(parentQuat, localQuat);
+		}
+	}
+
+	localQuat = XMQuaternionNormalize(localQuat);
+	XMStoreFloat4(&m_worldRotationQuat, localQuat);
+	m_worldScale = ExtractBasisLengths(m_worldMatrix);
+}
+
+void Transform::EnsureWorldMatrixUpdated() const
+{
+	if (m_isDirty)
+	{
+		UpdateWorldMatrix();
+	}
 }
 
 void Transform::SetParent(Handle parentHandle)
@@ -330,8 +368,8 @@ void Transform::AddChildInternal(Handle child)
 }
 
 void Transform::RemoveChild(Handle child)
-{	
-	if (auto it = std::find(m_children.begin(), m_children.end(), child);  it != m_children.end())
+{
+	if (auto it = std::find(m_children.begin(), m_children.end(), child); it != m_children.end())
 	{
 		m_children.erase(it);
 	}
@@ -395,36 +433,15 @@ void Transform::MarkDirty()
 
 XMFLOAT3 Transform::GetForward()
 {
-	XMFLOAT3 forward = {m_worldMatrix._31, m_worldMatrix._32, m_worldMatrix._33};
-
-	XMVECTOR forwardVec = XMLoadFloat3(&forward);
-	forwardVec = XMVector3Normalize(forwardVec);
-
-	XMFLOAT3 result;
-	XMStoreFloat3(&result, forwardVec);
-	return result;
+	return RotateBasisVector(GetWorldRotationQuaternion(), XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f));
 }
 
 XMFLOAT3 Transform::GetRight()
 {
-	XMFLOAT3 right = {m_worldMatrix._11, m_worldMatrix._12, m_worldMatrix._13};
-
-	XMVECTOR rightVec = XMLoadFloat3(&right);
-	rightVec = XMVector3Normalize(rightVec);
-
-	XMFLOAT3 result;
-	XMStoreFloat3(&result, rightVec);
-	return result;
+	return RotateBasisVector(GetWorldRotationQuaternion(), XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f));
 }
 
 XMFLOAT3 Transform::GetUp()
 {
-	XMFLOAT3 up = {m_worldMatrix._21, m_worldMatrix._22, m_worldMatrix._23};
-
-	XMVECTOR upVec = XMLoadFloat3(&up);
-	upVec = XMVector3Normalize(upVec);
-
-	XMFLOAT3 result;
-	XMStoreFloat3(&result, upVec);
-	return result;
+	return RotateBasisVector(GetWorldRotationQuaternion(), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 }

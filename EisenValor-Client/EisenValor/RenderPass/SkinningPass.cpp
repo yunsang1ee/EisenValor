@@ -74,7 +74,6 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 	};
 
 	boneBuffer.Clear();
-
 	for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
 		if (!isReadyForSkinning(skinnedMeshComp))
