@@ -199,6 +199,7 @@ table SC_PING_PACKET {
 table SC_GAME_FINISH_PACKET {
 
 }
+
 table SC_LOCAL_PLAYER_PACKET {
 	player_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
@@ -321,6 +322,26 @@ table CS_GEN_NPC_GENERAL_PACKET {
 
 table CS_UPDATE_PLAYER_STATE_PACKET {
 	player_state: uint8;
+}
+
+table SC_UPDATE_TEAM_SCORE_PACKET {
+	blue_score: uint8;
+	red_score: uint8;
+}
+
+table SC_OCCUPATION_ZONE_OCCUPIED_PACKET {
+	obj_id: uint64;
+	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+table SC_OCCUPATION_ZONE_GAUGE_PACKET {
+	obj_id: uint64;
+	occupy_gauge: float;
+	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+table SC_SOLDIER_ATTACK_PACKET {
+	obj_id: uint64;
 }
 
 // ================================================

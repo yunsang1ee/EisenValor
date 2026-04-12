@@ -439,8 +439,10 @@
     <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="HealZone.cpp" />
     <ClCompile Include="IDGenerator.cpp" />
     <ClCompile Include="LobbyServerPacketHandler.cpp" />
+    <ClCompile Include="MapDataManager.cpp" />
     <ClCompile Include="Movement.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Collider.cpp" />
@@ -598,8 +600,10 @@
     <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="HealZone.h" />
     <ClInclude Include="IDGenerator.h" />
     <ClInclude Include="LobbyServerPacketHandler.h" />
+    <ClInclude Include="MapDataManager.h" />
     <ClInclude Include="Movement.h" />
     <ClInclude Include="PacketEnums.h" />
     <ClInclude Include="SessionManager.h" />
@@ -654,6 +658,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Binaries\Server\GameData\GameData.json" />
+    <None Include="..\Binaries\Server\GameData\MapData.json" />
     <None Include="..\Binaries\Server\NavData\solo_navmesh.bin" />
     <None Include="..\Libraries\inc\SimpleMath.inl" />
     <None Include="..\Packets\Binaries\Enums.fbs" />

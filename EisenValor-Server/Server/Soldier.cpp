@@ -48,7 +48,7 @@ void GameServer::Contents::Soldier::OnDeath()
 		ag->Remove();
 }
 
-bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	uint32 damage{};
 
@@ -63,7 +63,22 @@ bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const at
 			damage = attackerAtkInfo.skillData->damage;
 		}
 	}
-	DecHP(damage);
+	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
+		damage = 10;
+	}
+
+	DecHP(damage, broadcast);
 
 	return true;
+}
+
+void GameServer::Contents::Soldier::OnPostComponentUpdate(const float dt)
+{
+	const Vec3 delta = GetTransform().GetDeltaPosition();
+	const float speedSq = delta.x * delta.x + delta.z * delta.z;
+
+	if(speedSq > 0.0001f) {
+		const Vec3 pos = GetPosition();
+		LookAt({ pos.x + delta.x, pos.y, pos.z + delta.z });
+	}
 }

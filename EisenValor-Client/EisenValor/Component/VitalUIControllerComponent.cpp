@@ -52,7 +52,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 		{
 			auto& resGlobal = GLOBAL(ResourceGlobal);
 			auto  team = teamComp->GetTeamType();
-			auto  texRes = (team == FB_ENUMS::TEAM_TYPE_OFFENSE)
+			auto  texRes = (team == FB_ENUMS::TEAM_TYPE_BLUE)
 							  ? resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex")
 							  : resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
 

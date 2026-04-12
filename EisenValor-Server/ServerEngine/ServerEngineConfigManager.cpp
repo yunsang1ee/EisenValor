@@ -72,17 +72,6 @@ bool GameServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::
     }
     else return false;
 
-    if(doc.HasMember("ThreadConfigure")) {
-        const Value& thread = doc["ThreadConfigure"];
-        std::cout << "\n[ThreadConfigure]" << std::endl;
-        if(thread.HasMember("MAX_WORKER_THREAD_COUNT")) {
-			m_threadConfig.MAX_WORKER_THREAD_COUNT = thread["MAX_WORKER_THREAD_COUNT"].GetInt();
-			std::cout << " - Max Worker Thread Count: " << m_threadConfig.MAX_WORKER_THREAD_COUNT << std::endl;
-        }
-        else return false;
-    }
-    else return false;
-
     if(doc.HasMember("SessionConfigure")) {
         const Value& session = doc["SessionConfigure"];
         std::cout << "\n[SessionConfigure]" << std::endl;

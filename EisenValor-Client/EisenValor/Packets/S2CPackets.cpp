@@ -228,9 +228,9 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 	else
 		DEBUG_LOG_FMT("User State: READY\n");
 
-	if (user->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (user->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("User TeamType: OFFENSE\n");
+		DEBUG_LOG_FMT("User TeamType: BLUE\n");
 	}
 	else
 		DEBUG_LOG_FMT("User TeamType: DEFENSE\n");
@@ -259,12 +259,12 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 		}
 		else
 			DEBUG_LOG_FMT("Participant State: READY\n");
-		if (participant->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+		if (participant->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 		{
-			DEBUG_LOG_FMT("Participant TeamType: OFFENSE\n");
+			DEBUG_LOG_FMT("Participant TeamType: BLUE\n");
 		}
 		else
-			DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
+			DEBUG_LOG_FMT("Participant TeamType: RED\n");
 	}
 
 	GLOBAL(SceneGlobal).LoadScene("RoomScene");
@@ -316,12 +316,12 @@ bool NetBridge::S2C::Handle_LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
 	else
 		DEBUG_LOG_FMT("Participant State: READY\n");
 
-	if (participant->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (participant->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("Participant TeamType: OFFENSE\n");
+		DEBUG_LOG_FMT("Participant TeamType: BLUE\n");
 	}
 	else
-		DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
+		DEBUG_LOG_FMT("Participant TeamType: RED\n");
 
 
 	return true;
@@ -368,13 +368,13 @@ bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB
 {
 	// 참가자가 팀을 변경함
 	// TODO: 참가자가 팀을 변경했음을 화면에 보여주기
-	if (recvPkt.team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (recvPkt.team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("User ID: {} Change Team To OFFENSE\n", recvPkt.user_id());
+		DEBUG_LOG_FMT("User ID: {} Change Team To BLUE\n", recvPkt.user_id());
 	}
 	else
 	{
-		DEBUG_LOG_FMT("User ID: {} Change Team To DEFENSE\n", recvPkt.user_id());
+		DEBUG_LOG_FMT("User ID: {} Change Team To RED\n", recvPkt.user_id());
 	}
 	return true;
 }
@@ -741,6 +741,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 	// TODO: stanceType 사용하기
 
+
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
 
@@ -773,6 +774,10 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		objectName = "GameObject_" + std::to_string(id);
 		break;
 	}
+
+	// TODO: objType이 점령지일 경우, 내부적으로 dominantTeamType을 가지고 있어야 합니다.(현재 점령중인 팀)
+	// SC_OCCUPATION_ZONE_GAUGE_PACKET이 오면 해당 점령지의 게이지 값을 바로 업데이트 해주면 됩니다.
+	// 그게 아니라면 매 프레임마다 점령지 오브젝트가 자신의 dominantTeamType을 확인해서 게이지를 5.f만큼 업데이트 해주면 됩니다.
 
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
@@ -967,7 +972,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			////////////////// isGeneral ///////////////////
 
-			else ////// Soldier
+			else if(objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)////// Soldier
 			{
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
@@ -1078,8 +1083,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			DEBUG_LOG_FMT(
-				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
-				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
+				"Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
+				pos.x, pos.y, pos.z, currentHP, maxHP
 			);
 
 			// 공격 범위 디버깅
@@ -1316,8 +1321,12 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+		{
+			return true;
+		}
 		fsm->SetServerState(nextState);
+		return true;
 	}
 
 SET_LOCAL:
@@ -1504,5 +1513,67 @@ bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES
 	// Ping 패킷 수신 시, Pong 패킷 전송
 	auto pb = C2S::Make_CS_PONG_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
+)
+{
+	// 팀 점수 업데이트
+	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_OCCUPIED_PACKET& recvPkt
+)
+{
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 상태 업데이트하기
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt
+)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	const uint64 objID = recvPkt.obj_id();
+	auto		 obj = scene->FindGameObjectByServerID(objID);
+
+	if (localID == objID)
+	{
+		return false;
+	}
+
+	if (!obj)
+	{
+		return false;
+	}
+
+	// FSM 상태 동기화
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		fsm->SetServerState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK);
+		return true;
+	}
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
+)
+{
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트하기
+
 	return true;
 }

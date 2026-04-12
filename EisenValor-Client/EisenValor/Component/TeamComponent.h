@@ -12,5 +12,5 @@ public:
 	FB_ENUMS::TEAM_TYPE GetTeamType() const { return m_teamType; }
 
 private:
-	FB_ENUMS::TEAM_TYPE m_teamType = FB_ENUMS::TEAM_TYPE_OFFENSE;
+	FB_ENUMS::TEAM_TYPE m_teamType = FB_ENUMS::TEAM_TYPE_NONE;
 };

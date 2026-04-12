@@ -9,7 +9,7 @@ namespace GameServer {
 			virtual ~Creature();
 
 		public:
-			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt) { return false; }
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) { return false; }
 			virtual void OnDeath() {}
 			virtual void OnRespawn() {}
 		
@@ -31,9 +31,8 @@ namespace GameServer {
 
 			const Stat& GetStat() const { return m_statInfo; }
 
-		private:
 			void BroadcastUpdateVital();
-
+	
 		private:
 			// TODO: Component로 뺴는것도 생각해보자
 			Stat						m_statInfo;

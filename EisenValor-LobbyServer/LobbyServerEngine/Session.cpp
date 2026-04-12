@@ -197,6 +197,7 @@ void LobbyServerEngine::Session::PostSend()
 
 	if(SOCKET_ERROR == ::WSASend(m_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), OUT & numOfBytes, 0, &m_sendContext, nullptr)) {
 		const int32 errCode{ WSAGetLastError() };
+		std::cout << errCode << std::endl;
 		LOG_WSA_GET_LAST_ERROR;
 		if(errCode != WSA_IO_PENDING) {
 			m_sendContext.SetOwner(nullptr); // RELEASE_REF

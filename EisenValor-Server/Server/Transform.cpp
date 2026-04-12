@@ -86,11 +86,39 @@ bool Transform::IsWithinRangeSq(const Transform& other, const float rangeSq) con
 
 void Transform::LookAt(const Vec3& target)
 {
+    //const float dx{ target.x - m_position.x };
+    //const float dz{ target.z - m_position.z };
+    //if(fabsf(dx) < 0.0001f && fabsf(dz) < 0.0001f)
+    //    return;
+
+    //// XZ 평면 기준 Yaw만 회전 (Pitch 무시)
+    //m_rotation.y = atan2f(dx, dz);
     const float dx{ target.x - m_position.x };
     const float dz{ target.z - m_position.z };
     if(fabsf(dx) < 0.0001f && fabsf(dz) < 0.0001f)
         return;
 
-    // XZ 평면 기준 Yaw만 회전 (Pitch 무시)
-    m_rotation.y = atan2f(dx, dz);
+    m_targetYaw = atan2f(dx, dz);
+    m_isTurning = true;
+
+}
+
+bool Transform::UpdateRotation(const float dt, const float speed)
+{
+    if(!m_isTurning) return true;
+
+    float diff = m_targetYaw - m_rotation.y;
+    while(diff > DirectX::XM_PI) diff -= 2.f * DirectX::XM_PI;
+    while(diff < -DirectX::XM_PI) diff += 2.f * DirectX::XM_PI;
+
+    const float delta = diff * dt * speed;
+
+    if(fabsf(delta) >= fabsf(diff)) {
+        m_rotation.y = m_targetYaw;
+        m_isTurning = false;
+        return true;
+    }
+
+    m_rotation.y += delta;
+    return false;
 }

@@ -57,6 +57,8 @@ bool GameServer::Contents::GameObject::IsSameTeam(std::shared_ptr<GameObject> co
 
 void GameServer::Contents::GameObject::Update(const float dt)
 {
+	m_transform.UpdateRotation(dt);
+
 	for(const auto& comp : m_components) {
 		if(comp)
 			comp->Update(dt);
@@ -65,6 +67,8 @@ void GameServer::Contents::GameObject::Update(const float dt)
 	for(const auto& script : m_scripts)
 		if(script)
 			script->Update(dt);
+
+	OnPostComponentUpdate(dt);
 
 	m_transform.CommitPosition();
 }
