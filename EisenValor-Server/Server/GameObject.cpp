@@ -68,5 +68,7 @@ void GameServer::Contents::GameObject::Update(const float dt)
 		if(script)
 			script->Update(dt);
 
+	OnPostComponentUpdate(dt);
+
 	m_transform.CommitPosition();
 }

@@ -1,0 +1,155 @@
+{
+  "sceneName": "Map",
+  "version": 1,
+  "recoveryPoints": [
+    {
+      "name": "Capture Point Heal",
+      "path": "MARKER/Capture Point Heal",
+      "exportOrder": 0,
+      "position": {
+        "x": 0.0,
+        "y": 30.0,
+        "z": 0.0
+      },
+      "radius": 6.0,
+      "healAmount": 10,
+      "time": 5
+    }
+  ],
+  "capturePoints": [
+    {
+      "name": "Capture Point A",
+      "path": "MARKER/Capture Point A",
+      "exportOrder": 0,
+      "position": {
+        "x": -110.0,
+        "y": 15.0,
+        "z": 0.0
+      },
+      "radius": 8.0,
+      "scoreTime": 10
+    },
+    {
+      "name": "Capture Point B",
+      "path": "MARKER/Capture Point B",
+      "exportOrder": 0,
+      "position": {
+        "x": 110.0,
+        "y": 15.0,
+        "z": 0.0
+      },
+      "radius": 8.0,
+      "scoreTime": 10
+    }
+  ],
+  "soldierSpawns": {
+    "red": [
+      {
+        "name": "Red soldier spawn",
+        "path": "MARKER/Red spawn/Red soldier spawn",
+        "destinationPath": "Capture_Points/Capture_Point_A",
+        "exportOrder": 0,
+        "position": {
+          "x": -10.696279525756836,
+          "y": 0.0,
+          "z": 150.60855102539063
+        },
+        "destinationPosition": {
+          "x": -110.0,
+          "y": 15.0,
+          "z": 0.0
+        },
+        "spawnIntervalSec": 20,
+        "soldierSpawnCount": 2
+      },
+      {
+        "name": "Red soldier spawn (1)",
+        "path": "MARKER/Red spawn/Red soldier spawn (1)",
+        "destinationPath": "Capture_Points/Capture_Point_B",
+        "exportOrder": 0,
+        "position": {
+          "x": 10.696279525756836,
+          "y": 0.0,
+          "z": 150.60855102539063
+        },
+        "destinationPosition": {
+          "x": 110.0,
+          "y": 15.0,
+          "z": 0.0
+        },
+        "spawnIntervalSec": 20,
+        "soldierSpawnCount": 2
+      }
+    ],
+    "blue": [
+      {
+        "name": "Blue soldier spawn",
+        "path": "MARKER/Blue spawn/Blue soldier spawn",
+        "destinationPath": "Capture_Points/Capture_Point_A",
+        "exportOrder": 0,
+        "position": {
+          "x": -10.69627571105957,
+          "y": 0.0,
+          "z": -150.60855102539063
+        },
+        "destinationPosition": {
+          "x": -110.0,
+          "y": 15.0,
+          "z": 0.0
+        },
+        "spawnIntervalSec": 20,
+        "soldierSpawnCount": 2
+      },
+      {
+        "name": "Blue soldier spawn (1)",
+        "path": "MARKER/Blue spawn/Blue soldier spawn (1)",
+        "destinationPath": "MARKER/Capture Point B",
+        "exportOrder": 0,
+        "position": {
+          "x": 10.696279525756836,
+          "y": 0.0,
+          "z": -150.60855102539063
+        },
+        "destinationPosition": {
+          "x": 110.0, 
+          "y": 15.0,
+          "z": 0.0
+        },
+        "spawnIntervalSec": 20,
+        "soldierSpawnCount": 2
+      }
+    ]
+  },
+  "teamBases": {
+    "red": {
+      "name": "Red spawn",
+      "path": "MARKER/Red spawn",
+      "exportOrder": 0,
+      "summonStartPosition": {
+        "x": 2.0,
+        "y": 0.0,
+        "z": 149.5679931640625
+      },
+      "offsetFromSummonStartPosition": {
+        "x": 2.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    "blue": {
+      "name": "Blue spawn",
+      "path": "MARKER/Blue spawn",
+      "exportOrder": 0,
+      "summonStartPosition": {
+        "x": -2.0,
+        "y": 0.0,
+        "z": -149.5679931640625
+      },
+      "offsetFromSummonStartPosition": {
+        "x": 2.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  }
+}

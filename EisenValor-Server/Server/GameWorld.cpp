@@ -19,12 +19,6 @@
 
 // #define PRINT_GAME_WORLD_LOG
 
-namespace
-{
-constexpr Vec3 kRedPlayerStartPos{ 0.f, 0.f, 149.5679931640625f };
-constexpr Vec3 kBluePlayerStartPos{ 0.f, 0.f, -149.5679931640625f };
-}
-
 GameServer::Contents::GameWorld::GameWorld()
 	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}
 {
@@ -34,6 +28,9 @@ GameServer::Contents::GameWorld::GameWorld()
 	m_remainingTimeSec = std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec };
 	m_fixedUpdateTick = 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick;
 	m_maxUpdateStep = MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep;
+
+	m_blueTeamLastBasePos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition;
+	m_redTeamLastBasePos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
 }
 
 GameServer::Contents::GameWorld::~GameWorld()
@@ -65,12 +62,12 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 void GameServer::Contents::GameWorld::Update(const float dt)
 {
-	m_lastDT = m_dt;  
+	m_lastDT = m_dt;
 	m_dt = dt;
 	m_accDT += dt;
 
 	uint32 loopCount{};
-	
+
 	while(m_accDT >= m_fixedUpdateTick && loopCount < m_maxUpdateStep) {
 		m_accDT -= m_fixedUpdateTick;
 		ProcessEvents();
@@ -104,13 +101,24 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "Enter Game World!" << std::endl;
 #endif
-	const Vec3 rot{ 0.f, 0.f, 0.f };
+	Vec3 rot{ 0.f, 0.f, 0.f };
 	static FB_ENUMS::TEAM_TYPE teamFlag{ FB_ENUMS::TEAM_TYPE_BLUE };
 
 	PlayerTemplate t;
-
+	Vec3 startPos{};
 	if(m_reservedParticipantInfo.contains(session->GetID())) {
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
+
+		if(t.teamType == FB_ENUMS::TEAM_TYPE_BLUE) {
+			startPos = m_blueTeamLastBasePos;
+			m_blueTeamLastBasePos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->offsetFromSummonStartPosition;
+		}
+		else if(t.teamType == FB_ENUMS::TEAM_TYPE_RED)
+			{
+			startPos = m_redTeamLastBasePos;
+			m_redTeamLastBasePos -= MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->offsetFromSummonStartPosition;
+			rot.y = -180.f;
+		}
 	}
 	else {
 		t.teamType = teamFlag;
@@ -121,10 +129,17 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 		else if(t.teamType == FB_ENUMS::TEAM_TYPE_RED) {
 			teamFlag = FB_ENUMS::TEAM_TYPE_BLUE;
 		}
+
+		if(t.teamType == FB_ENUMS::TEAM_TYPE_BLUE) {
+			startPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition;
+		}
+		else {
+			startPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
+			rot.y = -180.f;
+		}
+
 	}
 
-	const Vec3& startPos =
-		(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) ? kBluePlayerStartPos : kRedPlayerStartPos;
 	t.transform = Transform{ startPos, rot };
 
 	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
@@ -217,7 +232,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	if(!navQuery) return;
 
 	dtQueryFilter filter;
-	float extents[3] = { 0.5f, 2.5f, 0.5f };  // 계단 높이에 맞게 조정
+	const float extents[3] = { 0.5f, 2.5f, 0.5f };  // 계단 높이에 맞게 조정
 
 	// 3-1. 목표 위치가 NavMesh 위에 있는가?
 	float      newPosArr[3] = { newPos.x, newPos.y, newPos.z };
@@ -229,7 +244,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 
 	if(newPoly == 0) {
 		// NavMesh 밖 → 보정 후 차단
-		SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
+		SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotationDegree());
 		return;
 	}
 
@@ -272,7 +287,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo)
 {
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	
+
 	auto it = m_sessionToPlayer.find(sessionID);
 	if(it == m_sessionToPlayer.end()) return;
 
@@ -393,7 +408,7 @@ void GameServer::Contents::GameWorld::Handle_CS_UPDATE_PLAYER_STATE(const uint32
 void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg)
 {
 	const uint32 sessionID{ clientSession->GetID() };
-	
+
 	auto it = m_sessionToPlayer.find(sessionID);
 	if(it == m_sessionToPlayer.end()) return;
 
@@ -447,7 +462,7 @@ void GameServer::Contents::GameWorld::ProcessEvents()
 		m_pendingEventFpQueue.pop();
 	}
 	const auto now = std::chrono::steady_clock::now();
-	
+
 	while(false == m_timedEventQueue.empty() && m_timedEventQueue.top().executeTime <= now) {
 		auto eve = m_timedEventQueue.top().eveFunc;
 		m_timedEventQueue.pop();
@@ -467,7 +482,7 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 		const uint64 id{ newGameObject->GetID() };
 		const uint8 type{ etou8(newGameObject->GetObjType()) };
 		const Vec3 pos{ newGameObject->GetPosition() };
-		const Vec3 rot{ newGameObject->GetRotation() };
+		const Vec3 rot{ newGameObject->GetRotationDegree() };
 		const Transform kInfo{ pos, rot };
 
 		if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == newGameObject->GetObjType()) {
@@ -484,7 +499,7 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 
 			// 패킷으로 보낼 나의 데이터 정의
 			auto startPos = newPlayer->GetPosition();
-			auto rot = newPlayer->GetRotation();
+			auto rot = newPlayer->GetRotationDegree();
 			const Transform kInfo{ startPos, rot };
 
 			// 나에게 내 정보 전송
@@ -508,7 +523,7 @@ void GameServer::Contents::GameWorld::ProcessPendingAddObjectList()
 					if(obj.get()) {
 						const uint8 type{ etou8(obj->GetObjType()) };
 						const Vec3 pos{ obj->GetPosition() };
-						const Vec3 rot{ obj->GetRotation() };
+						const Vec3 rot{ obj->GetRotationDegree() };
 						const Transform kInfo{ pos, rot };
 
 						uint32 maxHp{};
@@ -602,6 +617,7 @@ void GameServer::Contents::GameWorld::ProcessPendingRemoveObjectList()
 		Broadcast(std::move(pb));
 	}
 }
+
 void GameServer::Contents::GameWorld::CheckGameTime(const float dt)
 {
 	m_accGameTime += dt;
@@ -751,43 +767,26 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(participant.teamType);
 			if(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) {
-				static Vec3 startPos{ -12.f, -9.f, -10.f };
+				static Vec3 startPos{ startPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition };
 				t.transform = Transform{ startPos, Vec3{} };
-				startPos.z += 1.f;
+				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->offsetFromSummonStartPosition;
+				m_blueTeamLastBasePos = startPos;
 			}
 			else {
-				static Vec3 startPos{ -37.f, -9.f, -6.f };
-				startPos.x += 1.f;
-				startPos.z -= 1.f;
+				static Vec3 startPos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition };
 				t.transform = Transform{ startPos, Vec3{} };
+				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->offsetFromSummonStartPosition;
+				m_redTeamLastBasePos = startPos;
 			}
 			t.gameWorld = this;
-			
+
 			auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
 			AddGameObject(std::move(general));
 		}
 	}
 #endif
 
-	// Spanwer로 옮겨야 함
-	//for(int i = 0; i < 1; ++i) {
-	//	static bool flag{ true };
-	//	static Vec3 startPos{ 0.f, 0.f, 0.f };
-	//	SoldierTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-	//	t.posInfo = PosInfo{
-	//	.pos = startPos,
-	//	.rot = Vec3{}
-	//	};
-	//	t.gameWorld = this;
-	//	flag = !flag;
-	//	startPos.x += 2.f;
-	//	auto soldier = (GameServer::Contents::GameObjectFactory::CreateSoldier(t));
-	//	AddGameObject(std::move(soldier));
-	//}
-
+#ifndef APPLY_LOBBY_SERVER
 	//for(int i = 0; i < 2; ++i) {
 	//	static bool flag{ true };
 
@@ -811,60 +810,64 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
 	//	AddGameObject(std::move(general));
 	//}
+#endif
 
 	// 회복소 생성
 	{
-		HealZoneTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_HEAL_ZONE);
-		t.gameObjectData = nullptr;
-		t.transform = Transform{ Vec3{ -24.9313736f,-8.80016708f,-5.53999329f }, Vec3{} };
-		t.gameWorld = this;
-		t.range = 3.f;
-		t.healAmount = 10;
-		t.time = 5;
-		t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
-		auto healZone{ GameServer::Contents::GameObjectFactory::CreateHealZone(t) };
-		AddGameObject(std::move(healZone));
+		auto healZones = MANAGER(GameServer::Contents::MapDataManager)->GetRecoveryPoints("Map");
+
+		for(const auto& healZone : *healZones) {
+			HealZoneTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_HEAL_ZONE);
+			t.gameObjectData = nullptr;
+			t.transform = Transform{ healZone.position , Vec3{} };
+			t.gameWorld = this;
+			t.radius = healZone.radius;
+			t.healAmount = healZone.healAmount;
+			t.time = healZone.time;
+			t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
+			auto healZone{ GameServer::Contents::GameObjectFactory::CreateHealZone(t) };
+			AddGameObject(std::move(healZone));
+		}
 	}
+
+	// 점령지 생성
+	{
+		const auto occupationZones = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZones("Map");
+
+		for(const auto& occupationZone : *occupationZones) {
+			OccupationZoneTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
+			t.gameObjectData = nullptr;
+			t.transform = Transform{ occupationZone.position, Vec3{} };
+			t.gameWorld = this;
+			t.radius = occupationZone.radius;
+			t.scoreTime = occupationZone.scoreTime;
+			t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
+			auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
+			AddGameObject(std::move(oz));
+		}
+	}
+
+	// 스포너 생성
+	std::vector<std::string> teams{ "blue", "red" };
 	
-	 // 점령지 생성
-	{
-		OccupationZoneTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
-		t.gameObjectData = nullptr;
-		t.transform = Transform{ Vec3{30.f, 0.f, 30.f}, Vec3{} };
-		t.gameWorld = this;
-		t.range = 0.5f;
-		t.time = 10;
-		t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
-		auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
-		AddGameObject(std::move(oz));
-	}
+	for(const auto& team : teams) {
+		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
 
-	// 블루팀 스포너 생성
-	{
-		SpanwerTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.gameObjectData = nullptr;
-		t.transform = Transform{ Vec3{ -25.f, -9.f, 10.f }, Vec3{} };
-		t.teamType = FB_ENUMS::TEAM_TYPE_BLUE;
-		t.gameWorld = this;
-
-		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
-		AddGameObject(std::move(spawner));
-	}
-
-	// 레드팀 스포너 생성
-	{
-		SpanwerTemplate t;
-		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-		t.gameObjectData = nullptr;
-		t.transform = Transform{ Vec3{ -25.f, -9.f, -12.f}, Vec3{} };
-		t.teamType = FB_ENUMS::TEAM_TYPE_RED;
-		t.gameWorld = this;
-
-		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSpawner(t) };
-		AddGameObject(std::move(spawner));
+		for(const auto& soldierSpawner : *soldierSpawners) {
+			SoldierSpanwerTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+			t.gameObjectData = nullptr;
+			t.transform = Transform{ soldierSpawner.position, Vec3{} };
+			t.teamType = soldierSpawner.teamType;
+			t.gameWorld = this;
+			t.destPos = soldierSpawner.destinationPosition;
+			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+			t.spawnCount = soldierSpawner.soldierSpawnCount;
+			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+			AddGameObject(std::move(spawner));
+		}
 	}
 }
 

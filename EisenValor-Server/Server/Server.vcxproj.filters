@@ -160,6 +160,9 @@
     <ClCompile Include="HealZone.cpp">
       <Filter>03. Contents\Component\Scripts\HealZone</Filter>
     </ClCompile>
+    <ClCompile Include="MapDataManager.cpp">
+      <Filter>03. Contents\GameWorld\MapData</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -305,6 +308,9 @@
     </Filter>
     <Filter Include="01. SessionManager\LobbyServerSession">
       <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Contents\GameWorld\MapData">
+      <UniqueIdentifier>{7a8477a1-fed7-4279-b40b-97c4b670a014}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -485,6 +491,9 @@
     <ClInclude Include="ServerManager.h">
       <Filter>00. main\ServerManager</Filter>
     </ClInclude>
+    <ClInclude Include="MapDataManager.h">
+      <Filter>03. Contents\GameWorld\MapData</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -508,6 +517,9 @@
     </None>
     <None Include="..\Binaries\Server\NavData\solo_navmesh.bin">
       <Filter>03. Contents\GameWorld\NavSystem\NavMeshData</Filter>
+    </None>
+    <None Include="..\Binaries\Server\GameData\MapData.json">
+      <Filter>03. Contents\GameWorld\MapData</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
 #include "GameServerSession.h"
 
 LobbyServer::GameRoom::GameRoom()
-	:m_offenseCount{}, m_defenseCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }
+	:m_blueTeamCount{}, m_redTeamCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }
 {
 }
 
@@ -39,29 +39,35 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 
 	m_info.currentParticipants++;
 
-	static bool teamFlag{ false };
-	teamFlag = !teamFlag;
-	FB_ENUMS::TEAM_TYPE teamType{ static_cast<uint8>(teamFlag) };
+	static FB_ENUMS::TEAM_TYPE teamType{ FB_ENUMS::TEAM_TYPE_BLUE };
 
 	if(teamType == FB_ENUMS::TEAM_TYPE_BLUE) {
-		if(m_offenseCount >= m_info.maxParticipants / 2) {
+		if(m_blueTeamCount >= m_info.maxParticipants / 2) {
 			teamType = FB_ENUMS::TEAM_TYPE_RED;
-			m_defenseCount++;
+			m_redTeamCount++;
 		}
-		else
-			m_offenseCount++;
+		else {
+			m_blueTeamCount++;
+		}
 	}
 	else {
-		if(m_defenseCount >= m_info.maxParticipants / 2) {
+		if(m_redTeamCount >= m_info.maxParticipants / 2) {
 			teamType = FB_ENUMS::TEAM_TYPE_BLUE;
-			m_offenseCount++;
+			m_blueTeamCount++;
 		}
-		else m_defenseCount++;
+		else {
+			m_redTeamCount++;
+		}
 	}
 
 	auto newUser = std::make_shared<User>(sessionID, participantType, teamType, clientSession);
 	if(newUser->GetType() == FB_ENUMS::PARTICIPANT_TYPE_HOST && nullptr == m_host)
 		m_host = newUser;
+
+	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) 
+		teamType = FB_ENUMS::TEAM_TYPE_RED;
+	else
+		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 
 	std::vector<ParticipantInfo> particinpants;
 
@@ -119,15 +125,15 @@ void LobbyServer::GameRoom::ChangeTeam(const std::shared_ptr<ClientSession>& cli
 
 	if(user->GetTeamType() == FB_ENUMS::TEAM_TYPE_BLUE) {
 		user->SetTeamType(FB_ENUMS::TEAM_TYPE_RED);
-		m_offenseCount--;
-		m_defenseCount++;
+		m_blueTeamCount--;
+		m_redTeamCount++;
 
 		std::cout << std::format("UserID: {}, Change Team! Team: Defense", userID) << std::endl;
 	}
 	else {
 		user->SetTeamType(FB_ENUMS::TEAM_TYPE_BLUE);
-		m_offenseCount++;
-		m_defenseCount--;
+		m_blueTeamCount++;
+		m_redTeamCount--;
 		std::cout << std::format("UserID: {}, Change Team! Team: Offense", userID) << std::endl;
 	}
 

@@ -40,6 +40,7 @@ namespace GameServer {
 			virtual void OnCollisionExit(Collider* const other) {}
 
 			virtual void Update(const float dt);
+			virtual void OnPostComponentUpdate(const float dt) {}
 
 		public:
 			template<std::derived_from<Component> T>
@@ -90,11 +91,11 @@ namespace GameServer {
 			}
 
 			template<std::derived_from<Script> T>
-			Script* AddScript(std::unique_ptr<T> script)
+			T* AddScript(std::unique_ptr<T> script)
 			{
 				Script* s = script.get();
 				m_scripts.emplace_back(std::move(script));
-				return s;
+				return static_cast<T*>(s);
 			}
 
 			Script* GetScript(const std::string_view name);
@@ -112,6 +113,7 @@ namespace GameServer {
 
 			void        SetPosition(const Vec3& pos) { m_transform.SetPosition(pos); }
 			const Vec3& GetPosition() const { return m_transform.GetPosition(); }
+			const Vec3& GetPrevPosition() const { return m_transform.GetPrevPosition(); }
 
 			void        SetRotation(const Vec3& rotDegree) { m_transform.SetRotation(rotDegree); }
 			const Vec3& GetRotation() const { return m_transform.GetRotation(); }  // Radian

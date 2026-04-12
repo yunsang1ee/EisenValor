@@ -39,6 +39,11 @@ bool GameServer::ServerManager::Init()
 		return false;
 	}
 
+	if(false == MANAGER(GameServer::Contents::MapDataManager)->LoadDataFromFile("../GameData/MapData.json")) {
+		LOG_ERROR("MapDataManager Load Failed");
+		return false;
+	}
+
 	if(false == MANAGER(GameServerEngine::ThreadManager)->Init()) {
 		LOG_ERROR("ThreadManager Init Failed");
 		return false;

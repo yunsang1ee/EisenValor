@@ -115,7 +115,6 @@ void GameServer::Contents::SoldierMoveState::Enter(const float dt)
 
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag) {
-		owner->LookAt(m_destPos);
 		ag->SetDestPos(m_destPos);
 	}
 }

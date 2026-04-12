@@ -71,3 +71,14 @@ bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const at
 
 	return true;
 }
+
+void GameServer::Contents::Soldier::OnPostComponentUpdate(const float dt)
+{
+	const Vec3 delta = GetTransform().GetDeltaPosition();
+	const float speedSq = delta.x * delta.x + delta.z * delta.z;
+
+	if(speedSq > 0.0001f) {
+		const Vec3 pos = GetPosition();
+		LookAt({ pos.x + delta.x, pos.y, pos.z + delta.z });
+	}
+}

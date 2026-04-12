@@ -25,7 +25,8 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
-			 .currentHP = t.gameObjectData->maxHp,
+			// .currentHP = t.gameObjectData->maxHp,
+			 .currentHP = 50,
 			.maxHP = t.gameObjectData->maxHp,
 			.currentStamina = t.gameObjectData->maxStamina,
 			.maxStamina = t.gameObjectData->maxStamina,
@@ -112,17 +113,17 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 		return nullptr;
 
 	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
-	auto roamingState = GameServer::Contents::GeneralRoamingState::Create(fsm);
-	auto duelingState = GameServer::Contents::GeneralDuelingState::Create(fsm);
-	auto stunState = GameServer::Contents::GeneralStunState::Create(fsm);
-	auto deadState = GameServer::Contents::GeneralDeadState::Create(fsm);
-	
-	fsm->AddState(std::move(roamingState));
-	fsm->AddState(std::move(duelingState));
-	fsm->AddState(std::move(stunState));
-	fsm->AddState(std::move(deadState));
-
-	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
+	//auto roamingState = GameServer::Contents::GeneralRoamingState::Create(fsm);
+	//auto duelingState = GameServer::Contents::GeneralDuelingState::Create(fsm);
+	//auto stunState = GameServer::Contents::GeneralStunState::Create(fsm);
+	//auto deadState = GameServer::Contents::GeneralDeadState::Create(fsm);
+	//
+	//fsm->AddState(std::move(roamingState));
+	//fsm->AddState(std::move(duelingState));
+	//fsm->AddState(std::move(stunState));
+	//fsm->AddState(std::move(deadState));
+	//
+	//fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
 
 	return general;
 }
@@ -163,7 +164,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	auto fsm{ soldier->AddComponent<GameServer::Contents::FSM>() };
 	
 	auto idleState = GameServer::Contents::SoldierIdleState::Create();
-	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, Vec3{ -24.9313736f, -8.80016708f, -5.53999329f });
+	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, t.destPos);
 	auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
 	auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
 	auto deadState = GameServer::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
@@ -176,24 +177,22 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 
 	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 
-	soldier->LookAt(Vec3{ -24.9313736f, -8.80016708f, -5.53999329f });
-
 	return soldier;
 }
 
-std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateSpawner(const SpanwerTemplate& t)
+std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateHealZone(const HealZoneTemplate& t)
 {
-	const auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-	spawnObj->SetID(t.id);
-	spawnObj->SetGameWorld(t.gameWorld);
-	spawnObj->SetTransform(t.transform);
-	spawnObj->SetGameObjectData(t.gameObjectData);
+	const auto hzObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_HEAL_ZONE) };
+	hzObj->SetID(t.id);
+	hzObj->SetGameWorld(t.gameWorld);
+	hzObj->SetTransform(t.transform);
+	hzObj->SetGameObjectData(t.gameObjectData);
 
-	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>());
-	spawner->SetName("Spawner");
-	spawner->SetOwner(spawnObj);
-	
-	return spawnObj;
+	auto const hz{ hzObj->AddScript(std::make_unique<HealZone>(t.radius * t.radius, t.time, t.healAmount)) };
+	hz->SetName("HZ");
+	hz->SetOwner(hzObj);
+
+	return hzObj;
 }
 
 std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateOccupationZone(const OccupationZoneTemplate& t)
@@ -204,24 +203,24 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	ozObj->SetTransform(t.transform);
 	ozObj->SetGameObjectData(t.gameObjectData);
 	
-	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.range * t.range, t.time))};
+	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.radius * t.radius, t.scoreTime))};
 	oz->SetName("OZ");
 	oz->SetOwner(ozObj);
 	
 	return ozObj;
 }
 
-std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateHealZone(const HealZoneTemplate& t)
+std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(const SoldierSpanwerTemplate& t)
 {
-	const auto hzObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_HEAL_ZONE) };
-	hzObj->SetID(t.id);
-	hzObj->SetGameWorld(t.gameWorld);
-	hzObj->SetTransform(t.transform);
-	hzObj->SetGameObjectData(t.gameObjectData);
-	
-	auto const hz{ hzObj->AddScript(std::make_unique<HealZone>(t.range * t.range, t.time, t.healAmount)) };
-	hz->SetName("HZ");
-	hz->SetOwner(hzObj);
-	
-	return hzObj;
+	const auto spawnObj = std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	spawnObj->SetID(t.id);
+	spawnObj->SetGameWorld(t.gameWorld);
+	spawnObj->SetTransform(t.transform);
+	spawnObj->SetGameObjectData(t.gameObjectData);
+
+	auto const spawner = spawnObj->AddScript(std::make_unique<Spawner>(t.destPos, t.spawnIntervalSec, t.spawnCount));
+	spawner->SetName("Spawner");
+	spawner->SetOwner(spawnObj);
+
+	return spawnObj;
 }

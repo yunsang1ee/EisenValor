@@ -124,6 +124,9 @@ namespace GameServer {
 
 			uint8																				m_redTeamScore;
 			uint8																				m_blueTeamScore;
+		
+			Vec3																				m_blueTeamLastBasePos;
+			Vec3																				m_redTeamLastBasePos;
 		};
 	}
 }
