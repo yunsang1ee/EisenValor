@@ -19,6 +19,12 @@
 
 // #define PRINT_GAME_WORLD_LOG
 
+namespace
+{
+constexpr Vec3 kRedPlayerStartPos{ 0.f, 0.f, 149.5679931640625f };
+constexpr Vec3 kBluePlayerStartPos{ 0.f, 0.f, -149.5679931640625f };
+}
+
 GameServer::Contents::GameWorld::GameWorld()
 	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}
 {
@@ -98,14 +104,10 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "Enter Game World!" << std::endl;
 #endif
-	static Vec3 startPos{ -24.9313736f,-8.80016708f,-5.53999329f };
-	static const Vec3 offset{ 0.f, 0.f, 0.f };
-	startPos += offset;
 	const Vec3 rot{ 0.f, 0.f, 0.f };
 	static FB_ENUMS::TEAM_TYPE teamFlag{ FB_ENUMS::TEAM_TYPE_BLUE };
 
 	PlayerTemplate t;
-	t.transform = Transform{ startPos, rot };
 
 	if(m_reservedParticipantInfo.contains(session->GetID())) {
 		t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(m_reservedParticipantInfo[session->GetID()].teamType);
@@ -120,7 +122,11 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 			teamFlag = FB_ENUMS::TEAM_TYPE_BLUE;
 		}
 	}
-	
+
+	const Vec3& startPos =
+		(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) ? kBluePlayerStartPos : kRedPlayerStartPos;
+	t.transform = Transform{ startPos, rot };
+
 	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	t.gameWorld = this;
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
