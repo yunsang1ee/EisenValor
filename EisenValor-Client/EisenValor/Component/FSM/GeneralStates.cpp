@@ -78,7 +78,7 @@ void PlayerMoveState::Update(FSMComponent* fsm, float dt)
 	uint8_t targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
 
 	// 락온 상태일 경우 방향별 애니메이션 키 결정
-	//if (fsm->IsLockOn())
+	if (fsm->IsLockOn())
 	{
 		auto dir = fsm->GetMoveDirection();
 		switch (dir)
