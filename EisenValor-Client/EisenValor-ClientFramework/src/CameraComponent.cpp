@@ -414,8 +414,8 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	}
 	else
 	{
-		XMFLOAT4 targetRotQf = lookAtTransform->GetWorldRotationQuaternion();
-		desiredWorldQ = XMLoadFloat4(&targetRotQf);
+		// 비락온 모드: 플레이어의 회전을 무시하고 Identity를 베이스로 사용
+		desiredWorldQ = XMQuaternionIdentity();
 	}
 
 	XMVECTOR offsetQ = XMQuaternionRotationRollPitchYaw(

@@ -712,7 +712,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 					cam->SetEnableLookAtRotation(false);
 					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{
+					cam->SetFollowOffset(DX::XMFLOAT3{
 						CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight,
 						CameraConfig::kDefaultLocalOffsetZ
 					});
