@@ -37,25 +37,25 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	movement->SetMaxSpeed(20.f);
 	movement->SetAcceleration(10.f);
 
-	//auto navAgent = player->AddComponent<GameServer::Contents::NavAgent>(player->GetGameWorld()->GetNavSystem());
-	//
-	//dtCrowdAgentParams params{};
-	//params.radius = 0.6f;
-	//params.height = 1.8f;
-	//params.maxSpeed = 0.0f;
-	//params.maxAcceleration = 0.0f;
-	//
-	//// set collision avoidance
-	//params.collisionQueryRange = params.radius * 12.0f;
-	//params.pathOptimizationRange = 0.0f;
-	//params.updateFlags = DT_CROWD_SEPARATION; 
-	//params.separationWeight = 2.0f;
-	//
-	//if(false == navAgent->Init(params))
-	//	return nullptr;
+	auto navAgent = player->AddComponent<GameServer::Contents::NavAgent>(player->GetGameWorld()->GetNavSystem());
+	
+	dtCrowdAgentParams params{};
+	params.radius = 0.6f;
+	params.height = 1.8f;
+	params.maxSpeed = 0.0f;
+	params.maxAcceleration = 0.0f;
+	
+	// set collision avoidance
+	params.collisionQueryRange = params.radius * 12.0f;
+	params.pathOptimizationRange = 0.0f;
+	params.updateFlags = DT_CROWD_SEPARATION; 
+	params.separationWeight = 2.0f;
+	
+	if(false == navAgent->Init(params))
+		return nullptr;
 
-	//navAgent->SetPlayerMode(true);
-	//navAgent->SetAsStaticObstacle();
+	navAgent->SetPlayerMode(true);
+	navAgent->SetAsStaticObstacle();
 
 	const auto fsm = player->AddComponent<GameServer::Contents::FSM>();
 	
