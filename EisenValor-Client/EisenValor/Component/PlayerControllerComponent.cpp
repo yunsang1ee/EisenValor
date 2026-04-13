@@ -84,6 +84,16 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		return;
 	}
 
+	// FSM Check
+	if (auto* fsmComp = myGameObject->GetComponent<PlayerFSMComponent>())
+	{
+		auto curState = fsmComp->GetCurrentStateType();
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+		{
+			return;
+		}
+	}
+
 	// Root Motion Delta
 	if (auto* animComp = myGameObject->GetComponent<AnimationComponent>())
 	{
@@ -123,8 +133,11 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 				{
 					if (camComp->IsLookAtRotationEnabled())
 					{
-						UpdateCameraShoulderView(camComp);
+						// 플레이어를 먼저 적 방향으로 회전
 						RotatePlayerToTarget(camComp);
+
+						// 플레이어의 위치를 기준으로 숄더뷰 위치 업데이트
+						UpdateCameraShoulderView(camComp);
 					}
 				}
 			}
@@ -167,83 +180,88 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 		return;
 	}
 
-	// 카메라의 락온(LookAt Rotation) 활성화 여부 확인
-	bool isLookAtLocked = false;
-	if (m_cameraObjectHandle.IsValid())
-	{
-		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-		if (scene)
-		{
-			if (auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle))
-			{
-				if (auto* camComp = camObj->GetComponent<CameraComponent>())
-				{
-					isLookAtLocked = camComp->IsLookAtRotationEnabled();
-				}
-			}
-		}
-	}
+	// 카메라 및 락온 상태 확인
+	if (!m_cameraObjectHandle.IsValid()) return;
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
+	auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle);
+	if (!camObj) return;
+	auto* camComp = camObj->GetComponent<CameraComponent>();
+	if (!camComp) return;
 
-	// 락온 상태면 마우스 회전 무시
+	bool isLookAtLocked = camComp->IsLookAtRotationEnabled();
+
+	// 락온 상태일 때 처리
 	if (isLookAtLocked)
 	{
+		// (락온 시) 카메라 오프셋을 0으로 보간하여 적을 정면으로 보게 함
+		float lerpFactor = 1.0f - expf(-10.0f * deltaTime);
+		
+		XMFLOAT3 currentOffset = camComp->GetLookAtRotationOffset();
+		currentOffset.x = std::lerp(currentOffset.x, 0.0f, lerpFactor);
+		currentOffset.y = std::lerp(currentOffset.y, 0.0f, lerpFactor);
+		camComp->SetLookAtRotationOffset(currentOffset);
+
+		// (락온 해제 시) 카메라가 플레이어 뒤를 비추도록 m_yaw 동기화
+		auto& transform = GetGameObject()->GetTransform();
+		XMFLOAT3 fwd = transform.GetForward();
+		m_yaw = XMConvertToDegrees(atan2f(fwd.x, fwd.z));
+		m_pitch = currentOffset.x;
 		return;
 	}
 
 	const auto& mouseState = input.GetMouseDelta();
-
 	const float deltaX = mouseState.x * m_sensitivityX;
 	const float deltaY = mouseState.y * m_sensitivityY;
 
+	bool isMouseMoved = (fabsf(deltaX) > kMinMouseDelta || fabsf(deltaY) > kMinMouseDelta);
+
 	if (fabsf(deltaX) > kMinMouseDelta)
 	{
-		auto* myGameObject = GetGameObject();
-		if (!myGameObject)
-			return;
-
-		auto* fsm = myGameObject->GetComponent<FSMComponent>();
-		if (!fsm)
-			return;
-
-		auto&				transform = myGameObject->GetTransform();
-		auto				pos = transform.GetPosition();
-		auto				rot = transform.GetRotation();
-		FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-
-		const auto curState{fsm->GetCurStateType()};
-
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
-			return;
-
 		RotateYaw(deltaX);
-
-		{
-			// 회전 후 transform에서 값을 읽어 패킷 전송
-			auto&				transform = myGameObject->GetTransform();
-			auto				pos = transform.GetPosition();
-			auto				rot = transform.GetRotation(); // 이제 회전된 값
-			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-		}
 	}
 
-	if (m_cameraObjectHandle.IsValid() && fabsf(deltaY) > kMinMouseDelta)
+	if (fabsf(deltaY) > kMinMouseDelta)
+	{
+		RotatePitch(deltaY);
+	}
+
+	// 비락온 상태에서만 직접 계산한 m_yaw, m_pitch와 월드 오프셋을 적용
+	// 회전 적용
+	camComp->SetLookAtRotationOffset({m_pitch, m_yaw, 0.0f});
+
+	// 월드 기준 오프셋 계산 (m_yaw, m_pitch 기반)
+	XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
+		XMConvertToRadians(m_pitch), 
+		XMConvertToRadians(m_yaw), 
+		0.0f
+	);
+
+	XMVECTOR baseOffset = XMVectorSet(
+		CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight,
+		CameraConfig::kDefaultLocalOffsetZ, 0.0f
+	); 
+	XMVECTOR worldOffset = XMVector3TransformNormal(baseOffset, rotationMatrix);
+
+	XMFLOAT3 finalOffset;
+	XMStoreFloat3(&finalOffset, worldOffset);
+
+	// 비락온 시 월드 오프셋 적용 (SetFollowOffset 사용)
+	camComp->SetFollowOffset(finalOffset);
+
+	// 마우스가 움직였다면 서버에 현재 위치/회전 패킷 전송 (연결 유지 및 동기화)
+	if (isMouseMoved)
 	{
 		auto* myGameObject = GetGameObject();
-		if (!myGameObject)
-			return;
-
-		auto* fsm = myGameObject->GetComponent<FSMComponent>();
-		if (!fsm)
-			return;
-
-		const auto curState{fsm->GetCurStateType()};
-
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
-			return;
-
-		RotatePitch(deltaY);
+		if (myGameObject)
+		{
+			auto& transform = myGameObject->GetTransform();
+			auto  pos = transform.GetPosition();
+			auto  rot = transform.GetRotation();
+			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+			auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		}
 	}
 }
 
@@ -310,61 +328,47 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	}
 	else
 	{
-		if (w)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
-		else if (s)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
-		else if (a)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
-		else if (d)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+		fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
 
-		movement->SetInputForward(w);
-		movement->SetInputBackward(s);
-		movement->SetInputLeft(a);
-		movement->SetInputRight(d);
+if (isMovingInput)
+		{
+			// 카메라 기준 방향 계산
+			XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
+			if (XMVector3LengthSq(baseFwd).m128_f32[0] < 1e-6f)
+				baseFwd = XMVectorSet(0, 0, 1, 0);
 
-		//fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+			XMVECTOR baseRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), baseFwd));
 
-		//if (isMovingInput)
-		//{
-		//	// 카메라 기준 방향 계산
-		//	XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
-		//	if (XMVector3LengthSq(baseFwd).m128_f32[0] < 1e-6f)
-		//		baseFwd = XMVectorSet(0, 0, 1, 0);
+			XMVECTOR moveDir = XMVectorZero();
+			if (w) moveDir = XMVectorAdd(moveDir, baseFwd);
+			if (s) moveDir = XMVectorSubtract(moveDir, baseFwd);
+			if (a) moveDir = XMVectorSubtract(moveDir, baseRight);
+			if (d) moveDir = XMVectorAdd(moveDir, baseRight);
 
-		//	XMVECTOR baseRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), baseFwd));
+			moveDir = XMVector3Normalize(moveDir);
 
-		//	XMVECTOR moveDir = XMVectorZero();
-		//	if (w) moveDir = XMVectorAdd(moveDir, baseFwd);
-		//	if (s) moveDir = XMVectorSubtract(moveDir, baseFwd);
-		//	if (a) moveDir = XMVectorSubtract(moveDir, baseRight);
-		//	if (d) moveDir = XMVectorAdd(moveDir, baseRight);
+			// 캐릭터 몸 회전 (Slerp)
+			float targetYaw = atan2f(XMVectorGetX(moveDir), XMVectorGetZ(moveDir));
+			XMVECTOR targetRotQ = XMQuaternionRotationAxis(XMVectorSet(0, 1, 0, 0), targetYaw);
+			
+			auto& tr = myGameObject->GetTransform();
+			auto q = tr.GetRotationQuaternion();
+			XMVECTOR curRotQ = XMLoadFloat4(&q);
+			XMVECTOR nextRotQ = XMQuaternionSlerp(curRotQ, targetRotQ, 0.2f);
+			
+			XMFLOAT4 nextRotF;
+			XMStoreFloat4(&nextRotF, nextRotQ);
+			tr.SetRotationQuaternion(nextRotF);
 
-		//	moveDir = XMVector3Normalize(moveDir);
-
-		//	// 캐릭터 몸 회전 (Slerp)
-		//	float targetYaw = atan2f(XMVectorGetX(moveDir), XMVectorGetZ(moveDir));
-		//	XMVECTOR targetRotQ = XMQuaternionRotationAxis(XMVectorSet(0, 1, 0, 0), targetYaw);
-		//	
-		//	auto& tr = myGameObject->GetTransform();
-		//	auto q = tr.GetRotationQuaternion();
-		//	XMVECTOR curRotQ = XMLoadFloat4(&q);
-		//	XMVECTOR nextRotQ = XMQuaternionSlerp(curRotQ, targetRotQ, 0.2f);
-		//	
-		//	XMFLOAT4 nextRotF;
-		//	XMStoreFloat4(&nextRotF, nextRotQ);
-		//	tr.SetRotationQuaternion(nextRotF);
-
-		//	movement->SetInputForward(true);
-		//}
-		//else
-		//{
-		//	movement->SetInputForward(false);
-		//}
-		//movement->SetInputBackward(false);
-		//movement->SetInputLeft(false);
-		//movement->SetInputRight(false);
+			movement->SetInputForward(true);
+		}
+		else
+		{
+			movement->SetInputForward(false);
+		}
+		movement->SetInputBackward(false);
+		movement->SetInputLeft(false);
+		movement->SetInputRight(false);
 	}
 
 	bool hasJustReleased =
@@ -430,48 +434,15 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)
 {
-	auto* myGameObject = GetGameObject();
-	if (!myGameObject)
-	{
-		return;
-	}
-
-	auto& bodyTransform = myGameObject->GetTransform();
-
-	XMFLOAT4 currentRotF = bodyTransform.GetRotationQuaternion();
-	XMVECTOR currentRot = XMLoadFloat4(&currentRotF);
-	XMVECTOR yawRotation =
-		XMQuaternionRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(deltaDegrees));
-
-	XMVECTOR newRot = XMQuaternionNormalize(XMQuaternionMultiply(yawRotation, currentRot));
-
-	XMFLOAT4 newRotF;
-	XMStoreFloat4(&newRotF, newRot);
-	bodyTransform.SetRotationQuaternion(newRotF);
+	m_yaw += deltaDegrees;
+	if (m_yaw > 360.0f) m_yaw -= 360.0f;
+	if (m_yaw < 0.0f) m_yaw += 360.0f;
 }
 
 void PlayerControllerComponent::RotatePitch(float deltaDegrees)
 {
-	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (!scene)
-	{
-		return;
-	}
-
-	auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle);
-	if (!camObj)
-	{
-		return;
-	}
-
 	m_pitch += deltaDegrees;
 	m_pitch = std::clamp(m_pitch, m_minPitch, m_maxPitch);
-
-	auto* camComp = camObj->GetComponent<CameraComponent>();
-	if (camComp)
-	{
-		camComp->SetLookAtRotationOffset({m_pitch, 0.0f, 0.0f});
-	}
 }
 
 void PlayerControllerComponent::FindCameraInChildren(GameObject* parentGameObject)
@@ -560,26 +531,28 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMFLOAT3 ePos = enemyTr->GetWorldPosition();
 		XMVECTOR enemyPos = XMLoadFloat3(&ePos);
 
-		// 적 방향 계산 (수평)
-		XMVECTOR dirToTarget = XMVectorSubtract(enemyPos, playerPos);
-		XMVECTOR dirH = XMVector3Normalize(XMVectorSetY(dirToTarget, 0.0f));
+		// RotationToTarget에서 이미 계산된 플레이어의 정면 벡터를 사용하여 숄더뷰 위치를 계산
+		XMFLOAT3 playerFwdF = playerTr->GetForward();
+		XMVECTOR playerFwd = XMLoadFloat3(&playerFwdF);
+		XMVECTOR playerFwdH = XMVector3Normalize(XMVectorSetY(playerFwd, 0.0f));
 
-		if (XMVector3LengthSq(dirH).m128_f32[0] < 1e-6f)
+		if (XMVector3LengthSq(playerFwdH).m128_f32[0] < 1e-6f)
 		{
-			XMFLOAT3 fwd = playerTr->GetForward();
-			dirH = XMLoadFloat3(&fwd);
+			playerFwdH = XMVectorSet(0, 0, 1, 0);
 		}
 
-		// 오른쪽 방향
-		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), dirH));
+		// 오른쪽 방향 계산 (수평)
+		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+		XMVECTOR rightH = XMVector3Normalize(XMVector3Cross(up, playerFwdH));
 
 		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
-		XMVECTOR offset = XMVectorScale(rightH, 3.0f) + XMVectorSet(0, 3.5f, 0, 0) + XMVectorScale(dirH, -3.5f);
+		// 플레이어의 현재 정면(playerFwdH)의 반대 방향으로 카메라 배치
+		XMVECTOR offset = XMVectorScale(rightH, CameraConfig::kShoulderViewOffsetX) + XMVectorSet(0, CameraConfig::kShoulderViewOffsetY, 0, 0) + XMVectorScale(playerFwdH, CameraConfig::kShoulderViewOffsetZ);
 
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);
 
-		camComp->SetFollowOffset(offsetF); // 월드 오프셋 적용
+		camComp->SetFollowOffset(offsetF);
 	}
 }
 
