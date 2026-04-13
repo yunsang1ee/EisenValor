@@ -85,9 +85,9 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 	}
 
 	// FSM Check
-	if (auto* fsmComp = myGameObject->GetComponent<PlayerFSMComponent>())
+	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
 	{
-		auto curState = fsmComp->GetCurrentStateType();
+		auto curState = fsm->GetCurStateType();
 		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 		{
 			return;
@@ -133,7 +133,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 				{
 					if (camComp->IsLookAtRotationEnabled())
 					{
-						// 플레이어를 먼저 적 방향으로 회전
+						// 1. 플레이어를 먼저 적 방향으로 회전
 						RotatePlayerToTarget(camComp);
 
 						// 플레이어의 위치를 기준으로 숄더뷰 위치 업데이트
