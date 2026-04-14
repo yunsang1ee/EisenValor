@@ -49,6 +49,10 @@ public:
 	void SetLockOn(bool lockOn) { m_isLockOn = lockOn; }
 	bool IsLockOn() const { return m_isLockOn; }
 
+	// 달리기 상태 설정/조회
+	void SetRunning(bool running) { m_isRunning = running; }
+	bool IsRunning() const { return m_isRunning; }
+
 	// Observer Pattern(상태 ID가 인자)
 	using StateChangeListener = std::function<void(uint8_t)>;
 	void AddListener(StateChangeListener listener) { m_listeners.push_back(listener); }
@@ -61,6 +65,7 @@ private:
 	uint8_t m_objType = 0;       // 캐릭터 타입 (GAME_OBJECT_TYPE)
 	MoveDirection m_moveDir = MoveDirection::FWD; // 현재 이동 방향
 	bool    m_isLockOn = false;  // 현재 락온 상태 여부
+	bool	m_isRunning = false; // 현재 달리기 상태 여부
 	float   m_stateTimer = 0.0f; // 상태별 시간 추적용
 	std::vector<StateChangeListener> m_listeners;
 };

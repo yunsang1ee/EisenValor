@@ -43,6 +43,7 @@ public:
 	
 	// FSM에서 쓸 현재 공격 모드 가져오는 함수
 	std::optional<GENERAL_ATTACK_TYPE> GetCurrentAttackType() const { return m_currentAttackType; }
+	GENERAL_STANCE_TYPE				   GetStance() const { return m_currentStance; }
 
 	void AddListener(HandleOf<GameObject> observerHandle, std::function<void(GENERAL_ATTACK_DIR_TYPE, std::optional<GENERAL_ATTACK_TYPE>)> callback) {
 		m_listeners.push_back({observerHandle, callback});

@@ -6,6 +6,7 @@
 #include "SceneGlobal.h"
 #include "Scene.h"
 #include "Component/FSM/FSMComponent.h"
+#include "Component/BattleUIControllerComponent.h"
 #include "AnimationComponent.h"
 #include "DxMath.h"
 
@@ -288,6 +289,27 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	bool  s = input.GetInput('S');
 	bool  a = input.GetInput('A');
 	bool  d = input.GetInput('D');
+	bool  isShiftPressed = input.GetInput(VK_SHIFT);
+
+	bool isMovingInput = (w || s || a || d);
+
+	// Run
+	if (auto* uiController = myGameObject->GetComponent<BattleUIControllerComponent>())
+	{
+		bool isNeutralStance = (uiController->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+		bool isRunning = isShiftPressed && isMovingInput && isNeutralStance;
+
+		if (isRunning)
+		{
+			movement->SetMoveSpeed(8.5f);
+			//DEBUG_LOG_FMT("[RunSystem] Running! Speed: {:.1f}\n", movement->GetMoveSpeed());   
+		}
+		else
+		{
+			movement->SetMoveSpeed(5.0f);
+		}
+		fsm->SetRunning(isRunning);
+	}
 
 	// 락온 상태 & 카메라 방향 업데이트
 	bool isLockOn = false;
@@ -311,8 +333,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	}
 	fsm->SetLockOn(isLockOn);
 
-	bool isMovingInput = (w || s || a || d);
-
 	// 이동 방향 및 캐릭터 회전 설정
 	if (isLockOn)
 	{
@@ -330,7 +350,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
 
-if (isMovingInput)
+	if (isMovingInput)
 		{
 			// 카메라 기준 방향 계산
 			XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
