@@ -44,11 +44,20 @@ void BattleUIControllerComponent::OnStart()
 	//	"[BattleUI Debug] OnStart Called! ID: {}, Mode: {}\n", owner->GetServerID(),
 	//	m_controlMode == ControlType::Local ? "Local" : "Remote"
 	//);
+
+	// FSM에 리스너 등록
+	if (auto* fsm = owner->GetComponent<FSMComponent>())
+	{
+		fsm->AddStanceListener([this](uint8_t stance) {
+			OnStanceChanged(stance);
+		});
+	}
+
 	// UI 동적 생성 및 초기화
 	CreateAndSetupUI();
 
 	// InitStance에서 저장된 상태에 따라 UI 갱신
-	ToggleUI(m_currentStance == GENERAL_STANCE_TYPE_COMBAT);
+	ToggleUI(GetStance() == GENERAL_STANCE_TYPE_COMBAT);
 }
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
@@ -83,93 +92,8 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 		}
 	}
 
-	// 1. Local 모드일 때만 직접 입력(전투 태세 전환) 처리
-	if (m_controlMode == ControlType::Local)
-	{
-		// 1. Ctrl 키
-		if (GLOBAL(InputGlobal).GetInputDown(VK_CONTROL))
-		{
-			//// 디버그 로그: ID 및 상태 확인
-			//if (auto* owner = GetGameObject())
-			//{
-			//	auto* scene = owner->GetScene();
-			//	uint32 localID = scene->GetLocalID();
-			//	uint32 ownerID = owner->GetServerID();
-			//	bool isRootActive = false;
-			//	if (auto* root = scene->TryGetGameObject(m_uiRootObjHandle)) isRootActive = root->IsActive();
-
-			//	DEBUG_LOG_FMT("[BattleUI Debug] Ctrl Pressed! LocalID: {}, OwnerID: {}, RootActive: {}, Stance: {}\n",
-			//		localID, ownerID, isRootActive, static_cast<int>(m_currentStance));
-			//}
-
-			
-
-			if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
-			{
-				// 전투 모드
-				SetStance(GENERAL_STANCE_TYPE_COMBAT);
-				DEBUG_LOG_FMT("[BattleUI] Switch to COMBAT\n");
-			}
-			else
-			{
-				// 일반 모드
-				SetStance(GENERAL_STANCE_TYPE_NEUTRAL);
-
-				// 상태 초기화
-				m_accumulatedDeltaX = 0.0f;
-				m_accumulatedDeltaY = 0.0f;
-				UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
-
-				// 전투 모드 해제 시 카메라 복귀
-				if (auto* mainCamera = CameraComponent::GetMainCamera())
-				{	
-					// 캐릭터 있을 때
-					if (auto* owner = GetGameObject())
-					{
-						mainCamera->SetLookAtTarget(owner->GetComponentHandle<Transform>());
-						mainCamera->SetEnableLookAtRotation(false);
-						// 원래 오프셋으로 복구
-						mainCamera->SetFollowOffsetLocal({
-							CameraConfig::kDefaultLocalOffsetX,
-							CameraConfig::kCameraHeight,
-							CameraConfig::kDefaultLocalOffsetZ
-						});
-						DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Reset Camera to LocalPlayer\n");
-					}
-					// 죽었을 때(일단 Clear로 해둠)
-					// TODO: 죽었을 때 처리
-					else
-					{
-						mainCamera->ClearLookAtTarget();
-						DEBUG_LOG_FMT("[BattleUI] Switch to NEUTRAL & Clear Camera Target\n");
-					}
-				}
-			}
-			auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-		}
-
-		// 2. NEUTRAL에서 공격 처리
-		if (m_currentStance == GENERAL_STANCE_TYPE_NEUTRAL)
-		{
-			// 좌클릭 시 공격 (방향 NONE, 타입 LIGHT)
-			if (GLOBAL(InputGlobal).GetInputDown(VK_LBUTTON))
-			{
-				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-				auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
-				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
-				{
-					fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-				}
-			}
-		}
-	}
-
 	// 2. COMBAT 모드 일때만 로직 수행
-	if (m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
+	if (GetStance() == GENERAL_STANCE_TYPE_COMBAT)
 	{
 		// 피드백 타이머 감소 (시간 기반)
 		if (m_attackFeedbackTimer > 0.0f)
@@ -212,14 +136,35 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 
 void BattleUIControllerComponent::InitStance(GENERAL_STANCE_TYPE stance)
 {
-	SetStance(stance);
+	if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+	{
+		fsm->SetStance(static_cast<uint8_t>(stance));
+	}
 	DEBUG_LOG_FMT("[BattleUI] InitStance Called! Stance: {}\n", static_cast<int>(stance));
 }
 
-void BattleUIControllerComponent::SetStance(GENERAL_STANCE_TYPE stance)
+void BattleUIControllerComponent::OnStanceChanged(uint8_t stance)
 {
-	m_currentStance = stance;
-	ToggleUI(stance == GENERAL_STANCE_TYPE_COMBAT);
+	GENERAL_STANCE_TYPE stanceType = static_cast<GENERAL_STANCE_TYPE>(stance);
+
+	// 중립 상태로 돌아갈 때 입력 데이터 초기화
+	if (stanceType == GENERAL_STANCE_TYPE_NEUTRAL)
+	{
+		m_accumulatedDeltaX = 0.0f;
+		m_accumulatedDeltaY = 0.0f;
+		UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
+	}
+
+	ToggleUI(stanceType == GENERAL_STANCE_TYPE_COMBAT);
+}
+
+GENERAL_STANCE_TYPE BattleUIControllerComponent::GetStance() const
+{
+	if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+	{
+		return static_cast<GENERAL_STANCE_TYPE>(fsm->GetStance());
+	}
+	return GENERAL_STANCE_TYPE_NEUTRAL;
 }
 
 void BattleUIControllerComponent::OnDestroy()
@@ -555,7 +500,7 @@ void BattleUIControllerComponent::UpdateUIPosition()
 	}
 	else
 	{
-		if (m_controlMode == ControlType::Local && m_currentStance == GENERAL_STANCE_TYPE_COMBAT)
+		if (m_controlMode == ControlType::Local && GetStance() == GENERAL_STANCE_TYPE_COMBAT)
 		{
 			DEBUG_LOG_FMT("[UI Debug] Root Object NOT FOUND!\n");
 		}

@@ -35,7 +35,6 @@ public:
 	void OnDestroy() override;
 
 	void SetControlMode(ControlType mode) { m_controlMode = mode; }
-	void SetStance(GENERAL_STANCE_TYPE stance);
 	void InitStance(GENERAL_STANCE_TYPE stance); 
 	void TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir); // 원격 공격 피드백
 	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
@@ -43,7 +42,7 @@ public:
 	
 	// FSM에서 쓸 현재 공격 모드 가져오는 함수
 	std::optional<GENERAL_ATTACK_TYPE> GetCurrentAttackType() const { return m_currentAttackType; }
-	GENERAL_STANCE_TYPE				   GetStance() const { return m_currentStance; }
+	GENERAL_STANCE_TYPE				   GetStance() const;
 
 	void AddListener(HandleOf<GameObject> observerHandle, std::function<void(GENERAL_ATTACK_DIR_TYPE, std::optional<GENERAL_ATTACK_TYPE>)> callback) {
 		m_listeners.push_back({observerHandle, callback});
@@ -115,7 +114,6 @@ private:
 	float m_centerY = 0.0f;
 	float m_radius = kDefaultRadius; // 기본 반지름 적용
 
-	GENERAL_STANCE_TYPE				   m_currentStance = GENERAL_STANCE_TYPE_NEUTRAL;		 // 현재 스탠스
 	GENERAL_ATTACK_DIR_TYPE			   m_currentSelectedDir = GENERAL_ATTACK_DIR_TYPE_NONE;  // 현재 선택된 가드 방향
 	std::optional<GENERAL_ATTACK_TYPE> m_currentAttackType = std::nullopt;					 // 현재 시도 중인 공격 타입 (없으면 nullopt)
 	bool							   m_isAttackValid = true;								 // 현재 입력(클릭)이 유효한지 여부 (방향 변경 시 false)
@@ -150,6 +148,8 @@ private:
 	
 	void UpdateUIPosition();
 	void NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type);
+
+	void OnStanceChanged(uint8_t stance); // FSM에서 호출하는 스탠스 변경 콜백
 
 	static float NormalizeAngle(float degrees); // 각도 정규화
 
