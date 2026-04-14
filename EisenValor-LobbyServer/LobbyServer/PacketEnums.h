@@ -1,5 +1,14 @@
 #pragma once
 
+/*
+	세션: 0 ~ 9
+	로그인: 10 ~ 99
+	로비: 100 ~ 999
+	룸: 1000 ~ 9999
+	월드: 10000 ~ 19999
+	테스트: 20000 ~ 65534
+*/
+
 enum class PACKET_TYPE : uint16 {
 	// ==================
 	//		세션
@@ -78,6 +87,9 @@ enum class PACKET_TYPE : uint16 {
 
 	CL_CHAT_PKT = 1020,
 	LC_CHAT_PKT = 1021,
+#pragma endregion
+
+#pragma region TEST_PACKETS
 #pragma endregion
 
 	END = 65535,

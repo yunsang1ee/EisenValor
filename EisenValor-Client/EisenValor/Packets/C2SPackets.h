@@ -7,6 +7,11 @@ namespace NetBridge
 namespace C2S
 {
 // =================
+//		세션
+// =================
+std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
+
+// =================
 //		로그인
 // =================
 std::shared_ptr<PacketBuffer> Make_CL_LOGIN_PACKET(const std::string_view id, const std::string_view pw) noexcept;
@@ -44,9 +49,10 @@ std::shared_ptr<PacketBuffer> Make_CS_GEN_NPC_GENREAL_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS::PLAYER_STATE_TYPE state);
 
 // =================
-//		세션
+// 		테스트
 // =================
-std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
+std::shared_ptr<PacketBuffer> Make_CS_TELEPORT_PACKET(const FB_ENUMS::TELEPORT_PLACE_TYPE place);
+
 
 } // namespace C2S
 } // namespace NetBridge

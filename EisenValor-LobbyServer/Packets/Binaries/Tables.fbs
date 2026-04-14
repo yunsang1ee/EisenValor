@@ -301,6 +301,10 @@ table SC_RESPAWN_GENERAL_PACKET {
 	stance_type:  FB_ENUMS.GENERAL_STANCE_TYPE;
 }
 
+table CS_ENTER_GAME_WORLD_PACKET {
+	room_id: ushort;
+	player_id: uint32;
+}
 
 table SC_DEAD_PACKET {
 	obj_id: uint64;
@@ -344,20 +348,10 @@ table SC_SOLDIER_ATTACK_PACKET {
 	obj_id: uint64;
 }
 
+
 // ================================================
 //					    TEST
 // ================================================
-table CS_ENTER_GAME_WORLD_PACKET {
-	room_id: ushort;
-	player_id: uint32;
-}
-
-table CS_GO_WORLD_PACKET{
-}
-
-// ====================================================
-//					  GAME_START
-// ====================================================
-table CS_GAME_START_PACKET{
-
+table CS_TELEPORT_PACKET {
+	place: FB_ENUMS.TELEPORT_PLACE_TYPE;
 }

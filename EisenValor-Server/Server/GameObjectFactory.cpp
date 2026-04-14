@@ -100,7 +100,8 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	dtCrowdAgentParams params{};
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;
-	params.maxSpeed = 1.f;
+	//params.maxSpeed = 1.f;
+	params.maxSpeed = 0.f;
 	params.maxAcceleration = 10.f;
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
@@ -113,17 +114,17 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 		return nullptr;
 
 	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
-	//auto roamingState = GameServer::Contents::GeneralRoamingState::Create(fsm);
-	//auto duelingState = GameServer::Contents::GeneralDuelingState::Create(fsm);
-	//auto stunState = GameServer::Contents::GeneralStunState::Create(fsm);
-	//auto deadState = GameServer::Contents::GeneralDeadState::Create(fsm);
-	//
-	//fsm->AddState(std::move(roamingState));
-	//fsm->AddState(std::move(duelingState));
-	//fsm->AddState(std::move(stunState));
-	//fsm->AddState(std::move(deadState));
-	//
-	//fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
+	auto roamingState = GameServer::Contents::GeneralRoamingState::Create(fsm);
+	auto duelingState = GameServer::Contents::GeneralDuelingState::Create(fsm);
+	auto stunState = GameServer::Contents::GeneralStunState::Create(fsm);
+	auto deadState = GameServer::Contents::GeneralDeadState::Create(fsm);
+	
+	fsm->AddState(std::move(roamingState));
+	fsm->AddState(std::move(duelingState));
+	fsm->AddState(std::move(stunState));
+	fsm->AddState(std::move(deadState));
+	
+	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
 
 	return general;
 }

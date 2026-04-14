@@ -61,7 +61,7 @@ namespace GameServer {
 			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
 			void Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state);
 			void Handle_CS_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg);
-
+			void Handle_CS_TELEPORT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TELEPORT_PLACE_TYPE place);
 		public:
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			void CheckCollision();

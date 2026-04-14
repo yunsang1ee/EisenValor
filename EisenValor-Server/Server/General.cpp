@@ -109,6 +109,8 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
+	if(!fsm) return false;
+
 	const auto stateType{ fsm->GetCurState()->GetStateType() };
 
 	if(FB_ENUMS::GENERAL_STATE_TYPE_DEAD == stateType)
