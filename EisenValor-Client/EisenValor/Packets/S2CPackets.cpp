@@ -1118,7 +1118,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				objHandle, [teamType](TeamComponent* team) { team->SetTeamType(teamType); }
 			);
 
-			// VitalUIControllerComponent
+			 // VitalUIControllerComponent
 			scene->CreateComponentWithInit<VitalUIControllerComponent>(
 				objHandle,
 				[](VitalUIControllerComponent* vital)
@@ -1323,6 +1323,49 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 	// 서버 Echo 방지
 	if (id == scene->GetLocalID())
 	{
+		auto cameraComp = CameraComponent::GetMainCamera();
+
+		if (!cameraComp)
+		{
+			return false;
+		}
+
+		const auto cameraTargetID = recvPkt.camera_target_id();
+
+		if (cameraTargetID == 0)
+		{
+			// 락온 해제 시(적 죽었을 때) 로컬 플레이어로 복구
+			const uint64 localID = scene->GetLocalID();
+			if (auto localPlayer = scene->FindGameObjectByServerID(localID))
+			{
+				cameraComp->SetLookAtTarget(localPlayer->GetHandle());
+				cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+				cameraComp->SetFollowOffsetLocal(
+					{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ
+					}
+				); // 오프셋 복구 (공유 상수 사용)
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
+			}
+			else
+			{
+				cameraComp->ClearLookAtTarget();
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
+			}
+		}
+		else
+		{
+			if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
+			{
+				cameraComp->SetLookAtTarget(targetObj->GetHandle());
+				cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
+			}
+			else
+			{
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Target ID {} not found in scene\n", cameraTargetID);
+			}
+		}
+
 		return true;
 	}
 

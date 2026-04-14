@@ -2490,7 +2490,8 @@ struct SC_CHANGE_GENERAL_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatb
   typedef SC_CHANGE_GENERAL_STANCE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
-    VT_STANCE_TYPE = 6
+    VT_STANCE_TYPE = 6,
+    VT_CAMERA_TARGET_ID = 8
   };
   uint64_t obj_id() const {
     return GetField<uint64_t>(VT_OBJ_ID, 0);
@@ -2498,10 +2499,14 @@ struct SC_CHANGE_GENERAL_STANCE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatb
   FB_ENUMS::GENERAL_STANCE_TYPE stance_type() const {
     return static_cast<FB_ENUMS::GENERAL_STANCE_TYPE>(GetField<uint8_t>(VT_STANCE_TYPE, 0));
   }
+  uint64_t camera_target_id() const {
+    return GetField<uint64_t>(VT_CAMERA_TARGET_ID, 0);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint8_t>(verifier, VT_STANCE_TYPE, 1) &&
+           VerifyField<uint64_t>(verifier, VT_CAMERA_TARGET_ID, 8) &&
            verifier.EndTable();
   }
 };
@@ -2515,6 +2520,9 @@ struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder {
   }
   void add_stance_type(FB_ENUMS::GENERAL_STANCE_TYPE stance_type) {
     fbb_.AddElement<uint8_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_STANCE_TYPE, static_cast<uint8_t>(stance_type), 0);
+  }
+  void add_camera_target_id(uint64_t camera_target_id) {
+    fbb_.AddElement<uint64_t>(SC_CHANGE_GENERAL_STANCE_PACKET::VT_CAMERA_TARGET_ID, camera_target_id, 0);
   }
   explicit SC_CHANGE_GENERAL_STANCE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -2530,8 +2538,10 @@ struct SC_CHANGE_GENERAL_STANCE_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_CHANGE_GENERAL_STANCE_PACKET> CreateSC_CHANGE_GENERAL_STANCE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t obj_id = 0,
-    FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) {
+    FB_ENUMS::GENERAL_STANCE_TYPE stance_type = FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL,
+    uint64_t camera_target_id = 0) {
   SC_CHANGE_GENERAL_STANCE_PACKETBuilder builder_(_fbb);
+  builder_.add_camera_target_id(camera_target_id);
   builder_.add_obj_id(obj_id);
   builder_.add_stance_type(stance_type);
   return builder_.Finish();
@@ -3613,7 +3623,7 @@ struct CS_TELEPORT_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_TELEPORT_PACKET> CreateCS_TELEPORT_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_NONE) {
+    FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE) {
   CS_TELEPORT_PACKETBuilder builder_(_fbb);
   builder_.add_place(place);
   return builder_.Finish();

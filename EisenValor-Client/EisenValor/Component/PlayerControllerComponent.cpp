@@ -441,25 +441,37 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	if (input.GetInputDown('1'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_TEAM_BASE)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('2'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('3'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('4'))
 	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('5'))
+	{
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('E'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 }

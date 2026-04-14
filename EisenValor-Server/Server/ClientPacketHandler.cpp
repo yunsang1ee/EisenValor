@@ -20,12 +20,12 @@ void GameServer::ClientPacketHandler::Init()
 	REGISTER_PACKET(PACKET_TYPE::CS_PLAYER_FAKE_PKT, FB_TABLES::CS_PLAYER_FAKE_PACKET, ClientPacketHandler::Handle_CS_PLAYER_FAKE_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_CHANGE_CAMERA_TARGET_PKT, FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET, ClientPacketHandler::Handle_CS_CHANGE_CAMERA_TARGET_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT, FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET, ClientPacketHandler::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET);
-	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET, FB_TABLES::CS_GEN_NPC_GENERAL_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_ENTER_GAME_WORLD_PKT, FB_TABLES::CS_ENTER_GAME_WORLD_PACKET, ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_UPDATE_PLAYER_STATE_PKT, FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET, ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET);
 #pragma endregion
 
 #pragma region TEST_PACKETS
+	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET, FB_TABLES::CS_GEN_NPC_GENERAL_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_TELEPORT_PKT, FB_TABLES::CS_TELEPORT_PACKET, ClientPacketHandler::Handle_CS_TELEPORT_PACKET);
 #pragma endregion
 
@@ -131,18 +131,6 @@ bool GameServer::ClientPacketHandler::Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(c
 	return true;
 }
 
-bool GameServer::ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt)
-{
-	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
-	const uint32 id{ clientSession->GetID() };
-	auto world = clientSession->GetGameWorld();
-
-	if(world)
-		world->Handle_CS_GEN_NPC_GENERAL(id);
-
-	return true;
-}
-
 bool GameServer::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt)
 {
 	const uint16 roomID{ recvPkt.room_id() };
@@ -173,6 +161,20 @@ bool GameServer::ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET(const
 
 	return true;
 }
+#pragma endregion
+
+#pragma region TEST_PACKETS
+bool GameServer::ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt)
+{
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+
+	if(world)
+		world->Handle_CS_GEN_NPC_GENERAL(id);
+
+	return true;
+}
 
 bool GameServer::ClientPacketHandler::Handle_CS_TELEPORT_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_TELEPORT_PACKET& recvPkt)
 {
@@ -183,5 +185,4 @@ bool GameServer::ClientPacketHandler::Handle_CS_TELEPORT_PACKET(const std::share
 		world->Handle_CS_TELEPORT(clientSession, recvPkt.place());
 	return true;
 }
-
 #pragma endregion

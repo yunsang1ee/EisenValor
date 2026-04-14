@@ -101,11 +101,11 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
 	}
 
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_GENERAL_STANCE_PACKET(const uint64 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_GENERAL_STANCE_PACKET(const uint64 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType, const uint64 targetID)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GENERAL_STANCE_PACKET, id, stanceType));
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GENERAL_STANCE_PACKET, id, stanceType, targetID));
 	}
 
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_CAMERA_TARGET_PACKET(const uint64 targetID)

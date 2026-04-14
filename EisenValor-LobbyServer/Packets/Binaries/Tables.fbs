@@ -244,6 +244,7 @@ table CS_CHANGE_GENERAL_STANCE_PACKET {
 table SC_CHANGE_GENERAL_STANCE_PACKET {
 	obj_id : uint64;
 	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
+	camera_target_id: uint64;
 }
 
 table CS_GENERAL_ATTACK_PACKET {

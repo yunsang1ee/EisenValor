@@ -33,27 +33,27 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
 
-	const auto movement = player->AddComponent<GameServer::Contents::Movement>();
-	movement->SetMaxSpeed(20.f);
-	movement->SetAcceleration(10.f);
+	player->SetRespawnPos(t.transform.GetPosition());
+
+	//const auto movement = player->AddComponent<GameServer::Contents::Movement>();
+	//movement->SetMaxSpeed(20.f);
+	//movement->SetAcceleration(10.f);
 
 	auto navAgent = player->AddComponent<GameServer::Contents::NavAgent>(player->GetGameWorld()->GetNavSystem());
-	
 	dtCrowdAgentParams params{};
 	params.radius = 0.6f;
 	params.height = 1.8f;
 	params.maxSpeed = 0.0f;
 	params.maxAcceleration = 0.0f;
-	
+
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange = 0.0f;
-	params.updateFlags = DT_CROWD_SEPARATION; 
+	params.updateFlags = DT_CROWD_SEPARATION;
 	params.separationWeight = 2.0f;
-	
+
 	if(false == navAgent->Init(params))
 		return nullptr;
-
 	navAgent->SetPlayerMode(true);
 	navAgent->SetAsStaticObstacle();
 
@@ -92,6 +92,9 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 			.maxStamina = t.gameObjectData->maxStamina,
 			.respawnTimeSec = t.gameObjectData->respawnTimeSec
 		});
+
+	general->SetRespawnPos(t.transform.GetPosition());
+
 	const auto bt = general->AddComponent<BehaviorTree>();
 	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);
 
@@ -99,16 +102,15 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	
 	dtCrowdAgentParams params{};
 	params.radius = 0.6f;				// collision radius
-	params.height = 1.f;
-	//params.maxSpeed = 1.f;
+	params.height = 1.8f;
 	params.maxSpeed = 0.f;
-	params.maxAcceleration = 10.f;
+	params.maxAcceleration =3.f;
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
-	params.pathOptimizationRange = params.radius * 30.0f;
-	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
+	params.pathOptimizationRange =params.radius * 30.0f;
+	params.updateFlags = DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_SEPARATION | DT_CROWD_OBSTACLE_AVOIDANCE | DT_CROWD_ANTICIPATE_TURNS;
 	params.obstacleAvoidanceType = 0;
-	params.separationWeight = 2.0f;   // seperation force for other agent 
+	params.separationWeight = 10.0f;   // seperation force for other agent 
 	
 	if(false == navAgent->Init(params))
 		return nullptr;
@@ -155,9 +157,9 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange = params.radius * 30.0f;
-	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE;
+	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE | DT_CROWD_SEPARATION;
 	params.obstacleAvoidanceType = 0; 
-	params.separationWeight = 2.0f;   // seperation force for other agent 
+	params.separationWeight = 10.0f;   // seperation force for other agent 
 
 	if(false == navAgent->Init(params))
 		return nullptr;

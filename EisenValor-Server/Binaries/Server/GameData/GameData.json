@@ -26,7 +26,7 @@
       "name": "HEAVY",
       "pre_delay": 20,
       "post_delay": 10,
-      "damage": 24,
+      "damage": 10,
       "extra_damage": 3,
       "attack_radius": 5.0,
       "attack_degree": 90.0,
@@ -85,7 +85,7 @@
     {
       "obj_type_id": 3,
       "type": "Soldier",
-      "max_hp": 100,
+      "max_hp": 10,
       "max_stamina": 0,
       "stamina_cost": 0,
       "extra_stamina": 0,
