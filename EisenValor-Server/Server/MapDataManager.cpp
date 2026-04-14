@@ -157,3 +157,23 @@ const TeamBaseData* GameServer::Contents::MapDataManager::GetTeamBase(const std:
     auto it = mapData->teamBases.find(team);
     return (it != mapData->teamBases.end()) ? &it->second : nullptr;
 }
+
+const HealZoneData* GameServer::Contents::MapDataManager::GetHealZone(std::string_view sceneName, std::string_view zoneName) const
+{
+    const auto* zones = GetRecoveryPoints(sceneName.data());
+    if(!zones) return nullptr;
+
+    auto it = std::ranges::find_if(*zones, [zoneName](const HealZoneData& z) { return z.name == zoneName; });
+
+    return (it != zones->end()) ? &(*it) : nullptr;
+}
+
+const OccupationZoneData* GameServer::Contents::MapDataManager::GetOccupationZone(const std::string& sceneName, const std::string& zoneName) const
+{
+    const auto* zones = GetOccupationZones(sceneName);
+    if(!zones) return nullptr;
+
+    auto it = std::ranges::find_if(*zones,[&zoneName](const OccupationZoneData& z) { return z.name == zoneName; });
+
+    return (it != zones->end()) ? &(*it) : nullptr;
+}

@@ -32,5 +32,9 @@ namespace GameServer {
 		static bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt);
 		static bool Handle_CS_UPDATE_PLAYER_STATE_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET& recvPkt);
 #pragma endregion
+
+#pragma region TEST_PACKETS
+		static bool Handle_CS_TELEPORT_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_TELEPORT_PACKET& recvPkt);
+#pragma endregion
 	};
 }

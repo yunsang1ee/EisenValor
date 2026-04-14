@@ -25,6 +25,10 @@ void GameServer::ClientPacketHandler::Init()
 	REGISTER_PACKET(PACKET_TYPE::CS_UPDATE_PLAYER_STATE_PKT, FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET, ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET);
 #pragma endregion
 
+#pragma region TEST_PACKETS
+	REGISTER_PACKET(PACKET_TYPE::CS_TELEPORT_PKT, FB_TABLES::CS_TELEPORT_PACKET, ClientPacketHandler::Handle_CS_TELEPORT_PACKET);
+#pragma endregion
+
 	LOG_INFO("ClientPacketHandler Init");
 }
 
@@ -167,6 +171,16 @@ bool GameServer::ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET(const
 	if(world)
 		world->Handle_CS_UPDATE_PLAYER_STATE(id, static_cast<FB_ENUMS::PLAYER_STATE_TYPE>(recvPkt.player_state()));
 
+	return true;
+}
+
+bool GameServer::ClientPacketHandler::Handle_CS_TELEPORT_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_TELEPORT_PACKET& recvPkt)
+{
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+	if(world)
+		world->Handle_CS_TELEPORT(clientSession, recvPkt.place());
 	return true;
 }
 

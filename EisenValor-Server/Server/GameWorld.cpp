@@ -425,6 +425,59 @@ void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<Clien
 	Broadcast(std::move(pb));
 }
 
+void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TELEPORT_PLACE_TYPE place)
+{
+	auto it = m_sessionToPlayer.find(clientSession->GetID());
+	if(it == m_sessionToPlayer.end()) return;
+
+	const uint64 playerID{ it->second };
+
+	auto const player = IDToPlayer(playerID);
+
+	Vec3 tpPos{};
+	switch(place) {
+		case FB_ENUMS::TELEPORT_PLACE_TYPE_TEAM_BASE:
+		{
+			const auto teamType{ player->GetTeamType() };
+			if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) {
+				tpPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition;
+			}
+			else {
+				tpPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
+			}
+			break;
+		}
+		case FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A:
+		{
+			const auto occupationZoneA = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", "A");
+			if(occupationZoneA) {
+				tpPos = occupationZoneA->position;
+			}
+			break;
+		}
+		case FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B:
+		{
+			const auto occupationZoneB = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", "B");
+			if(occupationZoneB) {
+				tpPos = occupationZoneB->position;
+			}
+			break;
+		}
+		case FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE:
+		{
+			const auto healZone = MANAGER(GameServer::Contents::MapDataManager)->GetHealZone("Map", "MainHealZone");
+			if(healZone) {
+				tpPos = healZone->position;
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
+	Handle_CS_MOVE(clientSession, Transform{ tpPos, player->GetRotationDegree() });
+}
+
 void GameServer::Contents::GameWorld::RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
 {
 	uint32 row{ static_cast<uint32>(left) };
@@ -850,25 +903,25 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	}
 
 	// 스포너 생성
-	std::vector<std::string> teams{ "blue", "red" };
-	
-	for(const auto& team : teams) {
-		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
+	//std::vector<std::string> teams{ "blue", "red" };
+	//
+	//for(const auto& team : teams) {
+	//	const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
 
-		for(const auto& soldierSpawner : *soldierSpawners) {
-			SoldierSpanwerTemplate t;
-			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-			t.gameObjectData = nullptr;
-			t.transform = Transform{ soldierSpawner.position, Vec3{} };
-			t.teamType = soldierSpawner.teamType;
-			t.gameWorld = this;
-			t.destPos = soldierSpawner.destinationPosition;
-			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
-			t.spawnCount = soldierSpawner.soldierSpawnCount;
-			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
-			AddGameObject(std::move(spawner));
-		}
-	}
+	//	for(const auto& soldierSpawner : *soldierSpawners) {
+	//		SoldierSpanwerTemplate t;
+	//		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	//		t.gameObjectData = nullptr;
+	//		t.transform = Transform{ soldierSpawner.position, Vec3{} };
+	//		t.teamType = soldierSpawner.teamType;
+	//		t.gameWorld = this;
+	//		t.destPos = soldierSpawner.destinationPosition;
+	//		t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+	//		t.spawnCount = soldierSpawner.soldierSpawnCount;
+	//		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+	//		AddGameObject(std::move(spawner));
+	//	}
+	//}
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

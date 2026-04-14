@@ -56,7 +56,10 @@ namespace GameServer {
             const std::vector<OccupationZoneData>* GetOccupationZones(const std::string& sceneName) const;
             const std::vector<SoldierSpawnerData>* GetSoldierSpawners(const std::string& sceneName, const std::string& team) const;
             const TeamBaseData* GetTeamBase(const std::string& sceneName, const std::string& team) const;
-
+            
+            const HealZoneData* GetHealZone(std::string_view sceneName, std::string_view zoneName) const;
+            const OccupationZoneData* GetOccupationZone(const std::string& sceneName, const std::string& zoneName) const;
+            
         private:
             std::unordered_map<std::string, MapData> m_mapDataMap;
         };
