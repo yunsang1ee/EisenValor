@@ -13,9 +13,11 @@
 
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
+#include "Packets/Enums_generated.h"
 #include "Packets/Structs_generated.h"
 
 using namespace DirectX;
+using namespace FB_ENUMS;
 
 namespace
 {
@@ -200,7 +202,6 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	{
 		// (락온 시) 카메라 오프셋을 0으로 보간하여 적을 정면으로 보게 함
 		float lerpFactor = 1.0f - expf(-10.0f * deltaTime);
-
 		XMFLOAT3 currentOffset = camComp->GetLookAtRotationOffset();
 		currentOffset.x = std::lerp(currentOffset.x, 0.0f, lerpFactor);
 		currentOffset.y = std::lerp(currentOffset.y, 0.0f, lerpFactor);
@@ -276,6 +277,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	auto* movement = myGameObject->GetComponent<MovementComponent>();
 	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+
 	if (!movement || !fsm)
 		return;
 
@@ -284,10 +286,89 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		return;
 
 	auto& input = GLOBAL(InputGlobal);
+
+	// 1. 전투 태세 전환 (Ctrl)
+	if (input.GetInputDown(VK_CONTROL))
+	{
+		if (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL)
+		{
+			fsm->SetStance(static_cast<uint8_t>(GENERAL_STANCE_TYPE_COMBAT));
+			DEBUG_LOG_FMT("[PlayerController] Switch to COMBAT\n");
+		}
+		else
+		{
+			fsm->SetStance(static_cast<uint8_t>(GENERAL_STANCE_TYPE_NEUTRAL));
+
+			// 카메라 및 상태 복구
+			if (auto* mainCamera = CameraComponent::GetMainCamera())
+			{
+				mainCamera->SetLookAtTarget(myGameObject->GetComponentHandle<Transform>());
+				mainCamera->SetEnableLookAtRotation(false);
+				mainCamera->SetFollowOffsetLocal({
+					CameraConfig::kDefaultLocalOffsetX,
+					CameraConfig::kCameraHeight,
+					CameraConfig::kDefaultLocalOffsetZ
+				});
+				DEBUG_LOG_FMT("[PlayerController] Switch to NEUTRAL & Reset Camera\n");
+			}
+		}
+		// 서버 알림
+		auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_STANCE_PACKET();
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	// 2. 중립 상태 공격 (LBUTTON / RBUTTON)
+	if (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL)
+	{
+		// 약공격
+		if (input.GetInputDown(VK_LBUTTON))
+		{
+			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
+			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
+			
+			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
+			return;
+		}
+		// 강공격
+		else if (input.GetInputDown(VK_RBUTTON))
+		{
+			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
+			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
+
+			DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
+			return;
+		}
+	}
+
 	bool  w = input.GetInput('W');
 	bool  s = input.GetInput('S');
 	bool  a = input.GetInput('A');
 	bool  d = input.GetInput('D');
+	bool  isShiftPressed = input.GetInput(VK_SHIFT);
+
+	bool isMovingInput = (w || s || a || d);
+
+	// Run
+	bool isNeutralStance = (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	bool isRunning = isShiftPressed && isMovingInput && isNeutralStance;
+
+	if (isRunning)
+	{
+		movement->SetMoveSpeed(8.5f);
+	}
+	else
+	{
+		movement->SetMoveSpeed(5.0f);
+	}
+	fsm->SetRunning(isRunning);
 
 	// 락온 상태 & 카메라 방향 업데이트
 	bool	 isLockOn = false;
@@ -310,8 +391,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		}
 	}
 	fsm->SetLockOn(isLockOn);
-
-	bool isMovingInput = (w || s || a || d);
 
 	// 이동 방향 및 캐릭터 회전 설정
 	if (isLockOn)

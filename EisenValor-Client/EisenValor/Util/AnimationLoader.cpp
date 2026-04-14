@@ -40,6 +40,9 @@ namespace AnimationLoader
 			anim->AddAnimation(22, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_L_Seq.evanim"));
 			anim->AddAnimation(23, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_R_Seq.evanim"));
 
+			// 달리기 (25)
+			anim->AddAnimation(25, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Run_Seq.evanim"));
+
 			// 2. 공격 (100~)
 			anim->AddAnimation(
 				100 + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT),

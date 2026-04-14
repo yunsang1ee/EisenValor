@@ -1371,9 +1371,9 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 
 	if (auto* obj = scene->FindGameObjectByServerID(id))
 	{
-		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
-			ui->SetStance(stance);
+			fsm->SetStance(static_cast<uint8_t>(stance));
 			DEBUG_LOG_FMT("[SC_CHANGE_PLAYER_STANCE] ID: {}, Stance: {}\n", id, static_cast<int>(stance));
 		}
 	}
@@ -1570,9 +1570,9 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 		}
 
 		// 스탠스 업데이트
-		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
-			ui->SetStance(recvPkt.stance_type());
+			fsm->SetStance(static_cast<uint8_t>(recvPkt.stance_type()));
 		}
 		// 디버깅
 		DEBUG_LOG_FMT(
