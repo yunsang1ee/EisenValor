@@ -317,9 +317,10 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
-	// 2. 중립 상태 공격 (LBUTTON)
+	// 2. 중립 상태 공격 (LBUTTON / RBUTTON)
 	if (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL)
 	{
+		// 약공격
 		if (input.GetInputDown(VK_LBUTTON))
 		{
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
@@ -330,7 +331,20 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 			
 			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
-			return; // 공격 시 이동 로직 건너뜀
+			return;
+		}
+		// 강공격
+		else if (input.GetInputDown(VK_RBUTTON))
+		{
+			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
+			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
+			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
+
+			DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
+			return;
 		}
 	}
 
