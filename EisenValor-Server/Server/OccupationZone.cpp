@@ -3,15 +3,16 @@
 
 #include "GameWorld.h"
 
-GameServer::Contents::OccupationZone::OccupationZone(const float rangeSq, const int64 time)
+GameServer::Contents::OccupationZone::OccupationZone(const float rangeSq, const int64 scoreTime)
 	: m_stateType{ FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED }
 	, m_rangeSq{ rangeSq }
-	, m_time{ time }
+	, m_scoreTime{ scoreTime }
 	, m_rateOfGaugeIncrease{ 5.f }
 	, m_gauge{}
 	, m_prevDominantTeamType{ FB_ENUMS::TEAM_TYPE_NONE }
 	, m_lastSentGauge{}
 	, m_syncAccDT{}
+	, m_dominantAccDT{}
 {
 }
 
@@ -32,17 +33,22 @@ void GameServer::Contents::OccupationZone::Update(const float dt)
 		return;
 
 	m_dominantAccDT += dt;
-	if(m_dominantAccDT >= static_cast<float>(m_time.count())) {
+	if(m_dominantAccDT >= static_cast<float>(m_scoreTime.count())) {
 		m_dominantAccDT = 0.f;
 		const auto owner{ GetOwner() };
 		owner->GetGameWorld()->AddScore(dominantTeamType, 1);
+		std::cout << "Score Added to " << (dominantTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue Team!" : "Red Team!") << std::endl;
 	}
 
 	const float prevGauge{ m_gauge };
-	if(FB_ENUMS::TEAM_TYPE_BLUE == dominantTeamType)
+	if(FB_ENUMS::TEAM_TYPE_BLUE == dominantTeamType) {
 		m_gauge -= m_rateOfGaugeIncrease * dt;
-	else if(FB_ENUMS::TEAM_TYPE_RED == dominantTeamType)
+		// std::cout << "Blue Gauge: " << m_gauge << std::endl;
+	}
+	else if(FB_ENUMS::TEAM_TYPE_RED == dominantTeamType) {
 		m_gauge += m_rateOfGaugeIncrease * dt;
+		// std::cout << "Red Gauge: " << m_gauge << std::endl;
+	}
 
 	m_gauge = std::clamp(m_gauge, -100.0f, 100.0f);
 	CheckOccupationState(prevGauge, m_gauge);
@@ -103,6 +109,8 @@ void GameServer::Contents::OccupationZone::CheckOccupationState(const float prev
 
 		auto pb = ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), FB_ENUMS::TEAM_TYPE_RED);
 		owner->GetGameWorld()->Broadcast(std::move(pb));
+
+		std::cout << "Occupation Zone Occupied by Red Team!" << std::endl;
 		return;
 	}
 
@@ -111,6 +119,8 @@ void GameServer::Contents::OccupationZone::CheckOccupationState(const float prev
 		
 		auto pb = ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), FB_ENUMS::TEAM_TYPE_BLUE);
 		owner->GetGameWorld()->Broadcast(std::move(pb));
+
+		std::cout << "Occupation Zone Occupied by Blue Team!" << std::endl;
 		return;
 	}
 
@@ -127,4 +137,6 @@ void GameServer::Contents::OccupationZone::BroadcastGauge(const FB_ENUMS::TEAM_T
 	owner->GetGameWorld()->Broadcast(std::move(pb));
 
 	m_lastSentGauge = m_gauge;
+
+	std::cout << "Occupation Zone Gauge Updated: " << m_gauge << " (Dominant Team: " << (dominantTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue" : (dominantTeamType == FB_ENUMS::TEAM_TYPE_RED ? "Red" : "None")) << ")" << std::endl;
 }

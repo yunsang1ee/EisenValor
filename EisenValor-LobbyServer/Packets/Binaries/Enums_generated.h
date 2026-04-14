@@ -527,6 +527,48 @@ inline const char *EnumNameMOVE_DIRECTION_TYPE(MOVE_DIRECTION_TYPE e) {
   return EnumNamesMOVE_DIRECTION_TYPE()[index];
 }
 
+enum TELEPORT_PLACE_TYPE : uint8_t {
+  TELEPORT_PLACE_TYPE_NONE = 0,
+  TELEPORT_PLACE_TYPE_TEAM_BASE = 1,
+  TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A = 2,
+  TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B = 3,
+  TELEPORT_PLACE_TYPE_HEAL_ZONE = 4,
+  TELEPORT_PLACE_TYPE_END = 5,
+  TELEPORT_PLACE_TYPE_MIN = TELEPORT_PLACE_TYPE_NONE,
+  TELEPORT_PLACE_TYPE_MAX = TELEPORT_PLACE_TYPE_END
+};
+
+inline const TELEPORT_PLACE_TYPE (&EnumValuesTELEPORT_PLACE_TYPE())[6] {
+  static const TELEPORT_PLACE_TYPE values[] = {
+    TELEPORT_PLACE_TYPE_NONE,
+    TELEPORT_PLACE_TYPE_TEAM_BASE,
+    TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A,
+    TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B,
+    TELEPORT_PLACE_TYPE_HEAL_ZONE,
+    TELEPORT_PLACE_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesTELEPORT_PLACE_TYPE() {
+  static const char * const names[7] = {
+    "NONE",
+    "TEAM_BASE",
+    "OCCUPATION_ZONE_A",
+    "OCCUPATION_ZONE_B",
+    "HEAL_ZONE",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameTELEPORT_PLACE_TYPE(TELEPORT_PLACE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, TELEPORT_PLACE_TYPE_NONE, TELEPORT_PLACE_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesTELEPORT_PLACE_TYPE()[index];
+}
+
 }  // namespace FB_ENUMS
 
 #endif  // FLATBUFFERS_GENERATED_ENUMS_FB_ENUMS_H_

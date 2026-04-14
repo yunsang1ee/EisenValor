@@ -118,7 +118,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 			auto				pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 
-			// DEBUG_LOG_FMT("[PlayerController] RootMotion Applied. NewPos:({:.2f}, {:.2f}, {:.2f})\n", 
+			// DEBUG_LOG_FMT("[PlayerController] RootMotion Applied. NewPos:({:.2f}, {:.2f}, {:.2f})\n",
 			//	finalPos.x, finalPos.y, finalPos.z);
 		}
 	}
@@ -183,13 +183,17 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	}
 
 	// 카메라 및 락온 상태 확인
-	if (!m_cameraObjectHandle.IsValid()) return;
+	if (!m_cameraObjectHandle.IsValid())
+		return;
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (!scene) return;
+	if (!scene)
+		return;
 	auto* camObj = scene->TryGetGameObject(m_cameraObjectHandle);
-	if (!camObj) return;
+	if (!camObj)
+		return;
 	auto* camComp = camObj->GetComponent<CameraComponent>();
-	if (!camComp) return;
+	if (!camComp)
+		return;
 
 	bool isLookAtLocked = camComp->IsLookAtRotationEnabled();
 
@@ -198,14 +202,13 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	{
 		// (락온 시) 카메라 오프셋을 0으로 보간하여 적을 정면으로 보게 함
 		float lerpFactor = 1.0f - expf(-10.0f * deltaTime);
-		
 		XMFLOAT3 currentOffset = camComp->GetLookAtRotationOffset();
 		currentOffset.x = std::lerp(currentOffset.x, 0.0f, lerpFactor);
 		currentOffset.y = std::lerp(currentOffset.y, 0.0f, lerpFactor);
 		camComp->SetLookAtRotationOffset(currentOffset);
 
 		// (락온 해제 시) 카메라가 플레이어 뒤를 비추도록 m_yaw 동기화
-		auto& transform = GetGameObject()->GetTransform();
+		auto&	 transform = GetGameObject()->GetTransform();
 		XMFLOAT3 fwd = transform.GetForward();
 		m_yaw = XMConvertToDegrees(atan2f(fwd.x, fwd.z));
 		m_pitch = currentOffset.x;
@@ -233,16 +236,12 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	camComp->SetLookAtRotationOffset({m_pitch, m_yaw, 0.0f});
 
 	// 월드 기준 오프셋 계산 (m_yaw, m_pitch 기반)
-	XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
-		XMConvertToRadians(m_pitch), 
-		XMConvertToRadians(m_yaw), 
-		0.0f
-	);
+	XMMATRIX rotationMatrix =
+		XMMatrixRotationRollPitchYaw(XMConvertToRadians(m_pitch), XMConvertToRadians(m_yaw), 0.0f);
 
 	XMVECTOR baseOffset = XMVectorSet(
-		CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight,
-		CameraConfig::kDefaultLocalOffsetZ, 0.0f
-	); 
+		CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ, 0.0f
+	);
 	XMVECTOR worldOffset = XMVector3TransformNormal(baseOffset, rotationMatrix);
 
 	XMFLOAT3 finalOffset;
@@ -257,11 +256,11 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 		auto* myGameObject = GetGameObject();
 		if (myGameObject)
 		{
-			auto& transform = myGameObject->GetTransform();
-			auto  pos = transform.GetPosition();
-			auto  rot = transform.GetRotation();
+			auto&				transform = myGameObject->GetTransform();
+			auto				pos = transform.GetPosition();
+			auto				rot = transform.GetRotation();
 			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-			auto pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 		}
 	}
@@ -358,7 +357,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	fsm->SetRunning(isRunning);
 
 	// 락온 상태 & 카메라 방향 업데이트
-	bool isLockOn = false;
+	bool	 isLockOn = false;
 	XMVECTOR camFwd = XMVectorSet(0, 0, 1, 0);
 
 	if (m_cameraObjectHandle.IsValid())
@@ -382,10 +381,14 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	// 이동 방향 및 캐릭터 회전 설정
 	if (isLockOn)
 	{
-		if (w) fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
-		else if (s) fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
-		else if (a) fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
-		else if (d) fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+		if (w)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		else if (s)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+		else if (a)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+		else if (d)
+			fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
 
 		movement->SetInputForward(w);
 		movement->SetInputBackward(s);
@@ -396,7 +399,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
 
-	if (isMovingInput)
+		if (isMovingInput)
 		{
 			// 카메라 기준 방향 계산
 			XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
@@ -406,22 +409,26 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			XMVECTOR baseRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), baseFwd));
 
 			XMVECTOR moveDir = XMVectorZero();
-			if (w) moveDir = XMVectorAdd(moveDir, baseFwd);
-			if (s) moveDir = XMVectorSubtract(moveDir, baseFwd);
-			if (a) moveDir = XMVectorSubtract(moveDir, baseRight);
-			if (d) moveDir = XMVectorAdd(moveDir, baseRight);
+			if (w)
+				moveDir = XMVectorAdd(moveDir, baseFwd);
+			if (s)
+				moveDir = XMVectorSubtract(moveDir, baseFwd);
+			if (a)
+				moveDir = XMVectorSubtract(moveDir, baseRight);
+			if (d)
+				moveDir = XMVectorAdd(moveDir, baseRight);
 
 			moveDir = XMVector3Normalize(moveDir);
 
 			// 캐릭터 몸 회전 (Slerp)
-			float targetYaw = atan2f(XMVectorGetX(moveDir), XMVectorGetZ(moveDir));
+			float	 targetYaw = atan2f(XMVectorGetX(moveDir), XMVectorGetZ(moveDir));
 			XMVECTOR targetRotQ = XMQuaternionRotationAxis(XMVectorSet(0, 1, 0, 0), targetYaw);
-			
-			auto& tr = myGameObject->GetTransform();
-			auto q = tr.GetRotationQuaternion();
+
+			auto&	 tr = myGameObject->GetTransform();
+			auto	 q = tr.GetRotationQuaternion();
 			XMVECTOR curRotQ = XMLoadFloat4(&q);
 			XMVECTOR nextRotQ = XMQuaternionSlerp(curRotQ, targetRotQ, 0.2f);
-			
+
 			XMFLOAT4 nextRotF;
 			XMStoreFloat4(&nextRotF, nextRotQ);
 			tr.SetRotationQuaternion(nextRotF);
@@ -463,7 +470,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 		return;
 	}
-	
+
 	if (isMovingInput)
 	{
 		if (curState != FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustPressed)
@@ -496,13 +503,39 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pb = NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET();
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
+
+	if (input.GetInputDown('1'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_TEAM_BASE)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('2'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('3'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('4'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)
 {
 	m_yaw += deltaDegrees;
-	if (m_yaw > 360.0f) m_yaw -= 360.0f;
-	if (m_yaw < 0.0f) m_yaw += 360.0f;
+	if (m_yaw > 360.0f)
+		m_yaw -= 360.0f;
+	if (m_yaw < 0.0f)
+		m_yaw += 360.0f;
 }
 
 void PlayerControllerComponent::RotatePitch(float deltaDegrees)
@@ -613,7 +646,9 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 
 		// 숄더뷰 오프셋(오른쪽, 위, 뒤)
 		// 플레이어의 현재 정면(playerFwdH)의 반대 방향으로 카메라 배치
-		XMVECTOR offset = XMVectorScale(rightH, CameraConfig::kShoulderViewOffsetX) + XMVectorSet(0, CameraConfig::kShoulderViewOffsetY, 0, 0) + XMVectorScale(playerFwdH, CameraConfig::kShoulderViewOffsetZ);
+		XMVECTOR offset = XMVectorScale(rightH, CameraConfig::kShoulderViewOffsetX) +
+						  XMVectorSet(0, CameraConfig::kShoulderViewOffsetY, 0, 0) +
+						  XMVectorScale(playerFwdH, CameraConfig::kShoulderViewOffsetZ);
 
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);

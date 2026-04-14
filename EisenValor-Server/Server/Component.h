@@ -7,7 +7,7 @@ namespace GameServer {
 		class Component {
 		public:
 			virtual ~Component()noexcept = default;
-		
+
 		public:
 			virtual void Update(const float dt) abstract;
 	

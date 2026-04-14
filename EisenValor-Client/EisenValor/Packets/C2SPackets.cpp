@@ -6,6 +6,17 @@
 using namespace NetBridge;
 
 // =================
+//		세션
+// =================
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PONG_PACKET() noexcept
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_PONG_PKT, ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PONG_PACKET)
+	);
+}
+
+// =================
 //		로그인
 // =================
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_LOGIN_PACKET(
@@ -214,14 +225,11 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET
 	return nullptr;
 }
 
-
-// =================
-//		세션
-// =================
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PONG_PACKET() noexcept
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_TELEPORT_PACKET(const FB_ENUMS::TELEPORT_PLACE_TYPE place)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_PONG_PKT, ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PONG_PACKET)
+		PACKET_TYPE::CS_TELEPORT_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_TELEPORT_PACKET, place)
 	);
 }

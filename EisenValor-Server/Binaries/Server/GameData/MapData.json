@@ -3,7 +3,7 @@
   "version": 1,
   "recoveryPoints": [
     {
-      "name": "Capture Point Heal",
+      "name": "MainHealZone",
       "path": "MARKER/Capture Point Heal",
       "exportOrder": 0,
       "position": {
@@ -18,7 +18,7 @@
   ],
   "capturePoints": [
     {
-      "name": "Capture Point A",
+      "name": "A",
       "path": "MARKER/Capture Point A",
       "exportOrder": 0,
       "position": {
@@ -30,7 +30,7 @@
       "scoreTime": 10
     },
     {
-      "name": "Capture Point B",
+      "name": "B",
       "path": "MARKER/Capture Point B",
       "exportOrder": 0,
       "position": {
