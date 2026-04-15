@@ -186,7 +186,7 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform)
+void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
 {
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
 	if(it == m_sessionToPlayer.end()) return;
@@ -279,7 +279,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	}
 
 	{
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()));
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), moveDir);
 		Broadcast(std::move(pb));
 	}
 }
@@ -915,7 +915,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	}
 
 	// 스포너 생성
-	std::vector<std::string> teams{ "blue", "red" };
+	/*std::vector<std::string> teams{ "blue", "red" };
 	
 	for(const auto& team : teams) {
 		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
@@ -933,7 +933,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
 			AddGameObject(std::move(spawner));
 		}
-	}
+	}*/
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

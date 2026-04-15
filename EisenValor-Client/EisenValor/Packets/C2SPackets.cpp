@@ -152,13 +152,13 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(
 // =================
 #pragma region WORLD_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(
-	const FB_STRUCTS::PosInfo* posInfo
+	const FB_STRUCTS::PosInfo* posInfo, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_MOVE_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo, moveDir)
 	);
 }
 

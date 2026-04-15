@@ -2358,14 +2358,19 @@ inline ::flatbuffers::Offset<SC_REMOVE_OBJ_PACKET> CreateSC_REMOVE_OBJ_PACKET(
 struct CS_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_MOVE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_POS_INFO = 4
+    VT_POS_INFO = 4,
+    VT_MOVE_DIR = 6
   };
   const FB_STRUCTS::PosInfo *pos_info() const {
     return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
   }
+  FB_ENUMS::MOVE_DIRECTION_TYPE move_dir() const {
+    return static_cast<FB_ENUMS::MOVE_DIRECTION_TYPE>(GetField<uint8_t>(VT_MOVE_DIR, 0));
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
+           VerifyField<uint8_t>(verifier, VT_MOVE_DIR, 1) &&
            verifier.EndTable();
   }
 };
@@ -2376,6 +2381,9 @@ struct CS_MOVE_PACKETBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
     fbb_.AddStruct(CS_MOVE_PACKET::VT_POS_INFO, pos_info);
+  }
+  void add_move_dir(FB_ENUMS::MOVE_DIRECTION_TYPE move_dir) {
+    fbb_.AddElement<uint8_t>(CS_MOVE_PACKET::VT_MOVE_DIR, static_cast<uint8_t>(move_dir), 0);
   }
   explicit CS_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -2390,9 +2398,11 @@ struct CS_MOVE_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_MOVE_PACKET> CreateCS_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const FB_STRUCTS::PosInfo *pos_info = nullptr) {
+    const FB_STRUCTS::PosInfo *pos_info = nullptr,
+    FB_ENUMS::MOVE_DIRECTION_TYPE move_dir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD) {
   CS_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_pos_info(pos_info);
+  builder_.add_move_dir(move_dir);
   return builder_.Finish();
 }
 
@@ -2401,7 +2411,8 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
     VT_POS_INFO = 6,
-    VT_SUB_STATE = 8
+    VT_SUB_STATE = 8,
+    VT_MOVE_DIR = 10
   };
   uint64_t obj_id() const {
     return GetField<uint64_t>(VT_OBJ_ID, 0);
@@ -2412,11 +2423,15 @@ struct SC_MOVE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint8_t sub_state() const {
     return GetField<uint8_t>(VT_SUB_STATE, 0);
   }
+  FB_ENUMS::MOVE_DIRECTION_TYPE move_dir() const {
+    return static_cast<FB_ENUMS::MOVE_DIRECTION_TYPE>(GetField<uint8_t>(VT_MOVE_DIR, 0));
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
            VerifyField<uint8_t>(verifier, VT_SUB_STATE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_MOVE_DIR, 1) &&
            verifier.EndTable();
   }
 };
@@ -2434,6 +2449,9 @@ struct SC_MOVE_PACKETBuilder {
   void add_sub_state(uint8_t sub_state) {
     fbb_.AddElement<uint8_t>(SC_MOVE_PACKET::VT_SUB_STATE, sub_state, 0);
   }
+  void add_move_dir(FB_ENUMS::MOVE_DIRECTION_TYPE move_dir) {
+    fbb_.AddElement<uint8_t>(SC_MOVE_PACKET::VT_MOVE_DIR, static_cast<uint8_t>(move_dir), 0);
+  }
   explicit SC_MOVE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -2449,10 +2467,12 @@ inline ::flatbuffers::Offset<SC_MOVE_PACKET> CreateSC_MOVE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t obj_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    uint8_t sub_state = 0) {
+    uint8_t sub_state = 0,
+    FB_ENUMS::MOVE_DIRECTION_TYPE move_dir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD) {
   SC_MOVE_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
   builder_.add_pos_info(pos_info);
+  builder_.add_move_dir(move_dir);
   builder_.add_sub_state(sub_state);
   return builder_.Finish();
 }

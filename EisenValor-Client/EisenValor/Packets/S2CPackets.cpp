@@ -1214,18 +1214,14 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		obj->GetTransform().SetPosition(pos);
 		obj->GetTransform().SetRotation(rot);
 
+	}
+
+	if (id != localID)
+	{
 		// 서버에서 보내준 state를 FSM에 전달
 		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
-			uint8_t subState = recvPkt.sub_state();
-			if (subState == 21)
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
-			else if (subState == 22)
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
-			else if (subState == 23)
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
-			else
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+			fsm->SetMoveDirection(recvPkt.move_dir());
 		}
 	}
 	return true;
@@ -1373,6 +1369,10 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 	{
 		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
+			if (fsm->IsLockOn())
+				fsm->SetLockOn(false);
+			else
+				fsm->SetLockOn(true);
 			fsm->SetStance(static_cast<uint8_t>(stance));
 			DEBUG_LOG_FMT("[SC_CHANGE_PLAYER_STANCE] ID: {}, Stance: {}\n", id, static_cast<int>(stance));
 		}

@@ -86,14 +86,14 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		return;
 	}
 
-	// FSM Check
-	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+	if (!fsm)
+		return;
+
+	auto curState = fsm->GetCurStateType();
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 	{
-		auto curState = fsm->GetCurStateType();
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
-		{
-			return;
-		}
+		return;
 	}
 
 	// Root Motion Delta
@@ -115,7 +115,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 			// 이동 후 서버 패킷 보내기
 			auto				rot = transform.GetRotation();
 			FB_STRUCTS::PosInfo posInfo{{finalPos.x, finalPos.y, finalPos.z}, {rot.x, rot.y, rot.z}};
-			auto				pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto				pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 
 			// DEBUG_LOG_FMT("[PlayerController] RootMotion Applied. NewPos:({:.2f}, {:.2f}, {:.2f})\n",
@@ -145,12 +145,6 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 			}
 		}
 	}
-
-	auto* fsm = myGameObject->GetComponent<FSMComponent>();
-	if (!fsm)
-		return;
-
-	const auto curState{fsm->GetCurStateType()};
 
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
@@ -250,6 +244,16 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	// 비락온 시 월드 오프셋 적용 (SetFollowOffset 사용)
 	camComp->SetFollowOffset(finalOffset);
 
+		auto* myGameObject = GetGameObject();
+	if (!myGameObject)
+	{
+		return;
+	}
+
+	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+	if (!fsm)
+		return;
+
 	// 마우스가 움직였다면 서버에 현재 위치/회전 패킷 전송 (연결 유지 및 동기화)
 	if (isMouseMoved)
 	{
@@ -260,7 +264,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 			auto				pos = transform.GetPosition();
 			auto				rot = transform.GetRotation();
 			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 		}
 	}
@@ -394,22 +398,24 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	if (isLockOn)
 	{
 		if (w)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 		else if (s)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
 		else if (a)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
 		else if (d)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
 
 		movement->SetInputForward(w);
 		movement->SetInputBackward(s);
 		movement->SetInputLeft(a);
 		movement->SetInputRight(d);
+
+		movement->SetMoveSpeed(2.f);
 	}
 	else
 	{
-		fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 
 		if (isMovingInput)
 		{
@@ -480,7 +486,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(stateType);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 		}
-		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 		return;
 	}
@@ -508,7 +514,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			}
 		}
 
-		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 	}
 	else
@@ -521,7 +527,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 
-			auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 		}
 	}

@@ -117,3 +117,12 @@ enum TELEPORT_PLACE_TYPE : ubyte {
 	HEAL_ZONE,
 	END
 }
+
+enum MOVE_DIRECTION_TYPE : ubyte {
+	FWD,
+	BWD,
+	LFT,
+	RGT,
+
+	END
+}
