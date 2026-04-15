@@ -75,7 +75,8 @@ enum GENERAL_STATE_TYPE: ubyte {
 enum PLAYER_STATE_TYPE: ubyte {
 	NONE = 0,
 	IDLE,
-	MOVE,
+	WALK,
+	RUN,
 	STUN,
 	DEAD,
 

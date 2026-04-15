@@ -16,7 +16,7 @@
 #include "Util/GameConstants.h"
 
 // ==================================
-//		  GENERAL_IDLE_STATE
+//		  PLAYER_IDLE_STATE
 // ==================================
 PlayerlIdleState::PlayerlIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
 {
@@ -44,54 +44,62 @@ void PlayerlIdleState::Exit(FSMComponent* fsm)
 	//DEBUG_LOG_FMT("[FSM] IDLE Exit\n");
 }
 
+
 // ==================================
-//		  GENERAL_MOVE_STATE
+// 		 PLAYER_WALK_STATE
 // ==================================
-PlayerMoveState::PlayerMoveState(): State(FB_ENUMS::PLAYER_STATE_TYPE_MOVE)
+PlayerWalkState::PlayerWalkState() : State(FB_ENUMS::PLAYER_STATE_TYPE_WALK)
 {
+
 }
 
-void PlayerMoveState::Enter(FSMComponent* fsm)
+void PlayerWalkState::Enter(FSMComponent* fsm) 
 {
-	//DEBUG_LOG_FMT("[FSM] MOVE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
+	// DEBUG_LOG_FMT("[FSM] MOVE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
 
 	if (auto* obj = fsm->GetGameObject())
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_MOVE), true);
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK), true);
 		}
 	}
 }
 
-void PlayerMoveState::Update(FSMComponent* fsm, float dt)
+void PlayerWalkState::Update(FSMComponent* fsm, float dt)
 {
-	if (!fsm) return;
+	if (!fsm)
+		return;
 
 	auto* obj = fsm->GetGameObject();
-	if (!obj) return;
+	if (!obj)
+		return;
 
 	auto* anim = obj->GetComponent<AnimationComponent>();
-	if (!anim) return;
+	if (!anim)
+		return;
 
 	// 기본 애니메이션 키 (전진:2)
-	uint8_t targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+	uint8_t targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 
-	// Run
-	if (fsm->IsRunning())
-	{
-		targetKey = 25;
-	}
 	// 락온 상태일 경우 방향별 애니메이션 키 결정
-	else if (fsm->IsLockOn())
+	if (fsm->IsLockOn())
 	{
 		auto dir = fsm->GetMoveDirection();
 		switch (dir)
 		{
-		case FSMComponent::MoveDirection::BWD: targetKey = 21; break;
-		case FSMComponent::MoveDirection::LFT: targetKey = 22; break;
-		case FSMComponent::MoveDirection::RGT: targetKey = 23; break;
-		default:                               targetKey = 2;  break;
+		case FSMComponent::MoveDirection::BWD:
+			targetKey = 21;
+			break;
+		case FSMComponent::MoveDirection::LFT:
+			targetKey = 22;
+			break;
+		case FSMComponent::MoveDirection::RGT:
+			targetKey = 23;
+			break;
+		default:
+			targetKey = 2;
+			break;
 		}
 	}
 
@@ -102,13 +110,43 @@ void PlayerMoveState::Update(FSMComponent* fsm, float dt)
 	}
 }
 
-void PlayerMoveState::Exit(FSMComponent* fsm)
+void PlayerWalkState::Exit(FSMComponent* fsm)
 {
-	//DEBUG_LOG_FMT("[FSM] MOVE Exit\n");
+
 }
 
+
 // ==================================
-//		 GENERAL_PRE_DELAY_STATE
+// 		 PLAYER_RUN_STATE
+// ==================================
+PlayerRunState::PlayerRunState() :State(FB_ENUMS::PLAYER_STATE_TYPE_RUN)
+{
+
+}
+
+void PlayerRunState::Enter(FSMComponent* fsm)
+{
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN), true);
+		}
+	}
+}
+
+void PlayerRunState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void PlayerRunState::Exit(FSMComponent* fsm)
+{
+
+}
+
+
+// ==================================
+//		 PLAYER_PRE_DELAY_STATE
 // ==================================
 PlayerPreDelayState::PlayerPreDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)
 {
@@ -147,7 +185,7 @@ void PlayerPreDelayState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
-//		  GENERAL_ATTACK_STATE
+//		  PLAYER_ATTACK_STATE
 // ==================================
 PlayerAttackState::PlayerAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
@@ -184,7 +222,7 @@ void PlayerAttackState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
-//		 GENERAL_POST_DELAY_STATE
+//		 PLAYER_POST_DELAY_STATE
 // ==================================
 PlayerPostDelayState::PlayerPostDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
 {
@@ -221,7 +259,7 @@ void PlayerPostDelayState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
-//		  GENERAL_DEFENSE_STATE
+//		  PLAYER_DEFENSE_STATE
 // ==================================
 PlayerDefenseState::PlayerDefenseState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE)
 {
@@ -249,7 +287,7 @@ void PlayerDefenseState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
-//		  GENERAL_STUN_STATE
+//		  PLAYER_STUN_STATE
 // ==================================
 PlayerStunState::PlayerStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
@@ -282,7 +320,7 @@ void PlayerStunState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
-//		  GENERAL_DEAD_STATE
+//		  PLAYER_DEAD_STATE
 // ==================================
 PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 {
@@ -462,5 +500,4 @@ void SoldierAttackState::Update(FSMComponent* fsm, float dt)
 }
 
 void SoldierAttackState::Exit(FSMComponent* fsm)
-{
-}
+{}

@@ -79,34 +79,50 @@ void GameServer::Contents::PlayerIdleState::Update(const float dt)
 }
 
 // ==================================
-//		  GENERAL_MOVE_STATE
+// 		 PLAYER_WALK_STATE
 // ==================================
-GameServer::Contents::PlayerMoveState::PlayerMoveState()
-	:State{ FB_ENUMS::PLAYER_STATE_TYPE_MOVE }
+GameServer::Contents::PlayerWalkState::PlayerWalkState()
+	:State{ FB_ENUMS::PLAYER_STATE_TYPE_WALK }
 {
-
 }
 
-GameServer::Contents::PlayerMoveState::~PlayerMoveState()
+GameServer::Contents::PlayerWalkState::~PlayerWalkState()
 {
-
 }
 
-void GameServer::Contents::PlayerMoveState::Enter(const float dt)
+void GameServer::Contents::PlayerWalkState::Enter(const float dt)
 {
-#ifdef PRINT_PLAYER_STATE_LOG
-	std::cout << "Enter Player Move State" << std::endl;
-#endif
 }
 
-void GameServer::Contents::PlayerMoveState::Exit(const float dt)
+void GameServer::Contents::PlayerWalkState::Exit(const float dt)
 {
-#ifdef PRINT_PLAYER_STATE_LOG
-	std::cout << "Exit Player Move State" << std::endl;
-#endif
 }
 
-void GameServer::Contents::PlayerMoveState::Update(const float dt)
+void GameServer::Contents::PlayerWalkState::Update(const float dt)
+{
+}
+
+// ==================================
+// 		 PLAYER_RUN_STATE
+// ==================================
+GameServer::Contents::PlayerRunState::PlayerRunState()
+	:State{ FB_ENUMS::PLAYER_STATE_TYPE_RUN }
+{
+}
+
+GameServer::Contents::PlayerRunState::~PlayerRunState()
+{
+}
+
+void GameServer::Contents::PlayerRunState::Enter(const float dt)
+{
+}
+
+void GameServer::Contents::PlayerRunState::Exit(const float dt)
+{
+}
+
+void GameServer::Contents::PlayerRunState::Update(const float dt)
 {
 }
 

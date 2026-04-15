@@ -25,13 +25,29 @@ namespace GameServer {
 		};
 
 		// ==================================
-		//		  PLAYER_MOVE_STATE
+		// 		 PLAYER_WALK_STATE
 		// ==================================
-		class PlayerMoveState : public State {
-			DECLARE_CREATE_FUNC(PlayerMoveState)
+		class PlayerWalkState : public State {
+			DECLARE_CREATE_FUNC(PlayerWalkState)
+
 		private:
-			PlayerMoveState();
-			virtual ~PlayerMoveState();
+			PlayerWalkState();
+			virtual ~PlayerWalkState();
+
+		public:
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
+		};
+
+		// ==================================
+		// 		 PLAYER_RUN_STATE
+		// ==================================
+		class PlayerRunState : public State {
+			DECLARE_CREATE_FUNC(PlayerRunState)
+		private:
+			PlayerRunState();
+			virtual ~PlayerRunState();
 
 		public:
 			virtual void Enter(const float dt) override final;

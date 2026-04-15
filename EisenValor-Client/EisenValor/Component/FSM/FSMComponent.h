@@ -53,10 +53,6 @@ public:
 	void    SetStance(uint8_t stance);
 	uint8_t GetStance() const { return m_stance; }
 
-	// 달리기 상태 설정/조회
-	void SetRunning(bool running) { m_isRunning = running; }
-	bool IsRunning() const { return m_isRunning; }
-
 	// Observer Pattern(상태 ID가 인자)
 	using StateChangeListener = std::function<void(uint8_t)>;
 	void AddListener(StateChangeListener listener) { m_listeners.push_back(listener); }
@@ -73,7 +69,6 @@ private:
 	uint8_t m_stance = 0;        // 현재 자세 (GENERAL_STANCE_TYPE)
 	MoveDirection m_moveDir = MoveDirection::FWD; // 현재 이동 방향
 	bool    m_isLockOn = false;  // 현재 락온 상태 여부
-	bool	m_isRunning = false; // 현재 달리기 상태 여부
 	float   m_stateTimer = 0.0f; // 상태별 시간 추적용
 	std::vector<StateChangeListener> m_listeners;
 	std::vector<StanceChangeListener> m_stanceListeners;

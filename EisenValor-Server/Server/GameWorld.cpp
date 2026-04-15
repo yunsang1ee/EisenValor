@@ -20,7 +20,7 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{}
 {
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
@@ -915,7 +915,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	}
 
 	// 스포너 생성
-	/*std::vector<std::string> teams{ "blue", "red" };
+	std::vector<std::string> teams{ "blue", "red" };
 	
 	for(const auto& team : teams) {
 		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
@@ -933,7 +933,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
 			AddGameObject(std::move(spawner));
 		}
-	}*/
+	}
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

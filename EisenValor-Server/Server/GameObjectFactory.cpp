@@ -60,7 +60,8 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	const auto fsm = player->AddComponent<GameServer::Contents::FSM>();
 	
 	auto idleState =  GameServer::Contents::PlayerIdleState::Create();
-	auto moveState =  GameServer::Contents::PlayerMoveState::Create();
+	auto walkState = GameServer::Contents::PlayerWalkState::Create();
+	auto runState = GameServer::Contents::PlayerRunState::Create();
 	auto preDelayState = GameServer::Contents::PlayerPredelayState::Create();
 	auto attackState = GameServer::Contents::PlayerAttackState::Create();
 	auto postDelayState = GameServer::Contents::PlayerPostdelayState::Create();
@@ -68,7 +69,8 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	auto deadState = GameServer::Contents::PlayerDeadState::Create();
 
 	fsm->AddState(std::move(idleState));
-	fsm->AddState(std::move(moveState));
+	fsm->AddState(std::move(walkState));
+	fsm->AddState(std::move(runState));
 	fsm->AddState(std::move(preDelayState));
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(postDelayState));
