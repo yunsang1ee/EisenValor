@@ -48,7 +48,7 @@ bool GameServer::ClientPacketHandler::Handle_CS_CHAT_PACKET(const std::shared_pt
 		world->Handle_CS_CHAT(clientSession, recvPkt.msg()->str());
 	
 	return true;
-}
+}	
 #pragma endregion
 
 #pragma region WORLD_PACKETS
@@ -66,7 +66,7 @@ bool GameServer::ClientPacketHandler::Handle_CS_MOVE_PACKET(const std::shared_pt
 
 	auto world = clientSession->GetGameWorld();
 	if(world)
-		world->Handle_CS_MOVE(clientSession, tramsform);
+		world->Handle_CS_MOVE(clientSession, tramsform,  recvPkt.move_dir());
 
 	return true;
 }

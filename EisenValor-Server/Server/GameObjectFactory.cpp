@@ -112,7 +112,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	params.pathOptimizationRange =params.radius * 30.0f;
 	params.updateFlags = DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_SEPARATION | DT_CROWD_OBSTACLE_AVOIDANCE | DT_CROWD_ANTICIPATE_TURNS;
 	params.obstacleAvoidanceType = 0;
-	params.separationWeight = 10.0f;   // seperation force for other agent 
+	params.separationWeight = 2.0f;   // seperation force for other agent 
 	
 	if(false == navAgent->Init(params))
 		return nullptr;
@@ -161,7 +161,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	params.pathOptimizationRange = params.radius * 30.0f;
 	params.updateFlags = DT_CROWD_ANTICIPATE_TURNS | DT_CROWD_OPTIMIZE_VIS | DT_CROWD_OPTIMIZE_TOPO | DT_CROWD_OBSTACLE_AVOIDANCE | DT_CROWD_SEPARATION;
 	params.obstacleAvoidanceType = 0; 
-	params.separationWeight = 10.0f;   // seperation force for other agent 
+	params.separationWeight = 2.0f;   // seperation force for other agent 
 
 	if(false == navAgent->Init(params))
 		return nullptr;

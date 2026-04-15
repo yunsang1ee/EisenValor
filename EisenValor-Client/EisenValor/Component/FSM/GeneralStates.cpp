@@ -88,17 +88,17 @@ void PlayerWalkState::Update(FSMComponent* fsm, float dt)
 		auto dir = fsm->GetMoveDirection();
 		switch (dir)
 		{
-		case FSMComponent::MoveDirection::BWD:
+		case FB_ENUMS::MOVE_DIRECTION_TYPE_FWD:
+			targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+			break;
+		case FB_ENUMS::MOVE_DIRECTION_TYPE_BWD:
 			targetKey = 21;
 			break;
-		case FSMComponent::MoveDirection::LFT:
+		case FB_ENUMS::MOVE_DIRECTION_TYPE_LFT:
 			targetKey = 22;
 			break;
-		case FSMComponent::MoveDirection::RGT:
+		case FB_ENUMS::MOVE_DIRECTION_TYPE_RGT:
 			targetKey = 23;
-			break;
-		default:
-			targetKey = 2;
 			break;
 		}
 	}

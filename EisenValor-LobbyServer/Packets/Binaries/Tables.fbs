@@ -229,12 +229,14 @@ table SC_REMOVE_OBJ_PACKET {
 
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
+	move_dir: FB_ENUMS.MOVE_DIRECTION_TYPE;
 }
 
 table SC_MOVE_PACKET {
 	obj_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	sub_state: uint8;
+	move_dir: FB_ENUMS.MOVE_DIRECTION_TYPE;
 }
 
 table CS_CHANGE_GENERAL_STANCE_PACKET {

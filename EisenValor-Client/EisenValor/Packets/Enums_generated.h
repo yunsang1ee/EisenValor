@@ -532,6 +532,45 @@ inline const char *EnumNameTELEPORT_PLACE_TYPE(TELEPORT_PLACE_TYPE e) {
   return EnumNamesTELEPORT_PLACE_TYPE()[index];
 }
 
+enum MOVE_DIRECTION_TYPE : uint8_t {
+  MOVE_DIRECTION_TYPE_FWD = 0,
+  MOVE_DIRECTION_TYPE_BWD = 1,
+  MOVE_DIRECTION_TYPE_LFT = 2,
+  MOVE_DIRECTION_TYPE_RGT = 3,
+  MOVE_DIRECTION_TYPE_END = 4,
+  MOVE_DIRECTION_TYPE_MIN = MOVE_DIRECTION_TYPE_FWD,
+  MOVE_DIRECTION_TYPE_MAX = MOVE_DIRECTION_TYPE_END
+};
+
+inline const MOVE_DIRECTION_TYPE (&EnumValuesMOVE_DIRECTION_TYPE())[5] {
+  static const MOVE_DIRECTION_TYPE values[] = {
+    MOVE_DIRECTION_TYPE_FWD,
+    MOVE_DIRECTION_TYPE_BWD,
+    MOVE_DIRECTION_TYPE_LFT,
+    MOVE_DIRECTION_TYPE_RGT,
+    MOVE_DIRECTION_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMOVE_DIRECTION_TYPE() {
+  static const char * const names[6] = {
+    "FWD",
+    "BWD",
+    "LFT",
+    "RGT",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMOVE_DIRECTION_TYPE(MOVE_DIRECTION_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, MOVE_DIRECTION_TYPE_FWD, MOVE_DIRECTION_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMOVE_DIRECTION_TYPE()[index];
+}
+
 }  // namespace FB_ENUMS
 
 #endif  // FLATBUFFERS_GENERATED_ENUMS_FB_ENUMS_H_
