@@ -3613,7 +3613,7 @@ struct CS_TELEPORT_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CS_TELEPORT_PACKET> CreateCS_TELEPORT_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_NONE) {
+    FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE) {
   CS_TELEPORT_PACKETBuilder builder_(_fbb);
   builder_.add_place(place);
   return builder_.Finish();

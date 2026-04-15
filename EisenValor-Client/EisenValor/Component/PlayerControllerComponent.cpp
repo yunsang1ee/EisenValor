@@ -304,11 +304,10 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			{
 				mainCamera->SetLookAtTarget(myGameObject->GetComponentHandle<Transform>());
 				mainCamera->SetEnableLookAtRotation(false);
-				mainCamera->SetFollowOffsetLocal({
-					CameraConfig::kDefaultLocalOffsetX,
-					CameraConfig::kCameraHeight,
-					CameraConfig::kDefaultLocalOffsetZ
-				});
+				mainCamera->SetFollowOffsetLocal(
+					{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ
+					}
+				);
 				DEBUG_LOG_FMT("[PlayerController] Switch to NEUTRAL & Reset Camera\n");
 			}
 		}
@@ -324,12 +323,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		if (input.GetInputDown(VK_LBUTTON))
 		{
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-			
+
 			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			return;
 		}
@@ -337,7 +336,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		else if (input.GetInputDown(VK_RBUTTON))
 		{
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
@@ -348,11 +347,11 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		}
 	}
 
-	bool  w = input.GetInput('W');
-	bool  s = input.GetInput('S');
-	bool  a = input.GetInput('A');
-	bool  d = input.GetInput('D');
-	bool  isShiftPressed = input.GetInput(VK_SHIFT);
+	bool w = input.GetInput('W');
+	bool s = input.GetInput('S');
+	bool a = input.GetInput('A');
+	bool d = input.GetInput('D');
+	bool isShiftPressed = input.GetInput(VK_SHIFT);
 
 	bool isMovingInput = (w || s || a || d);
 
@@ -368,7 +367,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		movement->SetMoveSpeed(5.0f);
 	}
-	fsm->SetRunning(isRunning);
 
 	// 락온 상태 & 카메라 방향 업데이트
 	bool	 isLockOn = false;
@@ -477,7 +475,9 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		if (isMovingInput)
 		{
-			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			auto stateType = isRunning ? FB_ENUMS::PLAYER_STATE_TYPE_RUN : FB_ENUMS::PLAYER_STATE_TYPE_WALK;
+
+			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(stateType);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 		}
 		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
@@ -487,12 +487,25 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	if (isMovingInput)
 	{
-		if (curState != FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustPressed)
+		if (isRunning)
 		{
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_RUN || hasJustPressed)
+			{
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
 
-			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+			}
+		}
+		else
+		{
+			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_WALK || hasJustPressed)
+			{
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+
+				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+			}
 		}
 
 		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
@@ -500,7 +513,8 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	}
 	else
 	{
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustReleased)
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_WALK || curState == FB_ENUMS::PLAYER_STATE_TYPE_RUN ||
+			hasJustReleased)
 		{
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 
@@ -520,25 +534,37 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	if (input.GetInputDown('1'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_TEAM_BASE)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('2'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('3'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('4'))
 	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('5'))
+	{
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('E'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 }

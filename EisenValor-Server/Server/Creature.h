@@ -1,4 +1,5 @@
 #pragma once
+
 #include "GameObject.h"
 
 namespace GameServer {
@@ -22,8 +23,10 @@ namespace GameServer {
 			void	SetStamina(const uint32 stamina, const bool broadcast = false);
 			void	IncStamina(const uint32 amount, const bool broadcast = true);
 			virtual void	DecStamina(const uint32 amount, const bool broadcast = true);
+			
 			void	SetTarget(std::shared_ptr<Creature> target) { m_target = target; }
 			std::shared_ptr<Creature> GetTarget() { return m_target.lock(); }
+			
 			int		GetHP() const { return m_statInfo.currentHP; }
 			int32	GetStamina() const { return m_statInfo.currentStamina; }
 

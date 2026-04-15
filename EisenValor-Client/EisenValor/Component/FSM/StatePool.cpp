@@ -14,7 +14,8 @@ void StatePool::Initialize()
 
 	// General States 
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_IDLE] = std::make_unique<PlayerlIdleState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_MOVE] = std::make_unique<PlayerMoveState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_WALK] = std::make_unique<PlayerWalkState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_RUN] = std::make_unique<PlayerRunState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<PlayerStunState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<PlayerDeadState>();
 

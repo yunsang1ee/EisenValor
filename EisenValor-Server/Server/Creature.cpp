@@ -4,7 +4,7 @@
 #include "GameWorld.h"
 
 GameServer::Contents::Creature::Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:GameObject(teamType, type)
+	:GameObject(teamType, type), m_statInfo{}
 {
 	SetCreature(true);
 }
