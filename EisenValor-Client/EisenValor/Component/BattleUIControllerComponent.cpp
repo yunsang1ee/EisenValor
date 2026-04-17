@@ -743,6 +743,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				// FSM 상태 전환
 				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 				{
+					fsm->SetCurAttackDir(static_cast<uint8_t>(m_currentSelectedDir));
 					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
 					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
