@@ -3,6 +3,7 @@
 #include "PacketHandler.h"
 #include "PacketHeader.h"
 #include "ServerGlobalFuncs.h"
+#include "Tables_generated.h"
 
 namespace GameServerEngine {
 	class PacketBuffer;
@@ -33,8 +34,9 @@ namespace GameServer {
 #pragma endregion
 
 #pragma region TEST_PACKETS
-		static bool Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt);
 		static bool Handle_CS_TELEPORT_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_TELEPORT_PACKET& recvPkt);
+		static bool Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt);
+		static bool Handle_CS_GEN_NPC_SOLDIER_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_SOLDIER_PACKET& recvPkt);
 #pragma endregion
 	};
 }

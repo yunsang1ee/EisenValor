@@ -25,8 +25,9 @@ void GameServer::ClientPacketHandler::Init()
 #pragma endregion
 
 #pragma region TEST_PACKETS
-	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET, FB_TABLES::CS_GEN_NPC_GENERAL_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_TELEPORT_PKT, FB_TABLES::CS_TELEPORT_PACKET, ClientPacketHandler::Handle_CS_TELEPORT_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET, FB_TABLES::CS_GEN_NPC_GENERAL_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CS_GEN_NPC_SOLDIER_PACKET, FB_TABLES::CS_GEN_NPC_SOLDIER_PACKET, ClientPacketHandler::Handle_CS_GEN_NPC_SOLDIER_PACKET);
 #pragma endregion
 
 	LOG_INFO("ClientPacketHandler Init");
@@ -164,6 +165,16 @@ bool GameServer::ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET(const
 #pragma endregion
 
 #pragma region TEST_PACKETS
+bool GameServer::ClientPacketHandler::Handle_CS_TELEPORT_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_TELEPORT_PACKET& recvPkt)
+{
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+	const uint32 id{ clientSession->GetID() };
+	auto world = clientSession->GetGameWorld();
+	if(world)
+		world->Handle_CS_TELEPORT(clientSession, recvPkt.place());
+	return true;
+}
+
 bool GameServer::ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_GENERAL_PACKET& recvPkt)
 {
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
@@ -176,13 +187,13 @@ bool GameServer::ClientPacketHandler::Handle_CS_GEN_NPC_GENERAL_PACKET(const std
 	return true;
 }
 
-bool GameServer::ClientPacketHandler::Handle_CS_TELEPORT_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_TELEPORT_PACKET& recvPkt)
+bool GameServer::ClientPacketHandler::Handle_CS_GEN_NPC_SOLDIER_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_GEN_NPC_SOLDIER_PACKET& recvPkt)
 {
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	const uint32 id{ clientSession->GetID() };
 	auto world = clientSession->GetGameWorld();
 	if(world)
-		world->Handle_CS_TELEPORT(clientSession, recvPkt.place());
+		world->Handle_CS_GEN_NPC_SOLDIER(id);
 	return true;
 }
 #pragma endregion

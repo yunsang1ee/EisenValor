@@ -50,7 +50,7 @@ void GameServer::Contents::FSM::AddState(std::unique_ptr<State> state)
 		m_states.try_emplace(state->GetStateType(), std::move(state));
 }
 
-void GameServer::Contents::FSM::ChangeState	(const uint8 nextState, const float dt, const bool broadcast)
+void GameServer::Contents::FSM::ChangeState(const uint8 nextState, const float dt, const bool broadcast)
 {
 	const auto owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };

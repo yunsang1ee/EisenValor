@@ -68,6 +68,9 @@ namespace GameServer {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDTForPreDelay;
 		
 		};
 
@@ -84,6 +87,10 @@ namespace GameServer {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDT{ 0.f };
+			bool  m_hitFired{ false };
 		};
 
 		// ==================================

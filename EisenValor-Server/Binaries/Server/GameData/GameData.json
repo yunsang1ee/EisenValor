@@ -1,6 +1,6 @@
 {
   "GameRoomData": {
-    "MAX_PARTICIPANTS_PER_ROOM":  6
+    "MAX_PARTICIPANTS_PER_ROOM": 6
   },
 
   "GameWorldData": {
@@ -59,6 +59,7 @@
     {
       "obj_type_id": 1,
       "type": "General",
+      "atk": 20,
       "max_hp": 150,
       "max_stamina": 1000,
       "stamina_cost": 10,
@@ -72,6 +73,7 @@
     {
       "obj_type_id": 2,
       "type": "Player",
+      "atk": 20,
       "max_hp": 150,
       "max_stamina": 1000,
       "stamina_cost": 10,
@@ -85,6 +87,7 @@
     {
       "obj_type_id": 3,
       "type": "Soldier",
+      "atk": 10,
       "max_hp": 10,
       "max_stamina": 0,
       "stamina_cost": 0,

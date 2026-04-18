@@ -25,7 +25,6 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
-			// .currentHP = t.gameObjectData->maxHp,
 			 .currentHP = 50,
 			.maxHP = t.gameObjectData->maxHp,
 			.currentStamina = t.gameObjectData->maxStamina,
@@ -35,9 +34,9 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 
 	player->SetRespawnPos(t.transform.GetPosition());
 
-	//const auto movement = player->AddComponent<GameServer::Contents::Movement>();
-	//movement->SetMaxSpeed(20.f);
-	//movement->SetAcceleration(10.f);
+	const auto movement = player->AddComponent<GameServer::Contents::Movement>();
+	movement->SetMaxSpeed(10.f);
+	movement->SetAcceleration(10.f);
 
 	auto navAgent = player->AddComponent<GameServer::Contents::NavAgent>(player->GetGameWorld()->GetNavSystem());
 	dtCrowdAgentParams params{};
@@ -169,10 +168,10 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	auto fsm{ soldier->AddComponent<GameServer::Contents::FSM>() };
 	
 	auto idleState = GameServer::Contents::SoldierIdleState::Create();
-	auto moveState = GameServer::Contents::SoldierMoveState::Create(5.f/*viewRange*/, t.destPos);
-	auto chaseState = GameServer::Contents::SoldierChaseState::Create(3.f/*chaseRange*/, 2.f/*attackRagne*/);
+	auto moveState = GameServer::Contents::SoldierMoveState::Create(3.f/*viewRange*/, t.destPos);
+	auto chaseState = GameServer::Contents::SoldierChaseState::Create(5.f/*chaseRange*/, 2.f/*attackRagne*/);
 	auto attackState = GameServer::Contents::SoldierAttackState::Create(2.f/*attackRange*/);
-	auto deadState = GameServer::Contents::SoldierDeadState::Create(3.f/*deadAnimTime*/);
+	auto deadState = GameServer::Contents::SoldierDeadState::Create(10.f/*deadAnimTime*/);
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(moveState));
@@ -194,7 +193,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	hzObj->SetGameObjectData(t.gameObjectData);
 
 	auto const hz{ hzObj->AddScript(std::make_unique<HealZone>(t.radius * t.radius, t.time, t.healAmount)) };
-	hz->SetName("HZ");
+	hz->SetName("HZ_");
 	hz->SetOwner(hzObj);
 
 	return hzObj;
@@ -209,7 +208,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	ozObj->SetGameObjectData(t.gameObjectData);
 	
 	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.radius * t.radius, t.scoreTime))};
-	oz->SetName("OZ");
+	oz->SetName(t.zoneName);
 	oz->SetOwner(ozObj);
 	
 	return ozObj;

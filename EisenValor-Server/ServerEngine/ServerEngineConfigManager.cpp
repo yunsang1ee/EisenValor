@@ -63,12 +63,6 @@ bool GameServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::
 			std::cout << " - RIO Result: " << m_rioWorkerConfig.MAX_RIO_RESULT << std::endl;
         }
         else return false;
-
-        if(rio.HasMember("RIO_WORKER_TICK_MS")) {
-			m_rioWorkerConfig.RIO_WORKER_TICK_MS = rio["RIO_WORKER_TICK_MS"].GetInt();
-			std::cout << " - RIO Worker Tick (ms): " << m_rioWorkerConfig.RIO_WORKER_TICK_MS << std::endl;
-        }
-        else return false;
     }
     else return false;
 

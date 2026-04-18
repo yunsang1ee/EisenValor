@@ -4,7 +4,7 @@
 #include "Creature.h"
 
 GameServer::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:m_objType{ type }, m_teamType{ teamType }, m_scale{1.f}, m_isCreature{false}, m_active{true}
+	:m_objType{ type }, m_teamType{ teamType }, m_scale{ 1.f }, m_isCreature{ false }, m_active{ true }, m_gameObjectData{ nullptr }, m_gameWorld{ nullptr }
 {
 }
 

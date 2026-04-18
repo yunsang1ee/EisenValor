@@ -64,8 +64,10 @@ std::shared_ptr<PacketBuffer> Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS:
 // 		테스트
 // =================
 #pragma region TEST_PACKETS
-std::shared_ptr<PacketBuffer> Make_CS_GEN_NPC_GENREAL_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_TELEPORT_PACKET(const FB_ENUMS::TELEPORT_PLACE_TYPE place);
+std::shared_ptr<PacketBuffer> Make_CS_GEN_NPC_GENREAL_PACKET();
+std::shared_ptr<PacketBuffer> Make_CS_GEN_NPC_SOLDIER_PACKET();
+
 #pragma endregion
 
 } // namespace C2S

@@ -12,7 +12,3 @@ void GameServer::Contents::Movement::Update(const float dt)
 {
 
 }
-
-void GameServer::Contents::Movement::UpdateRotation(const float dt)
-{
-}

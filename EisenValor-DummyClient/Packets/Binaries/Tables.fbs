@@ -323,10 +323,6 @@ table SC_END_ANIMATION {
 	anim_name: string;
 }
 
-table CS_GEN_NPC_GENERAL_PACKET {
-
-}
-
 table CS_UPDATE_PLAYER_STATE_PACKET {
 	player_state: uint8;
 }
@@ -357,4 +353,11 @@ table SC_SOLDIER_ATTACK_PACKET {
 // ================================================
 table CS_TELEPORT_PACKET {
 	place: FB_ENUMS.TELEPORT_PLACE_TYPE;
+}
+
+table CS_GEN_NPC_GENERAL_PACKET {
+
+}
+
+table CS_GEN_NPC_SOLDIER_PACKET {
 }

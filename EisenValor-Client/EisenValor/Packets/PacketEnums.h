@@ -152,6 +152,7 @@ enum class PACKET_TYPE : uint16_t
 #pragma region TEST_PACKETS
 	CS_TELEPORT_PKT = 30000,
 	CS_GEN_NPC_GENERAL_PACKET = 30001,
+	CS_GEN_NPC_SOLDIER_PACKET = 30002,
 
 #pragma endregion
 

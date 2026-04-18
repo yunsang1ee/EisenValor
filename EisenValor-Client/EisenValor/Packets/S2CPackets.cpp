@@ -502,7 +502,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 			addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 			addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-			//addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+			// addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 			addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 			scene->CreateComponentWithInit<MovementComponent>(
@@ -574,7 +574,8 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					shieldHandle,
 					[scene, playerObjHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
+						auto res =
+							GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -777,7 +778,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 	// TODO: objType이 점령지일 경우, 내부적으로 dominantTeamType을 가지고 있어야 합니다.(현재 점령중인 팀)
 	// SC_OCCUPATION_ZONE_GAUGE_PACKET이 오면 해당 점령지의 게이지 값을 바로 업데이트 해주면 됩니다.
-	// 그게 아니라면 매 프레임마다 점령지 오브젝트가 자신의 dominantTeamType을 확인해서 게이지를 5.f만큼 업데이트 해주면 됩니다.
+	// 그게 아니라면 매 프레임마다 점령지 오브젝트가 자신의 dominantTeamType을 확인해서 게이지를 5.f만큼 업데이트 해주면
+	// 됩니다.
 
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
@@ -839,7 +841,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 				addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-				//addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+				// addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 				addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 				// BattleUIControllerComponent
@@ -877,7 +879,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					shieldHandle,
 					[scene, objHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
+						auto res =
+							GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -972,7 +975,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			////////////////// isGeneral ///////////////////
 
-			else if(objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)////// Soldier
+			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
 			{
 				tr.SetScale(0.9f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
@@ -1118,7 +1121,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				objHandle, [teamType](TeamComponent* team) { team->SetTeamType(teamType); }
 			);
 
-			 // VitalUIControllerComponent
+			// VitalUIControllerComponent
 			scene->CreateComponentWithInit<VitalUIControllerComponent>(
 				objHandle,
 				[](VitalUIControllerComponent* vital)
@@ -1127,10 +1130,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				}
 			);
 
-			DEBUG_LOG_FMT(
-				"Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
-				pos.x, pos.y, pos.z, currentHP, maxHP
-			);
+			DEBUG_LOG_FMT("Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n", pos.x, pos.y, pos.z, currentHP, maxHP);
 
 			// 공격 범위 디버깅
 			// if (isGeneral)
@@ -1207,14 +1207,13 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
 
 	auto obj = scene->FindGameObjectByServerID(id);
-	if (obj)
-	{
-		const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
-		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
-		obj->GetTransform().SetPosition(pos);
-		obj->GetTransform().SetRotation(rot);
+	if (!obj)
+		return false;
 
-	}
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+	obj->GetTransform().SetPosition(pos);
+	obj->GetTransform().SetRotation(rot);	
 
 	if (id != localID)
 	{
@@ -1409,7 +1408,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
+			nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 		{
 			return true;
 		}

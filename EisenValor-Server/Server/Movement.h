@@ -25,7 +25,6 @@ namespace GameServer {
 
 		public:
 			virtual void Update(const float dt) override;
-			void UpdateRotation(const float dt);
 
 		private:
 			float	m_maxSpeed;
