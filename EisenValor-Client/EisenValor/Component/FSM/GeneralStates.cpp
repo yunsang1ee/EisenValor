@@ -59,13 +59,12 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 	{
 		uint8_t dir = fsm->GetCurAttackDir();
 		uint8_t targetIdleKey = 50 + dir;
-		
+
 		// 방향별 Idle 애니메이션 [IK] (51:TOP, 52:LEFT, 53:RIGHT)
-		if (dir != 0 && anim->GetCurrentKey() != targetIdleKey)
+		if (anim->GetCurrentKey() != targetIdleKey)
 		{
 			anim->Play(targetIdleKey, true);
 		}
-
 		// // IK 설정                                                                                                                                
 		// if (dir != 0)
 		// {
@@ -95,7 +94,7 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 		// 	anim->SetIKWeight(IK_TYPE::RIGHT_ARM, 0.0f); // NONE 시 IK 해제
 		// }
 	}
-	else // 일반 자세일 때
+	else // 일반 태세일 때
 	{
 		uint8_t neutralIdleKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 		if (anim->GetCurrentKey() != neutralIdleKey)

@@ -65,7 +65,8 @@ namespace AnimationLoader
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_01_Seq.evanim")
 			);
 
-			// 방향별 전투 Idle (51:TOP, 52:LEFT, 53:RIGHT)
+			// 방향별 전투 Idle (50: NONE, 51:TOP, 52:LEFT, 53:RIGHT)
+			anim->AddAnimation(50, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
 			anim->AddAnimation(51, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
 			anim->AddAnimation(52, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
 			anim->AddAnimation(53, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
