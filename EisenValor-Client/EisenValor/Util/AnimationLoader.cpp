@@ -122,7 +122,12 @@ namespace AnimationLoader
 			// res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Hurt_Light_FW_Seq.evanim"));
 			anim->AddAnimation(
 				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD),
-				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Die_Seq.evanim")
+				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Die/Die_Seq.evanim")
+			);
+			// 강공격 사망용 임시 키 (110)
+			anim->AddAnimation(
+				110,
+				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Die/Hurt_heavy_Seq.evanim")
 			);
 			anim->AddAnimation(
 				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK),
