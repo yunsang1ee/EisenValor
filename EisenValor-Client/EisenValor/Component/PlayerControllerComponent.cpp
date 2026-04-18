@@ -339,7 +339,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-
 			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			return;
 		}

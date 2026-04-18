@@ -21,6 +21,15 @@ void AnimationComponent::OnLateUpdate(float dt)
 
 	if (m_currentTime >= duration)
 	{
+		// 큐에 다음 애니메이션이 있는지 확인
+		if (!m_animationQueue.empty())
+		{
+			auto next = m_animationQueue.front();
+			m_animationQueue.pop_front();
+			Play(next.key, next.loop, next.rootMotion);
+			return;
+		}
+
 		if (m_isLooping)
 		{
 			m_currentTime = std::fmod(m_currentTime, duration);
@@ -66,12 +75,39 @@ void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool
 	// 루트모션 초기화
 	m_lastRootPos = {0.0f, 0.0f, 0.0f};
 	m_rootMotionFirstFrame = true;
+
+	// 새로운 애니메이션 재생 시 큐는 일단 유지 (PlayQueue가 아니면 큐를 비울지 결정 필요)
+}
+
+void AnimationComponent::PlayQueue(const std::vector<uint8_t>& keys, bool finalLoop, bool rootMotion)
+{
+	if (keys.empty())
+		return;
+
+	m_animationQueue.clear();
+
+	// 첫 번째 애니메이션 즉시 재생
+	Play(keys[0], (keys.size() == 1) ? finalLoop : false, rootMotion);
+
+	// 나머지 애니메이션 큐에 추가
+	for (size_t i = 1; i < keys.size(); ++i)
+	{
+		bool isLast = (i == keys.size() - 1);
+		m_animationQueue.push_back({keys[i], isLast ? finalLoop : false, rootMotion});
+	}
+}
+
+void AnimationComponent::SetNextAnimation(uint8_t nextKey, bool loop, bool rootMotion)
+{
+	m_animationQueue.clear();
+	m_animationQueue.push_back({nextKey, loop, rootMotion});
 }
 
 void AnimationComponent::Stop()
 {
 	m_isPlaying = false;
 	m_currentTime = 0.0f;
+	m_animationQueue.clear();
 }
 
 void AnimationComponent::Pause()
@@ -79,10 +115,30 @@ void AnimationComponent::Pause()
 	m_isPlaying = false;
 }
 
+
 void AnimationComponent::Resume()
 {
 	if (m_currentAnimation)
 		m_isPlaying = true;
+}
+
+void AnimationComponent::SetIKTarget(IK_TYPE type, const IKTarget& target)
+{
+	m_ikTargets[static_cast<size_t>(type)] = target;
+}
+
+void AnimationComponent::SetIKWeight(IK_TYPE type, float weight)
+{
+	m_ikTargets[static_cast<size_t>(type)].weight = weight;
+}
+
+void AnimationComponent::ClearIKTargets()
+{
+	for (auto& target : m_ikTargets)
+	{
+		target.active = false;
+		target.weight = 0.0f;
+	}
 }
 
 bool AnimationComponent::GetBoneIndexByName(const std::string& boneName, uint32_t& outIndex) const
@@ -345,6 +401,24 @@ void AnimationComponent::UpdateBoneMatrices()
 	for (size_t i = 0; i < boneCount; ++i)
 	{
 		computeGlobal((int32_t)i);
+	}
+
+	// [IK] (월드 행렬 수정)
+	for (const auto& target : m_ikTargets)
+	{
+		if (target.active && target.weight > 0.0f)
+		{
+			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, target);
+		}
+	}
+
+	// [IK] 최종 팔레트 계산 (Offset * Global)
+	for (size_t i = 0; i < boneCount; ++i)
+	{
+		XMMATRIX global = XMLoadFloat4x4(&m_globalMatrices[i]);
+		XMMATRIX offset = XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&offsetFloats[i * 16]));
+		XMMATRIX final = XMMatrixMultiply(offset, global);
+		XMStoreFloat4x4(&m_finalPalette[i], XMMatrixTranspose(final));
 	}
 
 	skinnedMesh->SetFinalMatrices(m_finalPalette);
