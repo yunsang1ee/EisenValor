@@ -66,6 +66,10 @@ bool GameServer::Contents::MapDataManager::LoadDataFromFile(const std::string_vi
                 point.radius = v["radius"].GetFloat();
             if(v.HasMember("scoreTime") && v["scoreTime"].IsNumber())
                 point.scoreTime = v["scoreTime"].GetInt64();
+			if(v.HasMember("scorePerTenSec") && v["scorePerTenSec"].IsUint())
+				point.scorePerTenSec = v["scorePerTenSec"].GetUint();
+			if(v.HasMember("occupationScore") && v["occupationScore"].IsUint())
+				point.occupationScore = v["occupationScore"].GetUint();
             mapData.occupationZones.push_back(std::move(point));
         }
     }

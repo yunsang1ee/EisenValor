@@ -36,7 +36,7 @@ void GameServer::Contents::OccupationZone::Update(const float dt)
 	if(m_dominantAccDT >= static_cast<float>(m_scoreTime.count())) {
 		m_dominantAccDT = 0.f;
 		const auto owner{ GetOwner() };
-		owner->GetGameWorld()->AddScore(dominantTeamType, 1);
+		owner->GetGameWorld()->AddScore(dominantTeamType, MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", GetName())->scorePerTenSec);
 		std::cout << "Score Added to " << (dominantTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue Team!" : "Red Team!") << std::endl;
 	}
 
@@ -102,28 +102,22 @@ FB_ENUMS::TEAM_TYPE GameServer::Contents::OccupationZone::GetDominantTeamType()
 
 void GameServer::Contents::OccupationZone::CheckOccupationState(const float prev, const float curr)
 {
-	const auto owner{ GetOwner() };
+	const auto [occupied, team] = [&]() -> std::pair<bool, FB_ENUMS::TEAM_TYPE>
+		{
+			if(prev < 100.f && curr >= 100.f)  return { true, FB_ENUMS::TEAM_TYPE_RED };
+			if(prev > -100.f && curr <= -100.f) return { true, FB_ENUMS::TEAM_TYPE_BLUE };
+			return { false, {} };
+		}();
 
-	if(prev < 100.f && curr >= 100.f) {
+	if(occupied) {
 		m_stateType = FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_OCCUPIED;
-
-		auto pb = ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), FB_ENUMS::TEAM_TYPE_RED);
-		owner->GetGameWorld()->Broadcast(std::move(pb));
-
-		std::cout << "Occupation Zone Occupied by Red Team!" << std::endl;
+		const auto owner = GetOwner();
+		const auto world = owner->GetGameWorld();
+		world->Broadcast(ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), team));
+		world->AddScore(team, MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", GetName())->occupationScore);
 		return;
 	}
-
-	if(prev > -100.f && curr <= -100.f) {
-		m_stateType = FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_OCCUPIED;
-		
-		auto pb = ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), FB_ENUMS::TEAM_TYPE_BLUE);
-		owner->GetGameWorld()->Broadcast(std::move(pb));
-
-		std::cout << "Occupation Zone Occupied by Blue Team!" << std::endl;
-		return;
-	}
-
+	
 	if((prev > 0.f && curr <= 0.f) || (prev < 0.f && curr >= 0.f)) {
 		m_stateType = FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED;
 	}

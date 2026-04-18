@@ -326,6 +326,13 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		// 약공격
 		if (input.GetInputDown(VK_LBUTTON))
 		{
+			const auto stateType{fsm->GetCurStateType()};
+			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY
+				|| stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			{
+				return;
+			}
+
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
 			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
@@ -339,6 +346,13 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		// 강공격
 		else if (input.GetInputDown(VK_RBUTTON))
 		{
+			const auto stateType{fsm->GetCurStateType()};
+			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+				stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			{
+				return;
+			}
+
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
 			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
@@ -538,6 +552,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
+	if (input.GetInputDown('G'))
+	{
+		auto pb = NetBridge::C2S::Make_CS_GEN_NPC_SOLDIER_PACKET();
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
 	if (input.GetInputDown('1'))
 	{
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE)};
@@ -573,6 +593,8 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
+
+
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)

@@ -11,7 +11,7 @@ namespace GameServer {
 
 		public:
 			void SetName(const std::string_view name) { m_name = name; }
-			const std::string_view GetName() const { return m_name; }
+			const std::string& GetName() const { return m_name; }
 
 		private:
 			std::string m_name;
@@ -19,4 +19,3 @@ namespace GameServer {
 		};
 	}
 }
-

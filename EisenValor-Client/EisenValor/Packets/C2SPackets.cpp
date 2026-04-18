@@ -230,6 +230,15 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET
 // 		테스트
 // =================
 #pragma region TEST_PACKETS
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_TELEPORT_PACKET(const FB_ENUMS::TELEPORT_PLACE_TYPE place)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_TELEPORT_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_TELEPORT_PACKET, place)
+	);
+}
+
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
 {
 	flatbuffers::FlatBufferBuilder builder;
@@ -240,12 +249,12 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_TELEPORT_PACKET(const FB_ENUMS::TELEPORT_PLACE_TYPE place)
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_SOLDIER_PACKET()
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_TELEPORT_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_TELEPORT_PACKET, place)
+		PACKET_TYPE::CS_GEN_NPC_SOLDIER_PACKET,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_SOLDIER_PACKET)
 	);
 }
 #pragma endregion

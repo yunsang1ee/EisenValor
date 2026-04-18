@@ -127,7 +127,7 @@ void GameServer::Contents::PlayerRunState::Update(const float dt)
 }
 
 // ==================================
-//		 GENERAL_PRE_DELAY_STATE
+//		 PLAYER_PRE_DELAY_STATE
 // ==================================
 GameServer::Contents::PlayerPredelayState::PlayerPredelayState()
 	:State{ FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY }
@@ -143,6 +143,7 @@ void GameServer::Contents::PlayerPredelayState::Enter(const float dt)
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Predelay State" << std::endl;
 #endif
+	m_accDTForPreDelay = 0.f;
 }
 
 void GameServer::Contents::PlayerPredelayState::Exit(const float dt)
@@ -150,6 +151,8 @@ void GameServer::Contents::PlayerPredelayState::Exit(const float dt)
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Predelay State" << std::endl;
 #endif
+
+	m_accDTForPreDelay = 0.f;
 }
 
 void GameServer::Contents::PlayerPredelayState::Update(const float dt)
@@ -158,6 +161,13 @@ void GameServer::Contents::PlayerPredelayState::Update(const float dt)
 
 	const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };
 	const auto& atkInfo{ owner->GetAtkInfo() };
+
+	m_accDTForPreDelay += dt;
+
+	//if(m_accDTForPreDelay >= 0.5f) {
+	//	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
+	//	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
+	//}
 
 	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
@@ -180,6 +190,9 @@ void GameServer::Contents::PlayerAttackState::Enter(const float dt)
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Attack State" << std::endl;
 #endif
+
+	m_accDT = 0.f;      
+	m_hitFired = false; 
 }
 
 void GameServer::Contents::PlayerAttackState::Exit(const float dt)
@@ -187,13 +200,33 @@ void GameServer::Contents::PlayerAttackState::Exit(const float dt)
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Attack State" << std::endl;
 #endif
+
+	m_accDT = 0.f;    
+	m_hitFired = false;
 }
 
 void GameServer::Contents::PlayerAttackState::Update(const float dt)
 {
+	float HIT_FRAME_DELAY{ 0.1f };
+
 	const auto& owner{ GetGeneral(GetFSM()) };
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
+
+	if(owner->GetAtkInfo().skillData->name == "LIGHT") {
+		HIT_FRAME_DELAY = 0.4f;
+	}
+	else if(owner->GetAtkInfo().skillData->name == "HEAVY") {
+		HIT_FRAME_DELAY = 0.6f;
+	}
+	else
+		HIT_FRAME_DELAY = 0.1f;
+
+	m_accDT += dt;                       
+
+	if(m_accDT < HIT_FRAME_DELAY) return;
+	if(m_hitFired) return;               
+	m_hitFired = true;                   
 
 	if(false == IsValidObj(owner)) return;
 
@@ -216,7 +249,7 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 					if(o->GetTeamType() == owner->GetTeamType()) continue;
 					if(owner->IsTargetInAttackRange(o)) {
 						const auto target = static_cast<General*>(o.get());
-						target->OnDamaged(owner, dt);
+						target->OnAttacked(owner, dt);
 					}
 				}
 			}
@@ -224,7 +257,26 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 		}
 		case FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT:
 		{
-			const auto target = owner->GetTarget();
+			const auto& gameObjects = world->GetGameObjectGroups();
+
+			for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
+				if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER && i != FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+					continue;
+
+				for(const auto& [id, o] : gameObjects[i]) {
+					if(false == IsValidObj(o))
+						continue;
+					if(owner->GetID() == id)
+						continue;
+					if(o->GetTeamType() == owner->GetTeamType()) continue;
+					if(owner->IsTargetInAttackRange(o)) {
+						owner->SetTarget(std::static_pointer_cast<Creature>(o));
+						break;
+					}
+				}
+			}
+
+			const auto target{ owner->GetTarget() };
 
 			if(false == IsValidObj(target)) {
 				owner->SetTarget(nullptr);
@@ -243,7 +295,7 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 					return;
 				}
 
-				if(target->OnDamaged(owner, dt)) {
+				if(target->OnAttacked(owner, dt)) {
 
 					if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
 						const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
@@ -271,7 +323,7 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 }
 
 // ==================================
-//		 GENERAL_POST_DELAY_STATE
+//		 PLAYER_POST_DELAY_STATE
 // ==================================
 GameServer::Contents::PlayerPostdelayState::PlayerPostdelayState()
 	:State{ FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY }
@@ -303,7 +355,7 @@ void GameServer::Contents::PlayerPostdelayState::Update(const float dt)
 }
 
 // ==================================
-//		 GENERAL_STUN_STATE
+//		 PLAYER_STUN_STATE
 // ==================================
 GameServer::Contents::PlayerStunState::PlayerStunState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_STUN), m_startFrame{}, m_stunDuration{}
@@ -345,7 +397,7 @@ void GameServer::Contents::PlayerStunState::Update(const float dt)
 }
 
 // ==================================
-//		 GENERAL_DEAD_STATE
+//		 PLAYER_DEAD_STATE
 // ==================================
 GameServer::Contents::PlayerDeadState::PlayerDeadState()
 	:State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD), m_accDTForRespawn{}

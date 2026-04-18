@@ -207,9 +207,6 @@ struct SC_START_ANIMATIONBuilder;
 struct SC_END_ANIMATION;
 struct SC_END_ANIMATIONBuilder;
 
-struct CS_GEN_NPC_GENERAL_PACKET;
-struct CS_GEN_NPC_GENERAL_PACKETBuilder;
-
 struct CS_UPDATE_PLAYER_STATE_PACKET;
 struct CS_UPDATE_PLAYER_STATE_PACKETBuilder;
 
@@ -227,6 +224,12 @@ struct SC_SOLDIER_ATTACK_PACKETBuilder;
 
 struct CS_TELEPORT_PACKET;
 struct CS_TELEPORT_PACKETBuilder;
+
+struct CS_GEN_NPC_GENERAL_PACKET;
+struct CS_GEN_NPC_GENERAL_PACKETBuilder;
+
+struct CS_GEN_NPC_SOLDIER_PACKET;
+struct CS_GEN_NPC_SOLDIER_PACKETBuilder;
 
 struct CL_PONG_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CL_PONG_PACKETBuilder Builder;
@@ -3334,35 +3337,6 @@ inline ::flatbuffers::Offset<SC_END_ANIMATION> CreateSC_END_ANIMATIONDirect(
       anim_name__);
 }
 
-struct CS_GEN_NPC_GENERAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_GEN_NPC_GENERAL_PACKETBuilder Builder;
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           verifier.EndTable();
-  }
-};
-
-struct CS_GEN_NPC_GENERAL_PACKETBuilder {
-  typedef CS_GEN_NPC_GENERAL_PACKET Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  explicit CS_GEN_NPC_GENERAL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> CreateCS_GEN_NPC_GENERAL_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb) {
-  CS_GEN_NPC_GENERAL_PACKETBuilder builder_(_fbb);
-  return builder_.Finish();
-}
-
 struct CS_UPDATE_PLAYER_STATE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CS_UPDATE_PLAYER_STATE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -3646,6 +3620,64 @@ inline ::flatbuffers::Offset<CS_TELEPORT_PACKET> CreateCS_TELEPORT_PACKET(
     FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE) {
   CS_TELEPORT_PACKETBuilder builder_(_fbb);
   builder_.add_place(place);
+  return builder_.Finish();
+}
+
+struct CS_GEN_NPC_GENERAL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GEN_NPC_GENERAL_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_GEN_NPC_GENERAL_PACKETBuilder {
+  typedef CS_GEN_NPC_GENERAL_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_GEN_NPC_GENERAL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_GEN_NPC_GENERAL_PACKET> CreateCS_GEN_NPC_GENERAL_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_GEN_NPC_GENERAL_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct CS_GEN_NPC_SOLDIER_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_GEN_NPC_SOLDIER_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_GEN_NPC_SOLDIER_PACKETBuilder {
+  typedef CS_GEN_NPC_SOLDIER_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CS_GEN_NPC_SOLDIER_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_GEN_NPC_SOLDIER_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_GEN_NPC_SOLDIER_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_GEN_NPC_SOLDIER_PACKET> CreateCS_GEN_NPC_SOLDIER_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CS_GEN_NPC_SOLDIER_PACKETBuilder builder_(_fbb);
   return builder_.Finish();
 }
 

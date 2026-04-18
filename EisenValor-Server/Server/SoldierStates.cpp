@@ -137,8 +137,9 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	const auto& pos{ owner->GetPosition() };
 
-	const float distToDestSq{ (m_destPos - pos).LengthSquared() };
-	if(distToDestSq < 0.5f * 0.5f) {
+	auto diff = m_destPos - pos;
+	const float distXZSq = diff.x * diff.x + diff.z * diff.z;
+	if(distXZSq < 0.5f * 0.5f) {
 		owner->SetPosition(m_destPos);
 		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt, true);
 		ag->StopMove();
@@ -191,7 +192,7 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 //					CHASE
 // ============================================
 GameServer::Contents::SoldierChaseState::SoldierChaseState(const float chaseRange, const float attackRange)
-	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_CHASE }, m_chaseRangeSq{ chaseRange * chaseRange }, m_attackRangeSq{ attackRange * attackRange },m_chaseTransitionRangeSq{ (attackRange * 1.2f) * (attackRange * 1.2f) }
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_CHASE }, m_chaseRangeSq{ chaseRange * chaseRange }, m_attackRangeSq{ attackRange * attackRange }, m_chaseTransitionRangeSq{ (attackRange * 1.2f) * (attackRange * 1.2f) }
 	, m_accDTForChase{ 0.f }
 {
 }
@@ -208,7 +209,7 @@ void GameServer::Contents::SoldierChaseState::Enter(const float dt)
 
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
-	
+
 	m_accDTForChase = 0.f;
 
 	if(!IsValidObj(target))
@@ -229,34 +230,6 @@ void GameServer::Contents::SoldierChaseState::Exit(const float dt)
 
 void GameServer::Contents::SoldierChaseState::Update(const float dt)
 {
-	//const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
-	//const auto target{ owner->GetTarget() };
-
-	//if(!IsValidObj(target)) {
-	//	GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
-	//	return;
-	//}
-
-	//const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
-
-	//// 추격 시, 추격 범위를 벗어났다면 이전상태로 전환
-	//if(distToTargetSq > m_chaseRangeSq) {
-	//	owner->SetTarget(nullptr);
-	//	GetFSM()->ChangeState(GetFSM()->GetPrevStateType(), dt, true);
-	//	return;
-	//}
-
-	//// 추격 시, 공격 범위 안에 있으면 공격상태로 전환
-	//if(distToTargetSq < m_attackRangeSq) {
-	//	GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt, true);
-	//	return;
-	//}
-	//const Vec3& targetPos{ target->GetPosition() };
-	//owner->LookAt(targetPos);
-
-	//const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
-	//if(ag)
-	//	ag->SetDestPos(targetPos);
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
 
@@ -267,20 +240,17 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 
 	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
 
-	// 추격 범위를 벗어나면 이전 상태로 전환
 	if(distToTargetSq > m_chaseRangeSq) {
 		owner->SetTarget(nullptr);
-		GetFSM()->ChangeState(GetFSM()->GetPrevStateType(), dt, true);
+		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
 		return;
 	}
 
-	// 공격 범위 안에 들어오면 공격 상태로 전환
 	if(distToTargetSq < m_attackRangeSq) {
 		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK, dt, true);
 		return;
 	}
 
-	// 목적지 갱신은 일정 주기마다만 수행 (매 프레임 경로 재계산 방지)
 	m_accDTForChase += dt;
 	if(m_accDTForChase < CHASE_UPDATE_INTERVAL)
 		return;
@@ -300,7 +270,7 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 //					ATTACK
 // ============================================
 GameServer::Contents::SoldierAttackState::SoldierAttackState(const float attackRange)
-	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDTForAttack{ }, m_attackRangeSq{ attackRange * attackRange }
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDTForAttack{ }, m_attackRangeSq{ attackRange * attackRange }, m_hitFired{ false }, m_attackStarted{ false }
 {
 }
 
@@ -319,6 +289,9 @@ void GameServer::Contents::SoldierAttackState::Enter(const float dt)
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->StopMove();
+
+	m_hitFired = false;
+	m_attackStarted = false;
 }
 
 void GameServer::Contents::SoldierAttackState::Exit(const float dt)
@@ -329,10 +302,16 @@ void GameServer::Contents::SoldierAttackState::Exit(const float dt)
 	std::cout << std::format("ID = {}, Exit SoldierAttackState", id) << std::endl;
 #endif
 	m_accDTForAttack = 0.f;
+
+	m_hitFired = false;
+	m_attackStarted = false;
 }
 
 void GameServer::Contents::SoldierAttackState::Update(const float dt)
 {
+	constexpr float ATTACK_CYCLE = 1.7f;
+	constexpr float HIT_FRAME_DELAY = 0.5f;
+
 	const auto owner{ std::static_pointer_cast<Soldier>(GetFSM()->GetOwner()) };
 	const auto target{ owner->GetTarget() };
 
@@ -344,27 +323,46 @@ void GameServer::Contents::SoldierAttackState::Update(const float dt)
 	owner->LookAt(target->GetPosition());
 	m_accDTForAttack += dt;
 
-	if(m_accDTForAttack < 2.f)
-		return;
-
-	m_accDTForAttack = 0.f;
-
-	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
-	if(distToTargetSq <= m_attackRangeSq) {
+	if(!m_attackStarted) {
+		m_attackStarted = true;
 		auto pb{ ServerPackets::Make_SC_SOLDIER_ATTACK_PACKET(owner->GetID()) };
 		owner->GetGameWorld()->Broadcast(std::move(pb));
-		target->OnDamaged(owner, dt, false);
-		constexpr float HIT_DELAY = 0.4f;
-		auto weakTarget = std::weak_ptr<Creature>(target);
-		owner->GetGameWorld()->AddTimedEvent([weakTarget]()
-			{
-				auto t = weakTarget.lock();
-				if(t)
-					t->BroadcastUpdateVital();
-			}, HIT_DELAY);
 	}
-	else {
-		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
+
+	if(!m_hitFired && m_accDTForAttack >= HIT_FRAME_DELAY) {
+		m_hitFired = true;
+
+		const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+		if(distToTargetSq <= m_attackRangeSq) {
+			target->OnAttacked(owner, dt, false);
+
+			auto weakTarget = std::weak_ptr<Creature>(target);
+			owner->GetGameWorld()->AddTimedEvent([weakTarget]()
+				{
+					auto t = weakTarget.lock();
+					if(t) t->BroadcastUpdateVital();
+				}, 0.05f);
+		}
+		else {
+			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
+			return;
+		}
+	}
+	
+	if(m_accDTForAttack >= ATTACK_CYCLE) {
+		m_accDTForAttack -= ATTACK_CYCLE;
+		m_hitFired = false;
+
+		const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+		if(distToTargetSq > m_attackRangeSq) {
+			m_attackStarted = false;
+			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
+			return;
+		}
+
+		m_attackStarted = true;
+		auto pb{ ServerPackets::Make_SC_SOLDIER_ATTACK_PACKET(owner->GetID()) };
+		owner->GetGameWorld()->Broadcast(std::move(pb));
 	}
 }
 

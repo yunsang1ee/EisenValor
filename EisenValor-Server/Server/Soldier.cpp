@@ -48,7 +48,7 @@ void GameServer::Contents::Soldier::OnDeath()
 		ag->Remove();
 }
 
-bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
+bool GameServer::Contents::Soldier::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	uint32 damage{};
 
@@ -64,7 +64,7 @@ bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const at
 		}
 	}
 	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
-		damage = 10;
+		damage = 5;
 	}
 
 	DecHP(damage, broadcast);

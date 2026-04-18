@@ -12,7 +12,7 @@ namespace GameServer {
 			virtual void Update(const float dt) override;
 			virtual void OnDeath() override;
 			virtual void OnRespawn() override;
-			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override;
+			virtual bool OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override;
 			bool IsTargetInAttackRange(std::shared_ptr<GameObject> const target);
 
 		public:

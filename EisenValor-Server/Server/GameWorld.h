@@ -58,11 +58,16 @@ namespace GameServer {
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);
 			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
-			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
 			void Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state);
 			void Handle_CS_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg);
-			void Handle_CS_TELEPORT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TELEPORT_PLACE_TYPE place);
 		
+		public:
+			// == TEST PACKETS ==
+			void Handle_CS_TELEPORT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TELEPORT_PLACE_TYPE place);
+			void Handle_CS_GEN_NPC_GENERAL(const uint32 sessionID);
+			void Handle_CS_GEN_NPC_SOLDIER(const uint32 sessionID);
+			// == TEST PACKETS ==
+
 		public:
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			void CheckCollision();

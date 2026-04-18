@@ -28,7 +28,7 @@ void GameServer::Contents::Player::Update(const float dt)
 	// std::cout << std::format("Pos: {}. {}. {}", pos.x, pos.y, pos.z) << std::endl;
 }
 
-bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
+bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
@@ -88,7 +88,7 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 		}
 	}
 	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
-		damage = 10;
+		damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
 	}
 
 	// when hit during the first delay, stun delay and damage are doubled
@@ -147,7 +147,7 @@ void GameServer::Contents::Player::DecStamina(const uint32 amount, const bool br
 	}
 }
 
-void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
+void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 {
 	if(false == IsActive())
 		return;
@@ -155,6 +155,14 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::Gen
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	const uint64 worldFrame = world->GetGameWorldFrameCount();
+	
+	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
+
+	const auto curState{ fsm->GetCurState()->GetStateType() };
+
+	if(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY == curState || FB_ENUMS::PLAYER_STATE_TYPE_ATTACK == curState || FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY == curState) {
+		return;
+	}
 
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir = atkInfo.attack_dir();
 	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType = atkInfo.attack_type();
@@ -163,7 +171,6 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::Gen
 	SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
 	DecStamina(skillData->staminaCost);
 
-	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY, worldDT, true);
 
 	{

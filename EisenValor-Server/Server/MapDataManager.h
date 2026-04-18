@@ -14,6 +14,8 @@ struct OccupationZoneData {
     Vec3        position;
     float       radius;
     int64       scoreTime;
+    uint8       scorePerTenSec;
+    uint8       occupationScore;
 };
 
 struct SoldierSpawnerData {

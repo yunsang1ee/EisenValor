@@ -717,6 +717,10 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				confirmedType = GENERAL_ATTACK_TYPE_HEAVY;
 		}
 
+		auto* fsm = GetGameObject()->GetComponent<FSMComponent>();
+		if (!fsm)
+			return;
+
 		// 3. 실행
 		if (confirmedType.has_value())
 		{
@@ -725,17 +729,22 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				GENERAL_ATTACK_TYPE finalType = confirmedType.value();
 				OnGuardDirectionConfirmed(m_currentSelectedDir, finalType);
 
+			const auto stateType{fsm->GetCurStateType()};
+				if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+					stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
+					stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+				{
+					return;
+				}
+
 				// 공격 패킷 전송
 				FB_STRUCTS::GeneralAttackInfo attackInfo(finalType, m_currentSelectedDir);
 				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// FSM 상태 전환
-				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
-				{
-					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-				}
+				fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 
 				// 확정 후 즉시 초기화
 				m_accumulatedDeltaX = 0.0f;

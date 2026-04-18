@@ -13,7 +13,7 @@ namespace GameServer {
 		
 		public:
 			virtual void Update(const float dt) override final;
-			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override final;
+			virtual bool OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override final;
 			virtual void OnDeath() override final;
 			virtual void OnRespawn() override final;
 			virtual void DecStamina(const uint32 amount, const bool broadcast= false) override;
@@ -23,7 +23,7 @@ namespace GameServer {
 			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
 
 		private:
-			void Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo);
+			void Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo);
 			void Handle_CS_PLAYER_GENERAL_STANCE();
 			void Handle_CS_PLAYER_FAKE();
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID);

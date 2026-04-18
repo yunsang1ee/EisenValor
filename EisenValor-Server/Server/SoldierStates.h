@@ -97,6 +97,8 @@ namespace GameServer {
 		private:
 			float m_accDTForAttack;
 			float m_attackRangeSq;
+			bool  m_hitFired;      
+			bool  m_attackStarted;
 
 			friend class GameObjectFactory;
 		};
