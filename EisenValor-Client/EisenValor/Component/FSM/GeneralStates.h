@@ -17,12 +17,19 @@ public:
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
-// Move
-class PlayerMoveState : public State {
-public:
-	PlayerMoveState();
-	virtual ~PlayerMoveState() = default;
+class PlayerWalkState : public State {
+	public:
+	PlayerWalkState();
+	virtual ~PlayerWalkState() = default;
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
 
+class PlayerRunState : public State {
+	public:
+	PlayerRunState();
+	virtual ~PlayerRunState() = default;
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;

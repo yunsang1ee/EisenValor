@@ -229,12 +229,14 @@ table SC_REMOVE_OBJ_PACKET {
 
 table CS_MOVE_PACKET {
 	pos_info: FB_STRUCTS.PosInfo;
+	move_dir: FB_ENUMS.MOVE_DIRECTION_TYPE;
 }
 
 table SC_MOVE_PACKET {
 	obj_id: uint64;
 	pos_info: FB_STRUCTS.PosInfo;
 	sub_state: uint8;
+	move_dir: FB_ENUMS.MOVE_DIRECTION_TYPE;
 }
 
 table CS_CHANGE_GENERAL_STANCE_PACKET {
@@ -244,6 +246,7 @@ table CS_CHANGE_GENERAL_STANCE_PACKET {
 table SC_CHANGE_GENERAL_STANCE_PACKET {
 	obj_id : uint64;
 	stance_type: FB_ENUMS.GENERAL_STANCE_TYPE;
+	camera_target_id: uint64;
 }
 
 table CS_GENERAL_ATTACK_PACKET {
@@ -320,10 +323,6 @@ table SC_END_ANIMATION {
 	anim_name: string;
 }
 
-table CS_GEN_NPC_GENERAL_PACKET {
-
-}
-
 table CS_UPDATE_PLAYER_STATE_PACKET {
 	player_state: uint8;
 }
@@ -354,4 +353,11 @@ table SC_SOLDIER_ATTACK_PACKET {
 // ================================================
 table CS_TELEPORT_PACKET {
 	place: FB_ENUMS.TELEPORT_PLACE_TYPE;
+}
+
+table CS_GEN_NPC_GENERAL_PACKET {
+
+}
+
+table CS_GEN_NPC_SOLDIER_PACKET {
 }

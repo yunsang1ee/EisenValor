@@ -6,8 +6,7 @@
   },
   "RIOWorkerConfigure": {
     "MAX_SESSION_PER_RIO_WORKER": 50,
-    "MAX_RIO_RESULT": 256,
-    "RIO_WORKER_TICK_MS": 64
+    "MAX_RIO_RESULT": 256
   },
   "ThreadConfigure": {
     "MAX_WORKER_THREAD_COUNT": 10
@@ -19,6 +18,6 @@
     "MAX_RECV_RQ_SIZE_PER_SESSION": 256,
     "COMMIT_SEND_MS": 20,
     "PING_INTERVAL_MS": 5000,
-    "SESSION_TIMEOUT_MS": 300000
+    "SESSION_TIMEOUT_MS": 30000
   }
 }

@@ -306,11 +306,11 @@
     <Filter Include="03. Contents\Component\Scripts\HealZone">
       <UniqueIdentifier>{3a015e9b-dd46-49e5-824e-8120f825e034}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. SessionManager\LobbyServerSession">
-      <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Contents\GameWorld\MapData">
       <UniqueIdentifier>{7a8477a1-fed7-4279-b40b-97c4b670a014}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. SessionManager\LobbyServerSession">
+      <UniqueIdentifier>{3255892d-8060-4d1c-9a0d-c9cf80ddd764}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

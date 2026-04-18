@@ -20,7 +20,7 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{}
 {
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
@@ -113,8 +113,7 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 			startPos = m_blueTeamLastBasePos;
 			m_blueTeamLastBasePos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->offsetFromSummonStartPosition;
 		}
-		else if(t.teamType == FB_ENUMS::TEAM_TYPE_RED)
-			{
+		else if(t.teamType == FB_ENUMS::TEAM_TYPE_RED) {
 			startPos = m_redTeamLastBasePos;
 			m_redTeamLastBasePos -= MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->offsetFromSummonStartPosition;
 			rot.y = -180.f;
@@ -141,10 +140,10 @@ void GameServer::Contents::GameWorld::EnterSession(std::shared_ptr<GameServerEng
 	}
 
 	t.transform = Transform{ startPos, rot };
-
 	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
 	t.gameWorld = this;
 	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER);
+
 	auto player = (GameServer::Contents::GameObjectFactory::CreatePlayer(t));
 	player->SetSession(clientSession);
 	player->GetComponent<GameServer::Contents::FSM>()->SetState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
@@ -186,7 +185,7 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform)
+void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
 {
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
 	if(it == m_sessionToPlayer.end()) return;
@@ -212,21 +211,8 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << newPos.x << ", " << newPos.y << ", " << newPos.z << std::endl;
 #endif
-
-	//auto movement = player->GetComponent<Movement>();
-	//if(!movement) return;
-
-	//constexpr float networkErrorMargin{ 3.f };
-	//const float maxSpeed{ movement->GetMaxSpeed() };
-	//const float maxMoveDistSq{ maxSpeed * maxSpeed * m_lastDT * m_lastDT * networkErrorMargin * networkErrorMargin };
-	//const float dx{ newPos.x - prevPos.x };
-	//const float dz{newPos.z - prevPos.z};
-	//const float distSq{ dx * dx + dz * dz };
-
-	//if(distSq > maxMoveDistSq) {
-	//	SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
-	//	return;
-	//}
+	auto movement = player->GetComponent<Movement>();
+	if(!movement) return;
 
 	auto const navQuery = m_navSystem.GetNavMeshQuery();
 	if(!navQuery) return;
@@ -279,7 +265,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	}
 
 	{
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()));
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), moveDir);
 		Broadcast(std::move(pb));
 	}
 }
@@ -295,7 +281,7 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sess
 
 	if(playerGroup.find(playerID) != playerGroup.end()) {
 		auto player = static_cast<Player*>(playerGroup[playerID].get());
-		player->Handle_CS_PLAYER_ATTACK(attackInfo);
+		player->Handle_CS_GENERAL_ATTACK(attackInfo);
 	}
 }
 
@@ -388,6 +374,44 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	AddGameObject(std::move(general));
 }
 
+void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_SOLDIER(const uint32 sessionID)
+{
+	auto it = m_sessionToPlayer.find(sessionID);
+	if(it == m_sessionToPlayer.end()) return;
+
+	const uint64 playerID{ it->second };
+
+	auto const player = IDToPlayer(playerID);
+
+	const Vec3 playerPos = player->GetPosition();
+	Vec3 playerLook = player->GetForward();
+	playerLook.Normalize();
+
+	FB_ENUMS::TEAM_TYPE teamType{};
+	if(FB_ENUMS::TEAM_TYPE_BLUE == player->GetTeamType())
+		teamType = FB_ENUMS::TEAM_TYPE_RED;
+	else
+		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
+	
+	constexpr float distance{ 5.0f };
+	
+	Vec3 spawnPos;
+	spawnPos.x = playerPos.x + (playerLook.x * distance);
+	spawnPos.y = playerPos.y;
+	spawnPos.z = playerPos.z + (playerLook.z * distance);
+
+	SoldierTemplate t;
+	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+	t.teamType = teamType;
+	t.transform = Transform{ spawnPos, Vec3{} };
+	t.gameWorld = this;
+	t.destPos = spawnPos;
+
+	auto soldier{ GameServer::Contents::GameObjectFactory::CreateSoldier(t) };
+	AddGameObject(std::move(soldier));
+}
+
 void GameServer::Contents::GameWorld::Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state)
 {
 	auto it = m_sessionToPlayer.find(sessionID);
@@ -436,7 +460,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 
 	Vec3 tpPos{};
 	switch(place) {
-		case FB_ENUMS::TELEPORT_PLACE_TYPE_TEAM_BASE:
+		case FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE:
 		{
 			const auto teamType{ player->GetTeamType() };
 			if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) {
@@ -444,6 +468,18 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 			}
 			else {
 				tpPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
+			}
+			break;
+		}
+		case FB_ENUMS::TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE:
+		{
+			const auto teamType{ player->GetTeamType() };
+
+			if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) {
+				tpPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
+			}
+			else {
+				tpPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition;
 			}
 			break;
 		}
@@ -678,10 +714,12 @@ void GameServer::Contents::GameWorld::CheckGameTime(const float dt)
 		m_accGameTime -= 1.f;
 		if(m_remainingTimeSec.count() > 0) {
 			m_remainingTimeSec -= std::chrono::seconds(1);
-			const uint32_t totalSeconds = static_cast<uint32_t>(m_remainingTimeSec.count());
-			const uint32_t minutes = totalSeconds / 60;
-			const uint32_t seconds = totalSeconds % 60;
+			const uint32_t totalSeconds{ static_cast<uint32_t>(m_remainingTimeSec.count()) };
+			const uint32_t minutes{totalSeconds / 60};
+			const uint32_t seconds{ totalSeconds % 60 };
+#ifdef PRINT_GAME_WORLD_LOG
 			std::cout << std::format("{}M {}S", minutes, seconds) << std::endl;
+#endif
 			auto pb = ServerPackets::Make_SC_REMANING_GAME_TIME_PACKET(totalSeconds);
 			Broadcast(std::move(pb));
 		}
@@ -793,9 +831,11 @@ void GameServer::Contents::GameWorld::AddScore(const FB_ENUMS::TEAM_TYPE teamTyp
 {
 	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) {
 		m_blueTeamScore += amount;
+		std::cout << "Blue Team Score: " << static_cast<uint32>(m_blueTeamScore) << std::endl;
 	}
 	else if(FB_ENUMS::TEAM_TYPE_RED == teamType) {
 		m_redTeamScore += amount;
+		std::cout << "Red Team Score: " << static_cast<uint32>(m_redTeamScore) << std::endl;
 	}
 
 	auto pb = ServerPackets::Make_SC_UPDATE_TEAM_SCORE_PACKET(m_blueTeamScore, m_redTeamScore);
@@ -890,6 +930,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 
 		for(const auto& occupationZone : *occupationZones) {
 			OccupationZoneTemplate t;
+			t.zoneName = occupationZone.name;
 			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE);
 			t.gameObjectData = nullptr;
 			t.transform = Transform{ occupationZone.position, Vec3{} };
@@ -903,12 +944,13 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	}
 
 	// 스포너 생성
-	//std::vector<std::string> teams{ "blue", "red" };
-	//
-	//for(const auto& team : teams) {
-	//	const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
+	std::vector<std::string> teams{ "blue", "red" };
 
-	//	for(const auto& soldierSpawner : *soldierSpawners) {
+	//for(int i = 0; i < 1; ++i) {
+	//	const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", teams[i]);
+
+	//	for(int i = 0; i < 1; ++i) {
+	//		const auto& soldierSpawner = (*soldierSpawners)[i];
 	//		SoldierSpanwerTemplate t;
 	//		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
 	//		t.gameObjectData = nullptr;
@@ -922,6 +964,39 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//		AddGameObject(std::move(spawner));
 	//	}
 	//}
+
+	for(const auto& team : teams) {
+		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
+
+		 for(const auto& soldierSpawner : *soldierSpawners) {
+			SoldierSpanwerTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+			t.gameObjectData = nullptr;
+			t.transform = Transform{ soldierSpawner.position, Vec3{} };
+			t.teamType = soldierSpawner.teamType;
+			t.gameWorld = this;
+			t.destPos = soldierSpawner.destinationPosition;
+			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+			t.spawnCount = soldierSpawner.soldierSpawnCount;
+			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+			AddGameObject(std::move(spawner));
+		}
+
+		/*for(int i=0; i < 1; ++i){
+			const auto& soldierSpawner = (*soldierSpawners)[i];
+			SoldierSpanwerTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+			t.gameObjectData = nullptr;
+			t.transform = Transform{ soldierSpawner.position, Vec3{} };
+			t.teamType = soldierSpawner.teamType;
+			t.gameWorld = this;
+			t.destPos = soldierSpawner.destinationPosition;
+			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+			t.spawnCount = soldierSpawner.soldierSpawnCount;
+			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+			AddGameObject(std::move(spawner));
+		}*/
+	}
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

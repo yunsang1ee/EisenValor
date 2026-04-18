@@ -12,7 +12,7 @@ namespace GameServer {
 			virtual void Update(const float dt) override;
 			virtual void OnDeath() override;
 			virtual void OnRespawn() override;
-			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override;
+			virtual bool OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override;
 			bool IsTargetInAttackRange(std::shared_ptr<GameObject> const target);
 
 		public:
@@ -28,6 +28,8 @@ namespace GameServer {
 			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }
 			const AttackInfo& GetAtkInfo() const { return m_atkInfo; }
 
+			void SetRespawnPos(const Vec3& pos) { m_respawnPos = pos; }	
+
 		protected:
 			FB_ENUMS::GENERAL_STANCE_TYPE			m_stanceType;
 			GENERAL_SUB_STATE_TYPE					m_subStateType;
@@ -37,6 +39,8 @@ namespace GameServer {
 
 			float									m_accDTForStaminaRecovery;
 			float									m_accDTForRespawn;
+
+			Vec3									m_respawnPos;
 
 		};
 	}

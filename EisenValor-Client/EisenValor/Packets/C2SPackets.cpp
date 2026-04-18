@@ -8,6 +8,7 @@ using namespace NetBridge;
 // =================
 //		세션
 // =================
+#pragma region SESSION_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PONG_PACKET() noexcept
 {
 	flatbuffers::FlatBufferBuilder builder;
@@ -15,10 +16,12 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_PONG_PACKET() noexcept
 		PACKET_TYPE::CS_PONG_PKT, ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_PONG_PACKET)
 	);
 }
+#pragma endregion
 
 // =================
 //		로그인
 // =================
+#pragma region LOGIN_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_LOGIN_PACKET(
 	const std::string_view id, const std::string_view pw
 ) noexcept
@@ -29,11 +32,12 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_LOGIN_PACKET(
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_LOGIN_PACKETDirect, id.data(), pw.data())
 	);
 }
-
+#pragma endregion
 
 // =================
 //		로비
 // =================
+#pragma region LOBBY_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_ENTER_GAME_LOBBY_PACKET()
 {
 	flatbuffers::FlatBufferBuilder builder;
@@ -60,11 +64,13 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_MAKE_GAME_ROOM_PACKET()
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_MAKE_GAME_ROOM_PACKET)
 	);
 }
+#pragma endregion
 
 
 // =================
 //		룸
 // =================
+#pragma region ROOM_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_ENTER_GAME_ROOM_PACKET(uint16_t roomId)
 {
 	flatbuffers::FlatBufferBuilder builder;
@@ -138,18 +144,21 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_ENTER_GAME_WORLD_PACKET, worldID, localID)
 	);
 }
+#pragma endregion	
+
 
 // =================
 //		월드
 // =================
+#pragma region WORLD_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_MOVE_PACKET(
-	const FB_STRUCTS::PosInfo* posInfo
+	const FB_STRUCTS::PosInfo* posInfo, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir
 )
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
 		PACKET_TYPE::CS_MOVE_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo)
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_MOVE_PACKET, posInfo, moveDir)
 	);
 }
 
@@ -202,16 +211,6 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PA
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
-{
-	flatbuffers::FlatBufferBuilder builder;
-
-	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_GENERAL_PACKET)
-	);
-}
-
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS::PLAYER_STATE_TYPE state
 )
 {
@@ -224,7 +223,13 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET
 
 	return nullptr;
 }
+#pragma endregion
 
+
+// =================
+// 		테스트
+// =================
+#pragma region TEST_PACKETS
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_TELEPORT_PACKET(const FB_ENUMS::TELEPORT_PLACE_TYPE place)
 {
 	flatbuffers::FlatBufferBuilder builder;
@@ -233,3 +238,23 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_TELEPORT_PACKET(const FB_E
 		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_TELEPORT_PACKET, place)
 	);
 }
+
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_GENREAL_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_GEN_NPC_GENERAL_PACKET,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_GENERAL_PACKET)
+	);
+}
+
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_GEN_NPC_SOLDIER_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CS_GEN_NPC_SOLDIER_PACKET,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_GEN_NPC_SOLDIER_PACKET)
+	);
+}
+#pragma endregion

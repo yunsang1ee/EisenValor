@@ -23,9 +23,15 @@ namespace AnimationLoader
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Idle_Seq.evanim")
 			);
 			anim->AddAnimation(
-				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_MOVE),
+				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK),
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_F_Seq.evanim")
 			);
+
+			anim->AddAnimation(
+				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN),
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Run_Seq.evanim")
+			);
+
 			anim->AddAnimation(
 				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN),
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_FW_Seq.evanim")

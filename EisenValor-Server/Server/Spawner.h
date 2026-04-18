@@ -14,7 +14,7 @@ namespace GameServer {
 
 		private:
 			const Vec3					m_soldierDestPos;
-			const std::chrono::seconds	m_spawnTimeSec;
+			std::chrono::seconds	m_spawnTimeSec;
 			const uint32				m_spawnCount;
 
 			float						m_accDT;

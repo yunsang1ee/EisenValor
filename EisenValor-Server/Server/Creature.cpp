@@ -4,7 +4,7 @@
 #include "GameWorld.h"
 
 GameServer::Contents::Creature::Creature(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
-	:GameObject(teamType, type)
+	:GameObject(teamType, type), m_statInfo{}
 {
 	SetCreature(true);
 }
@@ -43,10 +43,10 @@ void GameServer::Contents::Creature::IncHP(const uint32 amount, const bool broad
 	}
 }
 
-void GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
+int GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
 {
 	if(0 == amount)
-		return;
+		return m_statInfo.currentHP;
 
 	m_statInfo.currentHP = std::max(static_cast<int32>(GetHP()) - static_cast<int32>(amount), 0);
 	if(broadcast) {
@@ -61,6 +61,8 @@ void GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broad
 		if(world)
 			world->Broadcast(std::move(pb));
 	}
+
+	return m_statInfo.currentHP;
 }
 
 void GameServer::Contents::Creature::SetStamina(const uint32 stamina, const bool broadcast)

@@ -75,7 +75,8 @@ enum GENERAL_STATE_TYPE: ubyte {
 enum PLAYER_STATE_TYPE: ubyte {
 	NONE = 0,
 	IDLE,
-	MOVE,
+	WALK,
+	RUN,
 	STUN,
 	DEAD,
 
@@ -108,19 +109,20 @@ enum OCCUPATION_ZONE_STATE_TYPE: ubyte {
 	END
 }
 
-enum MOVE_DIRECTION_TYPE : ubyte {
-	FWD = 0,
-	BWD,
-	LFT,
-	RGT,
-	END
-}
-
 enum TELEPORT_PLACE_TYPE : ubyte {
-	NONE = 0,
-	TEAM_BASE,
+	MY_TEAM_BASE,
+	OPPONENT_TEAM_BASE,
 	OCCUPATION_ZONE_A,
 	OCCUPATION_ZONE_B,
 	HEAL_ZONE,
+	END
+}
+
+enum MOVE_DIRECTION_TYPE : ubyte {
+	FWD,
+	BWD,
+	LFT,
+	RGT,
+
 	END
 }

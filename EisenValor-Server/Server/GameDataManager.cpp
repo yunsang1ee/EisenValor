@@ -69,6 +69,7 @@ bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_v
             GameObjectData objData;
             objData.objTypeID = v["obj_type_id"].GetInt();
             objData.name = v["type"].GetString();
+			objData.atk = v["atk"].GetUint();
             objData.maxHp = v["max_hp"].GetInt();
             objData.maxStamina = v["max_stamina"].GetInt();
             objData.staminaCost = v["stamina_cost"].GetInt();
@@ -94,7 +95,6 @@ bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_v
             m_gameObjectDataMap[objData.objTypeID] = objData;
         }
     }
-
 	return true;
 }
 

@@ -86,14 +86,14 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 		return;
 	}
 
-	// FSM Check
-	if (auto* fsm = myGameObject->GetComponent<FSMComponent>())
+	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+	if (!fsm)
+		return;
+
+	auto curState = fsm->GetCurStateType();
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 	{
-		auto curState = fsm->GetCurStateType();
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
-		{
-			return;
-		}
+		return;
 	}
 
 	// Root Motion Delta
@@ -115,7 +115,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 			// 이동 후 서버 패킷 보내기
 			auto				rot = transform.GetRotation();
 			FB_STRUCTS::PosInfo posInfo{{finalPos.x, finalPos.y, finalPos.z}, {rot.x, rot.y, rot.z}};
-			auto				pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto				pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 
 			// DEBUG_LOG_FMT("[PlayerController] RootMotion Applied. NewPos:({:.2f}, {:.2f}, {:.2f})\n",
@@ -145,12 +145,6 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 			}
 		}
 	}
-
-	auto* fsm = myGameObject->GetComponent<FSMComponent>();
-	if (!fsm)
-		return;
-
-	const auto curState{fsm->GetCurStateType()};
 
 	ProcessMouseRotation(deltaTime);
 	ProcessMovementInput(deltaTime);
@@ -250,6 +244,16 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	// 비락온 시 월드 오프셋 적용 (SetFollowOffset 사용)
 	camComp->SetFollowOffset(finalOffset);
 
+		auto* myGameObject = GetGameObject();
+	if (!myGameObject)
+	{
+		return;
+	}
+
+	auto* fsm = myGameObject->GetComponent<FSMComponent>();
+	if (!fsm)
+		return;
+
 	// 마우스가 움직였다면 서버에 현재 위치/회전 패킷 전송 (연결 유지 및 동기화)
 	if (isMouseMoved)
 	{
@@ -260,7 +264,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 			auto				pos = transform.GetPosition();
 			auto				rot = transform.GetRotation();
 			FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
-			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto				pb = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 		}
 	}
@@ -304,11 +308,10 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			{
 				mainCamera->SetLookAtTarget(myGameObject->GetComponentHandle<Transform>());
 				mainCamera->SetEnableLookAtRotation(false);
-				mainCamera->SetFollowOffsetLocal({
-					CameraConfig::kDefaultLocalOffsetX,
-					CameraConfig::kCameraHeight,
-					CameraConfig::kDefaultLocalOffsetZ
-				});
+				mainCamera->SetFollowOffsetLocal(
+					{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ
+					}
+				);
 				DEBUG_LOG_FMT("[PlayerController] Switch to NEUTRAL & Reset Camera\n");
 			}
 		}
@@ -323,21 +326,34 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		// 약공격
 		if (input.GetInputDown(VK_LBUTTON))
 		{
+			const auto stateType{fsm->GetCurStateType()};
+			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY
+				|| stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			{
+				return;
+			}
+
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-			
 			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			return;
 		}
 		// 강공격
 		else if (input.GetInputDown(VK_RBUTTON))
 		{
+			const auto stateType{fsm->GetCurStateType()};
+			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+				stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			{
+				return;
+			}
+
 			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
@@ -348,11 +364,11 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		}
 	}
 
-	bool  w = input.GetInput('W');
-	bool  s = input.GetInput('S');
-	bool  a = input.GetInput('A');
-	bool  d = input.GetInput('D');
-	bool  isShiftPressed = input.GetInput(VK_SHIFT);
+	bool w = input.GetInput('W');
+	bool s = input.GetInput('S');
+	bool a = input.GetInput('A');
+	bool d = input.GetInput('D');
+	bool isShiftPressed = input.GetInput(VK_SHIFT);
 
 	bool isMovingInput = (w || s || a || d);
 
@@ -368,7 +384,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		movement->SetMoveSpeed(5.0f);
 	}
-	fsm->SetRunning(isRunning);
 
 	// 락온 상태 & 카메라 방향 업데이트
 	bool	 isLockOn = false;
@@ -396,22 +411,24 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	if (isLockOn)
 	{
 		if (w)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 		else if (s)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
 		else if (a)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
 		else if (d)
-			fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
 
 		movement->SetInputForward(w);
 		movement->SetInputBackward(s);
 		movement->SetInputLeft(a);
 		movement->SetInputRight(d);
+
+		movement->SetMoveSpeed(2.f);
 	}
 	else
 	{
-		fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+		fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 
 		if (isMovingInput)
 		{
@@ -477,37 +494,53 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		if (isMovingInput)
 		{
-			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			auto stateType = isRunning ? FB_ENUMS::PLAYER_STATE_TYPE_RUN : FB_ENUMS::PLAYER_STATE_TYPE_WALK;
+
+			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(stateType);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 		}
-		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 		return;
 	}
 
 	if (isMovingInput)
 	{
-		if (curState != FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustPressed)
+		if (isRunning)
 		{
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
+			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_RUN || hasJustPressed)
+			{
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
 
-			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_MOVE);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+			}
+		}
+		else
+		{
+			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_WALK || hasJustPressed)
+			{
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+
+				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
+			}
 		}
 
-		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 	}
 	else
 	{
-		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_MOVE || hasJustReleased)
+		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_WALK || curState == FB_ENUMS::PLAYER_STATE_TYPE_RUN ||
+			hasJustReleased)
 		{
 			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 
 			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 
-			auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo);
+			auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 		}
 	}
@@ -518,29 +551,49 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
+	if (input.GetInputDown('G'))
+	{
+		auto pb = NetBridge::C2S::Make_CS_GEN_NPC_SOLDIER_PACKET();
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
 	if (input.GetInputDown('1'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_TEAM_BASE)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('2'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('3'))
 	{
-		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (input.GetInputDown('4'))
 	{
+		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B)};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+	if (input.GetInputDown('5'))
+	{
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
+
+	if (input.GetInputDown('E'))
+	{
+		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+	}
+
+
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)

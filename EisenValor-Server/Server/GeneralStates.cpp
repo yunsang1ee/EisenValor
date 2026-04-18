@@ -47,9 +47,9 @@ void GameServer::Contents::GeneralRoamingState::Enter(const float dt)
 	auto const fsm{ GetFSM() };
 
 	// 로밍상태 들어올 때 중립태세로 전환
-	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
-	m_gameWorld->Broadcast(std::move(pb));
+	//GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	//auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
+	//m_gameWorld->Broadcast(std::move(pb));
 
 #ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralRoamingState Enter!" << std::endl;
@@ -169,9 +169,9 @@ void GameServer::Contents::GeneralDuelingState::Enter(const float dt)
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
 #endif
 
-	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
-	m_gameWorld->Broadcast(std::move(pb));
+	//GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	//auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
+	//m_gameWorld->Broadcast(std::move(pb));
 
 	if(m_bt) {
 		m_bt->SetRoot(m_root.get());
@@ -217,9 +217,9 @@ void GameServer::Contents::GeneralStunState::Enter(const float dt)
 
 	m_accDTForStunState = 0.f;
 
-	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType()) };
-	m_gameWorld->Broadcast(std::move(pb));
+	//GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	//auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType()) };
+	//m_gameWorld->Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::GeneralStunState::Exit(const float dt)
