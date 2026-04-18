@@ -82,13 +82,9 @@ void PlayerWalkState::Update(FSMComponent* fsm, float dt)
 	// 기본 애니메이션 키 (전진:2)
 	uint8_t targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 
-	// Run
-	if (fsm->IsRunning())
-	{
-		targetKey = 25;
-	}
+
 	// 락온 상태일 경우 방향별 애니메이션 키 결정
-	else if (fsm->IsLockOn())
+	if (fsm->IsLockOn())
 	{
 		auto dir = fsm->GetMoveDirection();
 		switch (dir)
