@@ -307,6 +307,7 @@
     <ClInclude Include="include\SkinnedMeshComponent.h">
       <Filter>Component\Mesh</Filter>
     </ClInclude>
+    <ClInclude Include="include\IKProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -463,6 +464,7 @@
     <ClCompile Include="src\SkinnedMeshComponent.cpp">
       <Filter>Component\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="src\IKProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">

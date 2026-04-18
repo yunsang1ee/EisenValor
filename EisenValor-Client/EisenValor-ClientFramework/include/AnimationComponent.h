@@ -1,10 +1,23 @@
 #pragma once
 #include "IComponent.h"
 #include "AnimationResource.h"
+#include "IKProcessor.h"
 #include <DirectXMath.h>
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <optional>
+#include <deque>
+#include <array>
+
+// IK를 적용할 수 있는 부위
+enum class IK_TYPE : uint8_t {
+	RIGHT_ARM = 0,
+	LEFT_ARM,
+	RIGHT_LEG,
+	LEFT_LEG,
+	COUNT // 배열 크기용
+};
 
 class AnimationComponent : public ComponentBase<AnimationComponent>
 {
@@ -17,11 +30,15 @@ public:
 
 	void OnLateUpdate(float dt);
 
-	// 애니메이션 등록 및 키 기반 재생 (uint8_t key 사용)
+	// 애니메이션 등록 및 키 기반 재생
 	void AddAnimation(uint8_t key, std::shared_ptr<AnimationResource> animation);
 	void Play(uint8_t key, bool loop = true, bool rootMotion = false);
-
 	void Play(std::shared_ptr<AnimationResource> animation, bool loop = true, bool rootMotion = false);
+
+	// Animation Queue System
+	void PlayQueue(const std::vector<uint8_t>& keys, bool finalLoop = true, bool rootMotion = false);
+	void SetNextAnimation(uint8_t nextKey, bool loop = true, bool rootMotion = false);
+
 	void Stop();
 	void Pause();
 	void Resume();
@@ -31,7 +48,12 @@ public:
 
 	uint8_t GetCurrentKey() const { return m_currentKey; }
 
-	// 루트 모션 이동량 가져오기 및 초기화
+	// IK 설정 함수 (Enum 사용)
+	void SetIKTarget(IK_TYPE type, const IKTarget& target);
+	void SetIKWeight(IK_TYPE type, float weight);
+	void ClearIKTargets();
+
+	// 루트 모션 이동량 가져오기
 	DirectX::XMVECTOR ConsumeRootMotionDelta() 
 	{ 
 		DirectX::XMVECTOR delta = DirectX::XMLoadFloat3(&m_accumulatedRootDelta);
@@ -57,6 +79,18 @@ private:
 	float m_currentTime = 0.0f;
 	bool m_isPlaying = false;
 	bool m_isLooping = true;
+
+	// 큐 시스템 데이터
+	struct AnimationQueueInfo {
+		uint8_t key;
+		bool loop;
+		bool rootMotion;
+	};
+	std::deque<AnimationQueueInfo> m_animationQueue;
+
+	// IK 데이터
+	IKProcessor m_ikProcessor;
+	std::array<IKTarget, static_cast<size_t>(IK_TYPE::COUNT)> m_ikTargets;
 
 	// 루트모션
 	bool m_enableRootMotion = false;

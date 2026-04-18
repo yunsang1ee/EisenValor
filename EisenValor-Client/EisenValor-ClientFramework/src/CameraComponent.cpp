@@ -376,6 +376,8 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	// LookAt Target Rotation (LookAt 타겟 기준)
 	const XMFLOAT3 lookAtPos = lookAtTransform->GetWorldPosition();
 	XMVECTOR	   lookAtPosVec = XMLoadFloat3(&lookAtPos);
+	XMVECTOR	   targetOffsetVec = XMLoadFloat3(&m_lookAt.targetOffset);
+	lookAtPosVec = XMVectorAdd(lookAtPosVec, targetOffsetVec);
 
 	if (m_lookAt.enableLookAtRotation)
 	{
