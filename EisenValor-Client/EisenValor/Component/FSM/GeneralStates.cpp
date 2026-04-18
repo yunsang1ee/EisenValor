@@ -15,6 +15,8 @@
 #include <Component/FSM/FSMComponent.h>
 #include "Util/GameConstants.h"
 
+using namespace DirectX;
+
 // ==================================
 //		  PLAYER_IDLE_STATE
 // ==================================
@@ -24,24 +26,88 @@ PlayerlIdleState::PlayerlIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
 
 void PlayerlIdleState::Enter(FSMComponent* fsm)
 {
-	//DEBUG_LOG_FMT("[FSM] IDLE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
-
 	if (auto* obj = fsm->GetGameObject())
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
-			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), true);
+			if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
+			{
+				uint8_t dir = fsm->GetCurAttackDir();
+				uint8_t idleKey = 50 + dir; // 51:TOP, 52:LEFT, 53:RIGHT
+				anim->Play(idleKey, true);
+			}
+			else
+			{
+				anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), true);
+			}
 		}
 	}
 }
 
 void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 {
+	if (!fsm) return;
+
+	auto* obj = fsm->GetGameObject();
+	if (!obj) return;
+
+	auto* anim = obj->GetComponent<AnimationComponent>();
+	if (!anim) return;
+
+	// 전투 자세일 때만 방향별 실시간 Idle 교체 수행
+	if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
+	{
+		uint8_t dir = fsm->GetCurAttackDir();
+		uint8_t targetIdleKey = 50 + dir;
+		
+		// 방향별 Idle 애니메이션 [IK] (51:TOP, 52:LEFT, 53:RIGHT)
+		if (dir != 0 && anim->GetCurrentKey() != targetIdleKey)
+		{
+			anim->Play(targetIdleKey, true);
+		}
+
+		// // IK 설정                                                                                                                                
+		// if (dir != 0)
+		// {
+		// 	IKTarget target;
+		// 	uint32_t handR, lowerarmR, upperarmR;
+		// 	if (anim->GetBoneIndexByName("hand_r", handR) && 
+		// 		anim->GetBoneIndexByName("lowerarm_r", lowerarmR) && 
+		// 		anim->GetBoneIndexByName("upperarm_r", upperarmR))
+		// 	{
+		// 		target.boneIndex = handR;
+		// 		target.midBoneIndex = lowerarmR;
+		// 		target.rootBoneIndex = upperarmR;
+		// 		target.active = true;
+		// 		target.weight = 1.0f; // 보간 필요 시 std::lerp 사용 가능
+
+		// 		// 방향별 IK Target Offset
+		// 		if (dir == 1)      target.targetPos = XMVectorSet(0.0f, 0.4f, 0.2f, 1.0f);   // TOP
+		// 		else if (dir == 2) target.targetPos = XMVectorSet(-0.3f, 0.1f, 0.3f, 1.0f);  // LEFT
+		// 		else if (dir == 3) target.targetPos = XMVectorSet(0.3f, 0.1f, 0.3f, 1.0f);   // RIGHT
+
+		// 		target.poleVector = XMVectorSet(1.0f, -0.5f, 0.0f, 0.0f);
+		// 		anim->SetIKTarget(IK_TYPE::RIGHT_ARM, target);
+		// 	}
+		// }
+		// else
+		// {
+		// 	anim->SetIKWeight(IK_TYPE::RIGHT_ARM, 0.0f); // NONE 시 IK 해제
+		// }
+	}
+	else // 일반 자세일 때
+	{
+		uint8_t neutralIdleKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+		if (anim->GetCurrentKey() != neutralIdleKey)
+		{
+			anim->Play(neutralIdleKey, true);
+			anim->SetIKWeight(IK_TYPE::RIGHT_ARM, 0.0f); // IK 해제
+		}
+	}
 }
 
 void PlayerlIdleState::Exit(FSMComponent* fsm)
 {	
-	//DEBUG_LOG_FMT("[FSM] IDLE Exit\n");
 }
 
 
@@ -199,14 +265,22 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 	//DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
 
+	DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
+		fsm->GetCurAttackType(),
+		fsm->GetCurAttackDir(), fsm->IsLockOn()
+	);
+
 	// 애니메이션 Key로 재생
 	if (auto* go = fsm->GetGameObject())
 	{
 		if (auto* anim = go->GetComponent<AnimationComponent>())
 		{
-			// 공격 타입에 따라 다른 애니메이션 키 계산 (100번 구역 사용)
+			// 공격 조준 방향(10단위) + 공격 타입(1단위) 조합 
+			uint8_t dir = fsm->GetCurAttackDir();
 			uint8_t attackType = static_cast<uint8_t>(fsm->GetCurAttackType());
-			uint8_t animationKey = 100 + attackType;
+
+			// 110(TOP), 120(LEFT), 130(RIGHT) 기반 + type
+			uint8_t animationKey = 100 + (dir * 10) + attackType;
 			anim->Play(animationKey, false, true);
 		}
 	}
@@ -241,7 +315,7 @@ void PlayerPostDelayState::Update(FSMComponent* fsm, float dt)
 
 	fsm->AddStateTimer(dt);
 
-	// FSM에 저장된 공격 타입을 사용
+	// FSM에 저장된 공격 타입 사용
 	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
 
 	// 약공격: 5FPS, 강공격: 10FPS
@@ -305,6 +379,15 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
+			//// 피격 방향(1, 2, 3) & 공격 강도(0:Light, 1:Heavy) 반영
+			//uint8_t dir = fsm->GetCurAttackDir();
+			//uint8_t type = static_cast<uint8_t>(fsm->GetCurAttackType()); // 0 or 1
+			//
+			//uint8_t stunKey = 150 + (dir * 10) + type;
+			//
+			//anim->Play(stunKey, false, true);
+
+			// 기본 STUN
 			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
 		}
 	}

@@ -47,10 +47,20 @@ void BattleUIControllerComponent::OnStart()
 	//	m_controlMode == ControlType::Local ? "Local" : "Remote"
 	//);
 
-	// FSM에 리스너 등록
+	// FSM에 리스너 등록 (상태 변화 감지)
 	if (auto* fsm = owner->GetComponent<FSMComponent>())
 	{
+		// 스탠스 변화 리스너 추가: FSM에서 스탠스가 변경될 때마다 UI에 알림(FSM->UI)
 		fsm->AddStanceListener([this](uint8_t stance) { OnStanceChanged(stance); });
+
+		// 방향 전환 리스너 추가: UI에서 선택된 방향을 FSM에 동기화(UI->FSM)
+		AddListener(
+			owner->GetHandle(),
+			[fsm](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type)
+			{
+				fsm->SetCurAttackDir(static_cast<uint8_t>(dir));
+			}
+		);
 	}
 
 	// UI 동적 생성 및 초기화
@@ -743,8 +753,12 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// FSM 상태 전환
-				fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
+				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+				{
+					fsm->SetCurAttackDir(static_cast<uint8_t>(m_currentSelectedDir));
+					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
+				}
 
 				// 확정 후 즉시 초기화
 				m_accumulatedDeltaX = 0.0f;
