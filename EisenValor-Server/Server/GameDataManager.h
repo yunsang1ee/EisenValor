@@ -7,8 +7,9 @@ struct GameRoomData {
 };
 
 struct GameWorldData {
-    uint32	gameTimeMin;
-    uint32	gameUpdateTimeMs;
+    uint32	gameTimeSec;
+    float   gameUpdateTick;
+    uint32  maxUpdateStep;
 };
 
 struct SkillData {
@@ -26,6 +27,8 @@ struct SkillData {
 struct GameObjectData {
     uint8 objTypeID;
     std::string name;
+
+    uint32 atk;
     uint32 maxHp;
     uint32 maxStamina;
     uint32 staminaCost;
@@ -58,7 +61,6 @@ namespace GameServer {
             GameWorldData                               m_gameWorldData;
             std::unordered_map<uint8, GameObjectData>   m_gameObjectDataMap;
             std::unordered_map<uint8, SkillData>        m_skillDataMap;
-
 		};
 	}
 }

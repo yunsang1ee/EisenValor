@@ -24,13 +24,15 @@ enum GAME_OBJECT_TYPE : ubyte{
 	SOLDIER,
 	SPAWNER,
 	OCCUPATION_ZONE,
+	HEAL_ZONE,
 	
 	END
 }
 
 enum TEAM_TYPE: ubyte{
-	OFFENSE = 0,
-	DEFENSE,
+	NONE = 0,
+	BLUE,
+	RED,
 
 	END
 }
@@ -73,7 +75,8 @@ enum GENERAL_STATE_TYPE: ubyte {
 enum PLAYER_STATE_TYPE: ubyte {
 	NONE = 0,
 	IDLE,
-	MOVE,
+	WALK,
+	RUN,
 	STUN,
 	DEAD,
 
@@ -97,11 +100,29 @@ enum SOLDIER_STATE_TYPE : ubyte {
 	DEAD,
 
 	END
-}
+}	
 
 enum OCCUPATION_ZONE_STATE_TYPE: ubyte {
 	UNOCCUPIED,
 	OCCUPIED,
+
+	END
+}
+
+enum TELEPORT_PLACE_TYPE : ubyte {
+	MY_TEAM_BASE,
+	OPPONENT_TEAM_BASE,
+	OCCUPATION_ZONE_A,
+	OCCUPATION_ZONE_B,
+	HEAL_ZONE,
+	END
+}
+
+enum MOVE_DIRECTION_TYPE : ubyte {
+	FWD,
+	BWD,
+	LFT,
+	RGT,
 
 	END
 }

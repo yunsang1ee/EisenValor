@@ -1,9 +1,8 @@
 #pragma once
 
-
-struct GameObjectDeleter;
-struct GameObjectData;
 #include "GameObject.h"
+
+struct GameObjectData;
 
 namespace GameServer {
 	namespace Contents {
@@ -11,7 +10,6 @@ namespace GameServer {
 		class General;
 		class Player;
 		class Soldier;
-		class BattleRam;
 
 		class GameWorld;
 
@@ -33,17 +31,27 @@ namespace GameServer {
 		};
 
 		struct SoldierTemplate : public CreatureTemplate {
-
+			Vec3 destPos;
 		};
 
-		struct SpanwerTemplate : public GameObjectTemplate {
-			// TODO: 스폰 시간
-			// TODO: 스폰되는 병사의 수
+		struct HealZoneTemplate : public GameObjectTemplate {
+			int64	time;
+			float	radius;
+			uint32	healAmount;
 		};
 
 		struct OccupationZoneTemplate : public GameObjectTemplate {
-			int64	time;
-			float	range;
+			std::string zoneName;
+			int64		scoreTime;
+			float		radius;
+			uint8		scorePerTenSec;
+			uint8		occupationScore;
+		};
+
+		struct SoldierSpanwerTemplate : public GameObjectTemplate {
+			Vec3	destPos;
+			uint32	spawnIntervalSec;
+			uint32	spawnCount;
 		};
 
 		class GameObjectFactory {
@@ -59,8 +67,9 @@ namespace GameServer {
 			static std::shared_ptr<Player>		CreatePlayer(const PlayerTemplate& t);
 			static std::shared_ptr<General>		CreateGeneral(const GeneralTemplate& t);
 			static std::shared_ptr<Soldier>		CreateSoldier(const SoldierTemplate& t);
-			static std::shared_ptr<GameObject>  CreateSpawner(const SpanwerTemplate& t);
+			static std::shared_ptr<GameObject>	CreateHealZone(const HealZoneTemplate& t);
 			static std::shared_ptr<GameObject>	CreateOccupationZone(const OccupationZoneTemplate& t);
+			static std::shared_ptr<GameObject>  CreateSoldierSpawner(const SoldierSpanwerTemplate& t);
 
 		};
 	}

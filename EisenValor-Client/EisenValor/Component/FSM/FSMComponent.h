@@ -36,31 +36,44 @@ public:
 	void    SetCurAttackType(uint8_t type) { m_curAttackType = type; }
 	uint8_t GetCurAttackType() const { return m_curAttackType; }
 
+	// 공격 조준 방향 (FB_ENUMS::GENERAL_ATTACK_DIR_TYPE)
+	void    SetCurAttackDir(uint8_t dir) { m_curAttackDir = dir; }
+	uint8_t GetCurAttackDir() const { return m_curAttackDir; }
+
 	// 캐릭터 타입
 	void    SetObjectType(uint8_t type) { m_objType = type; }
 	uint8_t GetObjectType() const { return m_objType; }
 
-	// 이동 방향 (락온 시 애니메이션 분기용)
-	enum class MoveDirection : uint8_t { FWD = 0, BWD, LFT, RGT };
-	void          SetMoveDirection(MoveDirection dir) { m_moveDir = dir; }
-	MoveDirection GetMoveDirection() const { return m_moveDir; }
+	void SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE dir) { m_moveDir = dir; }
+	FB_ENUMS::MOVE_DIRECTION_TYPE GetMoveDirection() const { return m_moveDir; }
 
 	// 락온 상태 설정/조회
 	void SetLockOn(bool lockOn) { m_isLockOn = lockOn; }
 	bool IsLockOn() const { return m_isLockOn; }
 
+	// Stance 설정/조회 (FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL/BATTLE)
+	void    SetStance(uint8_t stance);
+	uint8_t GetStance() const { return m_stance; }
+
 	// Observer Pattern(상태 ID가 인자)
 	using StateChangeListener = std::function<void(uint8_t)>;
 	void AddListener(StateChangeListener listener) { m_listeners.push_back(listener); }
+
+	using StanceChangeListener = std::function<void(uint8_t)>;
+	void AddStanceListener(StanceChangeListener listener) { m_stanceListeners.push_back(listener); }
 
 private:
 	// 캐릭터별 데이터
 	uint8_t m_serverState = 0;   // 서버에서 보낸 상태 (GENERAL_STATE_TYPE)
 	uint8_t m_curStateType = 0;  // 클라이언트 애니메이션 상태 (PLAYER_STATE_TYPE)
 	uint8_t m_curAttackType = 0; // 현재 수행 중인 공격 종류
+	uint8_t m_curAttackDir = 0;  // 현재 공격 조준 방향 (GENERAL_ATTACK_DIR_TYPE)
 	uint8_t m_objType = 0;       // 캐릭터 타입 (GAME_OBJECT_TYPE)
-	MoveDirection m_moveDir = MoveDirection::FWD; // 현재 이동 방향
+	uint8_t m_stance = 0;        // 현재 자세 (GENERAL_STANCE_TYPE)
+	FB_ENUMS::MOVE_DIRECTION_TYPE	 m_moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD; // 현재 이동 방향
 	bool    m_isLockOn = false;  // 현재 락온 상태 여부
+	bool	m_isRunning = false; // 현재 달리기 상태 여부
 	float   m_stateTimer = 0.0f; // 상태별 시간 추적용
 	std::vector<StateChangeListener> m_listeners;
+	std::vector<StanceChangeListener> m_stanceListeners;
 };

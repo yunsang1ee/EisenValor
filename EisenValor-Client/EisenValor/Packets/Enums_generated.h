@@ -115,12 +115,13 @@ enum GAME_OBJECT_TYPE : uint8_t {
   GAME_OBJECT_TYPE_SOLDIER = 3,
   GAME_OBJECT_TYPE_SPAWNER = 4,
   GAME_OBJECT_TYPE_OCCUPATION_ZONE = 5,
-  GAME_OBJECT_TYPE_END = 6,
+  GAME_OBJECT_TYPE_HEAL_ZONE = 6,
+  GAME_OBJECT_TYPE_END = 7,
   GAME_OBJECT_TYPE_MIN = GAME_OBJECT_TYPE_NONE,
   GAME_OBJECT_TYPE_MAX = GAME_OBJECT_TYPE_END
 };
 
-inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[7] {
+inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[8] {
   static const GAME_OBJECT_TYPE values[] = {
     GAME_OBJECT_TYPE_NONE,
     GAME_OBJECT_TYPE_GENERAL,
@@ -128,19 +129,21 @@ inline const GAME_OBJECT_TYPE (&EnumValuesGAME_OBJECT_TYPE())[7] {
     GAME_OBJECT_TYPE_SOLDIER,
     GAME_OBJECT_TYPE_SPAWNER,
     GAME_OBJECT_TYPE_OCCUPATION_ZONE,
+    GAME_OBJECT_TYPE_HEAL_ZONE,
     GAME_OBJECT_TYPE_END
   };
   return values;
 }
 
 inline const char * const *EnumNamesGAME_OBJECT_TYPE() {
-  static const char * const names[8] = {
+  static const char * const names[9] = {
     "NONE",
     "GENERAL",
     "PLAYER",
     "SOLDIER",
     "SPAWNER",
     "OCCUPATION_ZONE",
+    "HEAL_ZONE",
     "END",
     nullptr
   };
@@ -154,26 +157,29 @@ inline const char *EnumNameGAME_OBJECT_TYPE(GAME_OBJECT_TYPE e) {
 }
 
 enum TEAM_TYPE : uint8_t {
-  TEAM_TYPE_OFFENSE = 0,
-  TEAM_TYPE_DEFENSE = 1,
-  TEAM_TYPE_END = 2,
-  TEAM_TYPE_MIN = TEAM_TYPE_OFFENSE,
+  TEAM_TYPE_NONE = 0,
+  TEAM_TYPE_BLUE = 1,
+  TEAM_TYPE_RED = 2,
+  TEAM_TYPE_END = 3,
+  TEAM_TYPE_MIN = TEAM_TYPE_NONE,
   TEAM_TYPE_MAX = TEAM_TYPE_END
 };
 
-inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[3] {
+inline const TEAM_TYPE (&EnumValuesTEAM_TYPE())[4] {
   static const TEAM_TYPE values[] = {
-    TEAM_TYPE_OFFENSE,
-    TEAM_TYPE_DEFENSE,
+    TEAM_TYPE_NONE,
+    TEAM_TYPE_BLUE,
+    TEAM_TYPE_RED,
     TEAM_TYPE_END
   };
   return values;
 }
 
 inline const char * const *EnumNamesTEAM_TYPE() {
-  static const char * const names[4] = {
-    "OFFENSE",
-    "DEFENSE",
+  static const char * const names[5] = {
+    "NONE",
+    "BLUE",
+    "RED",
     "END",
     nullptr
   };
@@ -181,7 +187,7 @@ inline const char * const *EnumNamesTEAM_TYPE() {
 }
 
 inline const char *EnumNameTEAM_TYPE(TEAM_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_OFFENSE, TEAM_TYPE_END)) return "";
+  if (::flatbuffers::IsOutRange(e, TEAM_TYPE_NONE, TEAM_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTEAM_TYPE()[index];
 }
@@ -342,9 +348,10 @@ inline const char *EnumNameGENERAL_STATE_TYPE(GENERAL_STATE_TYPE e) {
 enum PLAYER_STATE_TYPE : uint8_t {
   PLAYER_STATE_TYPE_NONE = 0,
   PLAYER_STATE_TYPE_IDLE = 1,
-  PLAYER_STATE_TYPE_MOVE = 2,
-  PLAYER_STATE_TYPE_STUN = 3,
-  PLAYER_STATE_TYPE_DEAD = 4,
+  PLAYER_STATE_TYPE_WALK = 2,
+  PLAYER_STATE_TYPE_RUN = 3,
+  PLAYER_STATE_TYPE_STUN = 4,
+  PLAYER_STATE_TYPE_DEAD = 5,
   PLAYER_STATE_TYPE_PRE_DELAY = 10,
   PLAYER_STATE_TYPE_ATTACK = 11,
   PLAYER_STATE_TYPE_POST_DELAY = 12,
@@ -354,11 +361,12 @@ enum PLAYER_STATE_TYPE : uint8_t {
   PLAYER_STATE_TYPE_MAX = PLAYER_STATE_TYPE_END
 };
 
-inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[10] {
+inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[11] {
   static const PLAYER_STATE_TYPE values[] = {
     PLAYER_STATE_TYPE_NONE,
     PLAYER_STATE_TYPE_IDLE,
-    PLAYER_STATE_TYPE_MOVE,
+    PLAYER_STATE_TYPE_WALK,
+    PLAYER_STATE_TYPE_RUN,
     PLAYER_STATE_TYPE_STUN,
     PLAYER_STATE_TYPE_DEAD,
     PLAYER_STATE_TYPE_PRE_DELAY,
@@ -374,10 +382,10 @@ inline const char * const *EnumNamesPLAYER_STATE_TYPE() {
   static const char * const names[16] = {
     "NONE",
     "IDLE",
-    "MOVE",
+    "WALK",
+    "RUN",
     "STUN",
     "DEAD",
-    "",
     "",
     "",
     "",
@@ -480,6 +488,87 @@ inline const char *EnumNameOCCUPATION_ZONE_STATE_TYPE(OCCUPATION_ZONE_STATE_TYPE
   if (::flatbuffers::IsOutRange(e, OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED, OCCUPATION_ZONE_STATE_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesOCCUPATION_ZONE_STATE_TYPE()[index];
+}
+
+enum TELEPORT_PLACE_TYPE : uint8_t {
+  TELEPORT_PLACE_TYPE_MY_TEAM_BASE = 0,
+  TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE = 1,
+  TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A = 2,
+  TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B = 3,
+  TELEPORT_PLACE_TYPE_HEAL_ZONE = 4,
+  TELEPORT_PLACE_TYPE_END = 5,
+  TELEPORT_PLACE_TYPE_MIN = TELEPORT_PLACE_TYPE_MY_TEAM_BASE,
+  TELEPORT_PLACE_TYPE_MAX = TELEPORT_PLACE_TYPE_END
+};
+
+inline const TELEPORT_PLACE_TYPE (&EnumValuesTELEPORT_PLACE_TYPE())[6] {
+  static const TELEPORT_PLACE_TYPE values[] = {
+    TELEPORT_PLACE_TYPE_MY_TEAM_BASE,
+    TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE,
+    TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A,
+    TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B,
+    TELEPORT_PLACE_TYPE_HEAL_ZONE,
+    TELEPORT_PLACE_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesTELEPORT_PLACE_TYPE() {
+  static const char * const names[7] = {
+    "MY_TEAM_BASE",
+    "OPPONENT_TEAM_BASE",
+    "OCCUPATION_ZONE_A",
+    "OCCUPATION_ZONE_B",
+    "HEAL_ZONE",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameTELEPORT_PLACE_TYPE(TELEPORT_PLACE_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, TELEPORT_PLACE_TYPE_MY_TEAM_BASE, TELEPORT_PLACE_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesTELEPORT_PLACE_TYPE()[index];
+}
+
+enum MOVE_DIRECTION_TYPE : uint8_t {
+  MOVE_DIRECTION_TYPE_FWD = 0,
+  MOVE_DIRECTION_TYPE_BWD = 1,
+  MOVE_DIRECTION_TYPE_LFT = 2,
+  MOVE_DIRECTION_TYPE_RGT = 3,
+  MOVE_DIRECTION_TYPE_END = 4,
+  MOVE_DIRECTION_TYPE_MIN = MOVE_DIRECTION_TYPE_FWD,
+  MOVE_DIRECTION_TYPE_MAX = MOVE_DIRECTION_TYPE_END
+};
+
+inline const MOVE_DIRECTION_TYPE (&EnumValuesMOVE_DIRECTION_TYPE())[5] {
+  static const MOVE_DIRECTION_TYPE values[] = {
+    MOVE_DIRECTION_TYPE_FWD,
+    MOVE_DIRECTION_TYPE_BWD,
+    MOVE_DIRECTION_TYPE_LFT,
+    MOVE_DIRECTION_TYPE_RGT,
+    MOVE_DIRECTION_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMOVE_DIRECTION_TYPE() {
+  static const char * const names[6] = {
+    "FWD",
+    "BWD",
+    "LFT",
+    "RGT",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMOVE_DIRECTION_TYPE(MOVE_DIRECTION_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, MOVE_DIRECTION_TYPE_FWD, MOVE_DIRECTION_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMOVE_DIRECTION_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS

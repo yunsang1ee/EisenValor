@@ -47,9 +47,9 @@ void GameServer::Contents::GeneralRoamingState::Enter(const float dt)
 	auto const fsm{ GetFSM() };
 
 	// 로밍상태 들어올 때 중립태세로 전환
-	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
-	m_gameWorld->Broadcast(std::move(pb));
+	//GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	//auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
+	//m_gameWorld->Broadcast(std::move(pb));
 
 #ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "General GeneralRoamingState Enter!" << std::endl;
@@ -75,8 +75,8 @@ void GameServer::Contents::GeneralRoamingState::Exit(const float dt)
 
 void GameServer::Contents::GeneralRoamingState::Update(const float dt)
 {
-	RecoveryStamina(dt);
-	FindGeneral(dt);
+	//RecoveryStamina(dt);
+	//FindGeneral(dt);
 }
 
 void GameServer::Contents::GeneralRoamingState::RecoveryStamina(const float dt)
@@ -169,9 +169,9 @@ void GameServer::Contents::GeneralDuelingState::Enter(const float dt)
 	std::cout << "General GeneralDuelingState Enter!" << std::endl;
 #endif
 
-	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
-	m_gameWorld->Broadcast(std::move(pb));
+	//GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	//auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType())};
+	//m_gameWorld->Broadcast(std::move(pb));
 
 	if(m_bt) {
 		m_bt->SetRoot(m_root.get());
@@ -193,11 +193,11 @@ void GameServer::Contents::GeneralDuelingState::Exit(const float dt)
 
 void GameServer::Contents::GeneralDuelingState::Update(const float dt)
 {
-	const auto bb{ m_bt->GetBlackboard() };
+	//const auto bb{ m_bt->GetBlackboard() };
 
-	if(false == bb->HasKey("Target") || -1 == bb->GetValue<uint64>("Target")) {
-		GetFSM()->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, dt, true);
-	}
+	//if(false == bb->HasKey("Target") || -1 == bb->GetValue<uint64>("Target")) {
+	//	GetFSM()->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, dt, true);
+	//}
 }
 
 GameServer::Contents::GeneralStunState::GeneralStunState(FSM* const fsm)
@@ -217,9 +217,9 @@ void GameServer::Contents::GeneralStunState::Enter(const float dt)
 
 	m_accDTForStunState = 0.f;
 
-	GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType()) };
-	m_gameWorld->Broadcast(std::move(pb));
+	//GetOwner()->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	//auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetOwner()->GetID(), GetOwner()->GetStanceType()) };
+	//m_gameWorld->Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::GeneralStunState::Exit(const float dt)
@@ -232,15 +232,15 @@ void GameServer::Contents::GeneralStunState::Exit(const float dt)
 
 void GameServer::Contents::GeneralStunState::Update(const float dt)
 {
-	const auto fsm{ GetFSM() };
+	//const auto fsm{ GetFSM() };
 
-	m_accDTForStunState += dt;
+	//m_accDTForStunState += dt;
 
-	if(m_accDTForStunState >= 2.f) {
-		const auto prevStateType{ fsm->GetPrevStateType() };
-		fsm->ChangeState(prevStateType, dt, true);
-		return;
-	}
+	//if(m_accDTForStunState >= 2.f) {
+	//	const auto prevStateType{ fsm->GetPrevStateType() };
+	//	fsm->ChangeState(prevStateType, dt, true);
+	//	return;
+	//}
 }
 
 
@@ -274,11 +274,11 @@ void GameServer::Contents::GeneralDeadState::Exit(const float dt)
 
 void GameServer::Contents::GeneralDeadState::Update(const float dt)
 {
-	m_accDTForRespawn += dt;
-	auto const data{ GetOwner()->GetGameObjectData() };
+	//m_accDTForRespawn += dt;
+	//auto const data{ GetOwner()->GetGameObjectData() };
 
-	if(m_accDTForRespawn >= data->respawnTimeSec) {
-		GetOwner()->OnRespawn();
-	}
+	//if(m_accDTForRespawn >= data->respawnTimeSec) {
+	//	GetOwner()->OnRespawn();
+	//}
 }
 

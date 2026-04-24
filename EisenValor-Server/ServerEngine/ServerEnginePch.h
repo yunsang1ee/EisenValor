@@ -84,9 +84,9 @@ namespace fs = std::filesystem;
 
 #include "JobQueue.h"
 
-std::string WStringToString(const std::wstring_view wstr);
-std::wstring StringToWString(const std::string_view str);
-SOCKET CreateSocket(const DWORD flags);
+std::string		WStringToString(const std::wstring_view wstr);
+std::wstring	StringToWString(const std::string_view str);
+SOCKET			CreateSocket(const DWORD flags);
 
 namespace GameServer {
 	class RIOClientSession;

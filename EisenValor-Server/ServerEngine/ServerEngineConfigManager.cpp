@@ -63,23 +63,6 @@ bool GameServerEngine::ServerEngineConfigManager::LoadConfigFromFile(const std::
 			std::cout << " - RIO Result: " << m_rioWorkerConfig.MAX_RIO_RESULT << std::endl;
         }
         else return false;
-
-        if(rio.HasMember("RIO_WORKER_TICK_MS")) {
-			m_rioWorkerConfig.RIO_WORKER_TICK_MS = rio["RIO_WORKER_TICK_MS"].GetInt();
-			std::cout << " - RIO Worker Tick (ms): " << m_rioWorkerConfig.RIO_WORKER_TICK_MS << std::endl;
-        }
-        else return false;
-    }
-    else return false;
-
-    if(doc.HasMember("ThreadConfigure")) {
-        const Value& thread = doc["ThreadConfigure"];
-        std::cout << "\n[ThreadConfigure]" << std::endl;
-        if(thread.HasMember("MAX_WORKER_THREAD_COUNT")) {
-			m_threadConfig.MAX_WORKER_THREAD_COUNT = thread["MAX_WORKER_THREAD_COUNT"].GetInt();
-			std::cout << " - Max Worker Thread Count: " << m_threadConfig.MAX_WORKER_THREAD_COUNT << std::endl;
-        }
-        else return false;
     }
     else return false;
 

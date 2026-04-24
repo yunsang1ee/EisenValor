@@ -207,6 +207,7 @@
     <ClInclude Include="include\GameObject.h" />
     <ClInclude Include="include\GlobalInterfaces.h" />
     <ClInclude Include="include\IComponent.h" />
+    <ClInclude Include="include\IKProcessor.h" />
     <ClInclude Include="include\ImageUIComponent.h" />
     <ClInclude Include="include\InputGlobal.h" />
     <ClInclude Include="include\DxMath.h" />
@@ -270,6 +271,7 @@
     <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\GlobalInterfaces.cpp" />
     <ClCompile Include="src\IComponent.cpp" />
+    <ClCompile Include="src\IKProcessor.cpp" />
     <ClCompile Include="src\ImageUIComponent.cpp" />
     <ClCompile Include="src\InputGlobal.cpp" />
     <ClCompile Include="src\IResource.cpp" />

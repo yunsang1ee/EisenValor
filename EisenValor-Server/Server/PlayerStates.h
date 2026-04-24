@@ -6,7 +6,7 @@ namespace GameServer {
 	namespace Contents {
 
 		// ==================================
-		//		  GENERAL_IDLE_STATE
+		//		  PLAYER_IDLE_STATE
 		// ==================================
 		class PlayerIdleState : public State {
 			 DECLARE_CREATE_FUNC(PlayerIdleState)
@@ -25,13 +25,14 @@ namespace GameServer {
 		};
 
 		// ==================================
-		//		  GENERAL_MOVE_STATE
+		// 		 PLAYER_WALK_STATE
 		// ==================================
-		class PlayerMoveState : public State {
-			DECLARE_CREATE_FUNC(PlayerMoveState)
+		class PlayerWalkState : public State {
+			DECLARE_CREATE_FUNC(PlayerWalkState)
+
 		private:
-			PlayerMoveState();
-			virtual ~PlayerMoveState();
+			PlayerWalkState();
+			virtual ~PlayerWalkState();
 
 		public:
 			virtual void Enter(const float dt) override final;
@@ -40,7 +41,22 @@ namespace GameServer {
 		};
 
 		// ==================================
-		//		 GENERAL_PRE_DELAY_STATE
+		// 		 PLAYER_RUN_STATE
+		// ==================================
+		class PlayerRunState : public State {
+			DECLARE_CREATE_FUNC(PlayerRunState)
+		private:
+			PlayerRunState();
+			virtual ~PlayerRunState();
+
+		public:
+			virtual void Enter(const float dt) override final;
+			virtual void Exit(const float dt) override final;
+			virtual void Update(const float dt) override final;
+		};
+
+		// ==================================
+		//		 PLAYER_PRE_DELAY_STATE
 		// ==================================
 		class PlayerPredelayState : public State {
 			DECLARE_CREATE_FUNC(PlayerPredelayState)
@@ -54,11 +70,12 @@ namespace GameServer {
 			virtual void Update(const float dt) override final;
 
 		private:
-			uint64 m_startFrame;
+			float m_accDTForPreDelay;
+		
 		};
 
 		// ==================================
-		//		 GENERAL_ATTACK_STATE
+		//		PLAYER_ATTACK_STATE
 		// ==================================
 		class PlayerAttackState : public State {
 			DECLARE_CREATE_FUNC(PlayerAttackState)
@@ -70,10 +87,14 @@ namespace GameServer {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
+
+		private:
+			float m_accDT{ 0.f };
+			bool  m_hitFired{ false };
 		};
 
 		// ==================================
-		//		 GENERAL_POST_DELAY_STATE
+		//		 PLAYER_POST_DELAY_STATE
 		// ==================================
 		class PlayerPostdelayState : public State {
 			DECLARE_CREATE_FUNC(PlayerPostdelayState)
@@ -85,14 +106,11 @@ namespace GameServer {
 			virtual void Enter(const float dt) override final;
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
-
-		private:
-			uint64 m_startFrame;
 		};
 
 
 		// ==================================
-		//		 GENERAL_STUN_STATE
+		//		 PLAYER_STUN_STATE
 		// ==================================
 		class PlayerStunState : public State {
 			DECLARE_CREATE_FUNC(PlayerStunState)
@@ -114,7 +132,7 @@ namespace GameServer {
 
 
 		// ==================================
-		//		 GENERAL_DEAD_STATE
+		//		 PLAYER_DEAD_STATE
 		// ==================================
 		class PlayerDeadState : public State {
 			DECLARE_CREATE_FUNC(PlayerDeadState)

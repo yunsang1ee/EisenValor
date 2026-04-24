@@ -290,7 +290,7 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	}
 
 	// 2. Z-Order 기준 정렬
-	std::sort(
+	std::stable_sort(
 		renderableUIs.begin(), renderableUIs.end(),
 		[](IUIComponent* a, IUIComponent* b) { return a->GetOrder() < b->GetOrder(); }
 	);

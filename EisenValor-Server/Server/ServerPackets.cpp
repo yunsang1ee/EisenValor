@@ -61,7 +61,7 @@ namespace ServerPackets {
 		return  GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_REMOVE_OBJ_IN_GAME_WORLD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMOVE_OBJ_PACKET, id));
 	}
 
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint64 objID, const Transform& transform, const uint8 subState)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_MOVE_PACKET(const uint64 objID, const Transform& transform, const uint8 subState, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
@@ -69,7 +69,7 @@ namespace ServerPackets {
 		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
 
 		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
-		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, objID, &posInfo, subState));
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_MOVE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_MOVE_PACKET, objID, &posInfo, subState, moveDir));
 	}
 
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_GENERAL_ATTACK_PACKET(const uint64 id, const FB_STRUCTS::GeneralAttackInfo& atkInfo)
@@ -101,11 +101,11 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_REMAINING_GAME_TIME_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_REMAINING_GAME_TIME, remainTime));
 	}
 
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_GENERAL_STANCE_PACKET(const uint64 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_GENERAL_STANCE_PACKET(const uint64 id, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType, const uint64 targetID)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GENERAL_STANCE_PACKET, id, stanceType));
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_STANCE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GENERAL_STANCE_PACKET, id, stanceType, targetID));
 	}
 
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_CAMERA_TARGET_PACKET(const uint64 targetID)
@@ -138,6 +138,26 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_DEAD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_DEAD_PACKET, id));
+	}
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_UPDATE_TEAM_SCORE_PACKET(const uint8 blueTeamScore, const uint8 redTeamScore)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_UPDATE_TEAM_SCORE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_UPDATE_TEAM_SCORE_PACKET, blueTeamScore, redTeamScore));
+	}
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(const uint64 id, const FB_ENUMS::TEAM_TYPE teamType)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_OCCUPATION_ZONE_OCCUPIED_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_OCCUPATION_ZONE_OCCUPIED_PACKET, id, teamType));
+	}
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_OCCUPATION_ZONE_GAUGE_PACKET(const uint64 id, const float gauge, const FB_ENUMS::TEAM_TYPE teamType)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_OCCUPATION_ZONE_GAUGE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_OCCUPATION_ZONE_GAUGE_PACKET, id, gauge, teamType));
+	}
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_SOLDIER_ATTACK_PACKET(const uint64 id)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_SOLDIER_ATTACK_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SOLDIER_ATTACK_PACKET, id));
 	}
 #pragma endregion
 

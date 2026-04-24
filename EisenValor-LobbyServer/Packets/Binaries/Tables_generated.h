@@ -195,6 +195,9 @@ struct SC_SHOW_GENERAL_ATTACK_DIR_PACKETBuilder;
 struct SC_RESPAWN_GENERAL_PACKET;
 struct SC_RESPAWN_GENERAL_PACKETBuilder;
 
+struct CS_ENTER_GAME_WORLD_PACKET;
+struct CS_ENTER_GAME_WORLD_PACKETBuilder;
+
 struct SC_DEAD_PACKET;
 struct SC_DEAD_PACKETBuilder;
 
@@ -210,14 +213,20 @@ struct CS_GEN_NPC_GENERAL_PACKETBuilder;
 struct CS_UPDATE_PLAYER_STATE_PACKET;
 struct CS_UPDATE_PLAYER_STATE_PACKETBuilder;
 
-struct CS_ENTER_GAME_WORLD_PACKET;
-struct CS_ENTER_GAME_WORLD_PACKETBuilder;
+struct SC_UPDATE_TEAM_SCORE_PACKET;
+struct SC_UPDATE_TEAM_SCORE_PACKETBuilder;
 
-struct CS_GO_WORLD_PACKET;
-struct CS_GO_WORLD_PACKETBuilder;
+struct SC_OCCUPATION_ZONE_OCCUPIED_PACKET;
+struct SC_OCCUPATION_ZONE_OCCUPIED_PACKETBuilder;
 
-struct CS_GAME_START_PACKET;
-struct CS_GAME_START_PACKETBuilder;
+struct SC_OCCUPATION_ZONE_GAUGE_PACKET;
+struct SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder;
+
+struct SC_SOLDIER_ATTACK_PACKET;
+struct SC_SOLDIER_ATTACK_PACKETBuilder;
+
+struct CS_TELEPORT_PACKET;
+struct CS_TELEPORT_PACKETBuilder;
 
 struct CL_PONG_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CL_PONG_PACKETBuilder Builder;
@@ -1216,7 +1225,7 @@ struct LC_CHANGE_TEAM_PACKETBuilder {
 inline ::flatbuffers::Offset<LC_CHANGE_TEAM_PACKET> CreateLC_CHANGE_TEAM_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t user_id = 0,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
   LC_CHANGE_TEAM_PACKETBuilder builder_(_fbb);
   builder_.add_user_id(user_id);
   builder_.add_team_type(team_type);
@@ -1258,7 +1267,7 @@ struct CL_ADD_BOT_PACKETBuilder {
 
 inline ::flatbuffers::Offset<CL_ADD_BOT_PACKET> CreateCL_ADD_BOT_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
   CL_ADD_BOT_PACKETBuilder builder_(_fbb);
   builder_.add_team_type(team_type);
   return builder_.Finish();
@@ -1308,7 +1317,7 @@ struct LC_ADD_BOT_PACKETBuilder {
 inline ::flatbuffers::Offset<LC_ADD_BOT_PACKET> CreateLC_ADD_BOT_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t bot_id = 0,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE) {
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
   LC_ADD_BOT_PACKETBuilder builder_(_fbb);
   builder_.add_bot_id(bot_id);
   builder_.add_team_type(team_type);
@@ -2166,7 +2175,7 @@ inline ::flatbuffers::Offset<SC_LOCAL_PLAYER_PACKET> CreateSC_LOCAL_PLAYER_PACKE
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t player_id = 0,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE,
     uint32_t max_hp = 0,
     uint32_t current_hp = 0,
     uint32_t max_stamina = 0,
@@ -2285,7 +2294,7 @@ inline ::flatbuffers::Offset<SC_ADD_OBJ_PACKET> CreateSC_ADD_OBJ_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t obj_id = 0,
     FB_ENUMS::GAME_OBJECT_TYPE obj_type = FB_ENUMS::GAME_OBJECT_TYPE_NONE,
-    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_OFFENSE,
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE,
     const FB_STRUCTS::PosInfo *pos_info = nullptr,
     uint32_t max_hp = 0,
     uint32_t current_hp = 0,
@@ -3077,6 +3086,57 @@ inline ::flatbuffers::Offset<SC_RESPAWN_GENERAL_PACKET> CreateSC_RESPAWN_GENERAL
   return builder_.Finish();
 }
 
+struct CS_ENTER_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_ENTER_GAME_WORLD_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ROOM_ID = 4,
+    VT_PLAYER_ID = 6
+  };
+  uint16_t room_id() const {
+    return GetField<uint16_t>(VT_ROOM_ID, 0);
+  }
+  uint32_t player_id() const {
+    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
+           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_ENTER_GAME_WORLD_PACKETBuilder {
+  typedef CS_ENTER_GAME_WORLD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_room_id(uint16_t room_id) {
+    fbb_.AddElement<uint16_t>(CS_ENTER_GAME_WORLD_PACKET::VT_ROOM_ID, room_id, 0);
+  }
+  void add_player_id(uint32_t player_id) {
+    fbb_.AddElement<uint32_t>(CS_ENTER_GAME_WORLD_PACKET::VT_PLAYER_ID, player_id, 0);
+  }
+  explicit CS_ENTER_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> CreateCS_ENTER_GAME_WORLD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t room_id = 0,
+    uint32_t player_id = 0) {
+  CS_ENTER_GAME_WORLD_PACKETBuilder builder_(_fbb);
+  builder_.add_player_id(player_id);
+  builder_.add_room_id(room_id);
+  return builder_.Finish();
+}
+
 struct SC_DEAD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SC_DEAD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -3314,112 +3374,248 @@ inline ::flatbuffers::Offset<CS_UPDATE_PLAYER_STATE_PACKET> CreateCS_UPDATE_PLAY
   return builder_.Finish();
 }
 
-struct CS_ENTER_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_ENTER_GAME_WORLD_PACKETBuilder Builder;
+struct SC_UPDATE_TEAM_SCORE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_UPDATE_TEAM_SCORE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ROOM_ID = 4,
-    VT_PLAYER_ID = 6
+    VT_BLUE_SCORE = 4,
+    VT_RED_SCORE = 6
   };
-  uint16_t room_id() const {
-    return GetField<uint16_t>(VT_ROOM_ID, 0);
+  uint8_t blue_score() const {
+    return GetField<uint8_t>(VT_BLUE_SCORE, 0);
   }
-  uint32_t player_id() const {
-    return GetField<uint32_t>(VT_PLAYER_ID, 0);
+  uint8_t red_score() const {
+    return GetField<uint8_t>(VT_RED_SCORE, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
-           VerifyField<uint32_t>(verifier, VT_PLAYER_ID, 4) &&
+           VerifyField<uint8_t>(verifier, VT_BLUE_SCORE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_RED_SCORE, 1) &&
            verifier.EndTable();
   }
 };
 
-struct CS_ENTER_GAME_WORLD_PACKETBuilder {
-  typedef CS_ENTER_GAME_WORLD_PACKET Table;
+struct SC_UPDATE_TEAM_SCORE_PACKETBuilder {
+  typedef SC_UPDATE_TEAM_SCORE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_room_id(uint16_t room_id) {
-    fbb_.AddElement<uint16_t>(CS_ENTER_GAME_WORLD_PACKET::VT_ROOM_ID, room_id, 0);
+  void add_blue_score(uint8_t blue_score) {
+    fbb_.AddElement<uint8_t>(SC_UPDATE_TEAM_SCORE_PACKET::VT_BLUE_SCORE, blue_score, 0);
   }
-  void add_player_id(uint32_t player_id) {
-    fbb_.AddElement<uint32_t>(CS_ENTER_GAME_WORLD_PACKET::VT_PLAYER_ID, player_id, 0);
+  void add_red_score(uint8_t red_score) {
+    fbb_.AddElement<uint8_t>(SC_UPDATE_TEAM_SCORE_PACKET::VT_RED_SCORE, red_score, 0);
   }
-  explicit CS_ENTER_GAME_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_UPDATE_TEAM_SCORE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_UPDATE_TEAM_SCORE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_UPDATE_TEAM_SCORE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_ENTER_GAME_WORLD_PACKET> CreateCS_ENTER_GAME_WORLD_PACKET(
+inline ::flatbuffers::Offset<SC_UPDATE_TEAM_SCORE_PACKET> CreateSC_UPDATE_TEAM_SCORE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t room_id = 0,
-    uint32_t player_id = 0) {
-  CS_ENTER_GAME_WORLD_PACKETBuilder builder_(_fbb);
-  builder_.add_player_id(player_id);
-  builder_.add_room_id(room_id);
+    uint8_t blue_score = 0,
+    uint8_t red_score = 0) {
+  SC_UPDATE_TEAM_SCORE_PACKETBuilder builder_(_fbb);
+  builder_.add_red_score(red_score);
+  builder_.add_blue_score(blue_score);
   return builder_.Finish();
 }
 
-struct CS_GO_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_GO_WORLD_PACKETBuilder Builder;
+struct SC_OCCUPATION_ZONE_OCCUPIED_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_OCCUPATION_ZONE_OCCUPIED_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4,
+    VT_TEAM_TYPE = 6
+  };
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
+  }
+  FB_ENUMS::TEAM_TYPE team_type() const {
+    return static_cast<FB_ENUMS::TEAM_TYPE>(GetField<uint8_t>(VT_TEAM_TYPE, 0));
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
+           VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            verifier.EndTable();
   }
 };
 
-struct CS_GO_WORLD_PACKETBuilder {
-  typedef CS_GO_WORLD_PACKET Table;
+struct SC_OCCUPATION_ZONE_OCCUPIED_PACKETBuilder {
+  typedef SC_OCCUPATION_ZONE_OCCUPIED_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  explicit CS_GO_WORLD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_OCCUPATION_ZONE_OCCUPIED_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  void add_team_type(FB_ENUMS::TEAM_TYPE team_type) {
+    fbb_.AddElement<uint8_t>(SC_OCCUPATION_ZONE_OCCUPIED_PACKET::VT_TEAM_TYPE, static_cast<uint8_t>(team_type), 0);
+  }
+  explicit SC_OCCUPATION_ZONE_OCCUPIED_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_GO_WORLD_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_OCCUPATION_ZONE_OCCUPIED_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_GO_WORLD_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_OCCUPATION_ZONE_OCCUPIED_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_GO_WORLD_PACKET> CreateCS_GO_WORLD_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb) {
-  CS_GO_WORLD_PACKETBuilder builder_(_fbb);
+inline ::flatbuffers::Offset<SC_OCCUPATION_ZONE_OCCUPIED_PACKET> CreateSC_OCCUPATION_ZONE_OCCUPIED_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t obj_id = 0,
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
+  SC_OCCUPATION_ZONE_OCCUPIED_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
+  builder_.add_team_type(team_type);
   return builder_.Finish();
 }
 
-struct CS_GAME_START_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef CS_GAME_START_PACKETBuilder Builder;
+struct SC_OCCUPATION_ZONE_GAUGE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4,
+    VT_OCCUPY_GAUGE = 6,
+    VT_TEAM_TYPE = 8
+  };
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
+  }
+  float occupy_gauge() const {
+    return GetField<float>(VT_OCCUPY_GAUGE, 0.0f);
+  }
+  FB_ENUMS::TEAM_TYPE team_type() const {
+    return static_cast<FB_ENUMS::TEAM_TYPE>(GetField<uint8_t>(VT_TEAM_TYPE, 0));
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
+           VerifyField<float>(verifier, VT_OCCUPY_GAUGE, 4) &&
+           VerifyField<uint8_t>(verifier, VT_TEAM_TYPE, 1) &&
            verifier.EndTable();
   }
 };
 
-struct CS_GAME_START_PACKETBuilder {
-  typedef CS_GAME_START_PACKET Table;
+struct SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder {
+  typedef SC_OCCUPATION_ZONE_GAUGE_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  explicit CS_GAME_START_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_OCCUPATION_ZONE_GAUGE_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  void add_occupy_gauge(float occupy_gauge) {
+    fbb_.AddElement<float>(SC_OCCUPATION_ZONE_GAUGE_PACKET::VT_OCCUPY_GAUGE, occupy_gauge, 0.0f);
+  }
+  void add_team_type(FB_ENUMS::TEAM_TYPE team_type) {
+    fbb_.AddElement<uint8_t>(SC_OCCUPATION_ZONE_GAUGE_PACKET::VT_TEAM_TYPE, static_cast<uint8_t>(team_type), 0);
+  }
+  explicit SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<CS_GAME_START_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_OCCUPATION_ZONE_GAUGE_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<CS_GAME_START_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_OCCUPATION_ZONE_GAUGE_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<CS_GAME_START_PACKET> CreateCS_GAME_START_PACKET(
-    ::flatbuffers::FlatBufferBuilder &_fbb) {
-  CS_GAME_START_PACKETBuilder builder_(_fbb);
+inline ::flatbuffers::Offset<SC_OCCUPATION_ZONE_GAUGE_PACKET> CreateSC_OCCUPATION_ZONE_GAUGE_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t obj_id = 0,
+    float occupy_gauge = 0.0f,
+    FB_ENUMS::TEAM_TYPE team_type = FB_ENUMS::TEAM_TYPE_NONE) {
+  SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
+  builder_.add_occupy_gauge(occupy_gauge);
+  builder_.add_team_type(team_type);
+  return builder_.Finish();
+}
+
+struct SC_SOLDIER_ATTACK_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_SOLDIER_ATTACK_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4
+  };
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_SOLDIER_ATTACK_PACKETBuilder {
+  typedef SC_SOLDIER_ATTACK_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_SOLDIER_ATTACK_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  explicit SC_SOLDIER_ATTACK_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_SOLDIER_ATTACK_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_SOLDIER_ATTACK_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_SOLDIER_ATTACK_PACKET> CreateSC_SOLDIER_ATTACK_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t obj_id = 0) {
+  SC_SOLDIER_ATTACK_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
+  return builder_.Finish();
+}
+
+struct CS_TELEPORT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CS_TELEPORT_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLACE = 4
+  };
+  FB_ENUMS::TELEPORT_PLACE_TYPE place() const {
+    return static_cast<FB_ENUMS::TELEPORT_PLACE_TYPE>(GetField<uint8_t>(VT_PLACE, 0));
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint8_t>(verifier, VT_PLACE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct CS_TELEPORT_PACKETBuilder {
+  typedef CS_TELEPORT_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_place(FB_ENUMS::TELEPORT_PLACE_TYPE place) {
+    fbb_.AddElement<uint8_t>(CS_TELEPORT_PACKET::VT_PLACE, static_cast<uint8_t>(place), 0);
+  }
+  explicit CS_TELEPORT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CS_TELEPORT_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CS_TELEPORT_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CS_TELEPORT_PACKET> CreateCS_TELEPORT_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE) {
+  CS_TELEPORT_PACKETBuilder builder_(_fbb);
+  builder_.add_place(place);
   return builder_.Finish();
 }
 

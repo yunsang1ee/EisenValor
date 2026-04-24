@@ -49,6 +49,9 @@ public:
 	void				SetLookAtRotationOffset(const DX::XMFLOAT3& offsetEulerAngles);
 	const DX::XMFLOAT3& GetLookAtRotationOffset() const { return m_lookAt.rotationOffset; }
 
+	void SetLookAtTargetOffset(const DX::XMFLOAT3& offset) { m_lookAt.targetOffset = offset; }
+	const DX::XMFLOAT3& GetLookAtTargetOffset() const { return m_lookAt.targetOffset; }
+
 	void SetEnableLookAtRotation(bool enable) { m_lookAt.enableLookAtRotation = enable; }
 
 	void SetLookAtUpVector(const DX::XMFLOAT3& upVector);
@@ -111,6 +114,7 @@ private:
 		DenseListHandle<Transform> targetHandle = {};
 		DirectX::XMFLOAT3		   upVector = {0.0f, 1.0f, 0.0f};
 		DirectX::XMFLOAT3		   rotationOffset = {0.0f, 0.0f, 0.0f};
+		DirectX::XMFLOAT3		   targetOffset = {0.0f, 0.0f, 0.0f};
 		bool					   followTargetUp = false;
 		bool					   enableLookAtRotation = true; 
 	};

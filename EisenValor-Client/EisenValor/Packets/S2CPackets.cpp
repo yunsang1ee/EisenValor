@@ -228,9 +228,9 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 	else
 		DEBUG_LOG_FMT("User State: READY\n");
 
-	if (user->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (user->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("User TeamType: OFFENSE\n");
+		DEBUG_LOG_FMT("User TeamType: BLUE\n");
 	}
 	else
 		DEBUG_LOG_FMT("User TeamType: DEFENSE\n");
@@ -259,12 +259,12 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 		}
 		else
 			DEBUG_LOG_FMT("Participant State: READY\n");
-		if (participant->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+		if (participant->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 		{
-			DEBUG_LOG_FMT("Participant TeamType: OFFENSE\n");
+			DEBUG_LOG_FMT("Participant TeamType: BLUE\n");
 		}
 		else
-			DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
+			DEBUG_LOG_FMT("Participant TeamType: RED\n");
 	}
 
 	GLOBAL(SceneGlobal).LoadScene("RoomScene");
@@ -316,12 +316,12 @@ bool NetBridge::S2C::Handle_LC_JOIN_PARTICIPANT_IN_GAME_ROOM_PACKET(
 	else
 		DEBUG_LOG_FMT("Participant State: READY\n");
 
-	if (participant->team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (participant->team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("Participant TeamType: OFFENSE\n");
+		DEBUG_LOG_FMT("Participant TeamType: BLUE\n");
 	}
 	else
-		DEBUG_LOG_FMT("Participant TeamType: DEFENSE\n");
+		DEBUG_LOG_FMT("Participant TeamType: RED\n");
 
 
 	return true;
@@ -368,13 +368,13 @@ bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB
 {
 	// 참가자가 팀을 변경함
 	// TODO: 참가자가 팀을 변경했음을 화면에 보여주기
-	if (recvPkt.team_type() == FB_ENUMS::TEAM_TYPE_OFFENSE)
+	if (recvPkt.team_type() == FB_ENUMS::TEAM_TYPE_BLUE)
 	{
-		DEBUG_LOG_FMT("User ID: {} Change Team To OFFENSE\n", recvPkt.user_id());
+		DEBUG_LOG_FMT("User ID: {} Change Team To BLUE\n", recvPkt.user_id());
 	}
 	else
 	{
-		DEBUG_LOG_FMT("User ID: {} Change Team To DEFENSE\n", recvPkt.user_id());
+		DEBUG_LOG_FMT("User ID: {} Change Team To RED\n", recvPkt.user_id());
 	}
 	return true;
 }
@@ -574,7 +574,8 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					shieldHandle,
 					[scene, playerObjHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						auto res =
+							GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -712,7 +713,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					cam->SetFollowTarget(playerTrHandle); // FollowTarget 설정 추가
 					cam->SetEnableLookAtRotation(false);
 					cam->SetSmoothFollow(true, 10.0f, 10.0f);
-					cam->SetFollowOffsetLocal(DX::XMFLOAT3{
+					cam->SetFollowOffset(DX::XMFLOAT3{
 						CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight,
 						CameraConfig::kDefaultLocalOffsetZ
 					});
@@ -740,6 +741,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 	// TODO: 원격 플레이어 또는 봇 오브젝트를 게임 씬에 생성하고, 필요한 컴포넌트도 추가하기
 
 	// TODO: stanceType 사용하기
+
 
 	DEBUG_LOG_FMT("[SC_ADD_OBJ_PACKET] \n");
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
@@ -773,6 +775,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		objectName = "GameObject_" + std::to_string(id);
 		break;
 	}
+
+	// TODO: objType이 점령지일 경우, 내부적으로 dominantTeamType을 가지고 있어야 합니다.(현재 점령중인 팀)
+	// SC_OCCUPATION_ZONE_GAUGE_PACKET이 오면 해당 점령지의 게이지 값을 바로 업데이트 해주면 됩니다.
+	// 그게 아니라면 매 프레임마다 점령지 오브젝트가 자신의 dominantTeamType을 확인해서 게이지를 5.f만큼 업데이트 해주면
+	// 됩니다.
 
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
@@ -834,7 +841,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				addEquipment("PrimaryArmor", "Resource/Models/Primary_Armors.evskin");
 				addEquipment("SecondaryArmor", "Resource/Models/Secondary_Armors.evskin");
 				addEquipment("LegsArmor", "Resource/Models/Leg_Armors.evskin");
-				addEquipment("Scarf", "Resource/Models/Scarf.evskin");
+				// addEquipment("Scarf", "Resource/Models/Scarf.evskin");
 				addEquipment("Dress", "Resource/Models/Dress.evskin");
 
 				// BattleUIControllerComponent
@@ -872,7 +879,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					shieldHandle,
 					[scene, objHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						auto res =
+							GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Knight_Armored/Shield.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -967,8 +975,9 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			////////////////// isGeneral ///////////////////
 
-			else ////// Soldier
+			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
 			{
+				tr.SetScale(0.9f);
 				scene->CreateComponentWithInit<SkinnedMeshComponent>(
 					objHandle,
 					[teamType](SkinnedMeshComponent* mesh)
@@ -995,6 +1004,50 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						fsm->ChangeState(
 							StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)
 						);
+					}
+				);
+
+				// Shield
+				auto shieldHandle = scene->ReserveGameObject(objectName + "_Shield");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					shieldHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Shield.evmesh");
+						if (res)
+						{
+							mesh->SetMeshResource(res);
+						}
+
+						if (auto* parentObj = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(parentObj->GetTransform().GetHandle());
+						}
+					}
+				);
+
+				scene->CreateComponentWithInit<SocketComponent>(
+					shieldHandle,
+					[scene, objHandle](SocketComponent* socket)
+					{
+						if (auto* targetObj = scene->TryGetGameObject(objHandle))
+						{
+							socket->SetTarget(targetObj, "lowerarm_l");
+							// Offset
+							float			tx = 0.1634455f;
+							float			ty = 0.02278341f;
+							float			tz = 0.101984f;
+							constexpr float rx = DirectX::XMConvertToRadians(-10.853f);
+							constexpr float ry = DirectX::XMConvertToRadians(135.113f);
+							constexpr float rz = DirectX::XMConvertToRadians(-251.105f);
+
+							socket->SetOffsetMatrix(
+								DirectX::XMMatrixRotationRollPitchYaw(rx, ry, rz) *
+								DirectX::XMMatrixTranslation(tx, ty, tz)
+							);
+						}
 					}
 				);
 
@@ -1077,10 +1130,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				}
 			);
 
-			DEBUG_LOG_FMT(
-				"Created {} at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n",
-				objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER ? "Player" : "Bot", pos.x, pos.y, pos.z, currentHP, maxHP
-			);
+			DEBUG_LOG_FMT("Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n", pos.x, pos.y, pos.z, currentHP, maxHP);
 
 			// 공격 범위 디버깅
 			// if (isGeneral)
@@ -1157,25 +1207,20 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
 
 	auto obj = scene->FindGameObjectByServerID(id);
-	if (obj)
-	{
-		const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
-		const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
-		obj->GetTransform().SetPosition(pos);
-		obj->GetTransform().SetRotation(rot);
+	if (!obj)
+		return false;
 
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+	obj->GetTransform().SetPosition(pos);
+	obj->GetTransform().SetRotation(rot);	
+
+	if (id != localID)
+	{
 		// 서버에서 보내준 state를 FSM에 전달
 		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
-			uint8_t subState = recvPkt.sub_state();
-			if (subState == 21)
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::BWD);
-			else if (subState == 22)
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::LFT);
-			else if (subState == 23)
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::RGT);
-			else
-				fsm->SetMoveDirection(FSMComponent::MoveDirection::FWD);
+			fsm->SetMoveDirection(recvPkt.move_dir());
 		}
 	}
 	return true;
@@ -1273,14 +1318,64 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 	// 서버 Echo 방지
 	if (id == scene->GetLocalID())
 	{
+		auto cameraComp = CameraComponent::GetMainCamera();
+
+		if (!cameraComp)
+		{
+			return false;
+		}
+
+		const auto cameraTargetID = recvPkt.camera_target_id();
+
+		if (cameraTargetID == 0)
+		{
+			// 락온 해제 시(적 죽었을 때) 로컬 플레이어로 복구
+			const uint64 localID = scene->GetLocalID();
+			if (auto localPlayer = scene->FindGameObjectByServerID(localID))
+			{
+				cameraComp->SetLookAtTarget(localPlayer->GetHandle());
+				cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f}); // 오프셋 초기화
+				cameraComp->SetEnableLookAtRotation(false); // 자유 시점
+				cameraComp->SetFollowOffsetLocal(
+					{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ
+					}
+				); // 오프셋 복구 (공유 상수 사용)
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Reset to LocalPlayer\n");
+			}
+			else
+			{
+				cameraComp->ClearLookAtTarget();
+				cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f});
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
+			}
+		}
+		else
+		{
+			if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
+			{
+				cameraComp->SetLookAtTarget(targetObj->GetHandle());
+				cameraComp->SetLookAtTargetOffset({0.0f, CameraConfig::kLockOnViewOffsetY, 0.0f}); // 대상을 바라볼 때 약간 위를 바라보도록 설정
+				cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
+			}
+			else
+			{
+				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Target ID {} not found in scene\n", cameraTargetID);
+			}
+		}
+
 		return true;
 	}
 
 	if (auto* obj = scene->FindGameObjectByServerID(id))
 	{
-		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
-			ui->SetStance(stance);
+			if (fsm->IsLockOn())
+				fsm->SetLockOn(false);
+			else
+				fsm->SetLockOn(true);
+			fsm->SetStance(static_cast<uint8_t>(stance));
 			DEBUG_LOG_FMT("[SC_CHANGE_PLAYER_STANCE] ID: {}, Stance: {}\n", id, static_cast<int>(stance));
 		}
 	}
@@ -1316,8 +1411,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
+			nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+		{
+			return true;
+		}
 		fsm->SetServerState(nextState);
+		return true;
 	}
 
 SET_LOCAL:
@@ -1378,6 +1478,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
 		{
 			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
+			cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f}); // 오프셋 초기화
 			cameraComp->SetEnableLookAtRotation(false); // 자유 시점
 			cameraComp->SetFollowOffsetLocal(
 				{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ}
@@ -1387,6 +1488,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		else
 		{
 			cameraComp->ClearLookAtTarget();
+			cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f});
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
 		}
 	}
@@ -1395,6 +1497,8 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
 		{
 			cameraComp->SetLookAtTarget(targetObj->GetHandle());
+			cameraComp->SetLookAtTargetOffset({0.0f, CameraConfig::kLockOnViewOffsetY, 0.0f}
+			);										   // 대상을 바라볼 때 약간 위를 바라보도록 설정
 			cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
 		}
@@ -1473,9 +1577,9 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 		}
 
 		// 스탠스 업데이트
-		if (auto* ui = obj->GetComponent<BattleUIControllerComponent>())
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
-			ui->SetStance(recvPkt.stance_type());
+			fsm->SetStance(static_cast<uint8_t>(recvPkt.stance_type()));
 		}
 		// 디버깅
 		DEBUG_LOG_FMT(
@@ -1504,5 +1608,67 @@ bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES
 	// Ping 패킷 수신 시, Pong 패킷 전송
 	auto pb = C2S::Make_CS_PONG_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
+)
+{
+	// 팀 점수 업데이트
+	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_OCCUPIED_PACKET& recvPkt
+)
+{
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 상태 업데이트하기
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt
+)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	const uint64 objID = recvPkt.obj_id();
+	auto		 obj = scene->FindGameObjectByServerID(objID);
+
+	if (localID == objID)
+	{
+		return false;
+	}
+
+	if (!obj)
+	{
+		return false;
+	}
+
+	// FSM 상태 동기화
+	if (auto* fsm = obj->GetComponent<FSMComponent>())
+	{
+		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
+		fsm->SetServerState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK);
+		return true;
+	}
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
+)
+{
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트하기
+
 	return true;
 }

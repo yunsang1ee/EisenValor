@@ -15,6 +15,7 @@ public:
 	void  SetMouseSensitivity(float x, float y);
 	void  SetPitchLimits(float minPitch, float maxPitch);
 	float GetPitch() const { return m_pitch; }
+	float GetYaw() const { return m_yaw; }
 
 	void SetCameraHandle(HandleOf<GameObject> cameraHandle)
 	{
@@ -40,6 +41,7 @@ private:
 	HandleOf<MovementComponent> m_movementHandle;
 
 	float m_pitch = 0.0f;
+	float m_yaw   = 0.0f;
 
 	float m_sensitivityX = 0.1f;
 	float m_sensitivityY = 0.1f;

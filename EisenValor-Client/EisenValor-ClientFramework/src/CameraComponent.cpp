@@ -376,6 +376,8 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	// LookAt Target Rotation (LookAt 타겟 기준)
 	const XMFLOAT3 lookAtPos = lookAtTransform->GetWorldPosition();
 	XMVECTOR	   lookAtPosVec = XMLoadFloat3(&lookAtPos);
+	XMVECTOR	   targetOffsetVec = XMLoadFloat3(&m_lookAt.targetOffset);
+	lookAtPosVec = XMVectorAdd(lookAtPosVec, targetOffsetVec);
 
 	if (m_lookAt.enableLookAtRotation)
 	{
@@ -414,8 +416,8 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	}
 	else
 	{
-		XMFLOAT4 targetRotQf = lookAtTransform->GetWorldRotationQuaternion();
-		desiredWorldQ = XMLoadFloat4(&targetRotQf);
+		// 비락온 모드: 플레이어의 회전을 무시하고 Identity를 베이스로 사용
+		desiredWorldQ = XMQuaternionIdentity();
 	}
 
 	XMVECTOR offsetQ = XMQuaternionRotationRollPitchYaw(

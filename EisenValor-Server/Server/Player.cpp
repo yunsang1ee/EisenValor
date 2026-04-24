@@ -28,7 +28,7 @@ void GameServer::Contents::Player::Update(const float dt)
 	// std::cout << std::format("Pos: {}. {}. {}", pos.x, pos.y, pos.z) << std::endl;
 }
 
-bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt)
+bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	auto const world{ GetGameWorld() };
 	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
@@ -88,7 +88,7 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 		}
 	}
 	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
-		damage = 10;
+		damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
 	}
 
 	// when hit during the first delay, stun delay and damage are doubled
@@ -98,7 +98,7 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 			m_stunDelay *= 2;
 		}
 	}
-	DecHP(damage);
+	DecHP(damage, broadcast);
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 	
 	if(IsActive())
@@ -127,11 +127,8 @@ void GameServer::Contents::Player::OnRespawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
-	SetPosition(
-		(FB_ENUMS::TEAM_TYPE_OFFENSE == GetTeamType())
-			? Vec3{ 0.f, 0.f, -149.5679931640625f }
-			: Vec3{ 0.f, 0.f, 149.5679931640625f }
-	);
+
+	SetPosition(m_respawnPos);
 
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, worldDT, true);
@@ -150,7 +147,7 @@ void GameServer::Contents::Player::DecStamina(const uint32 amount, const bool br
 	}
 }
 
-void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
+void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo)
 {
 	if(false == IsActive())
 		return;
@@ -158,6 +155,14 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::Gen
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	const uint64 worldFrame = world->GetGameWorldFrameCount();
+	
+	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
+
+	const auto curState{ fsm->GetCurState()->GetStateType() };
+
+	if(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY == curState || FB_ENUMS::PLAYER_STATE_TYPE_ATTACK == curState || FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY == curState) {
+		return;
+	}
 
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir = atkInfo.attack_dir();
 	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType = atkInfo.attack_type();
@@ -166,45 +171,6 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_ATTACK(const FB_STRUCTS::Gen
 	SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
 	DecStamina(skillData->staminaCost);
 
-	bool findTarget{ false };
-
-	for(int i = 0; i < FB_ENUMS::GAME_OBJECT_TYPE_END; ++i) {
-
-		if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER && i != FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) 
-			continue;
-
-		const auto& gameObjectGroups = GetGameWorld()->GetGameObjectGroups();
-
-		for(const auto& [id, o] : gameObjectGroups[i]) {
-			if(false == IsValidObj(o))
-				continue;
-			
-			if(id == GetID())
-				continue;
-
-			if(false == o->IsCreature()) 
-				continue;
-
-			std::shared_ptr<Creature> const obj{ std::static_pointer_cast<Creature>(o) };
-
-			if(GetTeamType() == obj->GetTeamType()) 
-				continue;
-
-			if(IsTargetInAttackRange(obj)) {
-				std::cout << "Handle_CS_PLAYER_ATTACK - Set Target! ID : " << obj->GetID() << std::endl;
-				SetTarget(obj);
-				findTarget = true;
-			}
-		}
-
-		if(findTarget)
-			break;
-	}
-
-	if(false == findTarget)
-		SetTarget(nullptr);
-
-	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY, worldDT, true);
 
 	{
@@ -218,19 +184,67 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_GENERAL_STANCE()
 	if(false == IsActive())
 		return;
 
-	// std::cout << "Handle_CS_GENERAL_CHANGE_STATNCE" << std::endl;
-	(GetStanceType() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL) ? SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT) : SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(),GetStanceType());
+	auto const gameWorld{ GetGameWorld() };
+
+	const auto& gameObjectsGroups{ gameWorld->GetGameObjectGroups() };
+
+	const Vec3& myPos{ GetPosition() };
+	const uint64 myID{ GetID() };
+
+	uint64 bestTargetID{};
+	float bestDistSq{ std::numeric_limits<float>::max() };
+
+	const auto considerFp = [&](General* const target)
+		{
+			if(!target) return;
+
+			const uint64 targetID{ target->GetID() };
+			if(targetID == myID) return;
+
+			const auto d{ target->GetPosition() - myPos };
+			const float distSq{ d.LengthSquared() };
+
+			if(distSq < bestDistSq) {
+				bestDistSq = distSq;
+				bestTargetID = targetID;
+			}
+		};
+
+
+	for(int i = 0; i < gameObjectsGroups.size(); ++i) {
+		if(i != FB_ENUMS::GAME_OBJECT_TYPE_GENERAL && i != FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) continue;
+
+		for(const auto& [id, object] : gameObjectsGroups[i]) {
+			auto const target = static_cast<General*>(object.get());
+			considerFp(target);
+		}
+	}
+
+	if(bestTargetID == 0) return;
+
+	const auto stanceType{ GetStanceType() };
+	if(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL == stanceType) {
+		SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	}
+	else {
+		SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+		bestTargetID = 0;
+	}
+
+	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(),GetStanceType(), bestTargetID);
 	GetSession()->GetGameWorld()->Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
-{	if(false == IsActive())
+{	
+	if(false == IsActive())
 		return;
+
+	std::cout << "Handle_CS_PLAYER_FAKE" << std::endl;
 
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 
-	const FB_ENUMS::GENERAL_STATE_TYPE curState{ static_cast<FB_ENUMS::GENERAL_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
+	const FB_ENUMS::PLAYER_STATE_TYPE curState{ static_cast<FB_ENUMS::PLAYER_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
 
 	if(curState == (FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)) {
 		const AttackInfo& atkInfo{ GetAtkInfo() };
@@ -240,6 +254,8 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
 			const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 			if(worldFrame >= atkInfo.startPreDelay + (atkInfo.skillData->preDelay / 2)) {
 				std::cout << "Fake!" << std::endl;
+
+				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, world->GetGameWorldDT(), true);
 			}
 		}
 	}

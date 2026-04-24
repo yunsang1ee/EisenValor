@@ -11,7 +11,7 @@ GameServer::Contents::FSM::FSM()
 
 void GameServer::Contents::FSM::SetState(const uint8 state, const bool broadcast)
 {
-	auto const owner{ GetOwner() };
+	const auto owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };
 
 	if(world) {
@@ -52,7 +52,7 @@ void GameServer::Contents::FSM::AddState(std::unique_ptr<State> state)
 
 void GameServer::Contents::FSM::ChangeState(const uint8 nextState, const float dt, const bool broadcast)
 {
-	auto const owner{ GetOwner() };
+	const auto owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };
 	if(world) {
 		world->AddEvent([this, nextState, dt, broadcast]()
@@ -77,7 +77,7 @@ void GameServer::Contents::FSM::ChangeState(const uint8 nextState, const float d
 
 void GameServer::Contents::FSM::SendUpdateStatePacket()
 {
-	auto const owner{ GetOwner() };
+	const auto owner{ GetOwner() };
 	auto const world{ owner->GetGameWorld() };
 	auto pb{ ServerPackets::Make_SC_UPDATE_STATE_PACKET(owner->GetID(), m_curState->GetStateType()) };
 	world->Broadcast(std::move(pb));

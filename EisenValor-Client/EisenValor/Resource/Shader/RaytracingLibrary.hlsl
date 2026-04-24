@@ -503,8 +503,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		);
 		
 		float3 reflectF = FresnelSchlick(NdotVGeom, F0);
-		reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
-	}
+        reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
+    }
 	
 	float3 ambient = kD * albedo * 0.15f * ao;
 	float3 emissive = 0.0f.xxx;

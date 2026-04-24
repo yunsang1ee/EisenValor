@@ -50,8 +50,8 @@ namespace LobbyServer {
 		Bots														m_bots;
 		std::shared_ptr<User>										m_host;
 
-		int32														m_offenseCount;
-		int32														m_defenseCount;
+		int32														m_blueTeamCount;
+		int32														m_redTeamCount;
 	};
 }
 

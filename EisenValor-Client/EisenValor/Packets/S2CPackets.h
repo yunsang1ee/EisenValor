@@ -65,6 +65,8 @@ bool Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET
 
 #pragma endregion
 
+
+#pragma region WORLD_PACKETS
 bool Handle_SC_LOCAL_PLAYER_PACKET(const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt);
 bool Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_ADD_OBJ_PACKET& recvPkt);
 bool Handle_SC_REMOVE_OBJ_PACKET(const SOCKET& socket, const FB_TABLES::SC_REMOVE_OBJ_PACKET& recvPkt);
@@ -87,6 +89,17 @@ bool Handle_SC_RESPAWN_GENERAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_
 bool Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt);
 bool Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES::SC_PING_PACKET& recvPkt);
 
+bool Handle_SC_UPDATE_TEAM_SCORE_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt);
 
+bool Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
+);
+
+bool Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_OCCUPIED_PACKET& recvPkt
+);
+
+bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt);
+#pragma endregion
 } // namespace S2C
 } // namespace NetBridge

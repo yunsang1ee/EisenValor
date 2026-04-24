@@ -13,10 +13,6 @@ namespace GameServerEngine {
 			uint32 MAX_SESSION_PER_RIO_WORKER;
 			uint32 MAX_CQ_SIZE;
 			uint32 MAX_RIO_RESULT;
-			uint32 RIO_WORKER_TICK_MS;
-		};
-		struct ThreadConfig {
-			uint32 MAX_WORKER_THREAD_COUNT;
 		};
 		struct SessionConfig {
 			uint32 MAX_RIO_BUFFER_SIZE;
@@ -33,16 +29,11 @@ namespace GameServerEngine {
 	public:
 		const NetworkConfig& GetNetworkConfig() const { return m_networkConfig; }
 		const RIOWorkerConfig& GetRIOWorkerConfig() const { return m_rioWorkerConfig; }
-		const ThreadConfig& GetThreadConfig() const { return m_threadConfig; }
 		const SessionConfig& GetSessionConfig() const { return m_sessionConfig; }
-		uint16 GetGameWorldThreadPort(uint32 index) const
-		{
-			return m_networkConfig.GameWorldThreadStartPort + static_cast<uint16>(index);
-		}
+		uint16 GetGameWorldThreadPort(uint32 index) const { return m_networkConfig.GameWorldThreadStartPort + static_cast<uint16>(index); }
 	private:
 		NetworkConfig		m_networkConfig;
 		RIOWorkerConfig		m_rioWorkerConfig;
-		ThreadConfig		m_threadConfig;
 		SessionConfig		m_sessionConfig;
 	};
 }

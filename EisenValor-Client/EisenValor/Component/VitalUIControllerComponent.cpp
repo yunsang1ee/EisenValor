@@ -52,7 +52,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 		{
 			auto& resGlobal = GLOBAL(ResourceGlobal);
 			auto  team = teamComp->GetTeamType();
-			auto  texRes = (team == FB_ENUMS::TEAM_TYPE_OFFENSE)
+			auto  texRes = (team == FB_ENUMS::TEAM_TYPE_BLUE)
 							  ? resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagBlue.evtex")
 							  : resGlobal.Load<TextureResource>(L"Resource\\Texture\\FlagRed.evtex");
 
@@ -315,9 +315,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 		});
 
 		m_flagIcon = scene->CreateComponentWithInit<ImageUIComponent>(flagHandle, [this, &resGlobal](ImageUIComponent* img) {
-			img->SetOrder(16);
+			img->SetOrder(30);
 			// 관리 목록 등록
-			m_managedImages.push_back({img->GetHandle(), 14});
+			m_managedImages.push_back({img->GetHandle(), 30});
 		});
 	});
 
@@ -335,9 +335,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 		});
 
 		scene->CreateComponentWithInit<ImageUIComponent>(backHandle, [this, &resGlobal](ImageUIComponent* img) {
-			img->SetOrder(12);
+			img->SetOrder(20);
 			// 관리 목록 등록 (Back)
-			m_managedImages.push_back({img->GetHandle(), 12});
+			m_managedImages.push_back({img->GetHandle(), 20});
 			auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\HPback.evtex");
 			img->SetNormalTextureResource(texRes);
 		});
@@ -357,9 +357,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			});
 
 			m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &resGlobal](ImageUIComponent* img) {
-				img->SetOrder(14);
+				img->SetOrder(21);
 				// 관리 목록 등록 (Fill)
-				m_managedImages.push_back({img->GetHandle(), 13});
+				m_managedImages.push_back({img->GetHandle(), 21});
 				auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\HP_fill.evtex");
 				img->SetNormalTextureResource(texRes);
 				img->SetNormalColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 하얀색
@@ -405,7 +405,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				});
 
 				m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [this, &resGlobal](ImageUIComponent* img) {
-					img->SetOrder(12);
+					img->SetOrder(11);
 					// 관리 목록 등록 (Fill)
 					m_managedImages.push_back({img->GetHandle(), 11});
 					auto texRes = resGlobal.Load<TextureResource>(L"Resource\\Texture\\Staminafill.evtex");

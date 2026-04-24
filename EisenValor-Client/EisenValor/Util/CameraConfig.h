@@ -7,5 +7,13 @@ namespace CameraConfig
 
 	// Default local offset components for restoring camera on unlock
 	static constexpr float kDefaultLocalOffsetX = 1.0f;
-	static constexpr float kDefaultLocalOffsetZ = -2.5f;
-} // namespace CameraConfig
+	static constexpr float kDefaultLocalOffsetZ = -3.5f;
+
+	////////////////////////////////////////////////////////
+
+	static constexpr float kShoulderViewOffsetX = 1.5f;
+	static constexpr float kShoulderViewOffsetY = 1.5f;
+	static constexpr float kShoulderViewOffsetZ = -1.8f;
+
+	static constexpr float kLockOnViewOffsetY = 1.0f;
+	} // namespace CameraConfig

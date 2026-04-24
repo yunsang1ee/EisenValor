@@ -106,3 +106,14 @@ void FSMComponent::ChangeState(uint8_t nextStateType)
 	}
 }
 
+void FSMComponent::SetStance(uint8_t stance)
+{
+	if (m_stance == stance) return;
+	m_stance = stance;
+
+	for (auto& listener : m_stanceListeners)
+	{
+		if (listener) listener(m_stance);
+	}
+}
+

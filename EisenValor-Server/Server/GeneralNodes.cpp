@@ -319,7 +319,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::AttackTry::DoAc
 			const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(finalAtkType) };
 			owner->SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
 			owner->DecStamina(skillData->staminaCost, true);
-			if(target->OnDamaged(owner, dt)) {
+			if(target->OnAttacked(owner, dt)) {
 				// std::cout << "NPC General Attack!" << std::endl;
 				FB_STRUCTS::GeneralAttackInfo info{ static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(owner->GetAtkInfo().skillData->skillTypeID), owner->GetAtkInfo().dir };
 				auto pb{ ServerPackets::Make_SC_GENERAL_ATTACK_PACKET(owner->GetID(), info) };
