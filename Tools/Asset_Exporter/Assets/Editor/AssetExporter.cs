@@ -121,6 +121,7 @@ public class AssetExporter
         public string Guid = "";
         public string ExportName = "";
         public bool DestroyAfterExport;
+        public bool OverwriteExisting;
     }
 
     private sealed class GeneratedMaterialExportRecord
@@ -128,6 +129,7 @@ public class AssetExporter
         public string Guid = "";
         public string ExportName = "";
         public string AlbedoTextureGuid = "";
+        public bool OverwriteExisting;
     }
 
     private sealed class GeneratedTextureExportRecord
@@ -138,6 +140,7 @@ public class AssetExporter
         public bool IsSRGB = true;
         public bool IsNormalMap;
         public bool DestroyAfterExport;
+        public bool OverwriteExisting;
     }
 
     private sealed class TextureExportRecord
@@ -639,6 +642,10 @@ public class AssetExporter
                 );
 
                 RegisterMeshExport(chunkMesh, materialGuids, chunkGuid, chunkName, true, context);
+                if (context.MeshExports.TryGetValue(chunkGuid, out MeshExportRecord chunkRecord))
+                {
+                    chunkRecord.OverwriteExisting = true;
+                }
 
                 int chunkNodeIndex = context.Nodes.Count;
                 context.Nodes.Add(new SceneNodeRecord
@@ -817,7 +824,7 @@ public class AssetExporter
         Directory.CreateDirectory(modelDir);
 
         string outputPath = Path.Combine(modelDir, SanitizeFileName(record.ExportName) + "_" + record.Guid[..8] + ".evmesh");
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && false == record.OverwriteExisting)
         {
             return;
         }
@@ -910,7 +917,7 @@ public class AssetExporter
         Directory.CreateDirectory(materialDir);
 
         string outputPath = Path.Combine(materialDir, SanitizeFileName(material.ExportName) + "_" + material.Guid[..8] + ".evmat");
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && false == material.OverwriteExisting)
         {
             return;
         }
@@ -932,7 +939,7 @@ public class AssetExporter
         Directory.CreateDirectory(textureDir);
 
         string outputPath = Path.Combine(textureDir, SanitizeFileName(texture.ExportName) + "_" + texture.Guid[..8] + ".evtex");
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && false == texture.OverwriteExisting)
         {
             return;
         }
@@ -1172,7 +1179,8 @@ public class AssetExporter
                 ExportName = safeBaseName + "_TerrainAlbedo",
                 IsSRGB = true,
                 IsNormalMap = false,
-                DestroyAfterExport = true
+                DestroyAfterExport = true,
+                OverwriteExisting = true
             });
         }
         else
@@ -1186,7 +1194,8 @@ public class AssetExporter
             {
                 Guid = materialGuid,
                 ExportName = safeBaseName + "_Terrain",
-                AlbedoTextureGuid = textureGuid
+                AlbedoTextureGuid = textureGuid,
+                OverwriteExisting = true
             });
         }
 
@@ -1633,7 +1642,7 @@ public class AssetExporter
         using (BinaryWriter bw = new(ms))
         {
             bw.Write(SHADING_MODEL_LIT_PBR);
-            bw.Write(MATERIAL_FLAG_USE_ALBEDO_MAP);
+            bw.Write(MATERIAL_FLAG_USE_ALBEDO_MAP | MATERIAL_FLAG_DOUBLE_SIDED);
             bw.Write(1.0f);
             bw.Write(1.0f);
             bw.Write(1.0f);
