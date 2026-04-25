@@ -57,6 +57,34 @@ bool MaterialData::Deserialize(AssetFile& file)
 		}
 	}
 
+	const ChunkEntry* terrainEntry = file.GetChunkEntry("TERP");
+	if (terrainEntry && 1 == terrainEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("TERP", size));
+		constexpr size_t requiredSize = sizeof(uint32_t) + sizeof(float) * 2 + sizeof(float) * 4 * 4;
+		constexpr size_t requiredSizeV2 = requiredSize + sizeof(float) * 4 * 2;
+		if (nullptr != ptr && requiredSize <= size)
+		{
+			size_t offset = 0;
+			std::memcpy(&terrainLayerCount, ptr + offset, sizeof(uint32_t));
+			offset += sizeof(uint32_t);
+			if (4 < terrainLayerCount)
+			{
+				terrainLayerCount = 4;
+			}
+
+			std::memcpy(terrainSize, ptr + offset, sizeof(float) * 2);
+			offset += sizeof(float) * 2;
+			std::memcpy(terrainLayerTileST, ptr + offset, sizeof(float) * 4 * 4);
+			offset += sizeof(float) * 4 * 4;
+			if (requiredSizeV2 <= size)
+			{
+				std::memcpy(terrainLayerMetallicRoughness, ptr + offset, sizeof(float) * 4 * 2);
+			}
+		}
+	}
+
 	return IsValid();
 }
 } // namespace EvAsset

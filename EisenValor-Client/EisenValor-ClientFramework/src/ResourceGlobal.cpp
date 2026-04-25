@@ -519,6 +519,7 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
 	res->SetData(data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic);
+	res->SetTerrainData(data.terrainLayerCount, data.terrainSize, data.terrainLayerTileST, data.terrainLayerMetallicRoughness);
 
 	for (const auto& dep : data.dependencies)
 	{

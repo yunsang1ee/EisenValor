@@ -19,6 +19,45 @@ void MaterialResource::SetData(EvAsset::ShadingModel shadingModel, uint32_t mate
 	}
 }
 
+void MaterialResource::SetTerrainData(
+	uint32_t layerCount,
+	const float terrainSizeIn[2],
+	const float layerTileSTIn[4][4],
+	const float layerMetallicRoughnessIn[4][2]
+)
+{
+	terrainLayerCount = std::min(layerCount, 4u);
+	if (nullptr != terrainSizeIn)
+	{
+		terrainSize.x = terrainSizeIn[0];
+		terrainSize.y = terrainSizeIn[1];
+	}
+
+	if (nullptr != layerTileSTIn)
+	{
+		for (uint32_t i = 0; i < 4; ++i)
+		{
+			terrainLayerTileST[i] = DX::XMFLOAT4(
+				layerTileSTIn[i][0],
+				layerTileSTIn[i][1],
+				layerTileSTIn[i][2],
+				layerTileSTIn[i][3]
+			);
+		}
+	}
+
+	if (nullptr != layerMetallicRoughnessIn)
+	{
+		for (uint32_t i = 0; i < 4; ++i)
+		{
+			terrainLayerMetallicRoughness[i] = DX::XMFLOAT2(
+				layerMetallicRoughnessIn[i][0],
+				layerMetallicRoughnessIn[i][1]
+			);
+		}
+	}
+}
+
 void MaterialResource::SetTexture(std::string_view slotName, std::shared_ptr<TextureResource> tex)
 {
 	for (auto& slot : textures)

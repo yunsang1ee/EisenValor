@@ -20,6 +20,7 @@
 #include "TextureResource.h"
 #include "CameraRenderData.h"
 #include "FrameRenderData.h"
+#include "RaytracingCommon.h"
 
 #include <unordered_map>
 #include <algorithm>
@@ -53,6 +54,55 @@ uint32_t GetReadyTextureIndex(MaterialResource* material, std::string_view slotN
 	}
 
 	return texRes->GetTexture()->GetSRVIndex();
+}
+
+uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResource* material)
+{
+	if (nullptr == materialData || nullptr == material)
+	{
+		return ~0u;
+	}
+
+	const auto& matGuid = material->GetGuid();
+	if (materialData->materialToTerrainSurfaceIndex.contains(matGuid))
+	{
+		return materialData->materialToTerrainSurfaceIndex[matGuid];
+	}
+
+	const auto terrainSize = material->GetTerrainSize();
+	const auto* terrainLayerTileST = material->GetTerrainLayerTileST();
+	TerrainSurfaceGPUData surface = {};
+	surface.splatTextureIdx = GetReadyTextureIndex(material, "SPL0");
+	surface.layerAlbedoTextureIdx0 = GetReadyTextureIndex(material, "LA0A");
+	surface.layerAlbedoTextureIdx1 = GetReadyTextureIndex(material, "LA1A");
+	surface.layerAlbedoTextureIdx2 = GetReadyTextureIndex(material, "LA2A");
+	surface.layerAlbedoTextureIdx3 = GetReadyTextureIndex(material, "LA3A");
+	surface.layerNormalTextureIdx0 = GetReadyTextureIndex(material, "LA0N");
+	surface.layerNormalTextureIdx1 = GetReadyTextureIndex(material, "LA1N");
+	surface.layerNormalTextureIdx2 = GetReadyTextureIndex(material, "LA2N");
+	surface.layerNormalTextureIdx3 = GetReadyTextureIndex(material, "LA3N");
+	surface.layerOrmTextureIdx0 = GetReadyTextureIndex(material, "LA0O");
+	surface.layerOrmTextureIdx1 = GetReadyTextureIndex(material, "LA1O");
+	surface.layerOrmTextureIdx2 = GetReadyTextureIndex(material, "LA2O");
+	surface.layerOrmTextureIdx3 = GetReadyTextureIndex(material, "LA3O");
+	surface.layerCount = material->GetTerrainLayerCount();
+	surface.terrainSize = {terrainSize.x, terrainSize.y, 0.0f, 0.0f};
+	const auto* terrainLayerMetallicRoughness = material->GetTerrainLayerMetallicRoughness();
+	for (uint32_t i = 0; i < 4; ++i)
+	{
+		surface.layerTileST[i] = terrainLayerTileST[i];
+		surface.layerMetallicRoughness[i] = {
+			terrainLayerMetallicRoughness[i].x,
+			terrainLayerMetallicRoughness[i].y,
+			0.0f,
+			0.0f
+		};
+	}
+
+	uint32_t surfaceIdx = static_cast<uint32_t>(materialData->terrainSurfaceSyncBuffer.Size());
+	materialData->terrainSurfaceSyncBuffer.Register(surface);
+	materialData->materialToTerrainSurfaceIndex[matGuid] = surfaceIdx;
+	return surfaceIdx;
 }
 }
 
@@ -158,10 +208,12 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 
 	instanceData->syncBuffer.Clear();
 	materialData->syncBuffer.Clear();
+	materialData->terrainSurfaceSyncBuffer.Clear();
 	geoTableData->syncBuffer.Clear();
 	materialData->materialToIndex.clear();
+	materialData->materialToTerrainSurfaceIndex.clear();
 
-	std::vector<std::pair<GameObject*, DxBLAS*>> tlasInstances;
+	std::vector<DxTLASInstance> tlasInstances;
 	tlasInstances.reserve(1'000);
 
 	auto*							   cmdList = context.CommandList();
@@ -179,32 +231,46 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 
 	if (nullptr != tlas && false == tlasInstances.empty())
 	{
-		std::vector<std::pair<uint32_t, uint64_t>> topologyKeys;
-		topologyKeys.reserve(tlasInstances.size());
-		for (const auto& [obj, blas] : tlasInstances)
+		struct TlasTopologyKey
 		{
+			uint32_t objectId;
+			uint64_t blasAddr;
+			uint32_t flags;
+		};
+		std::vector<TlasTopologyKey> topologyKeys;
+		topologyKeys.reserve(tlasInstances.size());
+		for (const auto& instance : tlasInstances)
+		{
+			const auto* obj = instance.obj;
+			const auto* blas = instance.blas;
 			const uint32_t objectId = obj ? obj->GetHandle().id : 0u;
 			const uint64_t blasAddr = blas ? blas->GetGPUAddress() : 0ull;
-			topologyKeys.emplace_back(objectId, blasAddr);
+			const uint32_t instanceFlags = static_cast<uint32_t>(instance.flags);
+			topologyKeys.push_back({objectId, blasAddr, instanceFlags});
 		}
 
 		std::sort(
 			topologyKeys.begin(), topologyKeys.end(),
 			[](const auto& lhs, const auto& rhs)
 			{
-				if (lhs.first != rhs.first)
+				if (lhs.objectId != rhs.objectId)
 				{
-					return lhs.first < rhs.first;
+					return lhs.objectId < rhs.objectId;
 				}
-				return lhs.second < rhs.second;
+				if (lhs.blasAddr != rhs.blasAddr)
+				{
+					return lhs.blasAddr < rhs.blasAddr;
+				}
+				return lhs.flags < rhs.flags;
 			}
 		);
 
 		uint64_t topologyHash = kFnvOffsetBasis;
-		for (const auto& [objectId, blasAddr] : topologyKeys)
+		for (const auto& key : topologyKeys)
 		{
-			HashBytes(topologyHash, &objectId, sizeof(objectId));
-			HashBytes(topologyHash, &blasAddr, sizeof(blasAddr));
+			HashBytes(topologyHash, &key.objectId, sizeof(key.objectId));
+			HashBytes(topologyHash, &key.blasAddr, sizeof(key.blasAddr));
+			HashBytes(topologyHash, &key.flags, sizeof(key.flags));
 		}
 
 		const uint32_t currentInstanceCount = static_cast<uint32_t>(tlasInstances.size());
@@ -254,7 +320,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 void DxrRenderPass::CollectStaticMeshData(
 	Scene*										  scene,
 	ID3D12GraphicsCommandList4*					  cmdList,
-	std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+	std::vector<DxTLASInstance>&				  tlasInstances,
 	uint32_t									  frameIndex
 )
 {
@@ -293,6 +359,7 @@ void DxrRenderPass::CollectStaticMeshData(
 		}
 
 		uint32_t geoBaseIdx = static_cast<uint32_t>(geoTableData->syncBuffer.Size());
+		bool	 disableTriangleCull = false;
 		for (const auto& subMesh : meshRes->GetSubMeshes())
 		{
 			auto* matRes = meshComp.GetMaterial(subMesh.materialSlot);
@@ -300,6 +367,7 @@ void DxrRenderPass::CollectStaticMeshData(
 			{
 				matRes = GLOBAL(ResourceGlobal).GetDefaultMaterial().get();
 			}
+			disableTriangleCull |= (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_DOUBLE_SIDED));
 
 			uint32_t	matIdx = 0;
 			const auto& matGuid = matRes->GetGuid();
@@ -321,6 +389,9 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.normalTextureIdx = GetReadyTextureIndex(matRes, "NRML");
 				gpuMat.ormTextureIdx = GetReadyTextureIndex(matRes, "ORMS");
 				gpuMat.emissiveTextureIdx = GetReadyTextureIndex(matRes, "EMSV");
+				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
+										   ? RegisterTerrainSurface(materialData.get(), matRes)
+										   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;
@@ -343,14 +414,18 @@ void DxrRenderPass::CollectStaticMeshData(
 		inst.instanceID = meshComp.GetOwner().id;
 
 		instanceData->syncBuffer.Register(inst);
-		tlasInstances.push_back({meshComp.GetGameObject(), blas});
+		tlasInstances.push_back(
+			{meshComp.GetGameObject(), blas,
+			 disableTriangleCull ? D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE
+								 : D3D12_RAYTRACING_INSTANCE_FLAG_NONE}
+		);
 	}
 }
 
 void DxrRenderPass::CollectSkinnedMeshData(
 	Scene*										  scene,
 	ID3D12GraphicsCommandList4*					  cmdList,
-	std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+	std::vector<DxTLASInstance>&				  tlasInstances,
 	uint32_t									  frameIndex,
 	bool&										  hasAnimatedInstances
 )
@@ -432,6 +507,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		hasAnimatedInstances = true;
 
 		uint32_t geoBaseIdx = static_cast<uint32_t>(geoTableData->syncBuffer.Size());
+		bool	 disableTriangleCull = false;
 		for (const auto& subMesh : meshRes->GetSubMeshes())
 		{
 			auto* matRes = skinnedMeshComp.GetMaterialResource(subMesh.materialSlot);
@@ -439,6 +515,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			{
 				matRes = GLOBAL(ResourceGlobal).GetDefaultMaterial().get();
 			}
+			disableTriangleCull |= (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_DOUBLE_SIDED));
 
 			uint32_t	matIdx = 0;
 			const auto& matGuid = matRes->GetGuid();
@@ -460,6 +537,9 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.normalTextureIdx = GetReadyTextureIndex(matRes, "NRML");
 				gpuMat.ormTextureIdx = GetReadyTextureIndex(matRes, "ORMS");
 				gpuMat.emissiveTextureIdx = GetReadyTextureIndex(matRes, "EMSV");
+				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
+										   ? RegisterTerrainSurface(materialData.get(), matRes)
+										   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;
@@ -482,7 +562,11 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		inst.instanceID = skinnedMeshComp.GetOwner().id;
 
 		instanceData->syncBuffer.Register(inst);
-		tlasInstances.push_back({skinnedMeshComp.GetGameObject(), blas});
+		tlasInstances.push_back(
+			{skinnedMeshComp.GetGameObject(), blas,
+			 disableTriangleCull ? D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE
+								 : D3D12_RAYTRACING_INSTANCE_FLAG_NONE}
+		);
 	}
 }
 
@@ -546,6 +630,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		DxScopedGpuEvent syncEvent(context, L"DXR.SyncRenderData");
 		instanceData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		materialData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
+		materialData->terrainSurfaceSyncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		geoTableData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 	}
 
@@ -606,6 +691,12 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	{
 		cmdList4->SetComputeRootShaderResourceView(
 			5, geoTableData->syncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+		);
+	}
+	if (materialData->terrainSurfaceSyncBuffer.GetBuffer())
+	{
+		cmdList4->SetComputeRootShaderResourceView(
+			6, materialData->terrainSurfaceSyncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
 		);
 	}
 

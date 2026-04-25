@@ -161,7 +161,7 @@ struct MaterialProp
 
 struct MaterialDepEntry
 {
-	char type[4]; // "ALBD", "NRML", "ORM ", "EMSV"
+	char type[4]; // "ALBD", "NRML", "ORM ", "EMSV", "SPL0", "LA0A".."LA3A"
 	Guid assetGuid;
 };
 

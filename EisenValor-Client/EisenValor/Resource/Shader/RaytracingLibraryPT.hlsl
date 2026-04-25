@@ -12,11 +12,134 @@ cbuffer CameraConstants : register(b0, space0)
 StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
 StructuredBuffer<MaterialGPUData> g_materials : register(t2, space0);
 StructuredBuffer<GeoInfo> g_geoTable : register(t3, space0);
+StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0);
 
 SamplerState g_sampler : register(s0, space0);
 
 static const uint MAX_RECURSION_DEPTH = 18;
 static const uint SPP = 4;
+static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
+
+struct TerrainSample
+{
+	float3 albedo;
+	float3 normalTS;
+	float metallic;
+	float roughness;
+	float ao;
+};
+
+void AccumulateTerrainLayer(
+	inout TerrainSample blended,
+	inout float weightSum,
+	uint albedoTextureIdx,
+	uint normalTextureIdx,
+	uint ormTextureIdx,
+	float2 metallicRoughness,
+	float weight,
+	float2 terrainXZ,
+	float4 tileST)
+{
+	if (weight <= 0.0f)
+	{
+		return;
+	}
+
+	float2 layerUV = terrainXZ * tileST.xy + tileST.zw;
+	float3 layerAlbedo = 1.0f.xxx;
+	if (albedoTextureIdx != INVALID_TEXTURE_INDEX)
+	{
+		Texture2D albedoTexture = ResourceDescriptorHeap[albedoTextureIdx];
+		layerAlbedo = albedoTexture.SampleLevel(g_sampler, layerUV, 0).rgb;
+	}
+
+	float3 layerNormalTS = float3(0.0f, 0.0f, 1.0f);
+	if (normalTextureIdx != INVALID_TEXTURE_INDEX)
+	{
+		Texture2D normalTexture = ResourceDescriptorHeap[normalTextureIdx];
+		float2 encodedXY = normalTexture.SampleLevel(g_sampler, layerUV, 0).xy * 2.0f - 1.0f;
+		layerNormalTS = float3(encodedXY, sqrt(saturate(1.0f - dot(encodedXY, encodedXY))));
+	}
+
+	float layerMetallic = metallicRoughness.x;
+	float layerRoughness = metallicRoughness.y;
+	float layerAo = 1.0f;
+	if (ormTextureIdx != INVALID_TEXTURE_INDEX)
+	{
+		Texture2D ormTexture = ResourceDescriptorHeap[ormTextureIdx];
+		float4 p = ormTexture.SampleLevel(g_sampler, layerUV, 0);
+		layerAo = p.r;
+		layerMetallic = p.b;
+		layerRoughness = p.g;
+	}
+
+	blended.albedo += layerAlbedo * weight;
+	blended.normalTS += layerNormalTS * weight;
+	blended.metallic += layerMetallic * weight;
+	blended.roughness += layerRoughness * weight;
+	blended.ao += layerAo * weight;
+	weightSum += weight;
+}
+
+TerrainSample SampleTerrainSplat(MaterialGPUData mat, float2 terrainUV)
+{
+	TerrainSample result;
+	result.albedo = 1.0f.xxx;
+	result.normalTS = float3(0.0f, 0.0f, 1.0f);
+	result.metallic = 0.0f;
+	result.roughness = 1.0f;
+	result.ao = 1.0f;
+
+	if (mat.terrainSurfaceIdx == INVALID_TEXTURE_INDEX)
+	{
+		return result;
+	}
+
+	TerrainSurfaceGPUData terrain = g_terrainSurfaces[mat.terrainSurfaceIdx];
+	if (terrain.splatTextureIdx == INVALID_TEXTURE_INDEX)
+	{
+		return result;
+	}
+
+	Texture2D splatTexture = ResourceDescriptorHeap[terrain.splatTextureIdx];
+	float4 weights = splatTexture.SampleLevel(g_sampler, terrainUV, 0);
+	float2 terrainXZ = terrainUV * terrain.terrainSize.xy;
+	uint layerCount = terrain.layerCount;
+
+	TerrainSample blended;
+	blended.albedo = 0.0f.xxx;
+	blended.normalTS = 0.0f.xxx;
+	blended.metallic = 0.0f;
+	blended.roughness = 0.0f;
+	blended.ao = 0.0f;
+	float weightSum = 0.0f;
+	if (0 < layerCount)
+	{
+		AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx0, terrain.layerNormalTextureIdx0, terrain.layerOrmTextureIdx0, terrain.layerMetallicRoughness[0].xy, weights.r, terrainXZ, terrain.layerTileST[0]);
+	}
+	if (1 < layerCount)
+	{
+		AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx1, terrain.layerNormalTextureIdx1, terrain.layerOrmTextureIdx1, terrain.layerMetallicRoughness[1].xy, weights.g, terrainXZ, terrain.layerTileST[1]);
+	}
+	if (2 < layerCount)
+	{
+		AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx2, terrain.layerNormalTextureIdx2, terrain.layerOrmTextureIdx2, terrain.layerMetallicRoughness[2].xy, weights.b, terrainXZ, terrain.layerTileST[2]);
+	}
+	if (3 < layerCount)
+	{
+		AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx3, terrain.layerNormalTextureIdx3, terrain.layerOrmTextureIdx3, terrain.layerMetallicRoughness[3].xy, weights.a, terrainXZ, terrain.layerTileST[3]);
+	}
+
+	if (0.0f < weightSum)
+	{
+		result.albedo = blended.albedo / weightSum;
+		result.normalTS = normalize(blended.normalTS / weightSum);
+		result.metallic = blended.metallic / weightSum;
+		result.roughness = blended.roughness / weightSum;
+		result.ao = blended.ao / weightSum;
+	}
+	return result;
+}
 
 // RNG (PCG)
 float RandomValue(inout uint seed)
@@ -324,7 +447,18 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	float3 bitangent = normalize(cross(normal, tangent) * tangentSign);
 	
 	float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
-	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_NORMAL_MAP))
+	TerrainSample terrainSample;
+	bool useTerrainSplat = 0 != (mat.materialFlags & MATERIAL_FLAG_TERRAIN_SPLAT);
+	if (useTerrainSplat)
+	{
+		terrainSample = SampleTerrainSplat(mat, uv);
+		normal = normalize(
+			tangent * terrainSample.normalTS.x +
+			bitangent * terrainSample.normalTS.y +
+			normal * terrainSample.normalTS.z
+		);
+	}
+	else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_NORMAL_MAP))
 	{
 		Texture2D normalTexture = ResourceDescriptorHeap[mat.normalTextureIdx];
 		float2 encodedXY = normalTexture.SampleLevel(g_sampler, uv, 0).xy * 2.0f - 1.0f;
@@ -347,7 +481,11 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	}
 	
 	float3 albedo = mat.albedo.rgb;
-	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
+	if (useTerrainSplat)
+	{
+		albedo *= terrainSample.albedo;
+	}
+	else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
 	{
 		Texture2D albedoTexture = ResourceDescriptorHeap[mat.albedoTextureIdx];
 		albedo *= albedoTexture.SampleLevel(g_sampler, uv, 0).rgb;
@@ -356,7 +494,13 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	float metallic = mat.metallic;
 	float roughness = mat.roughness;
 	float ao = 1.0f;
-	if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ORM_MAP))
+	if (useTerrainSplat)
+	{
+		metallic = terrainSample.metallic;
+		roughness = terrainSample.roughness;
+		ao = terrainSample.ao;
+	}
+	else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ORM_MAP))
 	{
 		Texture2D ormTexture = ResourceDescriptorHeap[mat.ormTextureIdx];
 		float4 p = ormTexture.SampleLevel(g_sampler, uv, 0);

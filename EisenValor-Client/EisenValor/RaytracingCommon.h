@@ -33,6 +33,7 @@
 #define MATERIAL_FLAG_EMISSIVE_MAP (1 << 6)
 #define MATERIAL_FLAG_TRANSPARENT (1 << 7)
 #define MATERIAL_FLAG_IGNORE_LIGHTING (1 << 8)
+#define MATERIAL_FLAG_TERRAIN_SPLAT (1 << 9)
 
 #ifdef __cplusplus
 #pragma pack(push, 1)
@@ -80,6 +81,7 @@ struct InstanceData
 struct MaterialGPUData
 {
 	RAY_FLOAT4 albedo;
+
 	float	   roughness;
 	float	   metallic;
 	RAY_UINT   shadingModel;
@@ -89,6 +91,38 @@ struct MaterialGPUData
 	RAY_UINT normalTextureIdx;
 	RAY_UINT ormTextureIdx;
 	RAY_UINT emissiveTextureIdx;
+
+	RAY_UINT terrainSurfaceIdx;
+	RAY_UINT pad0;
+	RAY_UINT pad1;
+	RAY_UINT pad2;
+};
+
+struct TerrainSurfaceGPUData
+{
+	RAY_UINT splatTextureIdx;
+	RAY_UINT layerAlbedoTextureIdx0;
+	RAY_UINT layerAlbedoTextureIdx1;
+	RAY_UINT layerAlbedoTextureIdx2;
+
+	RAY_UINT layerAlbedoTextureIdx3;
+	RAY_UINT layerNormalTextureIdx0;
+	RAY_UINT layerNormalTextureIdx1;
+	RAY_UINT layerNormalTextureIdx2;
+
+	RAY_UINT layerNormalTextureIdx3;
+	RAY_UINT layerOrmTextureIdx0;
+	RAY_UINT layerOrmTextureIdx1;
+	RAY_UINT layerOrmTextureIdx2;
+
+	RAY_UINT layerOrmTextureIdx3;
+	RAY_UINT layerCount;
+	RAY_UINT pad0;
+	RAY_UINT pad1;
+
+	RAY_FLOAT4 terrainSize;
+	RAY_FLOAT4 layerTileST[4];
+	RAY_FLOAT4 layerMetallicRoughness[4];
 };
 
 #ifdef __cplusplus
