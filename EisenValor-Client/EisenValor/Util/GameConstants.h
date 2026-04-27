@@ -5,5 +5,7 @@ namespace StateOffset
 {
 	// FSM & Animation Offsets
 	static constexpr uint8_t kSoldierOffset = 50;
+	static constexpr uint8_t kIdleOffset = 60;
 	static constexpr uint8_t kAttackOffset  = 100;
-}
+	static constexpr uint8_t kHurtOffset = 150;
+	}

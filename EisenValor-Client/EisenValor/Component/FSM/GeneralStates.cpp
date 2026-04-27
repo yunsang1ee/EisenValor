@@ -33,7 +33,7 @@ void PlayerlIdleState::Enter(FSMComponent* fsm)
 			if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
 			{
 				uint8_t dir = fsm->GetCurAttackDir();
-				uint8_t idleKey = 50 + dir; // 51:TOP, 52:LEFT, 53:RIGHT
+				uint8_t idleKey = 60 + dir; // 61:TOP, 62:LEFT, 63:RIGHT
 				anim->Play(idleKey, true);
 			}
 			else
@@ -58,17 +58,11 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 	if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
 	{
 		uint8_t dir = fsm->GetCurAttackDir();
-		uint8_t targetIdleKey = 50 + dir;
+		uint8_t targetIdleKey = StateOffset::kIdleOffset + dir;
 
 		 if (anim->GetCurrentKey() != targetIdleKey)
 		{
 			//DEBUG_LOG_FMT("[Anim] Switching Idle Animation to Key: {} (Dir: {})\n", targetIdleKey, dir);
-			anim->Play(targetIdleKey, true);
-		}
-
-		// 방향별 Idle 애니메이션
-		if (anim->GetCurrentKey() != targetIdleKey)
-		{
 			anim->Play(targetIdleKey, true);
 		}
 	}
@@ -364,7 +358,7 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 			//anim->Play(stunKey, false, true);
 
 			// 기본 STUN
-			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
+			anim->Play(StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
 		}
 	}
 }
