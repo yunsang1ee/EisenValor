@@ -68,15 +68,15 @@ namespace AnimationLoader
 			// 방향별 전투 Idle (50: NONE, 51:TOP, 52:LEFT, 53:RIGHT)
 			anim->AddAnimation(50, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
 			anim->AddAnimation(51, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_UP_Idle.evanim"));
-			anim->AddAnimation(52, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
-			anim->AddAnimation(53, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
+			anim->AddAnimation(52, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_LEFT_Idle.evanim"));
+			anim->AddAnimation(53, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_RIGHT_Idle.evanim"));
 
 			// 4. 방향별 공격 (110:TOP, 120:LEFT, 130:RIGHT + type)
 			// TOP (110:Light, 111:Heavy)
 			anim->AddAnimation(110, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Thrust/Thrust_F_Seq.evanim"));
 			anim->AddAnimation(111, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Dash_Attack_ver_A1.evanim"));
 
-			// LEFT (120:Light, 121:Heavy)
+			// LEFT (120:Light, 121:Heavy)                                                                                                                                                                                                                                                                                                                                                                                                                                   
 			anim->AddAnimation(120, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_02_Seq.evanim"));
 			anim->AddAnimation(121, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_3_Inplace1.evanim"));
 
