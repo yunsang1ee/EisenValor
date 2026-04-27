@@ -637,7 +637,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	{
 		m_accumulatedDeltaX = 0.0f;
 		m_accumulatedDeltaY = 0.0f;
-		UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
+		//UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
 		return;
 	}
 
