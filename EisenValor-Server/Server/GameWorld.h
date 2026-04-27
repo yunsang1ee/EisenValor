@@ -77,7 +77,7 @@ namespace GameServer {
 			void AddGameObject(std::shared_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void RemoveGameObject(std::shared_ptr<GameObject> gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
 			float GetGameWorldDT() const { return m_dt; }
-			uint64 GetGameWorldFrameCount() const { return m_worldFrameCount; }
+			// uint64 GetGameWorldFrameCount() const { return m_worldFrameCount; }
 			const auto& GetGameObjectGroups() const { return m_gameObjectsGroups; }
 			const GameObjects& GetGameObjectGroup(const FB_ENUMS::GAME_OBJECT_TYPE type);
 			NavSystem* GetNavSystem() { return &m_navSystem; }
@@ -122,7 +122,7 @@ namespace GameServer {
 			const float																			m_fixedUpdateTick;
 			const uint32																		m_maxUpdateStep;
 			std::chrono::seconds																m_remainingTimeSec;
-			uint64																				m_worldFrameCount;
+			// uint64																				m_worldFrameCount;
 	
 			CollisionDetector																	m_collisionDetector;
 			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>				m_check;

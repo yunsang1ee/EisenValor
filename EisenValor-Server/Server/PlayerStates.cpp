@@ -159,8 +159,7 @@ void GameServer::Contents::PlayerPredelayState::Update(const float dt)
 {
 	const auto& owner{ GetGeneral(GetFSM()) };
 
-	const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAtkInfo() };
+	//const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };;
 
 	m_accDTForPreDelay += dt;
 
@@ -226,7 +225,7 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 
 	if(m_accDT < HIT_FRAME_DELAY) return;
 	if(m_hitFired) return;               
-	m_hitFired = true;                   
+	m_hitFired = true;						
 
 	if(false == IsValidObj(owner)) return;
 
@@ -369,7 +368,7 @@ GameServer::Contents::PlayerStunState::~PlayerStunState()
 void GameServer::Contents::PlayerStunState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
+	//m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 	if(m_stunDuration == 0) {
 		m_stunDuration = owner->GetGameObjectData()->stunDelay;
 	}
@@ -391,7 +390,7 @@ void GameServer::Contents::PlayerStunState::Update(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
 	auto const world{ owner->GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+	//const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const fsm{ GetFSM() };
 	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
 }

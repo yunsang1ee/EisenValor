@@ -106,7 +106,7 @@ bool GameServer::Contents::General::OnAttacked(std::shared_ptr<Creature> const a
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
 	auto const world{ GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+	// const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 	if(!fsm) return false;
@@ -138,17 +138,17 @@ bool GameServer::Contents::General::OnAttacked(std::shared_ptr<Creature> const a
 				uint64 lastDefendedFrame = bb->GetValue<uint64>("LastDefendedFrame", 0UI64);
 
 				if(lastDefendedFrame != 0) {
-					uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
-					uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
+					//uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
+					//uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
 
 					// 방어 성공
-					if(frameDiff <= 10) {
+					//if(frameDiff <= 10) {
 #ifdef PRINT_GENERAL_LOG
-						std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
+						//std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
 #endif
-						bb->SetValue("LastDefendedFrame", 0UI64);
-						return false;
-					}
+						//bb->SetValue("LastDefendedFrame", 0UI64);
+						//return false;
+					//}
 
 					bb->SetValue("LastDefendedFrame", 0UI64);
 				}

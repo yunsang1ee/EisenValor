@@ -95,10 +95,11 @@ namespace GameServer {
 			virtual void Update(const float dt) override final;
 
 		private:
-			float m_accDTForAttack;
-			float m_attackRangeSq;
-			bool  m_hitFired;      
-			bool  m_attackStarted;
+			float	m_accDTForAttack;
+			float	m_accDTForDamage;
+
+			float	m_attackRangeSq;
+			bool	m_attackStarted;
 
 			friend class GameObjectFactory;
 		};

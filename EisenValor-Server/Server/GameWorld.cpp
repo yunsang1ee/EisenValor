@@ -20,7 +20,7 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{},
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, /*m_worldFrameCount{},*/ m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{},
 	m_remainingTimeSec{ std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec } },
 	m_fixedUpdateTick{ 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick },
 	m_maxUpdateStep{ MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep },
@@ -77,7 +77,7 @@ void GameServer::Contents::GameWorld::Update(const float dt)
 		CheckCollision();
 		CheckGameTime(m_fixedUpdateTick);
 		CheckGameFinish();
-		m_worldFrameCount++;
+		// m_worldFrameCount++;
 		loopCount++;
 	}
 
@@ -963,38 +963,38 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	}
 	//}
 
-	for(const auto& team : teams) {
-		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
+	//for(const auto& team : teams) {
+	//	const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
 
-		 for(const auto& soldierSpawner : *soldierSpawners) {
-			SoldierSpanwerTemplate t;
-			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-			t.gameObjectData = nullptr;
-			t.transform = Transform{ soldierSpawner.position, Vec3{} };
-			t.teamType = soldierSpawner.teamType;
-			t.gameWorld = this;
-			t.destPos = soldierSpawner.destinationPosition;
-			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
-			t.spawnCount = soldierSpawner.soldierSpawnCount;
-			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
-			AddGameObject(std::move(spawner));
-		}
+	//	 for(const auto& soldierSpawner : *soldierSpawners) {
+	//		SoldierSpanwerTemplate t;
+	//		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	//		t.gameObjectData = nullptr;
+	//		t.transform = Transform{ soldierSpawner.position, Vec3{} };
+	//		t.teamType = soldierSpawner.teamType;
+	//		t.gameWorld = this;
+	//		t.destPos = soldierSpawner.destinationPosition;
+	//		t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+	//		t.spawnCount = soldierSpawner.soldierSpawnCount;
+	//		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+	//		AddGameObject(std::move(spawner));
+	//	}
 
-		/*for(int i=0; i < 1; ++i){
-			const auto& soldierSpawner = (*soldierSpawners)[i];
-			SoldierSpanwerTemplate t;
-			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-			t.gameObjectData = nullptr;
-			t.transform = Transform{ soldierSpawner.position, Vec3{} };
-			t.teamType = soldierSpawner.teamType;
-			t.gameWorld = this;
-			t.destPos = soldierSpawner.destinationPosition;
-			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
-			t.spawnCount = soldierSpawner.soldierSpawnCount;
-			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
-			AddGameObject(std::move(spawner));
-		}*/
-	}
+	//	/*for(int i=0; i < 1; ++i){
+	//		const auto& soldierSpawner = (*soldierSpawners)[i];
+	//		SoldierSpanwerTemplate t;
+	//		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	//		t.gameObjectData = nullptr;
+	//		t.transform = Transform{ soldierSpawner.position, Vec3{} };
+	//		t.teamType = soldierSpawner.teamType;
+	//		t.gameWorld = this;
+	//		t.destPos = soldierSpawner.destinationPosition;
+	//		t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+	//		t.spawnCount = soldierSpawner.soldierSpawnCount;
+	//		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+	//		AddGameObject(std::move(spawner));
+	//	}*/
+	//}
 }
 
 void GameServer::Contents::GameWorld::UpdateGameWorldObjects()

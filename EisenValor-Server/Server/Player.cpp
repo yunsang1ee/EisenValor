@@ -31,11 +31,11 @@ void GameServer::Contents::Player::Update(const float dt)
 bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	auto const world{ GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+	//const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 
-	m_startStunDelay = worldFrame;
+	//m_startStunDelay = worldFrame;
 	
 	//if(FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType())
 	//	return false;
@@ -67,7 +67,7 @@ bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const at
 			damage = attackerAtkInfo.skillData->damage;
 		}
 	}
-	// 공격자가 NPC 장수 일경우
+	// 공격자가 NPC 장수인 경우
 	else if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == attacker->GetObjType()) {
 		// std::cout << "Attacker Is General!" << std::endl;
 		auto attackGeneral{ std::static_pointer_cast<General>(attacker) };
@@ -87,11 +87,11 @@ bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const at
 			damage = attackerAtkInfo.skillData->damage;
 		}
 	}
+	// 공격자가 병사인 경우
 	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
 		damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
 	}
 
-	// when hit during the first delay, stun delay and damage are doubled
 	if(auto const fsm = GetComponent<GameServer::Contents::FSM>()) {
 		if(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY == fsm->GetCurState()->GetStateType()) {
 			damage *= 2;
@@ -154,7 +154,7 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
-	const uint64 worldFrame = world->GetGameWorldFrameCount();
+	// const uint64 worldFrame = world->GetGameWorldFrameCount();
 	
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 
@@ -168,7 +168,7 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType = atkInfo.attack_type();
 
 	const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(atkType) };
-	SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
+	SetAtkInfo(AttackInfo{ skillData, dir, 0});
 	DecStamina(skillData->staminaCost);
 
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY, worldDT, true);
@@ -251,12 +251,12 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
 
 		const auto world{ GetGameWorld() };
 		if(world) {
-			const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-			if(worldFrame >= atkInfo.startPreDelay + (atkInfo.skillData->preDelay / 2)) {
+			//const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+	/*		if(worldFrame >= atkInfo.startPreDelay + (atkInfo.skillData->preDelay / 2)) {
 				std::cout << "Fake!" << std::endl;
 
 				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, world->GetGameWorldDT(), true);
-			}
+			}*/
 		}
 	}
 }

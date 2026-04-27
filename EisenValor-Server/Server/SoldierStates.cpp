@@ -270,7 +270,7 @@ void GameServer::Contents::SoldierChaseState::Update(const float dt)
 //					ATTACK
 // ============================================
 GameServer::Contents::SoldierAttackState::SoldierAttackState(const float attackRange)
-	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDTForAttack{ }, m_attackRangeSq{ attackRange * attackRange }, m_hitFired{ false }, m_attackStarted{ false }
+	:State{ FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK }, m_accDTForAttack{ }, m_attackRangeSq{ attackRange * attackRange }, m_attackStarted{ false }
 {
 }
 
@@ -285,13 +285,12 @@ void GameServer::Contents::SoldierAttackState::Enter(const float dt)
 #ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Enter SoldierAttackState", id) << std::endl;
 #endif
-	m_accDTForAttack = 0.f;
+	m_accDTForDamage = 0.f;
+	m_accDTForAttack =0.f;
+	m_attackStarted = false;
 	const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(ag)
 		ag->StopMove();
-
-	m_hitFired = false;
-	m_attackStarted = false;
 }
 
 void GameServer::Contents::SoldierAttackState::Exit(const float dt)
@@ -301,10 +300,6 @@ void GameServer::Contents::SoldierAttackState::Exit(const float dt)
 #ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Exit SoldierAttackState", id) << std::endl;
 #endif
-	m_accDTForAttack = 0.f;
-
-	m_hitFired = false;
-	m_attackStarted = false;
 }
 
 void GameServer::Contents::SoldierAttackState::Update(const float dt)
@@ -320,50 +315,87 @@ void GameServer::Contents::SoldierAttackState::Update(const float dt)
 		return;
 	}
 
+	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+	if(distToTargetSq >= m_attackRangeSq) {
+		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_MOVE, dt, true);
+		return;
+	}
+
 	owner->LookAt(target->GetPosition());
 	m_accDTForAttack += dt;
 
-	if(!m_attackStarted) {
-		m_attackStarted = true;
-		auto pb{ ServerPackets::Make_SC_SOLDIER_ATTACK_PACKET(owner->GetID()) };
-		owner->GetGameWorld()->Broadcast(std::move(pb));
-	}
-
-	if(!m_hitFired && m_accDTForAttack >= HIT_FRAME_DELAY) {
-		m_hitFired = true;
-
-		const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
-		if(distToTargetSq <= m_attackRangeSq) {
-			target->OnAttacked(owner, dt, false);
-
-			auto weakTarget = std::weak_ptr<Creature>(target);
-			owner->GetGameWorld()->AddTimedEvent([weakTarget]()
-				{
-					auto t = weakTarget.lock();
-					if(t) t->BroadcastUpdateVital();
-				}, 0.05f);
-		}
-		else {
-			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
-			return;
-		}
-	}
-	
 	if(m_accDTForAttack >= ATTACK_CYCLE) {
 		m_accDTForAttack -= ATTACK_CYCLE;
-		m_hitFired = false;
-
-		const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
-		if(distToTargetSq > m_attackRangeSq) {
-			m_attackStarted = false;
-			GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
-			return;
-		}
-
 		m_attackStarted = true;
 		auto pb{ ServerPackets::Make_SC_SOLDIER_ATTACK_PACKET(owner->GetID()) };
 		owner->GetGameWorld()->Broadcast(std::move(pb));
+		return;
 	}
+
+	if(m_attackStarted) {
+		m_accDTForDamage += dt;
+	}
+
+	if(m_attackStarted && m_accDTForDamage >= HIT_FRAME_DELAY) {
+		m_accDTForDamage-= HIT_FRAME_DELAY;
+		m_accDTForAttack-=HIT_FRAME_DELAY;
+
+		m_attackStarted = false;
+
+		target->OnAttacked(owner, dt, false);
+
+		auto weakTarget = std::weak_ptr<Creature>(target);
+		owner->GetGameWorld()->AddTimedEvent([weakTarget]()
+			{
+				auto t = weakTarget.lock();
+				if(t) t->BroadcastUpdateVital();
+			}, 0.05f);
+	}
+
+	//if(!m_attackStarted) {
+	//	m_attackStarted = true;
+	//	auto pb{ ServerPackets::Make_SC_SOLDIER_ATTACK_PACKET(owner->GetID()) };
+	//	owner->GetGameWorld()->Broadcast(std::move(pb));
+	//}
+
+	//if(!m_hitFired && m_accDTForAttack >= HIT_FRAME_DELAY) {
+	//	m_hitFired = true;
+
+	//	const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+	//	if(distToTargetSq <= m_attackRangeSq) {
+	//		target->OnAttacked(owner, dt, false);
+
+	//		auto weakTarget = std::weak_ptr<Creature>(target);
+	//		owner->GetGameWorld()->AddTimedEvent([weakTarget]()
+	//			{
+	//				auto t = weakTarget.lock();
+	//				if(t) t->BroadcastUpdateVital();
+	//			}, 0.05f);
+	//	}
+	//	else {
+	//		std::cout << "First" << std::endl;
+	//		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
+	//		return;
+	//	}
+	//}
+	//
+	//if(m_accDTForAttack >= ATTACK_CYCLE) {
+	//	m_accDTForAttack = 0.f;
+	//	m_hitFired = false;
+	//	m_attackStarted = false;
+
+	//	/*const float distToTargetSq{ (target->GetPosition() - owner->GetPosition()).LengthSquared() };
+	//	if(distToTargetSq > m_attackRangeSq) {
+	//		std::cout << "Second" << std::endl;
+	//		m_attackStarted = false;
+	//		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE, dt, true);
+	//	}
+	//	else {
+	//		m_attackStarted = true;
+	//		auto pb{ ServerPackets::Make_SC_SOLDIER_ATTACK_PACKET(owner->GetID()) };
+	//		owner->GetGameWorld()->Broadcast(std::move(pb));
+	//	}*/
+	//}
 }
 
 
