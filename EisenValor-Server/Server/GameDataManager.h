@@ -10,6 +10,7 @@ struct GameWorldData {
     uint32	gameTimeSec;
     float   gameUpdateTick;
     uint32  maxUpdateStep;
+	uint32  scoreToWin;
 };
 
 struct SkillData {

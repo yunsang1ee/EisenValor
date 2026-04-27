@@ -396,7 +396,6 @@ void GameServer::Contents::SoldierDeadState::Update(const float dt)
 {
 	m_accDT += dt;
 
-	// TODO: 죽는 애니메이션 시간동안 대기
 	if(m_accDT >= m_deadAnimTime) {
 #ifdef PRINT_SOLDIER_STATE_LOG
 		std::cout << "Soldier Dead!" << std::endl;

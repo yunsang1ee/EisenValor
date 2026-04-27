@@ -20,17 +20,18 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{}
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{},
+	m_remainingTimeSec{ std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec } },
+	m_fixedUpdateTick{ 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick },
+	m_maxUpdateStep{ MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep },
+	m_blueTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition },
+	m_redTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition },
+	m_scoreToWin{ MANAGER(GameDataManager)->GetGameWorldData().scoreToWin },
+	m_isGameFinish{ false }
 {
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
 #endif
-	m_remainingTimeSec = std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec };
-	m_fixedUpdateTick = 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick;
-	m_maxUpdateStep = MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep;
-
-	m_blueTeamLastBasePos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition;
-	m_redTeamLastBasePos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
 }
 
 GameServer::Contents::GameWorld::~GameWorld()
@@ -67,19 +68,16 @@ void GameServer::Contents::GameWorld::Update(const float dt)
 	m_accDT += dt;
 
 	uint32 loopCount{};
-
 	while(m_accDT >= m_fixedUpdateTick && loopCount < m_maxUpdateStep) {
+		if(IsGameFinish()) break; 
 		m_accDT -= m_fixedUpdateTick;
 		ProcessEvents();
 		m_navSystem.Update(m_fixedUpdateTick);
-		for(const auto& group : m_gameObjectsGroups) {
-			for(const auto& [id, obj] : group) {
-				if(obj) obj->Update(m_fixedUpdateTick);
-			}
-		}
+		UpdateGameWorldObjects();
 		CheckCollision();
-		m_worldFrameCount++;
 		CheckGameTime(m_fixedUpdateTick);
+		CheckGameFinish();
+		m_worldFrameCount++;
 		loopCount++;
 	}
 
@@ -997,6 +995,47 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			AddGameObject(std::move(spawner));
 		}*/
 	}
+}
+
+void GameServer::Contents::GameWorld::UpdateGameWorldObjects()
+{
+	for(const auto& group : m_gameObjectsGroups) {
+		for(const auto& [id, obj] : group) {
+			if(obj) obj->Update(m_fixedUpdateTick);
+		}
+	}
+}
+
+void GameServer::Contents::GameWorld::CheckGameFinish()
+{
+	if(m_isGameFinish) return;
+
+	std::optional<FB_ENUMS::TEAM_TYPE> winner;
+
+	if(m_blueTeamScore >= m_scoreToWin) {
+		winner = FB_ENUMS::TEAM_TYPE_BLUE;
+	}
+	else if(m_redTeamScore >= m_scoreToWin) {
+		winner = FB_ENUMS::TEAM_TYPE_RED;
+	}
+	else if(m_remainingTimeSec.count() <= 0) {
+		if(m_blueTeamScore > m_redTeamScore) {
+			winner = FB_ENUMS::TEAM_TYPE_BLUE;
+		}
+		else if(m_redTeamScore > m_blueTeamScore) {
+			winner = FB_ENUMS::TEAM_TYPE_RED;
+		}
+		else {
+			winner = FB_ENUMS::TEAM_TYPE_NONE;
+		}
+	}
+
+	if(!winner) return;
+
+	m_isGameFinish = true;
+
+	auto pb = ServerPackets::Make_SC_GAME_FINISH_RESULT_PACKET(*winner, m_blueTeamScore, m_redTeamScore);
+	Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

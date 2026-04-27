@@ -72,7 +72,7 @@ namespace GameServer {
 			void RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			void CheckCollision();
 			void Reset() { memset(m_check.data(), 0, m_check.size() * sizeof(uint32)); }
-
+			bool IsGameFinish() const { return m_isGameFinish; }
 		public:
 			void AddGameObject(std::shared_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void RemoveGameObject(std::shared_ptr<GameObject> gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
@@ -91,11 +91,13 @@ namespace GameServer {
 			void ProcessPendingAddObjectList();
 			void ProcessPendingRemoveObjectList();
 			void CheckGameTime(const float dt);
+			void UpdateGameWorldObjects();
+			void CheckGameFinish();
+
 			void CollisionUpdateGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right);
 			bool IsFinish();
 			std::shared_ptr<Player> IDToPlayer(const uint64 sessionID);
 			void CreateGameWorldObjects();
-
 			void SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot);
 		private:
 			Users																				m_users;
@@ -103,7 +105,7 @@ namespace GameServer {
 
 			std::array<GameObjects, FB_ENUMS::GAME_OBJECT_TYPE_END>								m_gameObjectsGroups;
 
-			std::unordered_map<uint32, GameWorldParticipantInfo>								m_reservedParticipantInfo;
+			std::unordered_map<uint32/*Lobby Server Session ID*/, GameWorldParticipantInfo>		m_reservedParticipantInfo;
 			std::unordered_map<uint32, uint64>													m_sessionToPlayer;
 			std::unordered_map<uint64, uint32>													m_playerToSession;
 			IDGenerator																			m_idGenerator;
@@ -117,8 +119,8 @@ namespace GameServer {
 			float																				m_lastDT;
 			float																				m_accDT;
 			float																				m_accGameTime;
-			float																				m_fixedUpdateTick;
-			uint32																				m_maxUpdateStep;
+			const float																			m_fixedUpdateTick;
+			const uint32																		m_maxUpdateStep;
 			std::chrono::seconds																m_remainingTimeSec;
 			uint64																				m_worldFrameCount;
 	
@@ -133,6 +135,10 @@ namespace GameServer {
 		
 			Vec3																				m_blueTeamLastBasePos;
 			Vec3																				m_redTeamLastBasePos;
+
+			const uint32																		m_scoreToWin;
+
+			bool																				m_isGameFinish;
 		};
 	}
 }

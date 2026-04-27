@@ -348,9 +348,10 @@ inline const char *EnumNameGENERAL_STATE_TYPE(GENERAL_STATE_TYPE e) {
 enum PLAYER_STATE_TYPE : uint8_t {
   PLAYER_STATE_TYPE_NONE = 0,
   PLAYER_STATE_TYPE_IDLE = 1,
-  PLAYER_STATE_TYPE_MOVE = 2,
-  PLAYER_STATE_TYPE_STUN = 3,
-  PLAYER_STATE_TYPE_DEAD = 4,
+  PLAYER_STATE_TYPE_WALK = 2,
+  PLAYER_STATE_TYPE_RUN = 3,
+  PLAYER_STATE_TYPE_STUN = 4,
+  PLAYER_STATE_TYPE_DEAD = 5,
   PLAYER_STATE_TYPE_PRE_DELAY = 10,
   PLAYER_STATE_TYPE_ATTACK = 11,
   PLAYER_STATE_TYPE_POST_DELAY = 12,
@@ -360,11 +361,12 @@ enum PLAYER_STATE_TYPE : uint8_t {
   PLAYER_STATE_TYPE_MAX = PLAYER_STATE_TYPE_END
 };
 
-inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[10] {
+inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[11] {
   static const PLAYER_STATE_TYPE values[] = {
     PLAYER_STATE_TYPE_NONE,
     PLAYER_STATE_TYPE_IDLE,
-    PLAYER_STATE_TYPE_MOVE,
+    PLAYER_STATE_TYPE_WALK,
+    PLAYER_STATE_TYPE_RUN,
     PLAYER_STATE_TYPE_STUN,
     PLAYER_STATE_TYPE_DEAD,
     PLAYER_STATE_TYPE_PRE_DELAY,
@@ -380,10 +382,10 @@ inline const char * const *EnumNamesPLAYER_STATE_TYPE() {
   static const char * const names[16] = {
     "NONE",
     "IDLE",
-    "MOVE",
+    "WALK",
+    "RUN",
     "STUN",
     "DEAD",
-    "",
     "",
     "",
     "",
@@ -488,45 +490,6 @@ inline const char *EnumNameOCCUPATION_ZONE_STATE_TYPE(OCCUPATION_ZONE_STATE_TYPE
   return EnumNamesOCCUPATION_ZONE_STATE_TYPE()[index];
 }
 
-enum MOVE_DIRECTION_TYPE : uint8_t {
-  MOVE_DIRECTION_TYPE_FWD = 0,
-  MOVE_DIRECTION_TYPE_BWD = 1,
-  MOVE_DIRECTION_TYPE_LFT = 2,
-  MOVE_DIRECTION_TYPE_RGT = 3,
-  MOVE_DIRECTION_TYPE_END = 4,
-  MOVE_DIRECTION_TYPE_MIN = MOVE_DIRECTION_TYPE_FWD,
-  MOVE_DIRECTION_TYPE_MAX = MOVE_DIRECTION_TYPE_END
-};
-
-inline const MOVE_DIRECTION_TYPE (&EnumValuesMOVE_DIRECTION_TYPE())[5] {
-  static const MOVE_DIRECTION_TYPE values[] = {
-    MOVE_DIRECTION_TYPE_FWD,
-    MOVE_DIRECTION_TYPE_BWD,
-    MOVE_DIRECTION_TYPE_LFT,
-    MOVE_DIRECTION_TYPE_RGT,
-    MOVE_DIRECTION_TYPE_END
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesMOVE_DIRECTION_TYPE() {
-  static const char * const names[6] = {
-    "FWD",
-    "BWD",
-    "LFT",
-    "RGT",
-    "END",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameMOVE_DIRECTION_TYPE(MOVE_DIRECTION_TYPE e) {
-  if (::flatbuffers::IsOutRange(e, MOVE_DIRECTION_TYPE_FWD, MOVE_DIRECTION_TYPE_END)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesMOVE_DIRECTION_TYPE()[index];
-}
-
 enum TELEPORT_PLACE_TYPE : uint8_t {
   TELEPORT_PLACE_TYPE_MY_TEAM_BASE = 0,
   TELEPORT_PLACE_TYPE_OPPONENT_TEAM_BASE = 1,
@@ -567,6 +530,45 @@ inline const char *EnumNameTELEPORT_PLACE_TYPE(TELEPORT_PLACE_TYPE e) {
   if (::flatbuffers::IsOutRange(e, TELEPORT_PLACE_TYPE_MY_TEAM_BASE, TELEPORT_PLACE_TYPE_END)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTELEPORT_PLACE_TYPE()[index];
+}
+
+enum MOVE_DIRECTION_TYPE : uint8_t {
+  MOVE_DIRECTION_TYPE_FWD = 0,
+  MOVE_DIRECTION_TYPE_BWD = 1,
+  MOVE_DIRECTION_TYPE_LFT = 2,
+  MOVE_DIRECTION_TYPE_RGT = 3,
+  MOVE_DIRECTION_TYPE_END = 4,
+  MOVE_DIRECTION_TYPE_MIN = MOVE_DIRECTION_TYPE_FWD,
+  MOVE_DIRECTION_TYPE_MAX = MOVE_DIRECTION_TYPE_END
+};
+
+inline const MOVE_DIRECTION_TYPE (&EnumValuesMOVE_DIRECTION_TYPE())[5] {
+  static const MOVE_DIRECTION_TYPE values[] = {
+    MOVE_DIRECTION_TYPE_FWD,
+    MOVE_DIRECTION_TYPE_BWD,
+    MOVE_DIRECTION_TYPE_LFT,
+    MOVE_DIRECTION_TYPE_RGT,
+    MOVE_DIRECTION_TYPE_END
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMOVE_DIRECTION_TYPE() {
+  static const char * const names[6] = {
+    "FWD",
+    "BWD",
+    "LFT",
+    "RGT",
+    "END",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMOVE_DIRECTION_TYPE(MOVE_DIRECTION_TYPE e) {
+  if (::flatbuffers::IsOutRange(e, MOVE_DIRECTION_TYPE_FWD, MOVE_DIRECTION_TYPE_END)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMOVE_DIRECTION_TYPE()[index];
 }
 
 }  // namespace FB_ENUMS

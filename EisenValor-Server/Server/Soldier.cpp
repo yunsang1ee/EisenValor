@@ -51,8 +51,9 @@ void GameServer::Contents::Soldier::OnDeath()
 bool GameServer::Contents::Soldier::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	uint32 damage{};
+	const auto objType{ attacker->GetObjType() };
 
-	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
+	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
 		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
@@ -63,8 +64,8 @@ bool GameServer::Contents::Soldier::OnAttacked(std::shared_ptr<Creature> const a
 			damage = attackerAtkInfo.skillData->damage;
 		}
 	}
-	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == attacker->GetObjType()) {
-		damage = 5;
+	else if(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == objType) {
+		damage = MANAGER(GameDataManager)->GetGameObjectData(objType)->atk;
 	}
 
 	DecHP(damage, broadcast);

@@ -35,8 +35,14 @@ public:
 	Scene* GetActiveScene() const { return m_activeScene; }
 	Scene* GetScene(const std::string& sceneName) const;
 
-	void	 SetLocalNetworkID(uint64_t networkID);
-	uint64_t GetLocalNetworkID() const { return m_localNetworkID; }
+	// void	 SetLocalNetworkID(uint64_t networkID);
+	// uint64_t GetLocalNetworkID() const { return m_localNetworkID; }
+
+	void   SetSessionID(const uint32 sessionID) { m_serverSessionID = sessionID; }
+	uint32 GetSessionID() const { return m_serverSessionID; }
+
+	void   SetLocalGameObjectID(const uint64 id);
+	uint64 GetLocalGameObjectID() const { return m_localGameObjectID; }
 
 	void					 ClearAllScenes();
 	std::vector<std::string> GetSceneNames() const;
@@ -54,8 +60,11 @@ public:
 private:
 	std::unordered_map<std::string, std::unique_ptr<Scene>> m_scenes;
 
-	uint64_t	m_localNetworkID = 0;
+	// uint64_t	m_localNetworkID = 0;
 
 	Scene*		m_activeScene = nullptr;
 	std::string m_activeSceneName;
+
+	uint32		m_serverSessionID;
+	uint64		m_localGameObjectID;
 };

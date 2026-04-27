@@ -41,6 +41,9 @@ bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_v
 
 		if(data.HasMember("MAX_UPDATE_STEP") && data["MAX_UPDATE_STEP"].IsUint())
 			m_gameWorldData.maxUpdateStep = data["MAX_UPDATE_STEP"].GetUint();
+
+        if(data.HasMember("SCORE_TO_WIN") && data["SCORE_TO_WIN"].IsUint())
+			m_gameWorldData.scoreToWin = data["SCORE_TO_WIN"].GetUint();
 	}
 
     if(doc.HasMember("SkillData") && doc["SkillData"].IsArray()) {
