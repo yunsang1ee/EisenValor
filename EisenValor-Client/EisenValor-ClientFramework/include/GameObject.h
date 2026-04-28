@@ -13,8 +13,8 @@ public:
 	GameObject(Scene* scene, HandleOf<Transform> trHd, std::string name = "GameObject");
 	virtual ~GameObject() = default;
 
-	void   SetServerID(uint32 id) { m_serverID = id; }
-	uint32 GetServerID() const { return m_serverID; }
+	void   SetServerID(uint64 id) { m_serverID = id; }
+	uint64 GetServerID() const { return m_serverID; }
 	bool   IsNetworkObject() const { return m_serverID != Variable::kInvalidServerID; }
 
 	void   SetScene(Scene* scene) { m_scene = scene; }
@@ -94,7 +94,7 @@ protected:
 
 private:
 	std::string m_name;
-	uint32_t	m_serverID = 0;
+	uint64_t	m_serverID = 0;
 	bool		m_isActive = true;
 	bool		m_cachedActiveInHierarchy = true;
 

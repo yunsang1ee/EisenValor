@@ -11,7 +11,7 @@ bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const Packet
 bool Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt);
 bool Handle_LC_LOGIN_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_SUCCESS_PACKET& recvPkt);
 #pragma endregion
-
+	
 
 #pragma region LOBBY_PACKETS
 bool Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_LOBBY_FAIL_PACKET& recvPkt);

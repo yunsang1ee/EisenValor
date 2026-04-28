@@ -194,7 +194,7 @@ void GameServer::Contents::PlayerAttackState::Enter(const float dt)
 
 	m_accDT = 0.f;      
 	m_hitFired = false; 
-}
+}	
 
 void GameServer::Contents::PlayerAttackState::Exit(const float dt)
 {
