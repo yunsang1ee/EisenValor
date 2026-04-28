@@ -12,7 +12,7 @@ namespace CameraConfig
 	////////////////////////////////////////////////////////
 
 	static constexpr float kShoulderViewOffsetX = 1.5f;
-	static constexpr float kShoulderViewOffsetY = 1.5f;
+	static constexpr float kShoulderViewOffsetY = 1.3f;
 	static constexpr float kShoulderViewOffsetZ = -1.8f;
 
 	static constexpr float kLockOnViewOffsetY = 1.0f;

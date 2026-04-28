@@ -37,7 +37,14 @@ public:
 	uint8_t GetCurAttackType() const { return m_curAttackType; }
 
 	// 공격 조준 방향 (FB_ENUMS::GENERAL_ATTACK_DIR_TYPE)
-	void    SetCurAttackDir(uint8_t dir) { m_curAttackDir = dir; }
+	void SetCurAttackDir(uint8_t dir)
+	{
+		//if (m_curAttackDir != dir)
+		//{
+		//	DEBUG_LOG_FMT("[FSM] Direction Changed: {} -> {}\n", m_curAttackDir, dir);
+		//}
+		m_curAttackDir = dir;
+	}
 	uint8_t GetCurAttackDir() const { return m_curAttackDir; }
 
 	// 캐릭터 타입
