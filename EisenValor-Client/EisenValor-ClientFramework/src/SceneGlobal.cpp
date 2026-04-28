@@ -35,7 +35,7 @@ void SceneGlobal::LoadScene(const std::string& sceneName)
 	}
 
 	m_activeScene = iter->second.get();
-	m_activeScene->SetLocalID(m_localNetworkID);
+	// m_activeScene->SetLocalID(m_localNetworkID);
 	m_activeSceneName = sceneName;
 
 	m_activeScene->OnStart();
@@ -53,15 +53,15 @@ Scene* SceneGlobal::GetScene(const std::string& sceneName) const
 	return nullptr;
 }
 
-void SceneGlobal::SetLocalNetworkID(uint64_t networkID) 
-{
-	m_localNetworkID = networkID;
+void SceneGlobal::SetLocalGameObjectID(const uint64 id) {
+
+	m_localGameObjectID = id;
 
 	for (auto& [name, scene] : m_scenes)
 	{
 		if (scene)
 		{
-			scene->SetLocalID(networkID);
+			scene->SetLocalID(id);
 		}
 	}
 }

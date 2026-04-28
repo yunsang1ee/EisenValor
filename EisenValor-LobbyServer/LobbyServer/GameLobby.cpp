@@ -23,8 +23,6 @@ void LobbyServer::GameLobby::Handle_CL_ENTER_GAME_LOBBY(const std::shared_ptr<Cl
 {
 	clientSession->SetState(SESSION_STATE::IN_GAME_LOBBY);
 
-	const uint32 id{ clientSession->GetID() };
-
 	std::vector<RoomInfo> rooms;
 	std::vector<std::string_view> users;
 	std::vector<uint32> vecUserID;

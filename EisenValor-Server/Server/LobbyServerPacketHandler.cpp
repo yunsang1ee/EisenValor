@@ -34,6 +34,7 @@ bool GameServer::LobbyServerPacketHandler::Handle_LS_CREATE_GAME_WORLD_PACKET(co
 	std::unordered_map<uint32, GameWorldParticipantInfo> info;
 
 	auto participants = recvPkt.participants();
+	// 여기서 participants id는 lobby server에서의 session id임.
 	for(auto participant : *participants) {
 		GameWorldParticipantInfo participantInfo;
 		std::cout << "participant id: " << participant->id() << std::endl;

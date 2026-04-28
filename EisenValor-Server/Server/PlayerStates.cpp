@@ -46,8 +46,6 @@ void GameServer::Contents::PlayerIdleState::Exit(const float dt)
 
 void GameServer::Contents::PlayerIdleState::Update(const float dt)
 {
-	// TODO: Player Idle State - Stamina Recovery, Exhausted Recovery
-
 	const auto& owner{ GetGeneral(GetFSM()) };
 	const auto& statInfo{ owner->GetStat() };
 
@@ -130,7 +128,7 @@ void GameServer::Contents::PlayerRunState::Update(const float dt)
 //		 PLAYER_PRE_DELAY_STATE
 // ==================================
 GameServer::Contents::PlayerPredelayState::PlayerPredelayState()
-	:State{ FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY }
+	:State{ FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY }, m_accDTForPreDelay{ 0.f }
 {
 }
 
@@ -151,26 +149,29 @@ void GameServer::Contents::PlayerPredelayState::Exit(const float dt)
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Predelay State" << std::endl;
 #endif
-
-	m_accDTForPreDelay = 0.f;
 }
 
 void GameServer::Contents::PlayerPredelayState::Update(const float dt)
 {
 	const auto& owner{ GetGeneral(GetFSM()) };
 
-	const auto worldFrame{ owner->GetGameWorld()->GetGameWorldFrameCount() };
-	const auto& atkInfo{ owner->GetAtkInfo() };
-
 	m_accDTForPreDelay += dt;
 
-	//if(m_accDTForPreDelay >= 0.5f) {
-	//	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
-	//	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
-	//}
-
+	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
-	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
+
+	if(atkInfo.skillData->name == "LIGHT") {
+		if(m_accDTForPreDelay >= 0.3f) {
+			std::cout << "PlayerPredelayState Update, LIGHT Attack PreDelay End!" << std::endl;
+			fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
+		}
+	}
+	else {
+		if(m_accDTForPreDelay >= 0.6f) {
+			std::cout << "PlayerPredelayState Update, HEAVY Attack PreDelay End!" << std::endl;
+			fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
+		}
+	}
 }
 
 // ==================================
@@ -193,7 +194,7 @@ void GameServer::Contents::PlayerAttackState::Enter(const float dt)
 
 	m_accDT = 0.f;      
 	m_hitFired = false; 
-}
+}	
 
 void GameServer::Contents::PlayerAttackState::Exit(const float dt)
 {
@@ -226,7 +227,7 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 
 	if(m_accDT < HIT_FRAME_DELAY) return;
 	if(m_hitFired) return;               
-	m_hitFired = true;                   
+	m_hitFired = true;						
 
 	if(false == IsValidObj(owner)) return;
 
@@ -369,7 +370,7 @@ GameServer::Contents::PlayerStunState::~PlayerStunState()
 void GameServer::Contents::PlayerStunState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
+	//m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
 	if(m_stunDuration == 0) {
 		m_stunDuration = owner->GetGameObjectData()->stunDelay;
 	}
@@ -389,9 +390,6 @@ void GameServer::Contents::PlayerStunState::Exit(const float dt)
 
 void GameServer::Contents::PlayerStunState::Update(const float dt)
 {
-	auto const owner{ GetGeneral(GetFSM()) };
-	auto const world{ owner->GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const fsm{ GetFSM() };
 	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
 }

@@ -127,7 +127,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::DefaultDefense:
 	auto const tree{ GetTree() };
 	auto const owner{ std::static_pointer_cast<General>(tree->GetOwner()) };
 	auto const world{ owner->GetGameWorld() };
-	const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+	// const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 	auto const bb{ tree->GetBlackboard() };
 
 	const uint64 targetID{ bb->GetValue<uint64>("Target", -1) };
@@ -159,7 +159,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::DefaultDefense:
 			world->Broadcast(std::move(pb));
 
 			// TODO: BT의 블랙보드에 약공격 방어 성공 등록해야 함.
-			bb->SetValue("LastDefendedFrame", worldFrame);
+			// bb->SetValue("LastDefendedFrame", worldFrame);
 			return GameServer::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 		}
 		else {
@@ -184,7 +184,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::DefaultDefense:
 			// -> OnDamaged에서 확인하고 바로 삭제!
 
 			// 공격자가 공격을 시작할 때의 WorldFrameCount를 블랙보드에 같이 기록.
-			bb->SetValue("LastDefendedFrame", worldFrame);
+			//bb->SetValue("LastDefendedFrame", worldFrame);
 			return GameServer::Contents::BEHAVIOR_NODE_STATUS::SUCCESS;
 		}
 		else {
@@ -308,7 +308,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::AttackTry::DoAc
 		}
 
 		auto target{ std::static_pointer_cast<GameServer::Contents::Creature>(obj) };
-		const uint64 worldFrame{ world->GetGameWorldFrameCount() };
+		//const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 		const auto& targetPos{ target->GetPosition() };
 
@@ -317,7 +317,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::AttackTry::DoAc
 			const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir{ static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(uid(mersenne)) };
 
 			const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(finalAtkType) };
-			owner->SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
+			//owner->SetAtkInfo(AttackInfo{ skillData, dir, worldFrame });
 			owner->DecStamina(skillData->staminaCost, true);
 			if(target->OnAttacked(owner, dt)) {
 				// std::cout << "NPC General Attack!" << std::endl;

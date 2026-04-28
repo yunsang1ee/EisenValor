@@ -27,6 +27,4 @@ struct SkillData;
 struct AttackInfo {
 	const SkillData*					skillData;
 	FB_ENUMS::GENERAL_ATTACK_DIR_TYPE	dir;
-	uint64								startPreDelay;
-	uint64								startPostDelay;
 };
