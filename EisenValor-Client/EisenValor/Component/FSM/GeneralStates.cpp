@@ -33,7 +33,7 @@ void PlayerlIdleState::Enter(FSMComponent* fsm)
 			if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
 			{
 				uint8_t dir = fsm->GetCurAttackDir();
-				uint8_t idleKey = 60 + dir; // 61:TOP, 62:LEFT, 63:RIGHT
+				uint8_t idleKey = StateOffset::kIdleOffset + dir; // 61:TOP, 62:LEFT, 63:RIGHT
 				anim->Play(idleKey, true);
 			}
 			else
@@ -59,10 +59,11 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 	{
 		uint8_t dir = fsm->GetCurAttackDir();
 		uint8_t targetIdleKey = StateOffset::kIdleOffset + dir;
+		
+		//DEBUG_LOG_FMT("[AnimDebug] FSM: {}, Obj: {}, Dir: {}, Key: {}\n", (void*)fsm, obj->GetName(), dir, targetIdleKey);
 
-		 if (anim->GetCurrentKey() != targetIdleKey)
+		if (anim->GetCurrentKey() != targetIdleKey)
 		{
-			//DEBUG_LOG_FMT("[Anim] Switching Idle Animation to Key: {} (Dir: {})\n", targetIdleKey, dir);
 			anim->Play(targetIdleKey, true);
 		}
 	}
@@ -535,7 +536,7 @@ void SoldierChaseState::Exit(FSMComponent* fsm)
 SoldierAttackState::SoldierAttackState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 {
 	SetHasExitTime(true);
-	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE));
+	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 }
 
 void SoldierAttackState::Enter(FSMComponent* fsm)
