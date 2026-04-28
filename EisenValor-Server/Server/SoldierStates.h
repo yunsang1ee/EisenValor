@@ -76,7 +76,7 @@ namespace GameServer {
 			float m_chaseRangeSq;
 			float m_chaseTransitionRangeSq;
 			float m_accDTForChase;
-			static constexpr float CHASE_UPDATE_INTERVAL = 0.2f; // 0.2초마다 경로 갱신
+			static constexpr float CHASE_UPDATE_INTERVAL = 0.2f;
 		};
 
 		// ============================================

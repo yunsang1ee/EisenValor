@@ -154,7 +154,6 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
-	// const uint64 worldFrame = world->GetGameWorldFrameCount();
 	
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 
@@ -164,11 +163,28 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 		return;
 	}
 
-	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir = atkInfo.attack_dir();
-	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType = atkInfo.attack_type();
+	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir{atkInfo.attack_dir()};
+	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType{ atkInfo.attack_type() };
+
+	switch(atkType) {
+		case FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT:
+			std::cout << "GENERAL_ATTACK_TYPE_LIGHT" << std::endl;
+			break;
+		case FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY:
+			std::cout << "GENERAL_ATTACK_TYPE_HEAVY" << std::endl;
+			break;
+		case FB_ENUMS::GENERAL_ATTACK_TYPE_AREA:
+			std::cout << "GENERAL_ATTACK_TYPE_AREA" << std::endl;
+			break;
+		case FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM:
+			std::cout << "GENERAL_ATTACK_TYPE_DISARM" << std::endl;
+			break;
+		default:
+			break;
+	}
 
 	const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(atkType) };
-	SetAtkInfo(AttackInfo{ skillData, dir, 0});
+	SetAtkInfo(AttackInfo{ skillData, dir});
 	DecStamina(skillData->staminaCost);
 
 	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY, worldDT, true);

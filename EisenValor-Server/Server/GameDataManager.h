@@ -16,8 +16,6 @@ struct GameWorldData {
 struct SkillData {
     uint8 skillTypeID;
     std::string name;
-    uint32 preDelay;
-    uint32 postDelay;
     uint32 damage;
     uint32 extraDamage;
     float attackRadius;

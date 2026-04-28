@@ -853,6 +853,10 @@ void BattleUIControllerComponent::OnGuardDirectionConfirmed(
 	{
 		attackStr = "DISARM";
 	}
+	else if (attackType == GENERAL_ATTACK_TYPE_AREA)
+	{
+		attackStr = "AREA";
+	}
 
 	switch (confirmedDir)
 	{

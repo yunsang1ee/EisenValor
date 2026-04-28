@@ -167,10 +167,10 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 	const uint64 playerID{ it->second };
 
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	if(playerGroup.find(playerID) != playerGroup.end()) {
-		auto player = playerGroup[playerID];
+	auto player = IDToPlayer(playerID);
+	
+	if(player)
 		RemoveGameObject(player);
-	}
 }
 
 void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine::PacketBuffer> pb)
@@ -277,8 +277,8 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sess
 
 	const uint64 playerID{ it->second };
 
-	if(playerGroup.find(playerID) != playerGroup.end()) {
-		auto player = static_cast<Player*>(playerGroup[playerID].get());
+	const auto player = IDToPlayer(playerID);
+	if(player) {
 		player->Handle_CS_GENERAL_ATTACK(attackInfo);
 	}
 }
@@ -290,7 +290,7 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE(const uint
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player)
 		player->Handle_CS_PLAYER_GENERAL_STANCE();
 }
@@ -302,7 +302,7 @@ void GameServer::Contents::GameWorld::Handle_CS_PLAYER_FAKE(const uint32 session
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_PLAYER_FAKE();
 	}
@@ -315,7 +315,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint3
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_CHANGE_CAMERA_TARGET(prevTargetID);
 	}
@@ -328,7 +328,7 @@ void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const ui
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
 	}
@@ -417,7 +417,7 @@ void GameServer::Contents::GameWorld::Handle_CS_UPDATE_PLAYER_STATE(const uint32
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	auto fsm{ player->GetComponent<FSM>() };
 	if(fsm) {
 		const auto curState{ fsm->GetCurState()->GetStateType() };
@@ -436,7 +436,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<Clien
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 #ifdef PRINT_GAME_WORLD_LOG
 		std::cout << "Player " << playerID << " says: " << msg << std::endl;
@@ -454,7 +454,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 
 	Vec3 tpPos{};
 	switch(place) {

@@ -1299,7 +1299,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 		const uint32 stamina = recvPkt.current_stamina();
 
 
-		std::cout << std::format("ID:{}, hp:{}, stanmina:{}", objID, hp, stamina);
+		// std::cout << std::format("ID:{}, hp:{}, stanmina:{}", objID, hp, stamina);
 
 		auto staminaComp = obj->GetComponent<StaminaComponent>();
 		if (staminaComp)
@@ -1415,8 +1415,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
-			nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 		{
 			return true;
 		}
@@ -1619,7 +1618,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
 )
 {
-	// 팀 점수 업데이트
+	// TODO: 팀 점수 업데이트
 	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
 	return true;
 }
@@ -1672,6 +1671,7 @@ bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt
 )
 {
+	// TODO: UI 통해서 게임 종료 결과 보여줘야합니다.
 	const auto winningTeam{recvPkt.winning_team()};	
 	const auto blueScore{recvPkt.blue_score()};
 	const auto redScore{recvPkt.red_score()};
@@ -1698,7 +1698,7 @@ bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
 )
 {
-	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트하기
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트해야합니다.
 
 	return true;
 }
