@@ -33,7 +33,7 @@ void PlayerlIdleState::Enter(FSMComponent* fsm)
 			if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
 			{
 				uint8_t dir = fsm->GetCurAttackDir();
-				uint8_t idleKey = 50 + dir; // 51:TOP, 52:LEFT, 53:RIGHT
+				uint8_t idleKey = StateOffset::kIdleOffset + dir; // 61:TOP, 62:LEFT, 63:RIGHT
 				anim->Play(idleKey, true);
 			}
 			else
@@ -58,41 +58,14 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 	if (fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT))
 	{
 		uint8_t dir = fsm->GetCurAttackDir();
-		uint8_t targetIdleKey = 50 + dir;
+		uint8_t targetIdleKey = StateOffset::kIdleOffset + dir;
+		
+		//DEBUG_LOG_FMT("[AnimDebug] FSM: {}, Obj: {}, Dir: {}, Key: {}\n", (void*)fsm, obj->GetName(), dir, targetIdleKey);
 
-		// 방향별 Idle 애니메이션 [IK] (51:TOP, 52:LEFT, 53:RIGHT)
 		if (anim->GetCurrentKey() != targetIdleKey)
 		{
 			anim->Play(targetIdleKey, true);
 		}
-		// // IK 설정                                                                                                                                
-		// if (dir != 0)
-		// {
-		// 	IKTarget target;
-		// 	uint32_t handR, lowerarmR, upperarmR;
-		// 	if (anim->GetBoneIndexByName("hand_r", handR) && 
-		// 		anim->GetBoneIndexByName("lowerarm_r", lowerarmR) && 
-		// 		anim->GetBoneIndexByName("upperarm_r", upperarmR))
-		// 	{
-		// 		target.boneIndex = handR;
-		// 		target.midBoneIndex = lowerarmR;
-		// 		target.rootBoneIndex = upperarmR;
-		// 		target.active = true;
-		// 		target.weight = 1.0f; // 보간 필요 시 std::lerp 사용 가능
-
-		// 		// 방향별 IK Target Offset
-		// 		if (dir == 1)      target.targetPos = XMVectorSet(0.0f, 0.4f, 0.2f, 1.0f);   // TOP
-		// 		else if (dir == 2) target.targetPos = XMVectorSet(-0.3f, 0.1f, 0.3f, 1.0f);  // LEFT
-		// 		else if (dir == 3) target.targetPos = XMVectorSet(0.3f, 0.1f, 0.3f, 1.0f);   // RIGHT
-
-		// 		target.poleVector = XMVectorSet(1.0f, -0.5f, 0.0f, 0.0f);
-		// 		anim->SetIKTarget(IK_TYPE::RIGHT_ARM, target);
-		// 	}
-		// }
-		// else
-		// {
-		// 	anim->SetIKWeight(IK_TYPE::RIGHT_ARM, 0.0f); // NONE 시 IK 해제
-		// }
 	}
 	else // 일반 태세일 때
 	{
@@ -100,7 +73,6 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 		if (anim->GetCurrentKey() != neutralIdleKey)
 		{
 			anim->Play(neutralIdleKey, true);
-			anim->SetIKWeight(IK_TYPE::RIGHT_ARM, 0.0f); // IK 해제
 		}
 	}
 }
@@ -388,7 +360,7 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 			//anim->Play(stunKey, false, true);
 
 			// 기본 STUN
-			anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
+			anim->Play(StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
 		}
 	}
 }
@@ -565,7 +537,7 @@ void SoldierChaseState::Exit(FSMComponent* fsm)
 SoldierAttackState::SoldierAttackState() : State(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 {
 	SetHasExitTime(true);
-	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_CHASE));
+	SetNextStateOnEnd(StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
 }
 
 void SoldierAttackState::Enter(FSMComponent* fsm)

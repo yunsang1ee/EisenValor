@@ -53,15 +53,14 @@ void AnimationComponent::AddAnimation(uint8_t key, std::shared_ptr<AnimationReso
 void AnimationComponent::Play(uint8_t key, bool loop, bool rootMotion)
 {
 	auto it = m_animations.find(key);
-	if (it != m_animations.end())
+	if (it == m_animations.end())
 	{
-		m_currentKey = key;
-		Play(it->second, loop, rootMotion);
-	}
-	else
-	{
+		return;
 		DEBUG_LOG_FMT("[AnimationComponent] Cannot find animation for key: {}\n", key);
 	}
+
+	m_currentKey = key;
+	Play(it->second, loop, rootMotion);
 }
 
 void AnimationComponent::Play(std::shared_ptr<AnimationResource> animation, bool loop, bool rootMotion)

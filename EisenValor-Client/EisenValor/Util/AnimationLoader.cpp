@@ -56,37 +56,61 @@ namespace AnimationLoader
 
 			// 2. 공격
 			anim->AddAnimation(
-				100 + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT),
+				StateOffset::kAttackOffset + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT),
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Thrust/Thrust_F_Seq.evanim")
 			);
 
 			anim->AddAnimation(
-				100 + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY),
+				StateOffset::kAttackOffset + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY),
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_01_Seq.evanim")
 			);
 
-			// 방향별 전투 Idle (50: NONE, 51:TOP, 52:LEFT, 53:RIGHT)
-			anim->AddAnimation(50, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
-			anim->AddAnimation(51, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
-			anim->AddAnimation(52, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
-			anim->AddAnimation(53, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
-
+			// 방향별 전투 Idle (60: NONE, 61:TOP, 62:LEFT, 63:RIGHT)
+			anim->AddAnimation(60, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
+			anim->AddAnimation(61, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_UP_Idle.evanim"));
+			anim->AddAnimation(62, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_LEFT_Idle.evanim"));
+			anim->AddAnimation(63, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_RIGHT_Idle.evanim"));
+			
 			// 4. 방향별 공격 (110:TOP, 120:LEFT, 130:RIGHT + type)
 			// TOP (110:Light, 111:Heavy)
-			anim->AddAnimation(110, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Thrust/Thrust_F_Seq.evanim"));
-			anim->AddAnimation(111, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Dash_Attack_ver_A1.evanim"));
+			anim->AddAnimation(
+				StateOffset::kAttackOffset + 10,
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Thrust/Thrust_F_Seq.evanim")
+			);
+			anim->AddAnimation(
+				StateOffset::kAttackOffset + 11,
+				res.Load<AnimationResource>(
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Dash_Attack_ver_A1.evanim"
+				)
+			);
 
-			// LEFT (120:Light, 121:Heavy)
-			anim->AddAnimation(120, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_02_Seq.evanim"));
-			anim->AddAnimation(121, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_3_Inplace1.evanim"));
+			// LEFT (120:Light, 121:Heavy)                                                                                                                                                                                                                                                                                                                                                                                                                                   
+			anim->AddAnimation(
+				StateOffset::kAttackOffset + 20,
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_02_Seq.evanim")
+			);
+			anim->AddAnimation(
+				StateOffset::kAttackOffset + 21,
+				res.Load<AnimationResource>(
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_3_Inplace1.evanim"
+				)
+			);
 
 			// RIGHT (130:Light, 131:Heavy)
-			anim->AddAnimation(130, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_01_Seq.evanim"));
-			anim->AddAnimation(131, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_B1.evanim"));
+			anim->AddAnimation(
+				StateOffset::kAttackOffset + 30,
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_01_Seq.evanim")
+			);
+			anim->AddAnimation(
+				StateOffset::kAttackOffset + 31,
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_B1.evanim")
+			);
 
 			// 기본 피격
 			anim->AddAnimation(
-				150, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_FW_Seq.evanim"));
+				StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN),
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_FW_Seq.evanim")
+			);
 			
 			// 5. 방향별 피격 (160:TOP, 170:LEFT, 180:RIGHT + type)
 			//// TOP (160:Light, 161:Hard)
@@ -124,9 +148,9 @@ namespace AnimationLoader
 				StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD),
 				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Die/Die_Seq.evanim")
 			);
-			// 강공격 사망용 임시 키 (110)
+			// 강공격 사망용 임시 키
 			anim->AddAnimation(
-				110,
+				59,
 				res.Load<AnimationResource>("Resource/Animation/Knight_Armored/Die/Hurt_heavy_Seq.evanim")
 			);
 			anim->AddAnimation(
