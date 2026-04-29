@@ -306,34 +306,6 @@ void PlayerPostDelayState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
-//		  PLAYER_DEFENSE_STATE
-// ==================================
-PlayerDefenseState::PlayerDefenseState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE)
-{
-}
-
-void PlayerDefenseState::Enter(FSMComponent* fsm)
-{
-	//DEBUG_LOG_FMT("[FSM] DEFENSE Enter (Block Success!)\n");
-	fsm->SetStateTimer(0.0f);
-}
-
-void PlayerDefenseState::Update(FSMComponent* fsm, float dt)
-{
-	fsm->AddStateTimer(dt);
-	// 방어 성공 연출 시간 (1초)
-	if (fsm->GetStateTimer() >= 1.0f)
-	{
-		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	}
-}
-
-void PlayerDefenseState::Exit(FSMComponent* fsm)
-{
-	//DEBUG_LOG_FMT("[FSM] DEFENSE Exit\n");
-}
-
-// ==================================
 //		  PLAYER_STUN_STATE
 // ==================================
 PlayerStunState::PlayerStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)

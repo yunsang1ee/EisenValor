@@ -68,17 +68,6 @@ public:
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
-// Defense
-class PlayerDefenseState : public State {
-public:
-	PlayerDefenseState();
-	virtual ~PlayerDefenseState() = default;
-
-	virtual void Enter(FSMComponent* fsm) override;
-	virtual void Update(FSMComponent* fsm, float dt) override;
-	virtual void Exit(FSMComponent* fsm) override;
-};
-
 // Stun
 class PlayerStunState : public State {
 public:

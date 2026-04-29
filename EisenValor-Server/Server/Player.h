@@ -13,7 +13,7 @@ namespace GameServer {
 		
 		public:
 			virtual void Update(const float dt) override final;
-			virtual bool OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override final;
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override final;
 			virtual void OnDeath() override final;
 			virtual void OnRespawn() override final;
 			virtual void DecStamina(const uint32 amount, const bool broadcast= false) override;

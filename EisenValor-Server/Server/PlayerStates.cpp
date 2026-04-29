@@ -249,8 +249,8 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 						continue;
 					if(o->GetTeamType() == owner->GetTeamType()) continue;
 					if(owner->IsTargetInAttackRange(o)) {
-						const auto target = static_cast<General*>(o.get());
-						target->OnAttacked(owner, dt);
+						const auto target = static_cast<Creature*>(o.get()); 
+						target->OnDamaged(owner, dt);
 					}
 				}
 			}
@@ -296,12 +296,12 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 					return;
 				}
 
-				if(target->OnAttacked(owner, dt)) {
+				if(target->OnDamaged(owner, dt)) {
 
 					if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
 						const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
-						// 무장해제 공격일 시, 상대 플레이어의 상태를 IDLE로...
-						if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
+						// 무장해제 공격일 시, 상대 플레이어나 장수의 상태를 IDLE로...
+						if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType || FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType) {
 							auto const obj{ std::static_pointer_cast<General>(target) };
 							auto const fsm{ obj->GetComponent<GameServer::Contents::FSM>() };
 							fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, dt, true);

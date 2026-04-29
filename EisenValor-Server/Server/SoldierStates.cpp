@@ -335,7 +335,7 @@ void GameServer::Contents::SoldierAttackState::Update(const float dt)
 
 		m_attackStarted = false;
 
-		target->OnAttacked(owner, dt, false);
+		target->OnDamaged(owner, dt, false);
 
 		auto weakTarget = std::weak_ptr<Creature>(target);
 		owner->GetGameWorld()->AddTimedEvent([weakTarget]()

@@ -3,15 +3,51 @@
 
 namespace GameServer {
 	namespace Contents {
+
+		// ====================================
+		//			GENERAL_IDLE_STATE
+		// ====================================
+		
+		class WaitAfterSpawn : public ConditionNode {
+		private:
+			float m_accDTForRespawn{};
+
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+		
+		class FindOZ : public ActionNode {
+		public:
+			// 아직 점령되지 않은 점령지를 찾는다.
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
+
+		// ====================================
+		// 			GENERAL_WALK_STATE
+		// ====================================
+
+		// ====================================
+		// 			GENERAL_RUN_STATE
+		// ====================================
+
+		// ====================================
+		// 		 GENERAL_ATTACK_STATE
+		// ====================================
+
+		// ====================================
+		// 		 GENERAL_STUN_STATE
+		// ====================================
+
+		// ====================================
+		// 		 GENERAL_DEAD_STATE
+		// ====================================
+
+
 			
 		// ====================================
 		//		  GENERAL_ROAMING_STATE
 		// ====================================
-		class FindOZ : public ActionNode {
-		public:
-			// 상대방 팀의 점령지 중 아직 점령되지 않은 점령지를 찾고, 해당 점령지를 쳐다본다
-			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
-		};
+	
 
 		class MoveToOZ : public ActionNode {
 		public:
