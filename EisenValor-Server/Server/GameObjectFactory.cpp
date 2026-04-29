@@ -96,15 +96,15 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 
 	general->SetRespawnPos(t.transform.GetPosition());
 
-	const auto bt = general->AddComponent<BehaviorTree>();
-	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);
+	/*const auto bt = general->AddComponent<BehaviorTree>();
+	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);*/
 
 	auto navAgent = general->AddComponent<GameServer::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
 	
 	dtCrowdAgentParams params{};
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.8f;
-	params.maxSpeed = 0.f;
+	params.maxSpeed = 3.f;
 	params.maxAcceleration =3.f;
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
@@ -117,17 +117,23 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 		return nullptr;
 
 	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
-	auto roamingState = GameServer::Contents::GeneralRoamingState::Create(fsm);
-	auto duelingState = GameServer::Contents::GeneralDuelingState::Create(fsm);
-	auto stunState = GameServer::Contents::GeneralStunState::Create(fsm);
-	auto deadState = GameServer::Contents::GeneralDeadState::Create(fsm);
+
+	// TODO: IDLE, WALK, RUN, STUN, DEAD 상태로 변경해야함.
+	auto idleState = GameServer::Contents::GeneralIdleState::Create(general);
+	auto walkState = GameServer::Contents::GeneralWalkState::Create();
+	auto runState = GameServer::Contents::GeneralRunState::Create();
+	// auto attackState = GameServer::Contents::GeneralAttackState::Create();
+	// auto stunState = GameServer::Contents::GeneralStunState::Create();
+	// auto deadState = GameServer::Contents::GeneralDeadState::Create();
+
+	fsm->AddState(std::move(idleState));
+	fsm->AddState(std::move(walkState));
+	fsm->AddState(std::move(runState));
+	// fsm->AddState(std::move(attackState));
+	// fsm->AddState(std::move(stunState));
+	// fsm->AddState(std::move(deadState));
 	
-	fsm->AddState(std::move(roamingState));
-	fsm->AddState(std::move(duelingState));
-	fsm->AddState(std::move(stunState));
-	fsm->AddState(std::move(deadState));
-	
-	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING);
+	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, true);
 
 	return general;
 }
@@ -152,7 +158,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	dtCrowdAgentParams params{};
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;				
-	params.maxSpeed = 3.0f;			
+	params.maxSpeed = 3.f;			
 	params.maxAcceleration = 3.f;		
 
 	// set collision avoidance
@@ -179,7 +185,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	fsm->AddState(std::move(attackState));
 	fsm->AddState(std::move(deadState));
 
-	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE));
+	fsm->SetState(etou8(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE), true);
 
 	return soldier;
 }

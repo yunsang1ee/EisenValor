@@ -28,7 +28,7 @@ void GameServer::Contents::Player::Update(const float dt)
 	// std::cout << std::format("Pos: {}. {}. {}", pos.x, pos.y, pos.z) << std::endl;
 }
 
-bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
+bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	auto const world{ GetGameWorld() };
 	//const uint64 worldFrame{ world->GetGameWorldFrameCount() };
@@ -55,7 +55,7 @@ bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const at
 
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<GameServer::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) {
 			auto const fsm = GetComponent<GameServer::Contents::FSM>();
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE, dt, true);
+			// fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE, dt, true);
 			std::cout << "DEFENSE!" << std::endl;
 				return false;
 		}
@@ -75,7 +75,7 @@ bool GameServer::Contents::Player::OnAttacked(std::shared_ptr<Creature> const at
 
 		if(m_atkInfo.dir == attackerAtkInfo.dir && GetComponent<GameServer::Contents::FSM>()->GetCurState()->GetStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) {
 			auto const fsm = GetComponent<GameServer::Contents::FSM>();
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE, dt, true);
+			// fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE, dt, true);
 			std::cout << "PLAYER DEFENSE!" << std::endl;
 			return false;
 		}

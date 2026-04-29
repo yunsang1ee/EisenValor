@@ -52,6 +52,17 @@ bool GameServer::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameOb
 	return false;
 }
 
+void GameServer::Contents::General::OnPostComponentUpdate(const float dt)
+{
+	const Vec3 delta = GetTransform().GetDeltaPosition();
+	const float speedSq = delta.x * delta.x + delta.z * delta.z;
+
+	if(speedSq > 0.0001f) {
+		const Vec3 pos = GetPosition();
+		LookAt({ pos.x + delta.x, pos.y, pos.z + delta.z });
+	}
+}
+
 void GameServer::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
@@ -86,13 +97,9 @@ void GameServer::Contents::General::OnRespawn()
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ROAMING, worldDT, true);
-
-	// TODO: General Respawn 시 부활 위치 설정 해야함.
-	Vec3 pos{ GetPosition() };
-	pos.x += 10.f;
-	pos.z += 10.f;
-	GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(pos);
+	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, worldDT, true);
+	
+	GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(m_respawnPos);
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));
@@ -102,7 +109,7 @@ void GameServer::Contents::General::OnRespawn()
 #endif
 }
 
-bool GameServer::Contents::General::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
+bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	// TODO: 블랙보드에 공격자 정보 갱신
 	auto const world{ GetGameWorld() };
@@ -127,42 +134,42 @@ bool GameServer::Contents::General::OnAttacked(std::shared_ptr<Creature> const a
 		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
 		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
-		switch(stateType) {
-			case FB_ENUMS::GENERAL_STATE_TYPE_ROAMING:
-			{
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
-				break;
-			}
-			case FB_ENUMS::GENERAL_STATE_TYPE_DUELING:
-			{
-				uint64 lastDefendedFrame = bb->GetValue<uint64>("LastDefendedFrame", 0UI64);
-
-				if(lastDefendedFrame != 0) {
-					//uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
-					//uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
-
-					// 방어 성공
-					//if(frameDiff <= 10) {
-#ifdef PRINT_GENERAL_LOG
-						//std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
-#endif
-						//bb->SetValue("LastDefendedFrame", 0UI64);
-						//return false;
-					//}
-
-					bb->SetValue("LastDefendedFrame", 0UI64);
-				}
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
-				break;
-			}
-			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:
-			{
-
-				break;
-			}
-			default:
-				break;
-		}
+//		switch(stateType) {
+//			case FB_ENUMS::GENERAL_STATE_TYPE_ROAMING:
+//			{
+//				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
+//				break;
+//			}
+//			case FB_ENUMS::GENERAL_STATE_TYPE_DUELING:
+//			{
+//				uint64 lastDefendedFrame = bb->GetValue<uint64>("LastDefendedFrame", 0UI64);
+//
+//				if(lastDefendedFrame != 0) {
+//					//uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
+//					//uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
+//
+//					// 방어 성공
+//					//if(frameDiff <= 10) {
+//#ifdef PRINT_GENERAL_LOG
+//						//std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
+//#endif
+//						//bb->SetValue("LastDefendedFrame", 0UI64);
+//						//return false;
+//					//}
+//
+//					bb->SetValue("LastDefendedFrame", 0UI64);
+//				}
+//				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+//				break;
+//			}
+//			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:
+//			{
+//
+//				break;
+//			}
+//			default:
+//				break;
+//		}
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
 			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;

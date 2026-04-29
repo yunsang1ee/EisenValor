@@ -3,6 +3,7 @@
 namespace GameServer {
 	namespace Contents {
 		class BehaviorTree;
+		class General;
 
 		enum class BEHAVIOR_NODE_STATUS {
 			SUCCESS,
@@ -14,22 +15,28 @@ namespace GameServer {
 		public:
 			virtual ~BehaviorNode() = default;
 
+		//public:
+		//	virtual void SetTree(BehaviorTree* const tree) { m_tree = tree; }
+		//	BehaviorTree* GetTree() const { return m_tree; }
+
 		public:
-			virtual void SetTree(BehaviorTree* const tree) { m_tree = tree; }
-			BehaviorTree* GetTree() const { return m_tree; }
+			void SetOwner(std::shared_ptr<General> const owner) { m_owner = owner; }
+			std::shared_ptr<General> GetOwner() const { return m_owner.lock(); }
+		
 		public:
 			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) abstract;
 			virtual void Reset() {}
 
 		protected:
-			BehaviorTree* m_tree;
+			// BehaviorTree* m_tree;
+			std::weak_ptr<General> m_owner;
 		};
 
 		// 여러 자식을 가지고 있는 노드
 		class CompositeNode : public BehaviorNode {
 		public:
 			void AddChild(std::unique_ptr<BehaviorNode> child);
-			virtual void SetTree(BehaviorTree* const tree) override;
+			// virtual void SetTree(BehaviorTree* const tree) override;
 			void Reset() override;
 		
 		protected:
@@ -61,7 +68,7 @@ namespace GameServer {
 		class DecoratorNode : public BehaviorNode {
 		public:
 			void SetChild(std::unique_ptr<BehaviorNode> child);
-			void SetTree(BehaviorTree* const tree) override;
+			// void SetTree(BehaviorTree* const tree) override;
 			void Reset() override;
 
 		protected:

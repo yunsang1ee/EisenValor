@@ -48,14 +48,14 @@ void GameServer::Contents::Soldier::OnDeath()
 		ag->Remove();
 }
 
-bool GameServer::Contents::Soldier::OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
+bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
 	uint32 damage{};
 	const auto objType{ attacker->GetObjType() };
 
-	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType) {
-		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
+	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType || FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType) {
+		const auto general = std::static_pointer_cast<General>(attacker);
+		const AttackInfo& attackerAtkInfo{ general->GetAtkInfo() };
 
 		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
 			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
