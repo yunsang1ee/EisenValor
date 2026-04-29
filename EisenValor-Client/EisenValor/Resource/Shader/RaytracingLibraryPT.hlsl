@@ -46,12 +46,13 @@ void AccumulateTerrainLayer(
 	}
 
 	float2 layerUV = terrainXZ * tileST.xy + tileST.zw;
-	float3 layerAlbedo = 1.0f.xxx;
+	float4 layerAlbedoSample = float4(1.0f, 1.0f, 1.0f, 1.0f);
 	if (albedoTextureIdx != INVALID_TEXTURE_INDEX)
 	{
 		Texture2D albedoTexture = ResourceDescriptorHeap[albedoTextureIdx];
-		layerAlbedo = albedoTexture.SampleLevel(g_sampler, layerUV, 0).rgb;
+		layerAlbedoSample = albedoTexture.SampleLevel(g_sampler, layerUV, 0);
 	}
+	float3 layerAlbedo = layerAlbedoSample.rgb;
 
 	float3 layerNormalTS = float3(0.0f, 0.0f, 1.0f);
 	if (normalTextureIdx != INVALID_TEXTURE_INDEX)
@@ -68,9 +69,14 @@ void AccumulateTerrainLayer(
 	{
 		Texture2D ormTexture = ResourceDescriptorHeap[ormTextureIdx];
 		float4 p = ormTexture.SampleLevel(g_sampler, layerUV, 0);
-		layerAo = p.r;
-		layerMetallic = p.b;
-		layerRoughness = p.g;
+		layerMetallic = p.r;
+		layerAo = p.g;
+		layerRoughness = 1.0f - p.a;
+	}
+	else
+	{
+		float useDiffuseAlphaSmoothness = 1.0f - step(0.999f, layerAlbedoSample.a);
+		layerRoughness = lerp(layerRoughness, 1.0f - layerAlbedoSample.a, useDiffuseAlphaSmoothness);
 	}
 
 	blended.albedo += layerAlbedo * weight;

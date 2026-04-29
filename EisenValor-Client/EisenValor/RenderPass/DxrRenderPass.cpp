@@ -63,12 +63,6 @@ uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResour
 		return ~0u;
 	}
 
-	const auto& matGuid = material->GetGuid();
-	if (materialData->materialToTerrainSurfaceIndex.contains(matGuid))
-	{
-		return materialData->materialToTerrainSurfaceIndex[matGuid];
-	}
-
 	const auto terrainSize = material->GetTerrainSize();
 	const auto* terrainLayerTileST = material->GetTerrainLayerTileST();
 	TerrainSurfaceGPUData surface = {};
@@ -101,7 +95,6 @@ uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResour
 
 	uint32_t surfaceIdx = static_cast<uint32_t>(materialData->terrainSurfaceSyncBuffer.Size());
 	materialData->terrainSurfaceSyncBuffer.Register(surface);
-	materialData->materialToTerrainSurfaceIndex[matGuid] = surfaceIdx;
 	return surfaceIdx;
 }
 }
@@ -211,7 +204,6 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 	materialData->terrainSurfaceSyncBuffer.Clear();
 	geoTableData->syncBuffer.Clear();
 	materialData->materialToIndex.clear();
-	materialData->materialToTerrainSurfaceIndex.clear();
 
 	std::vector<DxTLASInstance> tlasInstances;
 	tlasInstances.reserve(1'000);

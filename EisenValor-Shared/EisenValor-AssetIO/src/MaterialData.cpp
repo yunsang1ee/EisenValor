@@ -3,6 +3,11 @@
 
 namespace EvAsset
 {
+namespace
+{
+constexpr uint32_t kMaterialFlagTerrainSplat = 1u << 9;
+}
+
 bool MaterialData::Deserialize(AssetFile& file)
 {
 	// 1. PROP (Material Properties)
@@ -57,13 +62,14 @@ bool MaterialData::Deserialize(AssetFile& file)
 		}
 	}
 
+	bool			  terrainParamsLoaded = false;
 	const ChunkEntry* terrainEntry = file.GetChunkEntry("TERP");
 	if (terrainEntry && 1 == terrainEntry->version)
 	{
 		size_t			 size = 0;
 		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("TERP", size));
-		constexpr size_t requiredSize = sizeof(uint32_t) + sizeof(float) * 2 + sizeof(float) * 4 * 4;
-		constexpr size_t requiredSizeV2 = requiredSize + sizeof(float) * 4 * 2;
+		constexpr size_t requiredSize =
+			sizeof(uint32_t) + sizeof(float) * 2 + sizeof(float) * 4 * 4 + sizeof(float) * 4 * 2;
 		if (nullptr != ptr && requiredSize <= size)
 		{
 			size_t offset = 0;
@@ -78,11 +84,14 @@ bool MaterialData::Deserialize(AssetFile& file)
 			offset += sizeof(float) * 2;
 			std::memcpy(terrainLayerTileST, ptr + offset, sizeof(float) * 4 * 4);
 			offset += sizeof(float) * 4 * 4;
-			if (requiredSizeV2 <= size)
-			{
-				std::memcpy(terrainLayerMetallicRoughness, ptr + offset, sizeof(float) * 4 * 2);
-			}
+			std::memcpy(terrainLayerMetallicRoughness, ptr + offset, sizeof(float) * 4 * 2);
+			terrainParamsLoaded = true;
 		}
+	}
+
+	if (0 != (materialFlags & kMaterialFlagTerrainSplat) && !terrainParamsLoaded)
+	{
+		return false;
 	}
 
 	return IsValid();
