@@ -12,9 +12,9 @@ namespace GameServer {
 			virtual void Update(const float dt) override;
 			virtual void OnDeath() override;
 			virtual void OnRespawn() override;
-			virtual bool OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override;
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override;
 			bool IsTargetInAttackRange(std::shared_ptr<GameObject> const target);
-
+			virtual void OnPostComponentUpdate(const float dt) override final;
 		public:
 			void AddSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType |= subStateType; }
 			void RemoveSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType &= ~subStateType; }

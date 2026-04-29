@@ -10,13 +10,12 @@ struct GameWorldData {
     uint32	gameTimeSec;
     float   gameUpdateTick;
     uint32  maxUpdateStep;
+	uint32  scoreToWin;
 };
 
 struct SkillData {
     uint8 skillTypeID;
     std::string name;
-    uint32 preDelay;
-    uint32 postDelay;
     uint32 damage;
     uint32 extraDamage;
     float attackRadius;

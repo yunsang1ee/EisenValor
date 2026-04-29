@@ -159,6 +159,11 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_SOLDIER_ATTACK_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SOLDIER_ATTACK_PACKET, id));
 	}
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_GAME_FINISH_RESULT_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_GAME_FINISH_RESULT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GAME_FINISH_RESULT_PACKET, winningTeam, blueScore, redScore));
+	}
 #pragma endregion
 
 

@@ -140,7 +140,9 @@ bool GameServer::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const st
 
 	if(world) {
 		std::cout << "CS_ENTER_GAME_WORLD_PACKET" << std::endl;
-		session->SetID(recvPkt.player_id());
+		const uint32 lobbySessionID{ recvPkt.player_id() };
+		session->SetID(lobbySessionID);
+
 		std::cout << "Session ID: " << session->GetID() << std::endl;
 		world->EnterSession(session);
 	}

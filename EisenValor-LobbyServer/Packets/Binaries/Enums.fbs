@@ -63,9 +63,11 @@ enum GENERAL_STANCE_TYPE : ubyte{
 }
 
 enum GENERAL_STATE_TYPE: ubyte {
-	NONE,
-	ROAMING,
-	DUELING,
+	NONE = 0,
+	IDLE,
+	WALK,
+	RUN,
+	ATTACK,
 	STUN,
 	DEAD,
 
@@ -77,14 +79,12 @@ enum PLAYER_STATE_TYPE: ubyte {
 	IDLE,
 	WALK,
 	RUN,
+	ATTACK,
 	STUN,
 	DEAD,
 
-	// 클라용
 	PRE_DELAY = 10,
-	ATTACK,
 	POST_DELAY,
-	DEFENSE,
 
 	END
 }

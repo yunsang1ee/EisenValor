@@ -11,7 +11,7 @@ bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const Packet
 bool Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt);
 bool Handle_LC_LOGIN_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_SUCCESS_PACKET& recvPkt);
 #pragma endregion
-
+	
 
 #pragma region LOBBY_PACKETS
 bool Handle_LC_ENTER_GAME_LOBBY_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_ENTER_GAME_LOBBY_FAIL_PACKET& recvPkt);
@@ -100,6 +100,9 @@ bool Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
 );
 
 bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt);
+
+bool Handle_SC_GAME_FINISH_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt);
+
 #pragma endregion
 } // namespace S2C
 } // namespace NetBridge

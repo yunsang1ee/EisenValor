@@ -61,7 +61,7 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 	auto		 device = GLOBAL(DxDeviceGlobal).GetDevice();
 
 #ifdef APPLY_LOBBY_SERVER
-	GLOBAL(SceneGlobal).SetLocalNetworkID(id);
+	GLOBAL(SceneGlobal).SetSessionID(id);
 	auto pb = NetBridge::C2S::Make_CL_ENTER_GAME_LOBBY_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
 	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to LobbyScene\n", id);
@@ -203,7 +203,8 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_ROOM_SUCCESS_PACKET(
 
 	DEBUG_LOG_FMT("[SC_JOIN_GAME_ROOM_SUCCESS_PACKET] ");
 	auto user = recvPkt.user();
-	GLOBAL(SceneGlobal).SetLocalNetworkID(user->id());
+	// GLOBAL(SceneGlobal).SetLocalNetworkID(user->id());
+	GLOBAL(SceneGlobal).SetSessionID(user->id());
 
 	DEBUG_LOG_FMT("User ID:{}\n", user->id());
 
@@ -400,17 +401,20 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET& recvPkt
 )
 {
-	DEBUG_LOG_FMT("Handle_LC_CONNECT_TO_GAME_SERVER");
-
+	DEBUG_LOG_FMT("Handle_LC_CON	NECT_TO_GAME_SERVER");
+	const uint32 sessionID = GLOBAL(SceneGlobal).GetSessionID();
+	const auto	 worldID = recvPkt.world_id();
+	const uint16 roomID{recvPkt.world_id()};
 	std::string ip{recvPkt.ip()->c_str()};
-	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), recvPkt.port()))
+	const uint16 port{recvPkt.port()};
+
+	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), port))
 		assert(nullptr);
 
 	// 로비서버로부터 받은 세션 아이디
-	const uint32 localID = GLOBAL(SceneGlobal).GetLocalNetworkID();
-	const uint16 roomID{1};
+	// TODO: 로비 서버로부터 받은 세션 아이디를 게임 서버로 전달해서 게임 서버에 입장하기
 	{
-		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, localID)};
+		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, sessionID)};
 		GLOBAL(NetworkGlobal).Send(std::move(pb));
 	}
 	return true;
@@ -427,10 +431,10 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
-	GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
-	// TODO: stanceType 사용하기
+	// GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
+
+	GLOBAL(SceneGlobal).SetLocalGameObjectID(recvPkt.player_id());
 	GLOBAL(SceneGlobal).LoadScene("SampleScene");
-	// 로컬 플레이어 오브젝트 생성
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
@@ -1295,7 +1299,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_VITAL_PACKET(
 		const uint32 stamina = recvPkt.current_stamina();
 
 
-		std::cout << std::format("ID:{}, hp:{}, stanmina:{}", objID, hp, stamina);
+		// std::cout << std::format("ID:{}, hp:{}, stanmina:{}", objID, hp, stamina);
 
 		auto staminaComp = obj->GetComponent<StaminaComponent>();
 		if (staminaComp)
@@ -1393,7 +1397,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		return false;
 	}
 
-	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalGameObjectID()};
 	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 	uint8_t		 nextState = recvPkt.next_state();
@@ -1411,8 +1415,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
-			nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 		{
 			return true;
 		}
@@ -1474,7 +1477,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	if (cameraTargetID == 0)
 	{
 		// 락온 해제 시(적 죽었을 때) 로컬 플레이어로 복구
-		const uint32 localID = scene->GetLocalID();
+		const uint64 localID = scene->GetLocalID();
 		if (auto localPlayer = scene->FindGameObjectByServerID(localID))
 		{
 			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
@@ -1615,7 +1618,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
 )
 {
-	// 팀 점수 업데이트
+	// TODO: 팀 점수 업데이트
 	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
 	return true;
 }
@@ -1639,7 +1642,7 @@ bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
 		return false;
 	}
 
-	auto		 localID{GLOBAL(SceneGlobal).GetLocalNetworkID()};
+	auto		 localID{GLOBAL(SceneGlobal).GetLocalGameObjectID()};
 	const uint64 objID = recvPkt.obj_id();
 	auto		 obj = scene->FindGameObjectByServerID(objID);
 
@@ -1664,11 +1667,39 @@ bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
 	return true;
 }
 
+bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt
+)
+{
+	// TODO: UI 통해서 게임 종료 결과 보여줘야합니다.
+	const auto winningTeam{recvPkt.winning_team()};	
+	const auto blueScore{recvPkt.blue_score()};
+	const auto redScore{recvPkt.red_score()};
+
+	switch (winningTeam)
+	{
+	case FB_ENUMS::TEAM_TYPE_NONE:
+		// 무승부
+		break;
+	case FB_ENUMS::TEAM_TYPE_BLUE:
+		// 블루팀 승리
+		break;
+	case FB_ENUMS::TEAM_TYPE_RED:
+		// 레드팀 승리
+		break;
+	default:
+		break;
+	}
+
+	return true;
+}
+
 bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
 )
 {
-	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트하기
+	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트해야합니다.
 
 	return true;
 }
+

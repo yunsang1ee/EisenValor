@@ -10,7 +10,7 @@ namespace GameServer {
 			virtual ~Creature();
 
 		public:
-			virtual bool OnAttacked(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) { return false; }
+			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) { return false; }
 			virtual void OnDeath() {}
 			virtual void OnRespawn() {}
 		

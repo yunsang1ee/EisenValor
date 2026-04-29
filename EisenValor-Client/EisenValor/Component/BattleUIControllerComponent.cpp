@@ -41,24 +41,37 @@ void BattleUIControllerComponent::OnStart()
 		return;
 	}
 
-	GameObject* owner = GetGameObject();
+	GameObject* ownerObj = GetGameObject();
 	// DEBUG_LOG_FMT(
 	//	"[BattleUI Debug] OnStart Called! ID: {}, Mode: {}\n", owner->GetServerID(),
 	//	m_controlMode == ControlType::Local ? "Local" : "Remote"
 	//);
 
 	// FSM에 리스너 등록 (상태 변화 감지)
-	if (auto* fsm = owner->GetComponent<FSMComponent>())
+	if (auto* fsm = ownerObj->GetComponent<FSMComponent>())
 	{
+		DEBUG_LOG_FMT("[BattleUI] Found FSM: {} for Obj: {}\n", (void*)fsm, ownerObj->GetName());
+
 		// 스탠스 변화 리스너 추가: FSM에서 스탠스가 변경될 때마다 UI에 알림(FSM->UI)
 		fsm->AddStanceListener([this](uint8_t stance) { OnStanceChanged(stance); });
 
 		// 방향 전환 리스너 추가: UI에서 선택된 방향을 FSM에 동기화(UI->FSM)
+		// 핸들을 통해 접근(포인터 재할당 문제)
+		auto ownerHandle = ownerObj->GetHandle();
 		AddListener(
-			owner->GetHandle(),
-			[fsm](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type)
+			ownerHandle,
+			[ownerHandle](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type)
 			{
-				fsm->SetCurAttackDir(static_cast<uint8_t>(dir));
+				auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+				if (!scene) return;
+
+				if (auto* ownerObj = scene->TryGetGameObject(ownerHandle))
+				{
+					if (auto* currentFsm = ownerObj->GetComponent<FSMComponent>())
+					{
+						currentFsm->SetCurAttackDir(static_cast<uint8_t>(dir));
+					}
+				}
 			}
 		);
 	}
@@ -637,7 +650,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	{
 		m_accumulatedDeltaX = 0.0f;
 		m_accumulatedDeltaY = 0.0f;
-		UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
+		//UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
 		return;
 	}
 
@@ -852,6 +865,10 @@ void BattleUIControllerComponent::OnGuardDirectionConfirmed(
 	if (attackType == GENERAL_ATTACK_TYPE_DISARM)
 	{
 		attackStr = "DISARM";
+	}
+	else if (attackType == GENERAL_ATTACK_TYPE_AREA)
+	{
+		attackStr = "AREA";
 	}
 
 	switch (confirmedDir)
