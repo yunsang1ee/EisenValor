@@ -41,10 +41,11 @@ namespace AnimationLoader
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Die_Seq.evanim")
 			);
 
-			// 락온 이동 (21~23)
-			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_B_Seq.evanim"));
-			anim->AddAnimation(22, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_L_Seq.evanim"));
-			anim->AddAnimation(23, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_R_Seq.evanim"));
+			// 락온 이동 (20~23)
+			anim->AddAnimation(20, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_F_Shield_Seq.evanim"));
+			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_B_Shield_Seq.evanim"));
+			anim->AddAnimation(22, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_L.evanim"));
+			anim->AddAnimation(23, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_R.evanim"));
 
 			// 달리기 (25)
 			anim->AddAnimation(25, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Run_Seq.evanim"));
@@ -75,7 +76,7 @@ namespace AnimationLoader
 			// TOP (110:Light, 111:Heavy)
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 10,
-				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Thrust/Thrust_F_Seq.evanim")
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_8.evanim")
 			);
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 11,
@@ -92,7 +93,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 21,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_3_Inplace1.evanim"
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3_Inplace1.evanim"
 				)
 			);
 

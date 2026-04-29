@@ -424,7 +424,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		movement->SetInputLeft(a);
 		movement->SetInputRight(d);
 
-		movement->SetMoveSpeed(2.f);
+		movement->SetMoveSpeed(1.5f);
 	}
 	else
 	{
