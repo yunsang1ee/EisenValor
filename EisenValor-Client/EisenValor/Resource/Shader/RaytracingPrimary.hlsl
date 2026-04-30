@@ -59,6 +59,30 @@ void AccumulateTerrainLayer(
     weightSum += weight;
 }
 
+float4 SampleTerrainSplatWeights(Texture2D splatTexture, float2 terrainUV)
+{
+    uint width = 0;
+    uint height = 0;
+    splatTexture.GetDimensions(width, height);
+    if (width == 0 || height == 0)
+    {
+        return float4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+
+    float2 texel = saturate(terrainUV) * float2(width - 1, height - 1);
+    uint2 p0 = (uint2)floor(texel);
+    uint2 p1 = min(p0 + 1, uint2(width - 1, height - 1));
+    float2 t = texel - float2(p0);
+    int2 ip0 = int2(p0);
+    int2 ip1 = int2(p1);
+
+    float4 w00 = splatTexture.Load(int3(ip0, 0));
+    float4 w10 = splatTexture.Load(int3(ip1.x, ip0.y, 0));
+    float4 w01 = splatTexture.Load(int3(ip0.x, ip1.y, 0));
+    float4 w11 = splatTexture.Load(int3(ip1, 0));
+    return lerp(lerp(w00, w10, t.x), lerp(w01, w11, t.x), t.y);
+}
+
 TerrainSample SampleTerrainSplat(MaterialGPUData mat, float2 terrainUV)
 {
     TerrainSample result;
@@ -77,7 +101,7 @@ TerrainSample SampleTerrainSplat(MaterialGPUData mat, float2 terrainUV)
     }
 
     Texture2D splatTexture = ResourceDescriptorHeap[terrain.splatTextureIdx];
-    float4 weights = splatTexture.SampleLevel(g_sampler, terrainUV, 0);
+    float4 weights = SampleTerrainSplatWeights(splatTexture, terrainUV);
     float2 terrainXZ = terrainUV * terrain.terrainSize.xy;
     uint layerCount = terrain.layerCount;
 
