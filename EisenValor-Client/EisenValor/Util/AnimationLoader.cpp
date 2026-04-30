@@ -42,8 +42,8 @@ namespace AnimationLoader
 			);
 
 			// 락온 이동 (20~23)
-			anim->AddAnimation(20, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_F_Shield_Seq.evanim"));
-			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_B_Shield_Seq.evanim"));
+			anim->AddAnimation(20, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_F.evanim"));
+			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_B.evanim"));
 			anim->AddAnimation(22, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_L.evanim"));
 			anim->AddAnimation(23, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_R.evanim"));
 
