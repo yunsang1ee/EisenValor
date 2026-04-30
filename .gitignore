@@ -411,9 +411,13 @@ FodyWeavers.xsd
 !/EisenValor-Server/Binaries/Server/NavData/**
 
 # Resource and Asset Exclusions
-# Ignore raw assets in Unity and Asset Exporter
-**/Resources/*
-**/Assets/*
+# Ignore licensed/raw Unity assets, but keep directories visible so .meta files can be tracked.
+**/Resources/**
+**/Assets/**
+!**/Resources/**/
+!**/Assets/**/
+!**/Resources/**/*.meta
+!**/Assets/**/*.meta
 
 # Preserve folder structure for ignored folders
 !**/Resources/.gitkeep

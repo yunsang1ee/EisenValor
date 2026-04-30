@@ -5,6 +5,13 @@
 class GameObject;
 class DxUploadHeap;
 
+struct DxTLASInstance
+{
+	GameObject* obj = nullptr;
+	class DxBLAS* blas = nullptr;
+	D3D12_RAYTRACING_INSTANCE_FLAGS flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+};
+
 class DxTLAS
 {
 public:
@@ -23,14 +30,14 @@ public:
 		struct ID3D12Device5*											device,
 		struct ID3D12GraphicsCommandList4*								cmdList,
 		class DxUploadHeap*												uploadHeap,
-		const std::vector<std::pair<class GameObject*, class DxBLAS*>>& instances
+		const std::vector<DxTLASInstance>& instances
 	);
 
 	void Refit(
 		struct ID3D12Device5*											device,
 		struct ID3D12GraphicsCommandList4*								cmdList,
 		class DxUploadHeap*												uploadHeap,
-		const std::vector<std::pair<class GameObject*, class DxBLAS*>>& instances
+		const std::vector<DxTLASInstance>& instances
 	);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const { return GetActiveTlasBuffer().GetGPUAddress(); }
@@ -44,7 +51,7 @@ private:
 		ID3D12Device5*										device,
 		ID3D12GraphicsCommandList4*							cmdList,
 		class DxUploadHeap*									uploadHeap,
-		const std::vector<std::pair<GameObject*, DxBLAS*>>& instances,
+		const std::vector<DxTLASInstance>& instances,
 		bool												isRefit
 	);
 
