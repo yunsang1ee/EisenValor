@@ -378,11 +378,11 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	if (isRunning)
 	{
-		movement->SetMoveSpeed(8.5f);
+		movement->SetMoveSpeed(8.0f);
 	}
 	else
 	{
-		movement->SetMoveSpeed(5.0f);
+		movement->SetMoveSpeed(4.5f);
 	}
 
 	// 락온 상태 & 카메라 방향 업데이트
@@ -424,7 +424,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		movement->SetInputLeft(a);
 		movement->SetInputRight(d);
 
-		movement->SetMoveSpeed(2.f);
+		movement->SetMoveSpeed(1.5f);
 	}
 	else
 	{
