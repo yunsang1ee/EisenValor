@@ -246,9 +246,6 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_GENERAL_STANCE()
 		SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 		bestTargetID = 0;
 	}
-
-	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(),GetStanceType(), bestTargetID);
-	GetSession()->GetGameWorld()->Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
