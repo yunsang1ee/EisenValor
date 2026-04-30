@@ -24,8 +24,18 @@ public:
 	DX::XMFLOAT4		  GetAlbedo() const { return albedo; }
 	float				  GetRoughness() const { return roughness; }
 	float				  GetMetallic() const { return metallic; }
+	uint32_t			  GetTerrainLayerCount() const { return terrainLayerCount; }
+	DX::XMFLOAT2		  GetTerrainSize() const { return terrainSize; }
+	const DX::XMFLOAT4*	  GetTerrainLayerTileST() const { return terrainLayerTileST; }
+	const DX::XMFLOAT2*	  GetTerrainLayerMetallicRoughness() const { return terrainLayerMetallicRoughness; }
 
 	void SetData(EvAsset::ShadingModel shadingModel, uint32_t materialFlagsIn, const float albedoIn[4], float roughnessVal, float metallicIn);
+	void SetTerrainData(
+		uint32_t layerCount,
+		const float terrainSizeIn[2],
+		const float layerTileSTIn[4][4],
+		const float layerMetallicRoughnessIn[4][2]
+	);
 	void SetTexture(std::string_view slotName, std::shared_ptr<TextureResource> tex);
 
 	std::shared_ptr<TextureResource> GetTexture(std::string_view slotName) const;
@@ -37,6 +47,20 @@ private:
 	DX::XMFLOAT4		  albedo{1.0f, 0.0f, 1.0f, 1.0f};
 	float				  roughness = 1.0f;
 	float				  metallic = 0.0f;
+	uint32_t			  terrainLayerCount = 0;
+	DX::XMFLOAT2		  terrainSize{0.0f, 0.0f};
+	DX::XMFLOAT4		  terrainLayerTileST[4]{
+		  DX::XMFLOAT4{1.0f, 1.0f, 0.0f, 0.0f},
+		  DX::XMFLOAT4{1.0f, 1.0f, 0.0f, 0.0f},
+		  DX::XMFLOAT4{1.0f, 1.0f, 0.0f, 0.0f},
+		  DX::XMFLOAT4{1.0f, 1.0f, 0.0f, 0.0f}
+	};
+	DX::XMFLOAT2		  terrainLayerMetallicRoughness[4]{
+		  DX::XMFLOAT2{0.0f, 1.0f},
+		  DX::XMFLOAT2{0.0f, 1.0f},
+		  DX::XMFLOAT2{0.0f, 1.0f},
+		  DX::XMFLOAT2{0.0f, 1.0f}
+	};
 
 	std::vector<TextureSlot> textures;
 };

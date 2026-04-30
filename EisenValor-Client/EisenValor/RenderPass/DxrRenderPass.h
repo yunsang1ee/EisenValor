@@ -37,13 +37,13 @@ private:
 	void CollectStaticMeshData(
 		Scene*										  scene,
 		ID3D12GraphicsCommandList4*					  cmdList,
-		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+		std::vector<DxTLASInstance>&				  tlasInstances,
 		uint32_t									  frameIndex
 	);
 	void CollectSkinnedMeshData(
 		Scene*										  scene,
 		ID3D12GraphicsCommandList4*					  cmdList,
-		std::vector<std::pair<GameObject*, DxBLAS*>>& tlasInstances,
+		std::vector<DxTLASInstance>&				  tlasInstances,
 		uint32_t									  frameIndex,
 		bool&										  hasAnimatedInstances
 	);

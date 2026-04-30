@@ -12,6 +12,7 @@ public:
 	virtual ~MaterialRenderData() override = default;
 
 	RenderDataSync<MaterialGPUData> syncBuffer;
+	RenderDataSync<TerrainSurfaceGPUData> terrainSurfaceSyncBuffer;
 
 	std::unordered_map<EvAsset::Guid, uint32_t, EvAsset::GuidHash> materialToIndex;
 

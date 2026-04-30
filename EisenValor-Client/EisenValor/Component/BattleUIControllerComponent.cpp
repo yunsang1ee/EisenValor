@@ -757,6 +757,9 @@ void BattleUIControllerComponent::ProcessMouseInput()
 					stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
 					stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 				{
+					m_pendingLeftClick = false;
+					m_pendingRightClick = false;
+					m_inputBufferTimer = 0.0f;
 					return;
 				}
 

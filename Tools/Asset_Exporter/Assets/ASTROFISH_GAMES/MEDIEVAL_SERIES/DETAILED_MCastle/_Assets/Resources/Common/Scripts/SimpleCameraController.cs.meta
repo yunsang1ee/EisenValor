@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 0bf4bb43deaadad4aa4f121fd4ef959c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 178027
+  packageName: DETAILED - Medieval Castle
+  packageVersion: 1.1
+  assetPath: Assets/ASTROFISH_GAMES/MEDIEVAL_SERIES/DETAILED_MCastle/_Assets/Resources/Common/Scripts/SimpleCameraController.cs
+  uploadId: 390422
