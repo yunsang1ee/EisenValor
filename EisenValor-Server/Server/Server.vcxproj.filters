@@ -365,9 +365,6 @@
     <ClInclude Include="Spawner.h">
       <Filter>03. Contents\Component\Scripts\Spawner</Filter>
     </ClInclude>
-    <ClInclude Include="GameWorld.h">
-      <Filter>03. Contents\GameWorld</Filter>
-    </ClInclude>
     <ClInclude Include="ServerPackets.h">
       <Filter>02. Packets\SendPackets</Filter>
     </ClInclude>
@@ -449,9 +446,6 @@
     <ClInclude Include="OccupationZone.h">
       <Filter>03. Contents\Component\Scripts\OccupationZone</Filter>
     </ClInclude>
-    <ClInclude Include="GeneralNodes.h">
-      <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
-    </ClInclude>
     <ClInclude Include="GeneralStates.h">
       <Filter>03. Contents\GameObject\Creature\General\States</Filter>
     </ClInclude>
@@ -493,6 +487,12 @@
     </ClInclude>
     <ClInclude Include="MapDataManager.h">
       <Filter>03. Contents\GameWorld\MapData</Filter>
+    </ClInclude>
+    <ClInclude Include="GameWorld.h">
+      <Filter>03. Contents\GameWorld</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralNodes.h">
+      <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

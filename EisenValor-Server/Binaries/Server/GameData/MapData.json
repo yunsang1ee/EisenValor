@@ -63,7 +63,7 @@
           "y": 15.0,
           "z": 0.0
         },
-        "spawnIntervalSec": 10,
+        "spawnIntervalSec": 30,
         "soldierSpawnCount": 2
       },
       {
@@ -81,7 +81,7 @@
           "y": 15.0,
           "z": 0.0
         },
-        "spawnIntervalSec": 10,
+        "spawnIntervalSec": 30,
         "soldierSpawnCount": 2
       }
     ],
@@ -101,7 +101,7 @@
           "y": 15.0,
           "z": 0.0
         },
-        "spawnIntervalSec": 10,
+        "spawnIntervalSec": 30,
         "soldierSpawnCount": 2
       },
       {
@@ -119,7 +119,7 @@
           "y": 15.0,
           "z": 0.0
         },
-        "spawnIntervalSec": 10,
+        "spawnIntervalSec": 30,
         "soldierSpawnCount": 2
       }
     ]

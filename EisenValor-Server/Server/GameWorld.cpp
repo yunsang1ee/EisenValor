@@ -20,17 +20,18 @@
 // #define PRINT_GAME_WORLD_LOG
 
 GameServer::Contents::GameWorld::GameWorld()
-	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, m_worldFrameCount{}, m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{}
+	:m_check{}, m_dt{}, m_lastDT{}, m_accDT{}, /*m_worldFrameCount{},*/ m_accGameTime{}, m_blueTeamScore{}, m_redTeamScore{},
+	m_remainingTimeSec{ std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec } },
+	m_fixedUpdateTick{ 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick },
+	m_maxUpdateStep{ MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep },
+	m_blueTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition },
+	m_redTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition },
+	m_scoreToWin{ MANAGER(GameDataManager)->GetGameWorldData().scoreToWin },
+	m_isGameFinish{ false }
 {
 #ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "GameWorldTest!" << std::endl;
 #endif
-	m_remainingTimeSec = std::chrono::seconds{ MANAGER(GameDataManager)->GetGameWorldData().gameTimeSec };
-	m_fixedUpdateTick = 1.f / MANAGER(GameDataManager)->GetGameWorldData().gameUpdateTick;
-	m_maxUpdateStep = MANAGER(GameDataManager)->GetGameWorldData().maxUpdateStep;
-
-	m_blueTeamLastBasePos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition;
-	m_redTeamLastBasePos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition;
 }
 
 GameServer::Contents::GameWorld::~GameWorld()
@@ -67,19 +68,16 @@ void GameServer::Contents::GameWorld::Update(const float dt)
 	m_accDT += dt;
 
 	uint32 loopCount{};
-
 	while(m_accDT >= m_fixedUpdateTick && loopCount < m_maxUpdateStep) {
+		if(IsGameFinish()) break; 
 		m_accDT -= m_fixedUpdateTick;
 		ProcessEvents();
 		m_navSystem.Update(m_fixedUpdateTick);
-		for(const auto& group : m_gameObjectsGroups) {
-			for(const auto& [id, obj] : group) {
-				if(obj) obj->Update(m_fixedUpdateTick);
-			}
-		}
+		UpdateGameWorldObjects();
 		CheckCollision();
-		m_worldFrameCount++;
 		CheckGameTime(m_fixedUpdateTick);
+		CheckGameFinish();
+		// m_worldFrameCount++;
 		loopCount++;
 	}
 
@@ -169,10 +167,10 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 	const uint64 playerID{ it->second };
 
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
-	if(playerGroup.find(playerID) != playerGroup.end()) {
-		auto player = playerGroup[playerID];
+	auto player = IDToPlayer(playerID);
+	
+	if(player)
 		RemoveGameObject(player);
-	}
 }
 
 void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine::PacketBuffer> pb)
@@ -279,8 +277,8 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_ATTACK(const uint32 sess
 
 	const uint64 playerID{ it->second };
 
-	if(playerGroup.find(playerID) != playerGroup.end()) {
-		auto player = static_cast<Player*>(playerGroup[playerID].get());
+	const auto player = IDToPlayer(playerID);
+	if(player) {
 		player->Handle_CS_GENERAL_ATTACK(attackInfo);
 	}
 }
@@ -292,7 +290,7 @@ void GameServer::Contents::GameWorld::Handle_CS_GENERAL_CHANGE_STANCE(const uint
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player)
 		player->Handle_CS_PLAYER_GENERAL_STANCE();
 }
@@ -304,7 +302,7 @@ void GameServer::Contents::GameWorld::Handle_CS_PLAYER_FAKE(const uint32 session
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_PLAYER_FAKE();
 	}
@@ -317,7 +315,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint3
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_CHANGE_CAMERA_TARGET(prevTargetID);
 	}
@@ -330,7 +328,7 @@ void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const ui
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
 	}
@@ -419,7 +417,7 @@ void GameServer::Contents::GameWorld::Handle_CS_UPDATE_PLAYER_STATE(const uint32
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	auto fsm{ player->GetComponent<FSM>() };
 	if(fsm) {
 		const auto curState{ fsm->GetCurState()->GetStateType() };
@@ -438,7 +436,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<Clien
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 	if(player) {
 #ifdef PRINT_GAME_WORLD_LOG
 		std::cout << "Player " << playerID << " says: " << msg << std::endl;
@@ -456,7 +454,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 
 	const uint64 playerID{ it->second };
 
-	auto const player = IDToPlayer(playerID);
+	const auto player = IDToPlayer(playerID);
 
 	Vec3 tpPos{};
 	switch(place) {
@@ -907,7 +905,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 
 	// 회복소 생성
 	{
-		auto healZones = MANAGER(GameServer::Contents::MapDataManager)->GetRecoveryPoints("Map");
+		auto const healZones = MANAGER(GameServer::Contents::MapDataManager)->GetRecoveryPoints("Map");
 
 		for(const auto& healZone : *healZones) {
 			HealZoneTemplate t;
@@ -926,7 +924,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 
 	// 점령지 생성
 	{
-		const auto occupationZones = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZones("Map");
+		auto const occupationZones = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZones("Map");
 
 		for(const auto& occupationZone : *occupationZones) {
 			OccupationZoneTemplate t;
@@ -947,7 +945,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	std::vector<std::string> teams{ "blue", "red" };
 
 	//for(int i = 0; i < 1; ++i) {
-	//	const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", teams[i]);
+	//	auto const soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", teams[i]);
 
 	//	for(int i = 0; i < 1; ++i) {
 	//		const auto& soldierSpawner = (*soldierSpawners)[i];
@@ -966,7 +964,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//}
 
 	for(const auto& team : teams) {
-		const auto soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
+		auto const soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
 
 		 for(const auto& soldierSpawner : *soldierSpawners) {
 			SoldierSpanwerTemplate t;
@@ -997,6 +995,47 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			AddGameObject(std::move(spawner));
 		}*/
 	}
+}
+
+void GameServer::Contents::GameWorld::UpdateGameWorldObjects()
+{
+	for(const auto& group : m_gameObjectsGroups) {
+		for(const auto& [id, obj] : group) {
+			if(obj) obj->Update(m_fixedUpdateTick);
+		}
+	}
+}
+
+void GameServer::Contents::GameWorld::CheckGameFinish()
+{
+	if(m_isGameFinish) return;
+
+	std::optional<FB_ENUMS::TEAM_TYPE> winner;
+
+	if(m_blueTeamScore >= m_scoreToWin) {
+		winner = FB_ENUMS::TEAM_TYPE_BLUE;
+	}
+	else if(m_redTeamScore >= m_scoreToWin) {
+		winner = FB_ENUMS::TEAM_TYPE_RED;
+	}
+	else if(m_remainingTimeSec.count() <= 0) {
+		if(m_blueTeamScore > m_redTeamScore) {
+			winner = FB_ENUMS::TEAM_TYPE_BLUE;
+		}
+		else if(m_redTeamScore > m_blueTeamScore) {
+			winner = FB_ENUMS::TEAM_TYPE_RED;
+		}
+		else {
+			winner = FB_ENUMS::TEAM_TYPE_NONE;
+		}
+	}
+
+	if(!winner) return;
+
+	m_isGameFinish = true;
+
+	auto pb = ServerPackets::Make_SC_GAME_FINISH_RESULT_PACKET(*winner, m_blueTeamScore, m_redTeamScore);
+	Broadcast(std::move(pb));
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

@@ -209,10 +209,11 @@ void PlayerPreDelayState::Update(FSMComponent* fsm, float dt)
 	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
 
 	// 약공격: 10FPS, 강공격: 20FPS
-	float targetTime = (type == GENERAL_ATTACK_TYPE_HEAVY) ? (20.0f / 60.0f) : (10.0f / 60.0f);
+	float targetTime = (type == GENERAL_ATTACK_TYPE_HEAVY) ? 0.6f : 0.3f;
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
+		std::cout << "Target Time Reached in PRE_DELAY: " << fsm->GetStateTimer() << "s, Transitioning to ATTACK\n";
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK);
 	}
 }
@@ -302,34 +303,6 @@ void PlayerPostDelayState::Update(FSMComponent* fsm, float dt)
 void PlayerPostDelayState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] POST_DELAY Exit\n");
-}
-
-// ==================================
-//		  PLAYER_DEFENSE_STATE
-// ==================================
-PlayerDefenseState::PlayerDefenseState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE)
-{
-}
-
-void PlayerDefenseState::Enter(FSMComponent* fsm)
-{
-	//DEBUG_LOG_FMT("[FSM] DEFENSE Enter (Block Success!)\n");
-	fsm->SetStateTimer(0.0f);
-}
-
-void PlayerDefenseState::Update(FSMComponent* fsm, float dt)
-{
-	fsm->AddStateTimer(dt);
-	// 방어 성공 연출 시간 (1초)
-	if (fsm->GetStateTimer() >= 1.0f)
-	{
-		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	}
-}
-
-void PlayerDefenseState::Exit(FSMComponent* fsm)
-{
-	//DEBUG_LOG_FMT("[FSM] DEFENSE Exit\n");
 }
 
 // ==================================

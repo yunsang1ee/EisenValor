@@ -12,18 +12,17 @@ void StatePool::Initialize()
 	// 이미 초기화된 경우 무시
 	if (!s_instanceMap.empty()) return;
 
-	// General States 
+	// General States & Player States
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_IDLE] = std::make_unique<PlayerlIdleState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_WALK] = std::make_unique<PlayerWalkState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_RUN] = std::make_unique<PlayerRunState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_ATTACK] = std::make_unique<PlayerAttackState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<PlayerStunState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<PlayerDeadState>();
 
 	// 클라용
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY] = std::make_unique<PlayerPreDelayState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_ATTACK] = std::make_unique<PlayerAttackState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY] = std::make_unique<PlayerPostDelayState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEFENSE] = std::make_unique<PlayerDefenseState>();
 
 	// Soldier States
 	uint8_t offset = StateOffset::kSoldierOffset;

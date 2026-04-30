@@ -6,15 +6,14 @@
   "GameWorldData": {
     "GAME_TIME_SEC": 1800,
     "GAME_UPDATE_TICK": 60.0,
-    "MAX_UPDATE_STEP": 5
+    "MAX_UPDATE_STEP": 5,
+    "SCORE_TO_WIN": 100
   },
 
   "SkillData": [
     {
       "id": 0,
       "name": "LIGHT",
-      "pre_delay": 10,
-      "post_delay": 5,
       "damage": 5,
       "extra_damage": 2,
       "attack_radius": 5.0,
@@ -24,8 +23,6 @@
     {
       "id": 1,
       "name": "HEAVY",
-      "pre_delay": 20,
-      "post_delay": 10,
       "damage": 10,
       "extra_damage": 3,
       "attack_radius": 5.0,
@@ -35,8 +32,6 @@
     {
       "id": 2,
       "name": "RANGE",
-      "pre_delay": 30,
-      "post_delay": 20,
       "damage": 36,
       "extra_damage": 0,
       "attack_radius": 5.0,
@@ -46,8 +41,6 @@
     {
       "id": 3,
       "name": "DISARM",
-      "pre_delay": 10,
-      "post_delay": 5,
       "damage": 5,
       "extra_damage": 0,
       "attack_radius": 5.0,
@@ -87,8 +80,8 @@
     {
       "obj_type_id": 3,
       "type": "Soldier",
-      "atk": 10,
-      "max_hp": 10,
+      "atk": 5,
+      "max_hp": 20,
       "max_stamina": 0,
       "stamina_cost": 0,
       "extra_stamina": 0,
