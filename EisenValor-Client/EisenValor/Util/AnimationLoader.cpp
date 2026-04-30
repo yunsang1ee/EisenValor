@@ -95,7 +95,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 12,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3.evanim"
+					"Resource/Animation/Shield_Sword/Attack/area_attack.evanim"
 				)
 			);
 
@@ -113,7 +113,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 22,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3.evanim"
+					"Resource/Animation/Shield_Sword/Attack/area_attack.evanim"
 				)
 			);
 
@@ -129,7 +129,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 32,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3.evanim"
+					"Resource/Animation/Shield_Sword/Attack/area_attack.evanim"
 				)
 			);
 
