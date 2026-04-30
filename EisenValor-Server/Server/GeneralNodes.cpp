@@ -10,8 +10,18 @@
 #include "FSM.h"
 
 // ====================================
-//		  GENERAL_ROAMING_STATE
+//			GENERAL_IDLE_STATE
 // ====================================
+//bool GameServer::Contents::WaitAfterSpawn::Check(const float dt)
+//{
+//	m_accDTForRespawn += dt;
+//	if(m_accDTForRespawn >= 1.f) {	
+//		m_accDTForRespawn = 0.f;
+//		return true;
+//	}
+//
+//	return false;
+//}
 
 GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindOZ::DoAction(const float dt)
 {
@@ -424,13 +434,105 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::CombatMovement:
 
 // 좌우로 이동
 
-bool GameServer::Contents::WaitAfterSpawn::Check(const float dt)
+bool GameServer::Contents::IsInOccupationZone::Check(const float dt)
+{
+	const auto owner{ GetOwner()};
+	const auto& ownerPos{ owner->GetPosition() };
+
+	auto const world{ owner->GetGameWorld() };
+	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	for(const auto& [id, o] : gameObjectGroup) {
+		auto const obj{ o.get() };
+		if(false == IsValidObj(o))
+			continue;
+
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		
+		if(oz) {
+			if(oz->IsInOccupationZone(ownerPos)) {
+				auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
+				const auto stateType{ fsm->GetCurState()->GetStateType() };
+				if(FB_ENUMS::GENERAL_STATE_TYPE_RUN == stateType) {
+					const auto ag{ owner->GetComponent<GameServer::Contents::NavAgent>() };
+					ag->StopMove();
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, dt, true);
+				}
+				
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool GameServer::Contents::IsTargetInNearRange::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	auto const world{ owner->GetGameWorld() };
+	auto const navAgent{ owner->GetComponent<GameServer::Contents::NavAgent>() };
+	auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
+	const auto prevStateType{ fsm->GetPrevStateType() };
+	const auto curStateType{ fsm->GetCurState()->GetStateType() };
+	const auto& gameObjectGroup{ world->GetGameObjectGroups()};
+
+	for(int i=0; i < gameObjectGroup.size(); ++i) {
+		if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL != i && FB_ENUMS::GAME_OBJECT_TYPE_PLAYER != i)
+			continue;
+
+		for(const auto& [id, o] : gameObjectGroup[i]) {
+			if(false == IsValidObj(o))
+				continue;
+
+			if(id == owner->GetID()) continue;
+			
+			if(o->GetTeamType() == owner->GetTeamType()) continue;
+
+			if(owner->IsTargetInRange(o, 2.f * 2.f)) {
+				const auto target = std::static_pointer_cast<Creature>(o);
+				owner->SetTarget(target);
+				navAgent->StopMove();
+				owner->LookAt(target->GetPosition());
+				owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_WALK, dt, true);
+				std::cout << "Target In Near Range!" << std::endl;
+				return true;
+			}
+		}
+	}
+
+	if(FB_ENUMS::GENERAL_STATE_TYPE_WALK == curStateType) {
+		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_RUN, dt, true);
+	}
+	
+	owner->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
+	return false;
+}
+
+bool GameServer::Contents::IsRespawnReady::Check(const float dt)
 {
 	m_accDTForRespawn += dt;
-	if(m_accDTForRespawn >= 1.f) {
+	const auto owner{ GetOwner() };
+	const auto& statInfo{ owner->GetStat() };
+
+	if(m_accDTForRespawn >= statInfo.respawnTimeSec) {
 		m_accDTForRespawn = 0.f;
 		return true;
 	}
 
 	return false;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::ChangeState::DoAction(const float dt)
+{
+	auto fsm = GetOwner()->GetComponent<FSM>();
+	fsm->ChangeState(m_stateType, dt, true);
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::Respawn::DoAction(const float dt)
+{
+	auto const owner{ GetOwner() };
+	owner->OnRespawn();
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }

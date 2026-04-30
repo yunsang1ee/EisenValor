@@ -7,6 +7,7 @@
 void LoginControllerComponent::OnUpdate(float deltaTime)
 {
 	// R 키 입력
+#ifdef APPLY_LOBBY_SERVER
 	if (!m_isLoginRequested && GLOBAL(InputGlobal).GetInputDown('R'))
 	{
 		DEBUG_LOG_FMT("[LoginControllerComponent] 'R' Key Detected! Sending CS_LOGIN...\n");
@@ -17,4 +18,5 @@ void LoginControllerComponent::OnUpdate(float deltaTime)
 
 		m_isLoginRequested = true;
 	}
+#endif
 }

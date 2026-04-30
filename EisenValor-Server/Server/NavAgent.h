@@ -18,6 +18,7 @@ namespace GameServer {
 			void SetPlayerMode(bool isPlayer) { m_isPlayerMode = isPlayer; }
 			void SetDestPos(const Vec3& destPos);
 			int32 GetAgentIdx() const { return m_agentIdx; }
+			void Teleport(const Vec3& destPos);
 			
 			void StopMove();
 			void Remove();

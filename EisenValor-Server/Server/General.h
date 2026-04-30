@@ -22,7 +22,7 @@ namespace GameServer {
 			void ChangeSubState(const GENERAL_SUB_STATE_TYPE subStateType) { m_subStateType = subStateType; }
 			GENERAL_SUB_STATE_TYPE GetSubState() const { return m_subStateType; }
 			
-			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType) { m_stanceType = stanceType; }
+			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);
 			void SetAtkInfo(const AttackInfo& atkInfo) { m_atkInfo = atkInfo; }
 			void SetAtkDir(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType) { m_atkInfo.dir = dirType; }
 			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }

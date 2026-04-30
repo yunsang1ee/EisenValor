@@ -10,9 +10,6 @@ namespace GameServer {
 			virtual ~Soldier();
 
 		public:
-			virtual void OnCollisionEnter(Collider* const other) override final;
-			virtual void OnCollisionStay(Collider* const other) override final;
-			virtual void OnCollisionExit(Collider* const other) override final;
 			virtual void Update(const float dt) override final;
 			virtual void OnDeath() override final;
 			virtual bool OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast = true) override final;

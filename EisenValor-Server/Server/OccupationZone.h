@@ -16,6 +16,9 @@ namespace GameServer {
 			FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE GetStateType() const { return m_stateType; }
 			float GetRangeSq() const { return m_rangeSq; }
 
+		public:
+			bool IsInOccupationZone(const Vec3& pos) const;
+
 		private:
 			FB_ENUMS::TEAM_TYPE GetDominantTeamType();
 			void CheckOccupationState(const float prev, const float curr);
