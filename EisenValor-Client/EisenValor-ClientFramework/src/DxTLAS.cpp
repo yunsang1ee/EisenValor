@@ -27,7 +27,7 @@ void DxTLAS::Build(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
 	DxUploadHeap*										uploadHeap,
-	const std::vector<std::pair<GameObject*, DxBLAS*>>& instances
+	const std::vector<DxTLASInstance>& instances
 )
 {
 	BuildInternal(device, cmdList, uploadHeap, instances, false);
@@ -37,7 +37,7 @@ void DxTLAS::Refit(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
 	DxUploadHeap*										uploadHeap,
-	const std::vector<std::pair<GameObject*, DxBLAS*>>& instances
+	const std::vector<DxTLASInstance>& instances
 )
 {
 	assert(m_isBuilt && "[DxTLAS] Cannot Refit before initial Build");
@@ -68,7 +68,7 @@ void DxTLAS::BuildInternal(
 	ID3D12Device5*										device,
 	ID3D12GraphicsCommandList4*							cmdList,
 	DxUploadHeap*										uploadHeap,
-	const std::vector<std::pair<GameObject*, DxBLAS*>>& instances,
+	const std::vector<DxTLASInstance>& instances,
 	bool												isRefit
 )
 {
@@ -92,8 +92,10 @@ void DxTLAS::BuildInternal(
 	instanceDescs.reserve(instances.size());
 	uint32_t instanceIndex = 0;
 
-	for (const auto& [obj, blas] : instances)
+	for (const auto& instance : instances)
 	{
+		GameObject* obj = instance.obj;
+		DxBLAS* blas = instance.blas;
 		if (!obj || !blas || !blas->IsBuilt())
 		{
 			continue;
@@ -118,15 +120,7 @@ void DxTLAS::BuildInternal(
 		desc.InstanceMask = 0xFF;
 		desc.InstanceContributionToHitGroupIndex = 0;
 		
-		// Map 오브젝트인 경우 컬링 비활성화
-		if (obj->GetName() == "Map")
-		{
-			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
-		}
-		else
-		{
-			desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-		}
+		desc.Flags = instance.flags;
 
 		desc.AccelerationStructure = blasAddr;
 

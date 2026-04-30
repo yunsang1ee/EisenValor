@@ -37,6 +37,7 @@ public class AssetExporter
     private const uint MATERIAL_FLAG_EMISSIVE_MAP = 1 << 6;
     private const uint MATERIAL_FLAG_TRANSPARENT = 1 << 7;
     private const uint MATERIAL_FLAG_IGNORE_LIGHTING = 1 << 8;
+    private const uint MATERIAL_FLAG_TERRAIN_SPLAT = 1 << 9;
 
     private static uint BuildMaterialFlags(Material mat)
     {
@@ -121,6 +122,7 @@ public class AssetExporter
         public string Guid = "";
         public string ExportName = "";
         public bool DestroyAfterExport;
+        public bool OverwriteExisting;
     }
 
     private sealed class GeneratedMaterialExportRecord
@@ -128,6 +130,21 @@ public class AssetExporter
         public string Guid = "";
         public string ExportName = "";
         public string AlbedoTextureGuid = "";
+        public bool IsTerrainMaterial;
+        public TerrainMaterialExportData TerrainData;
+        public bool OverwriteExisting;
+    }
+
+    private sealed class TerrainMaterialExportData
+    {
+        public string SplatTextureGuid = "";
+        public string[] LayerAlbedoGuids = Array.Empty<string>();
+        public string[] LayerNormalGuids = Array.Empty<string>();
+        public string[] LayerOrmGuids = Array.Empty<string>();
+        public Vector2 TerrainSize;
+        public Vector4[] LayerTileST = Array.Empty<Vector4>();
+        public Vector2[] LayerMetallicRoughness = Array.Empty<Vector2>();
+        public uint LayerCount;
     }
 
     private sealed class GeneratedTextureExportRecord
@@ -138,6 +155,7 @@ public class AssetExporter
         public bool IsSRGB = true;
         public bool IsNormalMap;
         public bool DestroyAfterExport;
+        public bool OverwriteExisting;
     }
 
     private sealed class TextureExportRecord
@@ -151,6 +169,7 @@ public class AssetExporter
     {
         public readonly string RootDir;
         public readonly string SceneFolderName;
+        public readonly StringBuilder Log = new StringBuilder();
         public readonly List<SceneNodeRecord> Nodes = new List<SceneNodeRecord>();
         public readonly List<SceneComponentEntryRecord> Components = new List<SceneComponentEntryRecord>();
         public readonly Dictionary<string, MeshExportRecord> MeshExports = new Dictionary<string, MeshExportRecord>();
@@ -168,6 +187,10 @@ public class AssetExporter
         {
             RootDir = rootDir;
             SceneFolderName = sceneFolderName;
+            Log.AppendLine("[SceneExportLog]");
+            Log.AppendLine("Scene=" + sceneFolderName);
+            Log.AppendLine("RootDir=" + rootDir);
+            Log.AppendLine("StartedAt=" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         }
     }
 
@@ -203,6 +226,11 @@ public class AssetExporter
         Directory.CreateDirectory(rootDir);
 
         string sceneFolderName = SanitizeFileName(activeScene.name);
+        if (!CleanExistingSceneExport(rootDir, sceneFolderName))
+        {
+            return;
+        }
+
         SceneExportContext context = new SceneExportContext(rootDir, sceneFolderName);
         foreach (GameObject rootObject in activeScene.GetRootGameObjects())
         {
@@ -265,8 +293,11 @@ public class AssetExporter
         writer.AddChunk("NODE", 1, BuildSceneNodeChunk(context.Nodes));
         writer.AddChunk("COMP", 1, BuildSceneComponentChunk(context.Components));
         writer.WriteToFile(scenePath);
+        context.Log.AppendLine("WRITE_SCENE path=" + scenePath + " nodes=" + context.Nodes.Count + " components=" + context.Components.Count);
 
         int entryCount = BuildAssetRegistryAtRoot(rootDir);
+        context.Log.AppendLine("WRITE_REGISTRY path=" + Path.Combine(rootDir, "AssetRegistry.evreg") + " entries=" + entryCount);
+        WriteSceneExportLog(context);
         UnityEngine.Debug.Log(
             $"<b>[SceneExport]</b> Saved Scene: {Path.GetFileName(scenePath)} " +
             $"(Nodes={context.Nodes.Count}, Components={context.Components.Count}, Meshes={context.MeshExports.Count}, " +
@@ -511,6 +542,7 @@ public class AssetExporter
         if (!ShouldExportRendererForLowestLod(renderer, context))
         {
             context.ExcludedHigherLodRenderers++;
+            context.Log.AppendLine("SKIP_MESH path=" + GetTransformPath(gameObject.transform) + " reason=HigherLOD renderer=" + renderer.name);
             return;
         }
 
@@ -527,18 +559,34 @@ public class AssetExporter
                 context.ExcludedTransparentRenderers++;
             }
 
+            context.Log.AppendLine(
+                "SKIP_MESH path=" + GetTransformPath(gameObject.transform) +
+                " reason=ExcludedMaterial alphaTest=" + hasAlphaTest +
+                " transparent=" + hasTransparent +
+                " materials=" + DescribeMaterials(materials)
+            );
             return;
         }
 
         Mesh mesh = meshFilter.sharedMesh;
-        string meshGuid = GetStableMeshGuidOrEmpty(mesh);
-        if (string.IsNullOrEmpty(meshGuid))
+        string sourceMeshGuid = GetStableMeshGuidOrEmpty(mesh);
+        if (string.IsNullOrEmpty(sourceMeshGuid))
         {
             UnityEngine.Debug.LogWarning($"[SceneExport] Skip mesh component on '{gameObject.name}': mesh has no stable GUID.");
+            context.Log.AppendLine("SKIP_MESH path=" + GetTransformPath(gameObject.transform) + " reason=MissingStableMeshGuid mesh=" + mesh.name);
             return;
         }
 
+        string meshGuid = BuildMeshMaterialSetGuid(sourceMeshGuid, materials);
         RegisterMeshExport(mesh, materials, meshGuid, mesh.name, false, context);
+        context.Log.AppendLine(
+            "ADD_MESH_COMPONENT nodeIndex=" + nodeIndex +
+            " path=" + GetTransformPath(gameObject.transform) +
+            " mesh=" + mesh.name +
+            " sourceMeshGuid=" + sourceMeshGuid +
+            " meshGuid=" + meshGuid +
+            " materials=" + DescribeMaterials(materials)
+        );
 
         context.Components.Add(new SceneComponentEntryRecord
         {
@@ -639,6 +687,10 @@ public class AssetExporter
                 );
 
                 RegisterMeshExport(chunkMesh, materialGuids, chunkGuid, chunkName, true, context);
+                if (context.MeshExports.TryGetValue(chunkGuid, out MeshExportRecord chunkRecord))
+                {
+                    chunkRecord.OverwriteExisting = true;
+                }
 
                 int chunkNodeIndex = context.Nodes.Count;
                 context.Nodes.Add(new SceneNodeRecord
@@ -706,6 +758,13 @@ public class AssetExporter
                 ExportName = exportName,
                 DestroyAfterExport = destroyAfterExport
             });
+            context.Log.AppendLine(
+                "REGISTER_MESH guid=" + guid +
+                " exportName=" + exportName +
+                " source=" + AssetDatabase.GetAssetPath(mesh) +
+                " materialGuids=" + string.Join(",", BuildMaterialGuidArray(materials)) +
+                " materials=" + DescribeMaterials(materials)
+            );
         }
 
         RegisterMaterialDependencies(materials, context);
@@ -734,6 +793,12 @@ public class AssetExporter
                 ExportName = exportName,
                 DestroyAfterExport = destroyAfterExport
             });
+            context.Log.AppendLine(
+                "REGISTER_MESH guid=" + guid +
+                " exportName=" + exportName +
+                " generated=" + destroyAfterExport +
+                " materialGuids=" + string.Join(",", materialGuids ?? Array.Empty<string>())
+            );
         }
     }
 
@@ -748,10 +813,22 @@ public class AssetExporter
         {
             if (material == null)
             {
+                context.Log.AppendLine("REGISTER_MATERIAL skipped=null");
                 continue;
             }
 
-            context.MaterialDependencies.Add(material);
+            if (context.MaterialDependencies.Add(material))
+            {
+                string materialPath = AssetDatabase.GetAssetPath(material);
+                string materialGuid = string.IsNullOrEmpty(materialPath) ? "" : AssetDatabase.AssetPathToGUID(materialPath);
+                context.Log.AppendLine(
+                    "REGISTER_MATERIAL name=" + material.name +
+                    " guid=" + materialGuid +
+                    " path=" + materialPath +
+                    " shader=" + (material.shader != null ? material.shader.name : "")
+                );
+                LogMaterialTextureProbe(material, context);
+            }
             RegisterMaterialTextureDependency(material, "_BaseMap", false, true, context);
             RegisterMaterialTextureDependency(material, "_MainTex", false, true, context);
             RegisterMaterialTextureDependency(material, "_BumpMap", true, false, context);
@@ -766,10 +843,30 @@ public class AssetExporter
     {
         if (!material.HasProperty(propertyName))
         {
+            context.Log.AppendLine("MATERIAL_TEXTURE_SLOT material=" + material.name + " property=" + propertyName + " result=MissingProperty");
             return;
         }
 
         if (material.GetTexture(propertyName) is not Texture2D texture)
+        {
+            context.Log.AppendLine("MATERIAL_TEXTURE_SLOT material=" + material.name + " property=" + propertyName + " result=NoTexture");
+            return;
+        }
+
+        context.Log.AppendLine(
+            "MATERIAL_TEXTURE_SLOT material=" + material.name +
+            " property=" + propertyName +
+            " texture=" + texture.name +
+            " path=" + AssetDatabase.GetAssetPath(texture) +
+            " normal=" + isNormalMap +
+            " srgb=" + isSRGB
+        );
+        RegisterTextureDependency(texture, isNormalMap, isSRGB, context);
+    }
+
+    private static void RegisterTextureDependency(Texture2D texture, bool isNormalMap, bool isSRGB, SceneExportContext context)
+    {
+        if (texture == null)
         {
             return;
         }
@@ -782,11 +879,25 @@ public class AssetExporter
                 IsNormalMap = isNormalMap,
                 IsSRGB = isSRGB
             });
+            string texturePath = AssetDatabase.GetAssetPath(texture);
+            string textureGuid = string.IsNullOrEmpty(texturePath) ? "" : AssetDatabase.AssetPathToGUID(texturePath);
+            context.Log.AppendLine(
+                "REGISTER_TEXTURE name=" + texture.name +
+                " guid=" + textureGuid +
+                " path=" + texturePath +
+                " normal=" + isNormalMap +
+                " srgb=" + isSRGB
+            );
             return;
         }
 
         record.IsNormalMap |= isNormalMap;
         record.IsSRGB &= isSRGB;
+        context.Log.AppendLine(
+            "MERGE_TEXTURE_FLAGS name=" + texture.name +
+            " normal=" + record.IsNormalMap +
+            " srgb=" + record.IsSRGB
+        );
     }
 
     private static string[] BuildMaterialGuidArray(Material[] materials)
@@ -806,6 +917,22 @@ public class AssetExporter
         return guids;
     }
 
+    private static string BuildMeshMaterialSetGuid(string sourceMeshGuid, Material[] materials)
+    {
+        if (string.IsNullOrEmpty(sourceMeshGuid))
+        {
+            return "";
+        }
+
+        string[] materialGuids = BuildMaterialGuidArray(materials);
+        if (materialGuids.Length == 0)
+        {
+            return sourceMeshGuid;
+        }
+
+        return ComputeHexMd5("mesh-material-set:" + sourceMeshGuid + ":" + string.Join("|", materialGuids));
+    }
+
     private static void ExportMeshAssetToRoot(MeshExportRecord record, SceneExportContext context)
     {
         if (record == null || record.Mesh == null || string.IsNullOrEmpty(record.Guid))
@@ -817,8 +944,9 @@ public class AssetExporter
         Directory.CreateDirectory(modelDir);
 
         string outputPath = Path.Combine(modelDir, SanitizeFileName(record.ExportName) + "_" + record.Guid[..8] + ".evmesh");
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && false == record.OverwriteExisting)
         {
+            context.Log.AppendLine("SKIP_WRITE_MESH path=" + outputPath + " reason=Exists guid=" + record.Guid);
             return;
         }
 
@@ -829,6 +957,7 @@ public class AssetExporter
         writer.AddChunk("BNDS", 1, BuildBoundsChunk(record.Mesh));
         writer.AddChunk("DEPS", 1, BuildMeshDepsChunk(record.MaterialGuids));
         writer.WriteToFile(outputPath);
+        context.Log.AppendLine("WRITE_MESH path=" + outputPath + " guid=" + record.Guid + " vertexCount=" + record.Mesh.vertexCount + " materialGuids=" + string.Join(",", record.MaterialGuids));
     }
 
     private static void ExportMaterialAssetToRoot(Material mat, SceneExportContext context)
@@ -837,6 +966,7 @@ public class AssetExporter
         string guid = string.IsNullOrEmpty(assetPath) ? "" : AssetDatabase.AssetPathToGUID(assetPath);
         if (string.IsNullOrEmpty(guid))
         {
+            context.Log.AppendLine("SKIP_WRITE_MATERIAL name=" + mat.name + " reason=MissingGuid path=" + assetPath);
             return;
         }
 
@@ -846,6 +976,7 @@ public class AssetExporter
         string outputPath = Path.Combine(materialDir, SanitizeFileName(mat.name) + "_" + guid[..8] + ".evmat");
         if (File.Exists(outputPath))
         {
+            context.Log.AppendLine("SKIP_WRITE_MATERIAL path=" + outputPath + " reason=Exists guid=" + guid);
             return;
         }
 
@@ -853,6 +984,7 @@ public class AssetExporter
         writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
         writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
         writer.WriteToFile(outputPath);
+        context.Log.AppendLine("WRITE_MATERIAL path=" + outputPath + " guid=" + guid + " name=" + mat.name);
     }
 
     private static void ExportTextureAssetToRoot(TextureExportRecord record, SceneExportContext context)
@@ -862,6 +994,7 @@ public class AssetExporter
         string guid = string.IsNullOrEmpty(inputPath) ? "" : AssetDatabase.AssetPathToGUID(inputPath);
         if (string.IsNullOrEmpty(guid))
         {
+            context.Log.AppendLine("SKIP_WRITE_TEXTURE name=" + tex.name + " reason=MissingGuid path=" + inputPath);
             return;
         }
 
@@ -871,6 +1004,7 @@ public class AssetExporter
         string outputPath = Path.Combine(textureDir, SanitizeFileName(tex.name) + "_" + guid[..8] + ".evtex");
         if (File.Exists(outputPath))
         {
+            context.Log.AppendLine("SKIP_WRITE_TEXTURE path=" + outputPath + " reason=Exists guid=" + guid);
             return;
         }
 
@@ -880,6 +1014,7 @@ public class AssetExporter
         if (false == RunTexConv(Path.GetFullPath(inputPath), textureDir, tempFileName, record.IsNormalMap, record.IsSRGB))
         {
             UnityEngine.Debug.LogError($"[SceneExport] Failed to convert texture '{tex.name}' to DDS.");
+            context.Log.AppendLine("FAIL_TEXCONV input=" + inputPath + " outputDir=" + textureDir + " name=" + tex.name);
             return;
         }
 
@@ -889,6 +1024,7 @@ public class AssetExporter
             writer.AddChunk("META", 1, BuildTextureMetaChunk(record.IsSRGB, record.IsNormalMap));
             writer.AddChunk("DATA", 1, File.ReadAllBytes(tempDdsPath));
             writer.WriteToFile(outputPath);
+            context.Log.AppendLine("WRITE_TEXTURE path=" + outputPath + " guid=" + guid + " name=" + tex.name + " normal=" + record.IsNormalMap + " srgb=" + record.IsSRGB);
         }
         finally
         {
@@ -910,15 +1046,21 @@ public class AssetExporter
         Directory.CreateDirectory(materialDir);
 
         string outputPath = Path.Combine(materialDir, SanitizeFileName(material.ExportName) + "_" + material.Guid[..8] + ".evmat");
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && false == material.OverwriteExisting)
         {
+            context.Log.AppendLine("SKIP_WRITE_GENERATED_MATERIAL path=" + outputPath + " reason=Exists guid=" + material.Guid);
             return;
         }
 
         AssetWriter writer = new AssetWriter("EVMT", material.Guid);
-        writer.AddChunk("PROP", 1, BuildGeneratedMaterialPropChunk());
-        writer.AddChunk("DEPS", 1, BuildGeneratedMaterialDepsChunk(material.AlbedoTextureGuid));
+        writer.AddChunk("PROP", 1, BuildGeneratedMaterialPropChunk(material));
+        writer.AddChunk("DEPS", 1, BuildGeneratedMaterialDepsChunk(material));
+        if (material.IsTerrainMaterial && material.TerrainData != null)
+        {
+            writer.AddChunk("TERP", 1, BuildTerrainMaterialParamsChunk(material.TerrainData));
+        }
         writer.WriteToFile(outputPath);
+        context.Log.AppendLine("WRITE_GENERATED_MATERIAL path=" + outputPath + " guid=" + material.Guid + " name=" + material.ExportName);
     }
 
     private static void ExportGeneratedTextureAssetToRoot(GeneratedTextureExportRecord texture, SceneExportContext context)
@@ -932,8 +1074,9 @@ public class AssetExporter
         Directory.CreateDirectory(textureDir);
 
         string outputPath = Path.Combine(textureDir, SanitizeFileName(texture.ExportName) + "_" + texture.Guid[..8] + ".evtex");
-        if (File.Exists(outputPath))
+        if (File.Exists(outputPath) && false == texture.OverwriteExisting)
         {
+            context.Log.AppendLine("SKIP_WRITE_GENERATED_TEXTURE path=" + outputPath + " reason=Exists guid=" + texture.Guid);
             return;
         }
 
@@ -951,6 +1094,7 @@ public class AssetExporter
             }
 
             UnityEngine.Debug.LogError($"[SceneExport] Failed to convert generated texture '{texture.ExportName}' to DDS.");
+            context.Log.AppendLine("FAIL_GENERATED_TEXCONV outputDir=" + textureDir + " name=" + texture.ExportName);
             return;
         }
 
@@ -960,6 +1104,7 @@ public class AssetExporter
             writer.AddChunk("META", 1, BuildTextureMetaChunk(texture.IsSRGB, texture.IsNormalMap));
             writer.AddChunk("DATA", 1, File.ReadAllBytes(tempDdsPath));
             writer.WriteToFile(outputPath);
+            context.Log.AppendLine("WRITE_GENERATED_TEXTURE path=" + outputPath + " guid=" + texture.Guid + " name=" + texture.ExportName + " normal=" + texture.IsNormalMap + " srgb=" + texture.IsSRGB);
         }
         finally
         {
@@ -1153,31 +1298,90 @@ public class AssetExporter
         out string terrainMaterialGuid)
     {
         terrainMaterialGuid = "";
-        Texture2D bakedAlbedo = BuildTerrainAlbedoTexture(terrain);
-        if (bakedAlbedo == null)
+        TerrainData terrainData = terrain.terrainData;
+        if (terrainData == null)
         {
             return false;
         }
 
-        string textureGuid = ComputeHexMd5($"terrain-albedo:{terrainIdentity}:{terrainPath}");
+        TerrainLayer[] layers = terrainData.terrainLayers;
+        if (layers == null || layers.Length == 0)
+        {
+            return false;
+        }
+
+        int layerCount = Mathf.Min(4, layers.Length);
+        if (layers.Length > 4)
+        {
+            UnityEngine.Debug.LogWarning($"[SceneExport] Terrain '{terrain.name}' has {layers.Length} layers. Only the first 4 layers are exported for terrain splat material v1.");
+        }
+
+        Texture2D splatMap = BuildTerrainSplatMapTexture(terrain, (int)layerCount);
+        if (splatMap == null)
+        {
+            return false;
+        }
+
+        string splatGuid = ComputeHexMd5($"terrain-splat0:{terrainIdentity}:{terrainPath}");
         string materialGuid = ComputeHexMd5($"terrain-material:{terrainIdentity}:{terrainPath}");
         string safeBaseName = SanitizeFileName(terrain.name);
 
-        if (!context.GeneratedTextureExports.ContainsKey(textureGuid))
+        if (!context.GeneratedTextureExports.ContainsKey(splatGuid))
         {
-            context.GeneratedTextureExports.Add(textureGuid, new GeneratedTextureExportRecord
+            context.GeneratedTextureExports.Add(splatGuid, new GeneratedTextureExportRecord
             {
-                Texture = bakedAlbedo,
-                Guid = textureGuid,
-                ExportName = safeBaseName + "_TerrainAlbedo",
-                IsSRGB = true,
+                Texture = splatMap,
+                Guid = splatGuid,
+                ExportName = safeBaseName + "_TerrainSplat0",
+                IsSRGB = false,
                 IsNormalMap = false,
-                DestroyAfterExport = true
+                DestroyAfterExport = true,
+                OverwriteExisting = true
             });
         }
         else
         {
-            UnityEngine.Object.DestroyImmediate(bakedAlbedo);
+            UnityEngine.Object.DestroyImmediate(splatMap);
+        }
+
+        string[] layerAlbedoGuids = new string[layerCount];
+        string[] layerNormalGuids = new string[layerCount];
+        string[] layerOrmGuids = new string[layerCount];
+        Vector4[] layerTileST = new Vector4[layerCount];
+        Vector2[] layerMetallicRoughness = new Vector2[layerCount];
+        for (int i = 0; i < layerCount; ++i)
+        {
+            TerrainLayer layer = layers[i];
+            Texture2D diffuse = layer != null ? layer.diffuseTexture : null;
+            if (diffuse != null)
+            {
+                RegisterTextureDependency(diffuse, false, true, context);
+                layerAlbedoGuids[i] = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(diffuse));
+            }
+
+            Texture2D normal = layer != null ? layer.normalMapTexture : null;
+            if (normal != null)
+            {
+                RegisterTextureDependency(normal, true, false, context);
+                layerNormalGuids[i] = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(normal));
+            }
+
+            Texture2D orm = layer != null ? layer.maskMapTexture : null;
+            if (orm != null)
+            {
+                RegisterTextureDependency(orm, false, false, context);
+                layerOrmGuids[i] = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(orm));
+            }
+
+            Vector2 tileSize = layer != null ? layer.tileSize : Vector2.one;
+            Vector2 tileOffset = layer != null ? layer.tileOffset : Vector2.zero;
+            tileSize.x = Mathf.Approximately(tileSize.x, 0.0f) ? 1.0f : tileSize.x;
+            tileSize.y = Mathf.Approximately(tileSize.y, 0.0f) ? 1.0f : tileSize.y;
+            layerTileST[i] = new Vector4(1.0f / tileSize.x, 1.0f / tileSize.y, -tileOffset.x / tileSize.x, -tileOffset.y / tileSize.y);
+
+            float metallic = layer != null ? layer.metallic : 0.0f;
+            float roughness = layer != null ? 1.0f - layer.smoothness : 1.0f;
+            layerMetallicRoughness[i] = new Vector2(metallic, Mathf.Clamp(roughness, 0.04f, 1.0f));
         }
 
         if (!context.GeneratedMaterialExports.ContainsKey(materialGuid))
@@ -1186,7 +1390,19 @@ public class AssetExporter
             {
                 Guid = materialGuid,
                 ExportName = safeBaseName + "_Terrain",
-                AlbedoTextureGuid = textureGuid
+                IsTerrainMaterial = true,
+                TerrainData = new TerrainMaterialExportData
+                {
+                    SplatTextureGuid = splatGuid,
+                    LayerAlbedoGuids = layerAlbedoGuids,
+                    LayerNormalGuids = layerNormalGuids,
+                    LayerOrmGuids = layerOrmGuids,
+                    TerrainSize = new Vector2(terrainData.size.x, terrainData.size.z),
+                    LayerTileST = layerTileST,
+                    LayerMetallicRoughness = layerMetallicRoughness,
+                    LayerCount = (uint)layerCount
+                },
+                OverwriteExisting = true
             });
         }
 
@@ -1301,6 +1517,42 @@ public class AssetExporter
         }
 
         return baked;
+    }
+
+    private static Texture2D BuildTerrainSplatMapTexture(Terrain terrain, int layerCount)
+    {
+        TerrainData terrainData = terrain.terrainData;
+        int alphamapWidth = terrainData.alphamapWidth;
+        int alphamapHeight = terrainData.alphamapHeight;
+        if (alphamapWidth <= 0 || alphamapHeight <= 0 || layerCount <= 0)
+        {
+            return null;
+        }
+
+        float[,,] alphamaps = terrainData.GetAlphamaps(0, 0, alphamapWidth, alphamapHeight);
+        Texture2D splat = new Texture2D(alphamapWidth, alphamapHeight, TextureFormat.RGBA32, false, true)
+        {
+            name = terrain.name + "_TerrainSplat0",
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        Color[] pixels = new Color[alphamapWidth * alphamapHeight];
+        for (int y = 0; y < alphamapHeight; ++y)
+        {
+            for (int x = 0; x < alphamapWidth; ++x)
+            {
+                Color c = Color.clear;
+                c.r = 0 < layerCount ? alphamaps[y, x, 0] : 0.0f;
+                c.g = 1 < layerCount ? alphamaps[y, x, 1] : 0.0f;
+                c.b = 2 < layerCount ? alphamaps[y, x, 2] : 0.0f;
+                c.a = 3 < layerCount ? alphamaps[y, x, 3] : 0.0f;
+                pixels[y * alphamapWidth + x] = c;
+            }
+        }
+
+        splat.SetPixels(pixels);
+        splat.Apply(false, false);
+        return splat;
     }
 
     private static float SampleTerrainLayerWeight(
@@ -1627,13 +1879,13 @@ public class AssetExporter
         return ms.ToArray();
     }
 
-    private static byte[] BuildGeneratedMaterialPropChunk()
+    private static byte[] BuildGeneratedMaterialPropChunk(GeneratedMaterialExportRecord material)
     {
         using (MemoryStream ms = new())
         using (BinaryWriter bw = new(ms))
         {
             bw.Write(SHADING_MODEL_LIT_PBR);
-            bw.Write(MATERIAL_FLAG_USE_ALBEDO_MAP);
+            bw.Write(material != null && material.IsTerrainMaterial ? MATERIAL_FLAG_TERRAIN_SPLAT : MATERIAL_FLAG_USE_ALBEDO_MAP);
             bw.Write(1.0f);
             bw.Write(1.0f);
             bw.Write(1.0f);
@@ -1644,14 +1896,72 @@ public class AssetExporter
         }
     }
 
-    private static byte[] BuildGeneratedMaterialDepsChunk(string albedoTextureGuid)
+    private static byte[] BuildGeneratedMaterialDepsChunk(GeneratedMaterialExportRecord material)
     {
         using MemoryStream ms = new();
         using BinaryWriter bw = new(ms);
 
-        bw.Write(1u);
-        bw.Write(Encoding.ASCII.GetBytes("ALBD"));
-        WriteGuidBytes(bw, albedoTextureGuid);
+        var validSlots = new List<(string key, string guid)>();
+        if (material != null && material.IsTerrainMaterial && material.TerrainData != null)
+        {
+            validSlots.Add(("SPL0", material.TerrainData.SplatTextureGuid));
+            for (int i = 0; i < material.TerrainData.LayerAlbedoGuids.Length && i < 4; ++i)
+            {
+                if (!string.IsNullOrEmpty(material.TerrainData.LayerAlbedoGuids[i]))
+                {
+                    validSlots.Add(($"LA{i}A", material.TerrainData.LayerAlbedoGuids[i]));
+                }
+
+                if (i < material.TerrainData.LayerNormalGuids.Length && !string.IsNullOrEmpty(material.TerrainData.LayerNormalGuids[i]))
+                {
+                    validSlots.Add(($"LA{i}N", material.TerrainData.LayerNormalGuids[i]));
+                }
+
+                if (i < material.TerrainData.LayerOrmGuids.Length && !string.IsNullOrEmpty(material.TerrainData.LayerOrmGuids[i]))
+                {
+                    validSlots.Add(($"LA{i}O", material.TerrainData.LayerOrmGuids[i]));
+                }
+            }
+        }
+        else if (material != null && !string.IsNullOrEmpty(material.AlbedoTextureGuid))
+        {
+            validSlots.Add(("ALBD", material.AlbedoTextureGuid));
+        }
+
+        bw.Write((uint)validSlots.Count);
+        foreach (var (key, guid) in validSlots)
+        {
+            bw.Write(Encoding.ASCII.GetBytes(key.PadRight(4)[..4]));
+            WriteGuidBytes(bw, guid);
+        }
+
+        return ms.ToArray();
+    }
+
+    private static byte[] BuildTerrainMaterialParamsChunk(TerrainMaterialExportData terrainData)
+    {
+        using MemoryStream ms = new();
+        using BinaryWriter bw = new(ms);
+
+        bw.Write((uint)Mathf.Min((int)terrainData.LayerCount, 4));
+        bw.Write(terrainData.TerrainSize.x);
+        bw.Write(terrainData.TerrainSize.y);
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Vector4 st = i < terrainData.LayerTileST.Length ? terrainData.LayerTileST[i] : new Vector4(1.0f, 1.0f, 0.0f, 0.0f);
+            bw.Write(st.x);
+            bw.Write(st.y);
+            bw.Write(st.z);
+            bw.Write(st.w);
+        }
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Vector2 mr = i < terrainData.LayerMetallicRoughness.Length ? terrainData.LayerMetallicRoughness[i] : new Vector2(0.0f, 1.0f);
+            bw.Write(mr.x);
+            bw.Write(mr.y);
+        }
 
         return ms.ToArray();
     }
@@ -1830,6 +2140,133 @@ public class AssetExporter
     private static string GetSceneResourceExportDirectory(string rootDir, string resourceFolder, string sceneFolderName)
     {
         return Path.Combine(rootDir, resourceFolder, "Map", sceneFolderName);
+    }
+
+    private static bool CleanExistingSceneExport(string rootDir, string sceneFolderName)
+    {
+        try
+        {
+            string[] sceneResourceDirs =
+            {
+                GetSceneResourceExportDirectory(rootDir, "Models", sceneFolderName),
+                GetSceneResourceExportDirectory(rootDir, "Material", sceneFolderName),
+                GetSceneResourceExportDirectory(rootDir, "Texture", sceneFolderName)
+            };
+
+            foreach (string sceneResourceDir in sceneResourceDirs)
+            {
+                if (Directory.Exists(sceneResourceDir))
+                {
+                    Directory.Delete(sceneResourceDir, true);
+                }
+            }
+
+            string scenePath = Path.Combine(rootDir, "Scenes", sceneFolderName + ".evscene");
+            if (File.Exists(scenePath))
+            {
+                File.Delete(scenePath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            UnityEngine.Debug.LogError($"[SceneExport] Failed to clean existing scene export for '{sceneFolderName}': {ex.Message}");
+            return false;
+        }
+    }
+
+    private static void WriteSceneExportLog(SceneExportContext context)
+    {
+        try
+        {
+            string logDir = Path.Combine(context.RootDir, "ExportLogs");
+            Directory.CreateDirectory(logDir);
+
+            string logPath = Path.Combine(
+                logDir,
+                context.SceneFolderName + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".log"
+            );
+
+            File.WriteAllText(logPath, context.Log.ToString(), new UTF8Encoding(false));
+            UnityEngine.Debug.Log("[SceneExport] Export log saved: " + logPath);
+        }
+        catch (Exception ex)
+        {
+            UnityEngine.Debug.LogWarning("[SceneExport] Failed to write export log: " + ex.Message);
+        }
+    }
+
+    private static string DescribeMaterials(Material[] materials)
+    {
+        if (materials == null || materials.Length == 0)
+        {
+            return "";
+        }
+
+        List<string> descriptions = new List<string>();
+        for (int i = 0; i < materials.Length; ++i)
+        {
+            Material material = materials[i];
+            if (material == null)
+            {
+                descriptions.Add(i + ":null");
+                continue;
+            }
+
+            string path = AssetDatabase.GetAssetPath(material);
+            string guid = string.IsNullOrEmpty(path) ? "" : AssetDatabase.AssetPathToGUID(path);
+            descriptions.Add(i + ":" + material.name + "[" + guid + "]");
+        }
+
+        return string.Join("|", descriptions);
+    }
+
+    private static void LogMaterialTextureProbe(Material material, SceneExportContext context)
+    {
+        LogMaterialTextureProbeSlot(
+            material,
+            context,
+            "ALBD",
+            FindTexture(material, new[] { "_BaseMap", "_MainTex", "Material_VirtualTexturePhysical_1" }, new[] { "Albedo", "BaseColor", "Cursed_Knight_BaseColor" })
+        );
+        LogMaterialTextureProbeSlot(
+            material,
+            context,
+            "NRML",
+            FindTexture(material, new[] { "_BumpMap", "Material_VirtualTexturePhysical_0" }, new[] { "Normal", "NormalMap" })
+        );
+        LogMaterialTextureProbeSlot(
+            material,
+            context,
+            "ORMS",
+            FindTexture(material, new[] { "_MaskMap", "_MetallicGlossMap", "Material_VirtualTexturePhysical_2", "Material_VirtualTexturePhysical_3" }, new[] { "Mask", "ORM", "Metallic" })
+        );
+        LogMaterialTextureProbeSlot(
+            material,
+            context,
+            "EMSV",
+            FindTexture(material, new[] { "_EmissionMap" }, new[] { "Emission", "Emissive" })
+        );
+    }
+
+    private static void LogMaterialTextureProbeSlot(Material material, SceneExportContext context, string slot, Texture texture)
+    {
+        if (texture == null)
+        {
+            context.Log.AppendLine("MATERIAL_DEPS_PROBE material=" + material.name + " slot=" + slot + " result=None");
+            return;
+        }
+
+        string path = AssetDatabase.GetAssetPath(texture);
+        string guid = string.IsNullOrEmpty(path) ? "" : AssetDatabase.AssetPathToGUID(path);
+        context.Log.AppendLine(
+            "MATERIAL_DEPS_PROBE material=" + material.name +
+            " slot=" + slot +
+            " texture=" + texture.name +
+            " guid=" + guid +
+            " path=" + path
+        );
     }
 
     public static bool TryGetStableMeshGuid(Mesh mesh, out string guidHex)
