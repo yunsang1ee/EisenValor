@@ -702,17 +702,9 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	bool isRightDown = input.GetInputDown(VK_RBUTTON);
 	bool isMiddleDown = input.GetInputDown(VK_MBUTTON);
 
-	auto* fsm = GetGameObject()->GetComponent<FSMComponent>();
-	if (!fsm)
-		return;
-
-	const auto stateType{fsm->GetCurStateType()};
-	bool	   isBusy = (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-				  stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK);
-
-	// 4. 마우스 클릭 (공격 확정) - Vaild일 때만 그리고 공격 중이 아닐 때만
-	// 유효하지 않은 상태거나 이미 공격 중이라면 버퍼 초기화 (큐잉 방지)
-	if (!m_isAttackValid || isBusy)
+	// 4. 마우스 클릭 (공격 확정) - Vaild일 때만
+	// 유효하지 않은 상태라면 버퍼 초기화
+	if (!m_isAttackValid)
 	{
 		m_pendingLeftClick = false;
 		m_pendingRightClick = false;
@@ -748,6 +740,10 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				confirmedType = GENERAL_ATTACK_TYPE_HEAVY;
 		}
 
+		auto* fsm = GetGameObject()->GetComponent<FSMComponent>();
+		if (!fsm)
+			return;
+
 		// 3. 실행
 		if (confirmedType.has_value())
 		{
@@ -755,6 +751,17 @@ void BattleUIControllerComponent::ProcessMouseInput()
 			{
 				GENERAL_ATTACK_TYPE finalType = confirmedType.value();
 				OnGuardDirectionConfirmed(m_currentSelectedDir, finalType);
+
+			const auto stateType{fsm->GetCurStateType()};
+				if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
+					stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
+					stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+				{
+					m_pendingLeftClick = false;
+					m_pendingRightClick = false;
+					m_inputBufferTimer = 0.0f;
+					return;
+				}
 
 				// 공격 패킷 전송
 				FB_STRUCTS::GeneralAttackInfo attackInfo(finalType, m_currentSelectedDir);
