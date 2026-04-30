@@ -64,6 +64,13 @@ void GameServer::Contents::OccupationZone::Update(const float dt)
 	}
 }
 
+bool GameServer::Contents::OccupationZone::IsInOccupationZone(const Vec3& pos) const
+{
+	const auto owner{ GetOwner() };
+	const float distSq{ (pos - owner->GetPosition()).LengthSquared() };
+	return distSq <= m_rangeSq;
+}
+
 FB_ENUMS::TEAM_TYPE GameServer::Contents::OccupationZone::GetDominantTeamType()
 {
 	const auto owner{ GetOwner() };

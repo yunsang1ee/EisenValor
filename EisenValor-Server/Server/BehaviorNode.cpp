@@ -4,25 +4,7 @@
 void GameServer::Contents::CompositeNode::AddChild(std::unique_ptr<BehaviorNode> child)
 {
 	m_children.emplace_back(std::move(child));
-
-	//if(m_tree) {
-	//	m_children.back()->SetTree(m_tree);
-	//}
-
-	if(const auto& owner = GetOwner()) {
-		m_children.back()->SetOwner(owner);
-	}
 }
-
-//void GameServer::Contents::CompositeNode::SetTree(BehaviorTree* const tree)
-//{
-//	BehaviorNode::SetTree(tree);
-//
-//	for(auto& child : m_children) {
-//		child->SetTree(tree);
-//	}
-//
-//}
 
 void GameServer::Contents::CompositeNode::Reset()
 {
@@ -31,21 +13,18 @@ void GameServer::Contents::CompositeNode::Reset()
 	}
 }
 
+void GameServer::Contents::CompositeNode::SetOwner(std::shared_ptr<General> const owner)
+{
+	BehaviorNode::SetOwner(owner);
+	for(auto& child : m_children) {
+		child->SetOwner(owner);
+	}
+}
+
 void GameServer::Contents::DecoratorNode::SetChild(std::unique_ptr<BehaviorNode> child)
 {
 	m_child = std::move(child);
-	//if(m_tree) {
-	//	m_child->SetTree(m_tree);
-	//}
 }
-
-//void GameServer::Contents::DecoratorNode::SetTree(BehaviorTree* const tree)
-//{
-//	BehaviorNode::SetTree(tree);
-//	if(m_child) {
-//		m_child->SetTree(tree);
-//	}
-//}
 
 void GameServer::Contents::DecoratorNode::Reset()
 {
@@ -53,45 +32,52 @@ void GameServer::Contents::DecoratorNode::Reset()
 		m_child->Reset();
 }
 
+void GameServer::Contents::DecoratorNode::SetOwner(std::shared_ptr<General> const owner)
+{
+	BehaviorNode::SetOwner(owner);
+	if(m_child) m_child->SetOwner(owner);
+}
+
 GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SequenceNode::Execute(const float dt)
 {
-	for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
+	while(m_currentIndex < m_children.size()) {
 		auto const child = m_children[m_currentIndex].get();
 		const auto status = child->Execute(dt);
-
-		// Execute 결과가 성공이면 다음 자식 노드 실행
-
-		if(BEHAVIOR_NODE_STATUS::RUNNING == status)
+		// RUNNING이면 인덱스 유지하고 다음 프레임에 같은 자식 재실행
+		if(BEHAVIOR_NODE_STATUS::RUNNING == status) {
 			return BEHAVIOR_NODE_STATUS::RUNNING;
+		}
+		// 하나라도 실패하면 전체 실패
 		else if(BEHAVIOR_NODE_STATUS::FAIL == status) {
 			m_currentIndex = 0;
 			return BEHAVIOR_NODE_STATUS::FAIL;
 		}
+		// SUCCESS면 다음 자식으로 진행
+		++m_currentIndex;
 	}
-
-	// 다 돌았으면 성공
+	// 모든 자식이 SUCCESS면 전체 성공
 	m_currentIndex = 0;
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 
 GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SelectorNode::Execute(const float dt)
 {
-	for(; m_currentIndex < m_children.size(); ++m_currentIndex) {
-		auto& child = m_children[m_currentIndex];
+	while(m_currentIndex < m_children.size()) {
+		auto const child = m_children[m_currentIndex].get();
 		const auto status = child->Execute(dt);
-
-		// Execute 결과가 실패면 다음 자식 노드 실행
-
+		// RUNNING이면 인덱스 유지하고 다음 프레임에 같은 자식 재실행
 		if(BEHAVIOR_NODE_STATUS::RUNNING == status) {
 			return BEHAVIOR_NODE_STATUS::RUNNING;
 		}
+		// 하나라도 성공하면 전체 성공
 		else if(BEHAVIOR_NODE_STATUS::SUCCESS == status) {
-			m_currentIndex = 0; 
+			m_currentIndex = 0;
 			return BEHAVIOR_NODE_STATUS::SUCCESS;
 		}
+		// FAIL이면 다음 자식으로 진행
+		++m_currentIndex;
 	}
-
-	// 다 돌았으면 실패
+	// 모든 자식이 FAIL이면 전체 실패
 	m_currentIndex = 0;
 	return BEHAVIOR_NODE_STATUS::FAIL;
 }

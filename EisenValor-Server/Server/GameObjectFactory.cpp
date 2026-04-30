@@ -118,20 +118,19 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 
 	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
 
-	// TODO: IDLE, WALK, RUN, STUN, DEAD 상태로 변경해야함.
 	auto idleState = GameServer::Contents::GeneralIdleState::Create(general);
-	auto walkState = GameServer::Contents::GeneralWalkState::Create();
-	auto runState = GameServer::Contents::GeneralRunState::Create();
-	// auto attackState = GameServer::Contents::GeneralAttackState::Create();
-	// auto stunState = GameServer::Contents::GeneralStunState::Create();
-	// auto deadState = GameServer::Contents::GeneralDeadState::Create();
+	auto walkState = GameServer::Contents::GeneralWalkState::Create(general);
+	auto runState = GameServer::Contents::GeneralRunState::Create(general);
+	auto attackState = GameServer::Contents::GeneralAttackState::Create();
+	auto stunState = GameServer::Contents::GeneralStunState::Create();
+	auto deadState = GameServer::Contents::GeneralDeadState::Create(general);
 
 	fsm->AddState(std::move(idleState));
 	fsm->AddState(std::move(walkState));
 	fsm->AddState(std::move(runState));
-	// fsm->AddState(std::move(attackState));
-	// fsm->AddState(std::move(stunState));
-	// fsm->AddState(std::move(deadState));
+	fsm->AddState(std::move(attackState));
+	fsm->AddState(std::move(stunState));
+	fsm->AddState(std::move(deadState));
 	
 	fsm->SetState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, true);
 
@@ -209,6 +208,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 {
 	const auto ozObj{ std::make_shared<GameObject>(t.teamType, FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 	ozObj->SetID(t.id);
+	ozObj->SetName(t.zoneName);
 	ozObj->SetGameWorld(t.gameWorld);
 	ozObj->SetTransform(t.transform);
 	ozObj->SetGameObjectData(t.gameObjectData);
