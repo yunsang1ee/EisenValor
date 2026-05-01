@@ -13,16 +13,16 @@ void StatePool::Initialize()
 	if (!s_instanceMap.empty()) return;
 
 	// General States & Player States
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_IDLE] = std::make_unique<PlayerlIdleState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_WALK] = std::make_unique<PlayerWalkState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_RUN] = std::make_unique<PlayerRunState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_ATTACK] = std::make_unique<PlayerAttackState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<PlayerStunState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<PlayerDeadState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_IDLE] = std::make_unique<GeneralIdleState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_WALK] = std::make_unique<GeneralWalkState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_RUN] = std::make_unique<GeneralRunState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_ATTACK] = std::make_unique<GeneralAttackState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_STUN] = std::make_unique<GeneralStunState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<GeneralDeadState>();
 
 	// 클라용
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY] = std::make_unique<PlayerPreDelayState>();
-	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY] = std::make_unique<PlayerPostDelayState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY] = std::make_unique<GeneralPreDelayState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY] = std::make_unique<GeneralPostDelayState>();
 
 	// Soldier States
 	uint8_t offset = StateOffset::kSoldierOffset;

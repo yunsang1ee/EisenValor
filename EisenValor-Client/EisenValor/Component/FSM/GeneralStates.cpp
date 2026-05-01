@@ -18,13 +18,13 @@
 using namespace DirectX;
 
 // ==================================
-//		  PLAYER_IDLE_STATE
+//		  GENERAL_IDLE_STATE
 // ==================================
-PlayerlIdleState::PlayerlIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
+GeneralIdleState::GeneralIdleState(): State(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
 {
 }
 
-void PlayerlIdleState::Enter(FSMComponent* fsm)
+void GeneralIdleState::Enter(FSMComponent* fsm)
 {
 	if (auto* obj = fsm->GetGameObject())
 	{
@@ -44,7 +44,7 @@ void PlayerlIdleState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
+void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 {
 	if (!fsm) return;
 
@@ -77,20 +77,20 @@ void PlayerlIdleState::Update(FSMComponent* fsm, float dt)
 	}
 }
 
-void PlayerlIdleState::Exit(FSMComponent* fsm)
+void GeneralIdleState::Exit(FSMComponent* fsm)
 {	
 }
 
 
 // ==================================
-// 		 PLAYER_WALK_STATE
+// 		 GENERAL_WALK_STATE
 // ==================================
-PlayerWalkState::PlayerWalkState() : State(FB_ENUMS::PLAYER_STATE_TYPE_WALK)
+GeneralWalkState::GeneralWalkState() : State(FB_ENUMS::PLAYER_STATE_TYPE_WALK)
 {
 
 }
 
-void PlayerWalkState::Enter(FSMComponent* fsm) 
+void GeneralWalkState::Enter(FSMComponent* fsm) 
 {
 	// DEBUG_LOG_FMT("[FSM] MOVE Enter (Subject: {})\n", fsm->GetHandle().GetValue());
 
@@ -103,7 +103,7 @@ void PlayerWalkState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerWalkState::Update(FSMComponent* fsm, float dt)
+void GeneralWalkState::Update(FSMComponent* fsm, float dt)
 {
 	if (!fsm)
 		return;
@@ -148,21 +148,21 @@ void PlayerWalkState::Update(FSMComponent* fsm, float dt)
 	}
 }
 
-void PlayerWalkState::Exit(FSMComponent* fsm)
+void GeneralWalkState::Exit(FSMComponent* fsm)
 {
 
 }
 
 
 // ==================================
-// 		 PLAYER_RUN_STATE
+// 		 GENERAL_RUN_STATE
 // ==================================
-PlayerRunState::PlayerRunState() :State(FB_ENUMS::PLAYER_STATE_TYPE_RUN)
+GeneralRunState::GeneralRunState() :State(FB_ENUMS::PLAYER_STATE_TYPE_RUN)
 {
 
 }
 
-void PlayerRunState::Enter(FSMComponent* fsm)
+void GeneralRunState::Enter(FSMComponent* fsm)
 {
 	if (auto* obj = fsm->GetGameObject())
 	{
@@ -173,24 +173,24 @@ void PlayerRunState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerRunState::Update(FSMComponent* fsm, float dt)
+void GeneralRunState::Update(FSMComponent* fsm, float dt)
 {
 }
 
-void PlayerRunState::Exit(FSMComponent* fsm)
+void GeneralRunState::Exit(FSMComponent* fsm)
 {
 
 }
 
 
 // ==================================
-//		 PLAYER_PRE_DELAY_STATE
+//		 GENERAL_PRE_DELAY_STATE
 // ==================================
-PlayerPreDelayState::PlayerPreDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)
+GeneralPreDelayState::GeneralPreDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)
 {
 }
 
-void PlayerPreDelayState::Enter(FSMComponent* fsm)
+void GeneralPreDelayState::Enter(FSMComponent* fsm)
 {
 	if (fsm)
 	{
@@ -199,7 +199,7 @@ void PlayerPreDelayState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerPreDelayState::Update(FSMComponent* fsm, float dt)
+void GeneralPreDelayState::Update(FSMComponent* fsm, float dt)
 {
 	if (!fsm) return;
 
@@ -218,21 +218,21 @@ void PlayerPreDelayState::Update(FSMComponent* fsm, float dt)
 	}
 }
 
-void PlayerPreDelayState::Exit(FSMComponent* fsm)
+void GeneralPreDelayState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] PRE_DELAY Exit\n");
 }
 
 // ==================================
-//		  PLAYER_ATTACK_STATE
+//		  GENERAL_ATTACK_STATE
 // ==================================
-PlayerAttackState::PlayerAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+GeneralAttackState::GeneralAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
 	SetHasExitTime(true);
 	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 }
 
-void PlayerAttackState::Enter(FSMComponent* fsm)
+void GeneralAttackState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
@@ -258,30 +258,30 @@ void PlayerAttackState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerAttackState::Update(FSMComponent* fsm, float dt)
+void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 {
 	// Onupdate에서 자동 체크
 }
 
-void PlayerAttackState::Exit(FSMComponent* fsm)
+void GeneralAttackState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] ATTACK Exit\n");
 }
 
 // ==================================
-//		 PLAYER_POST_DELAY_STATE
+//		 GENERAL_POST_DELAY_STATE
 // ==================================
-PlayerPostDelayState::PlayerPostDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
+GeneralPostDelayState::GeneralPostDelayState() : State(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY)
 {
 }
 
-void PlayerPostDelayState::Enter(FSMComponent* fsm)
+void GeneralPostDelayState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] POST_DELAY Enter\n");
 	fsm->SetStateTimer(0.0f);
 }
 
-void PlayerPostDelayState::Update(FSMComponent* fsm, float dt)
+void GeneralPostDelayState::Update(FSMComponent* fsm, float dt)
 {
 	if (!fsm) return;
 
@@ -300,21 +300,21 @@ void PlayerPostDelayState::Update(FSMComponent* fsm, float dt)
 	}
 }
 
-void PlayerPostDelayState::Exit(FSMComponent* fsm)
+void GeneralPostDelayState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] POST_DELAY Exit\n");
 }
 
 // ==================================
-//		  PLAYER_STUN_STATE
+//		  GENERAL_STUN_STATE
 // ==================================
-PlayerStunState::PlayerStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+GeneralStunState::GeneralStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
 	SetHasExitTime(true);
 	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 }
 
-void PlayerStunState::Enter(FSMComponent* fsm)
+void GeneralStunState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] STUN Enter (Hit!)\n");
 	fsm->SetStateTimer(0.0f);
@@ -337,25 +337,25 @@ void PlayerStunState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerStunState::Update(FSMComponent* fsm, float dt)
+void GeneralStunState::Update(FSMComponent* fsm, float dt)
 {
 	// OnUpdate에서 자동 체크
 }
 
-void PlayerStunState::Exit(FSMComponent* fsm)
+void GeneralStunState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] STUN Exit\n");
 }
 
 // ==================================
-//		  PLAYER_DEAD_STATE
+//		  GENERAL_DEAD_STATE
 // ==================================
-PlayerDeadState::PlayerDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+GeneralDeadState::GeneralDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 {
 	SetHasExitTime(true);
 }
 
-void PlayerDeadState::Enter(FSMComponent* fsm)
+void GeneralDeadState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] DEAD Enter (Killed)\n");
 
@@ -368,12 +368,12 @@ void PlayerDeadState::Enter(FSMComponent* fsm)
 	}
 }
 
-void PlayerDeadState::Update(FSMComponent* fsm, float dt)
+void GeneralDeadState::Update(FSMComponent* fsm, float dt)
 {
 	// DEAD는 전이 없이 서버의 리스폰 패킷을 기다림
 }
 
-void PlayerDeadState::Exit(FSMComponent* fsm)
+void GeneralDeadState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] DEAD Exit (Respawned)\n");
 }
