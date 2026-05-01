@@ -36,7 +36,7 @@ namespace GameServer {
 		class GeneralWalkState : public GeneralState {
 			DECLARE_CREATE_FUNC(GeneralWalkState)
 		public:
-			explicit GeneralWalkState();
+			explicit GeneralWalkState(const std::shared_ptr<General>& owner);
 			virtual ~GeneralWalkState();
 
 		public:
@@ -51,7 +51,7 @@ namespace GameServer {
 		class GeneralRunState : public GeneralState {
 			DECLARE_CREATE_FUNC(GeneralRunState)
 		public:
-			explicit GeneralRunState();
+			explicit GeneralRunState(const std::shared_ptr<General>& owner);
 			virtual ~GeneralRunState();
 
 		public:
@@ -96,7 +96,7 @@ namespace GameServer {
 		class GeneralDeadState : public GeneralState {
 			DECLARE_CREATE_FUNC(GeneralDeadState)
 		public:
-			explicit GeneralDeadState();
+			explicit GeneralDeadState(const std::shared_ptr<General>& owner);
 			virtual ~GeneralDeadState();
 
 		public:
@@ -104,83 +104,5 @@ namespace GameServer {
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
 		};
-
-		// =================================
-		//		 GENERAL_ROAMING_STATE
-		// =================================
-		//class GeneralRoamingState : public GeneralState {
-		//	DECLARE_CREATE_FUNC(GeneralRoamingState)
-		//public:
-		//	explicit GeneralRoamingState();
-		//	virtual ~GeneralRoamingState();
-
-		//public:
-		//	virtual void Enter(const float dt) override final;
-		//	virtual void Exit(const float dt) override final;
-		//	virtual void Update(const float dt) override final;
-
-		//private:
-		//	void RecoveryStamina(const float dt);
-		//	void FindGeneral(const float dt);
-		//
-		//private:
-		//	std::unique_ptr<BehaviorNode>	m_root;
-		//	float							m_accDTForStaminaRecovery;
-		//};
-
-		// =================================
-		//		 GENERAL_DUELING_STATE
-		// =================================
-		//class GeneralDuelingState : public GeneralState {
-		//	DECLARE_CREATE_FUNC(GeneralDuelingState)
-		//public:
-		//	explicit GeneralDuelingState();
-		//	virtual ~GeneralDuelingState();
-
-		//public:
-		//	virtual void Enter(const float dt) override final;
-		//	virtual void Exit(const float dt) override final;
-		//	virtual void Update(const float dt) override final;
-
-		//private:
-		//	std::unique_ptr<BehaviorNode> m_root;
-		//};
-
-		// =================================
-		//		 GENERAL_STUN_STATE
-		// =================================
-		//class GeneralStunState : public GeneralState {
-		//	DECLARE_CREATE_FUNC(GeneralStunState)
-		//public:
-		//	explicit GeneralStunState();
-		//	virtual ~GeneralStunState();
-
-		//public:
-		//	virtual void Enter(const float dt) override final;		
-		//	virtual void Exit(const float dt) override final;
-		//	virtual void Update(const float dt) override final;
-		//
-		//private:
-		//	float m_accDTForStunState;
-		//};
-
-		//// =================================
-		////		 GENERAL_DEAD_STATE
-		//// =================================
-		//class GeneralDeadState : public GeneralState {
-		//	DECLARE_CREATE_FUNC(GeneralDeadState)
-		//public:
-		//	explicit GeneralDeadState();
-		//	virtual ~GeneralDeadState();
-
-		//public:
-		//	virtual void Enter(const float dt) override final;
-		//	virtual void Exit(const float dt) override final;
-		//	virtual void Update(const float dt) override final;
-
-		//private:
-		//	float m_accDTForRespawn;
-		//};
-
 	}
 }

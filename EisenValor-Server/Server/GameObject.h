@@ -102,12 +102,12 @@ namespace GameServer {
 
 		public:
 			void SetID(const uint64 id)  { m_id = id; }
-			void SetName(std::wstring_view name) { m_name = name.data(); }
+			void SetName(std::string_view name) { m_name = name.data(); }
 			void SetCreature(bool flag) { m_isCreature = flag; }
 			void SetGameObjectData(const GameObjectData* const data) { m_gameObjectData = data; }
 			void SetActive(const bool active) { m_active = active; }
 			void SetTransform(const Transform& transform) { m_transform = transform; }
-			const std::wstring& GetName() const { return m_name; }
+			const std::string& GetName() const { return m_name; }
 			uint64 GetID() const { return m_id; }
 			FB_ENUMS::GAME_OBJECT_TYPE GetObjType() const { return m_objType; }
 
@@ -143,7 +143,7 @@ namespace GameServer {
 			bool IsSameTeam(std::shared_ptr<GameObject> const other);
 
 		private:
-			std::wstring							m_name;
+			std::string								m_name;
 			uint64									m_id;
 			const FB_ENUMS::GAME_OBJECT_TYPE		m_objType;
 			const FB_ENUMS::TEAM_TYPE				m_teamType;

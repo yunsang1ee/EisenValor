@@ -15,21 +15,6 @@ GameServer::Contents::Soldier::~Soldier()
 	std::cout << "~Soldier" << std::endl;
 }
 
-void GameServer::Contents::Soldier::OnCollisionEnter(Collider* const other)
-{
-
-}
-
-void GameServer::Contents::Soldier::OnCollisionStay(Collider* const other)
-{
-
-}
-
-void GameServer::Contents::Soldier::OnCollisionExit(Collider* const other)
-{
-
-}
-
 void GameServer::Contents::Soldier::Update(const float dt)
 {
 	GameObject::Update(dt);

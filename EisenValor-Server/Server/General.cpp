@@ -63,6 +63,15 @@ void GameServer::Contents::General::OnPostComponentUpdate(const float dt)
 	}
 }
 
+void GameServer::Contents::General::SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
+{
+	if(m_stanceType == stanceType) return;
+
+	m_stanceType = stanceType;
+	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(), GetStanceType(), 0);
+	GetGameWorld()->Broadcast(std::move(pb));
+}
+
 void GameServer::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
@@ -76,13 +85,10 @@ void GameServer::Contents::General::OnDeath()
 #ifdef PRINT_GENERAL_LOG
 	std::cout << "General::OnDeath()" << std::endl;
 #endif
-
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
 	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DEAD, worldDT, true);
-
-	GetComponent<GameServer::Contents::BehaviorTree>()->Reset();
 }
 
 void GameServer::Contents::General::OnRespawn()
@@ -96,10 +102,8 @@ void GameServer::Contents::General::OnRespawn()
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
-	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
-	fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_IDLE, worldDT, true);
 	
-	GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(m_respawnPos);
+	GetComponent<GameServer::Contents::NavAgent>()->Teleport(m_respawnPos);
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));

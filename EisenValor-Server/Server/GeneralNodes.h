@@ -3,62 +3,52 @@
 
 namespace GameServer {
 	namespace Contents {
-
-		// ====================================
-		//			GENERAL_IDLE_STATE
-		// ====================================
-		
-		class WaitAfterSpawn : public ConditionNode {
-		private:
-			float m_accDTForRespawn{};
-
+		class IsTargetInNearRange : public ConditionNode {
 		public:
+			// 근처에 적이 있는지 확인한다.
 			virtual bool Check(const float dt) override final;
 		};
-		
+
+		class IsInOccupationZone : public ConditionNode {
+		public:
+			// 점령지 안에 있는지 확인한다.
+			virtual bool Check(const float dt) override final;
+		};
+
 		class FindOZ : public ActionNode {
 		public:
 			// 아직 점령되지 않은 점령지를 찾는다.
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
-
-		// ====================================
-		// 			GENERAL_WALK_STATE
-		// ====================================
-
-		// ====================================
-		// 			GENERAL_RUN_STATE
-		// ====================================
-
-		// ====================================
-		// 		 GENERAL_ATTACK_STATE
-		// ====================================
-
-		// ====================================
-		// 		 GENERAL_STUN_STATE
-		// ====================================
-
-		// ====================================
-		// 		 GENERAL_DEAD_STATE
-		// ====================================
-
-
-			
-		// ====================================
-		//		  GENERAL_ROAMING_STATE
-		// ====================================
 	
-
 		class MoveToOZ : public ActionNode {
 		public:
 			// 점령지를 향해 달려간다.
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
 
+		class IsRespawnReady : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+			void Reset() { m_accDTForRespawn = 0.f; }
 
-		// ====================================
-		//		  GENERAL_DUELING_STATE
-		// ====================================
+		private:
+			float m_accDTForRespawn{};
+		};
+
+		class ChangeState : public ActionNode {
+			public:
+			ChangeState(const FB_ENUMS::GENERAL_STATE_TYPE stateType) : m_stateType{ stateType } {}
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+
+		private:
+			FB_ENUMS::GENERAL_STATE_TYPE m_stateType;
+		};
+
+		class Respawn : public ActionNode {
+			public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
 
 		// ==================
 		//	  DEFENSE_SEQ
@@ -78,7 +68,6 @@ namespace GameServer {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
-
 
 		// ==================
 		//	  ATTACK_SEQ
