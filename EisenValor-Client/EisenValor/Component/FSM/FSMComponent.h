@@ -72,7 +72,7 @@ public:
 private:
 	// 캐릭터별 데이터
 	uint8_t m_serverState = 0;   // 서버에서 보낸 상태 (GENERAL_STATE_TYPE)
-	uint8_t m_curStateType = 0;  // 클라이언트 애니메이션 상태 (PLAYER_STATE_TYPE)
+	uint8_t m_curStateType = 0;  // 클라이언트 애니메이션 상태 (GENERAL/PLAYER_STATE_TYPE)
 	uint8_t m_curAttackType = 0; // 현재 수행 중인 공격 종류
 	uint8_t m_curAttackDir = 0;  // 현재 공격 조준 방향 (GENERAL_ATTACK_DIR_TYPE)
 	uint8_t m_objType = 0;       // 캐릭터 타입 (GAME_OBJECT_TYPE)

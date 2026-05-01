@@ -2,44 +2,44 @@
 #include "StatePool.h"
 
 // ==================================
-//            PLAYER_STATES
+//            GENERAL_STATES
 // ==================================
 // idle
 // 서버 로직에 맞게 이식
 // 데이터 없이 로직만 수행
-class PlayerlIdleState : public State {
+class GeneralIdleState : public State {
 public:
-	PlayerlIdleState();
-	virtual ~PlayerlIdleState() = default;
+	GeneralIdleState();
+	virtual ~GeneralIdleState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
-class PlayerWalkState : public State {
+class GeneralWalkState : public State {
 	public:
-	PlayerWalkState();
-	virtual ~PlayerWalkState() = default;
+	GeneralWalkState();
+	virtual ~GeneralWalkState() = default;
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
-class PlayerRunState : public State {
+class GeneralRunState : public State {
 	public:
-	PlayerRunState();
-	virtual ~PlayerRunState() = default;
+	GeneralRunState();
+	virtual ~GeneralRunState() = default;
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
 // PreDelay
-class PlayerPreDelayState : public State {
+class GeneralPreDelayState : public State {
 public:
-	PlayerPreDelayState();
-	virtual ~PlayerPreDelayState() = default;
+	GeneralPreDelayState();
+	virtual ~GeneralPreDelayState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -47,10 +47,10 @@ public:
 };
 
 // Attack
-class PlayerAttackState : public State {
+class GeneralAttackState : public State {
 public:
-	PlayerAttackState();
-	virtual ~PlayerAttackState() = default;
+	GeneralAttackState();
+	virtual ~GeneralAttackState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -58,10 +58,10 @@ public:
 };
 
 // PostDelay
-class PlayerPostDelayState : public State {
+class GeneralPostDelayState : public State {
 public:
-	PlayerPostDelayState();
-	virtual ~PlayerPostDelayState() = default;
+	GeneralPostDelayState();
+	virtual ~GeneralPostDelayState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -69,10 +69,10 @@ public:
 };
 
 // Stun
-class PlayerStunState : public State {
+class GeneralStunState : public State {
 public:
-	PlayerStunState();
-	virtual ~PlayerStunState() = default;
+	GeneralStunState();
+	virtual ~GeneralStunState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -80,10 +80,10 @@ public:
 };
 
 // Dead
-class PlayerDeadState : public State {
+class GeneralDeadState : public State {
 public:
-	PlayerDeadState();
-	virtual ~PlayerDeadState() = default;
+	GeneralDeadState();
+	virtual ~GeneralDeadState() = default;
 
 	virtual void Enter(FSMComponent* fsm) override;
 	virtual void Update(FSMComponent* fsm, float dt) override;
@@ -159,4 +159,3 @@ public:
 	virtual void Update(FSMComponent* fsm, float dt) override;
 	virtual void Exit(FSMComponent* fsm) override;
 };
-
