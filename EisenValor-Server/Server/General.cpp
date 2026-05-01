@@ -3,7 +3,6 @@
 
 #include "GameWorld.h"
 #include "Player.h"
-#include "BehaviorTree.h"
 #include "NavAgent.h"
 
 // #define PRINT_GENERAL_LOG
@@ -127,8 +126,6 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 	if(FB_ENUMS::GENERAL_STATE_TYPE_DEAD == stateType)
 		return false;
 
-	const auto bt = GetComponent<BehaviorTree>();
-	const auto bb = bt->GetBlackboard();
 	const auto atkInfo{ GetAtkInfo() };
 
 	uint32 damage{};

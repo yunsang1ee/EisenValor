@@ -31,12 +31,6 @@
     <ClCompile Include="Script.cpp">
       <Filter>03. Contents\Component\Scripts</Filter>
     </ClCompile>
-    <ClCompile Include="BehaviorTree.cpp">
-      <Filter>03. Contents\Component\BehaviorTree</Filter>
-    </ClCompile>
-    <ClCompile Include="BehaviorNode.cpp">
-      <Filter>03. Contents\Component\BehaviorTree\BehaviorNode</Filter>
-    </ClCompile>
     <ClCompile Include="ServerGlobalFuncs.cpp">
       <Filter>97. Global</Filter>
     </ClCompile>
@@ -163,6 +157,9 @@
     <ClCompile Include="MapDataManager.cpp">
       <Filter>03. Contents\GameWorld\MapData</Filter>
     </ClCompile>
+    <ClCompile Include="BehaviorNode.cpp">
+      <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -282,12 +279,6 @@
     <Filter Include="03. Contents\Component\Scripts\OccupationZone">
       <UniqueIdentifier>{c3810b69-670c-4fdb-bc84-6df84cd3b8a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Contents\Component\BehaviorTree">
-      <UniqueIdentifier>{c7c49975-d6a6-485d-bffc-5b9fcc6f0b6a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="03. Contents\Component\BehaviorTree\BehaviorNode">
-      <UniqueIdentifier>{0978df18-9716-40c2-a053-fb9343ac6fa2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="03. Contents\Component\NavAgent">
       <UniqueIdentifier>{8bfe2cf1-67ed-42e0-afdd-54f3a9faf857}</UniqueIdentifier>
     </Filter>
@@ -349,12 +340,6 @@
     </ClInclude>
     <ClInclude Include="Script.h">
       <Filter>03. Contents\Component\Scripts</Filter>
-    </ClInclude>
-    <ClInclude Include="BehaviorTree.h">
-      <Filter>03. Contents\Component\BehaviorTree</Filter>
-    </ClInclude>
-    <ClInclude Include="BehaviorNode.h">
-      <Filter>03. Contents\Component\BehaviorTree\BehaviorNode</Filter>
     </ClInclude>
     <ClInclude Include="ServerGlobalFuncs.h">
       <Filter>97. Global</Filter>
@@ -492,6 +477,9 @@
       <Filter>03. Contents\GameWorld</Filter>
     </ClInclude>
     <ClInclude Include="GeneralNodes.h">
+      <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="BehaviorNode.h">
       <Filter>03. Contents\GameObject\Creature\General\Nodes</Filter>
     </ClInclude>
   </ItemGroup>

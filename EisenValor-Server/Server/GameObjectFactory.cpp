@@ -9,13 +9,13 @@
 #include "PlayerStates.h"
 #include "SoldierStates.h"
 #include "BehaviorNode.h"
-#include "BehaviorTree.h"
 #include "Spawner.h"
 #include "Collider.h"
 #include "GameWorld.h"
 #include "NavAgent.h"
 #include "OccupationZone.h"
 #include "HealZone.h"
+#include "GameDataManager.h"
 
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
@@ -96,8 +96,12 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 
 	general->SetRespawnPos(t.transform.GetPosition());
 
-	/*const auto bt = general->AddComponent<BehaviorTree>();
-	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);*/
+	if(t.gameObjectData && false == t.gameObjectData->skills.empty()) {
+		const SkillData* const defaultSkill{ MANAGER(GameDataManager)->GetSkillData(t.gameObjectData->skills[0]) };
+		if(defaultSkill) {
+			general->SetAtkInfo(AttackInfo{ defaultSkill, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP });
+		}
+	}
 
 	auto navAgent = general->AddComponent<GameServer::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
 	
@@ -121,8 +125,8 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	auto idleState = GameServer::Contents::GeneralIdleState::Create(general);
 	auto walkState = GameServer::Contents::GeneralWalkState::Create(general);
 	auto runState = GameServer::Contents::GeneralRunState::Create(general);
-	auto attackState = GameServer::Contents::GeneralAttackState::Create();
-	auto stunState = GameServer::Contents::GeneralStunState::Create();
+	auto attackState = GameServer::Contents::GeneralAttackState::Create(general);
+	auto stunState = GameServer::Contents::GeneralStunState::Create(general);
 	auto deadState = GameServer::Contents::GeneralDeadState::Create(general);
 
 	fsm->AddState(std::move(idleState));

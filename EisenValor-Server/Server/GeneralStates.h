@@ -66,7 +66,7 @@ namespace GameServer {
 		class GeneralAttackState : public GeneralState {
 			DECLARE_CREATE_FUNC(GeneralAttackState)
 		public:
-			explicit GeneralAttackState();
+			explicit GeneralAttackState(const std::shared_ptr<General>& owner);
 			virtual ~GeneralAttackState();
 
 		public:
@@ -81,7 +81,7 @@ namespace GameServer {
 		class GeneralStunState : public GeneralState {
 			DECLARE_CREATE_FUNC(GeneralStunState)
 		public:
-			explicit GeneralStunState();
+			explicit GeneralStunState(const std::shared_ptr<General>& owner);
 			virtual ~GeneralStunState();
 
 		public:
@@ -91,7 +91,7 @@ namespace GameServer {
 		};
 
 		// =================================
-		// GENERAL_DEAD_STATE
+		//		  GENERAL_DEAD_STATE
 		// =================================
 		class GeneralDeadState : public GeneralState {
 			DECLARE_CREATE_FUNC(GeneralDeadState)

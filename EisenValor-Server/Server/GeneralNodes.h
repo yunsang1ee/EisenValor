@@ -3,30 +3,16 @@
 
 namespace GameServer {
 	namespace Contents {
-		class IsTargetInNearRange : public ConditionNode {
-		public:
-			// 근처에 적이 있는지 확인한다.
-			virtual bool Check(const float dt) override final;
-		};
-
+		// =====================================================
+		//				     CONDITION NODES
+		// =====================================================
+		// 점령지 안에 있는지 확인한다.
 		class IsInOccupationZone : public ConditionNode {
 		public:
-			// 점령지 안에 있는지 확인한다.
 			virtual bool Check(const float dt) override final;
 		};
 
-		class FindOZ : public ActionNode {
-		public:
-			// 아직 점령되지 않은 점령지를 찾는다.
-			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
-		};
-	
-		class MoveToOZ : public ActionNode {
-		public:
-			// 점령지를 향해 달려간다.
-			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
-		};
-
+		// 죽은지 일정 시간이 지났는지 확인한다.
 		class IsRespawnReady : public ConditionNode {
 		public:
 			virtual bool Check(const float dt) override final;
@@ -36,8 +22,60 @@ namespace GameServer {
 			float m_accDTForRespawn{};
 		};
 
+		// 유효한 타겟을 보유하고 있는지 확인한다.
+		class HasTarget : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 타겟이 사라졌거나 더 이상 유효하지 않은지 확인한다.
+		class IsTargetLost : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 타겟이 적 감지 범위 안에 있는지 확인한다.
+		class IsTargetInDetectionRange : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 타겟이 전투 범위 안에 있는지 확인한다.
+		class IsTargetInCombatRange : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 타겟이 실제 공격 히트박스(반경/각도) 안에 있는지 확인한다.
+		class IsTargetInAttackRange : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 공격 쿨타임이 차서 다시 공격할 수 있는지 확인한다.
+		class IsAttackCooldownReady : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+			virtual void Reset() override { m_acc = 0.f; }
+		private:
+			float m_acc{};
+		};
+
+		// 스턴 지속시간이 끝났는지 확인한다.
+		class IsStunOver : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+			virtual void Reset() override { m_acc = 0.f; }
+		private:
+			float m_acc{};
+		};
+
+		// =====================================================
+		// 				    ACTION NODES
+		// =====================================================
+		// FSM의 상태를 변경한다.
 		class ChangeState : public ActionNode {
-			public:
+		public:
 			ChangeState(const FB_ENUMS::GENERAL_STATE_TYPE stateType) : m_stateType{ stateType } {}
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 
@@ -45,51 +83,61 @@ namespace GameServer {
 			FB_ENUMS::GENERAL_STATE_TYPE m_stateType;
 		};
 
+		// 리스폰 위치로 이동한다.
 		class Respawn : public ActionNode {
-			public:
-			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
-		};
-
-		// ==================
-		//	  DEFENSE_SEQ
-		// ==================
-		class IsTargetAttacking : public ConditionNode {
-		public:
-			// 상대방이 공격하고 있는 상태인지 확인한다
-			virtual bool Check(const float dt) override final;
-		};
-
-		class DefaultDefense : public ActionNode {
-		public:
-			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
-		};
-		 
-		class Parrying : public ActionNode {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
 
-		// ==================
-		//	  ATTACK_SEQ
-		// ==================
-		class AttackTry : public ActionNode {
+		// 감지 범위 내의 가장 가까운 적을 찾아 타겟으로 설정한다.
+		class FindEnemy : public ActionNode {
 		public:
-			// 상대방을 공격한다.
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
 
+		// 현재 타겟을 해제한다.
+		class ClearTarget : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
+
+		// 타겟 위치로 NavAgent 목적지를 갱신한다.
+		class MoveToTarget : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
+
+		// NavAgent 이동을 정지시킨다.
+		class StopMoving : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
+
+		// 타겟을 향해 회전한다.
+		class LookAtTarget : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
+
+		// 자세(Stance)를 설정한다.
+		class SetStance : public ActionNode {
+		public:
+			explicit SetStance(const FB_ENUMS::GENERAL_STANCE_TYPE stance) : m_stance{ stance } {}
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		private:
-			float m_accDT=0.f;
+			FB_ENUMS::GENERAL_STANCE_TYPE m_stance;
 		};
 
-		class CombatMovement : public ActionNode {
-		public:
-			CombatMovement();
-
+		// 1회 공격을 수행한다 (사거리 안의 타겟에게 데미지).
+		class Attack : public ActionNode {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
 
-		private:
-			float m_accDTForChangeAttackDir;
+		// 점령되지 않은 점령지를 찾아 NavAgent 목적지로 설정한다 (상태 변경 없음).
+		class MoveToOZ : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
 	}
 }

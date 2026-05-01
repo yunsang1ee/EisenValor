@@ -38,6 +38,33 @@ void GameServer::Contents::DecoratorNode::SetOwner(std::shared_ptr<General> cons
 	if(m_child) m_child->SetOwner(owner);
 }
 
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::InverterNode::Execute(const float dt)
+{
+	if(!m_child) return BEHAVIOR_NODE_STATUS::FAIL;
+	const auto status = m_child->Execute(dt);
+	if(BEHAVIOR_NODE_STATUS::SUCCESS == status) return BEHAVIOR_NODE_STATUS::FAIL;
+	if(BEHAVIOR_NODE_STATUS::FAIL == status) return BEHAVIOR_NODE_STATUS::SUCCESS;
+	return BEHAVIOR_NODE_STATUS::RUNNING;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::OnceNode::Execute(const float dt)
+{
+	if(m_done) return BEHAVIOR_NODE_STATUS::SUCCESS;
+	if(!m_child) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	const auto status = m_child->Execute(dt);
+	if(BEHAVIOR_NODE_STATUS::SUCCESS == status) {
+		m_done = true;
+	}
+	return status;
+}
+
+void GameServer::Contents::OnceNode::Reset()
+{
+	m_done = false;
+	DecoratorNode::Reset();
+}
+
 GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SequenceNode::Execute(const float dt)
 {
 	while(m_currentIndex < m_children.size()) {
