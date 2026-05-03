@@ -326,40 +326,30 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		// 약공격
 		if (input.GetInputDown(VK_LBUTTON))
 		{
-			const auto stateType{fsm->GetCurStateType()};
-			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY
-				|| stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			// RequestState에서 공격 가능 여부 판단
+			if (fsm->RequestState(FSMComponent::StateRequestType::AttackLight))
 			{
-				return;
+				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
+				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
+				DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			}
-
-			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			return;
 		}
 		// 강공격
 		else if (input.GetInputDown(VK_RBUTTON))
 		{
-			const auto stateType{fsm->GetCurStateType()};
-			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-				stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			if (fsm->RequestState(FSMComponent::StateRequestType::AttackHeavy))
 			{
-				return;
+				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
+				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
+				DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
 			}
-
-			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-
-			DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
 			return;
 		}
 	}

@@ -11,10 +11,10 @@ void HealthComponent::SetHealth(int health)
 
 	if (m_health <= 0) 
 	{
-		// FSM 상태를 DEAD로 변경
+		// FSM 상태를 DEAD로 변경 요청
 		if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 		{
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
+			fsm->RequestState(FSMComponent::StateRequestType::Die);
 		}
 
 		// 바로 비활성화하면 애니메이션이 보이지 않음(일단 주석처리)
@@ -22,10 +22,10 @@ void HealthComponent::SetHealth(int health)
 	}
 	else if (prevHealth <= 0 && m_health > 0)
 	{
-		// 체력이 다시 생기면 FSM을 IDLE로 복구
+		// 체력이 다시 생기면 FSM을 IDLE로 복구 요청
 		if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 		{
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 		}
 	}
 }
