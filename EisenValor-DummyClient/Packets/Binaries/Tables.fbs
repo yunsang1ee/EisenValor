@@ -285,11 +285,11 @@ table SC_CHANGE_CAMERA_TARGET_PACKET {
 	camera_target_id: uint64;
 }
 
-table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
+table CS_CHANGE_GENERAL_ATTACK_DIR_PACKET{
 	attack_dir: uint8;
 }
 
-table SC_SHOW_GENERAL_ATTACK_DIR_PACKET{
+table SC_CHANGE_GENERAL_ATTACK_DIR_PACKET{
 	obj_id: uint64;
 	attack_dir: uint8;
 }

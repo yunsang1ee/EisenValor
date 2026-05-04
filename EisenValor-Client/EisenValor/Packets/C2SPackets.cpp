@@ -206,8 +206,8 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PA
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ServerPacketHandler::MakePacketBuffer(
-		PACKET_TYPE::CS_SHOW_GENERAL_ATTACK_DIR_PKT,
-		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_SHOW_GENERAL_ATTACK_DIR_PACKET, dirType)
+		PACKET_TYPE::CS_CHANGE_GENERAL_ATTACK_DIR_PKT,
+		ServerPacketHandler::Serialization(builder, FB_TABLES::CreateCS_CHANGE_GENERAL_ATTACK_DIR_PACKET, dirType)
 	);
 }
 

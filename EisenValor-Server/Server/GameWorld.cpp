@@ -185,6 +185,7 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 
 void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
 {
+	// TODO: NavMesh 클라이언트로 이식해야함.
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
 	if(it == m_sessionToPlayer.end()) return;
 
@@ -255,6 +256,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	// ── 4. 위치 확정 ───────────────────────────────────────────
 	player->SetPosition(snapPos);
 	player->SetRotation(transform.GetRotationDegree());
+	player->SetMoveDir(moveDir);
 
 	// ── 5. Crowd에 플레이어 위치 동기화 ──────────────────────────
 	auto navAgent = player->GetComponent<NavAgent>();
@@ -263,7 +265,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	}
 
 	{
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), moveDir);
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), player->GetMoveDir());
 		Broadcast(std::move(pb));
 	}
 }
@@ -321,7 +323,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint3
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+void GameServer::Contents::GameWorld::Handle_CS_CHANGE_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
 	auto it = m_sessionToPlayer.find(sessionID);
 	if(it == m_sessionToPlayer.end()) return;
@@ -330,7 +332,7 @@ void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const ui
 
 	const auto player = IDToPlayer(playerID);
 	if(player) {
-		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
+		player->Handle_CS_CHANGE_GENERAL_ATTACK_DIR(dirType);
 	}
 }
 
@@ -449,6 +451,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHAT(const std::shared_ptr<Clien
 
 void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TELEPORT_PLACE_TYPE place)
 {
+	// TODO: NavMesh 클라이언트로 이식한 경우, 여기 바꿔야 함.
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
 	if(it == m_sessionToPlayer.end()) return;
 

@@ -25,7 +25,7 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
-			 .currentHP = 50,
+			 .currentHP = t.gameObjectData->maxHp,
 			.maxHP = t.gameObjectData->maxHp,
 			.currentStamina = t.gameObjectData->maxStamina,
 			.maxStamina = t.gameObjectData->maxStamina,
@@ -95,6 +95,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 		});
 
 	general->SetRespawnPos(t.transform.GetPosition());
+	general->SetMoveDir(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 
 	if(t.gameObjectData && false == t.gameObjectData->skills.empty()) {
 		const SkillData* const defaultSkill{ MANAGER(GameDataManager)->GetSkillData(t.gameObjectData->skills[0]) };
@@ -109,7 +110,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.8f;
 	params.maxSpeed = 3.f;
-	params.maxAcceleration =3.f;
+	params.maxAcceleration =10.f;
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange =params.radius * 30.0f;
@@ -121,6 +122,8 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 		return nullptr;
 
 	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
+
+	// State에서 쓰는 값들은 State마다 각각 따로 구조체로 따로 만들어서 Create할때 넘겨줘야함
 
 	auto idleState = GameServer::Contents::GeneralIdleState::Create(general);
 	auto walkState = GameServer::Contents::GeneralWalkState::Create(general);
@@ -162,7 +165,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;				
 	params.maxSpeed = 3.f;			
-	params.maxAcceleration = 3.f;		
+	params.maxAcceleration = 10.f;		
 
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;

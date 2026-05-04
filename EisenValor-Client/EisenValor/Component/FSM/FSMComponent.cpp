@@ -13,14 +13,32 @@ void FSMComponent::OnUpdate(float deltaTime)
 	if (state)
 	{
 		// 애니메이션 종료 시 자동 전이
-		if (state->HasExitTime() && state->GetNextStateOnEnd() != 0)
+		//if (state->HasExitTime() && state->GetNextStateOnEnd() != 0)
+		//{
+		//	if (auto* anim = GetGameObject()->GetComponent<AnimationComponent>())
+		//	{
+		//		if (anim->IsAnimationEnd())
+		//		{
+		//			ChangeState(state->GetNextStateOnEnd());
+		//			return; // 상태가 바뀌었으므로 이번 프레임 중단
+		//		}
+		//	}
+		//}
+
+		if (state->HasExitTime())
 		{
 			if (auto* anim = GetGameObject()->GetComponent<AnimationComponent>())
 			{
 				if (anim->IsAnimationEnd())
 				{
-					ChangeState(state->GetNextStateOnEnd());
-					return; // 상태가 바뀌었으므로 이번 프레임 중단
+					uint8_t next = state->GetNextStateOnEnd();
+					if (next == 0)
+						next = m_serverState; // 서버 상태로 폴백
+					if (next != m_curStateType)
+					{
+						ChangeState(next);
+						return;
+					}
 				}
 			}
 		}
@@ -41,12 +59,15 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	{
 		targetState += StateOffset::kSoldierOffset;
 	}
-
-	if (m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY) ||
-		m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) ||
-		m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY))
+	else if (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)
 	{
-		return;
+		// 플레이어는 공격 사이클 상태일 때 서버 상태 무시 (서버는 공격 시작만 알려주고 나머지는 클라이언트에서 처리)
+		if (m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY) ||
+			m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) ||
+			m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY))
+		{
+			return;
+		}
 	}
 	
 

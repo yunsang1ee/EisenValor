@@ -128,7 +128,38 @@ namespace GameServer {
 			FB_ENUMS::GENERAL_STANCE_TYPE m_stance;
 		};
 
-		// 1회 공격을 수행한다 (사거리 안의 타겟에게 데미지).
+		// 일정 간격마다 공격 방향을 무작위로 갱신하고 클라이언트에 표시 패킷을 브로드캐스트한다.
+		// 항상 SUCCESS를 반환해 공격 사이클의 다른 노드 흐름을 막지 않는다.
+		class RandomizeAttackDir : public ActionNode {
+		public:
+			explicit RandomizeAttackDir(const float intervalSec = 1.5f) : m_intervalSec{ intervalSec } {}
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+			virtual void Reset() override { m_acc = m_intervalSec; }
+
+		private:
+			float m_acc{};
+			float m_intervalSec;
+		};
+
+		// 타겟 주위 [minDist, maxDist] 반경 내 임의 지점을 일정 간격마다 새 목적지로 설정해 자연스러운 견제 무빙을 만든다.
+		class WanderAroundTarget : public ActionNode {
+		public:
+			explicit WanderAroundTarget(
+				const float intervalSec = 1.2f,
+				const float minDist = 1.0f,
+				const float maxDist = 2.5f)
+				: m_intervalSec{ intervalSec }, m_minDist{ minDist }, m_maxDist{ maxDist } {}
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+			virtual void Reset() override { m_acc = m_intervalSec; }
+
+		private:
+			float m_acc{};
+			float m_intervalSec;
+			float m_minDist;
+			float m_maxDist;
+		};
+
+		// 1회 공격을 수행한다 (사거리 안의 타겟에게 데미지 + 클라이언트에 공격 패킷 브로드캐스트).
 		class Attack : public ActionNode {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;

@@ -797,8 +797,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			bool isGeneral =
-				(objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
+			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
@@ -976,9 +975,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					}
 				);
 			}
-
-			////////////////// isGeneral ///////////////////
-
 			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
 			{
 				tr.SetScale(0.9f);
@@ -1268,6 +1264,12 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 			if (auto* fsm = obj->GetComponent<FSMComponent>())
 			{
 				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
+				const auto objectType = fsm->GetObjectType();
+				if (
+					objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL))
+				{
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK);
+				}
 			}
 			return true;
 		}
@@ -1419,6 +1421,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		{
 			return true;
 		}
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) && nextState == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
+		{
+			return true;
+		}
 		fsm->SetServerState(nextState);
 		return true;
 	}
@@ -1426,18 +1432,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
-		{
-			if (obj->GetComponent<StaminaComponent>() != nullptr)
-			{
-				fsm->SetServerState(nextState);
-				return true;
-			}
-		}
-
-		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD || nextState == FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 		{
 			fsm->SetServerState(nextState);
+			return true;
 		}
 	}
 
@@ -1514,8 +1512,8 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_ATTACK_DIR_PACKET& recvPkt
 )
 {
 	// 플레이어 공격 방향 표시

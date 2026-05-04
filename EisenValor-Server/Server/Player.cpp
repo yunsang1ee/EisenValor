@@ -184,6 +184,7 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 	}
 
 	const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(atkType) };
+	SetAtkDir(dir);
 	SetAtkInfo(AttackInfo{ skillData, dir});
 	DecStamina(skillData->staminaCost);
 
@@ -326,11 +327,11 @@ void GameServer::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 p
 	}
 }
 
-void GameServer::Contents::Player::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+void GameServer::Contents::Player::Handle_CS_CHANGE_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
 	SetAtkDir(dirType);
 	auto const world{ GetGameWorld() };
-	auto pb{ ServerPackets::Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(GetID(), etou8(dirType)) };
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(GetID(), etou8(dirType)) };
 	world->Broadcast(std::move(pb));
 
 	std::cout << "Handle_CS_SHOW_GENERAL_ATTACK_DIR" << std::endl;

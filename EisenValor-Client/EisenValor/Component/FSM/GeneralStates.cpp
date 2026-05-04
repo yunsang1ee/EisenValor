@@ -229,13 +229,19 @@ void GeneralPreDelayState::Exit(FSMComponent* fsm)
 GeneralAttackState::GeneralAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
 	SetHasExitTime(true);
-	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+
 }
 
 void GeneralAttackState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
+
+if (fsm->GetObjectType() == GAME_OBJECT_TYPE_PLAYER)
+		SetNextStateOnEnd(PLAYER_STATE_TYPE_POST_DELAY);
+	else
+		SetNextStateOnEnd(0);
+
 
 	DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
 		fsm->GetCurAttackType(),

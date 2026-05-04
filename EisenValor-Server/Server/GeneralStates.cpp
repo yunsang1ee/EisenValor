@@ -15,6 +15,8 @@ GameServer::Contents::GeneralState::GeneralState(const uint8 stateType)
 {
 }
 
+// IDLE이나 RUN때 FindEnemy 할때, 찾은 Enemy가 Player나 General이면 전투태세로 들어가고, 만약 병사라면 그냥 바로 공격
+
 // ============================================
 //					  IDLE
 // ============================================
@@ -85,17 +87,7 @@ GameServer::Contents::GeneralWalkState::GeneralWalkState(const std::shared_ptr<G
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 2) 공격 사거리 진입 → ATTACK
-	{
-		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
-		seq->AddChild(std::make_unique<GameServer::Contents::IsTargetInAttackRange>());
-		seq->AddChild(std::make_unique<GameServer::Contents::StopMoving>());
-		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
-		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
-		rootSelector->AddChild(std::move(seq));
-	}
-
-	// 3) 감지 범위 이탈 → 타겟 해제 후 IDLE
+	// 2) 감지 범위 이탈 → 타겟 해제 후 IDLE
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		auto inv = std::make_unique<GameServer::Contents::InverterNode>();
@@ -107,7 +99,28 @@ GameServer::Contents::GeneralWalkState::GeneralWalkState(const std::shared_ptr<G
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 4) 추격 (타겟 위치로 이동하며 응시)
+	// 3) 공격 사거리 + 쿨다운 ready → ATTACK 진입(휘두름 한 프레임)
+	{
+		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
+		seq->AddChild(std::make_unique<GameServer::Contents::IsTargetInAttackRange>());
+		seq->AddChild(std::make_unique<GameServer::Contents::IsAttackCooldownReady>());
+		seq->AddChild(std::make_unique<GameServer::Contents::StopMoving>());
+		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
+		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
+		rootSelector->AddChild(std::move(seq));
+	}
+
+	// 4) 전투 범위 안 → 견제 무빙 + 방향 주기적 변경 (WALK 애니 유지)
+	{
+		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
+		seq->AddChild(std::make_unique<GameServer::Contents::IsTargetInCombatRange>());
+		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
+		seq->AddChild(std::make_unique<GameServer::Contents::WanderAroundTarget>(1.2f, 1.5f, 2.5f));
+		seq->AddChild(std::make_unique<GameServer::Contents::RandomizeAttackDir>());
+		rootSelector->AddChild(std::move(seq));
+	}
+
+	// 5) 추격 (타겟 위치로 이동하며 응시)
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
@@ -211,7 +224,19 @@ GameServer::Contents::GeneralAttackState::GeneralAttackState(const std::shared_p
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 2) 사거리 이탈 → WALK로 복귀해 추격
+	// 2) 감지 범위 이탈 → 타겟 해제 후 IDLE
+	{
+		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
+		auto inv = std::make_unique<GameServer::Contents::InverterNode>();
+		inv->SetChild(std::make_unique<GameServer::Contents::IsTargetInDetectionRange>());
+		seq->AddChild(std::move(inv));
+		seq->AddChild(std::make_unique<GameServer::Contents::ClearTarget>());
+		seq->AddChild(std::make_unique<GameServer::Contents::SetStance>(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL));
+		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_IDLE));
+		rootSelector->AddChild(std::move(seq));
+	}
+
+	// 3) 공격 사거리 이탈 → WALK로 복귀해 추격
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		auto inv = std::make_unique<GameServer::Contents::InverterNode>();
@@ -221,13 +246,13 @@ GameServer::Contents::GeneralAttackState::GeneralAttackState(const std::shared_p
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 3) 공격 사이클 (응시 → 쿨다운 확인 → 공격)
+	// 4) 휘두름 한 프레임 (정지 → 응시 → 방향 갱신 → 공격 → WALK 복귀)
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
+		seq->AddChild(std::make_unique<GameServer::Contents::StopMoving>());
 		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
-		// TODO: 랜덤으로 공격 방향 정하는 노드 추가할듯..
-		seq->AddChild(std::make_unique<GameServer::Contents::IsAttackCooldownReady>());
 		seq->AddChild(std::make_unique<GameServer::Contents::Attack>());
+		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
 		rootSelector->AddChild(std::move(seq));
 	}
 
@@ -242,8 +267,6 @@ GameServer::Contents::GeneralAttackState::~GeneralAttackState()
 void GameServer::Contents::GeneralAttackState::Enter(const float dt)
 {
 	std::cout << "GeneralAttackState Enter!" << std::endl;
-	const auto owner{ std::static_pointer_cast<General>(GetFSM()->GetOwner()) };
-	owner->GetComponent<GameServer::Contents::NavAgent>()->StopMove();
 	if(m_root)
 		m_root->Reset();
 }

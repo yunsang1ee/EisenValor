@@ -50,7 +50,7 @@ bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_v
         const auto& skills = doc["SkillData"];
         for(rapidjson::SizeType i = 0; i < skills.Size(); i++) {
             const auto& v = skills[i];
-            SkillData skill;
+            SkillData skill{};
             skill.skillTypeID = static_cast<uint8>(v["id"].GetUint());
             skill.name = v["name"].GetString();
             skill.damage = v["damage"].GetUint();
@@ -67,7 +67,7 @@ bool GameServer::Contents::GameDataManager::LoadDataFromFile(const std::string_v
         const auto& objects = doc["GameObjectData"];
         for(rapidjson::SizeType i = 0; i < objects.Size(); i++) {
             const auto& v = objects[i];
-            GameObjectData objData;
+            GameObjectData objData{};
             objData.objTypeID = v["obj_type_id"].GetInt();
             objData.name = v["type"].GetString();
 			objData.atk = v["atk"].GetUint();

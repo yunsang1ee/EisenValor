@@ -8,6 +8,9 @@
 #include "General.h"
 #include "FSM.h"
 
+// =====================================================
+//				     CONDITION NODES
+// =====================================================
 bool GameServer::Contents::IsInOccupationZone::Check(const float dt)
 {
 	const auto owner{ GetOwner() };
@@ -55,10 +58,6 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::Respawn::DoActi
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 
-// =====================================================
-// === 순수 조건 노드                                ===
-// =====================================================
-
 bool GameServer::Contents::HasTarget::Check(const float dt)
 {
 	const auto owner{ GetOwner() };
@@ -83,8 +82,8 @@ bool GameServer::Contents::IsTargetInDetectionRange::Check(const float dt)
 	if(false == IsValidObj(target)) return false;
 
 	const auto& objData{ owner->GetGameObjectData() };
-	const float range{ objData ? objData->enemyDetectionRange : 0.f };
-	return owner->IsTargetInRange(target, range * range);
+	constexpr float leashRange{ 6.f };
+	return owner->IsTargetInRange(target, leashRange * leashRange);
 }
 
 bool GameServer::Contents::IsTargetInCombatRange::Check(const float dt)
@@ -94,7 +93,7 @@ bool GameServer::Contents::IsTargetInCombatRange::Check(const float dt)
 	if(false == IsValidObj(target)) return false;
 
 	const auto& objData{ owner->GetGameObjectData() };
-	const float range{ objData ? objData->enemyCombatRange : 0.f };
+	constexpr float range{3.f};
 	return owner->IsTargetInRange(target, range * range);
 }
 
@@ -103,8 +102,8 @@ bool GameServer::Contents::IsTargetInAttackRange::Check(const float dt)
 	const auto owner{ GetOwner() };
 	const auto target{ owner->GetTarget() };
 	if(false == IsValidObj(target)) return false;
-	// 전방뿐만 아니라 360도 범위로 공격 탐지하게 변경해야함.
-	return owner->IsTargetInAttackRange(target);
+	constexpr float range{ 3.f };
+	return owner->IsTargetInRange(target, range * range);
 }
 
 bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
@@ -112,7 +111,7 @@ bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
 	m_acc += dt;
 	const auto owner{ GetOwner() };
 	const auto& objData{ owner->GetGameObjectData() };
-	const float cycleSec{ objData ?5.f : 1.f };
+	constexpr float cycleSec{5.f};
 	if(m_acc >= cycleSec) {
 		m_acc = 0.f;
 		return true;
@@ -130,14 +129,14 @@ bool GameServer::Contents::IsStunOver::Check(const float dt)
 }
 
 // =====================================================
-// === 액션 노드                                     ===
+// 				    ACTION NODES
 // =====================================================
-
 GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindEnemy::DoAction(const float dt)
 {
 	auto const owner{ GetOwner() };
 	const auto& objData{ owner->GetGameObjectData() };
-	const float detectionRangeSq{ objData ? 3.f * 3.f : 0.f };
+	constexpr float detectionRange{ 3.f };
+	constexpr float detectionRangeSq{ detectionRange * detectionRange };
 	if(detectionRangeSq <= 0.f) return BEHAVIOR_NODE_STATUS::FAIL;
 
 	auto const world{ owner->GetGameWorld() };
@@ -212,16 +211,109 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SetStance::DoAc
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 
-GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::Attack::DoAction(const float dt)
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::RandomizeAttackDir::DoAction(const float dt)
+{
+	m_acc += dt;
+	if(m_acc < m_intervalSec) return BEHAVIOR_NODE_STATUS::SUCCESS;
+	m_acc = 0.f;
+
+	auto const owner{ GetOwner() };
+
+	std::uniform_int_distribution<int> dist{
+		FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP,
+		FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_RIGHT };
+	const auto dir{ static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(dist(mersenne)) };
+
+	if(owner->GetAtkInfo().dir == dir) return BEHAVIOR_NODE_STATUS::SUCCESS;
+
+	owner->SetAtkDir(dir);
+
+	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(owner->GetID(), etou8(dir)) };
+	owner->GetGameWorld()->Broadcast(std::move(pb));
+
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::WanderAroundTarget::DoAction(const float dt)
 {
 	auto const owner{ GetOwner() };
 	const auto target{ owner->GetTarget() };
 	if(false == IsValidObj(target)) return BEHAVIOR_NODE_STATUS::FAIL;
 
-	if(owner->IsTargetInAttackRange(target)) {
-		target->OnDamaged(owner, dt);
-		// TODO: SC_GENERAL_ATTACK_PACKET 브로드캐스트해서 클라이언트에서 공격 애메이션 재생하게 해야할듯
+	m_acc += dt;
+	if(m_acc < m_intervalSec) return BEHAVIOR_NODE_STATUS::SUCCESS;
+	m_acc = 0.f;
+
+	std::uniform_real_distribution<float> angleDist{ 0.f, 6.2831853f };
+	std::uniform_real_distribution<float> distDist{ m_minDist, m_maxDist };
+	const float angle{ angleDist(mersenne) };
+	const float dist{ distDist(mersenne) };
+
+	const Vec3& ownerPos{ owner->GetPosition() };
+	const Vec3& targetPos{ target->GetPosition() };
+	const Vec3 dest{
+		targetPos.x + std::cosf(angle) * dist,
+		targetPos.y,
+		targetPos.z + std::sinf(angle) * dist };
+
+	// 타겟 기준 forward/right 축으로 이동 방향 분류
+	const float fwdX{ targetPos.x - ownerPos.x };
+	const float fwdZ{ targetPos.z - ownerPos.z };
+	const float fwdLenSq{ fwdX * fwdX + fwdZ * fwdZ };
+	if(fwdLenSq > 0.0001f) {
+		const float invLen{ 1.f / std::sqrtf(fwdLenSq) };
+		const float fX{ fwdX * invLen };
+		const float fZ{ fwdZ * invLen };
+		const float rX{ fZ };
+		const float rZ{ -fX };
+
+		const float mX{ dest.x - ownerPos.x };
+		const float mZ{ dest.z - ownerPos.z };
+		const float fwdDot{ mX * fX + mZ * fZ };
+		const float rgtDot{ mX * rX + mZ * rZ };
+
+		FB_ENUMS::MOVE_DIRECTION_TYPE moveDir;
+		if(std::fabs(fwdDot) >= std::fabs(rgtDot)) {
+			moveDir = (fwdDot >= 0.f) ? FB_ENUMS::MOVE_DIRECTION_TYPE_FWD : FB_ENUMS::MOVE_DIRECTION_TYPE_BWD;
+		}
+		else {
+			moveDir = (rgtDot >= 0.f) ? FB_ENUMS::MOVE_DIRECTION_TYPE_RGT : FB_ENUMS::MOVE_DIRECTION_TYPE_LFT;
+		}
+		owner->SetMoveDir(moveDir);
 	}
+
+	auto const navAgent{ owner->GetComponent<GameServer::Contents::NavAgent>() };
+	if(navAgent) navAgent->SetDestPos(dest);
+
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::Attack::DoAction(const float dt)
+{
+	constexpr float HIT_FRAME_DELAY{ 0.5f };
+
+	auto const owner{ GetOwner() };
+	const auto target{ owner->GetTarget() };
+	if(false == IsValidObj(target)) return BEHAVIOR_NODE_STATUS::FAIL;
+	if(false == owner->IsTargetInAttackRange(target)) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	const auto& atkInfo{ owner->GetAtkInfo() };
+	if(nullptr == atkInfo.skillData) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	const FB_STRUCTS::GeneralAttackInfo info{static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(atkInfo.skillData->skillTypeID),atkInfo.dir};
+	auto pb{ ServerPackets::Make_SC_GENERAL_ATTACK_PACKET(owner->GetID(), info) };
+	auto const world{ owner->GetGameWorld() };
+	world->Broadcast(std::move(pb));
+
+	std::weak_ptr<Creature> weakOwner{ std::static_pointer_cast<Creature>(owner) };
+	std::weak_ptr<Creature> weakTarget{ target };
+	world->AddTimedEvent([weakOwner, weakTarget, dt]() {
+		auto o = weakOwner.lock();
+		auto t = weakTarget.lock();
+		if(!IsValidObj(o) || !IsValidObj(t)) return;
+		t->OnDamaged(o, dt);
+	}, HIT_FRAME_DELAY);
+
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 

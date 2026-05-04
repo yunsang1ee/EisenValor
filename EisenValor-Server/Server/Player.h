@@ -27,7 +27,7 @@ namespace GameServer {
 			void Handle_CS_PLAYER_GENERAL_STANCE();
 			void Handle_CS_PLAYER_FAKE();
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID);
-			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+			void Handle_CS_CHANGE_GENERAL_ATTACK_DIR(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 			
 			friend class GameWorld;
 			friend class GameWorld;

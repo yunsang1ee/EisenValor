@@ -18,7 +18,7 @@ namespace GameServer {
 			void	SetStat(const Stat& stat) { m_statInfo = stat; }
 			void	SetHp(const uint32 hp, const bool broadcast = false);
 			void	IncHP(const uint32 amount, const bool broadcast = true);
-			int		DecHP(const uint32 amount, const bool broadcast = true);
+			uint32	DecHP(const uint32 amount, const bool broadcast = true);
 			
 			void	SetStamina(const uint32 stamina, const bool broadcast = false);
 			void	IncStamina(const uint32 amount, const bool broadcast = true);

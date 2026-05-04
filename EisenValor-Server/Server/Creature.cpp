@@ -43,7 +43,7 @@ void GameServer::Contents::Creature::IncHP(const uint32 amount, const bool broad
 	}
 }
 
-int GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
+uint32 GameServer::Contents::Creature::DecHP(const uint32 amount, const bool broadcast)
 {
 	if(0 == amount)
 		return m_statInfo.currentHP;
