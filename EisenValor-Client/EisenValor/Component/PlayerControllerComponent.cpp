@@ -332,11 +332,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		return;
 
 	uint8_t curState = fsm->GetCurStateType();
-	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
-	{
-		ClearMovementInput(movement);
-		return;
-	}
 
 	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 	{
