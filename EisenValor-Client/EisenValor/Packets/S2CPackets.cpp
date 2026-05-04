@@ -35,8 +35,25 @@
 #include "Component/SocketComponent.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
+#include <unordered_map>
 
 using namespace NetBridge;
+
+namespace
+{
+	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
+
+	void ApplyPendingServerState(uint64 objID, FSMComponent* fsm)
+	{
+		if (!fsm) return;
+
+		auto iter = s_pendingStateByObjectID.find(objID);
+		if (iter == s_pendingStateByObjectID.end()) return;
+
+		fsm->SetServerState(iter->second);
+		s_pendingStateByObjectID.erase(iter);
+	}
+}
 
 bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const PacketHeader&)
 {
@@ -789,7 +806,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(),
 		 maxStamina = recvPkt.max_stamina(), currentStamina = recvPkt.current_stamina(), stance = recvPkt.stance_type(),
-		 objectName](GameObject* obj)
+		 objectName, id](GameObject* obj)
 		{
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
@@ -969,10 +986,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				// FSMComponent
 				scene->CreateComponentWithInit<FSMComponent>(
 					objHandle,
-					[objType](FSMComponent* fsm)
+					[objType, id](FSMComponent* fsm)
 					{
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
 						fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+						ApplyPendingServerState(id, fsm);
 					}
 				);
 			}
@@ -1002,10 +1020,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				// FSMComponent
 				scene->CreateComponentWithInit<FSMComponent>(
 					objHandle,
-					[objType](FSMComponent* fsm)
+					[objType, id](FSMComponent* fsm)
 					{
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
 						fsm->SetServerState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE);
+						ApplyPendingServerState(id, fsm);
 					}
 				);
 
@@ -1407,7 +1426,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 
 	if (!obj)
 	{
-		return false;
+		s_pendingStateByObjectID[objID] = nextState;
+		return true;
 	}
 
 	// FSM 상태 동기화
@@ -1420,6 +1440,9 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		fsm->SetServerState(nextState);
 		return true;
 	}
+
+	s_pendingStateByObjectID[objID] = nextState;
+	return true;
 
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
