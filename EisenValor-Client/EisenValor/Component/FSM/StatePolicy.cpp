@@ -37,6 +37,8 @@ StateTransitionDecision PlayerStatePolicy::Resolve(
 	switch (request)
 	{
 	case StateRequestType::Move:
+		if (IsPlayerAttackSequenceState(fsm.GetCurStateType())) return Reject();
+
 		return Accept((targetStateOverride != 0)
 			? targetStateOverride
 			: static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK));
