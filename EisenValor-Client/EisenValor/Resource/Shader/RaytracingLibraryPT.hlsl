@@ -3,6 +3,7 @@
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
+RWTexture2D<float4> g_temporalAccumulation : register(u1, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -14,10 +15,19 @@ StructuredBuffer<MaterialGPUData> g_materials : register(t2, space0);
 StructuredBuffer<GeoInfo> g_geoTable : register(t3, space0);
 StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0);
 StructuredBuffer<LocalLightGPUData> g_localLights : register(t5, space0);
+Texture2D<float4> g_temporalHistory : register(t6, space0);
 
 cbuffer LocalLightConstants : register(b1, space0)
 {
     uint g_localLightCount;
+};
+
+cbuffer TemporalAccumulationConstants : register(b2, space0)
+{
+    uint g_temporalFrameCount;
+    uint g_temporalAccumulationEnabled;
+    uint g_temporalAccumulationReset;
+    uint g_temporalAccumulationPad;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -484,7 +494,9 @@ void RayGenMain()
 	
     uint rngSeed = pixelIndex * 9781u
 					 ^ pixelCoord.y * 6271u
-					 ^ screenSize.x * 7919u + 124623u;
+					 ^ screenSize.x * 7919u
+                     ^ (g_temporalFrameCount + 1u) * 104729u
+                     ^ 124623u;
 	
     float3 finalColor = 0.0f.xxx;
 	
@@ -517,6 +529,18 @@ void RayGenMain()
         finalColor += payload.color.rgb;
     }
     finalColor /= SPP;
+
+    if (0 != g_temporalAccumulationEnabled)
+    {
+        uint historyCount = (0 != g_temporalAccumulationReset) ? 0u : g_temporalFrameCount;
+        if (historyCount > 0u)
+        {
+            float3 historyColor = g_temporalHistory.Load(int3(pixelCoord, 0)).rgb;
+            float blend = 1.0f / float(historyCount + 1u);
+            finalColor = lerp(historyColor, finalColor, blend);
+        }
+        g_temporalAccumulation[pixelCoord] = float4(finalColor, 1.0f);
+    }
 	
     float3 bloom = max(0.0f.xxx, finalColor - 0.75f.xxx) * 0.7f;
     finalColor += bloom;

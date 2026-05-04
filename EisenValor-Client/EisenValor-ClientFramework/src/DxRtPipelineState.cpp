@@ -21,15 +21,19 @@ void DxRtPipelineState::Create(ID3D12Device5* device, const std::wstring& shader
 void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 {
 	// 1. Descriptor Ranges (Table용)
-	D3D12_DESCRIPTOR_RANGE1 ranges[2] = {};
+	D3D12_DESCRIPTOR_RANGE1 ranges[4] = {};
 	
 	// Range 0: TLAS (t0)
 	ranges[0] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 	// Range 1: Output UAV (u0)
 	ranges[1] = {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
+	// Range 2: Temporal History SRV (t6)
+	ranges[2] = {D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 6, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
+	// Range 3: Temporal Accumulation UAV (u1)
+	ranges[3] = {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 
 	// 2. Root Parameters
-	D3D12_ROOT_PARAMETER1 rootParams[9] = {};
+	D3D12_ROOT_PARAMETER1 rootParams[12] = {};
 
 	// Param 0: TLAS Table (t0)
 	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -76,6 +80,21 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	rootParams[8].Constants = {1, 0, 1};
 	rootParams[8].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	// Param 9: Temporal History SRV Table (t6)
+	rootParams[9].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParams[9].DescriptorTable = {1, &ranges[2]};
+	rootParams[9].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// Param 10: Temporal Accumulation UAV Table (u1)
+	rootParams[10].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParams[10].DescriptorTable = {1, &ranges[3]};
+	rootParams[10].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// Param 11: Temporal Accumulation Constants (b2)
+	rootParams[11].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParams[11].Constants = {2, 0, 4};
+	rootParams[11].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	// 3. Static Sampler (Linear Wrap)
 	D3D12_STATIC_SAMPLER_DESC staticSampler = {};
 	staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -85,7 +104,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	// 4. Root Signature Desc
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedDesc = {};
 	versionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	versionedDesc.Desc_1_1.NumParameters = 9;
+	versionedDesc.Desc_1_1.NumParameters = 12;
 	versionedDesc.Desc_1_1.pParameters = rootParams;
 	versionedDesc.Desc_1_1.NumStaticSamplers = 1;
 	versionedDesc.Desc_1_1.pStaticSamplers = &staticSampler;

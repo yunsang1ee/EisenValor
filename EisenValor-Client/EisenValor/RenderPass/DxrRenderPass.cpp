@@ -25,6 +25,7 @@
 
 #include <unordered_map>
 #include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -109,6 +110,26 @@ bool IsNullGuid(const EvAsset::Guid& guid)
 	}
 	return true;
 }
+
+void TransitionResourceIfNeeded(
+	ID3D12GraphicsCommandList* cmdList, DxResource* resource, D3D12_RESOURCE_STATES targetState
+)
+{
+	if (nullptr == cmdList || nullptr == resource || nullptr == resource->GetResource())
+	{
+		return;
+	}
+
+	const auto currentState = resource->GetCurrentState();
+	if (currentState == targetState)
+	{
+		return;
+	}
+
+	auto barrier = DxUtils::CreateTransitionBarrier(resource->GetResource(), currentState, targetState);
+	cmdList->ResourceBarrier(1, &barrier);
+	resource->SetState(targetState);
+}
 } // namespace
 
 DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), m_height(height)
@@ -137,6 +158,10 @@ void DxrRenderPass::Initialize()
 		m_outputData[i] = std::make_shared<RaytracingOutputRenderData>();
 		m_outputData[i]->outputTexture = std::make_shared<DxTexture>();
 	}
+	for (auto& history : m_ptAccumHistory)
+	{
+		history = std::make_shared<DxTexture>();
+	}
 
 	CreateRaytracingPipeline();
 	CreateRaytracingResources(m_width, m_height);
@@ -156,6 +181,10 @@ void DxrRenderPass::Release()
 		m_lightData[i].reset();
 		m_outputData[i].reset();
 	}
+	for (auto& history : m_ptAccumHistory)
+	{
+		history.reset();
+	}
 	m_device5.Reset();
 
 	m_initialized = false;
@@ -170,6 +199,7 @@ void DxrRenderPass::OnResize(uint32_t width, uint32_t height)
 	m_height = height;
 
 	CreateRaytracingResources(m_width, m_height);
+	ResetTemporalAccumulation();
 }
 
 void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
@@ -199,6 +229,71 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 			outputTex->GetUAVIndex(0)
 		);
 	}
+
+	for (int i = 0; i < 2; ++i)
+	{
+		auto& historyTex = m_ptAccumHistory[i];
+		if (!historyTex)
+		{
+			historyTex = std::make_shared<DxTexture>();
+		}
+
+		if (historyTex->HasSRV() || historyTex->HasUAV(0))
+		{
+			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
+			historyTex->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+		}
+
+		historyTex->Initialize(
+			device.GetDevice(), width, height, DXGI_FORMAT_R16G16B16A16_FLOAT,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			"DxrRenderPass_PTAccumHistory_" + std::to_string(i)
+		);
+		historyTex->CreateSRV(device.GetDevice(), descHeap);
+		historyTex->CreateUAV(device.GetDevice(), descHeap, 0);
+	}
+
+	ResetTemporalAccumulation();
+}
+
+void DxrRenderPass::ResetTemporalAccumulation()
+{
+	m_temporalAccumulationResetPending = true;
+	m_temporalAccumulationFrameCount = 0;
+	m_temporalAccumulationReadIndex = 0;
+	m_temporalAccumulationWriteIndex = 1;
+	m_hasTemporalCamera = false;
+	m_lastTemporalLightCount = 0;
+}
+
+bool DxrRenderPass::ShouldResetTemporalAccumulation(const CameraRenderData* cameraData, uint32_t lightCount) const
+{
+	if (m_temporalAccumulationResetPending || nullptr == cameraData || !m_hasTemporalCamera)
+	{
+		return true;
+	}
+
+	const float dx = cameraData->cameraPosition.x - m_lastTemporalCameraPosition.x;
+	const float dy = cameraData->cameraPosition.y - m_lastTemporalCameraPosition.y;
+	const float dz = cameraData->cameraPosition.z - m_lastTemporalCameraPosition.z;
+	const float directionDx = cameraData->cameraDirection.x - m_lastTemporalCameraDirection.x;
+	const float directionDy = cameraData->cameraDirection.y - m_lastTemporalCameraDirection.y;
+	const float directionDz = cameraData->cameraDirection.z - m_lastTemporalCameraDirection.z;
+	const float positionDeltaSq = dx * dx + dy * dy + dz * dz;
+	const float directionDeltaSq = directionDx * directionDx + directionDy * directionDy + directionDz * directionDz;
+	if (positionDeltaSq > 0.0001f || directionDeltaSq > 0.000001f)
+	{
+		return true;
+	}
+
+	if (std::abs(cameraData->fov - m_lastTemporalFov) > 0.0001f ||
+		std::abs(cameraData->aspectRatio - m_lastTemporalAspectRatio) > 0.0001f)
+	{
+		return true;
+	}
+
+	return lightCount != m_lastTemporalLightCount;
 }
 
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
@@ -626,9 +721,7 @@ void DxrRenderPass::CollectLocalLightData(Scene* scene, uint32_t frameIndex, con
 		const auto color = lightComp.GetColor();
 
 		LocalLightGPUData gpuLight = {};
-		gpuLight.positionRange = {
-			worldPosition.x, worldPosition.y, worldPosition.z, lightComp.GetRange()
-		};
+		gpuLight.positionRange = {worldPosition.x, worldPosition.y, worldPosition.z, lightComp.GetRange()};
 		gpuLight.colorIntensity = {color.x, color.y, color.z, lightComp.GetIntensity()};
 		gpuLight.sourceRadiusPad = {lightComp.GetSourceRadius(), 0.0f, 0.0f, 0.0f};
 
@@ -700,10 +793,12 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	if (input.GetInputDown(VK_F6))
 	{
 		m_usePathTracing = !m_usePathTracing;
+		ResetTemporalAccumulation();
 	}
 	if (input.GetInputDown(VK_F7))
 	{
 		m_useLiteRT = !m_useLiteRT;
+		ResetTemporalAccumulation();
 	}
 
 	renderContext->SetData(instanceData, 0);
@@ -712,7 +807,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	renderContext->SetData(lightData, 0);
 	renderContext->SetData(outputData, 0);
 
-	auto cameraData = renderContext->GetData<CameraRenderData>();
+	auto				cameraData = renderContext->GetData<CameraRenderData>();
 	const DX::XMFLOAT3* cameraPosition = cameraData ? &cameraData->cameraPosition : nullptr;
 
 	auto&			 device = GLOBAL(DxDeviceGlobal);
@@ -763,6 +858,51 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 
 	cmdList4->SetComputeRootDescriptorTable(0, descHeap.GetGPUHandle(tlas->GetSRVIndex()));
 	cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputData->outputTexture->GetUAVIndex(0)));
+
+	bool resetTemporalAccumulation = true;
+	if (m_usePathTracing)
+	{
+		resetTemporalAccumulation = ShouldResetTemporalAccumulation(cameraData.get(), lightData->lightCount);
+		if (resetTemporalAccumulation)
+		{
+			m_temporalAccumulationFrameCount = 0;
+			m_temporalAccumulationReadIndex = 0;
+			m_temporalAccumulationWriteIndex = 1;
+		}
+	}
+	else
+	{
+		ResetTemporalAccumulation();
+	}
+
+	auto* temporalHistoryRead = m_ptAccumHistory[m_temporalAccumulationReadIndex].get();
+	auto* temporalHistoryWrite = m_ptAccumHistory[m_temporalAccumulationWriteIndex].get();
+	if (temporalHistoryRead && temporalHistoryRead->HasSRV())
+	{
+		cmdList4->SetComputeRootDescriptorTable(9, descHeap.GetGPUHandle(temporalHistoryRead->GetSRVIndex()));
+	}
+	if (temporalHistoryWrite && temporalHistoryWrite->HasUAV(0))
+	{
+		cmdList4->SetComputeRootDescriptorTable(10, descHeap.GetGPUHandle(temporalHistoryWrite->GetUAVIndex(0)));
+	}
+
+	struct TemporalAccumulationConstants
+	{
+		uint32_t frameCount;
+		uint32_t enabled;
+		uint32_t reset;
+		uint32_t pad;
+	};
+	TemporalAccumulationConstants temporalConstants = {
+		m_temporalAccumulationFrameCount, m_usePathTracing ? 1u : 0u, resetTemporalAccumulation ? 1u : 0u, 0u
+	};
+	cmdList4->SetComputeRoot32BitConstants(11, 4, &temporalConstants, 0);
+
+	if (m_usePathTracing)
+	{
+		TransitionResourceIfNeeded(cmdList4.Get(), temporalHistoryRead, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		TransitionResourceIfNeeded(cmdList4.Get(), temporalHistoryWrite, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
 
 	if (nullptr != cameraData)
 	{
@@ -817,5 +957,27 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	{
 		DxScopedGpuEvent dispatchEvent(context, L"DXR.DispatchRays");
 		cmdList4->DispatchRays(&desc);
+	}
+
+	if (m_usePathTracing)
+	{
+		TransitionResourceIfNeeded(
+			cmdList4.Get(), temporalHistoryWrite, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+		);
+
+		m_temporalAccumulationReadIndex = m_temporalAccumulationWriteIndex;
+		m_temporalAccumulationWriteIndex = 1u - m_temporalAccumulationReadIndex;
+		++m_temporalAccumulationFrameCount;
+		m_temporalAccumulationResetPending = false;
+		m_lastTemporalLightCount = lightData->lightCount;
+
+		if (nullptr != cameraData)
+		{
+			m_hasTemporalCamera = true;
+			m_lastTemporalCameraPosition = cameraData->cameraPosition;
+			m_lastTemporalCameraDirection = cameraData->cameraDirection;
+			m_lastTemporalFov = cameraData->fov;
+			m_lastTemporalAspectRatio = cameraData->aspectRatio;
+		}
 	}
 }
