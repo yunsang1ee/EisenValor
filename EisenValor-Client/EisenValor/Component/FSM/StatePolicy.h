@@ -5,7 +5,6 @@ class FSMComponent;
 
 enum class StateRequestType : uint8_t {
 	Move,
-	Chase,
 	StopMove,
 	AttackLight,
 	AttackHeavy,
@@ -36,15 +35,6 @@ public:
 };
 
 class PlayerStatePolicy final : public IStatePolicy {
-public:
-	StateTransitionDecision Resolve(
-		const FSMComponent& fsm,
-		StateRequestType request,
-		uint8_t targetStateOverride
-	) const override;
-};
-
-class SoldierStatePolicy final : public IStatePolicy {
 public:
 	StateTransitionDecision Resolve(
 		const FSMComponent& fsm,

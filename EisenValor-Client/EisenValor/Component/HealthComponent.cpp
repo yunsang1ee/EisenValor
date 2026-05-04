@@ -14,6 +14,7 @@ void HealthComponent::SetHealth(int health)
 		// FSM 상태를 DEAD로 변경 요청
 		if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 		{
+			if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)) return;
 			fsm->RequestState(FSMComponent::StateRequestType::Die);
 		}
 
@@ -25,6 +26,7 @@ void HealthComponent::SetHealth(int health)
 		// 체력이 다시 생기면 FSM을 IDLE로 복구 요청
 		if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
 		{
+			if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)) return;
 			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 		}
 	}

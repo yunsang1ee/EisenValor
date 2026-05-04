@@ -118,13 +118,24 @@ void FSMComponent::SetStance(uint8_t stance)
 bool FSMComponent::RequestState(StateRequestType request, uint8_t targetStateOverride)
 {
 	static const PlayerStatePolicy playerPolicy;
-	static const SoldierStatePolicy soldierPolicy;
 
-	const IStatePolicy& policy = (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
-		? static_cast<const IStatePolicy&>(soldierPolicy)
-		: static_cast<const IStatePolicy&>(playerPolicy);
+	if (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+	{
+		if (targetStateOverride == 0)
+		{
+			return false;
+		}
 
-	StateTransitionDecision decision = policy.Resolve(*this, request, targetStateOverride);
+		if (request != StateRequestType::ForcedServerCorrection)
+		{
+			return false;
+		}
+
+		ChangeState(targetStateOverride, true);
+		return true;
+	}
+
+	StateTransitionDecision decision = playerPolicy.Resolve(*this, request, targetStateOverride);
 	if (!decision.accepted)
 	{
 		return false;
