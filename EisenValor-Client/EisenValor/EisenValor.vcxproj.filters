@@ -252,6 +252,9 @@
     <ClCompile Include="Component\FSM\GeneralStates.cpp">
       <Filter>Component\FSM</Filter>
     </ClCompile>
+    <ClCompile Include="Component\FSM\StatePolicy.cpp">
+      <Filter>Component\FSM</Filter>
+    </ClCompile>
     <ClCompile Include="Component\FSM\StatePool.cpp">
       <Filter>Component\FSM</Filter>
     </ClCompile>
