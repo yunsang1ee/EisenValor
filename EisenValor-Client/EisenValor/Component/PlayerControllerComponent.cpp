@@ -55,6 +55,18 @@ struct MovementInputState
 		moveStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 	}
 };
+
+void ClearMovementInput(MovementComponent* movement)
+{
+	if (!movement)
+		return;
+
+	movement->SetInputForward(false);
+	movement->SetInputBackward(false);
+	movement->SetInputLeft(false);
+	movement->SetInputRight(false);
+	movement->ResetVelocity();
+}
 }
 
 void PlayerControllerComponent::SetMouseSensitivity(float x, float y)
@@ -126,6 +138,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 	auto curState = fsm->GetCurStateType();
 	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 	{
+		ClearMovementInput(myGameObject->GetComponent<MovementComponent>());
 		return;
 	}
 
@@ -318,18 +331,18 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	if (!movement || !fsm)
 		return;
 
-	auto clearMovementInput = [movement]()
-	{
-		movement->SetInputForward(false);
-		movement->SetInputBackward(false);
-		movement->SetInputLeft(false);
-		movement->SetInputRight(false);
-		movement->ResetVelocity();
-	};
-
 	uint8_t curState = fsm->GetCurStateType();
 	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+	{
+		ClearMovementInput(movement);
 		return;
+	}
+
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+	{
+		ClearMovementInput(movement);
+		return;
+	}
 
 	auto& input = GLOBAL(InputGlobal);
 
@@ -378,7 +391,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
 				DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			}
-			clearMovementInput();
+			ClearMovementInput(movement);
 			return;
 		}
 		// 강공격
@@ -393,7 +406,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
 				DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
 			}
-			clearMovementInput();
+			ClearMovementInput(movement);
 			return;
 		}
 	}
@@ -417,7 +430,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	if (!canMove)
 	{
 		moveInput.ClearMovement();
-		clearMovementInput();
+		ClearMovementInput(movement);
 	}
 
 	if (moveInput.isRunning)

@@ -13,6 +13,13 @@ namespace
 				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY));
 	}
 
+	bool IsPlayerMovementBlockedState(uint8_t stateType)
+	{
+		return (IsPlayerAttackSequenceState(stateType) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD));
+	}
+
 	StateTransitionDecision Accept(uint8_t nextStateType, bool ignoreExitTime = false)
 	{
 		StateTransitionDecision decision;
@@ -37,7 +44,7 @@ StateTransitionDecision PlayerStatePolicy::Resolve(
 	switch (request)
 	{
 	case StateRequestType::Move:
-		if (IsPlayerAttackSequenceState(fsm.GetCurStateType())) return Reject();
+		if (IsPlayerMovementBlockedState(fsm.GetCurStateType())) return Reject();
 
 		return Accept((targetStateOverride != 0)
 			? targetStateOverride
