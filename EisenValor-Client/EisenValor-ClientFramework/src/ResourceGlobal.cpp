@@ -115,9 +115,9 @@ void ResourceGlobal::ProcessPendingLoads()
 	DEBUG_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
 
 	const uint64_t reservedFrameUploadBudget = 64ull * 1024ull * 1024ull;
-	const uint64_t maxUploadBudget =
-		(uploadHeap->Capacity() > reservedFrameUploadBudget) ? (uploadHeap->Capacity() - reservedFrameUploadBudget)
-															 : uploadHeap->Capacity();
+	const uint64_t maxUploadBudget = (uploadHeap->Capacity() > reservedFrameUploadBudget)
+										 ? (uploadHeap->Capacity() - reservedFrameUploadBudget)
+										 : uploadHeap->Capacity();
 
 	auto canFitAllocation = [maxUploadBudget](uint64_t& simulatedOffset, uint64_t sizeInBytes, uint64_t alignment)
 	{
@@ -149,14 +149,16 @@ void ResourceGlobal::ProcessPendingLoads()
 			auto		 meshRes = std::static_pointer_cast<MeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::Vertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
-			uint64_t	simulatedOffset = uploadHeap->Used();
+			uint64_t	 simulatedOffset = uploadHeap->Used();
 
 			if (!canFitAllocation(simulatedOffset, vSize, 16) || !canFitAllocation(simulatedOffset, iSize, 4))
 			{
 				uint64_t freshOffset = 0;
 				if (!canFitAllocation(freshOffset, vSize, 16) || !canFitAllocation(freshOffset, iSize, 4))
 				{
-					DEBUG_LOG_FMT("[ResourceGlobal] ERROR: Mesh upload exceeds upload heap capacity: {}\n", task.path.string());
+					DEBUG_LOG_FMT(
+						"[ResourceGlobal] ERROR: Mesh upload exceeds upload heap capacity: {}\n", task.path.string()
+					);
 					m_pendingLoads.pop();
 					continue;
 				}
@@ -207,8 +209,8 @@ void ResourceGlobal::ProcessPendingLoads()
 			auto blas = std::make_unique<DxBLAS>();
 			blas->Build(
 				m_device5.Get(), cmdList4.Get(), vb->GetGPUAddress(), static_cast<uint32_t>(data.vertices.size()),
-				sizeof(EvAsset::Vertex), ib->GetGPUAddress(), static_cast<uint32_t>(data.indices.size()), meshRes->GetSubMeshes(),
-				false, data.name + "_BLAS"
+				sizeof(EvAsset::Vertex), ib->GetGPUAddress(), static_cast<uint32_t>(data.indices.size()),
+				meshRes->GetSubMeshes(), false, data.name + "_BLAS"
 			);
 
 			meshRes->SetGPUResources(std::move(vb), std::move(ib), std::move(blas));
@@ -226,7 +228,7 @@ void ResourceGlobal::ProcessPendingLoads()
 			auto		 skinnedRes = std::static_pointer_cast<SkinnedMeshResource>(task.targetResource);
 			const size_t vSize = data.vertices.size() * sizeof(EvAsset::SkinnedVertex);
 			const size_t iSize = data.indices.size() * sizeof(uint32_t);
-			uint64_t	simulatedOffset = uploadHeap->Used();
+			uint64_t	 simulatedOffset = uploadHeap->Used();
 
 			if (!canFitAllocation(simulatedOffset, vSize, 16) || !canFitAllocation(simulatedOffset, iSize, 4))
 			{
@@ -349,7 +351,9 @@ void ResourceGlobal::ProcessPendingLoads()
 			{
 				if (!fitsFreshFrame)
 				{
-					DEBUG_LOG_FMT("[ResourceGlobal] ERROR: Texture upload exceeds upload heap capacity: {}\n", task.path.string());
+					DEBUG_LOG_FMT(
+						"[ResourceGlobal] ERROR: Texture upload exceeds upload heap capacity: {}\n", task.path.string()
+					);
 					m_pendingLoads.pop();
 					continue;
 				}
@@ -422,12 +426,15 @@ void ResourceGlobal::DumpLoadedMaterials()
 
 	for (auto& [guid, res] : m_resourceCache)
 	{
-		if (!res) continue;
-		if (res->GetRuntimeTypeID() != MaterialResource::StaticRuntimeTypeID()) continue;
+		if (!res)
+			continue;
+		if (res->GetRuntimeTypeID() != MaterialResource::StaticRuntimeTypeID())
+			continue;
 
 		auto mat = std::static_pointer_cast<MaterialResource>(res);
-		DEBUG_LOG_FMT("[Material] Name='{}' GUID={} Flags=0x{:X}\n",
-			mat->GetName().c_str(), guid, mat->GetMaterialFlags());
+		DEBUG_LOG_FMT(
+			"[Material] Name='{}' GUID={} Flags=0x{:X}\n", mat->GetName().c_str(), guid, mat->GetMaterialFlags()
+		);
 
 		for (const auto& slot : mat->GetTextureSlots())
 		{
@@ -518,8 +525,13 @@ std::shared_ptr<MaterialResource> ResourceGlobal::LoadInternal<MaterialResource>
 	auto res = std::make_shared<MaterialResource>();
 	res->SetGuid(data.assetGuid);
 	res->SetName(data.name);
-	res->SetData(data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic);
-	res->SetTerrainData(data.terrainLayerCount, data.terrainSize, data.terrainLayerTileST, data.terrainLayerMetallicRoughness);
+	res->SetData(
+		data.shadingModelId, data.materialFlags, data.albedo, data.roughness, data.metallic, data.emissiveColor,
+		data.emissiveIntensity
+	);
+	res->SetTerrainData(
+		data.terrainLayerCount, data.terrainSize, data.terrainLayerTileST, data.terrainLayerMetallicRoughness
+	);
 
 	for (const auto& dep : data.dependencies)
 	{

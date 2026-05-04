@@ -20,6 +20,20 @@ static const uint MAX_RECURSION_DEPTH = 18;
 static const uint SPP = 4;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 
+float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv)
+{
+	float3 emission = mat.emissive.rgb * mat.emissive.a;
+	if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
+	{
+		Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
+		float3 emissiveTexel = emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
+		float hasEmissionFactor = max(max(mat.emissive.x, mat.emissive.y), max(mat.emissive.z, mat.emissive.a)) > 0.0f ? 1.0f : 0.0f;
+		float3 emissionFactor = lerp(1.0f.xxx, mat.emissive.rgb * mat.emissive.a, hasEmissionFactor);
+		emission = emissiveTexel * emissionFactor;
+	}
+	return emission;
+}
+
 struct TerrainSample
 {
 	float3 albedo;
@@ -637,11 +651,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	if (maxW < 1e-5f)
 	{
 		payload.color = kD_indirect * albedo * ao;
-		if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
-		{
-			Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
-			payload.color += emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
-		}
+		payload.color += EvaluateMaterialEmission(mat, uv);
 		return;
 	}
 
@@ -667,9 +677,5 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	);
 
 	payload.color = weight * child.color;
-	if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
-	{
-		Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
-		payload.color += emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
-	}
+	payload.color += EvaluateMaterialEmission(mat, uv);
 }

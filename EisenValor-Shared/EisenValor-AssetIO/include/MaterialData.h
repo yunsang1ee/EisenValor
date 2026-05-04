@@ -13,6 +13,8 @@ struct MaterialData : public AssetData
 	float		 albedo[4]{1.0f, 1.0f, 1.0f, 1.0f};
 	float		 roughness = 1.0f;
 	float		 metallic = 0.0f;
+	float		 emissiveColor[3]{0.0f, 0.0f, 0.0f};
+	float		 emissiveIntensity = 0.0f;
 	uint32_t	 terrainLayerCount = 0;
 	float		 terrainSize[2]{0.0f, 0.0f};
 	float		 terrainLayerTileST[4][4]{};

@@ -63,8 +63,8 @@ uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResour
 		return ~0u;
 	}
 
-	const auto terrainSize = material->GetTerrainSize();
-	const auto* terrainLayerTileST = material->GetTerrainLayerTileST();
+	const auto			  terrainSize = material->GetTerrainSize();
+	const auto*			  terrainLayerTileST = material->GetTerrainLayerTileST();
 	TerrainSurfaceGPUData surface = {};
 	surface.splatTextureIdx = GetReadyTextureIndex(material, "SPL0");
 	surface.layerAlbedoTextureIdx0 = GetReadyTextureIndex(material, "LA0A");
@@ -86,10 +86,7 @@ uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResour
 	{
 		surface.layerTileST[i] = terrainLayerTileST[i];
 		surface.layerMetallicRoughness[i] = {
-			terrainLayerMetallicRoughness[i].x,
-			terrainLayerMetallicRoughness[i].y,
-			0.0f,
-			0.0f
+			terrainLayerMetallicRoughness[i].x, terrainLayerMetallicRoughness[i].y, 0.0f, 0.0f
 		};
 	}
 
@@ -97,7 +94,7 @@ uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResour
 	materialData->terrainSurfaceSyncBuffer.Register(surface);
 	return surfaceIdx;
 }
-}
+} // namespace
 
 DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), m_height(height)
 {
@@ -189,7 +186,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 {
-	auto& context = *frame->GetMainContext();
+	auto&			 context = *frame->GetMainContext();
 	DxScopedGpuEvent prepareEvent(context, L"DXR.PrepareRenderData");
 
 	const uint32_t frameIndex = frame->GetFrameIndex();
@@ -233,8 +230,8 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 		topologyKeys.reserve(tlasInstances.size());
 		for (const auto& instance : tlasInstances)
 		{
-			const auto* obj = instance.obj;
-			const auto* blas = instance.blas;
+			const auto*	   obj = instance.obj;
+			const auto*	   blas = instance.blas;
 			const uint32_t objectId = obj ? obj->GetHandle().id : 0u;
 			const uint64_t blasAddr = blas ? blas->GetGPUAddress() : 0ull;
 			const uint32_t instanceFlags = static_cast<uint32_t>(instance.flags);
@@ -277,28 +274,29 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 		}
 
 		const bool pendingLoadsActive = GLOBAL(ResourceGlobal).HasPendingLoads();
-		const bool canRefit = tlas->IsBuilt() &&
-							  (tlas->GetInstanceCount() == currentInstanceCount) &&
-							  (m_lastTlasTopologyHash[frameIndex] == topologyHash) &&
-							  !pendingLoadsActive &&
+		const bool canRefit = tlas->IsBuilt() && (tlas->GetInstanceCount() == currentInstanceCount) &&
+							  (m_lastTlasTopologyHash[frameIndex] == topologyHash) && !pendingLoadsActive &&
 							  (m_tlasStableFrameCount[frameIndex] >= 2);
 
 		if (!canRefit)
 		{
 			DxScopedGpuEvent buildEvent(context, L"DXR.BuildTLAS");
-			//DEBUG_LOG_FMT(
-			//	"[DxrRenderPass] TLAS Build requested: Frame={}, Instances={}, PreviousBuilt={}, PreviousCount={}, PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
+			// DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] TLAS Build requested: Frame={}, Instances={}, PreviousBuilt={}, PreviousCount={},
+			//PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
 			//	frameIndex, tlasInstances.size(), tlas->IsBuilt(), tlas->GetInstanceCount(), pendingLoadsActive,
-			//	hasAnimatedInstances, m_tlasStableFrameCount[frameIndex], m_lastTlasTopologyHash[frameIndex], topologyHash
+			//	hasAnimatedInstances, m_tlasStableFrameCount[frameIndex], m_lastTlasTopologyHash[frameIndex],
+			//topologyHash
 			//);
 			tlas->Build(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
 		}
 		else
 		{
 			DxScopedGpuEvent refitEvent(context, L"DXR.RefitTLAS");
-			//DEBUG_LOG_FMT(
-			//	"[DxrRenderPass] TLAS Refit requested: Frame={}, Instances={}, StableFrames={}, AnimatedInstances={}, TopologyHash={}\n",
-			//	frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex], hasAnimatedInstances, topologyHash
+			// DEBUG_LOG_FMT(
+			//	"[DxrRenderPass] TLAS Refit requested: Frame={}, Instances={}, StableFrames={}, AnimatedInstances={},
+			//TopologyHash={}\n", 	frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex],
+			//hasAnimatedInstances, topologyHash
 			//);
 			tlas->Refit(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
 		}
@@ -310,10 +308,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 }
 
 void DxrRenderPass::CollectStaticMeshData(
-	Scene*										  scene,
-	ID3D12GraphicsCommandList4*					  cmdList,
-	std::vector<DxTLASInstance>&				  tlasInstances,
-	uint32_t									  frameIndex
+	Scene* scene, ID3D12GraphicsCommandList4* cmdList, std::vector<DxTLASInstance>& tlasInstances, uint32_t frameIndex
 )
 {
 	auto* meshStorage = scene->GetStorage<MeshComponent>();
@@ -334,7 +329,8 @@ void DxrRenderPass::CollectStaticMeshData(
 		}
 
 		auto* meshRes = meshComp.GetMeshResource();
-		if (nullptr == meshRes || !meshRes->IsReady() || nullptr == meshRes->GetVertexBuffer() || nullptr == meshRes->GetIndexBuffer())
+		if (nullptr == meshRes || !meshRes->IsReady() || nullptr == meshRes->GetVertexBuffer() ||
+			nullptr == meshRes->GetIndexBuffer())
 		{
 			continue;
 		}
@@ -375,6 +371,7 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.albedo = matRes->GetAlbedo();
 				gpuMat.roughness = matRes->GetRoughness();
 				gpuMat.metallic = matRes->GetMetallic();
+				gpuMat.emissive = matRes->GetEmissive();
 				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
 				gpuMat.materialFlags = matRes->GetMaterialFlags();
 				gpuMat.albedoTextureIdx = GetReadyTextureIndex(matRes, "ALBD");
@@ -382,8 +379,8 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.ormTextureIdx = GetReadyTextureIndex(matRes, "ORMS");
 				gpuMat.emissiveTextureIdx = GetReadyTextureIndex(matRes, "EMSV");
 				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
-										   ? RegisterTerrainSurface(materialData.get(), matRes)
-										   : ~0u;
+											   ? RegisterTerrainSurface(materialData.get(), matRes)
+											   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;
@@ -415,11 +412,11 @@ void DxrRenderPass::CollectStaticMeshData(
 }
 
 void DxrRenderPass::CollectSkinnedMeshData(
-	Scene*										  scene,
-	ID3D12GraphicsCommandList4*					  cmdList,
-	std::vector<DxTLASInstance>&				  tlasInstances,
-	uint32_t									  frameIndex,
-	bool&										  hasAnimatedInstances
+	Scene*						 scene,
+	ID3D12GraphicsCommandList4*	 cmdList,
+	std::vector<DxTLASInstance>& tlasInstances,
+	uint32_t					 frameIndex,
+	bool&						 hasAnimatedInstances
 )
 {
 	auto* skinnedMeshStorage = scene->GetStorage<SkinnedMeshComponent>();
@@ -454,15 +451,14 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		auto* blas = skinnedMeshComp.GetBLAS(frameIndex);
 		if (nullptr == blas)
 		{
-			//DEBUG_LOG_FMT(
+			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS initial build: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			auto newBlas = std::make_unique<DxBLAS>();
 			newBlas->Build(
 				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
 				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(),
-				meshRes->GetSubMeshes(), true,
-				meshRes->GetName() + "_AnimatedBLAS_" + std::to_string(frameIndex)
+				meshRes->GetSubMeshes(), true, meshRes->GetName() + "_AnimatedBLAS_" + std::to_string(frameIndex)
 			);
 
 			const_cast<SkinnedMeshComponent&>(skinnedMeshComp).SetBLAS(frameIndex, std::move(newBlas));
@@ -470,19 +466,18 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		}
 		else if (false == blas->IsBuilt())
 		{
-			//DEBUG_LOG_FMT(
+			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS rebuild: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			blas->Build(
 				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
 				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(),
-				meshRes->GetSubMeshes(), true,
-				meshRes->GetName() + "_AnimatedBLAS_" + std::to_string(frameIndex)
+				meshRes->GetSubMeshes(), true, meshRes->GetName() + "_AnimatedBLAS_" + std::to_string(frameIndex)
 			);
 		}
 		else
 		{
-			//DEBUG_LOG_FMT(
+			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS refit: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			blas->Refit(
@@ -523,6 +518,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.albedo = matRes->GetAlbedo();
 				gpuMat.roughness = matRes->GetRoughness();
 				gpuMat.metallic = matRes->GetMetallic();
+				gpuMat.emissive = matRes->GetEmissive();
 				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
 				gpuMat.materialFlags = matRes->GetMaterialFlags();
 				gpuMat.albedoTextureIdx = GetReadyTextureIndex(matRes, "ALBD");
@@ -530,8 +526,8 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.ormTextureIdx = GetReadyTextureIndex(matRes, "ORMS");
 				gpuMat.emissiveTextureIdx = GetReadyTextureIndex(matRes, "EMSV");
 				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
-										   ? RegisterTerrainSurface(materialData.get(), matRes)
-										   : ~0u;
+											   ? RegisterTerrainSurface(materialData.get(), matRes)
+											   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
 				materialData->materialToIndex[matGuid] = matIdx;
@@ -611,9 +607,9 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	renderContext->SetData(geoTableData, 0);
 	renderContext->SetData(outputData, 0);
 
-	auto& device = GLOBAL(DxDeviceGlobal);
-	auto& context = *frame->GetMainContext();
-	auto* uploadHeap = frame->GetUploadHeap();
+	auto&			 device = GLOBAL(DxDeviceGlobal);
+	auto&			 context = *frame->GetMainContext();
+	auto*			 uploadHeap = frame->GetUploadHeap();
 	DxScopedGpuEvent passEvent(context, L"DxrRenderPass");
 
 	PrepareRenderData(frame, scene);

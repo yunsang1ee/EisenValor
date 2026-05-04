@@ -16,6 +16,20 @@ StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0)
 
 SamplerState g_sampler : register(s0, space0);
 
+float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv)
+{
+    float3 emission = mat.emissive.rgb * mat.emissive.a;
+    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
+    {
+        Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
+        float3 emissiveTexel = emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
+        float hasEmissionFactor = max(max(mat.emissive.x, mat.emissive.y), max(mat.emissive.z, mat.emissive.a)) > 0.0f ? 1.0f : 0.0f;
+        float3 emissionFactor = lerp(1.0f.xxx, mat.emissive.rgb * mat.emissive.a, hasEmissionFactor);
+        emission = emissiveTexel * emissionFactor;
+    }
+    return emission;
+}
+
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 
 struct TerrainSample
@@ -211,6 +225,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
     float shadow = HardShadow(WorldRayOrigin() + WorldRayDirection() * RayTCurrent() + worldNormal * 0.01, lightDir);
     payload.color = albedo * (saturate(dot(worldNormal, lightDir)) * shadow * 2.0 + 0.15);
+    payload.color += EvaluateMaterialEmission(mat, uv);
 }
 
 [shader("miss")]

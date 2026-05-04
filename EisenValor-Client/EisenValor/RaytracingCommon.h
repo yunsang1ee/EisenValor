@@ -81,6 +81,7 @@ struct InstanceData
 struct MaterialGPUData
 {
 	RAY_FLOAT4 albedo;
+	RAY_FLOAT4 emissive;
 
 	float	   roughness;
 	float	   metallic;

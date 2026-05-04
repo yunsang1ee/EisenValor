@@ -439,6 +439,7 @@ public class AssetExporter
             var writer = new AssetWriter("EVMT", guid);
 
             writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
+            writer.AddChunk("EMIS", 1, BuildMaterialEmissionChunk(mat));
             writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
 
             writer.WriteToFile(path);
@@ -982,6 +983,7 @@ public class AssetExporter
 
         AssetWriter writer = new AssetWriter("EVMT", guid);
         writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
+        writer.AddChunk("EMIS", 1, BuildMaterialEmissionChunk(mat));
         writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
         writer.WriteToFile(outputPath);
         context.Log.AppendLine("WRITE_MATERIAL path=" + outputPath + " guid=" + guid + " name=" + mat.name);
@@ -1817,6 +1819,28 @@ public class AssetExporter
             float metallic = FindFloat(mat, new[] { "_Metallic" }, new[] { "Metallic" }, 0f);
             bw.Write(metallic);
 
+            return ms.ToArray();
+        }
+    }
+
+    private static byte[] BuildMaterialEmissionChunk(Material mat)
+    {
+        using (MemoryStream ms = new())
+        using (BinaryWriter bw = new(ms))
+        {
+            Color emissionColor = FindColor(mat, new[] { "_EmissionColor" }, new[] { "EmissionColor", "EmissiveColor" }, Color.black);
+            float defaultIntensity = emissionColor.maxColorComponent > 0.0f ? 1.0f : 0.0f;
+            float emissionIntensity = FindFloat(
+                mat,
+                new[] { "_EmissionIntensity", "_EmissiveIntensity" },
+                new[] { "EmissionIntensity", "EmissiveIntensity" },
+                defaultIntensity
+            );
+
+            bw.Write(emissionColor.r);
+            bw.Write(emissionColor.g);
+            bw.Write(emissionColor.b);
+            bw.Write(emissionIntensity);
             return ms.ToArray();
         }
     }

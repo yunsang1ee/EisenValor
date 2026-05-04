@@ -29,6 +29,21 @@ bool MaterialData::Deserialize(AssetFile& file)
 		}
 	}
 
+	const ChunkEntry* emissiveEntry = file.GetChunkEntry("EMIS");
+	if (emissiveEntry && 1 == emissiveEntry->version)
+	{
+		size_t			 size = 0;
+		const std::byte* ptr = static_cast<const std::byte*>(file.GetChunkDataPtr("EMIS", size));
+		constexpr size_t requiredSize = sizeof(float) * 4;
+		if (nullptr != ptr && requiredSize <= size)
+		{
+			size_t offset = 0;
+			std::memcpy(emissiveColor, ptr + offset, sizeof(float) * 3);
+			offset += sizeof(float) * 3;
+			std::memcpy(&emissiveIntensity, ptr + offset, sizeof(float));
+		}
+	}
+
 	// 2. DEPS (Texture Dependencies)
 	const ChunkEntry* depsEntry = file.GetChunkEntry("DEPS");
 	if (depsEntry && 1 == depsEntry->version)
