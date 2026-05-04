@@ -475,6 +475,18 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
 		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 
+	if (input.GetInputDown('E'))
+	{
+		if (isRestricted)
+		{
+			fsm->RequestState(FSMComponent::StateRequestType::CancelAttack);
+		}
+
+		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		return;
+	}
+
 	auto&				transform = myGameObject->GetTransform();
 	auto				pos = transform.GetPosition();
 	auto				rot = transform.GetRotation();
@@ -580,13 +592,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
-
-	if (input.GetInputDown('E'))
-	{
-		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	}
-
 
 }
 
