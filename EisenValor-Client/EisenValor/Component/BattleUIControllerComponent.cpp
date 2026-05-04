@@ -752,10 +752,23 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				GENERAL_ATTACK_TYPE finalType = confirmedType.value();
 				OnGuardDirectionConfirmed(m_currentSelectedDir, finalType);
 
-			const auto stateType{fsm->GetCurStateType()};
-				if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-					stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY ||
-					stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+				FSMComponent::StateRequestType attackRequest = FSMComponent::StateRequestType::AttackLight;
+				switch (finalType)
+				{
+				case GENERAL_ATTACK_TYPE_HEAVY:
+					attackRequest = FSMComponent::StateRequestType::AttackHeavy;
+					break;
+				case GENERAL_ATTACK_TYPE_AREA:
+					attackRequest = FSMComponent::StateRequestType::AttackArea;
+					break;
+				case GENERAL_ATTACK_TYPE_DISARM:
+					attackRequest = FSMComponent::StateRequestType::AttackDisarm;
+					break;
+				default:
+					break;
+				}
+
+				if (!fsm->RequestState(attackRequest))
 				{
 					m_pendingLeftClick = false;
 					m_pendingRightClick = false;
@@ -769,12 +782,8 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// FSM 상태 전환
-				if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
-				{
-					fsm->SetCurAttackDir(static_cast<uint8_t>(m_currentSelectedDir));
-					fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-				}
+				fsm->SetCurAttackDir(static_cast<uint8_t>(m_currentSelectedDir));
+				fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
 
 				// 확정 후 즉시 초기화
 				m_accumulatedDeltaX = 0.0f;

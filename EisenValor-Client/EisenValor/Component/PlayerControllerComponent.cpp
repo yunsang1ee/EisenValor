@@ -500,17 +500,21 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		{
 			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_RUN || hasJustPressed)
 			{
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
+				fsm->RequestState(
+					FSMComponent::StateRequestType::Move, static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN)
+				);
 
 				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 			}
 		}
-		else
+		else //	걷기
 		{
 			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_WALK || hasJustPressed)
 			{
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+				fsm->RequestState(
+					FSMComponent::StateRequestType::Move, static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK)
+				);
 
 				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
@@ -520,12 +524,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 	}
-	else
+	else // 입력이 없는 경우 이동에서 멈춤
 	{
 		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_WALK || curState == FB_ENUMS::PLAYER_STATE_TYPE_RUN ||
 			hasJustReleased)
 		{
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+			fsm->RequestState(FSMComponent::StateRequestType::StopMove);
 
 			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));

@@ -4,6 +4,7 @@
 #include <vector>
 #include <IComponent.h>
 #include "StatePool.h"
+#include "StatePolicy.h"
 #include "Util/GameConstants.h"
 
 // 캐릭터의 상태 데이터를 보유하고 관리하는 컴포넌트
@@ -12,19 +13,7 @@ class FSMComponent : public ComponentBase<FSMComponent> {
 public:
 	static constexpr const char* GetStaticTypeName() { return "FSMComponent"; }
 
-	enum class StateRequestType : uint8_t {
-		Move,
-		StopMove,
-		AttackLight,
-		AttackHeavy,
-		AttackArea,
-		AttackDisarm,
-		CancelAttack,
-		Stun,
-		Die,
-		IdleRecovery,
-		ForcedServerCorrection
-	};
+	using StateRequestType = ::StateRequestType;
 
 	FSMComponent() = default;
 	virtual ~FSMComponent() = default;
@@ -38,7 +27,7 @@ public:
 	uint8_t GetServerState() const { return m_serverState; }
 
 	//클라
-	bool RequestState(StateRequestType request, uint8_t requestedStateType = 0);
+	bool RequestState(StateRequestType request, uint8_t targetStateOverride = 0);
 	void ChangeState(uint8_t nextStateType);
 	uint8_t GetCurStateType() const { return m_curStateType; }
 
@@ -85,8 +74,6 @@ public:
 	void AddStanceListener(StanceChangeListener listener) { m_stanceListeners.push_back(listener); }
 
 private:
-	bool ResolveStateRequest(StateRequestType request, uint8_t requestedStateType, uint8_t& outNextStateType) const;
-	bool IsAttackSequenceState(uint8_t stateType) const;
 	void ChangeState(uint8_t nextStateType, bool ignoreExitTime);
 
 	// 캐릭터별 데이터

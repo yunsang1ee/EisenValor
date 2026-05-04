@@ -42,7 +42,7 @@ void FSMComponent::SetServerState(uint8_t serverState)
 		targetState += StateOffset::kSoldierOffset;
 	}
 
-	// 정책 기반 요청으로 변경 (공격 중 무시 등은 ResolveStateRequest에서 처리)
+	// 정책 기반 요청으로 변경 (공격 중 무시 등은 StatePolicy에서 처리)
 	RequestState(StateRequestType::ForcedServerCorrection, targetState);
 }
 
@@ -115,72 +115,21 @@ void FSMComponent::SetStance(uint8_t stance)
 	}
 }
 
-bool FSMComponent::RequestState(StateRequestType request, uint8_t requestedStateType)
+bool FSMComponent::RequestState(StateRequestType request, uint8_t targetStateOverride)
 {
-	uint8_t nextState = 0;
-	if (ResolveStateRequest(request, requestedStateType, nextState))
+	static const PlayerStatePolicy playerPolicy;
+	static const SoldierStatePolicy soldierPolicy;
+
+	const IStatePolicy& policy = (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+		? static_cast<const IStatePolicy&>(soldierPolicy)
+		: static_cast<const IStatePolicy&>(playerPolicy);
+
+	StateTransitionDecision decision = policy.Resolve(*this, request, targetStateOverride);
+	if (!decision.accepted)
 	{
-		// 특정 요청은 애니메이션 종료를 무시하고 즉시 전이
-		bool ignoreExitTime = false;
-		if (request == StateRequestType::Die ||
-			request == StateRequestType::Stun ||
-			request == StateRequestType::ForcedServerCorrection ||
-			request == StateRequestType::CancelAttack)
-		{
-			ignoreExitTime = true;
-		}
-
-		ChangeState(nextState, ignoreExitTime);
-		return true;
-	}
-	return false;
-}
-
-bool FSMComponent::ResolveStateRequest(StateRequestType request, uint8_t requestedStateType, uint8_t& outNextStateType) const
-{
-	switch (request)
-	{
-	case StateRequestType::Move:
-		outNextStateType = (m_isRunning) ? static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN) : static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
-		break;
-	case StateRequestType::StopMove:
-		outNextStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-		break;
-	case StateRequestType::AttackLight:
-	case StateRequestType::AttackHeavy:
-	case StateRequestType::AttackArea:
-	case StateRequestType::AttackDisarm:
-		outNextStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-		break;
-	case StateRequestType::CancelAttack:
-		outNextStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-		break;
-	case StateRequestType::Stun:
-		outNextStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN);
-		break;
-	case StateRequestType::Die:
-		outNextStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD);
-		break;
-	case StateRequestType::IdleRecovery:
-		outNextStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-		break;
-	case StateRequestType::ForcedServerCorrection:
-		// 공격 시퀀스 중이면 서버 보정을 거부
-		if (IsAttackSequenceState(m_curStateType)) return false;
-
-		outNextStateType = requestedStateType; // 서버가 강제로 지정한 상태
-		break;
-	default:
 		return false;
 	}
 
+	ChangeState(decision.nextStateType, decision.ignoreExitTime);
 	return true;
 }
-
-bool FSMComponent::IsAttackSequenceState(uint8_t stateType) const
-{
-	return (stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY) ||
-			stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) ||
-			stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY));
-}
-

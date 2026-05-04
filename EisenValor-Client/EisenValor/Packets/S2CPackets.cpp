@@ -561,7 +561,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				[](FSMComponent* fsm)
 				{
 					fsm->SetObjectType(static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER));
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+					fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 				}
 			);
 
@@ -972,7 +972,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					[objType](FSMComponent* fsm)
 					{
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
-						fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+						fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 					}
 				);
 			}
@@ -1005,7 +1005,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					[objType](FSMComponent* fsm)
 					{
 						fsm->SetObjectType(static_cast<uint8_t>(objType));
-						fsm->ChangeState(
+						fsm->RequestState(
+							FSMComponent::StateRequestType::IdleRecovery,
 							StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE)
 						);
 					}
