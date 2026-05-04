@@ -29,7 +29,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	ranges[1] = {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 
 	// 2. Root Parameters
-	D3D12_ROOT_PARAMETER1 rootParams[7] = {};
+	D3D12_ROOT_PARAMETER1 rootParams[9] = {};
 
 	// Param 0: TLAS Table (t0)
 	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -66,6 +66,16 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	rootParams[6].Descriptor = {4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
 	rootParams[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	// Param 7: Local Light Buffer (t5)
+	rootParams[7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	rootParams[7].Descriptor = {5, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
+	rootParams[7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	// Param 8: Local Light Constants (b1)
+	rootParams[8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParams[8].Constants = {1, 0, 1};
+	rootParams[8].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	// 3. Static Sampler (Linear Wrap)
 	D3D12_STATIC_SAMPLER_DESC staticSampler = {};
 	staticSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -75,7 +85,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	// 4. Root Signature Desc
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedDesc = {};
 	versionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	versionedDesc.Desc_1_1.NumParameters = 7;
+	versionedDesc.Desc_1_1.NumParameters = 9;
 	versionedDesc.Desc_1_1.pParameters = rootParams;
 	versionedDesc.Desc_1_1.NumStaticSamplers = 1;
 	versionedDesc.Desc_1_1.pStaticSamplers = &staticSampler;

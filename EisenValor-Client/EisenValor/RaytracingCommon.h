@@ -99,6 +99,13 @@ struct MaterialGPUData
 	RAY_UINT pad2;
 };
 
+struct LocalLightGPUData
+{
+	RAY_FLOAT4 positionRange;
+	RAY_FLOAT4 colorIntensity;
+	RAY_FLOAT4 sourceRadiusPad;
+};
+
 struct TerrainSurfaceGPUData
 {
 	RAY_UINT splatTextureIdx;

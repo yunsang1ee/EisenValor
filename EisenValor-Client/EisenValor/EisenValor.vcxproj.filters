@@ -157,7 +157,13 @@
     <ClInclude Include="Component\StressTestComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\LocalLightComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\LightRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="Scene\LoginScene.h">

@@ -10,6 +10,7 @@
 #include "DxDeviceGlobal.h"
 #include "ResourceGlobal.h"
 #include "InputGlobal.h"
+#include "Component/LocalLightComponent.h"
 #include "MeshComponent.h"
 #include "SkinnedMeshComponent.h"
 #include "DxBLAS.h"
@@ -29,6 +30,8 @@ namespace
 {
 constexpr uint64_t kFnvOffsetBasis = 14695981039346656037ull;
 constexpr uint64_t kFnvPrime = 1099511628211ull;
+// Keep this in sync with MAX_LOCAL_LIGHTS in the DXR shaders.
+constexpr uint32_t kMaxUploadedLocalLights = 24;
 
 void HashBytes(uint64_t& hash, const void* data, size_t size)
 {
@@ -94,6 +97,18 @@ uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResour
 	materialData->terrainSurfaceSyncBuffer.Register(surface);
 	return surfaceIdx;
 }
+
+bool IsNullGuid(const EvAsset::Guid& guid)
+{
+	for (uint8_t byte : guid.data)
+	{
+		if (byte != 0)
+		{
+			return false;
+		}
+	}
+	return true;
+}
 } // namespace
 
 DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), m_height(height)
@@ -117,6 +132,7 @@ void DxrRenderPass::Initialize()
 		m_instanceData[i] = std::make_shared<InstanceRenderData>();
 		m_materialData[i] = std::make_shared<MaterialRenderData>();
 		m_geoTableData[i] = std::make_shared<GeoTableRenderData>();
+		m_lightData[i] = std::make_shared<LightRenderData>();
 
 		m_outputData[i] = std::make_shared<RaytracingOutputRenderData>();
 		m_outputData[i]->outputTexture = std::make_shared<DxTexture>();
@@ -137,6 +153,7 @@ void DxrRenderPass::Release()
 		m_instanceData[i].reset();
 		m_materialData[i].reset();
 		m_geoTableData[i].reset();
+		m_lightData[i].reset();
 		m_outputData[i].reset();
 	}
 	m_device5.Reset();
@@ -184,7 +201,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 	}
 }
 
-void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
+void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
 {
 	auto&			 context = *frame->GetMainContext();
 	DxScopedGpuEvent prepareEvent(context, L"DXR.PrepareRenderData");
@@ -193,6 +210,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 	auto&		   instanceData = m_instanceData[frameIndex];
 	auto&		   materialData = m_materialData[frameIndex];
 	auto&		   geoTableData = m_geoTableData[frameIndex];
+	auto&		   lightData = m_lightData[frameIndex];
 	auto&		   tlas = m_tlas[frameIndex];
 	bool		   hasAnimatedInstances = false;
 
@@ -200,6 +218,8 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 	materialData->syncBuffer.Clear();
 	materialData->terrainSurfaceSyncBuffer.Clear();
 	geoTableData->syncBuffer.Clear();
+	lightData->syncBuffer.Clear();
+	lightData->lightCount = 0;
 	materialData->materialToIndex.clear();
 
 	std::vector<DxTLASInstance> tlasInstances;
@@ -216,6 +236,10 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 	{
 		DxScopedGpuEvent skinnedEvent(context, L"DXR.CollectSkinnedMeshData");
 		CollectSkinnedMeshData(scene, cmdList4.Get(), tlasInstances, frameIndex, hasAnimatedInstances);
+	}
+	{
+		DxScopedGpuEvent lightEvent(context, L"DXR.CollectLocalLightData");
+		CollectLocalLightData(scene, frameIndex, cameraPosition);
 	}
 
 	if (nullptr != tlas && false == tlasInstances.empty())
@@ -283,10 +307,10 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 			DxScopedGpuEvent buildEvent(context, L"DXR.BuildTLAS");
 			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] TLAS Build requested: Frame={}, Instances={}, PreviousBuilt={}, PreviousCount={},
-			//PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
+			// PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
 			//	frameIndex, tlasInstances.size(), tlas->IsBuilt(), tlas->GetInstanceCount(), pendingLoadsActive,
 			//	hasAnimatedInstances, m_tlasStableFrameCount[frameIndex], m_lastTlasTopologyHash[frameIndex],
-			//topologyHash
+			// topologyHash
 			//);
 			tlas->Build(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
 		}
@@ -295,8 +319,8 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene)
 			DxScopedGpuEvent refitEvent(context, L"DXR.RefitTLAS");
 			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] TLAS Refit requested: Frame={}, Instances={}, StableFrames={}, AnimatedInstances={},
-			//TopologyHash={}\n", 	frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex],
-			//hasAnimatedInstances, topologyHash
+			// TopologyHash={}\n", 	frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex],
+			// hasAnimatedInstances, topologyHash
 			//);
 			tlas->Refit(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), tlasInstances);
 		}
@@ -359,8 +383,9 @@ void DxrRenderPass::CollectStaticMeshData(
 
 			uint32_t	matIdx = 0;
 			const auto& matGuid = matRes->GetGuid();
+			const bool	isRuntimeMaterial = IsNullGuid(matGuid);
 
-			if (materialData->materialToIndex.contains(matGuid))
+			if (!isRuntimeMaterial && materialData->materialToIndex.contains(matGuid))
 			{
 				matIdx = materialData->materialToIndex[matGuid];
 			}
@@ -383,7 +408,10 @@ void DxrRenderPass::CollectStaticMeshData(
 											   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
-				materialData->materialToIndex[matGuid] = matIdx;
+				if (!isRuntimeMaterial)
+				{
+					materialData->materialToIndex[matGuid] = matIdx;
+				}
 			}
 
 			geoTableData->syncBuffer.Register(
@@ -506,8 +534,9 @@ void DxrRenderPass::CollectSkinnedMeshData(
 
 			uint32_t	matIdx = 0;
 			const auto& matGuid = matRes->GetGuid();
+			const bool	isRuntimeMaterial = IsNullGuid(matGuid);
 
-			if (materialData->materialToIndex.contains(matGuid))
+			if (!isRuntimeMaterial && materialData->materialToIndex.contains(matGuid))
 			{
 				matIdx = materialData->materialToIndex[matGuid];
 			}
@@ -530,7 +559,10 @@ void DxrRenderPass::CollectSkinnedMeshData(
 											   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
-				materialData->materialToIndex[matGuid] = matIdx;
+				if (!isRuntimeMaterial)
+				{
+					materialData->materialToIndex[matGuid] = matIdx;
+				}
 			}
 
 			geoTableData->syncBuffer.Register(
@@ -556,6 +588,77 @@ void DxrRenderPass::CollectSkinnedMeshData(
 								 : D3D12_RAYTRACING_INSTANCE_FLAG_NONE}
 		);
 	}
+}
+
+void DxrRenderPass::CollectLocalLightData(Scene* scene, uint32_t frameIndex, const DX::XMFLOAT3* cameraPosition)
+{
+	auto* lightStorage = scene->GetStorage<LocalLightComponent>();
+	if (nullptr == lightStorage)
+	{
+		return;
+	}
+
+	auto& lightData = m_lightData[frameIndex];
+
+	struct LocalLightCandidate
+	{
+		LocalLightGPUData gpuLight;
+		float			  cameraDistanceSq;
+	};
+
+	std::vector<LocalLightCandidate> candidates;
+	candidates.reserve(lightStorage->GetList().size());
+
+	for (const auto& lightComp : lightStorage->GetList())
+	{
+		if (lightComp.GetIntensity() <= 0.0f || lightComp.GetRange() <= 0.0f)
+		{
+			continue;
+		}
+
+		auto* owner = lightComp.GetGameObject();
+		if (nullptr == owner)
+		{
+			continue;
+		}
+
+		const auto worldPosition = owner->GetTransform().GetWorldPosition();
+		const auto color = lightComp.GetColor();
+
+		LocalLightGPUData gpuLight = {};
+		gpuLight.positionRange = {
+			worldPosition.x, worldPosition.y, worldPosition.z, lightComp.GetRange()
+		};
+		gpuLight.colorIntensity = {color.x, color.y, color.z, lightComp.GetIntensity()};
+		gpuLight.sourceRadiusPad = {lightComp.GetSourceRadius(), 0.0f, 0.0f, 0.0f};
+
+		float cameraDistanceSq = 0.0f;
+		if (nullptr != cameraPosition)
+		{
+			const float dx = worldPosition.x - cameraPosition->x;
+			const float dy = worldPosition.y - cameraPosition->y;
+			const float dz = worldPosition.z - cameraPosition->z;
+			cameraDistanceSq = dx * dx + dy * dy + dz * dz;
+		}
+
+		candidates.push_back({gpuLight, cameraDistanceSq});
+	}
+
+	if (nullptr != cameraPosition && candidates.size() > kMaxUploadedLocalLights)
+	{
+		std::partial_sort(
+			candidates.begin(), candidates.begin() + kMaxUploadedLocalLights, candidates.end(),
+			[](const auto& lhs, const auto& rhs) { return lhs.cameraDistanceSq < rhs.cameraDistanceSq; }
+		);
+	}
+
+	const size_t uploadCount = std::min<size_t>(candidates.size(), kMaxUploadedLocalLights);
+	for (size_t i = 0; i < uploadCount; ++i)
+	{
+		lightData->syncBuffer.Register(candidates[i].gpuLight);
+	}
+
+	lightData->lightCount = static_cast<uint32_t>(lightData->syncBuffer.Size());
 }
 
 void DxrRenderPass::CreateRaytracingPipeline()
@@ -589,6 +692,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	auto&		   instanceData = m_instanceData[frameIndex];
 	auto&		   materialData = m_materialData[frameIndex];
 	auto&		   geoTableData = m_geoTableData[frameIndex];
+	auto&		   lightData = m_lightData[frameIndex];
 	auto&		   outputData = m_outputData[frameIndex];
 	auto&		   tlas = m_tlas[frameIndex];
 
@@ -605,14 +709,18 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	renderContext->SetData(instanceData, 0);
 	renderContext->SetData(materialData, 0);
 	renderContext->SetData(geoTableData, 0);
+	renderContext->SetData(lightData, 0);
 	renderContext->SetData(outputData, 0);
+
+	auto cameraData = renderContext->GetData<CameraRenderData>();
+	const DX::XMFLOAT3* cameraPosition = cameraData ? &cameraData->cameraPosition : nullptr;
 
 	auto&			 device = GLOBAL(DxDeviceGlobal);
 	auto&			 context = *frame->GetMainContext();
 	auto*			 uploadHeap = frame->GetUploadHeap();
 	DxScopedGpuEvent passEvent(context, L"DxrRenderPass");
 
-	PrepareRenderData(frame, scene);
+	PrepareRenderData(frame, scene, cameraPosition);
 
 	{
 		DxScopedGpuEvent syncEvent(context, L"DXR.SyncRenderData");
@@ -620,6 +728,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		materialData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		materialData->terrainSurfaceSyncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		geoTableData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
+		lightData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 	}
 
 	if (nullptr == tlas || false == tlas->IsBuilt())
@@ -655,7 +764,6 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	cmdList4->SetComputeRootDescriptorTable(0, descHeap.GetGPUHandle(tlas->GetSRVIndex()));
 	cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputData->outputTexture->GetUAVIndex(0)));
 
-	auto cameraData = renderContext->GetData<CameraRenderData>();
 	if (nullptr != cameraData)
 	{
 		DX::XMFLOAT4X4 viewProjInvFloat;
@@ -687,6 +795,13 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			6, materialData->terrainSurfaceSyncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
 		);
 	}
+	if (lightData->syncBuffer.GetBuffer())
+	{
+		cmdList4->SetComputeRootShaderResourceView(
+			7, lightData->syncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
+		);
+	}
+	cmdList4->SetComputeRoot32BitConstants(8, 1, &lightData->lightCount, 0);
 
 	auto* shaderTable =
 		m_usePathTracing ? m_ptShaderTable.get() : (m_useLiteRT ? m_rtLiteShaderTable.get() : m_rtShaderTable.get());

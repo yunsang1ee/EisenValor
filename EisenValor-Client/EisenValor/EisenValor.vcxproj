@@ -200,6 +200,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\FSM\GeneralStates.h" />
     <ClInclude Include="Component\FSM\StatePool.h" />
     <ClInclude Include="Component\HealthComponent.h" />
+    <ClInclude Include="Component\LocalLightComponent.h" />
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
     <ClInclude Include="Component\Login\LoginControllerComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
@@ -220,6 +221,7 @@ exit /b 0</Command>
     <ClInclude Include="RaytracingCommon.h" />
     <ClInclude Include="RenderData\GeoTableRenderData.h" />
     <ClInclude Include="RenderData\InstanceRenderData.h" />
+    <ClInclude Include="RenderData\LightRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
     <ClInclude Include="RenderPass\CopyToBackBufferPass.h" />

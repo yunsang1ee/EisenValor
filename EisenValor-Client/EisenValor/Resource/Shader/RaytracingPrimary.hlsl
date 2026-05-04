@@ -2,17 +2,23 @@
 #include "RaytracingCommon.h"
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
-RWTexture2D<float4>             g_output : register(u0, space0);
+RWTexture2D<float4> g_output : register(u0, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
     float4x4 g_viewProjInverse;
 };
 
-StructuredBuffer<InstanceData>    g_instanceBuffer : register(t1, space0);
-StructuredBuffer<MaterialGPUData> g_materials      : register(t2, space0);
-StructuredBuffer<GeoInfo>         g_geoTable       : register(t3, space0);
+StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
+StructuredBuffer<MaterialGPUData> g_materials : register(t2, space0);
+StructuredBuffer<GeoInfo> g_geoTable : register(t3, space0);
 StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0);
+StructuredBuffer<LocalLightGPUData> g_localLights : register(t5, space0);
+
+cbuffer LocalLightConstants : register(b1, space0)
+{
+    uint g_localLightCount;
+};
 
 SamplerState g_sampler : register(s0, space0);
 
@@ -31,6 +37,7 @@ float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv)
 }
 
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
+static const uint MAX_LOCAL_LIGHTS = 24;
 
 struct TerrainSample
 {
@@ -84,7 +91,7 @@ float4 SampleTerrainSplatWeights(Texture2D splatTexture, float2 terrainUV)
     }
 
     float2 texel = saturate(terrainUV) * float2(width - 1, height - 1);
-    uint2 p0 = (uint2)floor(texel);
+    uint2 p0 = (uint2) floor(texel);
     uint2 p1 = min(p0 + 1, uint2(width - 1, height - 1));
     float2 t = texel - float2(p0);
     int2 ip0 = int2(p0);
@@ -150,11 +157,63 @@ TerrainSample SampleTerrainSplat(MaterialGPUData mat, float2 terrainUV)
 
 inline float HardShadow(float3 origin, float3 dir)
 {
-    RayQuery<RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_FORCE_OPAQUE> rq;
+    RayQuery < RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_FORCE_OPAQUE > rq;
     RayDesc ray = { origin, RAY_TMIN, dir, RAY_TMAX };
     rq.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
-    while (rq.Proceed()) {}
+    while (rq.Proceed())
+    {
+    }
     return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
+}
+
+inline float HardShadowRange(float3 origin, float3 dir, float tMax)
+{
+    RayQuery < RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_FORCE_OPAQUE > rq;
+    RayDesc ray = { origin, RAY_TMIN, dir, tMax };
+    rq.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
+    while (rq.Proceed())
+    {
+    }
+    return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
+}
+
+float3 EvaluateLocalLightDiffuse(float3 hitPos, float3 normal, float3 albedo)
+{
+    float3 result = 0.0f.xxx;
+    uint lightCount = min(g_localLightCount, MAX_LOCAL_LIGHTS);
+    for (uint lightIndex = 0; lightIndex < lightCount; ++lightIndex)
+    {
+        LocalLightGPUData light = g_localLights[lightIndex];
+        float3 toLight = light.positionRange.xyz - hitPos;
+        float distSq = dot(toLight, toLight);
+        if (distSq <= 0.000001f)
+        {
+            continue;
+        }
+
+        float dist = sqrt(distSq);
+        float range = max(light.positionRange.w, 0.0f);
+        if (range <= 0.0f || dist >= range)
+        {
+            continue;
+        }
+
+        float3 L = toLight / dist;
+        float NdotL = saturate(dot(normal, L));
+        if (NdotL <= 0.0f)
+        {
+            continue;
+        }
+
+        float sourceRadius = max(light.sourceRadiusPad.x, 0.02f);
+        float shadow = HardShadowRange(hitPos + normal * 0.03f, L, max(dist - sourceRadius, RAY_TMIN));
+        float rangeAtt = saturate(1.0f - dist / range);
+        rangeAtt *= rangeAtt;
+        float distanceAtt = 1.0f / max(distSq, sourceRadius * sourceRadius);
+        float3 radiance = light.colorIntensity.rgb * light.colorIntensity.w * rangeAtt * distanceAtt;
+        result += albedo * radiance * NdotL * shadow;
+    }
+    return result;
 }
 
 [shader("raygeneration")]
@@ -165,8 +224,10 @@ void RayGenMain()
     float2 ndc = (float2(pixelCoord) + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
     ndc.y = -ndc.y;
 
-    float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse); worldPos /= worldPos.w;
-    float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse); cameraPos /= cameraPos.w;
+    float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+    worldPos /= worldPos.w;
+    float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
+    cameraPos /= cameraPos.w;
 	
     RayDesc ray = { cameraPos.xyz, RAY_TMIN, normalize(worldPos.xyz - cameraPos.xyz), RAY_TMAX };
     RayPayload payload = { float3(0, 0, 0), 0 };
@@ -184,14 +245,16 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     MaterialGPUData mat = g_materials[geo.materialIdx];
 
     StructuredBuffer<Vertex> vBuffer = ResourceDescriptorHeap[inst.vertexBufferIdx];
-    Buffer<uint>             iBuffer = ResourceDescriptorHeap[inst.indexBufferIdx];
+    Buffer<uint> iBuffer = ResourceDescriptorHeap[inst.indexBufferIdx];
 
     uint triIdx = PrimitiveIndex();
     uint i0 = iBuffer[geo.indexBase + triIdx * 3 + 0];
     uint i1 = iBuffer[geo.indexBase + triIdx * 3 + 1];
     uint i2 = iBuffer[geo.indexBase + triIdx * 3 + 2];
 
-    Vertex v0 = vBuffer[i0]; Vertex v1 = vBuffer[i1]; Vertex v2 = vBuffer[i2];
+    Vertex v0 = vBuffer[i0];
+    Vertex v1 = vBuffer[i1];
+    Vertex v2 = vBuffer[i2];
     float3 bary = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
     // Safety: Normal Transformation
@@ -220,16 +283,29 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         Texture2D albedoTex = ResourceDescriptorHeap[mat.albedoTextureIdx];
         albedo *= albedoTex.SampleLevel(g_sampler, uv, 0).rgb;
     }
-    if (dot(worldNormal, WorldRayDirection()) > 0.0f) worldNormal = -worldNormal;
+    if (dot(worldNormal, WorldRayDirection()) > 0.0f)
+        worldNormal = -worldNormal;
 
-    float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
-    float shadow = HardShadow(WorldRayOrigin() + WorldRayDirection() * RayTCurrent() + worldNormal * 0.01, lightDir);
-    payload.color = albedo * (saturate(dot(worldNormal, lightDir)) * shadow * 2.0 + 0.15);
-    payload.color += EvaluateMaterialEmission(mat, uv);
+    float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+
+    // Disabled while validating physically sourced light only.
+    // float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
+    // float shadow = HardShadow(WorldRayOrigin() + WorldRayDirection() * RayTCurrent() + worldNormal * 0.01, lightDir);
+    // payload.color = albedo * saturate(dot(worldNormal, lightDir)) * shadow * 2.0;
+    payload.color = EvaluateMaterialEmission(mat, uv) + EvaluateLocalLightDiffuse(hitPos, worldNormal, albedo);
 }
 
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    payload.color = float3(0.1, 0.1, 0.1);
+    float3 rayDir = WorldRayDirection();
+    float skyT = smoothstep(-0.05f, 0.65f, rayDir.y);
+    float groundToSkyT = smoothstep(-0.02f, 0.02f, rayDir.y);
+
+    float3 nightZenith = float3(5.0f, 18.0f, 62.0f) / 255.0f;
+    float3 nightHorizon = float3(16.0f, 8.0f, 38.0f) / 255.0f;
+    float3 groundColor = float3(2.0f, 3.0f, 10.0f) / 255.0f;
+    float3 nightSky = lerp(nightHorizon, nightZenith, skyT);
+
+    payload.color = lerp(groundColor, nightSky, groundToSkyT);
 }

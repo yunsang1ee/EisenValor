@@ -9,6 +9,7 @@
 #include "RenderData/InstanceRenderData.h"
 #include "RenderData/MaterialRenderData.h"
 #include "RenderData/GeoTableRenderData.h"
+#include "RenderData/LightRenderData.h"
 #include "RenderData/RaytracingOutputRenderData.h"
 
 class MeshComponent;
@@ -32,7 +33,7 @@ private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
 
-	void PrepareRenderData(DxFrameResource* frame, Scene* scene);
+	void PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition);
 
 	void CollectStaticMeshData(
 		Scene*										  scene,
@@ -47,6 +48,7 @@ private:
 		uint32_t									  frameIndex,
 		bool&										  hasAnimatedInstances
 	);
+	void CollectLocalLightData(Scene* scene, uint32_t frameIndex, const DX::XMFLOAT3* cameraPosition);
 
 private:
 	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
@@ -63,6 +65,7 @@ private:
 	std::shared_ptr<InstanceRenderData> m_instanceData[3];
 	std::shared_ptr<MaterialRenderData> m_materialData[3];
 	std::shared_ptr<GeoTableRenderData> m_geoTableData[3];
+	std::shared_ptr<LightRenderData>	 m_lightData[3];
 	uint32_t m_lastTlasInstanceCount[3] = {};
 	uint32_t m_tlasStableFrameCount[3] = {};
 	uint64_t m_lastTlasTopologyHash[3] = {};
