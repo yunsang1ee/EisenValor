@@ -53,7 +53,7 @@ std::shared_ptr<PacketBuffer> Make_CS_GENERAL_ATTACK_PACKET(const FB_STRUCTS::Ge
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_STANCE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_PLAYER_FAKE_PACKET();
 std::shared_ptr<PacketBuffer> Make_CS_CHANGE_CAMERA_TARGET_PACKET(uint32_t targetId);
-std::shared_ptr<PacketBuffer> Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+std::shared_ptr<PacketBuffer> Make_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 
 	//std::shared_ptr<PacketBuffer> Make_CS_CHAT_PACKET(const std::string& message);
 std::shared_ptr<PacketBuffer> Make_CS_UPDATE_PLAYER_STATE_PACKET(const FB_ENUMS::PLAYER_STATE_TYPE state);

@@ -683,7 +683,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				m_accumulatedDeltaY = 0.0f;
 
 				// 방향이 바뀔 때 패킷 전송 (단순 방향 표시용)
-				auto pb = NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(detectedDir);
+				auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET(detectedDir);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// 마우스를 누른 채 이동한 경우 무효화

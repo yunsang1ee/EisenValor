@@ -130,21 +130,56 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 
 	uint32 damage{};
 
-	// 상대가 플레이어인 경우
-	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
-		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
-		fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
-		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
-			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+	switch(const auto attackerType = attacker->GetObjType()) {
+		case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
+		{
+			auto attackGeneral{ std::static_pointer_cast<General>(attacker) };
+			const AttackInfo& attackerAtkInfo{ attackGeneral->GetAtkInfo() };
+
+			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				return false;
+			}
+
+			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+				damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+			}
+			else {
+				damage = attackerAtkInfo.skillData->damage;
+			}
+			const uint32 currentHP{ DecHP(damage, broadcast) };
+			if(0 == currentHP) {
+				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+			}
+			break;
 		}
-		else {
-			damage = attackerAtkInfo.skillData->damage;
+		case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
+		{
+			auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
+			const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
+
+			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				return false;
+			}
+
+			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+				damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+			}
+			else {
+				damage = attackerAtkInfo.skillData->damage;
+			}
+			const uint32 currentHP{ DecHP(damage, broadcast) };
+			if(0 == currentHP) {
+				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+			}
+			break;
 		}
-		const uint32 currentHP{ DecHP(damage, broadcast) };
-		if(0 == currentHP){
-			attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
-		}
+		case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
+			break;
+		default:
+			break;
 	}
+
 	return true;
 }

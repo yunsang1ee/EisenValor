@@ -21,6 +21,8 @@ namespace GameServer {
 		public:
 			void SetSession(std::shared_ptr<ClientSession> clientSession) { m_session = clientSession; }
 			std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
+			void SetLookingTarget(const uint64 targetID) { m_lookingTargetID = targetID; }
+			uint64 GetLookingTarget() const { return m_lookingTargetID; }
 
 		private:
 			void Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::GeneralAttackInfo& atkInfo);
@@ -35,6 +37,7 @@ namespace GameServer {
 
 		private:
 			std::weak_ptr<ClientSession>			m_session;
+			uint64									m_lookingTargetID;
 		};
 	}
 }

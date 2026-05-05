@@ -200,7 +200,7 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKE
 	);
 }
 
-std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET(
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType
 )
 {
