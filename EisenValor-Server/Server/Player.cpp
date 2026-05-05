@@ -260,19 +260,8 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
 
 	const FB_ENUMS::PLAYER_STATE_TYPE curState{ static_cast<FB_ENUMS::PLAYER_STATE_TYPE>(fsm->GetCurState()->GetStateType()) };
 
-	if(curState == (FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY)) {
-		const AttackInfo& atkInfo{ GetAtkInfo() };
-
-		const auto world{ GetGameWorld() };
-		if(world) {
-			//const uint64 worldFrame{ world->GetGameWorldFrameCount() };
-	/*		if(worldFrame >= atkInfo.startPreDelay + (atkInfo.skillData->preDelay / 2)) {
-				std::cout << "Fake!" << std::endl;
-
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, world->GetGameWorldDT(), true);
-			}*/
-		}
-	}
+	const auto world{ GetGameWorld() };
+	fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE, world->GetGameWorldDT(), true);
 }
 
 void GameServer::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 prevTargetID)
