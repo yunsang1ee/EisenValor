@@ -104,5 +104,9 @@ bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_S
 bool Handle_SC_GAME_FINISH_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt);
 
 #pragma endregion
+
+#pragma region TEST_PACKETS
+bool Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt);
+#pragma endregion
 } // namespace S2C
 } // namespace NetBridge

@@ -52,7 +52,7 @@ namespace GameServer {
 			}
 
 		public:
-			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD, const bool teleport = false);
 			void Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
 			void Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID);
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);

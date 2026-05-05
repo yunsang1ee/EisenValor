@@ -99,6 +99,10 @@ void NetBridge::ServerPacketHandler::Init() noexcept
 		SC_GAME_FINISH_RESULT_PKT, SC_GAME_FINISH_RESULT_PACKET, Handle_SC_GAME_FINISH_RESULT_PACKET
 	)
 #pragma endregion
+
+#pragma region TEST_PACKETS
+	REGISTER_PACKET_HANDLER(SC_TELEPORT_PKT, SC_TELEPORT_PACKET, Handle_SC_TELEPORT_PACKET)
+#pragma endregion
 }
 
 std::shared_ptr<NetBridge::PacketBuffer> NetBridge::ServerPacketHandler::MakePacketBuffer(

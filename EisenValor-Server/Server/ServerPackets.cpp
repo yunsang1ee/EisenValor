@@ -164,7 +164,20 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_GAME_FINISH_RESULT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GAME_FINISH_RESULT_PACKET, winningTeam, blueScore, redScore));
 	}
+
 #pragma endregion
 
-
+	// =================
+	//		테스트
+	// =================
+#pragma region TEST_PACKETS
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_TELEPORT_PACKET(const uint64 objID, const Transform& transform, const uint8 subState, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.GetPosition()) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
+		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_TELEPORT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_TELEPORT_PACKET, objID, &posInfo, subState, moveDir));
+	}
+#pragma endregion
 }

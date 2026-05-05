@@ -1221,6 +1221,11 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const uint64 id = recvPkt.obj_id();
 	const uint64 localID = scene->GetLocalID();
 
+	if (id == localID)
+	{
+		return true;
+	}
+
 	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
 
 	auto obj = scene->FindGameObjectByServerID(id);
@@ -1710,6 +1715,35 @@ bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
 		break;
 	}
 
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
+
+	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
+
+	auto obj = scene->FindGameObjectByServerID(id);
+	if (!obj)
+		return false;
+
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+	obj->GetTransform().SetPosition(pos);
+	obj->GetTransform().SetRotation(rot);
+
+	if (id != localID)
+	{
+		// 서버에서 보내준 state를 FSM에 전달
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
+		{
+			fsm->SetMoveDirection(recvPkt.move_dir());
+		}
+	}
 	return true;
 }
 

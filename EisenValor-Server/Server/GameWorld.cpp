@@ -183,7 +183,7 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
+void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir, const bool teleport)
 {
 	// TODO: NavMesh 클라이언트로 이식해야함.
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
@@ -264,7 +264,12 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 		navAgent->SyncPosition(snapPos, prevPos, m_lastDT);
 	}
 
+	if(teleport)
 	{
+		auto pb = ServerPackets::Make_SC_TELEPORT_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), player->GetMoveDir());
+		Broadcast(std::move(pb));
+	}
+	else {
 		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), player->GetMoveDir());
 		Broadcast(std::move(pb));
 	}
@@ -512,7 +517,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 			break;
 	}
 
-	Handle_CS_MOVE(clientSession, Transform{ tpPos, player->GetRotationDegree() });
+	Handle_CS_MOVE(clientSession, Transform{ tpPos, player->GetRotationDegree() }, player->GetMoveDir(), true);
 }
 
 void GameServer::Contents::GameWorld::RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)

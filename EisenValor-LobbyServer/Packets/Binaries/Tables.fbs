@@ -360,6 +360,13 @@ table CS_TELEPORT_PACKET {
 	place: FB_ENUMS.TELEPORT_PLACE_TYPE;
 }
 
+table SC_TELEPORT_PACKET {
+	obj_id: uint64;
+	pos_info: FB_STRUCTS.PosInfo;
+	sub_state: uint8;
+	move_dir: FB_ENUMS.MOVE_DIRECTION_TYPE;
+}
+
 table CS_GEN_NPC_GENERAL_PACKET {
 
 }
