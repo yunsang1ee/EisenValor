@@ -33,7 +33,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	ranges[3] = {D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE, 0};
 
 	// 2. Root Parameters
-	D3D12_ROOT_PARAMETER1 rootParams[12] = {};
+	D3D12_ROOT_PARAMETER1 rootParams[10] = {};
 
 	// Param 0: TLAS Table (t0)
 	rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -70,30 +70,20 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	rootParams[6].Descriptor = {4, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
 	rootParams[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 7: Local Light Buffer (t5)
-	rootParams[7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-	rootParams[7].Descriptor = {5, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE};
+	// Param 7: Temporal History SRV Table (t6)
+	rootParams[7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParams[7].DescriptorTable = {1, &ranges[2]};
 	rootParams[7].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 8: Local Light Constants (b1)
-	rootParams[8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParams[8].Constants = {1, 0, 1};
+	// Param 8: Temporal Accumulation UAV Table (u1)
+	rootParams[8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParams[8].DescriptorTable = {1, &ranges[3]};
 	rootParams[8].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	// Param 9: Temporal History SRV Table (t6)
-	rootParams[9].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[9].DescriptorTable = {1, &ranges[2]};
+	// Param 9: Temporal Accumulation Constants (b2)
+	rootParams[9].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParams[9].Constants = {2, 0, 4};
 	rootParams[9].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	// Param 10: Temporal Accumulation UAV Table (u1)
-	rootParams[10].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParams[10].DescriptorTable = {1, &ranges[3]};
-	rootParams[10].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	// Param 11: Temporal Accumulation Constants (b2)
-	rootParams[11].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParams[11].Constants = {2, 0, 4};
-	rootParams[11].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	// 3. Static Sampler (Linear Wrap)
 	D3D12_STATIC_SAMPLER_DESC staticSampler = {};
@@ -104,7 +94,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 	// 4. Root Signature Desc
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedDesc = {};
 	versionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	versionedDesc.Desc_1_1.NumParameters = 12;
+	versionedDesc.Desc_1_1.NumParameters = 10;
 	versionedDesc.Desc_1_1.pParameters = rootParams;
 	versionedDesc.Desc_1_1.NumStaticSamplers = 1;
 	versionedDesc.Desc_1_1.pStaticSamplers = &staticSampler;

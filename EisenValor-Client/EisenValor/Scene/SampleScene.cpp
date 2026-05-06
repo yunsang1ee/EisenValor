@@ -13,7 +13,6 @@
 #include "Component/FSM/StatePool.h"
 #include "Component/StressTestComponent.h"
 #include "Component/SocketComponent.h"
-#include "Component/LocalLightComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -28,7 +27,6 @@
 #include "SceneResource.h"
 #include "SkinnedMeshResource.h"
 
-#include "MeshLoader.h"
 #include "MeshComponent.h"
 #include "MaterialResource.h"
 #include "RaytracingCommon.h"
@@ -39,16 +37,16 @@ namespace
 {
 constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/Map.evscene";
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
-constexpr float				kTorchVisibleEmissionScale = 1.0f;
-constexpr float				kTorchSurfaceLightScale = 30.0f;
+constexpr float			   kTorchPreviewSphereScale = 0.5f;
+constexpr float			   kTorchTransportEmissionScale = 65.0f;
+constexpr float			   kTorchVisibleEmissionScale = 2.5f;
 } // namespace
 
 void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
-		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		LocalLightComponent>();
+		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
@@ -60,21 +58,21 @@ void SampleScene::OnRegisterCustomSceneComponentDecoders()
 			ReserveGameObject(
 				"TorchEmitterPreview", std::nullopt,
 				[this, ownerHandle = context.ownerHandle, sourceRadius = data.GetSourceRadius(),
-				 visibleIntensity = data.GetIntensity() * kTorchVisibleEmissionScale,
-				 lightIntensity = data.GetIntensity() * kTorchSurfaceLightScale, range = data.GetRange(),
-				 colorR = data.GetColor()[0], colorG = data.GetColor()[1], colorB = data.GetColor()[2]](GameObject* obj)
+				 transportIntensity = data.GetIntensity() * kTorchTransportEmissionScale,
+				 visibleIntensity = data.GetIntensity() * kTorchVisibleEmissionScale, colorR = data.GetColor()[0],
+				 colorG = data.GetColor()[1], colorB = data.GetColor()[2]](GameObject* obj)
 				{
 					if (auto* ownerObj = TryGetGameObject(ownerHandle))
 					{
 						obj->GetTransform().SetParent(ownerObj->GetTransform().GetHandle());
 					}
 
-					const float diameter = std::max(sourceRadius * 2.0f, 0.15f);
+					const float diameter = std::max(sourceRadius * 2.0f * kTorchPreviewSphereScale, 0.05f);
 					obj->GetTransform().SetScale(diameter, diameter, diameter);
 
 					CreateComponentWithInit<MeshComponent>(
 						obj->GetHandle(),
-						[visibleIntensity, colorR, colorG, colorB](MeshComponent* mesh)
+						[transportIntensity, visibleIntensity, colorR, colorG, colorB](MeshComponent* mesh)
 						{
 							auto meshRes =
 								GLOBAL(ResourceGlobal).Load<MeshResource>(kTorchPreviewSphereMeshPath.data());
@@ -87,23 +85,14 @@ void SampleScene::OnRegisterCustomSceneComponentDecoders()
 
 							auto		material = std::make_shared<MaterialResource>();
 							const float albedo[4]{colorR, colorG, colorB, 1.0f};
-							const float emissiveColor[3]{colorR, colorG, colorB};
+							const float emissiveColor[3]{1.0f, 0.17f, 0.18f};
+							const float visibleEmissiveColor[3]{1.0f, 0.17f, 0.18f};
 							material->SetData(
 								EvAsset::ShadingModel::LitPbr, MATERIAL_FLAG_DOUBLE_SIDED, albedo, 1.0f, 0.0f,
-								emissiveColor, std::max(visibleIntensity, 0.0f)
+								emissiveColor, std::max(transportIntensity, 0.0f), visibleEmissiveColor,
+								std::max(visibleIntensity, 0.0f)
 							);
 							mesh->SetMaterialResource(0, std::move(material));
-						}
-					);
-
-					CreateComponentWithInit<LocalLightComponent>(
-						obj->GetHandle(),
-						[lightIntensity, range, sourceRadius, colorR, colorG, colorB](LocalLightComponent* light)
-						{
-							light->SetColor(DX::XMFLOAT3(colorR, colorG, colorB));
-							light->SetIntensity(lightIntensity);
-							light->SetRange(range);
-							light->SetSourceRadius(sourceRadius);
 						}
 					);
 				}

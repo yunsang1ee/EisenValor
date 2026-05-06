@@ -13,208 +13,22 @@ StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
 StructuredBuffer<MaterialGPUData> g_materials : register(t2, space0);
 StructuredBuffer<GeoInfo> g_geoTable : register(t3, space0);
 StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0);
-StructuredBuffer<LocalLightGPUData> g_localLights : register(t5, space0);
 
-cbuffer LocalLightConstants : register(b1, space0)
+cbuffer TemporalAccumulationConstants : register(b2, space0)
 {
-    uint g_localLightCount;
+    uint g_temporalFrameCount;
+    uint g_temporalAccumulationEnabled;
+    uint g_temporalAccumulationReset;
+    uint g_emissionViewMode;
 };
 
 SamplerState g_sampler : register(s0, space0);
 
-float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv)
-{
-    float3 emission = mat.emissive.rgb * mat.emissive.a;
-    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
-    {
-        Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
-        float3 emissiveTexel = emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
-        float hasEmissionFactor = max(max(mat.emissive.x, mat.emissive.y), max(mat.emissive.z, mat.emissive.a)) > 0.0f ? 1.0f : 0.0f;
-        float3 emissionFactor = lerp(1.0f.xxx, mat.emissive.rgb * mat.emissive.a, hasEmissionFactor);
-        emission = emissiveTexel * emissionFactor;
-    }
-    return emission;
-}
-
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
-static const uint MAX_LOCAL_LIGHTS = 24;
-
-struct TerrainSample
-{
-    float3 albedo;
-    float3 normalTS;
-};
-
-void AccumulateTerrainLayer(
-    inout TerrainSample blended,
-    inout float weightSum,
-    uint albedoTextureIdx,
-    uint normalTextureIdx,
-    float weight,
-    float2 terrainXZ,
-    float4 tileST)
-{
-    if (weight <= 0.0f)
-    {
-        return;
-    }
-
-    float2 layerUV = terrainXZ * tileST.xy + tileST.zw;
-    float3 layerAlbedo = 1.0f.xxx;
-    if (albedoTextureIdx != INVALID_TEXTURE_INDEX)
-    {
-        Texture2D albedoTexture = ResourceDescriptorHeap[albedoTextureIdx];
-        layerAlbedo = albedoTexture.SampleLevel(g_sampler, layerUV, 0).rgb;
-    }
-
-    float3 layerNormalTS = float3(0.0f, 0.0f, 1.0f);
-    if (normalTextureIdx != INVALID_TEXTURE_INDEX)
-    {
-        Texture2D normalTexture = ResourceDescriptorHeap[normalTextureIdx];
-        float2 encodedXY = normalTexture.SampleLevel(g_sampler, layerUV, 0).xy * 2.0f - 1.0f;
-        layerNormalTS = float3(encodedXY, sqrt(saturate(1.0f - dot(encodedXY, encodedXY))));
-    }
-
-    blended.albedo += layerAlbedo * weight;
-    blended.normalTS += layerNormalTS * weight;
-    weightSum += weight;
-}
-
-float4 SampleTerrainSplatWeights(Texture2D splatTexture, float2 terrainUV)
-{
-    uint width = 0;
-    uint height = 0;
-    splatTexture.GetDimensions(width, height);
-    if (width == 0 || height == 0)
-    {
-        return float4(0.0f, 0.0f, 0.0f, 0.0f);
-    }
-
-    float2 texel = saturate(terrainUV) * float2(width - 1, height - 1);
-    uint2 p0 = (uint2) floor(texel);
-    uint2 p1 = min(p0 + 1, uint2(width - 1, height - 1));
-    float2 t = texel - float2(p0);
-    int2 ip0 = int2(p0);
-    int2 ip1 = int2(p1);
-
-    float4 w00 = splatTexture.Load(int3(ip0, 0));
-    float4 w10 = splatTexture.Load(int3(ip1.x, ip0.y, 0));
-    float4 w01 = splatTexture.Load(int3(ip0.x, ip1.y, 0));
-    float4 w11 = splatTexture.Load(int3(ip1, 0));
-    return lerp(lerp(w00, w10, t.x), lerp(w01, w11, t.x), t.y);
-}
-
-TerrainSample SampleTerrainSplat(MaterialGPUData mat, float2 terrainUV)
-{
-    TerrainSample result;
-    result.albedo = 1.0f.xxx;
-    result.normalTS = float3(0.0f, 0.0f, 1.0f);
-
-    if (mat.terrainSurfaceIdx == INVALID_TEXTURE_INDEX)
-    {
-        return result;
-    }
-
-    TerrainSurfaceGPUData terrain = g_terrainSurfaces[mat.terrainSurfaceIdx];
-    if (terrain.splatTextureIdx == INVALID_TEXTURE_INDEX)
-    {
-        return result;
-    }
-
-    Texture2D splatTexture = ResourceDescriptorHeap[terrain.splatTextureIdx];
-    float4 weights = SampleTerrainSplatWeights(splatTexture, terrainUV);
-    float2 terrainXZ = terrainUV * terrain.terrainSize.xy;
-    uint layerCount = terrain.layerCount;
-
-    TerrainSample blended;
-    blended.albedo = 0.0f.xxx;
-    blended.normalTS = 0.0f.xxx;
-    float weightSum = 0.0f;
-    if (0 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx0, terrain.layerNormalTextureIdx0, weights.r, terrainXZ, terrain.layerTileST[0]);
-    }
-    if (1 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx1, terrain.layerNormalTextureIdx1, weights.g, terrainXZ, terrain.layerTileST[1]);
-    }
-    if (2 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx2, terrain.layerNormalTextureIdx2, weights.b, terrainXZ, terrain.layerTileST[2]);
-    }
-    if (3 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx3, terrain.layerNormalTextureIdx3, weights.a, terrainXZ, terrain.layerTileST[3]);
-    }
-
-    if (0.0f < weightSum)
-    {
-        result.albedo = blended.albedo / weightSum;
-        result.normalTS = normalize(blended.normalTS / weightSum);
-    }
-    return result;
-}
-
-inline float HardShadow(float3 origin, float3 dir)
-{
-    RayQuery < RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_FORCE_OPAQUE > rq;
-    RayDesc ray = { origin, RAY_TMIN, dir, RAY_TMAX };
-    rq.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
-    while (rq.Proceed())
-    {
-    }
-    return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
-}
-
-inline float HardShadowRange(float3 origin, float3 dir, float tMax)
-{
-    RayQuery < RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_FORCE_OPAQUE > rq;
-    RayDesc ray = { origin, RAY_TMIN, dir, tMax };
-    rq.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
-    while (rq.Proceed())
-    {
-    }
-    return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
-}
-
-float3 EvaluateLocalLightDiffuse(float3 hitPos, float3 normal, float3 albedo)
-{
-    float3 result = 0.0f.xxx;
-    uint lightCount = min(g_localLightCount, MAX_LOCAL_LIGHTS);
-    for (uint lightIndex = 0; lightIndex < lightCount; ++lightIndex)
-    {
-        LocalLightGPUData light = g_localLights[lightIndex];
-        float3 toLight = light.positionRange.xyz - hitPos;
-        float distSq = dot(toLight, toLight);
-        if (distSq <= 0.000001f)
-        {
-            continue;
-        }
-
-        float dist = sqrt(distSq);
-        float range = max(light.positionRange.w, 0.0f);
-        if (range <= 0.0f || dist >= range)
-        {
-            continue;
-        }
-
-        float3 L = toLight / dist;
-        float NdotL = saturate(dot(normal, L));
-        if (NdotL <= 0.0f)
-        {
-            continue;
-        }
-
-        float sourceRadius = max(light.sourceRadiusPad.x, 0.02f);
-        float shadow = HardShadowRange(hitPos + normal * 0.03f, L, max(dist - sourceRadius, RAY_TMIN));
-        float rangeAtt = saturate(1.0f - dist / range);
-        rangeAtt *= rangeAtt;
-        float distanceAtt = 1.0f / max(distSq, sourceRadius * sourceRadius);
-        float3 radiance = light.colorIntensity.rgb * light.colorIntensity.w * rangeAtt * distanceAtt;
-        result += albedo * radiance * NdotL * shadow;
-    }
-    return result;
-}
+#include "RaytracingMaterialEmission.hlsli"
+#include "RaytracingTerrain.hlsli"
+#include "RaytracingEnvironment.hlsli"
+#include "RaytracingNormal.hlsli"
 
 [shader("raygeneration")]
 void RayGenMain()
@@ -258,25 +72,22 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 bary = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
     // Safety: Normal Transformation
-    float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
-    float3 worldNormal = normalize(mul(normalObj, (float3x3) inst.worldInverse));
+    float3 normalObj = SafeNormalizeRay(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z, float3(0.0f, 1.0f, 0.0f));
+    float3 worldNormal = SafeNormalizeRay(mul(normalObj, (float3x3) inst.worldInverse), float3(0.0f, 1.0f, 0.0f));
     float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
-    float3 tangent = normalize(mul(tangentPacked.xyz, (float3x3) inst.worldMatrix));
-    tangent = normalize(tangent - worldNormal * dot(tangent, worldNormal));
-    float3 bitangent = normalize(cross(worldNormal, tangent) * tangentPacked.w);
+    float3 tangentCandidate = mul(tangentPacked.xyz, (float3x3) inst.worldMatrix);
+    float3 tangent;
+    float3 bitangent;
+    BuildSafeTangentFrame(worldNormal, tangentCandidate, tangentPacked.w, tangent, bitangent);
     
     float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
 
     float3 albedo = mat.albedo.rgb;
     if (0 != (mat.materialFlags & MATERIAL_FLAG_TERRAIN_SPLAT))
     {
-        TerrainSample terrainSample = SampleTerrainSplat(mat, uv);
+        TerrainSample terrainSample = SampleTerrainSplatPrimary(mat, uv, g_terrainSurfaces, g_sampler);
         albedo *= terrainSample.albedo;
-        worldNormal = normalize(
-            tangent * terrainSample.normalTS.x +
-            bitangent * terrainSample.normalTS.y +
-            worldNormal * terrainSample.normalTS.z
-        );
+        worldNormal = TangentNormalToWorld(terrainSample.normalTS, tangent, bitangent, worldNormal);
     }
     else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
     {
@@ -286,26 +97,11 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     if (dot(worldNormal, WorldRayDirection()) > 0.0f)
         worldNormal = -worldNormal;
 
-    float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-
-    // Disabled while validating physically sourced light only.
-    // float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
-    // float shadow = HardShadow(WorldRayOrigin() + WorldRayDirection() * RayTCurrent() + worldNormal * 0.01, lightDir);
-    // payload.color = albedo * saturate(dot(worldNormal, lightDir)) * shadow * 2.0;
-    payload.color = EvaluateMaterialEmission(mat, uv) + EvaluateLocalLightDiffuse(hitPos, worldNormal, albedo);
+    payload.color = EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler);
 }
 
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    float3 rayDir = WorldRayDirection();
-    float skyT = smoothstep(-0.05f, 0.65f, rayDir.y);
-    float groundToSkyT = smoothstep(-0.02f, 0.02f, rayDir.y);
-
-    float3 nightZenith = float3(5.0f, 18.0f, 62.0f) / 255.0f;
-    float3 nightHorizon = float3(16.0f, 8.0f, 38.0f) / 255.0f;
-    float3 groundColor = float3(2.0f, 3.0f, 10.0f) / 255.0f;
-    float3 nightSky = lerp(nightHorizon, nightZenith, skyT);
-
-    payload.color = lerp(groundColor, nightSky, groundToSkyT);
+    payload.color = SampleEnvironment(WorldRayDirection());
 }

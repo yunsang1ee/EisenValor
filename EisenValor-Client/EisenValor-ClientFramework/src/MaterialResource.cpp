@@ -10,7 +10,9 @@ void MaterialResource::SetData(
 	float				  roughnessVal,
 	float				  metallicIn,
 	const float			  emissiveColorIn[3],
-	float				  emissiveIntensityIn
+	float				  emissiveIntensityIn,
+	const float			  visibleEmissiveColorIn[3],
+	float				  visibleEmissiveIntensityIn
 )
 {
 	shadingModelId = shadingModel;
@@ -18,6 +20,7 @@ void MaterialResource::SetData(
 	roughness = roughnessVal;
 	metallic = metallicIn;
 	emissive.w = emissiveIntensityIn;
+	visibleEmissive.w = (visibleEmissiveIntensityIn >= 0.0f) ? visibleEmissiveIntensityIn : emissiveIntensityIn;
 
 	if (nullptr != albedoIn)
 	{
@@ -32,6 +35,19 @@ void MaterialResource::SetData(
 		emissive.x = emissiveColorIn[0];
 		emissive.y = emissiveColorIn[1];
 		emissive.z = emissiveColorIn[2];
+	}
+
+	if (nullptr != visibleEmissiveColorIn)
+	{
+		visibleEmissive.x = visibleEmissiveColorIn[0];
+		visibleEmissive.y = visibleEmissiveColorIn[1];
+		visibleEmissive.z = visibleEmissiveColorIn[2];
+	}
+	else
+	{
+		visibleEmissive.x = emissive.x;
+		visibleEmissive.y = emissive.y;
+		visibleEmissive.z = emissive.z;
 	}
 }
 

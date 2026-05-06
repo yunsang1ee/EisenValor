@@ -11,6 +11,7 @@
 #include "SkinnedMeshResource.h"
 #include "DxBuffer.h"
 #include "DxCommandContext.h"
+#include "PixProfiler.h"
 
 void SkinningPass::Initialize()
 {
@@ -33,6 +34,8 @@ void SkinningPass::Release()
 
 void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* context)
 {
+	PixScopedCpuEvent cpuEvent(L"SkinningPass.Execute");
+
 	if (!m_initialized || nullptr == scene)
 	{
 		return;
@@ -73,18 +76,22 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 		return nullptr != meshRes->GetVertexBuffer();
 	};
 
-	boneBuffer.Clear();
-	for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
-		if (!isReadyForSkinning(skinnedMeshComp))
-		{
-			continue;
-		}
+		PixScopedCpuEvent collectEvent(L"Skinning.CollectBoneMatrices");
 
-		const auto& finalMatrices = skinnedMeshComp.GetFinalMatrices();
-		for (const auto& mat : finalMatrices)
+		boneBuffer.Clear();
+		for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 		{
-			boneBuffer.Register(mat);
+			if (!isReadyForSkinning(skinnedMeshComp))
+			{
+				continue;
+			}
+
+			const auto& finalMatrices = skinnedMeshComp.GetFinalMatrices();
+			for (const auto& mat : finalMatrices)
+			{
+				boneBuffer.Register(mat);
+			}
 		}
 	}
 
@@ -93,67 +100,78 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 		return;
 	}
 
-	boneBuffer.SyncToGPU(device, cmdContext, *uploadHeap);
+	{
+		PixScopedCpuEvent syncCpuEvent(L"Skinning.SyncBoneMatrices");
+		DxScopedGpuEvent syncGpuEvent(cmdContext, L"Skinning.SyncBoneMatrices");
+		boneBuffer.SyncToGPU(device, cmdContext, *uploadHeap);
+	}
 
 	cmdList->SetComputeRootSignature(m_rootSignature.Get());
 	cmdList4->SetPipelineState(m_pso.Get());
 
 	uint32_t currentBoneBase = 0;
 
-	for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
-		if (!isReadyForSkinning(skinnedMeshComp))
-		{
-			continue;
-		}
+		PixScopedCpuEvent dispatchCpuEvent(L"Skinning.Dispatch");
+		DxScopedGpuEvent dispatchGpuEvent(cmdContext, L"Skinning.Dispatch");
 
-		auto*	 meshRes = skinnedMeshComp.GetSkinnedMeshResource();
-		auto*	 inVB = meshRes->GetVertexBuffer();
-		if (nullptr == inVB)
+		for (auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 		{
-			continue;
-		}
-		uint32_t vertexCount = meshRes->GetVertexCount();
+			if (!isReadyForSkinning(skinnedMeshComp))
+			{
+				continue;
+			}
 
-		auto* outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
-		if (nullptr == outVB)
-		{
-			auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
-			auto  buffer = std::make_unique<DxBuffer>();
-			buffer->Initialize(
-				device, sizeof(EvAsset::Vertex) * vertexCount, EBufferUsage::RawBuffer,
-				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
-				meshRes->GetName() + "_SkinnedVB_" + std::to_string(frameIndex)
+			auto* meshRes = skinnedMeshComp.GetSkinnedMeshResource();
+			auto* inVB = meshRes->GetVertexBuffer();
+			if (nullptr == inVB)
+			{
+				continue;
+			}
+			uint32_t vertexCount = meshRes->GetVertexCount();
+
+			auto* outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
+			if (nullptr == outVB)
+			{
+				PixScopedCpuEvent createBufferEvent(L"Skinning.CreateOutputBuffer");
+				auto&			  descHeap = GLOBAL(DxDescriptorHeapGlobal);
+				auto			  buffer = std::make_unique<DxBuffer>();
+				buffer->Initialize(
+					device, sizeof(EvAsset::Vertex) * vertexCount, EBufferUsage::RawBuffer,
+					D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COMMON,
+					meshRes->GetName() + "_SkinnedVB_" + std::to_string(frameIndex)
+				);
+
+				buffer->CreateSRV(device, descHeap, vertexCount, sizeof(EvAsset::Vertex));
+				skinnedMeshComp.SetSkinnedVertexBuffer(frameIndex, std::move(buffer));
+				outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
+			}
+
+			D3D12_RESOURCE_BARRIER preBarrier = DxUtils::CreateTransitionBarrier(
+				outVB->GetResource(), outVB->GetCurrentState(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 			);
+			cmdList->ResourceBarrier(1, &preBarrier);
+			outVB->SetState(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-			buffer->CreateSRV(device, descHeap, vertexCount, sizeof(EvAsset::Vertex));
-			skinnedMeshComp.SetSkinnedVertexBuffer(frameIndex, std::move(buffer));
-			outVB = skinnedMeshComp.GetSkinnedVertexBuffer(frameIndex);
+			uint32_t constants[4] = {vertexCount, currentBoneBase, 0, 0};
+			cmdList->SetComputeRoot32BitConstants(0, 4, constants, 0);
+			cmdList->SetComputeRootShaderResourceView(1, inVB->GetResource()->GetGPUVirtualAddress());
+			cmdList->SetComputeRootShaderResourceView(2, boneBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress());
+			cmdList->SetComputeRootUnorderedAccessView(3, outVB->GetResource()->GetGPUVirtualAddress());
+
+			cmdList->Dispatch((vertexCount + 255) / 256, 1, 1);
+
+			D3D12_RESOURCE_BARRIER postBarriers[2];
+			postBarriers[0] = DxUtils::CreateUAVBarrier(outVB->GetResource());
+			postBarriers[1] = DxUtils::CreateTransitionBarrier(
+				outVB->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+				D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			);
+			cmdList->ResourceBarrier(2, postBarriers);
+			outVB->SetState(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+			currentBoneBase += (uint32_t)skinnedMeshComp.GetFinalMatrices().size();
 		}
-
-		D3D12_RESOURCE_BARRIER preBarrier = DxUtils::CreateTransitionBarrier(
-			outVB->GetResource(), outVB->GetCurrentState(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-		);
-		cmdList->ResourceBarrier(1, &preBarrier);
-		outVB->SetState(D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-		uint32_t constants[4] = {vertexCount, currentBoneBase, 0, 0};
-		cmdList->SetComputeRoot32BitConstants(0, 4, constants, 0);
-		cmdList->SetComputeRootShaderResourceView(1, inVB->GetResource()->GetGPUVirtualAddress());
-		cmdList->SetComputeRootShaderResourceView(2, boneBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress());
-		cmdList->SetComputeRootUnorderedAccessView(3, outVB->GetResource()->GetGPUVirtualAddress());
-
-		cmdList->Dispatch((vertexCount + 255) / 256, 1, 1);
-
-		D3D12_RESOURCE_BARRIER postBarriers[2];
-		postBarriers[0] = DxUtils::CreateUAVBarrier(outVB->GetResource());
-		postBarriers[1] = DxUtils::CreateTransitionBarrier(
-			outVB->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
-		);
-		cmdList->ResourceBarrier(2, postBarriers);
-		outVB->SetState(D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
-		currentBoneBase += (uint32_t)skinnedMeshComp.GetFinalMatrices().size();
 	}
 }
 

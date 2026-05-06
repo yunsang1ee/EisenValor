@@ -1,5 +1,10 @@
 #define HLSL
 #include "RaytracingCommon.h"
+#include "RaytracingMaterialEmission.hlsli"
+#include "RaytracingTerrain.hlsli"
+#include "RaytracingEnvironment.hlsli"
+#include "RaytracingPostProcess.hlsli"
+#include "RaytracingNormal.hlsli"
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
@@ -14,193 +19,28 @@ StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
 StructuredBuffer<MaterialGPUData> g_materials : register(t2, space0);
 StructuredBuffer<GeoInfo> g_geoTable : register(t3, space0);
 StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0);
-StructuredBuffer<LocalLightGPUData> g_localLights : register(t5, space0);
 Texture2D<float4> g_temporalHistory : register(t6, space0);
-
-cbuffer LocalLightConstants : register(b1, space0)
-{
-    uint g_localLightCount;
-};
 
 cbuffer TemporalAccumulationConstants : register(b2, space0)
 {
     uint g_temporalFrameCount;
     uint g_temporalAccumulationEnabled;
     uint g_temporalAccumulationReset;
-    uint g_temporalAccumulationPad;
+    uint g_emissionViewMode;
 };
 
 SamplerState g_sampler : register(s0, space0);
 
-static const uint MAX_RECURSION_DEPTH = 18;
+static const uint MAX_RECURSION_DEPTH = 6;
 static const uint SPP = 4;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
-static const uint MAX_LOCAL_LIGHTS = 24;
+static const float PT_OUTPUT_EXPOSURE = 0.75f;
+static const float PT_BLOOM_THRESHOLD = 1.0f;
+static const float PT_BLOOM_INTENSITY = 0.75f;
+static const float PT_VISIBLE_NORMAL_STRENGTH = 2.5f;
 
-float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv)
-{
-    float3 emission = mat.emissive.rgb * mat.emissive.a;
-    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
-    {
-        Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
-        float3 emissiveTexel = emissiveTexture.SampleLevel(g_sampler, uv, 0).rgb;
-        float hasEmissionFactor = max(max(mat.emissive.x, mat.emissive.y), max(mat.emissive.z, mat.emissive.a)) > 0.0f ? 1.0f : 0.0f;
-        float3 emissionFactor = lerp(1.0f.xxx, mat.emissive.rgb * mat.emissive.a, hasEmissionFactor);
-        emission = emissiveTexel * emissionFactor;
-    }
-    return emission;
-}
-
-struct TerrainSample
-{
-    float3 albedo;
-    float3 normalTS;
-    float metallic;
-    float roughness;
-    float ao;
-};
-
-void AccumulateTerrainLayer(
-	inout TerrainSample blended,
-	inout float weightSum,
-	uint albedoTextureIdx,
-	uint normalTextureIdx,
-	uint ormTextureIdx,
-	float2 metallicRoughness,
-	float weight,
-	float2 terrainXZ,
-	float4 tileST)
-{
-    if (weight <= 0.0f)
-    {
-        return;
-    }
-
-    float2 layerUV = terrainXZ * tileST.xy + tileST.zw;
-    float4 layerAlbedoSample = float4(1.0f, 1.0f, 1.0f, 1.0f);
-    if (albedoTextureIdx != INVALID_TEXTURE_INDEX)
-    {
-        Texture2D albedoTexture = ResourceDescriptorHeap[albedoTextureIdx];
-        layerAlbedoSample = albedoTexture.SampleLevel(g_sampler, layerUV, 0);
-    }
-    float3 layerAlbedo = layerAlbedoSample.rgb;
-
-    float3 layerNormalTS = float3(0.0f, 0.0f, 1.0f);
-    if (normalTextureIdx != INVALID_TEXTURE_INDEX)
-    {
-        Texture2D normalTexture = ResourceDescriptorHeap[normalTextureIdx];
-        float2 encodedXY = normalTexture.SampleLevel(g_sampler, layerUV, 0).xy * 2.0f - 1.0f;
-        layerNormalTS = float3(encodedXY, sqrt(saturate(1.0f - dot(encodedXY, encodedXY))));
-    }
-
-    float layerMetallic = metallicRoughness.x;
-    float layerRoughness = metallicRoughness.y;
-    float layerAo = 1.0f;
-    if (ormTextureIdx != INVALID_TEXTURE_INDEX)
-    {
-        Texture2D ormTexture = ResourceDescriptorHeap[ormTextureIdx];
-        float4 p = ormTexture.SampleLevel(g_sampler, layerUV, 0);
-        layerMetallic = p.r;
-        layerAo = p.g;
-        layerRoughness = 1.0f - p.a;
-    }
-    else
-    {
-        float useDiffuseAlphaSmoothness = 1.0f - step(0.999f, layerAlbedoSample.a);
-        layerRoughness = lerp(layerRoughness, 1.0f - layerAlbedoSample.a, useDiffuseAlphaSmoothness);
-    }
-
-    blended.albedo += layerAlbedo * weight;
-    blended.normalTS += layerNormalTS * weight;
-    blended.metallic += layerMetallic * weight;
-    blended.roughness += layerRoughness * weight;
-    blended.ao += layerAo * weight;
-    weightSum += weight;
-}
-
-float4 SampleTerrainSplatWeights(Texture2D splatTexture, float2 terrainUV)
-{
-    uint width = 0;
-    uint height = 0;
-    splatTexture.GetDimensions(width, height);
-    if (width == 0 || height == 0)
-    {
-        return float4(0.0f, 0.0f, 0.0f, 0.0f);
-    }
-
-    float2 texel = saturate(terrainUV) * float2(width - 1, height - 1);
-    uint2 p0 = (uint2) floor(texel);
-    uint2 p1 = min(p0 + 1, uint2(width - 1, height - 1));
-    float2 t = texel - float2(p0);
-    int2 ip0 = int2(p0);
-    int2 ip1 = int2(p1);
-
-    float4 w00 = splatTexture.Load(int3(ip0, 0));
-    float4 w10 = splatTexture.Load(int3(ip1.x, ip0.y, 0));
-    float4 w01 = splatTexture.Load(int3(ip0.x, ip1.y, 0));
-    float4 w11 = splatTexture.Load(int3(ip1, 0));
-    return lerp(lerp(w00, w10, t.x), lerp(w01, w11, t.x), t.y);
-}
-
-TerrainSample SampleTerrainSplat(MaterialGPUData mat, float2 terrainUV)
-{
-    TerrainSample result;
-    result.albedo = 1.0f.xxx;
-    result.normalTS = float3(0.0f, 0.0f, 1.0f);
-    result.metallic = 0.0f;
-    result.roughness = 1.0f;
-    result.ao = 1.0f;
-
-    if (mat.terrainSurfaceIdx == INVALID_TEXTURE_INDEX)
-    {
-        return result;
-    }
-
-    TerrainSurfaceGPUData terrain = g_terrainSurfaces[mat.terrainSurfaceIdx];
-    if (terrain.splatTextureIdx == INVALID_TEXTURE_INDEX)
-    {
-        return result;
-    }
-
-    Texture2D splatTexture = ResourceDescriptorHeap[terrain.splatTextureIdx];
-    float4 weights = SampleTerrainSplatWeights(splatTexture, terrainUV);
-    float2 terrainXZ = terrainUV * terrain.terrainSize.xy;
-    uint layerCount = terrain.layerCount;
-
-    TerrainSample blended;
-    blended.albedo = 0.0f.xxx;
-    blended.normalTS = 0.0f.xxx;
-    blended.metallic = 0.0f;
-    blended.roughness = 0.0f;
-    blended.ao = 0.0f;
-    float weightSum = 0.0f;
-    if (0 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx0, terrain.layerNormalTextureIdx0, terrain.layerOrmTextureIdx0, terrain.layerMetallicRoughness[0].xy, weights.r, terrainXZ, terrain.layerTileST[0]);
-    }
-    if (1 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx1, terrain.layerNormalTextureIdx1, terrain.layerOrmTextureIdx1, terrain.layerMetallicRoughness[1].xy, weights.g, terrainXZ, terrain.layerTileST[1]);
-    }
-    if (2 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx2, terrain.layerNormalTextureIdx2, terrain.layerOrmTextureIdx2, terrain.layerMetallicRoughness[2].xy, weights.b, terrainXZ, terrain.layerTileST[2]);
-    }
-    if (3 < layerCount)
-    {
-        AccumulateTerrainLayer(blended, weightSum, terrain.layerAlbedoTextureIdx3, terrain.layerNormalTextureIdx3, terrain.layerOrmTextureIdx3, terrain.layerMetallicRoughness[3].xy, weights.a, terrainXZ, terrain.layerTileST[3]);
-    }
-
-    if (0.0f < weightSum)
-    {
-        result.albedo = blended.albedo / weightSum;
-        result.normalTS = normalize(blended.normalTS / weightSum);
-        result.metallic = blended.metallic / weightSum;
-        result.roughness = blended.roughness / weightSum;
-        result.ao = blended.ao / weightSum;
-    }
-    return result;
-}
+// 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
+static const uint PT_DEBUG_VIEW = 0;
 
 // RNG (PCG)
 float RandomValue(inout uint seed)
@@ -239,251 +79,18 @@ float3 CosineHemisphere(float3 normal, inout uint seed)
     return normalize(u * x + v * z + w * y);
 }
 
-// 프리넬 근사
-float3 FresnelSchlick(float cosTheta, float3 F0)
+float3 StrengthenTangentSpaceNormal(float3 normalTS, float strength)
 {
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return normalize(float3(normalTS.xy * strength, max(normalTS.z, 0.0f)));
 }
 
-// GGX Normal Distribution Function
-float DistributionGGX(float3 N, float3 H, float roughness)
+bool UsePhysicalRenderingMode()
 {
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float NdotH = max(dot(N, H), 0.0f);
-    float NdotH2 = NdotH * NdotH;
-	
-    float nom = a2;
-    float denom = (NdotH2 * (a2 - 1.0f) + 1.0f);
-    denom = PI * denom * denom;
-
-    return nom / max(denom, EPSILON);
+    return EMISSION_VIEW_PHYSICAL == g_emissionViewMode;
 }
 
-// Geometry Function - Schlick-GGX
-float GeometrySchlickGGX(float NdotV, float roughness)
-{
-    float r = roughness + 1.0f;
-    float k = (r * r) / 8.0f;
-	
-    float nom = NdotV;
-    float denom = NdotV * (1.0f - k) + k;
-
-    return nom / max(denom, EPSILON);
-}
-
-// GGX
-float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
-{
-    float NdotV = max(dot(N, V), 0.0f);
-    float NdotL = max(dot(N, L), 0.0f);
-    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-	
-    return ggx1 * ggx2;
-}
-
-// GGX Importance Sampling
-float3 SampleGGX(float3 N, float3 V, float roughness, inout uint seed)
-{
-    float a = roughness * roughness;
-	
-    float u1 = RandomValue(seed);
-    float u2 = RandomValue(seed);
-	
-    float theta = atan(a * sqrt(u1) / sqrt(1.0f - u1));
-    float phi = 2.0f * PI * u2;
-		
-    float3 H_local;
-    H_local.x = sin(theta) * cos(phi);
-    H_local.y = cos(theta);
-    H_local.z = sin(theta) * sin(phi);
-	
-    float3 up = abs(N.y) < 0.999 ? float3(0, 1, 0) : float3(1, 0, 0);
-    float3 tangent = normalize(cross(up, N));
-    float3 bitangent = cross(N, tangent);
-	
-    float3 H = normalize(tangent * H_local.x + N * H_local.y + bitangent * H_local.z);
-    return reflect(-V, H);
-}
-
-// GGX PDF
-float GGX_PDF(float3 N, float3 H, float3 V, float3 L, float roughness)
-{
-    float NdotH = max(dot(N, H), 0.0f);
-    float VdotH = max(dot(V, H), 0.0f);
-	
-    float D = DistributionGGX(N, H, roughness);
-    return (D * NdotH) / max(4.0f * VdotH, EPSILON);
-}
-
-// 배경을 위한
-float3 AtmosphereGradient(float3 rayDir, float3 sunDir)
-{
-    float height = rayDir.y;
-    float sunHeight = sunDir.y;
-  
-    float horizonFade = smoothstep(-0.02, 0.05, height);
-  
-    float3 zenithColor = lerp(float3(0.3, 0.4, 0.6), float3(0.5, 0.7, 1.0), smoothstep(-0.2, 0.5, sunHeight));
-    float3 horizonColor = lerp(float3(0.8, 0.4, 0.2), float3(0.9, 0.8, 0.7), smoothstep(-0.2, 0.2, sunHeight));
-  
-    float3 skyColor = lerp(horizonColor, zenithColor, smoothstep(0.0, 0.4, height));
-  
-    float sunInfluence = max(0.0, dot(rayDir, sunDir));
-    float3 sunTint = float3(1.0, 0.8, 0.6) * pow(sunInfluence, 8.0) * 0.3;
-  
-    return skyColor * horizonFade + sunTint;
-}
-
-float3 RayleighScattering(float3 rayDir, float3 sunDir)
-{
-    float cosTheta = dot(rayDir, sunDir);
-    float rayleighPhase = 3.0 / (16.0 * 3.14159) * (1.0 + cosTheta * cosTheta);
-  
-    float3 wavelengths = float3(0.65, 0.57, 0.475);
-    float3 scatterCoeff = 1.0 / pow(wavelengths, 4.0f.xxx);
-  
-    return scatterCoeff * rayleighPhase * 0.3;
-}
-
-float3 MieScattering(float3 rayDir, float3 sunDir)
-{
-    float cosTheta = dot(rayDir, sunDir);
-    float g = 0.76;
-    float g2 = g * g;
-  
-    float miePhase = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2)) *
-				   (1.0 + cosTheta * cosTheta) / pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5);
-  
-    return 1.0f.xxx * miePhase * 0.1;
-}
-
-float3 SunHalo(float3 rayDir, float3 sunDir)
-{
-    float sunDot = max(0.0, dot(rayDir, sunDir));
-  
-    float sunCore = pow(sunDot, 2000.0) * 2.0;
-  
-    float halo1 = pow(sunDot, 200.0) * 0.8;
-    float halo2 = pow(sunDot, 50.0) * 0.4;
-    float halo3 = pow(sunDot, 20.0) * 0.2;
-  
-    float corona = pow(sunDot, 10.0) * 0.1;
-  
-    float3 sunColor = float3(1.0, 0.95, 0.8);
-    float3 haloColor1 = float3(1.0, 0.9, 0.7);
-    float3 haloColor2 = float3(1.0, 0.8, 0.6);
-    float3 coronaColor = float3(0.9, 0.7, 0.5);
-  
-    return sunCore * sunColor +
-		 halo1 * haloColor1 +
-		 halo2 * haloColor2 +
-		 halo3 * haloColor1 * 0.5 +
-		 corona * coronaColor;
-}
-
-float CloudNoise(float3 rayDir)
-{
-    float3 p = rayDir * 5.0;
-    return frac(sin(dot(p, float3(12.9898, 78.233, 45.164))) * 43758.5453) * 0.5 + 0.5;
-}
-
-inline float ShadowVisibility(
-	RaytracingAccelerationStructure accel,
-	float3 origin,
-	float3 dir,
-	float tMin,
-	float tMax,
-	uint mask)
-{
-    RayQuery <
-		RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-		RAY_FLAG_FORCE_OPAQUE |
-		RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
-	> rq;
-
-    RayDesc ray;
-    ray.Origin = origin;
-    ray.Direction = dir;
-    ray.TMin = tMin;
-    ray.TMax = tMax;
-
-    rq.TraceRayInline(accel, RAY_FLAG_NONE, mask, ray);
-    while (rq.Proceed())
-    {
-        if (rq.CandidateType() == CANDIDATE_NON_OPAQUE_TRIANGLE)
-        {
-            rq.CommitNonOpaqueTriangleHit();
-        }
-    }
-
-    return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
-}
-
-float3 EvaluateLocalLightDirect(
-	float3 hitPos,
-	float3 normal,
-	float3 V,
-	float3 albedo,
-	float metallic,
-	float roughness,
-	float ao)
-{
-    float3 result = 0.0f.xxx;
-    uint lightCount = min(g_localLightCount, MAX_LOCAL_LIGHTS);
-    for (uint lightIndex = 0; lightIndex < lightCount; ++lightIndex)
-    {
-        LocalLightGPUData light = g_localLights[lightIndex];
-        float3 toLight = light.positionRange.xyz - hitPos;
-        float distSq = dot(toLight, toLight);
-        if (distSq <= EPSILON)
-        {
-            continue;
-        }
-
-        float dist = sqrt(distSq);
-        float range = max(light.positionRange.w, 0.0f);
-        if (range <= 0.0f || dist >= range)
-        {
-            continue;
-        }
-
-        float3 L = toLight / dist;
-        float NdotL = saturate(dot(normal, L));
-        if (NdotL <= 0.0f)
-        {
-            continue;
-        }
-
-        float sourceRadius = max(light.sourceRadiusPad.x, 0.02f);
-        float visibility = ShadowVisibility(
-			g_scene,
-			hitPos + normal * 0.03f,
-			L,
-			RAY_TMIN,
-			max(dist - sourceRadius, RAY_TMIN),
-			0xFF
-		);
-
-        float3 H = normalize(V + L);
-        float NdotV = saturate(dot(normal, V));
-        float3 F0 = lerp(0.04f.xxx, albedo, metallic);
-        float NDF = DistributionGGX(normal, H, roughness);
-        float G = GeometrySmith(normal, V, L, roughness);
-        float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
-        float3 specular = (NDF * G * F) / max(4.0f * NdotV * NdotL, EPSILON);
-        float3 kD = (1.0f - F) * (1.0f - metallic);
-
-        float rangeAtt = saturate(1.0f - dist / range);
-        rangeAtt *= rangeAtt;
-        float distanceAtt = 1.0f / max(distSq, sourceRadius * sourceRadius);
-        float3 radiance = light.colorIntensity.rgb * light.colorIntensity.w * rangeAtt * distanceAtt;
-
-        result += (kD * albedo * ao / PI + specular) * radiance * NdotL * visibility;
-    }
-    return result;
-}
+#define RAYTRACING_ENABLE_GGX_SAMPLING 1
+#include "RaytracingLighting.hlsli"
 
 [shader("raygeneration")]
 void RayGenMain()
@@ -514,7 +121,7 @@ void RayGenMain()
         ray.Origin = cameraPos.xyz;
         ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
         ray.TMin = 0.001f;
-        ray.TMax = 1000.0f;
+        ray.TMax = RAY_TMAX;
 
         RayPayload payload;
         payload.color = 0.0f.xxx;
@@ -542,31 +149,34 @@ void RayGenMain()
         g_temporalAccumulation[pixelCoord] = float4(finalColor, 1.0f);
     }
 	
-    float3 bloom = max(0.0f.xxx, finalColor - 0.75f.xxx) * 0.7f;
-    finalColor += bloom;
-	
-    finalColor = pow(finalColor, (1.0f / 1.8f).xxx);
-  
-    float luminance = dot(finalColor, float3(0.299f, 0.587f, 0.114f));
-    finalColor = lerp(luminance.xxx, finalColor, 1.4f);
-    finalColor = clamp(finalColor, 0.0f, 1.0f);
-	
-    g_output[pixelCoord] = float4(finalColor, 1.0f);
+    float3 displayColor = finalColor;
+    if (PT_DEBUG_VIEW == 0)
+    {
+        if (!UsePhysicalRenderingMode())
+        {
+            displayColor *= PT_OUTPUT_EXPOSURE;
+            float3 bloom = max(0.0f.xxx, displayColor - PT_BLOOM_THRESHOLD.xxx) * PT_BLOOM_INTENSITY;
+            displayColor += bloom;
+        }
+
+        displayColor = ToneMapACES(displayColor);
+        displayColor = pow(displayColor, (1.0f / 2.2f).xxx);
+
+        if (!UsePhysicalRenderingMode())
+        {
+            float luminance = dot(displayColor, float3(0.299f, 0.587f, 0.114f));
+            displayColor = lerp(luminance.xxx, displayColor, 1.15f);
+        }
+    }
+    displayColor = saturate(displayColor);
+
+    g_output[pixelCoord] = float4(displayColor, 1.0f);
 }
 
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    float3 rayDir = WorldRayDirection();
-    float skyT = smoothstep(-0.05f, 0.65f, rayDir.y);
-    float groundToSkyT = smoothstep(-0.02f, 0.02f, rayDir.y);
-
-    float3 nightZenith = float3(5.0f, 18.0f, 62.0f) / 255.0f;
-    float3 nightHorizon = float3(16.0f, 8.0f, 38.0f) / 255.0f;
-    float3 groundColor = float3(2.0f, 3.0f, 10.0f) / 255.0f;
-    float3 nightSky = lerp(nightHorizon, nightZenith, skyT);
-    
-    payload.color = lerp(groundColor, nightSky, groundToSkyT);
+    payload.color = SampleEnvironment(WorldRayDirection());
 }
 
 [shader("closesthit")]
@@ -595,27 +205,32 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 	
-    float3 normalObj = normalize(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z);
-    float3 normal = normalize(mul(normalObj, (float3x3) inst.worldInverse));
+    float3 normalObj = SafeNormalizeRay(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z, float3(0.0f, 1.0f, 0.0f));
+    float3 normal = SafeNormalizeRay(mul(normalObj, (float3x3) inst.worldInverse), float3(0.0f, 1.0f, 0.0f));
     float3 geometricNormal = normal;
+    float3 visibleNormal = normal;
     float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
     float3 tangentObj = tangentPacked.xyz;
     float tangentSign = tangentPacked.w;
-    float3 tangent = normalize(mul(tangentObj, (float3x3) inst.worldMatrix));
-    tangent = normalize(tangent - normal * dot(tangent, normal));
-    float3 bitangent = normalize(cross(normal, tangent) * tangentSign);
+    float3 tangentCandidate = mul(tangentObj, (float3x3) inst.worldMatrix);
+    float3 tangent;
+    float3 bitangent;
+    BuildSafeTangentFrame(normal, tangentCandidate, tangentSign, tangent, bitangent);
 	
     float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
     TerrainSample terrainSample;
     bool useTerrainSplat = 0 != (mat.materialFlags & MATERIAL_FLAG_TERRAIN_SPLAT);
+    float visibleNormalStrength = UsePhysicalRenderingMode() ? 1.0f : PT_VISIBLE_NORMAL_STRENGTH;
     if (useTerrainSplat)
     {
-        terrainSample = SampleTerrainSplat(mat, uv);
-        normal = normalize(
-			tangent * terrainSample.normalTS.x +
-			bitangent * terrainSample.normalTS.y +
-			normal * terrainSample.normalTS.z
-		);
+        terrainSample = SampleTerrainSplat(mat, uv, g_terrainSurfaces, g_sampler);
+        float3 visibleNormalTS = StrengthenTangentSpaceNormal(terrainSample.normalTS, visibleNormalStrength);
+        normal = TangentNormalToWorld(terrainSample.normalTS, tangent, bitangent, normal);
+        visibleNormal = normalize(
+            tangent * visibleNormalTS.x +
+            bitangent * visibleNormalTS.y +
+            geometricNormal * visibleNormalTS.z
+        );
     }
     else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_NORMAL_MAP))
     {
@@ -624,19 +239,30 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         float3 normalSample;
         normalSample.xy = encodedXY;
         normalSample.z = sqrt(saturate(1.0f - dot(encodedXY, encodedXY)));
-        normal = normalize(
-			tangent * normalSample.x +
-			bitangent * normalSample.y +
-			normal * normalSample.z
-		);
+        float3 visibleNormalSample = StrengthenTangentSpaceNormal(normalSample, visibleNormalStrength);
+        normal = TangentNormalToWorld(normalSample, tangent, bitangent, normal);
+        visibleNormal = normalize(
+            tangent * visibleNormalSample.x +
+            bitangent * visibleNormalSample.y +
+            geometricNormal * visibleNormalSample.z
+        );
     }
+    
     if (dot(normal, geometricNormal) < 0.0f)
     {
         normal = geometricNormal;
     }
+    if (dot(visibleNormal, geometricNormal) < 0.0f)
+    {
+        visibleNormal = geometricNormal;
+    }
     if (dot(normal, WorldRayDirection()) > 0.0f)
     {
         normal = -normal;
+    }
+    if (dot(visibleNormal, WorldRayDirection()) > 0.0f)
+    {
+        visibleNormal = -visibleNormal;
     }
 	
     float3 albedo = mat.albedo.rgb;
@@ -680,12 +306,39 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
     float3 V = -normalize(WorldRayDirection());
     float NdotVGeom = max(dot(geometricNormal, V), 0.0f);
-    float NdotVShading = max(dot(normal, V), 0.0f);
+    float NdotVShading = max(dot(visibleNormal, V), 0.0f);
     float3 F0 = lerp(0.04f.xxx, albedo, metallic);
-    float3 emissive = EvaluateMaterialEmission(mat, uv);
+    float3 emissive = EvaluateMaterialEmission(mat, uv, g_sampler);
+    if (payload.recursionDepth == 0 && PT_DEBUG_VIEW != 0)
+    {
+        if (PT_DEBUG_VIEW == 1)
+        {
+            payload.color = visibleNormal * 0.5f + 0.5f;
+        }
+        else if (PT_DEBUG_VIEW == 2)
+        {
+            payload.color = geometricNormal * 0.5f + 0.5f;
+        }
+        else if (PT_DEBUG_VIEW == 3)
+        {
+            payload.color = float3(NdotVShading, NdotVGeom, 0.0f);
+        }
+        else if (PT_DEBUG_VIEW == 4)
+        {
+            payload.color = albedo;
+        }
+        else
+        {
+            payload.color = float3(metallic, roughness, ao);
+        }
+        return;
+    }
+
     if (max(max(emissive.x, emissive.y), emissive.z) > 0.0f)
     {
-        payload.color = emissive;
+        payload.color = (0 == payload.recursionDepth)
+            ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
+            : emissive;
         return;
     }
 	
@@ -706,7 +359,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     rngSeed *= 0x846ca68b;
     rngSeed ^= rngSeed >> 16;
 	
-    float3 indirectF = FresnelSchlick(NdotVGeom, F0);
+    float3 indirectF = FresnelSchlick(NdotVShading, F0);
     float3 kS_indirect = indirectF;
     float3 kD_indirect = (1.0 - kS_indirect) * (1.0 - metallic);
 	
@@ -727,8 +380,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	
     if (!chooseSpec)
     {
-        L = CosineHemisphere(geometricNormal, rngSeed);
-        float NdotL = max(dot(geometricNormal, L), 0.0f);
+        L = CosineHemisphere(visibleNormal, rngSeed);
+        float NdotL = max(dot(visibleNormal, L), 0.0f);
         if (NdotL <= 0.0f)
         {
             payload.color = emissive;
@@ -747,22 +400,22 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     {
         if (roughness < 0.15f)
         {
-            L = reflect(WorldRayDirection(), geometricNormal);
-            float NdotL = max(dot(geometricNormal, L), 0.0f);
+            L = reflect(WorldRayDirection(), visibleNormal);
+            float NdotL = max(dot(visibleNormal, L), 0.0f);
             if (NdotL <= 0.0f)
             {
                 payload.color = emissive;
                 return;
             }
 
-            float3 F = FresnelSchlick(NdotVGeom, F0);
+            float3 F = FresnelSchlick(NdotVShading, F0);
             pdf = max(specProb, EPSILON);
             weight = F / pdf;
         }
         else
         {
-            L = SampleGGX(normal, V, roughness, rngSeed);
-            float NdotL = max(dot(normal, L), 0.0f);
+            L = SampleGGX(visibleNormal, V, roughness, rngSeed);
+            float NdotL = max(dot(visibleNormal, L), 0.0f);
             if (NdotL <= 0.0f)
             {
                 payload.color = emissive;
@@ -771,15 +424,15 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		
             float3 H = normalize(V + L);
 
-            float NDF = DistributionGGX(normal, H, roughness);
-            float G = GeometrySmith(normal, V, L, roughness);
+            float NDF = DistributionGGX(visibleNormal, H, roughness);
+            float G = GeometrySmith(visibleNormal, V, L, roughness);
             float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
 
             float3 numerator = NDF * G * F;
             float denominator = 4.0f * NdotVShading * NdotL;
             float3 f_s = numerator / max(denominator, EPSILON);
 		
-            float pdf_lobe = GGX_PDF(normal, H, V, L, roughness);
+            float pdf_lobe = GGX_PDF(visibleNormal, H, V, L, roughness);
             float branchProb = specProb;
 
             pdf = max(branchProb * pdf_lobe, EPSILON);
@@ -816,8 +469,5 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		child
 	);
 
-    float3 localLightDirect = payload.recursionDepth == 0
-        ? EvaluateLocalLightDirect(hitPos, normal, V, albedo, metallic, roughness, ao)
-        : 0.0f.xxx;
-    payload.color = emissive + localLightDirect + weight * child.color;
+    payload.color = emissive + weight * child.color;
 }

@@ -157,13 +157,7 @@
     <ClInclude Include="Component\StressTestComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
-    <ClInclude Include="Component\LocalLightComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
-      <Filter>RenderData</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderData\LightRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="Scene\LoginScene.h">
@@ -317,6 +311,21 @@
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingTerrain.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingEnvironment.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLighting.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingPostProcess.hlsli">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\UIPixelShader.hlsl">

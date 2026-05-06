@@ -4,6 +4,7 @@
 #include "MeshComponent.h"
 #include "MeshResource.h"
 #include "ResourceGlobal.h"
+#include "PixProfiler.h"
 
 void Scene::Initialize()
 {
@@ -221,6 +222,7 @@ void Scene::ResetAll()
 
 void Scene::OnBeginFrame()
 {
+	PixScopedCpuEvent event(L"Scene.OnBeginFrame");
 	ProcessDeferredCreates();
 	ProcessDeferredComponentCreates();
 	ProcessPendingStarts();
@@ -228,6 +230,8 @@ void Scene::OnBeginFrame()
 
 void Scene::ProcessPendingStarts()
 {
+	PixScopedCpuEvent event(L"Scene.ProcessPendingStarts");
+
 	while (!m_pendingStartComponents.empty())
 	{
 		const auto& req = m_pendingStartComponents.front();
@@ -252,6 +256,8 @@ void Scene::ProcessPendingStarts()
 
 void Scene::OnUpdate(float deltaTime)
 {
+	PixScopedCpuEvent event(L"Scene.OnUpdate");
+
 	for (const auto& entry : m_updateList)
 	{
 		entry.storage->OnUpdate(deltaTime);
@@ -260,6 +266,8 @@ void Scene::OnUpdate(float deltaTime)
 
 void Scene::OnFixedUpdate(float fixedDeltaTime)
 {
+	PixScopedCpuEvent event(L"Scene.OnFixedUpdate");
+
 	for (const auto& entry : m_fixedList)
 	{
 		entry.storage->OnFixedUpdate(fixedDeltaTime);
@@ -268,6 +276,8 @@ void Scene::OnFixedUpdate(float fixedDeltaTime)
 
 void Scene::OnLateUpdate(float deltaTime)
 {
+	PixScopedCpuEvent event(L"Scene.OnLateUpdate");
+
 	for (const auto& entry : m_lateList)
 	{
 		entry.storage->OnLateUpdate(deltaTime);
@@ -276,6 +286,7 @@ void Scene::OnLateUpdate(float deltaTime)
 
 void Scene::OnEndFrame()
 {
+	PixScopedCpuEvent event(L"Scene.OnEndFrame");
 	ProcessDeferredComponentDestroys();
 	ProcessDeferredDestroys();
 }
@@ -283,6 +294,8 @@ void Scene::OnEndFrame()
 
 void Scene::ProcessDeferredCreates()
 {
+	PixScopedCpuEvent event(L"Scene.ProcessDeferredCreates");
+
 	if (m_isProcessingDeferred)
 		return;
 
@@ -300,6 +313,8 @@ void Scene::ProcessDeferredCreates()
 
 void Scene::ProcessDeferredDestroys()
 {
+	PixScopedCpuEvent event(L"Scene.ProcessDeferredDestroys");
+
 	if (m_isProcessingDeferred)
 		return;
 
@@ -410,6 +425,8 @@ void Scene::DestroyGameObjectImmediate(GameObject::Handle handle)
 
 void Scene::ProcessDeferredComponentCreates()
 {
+	PixScopedCpuEvent event(L"Scene.ProcessDeferredComponentCreates");
+
 	if (m_isProcessingDeferred)
 		return;
 
@@ -427,6 +444,8 @@ void Scene::ProcessDeferredComponentCreates()
 
 void Scene::ProcessDeferredComponentDestroys()
 {
+	PixScopedCpuEvent event(L"Scene.ProcessDeferredComponentDestroys");
+
 	if (m_isProcessingDeferred)
 		return;
 

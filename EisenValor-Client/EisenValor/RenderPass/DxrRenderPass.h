@@ -9,7 +9,6 @@
 #include "RenderData/InstanceRenderData.h"
 #include "RenderData/MaterialRenderData.h"
 #include "RenderData/GeoTableRenderData.h"
-#include "RenderData/LightRenderData.h"
 #include "RenderData/RaytracingOutputRenderData.h"
 
 class MeshComponent;
@@ -34,7 +33,7 @@ private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
 	void ResetTemporalAccumulation();
-	bool ShouldResetTemporalAccumulation(const CameraRenderData* cameraData, uint32_t lightCount) const;
+	bool ShouldResetTemporalAccumulation(const CameraRenderData* cameraData) const;
 
 	void PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition);
 
@@ -51,7 +50,6 @@ private:
 		uint32_t					 frameIndex,
 		bool&						 hasAnimatedInstances
 	);
-	void CollectLocalLightData(Scene* scene, uint32_t frameIndex, const DX::XMFLOAT3* cameraPosition);
 
 private:
 	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
@@ -69,7 +67,6 @@ private:
 	std::shared_ptr<InstanceRenderData> m_instanceData[3];
 	std::shared_ptr<MaterialRenderData> m_materialData[3];
 	std::shared_ptr<GeoTableRenderData> m_geoTableData[3];
-	std::shared_ptr<LightRenderData>	m_lightData[3];
 	uint32_t							m_lastTlasInstanceCount[3] = {};
 	uint32_t							m_tlasStableFrameCount[3] = {};
 	uint64_t							m_lastTlasTopologyHash[3] = {};
@@ -82,12 +79,12 @@ private:
 	bool		 m_initialized = false;
 	bool		 m_usePathTracing = false;
 	bool		 m_useLiteRT = false;
+	bool		 m_usePhysicalEmissionView = false;
 	bool		 m_temporalAccumulationResetPending = true;
 	bool		 m_hasTemporalCamera = false;
 	uint32_t	 m_temporalAccumulationFrameCount = 0;
 	uint32_t	 m_temporalAccumulationReadIndex = 0;
 	uint32_t	 m_temporalAccumulationWriteIndex = 1;
-	uint32_t	 m_lastTemporalLightCount = 0;
 	DX::XMFLOAT3 m_lastTemporalCameraPosition = {0.0f, 0.0f, 0.0f};
 	DX::XMFLOAT3 m_lastTemporalCameraDirection = {0.0f, 0.0f, 1.0f};
 	float		 m_lastTemporalFov = 0.0f;

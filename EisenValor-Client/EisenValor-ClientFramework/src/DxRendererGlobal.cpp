@@ -14,6 +14,7 @@
 #include "TimerGlobal.h"
 #include "Transform.h"
 #include "GameObject.h"
+#include "PixProfiler.h"
 
 DxRendererGlobal::DxRendererGlobal() = default;
 
@@ -159,6 +160,8 @@ IRenderPass* DxRendererGlobal::GetRenderPass(const std::string& name) const
 
 void DxRendererGlobal::BeginFrame()
 {
+	PixScopedCpuEvent event(L"DxRenderer.BeginFrame");
+
 	if (!m_isInitialized || !m_swapChain)
 	{
 		DEBUG_LOG_FMT(
@@ -174,6 +177,8 @@ void DxRendererGlobal::BeginFrame()
 
 void DxRendererGlobal::Render(Scene* scene)
 {
+	PixScopedCpuEvent event(L"DxRenderer.Render");
+
 	if (nullptr == scene)
 	{
 		DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: Scene is null!\n");
@@ -182,35 +187,39 @@ void DxRendererGlobal::Render(Scene* scene)
 
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
-	auto frameData = std::make_shared<FrameRenderData>();
-	frameData->deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
-	frameData->totalTime = GLOBAL(TimerGlobal).GetRuntime();
-	frameData->frameIndex = frame->GetFrameIndex();
-	m_renderContext.SetData(frameData, 0);
-
-	auto* mainCamera = CameraComponent::GetMainCamera();
-	if (nullptr != mainCamera)
 	{
-		auto cameraData = std::make_shared<CameraRenderData>();
-		cameraData->viewMatrix = mainCamera->GetViewMatrix();
-		cameraData->projectionMatrix = mainCamera->GetProjectionMatrix();
-		cameraData->viewProjInverse = DirectX::XMMatrixInverse(
-			nullptr, DirectX::XMMatrixMultiply(cameraData->viewMatrix, cameraData->projectionMatrix)
-		);
+		PixScopedCpuEvent dataEvent(L"DxRenderer.PrepareFrameData");
+		auto			  frameData = std::make_shared<FrameRenderData>();
+		frameData->deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
+		frameData->totalTime = GLOBAL(TimerGlobal).GetRuntime();
+		frameData->frameIndex = frame->GetFrameIndex();
+		m_renderContext.SetData(frameData, 0);
 
-		auto& transform = mainCamera->GetGameObject()->GetTransform();
-		cameraData->cameraPosition = transform.GetWorldPosition();
-		cameraData->cameraDirection = transform.GetForward();
-		cameraData->nearZ = mainCamera->GetNearZ();
-		cameraData->farZ = mainCamera->GetFarZ();
-		cameraData->fov = mainCamera->GetFOV();
-		cameraData->aspectRatio = mainCamera->GetAspectRatio();
+		auto* mainCamera = CameraComponent::GetMainCamera();
+		if (nullptr != mainCamera)
+		{
+			auto cameraData = std::make_shared<CameraRenderData>();
+			cameraData->viewMatrix = mainCamera->GetViewMatrix();
+			cameraData->projectionMatrix = mainCamera->GetProjectionMatrix();
+			cameraData->viewProjInverse = DirectX::XMMatrixInverse(
+				nullptr, DirectX::XMMatrixMultiply(cameraData->viewMatrix, cameraData->projectionMatrix)
+			);
 
-		m_renderContext.SetData(cameraData, 0);
+			auto& transform = mainCamera->GetGameObject()->GetTransform();
+			cameraData->cameraPosition = transform.GetWorldPosition();
+			cameraData->cameraDirection = transform.GetForward();
+			cameraData->nearZ = mainCamera->GetNearZ();
+			cameraData->farZ = mainCamera->GetFarZ();
+			cameraData->fov = mainCamera->GetFOV();
+			cameraData->aspectRatio = mainCamera->GetAspectRatio();
+
+			m_renderContext.SetData(cameraData, 0);
+		}
 	}
 
 	if (m_renderPassesDirty)
 	{
+		PixScopedCpuEvent sortEvent(L"DxRenderer.SortRenderPasses");
 		std::stable_sort(
 			m_renderPasses.begin(), m_renderPasses.end(), [](const RenderPassEntry& a, const RenderPassEntry& b)
 			{ return static_cast<int32_t>(a.priority) < static_cast<int32_t>(b.priority); }
@@ -220,12 +229,16 @@ void DxRendererGlobal::Render(Scene* scene)
 
 	for (auto& entry : m_renderPasses)
 	{
+		const std::string markerName = "RenderPass." + entry.name;
+		PixScopedCpuEvent passEvent(markerName.c_str());
 		entry.pass->Execute(frame, scene, &m_renderContext);
 	}
 }
 
 void DxRendererGlobal::EndFrame()
 {
+	PixScopedCpuEvent event(L"DxRenderer.EndFrame");
+
 	if (!m_swapChain)
 	{
 		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
@@ -235,17 +248,33 @@ void DxRendererGlobal::EndFrame()
 	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
-	frame->ExecuteAndSignal(commandQueue.GetQueue());
-	const uint64_t signaledFence = commandQueue.SignalFence();
+	uint64_t signaledFence = 0;
+	{
+		PixScopedCpuEvent executeEvent(L"DxRenderer.ExecuteCommandList");
+		frame->ExecuteAndSignal(commandQueue.GetQueue());
+		signaledFence = commandQueue.SignalFence();
+	}
 
-	m_swapChain->PresentMaxPerformance();
-	frame->WaitForCompletion();
+	{
+		PixScopedCpuEvent presentEvent(L"DxRenderer.Present");
+		m_swapChain->PresentMaxPerformance();
+	}
+	{
+		PixScopedCpuEvent waitEvent(L"DxRenderer.WaitForFrameCompletion");
+		frame->WaitForCompletion();
+	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
-	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
+	{
+		PixScopedCpuEvent gcEvent(L"DxRenderer.ProcessCompletedReleases");
+		gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
+	}
 
-	m_renderContext.UpdateLifetimes();
+	{
+		PixScopedCpuEvent contextEvent(L"DxRenderer.UpdateRenderContextLifetimes");
+		m_renderContext.UpdateLifetimes();
+	}
 }
 
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)

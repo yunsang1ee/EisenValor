@@ -5,6 +5,7 @@
 #include <RenderContext.h>
 #include <DxSwapChain.h>
 #include <DxCommandContext.h>
+#include <PixProfiler.h>
 #include <DxTexture.h>
 #include <DxUtils.h>
 
@@ -23,6 +24,8 @@ void CopyToBackBufferPass::Release()
 
 void CopyToBackBufferPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
+	PixScopedCpuEvent cpuEvent(L"CopyToBackBufferPass.Execute");
+
 	if (!m_swapChain || !renderContext)
 	{
 		return;

@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "DxFrameResource.h"
 #include "DxCommandContext.h"
+#include "PixProfiler.h"
 #include "DxDescriptorHeapGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxSamplerHeapGlobal.h"
@@ -10,7 +11,6 @@
 #include "DxDeviceGlobal.h"
 #include "ResourceGlobal.h"
 #include "InputGlobal.h"
-#include "Component/LocalLightComponent.h"
 #include "MeshComponent.h"
 #include "SkinnedMeshComponent.h"
 #include "DxBLAS.h"
@@ -31,8 +31,6 @@ namespace
 {
 constexpr uint64_t kFnvOffsetBasis = 14695981039346656037ull;
 constexpr uint64_t kFnvPrime = 1099511628211ull;
-// Keep this in sync with MAX_LOCAL_LIGHTS in the DXR shaders.
-constexpr uint32_t kMaxUploadedLocalLights = 24;
 
 void HashBytes(uint64_t& hash, const void* data, size_t size)
 {
@@ -153,7 +151,6 @@ void DxrRenderPass::Initialize()
 		m_instanceData[i] = std::make_shared<InstanceRenderData>();
 		m_materialData[i] = std::make_shared<MaterialRenderData>();
 		m_geoTableData[i] = std::make_shared<GeoTableRenderData>();
-		m_lightData[i] = std::make_shared<LightRenderData>();
 
 		m_outputData[i] = std::make_shared<RaytracingOutputRenderData>();
 		m_outputData[i]->outputTexture = std::make_shared<DxTexture>();
@@ -178,7 +175,6 @@ void DxrRenderPass::Release()
 		m_instanceData[i].reset();
 		m_materialData[i].reset();
 		m_geoTableData[i].reset();
-		m_lightData[i].reset();
 		m_outputData[i].reset();
 	}
 	for (auto& history : m_ptAccumHistory)
@@ -264,10 +260,9 @@ void DxrRenderPass::ResetTemporalAccumulation()
 	m_temporalAccumulationReadIndex = 0;
 	m_temporalAccumulationWriteIndex = 1;
 	m_hasTemporalCamera = false;
-	m_lastTemporalLightCount = 0;
 }
 
-bool DxrRenderPass::ShouldResetTemporalAccumulation(const CameraRenderData* cameraData, uint32_t lightCount) const
+bool DxrRenderPass::ShouldResetTemporalAccumulation(const CameraRenderData* cameraData) const
 {
 	if (m_temporalAccumulationResetPending || nullptr == cameraData || !m_hasTemporalCamera)
 	{
@@ -293,19 +288,18 @@ bool DxrRenderPass::ShouldResetTemporalAccumulation(const CameraRenderData* came
 		return true;
 	}
 
-	return lightCount != m_lastTemporalLightCount;
+	return false;
 }
 
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
 {
+	PixScopedCpuEvent cpuEvent(L"DXR.PrepareRenderData");
 	auto&			 context = *frame->GetMainContext();
-	DxScopedGpuEvent prepareEvent(context, L"DXR.PrepareRenderData");
 
 	const uint32_t frameIndex = frame->GetFrameIndex();
 	auto&		   instanceData = m_instanceData[frameIndex];
 	auto&		   materialData = m_materialData[frameIndex];
 	auto&		   geoTableData = m_geoTableData[frameIndex];
-	auto&		   lightData = m_lightData[frameIndex];
 	auto&		   tlas = m_tlas[frameIndex];
 	bool		   hasAnimatedInstances = false;
 
@@ -313,8 +307,6 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	materialData->syncBuffer.Clear();
 	materialData->terrainSurfaceSyncBuffer.Clear();
 	geoTableData->syncBuffer.Clear();
-	lightData->syncBuffer.Clear();
-	lightData->lightCount = 0;
 	materialData->materialToIndex.clear();
 
 	std::vector<DxTLASInstance> tlasInstances;
@@ -325,16 +317,12 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));
 
 	{
-		DxScopedGpuEvent staticEvent(context, L"DXR.CollectStaticMeshData");
+		PixScopedCpuEvent staticEvent(L"DXR.CollectStaticMeshData");
 		CollectStaticMeshData(scene, cmdList4.Get(), tlasInstances, frameIndex);
 	}
 	{
-		DxScopedGpuEvent skinnedEvent(context, L"DXR.CollectSkinnedMeshData");
+		PixScopedCpuEvent skinnedEvent(L"DXR.CollectSkinnedMeshData");
 		CollectSkinnedMeshData(scene, cmdList4.Get(), tlasInstances, frameIndex, hasAnimatedInstances);
-	}
-	{
-		DxScopedGpuEvent lightEvent(context, L"DXR.CollectLocalLightData");
-		CollectLocalLightData(scene, frameIndex, cameraPosition);
 	}
 
 	if (nullptr != tlas && false == tlasInstances.empty())
@@ -430,6 +418,8 @@ void DxrRenderPass::CollectStaticMeshData(
 	Scene* scene, ID3D12GraphicsCommandList4* cmdList, std::vector<DxTLASInstance>& tlasInstances, uint32_t frameIndex
 )
 {
+	PixScopedCpuEvent event(L"DXR.CollectStaticMeshes");
+
 	auto* meshStorage = scene->GetStorage<MeshComponent>();
 	if (nullptr == meshStorage)
 	{
@@ -492,6 +482,7 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.roughness = matRes->GetRoughness();
 				gpuMat.metallic = matRes->GetMetallic();
 				gpuMat.emissive = matRes->GetEmissive();
+				gpuMat.visibleEmissive = matRes->GetVisibleEmissive();
 				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
 				gpuMat.materialFlags = matRes->GetMaterialFlags();
 				gpuMat.albedoTextureIdx = GetReadyTextureIndex(matRes, "ALBD");
@@ -542,6 +533,8 @@ void DxrRenderPass::CollectSkinnedMeshData(
 	bool&						 hasAnimatedInstances
 )
 {
+	PixScopedCpuEvent event(L"DXR.CollectSkinnedMeshes");
+
 	auto* skinnedMeshStorage = scene->GetStorage<SkinnedMeshComponent>();
 	if (nullptr == skinnedMeshStorage)
 	{
@@ -578,11 +571,14 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			//	"[DxrRenderPass] Animated BLAS initial build: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			auto newBlas = std::make_unique<DxBLAS>();
-			newBlas->Build(
-				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
-				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(),
-				meshRes->GetSubMeshes(), true, meshRes->GetName() + "_AnimatedBLAS_" + std::to_string(frameIndex)
-			);
+			{
+				PixScopedCommandListEvent blasEvent(cmdList, L"DXR.BuildAnimatedBLAS");
+				newBlas->Build(
+					m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
+					sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(),
+					meshRes->GetSubMeshes(), true, meshRes->GetName() + "_AnimatedBLAS_" + std::to_string(frameIndex)
+				);
+			}
 
 			const_cast<SkinnedMeshComponent&>(skinnedMeshComp).SetBLAS(frameIndex, std::move(newBlas));
 			blas = skinnedMeshComp.GetBLAS(frameIndex);
@@ -592,6 +588,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS rebuild: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
+			PixScopedCommandListEvent blasEvent(cmdList, L"DXR.RebuildAnimatedBLAS");
 			blas->Build(
 				m_device5.Get(), cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(),
 				sizeof(EvAsset::Vertex), meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(),
@@ -603,6 +600,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			// DEBUG_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS refit: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
+			PixScopedCommandListEvent blasEvent(cmdList, L"DXR.RefitAnimatedBLAS");
 			blas->Refit(
 				cmdList, skinnedVB->GetGPUAddress(), meshRes->GetVertexCount(), sizeof(EvAsset::Vertex),
 				meshRes->GetIndexBuffer()->GetGPUAddress(), meshRes->GetIndexCount(), meshRes->GetSubMeshes()
@@ -643,6 +641,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.roughness = matRes->GetRoughness();
 				gpuMat.metallic = matRes->GetMetallic();
 				gpuMat.emissive = matRes->GetEmissive();
+				gpuMat.visibleEmissive = matRes->GetVisibleEmissive();
 				gpuMat.shadingModel = static_cast<uint32_t>(matRes->GetShadingModelId());
 				gpuMat.materialFlags = matRes->GetMaterialFlags();
 				gpuMat.albedoTextureIdx = GetReadyTextureIndex(matRes, "ALBD");
@@ -685,75 +684,6 @@ void DxrRenderPass::CollectSkinnedMeshData(
 	}
 }
 
-void DxrRenderPass::CollectLocalLightData(Scene* scene, uint32_t frameIndex, const DX::XMFLOAT3* cameraPosition)
-{
-	auto* lightStorage = scene->GetStorage<LocalLightComponent>();
-	if (nullptr == lightStorage)
-	{
-		return;
-	}
-
-	auto& lightData = m_lightData[frameIndex];
-
-	struct LocalLightCandidate
-	{
-		LocalLightGPUData gpuLight;
-		float			  cameraDistanceSq;
-	};
-
-	std::vector<LocalLightCandidate> candidates;
-	candidates.reserve(lightStorage->GetList().size());
-
-	for (const auto& lightComp : lightStorage->GetList())
-	{
-		if (lightComp.GetIntensity() <= 0.0f || lightComp.GetRange() <= 0.0f)
-		{
-			continue;
-		}
-
-		auto* owner = lightComp.GetGameObject();
-		if (nullptr == owner)
-		{
-			continue;
-		}
-
-		const auto worldPosition = owner->GetTransform().GetWorldPosition();
-		const auto color = lightComp.GetColor();
-
-		LocalLightGPUData gpuLight = {};
-		gpuLight.positionRange = {worldPosition.x, worldPosition.y, worldPosition.z, lightComp.GetRange()};
-		gpuLight.colorIntensity = {color.x, color.y, color.z, lightComp.GetIntensity()};
-		gpuLight.sourceRadiusPad = {lightComp.GetSourceRadius(), 0.0f, 0.0f, 0.0f};
-
-		float cameraDistanceSq = 0.0f;
-		if (nullptr != cameraPosition)
-		{
-			const float dx = worldPosition.x - cameraPosition->x;
-			const float dy = worldPosition.y - cameraPosition->y;
-			const float dz = worldPosition.z - cameraPosition->z;
-			cameraDistanceSq = dx * dx + dy * dy + dz * dz;
-		}
-
-		candidates.push_back({gpuLight, cameraDistanceSq});
-	}
-
-	if (nullptr != cameraPosition && candidates.size() > kMaxUploadedLocalLights)
-	{
-		std::partial_sort(
-			candidates.begin(), candidates.begin() + kMaxUploadedLocalLights, candidates.end(),
-			[](const auto& lhs, const auto& rhs) { return lhs.cameraDistanceSq < rhs.cameraDistanceSq; }
-		);
-	}
-
-	const size_t uploadCount = std::min<size_t>(candidates.size(), kMaxUploadedLocalLights);
-	for (size_t i = 0; i < uploadCount; ++i)
-	{
-		lightData->syncBuffer.Register(candidates[i].gpuLight);
-	}
-
-	lightData->lightCount = static_cast<uint32_t>(lightData->syncBuffer.Size());
-}
-
 void DxrRenderPass::CreateRaytracingPipeline()
 {
 	m_rtLitePipeline = std::make_unique<DxRtPipelineState>();
@@ -776,6 +706,8 @@ void DxrRenderPass::CreateRaytracingPipeline()
 
 void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
+	PixScopedCpuEvent cpuEvent(L"DxrRenderPass.Execute");
+
 	if (!m_initialized || nullptr == scene || nullptr == renderContext)
 	{
 		return;
@@ -785,7 +717,6 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	auto&		   instanceData = m_instanceData[frameIndex];
 	auto&		   materialData = m_materialData[frameIndex];
 	auto&		   geoTableData = m_geoTableData[frameIndex];
-	auto&		   lightData = m_lightData[frameIndex];
 	auto&		   outputData = m_outputData[frameIndex];
 	auto&		   tlas = m_tlas[frameIndex];
 
@@ -800,12 +731,19 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		m_useLiteRT = !m_useLiteRT;
 		ResetTemporalAccumulation();
 	}
+	if (input.GetInputDown(VK_F8))
+	{
+		m_usePhysicalEmissionView = !m_usePhysicalEmissionView;
+		ResetTemporalAccumulation();
+	}
 
-	renderContext->SetData(instanceData, 0);
-	renderContext->SetData(materialData, 0);
-	renderContext->SetData(geoTableData, 0);
-	renderContext->SetData(lightData, 0);
-	renderContext->SetData(outputData, 0);
+	{
+		PixScopedCpuEvent setDataEvent(L"DXR.SetRenderContextData");
+		renderContext->SetData(instanceData, 0);
+		renderContext->SetData(materialData, 0);
+		renderContext->SetData(geoTableData, 0);
+		renderContext->SetData(outputData, 0);
+	}
 
 	auto				cameraData = renderContext->GetData<CameraRenderData>();
 	const DX::XMFLOAT3* cameraPosition = cameraData ? &cameraData->cameraPosition : nullptr;
@@ -818,12 +756,12 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	PrepareRenderData(frame, scene, cameraPosition);
 
 	{
+		PixScopedCpuEvent syncCpuEvent(L"DXR.SyncRenderData");
 		DxScopedGpuEvent syncEvent(context, L"DXR.SyncRenderData");
 		instanceData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		materialData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		materialData->terrainSurfaceSyncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		geoTableData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
-		lightData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 	}
 
 	if (nullptr == tlas || false == tlas->IsBuilt())
@@ -837,32 +775,36 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	auto& descHeap = GLOBAL(DxDescriptorHeapGlobal);
 	auto& samplerHeap = GLOBAL(DxSamplerHeapGlobal);
 
-	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap(), samplerHeap.GetHeap()};
-	cmdList4->SetDescriptorHeaps(2, heaps);
+	{
+		PixScopedCpuEvent setupEvent(L"DXR.BindPipelineAndResources");
 
-	if (m_usePathTracing)
-	{
-		cmdList4->SetPipelineState1(m_ptPipeline->GetStateObject());
-		cmdList4->SetComputeRootSignature(m_ptPipeline->GetGlobalRootSignature());
-	}
-	else if (m_useLiteRT)
-	{
-		cmdList4->SetPipelineState1(m_rtLitePipeline->GetStateObject());
-		cmdList4->SetComputeRootSignature(m_rtLitePipeline->GetGlobalRootSignature());
-	}
-	else
-	{
-		cmdList4->SetPipelineState1(m_rtPipeline->GetStateObject());
-		cmdList4->SetComputeRootSignature(m_rtPipeline->GetGlobalRootSignature());
-	}
+		ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap(), samplerHeap.GetHeap()};
+		cmdList4->SetDescriptorHeaps(2, heaps);
 
-	cmdList4->SetComputeRootDescriptorTable(0, descHeap.GetGPUHandle(tlas->GetSRVIndex()));
-	cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputData->outputTexture->GetUAVIndex(0)));
+		if (m_usePathTracing)
+		{
+			cmdList4->SetPipelineState1(m_ptPipeline->GetStateObject());
+			cmdList4->SetComputeRootSignature(m_ptPipeline->GetGlobalRootSignature());
+		}
+		else if (m_useLiteRT)
+		{
+			cmdList4->SetPipelineState1(m_rtLitePipeline->GetStateObject());
+			cmdList4->SetComputeRootSignature(m_rtLitePipeline->GetGlobalRootSignature());
+		}
+		else
+		{
+			cmdList4->SetPipelineState1(m_rtPipeline->GetStateObject());
+			cmdList4->SetComputeRootSignature(m_rtPipeline->GetGlobalRootSignature());
+		}
+
+		cmdList4->SetComputeRootDescriptorTable(0, descHeap.GetGPUHandle(tlas->GetSRVIndex()));
+		cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputData->outputTexture->GetUAVIndex(0)));
+	}
 
 	bool resetTemporalAccumulation = true;
 	if (m_usePathTracing)
 	{
-		resetTemporalAccumulation = ShouldResetTemporalAccumulation(cameraData.get(), lightData->lightCount);
+		resetTemporalAccumulation = ShouldResetTemporalAccumulation(cameraData.get());
 		if (resetTemporalAccumulation)
 		{
 			m_temporalAccumulationFrameCount = 0;
@@ -879,11 +821,11 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	auto* temporalHistoryWrite = m_ptAccumHistory[m_temporalAccumulationWriteIndex].get();
 	if (temporalHistoryRead && temporalHistoryRead->HasSRV())
 	{
-		cmdList4->SetComputeRootDescriptorTable(9, descHeap.GetGPUHandle(temporalHistoryRead->GetSRVIndex()));
+		cmdList4->SetComputeRootDescriptorTable(7, descHeap.GetGPUHandle(temporalHistoryRead->GetSRVIndex()));
 	}
 	if (temporalHistoryWrite && temporalHistoryWrite->HasUAV(0))
 	{
-		cmdList4->SetComputeRootDescriptorTable(10, descHeap.GetGPUHandle(temporalHistoryWrite->GetUAVIndex(0)));
+		cmdList4->SetComputeRootDescriptorTable(8, descHeap.GetGPUHandle(temporalHistoryWrite->GetUAVIndex(0)));
 	}
 
 	struct TemporalAccumulationConstants
@@ -891,12 +833,13 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		uint32_t frameCount;
 		uint32_t enabled;
 		uint32_t reset;
-		uint32_t pad;
+		uint32_t emissionViewMode;
 	};
 	TemporalAccumulationConstants temporalConstants = {
-		m_temporalAccumulationFrameCount, m_usePathTracing ? 1u : 0u, resetTemporalAccumulation ? 1u : 0u, 0u
+		m_temporalAccumulationFrameCount, m_usePathTracing ? 1u : 0u, resetTemporalAccumulation ? 1u : 0u,
+		m_usePhysicalEmissionView ? 1u : 0u
 	};
-	cmdList4->SetComputeRoot32BitConstants(11, 4, &temporalConstants, 0);
+	cmdList4->SetComputeRoot32BitConstants(9, 4, &temporalConstants, 0);
 
 	if (m_usePathTracing)
 	{
@@ -935,13 +878,6 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			6, materialData->terrainSurfaceSyncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
 		);
 	}
-	if (lightData->syncBuffer.GetBuffer())
-	{
-		cmdList4->SetComputeRootShaderResourceView(
-			7, lightData->syncBuffer.GetBuffer()->GetResource()->GetGPUVirtualAddress()
-		);
-	}
-	cmdList4->SetComputeRoot32BitConstants(8, 1, &lightData->lightCount, 0);
 
 	auto* shaderTable =
 		m_usePathTracing ? m_ptShaderTable.get() : (m_useLiteRT ? m_rtLiteShaderTable.get() : m_rtShaderTable.get());
@@ -955,6 +891,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	};
 
 	{
+		PixScopedCpuEvent dispatchCpuEvent(L"DXR.DispatchRays");
 		DxScopedGpuEvent dispatchEvent(context, L"DXR.DispatchRays");
 		cmdList4->DispatchRays(&desc);
 	}
@@ -969,7 +906,6 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		m_temporalAccumulationWriteIndex = 1u - m_temporalAccumulationReadIndex;
 		++m_temporalAccumulationFrameCount;
 		m_temporalAccumulationResetPending = false;
-		m_lastTemporalLightCount = lightData->lightCount;
 
 		if (nullptr != cameraData)
 		{

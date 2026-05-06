@@ -82,6 +82,7 @@ struct MaterialGPUData
 {
 	RAY_FLOAT4 albedo;
 	RAY_FLOAT4 emissive;
+	RAY_FLOAT4 visibleEmissive;
 
 	float	   roughness;
 	float	   metallic;
@@ -97,13 +98,6 @@ struct MaterialGPUData
 	RAY_UINT pad0;
 	RAY_UINT pad1;
 	RAY_UINT pad2;
-};
-
-struct LocalLightGPUData
-{
-	RAY_FLOAT4 positionRange;
-	RAY_FLOAT4 colorIntensity;
-	RAY_FLOAT4 sourceRadiusPad;
 };
 
 struct TerrainSurfaceGPUData

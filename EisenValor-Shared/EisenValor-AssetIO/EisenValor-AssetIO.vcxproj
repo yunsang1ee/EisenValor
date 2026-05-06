@@ -26,7 +26,6 @@
     <ClInclude Include="include\AssetRegistryData.h" />
     <ClInclude Include="include\MaterialData.h" />
     <ClInclude Include="include\MeshData.h" />
-    <ClInclude Include="include\MeshLoader.h" />
     <ClInclude Include="include\SceneData.h" />
     <ClInclude Include="include\SkinnedMeshData.h" />
     <ClInclude Include="include\TextureData.h" />
@@ -37,7 +36,6 @@
     <ClCompile Include="src\AssetRegistryData.cpp" />
     <ClCompile Include="src\MaterialData.cpp" />
     <ClCompile Include="src\MeshData.cpp" />
-    <ClCompile Include="src\MeshLoader.cpp" />
     <ClCompile Include="src\SceneData.cpp" />
     <ClCompile Include="src\SkinnedMeshData.cpp" />
     <ClCompile Include="src\TextureData.cpp" />

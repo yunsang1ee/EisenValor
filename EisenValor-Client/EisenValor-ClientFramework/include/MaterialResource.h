@@ -25,6 +25,7 @@ public:
 	float				  GetRoughness() const { return roughness; }
 	float				  GetMetallic() const { return metallic; }
 	DX::XMFLOAT4		  GetEmissive() const { return emissive; }
+	DX::XMFLOAT4		  GetVisibleEmissive() const { return visibleEmissive; }
 	uint32_t			  GetTerrainLayerCount() const { return terrainLayerCount; }
 	DX::XMFLOAT2		  GetTerrainSize() const { return terrainSize; }
 	const DX::XMFLOAT4*	  GetTerrainLayerTileST() const { return terrainLayerTileST; }
@@ -37,7 +38,9 @@ public:
 		float				  roughnessVal,
 		float				  metallicIn,
 		const float			  emissiveColorIn[3],
-		float				  emissiveIntensityIn
+		float				  emissiveIntensityIn,
+		const float			  visibleEmissiveColorIn[3] = nullptr,
+		float				  visibleEmissiveIntensityIn = -1.0f
 	);
 	void SetTerrainData(
 		uint32_t	layerCount,
@@ -57,6 +60,7 @@ private:
 	float				  roughness = 1.0f;
 	float				  metallic = 0.0f;
 	DX::XMFLOAT4		  emissive{0.0f, 0.0f, 0.0f, 0.0f};
+	DX::XMFLOAT4		  visibleEmissive{0.0f, 0.0f, 0.0f, 0.0f};
 	uint32_t			  terrainLayerCount = 0;
 	DX::XMFLOAT2		  terrainSize{0.0f, 0.0f};
 	DX::XMFLOAT4		  terrainLayerTileST[4]{

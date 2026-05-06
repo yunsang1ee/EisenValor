@@ -30,6 +30,7 @@
 #include "DxBLAS.h"
 #include "DxCommandQueueGlobal.h"
 #include "InputGlobal.h"
+#include "PixProfiler.h"
 
 #include <DirectXTex.h>
 #include <fstream>
@@ -102,6 +103,8 @@ void ResourceGlobal::ProcessPendingLoads()
 		return;
 	}
 
+	PixScopedCpuEvent event(L"Resource.ProcessPendingLoads");
+
 	auto* frame = GLOBAL(DxRendererGlobal).GetCurrentFrame();
 	if (!frame)
 	{
@@ -109,8 +112,10 @@ void ResourceGlobal::ProcessPendingLoads()
 	}
 
 	auto* device = GLOBAL(DxDeviceGlobal).GetDevice();
-	auto* cmdList = frame->GetMainContext()->CommandList();
+	auto& context = *frame->GetMainContext();
+	auto* cmdList = context.CommandList();
 	auto* uploadHeap = frame->GetUploadHeap();
+	DxScopedGpuEvent gpuEvent(context, L"Resource.ProcessPendingLoads");
 
 	DEBUG_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
 
@@ -139,6 +144,9 @@ void ResourceGlobal::ProcessPendingLoads()
 
 		if (task.typeID == MeshResource::StaticRuntimeTypeID())
 		{
+			PixScopedCpuEvent taskEvent(L"Resource.Upload.Mesh");
+			DxScopedGpuEvent taskGpuEvent(context, L"Resource.Upload.Mesh");
+
 			EvAsset::MeshData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
 			{
@@ -218,6 +226,9 @@ void ResourceGlobal::ProcessPendingLoads()
 		}
 		else if (task.typeID == SkinnedMeshResource::StaticRuntimeTypeID())
 		{
+			PixScopedCpuEvent taskEvent(L"Resource.Upload.SkinnedMesh");
+			DxScopedGpuEvent taskGpuEvent(context, L"Resource.Upload.SkinnedMesh");
+
 			EvAsset::SkinnedMeshData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
 			{
@@ -286,6 +297,9 @@ void ResourceGlobal::ProcessPendingLoads()
 		}
 		else if (task.typeID == TextureResource::StaticRuntimeTypeID())
 		{
+			PixScopedCpuEvent taskEvent(L"Resource.Upload.Texture");
+			DxScopedGpuEvent taskGpuEvent(context, L"Resource.Upload.Texture");
+
 			EvAsset::TextureData data;
 			if (false == EvAsset::AssetLoader::Load(task.path, data))
 			{
