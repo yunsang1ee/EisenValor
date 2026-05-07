@@ -18,8 +18,8 @@
   ],
   "capturePoints": [
     {
-      "name": "A",
-      "path": "MARKER/Capture Point A",
+      "name": "WEST",
+      "path": "MARKER/Capture Point WEST",
       "exportOrder": 0,
       "position": {
         "x": -110.0,
@@ -32,8 +32,8 @@
       "occupationScore": 50
     },
     {
-      "name": "B",
-      "path": "MARKER/Capture Point B",
+      "name": "EAST",
+      "path": "MARKER/Capture Point EAST",
       "exportOrder": 0,
       "position": {
         "x": 110.0,

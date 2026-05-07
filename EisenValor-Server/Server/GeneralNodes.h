@@ -52,13 +52,26 @@ namespace GameServer {
 			virtual bool Check(const float dt) override final;
 		};
 
-		// 공격 쿨타임이 차서 다시 공격할 수 있는지 확인한다.
-		class IsAttackCooldownReady : public ConditionNode {
+		// 현재 타겟이 병사(Soldier)인지 확인한다.
+		class IsTargetSoldier : public ConditionNode {
 		public:
 			virtual bool Check(const float dt) override final;
-			virtual void Reset() override { m_acc = 0.f; }
+		};
+
+		// 공격 쿨타임이 차서 다시 공격할 수 있는지 확인한다.
+		// 매 사이클마다 [minSec, maxSec] 범위에서 새로운 쿨다운을 무작위로 결정한다.
+		class IsAttackCooldownReady : public ConditionNode {
+		public:
+			explicit IsAttackCooldownReady(const float minSec = 3.f, const float maxSec = 7.f)
+				: m_minSec{ minSec }, m_maxSec{ maxSec } {
+			}
+			virtual bool Check(const float dt) override final;
+			virtual void Reset() override { m_acc = 0.f; m_cycleSec = -1.f; }
 		private:
 			float m_acc{};
+			float m_cycleSec{ -1.f };
+			float m_minSec;
+			float m_maxSec;
 		};
 
 		// 스턴 지속시간이 끝났는지 확인한다.

@@ -82,7 +82,7 @@ bool GameServer::Contents::IsTargetInDetectionRange::Check(const float dt)
 	if(false == IsValidObj(target)) return false;
 
 	const auto& objData{ owner->GetGameObjectData() };
-	constexpr float leashRange{ 6.f };
+	constexpr float leashRange{ 15.f };
 	return owner->IsTargetInRange(target, leashRange * leashRange);
 }
 
@@ -106,14 +106,26 @@ bool GameServer::Contents::IsTargetInAttackRange::Check(const float dt)
 	return owner->IsTargetInRange(target, range * range);
 }
 
+bool GameServer::Contents::IsTargetSoldier::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	const auto target{ owner->GetTarget() };
+	if(false == IsValidObj(target)) return false;
+	return FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == target->GetObjType();
+}
+
 bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
 {
+	if(m_cycleSec < 0.f) {
+		std::uniform_real_distribution<float> dist{ m_minSec, m_maxSec };
+		m_cycleSec = dist(mersenne);
+	}
+
 	m_acc += dt;
-	const auto owner{ GetOwner() };
-	const auto& objData{ owner->GetGameObjectData() };
-	constexpr float cycleSec{5.f};
-	if(m_acc >= cycleSec) {
+	if(m_acc >= m_cycleSec) {
 		m_acc = 0.f;
+		std::uniform_real_distribution<float> dist{ m_minSec, m_maxSec };
+		m_cycleSec = dist(mersenne);
 		return true;
 	}
 	return false;
@@ -135,7 +147,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindEnemy::DoAc
 {
 	auto const owner{ GetOwner() };
 	const auto& objData{ owner->GetGameObjectData() };
-	constexpr float detectionRange{ 3.f };
+	constexpr float detectionRange{ 15.f };
 	constexpr float detectionRangeSq{ detectionRange * detectionRange };
 	if(detectionRangeSq <= 0.f) return BEHAVIOR_NODE_STATUS::FAIL;
 
@@ -147,7 +159,9 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindEnemy::DoAc
 	float nearestDistSq{ std::numeric_limits<float>::max() };
 
 	for(int i = 0; i < gameObjectGroups.size(); ++i) {
-		if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL != i && FB_ENUMS::GAME_OBJECT_TYPE_PLAYER != i)
+		if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL != i &&
+		   FB_ENUMS::GAME_OBJECT_TYPE_PLAYER != i &&
+		   FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER != i)
 			continue;
 
 		for(const auto& [id, o] : gameObjectGroups[i]) {
@@ -328,7 +342,8 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::MoveToOZ::DoAct
 		if(false == IsValidObj(o)) continue;
 
 		std::bernoulli_distribution dist{ 0.5 };
-		std::string_view ozName{ dist(mersenne) ? "A" : "B" };
+		// std::string_view ozName{ dist(mersenne) ? "WEST" : "EAST" };
+		std::string_view ozName{ "WEST" };
 
 		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(ozName.data())) };
 		if(oz && FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {

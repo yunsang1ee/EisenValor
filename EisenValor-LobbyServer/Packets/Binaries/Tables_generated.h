@@ -228,6 +228,9 @@ struct SC_GAME_FINISH_RESULT_PACKETBuilder;
 struct CS_TELEPORT_PACKET;
 struct CS_TELEPORT_PACKETBuilder;
 
+struct SC_TELEPORT_PACKET;
+struct SC_TELEPORT_PACKETBuilder;
+
 struct CS_GEN_NPC_GENERAL_PACKET;
 struct CS_GEN_NPC_GENERAL_PACKETBuilder;
 
@@ -3684,6 +3687,77 @@ inline ::flatbuffers::Offset<CS_TELEPORT_PACKET> CreateCS_TELEPORT_PACKET(
     FB_ENUMS::TELEPORT_PLACE_TYPE place = FB_ENUMS::TELEPORT_PLACE_TYPE_MY_TEAM_BASE) {
   CS_TELEPORT_PACKETBuilder builder_(_fbb);
   builder_.add_place(place);
+  return builder_.Finish();
+}
+
+struct SC_TELEPORT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_TELEPORT_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_OBJ_ID = 4,
+    VT_POS_INFO = 6,
+    VT_SUB_STATE = 8,
+    VT_MOVE_DIR = 10
+  };
+  uint64_t obj_id() const {
+    return GetField<uint64_t>(VT_OBJ_ID, 0);
+  }
+  const FB_STRUCTS::PosInfo *pos_info() const {
+    return GetStruct<const FB_STRUCTS::PosInfo *>(VT_POS_INFO);
+  }
+  uint8_t sub_state() const {
+    return GetField<uint8_t>(VT_SUB_STATE, 0);
+  }
+  FB_ENUMS::MOVE_DIRECTION_TYPE move_dir() const {
+    return static_cast<FB_ENUMS::MOVE_DIRECTION_TYPE>(GetField<uint8_t>(VT_MOVE_DIR, 0));
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
+           VerifyField<FB_STRUCTS::PosInfo>(verifier, VT_POS_INFO, 4) &&
+           VerifyField<uint8_t>(verifier, VT_SUB_STATE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_MOVE_DIR, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_TELEPORT_PACKETBuilder {
+  typedef SC_TELEPORT_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_obj_id(uint64_t obj_id) {
+    fbb_.AddElement<uint64_t>(SC_TELEPORT_PACKET::VT_OBJ_ID, obj_id, 0);
+  }
+  void add_pos_info(const FB_STRUCTS::PosInfo *pos_info) {
+    fbb_.AddStruct(SC_TELEPORT_PACKET::VT_POS_INFO, pos_info);
+  }
+  void add_sub_state(uint8_t sub_state) {
+    fbb_.AddElement<uint8_t>(SC_TELEPORT_PACKET::VT_SUB_STATE, sub_state, 0);
+  }
+  void add_move_dir(FB_ENUMS::MOVE_DIRECTION_TYPE move_dir) {
+    fbb_.AddElement<uint8_t>(SC_TELEPORT_PACKET::VT_MOVE_DIR, static_cast<uint8_t>(move_dir), 0);
+  }
+  explicit SC_TELEPORT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_TELEPORT_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_TELEPORT_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_TELEPORT_PACKET> CreateSC_TELEPORT_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t obj_id = 0,
+    const FB_STRUCTS::PosInfo *pos_info = nullptr,
+    uint8_t sub_state = 0,
+    FB_ENUMS::MOVE_DIRECTION_TYPE move_dir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD) {
+  SC_TELEPORT_PACKETBuilder builder_(_fbb);
+  builder_.add_obj_id(obj_id);
+  builder_.add_pos_info(pos_info);
+  builder_.add_move_dir(move_dir);
+  builder_.add_sub_state(sub_state);
   return builder_.Finish();
 }
 
