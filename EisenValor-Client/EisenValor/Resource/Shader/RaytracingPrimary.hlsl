@@ -48,7 +48,7 @@ void RayGenMain()
 	
     TraceRay(g_scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 0, 0, ray, payload);
 	
-    g_output[pixelCoord] = float4(pow(payload.color, (1.0f / 2.2f).xxx), 1.0f);
+    g_output[pixelCoord] = float4(max(0.0f.xxx, payload.color), 1.0f);
 }
 
 [shader("closesthit")]

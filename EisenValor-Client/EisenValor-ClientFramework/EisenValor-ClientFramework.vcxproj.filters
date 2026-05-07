@@ -308,6 +308,9 @@
       <Filter>Component\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="include\IKProcessor.h" />
+    <ClInclude Include="include\PixProfiler.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">

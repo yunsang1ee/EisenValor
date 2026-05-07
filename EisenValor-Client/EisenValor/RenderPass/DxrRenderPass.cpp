@@ -215,9 +215,11 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		}
 
 		outputTex->Initialize(
-			device.GetDevice(), width, height, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-			1, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, "DxrRenderPass_Output_" + std::to_string(i)
+			device.GetDevice(), width, height, DXGI_FORMAT_R16G16B16A16_FLOAT,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			"DxrRenderPass_Output_" + std::to_string(i)
 		);
+		outputTex->CreateSRV(device.GetDevice(), descHeap);
 		outputTex->CreateUAV(device.GetDevice(), descHeap, 0);
 
 		DEBUG_LOG_FMT(
@@ -294,7 +296,7 @@ bool DxrRenderPass::ShouldResetTemporalAccumulation(const CameraRenderData* came
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
 {
 	PixScopedCpuEvent cpuEvent(L"DXR.PrepareRenderData");
-	auto&			 context = *frame->GetMainContext();
+	auto&			  context = *frame->GetMainContext();
 
 	const uint32_t frameIndex = frame->GetFrameIndex();
 	auto&		   instanceData = m_instanceData[frameIndex];
@@ -757,7 +759,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 
 	{
 		PixScopedCpuEvent syncCpuEvent(L"DXR.SyncRenderData");
-		DxScopedGpuEvent syncEvent(context, L"DXR.SyncRenderData");
+		DxScopedGpuEvent  syncEvent(context, L"DXR.SyncRenderData");
 		instanceData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		materialData->syncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
 		materialData->terrainSurfaceSyncBuffer.SyncToGPU(device.GetDevice(), context, *uploadHeap);
@@ -892,7 +894,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 
 	{
 		PixScopedCpuEvent dispatchCpuEvent(L"DXR.DispatchRays");
-		DxScopedGpuEvent dispatchEvent(context, L"DXR.DispatchRays");
+		DxScopedGpuEvent  dispatchEvent(context, L"DXR.DispatchRays");
 		cmdList4->DispatchRays(&desc);
 	}
 

@@ -202,18 +202,7 @@ void RayGenMain()
 		payload
 	);
 	
-    float3 finalColor = payload.color;
-	
-    float3 bloom = max(0.0f.xxx, finalColor - 0.75f.xxx) * 0.7f;
-    finalColor += bloom;
-	
-    finalColor = pow(finalColor, (1.0f / 1.8f).xxx);
-	
-    float luminance = dot(finalColor, float3(0.299f, 0.587f, 0.114f));
-    finalColor = lerp(luminance.xxx, finalColor, 1.4f);
-    finalColor = clamp(finalColor, 0.0f, 1.0f);
-	
-    g_output[pixelCoord] = float4(finalColor, 1.0f);
+    g_output[pixelCoord] = float4(max(0.0f.xxx, payload.color), 1.0f);
 }
 
 [shader("closesthit")]

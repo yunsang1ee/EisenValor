@@ -1704,12 +1704,12 @@ public class AssetExporter
             tangents = mesh.tangents;
             if (HasValidTangents(tangents, vertexCount))
             {
-                Debug.Log($"[AssetExporter] Recalculated tangents for '{mesh.name}'.");
+                UnityEngine.Debug.Log($"[AssetExporter] Recalculated tangents for '{mesh.name}'.");
                 return tangents;
             }
         }
 
-        Debug.LogWarning($"[AssetExporter] Failed to recalculate tangents for '{mesh.name}'. Using normal-based fallback tangents.");
+        UnityEngine.Debug.LogWarning($"[AssetExporter] Failed to recalculate tangents for '{mesh.name}'. Using normal-based fallback tangents.");
         return BuildFallbackTangents(normals, vertexCount);
     }
 

@@ -149,28 +149,15 @@ void RayGenMain()
         g_temporalAccumulation[pixelCoord] = float4(finalColor, 1.0f);
     }
 	
-    float3 displayColor = finalColor;
-    if (PT_DEBUG_VIEW == 0)
+    float3 outputColor = finalColor;
+    if (PT_DEBUG_VIEW == 0 && !UsePhysicalRenderingMode())
     {
-        if (!UsePhysicalRenderingMode())
-        {
-            displayColor *= PT_OUTPUT_EXPOSURE;
-            float3 bloom = max(0.0f.xxx, displayColor - PT_BLOOM_THRESHOLD.xxx) * PT_BLOOM_INTENSITY;
-            displayColor += bloom;
-        }
-
-        displayColor = ToneMapACES(displayColor);
-        displayColor = pow(displayColor, (1.0f / 2.2f).xxx);
-
-        if (!UsePhysicalRenderingMode())
-        {
-            float luminance = dot(displayColor, float3(0.299f, 0.587f, 0.114f));
-            displayColor = lerp(luminance.xxx, displayColor, 1.15f);
-        }
+        outputColor *= PT_OUTPUT_EXPOSURE;
+        float3 bloom = max(0.0f.xxx, outputColor - PT_BLOOM_THRESHOLD.xxx) * PT_BLOOM_INTENSITY;
+        outputColor += bloom;
     }
-    displayColor = saturate(displayColor);
 
-    g_output[pixelCoord] = float4(displayColor, 1.0f);
+    g_output[pixelCoord] = float4(max(0.0f.xxx, outputColor), 1.0f);
 }
 
 [shader("miss")]
