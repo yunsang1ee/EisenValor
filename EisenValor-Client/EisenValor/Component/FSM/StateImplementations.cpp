@@ -1,5 +1,5 @@
 #include "stdafxClient.h"
-#include "GeneralStates.h"
+#include "StateImplementations.h"
 #include "FSMComponent.h"
 #include "Component/BattleUIControllerComponent.h"
 #include "AnimationComponent.h"

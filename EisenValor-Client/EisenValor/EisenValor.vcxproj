@@ -197,7 +197,7 @@ exit /b 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Component\FSM\FSMComponent.h" />
-    <ClInclude Include="Component\FSM\GeneralStates.h" />
+    <ClInclude Include="Component\FSM\StateImplementations.h" />
     <ClInclude Include="Component\FSM\StatePool.h" />
     <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
@@ -241,7 +241,7 @@ exit /b 0</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\FSM\FSMComponent.cpp" />
-    <ClCompile Include="Component\FSM\GeneralStates.cpp" />
+    <ClCompile Include="Component\FSM\StateImplementations.cpp" />
     <ClCompile Include="Component\FSM\StatePolicy.cpp" />
     <ClCompile Include="Component\FSM\StatePool.cpp" />
     <ClCompile Include="Component\HealthComponent.cpp" />
