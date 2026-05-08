@@ -8,12 +8,14 @@
 #include "DxGarbageCollectorGlobal.h"
 #include "DxFrameResource.h"
 #include "DxSwapChain.h"
+#include "DxCommandContext.h"
 #include "CameraRenderData.h"
 #include "FrameRenderData.h"
 #include "CameraComponent.h"
 #include "TimerGlobal.h"
 #include "Transform.h"
 #include "GameObject.h"
+#include "DxCommandContext.h"
 #include "PixProfiler.h"
 
 DxRendererGlobal::DxRendererGlobal() = default;
@@ -227,11 +229,17 @@ void DxRendererGlobal::Render(Scene* scene)
 		m_renderPassesDirty = false;
 	}
 
-	for (auto& entry : m_renderPasses)
+	DxScopedGpuEvent frameGpuEvent(*frame->GetMainContext(), L"Frame");
 	{
-		const std::string markerName = "RenderPass." + entry.name;
-		PixScopedCpuEvent passEvent(markerName.c_str());
-		entry.pass->Execute(frame, scene, &m_renderContext);
+		DxScopedGpuEvent renderPassesGpuEvent(*frame->GetMainContext(), L"Render.RenderPasses");
+		for (auto& entry : m_renderPasses)
+		{
+			const std::string markerName = "RenderPass." + entry.name;
+			const std::wstring passGpuMarker(markerName.begin(), markerName.end());
+			DxScopedGpuEvent passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
+			PixScopedCpuEvent passEvent(markerName.c_str());
+			entry.pass->Execute(frame, scene, &m_renderContext);
+		}
 	}
 }
 
@@ -258,10 +266,6 @@ void DxRendererGlobal::EndFrame()
 	{
 		PixScopedCpuEvent presentEvent(L"DxRenderer.Present");
 		m_swapChain->PresentMaxPerformance();
-	}
-	{
-		PixScopedCpuEvent waitEvent(L"DxRenderer.WaitForFrameCompletion");
-		frame->WaitForCompletion();
 	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);

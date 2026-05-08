@@ -55,7 +55,6 @@ void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 	auto& cmdContext = *frame->GetMainContext();
 	auto* uploadHeap = frame->GetUploadHeap();
 	auto* cmdList = cmdContext.CommandList();
-	DxScopedGpuEvent passEvent(cmdContext, L"SkinningPass");
 
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
 	ThrowIfFailed(cmdList->QueryInterface(IID_PPV_ARGS(&cmdList4)));

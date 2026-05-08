@@ -57,11 +57,10 @@ void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext
 		return;
 	}
 
-	auto&			 context = *frame->GetMainContext();
-	auto*			 cmdList = context.CommandList();
-	auto*			 backBuffer = m_swapChain->GetCurrentBackBuffer();
-	auto*			 srcResource = srcTexture->GetResource();
-	DxScopedGpuEvent passEvent(context, L"HdrResolvePass");
+	auto& context = *frame->GetMainContext();
+	auto* cmdList = context.CommandList();
+	auto* backBuffer = m_swapChain->GetCurrentBackBuffer();
+	auto* srcResource = srcTexture->GetResource();
 
 	D3D12_RESOURCE_STATES  srcBefore = srcTexture->GetCurrentState();
 	D3D12_RESOURCE_BARRIER barriers[2];

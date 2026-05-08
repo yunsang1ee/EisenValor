@@ -63,7 +63,6 @@ void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 	auto& context = *frame->GetMainContext();
 	auto* cmdList = context.CommandList();
 	auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
-	DxScopedGpuEvent passEvent(context, L"UIRenderPass");
 
 	// 1. 백버퍼 상태 전환 (Present -> RenderTarget)
 	auto*				   backBuffer = swapChain->GetCurrentBackBuffer();
