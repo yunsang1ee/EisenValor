@@ -35,6 +35,7 @@ namespace GameServer {
 
 		protected:
 			FB_ENUMS::MOVE_DIRECTION_TYPE			m_moveDir;
+			FB_ENUMS::MOVE_DIRECTION_TYPE			m_lastSentMoveDir{};
 			FB_ENUMS::GENERAL_STANCE_TYPE			m_stanceType;
 			GENERAL_SUB_STATE_TYPE					m_subStateType;
 			AttackInfo								m_atkInfo;

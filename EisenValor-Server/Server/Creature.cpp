@@ -121,3 +121,42 @@ void GameServer::Contents::Creature::BroadcastUpdateVital()
 		world->Broadcast(std::move(pb));
 }
 
+bool GameServer::Contents::Creature::ShouldBroadcastMove(const float dt, const bool forceSend)
+{
+	m_moveBroadcastAccDT += dt;
+	m_moveIdleAccDT      += dt;
+
+	if(!forceSend && m_moveBroadcastAccDT < kMoveBroadcastInterval)
+		return false;
+
+	const Vec3& pos = GetPosition();
+	const Vec3& rot = GetRotation();
+
+	const float dx = pos.x - m_lastSentPos.x;
+	const float dy = pos.y - m_lastSentPos.y;
+	const float dz = pos.z - m_lastSentPos.z;
+	const float posDeltaSq = dx*dx + dy*dy + dz*dz;
+	const float rotDelta   = std::fabs(rot.y - m_lastSentRot.y);
+
+	const bool moved   = posDeltaSq > kMovePosEpsilonSq || rotDelta > kMoveRotEpsilon;
+	const bool stale   = m_moveIdleAccDT >= kMoveForceBroadcastSec;
+	const bool firstTx = !m_hasSentMoveOnce;
+
+	if(!(forceSend || moved || stale || firstTx))
+		return false;
+
+	m_moveBroadcastAccDT = 0.f;
+	m_moveIdleAccDT      = 0.f;
+	m_lastSentPos        = pos;
+	m_lastSentRot        = rot;
+	m_hasSentMoveOnce    = true;
+	return true;
+}
+
+void GameServer::Contents::Creature::ResetMoveBroadcastState()
+{
+	m_moveBroadcastAccDT = kMoveBroadcastInterval;
+	m_moveIdleAccDT      = 0.f;
+	m_hasSentMoveOnce    = false;
+}
+

@@ -35,7 +35,23 @@ namespace GameServer {
 			const Stat& GetStat() const { return m_statInfo; }
 
 			void BroadcastUpdateVital();
-	
+
+		protected:
+			bool ShouldBroadcastMove(const float dt, const bool forceSend = false);
+			void ResetMoveBroadcastState();
+
+		protected:
+			static constexpr float kMoveBroadcastInterval = 0.05f;   // 20Hz
+			static constexpr float kMoveForceBroadcastSec = 1.0f;    // 무송신 한계
+			static constexpr float kMovePosEpsilonSq      = 0.0004f; // (0.02m)^2
+			static constexpr float kMoveRotEpsilon        = 0.01f;   // rad
+
+			float m_moveBroadcastAccDT{ 0.f };
+			float m_moveIdleAccDT{ 0.f };
+			Vec3  m_lastSentPos{};
+			Vec3  m_lastSentRot{};
+			bool  m_hasSentMoveOnce{ false };
+
 		private:
 			// TODO: Component로 뺴는것도 생각해보자
 			Stat						m_statInfo;

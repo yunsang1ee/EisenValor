@@ -77,7 +77,13 @@ void GameServer::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0, GetMoveDir()) };
+	const auto curMoveDir = GetMoveDir();
+	const bool moveDirChanged = (curMoveDir != m_lastSentMoveDir);
+	if(!ShouldBroadcastMove(dt, moveDirChanged))
+		return;
+
+	m_lastSentMoveDir = curMoveDir;
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0, curMoveDir) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
@@ -105,6 +111,7 @@ void GameServer::Contents::General::OnRespawn()
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
 	
 	GetComponent<GameServer::Contents::NavAgent>()->Teleport(m_respawnPos);
+	ResetMoveBroadcastState();
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));

@@ -30,16 +30,16 @@ GameServer::Contents::GeneralIdleState::GeneralIdleState(const std::shared_ptr<G
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		seq->AddChild(std::make_unique<GameServer::Contents::FindEnemy>());
 		seq->AddChild(std::make_unique<GameServer::Contents::SetStance>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT));
-
-		auto branch = std::make_unique<GameServer::Contents::SelectorNode>();
-		{
-			auto soldierSeq = std::make_unique<GameServer::Contents::SequenceNode>();
-			soldierSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
-			soldierSeq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
-			branch->AddChild(std::move(soldierSeq));
-		}
-		branch->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
-		seq->AddChild(std::move(branch));
+		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
+		//auto branch = std::make_unique<GameServer::Contents::SelectorNode>();
+		//{
+		//	auto soldierSeq = std::make_unique<GameServer::Contents::SequenceNode>();
+		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
+		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
+		//	branch->AddChild(std::move(soldierSeq));
+		//}
+		//branch->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
+		//seq->AddChild(std::move(branch));
 
 		rootSelector->AddChild(std::move(seq));
 	}
@@ -124,9 +124,9 @@ GameServer::Contents::GeneralWalkState::GeneralWalkState(const std::shared_ptr<G
 	//    단, 타겟이 병사면 견제 없이 바로 추격해 붙는다.
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
-		auto notSoldier = std::make_unique<GameServer::Contents::InverterNode>();
-		notSoldier->SetChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
-		seq->AddChild(std::move(notSoldier));
+		//auto notSoldier = std::make_unique<GameServer::Contents::InverterNode>();
+		//notSoldier->SetChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
+		//seq->AddChild(std::move(notSoldier));
 		seq->AddChild(std::make_unique<GameServer::Contents::IsTargetInCombatRange>());
 		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
 		seq->AddChild(std::make_unique<GameServer::Contents::WanderAroundTarget>(1.2f, 1.5f, 2.5f));
@@ -190,16 +190,17 @@ GameServer::Contents::GeneralRunState::GeneralRunState(const std::shared_ptr<Gen
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		seq->AddChild(std::make_unique<GameServer::Contents::FindEnemy>());
 		seq->AddChild(std::make_unique<GameServer::Contents::SetStance>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT));
+		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
 
-		auto branch = std::make_unique<GameServer::Contents::SelectorNode>();
-		{
-			auto soldierSeq = std::make_unique<GameServer::Contents::SequenceNode>();
-			soldierSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
-			soldierSeq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
-			branch->AddChild(std::move(soldierSeq));
-		}
-		branch->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
-		seq->AddChild(std::move(branch));
+		//auto branch = std::make_unique<GameServer::Contents::SelectorNode>();
+		//{
+		//	auto soldierSeq = std::make_unique<GameServer::Contents::SequenceNode>();
+		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
+		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
+		//	branch->AddChild(std::move(soldierSeq));
+		//}
+		//branch->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
+		//seq->AddChild(std::move(branch));
 
 		rootSelector->AddChild(std::move(seq));
 	}
