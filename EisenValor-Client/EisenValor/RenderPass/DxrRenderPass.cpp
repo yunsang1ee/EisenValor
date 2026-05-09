@@ -148,12 +148,7 @@ void DxrRenderPass::Initialize()
 		m_tlas[i] = std::make_unique<DxTLAS>();
 		m_tlas[i]->Initialize(m_device5.Get());
 
-		m_instanceData[i] = std::make_shared<InstanceRenderData>();
-		m_materialData[i] = std::make_shared<MaterialRenderData>();
-		m_geoTableData[i] = std::make_shared<GeoTableRenderData>();
-
-		m_outputData[i] = std::make_shared<RaytracingOutputRenderData>();
-		m_outputData[i]->outputTexture = std::make_shared<DxTexture>();
+		m_outputData[i].outputTexture = std::make_shared<DxTexture>();
 	}
 	for (auto& history : m_ptAccumHistory)
 	{
@@ -172,10 +167,10 @@ void DxrRenderPass::Release()
 	for (int i = 0; i < 3; ++i)
 	{
 		m_tlas[i].reset();
-		m_instanceData[i].reset();
-		m_materialData[i].reset();
-		m_geoTableData[i].reset();
-		m_outputData[i].reset();
+		m_instanceData[i].Release();
+		m_materialData[i].Release();
+		m_geoTableData[i].Release();
+		m_outputData[i].Release();
 	}
 	for (auto& history : m_ptAccumHistory)
 	{
@@ -185,6 +180,29 @@ void DxrRenderPass::Release()
 
 	m_initialized = false;
 	DEBUG_LOG_FMT("[DxrRenderPass] Released\n");
+}
+
+void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
+{
+	if (nullptr == renderContext)
+	{
+		return;
+	}
+
+	renderContext->DeclareAccess<FrameRenderData>(GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read);
+	renderContext->DeclareAccess<CameraRenderData>(GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read);
+	renderContext->DeclareAccess<InstanceRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Write
+	);
+	renderContext->DeclareAccess<MaterialRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Write
+	);
+	renderContext->DeclareAccess<GeoTableRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Write
+	);
+	renderContext->DeclareAccess<RaytracingOutputRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Write
+	);
 }
 
 void DxrRenderPass::OnResize(uint32_t width, uint32_t height)
@@ -205,7 +223,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 	for (int i = 0; i < 3; ++i)
 	{
-		auto& outputTex = m_outputData[i]->outputTexture;
+		auto& outputTex = m_outputData[i].outputTexture;
 
 		if (outputTex->HasUAV(0))
 		{
@@ -299,9 +317,9 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	auto&			  context = *frame->GetMainContext();
 
 	const uint32_t frameIndex = frame->GetFrameIndex();
-	auto&		   instanceData = m_instanceData[frameIndex];
-	auto&		   materialData = m_materialData[frameIndex];
-	auto&		   geoTableData = m_geoTableData[frameIndex];
+	auto*		   instanceData = &m_instanceData[frameIndex];
+	auto*		   materialData = &m_materialData[frameIndex];
+	auto*		   geoTableData = &m_geoTableData[frameIndex];
 	auto&		   tlas = m_tlas[frameIndex];
 	bool		   hasAnimatedInstances = false;
 
@@ -428,9 +446,9 @@ void DxrRenderPass::CollectStaticMeshData(
 		return;
 	}
 
-	auto& materialData = m_materialData[frameIndex];
-	auto& geoTableData = m_geoTableData[frameIndex];
-	auto& instanceData = m_instanceData[frameIndex];
+	auto* materialData = &m_materialData[frameIndex];
+	auto* geoTableData = &m_geoTableData[frameIndex];
+	auto* instanceData = &m_instanceData[frameIndex];
 
 	for (const auto& meshComp : meshStorage->GetList())
 	{
@@ -492,7 +510,7 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.ormTextureIdx = GetReadyTextureIndex(matRes, "ORMS");
 				gpuMat.emissiveTextureIdx = GetReadyTextureIndex(matRes, "EMSV");
 				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
-											   ? RegisterTerrainSurface(materialData.get(), matRes)
+											   ? RegisterTerrainSurface(materialData, matRes)
 											   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
@@ -543,9 +561,9 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		return;
 	}
 
-	auto& materialData = m_materialData[frameIndex];
-	auto& geoTableData = m_geoTableData[frameIndex];
-	auto& instanceData = m_instanceData[frameIndex];
+	auto* materialData = &m_materialData[frameIndex];
+	auto* geoTableData = &m_geoTableData[frameIndex];
+	auto* instanceData = &m_instanceData[frameIndex];
 
 	for (const auto& skinnedMeshComp : skinnedMeshStorage->GetList())
 	{
@@ -651,7 +669,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.ormTextureIdx = GetReadyTextureIndex(matRes, "ORMS");
 				gpuMat.emissiveTextureIdx = GetReadyTextureIndex(matRes, "EMSV");
 				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
-											   ? RegisterTerrainSurface(materialData.get(), matRes)
+											   ? RegisterTerrainSurface(materialData, matRes)
 											   : ~0u;
 
 				materialData->syncBuffer.Register(gpuMat);
@@ -716,11 +734,15 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	}
 
 	const uint32_t frameIndex = frame->GetFrameIndex();
-	auto&		   instanceData = m_instanceData[frameIndex];
-	auto&		   materialData = m_materialData[frameIndex];
-	auto&		   geoTableData = m_geoTableData[frameIndex];
-	auto&		   outputData = m_outputData[frameIndex];
-	auto&		   tlas = m_tlas[frameIndex];
+	m_instanceData.BeginFrame(frameIndex);
+	m_materialData.BeginFrame(frameIndex);
+	m_geoTableData.BeginFrame(frameIndex);
+	m_outputData.BeginFrame(frameIndex);
+	auto* instanceData = &m_instanceData.GetCurrent();
+	auto* materialData = &m_materialData.GetCurrent();
+	auto* geoTableData = &m_geoTableData.GetCurrent();
+	auto* outputData = &m_outputData.GetCurrent();
+	auto& tlas = m_tlas[frameIndex];
 
 	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_F6))
@@ -741,13 +763,13 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 
 	{
 		PixScopedCpuEvent setDataEvent(L"DXR.SetRenderContextData");
-		renderContext->SetData(instanceData, 0);
-		renderContext->SetData(materialData, 0);
-		renderContext->SetData(geoTableData, 0);
-		renderContext->SetData(outputData, 0);
+		renderContext->Set(m_instanceData);
+		renderContext->Set(m_materialData);
+		renderContext->Set(m_geoTableData);
+		renderContext->Set(m_outputData);
 	}
 
-	auto				cameraData = renderContext->GetData<CameraRenderData>();
+	auto*				cameraData = renderContext->Get<CameraRenderData>();
 	const DX::XMFLOAT3* cameraPosition = cameraData ? &cameraData->cameraPosition : nullptr;
 
 	auto&			 device = GLOBAL(DxDeviceGlobal);
@@ -806,7 +828,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	bool resetTemporalAccumulation = true;
 	if (m_usePathTracing)
 	{
-		resetTemporalAccumulation = ShouldResetTemporalAccumulation(cameraData.get());
+		resetTemporalAccumulation = ShouldResetTemporalAccumulation(cameraData);
 		if (resetTemporalAccumulation)
 		{
 			m_temporalAccumulationFrameCount = 0;

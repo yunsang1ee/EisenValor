@@ -27,6 +27,18 @@ void HdrResolvePass::Release()
 	m_initialized = false;
 }
 
+void HdrResolvePass::DeclareRenderData(RenderContext* renderContext)
+{
+	if (nullptr == renderContext)
+	{
+		return;
+	}
+
+	renderContext->DeclareAccess<RaytracingOutputRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
+	);
+}
+
 void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
 	PixScopedCpuEvent cpuEvent(L"HdrResolvePass.Execute");
@@ -36,7 +48,7 @@ void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext
 		return;
 	}
 
-	auto outputData = renderContext->GetData<RaytracingOutputRenderData>();
+	auto* outputData = renderContext->Get<RaytracingOutputRenderData>();
 	if (!outputData || !outputData->outputTexture)
 	{
 		return;

@@ -271,6 +271,7 @@
     <ClInclude Include="include\RectTransformComponent.h" />
     <ClInclude Include="include\RecvBuffer.h" />
     <ClInclude Include="include\RenderContext.h" />
+    <ClInclude Include="include\RenderDataPolicy.h" />
     <ClInclude Include="include\RenderDataSync.h" />
     <ClInclude Include="include\DxRendererGlobal.h" />
     <ClInclude Include="include\ResourceGlobal.h" />
