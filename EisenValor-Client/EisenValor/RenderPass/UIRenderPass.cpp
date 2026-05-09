@@ -1,6 +1,8 @@
 #include "stdafxClient.h"
 #include "UIRenderPass.h"
 #include <DxCommandContext.h>
+#include <PixProfiler.h>
+#include <DxUploadHeap.h>
 #include <DxUtils.h>
 #include <DxRendererGlobal.h>
 #include <DxDeviceGlobal.h>
@@ -51,6 +53,8 @@ void UIRenderPass::Release()
 
 void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
+	PixScopedCpuEvent cpuEvent(L"UIRenderPass.Execute");
+
 	if (!m_initialized || !m_pipelineState || !m_vertexBuffer || !scene || !renderContext)
 	{
 		return;
@@ -59,7 +63,6 @@ void UIRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* 
 	auto& context = *frame->GetMainContext();
 	auto* cmdList = context.CommandList();
 	auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain();
-	DxScopedGpuEvent passEvent(context, L"UIRenderPass");
 
 	// 1. 백버퍼 상태 전환 (Present -> RenderTarget)
 	auto*				   backBuffer = swapChain->GetCurrentBackBuffer();
@@ -239,6 +242,8 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 {
 	if (!m_vertexDataUploaded)
 	{
+		PixScopedCpuEvent uploadStaticEvent(L"UI.UploadStaticVertexData");
+
 		auto*				  cmdList = frame->GetMainContext()->CommandList();
 		auto*				  uploadHeap = frame->GetUploadHeap();
 		std::vector<UIVertex> quadVertices = {
@@ -263,37 +268,45 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 
 	std::vector<IUIComponent*> renderableUIs;
 
-	// 1. ImageUI 수집
-	ComponentStorage<ImageUIComponent>* imgStorage = scene->GetStorage<ImageUIComponent>();
-	if (imgStorage)
 	{
-		for (ImageUIComponent& ui : imgStorage->GetList())
+		PixScopedCpuEvent collectEvent(L"UI.CollectComponents");
+
+		// 1. ImageUI 수집
+		ComponentStorage<ImageUIComponent>* imgStorage = scene->GetStorage<ImageUIComponent>();
+		if (imgStorage)
 		{
-			if (ui.GetGameObject()->IsActiveInHierarchy())
+			for (ImageUIComponent& ui : imgStorage->GetList())
 			{
-				renderableUIs.push_back(&ui);
+				if (ui.GetGameObject()->IsActiveInHierarchy())
+				{
+					renderableUIs.push_back(&ui);
+				}
+			}
+		}
+
+		// 2. ButtonUI 수집
+		ComponentStorage<ButtonUIComponent>* btnStorage = scene->GetStorage<ButtonUIComponent>();
+		if (btnStorage)
+		{
+			for (ButtonUIComponent& ui : btnStorage->GetList())
+			{
+				if (ui.GetGameObject()->IsActiveInHierarchy())
+				{
+					renderableUIs.push_back(&ui);
+				}
 			}
 		}
 	}
 
-	// 2. ButtonUI 수집
-	ComponentStorage<ButtonUIComponent>* btnStorage = scene->GetStorage<ButtonUIComponent>();
-	if (btnStorage)
 	{
-		for (ButtonUIComponent& ui : btnStorage->GetList())
-		{
-			if (ui.GetGameObject()->IsActiveInHierarchy())
-			{
-				renderableUIs.push_back(&ui);
-			}
-		}
-	}
+		PixScopedCpuEvent sortEvent(L"UI.Sort");
 
-	// 2. Z-Order 기준 정렬
-	std::stable_sort(
-		renderableUIs.begin(), renderableUIs.end(),
-		[](IUIComponent* a, IUIComponent* b) { return a->GetOrder() < b->GetOrder(); }
-	);
+		// 2. Z-Order 기준 정렬
+		std::stable_sort(
+			renderableUIs.begin(), renderableUIs.end(),
+			[](IUIComponent* a, IUIComponent* b) { return a->GetOrder() < b->GetOrder(); }
+		);
+	}
 
 	// 3. 배칭 최적화 및 데이터 수집
 	std::vector<UIInstanceData> instanceBufferData;
@@ -301,47 +314,41 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 
 	std::vector<UIRenderData> componentRenderData;
 
-	for (auto* ui : renderableUIs)
 	{
-		componentRenderData.clear();
-		ui->GetRenderData(componentRenderData);
+		PixScopedCpuEvent buildEvent(L"UI.BuildInstances");
 
-		for (const auto& rData : componentRenderData)
+		for (auto* ui : renderableUIs)
 		{
-			if (instanceBufferData.size() >= m_maxInstances)
-				break;
+			componentRenderData.clear();
+			ui->GetRenderData(componentRenderData);
 
-			UIInstanceData inst = {}; // 초기화
-
-			// 화면 좌표 -> NDC 변환
-			auto transform = CalculateUITransform(rData.rect.x, rData.rect.y, rData.rect.width, rData.rect.height);
-			DirectX::XMStoreFloat4x4(&inst.transform, DirectX::XMMatrixTranspose(transform));
-
-			inst.color = rData.color;
-			inst.uvMin = rData.uvMin;
-			inst.uvMax = rData.uvMax;
-
-			// 텍스처 바인딩 (Lazy-Resolving)
-			if (rData.textureResource && rData.textureResource->IsReady() && rData.textureResource->GetTexture())
+			for (const auto& rData : componentRenderData)
 			{
-				inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
+				if (instanceBufferData.size() >= m_maxInstances)
+					break;
 
-				//// 깃발 텍스처 렌더링 디버그 로그
-				// if (rData.textureResource->GetName().find("Flag") != std::string::npos)
-				//{
-				//	DEBUG_LOG_FMT(
-				//		"[UIRenderPass] Rendering Flag Texture: '{}', Index: {}\n",
-				//		rData.textureResource->GetName(),
-				//		inst.textureIndex
-				//	);
-				// }
-			}
-			else
-			{
-				inst.textureIndex = 0;
-			}
+				UIInstanceData inst = {}; // 초기화
 
-			instanceBufferData.push_back(inst);
+				// 화면 좌표 -> NDC 변환
+				auto transform = CalculateUITransform(rData.rect.x, rData.rect.y, rData.rect.width, rData.rect.height);
+				DirectX::XMStoreFloat4x4(&inst.transform, DirectX::XMMatrixTranspose(transform));
+
+				inst.color = rData.color;
+				inst.uvMin = rData.uvMin;
+				inst.uvMax = rData.uvMax;
+
+				// 텍스처 바인딩 (Lazy-Resolving)
+				if (rData.textureResource && rData.textureResource->IsReady() && rData.textureResource->GetTexture())
+				{
+					inst.textureIndex = rData.textureResource->GetTexture()->GetSRVIndex();
+				}
+				else
+				{
+					inst.textureIndex = 0;
+				}
+
+				instanceBufferData.push_back(inst);
+			}
 		}
 	}
 
@@ -352,8 +359,12 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	auto* cmdList = frame->GetMainContext()->CommandList();
 	auto* uploadHeap = frame->GetUploadHeap();
 
-	auto allocation =
-		uploadHeap->UploadRawData(instanceBufferData.data(), instanceBufferData.size() * sizeof(UIInstanceData), 16);
+	DxUploadHeap::Allocation allocation;
+	{
+		PixScopedCpuEvent uploadEvent(L"UI.UploadInstances");
+		allocation =
+			uploadHeap->UploadRawData(instanceBufferData.data(), instanceBufferData.size() * sizeof(UIInstanceData), 16);
+	}
 
 	D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {
 		m_vertexBuffer->GetVertexBufferView(sizeof(UIVertex)),
@@ -364,5 +375,9 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// 1 Draw Call
-	cmdList->DrawInstanced(6, (UINT)instanceBufferData.size(), 0, 0);
+	{
+		PixScopedCpuEvent drawCpuEvent(L"UI.Draw");
+		PixScopedCommandListEvent drawGpuEvent(cmdList, L"UI.Draw");
+		cmdList->DrawInstanced(6, (UINT)instanceBufferData.size(), 0, 0);
+	}
 }

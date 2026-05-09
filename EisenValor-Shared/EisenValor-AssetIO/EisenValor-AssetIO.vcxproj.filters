@@ -39,9 +39,6 @@
     <ClInclude Include="include\MaterialData.h">
       <Filter>Material</Filter>
     </ClInclude>
-    <ClInclude Include="include\MeshLoader.h">
-      <Filter>Mesh</Filter>
-    </ClInclude>
     <ClInclude Include="include\AnimationData.h">
       <Filter>Animation</Filter>
     </ClInclude>
@@ -67,9 +64,6 @@
     </ClCompile>
     <ClCompile Include="src\MaterialData.cpp">
       <Filter>Material</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MeshLoader.cpp">
-      <Filter>Mesh</Filter>
     </ClCompile>
     <ClCompile Include="src\AnimationData.cpp">
       <Filter>Animation</Filter>

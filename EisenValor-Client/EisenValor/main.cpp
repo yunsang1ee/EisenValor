@@ -20,7 +20,7 @@
 
 #include "RenderPass/SkinningPass.h"
 #include "RenderPass/DxrRenderPass.h"
-#include "RenderPass/CopyToBackBufferPass.h"
+#include "RenderPass/HdrResolvePass.h"
 #include "RenderPass/UIRenderPass.h"
 
 #include "UIGlobal.h"
@@ -213,9 +213,9 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
 			renderer.AddRenderPass("DXR", std::move(dxrPass));
 
-			// CopyToBackBuffer Pass 생성
-			auto copyPass = std::make_unique<CopyToBackBufferPass>(swapChain);
-			renderer.AddRenderPass("CopyToBackBuffer", std::move(copyPass));
+			// HDR Resolve Pass 생성
+			auto hdrResolvePass = std::make_unique<HdrResolvePass>(swapChain);
+			renderer.AddRenderPass("HdrResolve", std::move(hdrResolvePass));
 
 			// UI Pass 생성
 			auto uiPass = std::make_unique<UIRenderPass>();

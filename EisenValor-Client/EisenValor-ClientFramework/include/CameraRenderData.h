@@ -1,5 +1,5 @@
 #pragma once
-#include "IRenderData.h"
+#include "RenderDataPolicy.h"
 #include <DirectXMath.h>
 
 class CameraRenderData : public RenderDataBase<CameraRenderData>

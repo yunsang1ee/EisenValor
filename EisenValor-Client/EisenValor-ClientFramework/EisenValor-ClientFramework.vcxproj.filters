@@ -241,6 +241,9 @@
     <ClInclude Include="include\RenderContext.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="include\RenderDataPolicy.h">
+      <Filter>Graphics\Renderer\RenderData</Filter>
+    </ClInclude>
     <ClInclude Include="include\CommonInclude.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -308,6 +311,9 @@
       <Filter>Component\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="include\IKProcessor.h" />
+    <ClInclude Include="include\PixProfiler.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">

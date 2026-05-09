@@ -84,6 +84,9 @@ private:
 
 	[[nodiscard]] bool IsSourceModified(std::wstring_view sourceFile, const std::filesystem::file_time_type& cacheTime)
 		const;
+	[[nodiscard]] bool IsShaderDirectoryModified(
+		const std::filesystem::path& directory, const std::filesystem::file_time_type& cacheTime
+	) const;
 
 	void LogCompilationError(IDxcBlobEncoding* errorBlob, std::wstring_view shaderName, std::wstring_view filename);
 

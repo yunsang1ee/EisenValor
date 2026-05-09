@@ -9,6 +9,7 @@
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
 #include "ResourceGlobal.h"
+#include "PixProfiler.h"
 
 #define SERVER
 
@@ -38,18 +39,30 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view 
 
 void GameFramework::Run()
 {
+	PixScopedCpuEvent frameEvent(L"Frame");
+
 #ifdef SERVER
-	GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
+	{
+		PixScopedCpuEvent event(L"Network.ProcessIO");
+		GLOBAL(NetBridge::NetworkGlobal).ProcessIO();
+	}
 #endif
 
 	auto& input = GLOBAL(InputGlobal);
-	input.BeforeUpdate();
+	{
+		PixScopedCpuEvent event(L"Input.BeforeUpdate");
+		input.BeforeUpdate();
+	}
 
 	bool isFocused = (GetForegroundWindow() == m_hWnd);
 	input.SetWindowFocused(isFocused);
 
 	static float runTime{};
-	const float	 dt = GLOBAL(TimerGlobal).Update();
+	float		 dt = 0.0f;
+	{
+		PixScopedCpuEvent event(L"Timer.Update");
+		dt = GLOBAL(TimerGlobal).Update();
+	}
 
 	static float timeElapsed = 0.0f;
 	static int	 frameCount = 0;
@@ -231,6 +244,8 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 
 void GameFramework::Update(float delta)
 {
+	PixScopedCpuEvent event(L"Scene.Update");
+
 	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_ESCAPE))
 	{
@@ -264,25 +279,44 @@ void GameFramework::Update(float delta)
 
 void GameFramework::FixedUpdate()
 {
+	PixScopedCpuEvent event(L"Scene.FixedUpdate");
 	GLOBAL(SceneGlobal).OnFixedUpdate(GLOBAL(TimerGlobal).GetFixedDeltaTime());
 }
 
 void GameFramework::LateUpdate(float delta)
 {
+	PixScopedCpuEvent event(L"Scene.LateUpdate");
 	GLOBAL(SceneGlobal).OnLateUpdate(delta);
 }
 
 void GameFramework::Render()
 {
+	PixScopedCpuEvent event(L"Render");
+
 	auto& scene = GLOBAL(SceneGlobal);
 	auto& renderer = GLOBAL(DxRendererGlobal);
 
-	renderer.BeginFrame();
+	{
+		PixScopedCpuEvent beginFrameEvent(L"Render.BeginFrame");
+		renderer.BeginFrame();
+	}
 
-	GLOBAL(ResourceGlobal).ProcessPendingLoads();
+	{
+		PixScopedCpuEvent resourceEvent(L"Render.ResourceUpload");
+		GLOBAL(ResourceGlobal).ProcessPendingLoads();
+	}
 
-	renderer.Render(scene.GetActiveScene());
-	renderer.EndFrame();
+	{
+		PixScopedCpuEvent rendererEvent(L"Render.RenderPasses");
+		renderer.Render(scene.GetActiveScene());
+	}
+	{
+		PixScopedCpuEvent endFrameEvent(L"Render.EndFrame");
+		renderer.EndFrame();
+	}
 
-	GLOBAL(ResourceGlobal).CheckForReload();
+	{
+		PixScopedCpuEvent reloadEvent(L"Resource.CheckForReload");
+		GLOBAL(ResourceGlobal).CheckForReload();
+	}
 }

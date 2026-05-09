@@ -85,7 +85,7 @@
     <ClInclude Include="Packets\PacketHandler.h">
       <Filter>Packets\PacketHandler</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\CopyToBackBufferPass.h">
+    <ClInclude Include="RenderPass\HdrResolvePass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\DxrRenderPass.h">
@@ -210,7 +210,7 @@
     <ClCompile Include="Packets\PacketHandler.cpp">
       <Filter>Packets\PacketHandler</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\CopyToBackBufferPass.cpp">
+    <ClCompile Include="RenderPass\HdrResolvePass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
@@ -314,6 +314,24 @@
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingTerrain.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingEnvironment.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingLighting.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingPostProcess.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\FullscreenToneMap.hlsl">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\UIPixelShader.hlsl">
