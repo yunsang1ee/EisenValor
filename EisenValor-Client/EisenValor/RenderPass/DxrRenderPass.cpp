@@ -760,6 +760,11 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		m_usePhysicalEmissionView = !m_usePhysicalEmissionView;
 		ResetTemporalAccumulation();
 	}
+	if (input.GetInputDown(VK_F9))
+	{
+		m_useDayEnvironment = !m_useDayEnvironment;
+		ResetTemporalAccumulation();
+	}
 
 	{
 		PixScopedCpuEvent setDataEvent(L"DXR.SetRenderContextData");
@@ -858,12 +863,13 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		uint32_t enabled;
 		uint32_t reset;
 		uint32_t emissionViewMode;
+		uint32_t environmentMode;
 	};
 	TemporalAccumulationConstants temporalConstants = {
 		m_temporalAccumulationFrameCount, m_usePathTracing ? 1u : 0u, resetTemporalAccumulation ? 1u : 0u,
-		m_usePhysicalEmissionView ? 1u : 0u
+		m_usePhysicalEmissionView ? 1u : 0u, m_useDayEnvironment ? 1u : 0u
 	};
-	cmdList4->SetComputeRoot32BitConstants(9, 4, &temporalConstants, 0);
+	cmdList4->SetComputeRoot32BitConstants(9, 5, &temporalConstants, 0);
 
 	if (m_usePathTracing)
 	{

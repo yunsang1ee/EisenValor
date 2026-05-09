@@ -95,10 +95,9 @@ float3 SampleDayEnvironment(float3 rayDir)
     return lerp(groundColor, sky + rayleigh + mie + sun, groundToSkyT);
 }
 
-float3 SampleEnvironment(float3 rayDir)
+float3 SampleEnvironment(float3 rayDir, uint environmentMode)
 {
-    // return SampleDayEnvironment(rayDir);
-    return SampleNightEnvironment(rayDir);
+    return (0u != environmentMode) ? SampleDayEnvironment(rayDir) : SampleNightEnvironment(rayDir);
 }
 
 #endif // RAYTRACING_ENVIRONMENT_HLSLI

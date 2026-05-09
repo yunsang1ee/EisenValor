@@ -83,6 +83,7 @@ private:
 	bool		 m_usePathTracing = false;
 	bool		 m_useLiteRT = false;
 	bool		 m_usePhysicalEmissionView = false;
+	bool		 m_useDayEnvironment = false;
 	bool		 m_temporalAccumulationResetPending = true;
 	bool		 m_hasTemporalCamera = false;
 	uint32_t	 m_temporalAccumulationFrameCount = 0;

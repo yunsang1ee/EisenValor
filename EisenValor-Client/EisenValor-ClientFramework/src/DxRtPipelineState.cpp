@@ -82,7 +82,7 @@ void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)
 
 	// Param 9: Temporal Accumulation Constants (b2)
 	rootParams[9].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-	rootParams[9].Constants = {2, 0, 4};
+	rootParams[9].Constants = {2, 0, 5};
 	rootParams[9].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	// 3. Static Sampler (Linear Wrap)

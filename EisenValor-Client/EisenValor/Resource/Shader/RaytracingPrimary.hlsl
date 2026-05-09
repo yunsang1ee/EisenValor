@@ -20,6 +20,7 @@ cbuffer TemporalAccumulationConstants : register(b2, space0)
     uint g_temporalAccumulationEnabled;
     uint g_temporalAccumulationReset;
     uint g_emissionViewMode;
+    uint g_environmentMode;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -103,5 +104,5 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    payload.color = SampleEnvironment(WorldRayDirection());
+    payload.color = SampleEnvironment(WorldRayDirection(), g_environmentMode);
 }
