@@ -25,6 +25,7 @@ cbuffer TemporalAccumulationConstants : register(b2, space0)
     uint g_temporalAccumulationEnabled;
     uint g_temporalAccumulationReset;
     uint g_emissionViewMode;
+    uint g_environmentMode;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -394,7 +395,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     }
 	
 	// Temporary diffuse IBL approximation. This is sourced from the same environment as the miss shader.
-    float3 environmentDiffuse = kD * albedo * SampleEnvironment(normal) * ao;
+    float3 environmentDiffuse = kD * albedo * SampleEnvironment(normal, g_environmentMode) * ao;
     float3 emissive = (0 == payload.recursionDepth)
         ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
         : EvaluateMaterialEmission(mat, uv, g_sampler);
@@ -405,5 +406,5 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    payload.color = SampleEnvironment(WorldRayDirection());
+    payload.color = SampleEnvironment(WorldRayDirection(), g_environmentMode);
 }
