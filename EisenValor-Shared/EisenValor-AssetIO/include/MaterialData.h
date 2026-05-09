@@ -28,6 +28,11 @@ struct MaterialData : public AssetData
 	std::vector<Dependency> dependencies;
 
 	bool Deserialize(AssetFile& file) override;
-	bool IsValid() const { return true; }
+	bool IsValid() const;
+
+private:
+	bool m_hasProperties = false;
+	bool m_hasDependencies = false;
+	bool m_hasTerrainParams = false;
 };
 } // namespace EvAsset
