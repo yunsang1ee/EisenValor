@@ -2,6 +2,8 @@
 #include "Singleton.h"
 #include "DxFeatureCaps.h"
 #include "RenderContext.h"
+#include "CameraRenderData.h"
+#include "FrameRenderData.h"
 
 class Scene;
 class DxFrameResource;
@@ -53,6 +55,8 @@ public:
 	RenderContext*		 GetRenderContext() { return &m_renderContext; }
 
 private:
+	void RebuildRenderDataDeclarations();
+
 	bool						 m_isInitialized = false;
 	DxFeatureCaps				 m_featureCaps;
 	std::unique_ptr<DxSwapChain> m_swapChain;
@@ -63,6 +67,8 @@ private:
 	uint32_t												  m_currentFrameIndex = 0;
 	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
 	RenderContext											  m_renderContext;
+	Transient<FrameRenderData>								  m_frameData;
+	Transient<CameraRenderData>								  m_cameraData;
 
 	struct RenderPassEntry
 	{

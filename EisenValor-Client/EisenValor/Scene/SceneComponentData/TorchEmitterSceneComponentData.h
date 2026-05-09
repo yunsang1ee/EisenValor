@@ -19,11 +19,12 @@ public:
 		return true;
 	}
 
-	float GetIntensity() const { return m_payload.intensity; }
-	float GetRange() const { return m_payload.range; }
-	float GetSourceRadius() const { return m_payload.sourceRadius; }
-	float GetFlickerAmplitude() const { return m_payload.flickerAmplitude; }
-	float GetFlickerFrequency() const { return m_payload.flickerFrequency; }
+	float		 GetIntensity() const { return m_payload.intensity; }
+	float		 GetRange() const { return m_payload.range; }
+	float		 GetSourceRadius() const { return m_payload.sourceRadius; }
+	const float* GetColor() const { return m_payload.color; }
+	float		 GetFlickerAmplitude() const { return m_payload.flickerAmplitude; }
+	float		 GetFlickerFrequency() const { return m_payload.flickerFrequency; }
 
 private:
 	struct Payload

@@ -1,5 +1,5 @@
 #pragma once
-#include "IRenderData.h"
+#include "RenderDataPolicy.h"
 #include "RenderDataSync.h"
 #include "RaytracingCommon.h"
 
@@ -8,6 +8,13 @@ class InstanceRenderData : public RenderDataBase<InstanceRenderData>
 public:
 	InstanceRenderData() = default;
 	virtual ~InstanceRenderData() override = default;
+
+	void Release() override
+	{
+		syncBuffer = RenderDataSync<InstanceData>();
+		tlasDescriptorIndex = 0;
+		tlasAddress = 0;
+	}
 
 	RenderDataSync<InstanceData> syncBuffer;
 

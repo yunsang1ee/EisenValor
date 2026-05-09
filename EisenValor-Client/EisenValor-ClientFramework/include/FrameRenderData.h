@@ -1,5 +1,5 @@
 #pragma once
-#include "IRenderData.h"
+#include "RenderDataPolicy.h"
 
 class FrameRenderData : public RenderDataBase<FrameRenderData>
 {

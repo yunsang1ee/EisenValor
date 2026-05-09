@@ -108,16 +108,16 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	// 파일 읽기
 	ComPtr<IDxcBlobEncoding> sourceBlob;
 	UINT32					 codePage = DXC_CP_UTF8;
-	
+
 	DEBUG_LOG_FMT("[DxShaderCompiler] Loading file: {}\n", sourcePath.string());
-	
+
 	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), &codePage, &sourceBlob));
 
 	ComPtr<IDxcBlobUtf8> sourceUtf8;
 	ThrowIfFailed(m_dxcUtils->GetBlobAsUtf8(sourceBlob.Get(), &sourceUtf8));
 
 	std::vector<std::wstring> stringStorage;
-	stringStorage.reserve(32); 
+	stringStorage.reserve(32);
 
 	if (!isRaytacing)
 	{
@@ -311,9 +311,53 @@ bool DxShaderCompilerGlobal::IsSourceModified(
 	const std::wstring path{sourceFile};
 
 	if (!std::filesystem::exists(path))
+	{
 		return true;
+	}
 
-	return std::filesystem::last_write_time(path) > cacheTime;
+	if (std::filesystem::last_write_time(path) > cacheTime)
+	{
+		return true;
+	}
+
+	const auto sourceDirectory = std::filesystem::path(path).parent_path();
+	if (IsShaderDirectoryModified(sourceDirectory, cacheTime))
+	{
+		return true;
+	}
+
+	const auto runtimeShaderDirectory = Utils::ExeDir() / L"Resource/Shader";
+	if (runtimeShaderDirectory != sourceDirectory && IsShaderDirectoryModified(runtimeShaderDirectory, cacheTime))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool DxShaderCompilerGlobal::IsShaderDirectoryModified(
+	const std::filesystem::path& directory, const std::filesystem::file_time_type& cacheTime
+) const
+{
+	if (directory.empty() || !std::filesystem::exists(directory))
+	{
+		return false;
+	}
+
+	for (const auto& entry : std::filesystem::directory_iterator(directory))
+	{
+		if (!entry.is_regular_file())
+			continue;
+
+		const auto extension = entry.path().extension().wstring();
+		if (extension != L".hlsl" && extension != L".hlsli" && extension != L".h")
+			continue;
+
+		if (entry.last_write_time() > cacheTime)
+			return true;
+	}
+
+	return false;
 }
 
 void DxShaderCompilerGlobal::LogCompilationError(

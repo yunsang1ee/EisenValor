@@ -1,7 +1,16 @@
 #pragma once
-#include <memory>
+#include <cstdint>
+#include <typeinfo>
 
 using RenderDataTypeID = uint32_t;
+
+enum class RenderDataPolicy : uint8_t
+{
+	Transient,
+	FrameBuffered,
+	PingPongHistory,
+	Persistent
+};
 
 namespace RenderTypeInternal
 {
@@ -27,6 +36,12 @@ public:
 	virtual RenderDataTypeID GetRuntimeTypeID() const = 0;
 	virtual const char*		 GetTypeName() const = 0;
 	virtual bool			 IsValid() const = 0;
+
+	virtual void BeginFrame(uint32_t frameIndex) {}
+	virtual void EndFrame() {}
+	virtual void OnResize(uint32_t width, uint32_t height) {}
+	virtual void ResetHistory() {}
+	virtual void Release() {}
 };
 
 template <typename Derived>
@@ -39,6 +54,3 @@ public:
 
 	virtual bool IsValid() const override { return false; }
 };
-
-template <typename T>
-concept IsValidRenderData = std::derived_from<T, RenderDataBase<T>>;
