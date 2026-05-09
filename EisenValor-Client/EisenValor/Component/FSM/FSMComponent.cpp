@@ -35,29 +35,27 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	// 서버에서 오는 상태 기록
 	m_serverState = serverState;
 
-	// 병사 오프셋
+	// 병사 오프셋 처리
 	uint8_t targetState = serverState;
 	if (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
 	{
 		targetState += StateOffset::kSoldierOffset;
 	}
 
-	if (m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY) ||
-		m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK) ||
-		m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY))
-	{
-		return;
-	}
-	
-
-	// 그 외 경우 서버 상태로 변경
-	ChangeState(targetState);
+	// 정책 기반 요청으로 변경 (공격 중 무시 등은 StatePolicy에서 처리)
+	RequestState(StateRequestType::ForcedServerCorrection, targetState);
 }
 
 void FSMComponent::ChangeState(uint8_t nextStateType)
 {
+	// 기존 함수는 애니메이션 종료 대기가 기본값
+	ChangeState(nextStateType, false);
+}
+
+void FSMComponent::ChangeState(uint8_t nextStateType, bool ignoreExitTime)
+{
 	//디버그
-	//DEBUG_LOG_FMT("[FSM] ChangeState: {} -> {} (ObjType: {})\n", (int)m_curStateType, (int)nextStateType, (int)m_objType);
+	//DEBUG_LOG_FMT("[FSM] ChangeState: {} -> {} (ObjType: {}, IgnoreExitTime: {})\n", (int)m_curStateType, (int)nextStateType, (int)m_objType, ignoreExitTime);
 
 	// 같은 상태일 때 애니메이션을 다시 틀지 않도록 방어
 	if (m_curStateType == nextStateType) return;
@@ -67,8 +65,8 @@ void FSMComponent::ChangeState(uint8_t nextStateType)
 					   nextStateType == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD) ||
 					   nextStateType == (StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)));
 
-	// HasExitTime Check (Dead 제외)
-	if (!isNextDead)
+	// 종료 조건 체크 (ignoreExitTime이 false일 때만 수행)
+	if (!ignoreExitTime && !isNextDead)
 	{
 		if (State* curState = StatePool::GetState(m_curStateType))
 		{
@@ -117,3 +115,32 @@ void FSMComponent::SetStance(uint8_t stance)
 	}
 }
 
+bool FSMComponent::RequestState(StateRequestType request, uint8_t targetStateOverride)
+{
+	static const PlayerStatePolicy playerPolicy;
+
+	if (m_objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+	{
+		if (targetStateOverride == 0)
+		{
+			return false;
+		}
+
+		if (request != StateRequestType::ForcedServerCorrection)
+		{
+			return false;
+		}
+
+		ChangeState(targetStateOverride, true);
+		return true;
+	}
+
+	StateTransitionDecision decision = playerPolicy.Resolve(*this, request, targetStateOverride);
+	if (!decision.accepted)
+	{
+		return false;
+	}
+
+	ChangeState(decision.nextStateType, decision.ignoreExitTime);
+	return true;
+}

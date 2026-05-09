@@ -22,6 +22,51 @@ using namespace FB_ENUMS;
 namespace
 {
 constexpr float kMinMouseDelta = 1e-4f;
+
+struct MovementInputState
+{
+	bool forward = false;
+	bool backward = false;
+	bool left = false;
+	bool right = false;
+	bool shift = false;
+	bool isMoving = false;
+	bool isRunning = false;
+	uint8_t moveStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+	bool hasJustReleased = false;
+	bool hasJustPressed = false;
+
+	void DetermineMovementState(bool isNeutralStance)
+	{
+		isMoving = forward || backward || left || right;
+		isRunning = shift && isMoving && isNeutralStance;
+		moveStateType =
+			static_cast<uint8_t>(isRunning ? FB_ENUMS::PLAYER_STATE_TYPE_RUN : FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+	}
+
+	void ClearMovement()
+	{
+		forward = false;
+		backward = false;
+		left = false;
+		right = false;
+		isMoving = false;
+		isRunning = false;
+		moveStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+	}
+};
+
+void ClearMovementInput(MovementComponent* movement)
+{
+	if (!movement)
+		return;
+
+	movement->SetInputForward(false);
+	movement->SetInputBackward(false);
+	movement->SetInputLeft(false);
+	movement->SetInputRight(false);
+	movement->ResetVelocity();
+}
 }
 
 void PlayerControllerComponent::SetMouseSensitivity(float x, float y)
@@ -93,6 +138,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 	auto curState = fsm->GetCurStateType();
 	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 	{
+		ClearMovementInput(myGameObject->GetComponent<MovementComponent>());
 		return;
 	}
 
@@ -286,8 +332,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		return;
 
 	uint8_t curState = fsm->GetCurStateType();
-	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
+
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
+	{
+		ClearMovementInput(movement);
 		return;
+	}
 
 	auto& input = GLOBAL(InputGlobal);
 
@@ -326,57 +376,59 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		// 약공격
 		if (input.GetInputDown(VK_LBUTTON))
 		{
-			const auto stateType{fsm->GetCurStateType()};
-			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY
-				|| stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			// RequestState에서 공격 가능 여부 판단
+			if (fsm->RequestState(FSMComponent::StateRequestType::AttackLight))
 			{
-				return;
+				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
+				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
+				DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			}
-
-			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_LIGHT, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-			DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
+			ClearMovementInput(movement);
 			return;
 		}
 		// 강공격
 		else if (input.GetInputDown(VK_RBUTTON))
 		{
-			const auto stateType{fsm->GetCurStateType()};
-			if (stateType == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY ||
-				stateType == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY || stateType == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
+			if (fsm->RequestState(FSMComponent::StateRequestType::AttackHeavy))
 			{
-				return;
+				FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
+				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
+				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+
+				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
+				DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
 			}
-
-			FB_STRUCTS::GeneralAttackInfo attackInfo(GENERAL_ATTACK_TYPE_HEAVY, GENERAL_ATTACK_DIR_TYPE_NONE);
-			auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-
-			fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
-
-			DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
+			ClearMovementInput(movement);
 			return;
 		}
 	}
 
-	bool w = input.GetInput('W');
-	bool s = input.GetInput('S');
-	bool a = input.GetInput('A');
-	bool d = input.GetInput('D');
-	bool isShiftPressed = input.GetInput(VK_SHIFT);
-
-	bool isMovingInput = (w || s || a || d);
+	MovementInputState moveInput;
+	moveInput.forward = input.GetInput('W');
+	moveInput.backward = input.GetInput('S');
+	moveInput.left = input.GetInput('A');
+	moveInput.right = input.GetInput('D');
+	moveInput.shift = input.GetInput(VK_SHIFT);
+	moveInput.hasJustReleased =
+		input.GetInputUp('W') || input.GetInputUp('A') || input.GetInputUp('S') || input.GetInputUp('D');
+	moveInput.hasJustPressed =
+		input.GetInputDown('W') || input.GetInputDown('A') || input.GetInputDown('S') || input.GetInputDown('D');
 
 	// Run
 	bool isNeutralStance = (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
-	bool isRunning = isShiftPressed && isMovingInput && isNeutralStance;
+	moveInput.DetermineMovementState(isNeutralStance);
+	bool canMove =
+		!moveInput.isMoving || fsm->RequestState(FSMComponent::StateRequestType::Move, moveInput.moveStateType);
+	if (!canMove)
+	{
+		moveInput.ClearMovement();
+		ClearMovementInput(movement);
+	}
 
-	if (isRunning)
+	if (moveInput.isRunning)
 	{
 		movement->SetMoveSpeed(8.0f);
 	}
@@ -410,19 +462,19 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	// 이동 방향 및 캐릭터 회전 설정
 	if (isLockOn)
 	{
-		if (w)
+		if (moveInput.forward)
 			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
-		else if (s)
+		else if (moveInput.backward)
 			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
-		else if (a)
+		else if (moveInput.left)
 			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
-		else if (d)
+		else if (moveInput.right)
 			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
 
-		movement->SetInputForward(w);
-		movement->SetInputBackward(s);
-		movement->SetInputLeft(a);
-		movement->SetInputRight(d);
+		movement->SetInputForward(moveInput.forward);
+		movement->SetInputBackward(moveInput.backward);
+		movement->SetInputLeft(moveInput.left);
+		movement->SetInputRight(moveInput.right);
 
 		movement->SetMoveSpeed(1.5f);
 	}
@@ -430,7 +482,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 
-		if (isMovingInput)
+		if (moveInput.isMoving)
 		{
 			// 카메라 기준 방향 계산
 			XMVECTOR baseFwd = XMVector3Normalize(XMVectorSetY(camFwd, 0.0f));
@@ -440,13 +492,13 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 			XMVECTOR baseRight = XMVector3Normalize(XMVector3Cross(XMVectorSet(0, 1, 0, 0), baseFwd));
 
 			XMVECTOR moveDir = XMVectorZero();
-			if (w)
+			if (moveInput.forward)
 				moveDir = XMVectorAdd(moveDir, baseFwd);
-			if (s)
+			if (moveInput.backward)
 				moveDir = XMVectorSubtract(moveDir, baseFwd);
-			if (a)
+			if (moveInput.left)
 				moveDir = XMVectorSubtract(moveDir, baseRight);
-			if (d)
+			if (moveInput.right)
 				moveDir = XMVectorAdd(moveDir, baseRight);
 
 			moveDir = XMVector3Normalize(moveDir);
@@ -475,15 +527,21 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		movement->SetInputRight(false);
 	}
 
-	bool hasJustReleased =
-		input.GetInputUp('W') || input.GetInputUp('A') || input.GetInputUp('S') || input.GetInputUp('D');
-
-	bool hasJustPressed =
-		input.GetInputDown('W') || input.GetInputDown('A') || input.GetInputDown('S') || input.GetInputDown('D');
-
 	bool isRestricted =
 		(curState == FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY || curState == FB_ENUMS::PLAYER_STATE_TYPE_ATTACK ||
 		 curState == FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+
+	if (input.GetInputDown('E'))
+	{
+		if (isRestricted)
+		{
+			fsm->RequestState(FSMComponent::StateRequestType::CancelAttack);
+		}
+
+		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		return;
+	}
 
 	auto&				transform = myGameObject->GetTransform();
 	auto				pos = transform.GetPosition();
@@ -492,36 +550,30 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	if (isRestricted)
 	{
-		if (isMovingInput)
+		if (moveInput.isMoving)
 		{
-			auto stateType = isRunning ? FB_ENUMS::PLAYER_STATE_TYPE_RUN : FB_ENUMS::PLAYER_STATE_TYPE_WALK;
-
-			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(stateType);
+			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(
+				static_cast<FB_ENUMS::PLAYER_STATE_TYPE>(moveInput.moveStateType)
+			);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 		}
-		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 		return;
 	}
 
-	if (isMovingInput)
+	if (moveInput.isMoving)
 	{
-		if (isRunning)
+		if (moveInput.isRunning)
 		{
-			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_RUN || hasJustPressed)
+			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_RUN || moveInput.hasJustPressed)
 			{
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
-
 				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 			}
 		}
-		else
+		else //	걷기
 		{
-			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_WALK || hasJustPressed)
+			if (curState != FB_ENUMS::PLAYER_STATE_TYPE_WALK || moveInput.hasJustPressed)
 			{
-				fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
-
 				auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
 			}
@@ -530,12 +582,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
 	}
-	else
+	else // 입력이 없는 경우 이동에서 멈춤
 	{
 		if (curState == FB_ENUMS::PLAYER_STATE_TYPE_WALK || curState == FB_ENUMS::PLAYER_STATE_TYPE_RUN ||
-			hasJustReleased)
+			moveInput.hasJustReleased)
 		{
-			fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+			fsm->RequestState(FSMComponent::StateRequestType::StopMove);
 
 			auto pbState = NetBridge::C2S::Make_CS_UPDATE_PLAYER_STATE_PACKET(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbState));
@@ -586,13 +638,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
-
-	if (input.GetInputDown('E'))
-	{
-		auto pb{NetBridge::C2S::Make_CS_PLAYER_FAKE_PACKET()};
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	}
-
 
 }
 

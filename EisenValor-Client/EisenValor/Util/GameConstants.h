@@ -8,4 +8,4 @@ namespace StateOffset
 	static constexpr uint8_t kIdleOffset = 60;
 	static constexpr uint8_t kAttackOffset  = 100;
 	static constexpr uint8_t kHurtOffset = 150;
-	}
+}
