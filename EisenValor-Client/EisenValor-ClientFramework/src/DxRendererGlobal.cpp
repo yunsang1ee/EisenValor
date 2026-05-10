@@ -8,12 +8,15 @@
 #include "DxGarbageCollectorGlobal.h"
 #include "DxFrameResource.h"
 #include "DxSwapChain.h"
+#include "DxCommandContext.h"
 #include "CameraRenderData.h"
 #include "FrameRenderData.h"
 #include "CameraComponent.h"
 #include "TimerGlobal.h"
 #include "Transform.h"
 #include "GameObject.h"
+#include "DxCommandContext.h"
+#include "PixProfiler.h"
 
 DxRendererGlobal::DxRendererGlobal() = default;
 
@@ -118,6 +121,7 @@ void DxRendererGlobal::AddRenderPass(
 	pass->Initialize();
 	m_renderPasses.push_back({name, std::move(pass), priority});
 	m_renderPassesDirty = true;
+	RebuildRenderDataDeclarations();
 
 	DEBUG_LOG_FMT("[DxRendererGlobal] Pass added: {} (Priority: {})\n", name, static_cast<int32_t>(priority));
 }
@@ -142,6 +146,7 @@ void DxRendererGlobal::RemoveRenderPass(const std::string& name)
 		m_renderPasses.erase(iter, m_renderPasses.end());
 		DEBUG_LOG_FMT("[DxRendererGlobal] Pass removed: {}\n", name);
 		m_renderPassesDirty = true;
+		RebuildRenderDataDeclarations();
 	}
 }
 
@@ -159,6 +164,8 @@ IRenderPass* DxRendererGlobal::GetRenderPass(const std::string& name) const
 
 void DxRendererGlobal::BeginFrame()
 {
+	PixScopedCpuEvent event(L"DxRenderer.BeginFrame");
+
 	if (!m_isInitialized || !m_swapChain)
 	{
 		DEBUG_LOG_FMT(
@@ -170,10 +177,13 @@ void DxRendererGlobal::BeginFrame()
 	m_currentFrameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 	frame->BeginFrame();
+	m_renderContext.BeginFrame();
 }
 
 void DxRendererGlobal::Render(Scene* scene)
 {
+	PixScopedCpuEvent event(L"DxRenderer.Render");
+
 	if (nullptr == scene)
 	{
 		DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: Scene is null!\n");
@@ -181,36 +191,39 @@ void DxRendererGlobal::Render(Scene* scene)
 	}
 
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
-
-	auto frameData = std::make_shared<FrameRenderData>();
-	frameData->deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
-	frameData->totalTime = GLOBAL(TimerGlobal).GetRuntime();
-	frameData->frameIndex = frame->GetFrameIndex();
-	m_renderContext.SetData(frameData, 0);
-
-	auto* mainCamera = CameraComponent::GetMainCamera();
-	if (nullptr != mainCamera)
 	{
-		auto cameraData = std::make_shared<CameraRenderData>();
-		cameraData->viewMatrix = mainCamera->GetViewMatrix();
-		cameraData->projectionMatrix = mainCamera->GetProjectionMatrix();
-		cameraData->viewProjInverse = DirectX::XMMatrixInverse(
-			nullptr, DirectX::XMMatrixMultiply(cameraData->viewMatrix, cameraData->projectionMatrix)
-		);
+		PixScopedCpuEvent dataEvent(L"DxRenderer.PrepareFrameData");
+		auto& frameData = m_frameData.Get();
+		frameData.deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
+		frameData.totalTime = GLOBAL(TimerGlobal).GetRuntime();
+		frameData.frameIndex = frame->GetFrameIndex();
+		m_renderContext.Set(m_frameData);
 
-		auto& transform = mainCamera->GetGameObject()->GetTransform();
-		cameraData->cameraPosition = transform.GetWorldPosition();
-		cameraData->cameraDirection = transform.GetForward();
-		cameraData->nearZ = mainCamera->GetNearZ();
-		cameraData->farZ = mainCamera->GetFarZ();
-		cameraData->fov = mainCamera->GetFOV();
-		cameraData->aspectRatio = mainCamera->GetAspectRatio();
+		auto* mainCamera = CameraComponent::GetMainCamera();
+		if (nullptr != mainCamera)
+		{
+			auto& cameraData = m_cameraData.Get();
+			cameraData.viewMatrix = mainCamera->GetViewMatrix();
+			cameraData.projectionMatrix = mainCamera->GetProjectionMatrix();
+			cameraData.viewProjInverse = DirectX::XMMatrixInverse(
+				nullptr, DirectX::XMMatrixMultiply(cameraData.viewMatrix, cameraData.projectionMatrix)
+			);
 
-		m_renderContext.SetData(cameraData, 0);
+			auto& transform = mainCamera->GetGameObject()->GetTransform();
+			cameraData.cameraPosition = transform.GetWorldPosition();
+			cameraData.cameraDirection = transform.GetForward();
+			cameraData.nearZ = mainCamera->GetNearZ();
+			cameraData.farZ = mainCamera->GetFarZ();
+			cameraData.fov = mainCamera->GetFOV();
+			cameraData.aspectRatio = mainCamera->GetAspectRatio();
+
+			m_renderContext.Set(m_cameraData);
+		}
 	}
 
 	if (m_renderPassesDirty)
 	{
+		PixScopedCpuEvent sortEvent(L"DxRenderer.SortRenderPasses");
 		std::stable_sort(
 			m_renderPasses.begin(), m_renderPasses.end(), [](const RenderPassEntry& a, const RenderPassEntry& b)
 			{ return static_cast<int32_t>(a.priority) < static_cast<int32_t>(b.priority); }
@@ -218,14 +231,24 @@ void DxRendererGlobal::Render(Scene* scene)
 		m_renderPassesDirty = false;
 	}
 
-	for (auto& entry : m_renderPasses)
+	DxScopedGpuEvent frameGpuEvent(*frame->GetMainContext(), L"Frame");
 	{
-		entry.pass->Execute(frame, scene, &m_renderContext);
+		DxScopedGpuEvent renderPassesGpuEvent(*frame->GetMainContext(), L"Render.RenderPasses");
+		for (auto& entry : m_renderPasses)
+		{
+			const std::string markerName = "RenderPass." + entry.name;
+			const std::wstring passGpuMarker(markerName.begin(), markerName.end());
+			DxScopedGpuEvent passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
+			PixScopedCpuEvent passEvent(markerName.c_str());
+			entry.pass->Execute(frame, scene, &m_renderContext);
+		}
 	}
 }
 
 void DxRendererGlobal::EndFrame()
 {
+	PixScopedCpuEvent event(L"DxRenderer.EndFrame");
+
 	if (!m_swapChain)
 	{
 		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
@@ -235,17 +258,29 @@ void DxRendererGlobal::EndFrame()
 	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 
-	frame->ExecuteAndSignal(commandQueue.GetQueue());
-	const uint64_t signaledFence = commandQueue.SignalFence();
+	uint64_t signaledFence = 0;
+	{
+		PixScopedCpuEvent executeEvent(L"DxRenderer.ExecuteCommandList");
+		frame->ExecuteAndSignal(commandQueue.GetQueue());
+		signaledFence = commandQueue.SignalFence();
+	}
 
-	m_swapChain->PresentMaxPerformance();
-	frame->WaitForCompletion();
+	{
+		PixScopedCpuEvent presentEvent(L"DxRenderer.Present");
+		m_swapChain->PresentMaxPerformance();
+	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
-	gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
+	{
+		PixScopedCpuEvent gcEvent(L"DxRenderer.ProcessCompletedReleases");
+		gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
+	}
 
-	m_renderContext.UpdateLifetimes();
+	{
+		PixScopedCpuEvent contextEvent(L"DxRenderer.EndRenderContextFrame");
+		m_renderContext.EndFrame();
+	}
 }
 
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
@@ -296,8 +331,18 @@ void DxRendererGlobal::ClearAllPasses()
 	{
 		entry.pass->Release();
 	}
+	m_renderContext.Release();
 	m_renderPasses.clear();
 	DEBUG_LOG_FMT("[DxRendererGlobal] All passes cleared\n");
+}
+
+void DxRendererGlobal::RebuildRenderDataDeclarations()
+{
+	m_renderContext.ClearDeclaredAccesses();
+	for (auto& entry : m_renderPasses)
+	{
+		entry.pass->DeclareRenderData(&m_renderContext);
+	}
 }
 
 DxFrameResource* DxRendererGlobal::GetCurrentFrame() const

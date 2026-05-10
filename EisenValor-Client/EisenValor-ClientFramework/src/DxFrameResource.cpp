@@ -5,6 +5,7 @@
 #include "DxUtils.h"
 #include "DxDescriptorHeapGlobal.h"
 #include "DxGarbageCollectorGlobal.h"
+#include "PixProfiler.h"
 
 DxFrameResource::DxFrameResource() = default;
 
@@ -134,6 +135,7 @@ void DxFrameResource::WaitForCompletion()
 	const uint64_t completed = m_fence->GetCompletedValue();
 	if (m_fenceValue > 0 && completed < m_fenceValue)
 	{
+		PixScopedCpuEvent waitEvent(L"DxFrameResource.WaitForCompletion");
 		ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent));
 		WaitForSingleObject(m_fenceEvent, INFINITE);
 	}

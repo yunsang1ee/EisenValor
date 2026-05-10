@@ -439,6 +439,7 @@ public class AssetExporter
             var writer = new AssetWriter("EVMT", guid);
 
             writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
+            writer.AddChunk("EMIS", 1, BuildMaterialEmissionChunk(mat));
             writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
 
             writer.WriteToFile(path);
@@ -982,6 +983,7 @@ public class AssetExporter
 
         AssetWriter writer = new AssetWriter("EVMT", guid);
         writer.AddChunk("PROP", 1, BuildMaterialPropChunk(mat));
+        writer.AddChunk("EMIS", 1, BuildMaterialEmissionChunk(mat));
         writer.AddChunk("DEPS", 1, BuildMaterialDepsChunk(mat));
         writer.WriteToFile(outputPath);
         context.Log.AppendLine("WRITE_MATERIAL path=" + outputPath + " guid=" + guid + " name=" + mat.name);
@@ -1647,12 +1649,102 @@ public class AssetExporter
         return BuildVertexChunk(mesh, null);
     }
 
+    private static bool HasValidTangents(Vector4[] tangents, int vertexCount)
+    {
+        if (tangents == null || tangents.Length < vertexCount)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < vertexCount; i++)
+        {
+            Vector4 t = tangents[i];
+            if (new Vector3(t.x, t.y, t.z).sqrMagnitude <= 1e-8f || Mathf.Abs(t.w) <= 0.0f)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static Vector4[] BuildFallbackTangents(Vector3[] normals, int vertexCount)
+    {
+        Vector4[] tangents = new Vector4[vertexCount];
+        for (int i = 0; i < vertexCount; i++)
+        {
+            Vector3 n = (normals != null && normals.Length > i && normals[i].sqrMagnitude > 1e-8f)
+                ? normals[i].normalized
+                : Vector3.up;
+            Vector3 up = Mathf.Abs(n.y) < 0.999f ? Vector3.up : Vector3.right;
+            Vector3 tangent = Vector3.Cross(up, n);
+            if (tangent.sqrMagnitude <= 1e-8f)
+            {
+                tangent = Vector3.right;
+            }
+            tangent.Normalize();
+            tangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, 1.0f);
+        }
+
+        return tangents;
+    }
+
+    private static Vector4[] GetExportTangents(Mesh mesh, Vector3[] normals, Vector2[] uvs)
+    {
+        Vector4[] tangents = mesh.tangents;
+        int vertexCount = mesh.vertexCount;
+        if (HasValidTangents(tangents, vertexCount))
+        {
+            return tangents;
+        }
+
+        if (uvs != null && uvs.Length == vertexCount)
+        {
+            mesh.RecalculateTangents();
+            tangents = mesh.tangents;
+            if (HasValidTangents(tangents, vertexCount))
+            {
+                UnityEngine.Debug.Log($"[AssetExporter] Recalculated tangents for '{mesh.name}'.");
+                return tangents;
+            }
+        }
+
+        UnityEngine.Debug.LogWarning($"[AssetExporter] Failed to recalculate tangents for '{mesh.name}'. Using normal-based fallback tangents.");
+        return BuildFallbackTangents(normals, vertexCount);
+    }
+
     private static byte[] BuildVertexChunk(Mesh mesh, Material mat)
+    {
+        Mesh exportMesh = UnityEngine.Object.Instantiate(mesh);
+        try
+        {
+            return BuildVertexChunkFromPreparedMesh(exportMesh, mat);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(exportMesh);
+        }
+    }
+
+    private static byte[] BuildVertexChunkFromPreparedMesh(Mesh mesh, Material mat)
     {
         var pos = mesh.vertices;
         var norm = mesh.normals;
-        var tan = mesh.tangents;
         var uv = mesh.uv;
+        if (norm == null || norm.Length == 0)
+        {
+            mesh.RecalculateNormals();
+            norm = mesh.normals;
+        }
+        if (norm == null || norm.Length == 0)
+        {
+            norm = new Vector3[pos.Length];
+        }
+        if (uv == null || uv.Length == 0)
+        {
+            uv = new Vector2[pos.Length];
+        }
+        var tan = GetExportTangents(mesh, norm, uv);
 
         // Atlas UV Mapping (Pre-calculated: 1 x N layout)
         int atlasCols = 1;
@@ -1817,6 +1909,28 @@ public class AssetExporter
             float metallic = FindFloat(mat, new[] { "_Metallic" }, new[] { "Metallic" }, 0f);
             bw.Write(metallic);
 
+            return ms.ToArray();
+        }
+    }
+
+    private static byte[] BuildMaterialEmissionChunk(Material mat)
+    {
+        using (MemoryStream ms = new())
+        using (BinaryWriter bw = new(ms))
+        {
+            Color emissionColor = FindColor(mat, new[] { "_EmissionColor" }, new[] { "EmissionColor", "EmissiveColor" }, Color.black);
+            float defaultIntensity = emissionColor.maxColorComponent > 0.0f ? 1.0f : 0.0f;
+            float emissionIntensity = FindFloat(
+                mat,
+                new[] { "_EmissionIntensity", "_EmissiveIntensity" },
+                new[] { "EmissionIntensity", "EmissiveIntensity" },
+                defaultIntensity
+            );
+
+            bw.Write(emissionColor.r);
+            bw.Write(emissionColor.g);
+            bw.Write(emissionColor.b);
+            bw.Write(emissionIntensity);
             return ms.ToArray();
         }
     }

@@ -1,5 +1,5 @@
 #pragma once
-#include "IRenderData.h"
+#include "RenderDataPolicy.h"
 #include "RenderDataSync.h"
 #include "RaytracingCommon.h"
 #include "AssetFormat.h"
@@ -10,6 +10,13 @@ class MaterialRenderData : public RenderDataBase<MaterialRenderData>
 public:
 	MaterialRenderData() = default;
 	virtual ~MaterialRenderData() override = default;
+
+	void Release() override
+	{
+		syncBuffer = RenderDataSync<MaterialGPUData>();
+		terrainSurfaceSyncBuffer = RenderDataSync<TerrainSurfaceGPUData>();
+		materialToIndex.clear();
+	}
 
 	RenderDataSync<MaterialGPUData> syncBuffer;
 	RenderDataSync<TerrainSurfaceGPUData> terrainSurfaceSyncBuffer;

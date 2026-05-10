@@ -49,11 +49,13 @@ public class SkinnedMeshExporter
         // --- 검증 로그 추가 ---
         int[] triangles = mesh.triangles;
         int totalSubMeshIndexCount = 0;
-        for (int i = 0; i < mesh.subMeshCount; i++) {
+        for (int i = 0; i < mesh.subMeshCount; i++)
+        {
             totalSubMeshIndexCount += (int)mesh.GetSubMesh(i).indexCount;
         }
         Debug.Log($"[SkinnedMeshExporter] Verification - triangles.Length: {triangles.Length}, SubMesh Sum: {totalSubMeshIndexCount}");
-        if (triangles.Length != totalSubMeshIndexCount) {
+        if (triangles.Length != totalSubMeshIndexCount)
+        {
             Debug.LogError("[CRITICAL] 인덱스 개수 불일치 발견!");
         }
         // -----------------------
@@ -62,14 +64,23 @@ public class SkinnedMeshExporter
         if (string.IsNullOrEmpty(savePath)) return;
 
         // --- 데이터 추출 ---
-        byte[] vertData = CreateVertChunk(mesh, smr);
+        Mesh exportMesh = UnityEngine.Object.Instantiate(mesh);
+        byte[] vertData;
+        try
+        {
+            vertData = CreateVertChunk(exportMesh, smr);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(exportMesh);
+        }
         byte[] indxData = CreateIndexChunk(mesh);
         byte[] boundsData = CreateBoundsChunk(mesh);
         byte[] subMeshData = CreateSubMeshChunk(mesh);
         byte[] boneData = CreateBoneChunk(smr);
         byte[] offsetData = CreateOffsetChunk(mesh);
         byte[] depsData = CreateDepsChunk(smr);
-        
+
         // --- 파일 저장 (AssetWriter 활용) ---
         string guid = AssetExporter.GetStableMeshGuidOrEmpty(mesh);
         if (string.IsNullOrEmpty(guid))
@@ -85,7 +96,7 @@ public class SkinnedMeshExporter
         writer.AddChunk("BONE", 1, boneData);
         writer.AddChunk("OFFS", 1, offsetData);
         writer.AddChunk("DEPS", 1, depsData);
-        
+
         writer.WriteToFile(savePath);
         Debug.Log($"[SkinnedMeshExporter] 파일 저장 완료: {savePath}");
     }
@@ -124,7 +135,7 @@ public class SkinnedMeshExporter
         using (BinaryWriter bw = new BinaryWriter(ms))
         {
             Bounds bounds = mesh.bounds;
-            
+
             // AABB
             bw.Write(bounds.min.x); bw.Write(bounds.min.y); bw.Write(bounds.min.z);
             bw.Write(bounds.max.x); bw.Write(bounds.max.y); bw.Write(bounds.max.z);
@@ -179,16 +190,72 @@ public class SkinnedMeshExporter
         using (BinaryWriter bw = new BinaryWriter(ms))
         {
             int[] triangles = mesh.triangles;
-            
+
             bw.Write((uint)32);             // IndexFormat: 32-bit
             bw.Write((uint)triangles.Length); // IndexCount
-            
+
             foreach (int idx in triangles)
             {
                 bw.Write((uint)idx);
             }
             return ms.ToArray();
         }
+    }
+
+    private static bool HasValidTangents(Vector4[] tangents, int vertexCount)
+    {
+        if (tangents == null || tangents.Length < vertexCount)
+            return false;
+
+        for (int i = 0; i < vertexCount; i++)
+        {
+            Vector4 t = tangents[i];
+            if (new Vector3(t.x, t.y, t.z).sqrMagnitude <= 1e-8f || Mathf.Abs(t.w) <= 0.0f)
+                return false;
+        }
+
+        return true;
+    }
+
+    private static Vector4[] BuildFallbackTangents(Vector3[] normals, int vertexCount)
+    {
+        Vector4[] tangents = new Vector4[vertexCount];
+        for (int i = 0; i < vertexCount; i++)
+        {
+            Vector3 n = (normals != null && normals.Length > i && normals[i].sqrMagnitude > 1e-8f)
+                ? normals[i].normalized
+                : Vector3.up;
+            Vector3 up = Mathf.Abs(n.y) < 0.999f ? Vector3.up : Vector3.right;
+            Vector3 tangent = Vector3.Cross(up, n);
+            if (tangent.sqrMagnitude <= 1e-8f)
+                tangent = Vector3.right;
+            tangent.Normalize();
+            tangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, 1.0f);
+        }
+
+        return tangents;
+    }
+
+    private static Vector4[] GetExportTangents(Mesh mesh, Vector3[] normals, Vector2[] uvs)
+    {
+        Vector4[] tangents = mesh.tangents;
+        int vertexCount = mesh.vertexCount;
+        if (HasValidTangents(tangents, vertexCount))
+            return tangents;
+
+        if (uvs != null && uvs.Length == vertexCount)
+        {
+            mesh.RecalculateTangents();
+            tangents = mesh.tangents;
+            if (HasValidTangents(tangents, vertexCount))
+            {
+                Debug.Log($"[SkinnedMeshExporter] Recalculated tangents for '{mesh.name}'.");
+                return tangents;
+            }
+        }
+
+        Debug.LogWarning($"[SkinnedMeshExporter] Failed to recalculate tangents for '{mesh.name}'. Using normal-based fallback tangents.");
+        return BuildFallbackTangents(normals, vertexCount);
     }
 
     private static byte[] CreateVertChunk(Mesh mesh, SkinnedMeshRenderer smr)
@@ -198,7 +265,6 @@ public class SkinnedMeshExporter
         {
             Vector3[] vertices = mesh.vertices;
             Vector3[] normals = mesh.normals;
-            Vector4[] tangents = mesh.tangents;
             Vector2[] uvs = mesh.uv;
             BoneWeight[] weights = mesh.boneWeights;
 
@@ -216,13 +282,13 @@ public class SkinnedMeshExporter
                     if (mat.HasProperty("_AtlasCols"))
                     {
                         atlasCols = mat.GetFloat("_AtlasCols");
-                        
+
                         // _AtlasCols를 찾았다면 해당 머티리얼의 _FrameIndex도 가져옴
                         if (mat.HasProperty("_FrameIndex"))
                         {
                             frameIndex = mat.GetInt("_FrameIndex");
                         }
-                        
+
                         // 유효한 설정을 찾았으므로 루프 종료
                         break;
                     }
@@ -254,18 +320,23 @@ public class SkinnedMeshExporter
             }
 
             // 데이터가 없는 경우를 대비한 기본값 처리
+            if (normals == null || normals.Length == 0)
+            {
+                mesh.RecalculateNormals();
+                normals = mesh.normals;
+            }
             if (normals == null || normals.Length == 0) normals = new Vector3[vertices.Length];
-            if (tangents == null || tangents.Length == 0) tangents = new Vector4[vertices.Length];
             if (uvs == null || uvs.Length == 0) uvs = new Vector2[vertices.Length];
             if (weights == null || weights.Length == 0) weights = new BoneWeight[vertices.Length];
+            Vector4[] tangents = GetExportTangents(mesh, normals, uvs);
 
             for (int i = 0; i < vertices.Length; i++)
             {
                 // 1. Static Vertex Data (명세서 4.1)
                 bw.Write(vertices[i].x); bw.Write(vertices[i].y); bw.Write(vertices[i].z);
-                bw.Write(normals[i].x);  bw.Write(normals[i].y);  bw.Write(normals[i].z);
+                bw.Write(normals[i].x); bw.Write(normals[i].y); bw.Write(normals[i].z);
                 bw.Write(tangents[i].x); bw.Write(tangents[i].y); bw.Write(tangents[i].z); bw.Write(tangents[i].w);
-                
+
                 // [Bake Atlas UV] Shaders/Cursed_Set.hlsl 로직 이식
                 float rawU = uvs[i].x;
                 float rawV = uvs[i].y;
@@ -279,11 +350,11 @@ public class SkinnedMeshExporter
                 float offset = col * frameWidth;
 
                 // 최종 공식 적용: (원본 U * 폭) + 시작 오프셋
-                float finalX = (rawU * frameWidth) + offset; 
+                float finalX = (rawU * frameWidth) + offset;
                 float finalY = 1.0f - rawV; // V Flip
 
                 bw.Write(finalX);
-                bw.Write(finalY); 
+                bw.Write(finalY);
 
                 // 2. Skinning Data (명세서 4.4)
                 // Bone Indices (byte[4])
@@ -313,7 +384,7 @@ public class SkinnedMeshExporter
             for (int i = 0; i < bones.Length; i++)
             {
                 Transform bone = bones[i];
-                
+
                 // 1. 이름 해시 (FNV-1a 64-bit)
                 bw.Write(HashFNV1a(bone.name));
 
