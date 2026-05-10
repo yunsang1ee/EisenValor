@@ -52,12 +52,6 @@ namespace GameServer {
 			virtual bool Check(const float dt) override final;
 		};
 
-		// 현재 타겟이 병사(Soldier)인지 확인한다.
-		class IsTargetSoldier : public ConditionNode {
-		public:
-			virtual bool Check(const float dt) override final;
-		};
-
 		// 공격 쿨타임이 차서 다시 공격할 수 있는지 확인한다.
 		// 매 사이클마다 [minSec, maxSec] 범위에서 새로운 쿨다운을 무작위로 결정한다.
 		class IsAttackCooldownReady : public ConditionNode {
@@ -154,7 +148,8 @@ namespace GameServer {
 			float m_intervalSec;
 		};
 
-		// 타겟 주위 [minDist, maxDist] 반경 내 임의 지점을 일정 간격마다 새 목적지로 설정해 자연스러운 견제 무빙을 만든다.
+		// 일정 간격마다 FWD/BWD/LFT/RGT 중 한 방향을 골라 [minDist, maxDist] 만큼
+		// 그 방향으로 확실히 이동시킨다. 직전과 동일한 방향은 다시 뽑지 않아 변화감을 준다.
 		class WanderAroundTarget : public ActionNode {
 		public:
 			explicit WanderAroundTarget(
@@ -163,13 +158,14 @@ namespace GameServer {
 				const float maxDist = 2.5f)
 				: m_intervalSec{ intervalSec }, m_minDist{ minDist }, m_maxDist{ maxDist } {}
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
-			virtual void Reset() override { m_acc = m_intervalSec; }
+			virtual void Reset() override { m_acc = m_intervalSec; m_lastDirIdx = -1; }
 
 		private:
 			float m_acc{};
 			float m_intervalSec;
 			float m_minDist;
 			float m_maxDist;
+			int m_lastDirIdx{ -1 };
 		};
 
 		// 1회 공격을 수행한다 (사거리 안의 타겟에게 데미지 + 클라이언트에 공격 패킷 브로드캐스트).
@@ -182,6 +178,31 @@ namespace GameServer {
 		class MoveToOZ : public ActionNode {
 		public:
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		};
+
+		// NavAgent의 maxSpeed를 지정 값으로 설정한다 (이미 같으면 no-op).
+		// 항상 SUCCESS를 반환해 Sequence 흐름을 막지 않는다.
+		class SetMaxSpeed : public ActionNode {
+		public:
+			explicit SetMaxSpeed(const float maxSpeed) : m_maxSpeed{ maxSpeed } {}
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+		private:
+			float m_maxSpeed;
+		};
+
+		// 최초 1회 지정된 시간만큼 RUNNING을 반환해 트리 흐름을 막아두고,
+		// 시간이 지나면 그 후로는 항상 FAIL을 반환해 형제 노드로 흐름을 넘긴다.
+		// Reset()을 의도적으로 비워 상태 재진입에도 다시 발동하지 않는다.
+		class WaitOnce : public ActionNode {
+		public:
+			explicit WaitOnce(const float durationSec) : m_durationSec{ durationSec } {}
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
+			virtual void Reset() override {}
+
+		private:
+			float m_acc{ 0.f };
+			float m_durationSec;
+			bool  m_done{ false };
 		};
 	}
 }

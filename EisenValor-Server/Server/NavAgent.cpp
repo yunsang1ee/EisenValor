@@ -125,3 +125,27 @@ void GameServer::Contents::NavAgent::SetAsStaticObstacle()
 
 	ag->targetState = DT_CROWDAGENT_TARGET_NONE;
 }
+
+void GameServer::Contents::NavAgent::SetMaxSpeed(const float maxSpeed)
+{
+	if(m_agentIdx == -1) return;
+
+	m_params.maxSpeed = maxSpeed;
+
+	auto const crowd{ m_navSystem->GetCrowd() };
+	if(!crowd) return;
+
+	crowd->updateAgentParameters(m_agentIdx, &m_params);
+}
+
+void GameServer::Contents::NavAgent::SetMaxAcceleration(const float maxAcceleration)
+{
+	if(m_agentIdx == -1) return;
+
+	m_params.maxAcceleration = maxAcceleration;
+
+	auto const crowd{ m_navSystem->GetCrowd() };
+	if(!crowd) return;
+
+	crowd->updateAgentParameters(m_agentIdx, &m_params);
+}

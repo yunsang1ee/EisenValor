@@ -8,6 +8,8 @@
 #include "General.h"
 #include "FSM.h"
 
+// #define PRINT_GENERAL_NODE_LOG
+
 // =====================================================
 //				     CONDITION NODES
 // =====================================================
@@ -69,9 +71,6 @@ bool GameServer::Contents::IsTargetLost::Check(const float dt)
 {
 	const auto owner{ GetOwner() };
 	const auto target{ owner->GetTarget() };
-
-	// TODO: 범위 벗어남 조건 추가할듯
-
 	return false == IsValidObj(target);
 }
 
@@ -82,7 +81,7 @@ bool GameServer::Contents::IsTargetInDetectionRange::Check(const float dt)
 	if(false == IsValidObj(target)) return false;
 
 	const auto& objData{ owner->GetGameObjectData() };
-	constexpr float leashRange{ 15.f };
+	constexpr float leashRange{ 12.f };
 	return owner->IsTargetInRange(target, leashRange * leashRange);
 }
 
@@ -93,7 +92,7 @@ bool GameServer::Contents::IsTargetInCombatRange::Check(const float dt)
 	if(false == IsValidObj(target)) return false;
 
 	const auto& objData{ owner->GetGameObjectData() };
-	constexpr float range{3.f};
+	constexpr float range{ 5.f };
 	return owner->IsTargetInRange(target, range * range);
 }
 
@@ -102,16 +101,8 @@ bool GameServer::Contents::IsTargetInAttackRange::Check(const float dt)
 	const auto owner{ GetOwner() };
 	const auto target{ owner->GetTarget() };
 	if(false == IsValidObj(target)) return false;
-	constexpr float range{ 3.f };
+	constexpr float range{ 2.5f };
 	return owner->IsTargetInRange(target, range * range);
-}
-
-bool GameServer::Contents::IsTargetSoldier::Check(const float dt)
-{
-	const auto owner{ GetOwner() };
-	const auto target{ owner->GetTarget() };
-	if(false == IsValidObj(target)) return false;
-	return FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == target->GetObjType();
 }
 
 bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
@@ -147,7 +138,7 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindEnemy::DoAc
 {
 	auto const owner{ GetOwner() };
 	const auto& objData{ owner->GetGameObjectData() };
-	constexpr float detectionRange{ 15.f };
+	constexpr float detectionRange{ 12.f };
 	constexpr float detectionRangeSq{ detectionRange * detectionRange };
 	if(detectionRangeSq <= 0.f) return BEHAVIOR_NODE_STATUS::FAIL;
 
@@ -160,8 +151,8 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindEnemy::DoAc
 
 	for(int i = 0; i < gameObjectGroups.size(); ++i) {
 		if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL != i &&
-		   FB_ENUMS::GAME_OBJECT_TYPE_PLAYER != i &&
-		   FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER != i)
+			FB_ENUMS::GAME_OBJECT_TYPE_PLAYER != i &&
+			FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER != i)
 			continue;
 
 		for(const auto& [id, o] : gameObjectGroups[i]) {
@@ -222,6 +213,17 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::LookAtTarget::D
 GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SetStance::DoAction(const float dt)
 {
 	GetOwner()->SetStanceType(m_stance);
+	if(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT == m_stance) {
+#ifdef PRINT_GENERAL_NODE_LOG
+		std::cout << "SetStance: COMBAT" << std::endl;
+#endif
+	}
+	else
+		{
+#ifdef PRINT_GENERAL_NODE_LOG
+		std::cout << "SetStance: NEUTRAL" << std::endl;
+#endif
+	}
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 
@@ -258,44 +260,85 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::WanderAroundTar
 	if(m_acc < m_intervalSec) return BEHAVIOR_NODE_STATUS::SUCCESS;
 	m_acc = 0.f;
 
-	std::uniform_real_distribution<float> angleDist{ 0.f, 6.2831853f };
-	std::uniform_real_distribution<float> distDist{ m_minDist, m_maxDist };
-	const float angle{ angleDist(mersenne) };
-	const float dist{ distDist(mersenne) };
-
 	const Vec3& ownerPos{ owner->GetPosition() };
 	const Vec3& targetPos{ target->GetPosition() };
-	const Vec3 dest{
-		targetPos.x + std::cosf(angle) * dist,
-		targetPos.y,
-		targetPos.z + std::sinf(angle) * dist };
 
-	// 타겟 기준 forward/right 축으로 이동 방향 분류
+	// owner 기준 forward(타겟 방향) / right 축
 	const float fwdX{ targetPos.x - ownerPos.x };
 	const float fwdZ{ targetPos.z - ownerPos.z };
 	const float fwdLenSq{ fwdX * fwdX + fwdZ * fwdZ };
-	if(fwdLenSq > 0.0001f) {
-		const float invLen{ 1.f / std::sqrtf(fwdLenSq) };
-		const float fX{ fwdX * invLen };
-		const float fZ{ fwdZ * invLen };
-		const float rX{ fZ };
-		const float rZ{ -fX };
+	if(fwdLenSq < 0.0001f) return BEHAVIOR_NODE_STATUS::SUCCESS;
+	const float invLen{ 1.f / std::sqrtf(fwdLenSq) };
+	const float fX{ fwdX * invLen };
+	const float fZ{ fwdZ * invLen };
+	const float rX{ fZ };
+	const float rZ{ -fX };
 
-		const float mX{ dest.x - ownerPos.x };
-		const float mZ{ dest.z - ownerPos.z };
-		const float fwdDot{ mX * fX + mZ * fZ };
-		const float rgtDot{ mX * rX + mZ * rZ };
+	// FWD/BWD/LFT/RGT 중 직전과 다른 방향을 선택
+	constexpr int DIR_COUNT{ 4 };
+	int dirIdx;
+	if(m_lastDirIdx < 0) {
+		std::uniform_int_distribution<int> dist{ 0, DIR_COUNT - 1 };
+		dirIdx = dist(mersenne);
+	}
+	else {
+		std::uniform_int_distribution<int> dist{ 0, DIR_COUNT - 2 };
+		dirIdx = dist(mersenne);
+		if(dirIdx >= m_lastDirIdx) ++dirIdx;
+	}
+	m_lastDirIdx = dirIdx;
 
-		FB_ENUMS::MOVE_DIRECTION_TYPE moveDir;
-		if(std::fabs(fwdDot) >= std::fabs(rgtDot)) {
-			moveDir = (fwdDot >= 0.f) ? FB_ENUMS::MOVE_DIRECTION_TYPE_FWD : FB_ENUMS::MOVE_DIRECTION_TYPE_BWD;
+	std::uniform_real_distribution<float> stepDist{ m_minDist, m_maxDist };
+	const float step{ stepDist(mersenne) };
+
+	float dX{ 0.f }, dZ{ 0.f };
+	FB_ENUMS::MOVE_DIRECTION_TYPE moveDir{ FB_ENUMS::MOVE_DIRECTION_TYPE_FWD };
+	switch(dirIdx) {
+		case 0:
+		{
+			dX = fX * step;
+			dZ = fZ * step;
+			moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD;
+#ifdef PRINT_GENERAL_NODE_LOG
+			std::cout << "FWD" << std::endl;
+#endif
+			break;
 		}
-		else {
-			moveDir = (rgtDot >= 0.f) ? FB_ENUMS::MOVE_DIRECTION_TYPE_RGT : FB_ENUMS::MOVE_DIRECTION_TYPE_LFT;
+		case 1:
+		{
+			dX = -fX * step;
+			dZ = -fZ * step;
+			moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_BWD;
+#ifdef PRINT_GENERAL_NODE_LOG
+			std::cout << "BWD" << std::endl;
+#endif
+			break;
 		}
-		owner->SetMoveDir(moveDir);
+		case 2:
+		{
+			dX = -rX * step;
+			dZ = -rZ * step;
+			moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_LFT;
+#ifdef PRINT_GENERAL_NODE_LOG
+			std::cout << "LFT" << std::endl;
+#endif
+			break;
+		}
+		case 3:
+		{
+			dX = rX * step;
+			dZ = rZ * step;
+			moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_RGT;
+#ifdef PRINT_GENERAL_NODE_LOG
+			std::cout << "RGT" << std::endl;
+#endif
+			break;
+		}
 	}
 
+	const Vec3 dest{ ownerPos.x + dX, ownerPos.y, ownerPos.z + dZ };
+
+	owner->SetMoveDir(moveDir);
 	auto const navAgent{ owner->GetComponent<GameServer::Contents::NavAgent>() };
 	if(navAgent) navAgent->SetDestPos(dest);
 
@@ -314,20 +357,42 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::Attack::DoActio
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	if(nullptr == atkInfo.skillData) return BEHAVIOR_NODE_STATUS::FAIL;
 
-	const FB_STRUCTS::GeneralAttackInfo info{static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(atkInfo.skillData->skillTypeID),atkInfo.dir};
+	const FB_STRUCTS::GeneralAttackInfo info{ static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(atkInfo.skillData->skillTypeID),atkInfo.dir };
 	auto pb{ ServerPackets::Make_SC_GENERAL_ATTACK_PACKET(owner->GetID(), info) };
 	auto const world{ owner->GetGameWorld() };
 	world->Broadcast(std::move(pb));
 
 	std::weak_ptr<Creature> weakOwner{ std::static_pointer_cast<Creature>(owner) };
 	std::weak_ptr<Creature> weakTarget{ target };
-	world->AddTimedEvent([weakOwner, weakTarget, dt]() {
-		auto o = weakOwner.lock();
-		auto t = weakTarget.lock();
-		if(!IsValidObj(o) || !IsValidObj(t)) return;
-		t->OnDamaged(o, dt);
-	}, HIT_FRAME_DELAY);
+	world->AddTimedEvent([weakOwner, weakTarget, dt]()
+		{
+			auto o = weakOwner.lock();
+			auto t = weakTarget.lock();
+			if(!IsValidObj(o) || !IsValidObj(t)) return;
+			t->OnDamaged(o, dt);
+		}, HIT_FRAME_DELAY);
 
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::WaitOnce::DoAction(const float dt)
+{
+	if(m_done) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	m_acc += dt;
+	if(m_acc < m_durationSec) return BEHAVIOR_NODE_STATUS::RUNNING;
+
+	m_done = true;
+	return BEHAVIOR_NODE_STATUS::FAIL;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SetMaxSpeed::DoAction(const float dt)
+{
+	auto const owner{ GetOwner() };
+	auto const navAgent{ owner->GetComponent<GameServer::Contents::NavAgent>() };
+	if(navAgent && navAgent->GetMaxSpeed() != m_maxSpeed) {
+		navAgent->SetMaxSpeed(m_maxSpeed);
+	}
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 

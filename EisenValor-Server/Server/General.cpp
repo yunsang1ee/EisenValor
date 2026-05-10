@@ -69,6 +69,7 @@ void GameServer::Contents::General::SetStanceType(const FB_ENUMS::GENERAL_STANCE
 	if(m_stanceType == stanceType) return;
 
 	m_stanceType = stanceType;
+
 	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(), GetStanceType(), 0);
 	GetGameWorld()->Broadcast(std::move(pb));
 }

@@ -120,8 +120,10 @@ void GeneralWalkState::Update(FSMComponent* fsm, float dt)
 	uint8_t targetKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 
 
-	// 락온 상태일 경우 방향별 애니메이션 키 결정
-	if (fsm->IsLockOn())
+	// 전투 자세(플레이어 락온 / NPC 장수 COMBAT 스탠스)일 때 방향별 애니메이션 키 결정
+	const bool isCombat = fsm->IsLockOn() ||
+		fsm->GetStance() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT);
+	if (isCombat)
 	{
 		auto dir = fsm->GetMoveDirection();
 		switch (dir)

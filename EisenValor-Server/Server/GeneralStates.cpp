@@ -15,8 +15,6 @@ GameServer::Contents::GeneralState::GeneralState(const uint8 stateType)
 {
 }
 
-// IDLE이나 RUN때 FindEnemy 할때, 찾은 Enemy가 Player나 General이면 전투태세로 들어가고, 만약 병사라면 그냥 바로 공격
-
 // ============================================
 //					  IDLE
 // ============================================
@@ -25,31 +23,25 @@ GameServer::Contents::GeneralIdleState::GeneralIdleState(const std::shared_ptr<G
 {
 	auto rootSelector = std::make_unique<GameServer::Contents::SelectorNode>();
 
-	// 1) 적 감지 → 전투 진입 (병사면 즉시 ATTACK, 그 외(장수/플레이어)는 WALK)
+	// 0) 최초 생성 직후 2초 대기 (1회성, 이후 IDLE 재진입에는 영향 없음)
+	rootSelector->AddChild(std::make_unique<GameServer::Contents::WaitOnce>(2.f));
+
+	// 1) 적 감지 → 전투 진입
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		seq->AddChild(std::make_unique<GameServer::Contents::FindEnemy>());
 		seq->AddChild(std::make_unique<GameServer::Contents::SetStance>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT));
 		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
-		//auto branch = std::make_unique<GameServer::Contents::SelectorNode>();
-		//{
-		//	auto soldierSeq = std::make_unique<GameServer::Contents::SequenceNode>();
-		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
-		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
-		//	branch->AddChild(std::move(soldierSeq));
-		//}
-		//branch->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
-		//seq->AddChild(std::move(branch));
-
 		rootSelector->AddChild(std::move(seq));
 	}
 
 	// 2) 점령지 안이면 그대로 대기
 	rootSelector->AddChild(std::make_unique<GameServer::Contents::IsInOccupationZone>());
 
-	// 3) 점령지로 이동
+	// 3) 점령지로 이동 (RUN 진입 전 기본 속도 복귀)
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
+		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(3.f));
 		seq->AddChild(std::make_unique<GameServer::Contents::MoveToOZ>());
 		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_RUN));
 		rootSelector->AddChild(std::move(seq));
@@ -65,13 +57,18 @@ GameServer::Contents::GeneralIdleState::~GeneralIdleState()
 
 void GameServer::Contents::GeneralIdleState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralIdleState Enter!" << std::endl;
+#endif
 	if(m_root)
 		m_root->Reset();
 }
 
 void GameServer::Contents::GeneralIdleState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
+	std::cout << "GeneralIdleState Exit!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GeneralIdleState::Update(const float dt)
@@ -120,23 +117,21 @@ GameServer::Contents::GeneralWalkState::GeneralWalkState(const std::shared_ptr<G
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 4) 전투 범위 안 → 견제 무빙 + 방향 주기적 변경 (WALK 애니 유지)
-	//    단, 타겟이 병사면 견제 없이 바로 추격해 붙는다.
+	// 4) 전투 범위 안 → 견제 무빙 + 방향 주기적 변경 (WALK 애니 유지, 속도 감속)
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
-		//auto notSoldier = std::make_unique<GameServer::Contents::InverterNode>();
-		//notSoldier->SetChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
-		//seq->AddChild(std::move(notSoldier));
 		seq->AddChild(std::make_unique<GameServer::Contents::IsTargetInCombatRange>());
+		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(2.f));
 		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
-		seq->AddChild(std::make_unique<GameServer::Contents::WanderAroundTarget>(1.2f, 1.5f, 2.5f));
 		seq->AddChild(std::make_unique<GameServer::Contents::RandomizeAttackDir>());
+		seq->AddChild(std::make_unique<GameServer::Contents::WanderAroundTarget>(1.2f, 1.0f, 2.5f));
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 5) 추격 (타겟 위치로 이동하며 응시)
+	// 5) 추격 (타겟 위치로 이동하며 응시, 기본 속도 복귀)
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
+		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(3.f));
 		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
 		seq->AddChild(std::make_unique<GameServer::Contents::MoveToTarget>());
 		rootSelector->AddChild(std::move(seq));
@@ -152,14 +147,18 @@ GameServer::Contents::GeneralWalkState::~GeneralWalkState()
 
 void GameServer::Contents::GeneralWalkState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralWalkState Enter!" << std::endl;
+#endif
 	if(m_root)
 		m_root->Reset();
 }
 
 void GameServer::Contents::GeneralWalkState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralWalkState Exit!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GeneralWalkState::Update(const float dt)
@@ -185,23 +184,12 @@ GameServer::Contents::GeneralRunState::GeneralRunState(const std::shared_ptr<Gen
 		rootSelector->AddChild(std::move(seq));
 	}
 
-	// 2) 적 감지 → 전투 진입 (병사면 즉시 ATTACK, 그 외(장수/플레이어)는 WALK)
+	// 2) 적 감지 → 전투 진입
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
 		seq->AddChild(std::make_unique<GameServer::Contents::FindEnemy>());
 		seq->AddChild(std::make_unique<GameServer::Contents::SetStance>(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT));
 		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
-
-		//auto branch = std::make_unique<GameServer::Contents::SelectorNode>();
-		//{
-		//	auto soldierSeq = std::make_unique<GameServer::Contents::SequenceNode>();
-		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::IsTargetSoldier>());
-		//	soldierSeq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK));
-		//	branch->AddChild(std::move(soldierSeq));
-		//}
-		//branch->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_WALK));
-		//seq->AddChild(std::move(branch));
-
 		rootSelector->AddChild(std::move(seq));
 	}
 
@@ -215,14 +203,18 @@ GameServer::Contents::GeneralRunState::~GeneralRunState()
 
 void GameServer::Contents::GeneralRunState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralRunState Enter!" << std::endl;
+#endif
 	if(m_root)
 		m_root->Reset();
 }
 
 void GameServer::Contents::GeneralRunState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralRunState Exit!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GeneralRunState::Update(const float dt)
@@ -291,6 +283,8 @@ GameServer::Contents::GeneralAttackState::~GeneralAttackState()
 
 void GameServer::Contents::GeneralAttackState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
+#endif
 	std::cout << "GeneralAttackState Enter!" << std::endl;
 	if(m_root)
 		m_root->Reset();
@@ -298,6 +292,8 @@ void GameServer::Contents::GeneralAttackState::Enter(const float dt)
 
 void GameServer::Contents::GeneralAttackState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
+#endif
 	std::cout << "GeneralAttackState Exit!" << std::endl;
 }
 
@@ -327,7 +323,9 @@ GameServer::Contents::GeneralStunState::~GeneralStunState()
 
 void GameServer::Contents::GeneralStunState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralStunState Enter!" << std::endl;
+#endif
 	const auto owner{ std::static_pointer_cast<General>(GetFSM()->GetOwner()) };
 	owner->GetComponent<GameServer::Contents::NavAgent>()->StopMove();
 	if(m_root)
@@ -336,7 +334,9 @@ void GameServer::Contents::GeneralStunState::Enter(const float dt)
 
 void GameServer::Contents::GeneralStunState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralStunState Exit!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GeneralStunState::Update(const float dt)
@@ -376,14 +376,18 @@ GameServer::Contents::GeneralDeadState::~GeneralDeadState()
 
 void GameServer::Contents::GeneralDeadState::Enter(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralDeadState Enter!" << std::endl;
+#endif
 	if(m_root)
 		m_root->Reset();
 }
 
 void GameServer::Contents::GeneralDeadState::Exit(const float dt)
 {
+#ifdef PRINT_GENERAL_STATE_LOG
 	std::cout << "GeneralDeadState Exit!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GeneralDeadState::Update(const float dt)

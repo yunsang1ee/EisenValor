@@ -1233,6 +1233,9 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 
+	// obj->GetTransform().SetPosition(pos);
+	// obj->GetTransform().SetRotation(rot);
+
 	// MovementComponent가 있으면 네트워크 보간으로 부드럽게 이동, 없으면 즉시 스냅
 	if (auto* movement = obj->GetComponent<MovementComponent>())
 	{

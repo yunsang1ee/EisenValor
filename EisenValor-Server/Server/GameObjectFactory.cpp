@@ -96,6 +96,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 
 	general->SetRespawnPos(t.transform.GetPosition());
 	general->SetMoveDir(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+	general->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 
 	if(t.gameObjectData && false == t.gameObjectData->skills.empty()) {
 		const SkillData* const defaultSkill{ MANAGER(GameDataManager)->GetSkillData(t.gameObjectData->skills[0]) };

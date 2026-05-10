@@ -361,7 +361,8 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	else
 		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 
-	constexpr float distance{ 5.0f };
+	// combat range(5m)보다 바깥에 스폰해 추격 → 공격 사거리 진입 흐름을 타게 한다.
+	constexpr float distance{ 7.0f };
 
 	Vec3 spawnPos;
 	spawnPos.x = playerPos.x + (playerLook.x * distance);
@@ -944,38 +945,38 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 	//	}
 	//}
 
-	for(const auto& team : teams) {
-		auto const soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
+	//for(const auto& team : teams) {
+	//	auto const soldierSpawners = MANAGER(GameServer::Contents::MapDataManager)->GetSoldierSpawners("Map", team);
 
-		 for(const auto& soldierSpawner : *soldierSpawners) {
-			SoldierSpanwerTemplate t;
-			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-			t.gameObjectData = nullptr;
-			t.transform = Transform{ soldierSpawner.position, Vec3{} };
-			t.teamType = soldierSpawner.teamType;
-			t.gameWorld = this;
-			t.destPos = soldierSpawner.destinationPosition;
-			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
-			t.spawnCount = soldierSpawner.soldierSpawnCount;
-			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
-			AddGameObject(std::move(spawner));
-		}
+	//	 for(const auto& soldierSpawner : *soldierSpawners) {
+	//		SoldierSpanwerTemplate t;
+	//		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	//		t.gameObjectData = nullptr;
+	//		t.transform = Transform{ soldierSpawner.position, Vec3{} };
+	//		t.teamType = soldierSpawner.teamType;
+	//		t.gameWorld = this;
+	//		t.destPos = soldierSpawner.destinationPosition;
+	//		t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+	//		t.spawnCount = soldierSpawner.soldierSpawnCount;
+	//		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+	//		AddGameObject(std::move(spawner));
+	//	}
 
-		/*for(int i=0; i < 1; ++i){
-			const auto& soldierSpawner = (*soldierSpawners)[i];
-			SoldierSpanwerTemplate t;
-			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
-			t.gameObjectData = nullptr;
-			t.transform = Transform{ soldierSpawner.position, Vec3{} };
-			t.teamType = soldierSpawner.teamType;
-			t.gameWorld = this;
-			t.destPos = soldierSpawner.destinationPosition;
-			t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
-			t.spawnCount = soldierSpawner.soldierSpawnCount;
-			auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
-			AddGameObject(std::move(spawner));
-		}*/
-	}
+	//	/*for(int i=0; i < 1; ++i){
+	//		const auto& soldierSpawner = (*soldierSpawners)[i];
+	//		SoldierSpanwerTemplate t;
+	//		t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_SPAWNER);
+	//		t.gameObjectData = nullptr;
+	//		t.transform = Transform{ soldierSpawner.position, Vec3{} };
+	//		t.teamType = soldierSpawner.teamType;
+	//		t.gameWorld = this;
+	//		t.destPos = soldierSpawner.destinationPosition;
+	//		t.spawnIntervalSec = soldierSpawner.spawnIntervalSec;
+	//		t.spawnCount = soldierSpawner.soldierSpawnCount;
+	//		auto spawner{ GameServer::Contents::GameObjectFactory::CreateSoldierSpawner(t) };
+	//		AddGameObject(std::move(spawner));
+	//	}*/
+	//}
 }
 
 void GameServer::Contents::GameWorld::UpdateGameWorldObjects()
