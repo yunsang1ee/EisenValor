@@ -101,7 +101,7 @@ bool GameServer::Contents::IsTargetInAttackRange::Check(const float dt)
 	const auto owner{ GetOwner() };
 	const auto target{ owner->GetTarget() };
 	if(false == IsValidObj(target)) return false;
-	constexpr float range{ 2.5f };
+	constexpr float range{ 5.f };
 	return owner->IsTargetInRange(target, range * range);
 }
 
@@ -115,6 +115,7 @@ bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
 	m_acc += dt;
 	if(m_acc >= m_cycleSec) {
 		m_acc = 0.f;
+		std::cout << "Attack Cooldown Ready! Next Cooldown: " << m_cycleSec << " sec" << std::endl;
 		std::uniform_real_distribution<float> dist{ m_minSec, m_maxSec };
 		m_cycleSec = dist(mersenne);
 		return true;
