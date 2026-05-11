@@ -251,8 +251,8 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 	auto& resGlobal = GLOBAL(ResourceGlobal);
 	m_normalTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_normal.evtex");
 	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
-	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\select.evtex");
-	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\strong.evtex");
+	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
+	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_strong.evtex");
 	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\area.evtex");
 	m_disarmTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\disarm.evtex");
 
