@@ -128,7 +128,7 @@ bool GameServer::Contents::IsStunOver::Check(const float dt)
 	m_acc += dt;
 	const auto owner{ GetOwner() };
 	const auto& objData{ owner->GetGameObjectData() };
-	const float stunSec{ objData ? objData->stunDelay / 1000.f : 1.f };
+	constexpr float stunSec{ 2.f };
 	return m_acc >= stunSec;
 }
 

@@ -352,7 +352,7 @@ void GameServer::Contents::PlayerPostdelayState::Update(const float dt)
 //		 PLAYER_STUN_STATE
 // ==================================
 GameServer::Contents::PlayerStunState::PlayerStunState()
-	:State(FB_ENUMS::PLAYER_STATE_TYPE_STUN), m_startFrame{}, m_stunDuration{}
+	:State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
 }
 
@@ -363,10 +363,6 @@ GameServer::Contents::PlayerStunState::~PlayerStunState()
 void GameServer::Contents::PlayerStunState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	//m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-	if(m_stunDuration == 0) {
-		m_stunDuration = owner->GetGameObjectData()->stunDelay;
-	}
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Stun State" << std::endl;
 #endif
@@ -375,7 +371,6 @@ void GameServer::Contents::PlayerStunState::Enter(const float dt)
 void GameServer::Contents::PlayerStunState::Exit(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	m_stunDuration = owner->GetGameObjectData()->stunDelay;
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Stun State" << std::endl;
 #endif
@@ -384,7 +379,13 @@ void GameServer::Contents::PlayerStunState::Exit(const float dt)
 void GameServer::Contents::PlayerStunState::Update(const float dt)
 {
 	auto const fsm{ GetFSM() };
-	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
+
+	m_accDTForStun += dt;
+
+	if(m_accDTForStun >= 2.f) {
+		m_accDTForStun = 0.f;
+		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
+	}
 }
 
 // ==================================
