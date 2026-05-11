@@ -484,3 +484,51 @@
  - 5월 8일까지 게임학회 논문 제출 (예제 : https://drive.google.com/file/d/1Hatzc-XDa2SaXT5Jojhf213CQKP0aA8u/view)
 3. 다음미팅
  - 5월 11일 7시 30분
+
+2026-05-11
+-------------
+1. 진행상황
+ - ( X ) 발바닥 공중에 뜨지않게
+ - ( X ) 전투 손맛 개선 (적아군 구분, 딜레이 개선, 피격 모션, 넉백, 카메라 쉐이킹....)
+ - ( O ) 6월 22일  최종 발표까지 구현해야 할 항목(중점연구과제 포함) 들을 리스트업하고, 각각의 구현 deadline을 정해오기.
+ - (O )  5월 8일까지 게임학회 논문 제출 (예제 : https://drive.google.com/file/d/1Hatzc-XDa2SaXT5Jojhf213CQKP0aA8u/view)
+2.  MileStone
+ - 이윤상
+  * (진행중) 맵 제작 남은 맵 제작 & ReSTIR PT 공부                05-10 05-12
+  * ReSTIR PT 공부 & Reservoir Candidate Generation            05-13 05-17
+  * Temporal Reuse Compute                                             05-18 05-23
+  * Spatial Reuse Compute + Simple Reconnection               05-24 05-28
+  *  Hybrid Shift + Lobe-specific Connectability                    05-30 06-02
+  * Jacobian / PDF Correction + Final Evaluation                   06-03 06-06
+  * DLSS DLSS SR / RR 적용 및 입력 계약 정리                      06-07 06-10
+  * ReSTIR PT Enhanced Enhanced 최적화 요소 부분 적용      06-11 06-15
+  * 최적화 Profiling 기반 CPU/GPU-bound 최적화                06-16 06-20
+  * 마감 발표 빌드
+- 윤성열
+ * 전투와 게임 로직 및 클라-서버 연동~5/24
+   - 약공격, 강공격, 범위공격, 무장해제공격
+   - 아이템, 스킬, 마법 (X)
+   - 회복 Zone, 점령시스템
+   - NPC : 쫄,    장수: (플레이어 대체)
+   - 이슈 : 쫄들 동기화 할 때 네트워크 bandwidth 최적화
+              전투 타이밍 손맛을 고려한 네트워크 딜레이 대처 (클라 서버가 다른 컴퓨터, 클라 서버가 다른 도시에 있을 때)
+ * 5/25 ~ 6/1 DB(고민)
+ * 6/4 ~ 6/11, 6/13 ~ 6/15 시험공부 및 졸업작품 병행
+ * 6/15~ 6/21 최종검수
+ * 6/22 발표
+ - 이다건
+  * 1.  IK 구현 - FABRIK 알고리즘 (5/10 ~ 5/17)
+         - 지형 적응형 발 배치
+  * 2. Scene UI 및 기본 프레임워크 (5/17 ~ 5/25)
+       - 시작 씬(Main Menu), 로딩 씬, 메뉴 시스템 구성, 인게임 HUD
+  * 3. 전투 타격감 (VFX/손맛) 강화(1번과 함께 진행) (~5/31)
+       - 피격 시 스파클 및 블러드 이펙트, 사운드
+  * 4. 게임사운드 및 최종 점검 (~ 6/20)
+ 
+3. 다음미팅
+ - 5월 26일 오후 8시 
+ - MileStone해오기
+ - Directional Light 추가 (그림자를 위해서)
+
+4. 표준형 현장실습
+ - 현재 46명 요청, 게임회사,  서류심사를 위해서 경력개발처에서 서류 업그레이드 해줄 예정.
