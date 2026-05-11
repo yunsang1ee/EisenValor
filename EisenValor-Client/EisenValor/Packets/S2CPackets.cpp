@@ -28,7 +28,7 @@
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
 #include "Component/FSM/FSMComponent.h"
-#include "Component/FSM/GeneralStates.h"
+#include "Component/FSM/StateImplementations.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"

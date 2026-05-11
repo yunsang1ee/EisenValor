@@ -1,6 +1,6 @@
 #include "stdafxClient.h"
 #include "StatePool.h"
-#include "GeneralStates.h"
+#include "StateImplementations.h"
 #include <Packets/Enums_generated.h>
 #include "Util/GameConstants.h"
 
