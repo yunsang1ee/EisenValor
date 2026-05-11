@@ -45,9 +45,15 @@ public:
 	// 속도 초기화
 	void ResetVelocity() { m_velocity = DX::XMFLOAT3{0.0f, 0.0f, 0.0f}; }
 
+	// 네트워크 보간: 서버에서 받은 위치/회전(degree)으로 부드럽게 보간
+	// 호출 시점부터 kNetInterpDuration 동안 lerp 진행
+	void SetNetInterpTarget(const DX::XMFLOAT3& targetPos, const DX::XMFLOAT3& targetRotDegrees);
+	bool IsNetInterpActive() const { return m_isNetInterp; }
+
 private:
 	void ProcessInput(float deltaTime);
 	bool IsAnyInputActive() const;
+	void UpdateNetInterp(float deltaTime);
 
 private:
 	MovementMode m_movementMode = MovementMode::Immediate;
@@ -68,4 +74,15 @@ private:
 	bool m_isMovingBackward = false;
 	bool m_isMovingLeft = false;
 	bool m_isMovingRight = false;
+
+	// 네트워크 보간 상태 (원격 오브젝트용)
+	static constexpr float kNetInterpDuration = 0.05f; // 서버 송신 간격(20Hz)과 매칭
+
+	bool		 m_isNetInterp = false;
+	DX::XMFLOAT3 m_netFromPos{0.0f, 0.0f, 0.0f};
+	DX::XMFLOAT3 m_netToPos{0.0f, 0.0f, 0.0f};
+	DX::XMFLOAT3 m_netFromRot{0.0f, 0.0f, 0.0f};
+	DX::XMFLOAT3 m_netToRot{0.0f, 0.0f, 0.0f};
+	float		 m_netInterpElapsed = 0.0f;
+	float		 m_netInterpDuration = kNetInterpDuration;
 };

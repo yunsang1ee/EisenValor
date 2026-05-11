@@ -10,7 +10,7 @@ GameServer::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType,
 
 GameServer::Contents::GameObject::~GameObject()
 {
-	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;
+	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;	
 }
 
 GameServer::Contents::Script* GameServer::Contents::GameObject::GetScript(const std::string_view name)

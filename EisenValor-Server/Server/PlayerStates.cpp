@@ -214,10 +214,10 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
-	if(owner->GetAtkInfo().skillData->name == "LIGHT") {
+	if(etou8(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT) == owner->GetAtkInfo().skillData->skillTypeID) {
 		HIT_FRAME_DELAY = 0.4f;
 	}
-	else if(owner->GetAtkInfo().skillData->name == "HEAVY") {
+	else if(etou8(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY) == owner->GetAtkInfo().skillData->skillTypeID ) {
 		HIT_FRAME_DELAY = 0.6f;
 	}
 	else
@@ -289,16 +289,9 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 			std::cout << std::format("PlayerAttackState!, Target ID: {}", target->GetID()) << std::endl;
 
 			if(owner->IsTargetInAttackRange(target)) {
-
-				if(false == IsValidObj(target)) {
-					auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
-					return;
-				}
-
 				if(target->OnDamaged(owner, dt)) {
 
-					if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
+					if(atkInfo.skillData->skillTypeID == etou8(FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM)) {
 						const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
 						// 무장해제 공격일 시, 상대 플레이어나 장수의 상태를 IDLE로...
 						if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType || FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType) {

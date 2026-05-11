@@ -814,8 +814,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			bool isGeneral =
-				(objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
+			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
@@ -994,9 +993,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					}
 				);
 			}
-
-			////////////////// isGeneral ///////////////////
-
 			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
 			{
 				tr.SetScale(0.9f);
@@ -1225,7 +1221,10 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const uint64 id = recvPkt.obj_id();
 	const uint64 localID = scene->GetLocalID();
 
-	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
+	if (id == localID)
+	{
+		return true;
+	}
 
 	auto obj = scene->FindGameObjectByServerID(id);
 	if (!obj)
@@ -1233,8 +1232,20 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 
 	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
-	obj->GetTransform().SetPosition(pos);
-	obj->GetTransform().SetRotation(rot);	
+
+	// obj->GetTransform().SetPosition(pos);
+	// obj->GetTransform().SetRotation(rot);
+
+	// MovementComponent가 있으면 네트워크 보간으로 부드럽게 이동, 없으면 즉시 스냅
+	if (auto* movement = obj->GetComponent<MovementComponent>())
+	{
+		movement->SetNetInterpTarget(pos, rot);
+	}
+	else
+	{
+		obj->GetTransform().SetPosition(pos);
+		obj->GetTransform().SetRotation(rot);
+	}
 
 	if (id != localID)
 	{
@@ -1285,6 +1296,12 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 			if (auto* fsm = obj->GetComponent<FSMComponent>())
 			{
 				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
+				const auto objectType = fsm->GetObjectType();
+				if (
+					objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL))
+				{
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK);
+				}
 			}
 			return true;
 		}
@@ -1437,6 +1454,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		{
 			return true;
 		}
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) && nextState == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
+		{
+			return true;
+		}
 		fsm->SetServerState(nextState);
 		return true;
 	}
@@ -1447,18 +1468,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
-		{
-			if (obj->GetComponent<StaminaComponent>() != nullptr)
-			{
-				fsm->SetServerState(nextState);
-				return true;
-			}
-		}
-
-		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD || nextState == FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 		{
 			fsm->SetServerState(nextState);
+			return true;
 		}
 	}
 
@@ -1535,8 +1548,8 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_ATTACK_DIR_PACKET& recvPkt
 )
 {
 	// 플레이어 공격 방향 표시
@@ -1712,6 +1725,35 @@ bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
 		break;
 	}
 
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
+
+	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
+
+	auto obj = scene->FindGameObjectByServerID(id);
+	if (!obj)
+		return false;
+
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+	obj->GetTransform().SetPosition(pos);
+	obj->GetTransform().SetRotation(rot);
+
+	if (id != localID)
+	{
+		// 서버에서 보내준 state를 FSM에 전달
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
+		{
+			fsm->SetMoveDirection(recvPkt.move_dir());
+		}
+	}
 	return true;
 }
 

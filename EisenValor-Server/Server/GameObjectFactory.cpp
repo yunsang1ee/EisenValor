@@ -9,13 +9,13 @@
 #include "PlayerStates.h"
 #include "SoldierStates.h"
 #include "BehaviorNode.h"
-#include "BehaviorTree.h"
 #include "Spawner.h"
 #include "Collider.h"
 #include "GameWorld.h"
 #include "NavAgent.h"
 #include "OccupationZone.h"
 #include "HealZone.h"
+#include "GameDataManager.h"
 
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFactory::CreatePlayer(const PlayerTemplate& t)
 {
@@ -25,7 +25,7 @@ std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameObjectFa
 	player->SetTransform(t.transform);
 	player->SetGameObjectData(t.gameObjectData);
 	player->SetStat(Stat{
-			 .currentHP = 50,
+			 .currentHP = t.gameObjectData->maxHp,
 			.maxHP = t.gameObjectData->maxHp,
 			.currentStamina = t.gameObjectData->maxStamina,
 			.maxStamina = t.gameObjectData->maxStamina,
@@ -95,9 +95,15 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 		});
 
 	general->SetRespawnPos(t.transform.GetPosition());
+	general->SetMoveDir(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+	general->SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 
-	/*const auto bt = general->AddComponent<BehaviorTree>();
-	bt->GetBlackboard()->SetValue("IsDefenseSuccess", false);*/
+	if(t.gameObjectData && false == t.gameObjectData->skills.empty()) {
+		const SkillData* const defaultSkill{ MANAGER(GameDataManager)->GetSkillData(t.gameObjectData->skills[0]) };
+		if(defaultSkill) {
+			general->SetAtkInfo(AttackInfo{ defaultSkill, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP });
+		}
+	}
 
 	auto navAgent = general->AddComponent<GameServer::Contents::NavAgent>(general->GetGameWorld()->GetNavSystem());
 	
@@ -105,7 +111,7 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.8f;
 	params.maxSpeed = 3.f;
-	params.maxAcceleration =3.f;
+	params.maxAcceleration =10.f;
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;
 	params.pathOptimizationRange =params.radius * 30.0f;
@@ -118,11 +124,13 @@ std::shared_ptr<GameServer::Contents::General> GameServer::Contents::GameObjectF
 
 	const auto fsm = general->AddComponent<GameServer::Contents::FSM>();
 
+	// State에서 쓰는 값들은 State마다 각각 따로 구조체로 따로 만들어서 Create할때 넘겨줘야함
+
 	auto idleState = GameServer::Contents::GeneralIdleState::Create(general);
 	auto walkState = GameServer::Contents::GeneralWalkState::Create(general);
 	auto runState = GameServer::Contents::GeneralRunState::Create(general);
-	auto attackState = GameServer::Contents::GeneralAttackState::Create();
-	auto stunState = GameServer::Contents::GeneralStunState::Create();
+	auto attackState = GameServer::Contents::GeneralAttackState::Create(general);
+	auto stunState = GameServer::Contents::GeneralStunState::Create(general);
 	auto deadState = GameServer::Contents::GeneralDeadState::Create(general);
 
 	fsm->AddState(std::move(idleState));
@@ -158,7 +166,7 @@ std::shared_ptr<GameServer::Contents::Soldier> GameServer::Contents::GameObjectF
 	params.radius = 0.6f;				// collision radius
 	params.height = 1.f;				
 	params.maxSpeed = 3.f;			
-	params.maxAcceleration = 3.f;		
+	params.maxAcceleration = 10.f;		
 
 	// set collision avoidance
 	params.collisionQueryRange = params.radius * 12.0f;

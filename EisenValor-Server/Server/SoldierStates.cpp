@@ -7,7 +7,7 @@
 #include "GameWorld.h"
 #include "Soldier.h"
 
-#define PRINT_SOLDIER_STATE_LOG
+// #define PRINT_SOLDIER_STATE_LOG
 
 // ============================================
 //					IDLE
@@ -369,13 +369,17 @@ GameServer::Contents::SoldierDeadState::~SoldierDeadState()
 void GameServer::Contents::SoldierDeadState::Enter(const float dt)
 {
 	m_accDT = 0.f;
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Enter Soldier Dead State", GetFSM()->GetOwner()->GetID()) << std::endl;
+#endif
 }
 
 void GameServer::Contents::SoldierDeadState::Exit(const float dt)
 {
 	m_accDT = 0.f;
+#ifdef PRINT_SOLDIER_STATE_LOG
 	std::cout << std::format("ID = {}, Exit Soldier Dead State", GetFSM()->GetOwner()->GetID()) << std::endl;
+#endif
 }
 
 void GameServer::Contents::SoldierDeadState::Update(const float dt)

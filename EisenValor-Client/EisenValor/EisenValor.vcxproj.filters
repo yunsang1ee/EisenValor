@@ -71,6 +71,9 @@
     <Filter Include="Component\ComponentMetadata">
       <UniqueIdentifier>{c267c778-8330-446a-876e-ed36154e056e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NavMesh">
+      <UniqueIdentifier>{7123454c-2864-44c9-95dc-a1e5920e3aad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -198,6 +201,47 @@
     </ClInclude>
     <ClInclude Include="Component\FSM\StateImplementations.h">
       <Filter>Component\FSM</Filter>
+    <ClInclude Include="NavMesh\DetourAlloc.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourAssert.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourCommon.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourLocalBoundary.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourMath.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNavMesh.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNavMeshBuilder.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNavMeshQuery.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNode.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourObstacleAvoidance.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourPathCorridor.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourPathQueue.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourProximityGrid.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourStatus.h">
+      <Filter>NavMesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -293,6 +337,41 @@
     </ClCompile>
     <ClCompile Include="Component\FSM\StateImplementations.cpp">
       <Filter>Component\FSM</Filter>
+    <ClCompile Include="NavMesh\DetourAlloc.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourAssert.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourCommon.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourLocalBoundary.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMesh.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMeshBuilder.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMeshQuery.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNode.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourObstacleAvoidance.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourPathCorridor.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourPathQueue.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourProximityGrid.cpp">
+      <Filter>NavMesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
