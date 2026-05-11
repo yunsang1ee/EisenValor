@@ -436,7 +436,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BehaviorNode.cpp" />
-    <ClCompile Include="BehaviorTree.cpp" />
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="HealZone.cpp" />
@@ -597,7 +596,6 @@
   <ItemGroup>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="BehaviorNode.h" />
-    <ClInclude Include="BehaviorTree.h" />
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
     <ClInclude Include="HealZone.h" />

@@ -19,12 +19,17 @@ namespace GameServer {
 			void SetDestPos(const Vec3& destPos);
 			int32 GetAgentIdx() const { return m_agentIdx; }
 			void Teleport(const Vec3& destPos);
-			
+
 			void StopMove();
 			void Remove();
 
 			void SyncPosition(const Vec3& newPos, const Vec3& prevPos, float dt);
 			void SetAsStaticObstacle();
+
+			void  SetMaxSpeed(const float maxSpeed);
+			void  SetMaxAcceleration(const float maxAcceleration);
+			float GetMaxSpeed() const { return m_params.maxSpeed; }
+			float GetMaxAcceleration() const { return m_params.maxAcceleration; }
 
 		private:
 			NavSystem*			m_navSystem;

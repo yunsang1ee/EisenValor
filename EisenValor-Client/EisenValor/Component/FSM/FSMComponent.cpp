@@ -13,14 +13,32 @@ void FSMComponent::OnUpdate(float deltaTime)
 	if (state)
 	{
 		// 애니메이션 종료 시 자동 전이
-		if (state->HasExitTime() && state->GetNextStateOnEnd() != 0)
+		//if (state->HasExitTime() && state->GetNextStateOnEnd() != 0)
+		//{
+		//	if (auto* anim = GetGameObject()->GetComponent<AnimationComponent>())
+		//	{
+		//		if (anim->IsAnimationEnd())
+		//		{
+		//			ChangeState(state->GetNextStateOnEnd());
+		//			return; // 상태가 바뀌었으므로 이번 프레임 중단
+		//		}
+		//	}
+		//}
+
+		if (state->HasExitTime())
 		{
 			if (auto* anim = GetGameObject()->GetComponent<AnimationComponent>())
 			{
 				if (anim->IsAnimationEnd())
 				{
-					ChangeState(state->GetNextStateOnEnd());
-					return; // 상태가 바뀌었으므로 이번 프레임 중단
+					uint8_t next = state->GetNextStateOnEnd();
+					if (next == 0)
+						next = m_serverState; // 서버 상태로 폴백
+					if (next != m_curStateType)
+					{
+						ChangeState(next);
+						return;
+					}
 				}
 			}
 		}

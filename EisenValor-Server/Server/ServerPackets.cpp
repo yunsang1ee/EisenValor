@@ -114,11 +114,11 @@ namespace ServerPackets {
 
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_CAMERA_TARGET_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_CAMERA_TARGET_PACKET, targetID));
 	}
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(const uint64 generalID, const uint8 attackDir)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(const uint64 generalID, const uint8 attackDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_SHOW_GENERAL_ATTACK_DIR_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SHOW_GENERAL_ATTACK_DIR_PACKET, generalID, attackDir));
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHANGE_GENERAL_ATTACK_DIR_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHANGE_GENERAL_ATTACK_DIR_PACKET, generalID, attackDir));
 
 	}
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_RESPAWN_GENERAL_PACKET(const uint64 id, const Transform& transform, const uint32 maxHp, const uint32 currentHP, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
@@ -164,7 +164,20 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_GAME_FINISH_RESULT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GAME_FINISH_RESULT_PACKET, winningTeam, blueScore, redScore));
 	}
+
 #pragma endregion
 
-
+	// =================
+	//		테스트
+	// =================
+#pragma region TEST_PACKETS
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_TELEPORT_PACKET(const uint64 objID, const Transform& transform, const uint8 subState, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		const FB_STRUCTS::Vec3 pos{ Vec3ToFlatVec3(transform.GetPosition()) };
+		const FB_STRUCTS::Vec3 rot{ Vec3ToFlatVec3(transform.GetRotationDegree()) };
+		const FB_STRUCTS::PosInfo posInfo{ pos, rot };
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_TELEPORT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_TELEPORT_PACKET, objID, &posInfo, subState, moveDir));
+	}
+#pragma endregion
 }

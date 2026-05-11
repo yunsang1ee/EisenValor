@@ -3,7 +3,6 @@
 
 #include "GameWorld.h"
 #include "Player.h"
-#include "BehaviorTree.h"
 #include "NavAgent.h"
 
 // #define PRINT_GENERAL_LOG
@@ -54,6 +53,8 @@ bool GameServer::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameOb
 
 void GameServer::Contents::General::OnPostComponentUpdate(const float dt)
 {
+	if(FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT == m_stanceType) return;
+
 	const Vec3 delta = GetTransform().GetDeltaPosition();
 	const float speedSq = delta.x * delta.x + delta.z * delta.z;
 
@@ -68,6 +69,7 @@ void GameServer::Contents::General::SetStanceType(const FB_ENUMS::GENERAL_STANCE
 	if(m_stanceType == stanceType) return;
 
 	m_stanceType = stanceType;
+
 	auto pb = ServerPackets::Make_SC_CHANGE_GENERAL_STANCE_PACKET(GetID(), GetStanceType(), 0);
 	GetGameWorld()->Broadcast(std::move(pb));
 }
@@ -76,7 +78,13 @@ void GameServer::Contents::General::Update(const float dt)
 {
 	GameObject::Update(dt);
 
-	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0) };
+	const auto curMoveDir = GetMoveDir();
+	const bool moveDirChanged = (curMoveDir != m_lastSentMoveDir);
+	if(!ShouldBroadcastMove(dt, moveDirChanged))
+		return;
+
+	m_lastSentMoveDir = curMoveDir;
+	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0, curMoveDir) };
 	GetGameWorld()->Broadcast(std::move(pb));
 }
 
@@ -104,6 +112,7 @@ void GameServer::Contents::General::OnRespawn()
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
 	
 	GetComponent<GameServer::Contents::NavAgent>()->Teleport(m_respawnPos);
+	ResetMoveBroadcastState();
 
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType()) };
 	world->Broadcast(std::move(pb));
@@ -115,9 +124,7 @@ void GameServer::Contents::General::OnRespawn()
 
 bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const attacker, const float dt, const bool broadcast)
 {
-	// TODO: 블랙보드에 공격자 정보 갱신
 	auto const world{ GetGameWorld() };
-	// const uint64 worldFrame{ world->GetGameWorldFrameCount() };
 
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 	if(!fsm) return false;
@@ -127,64 +134,60 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 	if(FB_ENUMS::GENERAL_STATE_TYPE_DEAD == stateType)
 		return false;
 
-	const auto bt = GetComponent<BehaviorTree>();
-	const auto bb = bt->GetBlackboard();
 	const auto atkInfo{ GetAtkInfo() };
 
 	uint32 damage{};
 
-	// 상대가 플레이어인 경우
-	if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == attacker->GetObjType()) {
-		auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
-		const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
+	switch(const auto attackerType = attacker->GetObjType()) {
+		case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
+		{
+			auto attackGeneral{ std::static_pointer_cast<General>(attacker) };
+			const AttackInfo& attackerAtkInfo{ attackGeneral->GetAtkInfo() };
 
-//		switch(stateType) {
-//			case FB_ENUMS::GENERAL_STATE_TYPE_ROAMING:
-//			{
-//				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_DUELING, dt, true);
-//				break;
-//			}
-//			case FB_ENUMS::GENERAL_STATE_TYPE_DUELING:
-//			{
-//				uint64 lastDefendedFrame = bb->GetValue<uint64>("LastDefendedFrame", 0UI64);
-//
-//				if(lastDefendedFrame != 0) {
-//					//uint64 currentFrame = GetGameWorld()->GetGameWorldFrameCount();
-//					//uint64 frameDiff = (currentFrame > lastDefendedFrame) ? (currentFrame - lastDefendedFrame) : (lastDefendedFrame - currentFrame);
-//
-//					// 방어 성공
-//					//if(frameDiff <= 10) {
-//#ifdef PRINT_GENERAL_LOG
-//						//std::cout << std::format("NPC General Defense Success!, frameCount: {}", frameDiff) << std::endl;
-//#endif
-//						//bb->SetValue("LastDefendedFrame", 0UI64);
-//						//return false;
-//					//}
-//
-//					bb->SetValue("LastDefendedFrame", 0UI64);
-//				}
-//				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
-//				break;
-//			}
-//			case FB_ENUMS::GENERAL_STATE_TYPE_STUN:
-//			{
-//
-//				break;
-//			}
-//			default:
-//				break;
-//		}
+			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				return false;
+			}
 
-		if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
-			damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+				damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+			}
+			else {
+				damage = attackerAtkInfo.skillData->damage;
+			}
+			const uint32 currentHP{ DecHP(damage, broadcast) };
+			if(0 == currentHP) {
+				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+			}
+			break;
 		}
-		else {
-			damage = attackerAtkInfo.skillData->damage;
+		case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
+		{
+			auto attackerPlayer = std::static_pointer_cast<Player>(attacker);
+			const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
+
+			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				return false;
+			}
+
+			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
+				damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
+			}
+			else {
+				damage = attackerAtkInfo.skillData->damage;
+			}
+			const uint32 currentHP{ DecHP(damage, broadcast) };
+			if(0 == currentHP) {
+				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+			}
+			break;
 		}
-		const int32 currentHP{ DecHP(damage, broadcast) };
-		if(0 == currentHP){
-			attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
-		}
+		case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
+			break;
+		default:
+			break;
 	}
+
 	return true;
 }

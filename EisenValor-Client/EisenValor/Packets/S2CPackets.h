@@ -82,8 +82,8 @@ bool Handle_SC_REMAINING_GAME_TIME_PACKET(const SOCKET& socket, const FB_TABLES:
 bool Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_CAMERA_TARGET_PACKET& recvPkt
 );
-bool Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
+bool Handle_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_ATTACK_DIR_PACKET& recvPkt
 );
 bool Handle_SC_RESPAWN_GENERAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt);
 bool Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt);
@@ -103,6 +103,10 @@ bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_S
 
 bool Handle_SC_GAME_FINISH_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt);
 
+#pragma endregion
+
+#pragma region TEST_PACKETS
+bool Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt);
 #pragma endregion
 } // namespace S2C
 } // namespace NetBridge

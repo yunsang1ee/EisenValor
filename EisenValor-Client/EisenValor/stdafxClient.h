@@ -12,4 +12,8 @@
 #include "Packets/Structs_generated.h"
 #include "Packets/Tables_generated.h"
 
+#include "NavMesh/DetourNavMesh.h"
+#include "NavMesh/DetourNavMeshQuery.h"
+#include "NavMesh/DetourCommon.h"
+
 // #define APPLY_LOBBY_SERVER

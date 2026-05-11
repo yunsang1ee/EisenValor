@@ -29,10 +29,10 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 
 	// 봇 추가
 	if (GLOBAL(InputGlobal).GetInputDown(VK_F4)) {
-		static bool flag{false};
+		static FB_ENUMS::TEAM_TYPE flag{FB_ENUMS::TEAM_TYPE_BLUE};
 		auto pb{NetBridge::C2S::Make_CL_ADD_BOT_PACKET(static_cast<FB_ENUMS::TEAM_TYPE>(flag))};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-		flag = !flag;
+		flag = (flag == FB_ENUMS::TEAM_TYPE_BLUE) ? FB_ENUMS::TEAM_TYPE_RED : FB_ENUMS::TEAM_TYPE_BLUE;
 	}
 	
 	// 게임 시작하기

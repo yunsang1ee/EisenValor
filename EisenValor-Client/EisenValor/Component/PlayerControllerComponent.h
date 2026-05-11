@@ -1,6 +1,21 @@
 #pragma once
 #include "IComponent.h"
 #include "MovementComponent.h"
+#include <fstream>
+
+struct NavMeshSetHeader
+{
+	int32			magic;
+	int32			version;
+	int32			numTiles;
+	dtNavMeshParams params;
+};
+
+struct NavMeshTileHeader
+{
+	dtTileRef tileRef;
+	int32	  dataSize;
+};
 
 class PlayerControllerComponent : public ComponentBase<PlayerControllerComponent>
 {
@@ -48,6 +63,10 @@ private:
 
 	float m_minPitch = -89.0f;
 	float m_maxPitch = 89.0f;
+
+	dtNavMesh*		m_navMesh;
+	dtNavMeshQuery* m_navMeshQuery;
+	dtQueryFilter	m_queryFilter;
 
 	// Shoulder view vertical now provided by CameraConfig::kCameraHeight
 

@@ -28,7 +28,7 @@ namespace GameServer {
 		static bool Handle_CS_CHANGE_GENERAL_STANCE_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_GENERAL_STANCE_PACKET& recvPkt);
 		static bool Handle_CS_PLAYER_FAKE_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_PLAYER_FAKE_PACKET& recvPkt);
 		static bool Handle_CS_CHANGE_CAMERA_TARGET_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_CAMERA_TARGET_PACKET& recvPkt);
-		static bool Handle_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt);
+		static bool Handle_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_CHANGE_GENERAL_ATTACK_DIR_PACKET& recvPkt);
 		static bool Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt);
 		static bool Handle_CS_UPDATE_PLAYER_STATE_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET& recvPkt);
 #pragma endregion

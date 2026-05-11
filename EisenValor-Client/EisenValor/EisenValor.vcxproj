@@ -264,6 +264,20 @@ exit /b 0</Command>
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
+    <ClInclude Include="NavMesh\DetourAlloc.h" />
+    <ClInclude Include="NavMesh\DetourAssert.h" />
+    <ClInclude Include="NavMesh\DetourCommon.h" />
+    <ClInclude Include="NavMesh\DetourLocalBoundary.h" />
+    <ClInclude Include="NavMesh\DetourMath.h" />
+    <ClInclude Include="NavMesh\DetourNavMesh.h" />
+    <ClInclude Include="NavMesh\DetourNavMeshBuilder.h" />
+    <ClInclude Include="NavMesh\DetourNavMeshQuery.h" />
+    <ClInclude Include="NavMesh\DetourNode.h" />
+    <ClInclude Include="NavMesh\DetourObstacleAvoidance.h" />
+    <ClInclude Include="NavMesh\DetourPathCorridor.h" />
+    <ClInclude Include="NavMesh\DetourPathQueue.h" />
+    <ClInclude Include="NavMesh\DetourProximityGrid.h" />
+    <ClInclude Include="NavMesh\DetourStatus.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
     <ClInclude Include="Packets\PacketEnums.h" />
@@ -313,6 +327,54 @@ exit /b 0</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourAlloc.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourAssert.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourCommon.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourLocalBoundary.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMesh.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMeshBuilder.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMeshQuery.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNode.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourObstacleAvoidance.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourPathCorridor.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourPathQueue.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourProximityGrid.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Packets\C2SPackets.cpp" />
     <ClCompile Include="Packets\PacketHandler.cpp" />

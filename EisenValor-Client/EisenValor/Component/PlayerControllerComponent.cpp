@@ -106,6 +106,43 @@ void PlayerControllerComponent::OnStart()
 	auto& input = GLOBAL(InputGlobal);
 	input.SetMouseLocked(true);
 
+	std::filesystem::path finalPath = "Resource/NavData/nav.bin";
+	if (finalPath.is_relative())
+	{
+		finalPath = Utils::ExeDir() / finalPath;
+	}
+	std::ifstream ifs{finalPath, std::ios::binary};
+	if (!ifs)
+		return;
+
+	NavMeshSetHeader header;
+	ifs.read((char*)&header, sizeof(NavMeshSetHeader));
+
+	const int expectedMagic{'T' + ('E' << 8) + ('S' << 16) + ('M' << 24)};
+
+	if (header.magic != expectedMagic)
+		return;
+
+	m_navMesh = dtAllocNavMesh();
+	if (dtStatusFailed(m_navMesh->init(&header.params)))
+		return;
+
+	for (int i = 0; i < header.numTiles; ++i)
+	{
+		NavMeshTileHeader tileHeader;
+		ifs.read((char*)&tileHeader, sizeof(NavMeshTileHeader));
+		if (!tileHeader.tileRef || !tileHeader.dataSize)
+			break;
+
+		unsigned char* data{(unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM)};
+		ifs.read((char*)data, tileHeader.dataSize);
+		m_navMesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
+	}
+
+	m_navMeshQuery = dtAllocNavMeshQuery();
+	if (dtStatusFailed(m_navMeshQuery->init(m_navMesh, 2048)))
+		return;
+
 	DEBUG_LOG_FMT("[PlayerControllerComponent] Mouse locked for gameplay\n");
 }
 
@@ -546,7 +583,20 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	auto&				transform = myGameObject->GetTransform();
 	auto				pos = transform.GetPosition();
 	auto				rot = transform.GetRotation();
-	FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+
+	dtQueryFilter filter;
+	const float	  extents[3] = {0.5f, 2.5f, 0.5f};
+
+	float      newPosArr[3] = { pos.x, pos.y, pos.z };
+	dtPolyRef  newPoly = 0;
+	float newNearestPt[3];
+	
+	m_navMeshQuery->findNearestPoly(newPosArr, extents, &filter, &newPoly, newNearestPt);
+
+	const Vec3 snapPos{newNearestPt[0], newNearestPt[1], newNearestPt[2]};
+	transform.SetPosition(snapPos);
+
+	FB_STRUCTS::PosInfo posInfo{{snapPos.x, snapPos.y, snapPos.z}, {rot.x, rot.y, rot.z}};
 
 	if (isRestricted)
 	{
@@ -638,7 +688,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		auto pb{NetBridge::C2S::Make_CS_TELEPORT_PACKET(FB_ENUMS::TELEPORT_PLACE_TYPE_HEAL_ZONE)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
-
 }
 
 void PlayerControllerComponent::RotateYaw(float deltaDegrees)
