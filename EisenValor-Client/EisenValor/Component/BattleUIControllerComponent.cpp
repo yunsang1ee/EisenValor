@@ -105,6 +105,46 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	if (!owner)
 		return;
 
+	auto syncAttackDirectionVisibility = [this, owner]()
+	{
+		Scene* scene = owner->GetScene();
+		if (!scene)
+			return;
+
+		GENERAL_ATTACK_DIR_TYPE visibleDir = m_currentSelectedDir;
+		bool lockToAttackDir = false;
+
+		if (auto* fsm = owner->GetComponent<FSMComponent>())
+		{
+			uint8_t state = fsm->GetCurStateType();
+			lockToAttackDir =
+				state == static_cast<uint8_t>(PLAYER_STATE_TYPE_PRE_DELAY) ||
+				state == static_cast<uint8_t>(PLAYER_STATE_TYPE_ATTACK);
+			visibleDir = static_cast<GENERAL_ATTACK_DIR_TYPE>(fsm->GetCurAttackDir());
+		}
+
+		if (visibleDir == GENERAL_ATTACK_DIR_TYPE_NONE)
+		{
+			lockToAttackDir = false;
+		}
+
+		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+		if (!btnStorage)
+			return;
+
+		auto setVisible = [&](HandleOf<ButtonUIComponent> handle, bool visible)
+		{
+			if (auto* btn = btnStorage->Get(handle))
+			{
+				btn->GetGameObject()->SetActive(visible);
+			}
+		};
+
+		setVisible(m_upButtonHandle, !lockToAttackDir || visibleDir == GENERAL_ATTACK_DIR_TYPE_TOP);
+		setVisible(m_leftButtonHandle, !lockToAttackDir || visibleDir == GENERAL_ATTACK_DIR_TYPE_LEFT);
+		setVisible(m_rightButtonHandle, !lockToAttackDir || visibleDir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
+	};
+
 	// 죽었으면 UI 숨기기
 	if (auto* health = owner->GetComponent<HealthComponent>())
 	{
@@ -118,6 +158,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	// 스탠스 상태에 따라 UI 가시성 제어
 	bool isCombat = (GetStance() == GENERAL_STANCE_TYPE_COMBAT);
 	ToggleUI(isCombat);
+	syncAttackDirectionVisibility();
 
 	// 2. COMBAT 모드 일때만 로직 수행
 	if (isCombat)
@@ -155,6 +196,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			}
 
 			ProcessMouseInput();
+			syncAttackDirectionVisibility();
 		}
 
 		UpdateUIPosition();
@@ -619,6 +661,16 @@ void BattleUIControllerComponent::ProcessMouseInput()
 {
 	auto&		 input = GLOBAL(InputGlobal);
 	DX::XMFLOAT2 mouseDelta = input.GetMouseDelta();
+
+	if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+	{
+		uint8_t state = fsm->GetCurStateType();
+		if (state == static_cast<uint8_t>(PLAYER_STATE_TYPE_PRE_DELAY) ||
+			state == static_cast<uint8_t>(PLAYER_STATE_TYPE_ATTACK))
+		{
+			return;
+		}
+	}
 
 	if ((mouseDelta.x * mouseDelta.x + mouseDelta.y * mouseDelta.y) > kMouseDeltaIgnoreSq)
 	{
