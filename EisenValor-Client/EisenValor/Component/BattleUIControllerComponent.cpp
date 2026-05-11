@@ -249,8 +249,8 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 
 	// 2. 텍스처 로드
 	auto& resGlobal = GLOBAL(ResourceGlobal);
-	m_normalTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\normal.evtex");
-	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\hovering.evtex");
+	m_normalTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_normal.evtex");
+	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
 	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\select.evtex");
 	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\strong.evtex");
 	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\area.evtex");
@@ -428,7 +428,7 @@ void BattleUIControllerComponent::SetChildUIPositions(float scale)
 
 	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
 
-	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg)
+	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg, float rotationDeg)
 	{
 		if (!handle.IsValid())
 			return;
@@ -449,11 +449,12 @@ void BattleUIControllerComponent::SetChildUIPositions(float scale)
 		rectTr->SetSizeDelta({currentUISize, currentUISize});
 		rectTr->SetOffsetMin({offsetX - currentUIHalfSize, offsetY - currentUIHalfSize});
 		rectTr->SetOffsetMax({offsetX + currentUIHalfSize, offsetY + currentUIHalfSize});
+		rectTr->SetRotationDegrees(rotationDeg);
 	};
 
-	setupPos(m_upButtonHandle, 90.0f);
-	setupPos(m_leftButtonHandle, 210.0f);
-	setupPos(m_rightButtonHandle, 330.0f);
+	setupPos(m_upButtonHandle, 90.0f, 0.0f);
+	setupPos(m_leftButtonHandle, 210.0f, 240.0f);
+	setupPos(m_rightButtonHandle, 330.0f, 120.0f);
 }
 
 void BattleUIControllerComponent::UpdateUIPosition()

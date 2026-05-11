@@ -25,6 +25,7 @@ struct UIRenderData
 	DirectX::XMFLOAT4	color;
 	DirectX::XMFLOAT2	uvMin;
 	DirectX::XMFLOAT2	uvMax;
+	float				rotationDegrees = 0.0f;
 };
 
 class IUIComponent

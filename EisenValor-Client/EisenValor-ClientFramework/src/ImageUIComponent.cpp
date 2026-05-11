@@ -78,6 +78,7 @@ void ImageUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 	data.rect = finalRect;
 	data.uvMin = {0.0f, 0.0f};
 	data.uvMax = {1.0f, 1.0f};
+	data.rotationDegrees = rectTr->GetRotationDegrees();
 
 	DirectX::XMFLOAT4 finalColor;
 	finalColor.x = m_color.x * targetStateColor.x;
