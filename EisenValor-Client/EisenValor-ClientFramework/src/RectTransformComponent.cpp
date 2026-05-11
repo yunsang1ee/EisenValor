@@ -50,6 +50,11 @@ void RectTransformComponent::SetOffsetMax(Vec2 offsetMax)
 	MarkDirty();
 }
 
+void RectTransformComponent::SetRotationDegrees(float degrees)
+{
+	m_rotationDegrees = degrees;
+}
+
 void RectTransformComponent::SetSizeDelta(Vec2 sizeDelta)
 {
 	// 현재 중심에서 대칭적으로 확장하거나 단순히 설정하는 간단한 버전
