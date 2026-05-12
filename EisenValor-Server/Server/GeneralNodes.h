@@ -12,6 +12,19 @@ namespace GameServer {
 			virtual bool Check(const float dt) override final;
 		};
 
+		// 아직 점령되지 않은(UNOCCUPIED) 점령지 안에 있는지 확인한다.
+		class IsInUnoccupiedZone : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 모든 점령지가 점령된(OCCUPIED) 상태인지 확인한다.
+		// 점령지가 하나도 없는 맵에서는 false를 반환한다.
+		class AreAllZonesOccupied : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
 		// 죽은지 일정 시간이 지났는지 확인한다.
 		class IsRespawnReady : public ConditionNode {
 		public:

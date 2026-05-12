@@ -32,6 +32,48 @@ bool GameServer::Contents::IsInOccupationZone::Check(const float dt)
 	return false;
 }
 
+bool GameServer::Contents::IsInUnoccupiedZone::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	const auto& ownerPos{ owner->GetPosition() };
+
+	auto const world{ owner->GetGameWorld() };
+	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	for(const auto& [id, o] : gameObjectGroup) {
+		auto const obj{ o.get() };
+		if(false == IsValidObj(o)) continue;
+
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		if(oz
+			&& FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType() && oz->IsInOccupationZone(ownerPos)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool GameServer::Contents::AreAllZonesOccupied::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	auto const world{ owner->GetGameWorld() };
+	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+
+	bool hasAnyZone{ false };
+	for(const auto& [id, o] : gameObjectGroup) {
+		auto const obj{ o.get() };
+		if(false == IsValidObj(o)) continue;
+
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		if(!oz) continue;
+
+		hasAnyZone = true;
+		if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
+			return false;
+		}
+	}
+	return hasAnyZone;
+}
+
 bool GameServer::Contents::IsRespawnReady::Check(const float dt)
 {
 	m_accDTForRespawn += dt;
@@ -403,19 +445,37 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::MoveToOZ::DoAct
 	auto const world{ owner->GetGameWorld() };
 	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 
+	std::vector<GameObject*> unoccupied;
+	std::vector<GameObject*> all;
+	unoccupied.reserve(gameObjectGroup.size());
+	all.reserve(gameObjectGroup.size());
+
 	for(const auto& [id, o] : gameObjectGroup) {
 		auto const obj{ o.get() };
 		if(false == IsValidObj(o)) continue;
 
-		std::bernoulli_distribution dist{ 0.5 };
-		// std::string_view ozName{ dist(mersenne) ? "WEST" : "EAST" };
-		std::string_view ozName{ "WEST" };
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		if(!oz) continue;
 
-		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(ozName.data())) };
-		if(oz && FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
-			owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(obj->GetPosition());
-			return BEHAVIOR_NODE_STATUS::SUCCESS;
+		all.push_back(obj);
+		if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
+			unoccupied.push_back(obj);
 		}
 	}
-	return BEHAVIOR_NODE_STATUS::FAIL;
+
+	// 점령되지 않은 점령지가 있으면 그 중 랜덤, 없으면 전체 점령지 중 랜덤.
+	const auto& pool{ unoccupied.empty() ? all : unoccupied };
+	if(pool.empty()) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	GameObject* target{ nullptr };
+	if(pool.size() == 1) {
+		target = pool.front();
+	}
+	else {
+		std::uniform_int_distribution<size_t> dist{ 0, pool.size() - 1 };
+		target = pool[dist(mersenne)];
+	}
+
+	owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(target->GetPosition());
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }

@@ -107,6 +107,7 @@ void GameServer::Contents::General::OnRespawn()
 	SetHp(statInfo.maxHP);
 	SetStamina(statInfo.maxStamina);
 	SetActive(true);
+	SetTarget(nullptr);
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
