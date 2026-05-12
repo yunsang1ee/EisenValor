@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="소스 파일">
@@ -201,6 +201,7 @@
     </ClInclude>
     <ClInclude Include="Component\FSM\StateImplementations.h">
       <Filter>Component\FSM</Filter>
+    </ClInclude>
     <ClInclude Include="NavMesh\DetourAlloc.h">
       <Filter>NavMesh</Filter>
     </ClInclude>
@@ -296,9 +297,6 @@
     <ClCompile Include="Component\FSM\StatePolicy.cpp">
       <Filter>Component\FSM</Filter>
     </ClCompile>
-    <ClCompile Include="Component\FSM\StatePolicy.cpp">
-      <Filter>Component\FSM</Filter>
-    </ClCompile>
     <ClCompile Include="Component\FSM\StatePool.cpp">
       <Filter>Component\FSM</Filter>
     </ClCompile>
@@ -337,6 +335,7 @@
     </ClCompile>
     <ClCompile Include="Component\FSM\StateImplementations.cpp">
       <Filter>Component\FSM</Filter>
+    </ClCompile>
     <ClCompile Include="NavMesh\DetourAlloc.cpp">
       <Filter>NavMesh</Filter>
     </ClCompile>
@@ -422,11 +421,6 @@
     <None Include="Resource\Shader\UIVertexShader.hlsl">
       <Filter>Shaders\UI</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
