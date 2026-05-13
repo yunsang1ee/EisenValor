@@ -1134,6 +1134,30 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("RemoteSoldier_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.0f, 0.0f);
+						}
+					}
+				);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
@@ -1170,30 +1194,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			DEBUG_LOG_FMT("Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n", pos.x, pos.y, pos.z, currentHP, maxHP);
-
-			// Attack Range Indicator
-			auto attackRangeHandle = scene->ReserveGameObject("RemoteSoldier_AttackRange");
-
-			scene->CreateComponentWithInit<MeshComponent>(
-				attackRangeHandle,
-				[scene, objHandle](MeshComponent* mesh)
-				{
-					auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
-					if (!res)
-					{
-						DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
-						return;
-					}
-					mesh->SetMeshResource(res);
-
-					if (auto* player = scene->TryGetGameObject(objHandle))
-					{
-						auto* obj = mesh->GetGameObject();
-						obj->GetTransform().SetParent(player->GetTransform().GetHandle());
-						obj->GetTransform().SetPosition(0.0f, 1.0f, 0.0f);
-					}
-				}
-			);
 		}
 	);
 
