@@ -681,34 +681,31 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 						}
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("LocalPlayer_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, playerObjHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
+						}
+					}
+				);
 			}
-
-			//// 공격 범위 디버깅용
-			// scene->ReserveGameObject(
-			//	"AttackRangeIndicator", std::nullopt,
-			//	[scene, playerObjHandle](GameObject* indicatorObj)
-			//	{	// 부모 설정
-			//		if (auto* player = scene->TryGetGameObject(playerObjHandle)) {
-			//			indicatorObj->GetTransform().SetParent(player->GetComponentHandle<Transform>());
-			//		}
-			//		else {
-			//			scene->DestroyGameObject(indicatorObj->GetHandle());
-			//			return;
-			//		}
-
-			//		// 위치
-			//		indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
-
-			//		// 부채꼴 Mesh
-			//		auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-			//		scene->CreateComponentWithInit<MeshComponent>(
-			//			indicatorObj->GetHandle(),
-			//			[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-			//				mesh->SetMesh(v, i);
-			//			}
-			//		);
-			//	}
-			//);
 		}
 	);
 
@@ -992,6 +989,31 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						ApplyPendingServerState(id, fsm);
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("RemotePlayer_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
+						}
+					}
+				);
+
 			}
 			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
 			{
@@ -1112,6 +1134,30 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("RemoteSoldier_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.0f, 0.0f);
+						}
+					}
+				);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
@@ -1148,33 +1194,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			DEBUG_LOG_FMT("Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n", pos.x, pos.y, pos.z, currentHP, maxHP);
-
-			// 공격 범위 디버깅
-			// if (isGeneral)
-			//{
-			//	scene->ReserveGameObject(
-			//		"AttackRangeIndicator", std::nullopt,
-			//		[scene, objHandle](GameObject* indicatorObj)
-			//		{
-			//			// 부모
-			//			if (auto* parent = scene->TryGetGameObject(objHandle)) {
-			//				indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
-			//			}
-
-			//			// 위치
-			//			indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
-
-			//			// 부채꼴 Mesh
-			//			auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-			//			scene->CreateComponentWithInit<MeshComponent>(
-			//				indicatorObj->GetHandle(),
-			//				[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-			//					mesh->SetMesh(v, i);
-			//				}
-			//			);
-			//		}
-			//	);
-			//}
 		}
 	);
 
