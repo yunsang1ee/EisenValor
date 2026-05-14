@@ -65,6 +65,12 @@ namespace GameServer {
 			virtual bool Check(const float dt) override final;
 		};
 
+		// 현재 타겟이 Soldier인지 확인한다.
+		class IsTargetSoldier : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
 		// 공격 쿨타임이 차서 다시 공격할 수 있는지 확인한다.
 		// 매 사이클마다 [minSec, maxSec] 범위에서 새로운 쿨다운을 무작위로 결정한다.
 		class IsAttackCooldownReady : public ConditionNode {
@@ -146,6 +152,12 @@ namespace GameServer {
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		private:
 			FB_ENUMS::GENERAL_STANCE_TYPE m_stance;
+		};
+
+		// 타겟 타입에 따라 자세를 설정한다. Soldier 타겟이면 NEUTRAL, 그 외엔 COMBAT.
+		class SetStanceByTarget : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
 
 		// 일정 간격마다 공격 방향을 무작위로 갱신하고 클라이언트에 표시 패킷을 브로드캐스트한다.
