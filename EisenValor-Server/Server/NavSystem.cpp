@@ -117,3 +117,40 @@ void GameServer::Contents::NavSystem::RemoveAgent(const int32 agentIdx)
 
 	m_crowd->removeAgent(agentIdx);
 }
+
+bool GameServer::Contents::NavSystem::TeleportAgent(const int32 agentIdx, const Vec3& destPos, Vec3& outSnappedPos)
+{
+	if(!m_crowd || !m_navMeshQuery) return false;
+
+	dtCrowdAgent* ag{ m_crowd->getEditableAgent(agentIdx) };
+	if(!ag || !ag->active) return false;
+
+	const float pos[3]{ destPos.x, destPos.y, destPos.z };
+	constexpr float searchRange[3]{ 2.0f, 10.0f, 2.0f };
+	dtPolyRef nearestRef{};
+	float nearest[3]{ destPos.x, destPos.y, destPos.z };
+	const dtStatus status{ m_navMeshQuery->findNearestPoly(pos, searchRange, &m_queryFilter, &nearestRef, nearest) };
+	if(dtStatusFailed(status)) {
+		nearestRef = 0;
+		dtVcopy(nearest, pos);
+	}
+
+	ag->corridor.reset(nearestRef, nearest);
+	ag->boundary.reset();
+	ag->partial = false;
+	ag->topologyOptTime = 0;
+	ag->targetReplanTime = 0;
+	ag->nneis = 0;
+
+	dtVset(ag->dvel, 0.f, 0.f, 0.f);
+	dtVset(ag->nvel, 0.f, 0.f, 0.f);
+	dtVset(ag->vel,  0.f, 0.f, 0.f);
+	dtVcopy(ag->npos, nearest);
+	ag->desiredSpeed = 0.f;
+
+	ag->state = nearestRef ? DT_CROWDAGENT_STATE_WALKING : DT_CROWDAGENT_STATE_INVALID;
+	ag->targetState = DT_CROWDAGENT_TARGET_NONE;
+
+	outSnappedPos = Vec3{ nearest[0], nearest[1], nearest[2] };
+	return true;
+}

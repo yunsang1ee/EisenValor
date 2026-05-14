@@ -12,6 +12,19 @@ namespace GameServer {
 			virtual bool Check(const float dt) override final;
 		};
 
+		// 아직 점령되지 않은(UNOCCUPIED) 점령지 안에 있는지 확인한다.
+		class IsInUnoccupiedZone : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 모든 점령지가 점령된(OCCUPIED) 상태인지 확인한다.
+		// 점령지가 하나도 없는 맵에서는 false를 반환한다.
+		class AreAllZonesOccupied : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
 		// 죽은지 일정 시간이 지났는지 확인한다.
 		class IsRespawnReady : public ConditionNode {
 		public:
@@ -48,6 +61,12 @@ namespace GameServer {
 
 		// 타겟이 실제 공격 히트박스(반경/각도) 안에 있는지 확인한다.
 		class IsTargetInAttackRange : public ConditionNode {
+		public:
+			virtual bool Check(const float dt) override final;
+		};
+
+		// 현재 타겟이 Soldier인지 확인한다.
+		class IsTargetSoldier : public ConditionNode {
 		public:
 			virtual bool Check(const float dt) override final;
 		};
@@ -133,6 +152,12 @@ namespace GameServer {
 			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		private:
 			FB_ENUMS::GENERAL_STANCE_TYPE m_stance;
+		};
+
+		// 타겟 타입에 따라 자세를 설정한다. Soldier 타겟이면 NEUTRAL, 그 외엔 COMBAT.
+		class SetStanceByTarget : public ActionNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS DoAction(const float dt) override final;
 		};
 
 		// 일정 간격마다 공격 방향을 무작위로 갱신하고 클라이언트에 표시 패킷을 브로드캐스트한다.

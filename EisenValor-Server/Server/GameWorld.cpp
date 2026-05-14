@@ -883,6 +883,32 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			AddGameObject(std::move(general));
 		}
 	}
+#else
+	// 봇 생성
+	{
+		constexpr int numOfBots{ 2 };
+		for(int i = 0; i < numOfBots; ++i) {
+			GeneralTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+			t.teamType = (i % 2 == 0) ? FB_ENUMS::TEAM_TYPE_BLUE : FB_ENUMS::TEAM_TYPE_RED;
+			if(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) {
+				static Vec3 startPos{MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition };
+				t.transform = Transform{ startPos, Vec3{} };
+				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->offsetFromSummonStartPosition;
+				m_blueTeamLastBasePos = startPos;
+			}
+			else {
+				static Vec3 startPos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition };
+				t.transform = Transform{ startPos, Vec3{} };
+				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->offsetFromSummonStartPosition;
+				m_redTeamLastBasePos = startPos;
+			}
+			t.gameWorld = this;
+			auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
+			AddGameObject(std::move(general));
+		}
+	}
 #endif
 
 	// 회복소 생성

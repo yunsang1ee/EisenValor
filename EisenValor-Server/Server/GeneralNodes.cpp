@@ -32,6 +32,48 @@ bool GameServer::Contents::IsInOccupationZone::Check(const float dt)
 	return false;
 }
 
+bool GameServer::Contents::IsInUnoccupiedZone::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	const auto& ownerPos{ owner->GetPosition() };
+
+	auto const world{ owner->GetGameWorld() };
+	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+	for(const auto& [id, o] : gameObjectGroup) {
+		auto const obj{ o.get() };
+		if(false == IsValidObj(o)) continue;
+
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		if(oz
+			&& FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType() && oz->IsInOccupationZone(ownerPos)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool GameServer::Contents::AreAllZonesOccupied::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	auto const world{ owner->GetGameWorld() };
+	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+
+	bool hasAnyZone{ false };
+	for(const auto& [id, o] : gameObjectGroup) {
+		auto const obj{ o.get() };
+		if(false == IsValidObj(o)) continue;
+
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		if(!oz) continue;
+
+		hasAnyZone = true;
+		if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
+			return false;
+		}
+	}
+	return hasAnyZone;
+}
+
 bool GameServer::Contents::IsRespawnReady::Check(const float dt)
 {
 	m_accDTForRespawn += dt;
@@ -105,6 +147,14 @@ bool GameServer::Contents::IsTargetInAttackRange::Check(const float dt)
 	return owner->IsTargetInRange(target, range * range);
 }
 
+bool GameServer::Contents::IsTargetSoldier::Check(const float dt)
+{
+	const auto owner{ GetOwner() };
+	const auto target{ owner->GetTarget() };
+	if(false == IsValidObj(target)) return false;
+	return FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == target->GetObjType();
+}
+
 bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
 {
 	if(m_cycleSec < 0.f) {
@@ -128,7 +178,7 @@ bool GameServer::Contents::IsStunOver::Check(const float dt)
 	m_acc += dt;
 	const auto owner{ GetOwner() };
 	const auto& objData{ owner->GetGameObjectData() };
-	const float stunSec{ objData ? objData->stunDelay / 1000.f : 1.f };
+	constexpr float stunSec{ 2.f };
 	return m_acc >= stunSec;
 }
 
@@ -147,26 +197,35 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::FindEnemy::DoAc
 	const auto& gameObjectGroups{ world->GetGameObjectGroups() };
 	const auto& myPos{ owner->GetPosition() };
 
-	std::shared_ptr<Creature> nearestEnemy;
-	float nearestDistSq{ std::numeric_limits<float>::max() };
+	// 우선순위 그룹 별로 가장 가까운 적을 찾는다.
+	// 1순위: Player / 상대 NPC 장수
+	// 2순위: 병사
+	auto findNearestInTypes = [&](std::initializer_list<int> types) -> std::shared_ptr<Creature> {
+		std::shared_ptr<Creature> nearest;
+		float nearestDistSq{ std::numeric_limits<float>::max() };
+		for(const int t : types) {
+			if(t < 0 || t >= static_cast<int>(gameObjectGroups.size())) continue;
+			for(const auto& [id, o] : gameObjectGroups[t]) {
+				if(false == IsValidObj(o)) continue;
+				if(id == owner->GetID()) continue;
+				if(o->GetTeamType() == owner->GetTeamType()) continue;
 
-	for(int i = 0; i < gameObjectGroups.size(); ++i) {
-		if(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL != i &&
-			FB_ENUMS::GAME_OBJECT_TYPE_PLAYER != i &&
-			FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER != i)
-			continue;
-
-		for(const auto& [id, o] : gameObjectGroups[i]) {
-			if(false == IsValidObj(o)) continue;
-			if(id == owner->GetID()) continue;
-			if(o->GetTeamType() == owner->GetTeamType()) continue;
-
-			const float distSq{ GetDistSq(myPos, o->GetPosition()) };
-			if(distSq <= detectionRangeSq && distSq < nearestDistSq) {
-				nearestDistSq = distSq;
-				nearestEnemy = std::static_pointer_cast<Creature>(o);
+				const float distSq{ GetDistSq(myPos, o->GetPosition()) };
+				if(distSq <= detectionRangeSq && distSq < nearestDistSq) {
+					nearestDistSq = distSq;
+					nearest = std::static_pointer_cast<Creature>(o);
+				}
 			}
 		}
+		return nearest;
+	};
+
+	std::shared_ptr<Creature> nearestEnemy{ findNearestInTypes({
+		FB_ENUMS::GAME_OBJECT_TYPE_PLAYER,
+		FB_ENUMS::GAME_OBJECT_TYPE_GENERAL }) };
+
+	if(!nearestEnemy) {
+		nearestEnemy = findNearestInTypes({ FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER });
 	}
 
 	if(nearestEnemy) {
@@ -225,6 +284,20 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SetStance::DoAc
 		std::cout << "SetStance: NEUTRAL" << std::endl;
 #endif
 	}
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
+}
+
+GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::SetStanceByTarget::DoAction(const float dt)
+{
+	auto const owner{ GetOwner() };
+	const auto target{ owner->GetTarget() };
+	if(false == IsValidObj(target)) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	const auto stance{
+		FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == target->GetObjType()
+			? FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL
+			: FB_ENUMS::GENERAL_STANCE_TYPE_COMBAT };
+	owner->SetStanceType(stance);
 	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }
 
@@ -403,19 +476,37 @@ GameServer::Contents::BEHAVIOR_NODE_STATUS GameServer::Contents::MoveToOZ::DoAct
 	auto const world{ owner->GetGameWorld() };
 	const auto& gameObjectGroup{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
 
+	std::vector<GameObject*> unoccupied;
+	std::vector<GameObject*> all;
+	unoccupied.reserve(gameObjectGroup.size());
+	all.reserve(gameObjectGroup.size());
+
 	for(const auto& [id, o] : gameObjectGroup) {
 		auto const obj{ o.get() };
 		if(false == IsValidObj(o)) continue;
 
-		std::bernoulli_distribution dist{ 0.5 };
-		// std::string_view ozName{ dist(mersenne) ? "WEST" : "EAST" };
-		std::string_view ozName{ "WEST" };
+		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(obj->GetName())) };
+		if(!oz) continue;
 
-		auto const oz{ static_cast<OccupationZone*>(obj->GetScript(ozName.data())) };
-		if(oz && FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
-			owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(obj->GetPosition());
-			return BEHAVIOR_NODE_STATUS::SUCCESS;
+		all.push_back(obj);
+		if(FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED == oz->GetStateType()) {
+			unoccupied.push_back(obj);
 		}
 	}
-	return BEHAVIOR_NODE_STATUS::FAIL;
+
+	// 점령되지 않은 점령지가 있으면 그 중 랜덤, 없으면 전체 점령지 중 랜덤.
+	const auto& pool{ unoccupied.empty() ? all : unoccupied };
+	if(pool.empty()) return BEHAVIOR_NODE_STATUS::FAIL;
+
+	GameObject* target{ nullptr };
+	if(pool.size() == 1) {
+		target = pool.front();
+	}
+	else {
+		std::uniform_int_distribution<size_t> dist{ 0, pool.size() - 1 };
+		target = pool[dist(mersenne)];
+	}
+
+	owner->GetComponent<GameServer::Contents::NavAgent>()->SetDestPos(target->GetPosition());
+	return BEHAVIOR_NODE_STATUS::SUCCESS;
 }

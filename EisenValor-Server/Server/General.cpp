@@ -4,6 +4,7 @@
 #include "GameWorld.h"
 #include "Player.h"
 #include "NavAgent.h"
+#include "Soldier.h"
 
 // #define PRINT_GENERAL_LOG
 
@@ -107,6 +108,7 @@ void GameServer::Contents::General::OnRespawn()
 	SetHp(statInfo.maxHP);
 	SetStamina(statInfo.maxStamina);
 	SetActive(true);
+	SetTarget(nullptr);
 	IncRespawnTime();
 	SetStanceType(FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	AddSubState(GENERAL_SUB_STATE_TYPE::NONE);
@@ -184,7 +186,13 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			break;
 		}
 		case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
+		{
+			auto attackerPlayer = std::static_pointer_cast<Soldier>(attacker);
+			damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
+			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			DecHP(damage, broadcast);
 			break;
+		}
 		default:
 			break;
 	}

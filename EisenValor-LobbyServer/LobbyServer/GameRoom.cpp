@@ -220,7 +220,6 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 
 		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(m_info.id, particinpants) };
 		gameServerSession->Send(std::move(pb));
-
 		gameServerSession->AddReservedStartRoom(m_info.id);
 	}
 }

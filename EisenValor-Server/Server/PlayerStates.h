@@ -123,11 +123,8 @@ namespace GameServer {
 			virtual void Exit(const float dt) override final;
 			virtual void Update(const float dt) override final;
 
-			void SetStunDuration(uint32 duration) { m_stunDuration = duration; }
-
 		private:
-			uint64 m_startFrame;
-			uint32 m_stunDuration;
+			float	m_accDTForStun;
 		};
 
 
