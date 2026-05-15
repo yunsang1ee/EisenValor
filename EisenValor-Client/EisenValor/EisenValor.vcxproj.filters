@@ -157,6 +157,9 @@
     <ClInclude Include="Component\StressTestComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\AttackRangeDebugComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
@@ -304,6 +307,9 @@
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="Component\StressTestComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\AttackRangeDebugComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Scene\LoginScene.cpp">

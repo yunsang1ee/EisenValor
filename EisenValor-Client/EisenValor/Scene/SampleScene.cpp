@@ -13,6 +13,7 @@
 #include "Component/FSM/StatePool.h"
 #include "Component/StressTestComponent.h"
 #include "Component/SocketComponent.h"
+#include "Component/AttackRangeDebugComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -46,7 +47,8 @@ void SampleScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
-		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent>();
+		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
+		AttackRangeDebugComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 
