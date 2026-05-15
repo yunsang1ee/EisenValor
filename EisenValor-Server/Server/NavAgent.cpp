@@ -65,20 +65,17 @@ void GameServer::Contents::NavAgent::SetDestPos(const Vec3& destPos)
 
 void GameServer::Contents::NavAgent::Teleport(const Vec3& destPos)
 {
-	if(m_agentIdx != -1) {
-		m_destPos = destPos;
-		m_hasTarget = true;
-		m_navSystem->ResetMoveTarget(m_agentIdx);
-		auto const crowd = m_navSystem->GetCrowd();
-		if(crowd) {
-			dtCrowdAgent* ag = crowd->getEditableAgent(m_agentIdx);
-			if(ag) {
-				ag->npos[0] = destPos.x;
-				ag->npos[1] = destPos.y;
-				ag->npos[2] = destPos.z;
-			}
-		}
-	}
+	if(m_agentIdx == -1) return;
+
+	Vec3 snappedPos{ destPos };
+	if(!m_navSystem->TeleportAgent(m_agentIdx, destPos, snappedPos))
+		return;
+
+	m_destPos = snappedPos;
+	m_hasTarget = false;
+
+	if(auto const owner{ GetOwner() })
+		owner->SetPosition(snappedPos);
 }
 
 void GameServer::Contents::NavAgent::StopMove()

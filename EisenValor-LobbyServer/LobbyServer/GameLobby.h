@@ -46,6 +46,7 @@ namespace LobbyServer {
 		void ConnectToGameServer(const uint16 roomID, const uint16 port);
 	private:
 		void EnterGameLobby(std::shared_ptr<ClientSession> clientSession);
+		std::shared_ptr<GameRoom> FindGameRoom(const uint16 roomID);
 
 
 	private:

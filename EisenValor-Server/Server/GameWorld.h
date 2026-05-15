@@ -122,7 +122,7 @@ namespace GameServer {
 			const float																			m_fixedUpdateTick;
 			const uint32																		m_maxUpdateStep;
 			std::chrono::seconds																m_remainingTimeSec;
-			// uint64																				m_worldFrameCount;
+			// uint64																			m_worldFrameCount;
 	
 			CollisionDetector																	m_collisionDetector;
 			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>				m_check;
