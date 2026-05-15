@@ -22,7 +22,7 @@ void LobbyServer::GameLobby::Broadcast(std::shared_ptr<LobbyServerEngine::Packet
 void LobbyServer::GameLobby::Handle_CL_ENTER_GAME_LOBBY(const std::shared_ptr<ClientSession>& clientSession)
 {
 	clientSession->SetState(SESSION_STATE::IN_GAME_LOBBY);
-
+		
 	std::vector<RoomInfo> rooms;
 	std::vector<std::string_view> users;
 	std::vector<uint32> vecUserID;
@@ -101,13 +101,23 @@ void LobbyServer::GameLobby::EnterGameLobby(std::shared_ptr<ClientSession> clien
 	std::cout << std::format("User: {}, Enter Lobby!", id) << std::endl;
 }
 
+std::shared_ptr<LobbyServer::GameRoom> LobbyServer::GameLobby::FindGameRoom(const uint16 roomID)
+{
+	auto iter{ m_gameRooms.find(roomID) };
+	if(iter != m_gameRooms.end())
+		return iter->second;
+
+	return nullptr;
+}
+
 void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint16 port)
 {
-	if(false == m_gameRooms.contains(roomID))
-		return;
+	auto gameRoom{ FindGameRoom(roomID) };
 
-	auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, "127.0.0.1", port)};
-	m_gameRooms[roomID]->Broadcast(std::move(pb));
+	if(gameRoom) {
+		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, "127.0.0.1", port) };
+		gameRoom->Broadcast(std::move(pb));
+	}
 }
 
 void LobbyServer::GameLobby::LeaveGameLobby(const std::shared_ptr<ClientSession>& clientSession)
@@ -138,12 +148,15 @@ void LobbyServer::GameLobby::Handle_LeaveGameRoom(const std::shared_ptr<ClientSe
 #pragma region ROOM_PACKETS
 void LobbyServer::GameLobby::Handle_CS_ENTER_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession, const uint16 roomID)
 {
-	if(false == m_gameRooms.contains(roomID))
+	auto gameRoom{ FindGameRoom(roomID) };
+
+
+	if(nullptr == gameRoom)
 		return;
 
 	LeaveGameLobby(clientSession);
 
-	m_gameRooms[roomID]->EnterGameRoom(clientSession);
+	gameRoom->EnterGameRoom(clientSession);
 }
 
 void LobbyServer::GameLobby::Handle_CS_LEAVE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)

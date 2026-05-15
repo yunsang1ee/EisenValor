@@ -18,6 +18,8 @@ GameServer::Contents::Soldier::~Soldier()
 void GameServer::Contents::Soldier::Update(const float dt)
 {
 	GameObject::Update(dt);
+	if(!ShouldBroadcastMove(dt))
+		return;
 	auto pb{ ServerPackets::Make_SC_MOVE_PACKET(GetID(), GetTransform(), 0)};
 	GetGameWorld()->Broadcast(std::move(pb));
 }

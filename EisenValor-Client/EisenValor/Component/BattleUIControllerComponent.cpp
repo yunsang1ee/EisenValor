@@ -105,6 +105,46 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	if (!owner)
 		return;
 
+	auto syncAttackDirectionVisibility = [this, owner]()
+	{
+		Scene* scene = owner->GetScene();
+		if (!scene)
+			return;
+
+		GENERAL_ATTACK_DIR_TYPE visibleDir = m_currentSelectedDir;
+		bool lockToAttackDir = false;
+
+		if (auto* fsm = owner->GetComponent<FSMComponent>())
+		{
+			uint8_t state = fsm->GetCurStateType();
+			lockToAttackDir =
+				state == static_cast<uint8_t>(PLAYER_STATE_TYPE_PRE_DELAY) ||
+				state == static_cast<uint8_t>(PLAYER_STATE_TYPE_ATTACK);
+			visibleDir = static_cast<GENERAL_ATTACK_DIR_TYPE>(fsm->GetCurAttackDir());
+		}
+
+		if (visibleDir == GENERAL_ATTACK_DIR_TYPE_NONE)
+		{
+			lockToAttackDir = false;
+		}
+
+		auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
+		if (!btnStorage)
+			return;
+
+		auto setVisible = [&](HandleOf<ButtonUIComponent> handle, bool visible)
+		{
+			if (auto* btn = btnStorage->Get(handle))
+			{
+				btn->GetGameObject()->SetActive(visible);
+			}
+		};
+
+		setVisible(m_upButtonHandle, !lockToAttackDir || visibleDir == GENERAL_ATTACK_DIR_TYPE_TOP);
+		setVisible(m_leftButtonHandle, !lockToAttackDir || visibleDir == GENERAL_ATTACK_DIR_TYPE_LEFT);
+		setVisible(m_rightButtonHandle, !lockToAttackDir || visibleDir == GENERAL_ATTACK_DIR_TYPE_RIGHT);
+	};
+
 	// 죽었으면 UI 숨기기
 	if (auto* health = owner->GetComponent<HealthComponent>())
 	{
@@ -118,6 +158,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	// 스탠스 상태에 따라 UI 가시성 제어
 	bool isCombat = (GetStance() == GENERAL_STANCE_TYPE_COMBAT);
 	ToggleUI(isCombat);
+	syncAttackDirectionVisibility();
 
 	// 2. COMBAT 모드 일때만 로직 수행
 	if (isCombat)
@@ -155,6 +196,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			}
 
 			ProcessMouseInput();
+			syncAttackDirectionVisibility();
 		}
 
 		UpdateUIPosition();
@@ -249,10 +291,10 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 
 	// 2. 텍스처 로드
 	auto& resGlobal = GLOBAL(ResourceGlobal);
-	m_normalTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\normal.evtex");
-	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\hovering.evtex");
-	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\select.evtex");
-	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\strong.evtex");
+	m_normalTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_normal.evtex");
+	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
+	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
+	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_strong.evtex");
 	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\area.evtex");
 	m_disarmTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\disarm.evtex");
 
@@ -428,7 +470,7 @@ void BattleUIControllerComponent::SetChildUIPositions(float scale)
 
 	auto* btnStorage = scene->GetStorage<ButtonUIComponent>();
 
-	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg)
+	auto setupPos = [&](HandleOf<ButtonUIComponent> handle, float angleDeg, float rotationDeg)
 	{
 		if (!handle.IsValid())
 			return;
@@ -449,11 +491,12 @@ void BattleUIControllerComponent::SetChildUIPositions(float scale)
 		rectTr->SetSizeDelta({currentUISize, currentUISize});
 		rectTr->SetOffsetMin({offsetX - currentUIHalfSize, offsetY - currentUIHalfSize});
 		rectTr->SetOffsetMax({offsetX + currentUIHalfSize, offsetY + currentUIHalfSize});
+		rectTr->SetRotationDegrees(rotationDeg);
 	};
 
-	setupPos(m_upButtonHandle, 90.0f);
-	setupPos(m_leftButtonHandle, 210.0f);
-	setupPos(m_rightButtonHandle, 330.0f);
+	setupPos(m_upButtonHandle, 90.0f, 0.0f);
+	setupPos(m_leftButtonHandle, 210.0f, 240.0f);
+	setupPos(m_rightButtonHandle, 330.0f, 120.0f);
 }
 
 void BattleUIControllerComponent::UpdateUIPosition()
@@ -619,6 +662,16 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	auto&		 input = GLOBAL(InputGlobal);
 	DX::XMFLOAT2 mouseDelta = input.GetMouseDelta();
 
+	if (auto* fsm = GetGameObject()->GetComponent<FSMComponent>())
+	{
+		uint8_t state = fsm->GetCurStateType();
+		if (state == static_cast<uint8_t>(PLAYER_STATE_TYPE_PRE_DELAY) ||
+			state == static_cast<uint8_t>(PLAYER_STATE_TYPE_ATTACK))
+		{
+			return;
+		}
+	}
+
 	if ((mouseDelta.x * mouseDelta.x + mouseDelta.y * mouseDelta.y) > kMouseDeltaIgnoreSq)
 	{
 		float instantRadian = atan2f(-mouseDelta.y, mouseDelta.x);
@@ -683,7 +736,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 				m_accumulatedDeltaY = 0.0f;
 
 				// 방향이 바뀔 때 패킷 전송 (단순 방향 표시용)
-				auto pb = NetBridge::C2S::Make_CS_SHOW_GENERAL_ATTACK_DIR_PACKET(detectedDir);
+				auto pb = NetBridge::C2S::Make_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET(detectedDir);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
 				// 마우스를 누른 채 이동한 경우 무효화

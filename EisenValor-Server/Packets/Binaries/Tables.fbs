@@ -285,11 +285,11 @@ table SC_CHANGE_CAMERA_TARGET_PACKET {
 	camera_target_id: uint64;
 }
 
-table CS_SHOW_GENERAL_ATTACK_DIR_PACKET{
+table CS_CHANGE_GENERAL_ATTACK_DIR_PACKET{
 	attack_dir: uint8;
 }
 
-table SC_SHOW_GENERAL_ATTACK_DIR_PACKET{
+table SC_CHANGE_GENERAL_ATTACK_DIR_PACKET{
 	obj_id: uint64;
 	attack_dir: uint8;
 }
@@ -358,6 +358,13 @@ table SC_GAME_FINISH_RESULT_PACKET {
 // ================================================
 table CS_TELEPORT_PACKET {
 	place: FB_ENUMS.TELEPORT_PLACE_TYPE;
+}
+
+table SC_TELEPORT_PACKET {
+	obj_id: uint64;
+	pos_info: FB_STRUCTS.PosInfo;
+	sub_state: uint8;
+	move_dir: FB_ENUMS.MOVE_DIRECTION_TYPE;
 }
 
 table CS_GEN_NPC_GENERAL_PACKET {

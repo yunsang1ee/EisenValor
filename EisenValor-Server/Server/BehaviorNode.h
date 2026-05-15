@@ -74,6 +74,23 @@ namespace GameServer {
 			std::unique_ptr<BehaviorNode> m_child;
 		};
 
+		// 자식의 결과를 반전시키는 데코레이터 (SUCCESS↔FAIL, RUNNING은 유지)
+		class InverterNode : public DecoratorNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) override final;
+		};
+
+		// 자식을 SUCCESS가 될 때까지 한 번만 실행하고, 이후엔 자식을 호출하지 않고 SUCCESS를 반환한다.
+		// Reset() 호출 시 다시 실행 가능 상태로 돌아간다.
+		class OnceNode : public DecoratorNode {
+		public:
+			virtual BEHAVIOR_NODE_STATUS Execute(const float dt) override final;
+			virtual void Reset() override;
+
+		private:
+			bool m_done{ false };
+		};
+
 		class ConditionNode : public BehaviorNode {
 		public:
 			virtual void Reset() override {}

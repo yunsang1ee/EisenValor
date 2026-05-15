@@ -57,9 +57,9 @@ private:
 
 	// UI 설정 상수
 	static constexpr float kcontainerHalfSize = 38.0f;
-	static constexpr float kDefaultRadius = 28.0f; // 기본 반지름
-	static constexpr float kInnerRadiusRatio = 0.7f; // 자식 UI 배치될 내부 원 비율
-	static constexpr float kUISize = 13.0f; // 자식 UI 크기
+	static constexpr float kDefaultRadius = 3.0f; // 기본 반지름
+	static constexpr float kInnerRadiusRatio = 1.0f; // 자식 UI 배치될 내부 원 비율
+	static constexpr float kUISize = 50.0f; // 자식 UI 크기
 	static constexpr float kUIHalfSize = kUISize / 2.0f;
 
 	// 거리 비례 스케일링 상수

@@ -28,7 +28,7 @@
 #include "Component/VitalUIControllerComponent.h"
 #include "Component/StaminaComponent.h"
 #include "Component/FSM/FSMComponent.h"
-#include "Component/FSM/GeneralStates.h"
+#include "Component/FSM/StateImplementations.h"
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
@@ -681,34 +681,31 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 						}
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("LocalPlayer_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, playerObjHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(playerObjHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
+						}
+					}
+				);
 			}
-
-			//// 공격 범위 디버깅용
-			// scene->ReserveGameObject(
-			//	"AttackRangeIndicator", std::nullopt,
-			//	[scene, playerObjHandle](GameObject* indicatorObj)
-			//	{	// 부모 설정
-			//		if (auto* player = scene->TryGetGameObject(playerObjHandle)) {
-			//			indicatorObj->GetTransform().SetParent(player->GetComponentHandle<Transform>());
-			//		}
-			//		else {
-			//			scene->DestroyGameObject(indicatorObj->GetHandle());
-			//			return;
-			//		}
-
-			//		// 위치
-			//		indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
-
-			//		// 부채꼴 Mesh
-			//		auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-			//		scene->CreateComponentWithInit<MeshComponent>(
-			//			indicatorObj->GetHandle(),
-			//			[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-			//				mesh->SetMesh(v, i);
-			//			}
-			//		);
-			//	}
-			//);
 		}
 	);
 
@@ -814,8 +811,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 
 			auto objHandle = obj->GetHandle();
 
-			bool isGeneral =
-				(objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
+			bool isGeneral = (objType == FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) || objType == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL;
 
 			// MeshComponent 또는 SkinnedMeshComponent 추가
 			if (isGeneral)
@@ -993,10 +989,32 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						ApplyPendingServerState(id, fsm);
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("RemotePlayer_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
+						}
+					}
+				);
+
 			}
-
-			////////////////// isGeneral ///////////////////
-
 			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
 			{
 				tr.SetScale(0.9f);
@@ -1116,6 +1134,30 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 						}
 					}
 				);
+
+				// Attack Range Indicator
+				auto attackRangeHandle = scene->ReserveGameObject("RemoteSoldier_AttackRange");
+
+				scene->CreateComponentWithInit<MeshComponent>(
+					attackRangeHandle,
+					[scene, objHandle](MeshComponent* mesh)
+					{
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+						if (!res)
+						{
+							DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+							return;
+						}
+						mesh->SetMeshResource(res);
+
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							auto* obj = mesh->GetGameObject();
+							obj->GetTransform().SetParent(player->GetTransform().GetHandle());
+							obj->GetTransform().SetPosition(0.0f, 1.0f, 0.0f);
+						}
+					}
+				);
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
@@ -1152,33 +1194,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			);
 
 			DEBUG_LOG_FMT("Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n", pos.x, pos.y, pos.z, currentHP, maxHP);
-
-			// 공격 범위 디버깅
-			// if (isGeneral)
-			//{
-			//	scene->ReserveGameObject(
-			//		"AttackRangeIndicator", std::nullopt,
-			//		[scene, objHandle](GameObject* indicatorObj)
-			//		{
-			//			// 부모
-			//			if (auto* parent = scene->TryGetGameObject(objHandle)) {
-			//				indicatorObj->GetTransform().SetParent(parent->GetComponentHandle<Transform>());
-			//			}
-
-			//			// 위치
-			//			indicatorObj->GetTransform().SetPosition(0.0f, -0.5f, 0.0f);
-
-			//			// 부채꼴 Mesh
-			//			auto [vertices, indices] = Resources::Sector::CreateSectorMesh(3.0f, 90.0f);
-			//			scene->CreateComponentWithInit<MeshComponent>(
-			//				indicatorObj->GetHandle(),
-			//				[v = std::move(vertices), i = std::move(indices)](MeshComponent* mesh) {
-			//					mesh->SetMesh(v, i);
-			//				}
-			//			);
-			//		}
-			//	);
-			//}
 		}
 	);
 
@@ -1225,7 +1240,10 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const uint64 id = recvPkt.obj_id();
 	const uint64 localID = scene->GetLocalID();
 
-	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
+	if (id == localID)
+	{
+		return true;
+	}
 
 	auto obj = scene->FindGameObjectByServerID(id);
 	if (!obj)
@@ -1233,8 +1251,20 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 
 	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
-	obj->GetTransform().SetPosition(pos);
-	obj->GetTransform().SetRotation(rot);	
+
+	// obj->GetTransform().SetPosition(pos);
+	// obj->GetTransform().SetRotation(rot);
+
+	// MovementComponent가 있으면 네트워크 보간으로 부드럽게 이동, 없으면 즉시 스냅
+	if (auto* movement = obj->GetComponent<MovementComponent>())
+	{
+		movement->SetNetInterpTarget(pos, rot);
+	}
+	else
+	{
+		obj->GetTransform().SetPosition(pos);
+		obj->GetTransform().SetRotation(rot);
+	}
 
 	if (id != localID)
 	{
@@ -1285,6 +1315,12 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 			if (auto* fsm = obj->GetComponent<FSMComponent>())
 			{
 				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
+				const auto objectType = fsm->GetObjectType();
+				if (
+					objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL))
+				{
+					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK);
+				}
 			}
 			return true;
 		}
@@ -1437,6 +1473,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		{
 			return true;
 		}
+		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) && nextState == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
+		{
+			return true;
+		}
 		fsm->SetServerState(nextState);
 		return true;
 	}
@@ -1447,18 +1487,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 SET_LOCAL:
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
-		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
-		{
-			if (obj->GetComponent<StaminaComponent>() != nullptr)
-			{
-				fsm->SetServerState(nextState);
-				return true;
-			}
-		}
-
-		else if (nextState == FB_ENUMS::GENERAL_STATE_TYPE_DEAD || nextState == FB_ENUMS::SOLDIER_STATE_TYPE_DEAD)
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::PLAYER_STATE_TYPE_DEAD)
 		{
 			fsm->SetServerState(nextState);
+			return true;
 		}
 	}
 
@@ -1535,8 +1567,8 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_SHOW_GENERAL_ATTACK_DIR_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_SHOW_GENERAL_ATTACK_DIR_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_ATTACK_DIR_PACKET& recvPkt
 )
 {
 	// 플레이어 공격 방향 표시
@@ -1712,6 +1744,35 @@ bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
 		break;
 	}
 
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt)
+{
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+
+	const uint64 id = recvPkt.obj_id();
+	const uint64 localID = scene->GetLocalID();
+
+	// TODO: obj의 이전 위치와 현재 받은 위치를 이용해서 보간 처리해야 함
+
+	auto obj = scene->FindGameObjectByServerID(id);
+	if (!obj)
+		return false;
+
+	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
+	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+	obj->GetTransform().SetPosition(pos);
+	obj->GetTransform().SetRotation(rot);
+
+	if (id != localID)
+	{
+		// 서버에서 보내준 state를 FSM에 전달
+		if (auto* fsm = obj->GetComponent<FSMComponent>())
+		{
+			fsm->SetMoveDirection(recvPkt.move_dir());
+		}
+	}
 	return true;
 }
 

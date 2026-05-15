@@ -26,6 +26,7 @@ namespace GameServer {
 			void SetMoveTarget(const int32 agentIdx, const Vec3& targetPos);
 			void ResetMoveTarget(const int32 agentIdx);
 			void RemoveAgent(const int32 agentIdx);
+			bool TeleportAgent(const int32 agentIdx, const Vec3& destPos, Vec3& outSnappedPos);
 
 			dtCrowd* GetCrowd() const { return m_crowd; }
 

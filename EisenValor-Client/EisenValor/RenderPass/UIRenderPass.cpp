@@ -229,13 +229,19 @@ void UIRenderPass::CreateInstanceBuffer()
 	);
 }
 
-DirectX::XMMATRIX UIRenderPass::CalculateUITransform(float x, float y, float width, float height)
+DirectX::XMMATRIX UIRenderPass::CalculateUITransform(float x, float y, float width, float height, float rotationDegrees)
 {
-	float ndcWidth = (width / m_screenWidth) * 2.0f;
-	float ndcHeight = (height / m_screenHeight) * 2.0f;
 	float ndcX = (x / m_screenWidth) * 2.0f - 1.0f;
 	float ndcY = 1.0f - (y / m_screenHeight) * 2.0f;
-	return DirectX::XMMatrixScaling(ndcWidth, -ndcHeight, 1.0f) * DirectX::XMMatrixTranslation(ndcX, ndcY, 0.0f);
+	float centerX = ndcX + (width / m_screenWidth);
+	float centerY = ndcY - (height / m_screenHeight);
+	float radians = DirectX::XMConvertToRadians(rotationDegrees);
+
+	return DirectX::XMMatrixTranslation(-0.5f, -0.5f, 0.0f) *
+		   DirectX::XMMatrixScaling(width, height, 1.0f) *
+		   DirectX::XMMatrixRotationZ(radians) *
+		   DirectX::XMMatrixScaling(2.0f / m_screenWidth, -2.0f / m_screenHeight, 1.0f) *
+		   DirectX::XMMatrixTranslation(centerX, centerY, 0.0f);
 }
 
 void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
@@ -330,7 +336,9 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 				UIInstanceData inst = {}; // 초기화
 
 				// 화면 좌표 -> NDC 변환
-				auto transform = CalculateUITransform(rData.rect.x, rData.rect.y, rData.rect.width, rData.rect.height);
+				auto transform = CalculateUITransform(
+					rData.rect.x, rData.rect.y, rData.rect.width, rData.rect.height, rData.rotationDegrees
+				);
 				DirectX::XMStoreFloat4x4(&inst.transform, DirectX::XMMatrixTranspose(transform));
 
 				inst.color = rData.color;

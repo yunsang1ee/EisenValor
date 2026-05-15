@@ -39,6 +39,7 @@ public:
 	void SetPivot(Vec2 pivot);
 	void SetOffsetMin(Vec2 offsetMin);
 	void SetOffsetMax(Vec2 offsetMax);
+	void SetRotationDegrees(float degrees);
 
 	// 편의 메서드: 앵커 사이의 간격을 유지하며 크기 설정
 	void SetSizeDelta(Vec2 sizeDelta);
@@ -50,6 +51,7 @@ public:
 	Vec2 GetPivot() const { return m_pivot; }
 	Vec2 GetOffsetMin() const { return m_offsetMin; }
 	Vec2 GetOffsetMax() const { return m_offsetMax; }
+	float GetRotationDegrees() const { return m_rotationDegrees; }
 
 	// 레이아웃 갱신 로직
 	void UpdateLayout();
@@ -65,6 +67,7 @@ private:
 	Vec2 m_pivot = {0.5f, 0.5f};	 // 본인 Rect 내 기준점 비율 (0~1)
 	Vec2 m_offsetMin = {0.0f, 0.0f}; // 앵커 최소점으로부터의 픽셀 오프셋
 	Vec2 m_offsetMax = {0.0f, 0.0f}; // 앵커 최대점으로부터의 픽셀 오프셋
+	float m_rotationDegrees = 0.0f;
 
 	Rect m_rect = {0.0f, 0.0f, 0.0f, 0.0f}; // 계산된 최종 화면 좌표 및 크기
 	bool m_isDirty = true;

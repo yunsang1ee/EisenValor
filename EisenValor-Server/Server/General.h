@@ -25,12 +25,17 @@ namespace GameServer {
 			void SetStanceType(const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);
 			void SetAtkInfo(const AttackInfo& atkInfo) { m_atkInfo = atkInfo; }
 			void SetAtkDir(const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType) { m_atkInfo.dir = dirType; }
+			void SetMoveDir(const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir) { m_moveDir = moveDir; }
+
+			FB_ENUMS::MOVE_DIRECTION_TYPE GetMoveDir() const { return m_moveDir; }
 			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }
 			const AttackInfo& GetAtkInfo() const { return m_atkInfo; }
 
 			void SetRespawnPos(const Vec3& pos) { m_respawnPos = pos; }	
 
 		protected:
+			FB_ENUMS::MOVE_DIRECTION_TYPE			m_moveDir;
+			FB_ENUMS::MOVE_DIRECTION_TYPE			m_lastSentMoveDir{};
 			FB_ENUMS::GENERAL_STANCE_TYPE			m_stanceType;
 			GENERAL_SUB_STATE_TYPE					m_subStateType;
 			AttackInfo								m_atkInfo;

@@ -3,6 +3,8 @@
 
 #include "GameWorld.h"
 
+// #define PRINT_OCCUPATION_ZONE_LOG
+
 GameServer::Contents::OccupationZone::OccupationZone(const float rangeSq, const int64 scoreTime)
 	: m_stateType{ FB_ENUMS::OCCUPATION_ZONE_STATE_TYPE_UNOCCUPIED }
 	, m_rangeSq{ rangeSq }
@@ -37,7 +39,9 @@ void GameServer::Contents::OccupationZone::Update(const float dt)
 		m_dominantAccDT = 0.f;
 		const auto owner{ GetOwner() };
 		owner->GetGameWorld()->AddScore(dominantTeamType, MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", GetName())->scorePerTenSec);
+#ifdef PRINT_OCCUPATION_ZONE_LOG
 		std::cout << "Score Added to " << (dominantTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue Team!" : "Red Team!") << std::endl;
+#endif
 	}
 
 	const float prevGauge{ m_gauge };
@@ -68,7 +72,7 @@ bool GameServer::Contents::OccupationZone::IsInOccupationZone(const Vec3& pos) c
 {
 	const auto owner{ GetOwner() };
 	const float distSq{ (pos - owner->GetPosition()).LengthSquared() };
-	return distSq <= m_rangeSq;
+	return distSq < m_rangeSq;
 }
 
 FB_ENUMS::TEAM_TYPE GameServer::Contents::OccupationZone::GetDominantTeamType()
@@ -122,6 +126,7 @@ void GameServer::Contents::OccupationZone::CheckOccupationState(const float prev
 		const auto world = owner->GetGameWorld();
 		world->Broadcast(ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), team));
 		world->AddScore(team, MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", GetName())->occupationScore);
+		std::cout << "Occupation Zone Captured by " << (team == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue Team!" : "Red Team!") << std::endl;
 		return;
 	}
 	
@@ -139,5 +144,7 @@ void GameServer::Contents::OccupationZone::BroadcastGauge(const FB_ENUMS::TEAM_T
 
 	m_lastSentGauge = m_gauge;
 
+#ifdef PRINT_OCCUPATION_ZONE_LOG
 	std::cout << "Occupation Zone Gauge Updated: " << m_gauge << " (Dominant Team: " << (dominantTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue" : (dominantTeamType == FB_ENUMS::TEAM_TYPE_RED ? "Red" : "None")) << ")" << std::endl;
+#endif
 }

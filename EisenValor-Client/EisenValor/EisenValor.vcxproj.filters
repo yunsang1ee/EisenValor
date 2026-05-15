@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="소스 파일">
@@ -71,6 +71,9 @@
     <Filter Include="Component\ComponentMetadata">
       <UniqueIdentifier>{c267c778-8330-446a-876e-ed36154e056e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NavMesh">
+      <UniqueIdentifier>{7123454c-2864-44c9-95dc-a1e5920e3aad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -131,9 +134,6 @@
       <Filter>Component\Vital</Filter>
     </ClInclude>
     <ClInclude Include="Component\FSM\FSMComponent.h">
-      <Filter>Component\FSM</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\FSM\GeneralStates.h">
       <Filter>Component\FSM</Filter>
     </ClInclude>
     <ClInclude Include="Component\FSM\StatePool.h">
@@ -199,6 +199,51 @@
     <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h">
       <Filter>Component\ComponentMetadata</Filter>
     </ClInclude>
+    <ClInclude Include="Component\FSM\StateImplementations.h">
+      <Filter>Component\FSM</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourAlloc.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourAssert.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourCommon.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourLocalBoundary.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourMath.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNavMesh.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNavMeshBuilder.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNavMeshQuery.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourNode.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourObstacleAvoidance.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourPathCorridor.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourPathQueue.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourProximityGrid.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="NavMesh\DetourStatus.h">
+      <Filter>NavMesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -249,9 +294,6 @@
     <ClCompile Include="Component\FSM\FSMComponent.cpp">
       <Filter>Component\FSM</Filter>
     </ClCompile>
-    <ClCompile Include="Component\FSM\GeneralStates.cpp">
-      <Filter>Component\FSM</Filter>
-    </ClCompile>
     <ClCompile Include="Component\FSM\StatePolicy.cpp">
       <Filter>Component\FSM</Filter>
     </ClCompile>
@@ -290,6 +332,45 @@
     </ClCompile>
     <ClCompile Include="Component\SocketComponent.cpp">
       <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\FSM\StateImplementations.cpp">
+      <Filter>Component\FSM</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourAlloc.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourAssert.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourCommon.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourLocalBoundary.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMesh.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMeshBuilder.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNavMeshQuery.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourNode.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourObstacleAvoidance.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourPathCorridor.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourPathQueue.cpp">
+      <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="NavMesh\DetourProximityGrid.cpp">
+      <Filter>NavMesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -340,11 +421,6 @@
     <None Include="Resource\Shader\UIVertexShader.hlsl">
       <Filter>Shaders\UI</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resource\Shader\SkinningCompute.hlsl">

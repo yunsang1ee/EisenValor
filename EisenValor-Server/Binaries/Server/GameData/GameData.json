@@ -7,7 +7,7 @@
     "GAME_TIME_SEC": 1800,
     "GAME_UPDATE_TICK": 60.0,
     "MAX_UPDATE_STEP": 5,
-    "SCORE_TO_WIN": 100
+    "SCORE_TO_WIN": 100000
   },
 
   "SkillData": [
@@ -53,7 +53,7 @@
       "obj_type_id": 1,
       "type": "General",
       "atk": 20,
-      "max_hp": 150,
+      "max_hp": 10,
       "max_stamina": 1000,
       "stamina_cost": 10,
       "extra_stamina": 20,

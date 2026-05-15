@@ -31,7 +31,7 @@ namespace GameServer {
 
 		using GameObjects = std::map<uint64, std::shared_ptr<GameServer::Contents::GameObject>>;
 
-		class GameWorld : public GameServerEngine::IRoom {
+		class GameWorld	 : public GameServerEngine::IRoom {
 		public:
 			GameWorld();
 			virtual ~GameWorld();
@@ -52,12 +52,12 @@ namespace GameServer {
 			}
 
 		public:
-			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+			void Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD, const bool teleport = false);
 			void Handle_CS_GENERAL_ATTACK(const uint32 sessionID, const FB_STRUCTS::GeneralAttackInfo& attackInfo);
 			void Handle_CS_GENERAL_CHANGE_STANCE(const uint32 sessionID);
 			void Handle_CS_PLAYER_FAKE(const uint32 sessionID);
 			void Handle_CS_CHANGE_CAMERA_TARGET(const uint32 sessionID, const uint32 prevTargetID);
-			void Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
+			void Handle_CS_CHANGE_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType);
 			void Handle_CS_UPDATE_PLAYER_STATE(const uint32 sessionID, const FB_ENUMS::PLAYER_STATE_TYPE state);
 			void Handle_CS_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg);
 		
@@ -122,7 +122,7 @@ namespace GameServer {
 			const float																			m_fixedUpdateTick;
 			const uint32																		m_maxUpdateStep;
 			std::chrono::seconds																m_remainingTimeSec;
-			// uint64																				m_worldFrameCount;
+			// uint64																			m_worldFrameCount;
 	
 			CollisionDetector																	m_collisionDetector;
 			std::array<uint32, FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_END>				m_check;

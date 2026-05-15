@@ -183,8 +183,9 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)
+void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir, const bool teleport)
 {
+	// TODO: NavMesh 클라이언트로 이식해야함.
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
 	if(it == m_sessionToPlayer.end()) return;
 
@@ -255,6 +256,7 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	// ── 4. 위치 확정 ───────────────────────────────────────────
 	player->SetPosition(snapPos);
 	player->SetRotation(transform.GetRotationDegree());
+	player->SetMoveDir(moveDir);
 
 	// ── 5. Crowd에 플레이어 위치 동기화 ──────────────────────────
 	auto navAgent = player->GetComponent<NavAgent>();
@@ -262,8 +264,13 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 		navAgent->SyncPosition(snapPos, prevPos, m_lastDT);
 	}
 
+	if(teleport)
 	{
-		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), moveDir);
+		auto pb = ServerPackets::Make_SC_TELEPORT_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), player->GetMoveDir());
+		Broadcast(std::move(pb));
+	}
+	else {
+		auto pb = ServerPackets::Make_SC_MOVE_PACKET(player->GetID(), player->GetTransform(), etou8(player->GetSubState()), player->GetMoveDir());
 		Broadcast(std::move(pb));
 	}
 }
@@ -321,7 +328,7 @@ void GameServer::Contents::GameWorld::Handle_CS_CHANGE_CAMERA_TARGET(const uint3
 	}
 }
 
-void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
+void GameServer::Contents::GameWorld::Handle_CS_CHANGE_GENERAL_ATTACK_DIR(const uint32 sessionID, const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dirType)
 {
 	auto it = m_sessionToPlayer.find(sessionID);
 	if(it == m_sessionToPlayer.end()) return;
@@ -330,7 +337,7 @@ void GameServer::Contents::GameWorld::Handle_CS_SHOW_GENERAL_ATTACK_DIR(const ui
 
 	const auto player = IDToPlayer(playerID);
 	if(player) {
-		player->Handle_CS_SHOW_GENERAL_ATTACK_DIR(dirType);
+		player->Handle_CS_CHANGE_GENERAL_ATTACK_DIR(dirType);
 	}
 }
 
@@ -354,7 +361,8 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	else
 		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 
-	constexpr float distance{ 5.0f };
+	// combat range(5m)보다 바깥에 스폰해 추격 → 공격 사거리 진입 흐름을 타게 한다.
+	constexpr float distance{ 7.0f };
 
 	Vec3 spawnPos;
 	spawnPos.x = playerPos.x + (playerLook.x * distance);
@@ -483,7 +491,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 		}
 		case FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_A:
 		{
-			const auto occupationZoneA = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", "A");
+			const auto occupationZoneA = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", "WEST");
 			if(occupationZoneA) {
 				tpPos = occupationZoneA->position;
 			}
@@ -491,7 +499,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 		}
 		case FB_ENUMS::TELEPORT_PLACE_TYPE_OCCUPATION_ZONE_B:
 		{
-			const auto occupationZoneB = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", "B");
+			const auto occupationZoneB = MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", "EAST");
 			if(occupationZoneB) {
 				tpPos = occupationZoneB->position;
 			}
@@ -509,7 +517,7 @@ void GameServer::Contents::GameWorld::Handle_CS_TELEPORT(const std::shared_ptr<C
 			break;
 	}
 
-	Handle_CS_MOVE(clientSession, Transform{ tpPos, player->GetRotationDegree() });
+	Handle_CS_MOVE(clientSession, Transform{ tpPos, player->GetRotationDegree() }, player->GetMoveDir(), true);
 }
 
 void GameServer::Contents::GameWorld::RegistCollisionGroup(const FB_ENUMS::GAME_OBJECT_TYPE left, const FB_ENUMS::GAME_OBJECT_TYPE right)
@@ -800,7 +808,7 @@ void GameServer::Contents::GameWorld::CollisionUpdateGroup(const FB_ENUMS::GAME_
 
 bool GameServer::Contents::GameWorld::IsFinish()
 {
-	return false;
+	return m_isGameFinish;
 }
 
 std::shared_ptr<GameServer::Contents::Player> GameServer::Contents::GameWorld::IDToPlayer(const uint64 sessionID)
@@ -845,7 +853,7 @@ const GameServer::Contents::GameObjects& GameServer::Contents::GameWorld::GetGam
 	const uint8 index{ etou8(type) };
 	if(index >= FB_ENUMS::GAME_OBJECT_TYPE_END)
 		assert(nullptr);
-	return m_gameObjectsGroups[index];
+	return m_gameObjectsGroups[index];	
 }
 
 void GameServer::Contents::GameWorld::CreateGameWorldObjects()
@@ -858,7 +866,7 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
 			t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(participant.teamType);
 			if(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) {
-				static Vec3 startPos{ startPos = MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition };
+				static Vec3 startPos{MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition };
 				t.transform = Transform{ startPos, Vec3{} };
 				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->offsetFromSummonStartPosition;
 				m_blueTeamLastBasePos = startPos;
@@ -875,32 +883,32 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			AddGameObject(std::move(general));
 		}
 	}
-#endif
-
-#ifndef APPLY_LOBBY_SERVER
-	//for(int i = 0; i < 2; ++i) {
-	//	static bool flag{ true };
-
-	//	GeneralTemplate t;
-	//	t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-	//	t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
-	//	t.teamType = static_cast<FB_ENUMS::TEAM_TYPE>(flag);
-	//	if(FB_ENUMS::TEAM_TYPE_OFFENSE == t.teamType) {
-	//		static Vec3 startPos{ -12.f, -9.f, -10.f };
-	//		t.transform = Transform{ startPos, Vec3{} };
-	//		startPos.z += 1.f;
-	//	}
-	//	else {
-	//		static Vec3 startPos{ -37.f, -9.f, -6.f };
-	//		startPos.x += 1.f;
-	//		startPos.z -= 1.f;
-	//		t.transform = Transform{ startPos, Vec3{} };
-	//	}
-	//	t.gameWorld = this;
-	//	flag = !flag;
-	//	auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
-	//	AddGameObject(std::move(general));
-	//}
+#else
+	// 봇 생성
+	{
+		constexpr int numOfBots{ 2 };
+		for(int i = 0; i < numOfBots; ++i) {
+			GeneralTemplate t;
+			t.id = m_idGenerator.Generate(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+			t.gameObjectData = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL);
+			t.teamType = (i % 2 == 0) ? FB_ENUMS::TEAM_TYPE_BLUE : FB_ENUMS::TEAM_TYPE_RED;
+			if(FB_ENUMS::TEAM_TYPE_BLUE == t.teamType) {
+				static Vec3 startPos{MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition };
+				t.transform = Transform{ startPos, Vec3{} };
+				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->offsetFromSummonStartPosition;
+				m_blueTeamLastBasePos = startPos;
+			}
+			else {
+				static Vec3 startPos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition };
+				t.transform = Transform{ startPos, Vec3{} };
+				startPos += MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->offsetFromSummonStartPosition;
+				m_redTeamLastBasePos = startPos;
+			}
+			t.gameWorld = this;
+			auto general{ GameServer::Contents::GameObjectFactory::CreateGeneral(t) };
+			AddGameObject(std::move(general));
+		}
+	}
 #endif
 
 	// 회복소 생성

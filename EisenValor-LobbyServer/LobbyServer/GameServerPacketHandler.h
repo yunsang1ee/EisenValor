@@ -12,4 +12,4 @@ namespace LobbyServer {
 		static bool Handle_SL_CREATE_GAME_WORLD_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::SL_CREATE_GAME_WORLD_PACKET& recvPkt);
 
 	};
-}
+}	

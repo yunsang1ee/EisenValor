@@ -214,10 +214,10 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 	const auto& atkInfo{ owner->GetAtkInfo() };
 	auto const world{ owner->GetGameWorld() };
 
-	if(owner->GetAtkInfo().skillData->name == "LIGHT") {
+	if(etou8(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT) == owner->GetAtkInfo().skillData->skillTypeID) {
 		HIT_FRAME_DELAY = 0.4f;
 	}
-	else if(owner->GetAtkInfo().skillData->name == "HEAVY") {
+	else if(etou8(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY) == owner->GetAtkInfo().skillData->skillTypeID ) {
 		HIT_FRAME_DELAY = 0.6f;
 	}
 	else
@@ -289,16 +289,9 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 			std::cout << std::format("PlayerAttackState!, Target ID: {}", target->GetID()) << std::endl;
 
 			if(owner->IsTargetInAttackRange(target)) {
-
-				if(false == IsValidObj(target)) {
-					auto const fsm{ owner->GetComponent<GameServer::Contents::FSM>() };
-					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY, dt, true);
-					return;
-				}
-
 				if(target->OnDamaged(owner, dt)) {
 
-					if(atkInfo.skillData->skillTypeID == FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM) {
+					if(atkInfo.skillData->skillTypeID == etou8(FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM)) {
 						const FB_ENUMS::GAME_OBJECT_TYPE objType{ target->GetObjType() };
 						// 무장해제 공격일 시, 상대 플레이어나 장수의 상태를 IDLE로...
 						if(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER == objType || FB_ENUMS::GAME_OBJECT_TYPE_GENERAL == objType) {
@@ -359,7 +352,7 @@ void GameServer::Contents::PlayerPostdelayState::Update(const float dt)
 //		 PLAYER_STUN_STATE
 // ==================================
 GameServer::Contents::PlayerStunState::PlayerStunState()
-	:State(FB_ENUMS::PLAYER_STATE_TYPE_STUN), m_startFrame{}, m_stunDuration{}
+	:State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
 }
 
@@ -370,10 +363,6 @@ GameServer::Contents::PlayerStunState::~PlayerStunState()
 void GameServer::Contents::PlayerStunState::Enter(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	//m_startFrame = owner->GetGameWorld()->GetGameWorldFrameCount();
-	if(m_stunDuration == 0) {
-		m_stunDuration = owner->GetGameObjectData()->stunDelay;
-	}
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Enter Player Stun State" << std::endl;
 #endif
@@ -382,7 +371,6 @@ void GameServer::Contents::PlayerStunState::Enter(const float dt)
 void GameServer::Contents::PlayerStunState::Exit(const float dt)
 {
 	auto const owner{ GetGeneral(GetFSM()) };
-	m_stunDuration = owner->GetGameObjectData()->stunDelay;
 #ifdef PRINT_PLAYER_STATE_LOG
 	std::cout << "Exit Player Stun State" << std::endl;
 #endif
@@ -391,7 +379,13 @@ void GameServer::Contents::PlayerStunState::Exit(const float dt)
 void GameServer::Contents::PlayerStunState::Update(const float dt)
 {
 	auto const fsm{ GetFSM() };
-	fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
+
+	m_accDTForStun += dt;
+
+	if(m_accDTForStun >= 2.f) {
+		m_accDTForStun = 0.f;
+		fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), dt, true);
+	}
 }
 
 // ==================================

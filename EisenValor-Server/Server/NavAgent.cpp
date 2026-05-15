@@ -28,9 +28,24 @@ void GameServer::Contents::NavAgent::Update(const float dt)
 {
 	if(m_agentIdx == -1) return;
 
-	if(m_isPlayerMode) return;
+	auto const crowd{ m_navSystem->GetCrowd() };
+	if(!crowd) return;
 
-	const dtCrowdAgent* ag = m_navSystem->GetCrowd()->getAgent(m_agentIdx);
+	if(m_isPlayerMode) {
+		dtCrowdAgent* const ag{ crowd->getEditableAgent(m_agentIdx) };
+		if(ag && ag->active) {
+			const Vec3& pos{ GetOwner()->GetPosition() };
+			ag->npos[0] = pos.x;
+			ag->npos[1] = pos.y;
+			ag->npos[2] = pos.z;
+			ag->vel[0] = 0.f;
+			ag->vel[1] = 0.f;
+			ag->vel[2] = 0.f;
+		}
+		return;
+	}
+
+	const dtCrowdAgent* ag = crowd->getAgent(m_agentIdx);
 
 	if(ag && ag->active) {
 		Vec3 curPos{ ag->npos[0], ag->npos[1], ag->npos[2] };
@@ -50,20 +65,17 @@ void GameServer::Contents::NavAgent::SetDestPos(const Vec3& destPos)
 
 void GameServer::Contents::NavAgent::Teleport(const Vec3& destPos)
 {
-	if(m_agentIdx != -1) {
-		m_destPos = destPos;
-		m_hasTarget = true;
-		m_navSystem->ResetMoveTarget(m_agentIdx);
-		auto const crowd = m_navSystem->GetCrowd();
-		if(crowd) {
-			dtCrowdAgent* ag = crowd->getEditableAgent(m_agentIdx);
-			if(ag) {
-				ag->npos[0] = destPos.x;
-				ag->npos[1] = destPos.y;
-				ag->npos[2] = destPos.z;
-			}
-		}
-	}
+	if(m_agentIdx == -1) return;
+
+	Vec3 snappedPos{ destPos };
+	if(!m_navSystem->TeleportAgent(m_agentIdx, destPos, snappedPos))
+		return;
+
+	m_destPos = snappedPos;
+	m_hasTarget = false;
+
+	if(auto const owner{ GetOwner() })
+		owner->SetPosition(snappedPos);
 }
 
 void GameServer::Contents::NavAgent::StopMove()
@@ -109,4 +121,28 @@ void GameServer::Contents::NavAgent::SetAsStaticObstacle()
 	if(!ag) return;
 
 	ag->targetState = DT_CROWDAGENT_TARGET_NONE;
+}
+
+void GameServer::Contents::NavAgent::SetMaxSpeed(const float maxSpeed)
+{
+	if(m_agentIdx == -1) return;
+
+	m_params.maxSpeed = maxSpeed;
+
+	auto const crowd{ m_navSystem->GetCrowd() };
+	if(!crowd) return;
+
+	crowd->updateAgentParameters(m_agentIdx, &m_params);
+}
+
+void GameServer::Contents::NavAgent::SetMaxAcceleration(const float maxAcceleration)
+{
+	if(m_agentIdx == -1) return;
+
+	m_params.maxAcceleration = maxAcceleration;
+
+	auto const crowd{ m_navSystem->GetCrowd() };
+	if(!crowd) return;
+
+	crowd->updateAgentParameters(m_agentIdx, &m_params);
 }

@@ -45,7 +45,7 @@ private:
 	void CreateInstanceBuffer();
 
 	// 화면 좌표 -> NDC 행렬 계산
-	DirectX::XMMATRIX CalculateUITransform(float x, float y, float width, float height);
+	DirectX::XMMATRIX CalculateUITransform(float x, float y, float width, float height, float rotationDegrees);
 
 private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
