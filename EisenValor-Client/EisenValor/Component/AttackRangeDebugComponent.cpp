@@ -13,7 +13,7 @@ namespace
 {
 constexpr float kMinRadius = 0.1f;
 constexpr float kMaxRadius = 20.0f;
-constexpr float kRadiusStep = 0.5f;
+constexpr float kRadiusStep = 0.05f;
 constexpr float kSegmentAngleDegrees = 10.0f;
 constexpr float kMinCenterAngleDegrees = kSegmentAngleDegrees;
 constexpr float kMaxCenterAngleDegrees = 180.0f;

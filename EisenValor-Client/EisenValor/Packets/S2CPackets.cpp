@@ -1019,29 +1019,56 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					}
 				);
 
-				//// Attack Range Indicator
-				//auto attackRangeHandle = scene->ReserveGameObject("RemotePlayer_AttackRange");
+				// Attack Range Debug Indicator
+				auto attackRangeHandle = scene->ReserveGameObject(
+					"LocalPlayer_AttackRangeDebug", std::nullopt,
+					[scene, objHandle](GameObject* rangeRoot)
+					{
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							rangeRoot->GetTransform().SetParent(player->GetTransform().GetHandle());
+							rangeRoot->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
+						}
+					}
+				);
 
-				//scene->CreateComponentWithInit<MeshComponent>(
-				//	attackRangeHandle,
-				//	[scene, objHandle](MeshComponent* mesh)
-				//	{
-				//		auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
-				//		if (!res)
-				//		{
-				//			DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
-				//			return;
-				//		}
-				//		mesh->SetMeshResource(res);
+				for (int segmentIndex = 0; segmentIndex < 18; ++segmentIndex)
+				{
+					auto segmentHandle = scene->ReserveGameObject(
+						"LocalPlayer_AttackRangeDebugSegment", std::nullopt,
+						[scene, attackRangeHandle](GameObject* segmentObj)
+						{
+							if (auto* root = scene->TryGetGameObject(attackRangeHandle))
+							{
+								segmentObj->GetTransform().SetParent(root->GetTransform().GetHandle());
+							}
+						}
+					);
 
-				//		if (auto* player = scene->TryGetGameObject(objHandle))
-				//		{
-				//			auto* obj = mesh->GetGameObject();
-				//			obj->GetTransform().SetParent(player->GetTransform().GetHandle());
-				//			obj->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
-				//		}
-				//	}
-				//);
+					scene->CreateComponentWithInit<MeshComponent>(
+						segmentHandle,
+						[](MeshComponent* mesh)
+						{
+							auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+							if (!res)
+							{
+								DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+								return;
+							}
+							mesh->SetMeshResource(res);
+						}
+					);
+				}
+
+				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+					attackRangeHandle,
+					[](AttackRangeDebugComponent* debug)
+					{
+						debug->SetRadius(1.0f);
+						debug->SetCenterAngleDegrees(10.0f);
+					}
+				);
+				/////////////
 
 			}
 			else if (objType == FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) ////// Soldier
@@ -1164,29 +1191,56 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					}
 				);
 
-				//// Attack Range Indicator
-				//auto attackRangeHandle = scene->ReserveGameObject("RemoteSoldier_AttackRange");
+				// Attack Range Debug Indicator
+				auto attackRangeHandle = scene->ReserveGameObject(
+					"LocalPlayer_AttackRangeDebug", std::nullopt,
+					[scene, objHandle](GameObject* rangeRoot)
+					{
+						if (auto* player = scene->TryGetGameObject(objHandle))
+						{
+							rangeRoot->GetTransform().SetParent(player->GetTransform().GetHandle());
+							rangeRoot->GetTransform().SetPosition(0.0f, 1.1f, 0.0f);
+						}
+					}
+				);
 
-				//scene->CreateComponentWithInit<MeshComponent>(
-				//	attackRangeHandle,
-				//	[scene, objHandle](MeshComponent* mesh)
-				//	{
-				//		auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
-				//		if (!res)
-				//		{
-				//			DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
-				//			return;
-				//		}
-				//		mesh->SetMeshResource(res);
+				for (int segmentIndex = 0; segmentIndex < 18; ++segmentIndex)
+				{
+					auto segmentHandle = scene->ReserveGameObject(
+						"LocalPlayer_AttackRangeDebugSegment", std::nullopt,
+						[scene, attackRangeHandle](GameObject* segmentObj)
+						{
+							if (auto* root = scene->TryGetGameObject(attackRangeHandle))
+							{
+								segmentObj->GetTransform().SetParent(root->GetTransform().GetHandle());
+							}
+						}
+					);
 
-				//		if (auto* player = scene->TryGetGameObject(objHandle))
-				//		{
-				//			auto* obj = mesh->GetGameObject();
-				//			obj->GetTransform().SetParent(player->GetTransform().GetHandle());
-				//			obj->GetTransform().SetPosition(0.0f, 1.0f, 0.0f);
-				//		}
-				//	}
-				//);
+					scene->CreateComponentWithInit<MeshComponent>(
+						segmentHandle,
+						[](MeshComponent* mesh)
+						{
+							auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+							if (!res)
+							{
+								DEBUG_LOG_FMT("Failed to load attack range mesh resource!\n");
+								return;
+							}
+							mesh->SetMeshResource(res);
+						}
+					);
+				}
+
+				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+					attackRangeHandle,
+					[](AttackRangeDebugComponent* debug)
+					{
+						debug->SetRadius(1.0f);
+						debug->SetCenterAngleDegrees(10.0f);
+					}
+				);
+				////
 			}
 
 			// MovementComponent 추가 (네트워크 보간을 위해)
