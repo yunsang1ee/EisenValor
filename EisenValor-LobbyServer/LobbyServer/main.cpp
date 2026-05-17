@@ -10,7 +10,7 @@ int main()
 
 	if(false == LobbyServer::ServerManager::Init()) {
 		LOG_ERROR("ServerManager Init Failed");
-		LOG_SAVE;
+		LOG_SAVE;		
 		return EXIT_FAILURE;
 	}
 

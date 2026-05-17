@@ -39,7 +39,7 @@ namespace ServerPackets {
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(const uint64 id, const FB_ENUMS::TEAM_TYPE teamType);
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_OCCUPATION_ZONE_GAUGE_PACKET(const uint64 id, const float gauge, const FB_ENUMS::TEAM_TYPE teamType);
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_SOLDIER_ATTACK_PACKET(const uint64 id);
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_GAME_FINISH_RESULT_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_FINISH_GAME_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 #pragma endregion
 
 	// =================

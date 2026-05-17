@@ -347,7 +347,7 @@ table SC_SOLDIER_ATTACK_PACKET {
 	obj_id: uint64;
 }
 
-table SC_GAME_FINISH_RESULT_PACKET {
+table SC_FINISH_GAME_PACKET {
 	winning_team: FB_ENUMS.TEAM_TYPE;
 	blue_score: uint8;
 	red_score: uint8;

@@ -1042,7 +1042,7 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 
 	m_isGameFinish = true;
 
-	auto pb = ServerPackets::Make_SC_GAME_FINISH_RESULT_PACKET(*winner, m_blueTeamScore, m_redTeamScore);
+	auto pb = ServerPackets::Make_SC_FINISH_GAME_PACKET(*winner, m_blueTeamScore, m_redTeamScore);
 	Broadcast(std::move(pb));
 }
 

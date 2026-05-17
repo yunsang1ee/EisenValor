@@ -426,14 +426,14 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	std::string ip{recvPkt.ip()->c_str()};
 	const uint16 port{recvPkt.port()};
 
-	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), port))
+	if (false == GLOBAL(NetworkGlobal).ConnectGameServer(ip.c_str(), port))
 		assert(nullptr);
 
 	// 로비서버로부터 받은 세션 아이디
 	// TODO: 로비 서버로부터 받은 세션 아이디를 게임 서버로 전달해서 게임 서버에 입장하기
 	{
 		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, sessionID)};
-		GLOBAL(NetworkGlobal).Send(std::move(pb));
+		GLOBAL(NetworkGlobal).SendGame(std::move(pb));
 	}
 	return true;
 }
@@ -1803,8 +1803,8 @@ bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
 	return true;
 }
 
-bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt
+bool NetBridge::S2C::Handle_SC_FINISH_GAME_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_FINISH_GAME_PACKET& recvPkt
 )
 {
 	// TODO: UI 통해서 게임 종료 결과 보여줘야합니다.
@@ -1826,6 +1826,9 @@ bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
 	default:
 		break;
 	}
+
+
+
 
 	return true;
 }

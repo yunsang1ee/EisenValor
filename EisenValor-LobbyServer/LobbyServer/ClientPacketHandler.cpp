@@ -32,7 +32,7 @@ void LobbyServer::ClientPacketHandler::Init()
 bool LobbyServer::ClientPacketHandler::Handle_CL_LOGIN_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_LOGIN_PACKET& recvPkt)
 {
 	std::cout << "Handle_CL_LOGIN_PACKET" << std::endl;
-
+		
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 	std::cout << std::format("ID:{} , PW:{} ", recvPkt.id()->c_str(), recvPkt.pw()->c_str()) << std::endl;
 	const uint32 id{ clientSession->GetID() };
@@ -40,7 +40,7 @@ bool LobbyServer::ClientPacketHandler::Handle_CL_LOGIN_PACKET(const std::shared_
 	const std::string nickName{ "PLAYER_" + std::to_string(id) };
 	auto pb = LobbyServer::Make_LC_LOGIN_SUCCESS_PACKET(id, nickName);
 	clientSession->Send(std::move(pb));
-
+		
 	return true;
 }
 #pragma endregion

@@ -279,6 +279,8 @@ exit /b 0</Command>
     <ClInclude Include="NavMesh\DetourPathQueue.h" />
     <ClInclude Include="NavMesh\DetourProximityGrid.h" />
     <ClInclude Include="NavMesh\DetourStatus.h" />
+    <ClInclude Include="Network\GameServerSession.h" />
+    <ClInclude Include="Network\LobbyServerSession.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
     <ClInclude Include="Packets\PacketEnums.h" />
@@ -378,6 +380,8 @@ exit /b 0</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Network\GameServerSession.cpp" />
+    <ClCompile Include="Network\LobbyServerSession.cpp" />
     <ClCompile Include="Packets\C2SPackets.cpp" />
     <ClCompile Include="Packets\PacketHandler.cpp" />
     <ClCompile Include="Packets\S2CPackets.cpp" />

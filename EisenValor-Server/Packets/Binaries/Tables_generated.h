@@ -222,8 +222,8 @@ struct SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder;
 struct SC_SOLDIER_ATTACK_PACKET;
 struct SC_SOLDIER_ATTACK_PACKETBuilder;
 
-struct SC_GAME_FINISH_RESULT_PACKET;
-struct SC_GAME_FINISH_RESULT_PACKETBuilder;
+struct SC_FINISH_GAME_PACKET;
+struct SC_FINISH_GAME_PACKETBuilder;
 
 struct CS_TELEPORT_PACKET;
 struct CS_TELEPORT_PACKETBuilder;
@@ -3588,8 +3588,8 @@ inline ::flatbuffers::Offset<SC_SOLDIER_ATTACK_PACKET> CreateSC_SOLDIER_ATTACK_P
   return builder_.Finish();
 }
 
-struct SC_GAME_FINISH_RESULT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef SC_GAME_FINISH_RESULT_PACKETBuilder Builder;
+struct SC_FINISH_GAME_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_FINISH_GAME_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_WINNING_TEAM = 4,
     VT_BLUE_SCORE = 6,
@@ -3613,36 +3613,36 @@ struct SC_GAME_FINISH_RESULT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuff
   }
 };
 
-struct SC_GAME_FINISH_RESULT_PACKETBuilder {
-  typedef SC_GAME_FINISH_RESULT_PACKET Table;
+struct SC_FINISH_GAME_PACKETBuilder {
+  typedef SC_FINISH_GAME_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_winning_team(FB_ENUMS::TEAM_TYPE winning_team) {
-    fbb_.AddElement<uint8_t>(SC_GAME_FINISH_RESULT_PACKET::VT_WINNING_TEAM, static_cast<uint8_t>(winning_team), 0);
+    fbb_.AddElement<uint8_t>(SC_FINISH_GAME_PACKET::VT_WINNING_TEAM, static_cast<uint8_t>(winning_team), 0);
   }
   void add_blue_score(uint8_t blue_score) {
-    fbb_.AddElement<uint8_t>(SC_GAME_FINISH_RESULT_PACKET::VT_BLUE_SCORE, blue_score, 0);
+    fbb_.AddElement<uint8_t>(SC_FINISH_GAME_PACKET::VT_BLUE_SCORE, blue_score, 0);
   }
   void add_red_score(uint8_t red_score) {
-    fbb_.AddElement<uint8_t>(SC_GAME_FINISH_RESULT_PACKET::VT_RED_SCORE, red_score, 0);
+    fbb_.AddElement<uint8_t>(SC_FINISH_GAME_PACKET::VT_RED_SCORE, red_score, 0);
   }
-  explicit SC_GAME_FINISH_RESULT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit SC_FINISH_GAME_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<SC_GAME_FINISH_RESULT_PACKET> Finish() {
+  ::flatbuffers::Offset<SC_FINISH_GAME_PACKET> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<SC_GAME_FINISH_RESULT_PACKET>(end);
+    auto o = ::flatbuffers::Offset<SC_FINISH_GAME_PACKET>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<SC_GAME_FINISH_RESULT_PACKET> CreateSC_GAME_FINISH_RESULT_PACKET(
+inline ::flatbuffers::Offset<SC_FINISH_GAME_PACKET> CreateSC_FINISH_GAME_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     FB_ENUMS::TEAM_TYPE winning_team = FB_ENUMS::TEAM_TYPE_NONE,
     uint8_t blue_score = 0,
     uint8_t red_score = 0) {
-  SC_GAME_FINISH_RESULT_PACKETBuilder builder_(_fbb);
+  SC_FINISH_GAME_PACKETBuilder builder_(_fbb);
   builder_.add_red_score(red_score);
   builder_.add_blue_score(blue_score);
   builder_.add_winning_team(winning_team);

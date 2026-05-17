@@ -278,6 +278,7 @@
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\SceneGlobal.h" />
     <ClInclude Include="include\SceneResource.h" />
+    <ClInclude Include="include\Session.h" />
     <ClInclude Include="include\Singleton.h" />
     <ClInclude Include="include\SkinnedMeshComponent.h" />
     <ClInclude Include="include\SkinnedMeshResource.h" />
@@ -336,6 +337,7 @@
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneGlobal.cpp" />
     <ClCompile Include="src\SceneResource.cpp" />
+    <ClCompile Include="src\Session.cpp" />
     <ClCompile Include="src\SkinnedMeshComponent.cpp" />
     <ClCompile Include="src\SkinnedMeshResource.cpp" />
     <ClCompile Include="src\stdafxClientFramework.cpp">

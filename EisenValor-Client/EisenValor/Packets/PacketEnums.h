@@ -142,7 +142,7 @@ enum class PACKET_TYPE : uint16_t
 	CS_CHAT_PKT = 10050,
 	SC_CHAT_PKT = 10051,
 
-	SC_GAME_FINISH_RESULT_PKT = 11000,
+	SC_FINISH_GAME_PKT = 11000,
 
 
 #pragma endregion

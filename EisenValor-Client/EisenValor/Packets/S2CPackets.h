@@ -101,7 +101,7 @@ bool Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
 
 bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt);
 
-bool Handle_SC_GAME_FINISH_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt);
+bool Handle_SC_FINISH_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_FINISH_GAME_PACKET& recvPkt);
 
 #pragma endregion
 
