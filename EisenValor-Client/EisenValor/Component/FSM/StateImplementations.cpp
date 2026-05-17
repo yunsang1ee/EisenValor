@@ -340,7 +340,24 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 			//anim->Play(stunKey, false, true);
 
 			// 기본 STUN
-			anim->Play(StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN), false, true);
+			uint8_t dir = fsm->GetCurAttackDir();
+			uint8_t type = static_cast<uint8_t>(fsm->GetCurAttackType());
+
+			uint8_t stunKey = StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN);
+			if (dir >= 1 && dir <= 4)
+			{
+				stunKey = 150 + (dir * 10) + std::min<uint8_t>(type, 1);
+			}
+
+			DEBUG_LOG_FMT(
+				"[HitReact] dir={}, attackType={}, reactType={}, stunKey={}\n",
+				static_cast<int>(dir),
+				static_cast<int>(type),
+				static_cast<int>(std::min<uint8_t>(type, 1)),
+				static_cast<int>(stunKey)
+			);
+
+			anim->Play(stunKey, false, true);
 		}
 	}
 }
