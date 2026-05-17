@@ -684,7 +684,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				);
 
 				// Attack Range Debug Indicator
-				auto attackRangeHandle = scene->ReserveGameObject(
+				/*auto attackRangeHandle = scene->ReserveGameObject(
 					"LocalPlayer_AttackRangeDebug",
 					std::nullopt,
 					[scene, playerObjHandle](GameObject* rangeRoot)
@@ -724,16 +724,16 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 							mesh->SetMeshResource(res);
 						}
 					);
-				}
+				}*/
 
-				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
-					attackRangeHandle,
-					[](AttackRangeDebugComponent* debug)
-					{
-						debug->SetRadius(1.0f);
-						debug->SetCenterAngleDegrees(10.0f);
-					}
-				);
+				//scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+				//	attackRangeHandle,
+				//	[](AttackRangeDebugComponent* debug)
+				//	{
+				//		// debug->SetRadius(1.0f);
+				//		// debug->SetCenterAngleDegrees(10.0f);
+				//	}
+				//);
 			}
 		}
 	);
@@ -1020,7 +1020,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 
 				// Attack Range Debug Indicator
-				auto attackRangeHandle = scene->ReserveGameObject(
+				/*auto attackRangeHandle = scene->ReserveGameObject(
 					"LocalPlayer_AttackRangeDebug", std::nullopt,
 					[scene, objHandle](GameObject* rangeRoot)
 					{
@@ -1058,16 +1058,16 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 							mesh->SetMeshResource(res);
 						}
 					);
-				}
+				}*/
 
-				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
-					attackRangeHandle,
-					[](AttackRangeDebugComponent* debug)
-					{
-						debug->SetRadius(1.0f);
-						debug->SetCenterAngleDegrees(10.0f);
-					}
-				);
+				//scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+				//	attackRangeHandle,
+				//	[](AttackRangeDebugComponent* debug)
+				//	{
+				//		debug->SetRadius(1.0f);
+				//		debug->SetCenterAngleDegrees(10.0f);
+				//	}
+				//);
 				/////////////
 
 			}
@@ -1192,7 +1192,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 
 				// Attack Range Debug Indicator
-				auto attackRangeHandle = scene->ReserveGameObject(
+				/*auto attackRangeHandle = scene->ReserveGameObject(
 					"LocalPlayer_AttackRangeDebug", std::nullopt,
 					[scene, objHandle](GameObject* rangeRoot)
 					{
@@ -1230,16 +1230,16 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 							mesh->SetMeshResource(res);
 						}
 					);
-				}
+				}*/
 
-				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+			/*	scene->CreateComponentWithInit<AttackRangeDebugComponent>(
 					attackRangeHandle,
 					[](AttackRangeDebugComponent* debug)
 					{
 						debug->SetRadius(1.0f);
 						debug->SetCenterAngleDegrees(10.0f);
 					}
-				);
+				);*/
 				////
 			}
 

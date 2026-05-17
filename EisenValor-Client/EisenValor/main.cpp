@@ -115,9 +115,9 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 	std::string_view ipAddress{"127.0.0.1"};
 	
 	#ifdef APPLY_LOBBY_SERVER
-		const uint16 port{8888};	// lobby port
+		const uint16 port{G_LOBBY_SERVER_PORT};	// lobby port
 	#else
-		const uint16 port{40002};	// game server 1st worldThread port
+		const uint16 port{G_GAME_SERVER_PORT};	// game server 1st worldThread port
 	#endif
 
 	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port))
