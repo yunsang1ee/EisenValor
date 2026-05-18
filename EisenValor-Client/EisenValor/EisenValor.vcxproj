@@ -264,6 +264,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
+    <ClInclude Include="Component\World\WorldSceneControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="NavMesh\DetourAlloc.h" />
     <ClInclude Include="NavMesh\DetourAssert.h" />
@@ -326,6 +327,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
     <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
+    <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

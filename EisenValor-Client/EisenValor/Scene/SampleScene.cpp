@@ -14,6 +14,7 @@
 #include "Component/StressTestComponent.h"
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
+#include "Component/World/WorldSceneControllerComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -48,7 +49,7 @@ void SampleScene::OnRegisterCustomComponents()
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent>();
+		AttackRangeDebugComponent, WorldSceneControllerComponent>();
 	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
 }
 

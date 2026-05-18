@@ -86,7 +86,7 @@
     <Filter Include="Network\Session\GameServerSession">
       <UniqueIdentifier>{41e3a170-bfa5-49b2-b463-c32972d504cb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Component\Sample">
+    <Filter Include="Component\World">
       <UniqueIdentifier>{667d90e5-395c-43e8-87cd-fc86511a8d36}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -268,6 +268,9 @@
     <ClInclude Include="Network\LobbyServerSession.h">
       <Filter>Network\Session\LobbyServerSession</Filter>
     </ClInclude>
+    <ClInclude Include="Component\World\WorldSceneControllerComponent.h">
+      <Filter>Component\World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -404,6 +407,9 @@
     </ClCompile>
     <ClCompile Include="Network\LobbyServerSession.cpp">
       <Filter>Network\Session\LobbyServerSession</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp">
+      <Filter>Component\World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
