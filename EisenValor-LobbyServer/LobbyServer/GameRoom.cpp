@@ -218,9 +218,15 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 		for(const auto& [id, bot] : m_bots)
 			particinpants.emplace_back(bot->GetInfo());
 
-		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(m_info.id, particinpants) };
+		const uint16 worldID{ gameServerSession->ReserveStartRoom(m_info.id) };
+		if(0 == worldID) {
+			auto pb{ LobbyServer::Make_LC_START_GAME_FAIL_PACKET("Failed to allocate world id") };
+			Broadcast(std::move(pb));
+			return;
+		}
+
+		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(worldID, particinpants) };
 		gameServerSession->Send(std::move(pb));
-		gameServerSession->AddReservedStartRoom(m_info.id);
 	}
 }
 

@@ -421,8 +421,7 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 {
 	DEBUG_LOG_FMT("Handle_LC_CON	NECT_TO_GAME_SERVER");
 	const uint32 sessionID = GLOBAL(SceneGlobal).GetSessionID();
-	const auto	 worldID = recvPkt.world_id();
-	const uint16 roomID{recvPkt.world_id()};
+	const uint16 worldID{recvPkt.world_id()};
 	std::string ip{recvPkt.ip()->c_str()};
 	const uint16 port{recvPkt.port()};
 
@@ -432,7 +431,7 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	// 로비서버로부터 받은 세션 아이디
 	// TODO: 로비 서버로부터 받은 세션 아이디를 게임 서버로 전달해서 게임 서버에 입장하기
 	{
-		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, sessionID)};
+		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(worldID, sessionID)};
 		GLOBAL(NetworkGlobal).SendGame(std::move(pb));
 	}
 	return true;

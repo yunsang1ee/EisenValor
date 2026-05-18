@@ -110,12 +110,12 @@ std::shared_ptr<LobbyServer::GameRoom> LobbyServer::GameLobby::FindGameRoom(cons
 	return nullptr;
 }
 
-void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint16 port)
+void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint16 worldID, const uint16 port)
 {
 	auto gameRoom{ FindGameRoom(roomID) };
 
 	if(gameRoom) {
-		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, "127.0.0.1", port) };
+		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(worldID, "127.0.0.1", port) };
 		gameRoom->Broadcast(std::move(pb));
 	}
 }

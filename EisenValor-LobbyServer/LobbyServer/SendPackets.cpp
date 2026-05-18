@@ -144,7 +144,7 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_LEAVE_PART
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET, participantID));
 }
 
-std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 roomID, const std::vector<ParticipantInfo>& participants)
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::vector<ParticipantInfo>& participants)
 {
 	flatbuffers::FlatBufferBuilder builder;
 
@@ -154,7 +154,7 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAM
 	for(const auto& participant : participants)
 		participantsInfo.emplace_back(FB_STRUCTS::ParticipantInfo{ participant.id, participant.type, participant.stateType, participant.teamType });
 
-	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LS_CREATE_GAME_WORLD_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKETDirect, roomID, &participantsInfo));
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LS_CREATE_GAME_WORLD_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKETDirect, worldID, &participantsInfo));
 
 }
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port)

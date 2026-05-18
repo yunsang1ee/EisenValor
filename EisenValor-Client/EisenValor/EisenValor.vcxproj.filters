@@ -86,6 +86,9 @@
     <Filter Include="Network\Session\GameServerSession">
       <UniqueIdentifier>{41e3a170-bfa5-49b2-b463-c32972d504cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\Sample">
+      <UniqueIdentifier>{667d90e5-395c-43e8-87cd-fc86511a8d36}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">

@@ -23,12 +23,16 @@ bool LobbyServer::GameServerPacketHandler::Handle_SL_CREATE_GAME_WORLD_PACKET(co
 
 	const auto& gameServerSession{ std::static_pointer_cast<GameServerSession>(session) };
 
-	const uint16 roomID{ gameServerSession->GetReservedStartRoom(recvPkt.world_id()) };
+	const uint16 worldID{ recvPkt.world_id() };
+	const uint16 roomID{ gameServerSession->ConsumeReservedStartRoom(worldID) };
+
+	if(0 == roomID)
+		return false;
 
 	if(!G_GAME_LOBBY)
 		return false;
 
-	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::ConnectToGameServer, roomID, recvPkt.port());
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::ConnectToGameServer, roomID, worldID, recvPkt.port());
 
 	return true;
 }

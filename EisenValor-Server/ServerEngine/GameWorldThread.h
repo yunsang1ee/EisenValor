@@ -15,7 +15,7 @@ namespace GameServerEngine {
 		virtual void Run(const std::stop_token st) override final;
 
 	public:
-		void CreateWorld(const uint16 roomID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info);
+		void CreateWorld(const uint16 worldID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info);
 		void EnterWorld(std::shared_ptr<Session> session);
 		IRoom* FindGameWorld(const uint16 worldID);
 

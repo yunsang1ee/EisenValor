@@ -50,16 +50,16 @@ void GameServerEngine::GameWorldThread::Run(const std::stop_token st)
 	}
 }
 
-void GameServerEngine::GameWorldThread::CreateWorld(const uint16 roomID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
+void GameServerEngine::GameWorldThread::CreateWorld(const uint16 worldID, const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
 {
-	if(m_worlds.contains(roomID))
+	if(m_worlds.contains(worldID))
 		return;
 
 	auto world{ m_worldFunc() };
-	world->SetID(roomID);
+	world->SetID(worldID);
 	world->SetGameWorldThread(this);
 	world->Init(info);
-	m_worlds.insert(std::make_pair(roomID, std::move(world)));
+	m_worlds.insert(std::make_pair(worldID, std::move(world)));
 }
 
 void GameServerEngine::GameWorldThread::EnterWorld(std::shared_ptr<Session> session)

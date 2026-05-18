@@ -14,7 +14,7 @@
 //				     CONDITION NODES
 // =====================================================
 bool GameServer::Contents::IsInOccupationZone::Check(const float dt)
-{
+{  
 	const auto owner{ GetOwner() };
 	const auto& ownerPos{ owner->GetPosition() };
 

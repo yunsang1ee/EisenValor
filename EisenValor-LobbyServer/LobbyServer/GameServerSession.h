@@ -1,11 +1,13 @@
 #pragma once
 
 #include "Session.h"
+#include <tbb/concurrent_unordered_map.h>
 
 namespace LobbyServer {
 	class GameServerSession final : public LobbyServerEngine::PacketSession {
 	private:
-		tbb::concurrent_set<uint16> m_reservedStartRoomId;
+		tbb::concurrent_unordered_map<uint16, uint16>	m_reservedStartRooms;
+		std::atomic<uint32>								m_worldIdGenerator;
 	
 	public:
 		GameServerSession();
@@ -18,8 +20,8 @@ namespace LobbyServer {
 		virtual void OnRecvPacket(const std::span<const char>& buf) override final;
 
 	public:
-		void AddReservedStartRoom(const uint16 roomID);
-		uint16 GetReservedStartRoom(const uint16 roomID);
+		uint16 ReserveStartRoom(const uint16 roomID);
+		uint16 ConsumeReservedStartRoom(const uint16 worldID);
 
 	};
 }

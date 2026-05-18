@@ -1578,18 +1578,18 @@ inline ::flatbuffers::Offset<LC_START_GAME_FAIL_PACKET> CreateLC_START_GAME_FAIL
 struct LS_CREATE_GAME_WORLD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef LS_CREATE_GAME_WORLD_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ROOM_ID = 4,
+    VT_WORLD_ID = 4,
     VT_PARTICIPANTS = 6
   };
-  uint16_t room_id() const {
-    return GetField<uint16_t>(VT_ROOM_ID, 0);
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
   }
   const ::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *> *participants() const {
     return GetPointer<const ::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *> *>(VT_PARTICIPANTS);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
            VerifyOffset(verifier, VT_PARTICIPANTS) &&
            verifier.VerifyVector(participants()) &&
            verifier.EndTable();
@@ -1600,8 +1600,8 @@ struct LS_CREATE_GAME_WORLD_PACKETBuilder {
   typedef LS_CREATE_GAME_WORLD_PACKET Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_room_id(uint16_t room_id) {
-    fbb_.AddElement<uint16_t>(LS_CREATE_GAME_WORLD_PACKET::VT_ROOM_ID, room_id, 0);
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(LS_CREATE_GAME_WORLD_PACKET::VT_WORLD_ID, world_id, 0);
   }
   void add_participants(::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *>> participants) {
     fbb_.AddOffset(LS_CREATE_GAME_WORLD_PACKET::VT_PARTICIPANTS, participants);
@@ -1619,22 +1619,22 @@ struct LS_CREATE_GAME_WORLD_PACKETBuilder {
 
 inline ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET> CreateLS_CREATE_GAME_WORLD_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t room_id = 0,
+    uint16_t world_id = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const FB_STRUCTS::ParticipantInfo *>> participants = 0) {
   LS_CREATE_GAME_WORLD_PACKETBuilder builder_(_fbb);
   builder_.add_participants(participants);
-  builder_.add_room_id(room_id);
+  builder_.add_world_id(world_id);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<LS_CREATE_GAME_WORLD_PACKET> CreateLS_CREATE_GAME_WORLD_PACKETDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint16_t room_id = 0,
+    uint16_t world_id = 0,
     const std::vector<FB_STRUCTS::ParticipantInfo> *participants = nullptr) {
   auto participants__ = participants ? _fbb.CreateVectorOfStructs<FB_STRUCTS::ParticipantInfo>(*participants) : 0;
   return FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKET(
       _fbb,
-      room_id,
+      world_id,
       participants__);
 }
 
