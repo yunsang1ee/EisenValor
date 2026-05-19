@@ -245,10 +245,10 @@ if (fsm->GetObjectType() == GAME_OBJECT_TYPE_PLAYER)
 		SetNextStateOnEnd(0);
 
 
-	DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
+	/*DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
 		fsm->GetCurAttackType(),
 		fsm->GetCurAttackDir(), fsm->IsLockOn()
-	);
+	);*/
 
 	// 애니메이션 Key로 재생
 	if (auto* go = fsm->GetGameObject())
