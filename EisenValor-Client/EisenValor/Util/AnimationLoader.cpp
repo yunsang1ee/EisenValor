@@ -150,7 +150,7 @@ namespace AnimationLoader
 			anim->AddAnimation(180, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_R_Seq.evanim"));
 			anim->AddAnimation(181, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_R.evanim"));
 			//// BACK (190:Light, 191:Hard)
-			anim->AddAnimation(190, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_B_Seq.evanim"));
+			anim->AddAnimation(190, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_BW_Seq.evanim"));
 			anim->AddAnimation(191, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_B.evanim"));
 
 
