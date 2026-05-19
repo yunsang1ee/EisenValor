@@ -21,6 +21,10 @@ public:
 	{
 		if (this != &other)
 		{
+			if (m_parent.IsValid())
+			{
+				SetParent(Handle::Invalid());
+			}
 			MoveFrom(std::move(other));
 		}
 		return *this;
