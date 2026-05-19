@@ -6,25 +6,9 @@
 
 void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 {
-	// 로비에서 나가기
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F1))
+	if (GLOBAL(InputGlobal).GetInputDown('L'))
 	{
-		auto pb{NetBridge::C2S::Make_CL_LEAVE_GAME_LOBBY_PACKET()};
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	}
-
-	// 방 만들기
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F2))
-	{
-		auto pb{NetBridge::C2S::Make_CL_MAKE_GAME_ROOM_PACKET()};
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
-	}
-
-	// 방 들어가기
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F3))
-	{
-		const uint16 roomID{1};
-		auto		 pb{NetBridge::C2S::Make_CL_ENTER_GAME_ROOM_PACKET(roomID)};
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		auto pb{NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET()};
+		GLOBAL(NetBridge::NetworkGlobal).SendLobby(std::move(pb));
 	}
 }

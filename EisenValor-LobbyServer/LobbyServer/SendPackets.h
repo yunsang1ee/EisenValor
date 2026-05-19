@@ -34,6 +34,7 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_START_GAME_FAIL_PACKET(const std::string_view failMsg);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::vector<ParticipantInfo>& participants);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CONNECT_TO_GAME_SERVER_PACKET	(const uint16 worldID, const std::string_view ip, const uint16 port);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_RETURN_TO_GAME_ROOM_PACKET();
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHAT_PACKET(const uint32 sessionID, const std::string_view msg);
 #pragma endregion
 

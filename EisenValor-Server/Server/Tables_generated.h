@@ -120,6 +120,12 @@ struct SL_CREATE_GAME_WORLD_PACKETBuilder;
 struct LC_CONNECT_TO_GAME_SERVER_PACKET;
 struct LC_CONNECT_TO_GAME_SERVER_PACKETBuilder;
 
+struct CL_RETURN_TO_GAME_ROOM_PACKET;
+struct CL_RETURN_TO_GAME_ROOM_PACKETBuilder;
+
+struct LC_RETURN_TO_GAME_ROOM_PACKET;
+struct LC_RETURN_TO_GAME_ROOM_PACKETBuilder;
+
 struct CL_CHAT_PACKET;
 struct CL_CHAT_PACKETBuilder;
 
@@ -1786,6 +1792,64 @@ inline ::flatbuffers::Offset<LC_CONNECT_TO_GAME_SERVER_PACKET> CreateLC_CONNECT_
       world_id,
       ip__,
       port);
+}
+
+struct CL_RETURN_TO_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CL_RETURN_TO_GAME_ROOM_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct CL_RETURN_TO_GAME_ROOM_PACKETBuilder {
+  typedef CL_RETURN_TO_GAME_ROOM_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit CL_RETURN_TO_GAME_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CL_RETURN_TO_GAME_ROOM_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CL_RETURN_TO_GAME_ROOM_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CL_RETURN_TO_GAME_ROOM_PACKET> CreateCL_RETURN_TO_GAME_ROOM_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  CL_RETURN_TO_GAME_ROOM_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct LC_RETURN_TO_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_RETURN_TO_GAME_ROOM_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_RETURN_TO_GAME_ROOM_PACKETBuilder {
+  typedef LC_RETURN_TO_GAME_ROOM_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit LC_RETURN_TO_GAME_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_RETURN_TO_GAME_ROOM_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_RETURN_TO_GAME_ROOM_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_RETURN_TO_GAME_ROOM_PACKET> CreateLC_RETURN_TO_GAME_ROOM_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  LC_RETURN_TO_GAME_ROOM_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
 }
 
 struct CL_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

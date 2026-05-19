@@ -17,7 +17,7 @@ namespace LobbyServer {
 	public:
 		GameRoom();
 		~GameRoom();
-
+		
 	public:
 		void Broadcast(std::shared_ptr<LobbyServerEngine::PacketBuffer> pb);
 		void EnterGameRoom(const std::shared_ptr<ClientSession>& clientSession);
@@ -29,6 +29,7 @@ namespace LobbyServer {
 		void RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID);
 		void ReadyGame(const std::shared_ptr<ClientSession>& clientSession);
 		void StartGame(const std::shared_ptr<ClientSession>& clientSession);
+		void ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession);
 
 		std::shared_ptr<User> GetSessionUser(const std::shared_ptr<ClientSession>& clientSession);
 

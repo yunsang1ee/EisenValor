@@ -86,6 +86,9 @@ enum class PACKET_TYPE : uint16_t
 
 	CL_CHAT_PKT = 1020,
 	LC_CHAT_PKT = 1021,
+
+	CL_RETURN_TO_GAME_ROOM_PKT = 1022,
+	LC_RETURN_TO_GAME_ROOM_PKT = 1023,
 #pragma endregion
 
 	// ==================

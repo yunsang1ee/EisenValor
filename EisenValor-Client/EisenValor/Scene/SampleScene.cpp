@@ -128,6 +128,16 @@ void SampleScene::OnStartImpl()
 		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
 		//);
 	}
+
+	ReserveGameObject(
+		"WorldSceneController", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<WorldSceneControllerComponent>(
+				obj->GetHandle(), [](WorldSceneControllerComponent* login) {}
+			);
+		}
+	);
 }
 
 void SampleScene::CreateSceneObjects()

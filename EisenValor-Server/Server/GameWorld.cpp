@@ -36,7 +36,7 @@ GameServer::Contents::GameWorld::GameWorld()
 
 GameServer::Contents::GameWorld::~GameWorld()
 {
-
+	std::cout << "~GameWorld" << std::endl;
 }
 
 void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
@@ -171,6 +171,15 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 	
 	if(player)
 		RemoveGameObject(player);
+
+	if(m_users.find(id) != m_users.end())
+		m_users.erase(id);
+
+	m_sessionToPlayer.erase(id);
+	m_playerToSession.erase(playerID);
+
+	if(m_users.empty())
+		GetGameWorldThread()->RequestDestroyWorld(GetID());
 }
 
 void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine::PacketBuffer> pb)
@@ -695,13 +704,16 @@ void GameServer::Contents::GameWorld::ProcessPendingRemoveObjectList()
 
 		if(type == FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_PLAYER) {
 
-			if(false == m_playerToSession.contains(id))
-				return;
+			const auto sessionIter{ m_playerToSession.find(id) };
+			if(sessionIter != m_playerToSession.end()) {
+				const auto sessionID{ sessionIter->second };
 
-			const auto sessionID{ m_playerToSession[id] };
+				if(m_users.find(sessionID) != m_users.end())
+					m_users.erase(sessionID);
 
-			if(m_users.find(sessionID) != m_users.end())
-				m_users.erase(sessionID);
+				m_sessionToPlayer.erase(sessionID);
+				m_playerToSession.erase(id);
+			}
 		}
 		else if(type == FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) {
 			if(m_bots.find(id) != m_bots.end())
@@ -710,6 +722,9 @@ void GameServer::Contents::GameWorld::ProcessPendingRemoveObjectList()
 
 		auto pb = ServerPackets::Make_SC_REMOVE_OBJ_PACKET(id);
 		Broadcast(std::move(pb));
+
+		if(type == FB_ENUMS::GAME_OBJECT_TYPE::GAME_OBJECT_TYPE_PLAYER && m_users.empty())
+			GetGameWorldThread()->RequestDestroyWorld(GetID());
 	}
 }
 

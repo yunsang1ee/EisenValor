@@ -24,6 +24,7 @@ void LobbyServer::ClientPacketHandler::Init()
 	REGISTER_PACKET(PACKET_TYPE::CL_REMOVE_BOT_PKT, FB_TABLES::CL_REMOVE_BOT_PACKET, ClientPacketHandler::Handle_CL_REMOVE_BOT_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CL_READY_GAME_PKT, FB_TABLES::CL_READY_GAME_PACKET, ClientPacketHandler::Handle_CL_READY_GAME_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CL_START_GAME_PKT, FB_TABLES::CL_START_GAME_PACKET, ClientPacketHandler::Handle_CL_START_GAME_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::CL_RETURN_TO_GAME_ROOM_PKT, FB_TABLES::CL_RETURN_TO_GAME_ROOM_PACKET, ClientPacketHandler::Handle_CL_RETURN_TO_GAME_ROOM_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CL_CHAT_PKT, FB_TABLES::CL_CHAT_PACKET, ClientPacketHandler::Handle_CL_CHAT_PACKET);
 #pragma endregion
 }
@@ -166,6 +167,18 @@ bool LobbyServer::ClientPacketHandler::Handle_CL_START_GAME_PACKET(const std::sh
 
 	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CS_START_GAME, clientSession);
 	
+	return true;
+}
+
+bool LobbyServer::ClientPacketHandler::Handle_CL_RETURN_TO_GAME_ROOM_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_RETURN_TO_GAME_ROOM_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM, clientSession);
+
 	return true;
 }
 

@@ -167,6 +167,12 @@ table LC_CONNECT_TO_GAME_SERVER_PACKET {
 	port: uint16;
 }
 
+table CL_RETURN_TO_GAME_ROOM_PACKET {
+}
+
+table LC_RETURN_TO_GAME_ROOM_PACKET {
+}
+
 table CL_CHAT_PACKET {
 	msg: string;
 }

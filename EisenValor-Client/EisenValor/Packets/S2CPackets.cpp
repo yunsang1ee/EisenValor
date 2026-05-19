@@ -436,6 +436,16 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	}
 	return true;
 }
+
+bool NetBridge::S2C::Handle_LC_RETURN_TO_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_RETURN_TO_GAME_ROOM_PACKET& recvPkt
+)
+{
+	GLOBAL(NetworkGlobal).DisconnectGameServer();
+	GLOBAL(SceneGlobal).LoadScene("RoomScene");
+	return true;
+}
+
 bool NetBridge::S2C::Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET& recvPkt)
 {
 	DEBUG_LOG_FMT("[LC_CHAT_PACKET] ");

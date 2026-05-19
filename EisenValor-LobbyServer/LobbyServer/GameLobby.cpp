@@ -206,6 +206,15 @@ void LobbyServer::GameLobby::Handle_CS_START_GAME(const std::shared_ptr<ClientSe
 	if(gameRoom)
 		gameRoom->StartGame(clientSession);
 }
+
+void LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
+{
+	const auto& gameRoom{ clientSession->GetGameRoom() };
+
+	if(gameRoom)
+		gameRoom->ReturnToGameRoom(clientSession);
+}
+
 void LobbyServer::GameLobby::Handle_CL_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg)
 {
 	switch(clientSession->GetState()) {

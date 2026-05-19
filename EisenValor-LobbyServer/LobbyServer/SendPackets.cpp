@@ -163,6 +163,14 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CONNECT_TO
 	
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CONNECT_TO_GAME_SERVER_PACKETDirect, worldID, ip.data(), port));
 }
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_RETURN_TO_GAME_ROOM_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_RETURN_TO_GAME_ROOM_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_RETURN_TO_GAME_ROOM_PACKET));
+}
+
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CHAT_PACKET(const uint32 sessionID, const std::string_view msg)
 {
 	flatbuffers::FlatBufferBuilder builder;

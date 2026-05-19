@@ -64,7 +64,7 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 	if(newUser->GetType() == FB_ENUMS::PARTICIPANT_TYPE_HOST && nullptr == m_host)
 		m_host = newUser;
 
-	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) 
+	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType)
 		teamType = FB_ENUMS::TEAM_TYPE_RED;
 	else
 		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
@@ -230,14 +230,35 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 	}
 }
 
+void LobbyServer::GameRoom::ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession)
+{
+	auto user{ GetSessionUser(clientSession) };
+
+	const auto userType{ user->GetType() };
+	const auto userStateType{ user->GetStateType() };
+
+	if(FB_ENUMS::PARTICIPANT_TYPE_USER == userType && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY == userStateType) {
+		user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
+		std::cout << std::format("User ID: {}, Return To Game Room! Set Not Ready", user->GetID()) << std::endl;
+	}
+
+	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
+
+	std::cout << std::format("UserID: {}, Return To Game Room!", clientSession->GetID()) << std::endl;
+
+	auto pb{ LobbyServer::Make_LC_RETURN_TO_GAME_ROOM_PACKET() };
+	clientSession->Send(std::move(pb));
+}
+
 std::shared_ptr<LobbyServer::User> LobbyServer::GameRoom::GetSessionUser(const std::shared_ptr<ClientSession>& clientSession)
 {
 	const uint32 sessionID{ clientSession->GetID() };
+	const auto iter{ m_users.find(sessionID) };
 
-	if(false == m_users.contains(sessionID))
+	if(iter == m_users.end())
 		return nullptr;
 
-	return m_users[sessionID];
+	return iter->second;
 }
 
 void LobbyServer::GameRoom::EnterParticipant(std::shared_ptr<Participant> participant)

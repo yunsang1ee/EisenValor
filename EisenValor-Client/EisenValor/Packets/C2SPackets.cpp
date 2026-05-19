@@ -134,6 +134,15 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_START_GAME_PACKET()
 	);
 }
 
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return LobbyServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CL_RETURN_TO_GAME_ROOM_PKT,
+		LobbyServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_RETURN_TO_GAME_ROOM_PACKET)
+	);
+}
+
 std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CS_ENTER_GAME_WORLD_PACKET(
 	const uint16 worldID, const uint32 localID
 )

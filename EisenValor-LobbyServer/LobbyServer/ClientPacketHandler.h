@@ -26,6 +26,7 @@ namespace LobbyServer {
 		static bool Handle_CL_REMOVE_BOT_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_REMOVE_BOT_PACKET& recvPkt);
 		static bool Handle_CL_READY_GAME_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_READY_GAME_PACKET& recvPkt);
 		static bool Handle_CL_START_GAME_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_START_GAME_PACKET& recvPkt);
+		static bool Handle_CL_RETURN_TO_GAME_ROOM_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_RETURN_TO_GAME_ROOM_PACKET& recvPkt);
 		static bool Handle_CL_CHAT_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_CHAT_PACKET& recvPkt);
 #pragma endregion
 
