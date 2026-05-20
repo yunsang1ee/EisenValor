@@ -9,7 +9,7 @@ DxGfxCommandQueueGlobal::~DxGfxCommandQueueGlobal()
 		CloseHandle(m_fenceEvent);
 		m_fenceEvent = nullptr;
 	}
-	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] Destroyed DxGfxCommandQueueGlobal.\n");
+	GRAPHICS_LOG_FMT("[DxGfxCommandQueueGlobal] Destroyed DxGfxCommandQueueGlobal.\n");
 }
 
 void DxGfxCommandQueueGlobal::Initialize(ID3D12Device* device)
@@ -30,7 +30,7 @@ void DxGfxCommandQueueGlobal::Initialize(ID3D12Device* device)
 	m_fenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	assert(m_fenceEvent && "Failed to create fence event");
 
-	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] Initialized DxGfxCommandQueueGlobal.\n");
+	GRAPHICS_LOG_FMT("[DxGfxCommandQueueGlobal] Initialized DxGfxCommandQueueGlobal.\n");
 }
 
 void DxGfxCommandQueueGlobal::Release()
@@ -49,7 +49,7 @@ void DxGfxCommandQueueGlobal::ExecuteCommandList(ID3D12CommandList* commandList)
 {
 	if (!commandList)
 	{
-		DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
+		GRAPHICS_LOG_FMT("[DxGfxCommandQueueGlobal] ExecuteCommandList: commandList is null\n");
 		return;
 	}
 	m_commandQueue->ExecuteCommandLists(1, &commandList);
@@ -76,11 +76,11 @@ bool DxGfxCommandQueueGlobal::WaitForIdle(uint32_t timeoutMs)
 		ThrowIfFailed(m_fence->SetEventOnCompletion(waitValue, m_fenceEvent));
 		if (::WaitForSingleObject(m_fenceEvent, timeoutMs) == WAIT_TIMEOUT)
 		{
-			DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle timed out (Fence={})\n", waitValue);
+			GRAPHICS_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle timed out (Fence={})\n", waitValue);
 			return false;
 		}
 	}
 
-	DEBUG_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle completed (Fence={})\n", waitValue);
+	GRAPHICS_LOG_FMT("[DxGfxCommandQueueGlobal] WaitForIdle completed (Fence={})\n", waitValue);
 	return true;
 }

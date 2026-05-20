@@ -10,7 +10,7 @@ using namespace DirectX;
 
 DxTLAS::~DxTLAS()
 {
-	DEBUG_LOG_FMT("[DxTLAS] Destroyed (Instances: {})\n", m_instanceCount);
+	GRAPHICS_LOG_FMT("[DxTLAS] Destroyed (Instances: {})\n", m_instanceCount);
 }
 
 void DxTLAS::Initialize(ID3D12Device5* device, uint32_t maxInstances)
@@ -20,7 +20,7 @@ void DxTLAS::Initialize(ID3D12Device5* device, uint32_t maxInstances)
 
 	m_maxInstances = maxInstances;
 
-	DEBUG_LOG_FMT("[DxTLAS] Initialized with max {} instances\n", maxInstances);
+	GRAPHICS_LOG_FMT("[DxTLAS] Initialized with max {} instances\n", maxInstances);
 }
 
 void DxTLAS::Build(
@@ -59,7 +59,7 @@ void DxTLAS::EnsureTlasResultBuffer(
 		{
 			auto& heap = GLOBAL(DxDescriptorHeapGlobal);
 			deviceBuffer.CreateSRVWithAutoRecreate(device, heap, SRVDescription{.type = SRVDescription::Type::TLAS});
-			DEBUG_LOG_FMT("[DxTLAS] TLAS SRV created with auto-recreate enabled for '{}'\n", name);
+			GRAPHICS_LOG_FMT("[DxTLAS] TLAS SRV created with auto-recreate enabled for '{}'\n", name);
 		}
 	}
 }
@@ -81,7 +81,7 @@ void DxTLAS::BuildInternal(
 
 	if (isRefit && m_instanceCount != instances.size())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxTLAS] WARNING: Instance count changed ({} -> {}). Refit impossible. Forcing Rebuild.\n",
 			m_instanceCount, instances.size()
 		);
@@ -104,7 +104,7 @@ void DxTLAS::BuildInternal(
 		D3D12_GPU_VIRTUAL_ADDRESS blasAddr = blas->GetGPUAddress();
 		if (blasAddr == 0)
 		{
-			DEBUG_LOG_FMT("[DxTLAS] WARNING: BLAS for object '{}' is not built. Skipping instance.\n", obj->GetName());
+			GRAPHICS_LOG_FMT("[DxTLAS] WARNING: BLAS for object '{}' is not built. Skipping instance.\n", obj->GetName());
 			continue;
 		}
 
@@ -137,7 +137,7 @@ void DxTLAS::BuildInternal(
 
 	if (m_maxInstances > 0 && instanceDescs.size() > m_maxInstances)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxTLAS] WARNING: Instance count {} exceeds configured max {}.\n", instanceDescs.size(), m_maxInstances
 		);
 	}
@@ -163,7 +163,7 @@ void DxTLAS::BuildInternal(
 
 	if (0 == m_instanceDescBuffer.GetGPUAddress())
 	{
-		DEBUG_LOG_FMT("[DxTLAS] ERROR: Instance desc buffer has null GPU address. Skipping TLAS build.\n");
+		GRAPHICS_LOG_FMT("[DxTLAS] ERROR: Instance desc buffer has null GPU address. Skipping TLAS build.\n");
 		return;
 	}
 
@@ -238,7 +238,7 @@ void DxTLAS::BuildInternal(
 
 	if (0 == destTlasBuffer->GetGPUAddress() || 0 == m_scratchBuffer.GetGPUAddress())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxTLAS] ERROR: TLAS build resources have null GPU address. Result={}, Scratch={}. Skipping build.\n",
 			destTlasBuffer->GetGPUAddress(), m_scratchBuffer.GetGPUAddress()
 		);
@@ -247,7 +247,7 @@ void DxTLAS::BuildInternal(
 
 	if (isRefit && 0 == sourceTlasBuffer->GetGPUAddress())
 	{
-		DEBUG_LOG_FMT("[DxTLAS] ERROR: TLAS refit source buffer has null GPU address. Skipping refit.\n");
+		GRAPHICS_LOG_FMT("[DxTLAS] ERROR: TLAS refit source buffer has null GPU address. Skipping refit.\n");
 		return;
 	}
 
@@ -261,7 +261,7 @@ void DxTLAS::BuildInternal(
 		buildDesc.SourceAccelerationStructureData = sourceTlasBuffer->GetGPUAddress();
 	}
 
-	//DEBUG_LOG_FMT(
+	//GRAPHICS_LOG_FMT(
 	//	"[DxTLAS] {}RTAS: Instances={}, InstanceBuffer={}, Dest={}, Scratch={}, Source={}, ActiveBuffer={}, DestBuffer={}, BuildResultSize={}, UpdateResultSize={}, ActiveSize={}, DestSize={}\n",
 	//	isRefit ? "Refit" : "Build", m_instanceCount, inputs.InstanceDescs, buildDesc.DestAccelerationStructureData,
 	//	buildDesc.ScratchAccelerationStructureData, buildDesc.SourceAccelerationStructureData, m_activeTlasBufferIndex,

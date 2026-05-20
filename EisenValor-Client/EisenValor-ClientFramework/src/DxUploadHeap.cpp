@@ -8,7 +8,7 @@ DxUploadHeap::~DxUploadHeap()
 	{
 		m_resource->Unmap(0, nullptr);
 		m_mappedData = nullptr;
-		DEBUG_LOG_FMT("[DxUploadHeap] Destroyed upload heap\n");
+		GRAPHICS_LOG_FMT("[DxUploadHeap] Destroyed upload heap\n");
 	}
 }
 
@@ -48,13 +48,13 @@ void DxUploadHeap::Initialize(ID3D12Device* device, uint64_t sizeInBytes, const 
 	D3D12_RANGE readRange{0, 0}; // CPU read 안함
 	ThrowIfFailed(m_resource->Map(0, &readRange, &m_mappedData));
 
-	DEBUG_LOG_FMT("[DxUploadHeap] Created: {} bytes ({}MB)\n", sizeInBytes, sizeInBytes / (1024 * 1024));
+	GRAPHICS_LOG_FMT("[DxUploadHeap] Created: {} bytes ({}MB)\n", sizeInBytes, sizeInBytes / (1024 * 1024));
 }
 
 void DxUploadHeap::Reset()
 {
 	m_currentOffset = 0;
-	//DEBUG_LOG_FMT("[DxUploadHeap] Reset (capacity: {} bytes)\n", m_capacity);
+	//GRAPHICS_LOG_FMT("[DxUploadHeap] Reset (capacity: {} bytes)\n", m_capacity);
 }
 
 DxUploadHeap::Allocation DxUploadHeap::Allocate(uint64_t sizeInBytes, uint64_t alignment)
@@ -67,7 +67,7 @@ DxUploadHeap::Allocation DxUploadHeap::Allocate(uint64_t sizeInBytes, uint64_t a
 
 	if (alignedOffset + alignedSize > m_capacity)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxUploadHeap] ERROR: Out of memory!\n"
 			"  Requested: {} bytes (aligned: {})\n"
 			"  Available: {} bytes\n"

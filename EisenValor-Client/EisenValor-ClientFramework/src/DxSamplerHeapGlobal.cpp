@@ -16,13 +16,13 @@ void DxSamplerHeapGlobal::Initialize(ID3D12Device* device, uint32_t maxSamplerCo
 	m_descriptorIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 	m_allocIndex = 0;
 
-	DEBUG_LOG_FMT("[DxSamplerHeapGlobal] Initialized with {} samplers.\n", maxSamplerCount);
+	GRAPHICS_LOG_FMT("[DxSamplerHeapGlobal] Initialized with {} samplers.\n", maxSamplerCount);
 }
 
 void DxSamplerHeapGlobal::Release()
 {
 	m_heap.Reset();
-	DEBUG_LOG_FMT("[DxSamplerHeapGlobal] Released.\n");
+	GRAPHICS_LOG_FMT("[DxSamplerHeapGlobal] Released.\n");
 }
 
 uint32_t DxSamplerHeapGlobal::CreateSampler(ID3D12Device* device, const D3D12_SAMPLER_DESC& desc)

@@ -17,7 +17,7 @@ void SkinningPass::Initialize()
 {
 	CreatePipeline();
 	m_initialized = true;
-	DEBUG_LOG_FMT("[SkinningPass] Initialized\n");
+	GRAPHICS_LOG_FMT("[SkinningPass] Initialized\n");
 }
 
 void SkinningPass::Release()
@@ -29,7 +29,7 @@ void SkinningPass::Release()
 	m_pso.Reset();
 	m_rootSignature.Reset();
 	m_initialized = false;
-	DEBUG_LOG_FMT("[SkinningPass] Released\n");
+	GRAPHICS_LOG_FMT("[SkinningPass] Released\n");
 }
 
 void SkinningPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* context)
@@ -212,7 +212,7 @@ void SkinningPass::CreatePipeline()
 	{
 		if (errorBlob)
 		{
-			DEBUG_LOG_FMT("[SkinningPass] RootSig Error: {}\n", (const char*)errorBlob->GetBufferPointer());
+			GRAPHICS_LOG_FMT("[SkinningPass] RootSig Error: {}\n", (const char*)errorBlob->GetBufferPointer());
 		}
 		return;
 	}
@@ -225,7 +225,7 @@ void SkinningPass::CreatePipeline()
 		compiler.CompileShaderFromFile(L"SkinningCompute", L"Resource/Shader/SkinningCompute.hlsl", "main", "cs_6_6");
 	if (!csBlob)
 	{
-		DEBUG_LOG_FMT("[SkinningPass] ERROR: Failed to compile SkinningCompute.hlsl\n");
+		GRAPHICS_LOG_FMT("[SkinningPass] ERROR: Failed to compile SkinningCompute.hlsl\n");
 		return;
 	}
 
@@ -236,5 +236,5 @@ void SkinningPass::CreatePipeline()
 
 	ThrowIfFailed(device.GetDevice()->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pso)));
 
-	DEBUG_LOG_FMT("[SkinningPass] Skinning compute pipeline created successfully\n");
+	GRAPHICS_LOG_FMT("[SkinningPass] Skinning compute pipeline created successfully\n");
 }

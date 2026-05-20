@@ -253,6 +253,9 @@
     <ClInclude Include="include\CommonUtils.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="include\DebugLogConfig.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="include\UIGlobal.h">
       <Filter>Common\Global</Filter>
     </ClInclude>

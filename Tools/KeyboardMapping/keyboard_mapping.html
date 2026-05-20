@@ -1,0 +1,2157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EisenValor Input Mapping</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --panel: #181b22;
+      --panel-2: #20242d;
+      --panel-3: #2b303b;
+      --key: #70747d;
+      --key-dark: #4c5059;
+      --text: #edf0f5;
+      --muted: #aeb5c2;
+      --line: #373d4a;
+      --accent: #66c2ff;
+      --shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+      --unit: 66px;
+      --gap: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1720px, calc(100% - 34px));
+      margin: 0 auto;
+      padding: 24px 0 44px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .scene-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+
+    .scene-tab {
+      min-height: 34px;
+      border-color: var(--line);
+      background: var(--panel);
+      color: var(--muted);
+    }
+
+    .scene-tab.active {
+      border-color: var(--accent);
+      background: rgba(102, 194, 255, 0.14);
+      color: var(--text);
+    }
+
+    .scene-context {
+      margin: -4px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input,
+    select,
+    button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+    }
+
+    input,
+    select {
+      padding: 0 10px;
+    }
+
+    button {
+      padding: 0 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .surface {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .stage {
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .keyboard {
+      display: grid;
+      gap: var(--gap);
+      min-width: 1370px;
+    }
+
+    .key-row {
+      display: flex;
+      gap: var(--gap);
+      align-items: stretch;
+    }
+
+    .key,
+    .spacer {
+      flex: 0 0 calc(var(--unit) * var(--w));
+      min-width: calc(var(--unit) * var(--w));
+      height: 70px;
+    }
+
+    .key {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 2px;
+      padding: 7px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-bottom-color: rgba(0, 0, 0, 0.45);
+      border-radius: 9px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
+        var(--key);
+      color: #10131a;
+      box-shadow:
+        inset 0 -4px 0 rgba(0, 0, 0, 0.18),
+        0 2px 0 rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, outline-color 120ms ease;
+    }
+
+    .key:hover,
+    .mouse-button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .key.selected,
+    .mouse-button.selected {
+      outline: 3px solid rgba(102, 194, 255, 0.78);
+      outline-offset: 2px;
+      z-index: 2;
+    }
+
+    .key.filtered-out,
+    .mouse-button.filtered-out {
+      opacity: 0.22;
+      filter: grayscale(0.65);
+    }
+
+    .legend {
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(12, 15, 20, 0.72);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.18;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .unbound .action {
+      color: rgba(10, 12, 16, 0.42);
+    }
+
+    .mouse-panel {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .mouse {
+      position: relative;
+      width: 220px;
+      height: 310px;
+      margin: 0 auto;
+      border: 4px solid #cdd4df;
+      border-radius: 88px 88px 105px 105px;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255, 255, 255, 0.45) 49%, rgba(255, 255, 255, 0.45) 51%, transparent 51%),
+        linear-gradient(180deg, #f4f7fb, #dce2ea);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22), var(--shadow);
+    }
+
+    .mouse-button {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(0, 0, 0, 0.35);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
+        var(--key);
+      color: #10131a;
+      font-size: 12px;
+      font-weight: 850;
+      text-align: center;
+      line-height: 1.2;
+      cursor: pointer;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .mouse-button.left {
+      left: 18px;
+      top: 18px;
+      width: 74px;
+      height: 94px;
+      border-radius: 32px 22px 10px 10px;
+    }
+
+    .mouse-button.middle {
+      left: 91px;
+      top: 18px;
+      width: 38px;
+      height: 82px;
+      border-radius: 18px;
+      font-size: 11px;
+    }
+
+    .mouse-button.right {
+      right: 18px;
+      top: 18px;
+      width: 74px;
+      height: 94px;
+      border-radius: 22px 32px 10px 10px;
+    }
+
+    .mouse-button.wide {
+      left: 18px;
+      top: 106px;
+      width: 184px;
+      height: 52px;
+      border-radius: 14px;
+    }
+
+    .mouse-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mouse-list-item,
+    .binding-row {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-2);
+      cursor: pointer;
+    }
+
+    .code {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .row-action {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 720;
+    }
+
+    aside {
+      position: sticky;
+      top: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .detail-title {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .detail-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .detail-item {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .detail-item strong {
+      color: var(--text);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--chip-color);
+    }
+
+    .binding-list {
+      display: grid;
+      gap: 7px;
+      max-height: 360px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .editor-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+    }
+
+    .editor-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .manager-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .danger-button {
+      border-color: rgba(251, 113, 133, 0.55);
+      color: #fecdd3;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1050px) {
+      header,
+      .layout,
+      .mouse-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      aside {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1 id="title">EisenValor Input Mapping</h1>
+        <p class="subtitle" id="subtitle">Scene-separated input mapping.</p>
+      </div>
+      <div class="toolbar" aria-label="mapping tools">
+        <input id="search" type="search" placeholder="Search key or action">
+        <select id="categoryFilter" aria-label="category filter">
+          <option value="all">All Categories</option>
+        </select>
+        <button id="loadButton" type="button">Open JSON</button>
+        <button id="saveButton" type="button">Save JSON</button>
+        <button id="exportButton" type="button">Save As</button>
+        <input class="hidden-file" id="fileInput" type="file" accept="application/json,.json">
+      </div>
+    </header>
+
+    <nav class="scene-tabs" id="sceneTabs" aria-label="scene tabs"></nav>
+    <div class="scene-context" id="sceneContext"></div>
+
+    <div class="layout">
+      <section class="surface">
+        <div class="stage">
+          <div class="keyboard" id="keyboard"></div>
+        </div>
+
+        <div class="mouse-panel">
+          <div class="mouse" id="mouse"></div>
+          <div class="mouse-list" id="mouseList"></div>
+        </div>
+      </section>
+
+      <aside>
+        <section class="card">
+          <h2>Selected</h2>
+          <h3 class="detail-title" id="detailTitle">None</h3>
+          <div class="status" id="detailStatus">Select a key or mouse button.</div>
+          <div class="detail-grid" id="detailGrid"></div>
+        </section>
+
+        <section class="card">
+          <h2>Edit Binding</h2>
+          <form class="editor-form" id="editForm">
+            <label class="field">
+              <span>Action</span>
+              <input id="editorAction" type="text" placeholder="Example: Dodge">
+            </label>
+            <label class="field">
+              <span>Category</span>
+              <select id="editorCategory"></select>
+            </label>
+            <label class="field">
+              <span>Combo</span>
+              <input id="editorCombo" type="text" placeholder="Example: MouseLeft + MouseRight">
+            </label>
+            <label class="field">
+              <span>Note</span>
+              <input id="editorNote" type="text" placeholder="Temporary, debug, pending">
+            </label>
+            <label class="field">
+              <span>Component</span>
+              <input id="editorComponent" type="text" placeholder="Example: PlayerControllerComponent">
+            </label>
+            <div class="editor-actions">
+              <button id="applyButton" type="button">Apply</button>
+              <button id="clearButton" type="button">Clear</button>
+            </div>
+          </form>
+          <div class="status" id="saveStatus">Edits are applied to the selected scene. Use Save JSON to write the file.</div>
+        </section>
+
+        <section class="card">
+          <h2>Scenes</h2>
+          <form class="editor-form" id="sceneForm">
+            <label class="field">
+              <span>Name</span>
+              <input id="sceneNameInput" type="text" placeholder="Example: Boss Arena">
+            </label>
+            <label class="field">
+              <span>Description</span>
+              <input id="sceneDescriptionInput" type="text" placeholder="Optional scene note">
+            </label>
+            <div class="manager-actions">
+              <button id="addSceneButton" type="button">Add Scene</button>
+              <button id="deleteSceneButton" class="danger-button" type="button">Delete Active</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Categories</h2>
+          <form class="editor-form" id="categoryForm">
+            <label class="field">
+              <span>Name</span>
+              <input id="categoryNameInput" type="text" placeholder="Example: Interaction">
+            </label>
+            <label class="field">
+              <span>Delete Target</span>
+              <select id="categoryManageSelect"></select>
+            </label>
+            <div class="manager-actions">
+              <button id="addCategoryButton" type="button">Add Category</button>
+              <button id="deleteCategoryButton" class="danger-button" type="button">Delete Category</button>
+            </div>
+          </form>
+          <div class="chips" id="categoryChips"></div>
+        </section>
+
+        <section class="card">
+          <h2>Bound Inputs</h2>
+          <div class="binding-list" id="bindingList"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script type="application/json" id="embeddedMapping">
+{
+  "meta": {
+    "title": "EisenValor Input Mapping",
+    "version": "2026-05-15",
+    "description": "SceneGlobal-managed scene input mapping."
+  },
+  "categories": {
+    "system": {
+      "label": "System",
+      "color": "#d97963"
+    },
+    "render": {
+      "label": "Render",
+      "color": "#d7b55c"
+    },
+    "debug": {
+      "label": "Debug",
+      "color": "#c49ad8"
+    },
+    "movement": {
+      "label": "Movement",
+      "color": "#58aee6"
+    },
+    "waypoint": {
+      "label": "Waypoint",
+      "color": "#b7d9bd"
+    },
+    "combat": {
+      "label": "Combat",
+      "color": "#58b5d9"
+    },
+    "spawn": {
+      "label": "Spawn",
+      "color": "#b7d9bd"
+    },
+    "unassigned": {
+      "label": "Unassigned",
+      "color": "#70747d"
+    }
+  },
+  "keyboard": {
+    "rows": [
+      [
+        {
+          "code": "Escape",
+          "legend": "Esc",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.8
+        },
+        {
+          "code": "F1",
+          "legend": "F1",
+          "width": 1.15
+        },
+        {
+          "code": "F2",
+          "legend": "F2",
+          "width": 1.15
+        },
+        {
+          "code": "F3",
+          "legend": "F3",
+          "width": 1.15
+        },
+        {
+          "code": "F4",
+          "legend": "F4",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "F5",
+          "legend": "F5",
+          "width": 1.15
+        },
+        {
+          "code": "F6",
+          "legend": "F6",
+          "width": 1.15
+        },
+        {
+          "code": "F7",
+          "legend": "F7",
+          "width": 1.15
+        },
+        {
+          "code": "F8",
+          "legend": "F8",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "F9",
+          "legend": "F9",
+          "width": 1.15
+        },
+        {
+          "code": "F10",
+          "legend": "F10",
+          "width": 1.15
+        },
+        {
+          "code": "F11",
+          "legend": "F11",
+          "width": 1.15
+        },
+        {
+          "code": "F12",
+          "legend": "F12",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.6
+        },
+        {
+          "code": "PrintScreen",
+          "legend": "PrtSc",
+          "width": 1.15
+        },
+        {
+          "code": "ScrollLock",
+          "legend": "Scroll Lock",
+          "width": 1.15
+        },
+        {
+          "code": "Pause",
+          "legend": "Pause Break",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "Backquote",
+          "legend": "`",
+          "width": 1.05
+        },
+        {
+          "code": "Digit1",
+          "legend": "1",
+          "width": 1.05
+        },
+        {
+          "code": "Digit2",
+          "legend": "2",
+          "width": 1.05
+        },
+        {
+          "code": "Digit3",
+          "legend": "3",
+          "width": 1.05
+        },
+        {
+          "code": "Digit4",
+          "legend": "4",
+          "width": 1.05
+        },
+        {
+          "code": "Digit5",
+          "legend": "5",
+          "width": 1.05
+        },
+        {
+          "code": "Digit6",
+          "legend": "6",
+          "width": 1.05
+        },
+        {
+          "code": "Digit7",
+          "legend": "7",
+          "width": 1.05
+        },
+        {
+          "code": "Digit8",
+          "legend": "8",
+          "width": 1.05
+        },
+        {
+          "code": "Digit9",
+          "legend": "9",
+          "width": 1.05
+        },
+        {
+          "code": "Digit0",
+          "legend": "0",
+          "width": 1.05
+        },
+        {
+          "code": "Minus",
+          "legend": "-",
+          "width": 1.05
+        },
+        {
+          "code": "Equal",
+          "legend": "=",
+          "width": 1.05
+        },
+        {
+          "code": "Backspace",
+          "legend": "Backspace",
+          "width": 2.05
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "Insert",
+          "legend": "Insert",
+          "width": 1.15
+        },
+        {
+          "code": "Home",
+          "legend": "Home",
+          "width": 1.15
+        },
+        {
+          "code": "PageUp",
+          "legend": "PgUp",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "Tab",
+          "legend": "Tab",
+          "width": 1.55
+        },
+        {
+          "code": "KeyQ",
+          "legend": "Q",
+          "width": 1.05
+        },
+        {
+          "code": "KeyW",
+          "legend": "W",
+          "width": 1.05
+        },
+        {
+          "code": "KeyE",
+          "legend": "E",
+          "width": 1.05
+        },
+        {
+          "code": "KeyR",
+          "legend": "R",
+          "width": 1.05
+        },
+        {
+          "code": "KeyT",
+          "legend": "T",
+          "width": 1.05
+        },
+        {
+          "code": "KeyY",
+          "legend": "Y",
+          "width": 1.05
+        },
+        {
+          "code": "KeyU",
+          "legend": "U",
+          "width": 1.05
+        },
+        {
+          "code": "KeyI",
+          "legend": "I",
+          "width": 1.05
+        },
+        {
+          "code": "KeyO",
+          "legend": "O",
+          "width": 1.05
+        },
+        {
+          "code": "KeyP",
+          "legend": "P",
+          "width": 1.05
+        },
+        {
+          "code": "BracketLeft",
+          "legend": "[",
+          "width": 1.05
+        },
+        {
+          "code": "BracketRight",
+          "legend": "]",
+          "width": 1.05
+        },
+        {
+          "code": "Backslash",
+          "legend": "\\",
+          "width": 1.55
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "Delete",
+          "legend": "Delete",
+          "width": 1.15
+        },
+        {
+          "code": "End",
+          "legend": "End",
+          "width": 1.15
+        },
+        {
+          "code": "PageDown",
+          "legend": "PgDn",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "CapsLock",
+          "legend": "Caps Lock",
+          "width": 1.82
+        },
+        {
+          "code": "KeyA",
+          "legend": "A",
+          "width": 1.05
+        },
+        {
+          "code": "KeyS",
+          "legend": "S",
+          "width": 1.05
+        },
+        {
+          "code": "KeyD",
+          "legend": "D",
+          "width": 1.05
+        },
+        {
+          "code": "KeyF",
+          "legend": "F",
+          "width": 1.05
+        },
+        {
+          "code": "KeyG",
+          "legend": "G",
+          "width": 1.05
+        },
+        {
+          "code": "KeyH",
+          "legend": "H",
+          "width": 1.05
+        },
+        {
+          "code": "KeyJ",
+          "legend": "J",
+          "width": 1.05
+        },
+        {
+          "code": "KeyK",
+          "legend": "K",
+          "width": 1.05
+        },
+        {
+          "code": "KeyL",
+          "legend": "L",
+          "width": 1.05
+        },
+        {
+          "code": "Semicolon",
+          "legend": ";",
+          "width": 1.05
+        },
+        {
+          "code": "Quote",
+          "legend": "'",
+          "width": 1.05
+        },
+        {
+          "code": "Enter",
+          "legend": "Enter",
+          "width": 2.35
+        }
+      ],
+      [
+        {
+          "code": "ShiftLeft",
+          "legend": "Shift",
+          "width": 2.25
+        },
+        {
+          "code": "KeyZ",
+          "legend": "Z",
+          "width": 1.05
+        },
+        {
+          "code": "KeyX",
+          "legend": "X",
+          "width": 1.05
+        },
+        {
+          "code": "KeyC",
+          "legend": "C",
+          "width": 1.05
+        },
+        {
+          "code": "KeyV",
+          "legend": "V",
+          "width": 1.05
+        },
+        {
+          "code": "KeyB",
+          "legend": "B",
+          "width": 1.05
+        },
+        {
+          "code": "KeyN",
+          "legend": "N",
+          "width": 1.05
+        },
+        {
+          "code": "KeyM",
+          "legend": "M",
+          "width": 1.05
+        },
+        {
+          "code": "Comma",
+          "legend": ",",
+          "width": 1.05
+        },
+        {
+          "code": "Period",
+          "legend": ".",
+          "width": 1.05
+        },
+        {
+          "code": "Slash",
+          "legend": "/",
+          "width": 1.05
+        },
+        {
+          "code": "ShiftRight",
+          "legend": "Shift",
+          "width": 2.75
+        },
+        {
+          "type": "spacer",
+          "width": 0.8
+        },
+        {
+          "code": "ArrowUp",
+          "legend": "\u2191",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "ControlLeft",
+          "legend": "Ctrl",
+          "width": 1.35
+        },
+        {
+          "code": "MetaLeft",
+          "legend": "Win",
+          "width": 1.25
+        },
+        {
+          "code": "AltLeft",
+          "legend": "Alt",
+          "width": 1.35
+        },
+        {
+          "code": "Space",
+          "legend": "Space",
+          "width": 7.15
+        },
+        {
+          "code": "AltRight",
+          "legend": "Alt",
+          "width": 1.35
+        },
+        {
+          "code": "MetaRight",
+          "legend": "Win",
+          "width": 1.25
+        },
+        {
+          "code": "ContextMenu",
+          "legend": "Menu",
+          "width": 1.25
+        },
+        {
+          "code": "ControlRight",
+          "legend": "Ctrl",
+          "width": 1.35
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "ArrowLeft",
+          "legend": "\u2190",
+          "width": 1.15
+        },
+        {
+          "code": "ArrowDown",
+          "legend": "\u2193",
+          "width": 1.15
+        },
+        {
+          "code": "ArrowRight",
+          "legend": "\u2192",
+          "width": 1.15
+        }
+      ]
+    ]
+  },
+  "mouse": {
+    "buttons": [
+      {
+        "code": "MouseLeft",
+        "legend": "LMB",
+        "zone": "left"
+      },
+      {
+        "code": "MouseMiddle",
+        "legend": "Wheel",
+        "zone": "middle"
+      },
+      {
+        "code": "MouseRight",
+        "legend": "RMB",
+        "zone": "right"
+      },
+      {
+        "code": "MouseLeft+MouseRight",
+        "legend": "LMB+RMB",
+        "zone": "wide",
+        "combo": [
+          "MouseLeft",
+          "MouseRight"
+        ]
+      }
+    ]
+  },
+  "scenes": {
+    "global": {
+      "label": "Global Inputs",
+      "description": "SceneGlobal scene is not changed. GameFramework / DxrRenderPass inputs inherited by every active scene.",
+      "bindings": {
+        "Escape": {
+          "action": "\uc571 \uc885\ub8cc",
+          "category": "system",
+          "note": "GameFramework::Update / DestroyWindow"
+        },
+        "F5": {
+          "action": "Asset Hot Reload",
+          "category": "debug",
+          "note": "_DEBUG ResourceGlobal::CheckForReload. GameFramework shader reload placeholder also uses F5."
+        },
+        "F6": {
+          "action": "Path Tracing \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_usePathTracing"
+        },
+        "F7": {
+          "action": "Lite RT \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_useLiteRT"
+        },
+        "F8": {
+          "action": "Physical Emission View \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_usePhysicalEmissionView"
+        },
+        "F9": {
+          "action": "Day Environment \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_useDayEnvironment"
+        },
+        "F11": {
+          "action": "Borderless Fullscreen \ud1a0\uae00",
+          "category": "system",
+          "note": "SwapChain::ToggleBorderlessFullscreen"
+        },
+        "Enter": {
+          "action": "Fullscreen \ud1a0\uae00",
+          "category": "system",
+          "note": "SwapChain::ToggleFullscreen",
+          "combo": [
+            "Alt",
+            "Enter"
+          ]
+        }
+      },
+      "mouseBindings": {}
+    },
+    "LoginScene": {
+      "label": "LoginScene",
+      "description": "SceneGlobal.RegisterScene<LoginScene>(\"LoginScene\"). Uses LoginControllerComponent.",
+      "components": [
+        "LoginControllerComponent"
+      ],
+      "bindings": {
+        "KeyR": {
+          "action": "\ud14c\uc2a4\ud2b8 \ub85c\uadf8\uc778",
+          "category": "system",
+          "note": "Only compiled under APPLY_LOBBY_SERVER.",
+          "component": "LoginControllerComponent"
+        }
+      },
+      "mouseBindings": {}
+    },
+    "LobbyScene": {
+      "label": "LobbyScene",
+      "description": "SceneGlobal.RegisterScene<LobbyScene>(\"LobbyScene\"). Uses LobbySceneControllerComponent.",
+      "components": [
+        "LobbySceneControllerComponent"
+      ],
+      "bindings": {
+        "F1": {
+          "action": "\ub85c\ube44 \ub098\uac00\uae30",
+          "category": "system",
+          "note": "CL_LEAVE_GAME_LOBBY",
+          "component": "LobbySceneControllerComponent"
+        },
+        "F2": {
+          "action": "\ubc29 \ub9cc\ub4e4\uae30",
+          "category": "system",
+          "note": "CL_MAKE_GAME_ROOM",
+          "component": "LobbySceneControllerComponent"
+        },
+        "F3": {
+          "action": "\ubc29 \uc785\uc7a5",
+          "category": "system",
+          "note": "CL_ENTER_GAME_ROOM roomID=1",
+          "component": "LobbySceneControllerComponent"
+        }
+      },
+      "mouseBindings": {}
+    },
+    "RoomScene": {
+      "label": "RoomScene",
+      "description": "SceneGlobal.RegisterScene<RoomScene>(\"RoomScene\"). Uses RoomSceneControllerComponent.",
+      "components": [
+        "RoomSceneControllerComponent"
+      ],
+      "bindings": {
+        "F1": {
+          "action": "\ubc29 \ub098\uac00\uae30",
+          "category": "system",
+          "note": "CL_LEAVE_GAME_ROOM",
+          "component": "RoomSceneControllerComponent"
+        },
+        "F2": {
+          "action": "\ud300 \ubcc0\uacbd",
+          "category": "system",
+          "note": "CL_CHANGE_TEAM",
+          "component": "RoomSceneControllerComponent"
+        },
+        "F3": {
+          "action": "\uc900\ube44",
+          "category": "system",
+          "note": "CL_READY_GAME",
+          "component": "RoomSceneControllerComponent"
+        },
+        "F4": {
+          "action": "\ubd07 \ucd94\uac00",
+          "category": "spawn",
+          "note": "CL_ADD_BOT",
+          "component": "RoomSceneControllerComponent"
+        },
+        "KeyR": {
+          "action": "\uac8c\uc784 \uc2dc\uc791",
+          "category": "system",
+          "note": "CL_START_GAME",
+          "component": "RoomSceneControllerComponent"
+        }
+      },
+      "mouseBindings": {}
+    },
+    "SampleScene": {
+      "label": "SampleScene",
+      "description": "SceneGlobal.RegisterScene<SampleScene>(\"SampleScene\"). Uses map scene resource plus runtime player/UI components from packets.",
+      "components": [
+        "PlayerControllerComponent",
+        "BattleUIControllerComponent",
+        "VitalUIControllerComponent",
+        "StressTestComponent registered but not instantiated by default"
+      ],
+      "bindings": {
+        "F1": {
+          "action": "\ub9c8\uc6b0\uc2a4 Lock \ud1a0\uae00",
+          "category": "system",
+          "note": "InputGlobal::ToggleMouseLock",
+          "component": "PlayerControllerComponent"
+        },
+        "F2": {
+          "action": "HP Debug",
+          "category": "debug",
+          "note": "VitalUIControllerComponent current/max HP log. Active only for objects that own VitalUIControllerComponent.",
+          "component": "VitalUIControllerComponent"
+        },
+        "KeyW": {
+          "action": "\uc55e \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyA": {
+          "action": "\uc67c\ucabd \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyS": {
+          "action": "\ub4a4 \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyD": {
+          "action": "\uc624\ub978\ucabd \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "ShiftLeft": {
+          "action": "\ub2ec\ub9ac\uae30",
+          "category": "movement",
+          "note": "VK_SHIFT",
+          "component": "PlayerControllerComponent"
+        },
+        "ShiftRight": {
+          "action": "\ub2ec\ub9ac\uae30",
+          "category": "movement",
+          "note": "VK_SHIFT",
+          "component": "PlayerControllerComponent"
+        },
+        "ControlLeft": {
+          "action": "\uc804\ud22c\ud0dc\uc138 \ud1a0\uae00",
+          "category": "combat",
+          "note": "VK_CONTROL",
+          "component": "PlayerControllerComponent"
+        },
+        "ControlRight": {
+          "action": "\uc804\ud22c\ud0dc\uc138 \ud1a0\uae00",
+          "category": "combat",
+          "note": "VK_CONTROL",
+          "component": "PlayerControllerComponent"
+        },
+        "AltLeft": {
+          "action": "\uc804\ud22c \ub300\uc0c1 \uc804\ud658",
+          "category": "combat",
+          "note": "VK_MENU / CHANGE_CAMERA_TARGET",
+          "component": "BattleUIControllerComponent"
+        },
+        "AltRight": {
+          "action": "\uc804\ud22c \ub300\uc0c1 \uc804\ud658",
+          "category": "combat",
+          "note": "VK_MENU / CHANGE_CAMERA_TARGET",
+          "component": "BattleUIControllerComponent"
+        },
+        "KeyE": {
+          "action": "\ud398\uc778\ud2b8 / \uacf5\uaca9 \uce94\uc2ac",
+          "category": "combat",
+          "note": "Player fake packet. Restricted state requests CancelAttack before fake packet.",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyF": {
+          "action": "NPC \uc7a5\uc218 \uc0dd\uc131",
+          "category": "spawn",
+          "note": "CS_GEN_NPC_GENREAL_PACKET",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyG": {
+          "action": "NPC \ubcd1\uc0ac \uc0dd\uc131",
+          "category": "spawn",
+          "note": "CS_GEN_NPC_SOLDIER_PACKET",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit1": {
+          "action": "\uc544\uad70\uae30\uc9c0 \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit2": {
+          "action": "\uc801\uad70\uae30\uc9c0 \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit3": {
+          "action": "\uc810\ub839\uc9c0 A \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit4": {
+          "action": "\uc810\ub839\uc9c0 B \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit5": {
+          "action": "\ud68c\ubcf5\uc9c0 \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        }
+      },
+      "mouseBindings": {
+        "MouseLeft": {
+          "action": "\uc57d\uacf5\uaca9",
+          "category": "combat",
+          "note": "Neutral light attack or combat directional light attack.",
+          "component": "PlayerControllerComponent / BattleUIControllerComponent"
+        },
+        "MouseRight": {
+          "action": "\uac15\uacf5\uaca9",
+          "category": "combat",
+          "note": "Neutral heavy attack or combat directional heavy attack.",
+          "component": "PlayerControllerComponent / BattleUIControllerComponent"
+        },
+        "MouseMiddle": {
+          "action": "\ubb34\uc7a5\ud574\uc81c",
+          "category": "combat",
+          "note": "Combat directional disarm attack.",
+          "component": "BattleUIControllerComponent"
+        },
+        "MouseLeft+MouseRight": {
+          "action": "\ubc94\uc704\uacf5\uaca9",
+          "category": "combat",
+          "note": "Combat directional area attack. Input buffer accepts near-simultaneous LMB/RMB.",
+          "combo": [
+            "MouseLeft",
+            "MouseRight"
+          ],
+          "component": "BattleUIControllerComponent"
+        }
+      }
+    },
+    "LoadingScene": {
+      "label": "LoadingScene",
+      "description": "SceneGlobal.RegisterScene<LoadingScene>(\"LoadingScene\"). No scene-specific input in current code.",
+      "components": [],
+      "bindings": {},
+      "mouseBindings": {}
+    }
+  },
+  "defaultScene": "SampleScene"
+}
+  </script>
+
+  <script>
+    const elements = {
+      title: document.getElementById("title"),
+      subtitle: document.getElementById("subtitle"),
+      keyboard: document.getElementById("keyboard"),
+      mouse: document.getElementById("mouse"),
+      mouseList: document.getElementById("mouseList"),
+      sceneTabs: document.getElementById("sceneTabs"),
+      sceneContext: document.getElementById("sceneContext"),
+      search: document.getElementById("search"),
+      categoryFilter: document.getElementById("categoryFilter"),
+      categoryChips: document.getElementById("categoryChips"),
+      bindingList: document.getElementById("bindingList"),
+      detailTitle: document.getElementById("detailTitle"),
+      detailStatus: document.getElementById("detailStatus"),
+      detailGrid: document.getElementById("detailGrid"),
+      editorAction: document.getElementById("editorAction"),
+      editorCategory: document.getElementById("editorCategory"),
+      editorCombo: document.getElementById("editorCombo"),
+      editorNote: document.getElementById("editorNote"),
+      editorComponent: document.getElementById("editorComponent"),
+      applyButton: document.getElementById("applyButton"),
+      clearButton: document.getElementById("clearButton"),
+      sceneNameInput: document.getElementById("sceneNameInput"),
+      sceneDescriptionInput: document.getElementById("sceneDescriptionInput"),
+      addSceneButton: document.getElementById("addSceneButton"),
+      deleteSceneButton: document.getElementById("deleteSceneButton"),
+      categoryNameInput: document.getElementById("categoryNameInput"),
+      categoryManageSelect: document.getElementById("categoryManageSelect"),
+      addCategoryButton: document.getElementById("addCategoryButton"),
+      deleteCategoryButton: document.getElementById("deleteCategoryButton"),
+      saveStatus: document.getElementById("saveStatus"),
+      loadButton: document.getElementById("loadButton"),
+      saveButton: document.getElementById("saveButton"),
+      exportButton: document.getElementById("exportButton"),
+      fileInput: document.getElementById("fileInput")
+    };
+
+    let mapping = JSON.parse(document.getElementById("embeddedMapping").textContent);
+    let selectedCode = "";
+    let activeSceneId = mapping.defaultScene || Object.keys(mapping.scenes || {})[0] || "global";
+    let fileHandle = null;
+
+    function categoryInfo(id) {
+      return mapping.categories[id] || mapping.categories.unassigned || {label: "Unassigned", color: "#70747d"};
+    }
+
+    function sceneIds() {
+      return Object.keys(mapping.scenes || {});
+    }
+
+    function currentScene() {
+      const scenes = mapping.scenes || {};
+      if (!scenes[activeSceneId]) {
+        activeSceneId = mapping.defaultScene || Object.keys(scenes)[0] || "global";
+      }
+      return scenes[activeSceneId] || {label: activeSceneId, description: "", bindings: {}, mouseBindings: {}};
+    }
+
+    function sceneBinding(code, isMouse) {
+      const scene = currentScene();
+      const specific = isMouse ? scene.mouseBindings?.[code] : scene.bindings?.[code];
+      if (specific) {
+        return specific;
+      }
+
+      if (!isMouse && activeSceneId !== "global") {
+        return mapping.scenes?.global?.bindings?.[code] || null;
+      }
+
+      return null;
+    }
+
+    function formatCombo(value) {
+      if (!value) {
+        return "";
+      }
+      if (Array.isArray(value)) {
+        return value.join(" + ");
+      }
+      return String(value);
+    }
+
+    function comboOf(item) {
+      const binding = bindingOf(item);
+      if (binding && binding.combo) {
+        return formatCombo(binding.combo);
+      }
+      return formatCombo(item.combo);
+    }
+
+    function bindingOf(item) {
+      return sceneBinding(item.code, Boolean(item.zone));
+    }
+
+    function labelOf(item) {
+      const binding = bindingOf(item);
+      return binding ? binding.action : "";
+    }
+
+    function codeLabel(item) {
+      return comboOf(item) || item.legend || item.code;
+    }
+
+    function parseCombo(value) {
+      const parts = value
+        .split(/\s*\+\s*|,\s*/)
+        .map(part => part.trim())
+        .filter(Boolean);
+      return parts.length > 0 ? parts : undefined;
+    }
+
+    function makeId(label, fallback) {
+      const normalized = label
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return normalized || fallback;
+    }
+
+    function uniqueId(base, collection) {
+      let id = base;
+      let index = 2;
+      while (Object.prototype.hasOwnProperty.call(collection, id)) {
+        id = `${base}_${index}`;
+        ++index;
+      }
+      return id;
+    }
+
+    function randomCategoryColor() {
+      const hue = Math.floor(Math.random() * 360);
+      const saturation = 58 + Math.floor(Math.random() * 18);
+      const lightness = 58 + Math.floor(Math.random() * 10);
+      return hslToHex(hue, saturation, lightness);
+    }
+
+    function hslToHex(h, s, l) {
+      s /= 100;
+      l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+      const m = l - c / 2;
+      let r = 0;
+      let g = 0;
+      let b = 0;
+
+      if (h < 60) {
+        r = c; g = x;
+      } else if (h < 120) {
+        r = x; g = c;
+      } else if (h < 180) {
+        g = c; b = x;
+      } else if (h < 240) {
+        g = x; b = c;
+      } else if (h < 300) {
+        r = x; b = c;
+      } else {
+        r = c; b = x;
+      }
+
+      const toHex = value => Math.round((value + m) * 255).toString(16).padStart(2, "0");
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function allInputs() {
+      const keyboardItems = mapping.keyboard.rows.flat().filter(item => item.type !== "spacer").map(item => ({
+        ...item,
+        source: "Keyboard"
+      }));
+      const mouseItems = (mapping.mouse.buttons || []).map(item => ({
+        ...item,
+        source: "Mouse"
+      }));
+      return keyboardItems.concat(mouseItems);
+    }
+
+    function matchesFilter(item) {
+      const query = elements.search.value.trim().toLowerCase();
+      const filter = elements.categoryFilter.value;
+      const binding = bindingOf(item);
+      const category = binding ? binding.category : "unassigned";
+
+      if (filter !== "all" && category !== filter) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      const haystack = [
+        item.code,
+        item.legend,
+        item.label,
+        binding ? binding.action : "",
+        comboOf(item),
+        binding ? binding.note : "",
+        categoryInfo(category).label
+      ].join(" ").toLowerCase();
+      return haystack.includes(query);
+    }
+
+    function renderKeyboard() {
+      elements.keyboard.innerHTML = "";
+      for (const row of mapping.keyboard.rows) {
+        const rowEl = document.createElement("div");
+        rowEl.className = "key-row";
+
+        for (const item of row) {
+          if (item.type === "spacer") {
+            const spacer = document.createElement("div");
+            spacer.className = "spacer";
+            spacer.style.setProperty("--w", item.width || 1);
+            rowEl.appendChild(spacer);
+            continue;
+          }
+
+          const binding = bindingOf(item);
+          const category = binding ? binding.category : "unassigned";
+          const info = categoryInfo(category);
+          const key = document.createElement("button");
+          key.className = "key" + (binding ? "" : " unbound");
+          key.style.setProperty("--w", item.width || 1);
+          key.style.setProperty("--key", info.color);
+          key.dataset.code = item.code;
+          key.type = "button";
+          key.innerHTML = `
+            <span class="legend">${item.legend || item.code}</span>
+            <span class="action">${binding ? binding.action : ""}</span>
+          `;
+          if (item.code === selectedCode) {
+            key.classList.add("selected");
+          }
+          if (!matchesFilter(item)) {
+            key.classList.add("filtered-out");
+          }
+          key.addEventListener("click", () => selectInput(item));
+          rowEl.appendChild(key);
+        }
+
+        elements.keyboard.appendChild(rowEl);
+      }
+    }
+
+    function renderMouse() {
+      elements.mouse.innerHTML = "";
+      elements.mouseList.innerHTML = "";
+
+      for (const item of mapping.mouse.buttons || []) {
+        const binding = bindingOf(item);
+        const category = binding ? binding.category : "unassigned";
+        const info = categoryInfo(category);
+        const button = document.createElement("button");
+        button.className = `mouse-button ${item.zone || "wide"}`;
+        button.style.setProperty("--key", info.color);
+        button.type = "button";
+        button.dataset.code = item.code;
+        button.textContent = binding ? binding.action : "";
+        if (!binding) {
+          button.classList.add("unbound");
+        }
+        if (item.code === selectedCode) {
+          button.classList.add("selected");
+        }
+        if (!matchesFilter(item)) {
+          button.classList.add("filtered-out");
+        }
+        button.addEventListener("click", () => selectInput(item));
+        elements.mouse.appendChild(button);
+
+        const row = document.createElement("button");
+        row.className = "mouse-list-item";
+        row.type = "button";
+        row.innerHTML = `<span class="code">${codeLabel(item)}</span><span class="row-action">${binding ? binding.action : ""}</span>`;
+        row.addEventListener("click", () => selectInput(item));
+        elements.mouseList.appendChild(row);
+      }
+    }
+
+    function renderScenes() {
+      elements.sceneTabs.innerHTML = "";
+      const scenes = mapping.scenes || {};
+      for (const [id, scene] of Object.entries(scenes)) {
+        const tab = document.createElement("button");
+        tab.className = "scene-tab" + (id === activeSceneId ? " active" : "");
+        tab.type = "button";
+        tab.textContent = scene.label || id;
+        tab.addEventListener("click", () => {
+          activeSceneId = id;
+          selectedCode = "";
+          renderAll(false);
+        });
+        elements.sceneTabs.appendChild(tab);
+      }
+
+      const scene = currentScene();
+      const inherited = activeSceneId !== "global" && mapping.scenes?.global ? " Global bindings are also shown." : "";
+      const components = scene.components?.length ? ` Components: ${scene.components.join(", ")}.` : "";
+      elements.sceneContext.textContent = `${scene.label || activeSceneId}: ${scene.description || ""}${components}${inherited}`;
+      elements.deleteSceneButton.disabled = activeSceneId === "global";
+    }
+
+    function renderFilters() {
+      elements.categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
+      elements.categoryChips.innerHTML = "";
+      elements.editorCategory.innerHTML = "";
+      elements.categoryManageSelect.innerHTML = "";
+
+      for (const [id, info] of Object.entries(mapping.categories)) {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = info.label;
+        elements.categoryFilter.appendChild(option);
+
+        const editorOption = document.createElement("option");
+        editorOption.value = id;
+        editorOption.textContent = info.label;
+        elements.editorCategory.appendChild(editorOption);
+
+        const manageOption = document.createElement("option");
+        manageOption.value = id;
+        manageOption.textContent = info.label;
+        elements.categoryManageSelect.appendChild(manageOption);
+
+        const chip = document.createElement("button");
+        chip.className = "chip";
+        chip.type = "button";
+        chip.style.setProperty("--chip-color", info.color);
+        chip.innerHTML = `<span class="dot"></span>${info.label}`;
+        chip.addEventListener("click", () => {
+          elements.categoryFilter.value = id;
+          renderAll();
+        });
+        elements.categoryChips.appendChild(chip);
+      }
+    }
+
+    function renderBindingList() {
+      elements.bindingList.innerHTML = "";
+      const bound = allInputs()
+        .filter(item => bindingOf(item))
+        .filter(matchesFilter);
+
+      for (const item of bound) {
+        const binding = bindingOf(item);
+        const row = document.createElement("button");
+        row.className = "binding-row";
+        row.type = "button";
+        row.innerHTML = `
+          <span class="code">${codeLabel(item)}</span>
+          <span class="row-action">${binding.action}</span>
+        `;
+        row.addEventListener("click", () => selectInput(item));
+        elements.bindingList.appendChild(row);
+      }
+    }
+
+    function selectInput(item) {
+      selectedCode = item.code;
+      const binding = bindingOf(item);
+      const category = binding ? binding.category : "unassigned";
+      const info = categoryInfo(category);
+      const combo = comboOf(item);
+      const source = item.source || (item.zone ? "Mouse" : "Keyboard");
+
+      elements.detailTitle.textContent = binding ? binding.action : "Unassigned";
+      elements.detailStatus.textContent = `${source} - ${codeLabel(item)} - ${currentScene().label || activeSceneId}`;
+      elements.detailGrid.innerHTML = "";
+
+      const rows = [
+        ["Scene", currentScene().label || activeSceneId],
+        ["Input", codeLabel(item)],
+        ["Code", item.code || "-"],
+        ["Combo", combo || "-"],
+        ["Category", info.label],
+        ["Component", binding && binding.component ? binding.component : "-"],
+        ["Note", binding && binding.note ? binding.note : "-"]
+      ];
+
+      for (const [label, value] of rows) {
+        const div = document.createElement("div");
+        div.className = "detail-item";
+        div.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        elements.detailGrid.appendChild(div);
+      }
+
+      elements.editorAction.value = binding ? binding.action || "" : "";
+      elements.editorCategory.value = category;
+      elements.editorCombo.value = combo;
+      elements.editorNote.value = binding && binding.note ? binding.note : "";
+      elements.editorComponent.value = binding && binding.component ? binding.component : "";
+
+      renderAll(false);
+    }
+
+    function findInputByCode(code) {
+      for (const row of mapping.keyboard.rows) {
+        for (const item of row) {
+          if (item.type !== "spacer" && item.code === code) {
+            return item;
+          }
+        }
+      }
+      return (mapping.mouse.buttons || []).find(item => item.code === code) || null;
+    }
+
+    function editableStorageFor(item) {
+      const scene = currentScene();
+      scene.bindings = scene.bindings || {};
+      scene.mouseBindings = scene.mouseBindings || {};
+      return item.zone ? scene.mouseBindings : scene.bindings;
+    }
+
+    function applyEditor() {
+      const item = findInputByCode(selectedCode);
+      if (!item) {
+        elements.saveStatus.textContent = "Select an input first.";
+        return;
+      }
+
+      const action = elements.editorAction.value.trim();
+      const category = elements.editorCategory.value || "unassigned";
+      const note = elements.editorNote.value.trim();
+      const component = elements.editorComponent.value.trim();
+      const combo = parseCombo(elements.editorCombo.value);
+      const storage = editableStorageFor(item);
+
+      if (!action) {
+        delete storage[item.code];
+        elements.saveStatus.textContent = `Cleared ${item.code} in ${currentScene().label || activeSceneId}. Save JSON to persist.`;
+        selectInput(item);
+        return;
+      }
+
+      storage[item.code] = {action, category};
+      if (combo) {
+        storage[item.code].combo = combo;
+      }
+      if (note) {
+        storage[item.code].note = note;
+      }
+      if (component) {
+        storage[item.code].component = component;
+      }
+
+      elements.saveStatus.textContent = `Applied ${item.code} to ${currentScene().label || activeSceneId}. Save JSON to persist.`;
+      selectInput(item);
+    }
+
+    function clearBinding() {
+      const item = findInputByCode(selectedCode);
+      if (!item) {
+        elements.saveStatus.textContent = "Select an input first.";
+        return;
+      }
+
+      const storage = editableStorageFor(item);
+      delete storage[item.code];
+      elements.saveStatus.textContent = `Cleared ${item.code} in ${currentScene().label || activeSceneId}. Save JSON to persist.`;
+      selectInput(item);
+    }
+
+    function addScene() {
+      const label = elements.sceneNameInput.value.trim();
+      if (!label) {
+        elements.saveStatus.textContent = "Enter a scene name first.";
+        return;
+      }
+
+      mapping.scenes = mapping.scenes || {};
+      const baseId = makeId(label, "scene");
+      const id = uniqueId(baseId, mapping.scenes);
+      mapping.scenes[id] = {
+        label,
+        description: elements.sceneDescriptionInput.value.trim(),
+        bindings: {},
+        mouseBindings: {}
+      };
+
+      activeSceneId = id;
+      selectedCode = "";
+      elements.sceneNameInput.value = "";
+      elements.sceneDescriptionInput.value = "";
+      elements.saveStatus.textContent = `Added scene ${label}. Save JSON to persist.`;
+      renderAll(true);
+    }
+
+    function deleteActiveScene() {
+      if (!mapping.scenes || !mapping.scenes[activeSceneId]) {
+        elements.saveStatus.textContent = "No active scene to delete.";
+        return;
+      }
+      if (activeSceneId === "global") {
+        elements.saveStatus.textContent = "Global scene cannot be deleted.";
+        return;
+      }
+
+      const deletedLabel = mapping.scenes[activeSceneId].label || activeSceneId;
+      delete mapping.scenes[activeSceneId];
+
+      if (mapping.defaultScene === activeSceneId) {
+        mapping.defaultScene = mapping.scenes.gameplay ? "gameplay" : Object.keys(mapping.scenes)[0] || "global";
+      }
+
+      activeSceneId = mapping.defaultScene || Object.keys(mapping.scenes)[0] || "global";
+      selectedCode = "";
+      elements.saveStatus.textContent = `Deleted scene ${deletedLabel}. Save JSON to persist.`;
+      renderAll(true);
+    }
+
+    function addCategory() {
+      const label = elements.categoryNameInput.value.trim();
+      if (!label) {
+        elements.saveStatus.textContent = "Enter a category name first.";
+        return;
+      }
+
+      mapping.categories = mapping.categories || {};
+      const baseId = makeId(label, "category");
+      const id = uniqueId(baseId, mapping.categories);
+      mapping.categories[id] = {
+        label,
+        color: randomCategoryColor()
+      };
+
+      elements.categoryNameInput.value = "";
+      elements.saveStatus.textContent = `Added category ${label}. Save JSON to persist.`;
+      renderAll(true);
+      elements.categoryFilter.value = id;
+      elements.editorCategory.value = id;
+      elements.categoryManageSelect.value = id;
+    }
+
+    function deleteCategory() {
+      const categoryId = elements.categoryManageSelect.value;
+      if (!categoryId || !mapping.categories?.[categoryId]) {
+        elements.saveStatus.textContent = "Select a category to delete.";
+        return;
+      }
+      if (categoryId === "unassigned") {
+        elements.saveStatus.textContent = "Unassigned category cannot be deleted.";
+        return;
+      }
+
+      const deletedLabel = mapping.categories[categoryId].label || categoryId;
+      delete mapping.categories[categoryId];
+
+      for (const scene of Object.values(mapping.scenes || {})) {
+        for (const binding of Object.values(scene.bindings || {})) {
+          if (binding.category === categoryId) {
+            binding.category = "unassigned";
+          }
+        }
+        for (const binding of Object.values(scene.mouseBindings || {})) {
+          if (binding.category === categoryId) {
+            binding.category = "unassigned";
+          }
+        }
+      }
+
+      if (elements.categoryFilter.value === categoryId) {
+        elements.categoryFilter.value = "all";
+      }
+      if (elements.editorCategory.value === categoryId) {
+        elements.editorCategory.value = "unassigned";
+      }
+
+      elements.saveStatus.textContent = `Deleted category ${deletedLabel}. Existing bindings moved to Unassigned.`;
+      renderAll(true);
+    }
+
+    function downloadMapping() {
+      const blob = new Blob([JSON.stringify(mapping, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "keyboard_mapping.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      elements.saveStatus.textContent = "Downloaded JSON.";
+    }
+
+    async function writeMappingToHandle(handle) {
+      const writable = await handle.createWritable();
+      await writable.write(JSON.stringify(mapping, null, 2));
+      await writable.close();
+      elements.saveStatus.textContent = "Saved JSON file.";
+    }
+
+    async function saveMapping(saveAs) {
+      if ("showSaveFilePicker" in window) {
+        if (saveAs || !fileHandle) {
+          fileHandle = await window.showSaveFilePicker({
+            suggestedName: "keyboard_mapping.json",
+            types: [
+              {
+                description: "JSON",
+                accept: {"application/json": [".json"]}
+              }
+            ]
+          });
+        }
+        await writeMappingToHandle(fileHandle);
+        return;
+      }
+
+      downloadMapping();
+    }
+
+    async function openMappingFile() {
+      if ("showOpenFilePicker" in window) {
+        const handles = await window.showOpenFilePicker({
+          multiple: false,
+          types: [
+            {
+              description: "JSON",
+              accept: {"application/json": [".json"]}
+            }
+          ]
+        });
+        fileHandle = handles[0];
+        const file = await fileHandle.getFile();
+        mapping = JSON.parse(await file.text());
+        selectedCode = "";
+        activeSceneId = mapping.defaultScene || Object.keys(mapping.scenes || {})[0] || "global";
+        renderAll(true);
+        elements.saveStatus.textContent = "Opened JSON file. Save JSON writes back to the same file.";
+        return;
+      }
+
+      elements.fileInput.click();
+    }
+
+    function renderHeader() {
+      elements.title.textContent = mapping.meta.title || "Input Mapping";
+      const version = mapping.meta.version ? ` - ${mapping.meta.version}` : "";
+      elements.subtitle.textContent = `${mapping.meta.description || "Keyboard and mouse mapping."}${version}`;
+    }
+
+    function renderAll(rebuildFilters = true) {
+      renderHeader();
+      renderScenes();
+      if (rebuildFilters) {
+        renderFilters();
+      }
+      renderKeyboard();
+      renderMouse();
+      renderBindingList();
+    }
+
+    async function tryLoadNeighborJson() {
+      try {
+        const response = await fetch("keyboard_mapping.json", {cache: "no-store"});
+        if (!response.ok) {
+          return;
+        }
+        mapping = await response.json();
+        activeSceneId = mapping.defaultScene || Object.keys(mapping.scenes || {})[0] || "global";
+      } catch {
+        // file:// blocks fetch in several browsers. The embedded mapping keeps the tool usable.
+      }
+    }
+
+    elements.search.addEventListener("input", () => renderAll(false));
+    elements.categoryFilter.addEventListener("change", () => renderAll(false));
+    document.getElementById("editForm").addEventListener("submit", event => event.preventDefault());
+    document.getElementById("sceneForm").addEventListener("submit", event => event.preventDefault());
+    document.getElementById("categoryForm").addEventListener("submit", event => event.preventDefault());
+    elements.applyButton.addEventListener("click", applyEditor);
+    elements.clearButton.addEventListener("click", clearBinding);
+    elements.addSceneButton.addEventListener("click", addScene);
+    elements.deleteSceneButton.addEventListener("click", deleteActiveScene);
+    elements.addCategoryButton.addEventListener("click", addCategory);
+    elements.deleteCategoryButton.addEventListener("click", deleteCategory);
+    elements.loadButton.addEventListener("click", () => {
+      openMappingFile().catch(error => {
+        elements.saveStatus.textContent = `JSON operation failed: ${error.message}`;
+      });
+    });
+    elements.fileInput.addEventListener("change", async event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) {
+        return;
+      }
+      const text = await file.text();
+      mapping = JSON.parse(text);
+      selectedCode = "";
+      activeSceneId = mapping.defaultScene || Object.keys(mapping.scenes || {})[0] || "global";
+      fileHandle = null;
+      renderAll(true);
+      elements.saveStatus.textContent = "Opened JSON file. Save JSON writes back to the same file.";
+    });
+    elements.saveButton.addEventListener("click", () => {
+      saveMapping(false).catch(error => {
+        elements.saveStatus.textContent = `JSON operation failed: ${error.message}`;
+      });
+    });
+    elements.exportButton.addEventListener("click", () => {
+      saveMapping(true).catch(error => {
+        elements.saveStatus.textContent = `JSON operation failed: ${error.message}`;
+      });
+    });
+
+    tryLoadNeighborJson().finally(() => renderAll(true));
+  </script>
+</body>
+</html>

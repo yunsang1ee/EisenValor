@@ -141,7 +141,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
 	if (AllocConsole())
 	{
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -156,10 +156,12 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		freopen_s(&fp, "CONIN$", "r", stdin);
 		std::ios::sync_with_stdio();
 	}
+#endif
 
+#ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	// _CrtSetBreakAlloc(1739);
-#endif _DEBUG
+#endif
 
 	MSG	 msg;
 	bool quit = false;
@@ -243,7 +245,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 				gameFramework.Run();
 		}
 		gameFramework.Release();
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
 		FreeConsole();
 #endif
 		return msg.wParam;

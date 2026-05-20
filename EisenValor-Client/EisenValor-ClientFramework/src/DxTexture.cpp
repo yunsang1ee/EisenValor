@@ -24,7 +24,7 @@ DxTexture::~DxTexture()
 
 		ReleaseAllViews(heap, fence);
 
-		DEBUG_LOG_FMT("[DxTexture] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
+		GRAPHICS_LOG_FMT("[DxTexture] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
 	}
 }
 
@@ -73,7 +73,7 @@ void DxTexture::Initialize(
 	m_sizeInBytes = allocInfo.SizeInBytes;
 	m_uavHandles.resize(m_mipLevels);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxTexture] Texture2D initialized: {}x{}, Format:{}, Mips:{}\n", width, height, (int)format, mipLevels
 	);
 }
@@ -122,7 +122,7 @@ void DxTexture::Initialize3D(
 	m_sizeInBytes = allocInfo.SizeInBytes;
 	m_uavHandles.resize(m_mipLevels);
 
-	DEBUG_LOG_FMT("[DxTexture] Texture3D initialized: {}x{}x{}, Format:{}\n", width, height, depth, (int)format);
+	GRAPHICS_LOG_FMT("[DxTexture] Texture3D initialized: {}x{}x{}, Format:{}\n", width, height, depth, (int)format);
 }
 
 void DxTexture::InitializeCube(
@@ -167,7 +167,7 @@ void DxTexture::InitializeCube(
 	m_sizeInBytes = allocInfo.SizeInBytes;
 	m_uavHandles.resize(m_mipLevels);
 
-	DEBUG_LOG_FMT("[DxTexture] TextureCube initialized: {}x{}, Mips:{}\n", size, size, mipLevels);
+	GRAPHICS_LOG_FMT("[DxTexture] TextureCube initialized: {}x{}, Mips:{}\n", size, size, mipLevels);
 }
 
 void DxTexture::InitializeFromResource(
@@ -199,7 +199,7 @@ void DxTexture::InitializeFromResource(
 
 	CreateSRV(device, GLOBAL(DxDescriptorHeapGlobal));
 
-	DEBUG_LOG_FMT("[DxTexture] Initialized from external resource: {} ({}x{})\n", name, m_width, m_height);
+	GRAPHICS_LOG_FMT("[DxTexture] Initialized from external resource: {} ({}x{})\n", name, m_width, m_height);
 }
 
 void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
@@ -219,7 +219,7 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 
 	if (FAILED(hr))
 	{
-		DEBUG_LOG_FMT("[DxTexture] Failed to load image: {}\n", std::string(filePath.begin(), filePath.end()));
+		GRAPHICS_LOG_FMT("[DxTexture] Failed to load image: {}\n", std::string(filePath.begin(), filePath.end()));
 		return;
 	}
 
@@ -227,7 +227,7 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 	hr = DirectX::CreateTexture(device, image.GetMetadata(), &m_resource);
 	if (FAILED(hr))
 	{
-		DEBUG_LOG_FMT("[DxTexture] Failed to create texture resource\n");
+		GRAPHICS_LOG_FMT("[DxTexture] Failed to create texture resource\n");
 		return;
 	}
 
@@ -278,7 +278,7 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 
 	if (FAILED(hr))
 	{
-		DEBUG_LOG_FMT("[DxTexture] Failed to create upload heap\n");
+		GRAPHICS_LOG_FMT("[DxTexture] Failed to create upload heap\n");
 		return;
 	}
 
@@ -355,7 +355,7 @@ void DxTexture::CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 
 	if (HasSRV())
 	{
-		DEBUG_LOG_FMT("[DxTexture] Warning: SRV already exists for texture '{}'\n", GetName());
+		GRAPHICS_LOG_FMT("[DxTexture] Warning: SRV already exists for texture '{}'\n", GetName());
 		return;
 	}
 
@@ -388,7 +388,7 @@ void DxTexture::CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 
 	m_srvHandle = heap.CreateSRV(device, GetResource(), &srvDesc);
 
-	DEBUG_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvHandle.GetIndex(), GetName());
+	GRAPHICS_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvHandle.GetIndex(), GetName());
 }
 
 void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel)
@@ -397,13 +397,13 @@ void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, ui
 
 	if (mipLevel >= m_mipLevels)
 	{
-		DEBUG_LOG_FMT("[DxTexture] Error: UAV MipLevel {} is out of range (Max: {})\n", mipLevel, m_mipLevels);
+		GRAPHICS_LOG_FMT("[DxTexture] Error: UAV MipLevel {} is out of range (Max: {})\n", mipLevel, m_mipLevels);
 		return;
 	}
 
 	if (HasUAV(mipLevel))
 	{
-		DEBUG_LOG_FMT("[DxTexture] Warning: UAV already exists for texture '{}', MipLevel={}\n", GetName(), mipLevel);
+		GRAPHICS_LOG_FMT("[DxTexture] Warning: UAV already exists for texture '{}', MipLevel={}\n", GetName(), mipLevel);
 		return;
 	}
 
@@ -434,7 +434,7 @@ void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, ui
 
 	m_uavHandles[mipLevel] = heap.CreateUAV(device, GetResource(), &uavDesc);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxTexture] UAV created: Index={}, MipLevel={}, Name='{}'\n", m_uavHandles[mipLevel].GetIndex(), mipLevel,
 		GetName()
 	);

@@ -7,13 +7,13 @@ void DxGarbageCollectorGlobal::Initialize()
 {
 	m_currentFrameFence = FenceHandle();
 	m_totalProcessed = 0;
-	DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] Initialized\n");
+	GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] Initialized\n");
 }
 
 void DxGarbageCollectorGlobal::Release()
 {
 	FlushAll();
-	DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] Released: Total processed={}\n", m_totalProcessed);
+	GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] Released: Total processed={}\n", m_totalProcessed);
 }
 
 void DxGarbageCollectorGlobal::DeferDescriptorFree(
@@ -22,7 +22,7 @@ void DxGarbageCollectorGlobal::DeferDescriptorFree(
 {
 	if (!heap)
 	{
-		DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] ERROR: Null heap\n");
+		GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] ERROR: Null heap\n");
 		return;
 	}
 
@@ -36,7 +36,7 @@ void DxGarbageCollectorGlobal::DeferResourceRelease(
 {
 	if (!resource)
 	{
-		DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] ERROR: Null resource\n");
+		GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] ERROR: Null resource\n");
 		return;
 	}
 
@@ -50,7 +50,7 @@ void DxGarbageCollectorGlobal::DeferResourceRelease(
 				HRESULT hr = device->GetDeviceRemovedReason();
 				if (FAILED(hr))
 				{
-					DEBUG_LOG_FMT(
+					GRAPHICS_LOG_FMT(
 						"[DxGarbageCollectorGlobal] WARNING: Device removed (HRESULT=0x{:X}), skipping Release()\n",
 						static_cast<uint32_t>(hr)
 					);
@@ -75,7 +75,7 @@ void DxGarbageCollectorGlobal::DeferRelease(
 		const auto& back = m_releaseQueue[qi].back().fenceHandle;
 		if (back.value > fenceHandle.value)
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxGarbageCollectorGlobal] ASSERT: non-monotonic fence value (prev={}, cur={})\n", back.value,
 				fenceHandle.value
 			);
@@ -84,7 +84,7 @@ void DxGarbageCollectorGlobal::DeferRelease(
 	}
 #endif // _DEBUG
 	m_releaseQueue[qi].push_back(ReleaseEntry{std::move(releaseCallback), fenceHandle, std::string(debugName)});
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxGarbageCollectorGlobal] Deferred release: Q={}, Val={}, Name={}\n", static_cast<int>(fenceHandle.queueType),
 		fenceHandle.value, debugName
 	);
@@ -109,9 +109,13 @@ void DxGarbageCollectorGlobal::ProcessCompleted(const CompletedFences& completed
 				}
 				catch (const std::exception& ex)
 				{
-					DEBUG_LOG_FMT(
+#if ENABLE_GRAPHICS_DEBUG_LOG
+					GRAPHICS_LOG_FMT(
 						"[DxGarbageCollectorGlobal] ERROR: Release failed for '{}': {}\n", debugName, ex.what()
 					);
+#else
+					(void)ex;
+#endif
 				}
 				++m_totalProcessed;
 			}
@@ -150,12 +154,16 @@ void DxGarbageCollectorGlobal::FlushAll()
 			}
 			catch (const std::exception& ex)
 			{
-				DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] ERROR: Release failed for '{}': {}\n", debugName, ex.what());
+#if ENABLE_GRAPHICS_DEBUG_LOG
+				GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] ERROR: Release failed for '{}': {}\n", debugName, ex.what());
+#else
+				(void)ex;
+#endif
 			}
 			++m_totalProcessed;
 		}
 	}
-	DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] Flushed. TotalProcessed={}\n", m_totalProcessed);
+	GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] Flushed. TotalProcessed={}\n", m_totalProcessed);
 }
 
 void DxGarbageCollectorGlobal::LogStats() const
@@ -164,5 +172,5 @@ void DxGarbageCollectorGlobal::LogStats() const
 						   m_releaseQueue[static_cast<int>(EQueueType::Compute)].size() +
 						   m_releaseQueue[static_cast<int>(EQueueType::Copy)].size();
 
-	DEBUG_LOG_FMT("[DxGarbageCollectorGlobal] Stats: Pending={}, TotalProcessed={}\n", pending, m_totalProcessed);
+	GRAPHICS_LOG_FMT("[DxGarbageCollectorGlobal] Stats: Pending={}, TotalProcessed={}\n", pending, m_totalProcessed);
 }
