@@ -9,10 +9,16 @@ using namespace DirectX;
 
 void SocketComponent::OnLateUpdate(float dt)
 {
-    if (!m_targetActor || m_boneIndex == 0xFFFFFFFF)
+	if (!ownerObjhandle.IsValid() || m_boneIndex == 0xFFFFFFFF)
         return;
 
-    auto* animComp = m_targetActor->GetComponent<AnimationComponent>();
+	auto* socketObj = GetGameObject();
+	auto* scene = socketObj ? socketObj->GetScene() : nullptr;
+	auto* ownerObj = scene ? scene->TryGetGameObject(ownerObjhandle) : nullptr;
+	if (!ownerObj)
+        return;
+
+	auto* animComp = ownerObj->GetComponent<AnimationComponent>();
     if (!animComp)
         return;
 
@@ -29,7 +35,7 @@ void SocketComponent::OnLateUpdate(float dt)
         XMVECTOR s, r, t;
         if (XMMatrixDecompose(&s, &r, &t, socketBoneLocal))
         {
-            auto& tr = GetGameObject()->GetTransform();
+			auto& tr = socketObj->GetTransform();
             
             XMFLOAT3 pos, scale;
             XMFLOAT4 rot;
@@ -44,29 +50,29 @@ void SocketComponent::OnLateUpdate(float dt)
     }
 }
 
-void SocketComponent::SetTarget(GameObject* targetActor, const std::string& socketName)
+void SocketComponent::SetTarget(GameObject* ownerObj, const std::string& socketName)
 {
-    m_targetActor = targetActor;
+	ownerObjhandle = ownerObj ? ownerObj->GetHandle() : HandleOf<GameObject>::Invalid();
     m_socketName = socketName;
     m_boneIndex = 0xFFFFFFFF;
 
-    if (m_targetActor)
+    if (ownerObj)
     {
-        auto* animComp = m_targetActor->GetComponent<AnimationComponent>();
+		auto* animComp = ownerObj->GetComponent<AnimationComponent>();
         if (animComp)
         {
             if (!animComp->GetBoneIndexByName(m_socketName, m_boneIndex))
             {
-                DEBUG_LOG_FMT("[SocketComponent] Failed to find bone: {} in Actor: {}\n", m_socketName.c_str(), m_targetActor->GetName().c_str());
+               DEBUG_LOG_FMT("[SocketComponent] Failed to find bone: {} in Actor: {}\n", m_socketName.c_str(), ownerObj->GetName().c_str());
             }
             else
             {
-                DEBUG_LOG_FMT("[SocketComponent] Successfully found bone: {} (Index: {}) in Actor: {}\n", m_socketName.c_str(), m_boneIndex, m_targetActor->GetName().c_str());
+                //DEBUG_LOG_FMT("[SocketComponent] Successfully found bone: {} (Index: {}) in Actor: {}\n", m_socketName.c_str(), m_boneIndex, ownerObj->GetName().c_str());
             }
         }
         else
         {
-             DEBUG_LOG_FMT("[SocketComponent] Actor: {} has no AnimationComponent\n", m_targetActor->GetName().c_str());
+             DEBUG_LOG_FMT("[SocketComponent] Actor: {} has no AnimationComponent\n", ownerObj->GetName().c_str());
         }
     }
 }

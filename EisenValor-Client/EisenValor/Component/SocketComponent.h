@@ -26,7 +26,7 @@ public:
     void SetOffsetMatrix(const DirectX::XMMATRIX& offsetMatrix) { DirectX::XMStoreFloat4x4(&m_offsetMatrix, offsetMatrix); }
 
 private:
-    GameObject* m_targetActor = nullptr;
+	HandleOf<GameObject> ownerObjhandle = HandleOf<GameObject>::Invalid();
     std::string m_socketName;
     uint32_t    m_boneIndex = 0xFFFFFFFF;
     DirectX::XMFLOAT4X4 m_offsetMatrix = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
