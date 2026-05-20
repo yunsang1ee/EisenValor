@@ -7,7 +7,7 @@ DxBLAS::DxBLAS() = default;
 
 DxBLAS::~DxBLAS()
 {
-	DEBUG_LOG_FMT("[DxBLAS] Destroyed\n");
+	GRAPHICS_LOG_FMT("[DxBLAS] Destroyed\n");
 }
 
 void DxBLAS::Build(
@@ -34,7 +34,7 @@ void DxBLAS::Build(
 	if (0 == vertexBuffer || 0 == indexBuffer || 0 == vertexCount || 0 == vertexStride || 0 == totalIndexCount ||
 		subMeshes.empty())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBLAS] ERROR: Invalid build input for '{}'. VB={}, IB={}, VertexCount={}, VertexStride={}, TotalIndexCount={}, SubMeshes={}\n",
 			name, vertexBuffer, indexBuffer, vertexCount, vertexStride, totalIndexCount, subMeshes.size()
 		);
@@ -56,7 +56,7 @@ void DxBLAS::Build(
 		const uint64_t subMeshEnd = static_cast<uint64_t>(sm.indexOffset) + static_cast<uint64_t>(sm.indexCount);
 		if (sm.indexOffset >= totalIndexCount || subMeshEnd > totalIndexCount)
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxBLAS] WARNING: Skipping invalid submesh for '{}'. IndexOffset={}, IndexCount={}, TotalIndexCount={}\n",
 				name, sm.indexOffset, sm.indexCount, totalIndexCount
 			);
@@ -65,7 +65,7 @@ void DxBLAS::Build(
 
 		if ((sm.indexCount % 3) != 0)
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxBLAS] WARNING: Skipping non-triangle submesh for '{}'. IndexOffset={}, IndexCount={}\n",
 				name, sm.indexOffset, sm.indexCount
 			);
@@ -91,7 +91,7 @@ void DxBLAS::Build(
 
 	if (geoDescs.empty())
 	{
-		DEBUG_LOG_FMT("[DxBLAS] ERROR: No valid geometry descs for '{}'. Skipping build.\n", name);
+		GRAPHICS_LOG_FMT("[DxBLAS] ERROR: No valid geometry descs for '{}'. Skipping build.\n", name);
 		return;
 	}
 
@@ -125,7 +125,7 @@ void DxBLAS::Build(
 
 	if (0 == m_blasBuffer->GetGPUAddress() || 0 == m_scratchBuffer->GetGPUAddress())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBLAS] ERROR: Null GPU address after buffer init for '{}'. Result={}, Scratch={}\n",
 			name, m_blasBuffer->GetGPUAddress(), m_scratchBuffer->GetGPUAddress()
 		);
@@ -143,7 +143,7 @@ void DxBLAS::Build(
 	buildDesc.DestAccelerationStructureData = m_blasBuffer->GetGPUAddress();
 	buildDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetGPUAddress();
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBLAS] BuildRTAS '{}': GeoDescs={}, VB={}, IB={}, VertexCount={}, IndexCount={}, Dest={}, Scratch={}\n",
 		name, geoDescs.size(), vertexBuffer, indexBuffer, vertexCount, totalIndexCount, buildDesc.DestAccelerationStructureData,
 		buildDesc.ScratchAccelerationStructureData
@@ -155,7 +155,7 @@ void DxBLAS::Build(
 	cmdList->ResourceBarrier(1, &uavBarrier);
 	m_isBuilt = true;
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBLAS] Built BLAS '{}' (SubMeshes: {}) - Size: {} bytes\n", name, subMeshes.size(),
 		prebuildInfo.ResultDataMaxSizeInBytes
 	);
@@ -176,7 +176,7 @@ void DxBLAS::Refit(
 	if (nullptr == cmdList || !IsBuilt() || !m_allowUpdate || 0 == vertexBuffer || 0 == indexBuffer || 0 == vertexCount ||
 		0 == vertexStride || 0 == totalIndexCount || subMeshes.empty())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBLAS] ERROR: Invalid refit input. Built={}, AllowUpdate={}, VB={}, IB={}, VertexCount={}, VertexStride={}, TotalIndexCount={}, SubMeshes={}\n",
 			IsBuilt(), m_allowUpdate, vertexBuffer, indexBuffer, vertexCount, vertexStride, totalIndexCount, subMeshes.size()
 		);
@@ -196,7 +196,7 @@ void DxBLAS::Refit(
 		const uint64_t subMeshEnd = static_cast<uint64_t>(sm.indexOffset) + static_cast<uint64_t>(sm.indexCount);
 		if (sm.indexOffset >= totalIndexCount || subMeshEnd > totalIndexCount)
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxBLAS] WARNING: Skipping invalid refit submesh. IndexOffset={}, IndexCount={}, TotalIndexCount={}\n",
 				sm.indexOffset, sm.indexCount, totalIndexCount
 			);
@@ -205,7 +205,7 @@ void DxBLAS::Refit(
 
 		if ((sm.indexCount % 3) != 0)
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxBLAS] WARNING: Skipping non-triangle refit submesh. IndexOffset={}, IndexCount={}\n",
 				sm.indexOffset, sm.indexCount
 			);
@@ -231,13 +231,13 @@ void DxBLAS::Refit(
 
 	if (geoDescs.empty())
 	{
-		DEBUG_LOG_FMT("[DxBLAS] ERROR: No valid geometry descs for refit. Skipping.\n");
+		GRAPHICS_LOG_FMT("[DxBLAS] ERROR: No valid geometry descs for refit. Skipping.\n");
 		return;
 	}
 
 	if (nullptr == m_blasBuffer || nullptr == m_scratchBuffer || 0 == m_blasBuffer->GetGPUAddress() || 0 == m_scratchBuffer->GetGPUAddress())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBLAS] ERROR: Invalid BLAS resources for refit. Result={}, Scratch={}\n",
 			m_blasBuffer ? m_blasBuffer->GetGPUAddress() : 0, m_scratchBuffer ? m_scratchBuffer->GetGPUAddress() : 0
 		);
@@ -258,7 +258,7 @@ void DxBLAS::Refit(
 	refitDesc.DestAccelerationStructureData = m_blasBuffer->GetGPUAddress();
 	refitDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetGPUAddress();
 
-	//DEBUG_LOG_FMT(
+	//GRAPHICS_LOG_FMT(
 	//	"[DxBLAS] RefitRTAS: GeoDescs={}, VB={}, IB={}, VertexCount={}, IndexCount={}, Source={}, Dest={}, Scratch={}\n",
 	//	geoDescs.size(), vertexBuffer, indexBuffer, vertexCount, totalIndexCount, refitDesc.SourceAccelerationStructureData,
 	//	refitDesc.DestAccelerationStructureData, refitDesc.ScratchAccelerationStructureData

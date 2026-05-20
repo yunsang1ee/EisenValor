@@ -15,16 +15,17 @@
 # Mono auto generated files
 mono_crash.*
 
-# Build results
+# Build results & Client Custom Configurations
 [Dd]ebug/
 [Dd]ebugPublic/
 [Pp]rofile/
 [Rr]elease/
 [Rr]eleases/
+[Rr]eleaseWithDebugLog/
 x64/
 x86/
 
-# Custom Configurations (IOCP/RIO)
+# Server Custom Configurations
 IOCP-*/
 RIO-*/
 # ---------------------

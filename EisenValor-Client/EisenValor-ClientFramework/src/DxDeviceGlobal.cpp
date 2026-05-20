@@ -11,13 +11,13 @@ void DeviceRemovedMonitor::Start(ID3D12Device* device, ID3D12Fence* fence)
 {
 	if (m_running.load())
 	{
-		DEBUG_LOG_FMT("[DRED] DeviceRemovedMonitor already running.\n");
+		GRAPHICS_LOG_FMT("[DRED] DeviceRemovedMonitor already running.\n");
 		return;
 	}
 
 	if (!device || !fence)
 	{
-		DEBUG_LOG_FMT("[DRED] Start: device or fence is null.\n");
+		GRAPHICS_LOG_FMT("[DRED] Start: device or fence is null.\n");
 		return;
 	}
 
@@ -27,7 +27,7 @@ void DeviceRemovedMonitor::Start(ID3D12Device* device, ID3D12Fence* fence)
 	m_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (!m_event)
 	{
-		DEBUG_LOG_FMT("[DRED] Failed to create device-removed event. GLE={}\n", GetLastError());
+		GRAPHICS_LOG_FMT("[DRED] Failed to create device-removed event. GLE={}\n", GetLastError());
 		m_device.Reset();
 		m_fence.Reset();
 		return;
@@ -35,7 +35,7 @@ void DeviceRemovedMonitor::Start(ID3D12Device* device, ID3D12Fence* fence)
 
 	if (FAILED(m_fence->SetEventOnCompletion(UINT64_MAX, m_event)))
 	{
-		DEBUG_LOG_FMT("[DRED] SetEventOnCompletion failed. Monitor will not run.\n");
+		GRAPHICS_LOG_FMT("[DRED] SetEventOnCompletion failed. Monitor will not run.\n");
 		CloseHandle(m_event);
 		m_event = nullptr;
 		m_device.Reset();
@@ -53,13 +53,13 @@ void DeviceRemovedMonitor::Start(ID3D12Device* device, ID3D12Fence* fence)
 			HRESULT reason = m_device ? m_device->GetDeviceRemovedReason() : S_OK;
 			if (FAILED(reason))
 			{
-				DEBUG_LOG_FMT("[DRED] Device removed detected in monitor thread! Reason: 0x{:08X}\n", (uint32_t)reason);
+				GRAPHICS_LOG_FMT("[DRED] Device removed detected in monitor thread! Reason: 0x{:08X}\n", (uint32_t)reason);
 				DumpDred(m_device.Get());
 			}
 		}
 	);
 
-	DEBUG_LOG_FMT("[DRED] DeviceRemovedMonitor started.\n");
+	GRAPHICS_LOG_FMT("[DRED] DeviceRemovedMonitor started.\n");
 }
 
 void DeviceRemovedMonitor::Stop()
@@ -88,21 +88,21 @@ void DeviceRemovedMonitor::Stop()
 	m_fence.Reset();
 	m_device.Reset();
 
-	DEBUG_LOG_FMT("[DRED] DeviceRemovedMonitor stopped.\n");
+	GRAPHICS_LOG_FMT("[DRED] DeviceRemovedMonitor stopped.\n");
 }
 
 void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 {
 	if (!device)
 	{
-		DEBUG_LOG_FMT("[DRED] DumpDred: device is null.\n");
+		GRAPHICS_LOG_FMT("[DRED] DumpDred: device is null.\n");
 		return;
 	}
 
 	ComPtr<ID3D12DeviceRemovedExtendedData1> dred;
 	if (FAILED(device->QueryInterface(IID_PPV_ARGS(&dred))))
 	{
-		DEBUG_LOG_FMT("[DRED] ID3D12DeviceRemovedExtendedData1 not available.\n");
+		GRAPHICS_LOG_FMT("[DRED] ID3D12DeviceRemovedExtendedData1 not available.\n");
 		return;
 	}
 
@@ -110,7 +110,7 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 	D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 breadcrumbsOutput{};
 	if (SUCCEEDED(dred->GetAutoBreadcrumbsOutput1(&breadcrumbsOutput)))
 	{
-		DEBUG_LOG_FMT("[DRED] -- Auto Breadcrumbs --------------------------\n");
+		GRAPHICS_LOG_FMT("[DRED] -- Auto Breadcrumbs --------------------------\n");
 
 		const D3D12_AUTO_BREADCRUMB_NODE1* node = breadcrumbsOutput.pHeadAutoBreadcrumbNode;
 		uint32_t						   nodeIndex = 0;
@@ -123,7 +123,7 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 			const uint32_t rawCount = node->pLastBreadcrumbValue ? *node->pLastBreadcrumbValue : 0u;
 			const uint32_t completedCount = std::min(rawCount, node->BreadcrumbCount);
 
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DRED]   Node[{}] CmdList='{}' CmdQueue='{}' completed={}/{}\n", nodeIndex, cmdListName, cmdQueueName,
 				completedCount, node->BreadcrumbCount
 			);
@@ -141,7 +141,7 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 					else if (i == completedCount && completedCount < node->BreadcrumbCount)
 						tag = "  <-- potential fault";
 
-					DEBUG_LOG_FMT(
+					GRAPHICS_LOG_FMT(
 						"[DRED]     op[{}] = {}{}\n", i, static_cast<uint32_t>(node->pCommandHistory[i]), tag
 					);
 				}
@@ -154,7 +154,7 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 				{
 					const auto&		  ctx = node->pBreadcrumbContexts[i];
 					const std::string ctxStr = ctx.pContextString ? Utils::WideToUtf8(ctx.pContextString) : "(null)";
-					DEBUG_LOG_FMT("[DRED]       Context[{}] BreadcrumbIndex={} '{}'\n", i, ctx.BreadcrumbIndex, ctxStr);
+					GRAPHICS_LOG_FMT("[DRED]       Context[{}] BreadcrumbIndex={} '{}'\n", i, ctx.BreadcrumbIndex, ctxStr);
 				}
 			}
 
@@ -164,14 +164,14 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 	}
 	else
 	{
-		DEBUG_LOG_FMT("[DRED] GetAutoBreadcrumbsOutput1 failed.\n");
+		GRAPHICS_LOG_FMT("[DRED] GetAutoBreadcrumbsOutput1 failed.\n");
 	}
 
 	// -- Page Fault ------------------------------------------
 	D3D12_DRED_PAGE_FAULT_OUTPUT1 pageFaultOutput{};
 	if (SUCCEEDED(dred->GetPageFaultAllocationOutput1(&pageFaultOutput)))
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DRED] -- Page Fault --------------------------------\n"
 			"[DRED]   Faulting VA: 0x{:016X}\n",
 			static_cast<uint64_t>(pageFaultOutput.PageFaultVA)
@@ -181,11 +181,11 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 		if (allocNode)
 		{
 			uint32_t count = 0;
-			DEBUG_LOG_FMT("[DRED]   [Existing allocations near fault]\n");
+			GRAPHICS_LOG_FMT("[DRED]   [Existing allocations near fault]\n");
 			while (allocNode && count < 64)
 			{
 				const char* name = allocNode->ObjectNameA ? allocNode->ObjectNameA : "(unnamed)";
-				DEBUG_LOG_FMT(
+				GRAPHICS_LOG_FMT(
 					"[DRED]     [{}] Type={} Name='{}' Object={}\n", count,
 					static_cast<uint32_t>(allocNode->AllocationType), name, static_cast<const void*>(allocNode->pObject)
 				);
@@ -198,11 +198,11 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 		if (freedNode)
 		{
 			uint32_t count = 0;
-			DEBUG_LOG_FMT("[DRED]   [Recently freed allocations near fault]\n");
+			GRAPHICS_LOG_FMT("[DRED]   [Recently freed allocations near fault]\n");
 			while (freedNode && count < 64)
 			{
 				const char* name = freedNode->ObjectNameA ? freedNode->ObjectNameA : "(unnamed)";
-				DEBUG_LOG_FMT(
+				GRAPHICS_LOG_FMT(
 					"[DRED]     [{}] Type={} Name='{}' Object={}\n", count,
 					static_cast<uint32_t>(freedNode->AllocationType), name, static_cast<const void*>(freedNode->pObject)
 				);
@@ -213,7 +213,7 @@ void DeviceRemovedMonitor::DumpDred(ID3D12Device* device)
 	}
 	else
 	{
-		DEBUG_LOG_FMT("[DRED] GetPageFaultAllocationOutput1 failed.\n");
+		GRAPHICS_LOG_FMT("[DRED] GetPageFaultAllocationOutput1 failed.\n");
 	}
 }
 
@@ -248,7 +248,7 @@ void DxDeviceGlobal::Initialize()
 			maxDedicatedVideoMemory = desc.DedicatedVideoMemory;
 			tempAdapter.As(&m_adapter);
 
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxDevice] Adapter candidate: {} ({} MB VRAM)\n", Utils::WideToUtf8(desc.Description),
 				desc.DedicatedVideoMemory / (1024 * 1024)
 			);
@@ -260,7 +260,7 @@ void DxDeviceGlobal::Initialize()
 	{
 		DXGI_ADAPTER_DESC1 finalDesc;
 		m_adapter->GetDesc1(&finalDesc);
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDevice] Selected adapter: {} ({} MB VRAM)\n", Utils::WideToUtf8(finalDesc.Description),
 			finalDesc.DedicatedVideoMemory / (1024 * 1024)
 		);
@@ -268,7 +268,7 @@ void DxDeviceGlobal::Initialize()
 
 	ThrowIfFailed(D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&m_device)));
 
-	DEBUG_LOG_FMT("[DxDevice] Device created successfully.\n");
+	GRAPHICS_LOG_FMT("[DxDevice] Device created successfully.\n");
 }
 
 void DxDeviceGlobal::Release()
@@ -282,7 +282,7 @@ void DxDeviceGlobal::Release()
 		m_device->Release();
 		if (refCount > 1)
 		{
-			DEBUG_LOG_FMT("[DxDevice] Warning: Device still has {} references!\n", refCount - 1);
+			GRAPHICS_LOG_FMT("[DxDevice] Warning: Device still has {} references!\n", refCount - 1);
 		}
 	}
 #endif
@@ -291,5 +291,5 @@ void DxDeviceGlobal::Release()
 	m_adapter.Reset();
 	m_factory.Reset();
 
-	DEBUG_LOG_FMT("[DxDevice] Released DxDeviceGlobal.\n");
+	GRAPHICS_LOG_FMT("[DxDevice] Released DxDeviceGlobal.\n");
 }
