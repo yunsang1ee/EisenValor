@@ -93,6 +93,9 @@
     <Filter Include="03. Packets\PacketHandler\GameServerPacketHandler">
       <UniqueIdentifier>{b6a69420-c3f5-4b1b-abca-81bf4c87918d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. DB">
+      <UniqueIdentifier>{3b461bb7-09e9-4aa3-8fbd-478dbca0d2b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

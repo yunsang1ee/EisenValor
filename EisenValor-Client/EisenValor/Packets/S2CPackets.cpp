@@ -1742,15 +1742,6 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	return false;
 }
 
-bool NetBridge::S2C::Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt)
-{
-	// TODO: SC_DEAD_PACKET
-
-	std::cout << "Handle_SC_DEAD_PACKET!, ID: " << recvPkt.obj_id() << std::endl;
-
-	return false;
-}
-
 bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES::SC_PING_PACKET& recvPkt)
 {
 	// Ping 패킷 수신 시, Pong 패킷 전송

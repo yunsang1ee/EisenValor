@@ -315,20 +315,6 @@ table CS_ENTER_GAME_WORLD_PACKET {
 	player_id: uint32;
 }
 
-table SC_DEAD_PACKET {
-	obj_id: uint64;
-}
-
-table SC_START_ANIMATION {
-	obj_id: uint64;
-	anim_name: string;
-}
-
-table SC_END_ANIMATION {
-	obj_id: uint64;
-	anim_name: string;
-}
-
 table CS_UPDATE_PLAYER_STATE_PACKET {
 	player_state: uint8;
 }

@@ -82,7 +82,7 @@ void GameServer::Contents::NavAgent::StopMove()
 {
 	if(m_agentIdx != -1) {
 		m_navSystem->ResetMoveTarget(m_agentIdx);
-	}
+	} 
 }
 
 void GameServer::Contents::NavAgent::Remove()
