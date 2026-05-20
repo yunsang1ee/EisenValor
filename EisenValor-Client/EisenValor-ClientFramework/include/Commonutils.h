@@ -52,11 +52,11 @@ inline std::string WideToUtf8(const wchar_t* wstr)
 
 #pragma region DebugHelpers
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
 #include <fstream>
 #include <iostream>
 #include <format>
-#include <mutex>
+#include <mutex>	
 #include <windows.h>
 namespace Utils
 {
