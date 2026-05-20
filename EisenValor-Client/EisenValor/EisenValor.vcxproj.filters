@@ -160,6 +160,12 @@
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
+    <ClInclude Include="RenderData\RestirPrimaryHitCurrentRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RestirReservoirInitialRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
     <ClInclude Include="Scene\LoginScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
@@ -394,7 +400,7 @@
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
       <Filter>Shaders\Raytracing</Filter>
     </None>
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+    <None Include="Resource\Shader\RaytracingRestirPT.hlsl">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli">
@@ -410,6 +416,9 @@
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingPostProcess.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirReservoir.hlsli">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\FullscreenToneMap.hlsl">

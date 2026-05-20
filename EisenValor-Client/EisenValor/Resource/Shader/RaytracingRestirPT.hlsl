@@ -5,9 +5,12 @@
 #include "RaytracingEnvironment.hlsli"
 #include "RaytracingPostProcess.hlsli"
 #include "RaytracingNormal.hlsli"
+#include "RestirReservoir.hlsli"
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
+RWStructuredBuffer<RestirPrimaryHit> g_restirPrimaryHitCurrent : register(u2, space0);
+RWStructuredBuffer<RestirReservoir> g_restirReservoirInitial : register(u3, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -25,6 +28,14 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
     uint g_emissionViewMode;
     uint g_environmentMode;
     uint g_frameConstantsPad0;
+};
+
+cbuffer RestirCandidateConstants : register(b3, space0)
+{
+    uint g_restirCandidateEnabled;
+    uint g_restirDebugView;
+    uint g_restirScreenWidth;
+    uint g_restirScreenHeight;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -104,6 +115,7 @@ void RayGenMain()
                      ^ 124623u;
 	
     float3 finalColor = 0.0f.xxx;
+    RestirReservoir restirReservoir = RestirMakeEmptyReservoir();
 	
     for (uint bounce = 0; bounce < SPP; ++bounce)
     {
@@ -130,8 +142,27 @@ void RayGenMain()
 				 ray,
 				 payload);
         finalColor += payload.color.rgb;
+
+        if (0u != g_restirCandidateEnabled && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
+        {
+            RestirPathSample candidate = RestirMakeCandidateFromPayload(payload);
+            RestirUpdateReservoir(restirReservoir, candidate, candidate.contributionTarget.w, RandomValue(rngSeed));
+        }
     }
     finalColor /= SPP;
+
+    if (0u != g_restirCandidateEnabled)
+    {
+        RestirPrimaryHit primaryHit = RestirPrimaryHitFromSample(restirReservoir.sample, restirReservoir.flags);
+        g_restirReservoirInitial[pixelIndex] = restirReservoir;
+        g_restirPrimaryHitCurrent[pixelIndex] = primaryHit;
+
+        if (0u != g_restirDebugView)
+        {
+            g_output[pixelCoord] = float4(RestirDebugColor(restirReservoir, primaryHit, g_restirDebugView - 1u), 1.0f);
+            return;
+        }
+    }
 
     float3 outputColor = finalColor;
     if (PT_DEBUG_VIEW == 0 && !UsePhysicalRenderingMode())
@@ -274,6 +305,18 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         }
     }
     roughness = max(roughness, 0.04);
+
+    if (payload.recursionDepth == 0)
+    {
+        payload.primaryHitPosition = hitPos;
+        payload.primaryHitDistance = RayTCurrent();
+        payload.primaryHitNormal = geometricNormal;
+        payload.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID;
+        payload.instanceId = inst.instanceID;
+        payload.materialId = geo.materialIdx;
+        payload.geometryId = inst.geoInfoBaseIdx + GeometryIndex();
+        payload.roughness = roughness;
+    }
 
     float3 V = -normalize(WorldRayDirection());
     float NdotVGeom = max(dot(geometricNormal, V), 0.0f);

@@ -25,12 +25,12 @@
 
 #include <unordered_map>
 #include <algorithm>
-#include <cmath>
 
 namespace
 {
 constexpr uint64_t kFnvOffsetBasis = 14695981039346656037ull;
 constexpr uint64_t kFnvPrime = 1099511628211ull;
+constexpr uint32_t kRestirCandidateDebugViewCount = 6;
 
 void HashBytes(uint64_t& hash, const void* data, size_t size)
 {
@@ -150,10 +150,8 @@ void DxrRenderPass::Initialize()
 
 		m_outputData[i].outputTexture = std::make_shared<DxTexture>();
 	}
-	for (auto& history : m_ptAccumHistory)
-	{
-		history = std::make_shared<DxTexture>();
-	}
+	m_restirPrimaryHitCurrentData.Get().primaryHitBuffer = std::make_shared<DxBuffer>();
+	m_restirReservoirInitialData.Get().reservoirBuffer = std::make_shared<DxBuffer>();
 
 	CreateRaytracingPipeline();
 	CreateRaytracingResources(m_width, m_height);
@@ -172,10 +170,8 @@ void DxrRenderPass::Release()
 		m_geoTableData[i].Release();
 		m_outputData[i].Release();
 	}
-	for (auto& history : m_ptAccumHistory)
-	{
-		history.reset();
-	}
+	m_restirPrimaryHitCurrentData.Release();
+	m_restirReservoirInitialData.Release();
 	m_device5.Reset();
 
 	m_initialized = false;
@@ -203,6 +199,12 @@ void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
 	renderContext->DeclareAccess<RaytracingOutputRenderData>(
 		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Write
 	);
+	renderContext->DeclareAccess<RestirPrimaryHitCurrentRenderData>(
+		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Write
+	);
+	renderContext->DeclareAccess<RestirReservoirInitialRenderData>(
+		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Write
+	);
 }
 
 void DxrRenderPass::OnResize(uint32_t width, uint32_t height)
@@ -213,7 +215,6 @@ void DxrRenderPass::OnResize(uint32_t width, uint32_t height)
 	m_height = height;
 
 	CreateRaytracingResources(m_width, m_height);
-	ResetTemporalAccumulation();
 }
 
 void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
@@ -246,69 +247,50 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		);
 	}
 
-	for (int i = 0; i < 2; ++i)
+	const uint32_t pixelCount = width * height;
+	if (pixelCount > 0)
 	{
-		auto& historyTex = m_ptAccumHistory[i];
-		if (!historyTex)
+		auto& primaryHitBuffer = m_restirPrimaryHitCurrentData.Get().primaryHitBuffer;
+		auto& reservoirBuffer = m_restirReservoirInitialData.Get().reservoirBuffer;
+
+		if (!primaryHitBuffer)
 		{
-			historyTex = std::make_shared<DxTexture>();
+			primaryHitBuffer = std::make_shared<DxBuffer>();
+		}
+		if (!reservoirBuffer)
+		{
+			reservoirBuffer = std::make_shared<DxBuffer>();
 		}
 
-		if (historyTex->HasSRV() || historyTex->HasUAV(0))
+		if (primaryHitBuffer->HasUAV())
 		{
 			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			historyTex->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			primaryHitBuffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+		}
+		if (reservoirBuffer->HasUAV())
+		{
+			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
+			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
+			reservoirBuffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
 		}
 
-		historyTex->Initialize(
-			device.GetDevice(), width, height, DXGI_FORMAT_R16G16B16A16_FLOAT,
-			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-			"DxrRenderPass_PTAccumHistory_" + std::to_string(i)
+		primaryHitBuffer->Initialize(
+			device.GetDevice(), static_cast<uint64_t>(pixelCount) * sizeof(RestirPrimaryHit), EBufferUsage::Structured,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			"DxrRenderPass_RestirPrimaryHitCurrent"
 		);
-		historyTex->CreateSRV(device.GetDevice(), descHeap);
-		historyTex->CreateUAV(device.GetDevice(), descHeap, 0);
+		primaryHitBuffer->CreateSRV(device.GetDevice(), descHeap, pixelCount, sizeof(RestirPrimaryHit));
+		primaryHitBuffer->CreateUAV(device.GetDevice(), descHeap, pixelCount, sizeof(RestirPrimaryHit));
+
+		reservoirBuffer->Initialize(
+			device.GetDevice(), static_cast<uint64_t>(pixelCount) * sizeof(RestirReservoir), EBufferUsage::Structured,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			"DxrRenderPass_RestirReservoirInitial"
+		);
+		reservoirBuffer->CreateSRV(device.GetDevice(), descHeap, pixelCount, sizeof(RestirReservoir));
+		reservoirBuffer->CreateUAV(device.GetDevice(), descHeap, pixelCount, sizeof(RestirReservoir));
 	}
-
-	ResetTemporalAccumulation();
-}
-
-void DxrRenderPass::ResetTemporalAccumulation()
-{
-	m_temporalAccumulationResetPending = true;
-	m_temporalAccumulationFrameCount = 0;
-	m_temporalAccumulationReadIndex = 0;
-	m_temporalAccumulationWriteIndex = 1;
-	m_hasTemporalCamera = false;
-}
-
-bool DxrRenderPass::ShouldResetTemporalAccumulation(const CameraRenderData* cameraData) const
-{
-	if (m_temporalAccumulationResetPending || nullptr == cameraData || !m_hasTemporalCamera)
-	{
-		return true;
-	}
-
-	const float dx = cameraData->cameraPosition.x - m_lastTemporalCameraPosition.x;
-	const float dy = cameraData->cameraPosition.y - m_lastTemporalCameraPosition.y;
-	const float dz = cameraData->cameraPosition.z - m_lastTemporalCameraPosition.z;
-	const float directionDx = cameraData->cameraDirection.x - m_lastTemporalCameraDirection.x;
-	const float directionDy = cameraData->cameraDirection.y - m_lastTemporalCameraDirection.y;
-	const float directionDz = cameraData->cameraDirection.z - m_lastTemporalCameraDirection.z;
-	const float positionDeltaSq = dx * dx + dy * dy + dz * dz;
-	const float directionDeltaSq = directionDx * directionDx + directionDy * directionDy + directionDz * directionDz;
-	if (positionDeltaSq > 0.0001f || directionDeltaSq > 0.000001f)
-	{
-		return true;
-	}
-
-	if (std::abs(cameraData->fov - m_lastTemporalFov) > 0.0001f ||
-		std::abs(cameraData->aspectRatio - m_lastTemporalAspectRatio) > 0.0001f)
-	{
-		return true;
-	}
-
-	return false;
 }
 
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
@@ -706,11 +688,6 @@ void DxrRenderPass::CollectSkinnedMeshData(
 
 void DxrRenderPass::CreateRaytracingPipeline()
 {
-	m_rtLitePipeline = std::make_unique<DxRtPipelineState>();
-	m_rtLitePipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingPrimary.hlsl", 2);
-	m_rtLiteShaderTable = std::make_unique<DxRtShaderTable>();
-	m_rtLiteShaderTable->Build(m_device5.Get(), m_rtLitePipeline.get(), 1);
-
 	m_rtPipeline = std::make_unique<DxRtPipelineState>();
 	m_rtPipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
 	m_rtShaderTable = std::make_unique<DxRtShaderTable>();
@@ -720,6 +697,13 @@ void DxrRenderPass::CreateRaytracingPipeline()
 	m_ptPipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
 	m_ptShaderTable = std::make_unique<DxRtShaderTable>();
 	m_ptShaderTable->Build(m_device5.Get(), m_ptPipeline.get(), 1);
+
+	m_restirCandidatePipeline = std::make_unique<DxRtPipelineState>();
+	m_restirCandidatePipeline->Create(
+		m_device5.Get(), L"Resource/Shader/RaytracingRestirPT.hlsl", 19, 64, true
+	);
+	m_restirCandidateShaderTable = std::make_unique<DxRtShaderTable>();
+	m_restirCandidateShaderTable->Build(m_device5.Get(), m_restirCandidatePipeline.get(), 1);
 
 	DEBUG_LOG_FMT("[DxrRenderPass] Raytracing pipelines created\n");
 }
@@ -738,33 +722,38 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	m_materialData.BeginFrame(frameIndex);
 	m_geoTableData.BeginFrame(frameIndex);
 	m_outputData.BeginFrame(frameIndex);
+	m_restirPrimaryHitCurrentData.BeginFrame(frameIndex);
+	m_restirReservoirInitialData.BeginFrame(frameIndex);
 	auto* instanceData = &m_instanceData.GetCurrent();
 	auto* materialData = &m_materialData.GetCurrent();
 	auto* geoTableData = &m_geoTableData.GetCurrent();
 	auto* outputData = &m_outputData.GetCurrent();
+	auto* restirPrimaryHitData = &m_restirPrimaryHitCurrentData.Get();
+	auto* restirReservoirData = &m_restirReservoirInitialData.Get();
 	auto& tlas = m_tlas[frameIndex];
 
 	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_F6))
 	{
 		m_usePathTracing = !m_usePathTracing;
-		ResetTemporalAccumulation();
 	}
 	if (input.GetInputDown(VK_F7))
 	{
-		m_useLiteRT = !m_useLiteRT;
-		ResetTemporalAccumulation();
+		m_useRestirPT = !m_useRestirPT;
 	}
 	if (input.GetInputDown(VK_F8))
 	{
 		m_usePhysicalEmissionView = !m_usePhysicalEmissionView;
-		ResetTemporalAccumulation();
 	}
 	if (input.GetInputDown(VK_F9))
 	{
 		m_useDayEnvironment = !m_useDayEnvironment;
-		ResetTemporalAccumulation();
 	}
+	if (input.GetInputDown(VK_F10))
+	{
+		m_restirCandidateDebugView = (m_restirCandidateDebugView + 1u) % kRestirCandidateDebugViewCount;
+	}
+	const bool restirCandidateMode = m_useRestirPT;
 
 	{
 		PixScopedCpuEvent setDataEvent(L"DXR.SetRenderContextData");
@@ -772,6 +761,8 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		renderContext->Set(m_materialData);
 		renderContext->Set(m_geoTableData);
 		renderContext->Set(m_outputData);
+		renderContext->Set(m_restirPrimaryHitCurrentData);
+		renderContext->Set(m_restirReservoirInitialData);
 	}
 
 	auto*				cameraData = renderContext->Get<CameraRenderData>();
@@ -810,15 +801,15 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap(), samplerHeap.GetHeap()};
 		cmdList4->SetDescriptorHeaps(2, heaps);
 
-		if (m_usePathTracing)
+		if (restirCandidateMode)
+		{
+			cmdList4->SetPipelineState1(m_restirCandidatePipeline->GetStateObject());
+			cmdList4->SetComputeRootSignature(m_restirCandidatePipeline->GetGlobalRootSignature());
+		}
+		else if (m_usePathTracing)
 		{
 			cmdList4->SetPipelineState1(m_ptPipeline->GetStateObject());
 			cmdList4->SetComputeRootSignature(m_ptPipeline->GetGlobalRootSignature());
-		}
-		else if (m_useLiteRT)
-		{
-			cmdList4->SetPipelineState1(m_rtLitePipeline->GetStateObject());
-			cmdList4->SetComputeRootSignature(m_rtLitePipeline->GetGlobalRootSignature());
 		}
 		else
 		{
@@ -830,52 +821,20 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputData->outputTexture->GetUAVIndex(0)));
 	}
 
-	bool resetTemporalAccumulation = true;
-	if (m_usePathTracing)
+	struct RaytracingFrameConstants
 	{
-		resetTemporalAccumulation = ShouldResetTemporalAccumulation(cameraData);
-		if (resetTemporalAccumulation)
-		{
-			m_temporalAccumulationFrameCount = 0;
-			m_temporalAccumulationReadIndex = 0;
-			m_temporalAccumulationWriteIndex = 1;
-		}
-	}
-	else
-	{
-		ResetTemporalAccumulation();
-	}
-
-	auto* temporalHistoryRead = m_ptAccumHistory[m_temporalAccumulationReadIndex].get();
-	auto* temporalHistoryWrite = m_ptAccumHistory[m_temporalAccumulationWriteIndex].get();
-	if (temporalHistoryRead && temporalHistoryRead->HasSRV())
-	{
-		cmdList4->SetComputeRootDescriptorTable(7, descHeap.GetGPUHandle(temporalHistoryRead->GetSRVIndex()));
-	}
-	if (temporalHistoryWrite && temporalHistoryWrite->HasUAV(0))
-	{
-		cmdList4->SetComputeRootDescriptorTable(8, descHeap.GetGPUHandle(temporalHistoryWrite->GetUAVIndex(0)));
-	}
-
-	struct TemporalAccumulationConstants
-	{
-		uint32_t frameCount;
-		uint32_t enabled;
-		uint32_t reset;
+		uint32_t frameSeed;
 		uint32_t emissionViewMode;
 		uint32_t environmentMode;
+		uint32_t pad0;
 	};
-	TemporalAccumulationConstants temporalConstants = {
-		m_temporalAccumulationFrameCount, m_usePathTracing ? 1u : 0u, resetTemporalAccumulation ? 1u : 0u,
-		m_usePhysicalEmissionView ? 1u : 0u, m_useDayEnvironment ? 1u : 0u
+	RaytracingFrameConstants frameConstants = {
+		m_raytracingFrameSeed++,
+		m_usePhysicalEmissionView ? 1u : 0u,
+		m_useDayEnvironment ? 1u : 0u,
+		0u
 	};
-	cmdList4->SetComputeRoot32BitConstants(9, 5, &temporalConstants, 0);
-
-	if (m_usePathTracing)
-	{
-		TransitionResourceIfNeeded(cmdList4.Get(), temporalHistoryRead, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		TransitionResourceIfNeeded(cmdList4.Get(), temporalHistoryWrite, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	}
+	cmdList4->SetComputeRoot32BitConstants(7, 4, &frameConstants, 0);
 
 	if (nullptr != cameraData)
 	{
@@ -909,8 +868,49 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		);
 	}
 
-	auto* shaderTable =
-		m_usePathTracing ? m_ptShaderTable.get() : (m_useLiteRT ? m_rtLiteShaderTable.get() : m_rtShaderTable.get());
+	auto* restirPrimaryHitBuffer = restirPrimaryHitData ? restirPrimaryHitData->primaryHitBuffer.get() : nullptr;
+	auto* restirReservoirBuffer = restirReservoirData ? restirReservoirData->reservoirBuffer.get() : nullptr;
+	const bool restirCandidateEnabled = restirCandidateMode && restirPrimaryHitBuffer && restirReservoirBuffer;
+	if (restirCandidateMode)
+	{
+		if (restirPrimaryHitBuffer && restirPrimaryHitBuffer->HasUAV())
+		{
+			TransitionResourceIfNeeded(
+				cmdList4.Get(), restirPrimaryHitBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			);
+			cmdList4->SetComputeRootDescriptorTable(
+				8, descHeap.GetGPUHandle(restirPrimaryHitBuffer->GetUAVHandle().GetIndex())
+			);
+		}
+		if (restirReservoirBuffer && restirReservoirBuffer->HasUAV())
+		{
+			TransitionResourceIfNeeded(
+				cmdList4.Get(), restirReservoirBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+			);
+			cmdList4->SetComputeRootDescriptorTable(
+				9, descHeap.GetGPUHandle(restirReservoirBuffer->GetUAVHandle().GetIndex())
+			);
+		}
+
+		struct RestirCandidateConstants
+		{
+			uint32_t enabled;
+			uint32_t debugView;
+			uint32_t screenWidth;
+			uint32_t screenHeight;
+		};
+		RestirCandidateConstants restirConstants = {
+			restirCandidateEnabled ? 1u : 0u,
+			restirCandidateEnabled ? m_restirCandidateDebugView : 0u,
+			m_width,
+			m_height
+		};
+		cmdList4->SetComputeRoot32BitConstants(10, 4, &restirConstants, 0);
+	}
+
+	auto* shaderTable = restirCandidateMode	 ? m_restirCandidateShaderTable.get()
+						: m_usePathTracing ? m_ptShaderTable.get()
+										  : m_rtShaderTable.get();
 	D3D12_DISPATCH_RAYS_DESC desc = {
 		.RayGenerationShaderRecord = shaderTable->GetRayGenRecord(),
 		.MissShaderTable = shaderTable->GetMissTable(),
@@ -926,24 +926,18 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		cmdList4->DispatchRays(&desc);
 	}
 
-	if (m_usePathTracing)
+	if (restirCandidateEnabled)
 	{
+		D3D12_RESOURCE_BARRIER restirBarriers[] = {
+			DxUtils::CreateUAVBarrier(restirPrimaryHitBuffer->GetResource()),
+			DxUtils::CreateUAVBarrier(restirReservoirBuffer->GetResource())
+		};
+		cmdList4->ResourceBarrier(2, restirBarriers);
 		TransitionResourceIfNeeded(
-			cmdList4.Get(), temporalHistoryWrite, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+			cmdList4.Get(), restirPrimaryHitBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 		);
-
-		m_temporalAccumulationReadIndex = m_temporalAccumulationWriteIndex;
-		m_temporalAccumulationWriteIndex = 1u - m_temporalAccumulationReadIndex;
-		++m_temporalAccumulationFrameCount;
-		m_temporalAccumulationResetPending = false;
-
-		if (nullptr != cameraData)
-		{
-			m_hasTemporalCamera = true;
-			m_lastTemporalCameraPosition = cameraData->cameraPosition;
-			m_lastTemporalCameraDirection = cameraData->cameraDirection;
-			m_lastTemporalFov = cameraData->fov;
-			m_lastTemporalAspectRatio = cameraData->aspectRatio;
-		}
+		TransitionResourceIfNeeded(
+			cmdList4.Get(), restirReservoirBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+		);
 	}
 }

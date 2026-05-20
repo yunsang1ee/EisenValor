@@ -454,7 +454,7 @@
         },
         {
           "code": "ArrowUp",
-          "legend": "\u2191",
+          "legend": "↑",
           "width": 1.15
         }
       ],
@@ -505,17 +505,17 @@
         },
         {
           "code": "ArrowLeft",
-          "legend": "\u2190",
+          "legend": "←",
           "width": 1.15
         },
         {
           "code": "ArrowDown",
-          "legend": "\u2193",
+          "legend": "↓",
           "width": 1.15
         },
         {
           "code": "ArrowRight",
-          "legend": "\u2192",
+          "legend": "→",
           "width": 1.15
         }
       ]
@@ -555,7 +555,7 @@
       "description": "SceneGlobal scene is not changed. GameFramework / DxrRenderPass inputs inherited by every active scene.",
       "bindings": {
         "Escape": {
-          "action": "\uc571 \uc885\ub8cc",
+          "action": "앱 종료",
           "category": "system",
           "note": "GameFramework::Update / DestroyWindow"
         },
@@ -565,32 +565,32 @@
           "note": "_DEBUG ResourceGlobal::CheckForReload. GameFramework shader reload placeholder also uses F5."
         },
         "F6": {
-          "action": "Path Tracing \ud1a0\uae00",
+          "action": "Path Tracing 토글",
           "category": "render",
           "note": "DxrRenderPass::m_usePathTracing"
         },
         "F7": {
-          "action": "Lite RT \ud1a0\uae00",
+          "action": "Lite RT 토글",
           "category": "render",
           "note": "DxrRenderPass::m_useLiteRT"
         },
         "F8": {
-          "action": "Physical Emission View \ud1a0\uae00",
+          "action": "Physical Emission View 토글",
           "category": "render",
           "note": "DxrRenderPass::m_usePhysicalEmissionView"
         },
         "F9": {
-          "action": "Day Environment \ud1a0\uae00",
+          "action": "Day Environment 토글",
           "category": "render",
           "note": "DxrRenderPass::m_useDayEnvironment"
         },
         "F11": {
-          "action": "Borderless Fullscreen \ud1a0\uae00",
+          "action": "Borderless Fullscreen 토글",
           "category": "system",
           "note": "SwapChain::ToggleBorderlessFullscreen"
         },
         "Enter": {
-          "action": "Fullscreen \ud1a0\uae00",
+          "action": "Fullscreen 토글",
           "category": "system",
           "note": "SwapChain::ToggleFullscreen",
           "combo": [
@@ -609,7 +609,7 @@
       ],
       "bindings": {
         "KeyR": {
-          "action": "\ud14c\uc2a4\ud2b8 \ub85c\uadf8\uc778",
+          "action": "테스트 로그인",
           "category": "system",
           "note": "Only compiled under APPLY_LOBBY_SERVER.",
           "component": "LoginControllerComponent"
@@ -625,19 +625,19 @@
       ],
       "bindings": {
         "F1": {
-          "action": "\ub85c\ube44 \ub098\uac00\uae30",
+          "action": "로비 나가기",
           "category": "system",
           "note": "CL_LEAVE_GAME_LOBBY",
           "component": "LobbySceneControllerComponent"
         },
         "F2": {
-          "action": "\ubc29 \ub9cc\ub4e4\uae30",
+          "action": "방 만들기",
           "category": "system",
           "note": "CL_MAKE_GAME_ROOM",
           "component": "LobbySceneControllerComponent"
         },
         "F3": {
-          "action": "\ubc29 \uc785\uc7a5",
+          "action": "방 입장",
           "category": "system",
           "note": "CL_ENTER_GAME_ROOM roomID=1",
           "component": "LobbySceneControllerComponent"
@@ -653,31 +653,31 @@
       ],
       "bindings": {
         "F1": {
-          "action": "\ubc29 \ub098\uac00\uae30",
+          "action": "방 나가기",
           "category": "system",
           "note": "CL_LEAVE_GAME_ROOM",
           "component": "RoomSceneControllerComponent"
         },
         "F2": {
-          "action": "\ud300 \ubcc0\uacbd",
+          "action": "팀 변경",
           "category": "system",
           "note": "CL_CHANGE_TEAM",
           "component": "RoomSceneControllerComponent"
         },
         "F3": {
-          "action": "\uc900\ube44",
+          "action": "준비",
           "category": "system",
           "note": "CL_READY_GAME",
           "component": "RoomSceneControllerComponent"
         },
         "F4": {
-          "action": "\ubd07 \ucd94\uac00",
+          "action": "봇 추가",
           "category": "spawn",
           "note": "CL_ADD_BOT",
           "component": "RoomSceneControllerComponent"
         },
         "KeyR": {
-          "action": "\uac8c\uc784 \uc2dc\uc791",
+          "action": "게임 시작",
           "category": "system",
           "note": "CL_START_GAME",
           "component": "RoomSceneControllerComponent"
@@ -696,7 +696,7 @@
       ],
       "bindings": {
         "F1": {
-          "action": "\ub9c8\uc6b0\uc2a4 Lock \ud1a0\uae00",
+          "action": "마우스 Lock 토글",
           "category": "system",
           "note": "InputGlobal::ToggleMouseLock",
           "component": "PlayerControllerComponent"
@@ -708,126 +708,134 @@
           "component": "VitalUIControllerComponent"
         },
         "KeyW": {
-          "action": "\uc55e \uc774\ub3d9",
+          "action": "앞 이동",
           "category": "movement",
           "component": "PlayerControllerComponent"
         },
         "KeyA": {
-          "action": "\uc67c\ucabd \uc774\ub3d9",
+          "action": "왼쪽 이동",
           "category": "movement",
           "component": "PlayerControllerComponent"
         },
         "KeyS": {
-          "action": "\ub4a4 \uc774\ub3d9",
+          "action": "뒤 이동",
           "category": "movement",
           "component": "PlayerControllerComponent"
         },
         "KeyD": {
-          "action": "\uc624\ub978\ucabd \uc774\ub3d9",
+          "action": "오른쪽 이동",
           "category": "movement",
           "component": "PlayerControllerComponent"
         },
         "ShiftLeft": {
-          "action": "\ub2ec\ub9ac\uae30",
+          "action": "달리기",
           "category": "movement",
           "note": "VK_SHIFT",
           "component": "PlayerControllerComponent"
         },
         "ShiftRight": {
-          "action": "\ub2ec\ub9ac\uae30",
+          "action": "달리기",
           "category": "movement",
           "note": "VK_SHIFT",
           "component": "PlayerControllerComponent"
         },
         "ControlLeft": {
-          "action": "\uc804\ud22c\ud0dc\uc138 \ud1a0\uae00",
+          "action": "전투태세 토글",
           "category": "combat",
           "note": "VK_CONTROL",
           "component": "PlayerControllerComponent"
         },
         "ControlRight": {
-          "action": "\uc804\ud22c\ud0dc\uc138 \ud1a0\uae00",
+          "action": "전투태세 토글",
           "category": "combat",
           "note": "VK_CONTROL",
           "component": "PlayerControllerComponent"
         },
         "AltLeft": {
-          "action": "\uc804\ud22c \ub300\uc0c1 \uc804\ud658",
+          "action": "전투 대상 전환",
           "category": "combat",
           "note": "VK_MENU / CHANGE_CAMERA_TARGET",
           "component": "BattleUIControllerComponent"
         },
         "AltRight": {
-          "action": "\uc804\ud22c \ub300\uc0c1 \uc804\ud658",
+          "action": "전투 대상 전환",
           "category": "combat",
           "note": "VK_MENU / CHANGE_CAMERA_TARGET",
           "component": "BattleUIControllerComponent"
         },
         "KeyE": {
-          "action": "\ud398\uc778\ud2b8 / \uacf5\uaca9 \uce94\uc2ac",
+          "action": "페인트 / 공격 캔슬",
           "category": "combat",
           "note": "Player fake packet. Restricted state requests CancelAttack before fake packet.",
           "component": "PlayerControllerComponent"
         },
         "KeyF": {
-          "action": "NPC \uc7a5\uc218 \uc0dd\uc131",
+          "action": "NPC 장수 생성",
           "category": "spawn",
           "note": "CS_GEN_NPC_GENREAL_PACKET",
           "component": "PlayerControllerComponent"
         },
         "KeyG": {
-          "action": "NPC \ubcd1\uc0ac \uc0dd\uc131",
+          "action": "NPC 병사 생성",
           "category": "spawn",
           "note": "CS_GEN_NPC_SOLDIER_PACKET",
           "component": "PlayerControllerComponent"
         },
         "Digit1": {
-          "action": "\uc544\uad70\uae30\uc9c0 \uc774\ub3d9",
+          "action": "아군기지 이동",
           "category": "waypoint",
           "component": "PlayerControllerComponent"
         },
         "Digit2": {
-          "action": "\uc801\uad70\uae30\uc9c0 \uc774\ub3d9",
+          "action": "적군기지 이동",
           "category": "waypoint",
           "component": "PlayerControllerComponent"
         },
         "Digit3": {
-          "action": "\uc810\ub839\uc9c0 A \uc774\ub3d9",
+          "action": "점령지 A 이동",
           "category": "waypoint",
           "component": "PlayerControllerComponent"
         },
         "Digit4": {
-          "action": "\uc810\ub839\uc9c0 B \uc774\ub3d9",
+          "action": "점령지 B 이동",
           "category": "waypoint",
           "component": "PlayerControllerComponent"
         },
         "Digit5": {
-          "action": "\ud68c\ubcf5\uc9c0 \uc774\ub3d9",
+          "action": "회복지 이동",
           "category": "waypoint",
           "component": "PlayerControllerComponent"
+        },
+        "F10": {
+          "action": "Debug View",
+          "category": "debug"
+        },
+        "F7": {
+          "action": "ReSTIR PT 토글",
+          "category": "render"
         }
       },
       "mouseBindings": {
         "MouseLeft": {
-          "action": "\uc57d\uacf5\uaca9",
+          "action": "약공격",
           "category": "combat",
           "note": "Neutral light attack or combat directional light attack.",
           "component": "PlayerControllerComponent / BattleUIControllerComponent"
         },
         "MouseRight": {
-          "action": "\uac15\uacf5\uaca9",
+          "action": "강공격",
           "category": "combat",
           "note": "Neutral heavy attack or combat directional heavy attack.",
           "component": "PlayerControllerComponent / BattleUIControllerComponent"
         },
         "MouseMiddle": {
-          "action": "\ubb34\uc7a5\ud574\uc81c",
+          "action": "무장해제",
           "category": "combat",
           "note": "Combat directional disarm attack.",
           "component": "BattleUIControllerComponent"
         },
         "MouseLeft+MouseRight": {
-          "action": "\ubc94\uc704\uacf5\uaca9",
+          "action": "범위공격",
           "category": "combat",
           "note": "Combat directional area attack. Input buffer accepts near-simultaneous LMB/RMB.",
           "combo": [

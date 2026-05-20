@@ -127,15 +127,84 @@ struct TerrainSurfaceGPUData
 	RAY_FLOAT4 layerMetallicRoughness[4];
 };
 
+#define RESTIR_PRIMARY_HIT_VALID (1 << 0)
+#define RESTIR_RESERVOIR_VALID (1 << 0)
+
+struct RestirPrimaryHit
+{
+	RAY_FLOAT4 positionDistance;
+
+	RAY_UINT packedNormal;
+	RAY_UINT packedRoughness;
+	RAY_UINT instanceId;
+	RAY_UINT materialId;
+	RAY_UINT geometryId;
+	RAY_UINT flags;
+};
+
+struct RestirPathSample
+{
+	RAY_FLOAT4 contributionTarget; //.rgb = sample path contribution; .w = unnormalized distribution p_hat(sample)
+	RAY_FLOAT4 throughputPdf;
+	RAY_FLOAT4 firstHitPositionDistance;
+
+	RAY_UINT packedFirstHitNormal;
+	RAY_UINT packedFirstHitRoughness;
+	RAY_UINT instanceId;
+	RAY_UINT materialId;
+	RAY_UINT geometryId;
+	RAY_UINT pathLength;
+};
+
+struct RestirReservoir
+{
+	RestirPathSample sample;
+
+	float	 resamplingWeightSum;
+	float	 selectedResamplingWeight;
+	RAY_UINT sampleCount;
+	RAY_UINT flags;
+};
+
 #ifdef __cplusplus
+static_assert(sizeof(RestirPrimaryHit) == 40);
+static_assert(sizeof(RestirPathSample) == 72);
+static_assert(sizeof(RestirReservoir) == 88);
 #pragma pack(pop)
 #else
 // --- HLSL Only Helpers ---
+
 struct RayPayload
 {
 	float3 color;
 	uint   recursionDepth;
+
+	float3 primaryHitPosition;
+	float  primaryHitDistance;
+	float3 primaryHitNormal;
+	uint   primaryHitFlags;
+
+	uint  instanceId;
+	uint  materialId;
+	uint  geometryId;
+	float roughness;
 };
+
+RayPayload MakeDefaultRayPayload(uint recursionDepth)
+{
+	RayPayload payload;
+	payload.color = 0.0f.xxx;
+	payload.recursionDepth = recursionDepth;
+	payload.primaryHitPosition = 0.0f.xxx;
+	payload.primaryHitDistance = -1.0f;
+	payload.primaryHitNormal = float3(0.0f, 1.0f, 0.0f);
+	payload.primaryHitFlags = 0u;
+	payload.instanceId = 0xffffffffu;
+	payload.materialId = 0xffffffffu;
+	payload.geometryId = 0xffffffffu;
+	payload.roughness = 1.0f;
+	return payload;
+}
 
 static const float PI = 3.14159265359f;
 static const float EPSILON = 0.0000001f;

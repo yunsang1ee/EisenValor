@@ -290,6 +290,8 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
+    <ClInclude Include="RenderData\RestirPrimaryHitCurrentRenderData.h" />
+    <ClInclude Include="RenderData\RestirReservoirInitialRenderData.h" />
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />
@@ -418,14 +420,15 @@ exit /b 0</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.clang-format" />
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="Resource\Shader\RaytracingRestirPT.hlsl" />
     <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli" />
     <None Include="Resource\Shader\RaytracingTerrain.hlsli" />
     <None Include="Resource\Shader\RaytracingEnvironment.hlsli" />
     <None Include="Resource\Shader\RaytracingLighting.hlsli" />
     <None Include="Resource\Shader\RaytracingPostProcess.hlsli" />
+    <None Include="Resource\Shader\RestirReservoir.hlsli" />
     <None Include="Resource\Shader\FullscreenToneMap.hlsl" />
     <None Include="Resource\Shader\UIVertexShader.hlsl" />
     <None Include="Resource\Shader\UIPixelShader.hlsl" />

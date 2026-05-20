@@ -10,4 +10,8 @@ public:
 	void OnStartImpl() override;
 	void CreateSceneObjects();
 	void OnEndImpl() override;
+
+private:
+	void CreateDebugNavMeshPreview();
+	void CreateDebugMapObjPreview();
 };

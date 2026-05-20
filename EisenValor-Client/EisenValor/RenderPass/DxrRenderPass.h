@@ -12,12 +12,14 @@
 #include "RenderData/MaterialRenderData.h"
 #include "RenderData/GeoTableRenderData.h"
 #include "RenderData/RaytracingOutputRenderData.h"
+#include "RenderData/RestirPrimaryHitCurrentRenderData.h"
+#include "RenderData/RestirReservoirInitialRenderData.h"
 
 class MeshComponent;
 class MeshResource;
 class MaterialResource;
 class DxBLAS;
-class CameraRenderData;
+class DxBuffer;
 
 class DxrRenderPass : public IRenderPass
 {
@@ -35,8 +37,6 @@ public:
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
-	void ResetTemporalAccumulation();
-	bool ShouldResetTemporalAccumulation(const CameraRenderData* cameraData) const;
 
 	void PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition);
 
@@ -55,17 +55,18 @@ private:
 	);
 
 private:
-	std::unique_ptr<DxRtPipelineState> m_rtLitePipeline;
 	std::unique_ptr<DxRtPipelineState> m_rtPipeline;
 	std::unique_ptr<DxRtPipelineState> m_ptPipeline;
-	std::unique_ptr<DxRtShaderTable>   m_rtLiteShaderTable;
+	std::unique_ptr<DxRtPipelineState> m_restirCandidatePipeline;
 	std::unique_ptr<DxRtShaderTable>   m_rtShaderTable;
 	std::unique_ptr<DxRtShaderTable>   m_ptShaderTable;
+	std::unique_ptr<DxRtShaderTable>   m_restirCandidateShaderTable;
 
 	std::unique_ptr<DxTLAS> m_tlas[3];
 
 	FrameBuffered<RaytracingOutputRenderData, 3> m_outputData;
-	std::shared_ptr<DxTexture>					 m_ptAccumHistory[2];
+	Transient<RestirPrimaryHitCurrentRenderData>		   m_restirPrimaryHitCurrentData;
+	Transient<RestirReservoirInitialRenderData>		   m_restirReservoirInitialData;
 
 	FrameBuffered<InstanceRenderData, 3> m_instanceData;
 	FrameBuffered<MaterialRenderData, 3> m_materialData;
@@ -79,18 +80,11 @@ private:
 
 	ComPtr<ID3D12Device5> m_device5;
 
-	bool		 m_initialized = false;
-	bool		 m_usePathTracing = false;
-	bool		 m_useLiteRT = false;
-	bool		 m_usePhysicalEmissionView = false;
-	bool		 m_useDayEnvironment = false;
-	bool		 m_temporalAccumulationResetPending = true;
-	bool		 m_hasTemporalCamera = false;
-	uint32_t	 m_temporalAccumulationFrameCount = 0;
-	uint32_t	 m_temporalAccumulationReadIndex = 0;
-	uint32_t	 m_temporalAccumulationWriteIndex = 1;
-	DX::XMFLOAT3 m_lastTemporalCameraPosition = {0.0f, 0.0f, 0.0f};
-	DX::XMFLOAT3 m_lastTemporalCameraDirection = {0.0f, 0.0f, 1.0f};
-	float		 m_lastTemporalFov = 0.0f;
-	float		 m_lastTemporalAspectRatio = 0.0f;
+	bool	 m_initialized = false;
+	bool	 m_usePathTracing = false;
+	bool	 m_useRestirPT = false;
+	bool	 m_usePhysicalEmissionView = false;
+	bool	 m_useDayEnvironment = false;
+	uint32_t m_restirCandidateDebugView = 0;
+	uint32_t m_raytracingFrameSeed = 0;
 };
