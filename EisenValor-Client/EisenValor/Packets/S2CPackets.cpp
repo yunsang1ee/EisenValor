@@ -1728,6 +1728,7 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
 			fsm->SetStance(static_cast<uint8_t>(recvPkt.stance_type()));
+			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 		}
 		// 디버깅
 		DEBUG_LOG_FMT(

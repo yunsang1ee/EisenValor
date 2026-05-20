@@ -332,13 +332,6 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
 			//// 피격 방향(1, 2, 3) & 공격 강도(0:Light, 1:Heavy) 반영
-			//uint8_t dir = fsm->GetCurAttackDir();
-			//uint8_t type = static_cast<uint8_t>(fsm->GetCurAttackType()); // 0 or 1
-			//
-			//uint8_t stunKey = 150 + (dir * 10) + type;
-			//
-			//anim->Play(stunKey, false, true);
-
 			// 기본 STUN
 			uint8_t dir = fsm->GetCurAttackDir();
 			uint8_t type = static_cast<uint8_t>(fsm->GetCurAttackType());
