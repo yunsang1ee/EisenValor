@@ -211,9 +211,9 @@ void AnimationComponent::UpdateBoneMatrices()
 				}
 			}
 		}
-		DEBUG_LOG_FMT(
+		/*DEBUG_LOG_FMT(
 			"[Animation] Summary - Bones: {}, Tracks: {}, Matched: {}\n", boneCount, tracks.size(), matchCount
-		);
+		);*/
 	}
 
 	float	 frameRate = m_currentAnimation->GetFrameRate();

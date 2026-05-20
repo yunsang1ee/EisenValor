@@ -1343,6 +1343,14 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 
 	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
+	auto*	   fsm = obj->GetComponent<FSMComponent>();
+
+	if (fsm &&
+		fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
+		fsm->GetCurStateType() == StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD))
+	{
+		return true;
+	}
 
 	// obj->GetTransform().SetPosition(pos);
 	// obj->GetTransform().SetRotation(rot);
@@ -1361,7 +1369,7 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	if (id != localID)
 	{
 		// 서버에서 보내준 state를 FSM에 전달
-		if (auto* fsm = obj->GetComponent<FSMComponent>())
+		if (fsm)
 		{
 			fsm->SetMoveDirection(recvPkt.move_dir());
 		}

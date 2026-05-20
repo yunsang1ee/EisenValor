@@ -87,8 +87,13 @@ void GameServer::Contents::NavAgent::StopMove()
 
 void GameServer::Contents::NavAgent::Remove()
 {
-	if(m_agentIdx != -1)
+	if (m_agentIdx != -1)
+	{
 		m_navSystem->RemoveAgent(m_agentIdx);
+		m_agentIdx = -1;
+		m_hasTarget = false;
+	}
+
 }
 
 void GameServer::Contents::NavAgent::SyncPosition(const Vec3& newPos, const Vec3& prevPos, float dt)
