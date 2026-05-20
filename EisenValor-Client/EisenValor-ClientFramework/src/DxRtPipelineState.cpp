@@ -5,7 +5,7 @@
 
 DxRtPipelineState::~DxRtPipelineState()
 {
-	DEBUG_LOG_FMT("[DxRtPipelineState] Destroyed\n");
+	GRAPHICS_LOG_FMT("[DxRtPipelineState] Destroyed\n");
 }
 
 void DxRtPipelineState::Create(ID3D12Device5* device, const std::wstring& shaderPath, uint32_t maxRecursionDepth)
@@ -15,7 +15,7 @@ void DxRtPipelineState::Create(ID3D12Device5* device, const std::wstring& shader
 	CreateGlobalRootSignature(device);
 	CreateStateObject(device, shaderPath, maxRecursionDepth);
 
-	DEBUG_LOG_FMT("[DxRtPipelineState] Created (MaxRecursion: {})\n", maxRecursionDepth);
+	GRAPHICS_LOG_FMT("[DxRtPipelineState] Created (MaxRecursion: {})\n", maxRecursionDepth);
 }
 
 void DxRtPipelineState::CreateGlobalRootSignature(ID3D12Device5* device)

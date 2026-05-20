@@ -20,7 +20,7 @@ void DxShaderCompilerGlobal::Initialize(std::wstring_view cacheDir)
 	m_cacheDirectory = cd.wstring();
 	std::filesystem::create_directories(m_cacheDirectory);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxShaderCompilerGlobal] Initialized. Cache: {}\n", std::filesystem::path(m_cacheDirectory).string()
 	);
 }
@@ -83,13 +83,13 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	{
 		if (!IsSourceModified(sourceFile, it->second.sourceTimestamp))
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxShaderCompiler] Cache hit (memory): {}\n", std::string(shaderName.begin(), shaderName.end())
 			);
 			return it->second.blob;
 		}
 
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxShaderCompiler] Source modified, recompiling: {}\n", std::string(shaderName.begin(), shaderName.end())
 		);
 	}
@@ -101,7 +101,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 		auto timestamp = std::filesystem::last_write_time(sourceFile);
 		m_memoryCache.try_emplace(std::wstring{shaderName}, cachedBlob, timestamp, sourceFile);
 
-		DEBUG_LOG_FMT("[DxShaderCompiler] Cache hit (disk): {}\n", std::string(shaderName.begin(), shaderName.end()));
+		GRAPHICS_LOG_FMT("[DxShaderCompiler] Cache hit (disk): {}\n", std::string(shaderName.begin(), shaderName.end()));
 		return cachedBlob;
 	}
 
@@ -109,7 +109,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	ComPtr<IDxcBlobEncoding> sourceBlob;
 	UINT32					 codePage = DXC_CP_UTF8;
 
-	DEBUG_LOG_FMT("[DxShaderCompiler] Loading file: {}\n", sourcePath.string());
+	GRAPHICS_LOG_FMT("[DxShaderCompiler] Loading file: {}\n", sourcePath.string());
 
 	ThrowIfFailed(m_dxcUtils->LoadFile(sourceFile.c_str(), &codePage, &sourceBlob));
 
@@ -183,7 +183,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 		}
 		else
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxShaderCompiler][ERROR] Shader: {} failed with HRESULT: 0x{:08X}, but no error blob available.\n",
 				std::string(shaderName.begin(), shaderName.end()), static_cast<uint32_t>(hrStatus)
 			);
@@ -191,7 +191,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 		ComPtr<IDxcBlobUtf16> outputText;
 		if (SUCCEEDED(result->GetOutput(DXC_OUT_TEXT, IID_PPV_ARGS(&outputText), nullptr)) && outputText)
 		{
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxShaderCompiler][INFO] Additional output:\n{}\n",
 				std::string(static_cast<const char*>(outputText->GetBufferPointer()), outputText->GetBufferSize())
 			);
@@ -204,7 +204,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shader), nullptr);
 	if (!shader)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxShaderCompiler][ERROR] No shader output for: {}\n", std::string(shaderName.begin(), shaderName.end())
 		);
 	}
@@ -213,7 +213,7 @@ ComPtr<IDxcBlob> DxShaderCompilerGlobal::CompileInternal(
 	auto timestamp = std::filesystem::last_write_time(sourceFile);
 	m_memoryCache.try_emplace(std::wstring{shaderName}, shader, timestamp, sourceFile);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxShaderCompiler] Compiled: {} (Entry: {}, Target: {})\n", std::string(shaderName.begin(), shaderName.end()),
 		std::string(entryPoint.begin(), entryPoint.end()), std::string(target.begin(), target.end())
 	);
@@ -230,7 +230,7 @@ void DxShaderCompilerGlobal::InvalidateShader(std::wstring_view shaderName)
 		std::filesystem::remove(cachePath);
 	}
 
-	DEBUG_LOG_FMT("[DxShaderCompiler] Invalidated: {}\n", std::string(shaderName.begin(), shaderName.end()));
+	GRAPHICS_LOG_FMT("[DxShaderCompiler] Invalidated: {}\n", std::string(shaderName.begin(), shaderName.end()));
 }
 
 void DxShaderCompilerGlobal::ClearAllCache()
@@ -238,7 +238,7 @@ void DxShaderCompilerGlobal::ClearAllCache()
 	m_memoryCache.clear();
 	std::filesystem::remove_all(m_cacheDirectory);
 	std::filesystem::create_directories(m_cacheDirectory);
-	DEBUG_LOG_FMT("[DxShaderCompiler] Cleared all cache.\n");
+	GRAPHICS_LOG_FMT("[DxShaderCompiler] Cleared all cache.\n");
 }
 
 bool DxShaderCompilerGlobal::IsShaderCached(std::wstring_view shaderName) const
@@ -295,7 +295,7 @@ void DxShaderCompilerGlobal::SaveToCache(std::wstring_view shaderName, std::wstr
 
 	if (!file)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxShaderCompiler][WARN] Failed to save cache: {}\n", std::string(shaderName.begin(), shaderName.end())
 		);
 		return;
@@ -371,7 +371,7 @@ void DxShaderCompilerGlobal::LogCompilationError(
 		static_cast<const char*>(errorBlob->GetBufferPointer()), errorBlob->GetBufferSize()
 	};
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxShaderCompiler][ERROR] Shader: {}\n  File: {}\n{}\n", std::string(shaderName.begin(), shaderName.end()),
 		std::string(filename.begin(), filename.end()), errorMsg
 	);

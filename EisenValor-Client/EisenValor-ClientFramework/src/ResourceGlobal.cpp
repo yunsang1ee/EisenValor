@@ -38,7 +38,7 @@
 void ResourceGlobal::Initialize()
 {
 	InitializeDefaultResources();
-	DEBUG_LOG_FMT("[ResourceGlobal] Initialized (ExeDir: {})\n", Utils::ExeDir().string());
+	RESOURCE_LOG_FMT("[ResourceGlobal] Initialized (ExeDir: {})\n", Utils::ExeDir().string());
 }
 
 void ResourceGlobal::Release()
@@ -47,7 +47,7 @@ void ResourceGlobal::Release()
 	m_resourceCache.clear();
 	m_guidToPath.clear();
 	m_pathToGuid.clear();
-	DEBUG_LOG_FMT("[ResourceGlobal] Released.\n");
+	RESOURCE_LOG_FMT("[ResourceGlobal] Released.\n");
 }
 
 void ResourceGlobal::InitializeDefaultResources()
@@ -89,10 +89,10 @@ bool ResourceGlobal::LoadRegistry(const std::filesystem::path& path)
 		m_guidToPath[entry.guid] = finalFullPath;
 		m_pathToGuid[finalFullPath.wstring()] = entry.guid;
 
-		DEBUG_LOG_FMT("[ResourceGlobal] Registered asset: GUID={}, Path={}\n", entry.guid, finalFullPath.string());
+		RESOURCE_LOG_FMT("[ResourceGlobal] Registered asset: GUID={}, Path={}\n", entry.guid, finalFullPath.string());
 	}
 
-	DEBUG_LOG_FMT("[ResourceGlobal] Registry Loaded: {} entries.\n", m_guidToPath.size());
+	RESOURCE_LOG_FMT("[ResourceGlobal] Registry Loaded: {} entries.\n", m_guidToPath.size());
 	return true;
 }
 
@@ -117,7 +117,7 @@ void ResourceGlobal::ProcessPendingLoads()
 	auto* uploadHeap = frame->GetUploadHeap();
 	DxScopedGpuEvent gpuEvent(context, L"Resource.ProcessPendingLoads");
 
-	DEBUG_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
+	RESOURCE_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
 
 	const uint64_t reservedFrameUploadBudget = 64ull * 1024ull * 1024ull;
 	const uint64_t maxUploadBudget = (uploadHeap->Capacity() > reservedFrameUploadBudget)
@@ -171,7 +171,7 @@ void ResourceGlobal::ProcessPendingLoads()
 					continue;
 				}
 
-				DEBUG_LOG_FMT("[ResourceGlobal] Deferring mesh upload to next frame: {}\n", task.path.string());
+				RESOURCE_LOG_FMT("[ResourceGlobal] Deferring mesh upload to next frame: {}\n", task.path.string());
 				break;
 			}
 
@@ -254,7 +254,7 @@ void ResourceGlobal::ProcessPendingLoads()
 					continue;
 				}
 
-				DEBUG_LOG_FMT("[ResourceGlobal] Deferring skinned mesh upload to next frame: {}\n", task.path.string());
+				RESOURCE_LOG_FMT("[ResourceGlobal] Deferring skinned mesh upload to next frame: {}\n", task.path.string());
 				break;
 			}
 
@@ -372,7 +372,7 @@ void ResourceGlobal::ProcessPendingLoads()
 					continue;
 				}
 
-				DEBUG_LOG_FMT("[ResourceGlobal] Deferring texture upload to next frame: {}\n", task.path.string());
+				RESOURCE_LOG_FMT("[ResourceGlobal] Deferring texture upload to next frame: {}\n", task.path.string());
 				break;
 			}
 
@@ -579,7 +579,7 @@ std::shared_ptr<AnimationResource> ResourceGlobal::LoadInternal<AnimationResourc
 	res->SetData(data);
 	res->MarkReady(true);
 
-	DEBUG_LOG_FMT("[ResourceGlobal] COMPLETED: Animation: {} (Tracks: {})\n", data.name, (uint32_t)data.tracks.size());
+	RESOURCE_LOG_FMT("[ResourceGlobal] COMPLETED: Animation: {} (Tracks: {})\n", data.name, (uint32_t)data.tracks.size());
 
 	return res;
 }
@@ -600,7 +600,7 @@ std::shared_ptr<SceneResource> ResourceGlobal::LoadInternal<SceneResource>(const
 	res->SetData(std::move(data));
 	res->MarkReady(true);
 
-	DEBUG_LOG_FMT(
+	RESOURCE_LOG_FMT(
 		"[ResourceGlobal] COMPLETED: Scene: {} (Nodes: {}, Components: {})\n", res->GetName(),
 		(uint32_t)res->GetNodes().size(), (uint32_t)res->GetComponents().size()
 	);

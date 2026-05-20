@@ -16,7 +16,7 @@ DxBuffer::~DxBuffer()
 
 		ReleaseAllViews(heap, fence);
 
-		DEBUG_LOG_FMT("[DxBuffer] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
+		GRAPHICS_LOG_FMT("[DxBuffer] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
 	}
 }
 
@@ -40,11 +40,11 @@ void DxBuffer::Initialize(
 
 		if (needsAutoRecreate)
 		{
-			DEBUG_LOG_FMT("[DxBuffer] Released views before resize (auto-recreate enabled): {}\n", name);
+			GRAPHICS_LOG_FMT("[DxBuffer] Released views before resize (auto-recreate enabled): {}\n", name);
 		}
 		else
 		{
-			DEBUG_LOG_FMT("[DxBuffer] Released views before resize: {}\n", name);
+			GRAPHICS_LOG_FMT("[DxBuffer] Released views before resize: {}\n", name);
 		}
 	}
 
@@ -74,7 +74,7 @@ void DxBuffer::Initialize(
 	case EBufferUsage::Constant:
 		if (sizeInBytes % 256 != 0)
 		{
-			DEBUG_LOG_FMT("[DxBuffer] WARNING: Constant buffer size ({} bytes) is not 256-byte aligned\n", sizeInBytes);
+			GRAPHICS_LOG_FMT("[DxBuffer] WARNING: Constant buffer size ({} bytes) is not 256-byte aligned\n", sizeInBytes);
 		}
 		initialState = D3D12_RESOURCE_STATE_COMMON;
 		break;
@@ -113,7 +113,7 @@ void DxBuffer::Initialize(
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
 
-	//DEBUG_LOG_FMT(
+	//GRAPHICS_LOG_FMT(
 	//	"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
 	//	static_cast<uint32_t>(resourceFlags)
 	//);
@@ -146,11 +146,11 @@ void DxBuffer::Initialize(
 
 		if (needsAutoRecreate)
 		{
-			DEBUG_LOG_FMT("[DxBuffer] Released views before resize (auto-recreate enabled): {}\n", name);
+			GRAPHICS_LOG_FMT("[DxBuffer] Released views before resize (auto-recreate enabled): {}\n", name);
 		}
 		else
 		{
-			DEBUG_LOG_FMT("[DxBuffer] Released views before resize: {}\n", name);
+			GRAPHICS_LOG_FMT("[DxBuffer] Released views before resize: {}\n", name);
 		}
 	}
 
@@ -171,7 +171,7 @@ void DxBuffer::Initialize(
 	case EBufferUsage::Constant:
 		if (sizeInBytes % 256 != 0)
 		{
-			DEBUG_LOG_FMT("[DxBuffer] WARNING: Constant buffer size ({} bytes) is not 256-byte aligned\n", sizeInBytes);
+			GRAPHICS_LOG_FMT("[DxBuffer] WARNING: Constant buffer size ({} bytes) is not 256-byte aligned\n", sizeInBytes);
 		}
 		break;
 
@@ -197,7 +197,7 @@ void DxBuffer::Initialize(
 	SetName(name);
 	InitializeResource(device, heapProps, D3D12_HEAP_FLAG_NONE, bufferDesc, initialState, nullptr);
 
-	//DEBUG_LOG_FMT(
+	//GRAPHICS_LOG_FMT(
 	//	"[DxBuffer] Buffer created: {}, {} bytes, Usage={}, Flags=0x{:X}\n", name, sizeInBytes, static_cast<int>(usage),
 	//	static_cast<uint32_t>(resourceFlags)
 	//);
@@ -215,16 +215,16 @@ void DxBuffer::CreateSRV(
 {
 	if (!IsValid())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create SRV on invalid buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Cannot create SRV on invalid buffer: {}\n", GetName());
 		return;
 	}
 
 	if (HasSRV())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] WARNING: SRV already exists for buffer: {} (Index={})\n", GetName(), m_srvHandle.GetIndex()
 		);
-		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseSRV() first to avoid leaks\n");
+		GRAPHICS_LOG_FMT("[DxBuffer] Call ReleaseSRV() first to avoid leaks\n");
 		return;
 	}
 
@@ -241,7 +241,7 @@ void DxBuffer::CreateSRV(
 
 	m_srvHandle = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBuffer] SRV created: {}, Index={}, {}x{} bytes, Format={}\n", GetName(), m_srvHandle.GetIndex(), numElements,
 		elementStride, static_cast<int>(format)
 	);
@@ -253,23 +253,23 @@ void DxBuffer::CreateUAV(
 {
 	if (!IsValid())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create UAV on invalid buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Cannot create UAV on invalid buffer: {}\n", GetName());
 		return;
 	}
 
 	if (HasUAV())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] WARNING: UAV already exists for buffer: {} (Index={})\n", GetName(), m_uavHandle.GetIndex()
 		);
-		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseUAV() first to avoid leaks\n");
+		GRAPHICS_LOG_FMT("[DxBuffer] Call ReleaseUAV() first to avoid leaks\n");
 		return;
 	}
 
 	auto desc = m_resource->GetDesc();
 	if (!(desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Buffer '{}' does not have UAV flag!\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Buffer '{}' does not have UAV flag!\n", GetName());
 		return;
 	}
 
@@ -286,7 +286,7 @@ void DxBuffer::CreateUAV(
 
 	m_uavHandle = heap.CreateUAV(device, m_resource.Get(), &uavDesc);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBuffer] UAV created: {}, Index={}, {}x{} bytes\n", GetName(), m_uavHandle.GetIndex(), numElements,
 		elementStride
 	);
@@ -296,16 +296,16 @@ void DxBuffer::CreateCBV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 {
 	if (!IsValid())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create CBV on invalid buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Cannot create CBV on invalid buffer: {}\n", GetName());
 		return;
 	}
 
 	if (HasCBV())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] WARNING: CBV already exists for buffer: {} (Index={})\n", GetName(), m_cbvHandle.GetIndex()
 		);
-		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseCBV() first to avoid leaks\n");
+		GRAPHICS_LOG_FMT("[DxBuffer] Call ReleaseCBV() first to avoid leaks\n");
 		return;
 	}
 
@@ -313,7 +313,7 @@ void DxBuffer::CreateCBV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 
 	if (alignedSize != m_sizeInBytes)
 	{
-		DEBUG_LOG_FMT("[DxBuffer] INFO: CBV size aligned from {} to {} bytes\n", m_sizeInBytes, alignedSize);
+		GRAPHICS_LOG_FMT("[DxBuffer] INFO: CBV size aligned from {} to {} bytes\n", m_sizeInBytes, alignedSize);
 	}
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {
@@ -322,7 +322,7 @@ void DxBuffer::CreateCBV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 
 	m_cbvHandle = heap.CreateCBV(device, &cbvDesc);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBuffer] CBV created: {}, Index={}, {} bytes (aligned)\n", GetName(), m_cbvHandle.GetIndex(), alignedSize
 	);
 }
@@ -331,16 +331,16 @@ void DxBuffer::CreateSRVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 {
 	if (!IsValid())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create SRV on invalid buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Cannot create SRV on invalid buffer: {}\n", GetName());
 		return;
 	}
 
 	if (HasSRV())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] WARNING: SRV already exists for buffer: {} (Index={})\n", GetName(), m_srvHandle.GetIndex()
 		);
-		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseSRV() first to avoid leaks\n");
+		GRAPHICS_LOG_FMT("[DxBuffer] Call ReleaseSRV() first to avoid leaks\n");
 		return;
 	}
 
@@ -360,7 +360,7 @@ void DxBuffer::CreateSRVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 		srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
 		m_srvHandle = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] SRV (auto-recreate, Structured) created: {}, Index={}, {}x{} bytes\n", GetName(),
 			m_srvHandle.GetIndex(), desc.numElements, desc.elementStride
 		);
@@ -376,7 +376,7 @@ void DxBuffer::CreateSRVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 		srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 
 		m_srvHandle = heap.CreateSRV(device, m_resource.Get(), &srvDesc);
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] SRV (auto-recreate, RawBuffer) created: {}, Index={}, {} elements\n", GetName(),
 			m_srvHandle.GetIndex(), desc.numElements
 		);
@@ -389,7 +389,7 @@ void DxBuffer::CreateSRVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 		srvDesc.RaytracingAccelerationStructure.Location = GetGPUAddress();
 
 		m_srvHandle = heap.CreateSRV(device, nullptr, &srvDesc);
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] SRV (auto-recreate, TLAS) created: {}, Index={}\n", GetName(), m_srvHandle.GetIndex()
 		);
 		break;
@@ -400,23 +400,23 @@ void DxBuffer::CreateUAVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 {
 	if (!IsValid())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create UAV on invalid buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Cannot create UAV on invalid buffer: {}\n", GetName());
 		return;
 	}
 
 	if (HasUAV())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] WARNING: UAV already exists for buffer: {} (Index={})\n", GetName(), m_uavHandle.GetIndex()
 		);
-		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseUAV() first to avoid leaks\n");
+		GRAPHICS_LOG_FMT("[DxBuffer] Call ReleaseUAV() first to avoid leaks\n");
 		return;
 	}
 
 	auto resDesc = m_resource->GetDesc();
 	if (!(resDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Buffer '{}' does not have UAV flag!\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Buffer '{}' does not have UAV flag!\n", GetName());
 		return;
 	}
 
@@ -435,7 +435,7 @@ void DxBuffer::CreateUAVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 
 	m_uavHandle = heap.CreateUAV(device, m_resource.Get(), &uavDesc);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBuffer] UAV (auto-recreate) created: {}, Index={}, {}x{} bytes\n", GetName(), m_uavHandle.GetIndex(),
 		desc.numElements, desc.elementStride
 	);
@@ -445,16 +445,16 @@ void DxBuffer::CreateCBVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 {
 	if (!IsValid())
 	{
-		DEBUG_LOG_FMT("[DxBuffer] ERROR: Cannot create CBV on invalid buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] ERROR: Cannot create CBV on invalid buffer: {}\n", GetName());
 		return;
 	}
 
 	if (HasCBV())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxBuffer] WARNING: CBV already exists for buffer: {} (Index={})\n", GetName(), m_cbvHandle.GetIndex()
 		);
-		DEBUG_LOG_FMT("[DxBuffer] Call ReleaseCBV() first to avoid leaks\n");
+		GRAPHICS_LOG_FMT("[DxBuffer] Call ReleaseCBV() first to avoid leaks\n");
 		return;
 	}
 
@@ -464,7 +464,7 @@ void DxBuffer::CreateCBVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 
 	if (alignedSize != m_sizeInBytes)
 	{
-		DEBUG_LOG_FMT("[DxBuffer] INFO: CBV size aligned from {} to {} bytes\n", m_sizeInBytes, alignedSize);
+		GRAPHICS_LOG_FMT("[DxBuffer] INFO: CBV size aligned from {} to {} bytes\n", m_sizeInBytes, alignedSize);
 	}
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {
@@ -473,7 +473,7 @@ void DxBuffer::CreateCBVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 
 	m_cbvHandle = heap.CreateCBV(device, &cbvDesc);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxBuffer] CBV (auto-recreate) created: {}, Index={}, {} bytes (aligned)\n", GetName(), m_cbvHandle.GetIndex(),
 		alignedSize
 	);
@@ -482,19 +482,19 @@ void DxBuffer::CreateCBVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 void DxBuffer::ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
 	m_srvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_SRV");
-	DEBUG_LOG_FMT("[DxBuffer] SRV released: {} (Fence={})\n", GetName(), fenceHandle.value);
+	GRAPHICS_LOG_FMT("[DxBuffer] SRV released: {} (Fence={})\n", GetName(), fenceHandle.value);
 }
 
 void DxBuffer::ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
 	m_uavHandle.Free(heap, fenceHandle, std::string(GetName()) + "_UAV");
-	DEBUG_LOG_FMT("[DxBuffer] UAV released: {} (Fence={})\n", GetName(), fenceHandle.value);
+	GRAPHICS_LOG_FMT("[DxBuffer] UAV released: {} (Fence={})\n", GetName(), fenceHandle.value);
 }
 
 void DxBuffer::ReleaseCBV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
 {
 	m_cbvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_CBV");
-	DEBUG_LOG_FMT("[DxBuffer] CBV released: {} (Fence={})\n", GetName(), fenceHandle.value);
+	GRAPHICS_LOG_FMT("[DxBuffer] CBV released: {} (Fence={})\n", GetName(), fenceHandle.value);
 }
 
 void DxBuffer::ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
@@ -503,7 +503,7 @@ void DxBuffer::ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& 
 	ReleaseUAV(heap, fenceHandle);
 	ReleaseCBV(heap, fenceHandle);
 
-	DEBUG_LOG_FMT("[DxBuffer] All views released: {}\n", GetName());
+	GRAPHICS_LOG_FMT("[DxBuffer] All views released: {}\n", GetName());
 }
 
 void DxBuffer::RecreateViews(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
@@ -511,19 +511,19 @@ void DxBuffer::RecreateViews(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 	if (m_srvDesc.has_value())
 	{
 		CreateSRVWithAutoRecreate(device, heap, m_srvDesc.value());
-		DEBUG_LOG_FMT("[DxBuffer] SRV auto-recreated after resize: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] SRV auto-recreated after resize: {}\n", GetName());
 	}
 
 	if (m_uavDesc.has_value())
 	{
 		CreateUAVWithAutoRecreate(device, heap, m_uavDesc.value());
-		DEBUG_LOG_FMT("[DxBuffer] UAV auto-recreated after resize: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] UAV auto-recreated after resize: {}\n", GetName());
 	}
 
 	if (m_shouldRecreateCBV)
 	{
 		CreateCBVWithAutoRecreate(device, heap);
-		DEBUG_LOG_FMT("[DxBuffer] CBV auto-recreated after resize: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] CBV auto-recreated after resize: {}\n", GetName());
 	}
 }
 
@@ -531,7 +531,7 @@ D3D12_VERTEX_BUFFER_VIEW DxBuffer::GetVertexBufferView(uint32_t stride) const
 {
 	if (m_usage != EBufferUsage::Vertex)
 	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: GetVertexBufferView called on non-vertex buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] WARNING: GetVertexBufferView called on non-vertex buffer: {}\n", GetName());
 	}
 
 	return {
@@ -543,7 +543,7 @@ D3D12_INDEX_BUFFER_VIEW DxBuffer::GetIndexBufferView(DXGI_FORMAT format) const
 {
 	if (m_usage != EBufferUsage::Index)
 	{
-		DEBUG_LOG_FMT("[DxBuffer] WARNING: GetIndexBufferView called on non-index buffer: {}\n", GetName());
+		GRAPHICS_LOG_FMT("[DxBuffer] WARNING: GetIndexBufferView called on non-index buffer: {}\n", GetName());
 	}
 
 	return {.BufferLocation = GetGPUAddress(), .SizeInBytes = static_cast<UINT>(m_sizeInBytes), .Format = format};

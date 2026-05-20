@@ -62,7 +62,7 @@ void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext
 
 	if (srcTexture->GetWidth() != m_swapChain->GetWidth() || srcTexture->GetHeight() != m_swapChain->GetHeight())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[HdrResolvePass] ERROR: Size mismatch! Src: {}x{}, BackBuffer: {}x{}\n", srcTexture->GetWidth(),
 			srcTexture->GetHeight(), m_swapChain->GetWidth(), m_swapChain->GetHeight()
 		);

@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <filesystem>
+#include "DebugLogConfig.h"
 
 #pragma region Utils
 namespace Utils
@@ -52,11 +53,11 @@ inline std::string WideToUtf8(const wchar_t* wstr)
 
 #pragma region DebugHelpers
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
 #include <fstream>
 #include <iostream>
 #include <format>
-#include <mutex>
+#include <mutex>	
 #include <windows.h>
 namespace Utils
 {
@@ -99,6 +100,18 @@ inline void DebugLogFmt(std::format_string<Args...> fmt, Args&&... args)
 #define DEBUG_LOG_FMT(...) Utils::DebugLogFmt(__VA_ARGS__)
 #else
 #define DEBUG_LOG_FMT(...) ((void)0)
+#endif
+
+#if ENABLE_GRAPHICS_DEBUG_LOG
+#define GRAPHICS_LOG_FMT(...) DEBUG_LOG_FMT(__VA_ARGS__)
+#else
+#define GRAPHICS_LOG_FMT(...) ((void)0)
+#endif
+
+#if ENABLE_RESOURCE_DEBUG_LOG
+#define RESOURCE_LOG_FMT(...) DEBUG_LOG_FMT(__VA_ARGS__)
+#else
+#define RESOURCE_LOG_FMT(...) ((void)0)
 #endif
 
 #pragma endregion

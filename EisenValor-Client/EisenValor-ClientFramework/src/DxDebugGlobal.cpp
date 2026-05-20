@@ -10,7 +10,7 @@ void DxDebugGlobal::Initialize()
 		debugController->EnableDebugLayer();
 
 		debugController->SetEnableGPUBasedValidation(TRUE);
-		DEBUG_LOG_FMT("[DxDebug] D3D12 Debug Layer & GPU Validation Enabled.\n");
+		GRAPHICS_LOG_FMT("[DxDebug] D3D12 Debug Layer & GPU Validation Enabled.\n");
 	}
 
 	ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings;
@@ -19,7 +19,7 @@ void DxDebugGlobal::Initialize()
 		dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 		dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 		dredSettings->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-		DEBUG_LOG_FMT("[DxDebug] DRED tracking enabled.\n");
+		GRAPHICS_LOG_FMT("[DxDebug] DRED tracking enabled.\n");
 	}
 #endif //_DEBUG
 }
@@ -45,7 +45,7 @@ void DxDebugGlobal::SetupDebugMessages(ID3D12Device* device)
 	filter.DenyList.pIDList = denyIds;
 
 	m_infoQueue->PushStorageFilter(&filter);
-	DEBUG_LOG_FMT("[DxDebug] InfoQueue configured (filtering INFO messages)\n");
+	GRAPHICS_LOG_FMT("[DxDebug] InfoQueue configured (filtering INFO messages)\n");
 #endif //_DEBUG
 }
 
@@ -99,7 +99,7 @@ void DxDebugGlobal::PrintDebugMessages()
 				break;
 			}
 			std::cout << color;
-			DEBUG_LOG_FMT("[DxDebugGlobal {}] {}", severity, pMessage->pDescription);
+			GRAPHICS_LOG_FMT("[DxDebugGlobal {}] {}", severity, pMessage->pDescription);
 			std::cout << "\033[0m\n";
 		}
 	}
@@ -111,7 +111,7 @@ void DxDebugGlobal::SetBreakOnSeverity(bool breakOnError, bool breakOnWarning)
 {
 	if (!m_infoQueue)
 	{
-		DEBUG_LOG_FMT("[DxDebug] WARNING: InfoQueue not initialized!\n");
+		GRAPHICS_LOG_FMT("[DxDebug] WARNING: InfoQueue not initialized!\n");
 		return;
 	}
 
@@ -119,7 +119,7 @@ void DxDebugGlobal::SetBreakOnSeverity(bool breakOnError, bool breakOnWarning)
 	m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, breakOnError ? TRUE : FALSE);
 	m_infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, breakOnWarning ? TRUE : FALSE);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxDebug] Break on error: {}, Break on warning: {}\n", breakOnError ? "ON" : "OFF",
 		breakOnWarning ? "ON" : "OFF"
 	);

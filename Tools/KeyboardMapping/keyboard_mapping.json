@@ -1,0 +1,850 @@
+{
+  "meta": {
+    "title": "EisenValor Input Mapping",
+    "version": "2026-05-15",
+    "description": "SceneGlobal-managed scene input mapping."
+  },
+  "categories": {
+    "system": {
+      "label": "System",
+      "color": "#d97963"
+    },
+    "render": {
+      "label": "Render",
+      "color": "#d7b55c"
+    },
+    "debug": {
+      "label": "Debug",
+      "color": "#c49ad8"
+    },
+    "movement": {
+      "label": "Movement",
+      "color": "#58aee6"
+    },
+    "waypoint": {
+      "label": "Waypoint",
+      "color": "#b7d9bd"
+    },
+    "combat": {
+      "label": "Combat",
+      "color": "#58b5d9"
+    },
+    "spawn": {
+      "label": "Spawn",
+      "color": "#b7d9bd"
+    },
+    "unassigned": {
+      "label": "Unassigned",
+      "color": "#70747d"
+    }
+  },
+  "keyboard": {
+    "rows": [
+      [
+        {
+          "code": "Escape",
+          "legend": "Esc",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.8
+        },
+        {
+          "code": "F1",
+          "legend": "F1",
+          "width": 1.15
+        },
+        {
+          "code": "F2",
+          "legend": "F2",
+          "width": 1.15
+        },
+        {
+          "code": "F3",
+          "legend": "F3",
+          "width": 1.15
+        },
+        {
+          "code": "F4",
+          "legend": "F4",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "F5",
+          "legend": "F5",
+          "width": 1.15
+        },
+        {
+          "code": "F6",
+          "legend": "F6",
+          "width": 1.15
+        },
+        {
+          "code": "F7",
+          "legend": "F7",
+          "width": 1.15
+        },
+        {
+          "code": "F8",
+          "legend": "F8",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "F9",
+          "legend": "F9",
+          "width": 1.15
+        },
+        {
+          "code": "F10",
+          "legend": "F10",
+          "width": 1.15
+        },
+        {
+          "code": "F11",
+          "legend": "F11",
+          "width": 1.15
+        },
+        {
+          "code": "F12",
+          "legend": "F12",
+          "width": 1.15
+        },
+        {
+          "type": "spacer",
+          "width": 0.6
+        },
+        {
+          "code": "PrintScreen",
+          "legend": "PrtSc",
+          "width": 1.15
+        },
+        {
+          "code": "ScrollLock",
+          "legend": "Scroll Lock",
+          "width": 1.15
+        },
+        {
+          "code": "Pause",
+          "legend": "Pause Break",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "Backquote",
+          "legend": "`",
+          "width": 1.05
+        },
+        {
+          "code": "Digit1",
+          "legend": "1",
+          "width": 1.05
+        },
+        {
+          "code": "Digit2",
+          "legend": "2",
+          "width": 1.05
+        },
+        {
+          "code": "Digit3",
+          "legend": "3",
+          "width": 1.05
+        },
+        {
+          "code": "Digit4",
+          "legend": "4",
+          "width": 1.05
+        },
+        {
+          "code": "Digit5",
+          "legend": "5",
+          "width": 1.05
+        },
+        {
+          "code": "Digit6",
+          "legend": "6",
+          "width": 1.05
+        },
+        {
+          "code": "Digit7",
+          "legend": "7",
+          "width": 1.05
+        },
+        {
+          "code": "Digit8",
+          "legend": "8",
+          "width": 1.05
+        },
+        {
+          "code": "Digit9",
+          "legend": "9",
+          "width": 1.05
+        },
+        {
+          "code": "Digit0",
+          "legend": "0",
+          "width": 1.05
+        },
+        {
+          "code": "Minus",
+          "legend": "-",
+          "width": 1.05
+        },
+        {
+          "code": "Equal",
+          "legend": "=",
+          "width": 1.05
+        },
+        {
+          "code": "Backspace",
+          "legend": "Backspace",
+          "width": 2.05
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "Insert",
+          "legend": "Insert",
+          "width": 1.15
+        },
+        {
+          "code": "Home",
+          "legend": "Home",
+          "width": 1.15
+        },
+        {
+          "code": "PageUp",
+          "legend": "PgUp",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "Tab",
+          "legend": "Tab",
+          "width": 1.55
+        },
+        {
+          "code": "KeyQ",
+          "legend": "Q",
+          "width": 1.05
+        },
+        {
+          "code": "KeyW",
+          "legend": "W",
+          "width": 1.05
+        },
+        {
+          "code": "KeyE",
+          "legend": "E",
+          "width": 1.05
+        },
+        {
+          "code": "KeyR",
+          "legend": "R",
+          "width": 1.05
+        },
+        {
+          "code": "KeyT",
+          "legend": "T",
+          "width": 1.05
+        },
+        {
+          "code": "KeyY",
+          "legend": "Y",
+          "width": 1.05
+        },
+        {
+          "code": "KeyU",
+          "legend": "U",
+          "width": 1.05
+        },
+        {
+          "code": "KeyI",
+          "legend": "I",
+          "width": 1.05
+        },
+        {
+          "code": "KeyO",
+          "legend": "O",
+          "width": 1.05
+        },
+        {
+          "code": "KeyP",
+          "legend": "P",
+          "width": 1.05
+        },
+        {
+          "code": "BracketLeft",
+          "legend": "[",
+          "width": 1.05
+        },
+        {
+          "code": "BracketRight",
+          "legend": "]",
+          "width": 1.05
+        },
+        {
+          "code": "Backslash",
+          "legend": "\\",
+          "width": 1.55
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "Delete",
+          "legend": "Delete",
+          "width": 1.15
+        },
+        {
+          "code": "End",
+          "legend": "End",
+          "width": 1.15
+        },
+        {
+          "code": "PageDown",
+          "legend": "PgDn",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "CapsLock",
+          "legend": "Caps Lock",
+          "width": 1.82
+        },
+        {
+          "code": "KeyA",
+          "legend": "A",
+          "width": 1.05
+        },
+        {
+          "code": "KeyS",
+          "legend": "S",
+          "width": 1.05
+        },
+        {
+          "code": "KeyD",
+          "legend": "D",
+          "width": 1.05
+        },
+        {
+          "code": "KeyF",
+          "legend": "F",
+          "width": 1.05
+        },
+        {
+          "code": "KeyG",
+          "legend": "G",
+          "width": 1.05
+        },
+        {
+          "code": "KeyH",
+          "legend": "H",
+          "width": 1.05
+        },
+        {
+          "code": "KeyJ",
+          "legend": "J",
+          "width": 1.05
+        },
+        {
+          "code": "KeyK",
+          "legend": "K",
+          "width": 1.05
+        },
+        {
+          "code": "KeyL",
+          "legend": "L",
+          "width": 1.05
+        },
+        {
+          "code": "Semicolon",
+          "legend": ";",
+          "width": 1.05
+        },
+        {
+          "code": "Quote",
+          "legend": "'",
+          "width": 1.05
+        },
+        {
+          "code": "Enter",
+          "legend": "Enter",
+          "width": 2.35
+        }
+      ],
+      [
+        {
+          "code": "ShiftLeft",
+          "legend": "Shift",
+          "width": 2.25
+        },
+        {
+          "code": "KeyZ",
+          "legend": "Z",
+          "width": 1.05
+        },
+        {
+          "code": "KeyX",
+          "legend": "X",
+          "width": 1.05
+        },
+        {
+          "code": "KeyC",
+          "legend": "C",
+          "width": 1.05
+        },
+        {
+          "code": "KeyV",
+          "legend": "V",
+          "width": 1.05
+        },
+        {
+          "code": "KeyB",
+          "legend": "B",
+          "width": 1.05
+        },
+        {
+          "code": "KeyN",
+          "legend": "N",
+          "width": 1.05
+        },
+        {
+          "code": "KeyM",
+          "legend": "M",
+          "width": 1.05
+        },
+        {
+          "code": "Comma",
+          "legend": ",",
+          "width": 1.05
+        },
+        {
+          "code": "Period",
+          "legend": ".",
+          "width": 1.05
+        },
+        {
+          "code": "Slash",
+          "legend": "/",
+          "width": 1.05
+        },
+        {
+          "code": "ShiftRight",
+          "legend": "Shift",
+          "width": 2.75
+        },
+        {
+          "type": "spacer",
+          "width": 0.8
+        },
+        {
+          "code": "ArrowUp",
+          "legend": "\u2191",
+          "width": 1.15
+        }
+      ],
+      [
+        {
+          "code": "ControlLeft",
+          "legend": "Ctrl",
+          "width": 1.35
+        },
+        {
+          "code": "MetaLeft",
+          "legend": "Win",
+          "width": 1.25
+        },
+        {
+          "code": "AltLeft",
+          "legend": "Alt",
+          "width": 1.35
+        },
+        {
+          "code": "Space",
+          "legend": "Space",
+          "width": 7.15
+        },
+        {
+          "code": "AltRight",
+          "legend": "Alt",
+          "width": 1.35
+        },
+        {
+          "code": "MetaRight",
+          "legend": "Win",
+          "width": 1.25
+        },
+        {
+          "code": "ContextMenu",
+          "legend": "Menu",
+          "width": 1.25
+        },
+        {
+          "code": "ControlRight",
+          "legend": "Ctrl",
+          "width": 1.35
+        },
+        {
+          "type": "spacer",
+          "width": 0.45
+        },
+        {
+          "code": "ArrowLeft",
+          "legend": "\u2190",
+          "width": 1.15
+        },
+        {
+          "code": "ArrowDown",
+          "legend": "\u2193",
+          "width": 1.15
+        },
+        {
+          "code": "ArrowRight",
+          "legend": "\u2192",
+          "width": 1.15
+        }
+      ]
+    ]
+  },
+  "mouse": {
+    "buttons": [
+      {
+        "code": "MouseLeft",
+        "legend": "LMB",
+        "zone": "left"
+      },
+      {
+        "code": "MouseMiddle",
+        "legend": "Wheel",
+        "zone": "middle"
+      },
+      {
+        "code": "MouseRight",
+        "legend": "RMB",
+        "zone": "right"
+      },
+      {
+        "code": "MouseLeft+MouseRight",
+        "legend": "LMB+RMB",
+        "zone": "wide",
+        "combo": [
+          "MouseLeft",
+          "MouseRight"
+        ]
+      }
+    ]
+  },
+  "scenes": {
+    "global": {
+      "label": "Global Inputs",
+      "description": "SceneGlobal scene is not changed. GameFramework / DxrRenderPass inputs inherited by every active scene.",
+      "bindings": {
+        "Escape": {
+          "action": "\uc571 \uc885\ub8cc",
+          "category": "system",
+          "note": "GameFramework::Update / DestroyWindow"
+        },
+        "F5": {
+          "action": "Asset Hot Reload",
+          "category": "debug",
+          "note": "_DEBUG ResourceGlobal::CheckForReload. GameFramework shader reload placeholder also uses F5."
+        },
+        "F6": {
+          "action": "Path Tracing \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_usePathTracing"
+        },
+        "F7": {
+          "action": "Lite RT \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_useLiteRT"
+        },
+        "F8": {
+          "action": "Physical Emission View \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_usePhysicalEmissionView"
+        },
+        "F9": {
+          "action": "Day Environment \ud1a0\uae00",
+          "category": "render",
+          "note": "DxrRenderPass::m_useDayEnvironment"
+        },
+        "F11": {
+          "action": "Borderless Fullscreen \ud1a0\uae00",
+          "category": "system",
+          "note": "SwapChain::ToggleBorderlessFullscreen"
+        },
+        "Enter": {
+          "action": "Fullscreen \ud1a0\uae00",
+          "category": "system",
+          "note": "SwapChain::ToggleFullscreen",
+          "combo": [
+            "Alt",
+            "Enter"
+          ]
+        }
+      },
+      "mouseBindings": {}
+    },
+    "LoginScene": {
+      "label": "LoginScene",
+      "description": "SceneGlobal.RegisterScene<LoginScene>(\"LoginScene\"). Uses LoginControllerComponent.",
+      "components": [
+        "LoginControllerComponent"
+      ],
+      "bindings": {
+        "KeyR": {
+          "action": "\ud14c\uc2a4\ud2b8 \ub85c\uadf8\uc778",
+          "category": "system",
+          "note": "Only compiled under APPLY_LOBBY_SERVER.",
+          "component": "LoginControllerComponent"
+        }
+      },
+      "mouseBindings": {}
+    },
+    "LobbyScene": {
+      "label": "LobbyScene",
+      "description": "SceneGlobal.RegisterScene<LobbyScene>(\"LobbyScene\"). Uses LobbySceneControllerComponent.",
+      "components": [
+        "LobbySceneControllerComponent"
+      ],
+      "bindings": {
+        "F1": {
+          "action": "\ub85c\ube44 \ub098\uac00\uae30",
+          "category": "system",
+          "note": "CL_LEAVE_GAME_LOBBY",
+          "component": "LobbySceneControllerComponent"
+        },
+        "F2": {
+          "action": "\ubc29 \ub9cc\ub4e4\uae30",
+          "category": "system",
+          "note": "CL_MAKE_GAME_ROOM",
+          "component": "LobbySceneControllerComponent"
+        },
+        "F3": {
+          "action": "\ubc29 \uc785\uc7a5",
+          "category": "system",
+          "note": "CL_ENTER_GAME_ROOM roomID=1",
+          "component": "LobbySceneControllerComponent"
+        }
+      },
+      "mouseBindings": {}
+    },
+    "RoomScene": {
+      "label": "RoomScene",
+      "description": "SceneGlobal.RegisterScene<RoomScene>(\"RoomScene\"). Uses RoomSceneControllerComponent.",
+      "components": [
+        "RoomSceneControllerComponent"
+      ],
+      "bindings": {
+        "F1": {
+          "action": "\ubc29 \ub098\uac00\uae30",
+          "category": "system",
+          "note": "CL_LEAVE_GAME_ROOM",
+          "component": "RoomSceneControllerComponent"
+        },
+        "F2": {
+          "action": "\ud300 \ubcc0\uacbd",
+          "category": "system",
+          "note": "CL_CHANGE_TEAM",
+          "component": "RoomSceneControllerComponent"
+        },
+        "F3": {
+          "action": "\uc900\ube44",
+          "category": "system",
+          "note": "CL_READY_GAME",
+          "component": "RoomSceneControllerComponent"
+        },
+        "F4": {
+          "action": "\ubd07 \ucd94\uac00",
+          "category": "spawn",
+          "note": "CL_ADD_BOT",
+          "component": "RoomSceneControllerComponent"
+        },
+        "KeyR": {
+          "action": "\uac8c\uc784 \uc2dc\uc791",
+          "category": "system",
+          "note": "CL_START_GAME",
+          "component": "RoomSceneControllerComponent"
+        }
+      },
+      "mouseBindings": {}
+    },
+    "SampleScene": {
+      "label": "SampleScene",
+      "description": "SceneGlobal.RegisterScene<SampleScene>(\"SampleScene\"). Uses map scene resource plus runtime player/UI components from packets.",
+      "components": [
+        "PlayerControllerComponent",
+        "BattleUIControllerComponent",
+        "VitalUIControllerComponent",
+        "StressTestComponent registered but not instantiated by default"
+      ],
+      "bindings": {
+        "F1": {
+          "action": "\ub9c8\uc6b0\uc2a4 Lock \ud1a0\uae00",
+          "category": "system",
+          "note": "InputGlobal::ToggleMouseLock",
+          "component": "PlayerControllerComponent"
+        },
+        "F2": {
+          "action": "HP Debug",
+          "category": "debug",
+          "note": "VitalUIControllerComponent current/max HP log. Active only for objects that own VitalUIControllerComponent.",
+          "component": "VitalUIControllerComponent"
+        },
+        "KeyW": {
+          "action": "\uc55e \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyA": {
+          "action": "\uc67c\ucabd \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyS": {
+          "action": "\ub4a4 \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyD": {
+          "action": "\uc624\ub978\ucabd \uc774\ub3d9",
+          "category": "movement",
+          "component": "PlayerControllerComponent"
+        },
+        "ShiftLeft": {
+          "action": "\ub2ec\ub9ac\uae30",
+          "category": "movement",
+          "note": "VK_SHIFT",
+          "component": "PlayerControllerComponent"
+        },
+        "ShiftRight": {
+          "action": "\ub2ec\ub9ac\uae30",
+          "category": "movement",
+          "note": "VK_SHIFT",
+          "component": "PlayerControllerComponent"
+        },
+        "ControlLeft": {
+          "action": "\uc804\ud22c\ud0dc\uc138 \ud1a0\uae00",
+          "category": "combat",
+          "note": "VK_CONTROL",
+          "component": "PlayerControllerComponent"
+        },
+        "ControlRight": {
+          "action": "\uc804\ud22c\ud0dc\uc138 \ud1a0\uae00",
+          "category": "combat",
+          "note": "VK_CONTROL",
+          "component": "PlayerControllerComponent"
+        },
+        "AltLeft": {
+          "action": "\uc804\ud22c \ub300\uc0c1 \uc804\ud658",
+          "category": "combat",
+          "note": "VK_MENU / CHANGE_CAMERA_TARGET",
+          "component": "BattleUIControllerComponent"
+        },
+        "AltRight": {
+          "action": "\uc804\ud22c \ub300\uc0c1 \uc804\ud658",
+          "category": "combat",
+          "note": "VK_MENU / CHANGE_CAMERA_TARGET",
+          "component": "BattleUIControllerComponent"
+        },
+        "KeyE": {
+          "action": "\ud398\uc778\ud2b8 / \uacf5\uaca9 \uce94\uc2ac",
+          "category": "combat",
+          "note": "Player fake packet. Restricted state requests CancelAttack before fake packet.",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyF": {
+          "action": "NPC \uc7a5\uc218 \uc0dd\uc131",
+          "category": "spawn",
+          "note": "CS_GEN_NPC_GENREAL_PACKET",
+          "component": "PlayerControllerComponent"
+        },
+        "KeyG": {
+          "action": "NPC \ubcd1\uc0ac \uc0dd\uc131",
+          "category": "spawn",
+          "note": "CS_GEN_NPC_SOLDIER_PACKET",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit1": {
+          "action": "\uc544\uad70\uae30\uc9c0 \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit2": {
+          "action": "\uc801\uad70\uae30\uc9c0 \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit3": {
+          "action": "\uc810\ub839\uc9c0 A \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit4": {
+          "action": "\uc810\ub839\uc9c0 B \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        },
+        "Digit5": {
+          "action": "\ud68c\ubcf5\uc9c0 \uc774\ub3d9",
+          "category": "waypoint",
+          "component": "PlayerControllerComponent"
+        }
+      },
+      "mouseBindings": {
+        "MouseLeft": {
+          "action": "\uc57d\uacf5\uaca9",
+          "category": "combat",
+          "note": "Neutral light attack or combat directional light attack.",
+          "component": "PlayerControllerComponent / BattleUIControllerComponent"
+        },
+        "MouseRight": {
+          "action": "\uac15\uacf5\uaca9",
+          "category": "combat",
+          "note": "Neutral heavy attack or combat directional heavy attack.",
+          "component": "PlayerControllerComponent / BattleUIControllerComponent"
+        },
+        "MouseMiddle": {
+          "action": "\ubb34\uc7a5\ud574\uc81c",
+          "category": "combat",
+          "note": "Combat directional disarm attack.",
+          "component": "BattleUIControllerComponent"
+        },
+        "MouseLeft+MouseRight": {
+          "action": "\ubc94\uc704\uacf5\uaca9",
+          "category": "combat",
+          "note": "Combat directional area attack. Input buffer accepts near-simultaneous LMB/RMB.",
+          "combo": [
+            "MouseLeft",
+            "MouseRight"
+          ],
+          "component": "BattleUIControllerComponent"
+        }
+      }
+    },
+    "LoadingScene": {
+      "label": "LoadingScene",
+      "description": "SceneGlobal.RegisterScene<LoadingScene>(\"LoadingScene\"). No scene-specific input in current code.",
+      "components": [],
+      "bindings": {},
+      "mouseBindings": {}
+    }
+  },
+  "defaultScene": "SampleScene"
+}

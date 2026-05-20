@@ -98,7 +98,7 @@ private:
 		m_currentCapacity = newCapacity;
 		m_descriptorDirty = true;
 
-		DEBUG_LOG_FMT("[RenderDataSync] Resized GPU buffer to {} elements ({} bytes)", newCapacity, sizeInBytes);
+		GRAPHICS_LOG_FMT("[RenderDataSync] Resized GPU buffer to {} elements ({} bytes)", newCapacity, sizeInBytes);
 	}
 
 	void UploadData(DxCommandContext& context, DxUploadHeap& uploadHeap, size_t sizeInBytes)
@@ -120,7 +120,7 @@ private:
 		);
 		cmdList->ResourceBarrier(1, &barrier2);
 
-		// DEBUG_LOG_FMT("[RenderDataSync] Uploaded {} elements ({} bytes) to GPU\n", m_list.size(), sizeInBytes);
+		// GRAPHICS_LOG_FMT("[RenderDataSync] Uploaded {} elements ({} bytes) to GPU\n", m_list.size(), sizeInBytes);
 	}
 
 private:
