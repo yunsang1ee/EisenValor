@@ -270,6 +270,7 @@
     <ClInclude Include="include\CameraRenderData.h" />
     <ClInclude Include="include\CommonInclude.h" />
     <ClInclude Include="include\CommonUtils.h" />
+    <ClInclude Include="include\DebugLogConfig.h" />
     <ClInclude Include="include\ComponentStorage.h" />
     <ClInclude Include="include\DenseList.h" />
     <ClInclude Include="include\DxBLAS.h" />

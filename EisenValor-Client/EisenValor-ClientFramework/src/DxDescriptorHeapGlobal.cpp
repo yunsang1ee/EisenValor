@@ -111,7 +111,7 @@ DxDescriptorRange DxDescriptorTableBuilder::Commit(ID3D12Device* device, DxDescr
 
 void DxDescriptorHeapGlobal::Initialize()
 {
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] WARNING: Initialize() called without parameters. Call Initialize(device, "
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] WARNING: Initialize() called without parameters. Call Initialize(device, "
 				  "count) instead.\n");
 }
 
@@ -137,7 +137,7 @@ void DxDescriptorHeapGlobal::Initialize(ID3D12Device* device, uint32_t maxDescri
 
 	DxUtils::SetDebugName(m_heap.Get(), "BindlessHeap_CBV_SRV_UAV");
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxDescriptorHeapGlobal] Bindless Heap created: Capacity={}, IncrementSize={} bytes\n", maxDescriptorCount,
 		m_descriptorIncrementSize
 	);
@@ -150,12 +150,12 @@ void DxDescriptorHeapGlobal::Release()
 
 	if (used > 0)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] WARNING: Release() called with {} descriptors still allocated!\n", used
 		);
 	}
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Destroyed: Used={}/{}, Usage={:.1f}%\n", used, m_capacity, usage);
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] Destroyed: Used={}/{}, Usage={:.1f}%\n", used, m_capacity, usage);
 
 	m_heap.Reset();
 	m_freeSlots.clear();
@@ -183,7 +183,7 @@ DxDescriptorHandles DxDescriptorHeapGlobal::Allocate()
 		{
 			if (m_allocIndex >= m_capacity)
 			{
-				DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Heap full! ({}/{})\n", m_allocIndex, m_capacity);
+				GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Heap full! ({}/{})\n", m_allocIndex, m_capacity);
 				std::abort();
 			}
 			idx = m_allocIndex++;
@@ -193,7 +193,7 @@ DxDescriptorHandles DxDescriptorHeapGlobal::Allocate()
 #ifdef _DEBUG
 	if (idx < m_liveMarkers.size() && m_liveMarkers[idx] == 1)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Double-allocate index {}\n", idx);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Double-allocate index {}\n", idx);
 		std::abort();
 	}
 	if (idx >= m_liveMarkers.size())
@@ -213,14 +213,14 @@ void DxDescriptorHeapGlobal::FreeImmediate(uint32_t index)
 
 	if (index >= m_capacity)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Invalid index {} (capacity: {})\n", index, m_capacity);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Invalid index {} (capacity: {})\n", index, m_capacity);
 		return;
 	}
 
 #ifdef _DEBUG
 	if (index >= m_liveMarkers.size() || m_liveMarkers[index] == 0)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Double-free index {}\n", index);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Double-free index {}\n", index);
 		std::abort();
 	}
 	m_liveMarkers[index] = 0;
@@ -228,7 +228,7 @@ void DxDescriptorHeapGlobal::FreeImmediate(uint32_t index)
 
 	m_freeSlots.push_back(index);
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Freed slot: Index={} (available: {})\n", index, m_freeSlots.size());
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] Freed slot: Index={} (available: {})\n", index, m_freeSlots.size());
 }
 
 void DxDescriptorHeapGlobal::Free(uint32_t index, const FenceHandle& fenceHandle, std::string_view debugName)
@@ -247,7 +247,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::ReserveRange(uint32_t count)
 		return {0, 0};
 	if (auto fromFR = ReserveRangeFromFreeRanges(count); fromFR.count == count)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] Reserved range from freeRanges: StartIndex={}, Count={}\n", fromFR.startIndex,
 			count
 		);
@@ -257,7 +257,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::ReserveRange(uint32_t count)
 	SweepFreeSlotsIntoRanges();
 	if (auto fromFR2 = ReserveRangeFromFreeRanges(count); fromFR2.count == count)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] Reserved range after sweep: StartIndex={}, Count={}\n", fromFR2.startIndex, count
 		);
 		return fromFR2;
@@ -265,7 +265,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::ReserveRange(uint32_t count)
 
 	if (m_allocIndex + count > m_capacity)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] Not enough space for range! Required={}, Available={}\n", count,
 			m_capacity - m_allocIndex
 		);
@@ -282,7 +282,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::ReserveRange(uint32_t count)
 		m_liveMarkers[i] = 1;
 #endif
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Reserved range: StartIndex={}, Count={}\n", startIndex, count);
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] Reserved range: StartIndex={}, Count={}\n", startIndex, count);
 
 	return {startIndex, count};
 }
@@ -294,7 +294,7 @@ void DxDescriptorHeapGlobal::FreeRangeImmediate(uint32_t startIndex, uint32_t co
 	const uint32_t end = startIndex + count;
 	if (end > m_capacity)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: FreeRangeImmediate out of range: [{} , {})\n", startIndex, end);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: FreeRangeImmediate out of range: [{} , {})\n", startIndex, end);
 		return;
 	}
 
@@ -303,7 +303,7 @@ void DxDescriptorHeapGlobal::FreeRangeImmediate(uint32_t startIndex, uint32_t co
 	{
 		if (i >= m_liveMarkers.size() || m_liveMarkers[i] == 0)
 		{
-			DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Freeing non-allocated m_index {} in range\n", i);
+			GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ERROR: Freeing non-allocated m_index {} in range\n", i);
 			std::abort();
 		}
 		m_liveMarkers[i] = 0;
@@ -312,7 +312,7 @@ void DxDescriptorHeapGlobal::FreeRangeImmediate(uint32_t startIndex, uint32_t co
 
 	InsertFreeRangeAndMerge(startIndex, end);
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxDescriptorHeapGlobal] Freed range: Start={}, Count={}, freeRanges={}\n", startIndex, count,
 		m_freeRanges.size()
 	);
@@ -333,7 +333,7 @@ DxDescriptorHandles DxDescriptorHeapGlobal::CreateSRV(
 	auto handles = Allocate();
 	device->CreateShaderResourceView(resource, desc, handles.GetCPUHandle());
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] SRV created: GlobalIndex={}\n", handles.GetIndex());
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] SRV created: GlobalIndex={}\n", handles.GetIndex());
 
 	return handles;
 }
@@ -345,7 +345,7 @@ DxDescriptorHandles DxDescriptorHeapGlobal::CreateUAV(
 	auto handles = Allocate();
 	device->CreateUnorderedAccessView(resource, nullptr, desc, handles.GetCPUHandle());
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] UAV created: GlobalIndex={}\n", handles.GetIndex());
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] UAV created: GlobalIndex={}\n", handles.GetIndex());
 
 	return handles;
 }
@@ -355,7 +355,7 @@ DxDescriptorHandles DxDescriptorHeapGlobal::CreateCBV(ID3D12Device* device, cons
 	auto handles = Allocate();
 	device->CreateConstantBufferView(desc, handles.GetCPUHandle());
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] CBV created: GlobalIndex={}\n", handles.GetIndex());
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] CBV created: GlobalIndex={}\n", handles.GetIndex());
 
 	return handles;
 }
@@ -366,7 +366,7 @@ void DxDescriptorHeapGlobal::CreateSRVAt(
 {
 	if (globalIndex >= m_allocIndex)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] ERROR: Invalid m_index {} (current allocIndex: {})\n", globalIndex, m_allocIndex
 		);
 		std::abort();
@@ -375,7 +375,7 @@ void DxDescriptorHeapGlobal::CreateSRVAt(
 #ifdef _DEBUG
 	if (globalIndex >= m_liveMarkers.size() || m_liveMarkers[globalIndex] == 0)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] ERROR: Index {} is not allocated (Use-After-Free detected)\n", globalIndex
 		);
 		std::abort();
@@ -400,7 +400,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::CreateSRVRange(
 		device->CreateShaderResourceView(resources[i], desc, cpuHandle);
 	}
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] SRV Range created: Start={}, Count={}\n", range.startIndex, count);
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] SRV Range created: Start={}, Count={}\n", range.startIndex, count);
 
 	return range;
 }
@@ -413,7 +413,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::CreateSRVRange(
 {
 	if (resources.size() != descs.size())
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxDescriptorHeapGlobal] ERROR: Resource count ({}) != Desc count ({})\n", resources.size(), descs.size()
 		);
 		std::abort();
@@ -428,7 +428,7 @@ DxDescriptorRange DxDescriptorHeapGlobal::CreateSRVRange(
 		device->CreateShaderResourceView(resources[i], &descs[i], cpuHandle);
 	}
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxDescriptorHeapGlobal] SRV Range (individual descs) created: StartIndex={}, Count={}\n", range.startIndex,
 		count
 	);
@@ -450,7 +450,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeapGlobal::GetCPUHandle(uint32_t index)
 {
 	if (index >= m_capacity)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] GetCPUHandle index out of range: {} >= {}\n", index, m_capacity);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] GetCPUHandle index out of range: {} >= {}\n", index, m_capacity);
 		std::abort();
 	}
 
@@ -461,7 +461,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeapGlobal::GetGPUHandle(uint32_t index)
 {
 	if (index >= m_capacity)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] GetGPUHandle index out of range: {} >= {}\n", index, m_capacity);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] GetGPUHandle index out of range: {} >= {}\n", index, m_capacity);
 		std::abort();
 	}
 
@@ -474,7 +474,7 @@ void DxDescriptorHeapGlobal::Reset()
 	const auto used = GetAllocatedCount();
 	if (used > 0)
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] WARNING: Reset() called with {} descriptors still allocated!\n", used);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] WARNING: Reset() called with {} descriptors still allocated!\n", used);
 	}
 #endif
 	m_allocIndex = 0;
@@ -483,7 +483,7 @@ void DxDescriptorHeapGlobal::Reset()
 #ifdef _DEBUG
 	std::fill(m_liveMarkers.begin(), m_liveMarkers.end(), 0);
 #endif
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Reset: All descriptors cleared\n");
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] Reset: All descriptors cleared\n");
 }
 
 void DxDescriptorHeapGlobal::LogStats() const
@@ -491,7 +491,7 @@ void DxDescriptorHeapGlobal::LogStats() const
 	const auto	used = GetAllocatedCount();
 	const float usage = m_capacity > 0 ? (used * 100.0f / m_capacity) : 0.0f;
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxDescriptorHeapGlobal] Stats: Used={}/{} ({:.1f}%), IncrSize={}, freeSlots={}, freeRanges={}\n", used,
 		m_capacity, usage, m_descriptorIncrementSize, m_freeSlots.size(), m_freeRanges.size()
 	);
@@ -549,7 +549,7 @@ void DxDescriptorHeapGlobal::InsertFreeRangeAndMerge(uint32_t begin, uint32_t en
 #ifdef _DEBUG
 	if (!(begin < end && end <= m_capacity))
 	{
-		DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] ASSERT: InsertFreeRange invalid range [{}, {})\n", begin, end);
+		GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] ASSERT: InsertFreeRange invalid range [{}, {})\n", begin, end);
 		assert(false);
 	}
 #endif
@@ -610,5 +610,5 @@ void DxDescriptorHeapGlobal::SweepFreeSlotsIntoRanges()
 	InsertFreeRangeAndMerge(b, e);
 	m_freeSlots.clear();
 
-	DEBUG_LOG_FMT("[DxDescriptorHeapGlobal] Swept free slots into ranges: {} ranges\n", m_freeRanges.size());
+	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] Swept free slots into ranges: {} ranges\n", m_freeRanges.size());
 }

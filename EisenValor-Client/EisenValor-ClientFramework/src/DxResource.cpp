@@ -45,7 +45,7 @@ D3D12_GPU_VIRTUAL_ADDRESS DxResource::GetGPUAddress(uint64_t offset) const
 	auto desc = m_resource->GetDesc();
 	if (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER)
 	{
-		DEBUG_LOG_FMT("[DxResource] GetGPUAddress called on non-buffer resource: {}\n", m_name);
+		GRAPHICS_LOG_FMT("[DxResource] GetGPUAddress called on non-buffer resource: {}\n", m_name);
 		return 0;
 	}
 
@@ -104,7 +104,7 @@ void DxResource::InitializeResource(
 		DxUtils::SetDebugName(m_resource.Get(), m_name);
 	}
 
-	//DEBUG_LOG_FMT(
+	//GRAPHICS_LOG_FMT(
 	//	"[DxResource] Resource created: {}, {} bytes, State: 0x{:X}\n", m_name, m_sizeInBytes,
 	//	static_cast<uint32_t>(m_currentState)
 	//);
@@ -139,6 +139,6 @@ void DxResource::ReleaseResource()
 
 	if (!m_name.empty())
 	{
-		DEBUG_LOG_FMT("[DxResource] Resource queued for GC: {} (Fence={})\n", m_name, currentFence.value);
+		GRAPHICS_LOG_FMT("[DxResource] Resource queued for GC: {} (Fence={})\n", m_name, currentFence.value);
 	}
 }

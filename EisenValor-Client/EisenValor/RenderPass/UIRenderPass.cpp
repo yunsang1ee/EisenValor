@@ -39,7 +39,7 @@ void UIRenderPass::Initialize()
 	CreateInstanceBuffer();
 
 	m_initialized = true;
-	//	DEBUG_LOG_FMT("[UIRenderPass] Initialized ({}x{})", m_screenWidth, m_screenHeight);
+	//	GRAPHICS_LOG_FMT("[UIRenderPass] Initialized ({}x{})", m_screenWidth, m_screenHeight);
 }
 
 void UIRenderPass::Release()

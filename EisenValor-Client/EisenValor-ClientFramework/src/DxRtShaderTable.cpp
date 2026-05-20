@@ -6,7 +6,7 @@
 
 DxRtShaderTable::~DxRtShaderTable()
 {
-	DEBUG_LOG_FMT("[DxRtShaderTable] Destroyed\n");
+	GRAPHICS_LOG_FMT("[DxRtShaderTable] Destroyed\n");
 }
 
 void DxRtShaderTable::Build(ID3D12Device5* device, DxRtPipelineState* pipelineState, uint32_t numHitGroups)
@@ -57,7 +57,7 @@ void DxRtShaderTable::Build(ID3D12Device5* device, DxRtPipelineState* pipelineSt
 		memcpy(pData + offset, hitGroupID, shaderIdentifierSize);
 	}
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxRtShaderTable] Built:\n"
 		"  RayGen:    Offset={:4}, Size={:4}\n"
 		"  Miss:      Offset={:4}, Size={:4} (x{})\n"

@@ -22,7 +22,7 @@ DxFrameResource::~DxFrameResource()
 		m_fenceEvent = nullptr;
 	}
 
-	DEBUG_LOG_FMT("[DxFrameResource] Frame {} released\n", m_frameIndex);
+	GRAPHICS_LOG_FMT("[DxFrameResource] Frame {} released\n", m_frameIndex);
 }
 
 void DxFrameResource::Initialize(
@@ -50,7 +50,7 @@ void DxFrameResource::Initialize(
 		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
 	}
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxFrameResource] Frame {} initialized (Type: {}, UploadHeap: {} MB)\n", frameIndex, static_cast<int>(type),
 		uploadHeapSize / (1024 * 1024)
 	);
@@ -89,7 +89,7 @@ void DxFrameResource::ExecuteAndSignal(ID3D12CommandQueue* queue)
 		if (device)
 		{
 			HRESULT removedReason = device->GetDeviceRemovedReason(); 
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxFrameResource] Signal failed! DeviceRemovedReason=0x{:08X}\n", static_cast<uint32_t>(removedReason)
 			);
 
@@ -103,13 +103,13 @@ void DxFrameResource::ExecuteAndSignal(ID3D12CommandQueue* queue)
 				dred->GetAutoBreadcrumbsOutput1(&breadcrumbs);
 				dred->GetPageFaultAllocationOutput(&pageFault);
 
-				DEBUG_LOG_FMT("[DxFrameResource] DRED PageFault VA: 0x{:016X}\n", pageFault.PageFaultVA);
+				GRAPHICS_LOG_FMT("[DxFrameResource] DRED PageFault VA: 0x{:016X}\n", pageFault.PageFaultVA);
 
 				// Breadcrumb 체인 순회 - hang 직전 마지막 명령 확인
 				const auto* node = breadcrumbs.pHeadAutoBreadcrumbNode;
 				while (node)
 				{
-					DEBUG_LOG_FMT(
+					GRAPHICS_LOG_FMT(
 						"[DxFrameResource] DRED Breadcrumb: CmdList={}, LastOp={}/{}\n",
 						node->pCommandListDebugNameA ? node->pCommandListDebugNameA : "Unknown",
 						node->pLastBreadcrumbValue ? *node->pLastBreadcrumbValue : 0, node->BreadcrumbCount
