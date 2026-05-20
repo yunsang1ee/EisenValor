@@ -14,7 +14,7 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 
 	if (!device || !adapter)
 	{
-		DEBUG_LOG_FMT("[DxFeatureCaps] Warning: Null device or adapter provided\n");
+		GRAPHICS_LOG_FMT("[DxFeatureCaps] Warning: Null device or adapter provided\n");
 		return caps;
 	}
 
@@ -23,7 +23,7 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 	// D3D12 Options
 	if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &caps.options, sizeof(caps.options))))
 	{
-		DEBUG_LOG_FMT("[DxFeatureCaps] Warning: Failed to query D3D12 options\n");
+		GRAPHICS_LOG_FMT("[DxFeatureCaps] Warning: Failed to query D3D12 options\n");
 	}
 
 	// Root Signature 버전
@@ -41,7 +41,7 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 		if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &tempRootSig, sizeof(tempRootSig))))
 		{
 			caps.rootSignature.HighestVersion = tempRootSig.HighestVersion;
-			DEBUG_LOG_FMT("[DxFeatureCaps] Root Signature Version: 1.{}\n", static_cast<int>(version));
+			GRAPHICS_LOG_FMT("[DxFeatureCaps] Root Signature Version: 1.{}\n", static_cast<int>(version));
 			break;
 		}
 	}
@@ -50,7 +50,7 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 	caps.shaderModel = QueryHighestShaderModel(device);
 	if (caps.shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6)
 	{
-		DEBUG_LOG_FMT("[DxFeatureCaps] Warning: Unsupported shader model detected. Please update your drivers.\n");
+		GRAPHICS_LOG_FMT("[DxFeatureCaps] Warning: Unsupported shader model detected. Please update your drivers.\n");
 	}
 
 	// ===== 레이트레이싱 쿼리 =====
@@ -99,7 +99,7 @@ DxFeatureCaps DxFeatureCaps::Query(ID3D12Device* device, IDXGIAdapter4* adapter)
 	}
 	else
 	{
-		DEBUG_LOG_FMT("[DxFeatureCaps] Warning: Failed to get adapter description\n");
+		GRAPHICS_LOG_FMT("[DxFeatureCaps] Warning: Failed to get adapter description\n");
 		caps.adaptorDescription = L"Unknown GPU";
 	}
 
@@ -117,56 +117,56 @@ D3D12_FEATURE_DATA_SHADER_MODEL DxFeatureCaps::QueryHighestShaderModel(ID3D12Dev
 
 		if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
 		{
-			DEBUG_LOG_FMT("[DxFeatureCaps] Highest Shader Model: {}\n", GetShaderModelString(model));
+			GRAPHICS_LOG_FMT("[DxFeatureCaps] Highest Shader Model: {}\n", GetShaderModelString(model));
 			return shaderModel;
 		}
 	}
 
-	DEBUG_LOG_FMT("[DxFeatureCaps] Warning: No shader model supported, defaulting to 5.1\n");
+	GRAPHICS_LOG_FMT("[DxFeatureCaps] Warning: No shader model supported, defaulting to 5.1\n");
 	shaderModel.HighestShaderModel = D3D_SHADER_MODEL_5_1;
 	return shaderModel;
 }
 
 void DxFeatureCaps::LogCapabilities() const
 {
-	DEBUG_LOG_FMT("=== DxFeatureCaps Information ===\n");
+	GRAPHICS_LOG_FMT("=== DxFeatureCaps Information ===\n");
 	LogBasicInfo();
 	LogAdvancedFeatures();
 	LogMemoryInfo();
-	DEBUG_LOG_FMT("================================\n");
+	GRAPHICS_LOG_FMT("================================\n");
 }
 
 void DxFeatureCaps::LogBasicInfo() const
 {
-	DEBUG_LOG_FMT("--- Basic Information ---\n");
+	GRAPHICS_LOG_FMT("--- Basic Information ---\n");
 	std::string adapterName{adaptorDescription.begin(), adaptorDescription.end()};
-	DEBUG_LOG_FMT("GPU: {}\n", adapterName);
-	DEBUG_LOG_FMT("Vendor ID: 0x{:04X}\n", vendorId);
-	DEBUG_LOG_FMT("Device ID: 0x{:04X}\n", deviceId);
+	GRAPHICS_LOG_FMT("GPU: {}\n", adapterName);
+	GRAPHICS_LOG_FMT("Vendor ID: 0x{:04X}\n", vendorId);
+	GRAPHICS_LOG_FMT("Device ID: 0x{:04X}\n", deviceId);
 
-	DEBUG_LOG_FMT("Shader Model: {}\n", GetShaderModelString(shaderModel.HighestShaderModel));
-	DEBUG_LOG_FMT("Root Signature: 1.{}\n", std::to_string(static_cast<int>(rootSignature.HighestVersion)));
+	GRAPHICS_LOG_FMT("Shader Model: {}\n", GetShaderModelString(shaderModel.HighestShaderModel));
+	GRAPHICS_LOG_FMT("Root Signature: 1.{}\n", std::to_string(static_cast<int>(rootSignature.HighestVersion)));
 
-	DEBUG_LOG_FMT("Resource Binding Tier: {}\n", static_cast<int>(options.ResourceBindingTier));
-	DEBUG_LOG_FMT("Resource Heap Tier: {}\n", static_cast<int>(options.ResourceHeapTier));
+	GRAPHICS_LOG_FMT("Resource Binding Tier: {}\n", static_cast<int>(options.ResourceBindingTier));
+	GRAPHICS_LOG_FMT("Resource Heap Tier: {}\n", static_cast<int>(options.ResourceHeapTier));
 }
 
 void DxFeatureCaps::LogAdvancedFeatures() const
 {
-	DEBUG_LOG_FMT("--- Advanced Features ---\n");
+	GRAPHICS_LOG_FMT("--- Advanced Features ---\n");
 
-	DEBUG_LOG_FMT("Tearing Support: {}\n", supportsTearing ? "Yes" : "No");
-	DEBUG_LOG_FMT("Ray Tracing: {} ({})\n", supportsRayTracing ? "Yes" : "No", GetRaytracingTierString());
-	DEBUG_LOG_FMT("Mesh Shaders: {}\n", supportsMeshShaders ? "Yes" : "No");
-	DEBUG_LOG_FMT("Sampler Feedback: {}\n", supportsSamplerFeedback ? "Yes" : "No");
+	GRAPHICS_LOG_FMT("Tearing Support: {}\n", supportsTearing ? "Yes" : "No");
+	GRAPHICS_LOG_FMT("Ray Tracing: {} ({})\n", supportsRayTracing ? "Yes" : "No", GetRaytracingTierString());
+	GRAPHICS_LOG_FMT("Mesh Shaders: {}\n", supportsMeshShaders ? "Yes" : "No");
+	GRAPHICS_LOG_FMT("Sampler Feedback: {}\n", supportsSamplerFeedback ? "Yes" : "No");
 }
 
 void DxFeatureCaps::LogMemoryInfo() const
 {
-	DEBUG_LOG_FMT("--- Memory Information ---\n");
-	DEBUG_LOG_FMT("Dedicated Video Memory: {:.1f} MB\n", dedicatedVideoMemory / (1024.0f * 1024.0f));
-	DEBUG_LOG_FMT("Dedicated System Memory: {:.1f} MB\n", dedicatedSystemMemory / (1024.0f * 1024.0f));
-	DEBUG_LOG_FMT("Shared System Memory: {:.1f} MB\n", sharedSystemMemory / (1024.0f * 1024.0f));
+	GRAPHICS_LOG_FMT("--- Memory Information ---\n");
+	GRAPHICS_LOG_FMT("Dedicated Video Memory: {:.1f} MB\n", dedicatedVideoMemory / (1024.0f * 1024.0f));
+	GRAPHICS_LOG_FMT("Dedicated System Memory: {:.1f} MB\n", dedicatedSystemMemory / (1024.0f * 1024.0f));
+	GRAPHICS_LOG_FMT("Shared System Memory: {:.1f} MB\n", sharedSystemMemory / (1024.0f * 1024.0f));
 }
 
 std::string DxFeatureCaps::GetShaderModelString(D3D_SHADER_MODEL model)

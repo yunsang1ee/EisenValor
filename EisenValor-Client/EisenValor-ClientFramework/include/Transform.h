@@ -1,5 +1,7 @@
 #pragma once
 #include "IComponent.h"
+#include <utility>
+#include <vector>
 
 class Transform : public ComponentBase<Transform>
 {
@@ -11,6 +13,25 @@ public:
 
 	Transform();
 	~Transform();
+	Transform(Transform&& other) noexcept
+	{
+		MoveFrom(std::move(other));
+	}
+	Transform& operator=(Transform&& other) noexcept
+	{
+		if (this != &other)
+		{
+			if (m_parent.IsValid())
+			{
+				SetParent(Handle::Invalid());
+			}
+			MoveFrom(std::move(other));
+		}
+		return *this;
+	}
+
+	Transform(const Transform&) = delete;
+	Transform& operator=(const Transform&) = delete;
 
 	void OnUpdate(float deltaTime);
 
@@ -58,6 +79,28 @@ private:
 	void AddChildInternal(Handle child);
 	void EnsureWorldMatrixUpdated() const;
 	void MarkDirty();
+	void MoveFrom(Transform&& other) noexcept
+	{
+		m_localPosition = other.m_localPosition;
+		m_localRotationQuat = other.m_localRotationQuat;
+		m_localScale = other.m_localScale;
+		m_cachedEulerAngles = other.m_cachedEulerAngles;
+		m_eulerCacheDirty = other.m_eulerCacheDirty;
+		m_localMatrix = other.m_localMatrix;
+		m_worldMatrix = other.m_worldMatrix;
+		m_worldRotationQuat = other.m_worldRotationQuat;
+		m_worldScale = other.m_worldScale;
+		m_isDirty = other.m_isDirty;
+		m_parent = other.m_parent;
+		m_children = std::move(other.m_children);
+		SetHandle(other.GetHandle());
+		SetOwner(other.GetOwner());
+
+		other.m_parent = Handle::Invalid();
+		other.m_children.clear();
+		other.SetHandle(Handle::Invalid());
+		other.SetOwner(DenseListHandle<GameObject>::Invalid());
+	}
 	void UpdateLocalMatrix() const;
 	void UpdateWorldDerivedData() const;
 	void UpdateWorldMatrix() const;
@@ -79,3 +122,6 @@ private:
 	Handle				m_parent = Handle::Invalid();
 	std::vector<Handle> m_children;
 };
+
+void DebugSetChildWorldLogTarget(Transform::Handle parentHandle);
+bool DebugIsChildWorldLogTarget(Transform::Handle handle);

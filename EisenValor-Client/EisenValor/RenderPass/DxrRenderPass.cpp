@@ -132,12 +132,12 @@ void TransitionResourceIfNeeded(
 
 DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), m_height(height)
 {
-	DEBUG_LOG_FMT("[DxrRenderPass] Constructor: {}x{}\n", width, height);
+	GRAPHICS_LOG_FMT("[DxrRenderPass] Constructor: {}x{}\n", width, height);
 }
 
 void DxrRenderPass::Initialize()
 {
-	DEBUG_LOG_FMT("[DxrRenderPass] Initializing with resolution: {}x{}\n", m_width, m_height);
+	GRAPHICS_LOG_FMT("[DxrRenderPass] Initializing with resolution: {}x{}\n", m_width, m_height);
 
 	auto& deviceG = GLOBAL(DxDeviceGlobal);
 	auto* device = deviceG.GetDevice();
@@ -157,7 +157,7 @@ void DxrRenderPass::Initialize()
 	CreateRaytracingResources(m_width, m_height);
 
 	m_initialized = true;
-	DEBUG_LOG_FMT("[DxrRenderPass] Initialized\n");
+	GRAPHICS_LOG_FMT("[DxrRenderPass] Initialized\n");
 }
 
 void DxrRenderPass::Release()
@@ -175,7 +175,7 @@ void DxrRenderPass::Release()
 	m_device5.Reset();
 
 	m_initialized = false;
-	DEBUG_LOG_FMT("[DxrRenderPass] Released\n");
+	GRAPHICS_LOG_FMT("[DxrRenderPass] Released\n");
 }
 
 void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
@@ -209,7 +209,7 @@ void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
 
 void DxrRenderPass::OnResize(uint32_t width, uint32_t height)
 {
-	DEBUG_LOG_FMT("[DxrRenderPass] Resizing: {}x{} -> {}x{}\n", m_width, m_height, width, height);
+	GRAPHICS_LOG_FMT("[DxrRenderPass] Resizing: {}x{} -> {}x{}\n", m_width, m_height, width, height);
 
 	m_width = width;
 	m_height = height;
@@ -241,7 +241,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		outputTex->CreateSRV(device.GetDevice(), descHeap);
 		outputTex->CreateUAV(device.GetDevice(), descHeap, 0);
 
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxrRenderPass] Raytracing output {} created: {}x{}, UAV Index={}\n", i, width, height,
 			outputTex->GetUAVIndex(0)
 		);
@@ -390,7 +390,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 		if (!canRefit)
 		{
 			DxScopedGpuEvent buildEvent(context, L"DXR.BuildTLAS");
-			// DEBUG_LOG_FMT(
+			// GRAPHICS_LOG_FMT(
 			//	"[DxrRenderPass] TLAS Build requested: Frame={}, Instances={}, PreviousBuilt={}, PreviousCount={},
 			// PendingLoads={}, AnimatedInstances={}, StableFrames={}, TopologyHashPrev={}, TopologyHashNow={}\n",
 			//	frameIndex, tlasInstances.size(), tlas->IsBuilt(), tlas->GetInstanceCount(), pendingLoadsActive,
@@ -402,7 +402,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 		else
 		{
 			DxScopedGpuEvent refitEvent(context, L"DXR.RefitTLAS");
-			// DEBUG_LOG_FMT(
+			// GRAPHICS_LOG_FMT(
 			//	"[DxrRenderPass] TLAS Refit requested: Frame={}, Instances={}, StableFrames={}, AnimatedInstances={},
 			// TopologyHash={}\n", 	frameIndex, tlasInstances.size(), m_tlasStableFrameCount[frameIndex],
 			// hasAnimatedInstances, topologyHash
@@ -569,7 +569,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		auto* blas = skinnedMeshComp.GetBLAS(frameIndex);
 		if (nullptr == blas)
 		{
-			// DEBUG_LOG_FMT(
+			// GRAPHICS_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS initial build: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			auto newBlas = std::make_unique<DxBLAS>();
@@ -587,7 +587,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		}
 		else if (false == blas->IsBuilt())
 		{
-			// DEBUG_LOG_FMT(
+			// GRAPHICS_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS rebuild: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			PixScopedCommandListEvent blasEvent(cmdList, L"DXR.RebuildAnimatedBLAS");
@@ -599,7 +599,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		}
 		else
 		{
-			// DEBUG_LOG_FMT(
+			// GRAPHICS_LOG_FMT(
 			//	"[DxrRenderPass] Animated BLAS refit: Frame={}, Mesh={}\n", frameIndex, meshRes->GetName()
 			//);
 			PixScopedCommandListEvent blasEvent(cmdList, L"DXR.RefitAnimatedBLAS");
@@ -705,7 +705,7 @@ void DxrRenderPass::CreateRaytracingPipeline()
 	m_restirCandidateShaderTable = std::make_unique<DxRtShaderTable>();
 	m_restirCandidateShaderTable->Build(m_device5.Get(), m_restirCandidatePipeline.get(), 1);
 
-	DEBUG_LOG_FMT("[DxrRenderPass] Raytracing pipelines created\n");
+	GRAPHICS_LOG_FMT("[DxrRenderPass] Raytracing pipelines created\n");
 }
 
 void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)

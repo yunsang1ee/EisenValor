@@ -33,7 +33,7 @@ void DxRendererGlobal::Initialize()
 
 	if (m_featureCaps.rayTracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
 	{
-		DEBUG_LOG_FMT("[GameFramework] ERROR: DXR not supported on this device!\n");
+		GRAPHICS_LOG_FMT("[GameFramework] ERROR: DXR not supported on this device!\n");
 		m_isInitialized = false;
 		return;
 	}
@@ -56,20 +56,20 @@ void DxRendererGlobal::Initialize()
 		m_frameResources[i]->Initialize(device.GetDevice(), i);
 	}
 
-	DEBUG_LOG_FMT("[DxRendererGlobal] Initialized (SwapChain not created yet - call CreateSwapChain)\n");
+	GRAPHICS_LOG_FMT("[DxRendererGlobal] Initialized (SwapChain not created yet - call CreateSwapChain)\n");
 }
 
 void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t height)
 {
 	if (m_swapChain)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: SwapChain already exists!\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] WARNING: SwapChain already exists!\n");
 		return;
 	}	
 
 	if (!m_rtvDescriptorHeap)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: Renderer not initialized (RTV heap is null)\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: Renderer not initialized (RTV heap is null)\n");
 		return;
 	}
 
@@ -81,7 +81,7 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
 
-	DEBUG_LOG_FMT("[DxRendererGlobal] SwapChain created: {}x{}\n", width, height);
+	GRAPHICS_LOG_FMT("[DxRendererGlobal] SwapChain created: {}x{}\n", width, height);
 }
 
 void DxRendererGlobal::Release()
@@ -102,7 +102,7 @@ void DxRendererGlobal::Release()
 	m_swapChain.reset();
 	m_rtvDescriptorHeap.Reset();
 
-	DEBUG_LOG_FMT("[DxRendererGlobal] Released\n");
+	GRAPHICS_LOG_FMT("[DxRendererGlobal] Released\n");
 }
 
 void DxRendererGlobal::AddRenderPass(
@@ -113,7 +113,7 @@ void DxRendererGlobal::AddRenderPass(
 	{
 		if (entry.name == name)
 		{
-			DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: Pass already exists: {}\n", name);
+			GRAPHICS_LOG_FMT("[DxRendererGlobal] WARNING: Pass already exists: {}\n", name);
 			return;
 		}
 	}
@@ -123,7 +123,7 @@ void DxRendererGlobal::AddRenderPass(
 	m_renderPassesDirty = true;
 	RebuildRenderDataDeclarations();
 
-	DEBUG_LOG_FMT("[DxRendererGlobal] Pass added: {} (Priority: {})\n", name, static_cast<int32_t>(priority));
+	GRAPHICS_LOG_FMT("[DxRendererGlobal] Pass added: {} (Priority: {})\n", name, static_cast<int32_t>(priority));
 }
 
 void DxRendererGlobal::RemoveRenderPass(const std::string& name)
@@ -144,7 +144,7 @@ void DxRendererGlobal::RemoveRenderPass(const std::string& name)
 	if (iter != m_renderPasses.end())
 	{
 		m_renderPasses.erase(iter, m_renderPasses.end());
-		DEBUG_LOG_FMT("[DxRendererGlobal] Pass removed: {}\n", name);
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] Pass removed: {}\n", name);
 		m_renderPassesDirty = true;
 		RebuildRenderDataDeclarations();
 	}
@@ -168,7 +168,7 @@ void DxRendererGlobal::BeginFrame()
 
 	if (!m_isInitialized || !m_swapChain)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxRendererGlobal] ERROR: Not ready (init:{}, swapChain:{})\n", m_isInitialized, nullptr != m_swapChain
 		);
 		return;
@@ -186,7 +186,7 @@ void DxRendererGlobal::Render(Scene* scene)
 
 	if (nullptr == scene)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] WARNING: Scene is null!\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] WARNING: Scene is null!\n");
 		return;
 	}
 
@@ -251,7 +251,7 @@ void DxRendererGlobal::EndFrame()
 
 	if (!m_swapChain)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
 		return;
 	}
 
@@ -287,13 +287,13 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 {
 	if (!m_swapChain)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: SwapChain not initialized!\n");
 		return;
 	}
 
 	if (width == 0 || height == 0)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] Warning: Resize called with zero dimension: {}x{}\n", width, height);
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] Warning: Resize called with zero dimension: {}x{}\n", width, height);
 		return;
 	}
 
@@ -302,12 +302,12 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 
 	if (!commandQueue.WaitForIdle(5'000))
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: WaitForIdle timeout during resize!\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: WaitForIdle timeout during resize!\n");
 
 		HRESULT hr = device.GetDevice()->GetDeviceRemovedReason();
 		if (FAILED(hr))
 		{
-			DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr));
+			GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr));
 			return;
 		}
 	}
@@ -322,7 +322,7 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 		entry.pass->OnResize(width, height);
 	}
 
-	DEBUG_LOG_FMT("[DxRendererGlobal] Resize handled: {}x{}\n", width, height);
+	GRAPHICS_LOG_FMT("[DxRendererGlobal] Resize handled: {}x{}\n", width, height);
 }
 
 void DxRendererGlobal::ClearAllPasses()
@@ -333,7 +333,7 @@ void DxRendererGlobal::ClearAllPasses()
 	}
 	m_renderContext.Release();
 	m_renderPasses.clear();
-	DEBUG_LOG_FMT("[DxRendererGlobal] All passes cleared\n");
+	GRAPHICS_LOG_FMT("[DxRendererGlobal] All passes cleared\n");
 }
 
 void DxRendererGlobal::RebuildRenderDataDeclarations()
@@ -349,7 +349,7 @@ DxFrameResource* DxRendererGlobal::GetCurrentFrame() const
 {
 	if (!m_isInitialized)
 	{
-		DEBUG_LOG_FMT("[DxRendererGlobal] ERROR: Not initialized!\n");
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: Not initialized!\n");
 		return nullptr;
 	}
 	return m_frameResources[m_currentFrameIndex].get();

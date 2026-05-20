@@ -70,7 +70,7 @@ DxSwapChain::DxSwapChain(
 
 	LogMonitorInfo(); // 디버깅 정보 출력
 
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxSwapChain] SwapChain created: {}x{}, BackBuffers: {}, Format: {}, Tearing: {}\n", m_width, m_height,
 		m_backBufferCount, (int)m_format, m_supportsTearing
 	);
@@ -79,7 +79,7 @@ DxSwapChain::DxSwapChain(
 DxSwapChain::~DxSwapChain()
 {
 	ReleaseBackBuffers();
-	DEBUG_LOG_FMT("[DxSwapChain] DxSwapChain destroyed.\n");
+	GRAPHICS_LOG_FMT("[DxSwapChain] DxSwapChain destroyed.\n");
 }
 
 void DxSwapChain::ReleaseBackBuffers()
@@ -106,10 +106,10 @@ void DxSwapChain::Present(UINT syncInterval, UINT flags)
 	HRESULT hr = m_swapChain->Present(syncInterval, presentFlags);
 	if (FAILED(hr))
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Present failed (0x{:X}).\n", static_cast<uint32_t>(hr));
+		GRAPHICS_LOG_FMT("[DxSwapChain] Present failed (0x{:X}).\n", static_cast<uint32_t>(hr));
 
 		HRESULT removedReason = m_device->GetDeviceRemovedReason();
-		DEBUG_LOG_FMT("[DxSwapChain] Device removed reason: 0x{:X}\n", static_cast<uint32_t>(removedReason));
+		GRAPHICS_LOG_FMT("[DxSwapChain] Device removed reason: 0x{:X}\n", static_cast<uint32_t>(removedReason));
 
 		if (FAILED(removedReason))
 		{
@@ -146,7 +146,7 @@ void DxSwapChain::OnResize(
 {
 	if (newWidth == 0 || newHeight == 0)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] OnResize called with 0 width/height. Skipping resize.\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] OnResize called with 0 width/height. Skipping resize.\n");
 		return;
 	}
 
@@ -161,7 +161,7 @@ void DxSwapChain::OnResize(
 
 	CreateResources(device, m_gfxCommandQueueGlobal.GetQueue(), m_rtvDescriptorStart, m_rtvDescriptorSize);
 
-	DEBUG_LOG_FMT("[DxSwapChain] SwapChain resized to {}x{}. BackBuffers recreated.\n", m_width, m_height);
+	GRAPHICS_LOG_FMT("[DxSwapChain] SwapChain resized to {}x{}. BackBuffers recreated.\n", m_width, m_height);
 }
 
 void DxSwapChain::CreateResources(
@@ -196,14 +196,14 @@ ID3D12Resource* DxSwapChain::GetBackBuffer(uint32_t index) const
 {
 	if (index >= m_backBufferCount)
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxSwapChain] Warning: Invalid back buffer index {}. Max is {}.\n", index, m_backBufferCount - 1
 		);
 		return nullptr;
 	}
 	if (!m_backBuffers[index])
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Error: Back buffer {} is null\n", index);
+		GRAPHICS_LOG_FMT("[DxSwapChain] Error: Back buffer {} is null\n", index);
 		return nullptr;
 	}
 	return m_backBuffers[index].Get();
@@ -218,7 +218,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxSwapChain::GetBackBufferRTV(uint32_t index) const
 {
 	if (index >= m_backBufferCount)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Warning: Invalid RTV index {}. Max is {}.\n", index, m_backBufferCount - 1);
+		GRAPHICS_LOG_FMT("[DxSwapChain] Warning: Invalid RTV index {}. Max is {}.\n", index, m_backBufferCount - 1);
 		return {};
 	}
 
@@ -250,7 +250,7 @@ void DxSwapChain::SetFullscreen(bool enable)
 
 	if (!m_canExclusiveFullscreen || !m_outputFoundLastEnum)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] Exclusive fullscreen unavailable. Fallback to borderless.\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] Exclusive fullscreen unavailable. Fallback to borderless.\n");
 		SetBorderlessFullscreen(enable);
 		return;
 	}
@@ -258,7 +258,7 @@ void DxSwapChain::SetFullscreen(bool enable)
 	HRESULT hr = m_swapChain->SetFullscreenState(enable ? TRUE : FALSE, nullptr);
 	if (FAILED(hr))
 	{
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxSwapChain] SetFullscreenState({}) failed: 0x{:08X}\n", enable ? "TRUE" : "FALSE", (uint32_t)hr
 		);
 
@@ -266,14 +266,14 @@ void DxSwapChain::SetFullscreen(bool enable)
 		if (SUCCEEDED(m_swapChain->GetFullscreenState(&isFs, nullptr)))
 		{
 			m_isFullscreen = (isFs == TRUE);
-			DEBUG_LOG_FMT(
+			GRAPHICS_LOG_FMT(
 				"[DxSwapChain] Actual fullscreen state after failure: {}\n", m_isFullscreen ? "TRUE" : "FALSE"
 			);
 		}
 
 		if (enable == FALSE)
 		{
-			DEBUG_LOG_FMT("[DxSwapChain] Exit exclusive failed. Please try again.\n");
+			GRAPHICS_LOG_FMT("[DxSwapChain] Exit exclusive failed. Please try again.\n");
 			return;
 		}
 
@@ -283,7 +283,7 @@ void DxSwapChain::SetFullscreen(bool enable)
 	}
 
 	m_isFullscreen = enable;
-	DEBUG_LOG_FMT("[DxSwapChain] Exclusive Fullscreen: {}\n", m_isFullscreen ? "TRUE" : "FALSE");
+	GRAPHICS_LOG_FMT("[DxSwapChain] Exclusive Fullscreen: {}\n", m_isFullscreen ? "TRUE" : "FALSE");
 	return;
 }
 
@@ -306,7 +306,7 @@ void DxSwapChain::SetBorderlessFullscreen(bool enable)
 
 		m_isBorderlessFullscreen = true;
 
-		DEBUG_LOG_FMT(
+		GRAPHICS_LOG_FMT(
 			"[DxSwapChain] Borderless Fullscreen enabled: {}x{}\n", m_currentDisplayMode.width,
 			m_currentDisplayMode.height
 		);
@@ -316,7 +316,7 @@ void DxSwapChain::SetBorderlessFullscreen(bool enable)
 		m_isBorderlessFullscreen = false;
 
 		RestoreWindowedState();
-		DEBUG_LOG_FMT("[DxSwapChain] Borderless Fullscreen disabled\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] Borderless Fullscreen disabled\n");
 	}
 }
 
@@ -441,7 +441,7 @@ void DxSwapChain::EnumerateDisplayModes()
 		UINT	numModes = 0;
 		HRESULT hr = output->GetDisplayModeList(m_format, 0, &numModes, nullptr);
 
-		DEBUG_LOG_FMT("[DxSwapChain] Found {} display modes for format {}\n", numModes, (int)m_format);
+		GRAPHICS_LOG_FMT("[DxSwapChain] Found {} display modes for format {}\n", numModes, (int)m_format);
 
 		if (SUCCEEDED(hr) && numModes > 0)
 		{
@@ -460,18 +460,18 @@ void DxSwapChain::EnumerateDisplayModes()
 				}
 			}
 		}
-		DEBUG_LOG_FMT("[DxSwapChain] Enumerated {} display modes (DXGI output)\n", m_supportedModes.size());
+		GRAPHICS_LOG_FMT("[DxSwapChain] Enumerated {} display modes (DXGI output)\n", m_supportedModes.size());
 		return;
 	}
 	else
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] No DXGI output found. Falling back to Win32 API.\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] No DXGI output found. Falling back to Win32 API.\n");
 		EnumerateDisplayModesWin32();
 	}
 
 	if (m_supportedModes.empty())
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] No valid modes found. Using native display mode as fallback.\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] No valid modes found. Using native display mode as fallback.\n");
 		m_supportedModes.push_back(m_nativeDisplayMode);
 	}
 }
@@ -486,7 +486,7 @@ void DxSwapChain::EnumerateDisplayModesWin32()
 
 	if (!gotMonitorInfo)
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] GetMonitorInfoW failed. Cannot enumerate display modes.\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] GetMonitorInfoW failed. Cannot enumerate display modes.\n");
 		return;
 	}
 
@@ -531,7 +531,7 @@ void DxSwapChain::EnumerateDisplayModesWin32()
 			}
 		}
 	}
-	DEBUG_LOG_FMT("[DxSwapChain] Enumerated {} valid display modes (Win32 fallback)\n", m_supportedModes.size());
+	GRAPHICS_LOG_FMT("[DxSwapChain] Enumerated {} valid display modes (Win32 fallback)\n", m_supportedModes.size());
 }
 
 DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
@@ -542,7 +542,7 @@ DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
 	info.cbSize = sizeof(info);
 	if (!GetMonitorInfo(monitor, &info))
 	{
-		DEBUG_LOG_FMT("[DxSwapChain] GetMonitorInfo failed. Using fallback 1920x1080@60Hz.\n");
+		GRAPHICS_LOG_FMT("[DxSwapChain] GetMonitorInfo failed. Using fallback 1920x1080@60Hz.\n");
 		return {1920, 1080, 60, 1, m_format, DXGI_MODE_SCALING_UNSPECIFIED};
 	}
 
@@ -557,7 +557,7 @@ DxSwapChain::DisplayModeInfo DxSwapChain::GetNativeDisplayMode() const
 		refreshRate = dm.dmDisplayFrequency;
 	}
 
-	DEBUG_LOG_FMT("[DxSwapChain] Native mode: {}x{} @{}Hz\n", width, height, refreshRate);
+	GRAPHICS_LOG_FMT("[DxSwapChain] Native mode: {}x{} @{}Hz\n", width, height, refreshRate);
 
 	return {width, height, refreshRate, 1, m_format, DXGI_MODE_SCALING_UNSPECIFIED};
 }
@@ -607,7 +607,7 @@ DxSwapChain::DisplayModeInfo DxSwapChain::FindBestModeForCurrentMonitor() const
 		}
 	}
 
-	DEBUG_LOG_FMT("[DxSwapChain] Selected best mode: {}x{} @{}Hz\n", bestMode.width, bestMode.height, maxRefreshRate);
+	GRAPHICS_LOG_FMT("[DxSwapChain] Selected best mode: {}x{} @{}Hz\n", bestMode.width, bestMode.height, maxRefreshRate);
 	return bestMode;
 }
 
@@ -631,14 +631,14 @@ void DxSwapChain::RestoreWindowedState()
 
 void DxSwapChain::LogMonitorInfo() const
 {
-	DEBUG_LOG_FMT("[DxSwapChain] === Monitor Information ===\n");
+	GRAPHICS_LOG_FMT("[DxSwapChain] === Monitor Information ===\n");
 
-	DEBUG_LOG_FMT("[DxSwapChain] Monitor Count: {}\n", GetSystemMetrics(SM_CMONITORS));
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT("[DxSwapChain] Monitor Count: {}\n", GetSystemMetrics(SM_CMONITORS));
+	GRAPHICS_LOG_FMT(
 		"[DxSwapChain] Virtual Screen: {}x{}\n", GetSystemMetrics(SM_CXVIRTUALSCREEN),
 		GetSystemMetrics(SM_CYVIRTUALSCREEN)
 	);
-	DEBUG_LOG_FMT(
+	GRAPHICS_LOG_FMT(
 		"[DxSwapChain] Primary Screen: {}x{}\n", GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)
 	);
 
@@ -647,9 +647,9 @@ void DxSwapChain::LogMonitorInfo() const
 	{
 		int dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
 		int dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
-		DEBUG_LOG_FMT("[DxSwapChain] System DPI: {}x{}\n", dpiX, dpiY);
+		GRAPHICS_LOG_FMT("[DxSwapChain] System DPI: {}x{}\n", dpiX, dpiY);
 		ReleaseDC(nullptr, hdc);
 	}
 
-	DEBUG_LOG_FMT("[DxSwapChain] ===============================\n");
+	GRAPHICS_LOG_FMT("[DxSwapChain] ===============================\n");
 }

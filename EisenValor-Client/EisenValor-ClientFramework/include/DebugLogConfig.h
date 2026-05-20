@@ -1,0 +1,9 @@
+#pragma once
+
+#ifndef ENABLE_GRAPHICS_DEBUG_LOG
+#define ENABLE_GRAPHICS_DEBUG_LOG 0
+#endif
+
+#ifndef ENABLE_RESOURCE_DEBUG_LOG
+#define ENABLE_RESOURCE_DEBUG_LOG 0
+#endif
