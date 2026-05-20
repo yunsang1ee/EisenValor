@@ -22,6 +22,7 @@ namespace LobbyServerEngine {
 	public:
 		IOCPCore& GetIocpCore()  { return m_iocpCore; }
 		std::shared_ptr<Session> CreateClientSession();
+		uint32 GetWorkerThreadCount() const { return static_cast<uint32>(m_workerThreads.size()); }
 
 	private:
 		ClientSessionFactoryFunc					m_clientSessionFunc;

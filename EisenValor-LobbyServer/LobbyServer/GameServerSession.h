@@ -5,10 +5,6 @@
 
 namespace LobbyServer {
 	class GameServerSession final : public LobbyServerEngine::PacketSession {
-	private:
-		tbb::concurrent_unordered_map<uint16, uint16>	m_reservedStartRooms;
-		std::atomic<uint32>								m_worldIdGenerator;
-	
 	public:
 		GameServerSession();
 		virtual ~GameServerSession();
@@ -22,6 +18,10 @@ namespace LobbyServer {
 	public:
 		uint16 ReserveStartRoom(const uint16 roomID);
 		uint16 ConsumeReservedStartRoom(const uint16 worldID);
+
+	private:
+		tbb::concurrent_unordered_map<uint16, uint16>	m_reservedStartRooms;
+		std::atomic<uint32>								m_worldIdGenerator;
 
 	};
 }

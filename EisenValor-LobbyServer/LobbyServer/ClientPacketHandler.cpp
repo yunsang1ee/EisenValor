@@ -3,6 +3,8 @@
 
 #include "GameLobby.h"
 #include "ClientSession.h"
+#include "DBConnectionPool.h"
+#include "DBBind.h"
 
 void LobbyServer::ClientPacketHandler::Init()
 {
@@ -35,9 +37,58 @@ bool LobbyServer::ClientPacketHandler::Handle_CL_LOGIN_PACKET(const std::shared_
 	std::cout << "Handle_CL_LOGIN_PACKET" << std::endl;
 		
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
-	std::cout << std::format("ID:{} , PW:{} ", recvPkt.id()->c_str(), recvPkt.pw()->c_str()) << std::endl;
-	const uint32 id{ clientSession->GetID() };
+	const auto* packetID = recvPkt.id();
+	const auto* packetPW = recvPkt.pw();
+	//if(packetID == nullptr || packetPW == nullptr) {
+	//	auto pb = LobbyServer::Make_LC_LOGIN_FAIL_PACKET("Invalid id or password");
+	//	clientSession->Send(std::move(pb));
+	//	return true;
+	//}
 
+	std::cout << std::format("ID:{} , PW:{} ", packetID->c_str(), packetPW->c_str()) << std::endl;
+
+	/*DBConnectionGuard dbConnectionGuard{ MANAGER(DBConnectionPool)->Pop() };
+	DBConnection* dbConnection = dbConnectionGuard.Get();
+	if(dbConnection == nullptr) {
+		auto pb = LobbyServer::Make_LC_LOGIN_FAIL_PACKET("DB connection failed");
+		clientSession->Send(std::move(pb));
+		return false;
+	}
+
+	const char* loginID = packetID->c_str();
+	const char* loginPW = packetPW->c_str();
+	if(loginID[0] == '\0' || loginPW[0] == '\0') {
+		auto pb = LobbyServer::Make_LC_LOGIN_FAIL_PACKET("Invalid id or password");
+		clientSession->Send(std::move(pb));
+		return true;
+	}
+
+	int32 winCount = 0;
+	int32 loseCount = 0;
+
+	DBBind<2, 2> dbBind{
+		*dbConnection,
+		L"SELECT winCount, loseCount FROM dbo.Account WHERE id = ? AND pw = ?"
+	};
+	dbBind.BindParam(0, loginID);
+	dbBind.BindParam(1, loginPW);
+	dbBind.BindCol(0, winCount);
+	dbBind.BindCol(1, loseCount);
+
+	if(dbBind.Execute() == false) {
+		auto pb = LobbyServer::Make_LC_LOGIN_FAIL_PACKET("DB query failed");
+		clientSession->Send(std::move(pb));
+		return false;
+	}
+
+	if(dbBind.Fetch() == false) {
+		auto pb = LobbyServer::Make_LC_LOGIN_FAIL_PACKET("Invalid id or password");
+		clientSession->Send(std::move(pb));
+		return true;
+	}*/
+
+	// const std::string nickName{ packetID->c_str() };
+	const uint32 id{ clientSession->GetID() };
 	const std::string nickName{ "PLAYER_" + std::to_string(id) };
 	auto pb = LobbyServer::Make_LC_LOGIN_SUCCESS_PACKET(id, nickName);
 	clientSession->Send(std::move(pb));
