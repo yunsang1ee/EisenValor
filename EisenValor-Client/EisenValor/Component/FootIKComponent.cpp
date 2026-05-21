@@ -5,6 +5,8 @@
 #include "GameObject.h"
 #include "GameObject.inl"
 
+#include <unordered_set>
+
 namespace
 {
 bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& outIndex)
@@ -18,6 +20,12 @@ bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& o
 	outIndex = UINT32_MAX;
 	return false;
 }
+
+bool TryGetBoneMatrix(AnimationComponent& animation, uint32_t boneIndex, DirectX::XMMATRIX& outMatrix)
+{
+	return boneIndex != UINT32_MAX && animation.GetSocketMatrix(boneIndex, outMatrix);
+}
+
 } // namespace
 
 void FootIKComponent::OnStart()
@@ -48,6 +56,40 @@ void FootIKComponent::OnLateUpdate(float)
 		m_bonesCached = CacheBones(*animation);
 		m_ikEnabled = m_bonesCached;
 	}
+
+	if (!m_bonesCached)
+	{
+		return;
+	}
+
+	DirectX::XMMATRIX leftFootMatrix;
+	DirectX::XMMATRIX leftTargetMatrix;
+	DirectX::XMMATRIX rightFootMatrix;
+	DirectX::XMMATRIX rightTargetMatrix;
+	if (!TryGetBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
+		!TryGetBoneMatrix(*animation, m_leftLeg.ikFoot, leftTargetMatrix) ||
+		!TryGetBoneMatrix(*animation, m_rightLeg.foot, rightFootMatrix) ||
+		!TryGetBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
+	{
+		return;
+	}
+
+	static std::unordered_set<const FootIKComponent*> loggedComponents;
+	if (loggedComponents.insert(this).second)
+	{
+		DEBUG_LOG_FMT(
+			"[FootIK] leftFootY={:.3f}, leftIkFootY={:.3f}, rightFootY={:.3f}, rightIkFootY={:.3f}\n",
+			DirectX::XMVectorGetY(leftFootMatrix.r[3]), DirectX::XMVectorGetY(leftTargetMatrix.r[3]),
+			DirectX::XMVectorGetY(rightFootMatrix.r[3]), DirectX::XMVectorGetY(rightTargetMatrix.r[3])
+		);
+	}
+
+	animation->SetIKTarget(
+		IK_TYPE::LEFT_LEG, BuildLegIKTarget(m_leftLeg, leftTargetMatrix.r[3], m_leftWeight)
+	);
+	animation->SetIKTarget(
+		IK_TYPE::RIGHT_LEG, BuildLegIKTarget(m_rightLeg, rightTargetMatrix.r[3], m_rightWeight)
+	);
 }
 
 bool FootIKComponent::CacheBones(AnimationComponent& animation)
@@ -76,6 +118,21 @@ bool FootIKComponent::CacheBones(AnimationComponent& animation)
 
 bool FootIKComponent::IsValidLegCache(const LegBoneCache& cache) const
 {
-	return cache.thigh != kInvalidBoneIndex && cache.calf != kInvalidBoneIndex &&
-		   cache.foot != kInvalidBoneIndex && cache.ikFoot != kInvalidBoneIndex;
+	return cache.thigh != kInvalidBoneIndex && cache.calf != kInvalidBoneIndex && cache.foot != kInvalidBoneIndex &&
+		   cache.ikFoot != kInvalidBoneIndex;
+}
+
+IKTarget FootIKComponent::BuildLegIKTarget(
+	const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight
+) const
+{
+	IKTarget target;
+	target.rootBoneIndex = cache.thigh;
+	target.midBoneIndex = cache.calf;
+	target.boneIndex = cache.foot;
+	target.targetPos = targetPos;
+	target.poleVector = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	target.weight = weight;
+	target.active = true;
+	return target;
 }

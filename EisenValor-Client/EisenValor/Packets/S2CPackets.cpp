@@ -34,6 +34,7 @@
 #include "ButtonUIComponent.h"
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
+#include "Component/FootIKComponent.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 #include <unordered_map>
@@ -587,6 +588,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			scene->CreateComponentWithInit<AnimationComponent>(
 				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 			);
+			
+			// Foot IK Component
+			scene->CreateComponentWithInit<FootIKComponent>(playerObjHandle, [](FootIKComponent*) {});
 
 			// Shield
 			{

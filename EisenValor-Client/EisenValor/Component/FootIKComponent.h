@@ -1,5 +1,6 @@
 #pragma once
 #include "IComponent.h"
+#include "IKProcessor.h"
 #include <cstdint>
 
 class AnimationComponent;
@@ -30,6 +31,7 @@ private:
 
 	bool CacheBones(AnimationComponent& animation);
 	bool IsValidLegCache(const LegBoneCache& cache) const;
+	IKTarget BuildLegIKTarget(const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight) const;
 
 private:
 	bool m_ikEnabled = true;
