@@ -74,6 +74,9 @@
     <Filter Include="NavMesh">
       <UniqueIdentifier>{7123454c-2864-44c9-95dc-a1e5920e3aad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component\IK">
+      <UniqueIdentifier>{7228a999-5b07-4b05-bfa5-3fd3fe5d2796}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -247,6 +250,9 @@
     <ClInclude Include="NavMesh\DetourStatus.h">
       <Filter>NavMesh</Filter>
     </ClInclude>
+    <ClInclude Include="Component\FootIKComponent.h">
+      <Filter>Component\IK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -377,6 +383,9 @@
     </ClCompile>
     <ClCompile Include="NavMesh\DetourProximityGrid.cpp">
       <Filter>NavMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\FootIKComponent.cpp">
+      <Filter>Component\IK</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
