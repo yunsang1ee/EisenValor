@@ -10,6 +10,7 @@ namespace LobbyServer {
 	public:
 #pragma region LOGIN_PACKETS
 		static bool Handle_CL_LOGIN_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_LOGIN_PACKET& recvPkt);
+		static bool Handle_CL_SIGN_UP_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::CL_SIGN_UP_PACKET& recvPkt);
 #pragma endregion
 
 #pragma region LOBBY_PACKETS

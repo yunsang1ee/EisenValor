@@ -10,6 +10,8 @@ namespace LobbyServer {
 #pragma region LOGIN_PACKETS
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_LOGIN_SUCCESS_PACKET(const uint32 id, const std::string_view nickName);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_LOGIN_FAIL_PACKET(const std::string_view failMsg);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_SIGN_UP_SUCCESS_PACKET();
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_SIGN_UP_FAIL_PACKET(const std::string_view failMsg);
 #pragma endregion
 
 #pragma region LOBBY_PACKETS

@@ -26,6 +26,20 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_LOGIN_FAIL
 
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_LOGIN_FAIL_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_LOGIN_FAIL_PACKETDirect, failMsg.data()));
 }
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_SIGN_UP_SUCCESS_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_SIGN_UP_SUCCESS_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_SIGN_UP_SUCCESS_PACKET));
+}
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_SIGN_UP_FAIL_PACKET(const std::string_view failMsg)
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_SIGN_UP_FAIL_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_SIGN_UP_FAIL_PACKETDirect, failMsg.data()));
+}
 #pragma endregion
 
 #pragma region LOBBY_PACKETS

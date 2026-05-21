@@ -83,13 +83,19 @@ public:
 	template<int32 N>
 	void BindCol(int32 idx, WCHAR(&value)[N])
 	{
-		m_dbConnection.BindCol(idx + 1, value, N - 1, &m_columnIndex[idx]);
+		m_dbConnection.BindCol(idx + 1, value, size32(value), &m_columnIndex[idx]);
 		m_columnFlag |= (1LL << idx);
 	}
 
-	void BindCol(int32 idx, WCHAR* value, int32 len)
+	void BindCol(int32 idx, WCHAR* value, int32 byteSize)
 	{
-		m_dbConnection.BindCol(idx + 1, value, len - 1, &m_columnIndex[idx]);
+		m_dbConnection.BindCol(idx + 1, value, byteSize, &m_columnIndex[idx]);
+		m_columnFlag |= (1LL << idx);
+	}
+
+	void BindCol(int32 idx, char* value, int32 byteSize)
+	{
+		m_dbConnection.BindCol(idx + 1, value, byteSize, &m_columnIndex[idx]);
 		m_columnFlag |= (1LL << idx);
 	}
 

@@ -10,6 +10,8 @@ bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const Packet
 #pragma region LOGIN_PACKETS
 bool Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt);
 bool Handle_LC_LOGIN_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_SUCCESS_PACKET& recvPkt);
+bool Handle_LC_SIGN_UP_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_FAIL_PACKET& recvPkt);
+bool Handle_LC_SIGN_UP_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_SUCCESS_PACKET& recvPkt);
 #pragma endregion
 	
 

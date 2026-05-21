@@ -78,6 +78,10 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 	const uint32 id = recvPkt.lobby_session_id();
 	auto		 device = GLOBAL(DxDeviceGlobal).GetDevice();
 
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] Login Success! Lobby Session ID: {}\n", id);
+	const auto& nickName{recvPkt.nickname()->c_str()};
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] Nickname: {}\n", nickName);
+
 #ifdef APPLY_LOBBY_SERVER
 	GLOBAL(SceneGlobal).SetSessionID(id);
 	auto pb = NetBridge::C2S::Make_CL_ENTER_GAME_LOBBY_PACKET();
@@ -93,6 +97,22 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 
 #endif // !APPLY_LOBBY_SERVER
 
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_SIGN_UP_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_FAIL_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("[SC_SIGN_UP_FAIL_PACKET] ");
+	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_SIGN_UP_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_SUCCESS_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("[SC_SIGN_UP_SUCCESS_PACKET] Sign Up Success! ");
 	return true;
 }
 #pragma endregion

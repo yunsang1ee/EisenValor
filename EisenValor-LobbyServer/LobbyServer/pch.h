@@ -6,6 +6,8 @@
 #define ASSERT_CRASH(expr) assert(expr)
 #endif
 
+// #define APPLY_DB
+
 #include "LobbyServerEnginePch.h"
 
 #include "Enums_generated.h"

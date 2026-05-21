@@ -24,11 +24,24 @@ table CL_LOGIN_PACKET {
 
 table LC_LOGIN_SUCCESS_PACKET {
 	lobby_session_id : uint;
-	name: string;
+	nickname: string;
 }
 
 table LC_LOGIN_FAIL_PACKET {
 	fail_msg: string;
+}
+
+table CL_SIGN_UP_PACKET {
+	id: string;
+	pw: string;
+	nickname: string;
+}
+
+table LC_SIGN_UP_FAIL_PACKET {
+	fail_msg: string;
+}
+
+table LC_SIGN_UP_SUCCESS_PACKET {
 }
 
 // ================================================

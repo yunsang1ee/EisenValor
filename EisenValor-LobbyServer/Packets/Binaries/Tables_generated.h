@@ -33,6 +33,15 @@ struct LC_LOGIN_SUCCESS_PACKETBuilder;
 struct LC_LOGIN_FAIL_PACKET;
 struct LC_LOGIN_FAIL_PACKETBuilder;
 
+struct CL_SIGN_UP_PACKET;
+struct CL_SIGN_UP_PACKETBuilder;
+
+struct LC_SIGN_UP_FAIL_PACKET;
+struct LC_SIGN_UP_FAIL_PACKETBuilder;
+
+struct LC_SIGN_UP_SUCCESS_PACKET;
+struct LC_SIGN_UP_SUCCESS_PACKETBuilder;
+
 struct CL_ENTER_GAME_LOBBY_PACKET;
 struct CL_ENTER_GAME_LOBBY_PACKETBuilder;
 
@@ -361,19 +370,19 @@ struct LC_LOGIN_SUCCESS_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::
   typedef LC_LOGIN_SUCCESS_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_LOBBY_SESSION_ID = 4,
-    VT_NAME = 6
+    VT_NICKNAME = 6
   };
   uint32_t lobby_session_id() const {
     return GetField<uint32_t>(VT_LOBBY_SESSION_ID, 0);
   }
-  const ::flatbuffers::String *name() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  const ::flatbuffers::String *nickname() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NICKNAME);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_LOBBY_SESSION_ID, 4) &&
-           VerifyOffset(verifier, VT_NAME) &&
-           verifier.VerifyString(name()) &&
+           VerifyOffset(verifier, VT_NICKNAME) &&
+           verifier.VerifyString(nickname()) &&
            verifier.EndTable();
   }
 };
@@ -385,8 +394,8 @@ struct LC_LOGIN_SUCCESS_PACKETBuilder {
   void add_lobby_session_id(uint32_t lobby_session_id) {
     fbb_.AddElement<uint32_t>(LC_LOGIN_SUCCESS_PACKET::VT_LOBBY_SESSION_ID, lobby_session_id, 0);
   }
-  void add_name(::flatbuffers::Offset<::flatbuffers::String> name) {
-    fbb_.AddOffset(LC_LOGIN_SUCCESS_PACKET::VT_NAME, name);
+  void add_nickname(::flatbuffers::Offset<::flatbuffers::String> nickname) {
+    fbb_.AddOffset(LC_LOGIN_SUCCESS_PACKET::VT_NICKNAME, nickname);
   }
   explicit LC_LOGIN_SUCCESS_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -402,9 +411,9 @@ struct LC_LOGIN_SUCCESS_PACKETBuilder {
 inline ::flatbuffers::Offset<LC_LOGIN_SUCCESS_PACKET> CreateLC_LOGIN_SUCCESS_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t lobby_session_id = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> name = 0) {
+    ::flatbuffers::Offset<::flatbuffers::String> nickname = 0) {
   LC_LOGIN_SUCCESS_PACKETBuilder builder_(_fbb);
-  builder_.add_name(name);
+  builder_.add_nickname(nickname);
   builder_.add_lobby_session_id(lobby_session_id);
   return builder_.Finish();
 }
@@ -412,12 +421,12 @@ inline ::flatbuffers::Offset<LC_LOGIN_SUCCESS_PACKET> CreateLC_LOGIN_SUCCESS_PAC
 inline ::flatbuffers::Offset<LC_LOGIN_SUCCESS_PACKET> CreateLC_LOGIN_SUCCESS_PACKETDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t lobby_session_id = 0,
-    const char *name = nullptr) {
-  auto name__ = name ? _fbb.CreateString(name) : 0;
+    const char *nickname = nullptr) {
+  auto nickname__ = nickname ? _fbb.CreateString(nickname) : 0;
   return FB_TABLES::CreateLC_LOGIN_SUCCESS_PACKET(
       _fbb,
       lobby_session_id,
-      name__);
+      nickname__);
 }
 
 struct LC_LOGIN_FAIL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -469,6 +478,165 @@ inline ::flatbuffers::Offset<LC_LOGIN_FAIL_PACKET> CreateLC_LOGIN_FAIL_PACKETDir
   return FB_TABLES::CreateLC_LOGIN_FAIL_PACKET(
       _fbb,
       fail_msg__);
+}
+
+struct CL_SIGN_UP_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CL_SIGN_UP_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_PW = 6,
+    VT_NICKNAME = 8
+  };
+  const ::flatbuffers::String *id() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ID);
+  }
+  const ::flatbuffers::String *pw() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_PW);
+  }
+  const ::flatbuffers::String *nickname() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NICKNAME);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_ID) &&
+           verifier.VerifyString(id()) &&
+           VerifyOffset(verifier, VT_PW) &&
+           verifier.VerifyString(pw()) &&
+           VerifyOffset(verifier, VT_NICKNAME) &&
+           verifier.VerifyString(nickname()) &&
+           verifier.EndTable();
+  }
+};
+
+struct CL_SIGN_UP_PACKETBuilder {
+  typedef CL_SIGN_UP_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_id(::flatbuffers::Offset<::flatbuffers::String> id) {
+    fbb_.AddOffset(CL_SIGN_UP_PACKET::VT_ID, id);
+  }
+  void add_pw(::flatbuffers::Offset<::flatbuffers::String> pw) {
+    fbb_.AddOffset(CL_SIGN_UP_PACKET::VT_PW, pw);
+  }
+  void add_nickname(::flatbuffers::Offset<::flatbuffers::String> nickname) {
+    fbb_.AddOffset(CL_SIGN_UP_PACKET::VT_NICKNAME, nickname);
+  }
+  explicit CL_SIGN_UP_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CL_SIGN_UP_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CL_SIGN_UP_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CL_SIGN_UP_PACKET> CreateCL_SIGN_UP_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> id = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> pw = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> nickname = 0) {
+  CL_SIGN_UP_PACKETBuilder builder_(_fbb);
+  builder_.add_nickname(nickname);
+  builder_.add_pw(pw);
+  builder_.add_id(id);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<CL_SIGN_UP_PACKET> CreateCL_SIGN_UP_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *id = nullptr,
+    const char *pw = nullptr,
+    const char *nickname = nullptr) {
+  auto id__ = id ? _fbb.CreateString(id) : 0;
+  auto pw__ = pw ? _fbb.CreateString(pw) : 0;
+  auto nickname__ = nickname ? _fbb.CreateString(nickname) : 0;
+  return FB_TABLES::CreateCL_SIGN_UP_PACKET(
+      _fbb,
+      id__,
+      pw__,
+      nickname__);
+}
+
+struct LC_SIGN_UP_FAIL_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_SIGN_UP_FAIL_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FAIL_MSG = 4
+  };
+  const ::flatbuffers::String *fail_msg() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_FAIL_MSG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_FAIL_MSG) &&
+           verifier.VerifyString(fail_msg()) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_SIGN_UP_FAIL_PACKETBuilder {
+  typedef LC_SIGN_UP_FAIL_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_fail_msg(::flatbuffers::Offset<::flatbuffers::String> fail_msg) {
+    fbb_.AddOffset(LC_SIGN_UP_FAIL_PACKET::VT_FAIL_MSG, fail_msg);
+  }
+  explicit LC_SIGN_UP_FAIL_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_SIGN_UP_FAIL_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_SIGN_UP_FAIL_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_SIGN_UP_FAIL_PACKET> CreateLC_SIGN_UP_FAIL_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> fail_msg = 0) {
+  LC_SIGN_UP_FAIL_PACKETBuilder builder_(_fbb);
+  builder_.add_fail_msg(fail_msg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<LC_SIGN_UP_FAIL_PACKET> CreateLC_SIGN_UP_FAIL_PACKETDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *fail_msg = nullptr) {
+  auto fail_msg__ = fail_msg ? _fbb.CreateString(fail_msg) : 0;
+  return FB_TABLES::CreateLC_SIGN_UP_FAIL_PACKET(
+      _fbb,
+      fail_msg__);
+}
+
+struct LC_SIGN_UP_SUCCESS_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_SIGN_UP_SUCCESS_PACKETBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_SIGN_UP_SUCCESS_PACKETBuilder {
+  typedef LC_SIGN_UP_SUCCESS_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit LC_SIGN_UP_SUCCESS_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_SIGN_UP_SUCCESS_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_SIGN_UP_SUCCESS_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_SIGN_UP_SUCCESS_PACKET> CreateLC_SIGN_UP_SUCCESS_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  LC_SIGN_UP_SUCCESS_PACKETBuilder builder_(_fbb);
+  return builder_.Finish();
 }
 
 struct CL_ENTER_GAME_LOBBY_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

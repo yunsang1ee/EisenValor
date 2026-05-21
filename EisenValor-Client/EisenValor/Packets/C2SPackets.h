@@ -18,6 +18,7 @@ std::shared_ptr<PacketBuffer> Make_CS_PONG_PACKET() noexcept;
 // =================
 #pragma region LOGIN_PACKETS
 std::shared_ptr<PacketBuffer> Make_CL_LOGIN_PACKET(const std::string_view id, const std::string_view pw) noexcept;
+std::shared_ptr<PacketBuffer> Make_CL_SIGN_UP_PACKET(const std::string_view id, const std::string_view pw, const std::string_view nickName) noexcept;
 #pragma endregion
 
 

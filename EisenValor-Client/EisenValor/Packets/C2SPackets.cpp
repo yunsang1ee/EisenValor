@@ -32,6 +32,16 @@ std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_LOGIN_PACKET(
 		LobbyServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_LOGIN_PACKETDirect, id.data(), pw.data())
 	);
 }
+std::shared_ptr<PacketBuffer> NetBridge::C2S::Make_CL_SIGN_UP_PACKET(
+	const std::string_view id, const std::string_view pw, const std::string_view nickName
+) noexcept
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return LobbyServerPacketHandler::MakePacketBuffer(
+		PACKET_TYPE::CL_SIGN_UP_PKT,
+		LobbyServerPacketHandler::Serialization(builder, FB_TABLES::CreateCL_SIGN_UP_PACKETDirect, id.data(), pw.data(), nickName.data())
+	);
+}
 #pragma endregion
 
 // =================
