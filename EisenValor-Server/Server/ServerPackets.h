@@ -17,6 +17,7 @@ namespace ServerPackets {
 	//		룸
 	// =================
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port);
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_GAME_RESULT_PACKET(const uint16 worldID, const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 
 	// ==================
 	//		월드

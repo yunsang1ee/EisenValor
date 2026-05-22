@@ -45,6 +45,7 @@ namespace LobbyServer {
 		void Handle_LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession);
 
 		void ConnectToGameServer(const uint16 roomID, const uint16 worldID, const uint16 port);
+		void Handle_SL_GAME_RESULT(const uint16 worldID, const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 	private:
 		void EnterGameLobby(std::shared_ptr<ClientSession> clientSession);
 		std::shared_ptr<GameRoom> FindGameRoom(const uint16 roomID);
@@ -53,5 +54,6 @@ namespace LobbyServer {
 	private:
 		std::unordered_map<uint32, std::shared_ptr<ClientSession>>	m_users;
 		std::unordered_map<uint32, std::shared_ptr<GameRoom>>		m_gameRooms;
+		std::unordered_map<uint16, uint16>							m_playingWorldRooms;
 	};
 }

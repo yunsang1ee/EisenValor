@@ -109,7 +109,7 @@
     <ClInclude Include="RenderPass\DxrRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\SampleScene.h">
+    <ClInclude Include="Scene\WorldScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Packets\C2SPackets.h">
@@ -288,7 +288,7 @@
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="Scene\SampleScene.cpp">
+    <ClCompile Include="Scene\WorldScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Packets\C2SPackets.cpp">

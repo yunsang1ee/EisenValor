@@ -119,6 +119,9 @@ void GameServer::Contents::Creature::BroadcastUpdateVital()
 
 bool GameServer::Contents::Creature::ShouldBroadcastMove(const float dt, const bool forceSend)
 {
+	if(false == IsActive())
+		return false;
+
 	m_moveBroadcastAccDT += dt;
 	m_moveIdleAccDT      += dt;
 

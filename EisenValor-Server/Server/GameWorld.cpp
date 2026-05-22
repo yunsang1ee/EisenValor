@@ -1059,6 +1059,12 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 
 	auto pb = ServerPackets::Make_SC_FINISH_GAME_PACKET(*winner, m_blueTeamScore, m_redTeamScore);
 	Broadcast(std::move(pb));
+
+	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
+	if(lobbyServerSession) {
+		auto resultPb = ServerPackets::Make_SL_GAME_RESULT_PACKET(GetID(), *winner, m_blueTeamScore, m_redTeamScore);
+		lobbyServerSession->Send(std::move(resultPb));
+	}
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)

@@ -8,6 +8,7 @@ void LobbyServer::GameServerPacketHandler::Init()
 {
 	REGISTER_PACKET(PACKET_TYPE::SC_PING_PKT, FB_TABLES::SC_PING_PACKET, LobbyServer::GameServerPacketHandler::Handle_SC_PING_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::SL_CREATE_GAME_WORLD_PKT, FB_TABLES::SL_CREATE_GAME_WORLD_PACKET, LobbyServer::GameServerPacketHandler::Handle_SL_CREATE_GAME_WORLD_PACKET);
+	REGISTER_PACKET(PACKET_TYPE::SL_GAME_RESULT_PKT, FB_TABLES::SL_GAME_RESULT_PACKET, LobbyServer::GameServerPacketHandler::Handle_SL_GAME_RESULT_PACKET);
 }
 
 bool LobbyServer::GameServerPacketHandler::Handle_SC_PING_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::SC_PING_PACKET& recvPkt)
@@ -33,6 +34,16 @@ bool LobbyServer::GameServerPacketHandler::Handle_SL_CREATE_GAME_WORLD_PACKET(co
 		return false;
 
 	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::ConnectToGameServer, roomID, worldID, recvPkt.port());
+
+	return true;
+}
+
+bool LobbyServer::GameServerPacketHandler::Handle_SL_GAME_RESULT_PACKET(const std::shared_ptr<LobbyServerEngine::PacketSession>& session, const FB_TABLES::SL_GAME_RESULT_PACKET& recvPkt)
+{
+	if(!G_GAME_LOBBY)
+		return false;
+
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_SL_GAME_RESULT, recvPkt.world_id(), recvPkt.winning_team(), recvPkt.blue_score(), recvPkt.red_score());
 
 	return true;
 }

@@ -195,6 +195,13 @@ table LC_CHAT_PACKET {
 	msg: string;
 }
 
+table SL_GAME_RESULT_PACKET{
+	world_id: uint16;
+	winning_team: FB_ENUMS.TEAM_TYPE;
+	blue_score: uint8;
+	red_score: uint8;
+}
+
 // ================================================
 //					  GAME_WORLD
 // ================================================

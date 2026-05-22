@@ -30,6 +30,7 @@ namespace LobbyServer {
 		void ReadyGame(const std::shared_ptr<ClientSession>& clientSession);
 		void StartGame(const std::shared_ptr<ClientSession>& clientSession);
 		void ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession);
+		void ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 
 		std::shared_ptr<User> GetSessionUser(const std::shared_ptr<ClientSession>& clientSession);
 
@@ -38,6 +39,7 @@ namespace LobbyServer {
 
 	public:
 		void SetRoomInfo(const RoomInfo& info) { m_info = info; }
+		void SetRoomState(const FB_ENUMS::ROOM_STATE_TYPE stateType) { m_info.stateType = stateType; }
 		const RoomInfo& GetRoomInfo() const { return m_info; }
 
 	private:
@@ -53,6 +55,7 @@ namespace LobbyServer {
 
 		int32														m_blueTeamCount;
 		int32														m_redTeamCount;
+		bool														m_gameResultApplied;
 	};
 }
 

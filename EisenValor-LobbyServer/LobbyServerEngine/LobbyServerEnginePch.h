@@ -36,6 +36,7 @@
 #include <tbb/tbb.h>
 #include <tbb/memory_pool.h>
 #include <tbb/scalable_allocator.h>
+#include <tbb/concurrent_unordered_map.h>
 
 // multi-thread
 #include <thread>

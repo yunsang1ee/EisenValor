@@ -6,11 +6,11 @@
 
 void LoginControllerComponent::OnUpdate(float deltaTime)
 {
-	// R 키 입력
+	// L 키 입력
 #ifdef APPLY_LOBBY_SERVER
-	if (GLOBAL(InputGlobal).GetInputDown('R'))
+	if (GLOBAL(InputGlobal).GetInputDown('L'))
 	{
-		DEBUG_LOG_FMT("[LoginControllerComponent] 'R' Key Detected! Sending CS_LOGIN...\n");
+		DEBUG_LOG_FMT("[LoginControllerComponent] 'L' Key Detected! Sending CS_LOGIN...\n");
 
 		// 테스트용 ID/PW로 로그인 패킷 전송
 		auto pb = NetBridge::C2S::Make_CL_LOGIN_PACKET("TestID", "TestPW");

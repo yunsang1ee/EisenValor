@@ -96,6 +96,7 @@ bool LobbyServer::ClientPacketHandler::Handle_CL_LOGIN_PACKET(const std::shared_
 #endif
 
 	const uint32 id{ clientSession->GetID() };
+	clientSession->SetAccountID(packetID->c_str());
 	clientSession->SetName(nickName);
 	auto pb = LobbyServer::Make_LC_LOGIN_SUCCESS_PACKET(id, nickName);
 	clientSession->Send(std::move(pb));

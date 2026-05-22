@@ -141,6 +141,9 @@ struct CL_CHAT_PACKETBuilder;
 struct LC_CHAT_PACKET;
 struct LC_CHAT_PACKETBuilder;
 
+struct SL_GAME_RESULT_PACKET;
+struct SL_GAME_RESULT_PACKETBuilder;
+
 struct CS_CHAT_PACKET;
 struct CS_CHAT_PACKETBuilder;
 
@@ -2123,6 +2126,77 @@ inline ::flatbuffers::Offset<LC_CHAT_PACKET> CreateLC_CHAT_PACKETDirect(
       _fbb,
       session_id,
       msg__);
+}
+
+struct SL_GAME_RESULT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SL_GAME_RESULT_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_WORLD_ID = 4,
+    VT_WINNING_TEAM = 6,
+    VT_BLUE_SCORE = 8,
+    VT_RED_SCORE = 10
+  };
+  uint16_t world_id() const {
+    return GetField<uint16_t>(VT_WORLD_ID, 0);
+  }
+  FB_ENUMS::TEAM_TYPE winning_team() const {
+    return static_cast<FB_ENUMS::TEAM_TYPE>(GetField<uint8_t>(VT_WINNING_TEAM, 0));
+  }
+  uint8_t blue_score() const {
+    return GetField<uint8_t>(VT_BLUE_SCORE, 0);
+  }
+  uint8_t red_score() const {
+    return GetField<uint8_t>(VT_RED_SCORE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_WORLD_ID, 2) &&
+           VerifyField<uint8_t>(verifier, VT_WINNING_TEAM, 1) &&
+           VerifyField<uint8_t>(verifier, VT_BLUE_SCORE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_RED_SCORE, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct SL_GAME_RESULT_PACKETBuilder {
+  typedef SL_GAME_RESULT_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_world_id(uint16_t world_id) {
+    fbb_.AddElement<uint16_t>(SL_GAME_RESULT_PACKET::VT_WORLD_ID, world_id, 0);
+  }
+  void add_winning_team(FB_ENUMS::TEAM_TYPE winning_team) {
+    fbb_.AddElement<uint8_t>(SL_GAME_RESULT_PACKET::VT_WINNING_TEAM, static_cast<uint8_t>(winning_team), 0);
+  }
+  void add_blue_score(uint8_t blue_score) {
+    fbb_.AddElement<uint8_t>(SL_GAME_RESULT_PACKET::VT_BLUE_SCORE, blue_score, 0);
+  }
+  void add_red_score(uint8_t red_score) {
+    fbb_.AddElement<uint8_t>(SL_GAME_RESULT_PACKET::VT_RED_SCORE, red_score, 0);
+  }
+  explicit SL_GAME_RESULT_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SL_GAME_RESULT_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SL_GAME_RESULT_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SL_GAME_RESULT_PACKET> CreateSL_GAME_RESULT_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t world_id = 0,
+    FB_ENUMS::TEAM_TYPE winning_team = FB_ENUMS::TEAM_TYPE_NONE,
+    uint8_t blue_score = 0,
+    uint8_t red_score = 0) {
+  SL_GAME_RESULT_PACKETBuilder builder_(_fbb);
+  builder_.add_world_id(world_id);
+  builder_.add_red_score(red_score);
+  builder_.add_blue_score(blue_score);
+  builder_.add_winning_team(winning_team);
+  return builder_.Finish();
 }
 
 struct CS_CHAT_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

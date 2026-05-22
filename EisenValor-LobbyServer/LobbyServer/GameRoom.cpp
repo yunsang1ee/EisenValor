@@ -5,9 +5,13 @@
 #include "Participant.h"
 #include "SessionManager.h"
 #include "GameServerSession.h"
+#ifdef APPLY_DB
+#include "DBConnectionPool.h"
+#include "DBBind.h"
+#endif
 
 LobbyServer::GameRoom::GameRoom()
-	:m_blueTeamCount{}, m_redTeamCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }
+	:m_blueTeamCount{}, m_redTeamCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }, m_gameResultApplied{ false }
 {
 }
 
@@ -225,6 +229,8 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 			return;
 		}
 
+		m_gameResultApplied = false;
+
 		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(worldID, particinpants) };
 		gameServerSession->Send(std::move(pb));
 	}
@@ -248,6 +254,65 @@ void LobbyServer::GameRoom::ReturnToGameRoom(const std::shared_ptr<ClientSession
 
 	auto pb{ LobbyServer::Make_LC_RETURN_TO_GAME_ROOM_PACKET() };
 	clientSession->Send(std::move(pb));
+}
+
+void LobbyServer::GameRoom::ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
+{
+	if(m_gameResultApplied)
+		return;
+
+	m_gameResultApplied = true;
+	m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_WATING;
+
+	for(const auto& [id, user] : m_users) {
+		if(FB_ENUMS::PARTICIPANT_TYPE_HOST != user->GetType() && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY == user->GetStateType())
+			user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
+	}
+
+	if(FB_ENUMS::TEAM_TYPE_NONE == winningTeam) {
+		LOG_INFO("Game result applied. RoomID:{}, Draw, BlueScore:{}, RedScore:{}", m_info.id, blueScore, redScore);
+		return;
+	}
+
+#ifdef APPLY_DB
+	DBConnectionGuard dbConnectionGuard{ MANAGER(DBConnectionPool)->Pop() };
+	DBConnection* dbConnection = dbConnectionGuard.Get();
+	if(nullptr == dbConnection) {
+		LOG_WARNING("Failed to apply game result. RoomID:{}, DB connection failed", m_info.id);
+		return;
+	}
+#endif
+
+	for(const auto& [id, user] : m_users) {
+		auto session{ user->GetSession() };
+		if(nullptr == session)
+			continue;
+
+		const std::string& accountID{ session->GetAccountID() };
+		if(accountID.empty())
+			continue;
+
+		const bool isWinner{ user->GetTeamType() == winningTeam };
+
+#ifdef APPLY_DB
+		if(isWinner) {
+			DBBind<1, 0> dbBind{ *dbConnection, L"UPDATE dbo.userInfo SET winCount = winCount + 1 WHERE id = ?" };
+			dbBind.BindParam(0, accountID.c_str());
+			if(false == dbBind.Execute())
+				LOG_WARNING("Failed to update winCount. RoomID:{}, AccountID:{}", m_info.id, accountID);
+		}
+		else {
+			DBBind<1, 0> dbBind{ *dbConnection, L"UPDATE dbo.userInfo SET loseCount = loseCount + 1 WHERE id = ?" };
+			dbBind.BindParam(0, accountID.c_str());
+			if(false == dbBind.Execute())
+				LOG_WARNING("Failed to update loseCount. RoomID:{}, AccountID:{}", m_info.id, accountID);
+		}
+#else
+		LOG_INFO("Game result DB update skipped. RoomID:{}, AccountID:{}, Result:{}", m_info.id, accountID, isWinner ? "Win" : "Lose");
+#endif
+	}
+
+	LOG_INFO("Game result applied. RoomID:{}, WinningTeam:{}, BlueScore:{}, RedScore:{}", m_info.id, static_cast<uint8>(winningTeam), blueScore, redScore);
 }
 
 std::shared_ptr<LobbyServer::User> LobbyServer::GameRoom::GetSessionUser(const std::shared_ptr<ClientSession>& clientSession)

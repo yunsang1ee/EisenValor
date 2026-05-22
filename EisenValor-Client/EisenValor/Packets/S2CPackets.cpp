@@ -93,7 +93,7 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 	const uint16 roomID{1};
 	auto		 pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, id);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
-	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to WorldScene\n", id);
 
 #endif // !APPLY_LOBBY_SERVER
 
@@ -164,7 +164,6 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
 	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));/
 
 	GLOBAL(SceneGlobal).LoadScene("LobbyScene");
-
 
 	return true;
 }
@@ -315,7 +314,6 @@ bool NetBridge::S2C::Handle_LC_LEAVE_GAME_ROOM_PACKET(
 )
 {
 	// 게임 룸 퇴장 성공
-	// TODO: 로비 Scene으로 전환
 
 	DEBUG_LOG_FMT("[SC_LEAVE_GAME_ROOM_PACKET] ");
 	DEBUG_LOG_FMT("Leave Game Room!\n");
@@ -481,7 +479,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	// GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
 
 	GLOBAL(SceneGlobal).SetLocalGameObjectID(recvPkt.player_id());
-	GLOBAL(SceneGlobal).LoadScene("SampleScene");
+	GLOBAL(SceneGlobal).LoadScene("WorldScene");
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
@@ -1855,8 +1853,7 @@ bool NetBridge::S2C::Handle_SC_FINISH_GAME_PACKET(
 		break;
 	}
 
-
-
+	GLOBAL(SceneGlobal).LoadScene("RoomScene");
 
 	return true;
 }

@@ -23,6 +23,7 @@ enum class PACKET_TYPE : uint16 {
 #pragma region ROOM_PACKETS
 	LS_CREATE_GAME_WORLD_PKT = 1017,
 	SL_CREATE_GAME_WORLD_PKT = 1018,
+	SL_GAME_RESULT_PKT = 1024,
 #pragma endregion
 
 	// ==================
