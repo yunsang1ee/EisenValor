@@ -4,6 +4,7 @@
 #include "AnimationComponent.h"
 #include "GameObject.h"
 #include "GameObject.inl"
+#include "Transform.h"
 
 #include <unordered_set>
 
@@ -24,6 +25,12 @@ bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& o
 bool TryGetBoneMatrix(AnimationComponent& animation, uint32_t boneIndex, DirectX::XMMATRIX& outMatrix)
 {
 	return boneIndex != UINT32_MAX && animation.GetSocketMatrix(boneIndex, outMatrix);
+}
+
+DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, const Transform& ownerTransform)
+{
+	const auto ownerWorldMatrix = ownerTransform.GetWorldMatrix();
+	return DirectX::XMVector3TransformCoord(bonePosition, DirectX::XMLoadFloat4x4(&ownerWorldMatrix));
 }
 
 } // namespace
@@ -77,10 +84,22 @@ void FootIKComponent::OnLateUpdate(float)
 	static std::unordered_set<const FootIKComponent*> loggedComponents;
 	if (loggedComponents.insert(this).second)
 	{
+		auto&		ownerTransform = owner->GetTransform();
+		const auto  ownerWorldPosition = ownerTransform.GetWorldPosition();
+		const auto  leftFootWorld = TransformBonePositionToWorld(leftFootMatrix.r[3], ownerTransform);
+		const auto  leftTargetWorld = TransformBonePositionToWorld(leftTargetMatrix.r[3], ownerTransform);
+		const auto  rightFootWorld = TransformBonePositionToWorld(rightFootMatrix.r[3], ownerTransform);
+		const auto  rightTargetWorld = TransformBonePositionToWorld(rightTargetMatrix.r[3], ownerTransform);
+
 		DEBUG_LOG_FMT(
-			"[FootIK] leftFootY={:.3f}, leftIkFootY={:.3f}, rightFootY={:.3f}, rightIkFootY={:.3f}\n",
+			"[FootIK] modelY leftFoot={:.3f}, leftIkFoot={:.3f}, rightFoot={:.3f}, rightIkFoot={:.3f}\n",
 			DirectX::XMVectorGetY(leftFootMatrix.r[3]), DirectX::XMVectorGetY(leftTargetMatrix.r[3]),
 			DirectX::XMVectorGetY(rightFootMatrix.r[3]), DirectX::XMVectorGetY(rightTargetMatrix.r[3])
+		);
+		DEBUG_LOG_FMT(
+			"[FootIK] worldY player={:.3f}, leftFoot={:.3f}, leftIkFoot={:.3f}, rightFoot={:.3f}, rightIkFoot={:.3f}\n",
+			ownerWorldPosition.y, DirectX::XMVectorGetY(leftFootWorld), DirectX::XMVectorGetY(leftTargetWorld),
+			DirectX::XMVectorGetY(rightFootWorld), DirectX::XMVectorGetY(rightTargetWorld)
 		);
 	}
 
