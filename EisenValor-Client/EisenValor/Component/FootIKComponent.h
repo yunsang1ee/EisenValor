@@ -29,9 +29,19 @@ private:
 		uint32_t ikFoot = kInvalidBoneIndex;
 	};
 
+	struct GroundHit
+	{
+		DirectX::XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
+		DirectX::XMFLOAT3 normal = {0.0f, 1.0f, 0.0f};
+		float distance = 0.0f;
+	};
+
 	bool CacheBones(AnimationComponent& animation);
 	bool IsValidLegCache(const LegBoneCache& cache) const;
 	IKTarget BuildLegIKTarget(const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight) const;
+	bool TrySampleVisualGround(
+		const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
+	) const;
 
 private:
 	bool m_ikEnabled = true;
