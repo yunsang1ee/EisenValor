@@ -103,6 +103,21 @@ void FootIKComponent::OnLateUpdate(float)
 		);
 	}
 
+	auto&	   ownerTransform = owner->GetTransform();
+	const auto leftFootWorld = TransformBonePositionToWorld(leftFootMatrix.r[3], ownerTransform);
+	const auto rightFootWorld = TransformBonePositionToWorld(rightFootMatrix.r[3], ownerTransform);
+	DirectX::XMFLOAT3 leftFootWorldPosition;
+	DirectX::XMFLOAT3 rightFootWorldPosition;
+	DirectX::XMStoreFloat3(&leftFootWorldPosition, leftFootWorld);
+	DirectX::XMStoreFloat3(&rightFootWorldPosition, rightFootWorld);
+
+	GroundHit leftGroundHit;
+	GroundHit rightGroundHit;
+	const bool leftHit = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
+	const bool rightHit = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
+	m_leftWeight = leftHit ? m_leftWeight : 0.0f;
+	m_rightWeight = rightHit ? m_rightWeight : 0.0f;
+
 	animation->SetIKTarget(
 		IK_TYPE::LEFT_LEG, BuildLegIKTarget(m_leftLeg, leftTargetMatrix.r[3], m_leftWeight)
 	);
@@ -154,4 +169,11 @@ IKTarget FootIKComponent::BuildLegIKTarget(
 	target.weight = weight;
 	target.active = true;
 	return target;
+}
+
+bool FootIKComponent::TrySampleVisualGround(
+	const DirectX::XMFLOAT3&, float, float, GroundHit&
+) const
+{
+	return false;
 }
