@@ -191,4 +191,9 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CHAT_PACKE
 
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CHAT_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CHAT_PACKETDirect, sessionID, msg.data()));
 }
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_GAME_RESULT_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_GAME_RESULT_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_GAME_RESULT_PACKET, winningTeam, blueScore, redScore));
+}
 #pragma endregion

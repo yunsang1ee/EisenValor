@@ -202,6 +202,12 @@ table SL_GAME_RESULT_PACKET{
 	red_score: uint8;
 }
 
+table LC_GAME_RESULT_PACKET {
+	winning_team: FB_ENUMS.TEAM_TYPE;
+	blue_score: uint8;
+	red_score: uint8;
+}
+
 // ================================================
 //					  GAME_WORLD
 // ================================================
@@ -357,12 +363,6 @@ table SC_OCCUPATION_ZONE_GAUGE_PACKET {
 
 table SC_SOLDIER_ATTACK_PACKET {
 	obj_id: uint64;
-}
-
-table SC_FINISH_GAME_PACKET {
-	winning_team: FB_ENUMS.TEAM_TYPE;
-	blue_score: uint8;
-	red_score: uint8;
 }
 
 // ================================================

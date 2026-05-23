@@ -470,6 +470,36 @@ bool NetBridge::S2C::Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES
 	DEBUG_LOG_FMT("User ID: {}, Message: {}\n", recvPkt.session_id(), recvPkt.msg()->c_str());
 	return true;
 }
+bool NetBridge::S2C::Handle_LC_GAME_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::LC_GAME_RESULT_PACKET& recvPkt)
+{
+	// TODO: UI로 게임결과 보여주거나 게임 결과 씬으로 전환하거나
+
+	DEBUG_LOG_FMT("[LC_GAME_RESULT_PACKET] ");
+
+	const auto winningTeam{recvPkt.winning_team()};
+	const auto blueScore{recvPkt.blue_score()};
+	const auto redScore{recvPkt.red_score()};
+
+	switch (winningTeam)
+	{
+	case FB_ENUMS::TEAM_TYPE_NONE:
+		// 무승부
+		break;
+	case FB_ENUMS::TEAM_TYPE_BLUE:
+		// 블루팀 승리
+		break;
+	case FB_ENUMS::TEAM_TYPE_RED:
+		// 레드팀 승리
+		break;
+	default:
+		break;
+	}
+
+	auto pb{NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET()};
+	GLOBAL(NetBridge::NetworkGlobal).SendLobby(std::move(pb));
+
+	return true;
+}
 #pragma endregion
 
 bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
@@ -1825,35 +1855,6 @@ bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
 		fsm->SetServerState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK);
 		return true;
 	}
-
-	return true;
-}
-
-bool NetBridge::S2C::Handle_SC_FINISH_GAME_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_FINISH_GAME_PACKET& recvPkt
-)
-{
-	// TODO: UI 통해서 게임 종료 결과 보여줘야합니다.
-	const auto winningTeam{recvPkt.winning_team()};	
-	const auto blueScore{recvPkt.blue_score()};
-	const auto redScore{recvPkt.red_score()};
-
-	switch (winningTeam)
-	{
-	case FB_ENUMS::TEAM_TYPE_NONE:
-		// 무승부
-		break;
-	case FB_ENUMS::TEAM_TYPE_BLUE:
-		// 블루팀 승리
-		break;
-	case FB_ENUMS::TEAM_TYPE_RED:
-		// 레드팀 승리
-		break;
-	default:
-		break;
-	}
-
-	GLOBAL(SceneGlobal).LoadScene("RoomScene");
 
 	return true;
 }

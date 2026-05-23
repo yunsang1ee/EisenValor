@@ -1057,9 +1057,6 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 
 	m_isGameFinish = true;
 
-	auto pb = ServerPackets::Make_SC_FINISH_GAME_PACKET(*winner, m_blueTeamScore, m_redTeamScore);
-	Broadcast(std::move(pb));
-
 	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
 	if(lobbyServerSession) {
 		auto resultPb = ServerPackets::Make_SL_GAME_RESULT_PACKET(GetID(), *winner, m_blueTeamScore, m_redTeamScore);

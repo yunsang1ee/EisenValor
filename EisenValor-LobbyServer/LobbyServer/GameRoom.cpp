@@ -207,6 +207,7 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 	if(gameServerSession) {
 		for(const auto& [id, user] : m_users) {
 			if(user->GetStateType() != FB_ENUMS::PARTICIPANT_STATE_TYPE_READY) {
+				std::cout << std::format("User ID: {}, Not Ready!", user->GetID()) << std::endl;
 				auto pb{ LobbyServer::Make_LC_START_GAME_FAIL_PACKET("Not all users are ready") };
 				Broadcast(std::move(pb));
 				return;
@@ -224,6 +225,7 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 
 		const uint16 worldID{ gameServerSession->ReserveStartRoom(m_info.id) };
 		if(0 == worldID) {
+			std::cout << "월드 아이디 할당 실패" << std::endl;
 			auto pb{ LobbyServer::Make_LC_START_GAME_FAIL_PACKET("Failed to allocate world id") };
 			Broadcast(std::move(pb));
 			return;
@@ -309,6 +311,8 @@ void LobbyServer::GameRoom::ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTea
 		}
 #else
 		LOG_INFO("Game result DB update skipped. RoomID:{}, AccountID:{}, Result:{}", m_info.id, accountID, isWinner ? "Win" : "Lose");
+		auto pb{ LobbyServer::Make_LC_GAME_RESULT_PACKET(winningTeam, blueScore, redScore) };
+		session->Send(pb);
 #endif
 	}
 

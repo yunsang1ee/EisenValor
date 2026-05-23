@@ -69,6 +69,7 @@ bool Handle_LC_RETURN_TO_GAME_ROOM_PACKET(
 
 bool Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET& recvPkt);
 
+bool Handle_LC_GAME_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::LC_GAME_RESULT_PACKET& recvPkt);
 #pragma endregion
 
 
@@ -105,8 +106,6 @@ bool Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
 );
 
 bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt);
-
-bool Handle_SC_FINISH_GAME_PACKET(const SOCKET& socket, const FB_TABLES::SC_FINISH_GAME_PACKET& recvPkt);
 
 #pragma endregion
 

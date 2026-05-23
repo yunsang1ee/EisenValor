@@ -38,6 +38,7 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CONNECT_TO_GAME_SERVER_PACKET	(const uint16 worldID, const std::string_view ip, const uint16 port);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_RETURN_TO_GAME_ROOM_PACKET();
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHAT_PACKET(const uint32 sessionID, const std::string_view msg);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_GAME_RESULT_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 #pragma endregion
 
 }

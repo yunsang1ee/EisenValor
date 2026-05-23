@@ -7,7 +7,7 @@
     "GAME_TIME_SEC": 1800,
     "GAME_UPDATE_TICK": 60.0,
     "MAX_UPDATE_STEP": 5,
-    "SCORE_TO_WIN": 100000
+    "SCORE_TO_WIN": 100
   },
 
   "SkillData": [

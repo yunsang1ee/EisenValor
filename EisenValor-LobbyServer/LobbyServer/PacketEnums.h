@@ -91,6 +91,7 @@ enum class PACKET_TYPE : uint16 {
 	LC_RETURN_TO_GAME_ROOM_PKT = 1023,
 
 	SL_GAME_RESULT_PKT = 1024,
+	LC_GAME_RESULT_PKT = 1025,
 #pragma endregion
 
 #pragma region TEST_PACKETS
