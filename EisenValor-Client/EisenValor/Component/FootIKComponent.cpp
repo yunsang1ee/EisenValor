@@ -128,10 +128,13 @@ void FootIKComponent::OnLateUpdate(float)
 			{
 				DEBUG_LOG_FMT("[FootIK] scene mesh count={}\n", meshStorage->GetList().size());
 
-				constexpr float nearbyRadius = 20.0f;
+				constexpr float nearbyRadius = 8.0f;
 				constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
+				constexpr float nearbyHeightTolerance = 0.3f;
 				size_t nearbyCandidateCount = 0;
+				size_t nearbyHeightCandidateCount = 0;
 				size_t loggedCandidateCount = 0;
+				size_t loggedHeightCandidateCount = 0;
 				size_t loggedMeshCount = 0;
 				for (const auto& meshComp : meshStorage->GetList())
 				{
@@ -171,6 +174,22 @@ void FootIKComponent::OnLateUpdate(float)
 							);
 							++loggedCandidateCount;
 						}
+
+						const float heightDelta = std::fabs(worldPos.y - footCenter.y);
+						if (heightDelta <= nearbyHeightTolerance)
+						{
+							++nearbyHeightCandidateCount;
+
+							if (loggedHeightCandidateCount < 8)
+							{
+								DEBUG_LOG_FMT(
+									"[FootIK] nearby height candidate obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f}) distXZ={:.3f} deltaY={:.3f}\n",
+									meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z,
+									std::sqrt(distanceSqXZ), heightDelta
+								);
+								++loggedHeightCandidateCount;
+							}
+						}
 					}
 
 				}
@@ -178,6 +197,10 @@ void FootIKComponent::OnLateUpdate(float)
 				DEBUG_LOG_FMT(
 					"[FootIK] nearby mesh candidate count={} radius={:.1f} footCenter=({:.3f}, {:.3f}, {:.3f})\n",
 					nearbyCandidateCount, nearbyRadius, footCenter.x, footCenter.y, footCenter.z
+				);
+				DEBUG_LOG_FMT(
+					"[FootIK] nearby height candidate count={} radius={:.1f} heightTolerance={:.1f}\n",
+					nearbyHeightCandidateCount, nearbyRadius, nearbyHeightTolerance
 				);
 			}
 		}
