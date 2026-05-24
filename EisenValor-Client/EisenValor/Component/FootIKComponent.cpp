@@ -37,6 +37,11 @@ DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, 
 	return DirectX::XMVector3TransformCoord(bonePosition, DirectX::XMLoadFloat4x4(&ownerWorldMatrix));
 }
 
+float DistanceSqXZ(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
+{
+	const float dx = a.x - b.x;
+	const float dz = a.z - b.z;
+	return dx * dx + dz * dz;
 }
 
 } // namespace
