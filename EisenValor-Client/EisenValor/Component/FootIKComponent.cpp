@@ -4,8 +4,12 @@
 #include "AnimationComponent.h"
 #include "GameObject.h"
 #include "GameObject.inl"
+#include "MeshComponent.h"
+#include "MeshResource.h"
+#include "Scene.h"
 #include "Transform.h"
 
+#include <cmath>
 #include <unordered_set>
 
 namespace
@@ -31,6 +35,8 @@ DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, 
 {
 	const auto ownerWorldMatrix = ownerTransform.GetWorldMatrix();
 	return DirectX::XMVector3TransformCoord(bonePosition, DirectX::XMLoadFloat4x4(&ownerWorldMatrix));
+}
+
 }
 
 } // namespace
@@ -90,6 +96,15 @@ void FootIKComponent::OnLateUpdate(float)
 		const auto  leftTargetWorld = TransformBonePositionToWorld(leftTargetMatrix.r[3], ownerTransform);
 		const auto  rightFootWorld = TransformBonePositionToWorld(rightFootMatrix.r[3], ownerTransform);
 		const auto  rightTargetWorld = TransformBonePositionToWorld(rightTargetMatrix.r[3], ownerTransform);
+		DirectX::XMFLOAT3 leftFootWorldPosition;
+		DirectX::XMFLOAT3 rightFootWorldPosition;
+		DirectX::XMStoreFloat3(&leftFootWorldPosition, leftFootWorld);
+		DirectX::XMStoreFloat3(&rightFootWorldPosition, rightFootWorld);
+		const DirectX::XMFLOAT3 footCenter = {
+			(leftFootWorldPosition.x + rightFootWorldPosition.x) * 0.5f,
+			(leftFootWorldPosition.y + rightFootWorldPosition.y) * 0.5f,
+			(leftFootWorldPosition.z + rightFootWorldPosition.z) * 0.5f
+		};
 
 		DEBUG_LOG_FMT(
 			"[FootIK] modelY leftFoot={:.3f}, leftIkFoot={:.3f}, rightFoot={:.3f}, rightIkFoot={:.3f}\n",
@@ -101,6 +116,66 @@ void FootIKComponent::OnLateUpdate(float)
 			ownerWorldPosition.y, DirectX::XMVectorGetY(leftFootWorld), DirectX::XMVectorGetY(leftTargetWorld),
 			DirectX::XMVectorGetY(rightFootWorld), DirectX::XMVectorGetY(rightTargetWorld)
 		);
+
+		if (auto* scene = owner->GetScene())
+		{
+			if (auto* meshStorage = scene->GetStorage<MeshComponent>())
+			{
+				DEBUG_LOG_FMT("[FootIK] scene mesh count={}\n", meshStorage->GetList().size());
+
+				constexpr float nearbyRadius = 20.0f;
+				constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
+				size_t nearbyCandidateCount = 0;
+				size_t loggedCandidateCount = 0;
+				size_t loggedMeshCount = 0;
+				for (const auto& meshComp : meshStorage->GetList())
+				{
+					if (!meshComp.IsValid())
+					{
+						continue;
+					}
+
+					auto* meshObj = meshComp.GetGameObject();
+					auto* meshRes = meshComp.GetMeshResource();
+					if (!meshObj || !meshRes)
+					{
+						continue;
+					}
+
+					const auto worldPos = meshObj->GetTransform().GetWorldPosition();
+					if (loggedMeshCount < 12)
+					{
+						DEBUG_LOG_FMT(
+							"[FootIK] scene mesh obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f})\n",
+							meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z
+						);
+						++loggedMeshCount;
+					}
+
+					const float distanceSqXZ = DistanceSqXZ(worldPos, footCenter);
+					if (distanceSqXZ <= nearbyRadiusSq)
+					{
+						++nearbyCandidateCount;
+
+						if (loggedCandidateCount < 8)
+						{
+							DEBUG_LOG_FMT(
+								"[FootIK] nearby mesh candidate obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f}) distXZ={:.3f}\n",
+								meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z,
+								std::sqrt(distanceSqXZ)
+							);
+							++loggedCandidateCount;
+						}
+					}
+
+				}
+
+				DEBUG_LOG_FMT(
+					"[FootIK] nearby mesh candidate count={} radius={:.1f} footCenter=({:.3f}, {:.3f}, {:.3f})\n",
+					nearbyCandidateCount, nearbyRadius, footCenter.x, footCenter.y, footCenter.z
+				);
+			}
+		}
 	}
 
 	auto&	   ownerTransform = owner->GetTransform();
