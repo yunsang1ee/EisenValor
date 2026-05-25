@@ -2,16 +2,23 @@
 #include "FootIKComponent.h"
 
 #include "AnimationComponent.h"
+#include "AssetLoader.h"
 #include "GameObject.h"
 #include "GameObject.inl"
+#include "MeshData.h"
 #include "MeshComponent.h"
 #include "MeshResource.h"
+#include "ResourceGlobal.h"
 #include "Scene.h"
 #include "Transform.h"
 
+#include <DirectXCollision.h>
 #include <cmath>
 #include <limits>
+#include <memory>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace
 {
@@ -43,6 +50,25 @@ float DistanceSqXZ(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
 	const float dx = a.x - b.x;
 	const float dz = a.z - b.z;
 	return dx * dx + dz * dz;
+}
+
+std::shared_ptr<EvAsset::MeshData> GetCachedMeshData(const EvAsset::Guid& guid, const std::filesystem::path& path)
+{
+	static std::unordered_map<EvAsset::Guid, std::shared_ptr<EvAsset::MeshData>, EvAsset::GuidHash> meshDataCache;
+
+	if (auto it = meshDataCache.find(guid); it != meshDataCache.end())
+	{
+		return it->second;
+	}
+
+	auto meshData = std::make_shared<EvAsset::MeshData>();
+	if (!EvAsset::AssetLoader::Load(path, *meshData))
+	{
+		return nullptr;
+	}
+
+	meshDataCache[guid] = meshData;
+	return meshData;
 }
 
 } // namespace
@@ -137,6 +163,15 @@ void FootIKComponent::OnLateUpdate(float)
 				size_t loggedCandidateCount = 0;
 				size_t loggedHeightCandidateCount = 0;
 				size_t loggedMeshCount = 0;
+				struct HeightCandidate
+				{
+					const GameObject* obj = nullptr;
+					const MeshResource* res = nullptr;
+					DirectX::XMFLOAT3 worldPos = {};
+					float distanceSqXZ = 0.0f;
+					float deltaY = 0.0f;
+				};
+				std::vector<HeightCandidate> heightCandidates;
 				std::unordered_set<EvAsset::Guid, EvAsset::GuidHash> uniqueHeightCandidateGuids;
 				const GameObject* closestHeightCandidateObj = nullptr;
 				const MeshResource* closestHeightCandidateRes = nullptr;
@@ -187,6 +222,7 @@ void FootIKComponent::OnLateUpdate(float)
 						{
 							++nearbyHeightCandidateCount;
 							uniqueHeightCandidateGuids.insert(meshRes->GetGuid());
+							heightCandidates.push_back({meshObj, meshRes, worldPos, distanceSqXZ, heightDelta});
 
 							if (distanceSqXZ < closestHeightCandidateDistanceSq)
 							{
@@ -221,12 +257,139 @@ void FootIKComponent::OnLateUpdate(float)
 				);
 				if (closestHeightCandidateObj && closestHeightCandidateRes)
 				{
+					std::filesystem::path closestHeightCandidatePath;
 					DEBUG_LOG_FMT(
 						"[FootIK] closest height candidate obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f}) distXZ={:.3f} deltaY={:.3f}\n",
 						closestHeightCandidateObj->GetName().c_str(), closestHeightCandidateRes->GetGuid(),
 						closestHeightCandidateWorld.x, closestHeightCandidateWorld.y, closestHeightCandidateWorld.z,
 						std::sqrt(closestHeightCandidateDistanceSq), closestHeightCandidateDeltaY
 					);
+					if (GLOBAL(ResourceGlobal).TryGetPath(closestHeightCandidateRes->GetGuid(), closestHeightCandidatePath))
+					{
+						DEBUG_LOG_FMT(
+							"[FootIK] closest height candidate path={}\n", closestHeightCandidatePath.string()
+						);
+
+						EvAsset::MeshData meshData;
+						if (EvAsset::AssetLoader::Load(closestHeightCandidatePath, meshData))
+						{
+							DEBUG_LOG_FMT(
+								"[FootIK] closest height mesh loaded vertices={} indices={} subMeshes={}\n",
+								meshData.vertices.size(), meshData.indices.size(), meshData.subMeshes.size()
+							);
+						}
+						else
+						{
+							DEBUG_LOG_FMT("[FootIK] closest height mesh load failed\n");
+						}
+					}
+					else
+					{
+						DEBUG_LOG_FMT("[FootIK] closest height candidate path lookup failed\n");
+					}
+				}
+
+				// Ray를 이용한 충돌 검사로 후보군의 실제 높이 샘플링
+				const auto rayOrigin = DirectX::XMVectorSet(footCenter.x, footCenter.y + 0.5f, footCenter.z, 1.0f);
+				const auto rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f);
+				constexpr float rayMaxDistance = 1.5f;
+				float bestRayDistance = std::numeric_limits<float>::max();
+				DirectX::XMFLOAT3 bestHitPoint = {};
+				const HeightCandidate* bestRayCandidate = nullptr;
+				size_t rayCheckedCandidateCount = 0;
+				size_t rayLoadedCandidateCount = 0;
+
+				for (const auto& candidate : heightCandidates)
+				{
+					if (!candidate.obj || !candidate.res)
+					{
+						continue;
+					}
+
+					++rayCheckedCandidateCount;
+					std::filesystem::path candidatePath;
+					if (!GLOBAL(ResourceGlobal).TryGetPath(candidate.res->GetGuid(), candidatePath))
+					{
+						continue;
+					}
+
+					EvAsset::MeshData meshData;
+					if (!EvAsset::AssetLoader::Load(candidatePath, meshData))
+					{
+						continue;
+					}
+					++rayLoadedCandidateCount;
+
+					const auto worldMatrix = candidate.obj->GetTransform().GetWorldMatrix();
+					const auto world = DirectX::XMLoadFloat4x4(&worldMatrix);
+
+					for (size_t index = 0; index + 2 < meshData.indices.size(); index += 3)
+					{
+						const uint32_t i0 = meshData.indices[index];
+						const uint32_t i1 = meshData.indices[index + 1];
+						const uint32_t i2 = meshData.indices[index + 2];
+						if (i0 >= meshData.vertices.size() || i1 >= meshData.vertices.size() || i2 >= meshData.vertices.size())
+						{
+							continue;
+						}
+
+						const auto v0 = DirectX::XMVector3TransformCoord(
+							DirectX::XMVectorSet(
+								meshData.vertices[i0].position[0], meshData.vertices[i0].position[1],
+								meshData.vertices[i0].position[2], 1.0f
+							),
+							world
+						);
+						const auto v1 = DirectX::XMVector3TransformCoord(
+							DirectX::XMVectorSet(
+								meshData.vertices[i1].position[0], meshData.vertices[i1].position[1],
+								meshData.vertices[i1].position[2], 1.0f
+							),
+							world
+						);
+						const auto v2 = DirectX::XMVector3TransformCoord(
+							DirectX::XMVectorSet(
+								meshData.vertices[i2].position[0], meshData.vertices[i2].position[1],
+								meshData.vertices[i2].position[2], 1.0f
+							),
+							world
+						);
+
+						float distance = 0.0f;
+						if (!DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, distance))
+						{
+							continue;
+						}
+
+						if (distance < 0.0f || distance > rayMaxDistance || distance >= bestRayDistance)
+						{
+							continue;
+						}
+
+						bestRayDistance = distance;
+						bestRayCandidate = &candidate;
+						const auto hitPoint =
+							DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
+						DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
+					}
+				}
+
+				DEBUG_LOG_FMT(
+					"[FootIK] raycast scan checkedCandidates={} loadedMeshes={} maxDistance={:.2f}\n",
+					rayCheckedCandidateCount, rayLoadedCandidateCount, rayMaxDistance
+				);
+				if (bestRayCandidate)
+				{
+					DEBUG_LOG_FMT(
+						"[FootIK] raycast best hit obj='{}' guid={} hit=({:.3f}, {:.3f}, {:.3f}) distance={:.3f} candidateDistXZ={:.3f} candidateDeltaY={:.3f}\n",
+						bestRayCandidate->obj->GetName().c_str(), bestRayCandidate->res->GetGuid(), bestHitPoint.x,
+						bestHitPoint.y, bestHitPoint.z, bestRayDistance, std::sqrt(bestRayCandidate->distanceSqXZ),
+						bestRayCandidate->deltaY
+					);
+				}
+				else
+				{
+					DEBUG_LOG_FMT("[FootIK] raycast best hit not found\n");
 				}
 			}
 		}
@@ -301,8 +464,129 @@ IKTarget FootIKComponent::BuildLegIKTarget(
 }
 
 bool FootIKComponent::TrySampleVisualGround(
-	const DirectX::XMFLOAT3&, float, float, GroundHit&
+	const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
 ) const
 {
-	return false;
+	auto* owner = GetGameObject();
+	auto* scene = owner ? owner->GetScene() : nullptr;
+	auto* meshStorage = scene ? scene->GetStorage<MeshComponent>() : nullptr;
+	if (!meshStorage)
+	{
+		return false;
+	}
+
+	constexpr float nearbyRadius = 8.0f;
+	constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
+	const float	  heightTolerance = maxUp;
+	const auto	  rayOrigin = DirectX::XMVectorSet(worldPosition.x, worldPosition.y + maxUp, worldPosition.z, 1.0f);
+	const auto	  rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f);
+	const float	  rayMaxDistance = maxUp + maxDown;
+	float		  bestRayDistance = std::numeric_limits<float>::max();
+	DirectX::XMFLOAT3 bestHitPoint = {};
+	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f};
+
+	for (const auto& meshComp : meshStorage->GetList())
+	{
+		if (!meshComp.IsValid())
+		{
+			continue;
+		}
+
+		auto* meshObj = meshComp.GetGameObject();
+		auto* meshRes = meshComp.GetMeshResource();
+		if (!meshObj || !meshRes)
+		{
+			continue;
+		}
+
+		const auto worldPos = meshObj->GetTransform().GetWorldPosition();
+		if (DistanceSqXZ(worldPos, worldPosition) > nearbyRadiusSq)
+		{
+			continue;
+		}
+
+		if (std::fabs(worldPos.y - worldPosition.y) > heightTolerance)
+		{
+			continue;
+		}
+
+		std::filesystem::path meshPath;
+		if (!GLOBAL(ResourceGlobal).TryGetPath(meshRes->GetGuid(), meshPath))
+		{
+			continue;
+		}
+
+		auto meshData = GetCachedMeshData(meshRes->GetGuid(), meshPath);
+		if (!meshData)
+		{
+			continue;
+		}
+
+		const auto worldMatrix = meshObj->GetTransform().GetWorldMatrix();
+		const auto world = DirectX::XMLoadFloat4x4(&worldMatrix);
+
+		for (size_t index = 0; index + 2 < meshData->indices.size(); index += 3)
+		{
+			const uint32_t i0 = meshData->indices[index];
+			const uint32_t i1 = meshData->indices[index + 1];
+			const uint32_t i2 = meshData->indices[index + 2];
+			if (i0 >= meshData->vertices.size() || i1 >= meshData->vertices.size() || i2 >= meshData->vertices.size())
+			{
+				continue;
+			}
+
+			const auto v0 = DirectX::XMVector3TransformCoord(
+				DirectX::XMVectorSet(
+					meshData->vertices[i0].position[0], meshData->vertices[i0].position[1],
+					meshData->vertices[i0].position[2], 1.0f
+				),
+				world
+			);
+			const auto v1 = DirectX::XMVector3TransformCoord(
+				DirectX::XMVectorSet(
+					meshData->vertices[i1].position[0], meshData->vertices[i1].position[1],
+					meshData->vertices[i1].position[2], 1.0f
+				),
+				world
+			);
+			const auto v2 = DirectX::XMVector3TransformCoord(
+				DirectX::XMVectorSet(
+					meshData->vertices[i2].position[0], meshData->vertices[i2].position[1],
+					meshData->vertices[i2].position[2], 1.0f
+				),
+				world
+			);
+
+			float distance = 0.0f;
+			if (!DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, distance))
+			{
+				continue;
+			}
+
+			if (distance < 0.0f || distance > rayMaxDistance || distance >= bestRayDistance)
+			{
+				continue;
+			}
+
+			bestRayDistance = distance;
+			const auto hitPoint =
+				DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
+			DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
+
+			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
+			const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
+			const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
+			DirectX::XMStoreFloat3(&bestHitNormal, normal);
+		}
+	}
+
+	if (bestRayDistance == std::numeric_limits<float>::max())
+	{
+		return false;
+	}
+
+	outHit.position = bestHitPoint;
+	outHit.normal = bestHitNormal;
+	outHit.distance = bestRayDistance;
+	return true;
 }
