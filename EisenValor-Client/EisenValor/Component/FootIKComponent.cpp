@@ -407,14 +407,28 @@ void FootIKComponent::OnLateUpdate(float)
 	GroundHit rightGroundHit;
 	const bool leftHit = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
 	const bool rightHit = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
-	m_leftWeight = leftHit ? m_leftWeight : 0.0f;
-	m_rightWeight = rightHit ? m_rightWeight : 0.0f;
+
+	auto leftTargetPos = leftTargetMatrix.r[3];
+	auto rightTargetPos = rightTargetMatrix.r[3];
+	if (leftHit)
+	{
+		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
+		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, DirectX::XMVectorGetY(groundModel) + m_footSoleOffset);
+	}
+	if (rightHit)
+	{
+		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&rightGroundHit.position), ownerTransform);
+		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, DirectX::XMVectorGetY(groundModel) + m_footSoleOffset);
+	}
+
+	m_leftWeight = leftHit ? 1.0f : 0.0f;
+	m_rightWeight = rightHit ? 1.0f : 0.0f;
 
 	animation->SetIKTarget(
-		IK_TYPE::LEFT_LEG, BuildLegIKTarget(m_leftLeg, leftTargetMatrix.r[3], m_leftWeight)
+		IK_TYPE::LEFT_LEG, BuildLegIKTarget(m_leftLeg, leftTargetPos, m_leftWeight)
 	);
 	animation->SetIKTarget(
-		IK_TYPE::RIGHT_LEG, BuildLegIKTarget(m_rightLeg, rightTargetMatrix.r[3], m_rightWeight)
+		IK_TYPE::RIGHT_LEG, BuildLegIKTarget(m_rightLeg, rightTargetPos, m_rightWeight)
 	);
 }
 
