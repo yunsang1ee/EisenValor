@@ -402,6 +402,16 @@ void AnimationComponent::UpdateBoneMatrices()
 		computeGlobal((int32_t)i);
 	}
 
+	if (std::fabs(m_modelRootOffsetY) > 0.0001f)
+	{
+		for (auto& globalMatrix : m_globalMatrices)
+		{
+			XMMATRIX global = XMLoadFloat4x4(&globalMatrix);
+			global.r[3] = XMVectorSetY(global.r[3], XMVectorGetY(global.r[3]) + m_modelRootOffsetY);
+			XMStoreFloat4x4(&globalMatrix, global);
+		}
+	}
+
 	// [IK] (월드 행렬 수정)
 	for (const auto& target : m_ikTargets)
 	{

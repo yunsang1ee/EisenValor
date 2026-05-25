@@ -13,6 +13,7 @@
 #include "Transform.h"
 
 #include <DirectXCollision.h>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -415,7 +416,7 @@ void FootIKComponent::OnLateUpdate(float)
 	GroundHit rightGroundHit;
 	const bool leftHit = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
 	const bool rightHit = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
-	DEBUG_LOG_FMT(
+	/*DEBUG_LOG_FMT(
 		"[FootIK] left sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
 		leftHit, leftFootWorldPosition.x, leftFootWorldPosition.y, leftFootWorldPosition.z, leftGroundHit.position.x,
 		leftGroundHit.position.y, leftGroundHit.position.z, leftGroundHit.distance
@@ -424,7 +425,28 @@ void FootIKComponent::OnLateUpdate(float)
 		"[FootIK] right sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
 		rightHit, rightFootWorldPosition.x, rightFootWorldPosition.y, rightFootWorldPosition.z,
 		rightGroundHit.position.x, rightGroundHit.position.y, rightGroundHit.position.z, rightGroundHit.distance
-	);
+	);*/
+
+	float desiredPelvisOffsetY = 0.0f;
+	if (leftHit)
+	{
+		desiredPelvisOffsetY = std::min(desiredPelvisOffsetY, leftGroundHit.position.y - leftFootWorldPosition.y);
+	}
+	if (rightHit)
+	{
+		desiredPelvisOffsetY = std::min(desiredPelvisOffsetY, rightGroundHit.position.y - rightFootWorldPosition.y);
+	}
+	m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
+	animation->SetModelRootOffsetY(m_pelvisOffsetY);
+	static uint32_t pelvisLogCounter = 0;
+	// m_pelvisOffsetY가 얼마인지 출력
+	if ((++pelvisLogCounter % 30) == 0)
+	{
+		DEBUG_LOG_FMT(
+			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} leftHit={} rightHit={}\n",
+			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, leftHit, rightHit
+		);
+	}
 
 	auto leftTargetPos = leftTargetMatrix.r[3];
 	auto rightTargetPos = rightTargetMatrix.r[3];
@@ -515,6 +537,8 @@ bool FootIKComponent::TrySampleVisualGround(
 	float		  bestRayDistance = std::numeric_limits<float>::max();
 	DirectX::XMFLOAT3 bestHitPoint = {};
 	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f};
+	const GameObject* bestHitObj = nullptr;
+	const MeshResource* bestHitRes = nullptr;
 	size_t		  nearbyMeshCount = 0;
 	size_t		  pathResolvedCount = 0;
 	size_t		  loadedMeshCount = 0;
@@ -606,6 +630,8 @@ bool FootIKComponent::TrySampleVisualGround(
 			}
 
 			bestRayDistance = distance;
+			bestHitObj = meshObj;
+			bestHitRes = meshRes;
 			const auto hitPoint =
 				DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
 			DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
@@ -634,5 +660,14 @@ bool FootIKComponent::TrySampleVisualGround(
 	outHit.position = bestHitPoint;
 	outHit.normal = bestHitNormal;
 	outHit.distance = bestRayDistance;
+	static uint32_t hitLogCounter = 0;
+	if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
+	{
+		//DEBUG_LOG_FMT(
+		//	"[FootIK] sample hit obj='{}' guid={} foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f}\n",
+		//	bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), worldPosition.x, worldPosition.y, worldPosition.z,
+		//	bestHitPoint.x, bestHitPoint.y, bestHitPoint.z, bestRayDistance
+		//);
+	}
 	return true;
 }

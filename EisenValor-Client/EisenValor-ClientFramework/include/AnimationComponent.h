@@ -52,6 +52,7 @@ public:
 	void SetIKTarget(IK_TYPE type, const IKTarget& target);
 	void SetIKWeight(IK_TYPE type, float weight);
 	void ClearIKTargets();
+	void SetModelRootOffsetY(float offsetY) { m_modelRootOffsetY = offsetY; }
 
 	// 루트 모션 이동량 가져오기
 	DirectX::XMVECTOR ConsumeRootMotionDelta() 
@@ -91,6 +92,7 @@ private:
 	// IK 데이터
 	IKProcessor m_ikProcessor;
 	std::array<IKTarget, static_cast<size_t>(IK_TYPE::COUNT)> m_ikTargets;
+	float m_modelRootOffsetY = 0.0f;
 
 	// 루트모션
 	bool m_enableRootMotion = false;
