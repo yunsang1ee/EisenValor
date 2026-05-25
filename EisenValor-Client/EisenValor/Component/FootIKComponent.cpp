@@ -10,6 +10,7 @@
 #include "Transform.h"
 
 #include <cmath>
+#include <limits>
 #include <unordered_set>
 
 namespace
@@ -136,6 +137,12 @@ void FootIKComponent::OnLateUpdate(float)
 				size_t loggedCandidateCount = 0;
 				size_t loggedHeightCandidateCount = 0;
 				size_t loggedMeshCount = 0;
+				std::unordered_set<EvAsset::Guid, EvAsset::GuidHash> uniqueHeightCandidateGuids;
+				const GameObject* closestHeightCandidateObj = nullptr;
+				const MeshResource* closestHeightCandidateRes = nullptr;
+				DirectX::XMFLOAT3 closestHeightCandidateWorld = {};
+				float closestHeightCandidateDistanceSq = std::numeric_limits<float>::max();
+				float closestHeightCandidateDeltaY = 0.0f;
 				for (const auto& meshComp : meshStorage->GetList())
 				{
 					if (!meshComp.IsValid())
@@ -179,6 +186,16 @@ void FootIKComponent::OnLateUpdate(float)
 						if (heightDelta <= nearbyHeightTolerance)
 						{
 							++nearbyHeightCandidateCount;
+							uniqueHeightCandidateGuids.insert(meshRes->GetGuid());
+
+							if (distanceSqXZ < closestHeightCandidateDistanceSq)
+							{
+								closestHeightCandidateObj = meshObj;
+								closestHeightCandidateRes = meshRes;
+								closestHeightCandidateWorld = worldPos;
+								closestHeightCandidateDistanceSq = distanceSqXZ;
+								closestHeightCandidateDeltaY = heightDelta;
+							}
 
 							if (loggedHeightCandidateCount < 8)
 							{
@@ -199,9 +216,18 @@ void FootIKComponent::OnLateUpdate(float)
 					nearbyCandidateCount, nearbyRadius, footCenter.x, footCenter.y, footCenter.z
 				);
 				DEBUG_LOG_FMT(
-					"[FootIK] nearby height candidate count={} radius={:.1f} heightTolerance={:.1f}\n",
-					nearbyHeightCandidateCount, nearbyRadius, nearbyHeightTolerance
+					"[FootIK] nearby height candidate count={} uniqueGuidCount={} radius={:.1f} heightTolerance={:.1f}\n",
+					nearbyHeightCandidateCount, uniqueHeightCandidateGuids.size(), nearbyRadius, nearbyHeightTolerance
 				);
+				if (closestHeightCandidateObj && closestHeightCandidateRes)
+				{
+					DEBUG_LOG_FMT(
+						"[FootIK] closest height candidate obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f}) distXZ={:.3f} deltaY={:.3f}\n",
+						closestHeightCandidateObj->GetName().c_str(), closestHeightCandidateRes->GetGuid(),
+						closestHeightCandidateWorld.x, closestHeightCandidateWorld.y, closestHeightCandidateWorld.z,
+						std::sqrt(closestHeightCandidateDistanceSq), closestHeightCandidateDeltaY
+					);
+				}
 			}
 		}
 	}

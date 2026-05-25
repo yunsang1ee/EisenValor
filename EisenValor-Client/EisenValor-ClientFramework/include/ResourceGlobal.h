@@ -94,6 +94,18 @@ public:
 		return nullptr;
 	}
 
+	bool TryGetPath(const EvAsset::Guid& guid, std::filesystem::path& outPath) const
+	{
+		auto it = m_guidToPath.find(guid);
+		if (m_guidToPath.end() == it)
+		{
+			return false;
+		}
+
+		outPath = it->second;
+		return true;
+	}
+
 	void ProcessPendingLoads();	// 리소스 예약
 	void CheckForReload();	//Hot Reload
 	bool HasPendingLoads() const { return !m_pendingLoads.empty(); }
