@@ -34,15 +34,6 @@
     <Filter Include="NetBridge">
       <UniqueIdentifier>{757ff512-363e-4b4b-9995-e514033e6060}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NetBridge\01. NWBuffer">
-      <UniqueIdentifier>{e76c6816-d432-4b93-89cd-3c016a7a8e3e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NetBridge\01. NWBuffer\00. RecvBuffer">
-      <UniqueIdentifier>{a3109b9e-f30d-47f1-a469-c2e290563598}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="NetBridge\01. NWBuffer\01. PacketBuffer">
-      <UniqueIdentifier>{b76b1070-81c6-43fa-a4ab-97758300ab18}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Resource\Heap">
       <UniqueIdentifier>{db2029bf-c6c5-4026-ab67-75387e76e1c4}</UniqueIdentifier>
     </Filter>
@@ -100,6 +91,18 @@
     <Filter Include="Component\Mesh">
       <UniqueIdentifier>{8756c9ba-3deb-44b5-99e7-bbec44e463ee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NetBridge\00. Network\01. Session">
+      <UniqueIdentifier>{9db59726-de17-4dce-9ec8-bc536cacfce8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\00. Network\01. Session\00. NWBuffer">
+      <UniqueIdentifier>{e76c6816-d432-4b93-89cd-3c016a7a8e3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\00. Network\01. Session\00. NWBuffer\00. RecvBuffer">
+      <UniqueIdentifier>{a3109b9e-f30d-47f1-a469-c2e290563598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetBridge\00. Network\01. Session\00. NWBuffer\01. PacketBuffer">
+      <UniqueIdentifier>{b76b1070-81c6-43fa-a4ab-97758300ab18}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Vec3.h">
@@ -131,10 +134,10 @@
       <Filter>NetBridge\00. Network</Filter>
     </ClInclude>
     <ClInclude Include="include\RecvBuffer.h">
-      <Filter>NetBridge\01. NWBuffer\00. RecvBuffer</Filter>
+      <Filter>NetBridge\00. Network\01. Session\00. NWBuffer\00. RecvBuffer</Filter>
     </ClInclude>
     <ClInclude Include="include\PacketBuffer.h">
-      <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
+      <Filter>NetBridge\00. Network\01. Session\00. NWBuffer\01. PacketBuffer</Filter>
     </ClInclude>
     <ClInclude Include="..\Libraries\inc\SimpleMath.h">
       <Filter>Common\Math</Filter>
@@ -317,6 +320,9 @@
     <ClInclude Include="include\PixProfiler.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="include\Session.h">
+      <Filter>NetBridge\00. Network\01. Session</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -339,10 +345,10 @@
       <Filter>NetBridge\00. Network</Filter>
     </ClCompile>
     <ClCompile Include="src\RecvBuffer.cpp">
-      <Filter>NetBridge\01. NWBuffer\00. RecvBuffer</Filter>
+      <Filter>NetBridge\00. Network\01. Session\00. NWBuffer\00. RecvBuffer</Filter>
     </ClCompile>
     <ClCompile Include="src\PacketBuffer.cpp">
-      <Filter>NetBridge\01. NWBuffer\01. PacketBuffer</Filter>
+      <Filter>NetBridge\00. Network\01. Session\00. NWBuffer\01. PacketBuffer</Filter>
     </ClCompile>
     <ClCompile Include="src\InputGlobal.cpp">
       <Filter>Input</Filter>
@@ -474,6 +480,9 @@
       <Filter>Component\Mesh</Filter>
     </ClCompile>
     <ClCompile Include="src\IKProcessor.cpp" />
+    <ClCompile Include="src\Session.cpp">
+      <Filter>NetBridge\00. Network\01. Session</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Libraries\inc\SimpleMath.inl">

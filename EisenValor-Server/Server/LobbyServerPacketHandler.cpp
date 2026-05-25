@@ -44,7 +44,8 @@ bool GameServer::LobbyServerPacketHandler::Handle_LS_CREATE_GAME_WORLD_PACKET(co
 	}
 
 	if(worker) {
-		worker->PushJob(&GameServerEngine::GameWorldThread::CreateWorld, recvPkt.room_id(), info);
+		const uint16 worldID{ recvPkt.world_id() };
+		worker->PushJob(&GameServerEngine::GameWorldThread::CreateWorld, worldID, info);
 	}
 
 	return true;

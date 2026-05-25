@@ -2,6 +2,7 @@
 #include "ServerManager.h"
 
 #include "LobbyServerEngineCore.h"
+#include "DBConnectionPool.h"
 
 BOOL __stdcall ConsoleHandler(DWORD signal)
 {
@@ -25,6 +26,11 @@ bool LobbyServer::ServerManager::Init()
 
 	if(false == MANAGER(LobbyServerEngine::LobbyServerEngineCore)->Init(MakeGameServerSessionFunc, MakeClientSessionFunc)) {
 		LOG_ERROR("LobbyServerEngineCore Init Failed");
+		return false;
+	}
+
+	if(false == MANAGER(DBConnectionPool)->Connect(MANAGER(LobbyServerEngine::LobbyServerEngineCore)->GetWorkerThreadCount(), L"DSN=EisenValor-DB_ODBC;Trusted_Connection=yes;")) {
+		LOG_ERROR("DBConnectionPool Connect Failed");
 		return false;
 	}
 
@@ -59,5 +65,6 @@ bool LobbyServer::ServerManager::Run()
 
 void LobbyServer::ServerManager::Shutdown()
 {
+	MANAGER(DBConnectionPool)->Clear();
 	MANAGER(LobbyServerEngine::LobbyServerEngineCore)->Shutdown();
 }

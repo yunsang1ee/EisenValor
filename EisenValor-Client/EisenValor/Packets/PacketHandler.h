@@ -10,23 +10,23 @@ namespace NetBridge
 {
 class PacketBuffer;
 
-class ServerPacketHandler : public IPacketHandler
+class PacketHandler : public IPacketHandler
 {
 public:
 	using PacketHandlerFunc = bool (*)(const SOCKET&, const char* const, const PacketHeader&);
 
-	ServerPacketHandler() = default;
-	~ServerPacketHandler() = default;
-	ServerPacketHandler(const ServerPacketHandler&) = delete;
-	ServerPacketHandler& operator=(const ServerPacketHandler&) = delete;
-	ServerPacketHandler(ServerPacketHandler&&) noexcept = default;
-	ServerPacketHandler& operator=(ServerPacketHandler&&) noexcept = default;
+	PacketHandler() = default;
+	~PacketHandler() override = default;
+	PacketHandler(const PacketHandler&) = delete;
+	PacketHandler& operator=(const PacketHandler&) = delete;
+	PacketHandler(PacketHandler&&) noexcept = default;
+	PacketHandler& operator=(PacketHandler&&) noexcept = default;
 
 public:
-	virtual void Init() noexcept final;
-	virtual bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader) final
+	void Init() final;
+	bool HandlePacket(const SOCKET& socket, const char* const buffer, const PacketHeader& packetHeader) final
 	{
-		return std::invoke(PacketHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
+		return std::invoke(m_packetHandlerFuncs[packetHeader.packetType], socket, buffer, packetHeader);
 	}
 
 	// template <typename PacketType, typename HandleFunc>
@@ -74,7 +74,33 @@ public:
 		const PACKET_TYPE packetType, const flatbuffers::DetachedBuffer& packetData
 	);
 
+protected:
+	void RegisterPacketHandler(PACKET_TYPE packetType, PacketHandlerFunc packetHandlerFunc) noexcept;
+
+	template <typename PacketType, auto HandleFunc>
+	void RegisterPacketHandler(PACKET_TYPE packetType) noexcept
+	{
+		RegisterPacketHandler(
+			packetType,
+			[](const SOCKET& socket, const char* const buffer, const PacketHeader& header) -> bool
+			{ return PacketHandler::HandlePacket<PacketType>(HandleFunc, socket, buffer, header); }
+		);
+	}
+	virtual void RegisterHandlers() noexcept = 0;
+
 private:
-	static std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> PacketHandlerFuncs;
+	std::array<PacketHandlerFunc, std::numeric_limits<uint16>::max() + 1> m_packetHandlerFuncs{};
+};
+
+class LobbyServerPacketHandler final : public PacketHandler
+{
+protected:
+	void RegisterHandlers() noexcept override;
+};
+
+class GameServerPacketHandler final : public PacketHandler
+{
+protected:
+	void RegisterHandlers() noexcept override;
 };
 } // namespace NetBridge

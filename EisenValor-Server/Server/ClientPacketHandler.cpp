@@ -134,9 +134,9 @@ bool GameServer::ClientPacketHandler::Handle_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET
 
 bool GameServer::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::CS_ENTER_GAME_WORLD_PACKET& recvPkt)
 {
-	const uint16 roomID{ recvPkt.room_id() };
+	const uint16 worldID{ recvPkt.room_id() };
 	
-	auto world = static_cast<GameServer::Contents::GameWorld*>(static_cast<GameServerEngine::GameWorldThread*>(TLS_WOREKR_THREAD)->FindGameWorld(roomID));
+	auto world = static_cast<GameServer::Contents::GameWorld*>(static_cast<GameServerEngine::GameWorldThread*>(TLS_WOREKR_THREAD)->FindGameWorld(worldID));
 
 	if(world) {
 		std::cout << "CS_ENTER_GAME_WORLD_PACKET" << std::endl;

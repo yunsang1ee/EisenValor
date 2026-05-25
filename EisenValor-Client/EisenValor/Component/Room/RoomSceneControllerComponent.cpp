@@ -16,19 +16,19 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 	}
 
 	// 팀 변경
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F2)) {
+	if (GLOBAL(InputGlobal).GetInputDown(VK_F3)) {
 		auto pb{NetBridge::C2S::Make_CL_CHANGE_TEAM_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 	
 	// 준비해제/준비완료
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F3)) {
+	if (GLOBAL(InputGlobal).GetInputDown(VK_F4)) {
 		auto pb{NetBridge::C2S::Make_CL_READY_GAME_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	// 봇 추가
-	if (GLOBAL(InputGlobal).GetInputDown(VK_F4)) {
+	if (GLOBAL(InputGlobal).GetInputDown(VK_F5)) {
 		static FB_ENUMS::TEAM_TYPE flag{FB_ENUMS::TEAM_TYPE_BLUE};
 		auto pb{NetBridge::C2S::Make_CL_ADD_BOT_PACKET(static_cast<FB_ENUMS::TEAM_TYPE>(flag))};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));

@@ -12,7 +12,7 @@
 #include <DxSwapChain.h>
 
 // Scene
-#include "Scene/SampleScene.h"
+#include "Scene/WorldScene.h"
 #include "Scene/LoginScene.h"
 #include "Scene/LobbyScene.h"
 #include "Scene/RoomScene.h"
@@ -29,6 +29,8 @@
 
 #include "Packets/PacketHandler.h"
 #include "Packets/C2SPackets.h"
+#include "Network/LobbyServerSession.h"
+#include "Network/GameServerSession.h"
 #include <TimerGlobal.h>
 
 
@@ -115,10 +117,13 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 	std::string_view ipAddress{"127.0.0.1"};
 	
 	#ifdef APPLY_LOBBY_SERVER
-		const uint16 port{8888};	// lobby port
+		const uint16 port{G_LOBBY_SERVER_PORT};	// lobby port
+		GLOBAL(NetBridge::NetworkGlobal).SetLobbySession(std::make_unique<NetBridge::LobbyServerSession>());
 	#else
-		const uint16 port{40002};	// game server 1st worldThread port
+		const uint16 port{G_GAME_SERVER_PORT};	// game server 1st worldThread port
 	#endif
+
+	GLOBAL(NetBridge::NetworkGlobal).SetGameSession(std::make_unique<NetBridge::GameServerSession>());
 
 	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port))
 	{
@@ -181,24 +186,6 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			timer.SetTargetFPS(0);
 		}
 
-		// PacketHandler 등록
-		{
-			std::unique_ptr<NetBridge::IPacketHandler> packetHandler =
-				std::make_unique<NetBridge::ServerPacketHandler>();
-			GLOBAL(NetBridge::NetworkGlobal).SetPacketHandler(std::move(packetHandler));
-			/*std::string id, pw;
-			std::cout << "Input ID(any):";
-			// std::cin >> id;
-			id = "ID";
-			std::cout << "\n";
-			std::cout << "Input PW(any):";
-			// std::cin >> pw;
-			pw = "PW";
-
-			auto pb = NetBridge::C2S::Make_CS_LOGIN_PACKET(id.c_str(), pw.c_str());
-			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));*/
-		}
-
 		// RenderPass 등록
 		{
 			auto& renderer = GLOBAL(DxRendererGlobal);
@@ -234,7 +221,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	// Scene 등록
 	{
 		GLOBAL(SceneGlobal).RegisterScene<LoginScene>("LoginScene");
-		GLOBAL(SceneGlobal).RegisterScene<SampleScene>("SampleScene");
+		GLOBAL(SceneGlobal).RegisterScene<WorldScene>("WorldScene");
 		GLOBAL(SceneGlobal).RegisterScene<LobbyScene>("LobbyScene");
 		GLOBAL(SceneGlobal).RegisterScene<RoomScene>("RoomScene");
 		GLOBAL(SceneGlobal).RegisterScene<LoadingScene>("LoadingScene");

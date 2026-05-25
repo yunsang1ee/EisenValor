@@ -318,6 +318,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
+    <ClInclude Include="Component\World\WorldSceneControllerComponent.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="NavMesh\DetourAlloc.h" />
     <ClInclude Include="NavMesh\DetourAssert.h" />
@@ -333,6 +334,8 @@ exit /b 0</Command>
     <ClInclude Include="NavMesh\DetourPathQueue.h" />
     <ClInclude Include="NavMesh\DetourProximityGrid.h" />
     <ClInclude Include="NavMesh\DetourStatus.h" />
+    <ClInclude Include="Network\GameServerSession.h" />
+    <ClInclude Include="Network\LobbyServerSession.h" />
     <ClInclude Include="Packets\C2SPackets.h" />
     <ClInclude Include="Packets\Enums_generated.h" />
     <ClInclude Include="Packets\PacketEnums.h" />
@@ -354,7 +357,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\LobbyScene.h" />
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
-    <ClInclude Include="Scene\SampleScene.h" />
+    <ClInclude Include="Scene\WorldScene.h" />
     <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
     <ClInclude Include="stdafxClient.h" />
     <ClInclude Include="Component\BattleUIControllerComponent.h" />
@@ -378,6 +381,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
     <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
+    <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -445,6 +449,8 @@ exit /b 0</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Network\GameServerSession.cpp" />
+    <ClCompile Include="Network\LobbyServerSession.cpp" />
     <ClCompile Include="Packets\C2SPackets.cpp" />
     <ClCompile Include="Packets\PacketHandler.cpp" />
     <ClCompile Include="Packets\S2CPackets.cpp" />
@@ -456,7 +462,7 @@ exit /b 0</Command>
     <ClCompile Include="Scene\LobbyScene.cpp" />
     <ClCompile Include="Scene\LoginScene.cpp" />
     <ClCompile Include="Scene\RoomScene.cpp" />
-    <ClCompile Include="Scene\SampleScene.cpp" />
+    <ClCompile Include="Scene\WorldScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

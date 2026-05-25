@@ -5,9 +5,13 @@
 #include "Participant.h"
 #include "SessionManager.h"
 #include "GameServerSession.h"
+#ifdef APPLY_DB
+#include "DBConnectionPool.h"
+#include "DBBind.h"
+#endif
 
 LobbyServer::GameRoom::GameRoom()
-	:m_blueTeamCount{}, m_redTeamCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }
+	:m_blueTeamCount{}, m_redTeamCount{}, m_host{ nullptr }, m_info{}, m_idGenerator{ 100'000 }, m_gameResultApplied{ false }
 {
 }
 
@@ -64,7 +68,7 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 	if(newUser->GetType() == FB_ENUMS::PARTICIPANT_TYPE_HOST && nullptr == m_host)
 		m_host = newUser;
 
-	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) 
+	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType)
 		teamType = FB_ENUMS::TEAM_TYPE_RED;
 	else
 		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
@@ -203,6 +207,7 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 	if(gameServerSession) {
 		for(const auto& [id, user] : m_users) {
 			if(user->GetStateType() != FB_ENUMS::PARTICIPANT_STATE_TYPE_READY) {
+				std::cout << std::format("User ID: {}, Not Ready!", user->GetID()) << std::endl;
 				auto pb{ LobbyServer::Make_LC_START_GAME_FAIL_PACKET("Not all users are ready") };
 				Broadcast(std::move(pb));
 				return;
@@ -218,20 +223,111 @@ void LobbyServer::GameRoom::StartGame(const std::shared_ptr<ClientSession>& clie
 		for(const auto& [id, bot] : m_bots)
 			particinpants.emplace_back(bot->GetInfo());
 
-		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(m_info.id, particinpants) };
+		const uint16 worldID{ gameServerSession->ReserveStartRoom(m_info.id) };
+		if(0 == worldID) {
+			std::cout << "월드 아이디 할당 실패" << std::endl;
+			auto pb{ LobbyServer::Make_LC_START_GAME_FAIL_PACKET("Failed to allocate world id") };
+			Broadcast(std::move(pb));
+			return;
+		}
+
+		m_gameResultApplied = false;
+
+		auto pb{ LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(worldID, particinpants) };
 		gameServerSession->Send(std::move(pb));
-		gameServerSession->AddReservedStartRoom(m_info.id);
 	}
+}
+
+void LobbyServer::GameRoom::ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession)
+{
+	auto user{ GetSessionUser(clientSession) };
+
+	const auto userType{ user->GetType() };
+	const auto userStateType{ user->GetStateType() };
+
+	if(FB_ENUMS::PARTICIPANT_TYPE_USER == userType && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY == userStateType) {
+		user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
+		std::cout << std::format("User ID: {}, Return To Game Room! Set Not Ready", user->GetID()) << std::endl;
+	}
+
+	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
+
+	std::cout << std::format("UserID: {}, Return To Game Room!", clientSession->GetID()) << std::endl;
+
+	auto pb{ LobbyServer::Make_LC_RETURN_TO_GAME_ROOM_PACKET() };
+	clientSession->Send(std::move(pb));
+}
+
+void LobbyServer::GameRoom::ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
+{
+	if(m_gameResultApplied)
+		return;
+
+	m_gameResultApplied = true;
+	m_info.stateType = FB_ENUMS::ROOM_STATE_TYPE_WATING;
+
+	for(const auto& [id, user] : m_users) {
+		if(FB_ENUMS::PARTICIPANT_TYPE_HOST != user->GetType() && FB_ENUMS::PARTICIPANT_STATE_TYPE_READY == user->GetStateType())
+			user->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_NOT_READY);
+	}
+
+	if(FB_ENUMS::TEAM_TYPE_NONE == winningTeam) {
+		LOG_INFO("Game result applied. RoomID:{}, Draw, BlueScore:{}, RedScore:{}", m_info.id, blueScore, redScore);
+		return;
+	}
+
+#ifdef APPLY_DB
+	DBConnectionGuard dbConnectionGuard{ MANAGER(DBConnectionPool)->Pop() };
+	DBConnection* dbConnection = dbConnectionGuard.Get();
+	if(nullptr == dbConnection) {
+		LOG_WARNING("Failed to apply game result. RoomID:{}, DB connection failed", m_info.id);
+		return;
+	}
+#endif
+
+	for(const auto& [id, user] : m_users) {
+		auto session{ user->GetSession() };
+		if(nullptr == session)
+			continue;
+
+		const std::string& accountID{ session->GetAccountID() };
+		if(accountID.empty())
+			continue;
+
+		const bool isWinner{ user->GetTeamType() == winningTeam };
+
+#ifdef APPLY_DB
+		if(isWinner) {
+			DBBind<1, 0> dbBind{ *dbConnection, L"UPDATE dbo.userInfo SET winCount = winCount + 1 WHERE id = ?" };
+			dbBind.BindParam(0, accountID.c_str());
+			if(false == dbBind.Execute())
+				LOG_WARNING("Failed to update winCount. RoomID:{}, AccountID:{}", m_info.id, accountID);
+		}
+		else {
+			DBBind<1, 0> dbBind{ *dbConnection, L"UPDATE dbo.userInfo SET loseCount = loseCount + 1 WHERE id = ?" };
+			dbBind.BindParam(0, accountID.c_str());
+			if(false == dbBind.Execute())
+				LOG_WARNING("Failed to update loseCount. RoomID:{}, AccountID:{}", m_info.id, accountID);
+		}
+#else
+		LOG_INFO("Game result DB update skipped. RoomID:{}, AccountID:{}, Result:{}", m_info.id, accountID, isWinner ? "Win" : "Lose");
+		auto pb{ LobbyServer::Make_LC_GAME_RESULT_PACKET(winningTeam, blueScore, redScore) };
+		session->Send(pb);
+#endif
+	}
+
+	LOG_INFO("Game result applied. RoomID:{}, WinningTeam:{}, BlueScore:{}, RedScore:{}", m_info.id, static_cast<uint8>(winningTeam), blueScore, redScore);
 }
 
 std::shared_ptr<LobbyServer::User> LobbyServer::GameRoom::GetSessionUser(const std::shared_ptr<ClientSession>& clientSession)
 {
 	const uint32 sessionID{ clientSession->GetID() };
+	const auto iter{ m_users.find(sessionID) };
 
-	if(false == m_users.contains(sessionID))
+	if(iter == m_users.end())
 		return nullptr;
 
-	return m_users[sessionID];
+	return iter->second;
 }
 
 void LobbyServer::GameRoom::EnterParticipant(std::shared_ptr<Participant> participant)

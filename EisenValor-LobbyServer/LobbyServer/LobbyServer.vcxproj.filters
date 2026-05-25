@@ -40,6 +40,15 @@
     <ClCompile Include="Participant.cpp">
       <Filter>02. GameLobby\GameRoom\Participant</Filter>
     </ClCompile>
+    <ClCompile Include="DBConnectionPool.cpp">
+      <Filter>04. DB\DBConnectionPool</Filter>
+    </ClCompile>
+    <ClCompile Include="DBConnection.cpp">
+      <Filter>04. DB\DBConnectionPool\DBConnection</Filter>
+    </ClCompile>
+    <ClCompile Include="DBBind.cpp">
+      <Filter>04. DB\DBBind</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="99. pch">
@@ -93,6 +102,18 @@
     <Filter Include="03. Packets\PacketHandler\GameServerPacketHandler">
       <UniqueIdentifier>{b6a69420-c3f5-4b1b-abca-81bf4c87918d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="04. DB">
+      <UniqueIdentifier>{3b461bb7-09e9-4aa3-8fbd-478dbca0d2b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. DB\DBConnectionPool">
+      <UniqueIdentifier>{2503287f-9464-438a-8f12-73fbf95f0e2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. DB\DBConnectionPool\DBConnection">
+      <UniqueIdentifier>{c334e698-8040-44c1-ae2d-1bd4b3e825df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. DB\DBBind">
+      <UniqueIdentifier>{7eaa207b-4dea-4800-a2d9-4f5c0d206ce4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -139,6 +160,15 @@
     </ClInclude>
     <ClInclude Include="PacketEnums.h">
       <Filter>03. Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="DBConnectionPool.h">
+      <Filter>04. DB\DBConnectionPool</Filter>
+    </ClInclude>
+    <ClInclude Include="DBConnection.h">
+      <Filter>04. DB\DBConnectionPool\DBConnection</Filter>
+    </ClInclude>
+    <ClInclude Include="DBBind.h">
+      <Filter>04. DB\DBBind</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
