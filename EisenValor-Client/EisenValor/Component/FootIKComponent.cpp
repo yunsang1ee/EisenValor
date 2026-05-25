@@ -45,6 +45,14 @@ DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, 
 	return DirectX::XMVector3TransformCoord(bonePosition, DirectX::XMLoadFloat4x4(&ownerWorldMatrix));
 }
 
+DirectX::XMVECTOR TransformWorldPositionToModel(DirectX::FXMVECTOR worldPosition, const Transform& ownerTransform)
+{
+	const auto ownerWorldMatrix = ownerTransform.GetWorldMatrix();
+	const auto ownerWorld = DirectX::XMLoadFloat4x4(&ownerWorldMatrix);
+	const auto ownerWorldInverse = DirectX::XMMatrixInverse(nullptr, ownerWorld);
+	return DirectX::XMVector3TransformCoord(worldPosition, ownerWorldInverse);
+}
+
 float DistanceSqXZ(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
 {
 	const float dx = a.x - b.x;
@@ -155,9 +163,9 @@ void FootIKComponent::OnLateUpdate(float)
 			{
 				DEBUG_LOG_FMT("[FootIK] scene mesh count={}\n", meshStorage->GetList().size());
 
-				constexpr float nearbyRadius = 8.0f;
+				constexpr float nearbyRadius = 5.0f;
 				constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
-				constexpr float nearbyHeightTolerance = 0.3f;
+				constexpr float nearbyHeightTolerance = 0.5f;
 				size_t nearbyCandidateCount = 0;
 				size_t nearbyHeightCandidateCount = 0;
 				size_t loggedCandidateCount = 0;
@@ -407,6 +415,16 @@ void FootIKComponent::OnLateUpdate(float)
 	GroundHit rightGroundHit;
 	const bool leftHit = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
 	const bool rightHit = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
+	DEBUG_LOG_FMT(
+		"[FootIK] left sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
+		leftHit, leftFootWorldPosition.x, leftFootWorldPosition.y, leftFootWorldPosition.z, leftGroundHit.position.x,
+		leftGroundHit.position.y, leftGroundHit.position.z, leftGroundHit.distance
+	);
+	DEBUG_LOG_FMT(
+		"[FootIK] right sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
+		rightHit, rightFootWorldPosition.x, rightFootWorldPosition.y, rightFootWorldPosition.z,
+		rightGroundHit.position.x, rightGroundHit.position.y, rightGroundHit.position.z, rightGroundHit.distance
+	);
 
 	auto leftTargetPos = leftTargetMatrix.r[3];
 	auto rightTargetPos = rightTargetMatrix.r[3];
