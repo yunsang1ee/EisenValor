@@ -146,7 +146,7 @@ void FootIKComponent::OnLateUpdate(float)
 			(leftFootWorldPosition.z + rightFootWorldPosition.z) * 0.5f
 		};
 
-		DEBUG_LOG_FMT(
+		/*DEBUG_LOG_FMT(
 			"[FootIK] modelY leftFoot={:.3f}, leftIkFoot={:.3f}, rightFoot={:.3f}, rightIkFoot={:.3f}\n",
 			DirectX::XMVectorGetY(leftFootMatrix.r[3]), DirectX::XMVectorGetY(leftTargetMatrix.r[3]),
 			DirectX::XMVectorGetY(rightFootMatrix.r[3]), DirectX::XMVectorGetY(rightTargetMatrix.r[3])
@@ -155,13 +155,13 @@ void FootIKComponent::OnLateUpdate(float)
 			"[FootIK] worldY player={:.3f}, leftFoot={:.3f}, leftIkFoot={:.3f}, rightFoot={:.3f}, rightIkFoot={:.3f}\n",
 			ownerWorldPosition.y, DirectX::XMVectorGetY(leftFootWorld), DirectX::XMVectorGetY(leftTargetWorld),
 			DirectX::XMVectorGetY(rightFootWorld), DirectX::XMVectorGetY(rightTargetWorld)
-		);
+		);*/
 
 		if (auto* scene = owner->GetScene())
 		{
 			if (auto* meshStorage = scene->GetStorage<MeshComponent>())
 			{
-				DEBUG_LOG_FMT("[FootIK] scene mesh count={}\n", meshStorage->GetList().size());
+				//DEBUG_LOG_FMT("[FootIK] scene mesh count={}\n", meshStorage->GetList().size());
 
 				constexpr float nearbyRadius = 5.0f;
 				constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
@@ -203,10 +203,10 @@ void FootIKComponent::OnLateUpdate(float)
 					const auto worldPos = meshObj->GetTransform().GetWorldPosition();
 					if (loggedMeshCount < 12)
 					{
-						DEBUG_LOG_FMT(
-							"[FootIK] scene mesh obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f})\n",
-							meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z
-						);
+						//DEBUG_LOG_FMT(
+						//	"[FootIK] scene mesh obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f})\n",
+						//	meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z
+						//);
 						++loggedMeshCount;
 					}
 
@@ -217,11 +217,11 @@ void FootIKComponent::OnLateUpdate(float)
 
 						if (loggedCandidateCount < 8)
 						{
-							DEBUG_LOG_FMT(
-								"[FootIK] nearby mesh candidate obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f}) distXZ={:.3f}\n",
-								meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z,
-								std::sqrt(distanceSqXZ)
-							);
+							//DEBUG_LOG_FMT(
+							//	"[FootIK] nearby mesh candidate obj='{}' guid={} world=({:.3f}, {:.3f}, {:.3f}) distXZ={:.3f}\n",
+							//	meshObj->GetName().c_str(), meshRes->GetGuid(), worldPos.x, worldPos.y, worldPos.z,
+							//	std::sqrt(distanceSqXZ)
+							//);
 							++loggedCandidateCount;
 						}
 
@@ -622,11 +622,11 @@ bool FootIKComponent::TrySampleVisualGround(
 		static uint32_t missLogCounter = 0;
 		if ((++missLogCounter % 30) == 0)
 		{
-			DEBUG_LOG_FMT(
-				"[FootIK] sample miss foot=({:.3f},{:.3f},{:.3f}) up={:.2f} down={:.2f} nearby={} path={} loaded={} triTest={} triHit={}\n",
-				worldPosition.x, worldPosition.y, worldPosition.z, maxUp, maxDown, nearbyMeshCount, pathResolvedCount,
-				loadedMeshCount, triangleTestCount, triangleIntersectCount
-			);
+			//DEBUG_LOG_FMT(
+			//	"[FootIK] sample miss foot=({:.3f},{:.3f},{:.3f}) up={:.2f} down={:.2f} nearby={} path={} loaded={} triTest={} triHit={}\n",
+			//	worldPosition.x, worldPosition.y, worldPosition.z, maxUp, maxDown, nearbyMeshCount, pathResolvedCount,
+			//	loadedMeshCount, triangleTestCount, triangleIntersectCount
+			//);
 		}
 		return false;
 	}
