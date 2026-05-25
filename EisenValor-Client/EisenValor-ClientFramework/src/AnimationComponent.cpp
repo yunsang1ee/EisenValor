@@ -173,6 +173,15 @@ bool AnimationComponent::GetSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& 
 	return true;
 }
 
+bool AnimationComponent::GetPreIKSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& outMatrix) const
+{
+	if (boneIndex >= m_preIKGlobalMatrices.size())
+		return false;
+
+	outMatrix = DirectX::XMLoadFloat4x4(&m_preIKGlobalMatrices[boneIndex]);
+	return true;
+}
+
 void AnimationComponent::UpdateBoneMatrices()
 {
 	if (!m_currentAnimation)
@@ -195,6 +204,7 @@ void AnimationComponent::UpdateBoneMatrices()
 	{
 		m_localMatrices.resize(boneCount);
 		m_globalMatrices.resize(boneCount);
+		m_preIKGlobalMatrices.resize(boneCount);
 		m_finalPalette.resize(boneCount);
 
 		// [DEBUG] 매칭 확인
@@ -401,6 +411,8 @@ void AnimationComponent::UpdateBoneMatrices()
 	{
 		computeGlobal((int32_t)i);
 	}
+
+	m_preIKGlobalMatrices = m_globalMatrices;
 
 	if (std::fabs(m_modelRootOffsetY) > 0.0001f)
 	{

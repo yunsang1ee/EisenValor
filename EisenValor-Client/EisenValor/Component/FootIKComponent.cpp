@@ -35,9 +35,9 @@ bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& o
 	return false;
 }
 
-bool TryGetBoneMatrix(AnimationComponent& animation, uint32_t boneIndex, DirectX::XMMATRIX& outMatrix)
+bool TryGetPreIKBoneMatrix(AnimationComponent& animation, uint32_t boneIndex, DirectX::XMMATRIX& outMatrix)
 {
-	return boneIndex != UINT32_MAX && animation.GetSocketMatrix(boneIndex, outMatrix);
+	return boneIndex != UINT32_MAX && animation.GetPreIKSocketMatrix(boneIndex, outMatrix);
 }
 
 DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, const Transform& ownerTransform)
@@ -120,10 +120,10 @@ void FootIKComponent::OnLateUpdate(float)
 	DirectX::XMMATRIX leftTargetMatrix;
 	DirectX::XMMATRIX rightFootMatrix;
 	DirectX::XMMATRIX rightTargetMatrix;
-	if (!TryGetBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
-		!TryGetBoneMatrix(*animation, m_leftLeg.ikFoot, leftTargetMatrix) ||
-		!TryGetBoneMatrix(*animation, m_rightLeg.foot, rightFootMatrix) ||
-		!TryGetBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
+	if (!TryGetPreIKBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.ikFoot, leftTargetMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.foot, rightFootMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
 	{
 		return;
 	}

@@ -68,6 +68,7 @@ public:
 	// Socket System
     bool GetBoneIndexByName(const std::string& boneName, uint32_t& outIndex) const;
     bool GetSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& outMatrix) const;
+	bool GetPreIKSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& outMatrix) const;
 
 
 private:
@@ -103,5 +104,6 @@ private:
 	// 계산용 임시 버퍼들
 	std::vector<DirectX::XMFLOAT4X4> m_localMatrices;
 	std::vector<DirectX::XMFLOAT4X4> m_globalMatrices;
+	std::vector<DirectX::XMFLOAT4X4> m_preIKGlobalMatrices;
 	std::vector<DirectX::XMFLOAT4X4> m_finalPalette;
 };
