@@ -665,11 +665,18 @@ bool FootIKComponent::TrySampleVisualGround(
 				continue;
 			}
 
+			const auto hitPoint =
+				DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
+			const float hitY = DirectX::XMVectorGetY(hitPoint);
+			constexpr float maxGroundAboveFoot = 0.12f;
+			if (hitY > worldPosition.y + maxGroundAboveFoot)
+			{
+				continue;
+			}
+
 			bestRayDistance = distance;
 			bestHitObj = meshObj;
 			bestHitRes = meshRes;
-			const auto hitPoint =
-				DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
 			DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
 
 			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
