@@ -117,11 +117,19 @@ void FootIKComponent::OnLateUpdate(float)
 	}
 
 	DirectX::XMMATRIX leftFootMatrix;
+	DirectX::XMMATRIX leftThighMatrix;
+	DirectX::XMMATRIX leftCalfMatrix;
 	DirectX::XMMATRIX leftTargetMatrix;
 	DirectX::XMMATRIX rightFootMatrix;
+	DirectX::XMMATRIX rightThighMatrix;
+	DirectX::XMMATRIX rightCalfMatrix;
 	DirectX::XMMATRIX rightTargetMatrix;
-	if (!TryGetPreIKBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
+	if (!TryGetPreIKBoneMatrix(*animation, m_leftLeg.thigh, leftThighMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.calf, leftCalfMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
 		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.ikFoot, leftTargetMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.thigh, rightThighMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.calf, rightCalfMatrix) ||
 		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.foot, rightFootMatrix) ||
 		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
 	{
@@ -448,17 +456,55 @@ void FootIKComponent::OnLateUpdate(float)
 		);
 	}
 
-	const auto leftTargetPos = leftTargetMatrix.r[3];
-	const auto rightTargetPos = rightTargetMatrix.r[3];
+	// maxFootCorrectionY 수치 설정
+	constexpr float maxFootCorrectionY = 0.05f;
+	auto leftTargetPos = DirectX::XMVectorSetY(
+		leftTargetMatrix.r[3], DirectX::XMVectorGetY(leftTargetMatrix.r[3]) + m_pelvisOffsetY
+	);
+	auto rightTargetPos = DirectX::XMVectorSetY(
+		rightTargetMatrix.r[3], DirectX::XMVectorGetY(rightTargetMatrix.r[3]) + m_pelvisOffsetY
+	);
+	if (leftHit)
+	{
+		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
+		const float targetY = DirectX::XMVectorGetY(leftTargetPos);
+		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
+		const float correctionY = std::clamp(desiredY - targetY, -maxFootCorrectionY, maxFootCorrectionY);
+		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, targetY + correctionY);
+	}
+	if (rightHit)
+	{
+		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&rightGroundHit.position), ownerTransform);
+		const float targetY = DirectX::XMVectorGetY(rightTargetPos);
+		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
+		const float correctionY = std::clamp(desiredY - targetY, -maxFootCorrectionY, maxFootCorrectionY);
+		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, targetY + correctionY);
+	}
 
-	m_leftWeight = 0.0f;
-	m_rightWeight = 0.0f;
+	m_leftWeight = leftHit ? 1.0f : 0.0f;
+	m_rightWeight = rightHit ? 1.0f : 0.0f;
+
+	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
+	const auto rightPoleVector =
+		DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(rightCalfMatrix.r[3], rightThighMatrix.r[3]));
+	auto buildLegIKTarget = [](const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, DirectX::FXMVECTOR poleVector, float weight)
+	{
+		IKTarget target;
+		target.rootBoneIndex = cache.thigh;
+		target.midBoneIndex = cache.calf;
+		target.boneIndex = cache.foot;
+		target.targetPos = targetPos;
+		target.poleVector = poleVector;
+		target.weight = weight;
+		target.active = true;
+		return target;
+	};
 
 	animation->SetIKTarget(
-		IK_TYPE::LEFT_LEG, BuildLegIKTarget(m_leftLeg, leftTargetPos, m_leftWeight)
+		IK_TYPE::LEFT_LEG, buildLegIKTarget(m_leftLeg, leftTargetPos, leftPoleVector, m_leftWeight)
 	);
 	animation->SetIKTarget(
-		IK_TYPE::RIGHT_LEG, BuildLegIKTarget(m_rightLeg, rightTargetPos, m_rightWeight)
+		IK_TYPE::RIGHT_LEG, buildLegIKTarget(m_rightLeg, rightTargetPos, rightPoleVector, m_rightWeight)
 	);
 }
 
