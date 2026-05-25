@@ -425,11 +425,34 @@ void AnimationComponent::UpdateBoneMatrices()
 	}
 
 	// [IK] (월드 행렬 수정)
+	std::vector<std::vector<uint32_t>> childIndices(boneCount);
+	for (size_t boneIndex = 0; boneIndex < boneCount; ++boneIndex)
+	{
+		const int32_t parentIndex = bones[boneIndex].parentIndex;
+		if (parentIndex >= 0)
+		{
+			childIndices[parentIndex].push_back(static_cast<uint32_t>(boneIndex));
+		}
+	}
+
+	std::function<void(uint32_t)> propagateDescendants = [&](uint32_t parentIndex)
+	{
+		for (const uint32_t childIndex : childIndices[parentIndex])
+		{
+			XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[childIndex]);
+			XMMATRIX parentGlobal = XMLoadFloat4x4(&m_globalMatrices[parentIndex]);
+			XMMATRIX global = XMMatrixMultiply(local, parentGlobal);
+			XMStoreFloat4x4(&m_globalMatrices[childIndex], global);
+			propagateDescendants(childIndex);
+		}
+	};
+
 	for (const auto& target : m_ikTargets)
 	{
 		if (target.active && target.weight > 0.0f)
 		{
 			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, target);
+			propagateDescendants(target.boneIndex);
 		}
 	}
 
