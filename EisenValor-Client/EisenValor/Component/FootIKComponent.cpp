@@ -507,15 +507,19 @@ bool FootIKComponent::TrySampleVisualGround(
 		return false;
 	}
 
-	constexpr float nearbyRadius = 8.0f;
+	constexpr float nearbyRadius = 15.0f;
 	constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
-	const float	  heightTolerance = maxUp;
 	const auto	  rayOrigin = DirectX::XMVectorSet(worldPosition.x, worldPosition.y + maxUp, worldPosition.z, 1.0f);
 	const auto	  rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f);
 	const float	  rayMaxDistance = maxUp + maxDown;
 	float		  bestRayDistance = std::numeric_limits<float>::max();
 	DirectX::XMFLOAT3 bestHitPoint = {};
 	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f};
+	size_t		  nearbyMeshCount = 0;
+	size_t		  pathResolvedCount = 0;
+	size_t		  loadedMeshCount = 0;
+	size_t		  triangleTestCount = 0;
+	size_t		  triangleIntersectCount = 0;
 
 	for (const auto& meshComp : meshStorage->GetList())
 	{
@@ -536,23 +540,22 @@ bool FootIKComponent::TrySampleVisualGround(
 		{
 			continue;
 		}
-
-		if (std::fabs(worldPos.y - worldPosition.y) > heightTolerance)
-		{
-			continue;
-		}
+		// Mesh object origins are not reliable surface heights, so keep only the XZ proximity filter here.
+		++nearbyMeshCount;
 
 		std::filesystem::path meshPath;
 		if (!GLOBAL(ResourceGlobal).TryGetPath(meshRes->GetGuid(), meshPath))
 		{
 			continue;
 		}
+		++pathResolvedCount;
 
 		auto meshData = GetCachedMeshData(meshRes->GetGuid(), meshPath);
 		if (!meshData)
 		{
 			continue;
 		}
+		++loadedMeshCount;
 
 		const auto worldMatrix = meshObj->GetTransform().GetWorldMatrix();
 		const auto world = DirectX::XMLoadFloat4x4(&worldMatrix);
@@ -590,10 +593,12 @@ bool FootIKComponent::TrySampleVisualGround(
 			);
 
 			float distance = 0.0f;
+			++triangleTestCount;
 			if (!DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, distance))
 			{
 				continue;
 			}
+			++triangleIntersectCount;
 
 			if (distance < 0.0f || distance > rayMaxDistance || distance >= bestRayDistance)
 			{
@@ -614,6 +619,15 @@ bool FootIKComponent::TrySampleVisualGround(
 
 	if (bestRayDistance == std::numeric_limits<float>::max())
 	{
+		static uint32_t missLogCounter = 0;
+		if ((++missLogCounter % 30) == 0)
+		{
+			DEBUG_LOG_FMT(
+				"[FootIK] sample miss foot=({:.3f},{:.3f},{:.3f}) up={:.2f} down={:.2f} nearby={} path={} loaded={} triTest={} triHit={}\n",
+				worldPosition.x, worldPosition.y, worldPosition.z, maxUp, maxDown, nearbyMeshCount, pathResolvedCount,
+				loadedMeshCount, triangleTestCount, triangleIntersectCount
+			);
+		}
 		return false;
 	}
 
