@@ -94,6 +94,17 @@ float3 SunHalo(float3 rayDir, float3 sunDir)
         corona * coronaColor;
 }
 
+float3 SampleDaySkyEnvironment(float3 rayDir)
+{
+    float3 sunDir = GetEnvironmentSunDirection();
+    float3 sky = AtmosphereGradient(rayDir, sunDir);
+    float3 rayleigh = RayleighScattering(rayDir, sunDir) * 0.08f;
+    float3 mie = MieScattering(rayDir, sunDir) * 0.15f;
+    float groundToSkyT = smoothstep(-0.02f, 0.02f, rayDir.y);
+    float3 groundColor = float3(0.18f, 0.20f, 0.18f);
+    return lerp(groundColor, sky + rayleigh + mie, groundToSkyT);
+}
+
 float CloudNoise(float3 rayDir)
 {
     float3 p = rayDir * 5.0f;
@@ -103,18 +114,19 @@ float CloudNoise(float3 rayDir)
 float3 SampleDayEnvironment(float3 rayDir)
 {
     float3 sunDir = GetEnvironmentSunDirection();
-    float3 sky = AtmosphereGradient(rayDir, sunDir);
-    float3 rayleigh = RayleighScattering(rayDir, sunDir) * 0.08f;
-    float3 mie = MieScattering(rayDir, sunDir) * 0.15f;
+    float3 sky = SampleDaySkyEnvironment(rayDir);
     float3 sun = SunHalo(rayDir, sunDir) * 0.35f;
-    float groundToSkyT = smoothstep(-0.02f, 0.02f, rayDir.y);
-    float3 groundColor = float3(0.18f, 0.20f, 0.18f);
-    return lerp(groundColor, sky + rayleigh + mie + sun, groundToSkyT);
+    return sky + sun;
 }
 
 float3 SampleEnvironment(float3 rayDir, uint environmentMode)
 {
     return (0u != environmentMode) ? SampleDayEnvironment(rayDir) : SampleNightEnvironment(rayDir);
+}
+
+float3 SampleEnvironmentWithoutSun(float3 rayDir, uint environmentMode)
+{
+    return (0u != environmentMode) ? SampleDaySkyEnvironment(rayDir) : SampleNightEnvironment(rayDir);
 }
 
 #endif // RAYTRACING_ENVIRONMENT_HLSLI
