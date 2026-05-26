@@ -47,6 +47,8 @@ static const float PT_OUTPUT_EXPOSURE = 0.75f;
 static const float PT_BLOOM_THRESHOLD = 1.0f;
 static const float PT_BLOOM_INTENSITY = 0.75f;
 static const float PT_VISIBLE_NORMAL_STRENGTH = 2.5f;
+static const float PT_CAMERA_JITTER_RADIUS_PIXELS = 0.5f;
+static const float PT_CAMERA_JITTER_PDF = 1.0f / (PI * PT_CAMERA_JITTER_RADIUS_PIXELS * PT_CAMERA_JITTER_RADIUS_PIXELS);
 
 // 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
 static const uint PT_DEBUG_VIEW = 0;
@@ -116,10 +118,11 @@ void RayGenMain()
 	
     float3 finalColor = 0.0f.xxx;
     RestirReservoir restirReservoir = RestirMakeEmptyReservoir();
+    RestirPrimaryHit primaryHit = RestirMakeInvalidPrimaryHit();
 	
     for (uint bounce = 0; bounce < SPP; ++bounce)
     {
-        float2 jit = RandomPointInCircle(rngSeed) * 0.5f;
+        float2 jit = RandomPointInCircle(rngSeed) * PT_CAMERA_JITTER_RADIUS_PIXELS;
         float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
         float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
@@ -141,19 +144,25 @@ void RayGenMain()
 				 0, 0, 0,
 				 ray,
 				 payload);
+        payload.targetContribution *= PT_CAMERA_JITTER_PDF;
+        payload.sourcePdf = max(PT_CAMERA_JITTER_PDF * payload.sourcePdf, EPSILON);
         finalColor += payload.color.rgb;
 
         if (0u != g_restirCandidateEnabled && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
         {
+            if (0u == (primaryHit.flags & RESTIR_PRIMARY_HIT_VALID))
+            {
+                primaryHit = RestirPrimaryHitFromPayload(payload);
+            }
             RestirPathSample candidate = RestirMakeCandidateFromPayload(payload);
-            RestirUpdateReservoir(restirReservoir, candidate, candidate.contributionTarget.w, RandomValue(rngSeed));
+            float resamplingWeight = RestirComputeResamplingWeight(RestirGetWeightTerms(candidate));
+            RestirUpdateReservoir(restirReservoir, candidate, resamplingWeight, RandomValue(rngSeed));
         }
     }
     finalColor /= SPP;
 
     if (0u != g_restirCandidateEnabled)
     {
-        RestirPrimaryHit primaryHit = RestirPrimaryHitFromSample(restirReservoir.sample, restirReservoir.flags);
         g_restirReservoirInitial[pixelIndex] = restirReservoir;
         g_restirPrimaryHitCurrent[pixelIndex] = primaryHit;
 
@@ -178,7 +187,10 @@ void RayGenMain()
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    payload.color = SampleEnvironment(WorldRayDirection(), g_environmentMode);
+    float3 environment = SampleEnvironment(WorldRayDirection(), g_environmentMode);
+    payload.color = environment;
+    payload.targetContribution = environment;
+    payload.sourcePdf = 1.0f;
 }
 
 [shader("closesthit")]
@@ -345,20 +357,27 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         {
             payload.color = float3(metallic, roughness, ao);
         }
+        payload.targetContribution = payload.color;
+        payload.sourcePdf = 1.0f;
         return;
     }
 
     if (max(max(emissive.x, emissive.y), emissive.z) > 0.0f)
     {
-        payload.color = (0 == payload.recursionDepth)
+        float3 emissionContribution = (0 == payload.recursionDepth)
             ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
             : emissive;
+        payload.color = emissionContribution;
+        payload.targetContribution = emissionContribution;
+        payload.sourcePdf = 1.0f;
         return;
     }
 	
     if (payload.recursionDepth >= MAX_RECURSION_DEPTH)
     {
         payload.color = emissive;
+        payload.targetContribution = emissive;
+        payload.sourcePdf = 1.0f;
         return;
     }
 	
@@ -391,6 +410,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 f; // BSDF 값
     float pdf; // 샘플링 pdf (mixture)
     float3 weight; // 1-step throughput
+    float3 contributionNumerator;
 	
     if (!chooseSpec)
     {
@@ -399,6 +419,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         if (NdotL <= 0.0f)
         {
             payload.color = emissive;
+            payload.targetContribution = emissive;
+            payload.sourcePdf = 1.0f;
             return;
         }
 
@@ -408,6 +430,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
         pdf = max(branchProb * pdf_lobe, EPSILON);
         f = f_d;
+        contributionNumerator = f * NdotL;
         weight = f * NdotL / pdf;
     }
     else
@@ -419,11 +442,14 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             if (NdotL <= 0.0f)
             {
                 payload.color = emissive;
+                payload.targetContribution = emissive;
+                payload.sourcePdf = 1.0f;
                 return;
             }
 
             float3 F = FresnelSchlick(NdotVShading, F0);
             pdf = max(specProb, EPSILON);
+            contributionNumerator = F;
             weight = F / pdf;
         }
         else
@@ -433,6 +459,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             if (NdotL <= 0.0f)
             {
                 payload.color = emissive;
+                payload.targetContribution = emissive;
+                payload.sourcePdf = 1.0f;
                 return;
             }
 		
@@ -451,6 +479,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
             pdf = max(branchProb * pdf_lobe, EPSILON);
             f = f_s;
+            contributionNumerator = f * NdotL;
             weight = f * NdotL / pdf;
         }
     }
@@ -459,6 +488,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     if (maxW < 1e-5f)
     {
         payload.color = emissive;
+        payload.targetContribution = emissive;
+        payload.sourcePdf = 1.0f;
         return;
     }
 
@@ -482,4 +513,6 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	);
 
     payload.color = emissive + weight * child.color;
+    payload.targetContribution = emissive + contributionNumerator * child.targetContribution;
+    payload.sourcePdf = max(pdf * child.sourcePdf, EPSILON);
 }

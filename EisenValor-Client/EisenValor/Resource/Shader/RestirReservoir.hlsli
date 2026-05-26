@@ -6,9 +6,32 @@ float RestirLuminance(float3 color)
     return dot(max(0.0f.xxx, color), float3(0.2126f, 0.7152f, 0.0722f));
 }
 
-float RestirTargetFromContribution(float3 contribution)
+float RestirTargetFromPathContribution(float3 pathContribution)
 {
-    return RestirLuminance(contribution);
+    return RestirLuminance(pathContribution);
+}
+
+struct RestirWeightTerms
+{
+    float target;
+    float contributionWeight;
+    float misWeight;
+    float shiftJacobian;
+};
+
+RestirWeightTerms RestirMakeInitialCandidateWeightTerms(float3 targetContribution, float sourcePdf)
+{
+    RestirWeightTerms terms;
+    terms.target = RestirTargetFromPathContribution(targetContribution);
+    terms.contributionWeight = rcp(max(sourcePdf, EPSILON));
+    terms.misWeight = 1.0f;
+    terms.shiftJacobian = 1.0f;
+    return terms;
+}
+
+float RestirComputeResamplingWeight(RestirWeightTerms terms)
+{
+    return terms.target * terms.contributionWeight * terms.misWeight * terms.shiftJacobian;
 }
 
 float2 RestirOctWrap(float2 v)
@@ -76,12 +99,15 @@ RestirPathSample RestirMakeEmptyPathSample()
     sample.contributionTarget = 0.0f.xxxx;
     sample.throughputPdf = float4(1.0f, 1.0f, 1.0f, 1.0f);
     sample.firstHitPositionDistance = float4(0.0f, 0.0f, 0.0f, -1.0f);
+    sample.weightTerms = float4(0.0f, 1.0f, 1.0f, 1.0f);
     sample.packedFirstHitNormal = RestirPackNormalOct16(float3(0.0f, 1.0f, 0.0f));
     sample.packedFirstHitRoughness = RestirPackUnorm16(1.0f);
     sample.instanceId = 0xffffffffu;
     sample.materialId = 0xffffffffu;
     sample.geometryId = 0xffffffffu;
     sample.pathLength = 0u;
+    sample.sourceKind = RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH;
+    sample.shiftKind = RESTIR_SHIFT_IDENTITY;
     return sample;
 }
 
@@ -99,9 +125,12 @@ RestirReservoir RestirMakeEmptyReservoir()
 RestirPathSample RestirMakeCandidateFromPayload(RayPayload payload)
 {
     RestirPathSample sample = RestirMakeEmptyPathSample();
-    float3 contribution = max(0.0f.xxx, payload.color);
-    float target = RestirTargetFromContribution(contribution);
-    sample.contributionTarget = float4(contribution, target);
+    float3 targetContribution = max(0.0f.xxx, payload.targetContribution);
+    float sourcePdf = max(payload.sourcePdf, EPSILON);
+    RestirWeightTerms terms = RestirMakeInitialCandidateWeightTerms(targetContribution, sourcePdf);
+    sample.contributionTarget = float4(targetContribution, terms.target);
+    sample.throughputPdf = float4(1.0f, 1.0f, 1.0f, sourcePdf);
+    sample.weightTerms = float4(terms.target, terms.contributionWeight, terms.misWeight, terms.shiftJacobian);
     sample.firstHitPositionDistance = float4(payload.primaryHitPosition, payload.primaryHitDistance);
     sample.packedFirstHitNormal = RestirPackNormalOct16(payload.primaryHitNormal);
     sample.packedFirstHitRoughness = RestirPackUnorm16(payload.roughness);
@@ -109,7 +138,37 @@ RestirPathSample RestirMakeCandidateFromPayload(RayPayload payload)
     sample.materialId = payload.materialId;
     sample.geometryId = payload.geometryId;
     sample.pathLength = payload.recursionDepth + 1u;
+    sample.sourceKind = RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH;
+    sample.shiftKind = RESTIR_SHIFT_IDENTITY;
     return sample;
+}
+
+RestirWeightTerms RestirGetWeightTerms(RestirPathSample sample)
+{
+    RestirWeightTerms terms;
+    terms.target = sample.weightTerms.x;
+    terms.contributionWeight = sample.weightTerms.y;
+    terms.misWeight = sample.weightTerms.z;
+    terms.shiftJacobian = sample.weightTerms.w;
+    return terms;
+}
+
+RestirPrimaryHit RestirPrimaryHitFromPayload(RayPayload payload)
+{
+    if (0u == (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
+    {
+        return RestirMakeInvalidPrimaryHit();
+    }
+
+    RestirPrimaryHit hit;
+    hit.positionDistance = float4(payload.primaryHitPosition, payload.primaryHitDistance);
+    hit.packedNormal = RestirPackNormalOct16(payload.primaryHitNormal);
+    hit.packedRoughness = RestirPackUnorm16(payload.roughness);
+    hit.instanceId = payload.instanceId;
+    hit.materialId = payload.materialId;
+    hit.geometryId = payload.geometryId;
+    hit.flags = RESTIR_PRIMARY_HIT_VALID;
+    return hit;
 }
 
 RestirPrimaryHit RestirPrimaryHitFromSample(RestirPathSample sample, uint reservoirFlags)

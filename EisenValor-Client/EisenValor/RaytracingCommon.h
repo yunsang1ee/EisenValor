@@ -130,6 +130,9 @@ struct TerrainSurfaceGPUData
 #define RESTIR_PRIMARY_HIT_VALID (1 << 0)
 #define RESTIR_RESERVOIR_VALID (1 << 0)
 
+#define RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH 0
+#define RESTIR_SHIFT_IDENTITY 0
+
 struct RestirPrimaryHit
 {
 	RAY_FLOAT4 positionDistance;
@@ -144,16 +147,20 @@ struct RestirPrimaryHit
 
 struct RestirPathSample
 {
-	RAY_FLOAT4 contributionTarget; //.rgb = sample path contribution; .w = unnormalized distribution p_hat(sample)
-	RAY_FLOAT4 throughputPdf;
+	RAY_FLOAT4 contributionTarget; //.rgb = target contribution; .w = scalar target p_hat
+	RAY_FLOAT4 throughputPdf; //.w = source path pdf used to derive contributionWeight
 	RAY_FLOAT4 firstHitPositionDistance;
+	RAY_FLOAT4 weightTerms; //.x = target, .y = contributionWeight, .z = misWeight, .w = shiftJacobian
 
 	RAY_UINT packedFirstHitNormal;
 	RAY_UINT packedFirstHitRoughness;
 	RAY_UINT instanceId;
 	RAY_UINT materialId;
+
 	RAY_UINT geometryId;
 	RAY_UINT pathLength;
+	RAY_UINT sourceKind;
+	RAY_UINT shiftKind;
 };
 
 struct RestirReservoir
@@ -168,8 +175,8 @@ struct RestirReservoir
 
 #ifdef __cplusplus
 static_assert(sizeof(RestirPrimaryHit) == 40);
-static_assert(sizeof(RestirPathSample) == 72);
-static_assert(sizeof(RestirReservoir) == 88);
+static_assert(sizeof(RestirPathSample) == 96);
+static_assert(sizeof(RestirReservoir) == 112);
 #pragma pack(pop)
 #else
 // --- HLSL Only Helpers ---
@@ -178,6 +185,9 @@ struct RayPayload
 {
 	float3 color;
 	uint   recursionDepth;
+
+	float3 targetContribution;
+	float  sourcePdf;
 
 	float3 primaryHitPosition;
 	float  primaryHitDistance;
@@ -195,6 +205,8 @@ RayPayload MakeDefaultRayPayload(uint recursionDepth)
 	RayPayload payload;
 	payload.color = 0.0f.xxx;
 	payload.recursionDepth = recursionDepth;
+	payload.targetContribution = 0.0f.xxx;
+	payload.sourcePdf = 1.0f;
 	payload.primaryHitPosition = 0.0f.xxx;
 	payload.primaryHitDistance = -1.0f;
 	payload.primaryHitNormal = float3(0.0f, 1.0f, 0.0f);

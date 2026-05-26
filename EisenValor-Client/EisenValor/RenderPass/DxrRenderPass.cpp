@@ -700,7 +700,7 @@ void DxrRenderPass::CreateRaytracingPipeline()
 
 	m_restirCandidatePipeline = std::make_unique<DxRtPipelineState>();
 	m_restirCandidatePipeline->Create(
-		m_device5.Get(), L"Resource/Shader/RaytracingRestirPT.hlsl", 19, 64, true
+		m_device5.Get(), L"Resource/Shader/RaytracingRestirPT.hlsl", 19, 80, true
 	);
 	m_restirCandidateShaderTable = std::make_unique<DxRtShaderTable>();
 	m_restirCandidateShaderTable->Build(m_device5.Get(), m_restirCandidatePipeline.get(), 1);

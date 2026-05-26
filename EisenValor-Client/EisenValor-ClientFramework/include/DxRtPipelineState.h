@@ -14,7 +14,7 @@ public:
 		ID3D12Device5*		device,
 		const std::wstring& shaderPath,
 		uint32_t			maxRecursionDepth = 1,
-		uint32_t			maxPayloadSizeBytes = 64,
+		uint32_t			maxPayloadSizeBytes = 80,
 		bool				enableRestirCandidateRoot = false
 	);
 
