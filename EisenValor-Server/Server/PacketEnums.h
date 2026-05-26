@@ -23,6 +23,7 @@ enum class PACKET_TYPE : uint16 {
 #pragma region ROOM_PACKETS
 	LS_CREATE_GAME_WORLD_PKT = 1017,
 	SL_CREATE_GAME_WORLD_PKT = 1018,
+	SL_GAME_RESULT_PKT = 1024,
 #pragma endregion
 
 	// ==================
@@ -76,9 +77,6 @@ SC_SOLDIER_ATTACK_PKT = 10046,
 
 CS_CHAT_PKT = 10050,
 SC_CHAT_PKT = 10051,
-
-SC_GAME_FINISH_RESULT_PKT = 11000,
-
 #pragma endregion
 
 

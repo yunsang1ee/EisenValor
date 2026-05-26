@@ -76,6 +76,20 @@
     </Filter>
     <Filter Include="Component\IK">
       <UniqueIdentifier>{7228a999-5b07-4b05-bfa5-3fd3fe5d2796}</UniqueIdentifier>
+    <Filter Include="Network">
+      <UniqueIdentifier>{61578eb5-cdd5-41a5-8207-64991001c1e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Session">
+      <UniqueIdentifier>{f6ceb962-d3e1-4e8d-a9f1-6dfadd438e41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Session\LobbyServerSession">
+      <UniqueIdentifier>{63372798-0c48-43cf-b230-6ceb0779c6a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network\Session\GameServerSession">
+      <UniqueIdentifier>{41e3a170-bfa5-49b2-b463-c32972d504cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\World">
+      <UniqueIdentifier>{667d90e5-395c-43e8-87cd-fc86511a8d36}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -97,7 +111,7 @@
     <ClInclude Include="RenderPass\DxrRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\SampleScene.h">
+    <ClInclude Include="Scene\WorldScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Packets\C2SPackets.h">
@@ -252,6 +266,14 @@
     </ClInclude>
     <ClInclude Include="Component\FootIKComponent.h">
       <Filter>Component\IK</Filter>
+    <ClInclude Include="Network\GameServerSession.h">
+      <Filter>Network\Session\GameServerSession</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\LobbyServerSession.h">
+      <Filter>Network\Session\LobbyServerSession</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\World\WorldSceneControllerComponent.h">
+      <Filter>Component\World</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -270,7 +292,7 @@
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="Scene\SampleScene.cpp">
+    <ClCompile Include="Scene\WorldScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Packets\C2SPackets.cpp">
@@ -386,6 +408,14 @@
     </ClCompile>
     <ClCompile Include="Component\FootIKComponent.cpp">
       <Filter>Component\IK</Filter>
+    <ClCompile Include="Network\GameServerSession.cpp">
+      <Filter>Network\Session\GameServerSession</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\LobbyServerSession.cpp">
+      <Filter>Network\Session\LobbyServerSession</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp">
+      <Filter>Component\World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

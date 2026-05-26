@@ -1,5 +1,13 @@
 #pragma once
 
+#define size32(val)		static_cast<int32>(sizeof(val))
+
+#ifndef ASSERT_CRASH
+#define ASSERT_CRASH(expr) assert(expr)
+#endif
+
+// #define APPLY_DB
+
 #include "LobbyServerEnginePch.h"
 
 #include "Enums_generated.h"
@@ -18,3 +26,6 @@ namespace LobbyServer {
 extern std::shared_ptr<LobbyServer::GameLobby> G_GAME_LOBBY;
 
 #include "SendPackets.h"
+
+#include <sql.h>
+#include <sqlext.h>

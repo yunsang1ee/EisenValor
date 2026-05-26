@@ -159,6 +159,9 @@
   <ItemGroup>
     <ClCompile Include="ClientPacketHandler.cpp" />
     <ClCompile Include="ClientSession.cpp" />
+    <ClCompile Include="DBBind.cpp" />
+    <ClCompile Include="DBConnection.cpp" />
+    <ClCompile Include="DBConnectionPool.cpp" />
     <ClCompile Include="GameServerPacketHandler.cpp" />
     <ClCompile Include="GameServerSession.cpp" />
     <ClCompile Include="Participant.cpp" />
@@ -179,6 +182,9 @@
   <ItemGroup>
     <ClInclude Include="ClientPacketHandler.h" />
     <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="DBBind.h" />
+    <ClInclude Include="DBConnection.h" />
+    <ClInclude Include="DBConnectionPool.h" />
     <ClInclude Include="GameServerPacketHandler.h" />
     <ClInclude Include="GameServerSession.h" />
     <ClInclude Include="LobbyServerEnums.h" />

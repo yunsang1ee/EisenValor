@@ -1,5 +1,5 @@
 #include "stdafxClient.h"
-#include "SampleScene.h"
+#include "WorldScene.h"
 #include "Scene\SceneComponentData\TorchEmitterSceneComponentData.h"
 
 // Component
@@ -15,6 +15,7 @@
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
+#include "Component/World/WorldSceneControllerComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -44,16 +45,16 @@ constexpr float			   kTorchTransportEmissionScale = 65.0f;
 constexpr float			   kTorchVisibleEmissionScale = 2.5f;
 } // namespace
 
-void SampleScene::OnRegisterCustomComponents()
+void WorldScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent, FootIKComponent>();
-	DEBUG_LOG_FMT("[SampleScene] Custom components registered\n");
+		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent>();
+	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
-void SampleScene::OnRegisterCustomSceneComponentDecoders()
+void WorldScene::OnRegisterCustomSceneComponentDecoders()
 {
 	RegisterSceneComponentDecoder<TorchEmitterSceneComponentData>(
 		[this](const TorchEmitterSceneComponentData& data, const SceneComponentLoadContext& context)
@@ -103,19 +104,19 @@ void SampleScene::OnRegisterCustomSceneComponentDecoders()
 		}
 	);
 
-	DEBUG_LOG_FMT("[SampleScene] Custom scene component decoders registered\n");
+	DEBUG_LOG_FMT("[WorldScene] Custom scene component decoders registered\n");
 }
 
-void SampleScene::OnStartImpl()
+void WorldScene::OnStartImpl()
 {
-	DEBUG_LOG_FMT("[SampleScene] OnStart called\n");
+	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
 
 	bool loadedScene = false;
 	if (auto sceneResource = GLOBAL(ResourceGlobal).Load<SceneResource>(std::filesystem::path(kDefaultMapScenePath)))
 	{
 		LoadFromSceneResource(sceneResource);
 		loadedScene = true;
-		DEBUG_LOG_FMT("[SampleScene] Loaded scene resource: {}\n", kDefaultMapScenePath);
+		DEBUG_LOG_FMT("[WorldScene] Loaded scene resource: {}\n", kDefaultMapScenePath);
 	}
 
 	if (!loadedScene)
@@ -128,11 +129,21 @@ void SampleScene::OnStartImpl()
 		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
 		//);
 	}
+
+	ReserveGameObject(
+		"WorldSceneController", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<WorldSceneControllerComponent>(
+				obj->GetHandle(), [](WorldSceneControllerComponent* login) {}
+			);
+		}
+	);
 }
 
-void SampleScene::CreateSceneObjects()
+void WorldScene::CreateSceneObjects()
 {
-	DEBUG_LOG_FMT("[SampleScene] Creating scene objects from exported assets...\n");
+	DEBUG_LOG_FMT("[WorldScene] Creating scene objects from exported assets...\n");
 
 	ReserveGameObject(
 		"Ground", std::nullopt,
@@ -178,10 +189,10 @@ void SampleScene::CreateSceneObjects()
 		}
 	);*/
 
-	DEBUG_LOG_FMT("[SampleScene] Scene objects created and assets linked\n");
+	DEBUG_LOG_FMT("[WorldScene] Scene objects created and assets linked\n");
 }
 
-void SampleScene::OnEndImpl()
+void WorldScene::OnEndImpl()
 {
-	DEBUG_LOG_FMT("[SampleScene] OnEnd called\n");
+	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
