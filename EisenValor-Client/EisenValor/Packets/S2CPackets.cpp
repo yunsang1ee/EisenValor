@@ -34,6 +34,7 @@
 #include "ButtonUIComponent.h"
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
+#include "Component/FootIKComponent.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 #include <unordered_map>
@@ -78,6 +79,10 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 	const uint32 id = recvPkt.lobby_session_id();
 	auto		 device = GLOBAL(DxDeviceGlobal).GetDevice();
 
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] Login Success! Lobby Session ID: {}\n", id);
+	const auto& nickName{recvPkt.nickname()->c_str()};
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] Nickname: {}\n", nickName);
+
 #ifdef APPLY_LOBBY_SERVER
 	GLOBAL(SceneGlobal).SetSessionID(id);
 	auto pb = NetBridge::C2S::Make_CL_ENTER_GAME_LOBBY_PACKET();
@@ -89,10 +94,26 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 	const uint16 roomID{1};
 	auto		 pb = C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, id);
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
-	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to SampleScene\n", id);
+	DEBUG_LOG_FMT("[SC_LOGIN_SUCCESS_PACKET] id: {}, Scene changed to WorldScene\n", id);
 
 #endif // !APPLY_LOBBY_SERVER
 
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_SIGN_UP_FAIL_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_FAIL_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("[SC_SIGN_UP_FAIL_PACKET] ");
+	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_SIGN_UP_SUCCESS_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_SUCCESS_PACKET& recvPkt
+)
+{
+	DEBUG_LOG_FMT("[SC_SIGN_UP_SUCCESS_PACKET] Sign Up Success! ");
 	return true;
 }
 #pragma endregion
@@ -144,7 +165,6 @@ bool NetBridge::S2C::Handle_LC_ENTER_GAME_LOBBY_SUCCESS_PACKET(
 	// GLOBAL(NetBridge::NetworkManager)->Send(std::move(pb));/
 
 	GLOBAL(SceneGlobal).LoadScene("LobbyScene");
-
 
 	return true;
 }
@@ -295,7 +315,6 @@ bool NetBridge::S2C::Handle_LC_LEAVE_GAME_ROOM_PACKET(
 )
 {
 	// 게임 룸 퇴장 성공
-	// TODO: 로비 Scene으로 전환
 
 	DEBUG_LOG_FMT("[SC_LEAVE_GAME_ROOM_PACKET] ");
 	DEBUG_LOG_FMT("Leave Game Room!\n");
@@ -421,26 +440,65 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 {
 	DEBUG_LOG_FMT("Handle_LC_CON	NECT_TO_GAME_SERVER");
 	const uint32 sessionID = GLOBAL(SceneGlobal).GetSessionID();
-	const auto	 worldID = recvPkt.world_id();
-	const uint16 roomID{recvPkt.world_id()};
+	const uint16 worldID{recvPkt.world_id()};
 	std::string ip{recvPkt.ip()->c_str()};
 	const uint16 port{recvPkt.port()};
 
-	if (false == GLOBAL(NetworkGlobal).Connect(ip.c_str(), port))
+	if (false == GLOBAL(NetworkGlobal).ConnectGameServer(ip.c_str(), port))
 		assert(nullptr);
 
 	// 로비서버로부터 받은 세션 아이디
 	// TODO: 로비 서버로부터 받은 세션 아이디를 게임 서버로 전달해서 게임 서버에 입장하기
 	{
-		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(roomID, sessionID)};
-		GLOBAL(NetworkGlobal).Send(std::move(pb));
+		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(worldID, sessionID)};
+		GLOBAL(NetworkGlobal).SendGame(std::move(pb));
 	}
 	return true;
 }
+
+bool NetBridge::S2C::Handle_LC_RETURN_TO_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_RETURN_TO_GAME_ROOM_PACKET& recvPkt
+)
+{
+	GLOBAL(NetworkGlobal).DisconnectGameServer();
+	GLOBAL(SceneGlobal).LoadScene("RoomScene");
+	return true;
+}
+
 bool NetBridge::S2C::Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET& recvPkt)
 {
 	DEBUG_LOG_FMT("[LC_CHAT_PACKET] ");
 	DEBUG_LOG_FMT("User ID: {}, Message: {}\n", recvPkt.session_id(), recvPkt.msg()->c_str());
+	return true;
+}
+bool NetBridge::S2C::Handle_LC_GAME_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::LC_GAME_RESULT_PACKET& recvPkt)
+{
+	// TODO: UI로 게임결과 보여주거나 게임 결과 씬으로 전환하거나
+
+	DEBUG_LOG_FMT("[LC_GAME_RESULT_PACKET] ");
+
+	const auto winningTeam{recvPkt.winning_team()};
+	const auto blueScore{recvPkt.blue_score()};
+	const auto redScore{recvPkt.red_score()};
+
+	switch (winningTeam)
+	{
+	case FB_ENUMS::TEAM_TYPE_NONE:
+		// 무승부
+		break;
+	case FB_ENUMS::TEAM_TYPE_BLUE:
+		// 블루팀 승리
+		break;
+	case FB_ENUMS::TEAM_TYPE_RED:
+		// 레드팀 승리
+		break;
+	default:
+		break;
+	}
+
+	auto pb{NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET()};
+	GLOBAL(NetBridge::NetworkGlobal).SendLobby(std::move(pb));
+
 	return true;
 }
 #pragma endregion
@@ -452,7 +510,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	// GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
 
 	GLOBAL(SceneGlobal).SetLocalGameObjectID(recvPkt.player_id());
-	GLOBAL(SceneGlobal).LoadScene("SampleScene");
+	GLOBAL(SceneGlobal).LoadScene("WorldScene");
 	DEBUG_LOG_FMT("[SC_LOCAL_PLAYER_PACKET] \n");
 
 	auto device = GLOBAL(DxDeviceGlobal).GetDevice();
@@ -587,6 +645,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 			scene->CreateComponentWithInit<AnimationComponent>(
 				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 			);
+			
+			// Foot IK Component
+			scene->CreateComponentWithInit<FootIKComponent>(playerObjHandle, [](FootIKComponent*) {});
 
 			// Shield
 			{
@@ -684,7 +745,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 				);
 
 				// Attack Range Debug Indicator
-				auto attackRangeHandle = scene->ReserveGameObject(
+				/*auto attackRangeHandle = scene->ReserveGameObject(
 					"LocalPlayer_AttackRangeDebug",
 					std::nullopt,
 					[scene, playerObjHandle](GameObject* rangeRoot)
@@ -724,17 +785,16 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 							mesh->SetMeshResource(res);
 						}
 					);
-				}
+				}*/
 
-				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
-					attackRangeHandle,
-					[](AttackRangeDebugComponent* debug)
-					{
-						debug->SetRadius(1.0f);
-						debug->SetCenterAngleDegrees(10.0f);
-					}
-				);
-				////
+				//scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+				//	attackRangeHandle,
+				//	[](AttackRangeDebugComponent* debug)
+				//	{
+				//		// debug->SetRadius(1.0f);
+				//		// debug->SetCenterAngleDegrees(10.0f);
+				//	}
+				//);
 			}
 		}
 	);
@@ -1021,7 +1081,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 
 				// Attack Range Debug Indicator
-				auto attackRangeHandle = scene->ReserveGameObject(
+				/*auto attackRangeHandle = scene->ReserveGameObject(
 					"LocalPlayer_AttackRangeDebug", std::nullopt,
 					[scene, objHandle](GameObject* rangeRoot)
 					{
@@ -1059,16 +1119,16 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 							mesh->SetMeshResource(res);
 						}
 					);
-				}
+				}*/
 
-				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
-					attackRangeHandle,
-					[](AttackRangeDebugComponent* debug)
-					{
-						debug->SetRadius(1.0f);
-						debug->SetCenterAngleDegrees(10.0f);
-					}
-				);
+				//scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+				//	attackRangeHandle,
+				//	[](AttackRangeDebugComponent* debug)
+				//	{
+				//		debug->SetRadius(1.0f);
+				//		debug->SetCenterAngleDegrees(10.0f);
+				//	}
+				//);
 				/////////////
 
 			}
@@ -1193,7 +1253,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				);
 
 				// Attack Range Debug Indicator
-				auto attackRangeHandle = scene->ReserveGameObject(
+				/*auto attackRangeHandle = scene->ReserveGameObject(
 					"LocalPlayer_AttackRangeDebug", std::nullopt,
 					[scene, objHandle](GameObject* rangeRoot)
 					{
@@ -1231,16 +1291,16 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 							mesh->SetMeshResource(res);
 						}
 					);
-				}
+				}*/
 
-				scene->CreateComponentWithInit<AttackRangeDebugComponent>(
+			/*	scene->CreateComponentWithInit<AttackRangeDebugComponent>(
 					attackRangeHandle,
 					[](AttackRangeDebugComponent* debug)
 					{
 						debug->SetRadius(1.0f);
 						debug->SetCenterAngleDegrees(10.0f);
 					}
-				);
+				);*/
 				////
 			}
 
@@ -1728,6 +1788,7 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 		if (auto* fsm = obj->GetComponent<FSMComponent>())
 		{
 			fsm->SetStance(static_cast<uint8_t>(recvPkt.stance_type()));
+			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 		}
 		// 디버깅
 		DEBUG_LOG_FMT(
@@ -1739,15 +1800,6 @@ bool NetBridge::S2C::Handle_SC_RESPAWN_GENERAL_PACKET(
 	}
 
 	DEBUG_LOG_FMT("[SC_RESPAWN_GENERAL_PACKET] Failed to find object ID {}\n", objID);
-	return false;
-}
-
-bool NetBridge::S2C::Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt)
-{
-	// TODO: SC_DEAD_PACKET
-
-	std::cout << "Handle_SC_DEAD_PACKET!, ID: " << recvPkt.obj_id() << std::endl;
-
 	return false;
 }
 
@@ -1807,33 +1859,6 @@ bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
 		// DEBUG_LOG_FMT("[S2C] State Update - ID: {}, NextState: {}\n", objID, static_cast<int>(nextState));
 		fsm->SetServerState(FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK);
 		return true;
-	}
-
-	return true;
-}
-
-bool NetBridge::S2C::Handle_SC_GAME_FINISH_RESULT_PACKET(
-	const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt
-)
-{
-	// TODO: UI 통해서 게임 종료 결과 보여줘야합니다.
-	const auto winningTeam{recvPkt.winning_team()};	
-	const auto blueScore{recvPkt.blue_score()};
-	const auto redScore{recvPkt.red_score()};
-
-	switch (winningTeam)
-	{
-	case FB_ENUMS::TEAM_TYPE_NONE:
-		// 무승부
-		break;
-	case FB_ENUMS::TEAM_TYPE_BLUE:
-		// 블루팀 승리
-		break;
-	case FB_ENUMS::TEAM_TYPE_RED:
-		// 레드팀 승리
-		break;
-	default:
-		break;
 	}
 
 	return true;

@@ -26,10 +26,9 @@ enum class PACKET_TYPE : uint16_t
 	LC_LOGIN_FAIL_PKT = 11,
 	LC_LOGIN_SUCCESS_PKT = 12,
 
-	// TODO: 회원가입
-	CS_SIGN_UP_PKT = 13,
-	SC_SIGN_UP_FAIL_PKT = 14,
-	SC_SIGN_UP_SUCCESS_PKT = 15,
+	CL_SIGN_UP_PKT = 13,
+	LC_SIGN_UP_FAIL_PKT = 14,
+	LC_SIGN_UP_SUCCESS_PKT = 15,
 #pragma endregion
 	// ==================
 	//		로비
@@ -86,6 +85,10 @@ enum class PACKET_TYPE : uint16_t
 
 	CL_CHAT_PKT = 1020,
 	LC_CHAT_PKT = 1021,
+
+	CL_RETURN_TO_GAME_ROOM_PKT = 1022,
+	LC_RETURN_TO_GAME_ROOM_PKT = 1023,
+		LC_GAME_RESULT_PKT = 1025,
 #pragma endregion
 
 	// ==================
@@ -141,10 +144,6 @@ enum class PACKET_TYPE : uint16_t
 
 	CS_CHAT_PKT = 10050,
 	SC_CHAT_PKT = 10051,
-
-	SC_GAME_FINISH_RESULT_PKT = 11000,
-
-
 #pragma endregion
 
 // ==================

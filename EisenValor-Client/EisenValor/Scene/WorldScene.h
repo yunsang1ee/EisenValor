@@ -1,6 +1,6 @@
 #pragma once
 #include <Scene.h>
-class SampleScene final : public Scene
+class WorldScene final : public Scene
 {
 protected:
 	void OnRegisterCustomComponents();

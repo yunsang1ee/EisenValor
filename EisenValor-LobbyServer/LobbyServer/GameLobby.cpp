@@ -110,14 +110,37 @@ std::shared_ptr<LobbyServer::GameRoom> LobbyServer::GameLobby::FindGameRoom(cons
 	return nullptr;
 }
 
-void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint16 port)
+void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint16 worldID, const uint16 port)
 {
 	auto gameRoom{ FindGameRoom(roomID) };
 
 	if(gameRoom) {
-		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(roomID, "127.0.0.1", port) };
+		gameRoom->SetRoomState(FB_ENUMS::ROOM_STATE_TYPE_PLAYING);
+		m_playingWorldRooms[worldID] = roomID;
+
+		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(worldID, "127.0.0.1", port) };
 		gameRoom->Broadcast(std::move(pb));
 	}
+}
+
+void LobbyServer::GameLobby::Handle_SL_GAME_RESULT(const uint16 worldID, const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
+{
+	const auto iter{ m_playingWorldRooms.find(worldID) };
+	if(iter == m_playingWorldRooms.end()) {
+		LOG_WARNING("Invalid game result. WorldID:{} is not active", worldID);
+		return;
+	}
+
+	const uint16 roomID{ iter->second };
+	m_playingWorldRooms.erase(iter);
+
+	auto gameRoom{ FindGameRoom(roomID) };
+	if(nullptr == gameRoom) {
+		LOG_WARNING("Invalid game result. RoomID:{} not found, WorldID:{}", roomID, worldID);
+		return;
+	}
+
+	gameRoom->ApplyGameResult(winningTeam, blueScore, redScore);
 }
 
 void LobbyServer::GameLobby::LeaveGameLobby(const std::shared_ptr<ClientSession>& clientSession)
@@ -206,6 +229,15 @@ void LobbyServer::GameLobby::Handle_CS_START_GAME(const std::shared_ptr<ClientSe
 	if(gameRoom)
 		gameRoom->StartGame(clientSession);
 }
+
+void LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
+{
+	const auto& gameRoom{ clientSession->GetGameRoom() };
+
+	if(gameRoom)
+		gameRoom->ReturnToGameRoom(clientSession);
+}
+
 void LobbyServer::GameLobby::Handle_CL_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg)
 {
 	switch(clientSession->GetState()) {

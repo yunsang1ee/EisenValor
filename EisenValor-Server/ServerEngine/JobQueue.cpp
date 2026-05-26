@@ -10,6 +10,7 @@ void GameServerEngine::JobQueue::FlushJobQueue()
 
     std::shared_ptr<Job> job;
     while(m_jobs.try_pop(job)) {
+        m_pendingJobCount.fetch_sub(1, std::memory_order_relaxed);
         if(job)
             job->Execute();
     }

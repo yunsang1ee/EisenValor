@@ -16,6 +16,6 @@ private:
 	void ApplyTransform();
 	void LogValues() const;
 
-	float m_radius = 1.0f;
-	float m_centerAngleDegrees = 10.0f;
+	float m_radius = 5.0f;
+	float m_centerAngleDegrees = 90.0f;
 };

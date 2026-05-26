@@ -10,6 +10,8 @@ namespace LobbyServer {
 #pragma region LOGIN_PACKETS
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_LOGIN_SUCCESS_PACKET(const uint32 id, const std::string_view nickName);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_LOGIN_FAIL_PACKET(const std::string_view failMsg);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_SIGN_UP_SUCCESS_PACKET();
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_SIGN_UP_FAIL_PACKET(const std::string_view failMsg);
 #pragma endregion
 
 #pragma region LOBBY_PACKETS
@@ -32,9 +34,11 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_ADD_BOT_PACKET(const ParticipantInfo& bot);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_READY_GAME_PACKET(const uint32 participantID, const FB_ENUMS::PARTICIPANT_STATE_TYPE state);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_START_GAME_FAIL_PACKET(const std::string_view failMsg);
-	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 roomID, const std::vector<ParticipantInfo>& participants);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::vector<ParticipantInfo>& participants);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CONNECT_TO_GAME_SERVER_PACKET	(const uint16 worldID, const std::string_view ip, const uint16 port);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_RETURN_TO_GAME_ROOM_PACKET();
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHAT_PACKET(const uint32 sessionID, const std::string_view msg);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_GAME_RESULT_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 #pragma endregion
 
 }

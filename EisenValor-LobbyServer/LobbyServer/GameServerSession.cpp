@@ -4,7 +4,7 @@
 #include "GameServerPacketHandler.h"
 #include "SessionManager.h"
 LobbyServer::GameServerSession::GameServerSession()
-	:PacketSession{ SESSION_TYPE::GAME_SERVER }
+	:PacketSession{ SESSION_TYPE::GAME_SERVER }, m_worldIdGenerator{}
 {
 }
 
@@ -45,20 +45,28 @@ void LobbyServer::GameServerSession::OnRecvPacket(const std::span<const char>& b
 	}
 }
 
-void LobbyServer::GameServerSession::AddReservedStartRoom(const uint16 roomID)
+uint16 LobbyServer::GameServerSession::ReserveStartRoom(const uint16 roomID)
 {
-	if(m_reservedStartRoomId.contains(roomID))
-		return;
+	const uint32 nextWorldID{ ++m_worldIdGenerator };
 
-	m_reservedStartRoomId.insert(roomID);
-}
-
-uint16 LobbyServer::GameServerSession::GetReservedStartRoom(const uint16 roomID)
-{
-	if(false == m_reservedStartRoomId.contains(roomID))
+	if(nextWorldID > std::numeric_limits<uint16>::max())
 		return 0;
 
-	m_reservedStartRoomId.unsafe_erase(roomID);
+	const uint16 worldID{ static_cast<uint16>(nextWorldID) };
+
+	m_reservedStartRooms.insert(std::make_pair(worldID, roomID));
+	return worldID;
+}
+
+uint16 LobbyServer::GameServerSession::ConsumeReservedStartRoom(const uint16 worldID)
+{
+	const auto iter{ m_reservedStartRooms.find(worldID) };
+
+	if(iter == m_reservedStartRooms.end())
+		return 0;
+
+	const uint16 roomID{ iter->second };
+	m_reservedStartRooms.unsafe_erase(worldID);
 
 	return roomID;
 }

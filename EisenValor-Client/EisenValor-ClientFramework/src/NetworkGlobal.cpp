@@ -1,168 +1,113 @@
 #include "stdafxClientFramework.h"
 #include "NetworkGlobal.h"
 
-#include "RecvBuffer.h"
-
-NetBridge::NetworkGlobal::NetworkGlobal()
-	: m_socket{INVALID_SOCKET}, m_recvBuffer{std::make_unique<RecvBuffer>(NW_BUFFER_CAPACITY) /*64kb*/}
-{
-}
+NetBridge::NetworkGlobal::NetworkGlobal() = default;
 
 NetBridge::NetworkGlobal::~NetworkGlobal() {}
+
+void NetBridge::NetworkGlobal::SetLobbySession(std::unique_ptr<Session>&& session)
+{
+	m_lobbySession = std::move(session);
+}
+
+void NetBridge::NetworkGlobal::SetGameSession(std::unique_ptr<Session>&& session)
+{
+	m_gameSession = std::move(session);
+}
 
 bool NetBridge::NetworkGlobal::Init(const std::string_view ip, const uint16 port)
 {
 	std::wcout.imbue(std::locale("korean"));
 
-	WSADATA wsaData;
-	if (0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
+	if (false == m_isWsaStarted)
 	{
-		std::cout << "WSAStartup Failed!" << std::endl;
-		return false;
+		WSADATA wsaData;
+		if (0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
+		{
+			std::cout << "WSAStartup Failed!" << std::endl;
+			return false;
+		}
+
+		m_isWsaStarted = true;
 	}
 
-	if (false == Connect(ip, port))
-	{
-		return false;
-	}
-
-	return true;
+#ifdef APPLY_LOBBY_SERVER
+	return ConnectLobbyServer(ip, port);
+#else
+	return ConnectGameServer(ip, port);
+#endif
 }
 
 bool NetBridge::NetworkGlobal::Connect(const std::string_view ip, const uint16 port)
 {
-	m_recvBuffer->Reset();
+	return ConnectLobbyServer(ip, port);
+}
 
-	if (INVALID_SOCKET != m_socket)
+bool NetBridge::NetworkGlobal::ConnectLobbyServer(const std::string_view ip, const uint16 port)
+{
+	if (nullptr == m_lobbySession)
 	{
-		shutdown(m_socket, SD_SEND);
-		closesocket(m_socket);
-	}
-
-	m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	if (INVALID_SOCKET == m_socket)
-	{
-		std::println("INVALID_SOCKET = {}", WSAGetLastError());
-		WSACleanup();
+		std::println("LobbyServerSession is not set.");
 		return false;
 	}
 
-	SOCKADDR_IN serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(port);
-	inet_pton(AF_INET, ip.data(), &serverAddr.sin_addr);
+	return m_lobbySession->Connect(ip, port);
+}
 
-	if (SOCKET_ERROR == connect(m_socket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)))
+bool NetBridge::NetworkGlobal::ConnectGameServer(const std::string_view ip, const uint16 port)
+{
+	if (nullptr == m_gameSession)
 	{
-		std::println("INVALID_SOCKET = {}", WSAGetLastError());
-		closesocket(m_socket);
-		WSACleanup();
+		std::println("GameServerSession is not set.");
 		return false;
 	}
 
-	u_long mode = 1;
+	return m_gameSession->Connect(ip, port);
+}
 
-	if (SOCKET_ERROR == ioctlsocket(m_socket, FIONBIO, &mode))
-	{
-		std::println("NON BLOKING MODE FAILED = {}", WSAGetLastError());
-		closesocket(m_socket);
-		WSACleanup();
-		return false;
-	}
+void NetBridge::NetworkGlobal::DisconnectLobbyServer()
+{
+	if (m_lobbySession)
+		m_lobbySession->Disconnect();
+}
 
-	BOOL flag = true;
-
-	if (SOCKET_ERROR == setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag)))
-	{
-		std::println("NAGLE ALGORITHM TURN OFF FAILED = {}", WSAGetLastError());
-		closesocket(m_socket);
-		WSACleanup();
-		return false;
-	}
-
-	return true;
+void NetBridge::NetworkGlobal::DisconnectGameServer()
+{
+	if (m_gameSession)
+		m_gameSession->Disconnect();
 }
 
 void NetBridge::NetworkGlobal::ProcessIO()
 {
-	RecvBuffer* const recvBuffer = m_recvBuffer.get();
+	if (m_lobbySession)
+		m_lobbySession->ProcessIO();
 
-	const int32 recvLen = ::recv(m_socket, recvBuffer->GetWritePos(), m_recvBuffer->GetFreeSize(), 0);
-
-	if (recvLen == 0)
-	{
-		// assert(false && "Recv Zero");
-		std::cout << "Recv Zero" << std::endl;
-		// exit(-1);
-	}
-	else if (recvLen < 0)
-	{
-		const int32 errCode = ::WSAGetLastError();
-		if (WSAEWOULDBLOCK != errCode)
-		{
-			// assert(false && "Recv Error");
-			std::println("Recv Error = {}", errCode);
-			// exit(-1);
-		}
-		return;
-	}
-	else
-	{
-		if (false == recvBuffer->OnWrite(recvLen))
-		{
-			assert(false && "RecvBuffer Write OverFlow");
-			std::println("RecvBuffer Write OverFlow = {}", WSAGetLastError());
-			return;
-		}
-
-		const uint32 remainDataSize = recvBuffer->GetDataSize();
-		const uint32 processLen = AssembleReceivedData(recvBuffer->GetReadPos(), remainDataSize);
-		recvBuffer->OnRead(processLen);
-		recvBuffer->Clean();
-	}
+	if (m_gameSession)
+		m_gameSession->ProcessIO();
 }
 
 void NetBridge::NetworkGlobal::Release()
 {
-	shutdown(m_socket, SD_SEND);
-	char buf;
-	while (recv(m_socket, &buf, 1, 0) > 0) {}
-	closesocket(m_socket);
-	WSACleanup();
+	DisconnectGameServer();
+	DisconnectLobbyServer();
+
+	if (m_isWsaStarted)
+	{
+		WSACleanup();
+		m_isWsaStarted = false;
+	}
+
 	std::cout << "NetworkGlobal Release!" << std::endl;
 }
 
-uint32 NetBridge::NetworkGlobal::AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept
+void NetBridge::NetworkGlobal::SendLobby(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 {
-	uint32 processLen = 0;
-
-	while (true)
-	{
-		const uint32 dataSize = remainDataSize - processLen;
-
-		if (dataSize < sizeof(PacketHeader))
-			break;
-
-		const PacketHeader header = *reinterpret_cast<const PacketHeader*>(&buffer[processLen]);
-
-		if (0 == header.packetSize)
-			break;
-
-		if (dataSize < header.packetSize)
-			break;
-
-		ProcessPacket(&buffer[processLen]);
-
-		processLen += header.packetSize;
-	}
-
-	return processLen;
+	if (m_lobbySession)
+		m_lobbySession->Send(std::move(sendBuffer));
 }
 
-void NetBridge::NetworkGlobal::ProcessPacket(const char* const buffer) noexcept
+void NetBridge::NetworkGlobal::SendGame(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 {
-	const PacketHeader header = *reinterpret_cast<const PacketHeader*>(buffer);
-	const char* const  packetData = buffer + sizeof(PacketHeader);
-	m_packetHandler->HandlePacket(m_socket, packetData, header);
+	if (m_gameSession)
+		m_gameSession->Send(std::move(sendBuffer));
 }

@@ -16,4 +16,7 @@
 #include "NavMesh/DetourNavMeshQuery.h"
 #include "NavMesh/DetourCommon.h"
 
+extern uint16 G_LOBBY_SERVER_PORT;
+extern uint16 G_GAME_SERVER_PORT;
+
 // #define APPLY_LOBBY_SERVER
