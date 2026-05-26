@@ -173,6 +173,15 @@ bool AnimationComponent::GetSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& 
 	return true;
 }
 
+bool AnimationComponent::GetPreIKSocketMatrix(uint32_t boneIndex, DirectX::XMMATRIX& outMatrix) const
+{
+	if (boneIndex >= m_preIKGlobalMatrices.size())
+		return false;
+
+	outMatrix = DirectX::XMLoadFloat4x4(&m_preIKGlobalMatrices[boneIndex]);
+	return true;
+}
+
 void AnimationComponent::UpdateBoneMatrices()
 {
 	if (!m_currentAnimation)
@@ -195,6 +204,7 @@ void AnimationComponent::UpdateBoneMatrices()
 	{
 		m_localMatrices.resize(boneCount);
 		m_globalMatrices.resize(boneCount);
+		m_preIKGlobalMatrices.resize(boneCount);
 		m_finalPalette.resize(boneCount);
 
 		// [DEBUG] 매칭 확인
@@ -402,12 +412,47 @@ void AnimationComponent::UpdateBoneMatrices()
 		computeGlobal((int32_t)i);
 	}
 
+	m_preIKGlobalMatrices = m_globalMatrices;
+
+	if (std::fabs(m_modelRootOffsetY) > 0.0001f)
+	{
+		for (auto& globalMatrix : m_globalMatrices)
+		{
+			XMMATRIX global = XMLoadFloat4x4(&globalMatrix);
+			global.r[3] = XMVectorSetY(global.r[3], XMVectorGetY(global.r[3]) + m_modelRootOffsetY);
+			XMStoreFloat4x4(&globalMatrix, global);
+		}
+	}
+
 	// [IK] (월드 행렬 수정)
+	std::vector<std::vector<uint32_t>> childIndices(boneCount);
+	for (size_t boneIndex = 0; boneIndex < boneCount; ++boneIndex)
+	{
+		const int32_t parentIndex = bones[boneIndex].parentIndex;
+		if (parentIndex >= 0)
+		{
+			childIndices[parentIndex].push_back(static_cast<uint32_t>(boneIndex));
+		}
+	}
+
+	std::function<void(uint32_t)> propagateDescendants = [&](uint32_t parentIndex)
+	{
+		for (const uint32_t childIndex : childIndices[parentIndex])
+		{
+			XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[childIndex]);
+			XMMATRIX parentGlobal = XMLoadFloat4x4(&m_globalMatrices[parentIndex]);
+			XMMATRIX global = XMMatrixMultiply(local, parentGlobal);
+			XMStoreFloat4x4(&m_globalMatrices[childIndex], global);
+			propagateDescendants(childIndex);
+		}
+	};
+
 	for (const auto& target : m_ikTargets)
 	{
 		if (target.active && target.weight > 0.0f)
 		{
 			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, target);
+			propagateDescendants(target.boneIndex);
 		}
 	}
 

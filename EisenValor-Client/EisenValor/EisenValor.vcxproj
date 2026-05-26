@@ -308,6 +308,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\FSM\StateImplementations.h" />
     <ClInclude Include="Component\FSM\StatePool.h" />
     <ClInclude Include="Component\AttackRangeDebugComponent.h" />
+    <ClInclude Include="Component\FootIKComponent.h" />
     <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
     <ClInclude Include="Component\Login\LoginControllerComponent.h" />
@@ -371,6 +372,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\FSM\StatePolicy.cpp" />
     <ClCompile Include="Component\FSM\StatePool.cpp" />
     <ClCompile Include="Component\AttackRangeDebugComponent.cpp" />
+    <ClCompile Include="Component\FootIKComponent.cpp" />
     <ClCompile Include="Component\HealthComponent.cpp" />
     <ClCompile Include="Component\Lobby\LobbySceneControllerComponent.cpp" />
     <ClCompile Include="Component\Login\LoginControllerComponent.cpp" />
