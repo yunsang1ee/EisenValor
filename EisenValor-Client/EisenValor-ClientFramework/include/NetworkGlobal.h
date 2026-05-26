@@ -3,11 +3,12 @@
 #include "Singleton.h"
 #include "PacketBuffer.h"
 #include "IPacketHandler.h"
+#include "Session.h"
 
 namespace NetBridge
 {
-class RecvBuffer;
 class PacketBuffer;
+class Session;
 
 // ===========================================
 // * Non-Blockig I/O Model
@@ -20,21 +21,30 @@ private:
 	friend class Singleton;
 
 private:
-	SOCKET							  m_socket;
-	const std::unique_ptr<RecvBuffer> m_recvBuffer;
-	std::unique_ptr<IPacketHandler>	  m_packetHandler;
+	bool							m_isWsaStarted = false;
+	std::unique_ptr<Session>		m_lobbySession;
+	std::unique_ptr<Session>		m_gameSession;
+	std::unique_ptr<IPacketHandler> m_legacyPacketHandler;
 
 public:
+	void SetLobbySession(std::unique_ptr<Session>&& session);
+	void SetGameSession(std::unique_ptr<Session>&& session);
+
 	void SetPacketHandler(std::unique_ptr<IPacketHandler>&& handler)
 	{
-		m_packetHandler = std::move(handler);
-		m_packetHandler->Init();
+		m_legacyPacketHandler = std::move(handler);
+		m_legacyPacketHandler->Init();
 	}
 
 	[[nodiscard("DO NOT IGNORE RETURN VALUE.")]]
 	bool Init(const std::string_view ip, const uint16 port);
 
 	bool Connect(const std::string_view ip, const uint16 port);
+	bool ConnectLobbyServer(const std::string_view ip, const uint16 port);
+	bool ConnectGameServer(const std::string_view ip, const uint16 port);
+
+	void DisconnectLobbyServer();
+	void DisconnectGameServer();
 
 	void ProcessIO();
 
@@ -43,46 +53,19 @@ public:
 	template <typename Packet>
 	void Send(Packet&& sendPkt) noexcept
 	{
-		const int32 sendBytes = send(m_socket, reinterpret_cast<char*>(&sendPkt), sizeof(std::decay_t<Packet>), 0);
-		if (SOCKET_ERROR == sendBytes)
-		{
-			const int32 errCode = WSAGetLastError();
-			if (WSAEWOULDBLOCK == errCode)
-			{
-				std::cout << "WSAEWOULDBLOCK" << std::endl;
-				return;
-			}
-			else
-			{
-				std::println("Send Error = {}", errCode);
-				return;
-			}
-		}
+		static_assert(sizeof(Packet) == 0, "Use PacketBuffer-based SendLobby/SendGame instead.");
 	}
 
 	void Send(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept
 	{
-		const int32 sendBytes = send(m_socket, sendBuffer->GetBuffer(), static_cast<int32>(sendBuffer->GetCapacity()), 0);
-		if (SOCKET_ERROR == sendBytes)
-		{
-			const int32 errCode = WSAGetLastError();
-			if (WSAEWOULDBLOCK == errCode)
-			{
-				std::cout << "WSAEWOULDBLOCK" << std::endl;
-				assert(nullptr);
-				return;
-			}
-			else
-			{
-				assert("SENDERROR");
-				std::println("Send Error = {}", errCode);
-				return;
-			}
-		}
+		if (m_gameSession && m_gameSession->IsConnected())
+			SendGame(std::move(sendBuffer));
+		else
+			SendLobby(std::move(sendBuffer));
 	}
 
-	uint32 AssembleReceivedData(const char* const buffer, const uint32 remainDataSize) noexcept;
-	void   ProcessPacket(const char* const buffer) noexcept;
+	void SendLobby(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept;
+	void SendGame(std::shared_ptr<NetBridge::PacketBuffer> sendBuffer) noexcept;
 };
 } // namespace NetBridge
 

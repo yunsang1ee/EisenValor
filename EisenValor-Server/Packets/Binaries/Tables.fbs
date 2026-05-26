@@ -24,11 +24,24 @@ table CL_LOGIN_PACKET {
 
 table LC_LOGIN_SUCCESS_PACKET {
 	lobby_session_id : uint;
-	name: string;
+	nickname: string;
 }
 
 table LC_LOGIN_FAIL_PACKET {
 	fail_msg: string;
+}
+
+table CL_SIGN_UP_PACKET {
+	id: string;
+	pw: string;
+	nickname: string;
+}
+
+table LC_SIGN_UP_FAIL_PACKET {
+	fail_msg: string;
+}
+
+table LC_SIGN_UP_SUCCESS_PACKET {
 }
 
 // ================================================
@@ -151,7 +164,7 @@ table LC_START_GAME_FAIL_PACKET {
 }
 
 table LS_CREATE_GAME_WORLD_PACKET {
-	room_id: uint16;
+	world_id: uint16;
 	participants: [FB_STRUCTS.ParticipantInfo];
 }
 
@@ -167,6 +180,12 @@ table LC_CONNECT_TO_GAME_SERVER_PACKET {
 	port: uint16;
 }
 
+table CL_RETURN_TO_GAME_ROOM_PACKET {
+}
+
+table LC_RETURN_TO_GAME_ROOM_PACKET {
+}
+
 table CL_CHAT_PACKET {
 	msg: string;
 }
@@ -174,6 +193,19 @@ table CL_CHAT_PACKET {
 table LC_CHAT_PACKET {
 	session_id: uint;
 	msg: string;
+}
+
+table SL_GAME_RESULT_PACKET{
+	world_id: uint16;
+	winning_team: FB_ENUMS.TEAM_TYPE;
+	blue_score: uint8;
+	red_score: uint8;
+}
+
+table LC_GAME_RESULT_PACKET {
+	winning_team: FB_ENUMS.TEAM_TYPE;
+	blue_score: uint8;
+	red_score: uint8;
 }
 
 // ================================================
@@ -309,20 +341,6 @@ table CS_ENTER_GAME_WORLD_PACKET {
 	player_id: uint32;
 }
 
-table SC_DEAD_PACKET {
-	obj_id: uint64;
-}
-
-table SC_START_ANIMATION {
-	obj_id: uint64;
-	anim_name: string;
-}
-
-table SC_END_ANIMATION {
-	obj_id: uint64;
-	anim_name: string;
-}
-
 table CS_UPDATE_PLAYER_STATE_PACKET {
 	player_state: uint8;
 }
@@ -345,12 +363,6 @@ table SC_OCCUPATION_ZONE_GAUGE_PACKET {
 
 table SC_SOLDIER_ATTACK_PACKET {
 	obj_id: uint64;
-}
-
-table SC_GAME_FINISH_RESULT_PACKET {
-	winning_team: FB_ENUMS.TEAM_TYPE;
-	blue_score: uint8;
-	red_score: uint8;
 }
 
 // ================================================

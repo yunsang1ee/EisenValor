@@ -30,8 +30,8 @@ bool GameServer::Contents::General::IsTargetInAttackRange(std::shared_ptr<GameOb
 	Vec3 myDir{ sin(myRot.y), 0.f, cosf(myRot.y) };
 	myDir.Normalize();
 
-	const float degree{ atkInfo.skillData->attackDegree * 0.5f };
-	const float cosHalfAngle{ std::cosf(Deg2Rad(degree)) };
+	const float halfDegree{ atkInfo.skillData->attackDegree * 0.5f };
+	const float cosHalfAngle{ std::cosf(Deg2Rad(halfDegree)) };
 	const Vec3& targetPos{ target->GetPosition() };
 	const Vec3 toTargetDir{ targetPos - myPos };
 	const float distToTargetSq = toTargetDir.x * toTargetDir.x + toTargetDir.y * toTargetDir.y + toTargetDir.z * toTargetDir.z;

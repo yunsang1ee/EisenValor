@@ -102,15 +102,35 @@ void GameServerEngine::ServerEngineCore::Shutdown()
 
 GameServerEngine::GameWorldThread* GameServerEngine::ServerEngineCore::GetLeisurelyWorker()
 {
-	// TODO: WorkerThread가 현재 얼마나 바쁜지 판단해서 가장 여유로운애를 반환해줘야함.
-	// 판단? WorkerThread::Run에서 DT가 가장 짧은 얘로..?
-	uint16 index = 1;
-	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
+	if(m_workerThreads.size() <= 0)
+		return nullptr;
+
+	GameWorldThread* bestWorker{ nullptr };
+	uint64 bestScore{ std::numeric_limits<uint64>::max() };
+
+	const uint32 gameWorkerCount{ static_cast<uint32>(m_workerThreads.size() - 1) };
+	const uint32 startIndex{ 1 + (m_nextWorkerIndex.fetch_add(1, std::memory_order_relaxed) % gameWorkerCount) };
+
+	for(uint32 offset = 0; offset < gameWorkerCount; ++offset) {
+		const uint32 index{ 1 + ((startIndex - 1 + offset) % gameWorkerCount) };
+		auto* const worker{ static_cast<GameWorldThread*>(m_workerThreads[index].get()) };
+		if(nullptr == worker)
+			continue;
+
+		const uint64 score{ worker->GetLoadScore() };
+		if(score < bestScore) {
+			bestScore = score;
+			bestWorker = worker;
+		}
+	}
+
+	return bestWorker;
 }
 
 GameServerEngine::GameWorldThread* GameServerEngine::ServerEngineCore::GetWorkerThread(const uint32 index)
 {
 	assert(index >= 1);
+	assert(index < m_workerThreads.size());
 	return static_cast<GameWorldThread*>(m_workerThreads[index].get());
 }
 #endif

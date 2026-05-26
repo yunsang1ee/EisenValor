@@ -26,6 +26,20 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_LOGIN_FAIL
 
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_LOGIN_FAIL_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_LOGIN_FAIL_PACKETDirect, failMsg.data()));
 }
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_SIGN_UP_SUCCESS_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_SIGN_UP_SUCCESS_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_SIGN_UP_SUCCESS_PACKET));
+}
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_SIGN_UP_FAIL_PACKET(const std::string_view failMsg)
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_SIGN_UP_FAIL_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_SIGN_UP_FAIL_PACKETDirect, failMsg.data()));
+}
 #pragma endregion
 
 #pragma region LOBBY_PACKETS
@@ -144,7 +158,7 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_LEAVE_PART
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET, participantID));
 }
 
-std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 roomID, const std::vector<ParticipantInfo>& participants)
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::vector<ParticipantInfo>& participants)
 {
 	flatbuffers::FlatBufferBuilder builder;
 
@@ -154,7 +168,7 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LS_CREATE_GAM
 	for(const auto& participant : participants)
 		participantsInfo.emplace_back(FB_STRUCTS::ParticipantInfo{ participant.id, participant.type, participant.stateType, participant.teamType });
 
-	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LS_CREATE_GAME_WORLD_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKETDirect, roomID, &participantsInfo));
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LS_CREATE_GAME_WORLD_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLS_CREATE_GAME_WORLD_PACKETDirect, worldID, &participantsInfo));
 
 }
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port)
@@ -163,10 +177,23 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CONNECT_TO
 	
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CONNECT_TO_GAME_SERVER_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CONNECT_TO_GAME_SERVER_PACKETDirect, worldID, ip.data(), port));
 }
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_RETURN_TO_GAME_ROOM_PACKET()
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_RETURN_TO_GAME_ROOM_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_RETURN_TO_GAME_ROOM_PACKET));
+}
+
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CHAT_PACKET(const uint32 sessionID, const std::string_view msg)
 {
 	flatbuffers::FlatBufferBuilder builder;
 
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CHAT_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CHAT_PACKETDirect, sessionID, msg.data()));
+}
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_GAME_RESULT_PACKET(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_GAME_RESULT_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_GAME_RESULT_PACKET, winningTeam, blueScore, redScore));
 }
 #pragma endregion

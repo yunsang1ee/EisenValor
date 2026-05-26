@@ -10,6 +10,8 @@ bool Handle_Invalid(const SOCKET& socket, const char* const buffer, const Packet
 #pragma region LOGIN_PACKETS
 bool Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt);
 bool Handle_LC_LOGIN_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_SUCCESS_PACKET& recvPkt);
+bool Handle_LC_SIGN_UP_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_FAIL_PACKET& recvPkt);
+bool Handle_LC_SIGN_UP_SUCCESS_PACKET(const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_SUCCESS_PACKET& recvPkt);
 #pragma endregion
 	
 
@@ -61,8 +63,13 @@ bool Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_CONNECT_TO_GAME_SERVER_PACKET& recvPkt
 );
 
+bool Handle_LC_RETURN_TO_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_RETURN_TO_GAME_ROOM_PACKET& recvPkt
+);
+
 bool Handle_LC_CHAT_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHAT_PACKET& recvPkt);
 
+bool Handle_LC_GAME_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::LC_GAME_RESULT_PACKET& recvPkt);
 #pragma endregion
 
 
@@ -86,7 +93,6 @@ bool Handle_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_CHANGE_GENERAL_ATTACK_DIR_PACKET& recvPkt
 );
 bool Handle_SC_RESPAWN_GENERAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt);
-bool Handle_SC_DEAD_PACKET(const SOCKET& socket, const FB_TABLES::SC_DEAD_PACKET& recvPkt);
 bool Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES::SC_PING_PACKET& recvPkt);
 
 bool Handle_SC_UPDATE_TEAM_SCORE_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt);
@@ -100,8 +106,6 @@ bool Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
 );
 
 bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt);
-
-bool Handle_SC_GAME_FINISH_RESULT_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_RESULT_PACKET& recvPkt);
 
 #pragma endregion
 
