@@ -14,6 +14,23 @@ float3 SampleNightEnvironment(float3 rayDir)
     return lerp(groundColor, nightSky, groundToSkyT);
 }
 
+float3 GetEnvironmentSunDirection()
+{
+    return normalize(float3(0.35f, 0.75f, 0.45f));
+}
+
+float3 GetEnvironmentSunRadiance(uint environmentMode)
+{
+    return (0u != environmentMode)
+        ? float3(1.0f, 0.95f, 0.8f) * 2.5f
+        : float3(5.0f, 18.0f, 62.0f) / 255.0f * 0.25f;
+}
+
+float GetEnvironmentSunAngularRadius(uint environmentMode)
+{
+    return (0u != environmentMode) ? 0.04f : 0.08f;
+}
+
 float3 AtmosphereGradient(float3 rayDir, float3 sunDir)
 {
     float height = rayDir.y;
@@ -85,7 +102,7 @@ float CloudNoise(float3 rayDir)
 
 float3 SampleDayEnvironment(float3 rayDir)
 {
-    float3 sunDir = normalize(float3(0.35f, 0.75f, 0.45f));
+    float3 sunDir = GetEnvironmentSunDirection();
     float3 sky = AtmosphereGradient(rayDir, sunDir);
     float3 rayleigh = RayleighScattering(rayDir, sunDir) * 0.08f;
     float3 mie = MieScattering(rayDir, sunDir) * 0.15f;
