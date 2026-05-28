@@ -36,7 +36,7 @@ namespace LobbyServer {
 		
 		void Handle_CS_READY_GAME(const std::shared_ptr<ClientSession>& clientSession);
 		void Handle_CS_START_GAME(const std::shared_ptr<ClientSession>& clientSession);
-		void Handle_CL_RETURN_TO_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession);
+		void Handle_CL_RETURN_TO_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession, const uint32 userID);
 
 		void Handle_CL_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg);
 #pragma endregion

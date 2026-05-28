@@ -42,7 +42,7 @@ std::shared_ptr<PacketBuffer> Make_CL_ADD_BOT_PACKET(FB_ENUMS::TEAM_TYPE teamTyp
 std::shared_ptr<PacketBuffer> Make_CL_REMOVE_BOT_PACKET(uint32_t botId);
 std::shared_ptr<PacketBuffer> Make_CL_READY_GAME_PACKET();
 std::shared_ptr<PacketBuffer> Make_CL_START_GAME_PACKET();
-std::shared_ptr<PacketBuffer> Make_CL_RETURN_TO_GAME_ROOM_PACKET();
+std::shared_ptr<PacketBuffer> Make_CL_RETURN_TO_GAME_ROOM_PACKET(const uint32 userID);
 #pragma endregion
 
 // =================

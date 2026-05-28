@@ -3,6 +3,26 @@
 
 #include "LobbyServerEngineCore.h"
 #include "DBConnectionPool.h"
+#include "UserSessionStateStore.h"
+
+namespace {
+	bool EnsureUserInfoSchema()
+	{
+		DBConnectionGuard dbConnectionGuard{ MANAGER(DBConnectionPool)->Pop() };
+		DBConnection* dbConnection = dbConnectionGuard.Get();
+		if(nullptr == dbConnection)
+			return false;
+
+		return dbConnection->Execute(
+			L"IF OBJECT_ID(N'dbo.userInfo', N'U') IS NOT NULL "
+			L"AND COL_LENGTH(N'dbo.userInfo', N'created_at') IS NULL "
+			L"BEGIN "
+			L"ALTER TABLE dbo.userInfo ADD created_at DATETIME2 NOT NULL "
+			L"CONSTRAINT DF_userInfo_created_at DEFAULT DATEADD(hour, 9, SYSUTCDATETIME()) WITH VALUES; "
+			L"END"
+		);
+	}
+}
 
 BOOL __stdcall ConsoleHandler(DWORD signal)
 {
@@ -31,6 +51,16 @@ bool LobbyServer::ServerManager::Init()
 
 	if(false == MANAGER(DBConnectionPool)->Connect(MANAGER(LobbyServerEngine::LobbyServerEngineCore)->GetWorkerThreadCount(), L"DSN=EisenValor-DB_ODBC;Trusted_Connection=yes;")) {
 		LOG_ERROR("DBConnectionPool Connect Failed");
+		return false;
+	}
+
+	if(false == EnsureUserInfoSchema()) {
+		LOG_ERROR("UserInfo EnsureSchema Failed");
+		return false;
+	}
+
+	if(false == LobbyServer::UserSessionStateStore::EnsureSchema()) {
+		LOG_ERROR("UserSessionStateStore EnsureSchema Failed");
 		return false;
 	}
 

@@ -25,6 +25,8 @@ private:
 	std::unique_ptr<Session>		m_lobbySession;
 	std::unique_ptr<Session>		m_gameSession;
 	std::unique_ptr<IPacketHandler> m_legacyPacketHandler;
+	std::string						m_lobbyIP;
+	uint16							m_lobbyPort = 0;
 
 public:
 	void SetLobbySession(std::unique_ptr<Session>&& session);
@@ -42,6 +44,7 @@ public:
 	bool Connect(const std::string_view ip, const uint16 port);
 	bool ConnectLobbyServer(const std::string_view ip, const uint16 port);
 	bool ConnectGameServer(const std::string_view ip, const uint16 port);
+	bool ReconnectLobbyServer();
 
 	void DisconnectLobbyServer();
 	void DisconnectGameServer();

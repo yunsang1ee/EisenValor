@@ -164,6 +164,15 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 	auto it = m_sessionToPlayer.find(id);
 	if(it == m_sessionToPlayer.end()) return;
 
+	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
+	if(lobbyServerSession) {
+		auto pb{ ServerPackets::Make_SL_MARK_USER_OFFLINE_FROM_GAME_PACKET(id, GetID()) };
+		lobbyServerSession->Send(std::move(pb));
+	}
+	else {
+		LOG_WARNING("Failed to mark user offline from game. Lobby server session is disconnected. UserID:{}, WorldID:{}", id, GetID());
+	}
+
 	const uint64 playerID{ it->second };
 
 	auto& playerGroup = m_gameObjectsGroups[etou8(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER)];
@@ -1062,6 +1071,19 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 		auto resultPb = ServerPackets::Make_SL_GAME_RESULT_PACKET(GetID(), *winner, m_blueTeamScore, m_redTeamScore);
 		lobbyServerSession->Send(std::move(resultPb));
 	}
+
+	if(lobbyServerSession) {
+		for(const auto& [userID, user] : m_users) {
+			auto pb{ ServerPackets::Make_SL_MARK_USER_TRANSFERRING_TO_LOBBY_PACKET(userID, GetID()) };
+			lobbyServerSession->Send(std::move(pb));
+		}
+	}
+	else {
+		LOG_WARNING("Failed to mark users transferring to lobby. Lobby server session is disconnected. WorldID:{}", GetID());
+	}
+
+	auto finishPb = ServerPackets::Make_SC_GAME_FINISH_PACKET();
+	Broadcast(std::move(finishPb));
 }
 
 void GameServer::Contents::GameWorld::SendPositionCorrection(const std::shared_ptr<ClientSession>& session, const uint64 objID, const Vec3& correctPos, const Vec3& correctRot)
