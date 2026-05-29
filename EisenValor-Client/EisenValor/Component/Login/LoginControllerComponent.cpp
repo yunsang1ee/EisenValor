@@ -12,19 +12,26 @@ void LoginControllerComponent::OnUpdate(float deltaTime)
 	{
 		DEBUG_LOG_FMT("[LoginControllerComponent] 'L' Key Detected! Sending CS_LOGIN...\n");
 
-		// 테스트용 ID/PW로 로그인 패킷 전송
-		const std::string id = "TestID" + std::to_string(GetCurrentProcessId());
-		auto pb = NetBridge::C2S::Make_CL_LOGIN_PACKET(id, "TestPW");
+		if (m_id.empty())
+		{
+			std::cout << "Enter ID: ";
+			std::getline(std::cin, m_id);
+		}
+
+		auto pb = NetBridge::C2S::Make_CL_LOGIN_PACKET(m_id, "TestPW");
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
 	if (GLOBAL(InputGlobal).GetInputDown('R'))
 	{
 		DEBUG_LOG_FMT("[LoginControllerComponent] 'R' Key Detected! Sending CL_SIGN_UP...\n");
-
-		const std::string id = "TestID" + std::to_string(GetCurrentProcessId());
+		if (m_id.empty())
+		{
+			std::cout << "Enter ID: ";
+			std::getline(std::cin, m_id);
+		}
 		const std::string nickname = "TestNickName" + std::to_string(GetCurrentProcessId());
-		auto pb{NetBridge::C2S::Make_CL_SIGN_UP_PACKET(id, "TestPW", nickname)};
+		auto pb{NetBridge::C2S::Make_CL_SIGN_UP_PACKET(m_id, "TestPW", nickname)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
 
