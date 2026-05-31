@@ -15,7 +15,7 @@ namespace ServerPackets {
 #pragma endregion
 
 	// =================
-	//		LOGIN
+	//		LOBBY
 	// =================
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port);
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_GAME_RESULT_PACKET(const uint16 worldID, const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
@@ -24,7 +24,7 @@ namespace ServerPackets {
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_MARK_USER_OFFLINE_FROM_GAME_PACKET(const uint32 userID, const uint16 worldID);
 
 	// ==================
-	//		LOBBY
+	//		WORLD
 	// ==================
 #pragma region WORLD_PACKETS
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint64 id, const Transform& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType);

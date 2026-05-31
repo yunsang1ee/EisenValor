@@ -165,7 +165,7 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 	if(it == m_sessionToPlayer.end()) return;
 
 	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
-	if(lobbyServerSession) {
+	if(lobbyServerSession && !m_isGameFinish) {
 		auto pb{ ServerPackets::Make_SL_MARK_USER_OFFLINE_FROM_GAME_PACKET(id, GetID()) };
 		lobbyServerSession->Send(std::move(pb));
 	}

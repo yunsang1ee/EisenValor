@@ -28,7 +28,9 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHAT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
 	}
 #pragma endregion
-
+	// =================
+	// 		LOBBY
+	// =================
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port)
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -58,6 +60,7 @@ namespace ServerPackets {
 		flatbuffers::FlatBufferBuilder builder;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_MARK_USER_OFFLINE_FROM_GAME_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_MARK_USER_OFFLINE_FROM_GAME_PACKET, userID, worldID));
 	}
+	
 	// ==================
 	//		WORLD
 	// ==================
