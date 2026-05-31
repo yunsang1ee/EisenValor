@@ -160,6 +160,12 @@
     <ClInclude Include="include\DxShaderCompilerGlobal.h">
       <Filter>Graphics\Pipeline</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxPipelineState.h">
+      <Filter>Graphics\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxRootSignatureBuilder.h">
+      <Filter>Graphics\Pipeline</Filter>
+    </ClInclude>
     <ClInclude Include="include\DxCommandQueueGlobal.h">
       <Filter>Graphics\Device\Command</Filter>
     </ClInclude>
@@ -197,6 +203,9 @@
       <Filter>Graphics\Resource\Upload/Readback</Filter>
     </ClInclude>
     <ClInclude Include="include\DxRtPipelineState.h">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DxRaytracingStateObjectBuilder.h">
       <Filter>Graphics\Raytracing</Filter>
     </ClInclude>
     <ClInclude Include="include\DxRtShaderTable.h">
@@ -365,6 +374,12 @@
     <ClCompile Include="src\DxShaderCompilerGlobal.cpp">
       <Filter>Graphics\Pipeline</Filter>
     </ClCompile>
+    <ClCompile Include="src\DxPipelineState.cpp">
+      <Filter>Graphics\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxRootSignatureBuilder.cpp">
+      <Filter>Graphics\Pipeline</Filter>
+    </ClCompile>
     <ClCompile Include="src\DxCommandQueueGlobal.cpp">
       <Filter>Graphics\Device\Command</Filter>
     </ClCompile>
@@ -399,6 +414,9 @@
       <Filter>Graphics\Resource\Upload/Readback</Filter>
     </ClCompile>
     <ClCompile Include="src\DxRtPipelineState.cpp">
+      <Filter>Graphics\Raytracing</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxRaytracingStateObjectBuilder.cpp">
       <Filter>Graphics\Raytracing</Filter>
     </ClCompile>
     <ClCompile Include="src\DxRtShaderTable.cpp">

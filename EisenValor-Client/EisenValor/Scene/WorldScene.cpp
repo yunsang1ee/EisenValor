@@ -203,7 +203,7 @@ void WorldScene::OnEndImpl()
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
 
-void SampleScene::CreateDebugNavMeshPreview()
+void WorldScene::CreateDebugNavMeshPreview()
 {
 	if (!kEnableDebugNavMeshPreview)
 	{
@@ -223,7 +223,7 @@ void SampleScene::CreateDebugNavMeshPreview()
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(kDebugNavMeshMeshPath.data());
 					if (!meshRes)
 					{
-						DEBUG_LOG_FMT("[SampleScene] Debug NavMesh mesh not found: {}\n", kDebugNavMeshMeshPath);
+						DEBUG_LOG_FMT("[WorldScene] Debug NavMesh mesh not found: {}\n", kDebugNavMeshMeshPath);
 						return;
 					}
 
@@ -243,7 +243,7 @@ void SampleScene::CreateDebugNavMeshPreview()
 	);
 }
 
-void SampleScene::CreateDebugMapObjPreview()
+void WorldScene::CreateDebugMapObjPreview()
 {
 	if (!kEnableDebugMapObjPreview)
 	{
@@ -263,7 +263,7 @@ void SampleScene::CreateDebugMapObjPreview()
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(kDebugMapObjMeshPath.data());
 					if (!meshRes)
 					{
-						DEBUG_LOG_FMT("[SampleScene] Debug Map.obj mesh not found: {}\n", kDebugMapObjMeshPath);
+						DEBUG_LOG_FMT("[WorldScene] Debug Map.obj mesh not found: {}\n", kDebugMapObjMeshPath);
 						return;
 					}
 

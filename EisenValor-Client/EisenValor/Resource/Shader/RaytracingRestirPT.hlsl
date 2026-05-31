@@ -33,9 +33,9 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
 cbuffer RestirCandidateConstants : register(b3, space0)
 {
     uint g_restirCandidateEnabled;
-    uint g_restirDebugView;
     uint g_restirScreenWidth;
     uint g_restirScreenHeight;
+    uint g_restirCandidatePad0;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -166,11 +166,7 @@ void RayGenMain()
         g_restirReservoirInitial[pixelIndex] = restirReservoir;
         g_restirPrimaryHitCurrent[pixelIndex] = primaryHit;
 
-        if (0u != g_restirDebugView)
-        {
-            g_output[pixelCoord] = float4(RestirDebugColor(restirReservoir, primaryHit, g_restirDebugView - 1u), 1.0f);
-            return;
-        }
+        return;
     }
 
     float3 outputColor = finalColor;

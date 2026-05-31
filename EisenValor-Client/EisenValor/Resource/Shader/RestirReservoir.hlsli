@@ -191,13 +191,14 @@ RestirPrimaryHit RestirPrimaryHitFromSample(RestirPathSample sample, uint reserv
 
 void RestirUpdateReservoir(inout RestirReservoir reservoir, RestirPathSample candidate, float resamplingWeight, float randomValue)
 {
+    ++reservoir.sampleCount;
+
     if (resamplingWeight <= 0.0f)
     {
         return;
     }
 
     reservoir.resamplingWeightSum += resamplingWeight;
-    ++reservoir.sampleCount;
 
     float selectionProbability = resamplingWeight / max(reservoir.resamplingWeightSum, EPSILON);
     if (randomValue <= selectionProbability)
@@ -208,28 +209,58 @@ void RestirUpdateReservoir(inout RestirReservoir reservoir, RestirPathSample can
     }
 }
 
-float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit hit, uint debugView)
+float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit selectedHit, RestirPrimaryHit currentHit, uint debugView)
 {
+    bool validReservoir = 0u != (reservoir.flags & RESTIR_RESERVOIR_VALID);
+    bool validSelectedHit = 0u != (selectedHit.flags & RESTIR_PRIMARY_HIT_VALID);
+    bool validCurrentHit = 0u != (currentHit.flags & RESTIR_PRIMARY_HIT_VALID);
+    float3 invalidColor = float3(0.35f, 0.0f, 0.0f);
+
     if (1u == debugView)
     {
-        return (0u != (reservoir.flags & RESTIR_RESERVOIR_VALID)) ? float3(0.1f, 1.0f, 0.2f) : float3(0.35f, 0.0f, 0.0f);
+        return validReservoir ? reservoir.sample.contributionTarget.rgb : invalidColor;
     }
     if (2u == debugView)
     {
-        float heat = saturate(log2(1.0f + reservoir.resamplingWeightSum) / 8.0f);
-        return float3(heat, heat * heat, 1.0f - heat);
+        return validReservoir ? float3(0.1f, 1.0f, 0.2f) : invalidColor;
     }
     if (3u == debugView)
     {
-        return (0u != (hit.flags & RESTIR_PRIMARY_HIT_VALID)) ? RestirUnpackNormalOct16(hit.packedNormal) * 0.5f + 0.5f : 0.0f.xxx;
+        if (!validReservoir)
+        {
+            return invalidColor;
+        }
+        float heat = saturate(log2(1.0f + reservoir.resamplingWeightSum) / 8.0f);
+        return float3(heat, heat * heat, 1.0f - heat);
     }
     if (4u == debugView)
     {
-        float roughness = RestirUnpackUnorm16(hit.packedRoughness);
+        return (validReservoir && validSelectedHit) ? RestirUnpackNormalOct16(selectedHit.packedNormal) * 0.5f + 0.5f : invalidColor;
+    }
+    if (5u == debugView)
+    {
+        return validCurrentHit ? RestirUnpackNormalOct16(currentHit.packedNormal) * 0.5f + 0.5f : invalidColor;
+    }
+    if (6u == debugView)
+    {
+        if (!validReservoir || !validSelectedHit)
+        {
+            return invalidColor;
+        }
+        float roughness = RestirUnpackUnorm16(selectedHit.packedRoughness);
         return float3(roughness, reservoir.sampleCount > 0u ? 1.0f : 0.0f, 0.0f);
     }
+    if (7u == debugView)
+    {
+        if (!validCurrentHit)
+        {
+            return invalidColor;
+        }
+        float roughness = RestirUnpackUnorm16(currentHit.packedRoughness);
+        return float3(roughness, 1.0f, 0.0f);
+    }
 
-    return reservoir.sample.contributionTarget.rgb;
+    return 0.0f.xxx;
 }
 
 #endif // RESTIR_RESERVOIR_HLSLI

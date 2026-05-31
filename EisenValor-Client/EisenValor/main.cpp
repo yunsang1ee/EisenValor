@@ -20,6 +20,7 @@
 
 #include "RenderPass/SkinningPass.h"
 #include "RenderPass/DxrRenderPass.h"
+#include "RenderPass/RestirFinalEvaluationPass.h"
 #include "RenderPass/HdrResolvePass.h"
 #include "RenderPass/UIRenderPass.h"
 
@@ -201,6 +202,9 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			// DXR Pass 생성
 			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
 			renderer.AddRenderPass("DXR", std::move(dxrPass));
+
+			auto restirFinalEvaluationPass = std::make_unique<RestirFinalEvaluationPass>();
+			renderer.AddRenderPass("RestirFinalEvaluation", std::move(restirFinalEvaluationPass));
 
 			// HDR Resolve Pass 생성
 			auto hdrResolvePass = std::make_unique<HdrResolvePass>(swapChain);

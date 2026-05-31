@@ -76,6 +76,7 @@
     </Filter>
     <Filter Include="Component\IK">
       <UniqueIdentifier>{7228a999-5b07-4b05-bfa5-3fd3fe5d2796}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{61578eb5-cdd5-41a5-8207-64991001c1e9}</UniqueIdentifier>
     </Filter>
@@ -109,6 +110,9 @@
       <Filter>RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass\DxrRenderPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="Scene\WorldScene.h">
@@ -178,6 +182,9 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RestirFinalReservoirRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RestirPrimaryHitCurrentRenderData.h">
@@ -272,6 +279,7 @@
     </ClInclude>
     <ClInclude Include="Component\FootIKComponent.h">
       <Filter>Component\IK</Filter>
+    </ClInclude>
     <ClInclude Include="Network\GameServerSession.h">
       <Filter>Network\Session\GameServerSession</Filter>
     </ClInclude>
@@ -296,6 +304,9 @@
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="Scene\WorldScene.cpp">
@@ -414,6 +425,7 @@
     </ClCompile>
     <ClCompile Include="Component\FootIKComponent.cpp">
       <Filter>Component\IK</Filter>
+    </ClCompile>
     <ClCompile Include="Network\GameServerSession.cpp">
       <Filter>Network\Session\GameServerSession</Filter>
     </ClCompile>
@@ -446,6 +458,9 @@
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingRestirPT.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirFinalEvaluation.hlsl">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli">

@@ -7,11 +7,15 @@
 #include <RenderDataPolicy.h>
 #include <array>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
 #include "AssetFormat.h"
 #include "RenderData/InstanceRenderData.h"
 #include "RenderData/MaterialRenderData.h"
 #include "RenderData/GeoTableRenderData.h"
 #include "RenderData/RaytracingOutputRenderData.h"
+#include "RenderData/RestirFinalReservoirRenderData.h"
 #include "RenderData/RestirPrimaryHitCurrentRenderData.h"
 #include "RenderData/RestirReservoirInitialRenderData.h"
 
@@ -37,8 +41,21 @@ public:
 private:
 	void CreateRaytracingPipeline();
 	void CreateRaytracingResources(uint32_t width, uint32_t height);
+	ComPtr<ID3D12RootSignature> BuildDxrGlobalRootSignature(
+		bool enableRestirCandidateRoot, std::string_view name
+	) const;
+	std::unique_ptr<DxRtPipelineState> BuildDxrPipeline(
+		const std::wstring& shaderPath,
+		uint32_t			maxRecursionDepth,
+		uint32_t			maxPayloadSizeBytes,
+		bool				enableRestirCandidateRoot
+	);
+	std::unique_ptr<DxRtShaderTable> BuildDxrShaderTable(
+		const DxRtPipelineState* pipelineState, std::string_view name
+	) const;
 
 	void PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition);
+	uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResource* material) const;
 
 	void CollectStaticMeshData(
 		Scene*						 scene,
@@ -65,8 +82,9 @@ private:
 	std::unique_ptr<DxTLAS> m_tlas[3];
 
 	FrameBuffered<RaytracingOutputRenderData, 3> m_outputData;
-	Transient<RestirPrimaryHitCurrentRenderData>		   m_restirPrimaryHitCurrentData;
-	Transient<RestirReservoirInitialRenderData>		   m_restirReservoirInitialData;
+	Transient<RestirPrimaryHitCurrentRenderData> m_restirPrimaryHitCurrentData;
+	Transient<RestirReservoirInitialRenderData>	 m_restirReservoirInitialData;
+	Transient<RestirFinalReservoirRenderData>	 m_restirFinalReservoirData;
 
 	FrameBuffered<InstanceRenderData, 3> m_instanceData;
 	FrameBuffered<MaterialRenderData, 3> m_materialData;
@@ -85,6 +103,5 @@ private:
 	bool	 m_useRestirPT = false;
 	bool	 m_usePhysicalEmissionView = false;
 	bool	 m_useDayEnvironment = false;
-	uint32_t m_restirCandidateDebugView = 0;
 	uint32_t m_raytracingFrameSeed = 0;
 };

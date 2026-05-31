@@ -284,7 +284,10 @@
     <ClInclude Include="include\DxFeatureCaps.h" />
     <ClInclude Include="include\DxFrameResource.h" />
     <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
+    <ClInclude Include="include\DxPipelineState.h" />
+    <ClInclude Include="include\DxRaytracingStateObjectBuilder.h" />
     <ClInclude Include="include\DxResource.h" />
+    <ClInclude Include="include\DxRootSignatureBuilder.h" />
     <ClInclude Include="include\DxRtPipelineState.h" />
     <ClInclude Include="include\DxRtShaderTable.h" />
     <ClInclude Include="include\DxSamplerHeapGlobal.h" />
@@ -353,7 +356,10 @@
     <ClCompile Include="src\DxFeatureCaps.cpp" />
     <ClCompile Include="src\DxFrameResource.cpp" />
     <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
+    <ClCompile Include="src\DxPipelineState.cpp" />
+    <ClCompile Include="src\DxRaytracingStateObjectBuilder.cpp" />
     <ClCompile Include="src\DxResource.cpp" />
+    <ClCompile Include="src\DxRootSignatureBuilder.cpp" />
     <ClCompile Include="src\DxRtPipelineState.cpp" />
     <ClCompile Include="src\DxRtShaderTable.cpp" />
     <ClCompile Include="src\DxSamplerHeapGlobal.cpp" />

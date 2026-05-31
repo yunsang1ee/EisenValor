@@ -268,7 +268,7 @@ void RayGenMain()
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    payload.color = SampleEnvironmentWithoutSun(WorldRayDirection(), g_environmentMode);
+    payload.color = SampleSkyEnvironment(WorldRayDirection(), g_environmentMode);
 }
 
 [shader("closesthit")]

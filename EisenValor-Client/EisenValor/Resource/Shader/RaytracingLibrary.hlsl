@@ -207,7 +207,7 @@ void RayGenMain()
 void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     float3 lightDir = GetEnvironmentSunDirection();
-    // Temporary NEE-style directional sample sourced from the same environment as the miss shader.
+    // Temporary explicit environment sun NEE.
     float3 lightRadiance = GetEnvironmentSunRadiance(g_environmentMode);
 	
 	InstanceData inst = g_instanceBuffer[InstanceID()];

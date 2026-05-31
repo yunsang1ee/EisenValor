@@ -15,6 +15,9 @@
 #include "SkinnedMeshComponent.h"
 #include "DxBLAS.h"
 #include "DxBuffer.h"
+#include "DxRaytracingStateObjectBuilder.h"
+#include "DxRootSignatureBuilder.h"
+#include "DxShaderCompilerGlobal.h"
 #include "DxUtils.h"
 #include "MeshResource.h"
 #include "MaterialResource.h"
@@ -25,12 +28,43 @@
 
 #include <unordered_map>
 #include <algorithm>
+#include <string_view>
 
 namespace
 {
 constexpr uint64_t kFnvOffsetBasis = 14695981039346656037ull;
 constexpr uint64_t kFnvPrime = 1099511628211ull;
-constexpr uint32_t kRestirCandidateDebugViewCount = 6;
+
+std::wstring ExtractShaderName(const std::wstring& shaderPath)
+{
+	std::wstring shaderName = shaderPath;
+	const size_t lastSlash = shaderName.find_last_of(L"/\\");
+	if (lastSlash != std::wstring::npos)
+	{
+		shaderName = shaderName.substr(lastSlash + 1);
+	}
+
+	const size_t dotPos = shaderName.find_last_of(L'.');
+	if (dotPos != std::wstring::npos)
+	{
+		shaderName.resize(dotPos);
+	}
+
+	return shaderName;
+}
+
+std::string ToNarrowString(std::wstring_view text)
+{
+	std::string result;
+	result.reserve(text.size());
+
+	for (wchar_t ch : text)
+	{
+		result.push_back(static_cast<char>(ch));
+	}
+
+	return result;
+}
 
 void HashBytes(uint64_t& hash, const void* data, size_t size)
 {
@@ -56,45 +90,6 @@ uint32_t GetReadyTextureIndex(MaterialResource* material, std::string_view slotN
 	}
 
 	return texRes->GetTexture()->GetSRVIndex();
-}
-
-uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResource* material)
-{
-	if (nullptr == materialData || nullptr == material)
-	{
-		return ~0u;
-	}
-
-	const auto			  terrainSize = material->GetTerrainSize();
-	const auto*			  terrainLayerTileST = material->GetTerrainLayerTileST();
-	TerrainSurfaceGPUData surface = {};
-	surface.splatTextureIdx = GetReadyTextureIndex(material, "SPL0");
-	surface.layerAlbedoTextureIdx0 = GetReadyTextureIndex(material, "LA0A");
-	surface.layerAlbedoTextureIdx1 = GetReadyTextureIndex(material, "LA1A");
-	surface.layerAlbedoTextureIdx2 = GetReadyTextureIndex(material, "LA2A");
-	surface.layerAlbedoTextureIdx3 = GetReadyTextureIndex(material, "LA3A");
-	surface.layerNormalTextureIdx0 = GetReadyTextureIndex(material, "LA0N");
-	surface.layerNormalTextureIdx1 = GetReadyTextureIndex(material, "LA1N");
-	surface.layerNormalTextureIdx2 = GetReadyTextureIndex(material, "LA2N");
-	surface.layerNormalTextureIdx3 = GetReadyTextureIndex(material, "LA3N");
-	surface.layerOrmTextureIdx0 = GetReadyTextureIndex(material, "LA0O");
-	surface.layerOrmTextureIdx1 = GetReadyTextureIndex(material, "LA1O");
-	surface.layerOrmTextureIdx2 = GetReadyTextureIndex(material, "LA2O");
-	surface.layerOrmTextureIdx3 = GetReadyTextureIndex(material, "LA3O");
-	surface.layerCount = material->GetTerrainLayerCount();
-	surface.terrainSize = {terrainSize.x, terrainSize.y, 0.0f, 0.0f};
-	const auto* terrainLayerMetallicRoughness = material->GetTerrainLayerMetallicRoughness();
-	for (uint32_t i = 0; i < 4; ++i)
-	{
-		surface.layerTileST[i] = terrainLayerTileST[i];
-		surface.layerMetallicRoughness[i] = {
-			terrainLayerMetallicRoughness[i].x, terrainLayerMetallicRoughness[i].y, 0.0f, 0.0f
-		};
-	}
-
-	uint32_t surfaceIdx = static_cast<uint32_t>(materialData->terrainSurfaceSyncBuffer.Size());
-	materialData->terrainSurfaceSyncBuffer.Register(surface);
-	return surfaceIdx;
 }
 
 bool IsNullGuid(const EvAsset::Guid& guid)
@@ -172,6 +167,7 @@ void DxrRenderPass::Release()
 	}
 	m_restirPrimaryHitCurrentData.Release();
 	m_restirReservoirInitialData.Release();
+	m_restirFinalReservoirData.Release();
 	m_device5.Reset();
 
 	m_initialized = false;
@@ -203,6 +199,9 @@ void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Write
 	);
 	renderContext->DeclareAccess<RestirReservoirInitialRenderData>(
+		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Write
+	);
+	renderContext->DeclareAccess<RestirFinalReservoirRenderData>(
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Write
 	);
 }
@@ -291,6 +290,78 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		reservoirBuffer->CreateSRV(device.GetDevice(), descHeap, pixelCount, sizeof(RestirReservoir));
 		reservoirBuffer->CreateUAV(device.GetDevice(), descHeap, pixelCount, sizeof(RestirReservoir));
 	}
+}
+
+ComPtr<ID3D12RootSignature> DxrRenderPass::BuildDxrGlobalRootSignature(
+	bool enableRestirCandidateRoot, std::string_view name
+) const
+{
+	DxRootSignatureBuilder builder;
+	builder.AddDescriptorTable()
+		.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)
+		.AddDescriptorTable()
+		.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0)
+		.Add32BitConstants(16, 0)
+		.AddSRV(1)
+		.AddSRV(2)
+		.AddSRV(3)
+		.AddSRV(4)
+		.Add32BitConstants(4, 2);
+
+	if (enableRestirCandidateRoot)
+	{
+		builder.AddDescriptorTable()
+			.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2)
+			.AddDescriptorTable()
+			.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3)
+			.Add32BitConstants(4, 3);
+	}
+
+	return builder.AddStaticSampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP)
+		.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED)
+		.Build(m_device5.Get(), name);
+}
+
+std::unique_ptr<DxRtPipelineState> DxrRenderPass::BuildDxrPipeline(
+	const std::wstring& shaderPath,
+	uint32_t			maxRecursionDepth,
+	uint32_t			maxPayloadSizeBytes,
+	bool				enableRestirCandidateRoot
+)
+{
+	auto& compiler = GLOBAL(DxShaderCompilerGlobal);
+
+	const std::wstring shaderName = ExtractShaderName(shaderPath);
+	auto			   shaderBlob = compiler.CompileRTShader(shaderName, shaderPath, {});
+	const std::string  pipelineName = ToNarrowString(shaderName);
+
+	auto rootSignature = BuildDxrGlobalRootSignature(enableRestirCandidateRoot, pipelineName + "_GlobalRootSig");
+
+	DxRaytracingStateObjectBuilder stateObjectBuilder;
+	auto						   stateObject = stateObjectBuilder.AddDxilLibrary(shaderBlob.Get())
+						   .AddHitGroup(L"HitGroup", L"ClosestHitMain")
+						   .SetShaderConfig(maxPayloadSizeBytes, 2 * sizeof(float))
+						   .SetPipelineConfig(maxRecursionDepth)
+						   .SetGlobalRootSignature(rootSignature.Get())
+						   .Build(m_device5.Get(), pipelineName + "_StateObject");
+
+	auto pipeline = std::make_unique<DxRtPipelineState>();
+	pipeline->SetStateObjects(rootSignature, stateObject);
+	return pipeline;
+}
+
+std::unique_ptr<DxRtShaderTable> DxrRenderPass::BuildDxrShaderTable(
+	const DxRtPipelineState* pipelineState, std::string_view name
+) const
+{
+	DxRtShaderTableDesc desc;
+	desc.rayGen = DxRtShaderRecordDesc(L"RayGenMain");
+	desc.missShaders.emplace_back(L"MissMain");
+	desc.hitGroups.emplace_back(L"HitGroup");
+
+	auto shaderTable = std::make_unique<DxRtShaderTable>();
+	shaderTable->Build(m_device5.Get(), pipelineState, desc, name);
+	return shaderTable;
 }
 
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
@@ -527,6 +598,46 @@ void DxrRenderPass::CollectStaticMeshData(
 	}
 }
 
+uint32_t DxrRenderPass::RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResource* material) const
+{
+	if (nullptr == materialData || nullptr == material)
+	{
+		return ~0u;
+	}
+
+	const auto			  terrainSize = material->GetTerrainSize();
+	const auto*			  terrainLayerTileST = material->GetTerrainLayerTileST();
+	TerrainSurfaceGPUData surface = {};
+	surface.splatTextureIdx = GetReadyTextureIndex(material, "SPL0");
+	surface.layerAlbedoTextureIdx0 = GetReadyTextureIndex(material, "LA0A");
+	surface.layerAlbedoTextureIdx1 = GetReadyTextureIndex(material, "LA1A");
+	surface.layerAlbedoTextureIdx2 = GetReadyTextureIndex(material, "LA2A");
+	surface.layerAlbedoTextureIdx3 = GetReadyTextureIndex(material, "LA3A");
+	surface.layerNormalTextureIdx0 = GetReadyTextureIndex(material, "LA0N");
+	surface.layerNormalTextureIdx1 = GetReadyTextureIndex(material, "LA1N");
+	surface.layerNormalTextureIdx2 = GetReadyTextureIndex(material, "LA2N");
+	surface.layerNormalTextureIdx3 = GetReadyTextureIndex(material, "LA3N");
+	surface.layerOrmTextureIdx0 = GetReadyTextureIndex(material, "LA0O");
+	surface.layerOrmTextureIdx1 = GetReadyTextureIndex(material, "LA1O");
+	surface.layerOrmTextureIdx2 = GetReadyTextureIndex(material, "LA2O");
+	surface.layerOrmTextureIdx3 = GetReadyTextureIndex(material, "LA3O");
+	surface.layerCount = material->GetTerrainLayerCount();
+	surface.terrainSize = {terrainSize.x, terrainSize.y, 0.0f, 0.0f};
+
+	const auto* terrainLayerMetallicRoughness = material->GetTerrainLayerMetallicRoughness();
+	for (uint32_t i = 0; i < 4; ++i)
+	{
+		surface.layerTileST[i] = terrainLayerTileST[i];
+		surface.layerMetallicRoughness[i] = {
+			terrainLayerMetallicRoughness[i].x, terrainLayerMetallicRoughness[i].y, 0.0f, 0.0f
+		};
+	}
+
+	uint32_t surfaceIdx = static_cast<uint32_t>(materialData->terrainSurfaceSyncBuffer.Size());
+	materialData->terrainSurfaceSyncBuffer.Register(surface);
+	return surfaceIdx;
+}
+
 void DxrRenderPass::CollectSkinnedMeshData(
 	Scene*						 scene,
 	ID3D12GraphicsCommandList4*	 cmdList,
@@ -688,22 +799,15 @@ void DxrRenderPass::CollectSkinnedMeshData(
 
 void DxrRenderPass::CreateRaytracingPipeline()
 {
-	m_rtPipeline = std::make_unique<DxRtPipelineState>();
-	m_rtPipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4);
-	m_rtShaderTable = std::make_unique<DxRtShaderTable>();
-	m_rtShaderTable->Build(m_device5.Get(), m_rtPipeline.get(), 1);
+	m_rtPipeline = BuildDxrPipeline(L"Resource/Shader/RaytracingLibrary.hlsl", 4, 80, false);
+	m_rtShaderTable = BuildDxrShaderTable(m_rtPipeline.get(), "RaytracingLibrary_ShaderTable");
 
-	m_ptPipeline = std::make_unique<DxRtPipelineState>();
-	m_ptPipeline->Create(m_device5.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19);
-	m_ptShaderTable = std::make_unique<DxRtShaderTable>();
-	m_ptShaderTable->Build(m_device5.Get(), m_ptPipeline.get(), 1);
+	m_ptPipeline = BuildDxrPipeline(L"Resource/Shader/RaytracingLibraryPT.hlsl", 19, 80, false);
+	m_ptShaderTable = BuildDxrShaderTable(m_ptPipeline.get(), "RaytracingLibraryPT_ShaderTable");
 
-	m_restirCandidatePipeline = std::make_unique<DxRtPipelineState>();
-	m_restirCandidatePipeline->Create(
-		m_device5.Get(), L"Resource/Shader/RaytracingRestirPT.hlsl", 19, 80, true
-	);
-	m_restirCandidateShaderTable = std::make_unique<DxRtShaderTable>();
-	m_restirCandidateShaderTable->Build(m_device5.Get(), m_restirCandidatePipeline.get(), 1);
+	m_restirCandidatePipeline = BuildDxrPipeline(L"Resource/Shader/RaytracingRestirPT.hlsl", 19, 80, true);
+	m_restirCandidateShaderTable =
+		BuildDxrShaderTable(m_restirCandidatePipeline.get(), "RaytracingRestirPT_ShaderTable");
 
 	GRAPHICS_LOG_FMT("[DxrRenderPass] Raytracing pipelines created\n");
 }
@@ -724,13 +828,16 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	m_outputData.BeginFrame(frameIndex);
 	m_restirPrimaryHitCurrentData.BeginFrame(frameIndex);
 	m_restirReservoirInitialData.BeginFrame(frameIndex);
+	m_restirFinalReservoirData.BeginFrame(frameIndex);
 	auto* instanceData = &m_instanceData.GetCurrent();
 	auto* materialData = &m_materialData.GetCurrent();
 	auto* geoTableData = &m_geoTableData.GetCurrent();
-	auto* outputData = &m_outputData.GetCurrent();
+	auto& outputData = m_outputData.GetCurrent();
 	auto* restirPrimaryHitData = &m_restirPrimaryHitCurrentData.Get();
 	auto* restirReservoirData = &m_restirReservoirInitialData.Get();
+	auto* restirFinalReservoirData = &m_restirFinalReservoirData.Get();
 	auto& tlas = m_tlas[frameIndex];
+	outputData.bypassToneMap = false;
 
 	auto& input = GLOBAL(InputGlobal);
 	if (input.GetInputDown(VK_F6))
@@ -749,11 +856,14 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	{
 		m_useDayEnvironment = !m_useDayEnvironment;
 	}
-	if (input.GetInputDown(VK_F10))
-	{
-		m_restirCandidateDebugView = (m_restirCandidateDebugView + 1u) % kRestirCandidateDebugViewCount;
-	}
 	const bool restirCandidateMode = m_useRestirPT;
+	auto*	   restirPrimaryHitBuffer = restirPrimaryHitData ? restirPrimaryHitData->primaryHitBuffer.get() : nullptr;
+	auto*	   restirReservoirBuffer = restirReservoirData ? restirReservoirData->reservoirBuffer.get() : nullptr;
+	const bool restirCandidateResourcesReady = restirPrimaryHitBuffer && restirPrimaryHitBuffer->HasUAV() &&
+											   restirPrimaryHitBuffer->HasSRV() && restirReservoirBuffer &&
+											   restirReservoirBuffer->HasUAV() && restirReservoirBuffer->HasSRV();
+	const bool restirCandidateEnabled = restirCandidateMode && restirCandidateResourcesReady;
+	restirFinalReservoirData->Release();
 
 	{
 		PixScopedCpuEvent setDataEvent(L"DXR.SetRenderContextData");
@@ -763,6 +873,13 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		renderContext->Set(m_outputData);
 		renderContext->Set(m_restirPrimaryHitCurrentData);
 		renderContext->Set(m_restirReservoirInitialData);
+		renderContext->Set(m_restirFinalReservoirData);
+	}
+
+	auto* outputTexture = outputData.outputTexture.get();
+	if (nullptr == outputTexture || !outputTexture->HasUAV(0))
+	{
+		return;
 	}
 
 	auto*				cameraData = renderContext->Get<CameraRenderData>();
@@ -818,7 +935,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		}
 
 		cmdList4->SetComputeRootDescriptorTable(0, descHeap.GetGPUHandle(tlas->GetSRVIndex()));
-		cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputData->outputTexture->GetUAVIndex(0)));
+		cmdList4->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
 	}
 
 	struct RaytracingFrameConstants
@@ -829,10 +946,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		uint32_t pad0;
 	};
 	RaytracingFrameConstants frameConstants = {
-		m_raytracingFrameSeed++,
-		m_usePhysicalEmissionView ? 1u : 0u,
-		m_useDayEnvironment ? 1u : 0u,
-		0u
+		m_raytracingFrameSeed++, m_usePhysicalEmissionView ? 1u : 0u, m_useDayEnvironment ? 1u : 0u, 0u
 	};
 	cmdList4->SetComputeRoot32BitConstants(7, 4, &frameConstants, 0);
 
@@ -868,25 +982,15 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		);
 	}
 
-	auto* restirPrimaryHitBuffer = restirPrimaryHitData ? restirPrimaryHitData->primaryHitBuffer.get() : nullptr;
-	auto* restirReservoirBuffer = restirReservoirData ? restirReservoirData->reservoirBuffer.get() : nullptr;
-	const bool restirCandidateEnabled = restirCandidateMode && restirPrimaryHitBuffer && restirReservoirBuffer;
 	if (restirCandidateMode)
 	{
-		if (restirPrimaryHitBuffer && restirPrimaryHitBuffer->HasUAV())
+		if (restirCandidateResourcesReady)
 		{
-			TransitionResourceIfNeeded(
-				cmdList4.Get(), restirPrimaryHitBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-			);
+			TransitionResourceIfNeeded(cmdList4.Get(), restirPrimaryHitBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			cmdList4->SetComputeRootDescriptorTable(
 				8, descHeap.GetGPUHandle(restirPrimaryHitBuffer->GetUAVHandle().GetIndex())
 			);
-		}
-		if (restirReservoirBuffer && restirReservoirBuffer->HasUAV())
-		{
-			TransitionResourceIfNeeded(
-				cmdList4.Get(), restirReservoirBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-			);
+			TransitionResourceIfNeeded(cmdList4.Get(), restirReservoirBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			cmdList4->SetComputeRootDescriptorTable(
 				9, descHeap.GetGPUHandle(restirReservoirBuffer->GetUAVHandle().GetIndex())
 			);
@@ -895,28 +999,23 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		struct RestirCandidateConstants
 		{
 			uint32_t enabled;
-			uint32_t debugView;
 			uint32_t screenWidth;
 			uint32_t screenHeight;
+			uint32_t pad0;
 		};
-		RestirCandidateConstants restirConstants = {
-			restirCandidateEnabled ? 1u : 0u,
-			restirCandidateEnabled ? m_restirCandidateDebugView : 0u,
-			m_width,
-			m_height
-		};
+		RestirCandidateConstants restirConstants = {restirCandidateEnabled ? 1u : 0u, m_width, m_height, 0u};
 		cmdList4->SetComputeRoot32BitConstants(10, 4, &restirConstants, 0);
 	}
 
-	auto* shaderTable = restirCandidateMode	 ? m_restirCandidateShaderTable.get()
-						: m_usePathTracing ? m_ptShaderTable.get()
-										  : m_rtShaderTable.get();
+	auto*					 shaderTable = restirCandidateMode ? m_restirCandidateShaderTable.get()
+										   : m_usePathTracing  ? m_ptShaderTable.get()
+															   : m_rtShaderTable.get();
 	D3D12_DISPATCH_RAYS_DESC desc = {
 		.RayGenerationShaderRecord = shaderTable->GetRayGenRecord(),
 		.MissShaderTable = shaderTable->GetMissTable(),
 		.HitGroupTable = shaderTable->GetHitGroupTable(),
-		.Width = outputData->outputTexture->GetWidth(),
-		.Height = outputData->outputTexture->GetHeight(),
+		.Width = outputTexture->GetWidth(),
+		.Height = outputTexture->GetHeight(),
 		.Depth = 1
 	};
 
@@ -939,5 +1038,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		TransitionResourceIfNeeded(
 			cmdList4.Get(), restirReservoirBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 		);
+		restirFinalReservoirData->reservoirBuffer = restirReservoirData->reservoirBuffer;
+		restirFinalReservoirData->source = RestirFinalReservoirSource::Initial;
 	}
 }

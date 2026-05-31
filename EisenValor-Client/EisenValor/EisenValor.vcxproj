@@ -349,10 +349,12 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
+    <ClInclude Include="RenderData\RestirFinalReservoirRenderData.h" />
     <ClInclude Include="RenderData\RestirPrimaryHitCurrentRenderData.h" />
     <ClInclude Include="RenderData\RestirReservoirInitialRenderData.h" />
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
@@ -460,6 +462,7 @@ exit /b 0</Command>
     <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\HdrResolvePass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp" />
     <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\LoadingScene.cpp" />
@@ -502,6 +505,7 @@ exit /b 0</Command>
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
     <None Include="Resource\Shader\RaytracingRestirPT.hlsl" />
+    <None Include="Resource\Shader\RestirFinalEvaluation.hlsl" />
     <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli" />
     <None Include="Resource\Shader\RaytracingTerrain.hlsli" />
     <None Include="Resource\Shader\RaytracingEnvironment.hlsli" />
