@@ -56,5 +56,5 @@ private:
 	float m_pelvisOffsetY = 0.0f;
 
 	float m_footSoleOffset = 0.0f;
-	float m_maxPelvisDrop = 0.25f;
+	float m_maxPelvisDrop = 0.8f;
 };

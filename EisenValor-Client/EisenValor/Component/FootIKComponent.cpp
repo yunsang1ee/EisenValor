@@ -456,29 +456,19 @@ void FootIKComponent::OnLateUpdate(float)
 		);
 	}
 
-	// maxFootCorrectionY 수치 설정
-	constexpr float maxFootCorrectionY = 0.05f;
-	auto leftTargetPos = DirectX::XMVectorSetY(
-		leftTargetMatrix.r[3], DirectX::XMVectorGetY(leftTargetMatrix.r[3]) + m_pelvisOffsetY
-	);
-	auto rightTargetPos = DirectX::XMVectorSetY(
-		rightTargetMatrix.r[3], DirectX::XMVectorGetY(rightTargetMatrix.r[3]) + m_pelvisOffsetY
-	);
+	auto leftTargetPos = leftTargetMatrix.r[3];
+	auto rightTargetPos = rightTargetMatrix.r[3];
 	if (leftHit)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
-		const float targetY = DirectX::XMVectorGetY(leftTargetPos);
 		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
-		const float correctionY = std::clamp(desiredY - targetY, -maxFootCorrectionY, maxFootCorrectionY);
-		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, targetY + correctionY);
+		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, desiredY);
 	}
 	if (rightHit)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&rightGroundHit.position), ownerTransform);
-		const float targetY = DirectX::XMVectorGetY(rightTargetPos);
 		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
-		const float correctionY = std::clamp(desiredY - targetY, -maxFootCorrectionY, maxFootCorrectionY);
-		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, targetY + correctionY);
+		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, desiredY);
 	}
 
 	m_leftWeight = leftHit ? 1.0f : 0.0f;
@@ -573,6 +563,9 @@ bool FootIKComponent::TrySampleVisualGround(
 	float		  bestRayDistance = std::numeric_limits<float>::max();
 	DirectX::XMFLOAT3 bestHitPoint = {};
 	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f};
+	DirectX::XMFLOAT3 bestTriV0 = {};
+	DirectX::XMFLOAT3 bestTriV1 = {};
+	DirectX::XMFLOAT3 bestTriV2 = {};
 	const GameObject* bestHitObj = nullptr;
 	const MeshResource* bestHitRes = nullptr;
 	size_t		  nearbyMeshCount = 0;
@@ -678,7 +671,9 @@ bool FootIKComponent::TrySampleVisualGround(
 			bestHitObj = meshObj;
 			bestHitRes = meshRes;
 			DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
-
+			DirectX::XMStoreFloat3(&bestTriV0, v0);
+			DirectX::XMStoreFloat3(&bestTriV1, v1);
+			DirectX::XMStoreFloat3(&bestTriV2, v2);
 			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
 			const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
 			const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
@@ -706,11 +701,19 @@ bool FootIKComponent::TrySampleVisualGround(
 	static uint32_t hitLogCounter = 0;
 	if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
 	{
-		//DEBUG_LOG_FMT(
-		//	"[FootIK] sample hit obj='{}' guid={} foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f}\n",
-		//	bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), worldPosition.x, worldPosition.y, worldPosition.z,
-		//	bestHitPoint.x, bestHitPoint.y, bestHitPoint.z, bestRayDistance
-		//);
+		std::filesystem::path meshPath;
+		const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
+		DEBUG_LOG_FMT(
+			"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f}\n",
+			bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
+			worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
+			bestRayDistance
+		);
+		DEBUG_LOG_FMT(
+			"[FootIK] hit tri v0=({:.3f},{:.3f},{:.3f}) v1=({:.3f},{:.3f},{:.3f}) v2=({:.3f},{:.3f},{:.3f}) normal=({:.3f},{:.3f},{:.3f})\n",
+			bestTriV0.x, bestTriV0.y, bestTriV0.z, bestTriV1.x, bestTriV1.y, bestTriV1.z, bestTriV2.x, bestTriV2.y,
+			bestTriV2.z, bestHitNormal.x, bestHitNormal.y, bestHitNormal.z
+		);
 	}
 	return true;
 }
