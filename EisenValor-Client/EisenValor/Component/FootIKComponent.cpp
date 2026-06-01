@@ -80,6 +80,50 @@ std::shared_ptr<EvAsset::MeshData> GetCachedMeshData(const EvAsset::Guid& guid, 
 	return meshData;
 }
 
+void UpdateHitMarker(const FootIKComponent* ownerComponent, Scene* scene, const DirectX::XMFLOAT3& worldPosition)
+{
+	if (!ownerComponent || !scene)
+	{
+		return;
+	}
+
+	static std::unordered_map<const FootIKComponent*, GameObject::Handle> markerHandles;
+
+	GameObject* markerObject = nullptr;
+	auto		it = markerHandles.find(ownerComponent);
+	if (it != markerHandles.end())
+	{
+		markerObject = scene->TryGetGameObject(it->second);
+	}
+
+	if (!markerObject)
+	{
+		auto markerHandle = scene->ReserveGameObject("FootIK_HitMarker", std::nullopt);
+		scene->CreateComponentWithInit<MeshComponent>(
+			markerHandle,
+			[](MeshComponent* mesh)
+			{
+				auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+				if (meshRes)
+				{
+					mesh->SetMeshResource(meshRes);
+				}
+			}
+		);
+
+		markerObject = scene->TryGetGameObject(markerHandle);
+		if (!markerObject)
+		{
+			return;
+		}
+
+		markerObject->GetTransform().SetScale(0.05f);
+		markerHandles[ownerComponent] = markerHandle;
+	}
+
+	markerObject->GetTransform().SetWorldPosition(worldPosition);
+}
+
 } // namespace
 
 void FootIKComponent::OnStart()
@@ -698,6 +742,7 @@ bool FootIKComponent::TrySampleVisualGround(
 	outHit.position = bestHitPoint;
 	outHit.normal = bestHitNormal;
 	outHit.distance = bestRayDistance;
+	UpdateHitMarker(this, scene, bestHitPoint);
 	static uint32_t hitLogCounter = 0;
 	if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
 	{
