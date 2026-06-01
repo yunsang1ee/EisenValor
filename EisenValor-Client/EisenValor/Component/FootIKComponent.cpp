@@ -99,11 +99,12 @@ void UpdateHitMarker(const FootIKComponent* ownerComponent, Scene* scene, const 
 	if (!markerObject)
 	{
 		auto markerHandle = scene->ReserveGameObject("FootIK_HitMarker", std::nullopt);
+		markerHandles[ownerComponent] = markerHandle;
 		scene->CreateComponentWithInit<MeshComponent>(
 			markerHandle,
 			[](MeshComponent* mesh)
 			{
-				auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
+				auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
 				if (meshRes)
 				{
 					mesh->SetMeshResource(meshRes);
@@ -117,11 +118,11 @@ void UpdateHitMarker(const FootIKComponent* ownerComponent, Scene* scene, const 
 			return;
 		}
 
-		markerObject->GetTransform().SetScale(0.05f);
-		markerHandles[ownerComponent] = markerHandle;
+		markerObject->GetTransform().SetScale(0.5f);
 	}
 
-	markerObject->GetTransform().SetWorldPosition(worldPosition);
+	const DirectX::XMFLOAT3 markerWorldPosition = {worldPosition.x, worldPosition.y, worldPosition.z};
+	markerObject->GetTransform().SetWorldPosition(markerWorldPosition);
 }
 
 } // namespace
