@@ -34,12 +34,13 @@ bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& o
 	outIndex = UINT32_MAX;
 	return false;
 }
-
+// 유효한 뼈 인덱스인지 확인하고 해당 뼈의 Pre-IK 매트릭스를 가져옴 (원래 뼈 행렬)
 bool TryGetPreIKBoneMatrix(AnimationComponent& animation, uint32_t boneIndex, DirectX::XMMATRIX& outMatrix)
 {
 	return boneIndex != UINT32_MAX && animation.GetPreIKSocketMatrix(boneIndex, outMatrix);
 }
 
+// 
 DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, const Transform& ownerTransform)
 {
 	const auto ownerWorldMatrix = ownerTransform.GetWorldMatrix();
@@ -179,6 +180,15 @@ void FootIKComponent::OnLateUpdate(float)
 		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
 	{
 		return;
+	}
+
+	if (m_footSoleOffset == 0.0f)
+	{
+		m_footSoleOffset = 0.1f;
+		DEBUG_LOG_FMT(
+			"[FootIK] sole offset initialized applied={:.3f}\n",
+			m_footSoleOffset
+		);
 	}
 
 	static std::unordered_set<const FootIKComponent*> loggedComponents;
@@ -489,7 +499,7 @@ void FootIKComponent::OnLateUpdate(float)
 	{
 		desiredPelvisOffsetY = std::min(desiredPelvisOffsetY, rightGroundHit.position.y - rightFootWorldPosition.y);
 	}
-	m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
+	m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY + m_footSoleOffset, -m_maxPelvisDrop, 0.0f);
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
@@ -573,7 +583,7 @@ bool FootIKComponent::IsValidLegCache(const LegBoneCache& cache) const
 		   cache.ikFoot != kInvalidBoneIndex;
 }
 
-IKTarget FootIKComponent::BuildLegIKTarget(
+IKTarget FootIKComponent::BuildLegIKTarget(    
 	const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight
 ) const
 {
