@@ -3,18 +3,15 @@
 
 #include "AnimationComponent.h"
 #include "AssetLoader.h"
-#include "Component/FSM/FSMComponent.h"
 #include "GameObject.h"
 #include "GameObject.inl"
 #include "MeshData.h"
 #include "MeshComponent.h"
 #include "MeshResource.h"
+#include "MovementComponent.h"
 #include "ResourceGlobal.h"
 #include "Scene.h"
 #include "Transform.h"
-#include "Util/GameConstants.h"
-
-#include <Packets/Enums_generated.h>
 
 #include <DirectXCollision.h>
 #include <algorithm>
@@ -37,23 +34,6 @@ bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& o
 	DEBUG_LOG_FMT("[FootIK] Missing bone '{}'\n", boneName);
 	outIndex = UINT32_MAX;
 	return false;
-}
-
-bool IsIdleFsmState(const FSMComponent& fsm)
-{
-	const uint8_t currentState = fsm.GetCurStateType();
-	switch (fsm.GetObjectType())
-	{
-	case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
-		return currentState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_IDLE);
-	case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
-		return currentState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
-	case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
-		return currentState ==
-			   StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE);
-	default:
-		return false;
-	}
 }
 
 // 유효한 뼈 인덱스인지 확인하고 해당 뼈의 Pre-IK 매트릭스를 가져옴 (원래 뼈 행렬)
@@ -517,6 +497,7 @@ void FootIKComponent::OnLateUpdate(float)
 	// 양발 targetGap이 모두 크면 공중, 비슷하면 양발 지지, 차이나면 더 가까운 발만 지지
 	constexpr float kPelvisAirborneTargetGap = 0.55f;
 	constexpr float kPelvisBothFeetGapTolerance = 0.05f;
+	constexpr float kStationaryHorizontalSpeed = 1.0f;
 	const float leftTargetWorldY = leftGroundHit.position.y + m_footSoleOffset;
 	const float rightTargetWorldY = rightGroundHit.position.y + m_footSoleOffset;
 	const float leftTargetGap =
@@ -530,12 +511,14 @@ void FootIKComponent::OnLateUpdate(float)
 		leftTargetGap > kPelvisAirborneTargetGap && rightTargetGap > kPelvisAirborneTargetGap;
 	const bool hasSimilarTargetGaps =
 		std::abs(leftTargetGap - rightTargetGap) <= kPelvisBothFeetGapTolerance;
-	const auto* fsm = owner ? owner->GetComponent<FSMComponent>() : nullptr;
-	const bool isIdleState = fsm && IsIdleFsmState(*fsm);
+	const auto* movement = owner ? owner->GetComponent<MovementComponent>() : nullptr;
+	const DirectX::XMFLOAT3 velocity = movement ? movement->GetVelocity() : DirectX::XMFLOAT3{0.0f, 0.0f, 0.0f};
+	const float horizontalSpeedSq = velocity.x * velocity.x + velocity.z * velocity.z;
+	const bool isStationary = horizontalSpeedSq <= kStationaryHorizontalSpeed * kStationaryHorizontalSpeed;
 	const bool leftPelvisSupport =
-		leftHitValid && (isIdleState || (!isPelvisAirborne && (hasSimilarTargetGaps || leftTargetGap == closestTargetGap)));
+		leftHitValid && (isStationary || (!isPelvisAirborne && (hasSimilarTargetGaps || leftTargetGap == closestTargetGap)));
 	const bool rightPelvisSupport =
-		rightHitValid && (isIdleState || (!isPelvisAirborne && (hasSimilarTargetGaps || rightTargetGap == closestTargetGap)));
+		rightHitValid && (isStationary || (!isPelvisAirborne && (hasSimilarTargetGaps || rightTargetGap == closestTargetGap)));
 
 	float desiredPelvisOffsetY = 0.0f;
 	bool hasPelvisSupport = false;
@@ -559,8 +542,8 @@ void FootIKComponent::OnLateUpdate(float)
 	if ((++pelvisLogCounter % 30) == 0)
 	{
 		DEBUG_LOG_FMT(
-			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} idle={} leftHit={} rightHit={} leftSupport={} rightSupport={} leftGap={:.3f} rightGap={:.3f} leftGapDelta={:.3f} rightGapDelta={:.3f}\n",
-			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, isIdleState, leftHitValid, rightHitValid, leftPelvisSupport,
+			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} stationary={} speedSq={:.4f} leftHit={} rightHit={} leftSupport={} rightSupport={} leftGap={:.3f} rightGap={:.3f} leftGapDelta={:.3f} rightGapDelta={:.3f}\n",
+			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, isStationary, horizontalSpeedSq, leftHitValid, rightHitValid, leftPelvisSupport,
 			rightPelvisSupport, leftTargetGap, rightTargetGap, leftTargetGapDelta, rightTargetGapDelta
 		);
 	}
