@@ -447,11 +447,30 @@ void AnimationComponent::UpdateBoneMatrices()
 		}
 	};
 
+	auto propagateDescendantsExcept = [&](uint32_t parentIndex, uint32_t excludedChildIndex)
+	{
+		for (const uint32_t childIndex : childIndices[parentIndex])
+		{
+			if (childIndex == excludedChildIndex)
+			{
+				continue;
+			}
+
+			XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[childIndex]);
+			XMMATRIX parentGlobal = XMLoadFloat4x4(&m_globalMatrices[parentIndex]);
+			XMMATRIX global = XMMatrixMultiply(local, parentGlobal);
+			XMStoreFloat4x4(&m_globalMatrices[childIndex], global);
+			propagateDescendants(childIndex);
+		}
+	};
+
 	for (const auto& target : m_ikTargets)
 	{
 		if (target.active && target.weight > 0.0f)
 		{
 			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, target);
+			propagateDescendantsExcept(target.rootBoneIndex, target.midBoneIndex);
+			propagateDescendantsExcept(target.midBoneIndex, target.boneIndex);
 			propagateDescendants(target.boneIndex);
 		}
 	}

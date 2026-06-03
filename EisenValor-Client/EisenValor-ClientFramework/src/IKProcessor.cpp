@@ -76,8 +76,14 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
     XMVECTOR sideDir = XMVector3Normalize(XMVector3Cross(targetDir, poleDir));
 
     // 어깨에서 팔꿈치로 향하는 새로운 벡터 계산
-    XMVECTOR newMidDir = XMVector3Rotate(targetDir, XMQuaternionRotationAxis(sideDir, -angleA));
-    XMVECTOR newMidPos = XMVectorAdd(rootPos, XMVectorScale(newMidDir, a));
+    XMVECTOR midDirCandidateA = XMVector3Rotate(targetDir, XMQuaternionRotationAxis(sideDir, -angleA));
+    XMVECTOR midDirCandidateB = XMVector3Rotate(targetDir, XMQuaternionRotationAxis(sideDir, angleA));
+    XMVECTOR midPosCandidateA = XMVectorAdd(rootPos, XMVectorScale(midDirCandidateA, a));
+    XMVECTOR midPosCandidateB = XMVectorAdd(rootPos, XMVectorScale(midDirCandidateB, a));
+    float midDistanceA = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(midPosCandidateA, midPos)));
+    float midDistanceB = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(midPosCandidateB, midPos)));
+    XMVECTOR newMidDir = midDistanceA <= midDistanceB ? midDirCandidateA : midDirCandidateB;
+    XMVECTOR newMidPos = midDistanceA <= midDistanceB ? midPosCandidateA : midPosCandidateB;
 
     // 어깨 행렬
     XMVECTOR oldMidDir = XMVector3Normalize(XMVectorSubtract(midPos, rootPos));

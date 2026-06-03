@@ -34,12 +34,13 @@ bool TryGetBone(AnimationComponent& animation, const char* boneName, uint32_t& o
 	outIndex = UINT32_MAX;
 	return false;
 }
-
+// 유효한 뼈 인덱스인지 확인하고 해당 뼈의 Pre-IK 매트릭스를 가져옴 (원래 뼈 행렬)
 bool TryGetPreIKBoneMatrix(AnimationComponent& animation, uint32_t boneIndex, DirectX::XMMATRIX& outMatrix)
 {
 	return boneIndex != UINT32_MAX && animation.GetPreIKSocketMatrix(boneIndex, outMatrix);
 }
 
+// 
 DirectX::XMVECTOR TransformBonePositionToWorld(DirectX::FXMVECTOR bonePosition, const Transform& ownerTransform)
 {
 	const auto ownerWorldMatrix = ownerTransform.GetWorldMatrix();
@@ -80,6 +81,51 @@ std::shared_ptr<EvAsset::MeshData> GetCachedMeshData(const EvAsset::Guid& guid, 
 	return meshData;
 }
 
+void UpdateHitMarker(const FootIKComponent* ownerComponent, Scene* scene, const DirectX::XMFLOAT3& worldPosition)
+{
+	if (!ownerComponent || !scene)
+	{
+		return;
+	}
+
+	static std::unordered_map<const FootIKComponent*, GameObject::Handle> markerHandles;
+
+	GameObject* markerObject = nullptr;
+	auto		it = markerHandles.find(ownerComponent);
+	if (it != markerHandles.end())
+	{
+		markerObject = scene->TryGetGameObject(it->second);
+	}
+
+	if (!markerObject)
+	{
+		auto markerHandle = scene->ReserveGameObject("FootIK_HitMarker", std::nullopt);
+		markerHandles[ownerComponent] = markerHandle;
+		scene->CreateComponentWithInit<MeshComponent>(
+			markerHandle,
+			[](MeshComponent* mesh)
+			{
+				auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Range.evmesh");
+				if (meshRes)
+				{
+					mesh->SetMeshResource(meshRes);
+				}
+			}
+		);
+
+		markerObject = scene->TryGetGameObject(markerHandle);
+		if (!markerObject)
+		{
+			return;
+		}
+
+		markerObject->GetTransform().SetScale(0.5f);
+	}
+
+	const DirectX::XMFLOAT3 markerWorldPosition = {worldPosition.x, worldPosition.y, worldPosition.z};
+	markerObject->GetTransform().SetWorldPosition(markerWorldPosition);
+}
+
 } // namespace
 
 void FootIKComponent::OnStart()
@@ -117,15 +163,32 @@ void FootIKComponent::OnLateUpdate(float)
 	}
 
 	DirectX::XMMATRIX leftFootMatrix;
+	DirectX::XMMATRIX leftThighMatrix;
+	DirectX::XMMATRIX leftCalfMatrix;
 	DirectX::XMMATRIX leftTargetMatrix;
 	DirectX::XMMATRIX rightFootMatrix;
+	DirectX::XMMATRIX rightThighMatrix;
+	DirectX::XMMATRIX rightCalfMatrix;
 	DirectX::XMMATRIX rightTargetMatrix;
-	if (!TryGetPreIKBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
+	if (!TryGetPreIKBoneMatrix(*animation, m_leftLeg.thigh, leftThighMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.calf, leftCalfMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.foot, leftFootMatrix) ||
 		!TryGetPreIKBoneMatrix(*animation, m_leftLeg.ikFoot, leftTargetMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.thigh, rightThighMatrix) ||
+		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.calf, rightCalfMatrix) ||
 		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.foot, rightFootMatrix) ||
 		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
 	{
 		return;
+	}
+
+	if (m_footSoleOffset == 0.0f)
+	{
+		m_footSoleOffset = 0.1f;
+		DEBUG_LOG_FMT(
+			"[FootIK] sole offset initialized applied={:.3f}\n",
+			m_footSoleOffset
+		);
 	}
 
 	static std::unordered_set<const FootIKComponent*> loggedComponents;
@@ -436,7 +499,7 @@ void FootIKComponent::OnLateUpdate(float)
 	{
 		desiredPelvisOffsetY = std::min(desiredPelvisOffsetY, rightGroundHit.position.y - rightFootWorldPosition.y);
 	}
-	m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
+	m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY + m_footSoleOffset, -m_maxPelvisDrop, 0.0f);
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
@@ -448,17 +511,45 @@ void FootIKComponent::OnLateUpdate(float)
 		);
 	}
 
-	const auto leftTargetPos = leftTargetMatrix.r[3];
-	const auto rightTargetPos = rightTargetMatrix.r[3];
+	auto leftTargetPos = leftTargetMatrix.r[3];
+	auto rightTargetPos = rightTargetMatrix.r[3];
+	if (leftHit)
+	{
+		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
+		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
+		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, desiredY);
+	}
+	if (rightHit)
+	{
+		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&rightGroundHit.position), ownerTransform);
+		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
+		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, desiredY);
+	}
 
-	m_leftWeight = 0.0f;
-	m_rightWeight = 0.0f;
+	m_leftWeight = leftHit ? 1.0f : 0.0f;
+	m_rightWeight = rightHit ? 1.0f : 0.0f;
+
+	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
+	const auto rightPoleVector =
+		DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(rightCalfMatrix.r[3], rightThighMatrix.r[3]));
+	auto buildLegIKTarget = [](const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, DirectX::FXMVECTOR poleVector, float weight)
+	{
+		IKTarget target;
+		target.rootBoneIndex = cache.thigh;
+		target.midBoneIndex = cache.calf;
+		target.boneIndex = cache.foot;
+		target.targetPos = targetPos;
+		target.poleVector = poleVector;
+		target.weight = weight;
+		target.active = true;
+		return target;
+	};
 
 	animation->SetIKTarget(
-		IK_TYPE::LEFT_LEG, BuildLegIKTarget(m_leftLeg, leftTargetPos, m_leftWeight)
+		IK_TYPE::LEFT_LEG, buildLegIKTarget(m_leftLeg, leftTargetPos, leftPoleVector, m_leftWeight)
 	);
 	animation->SetIKTarget(
-		IK_TYPE::RIGHT_LEG, BuildLegIKTarget(m_rightLeg, rightTargetPos, m_rightWeight)
+		IK_TYPE::RIGHT_LEG, buildLegIKTarget(m_rightLeg, rightTargetPos, rightPoleVector, m_rightWeight)
 	);
 }
 
@@ -492,21 +583,6 @@ bool FootIKComponent::IsValidLegCache(const LegBoneCache& cache) const
 		   cache.ikFoot != kInvalidBoneIndex;
 }
 
-IKTarget FootIKComponent::BuildLegIKTarget(
-	const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight
-) const
-{
-	IKTarget target;
-	target.rootBoneIndex = cache.thigh;
-	target.midBoneIndex = cache.calf;
-	target.boneIndex = cache.foot;
-	target.targetPos = targetPos;
-	target.poleVector = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	target.weight = weight;
-	target.active = true;
-	return target;
-}
-
 bool FootIKComponent::TrySampleVisualGround(
 	const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
 ) const
@@ -527,6 +603,9 @@ bool FootIKComponent::TrySampleVisualGround(
 	float		  bestRayDistance = std::numeric_limits<float>::max();
 	DirectX::XMFLOAT3 bestHitPoint = {};
 	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f};
+	DirectX::XMFLOAT3 bestTriV0 = {};
+	DirectX::XMFLOAT3 bestTriV1 = {};
+	DirectX::XMFLOAT3 bestTriV2 = {};
 	const GameObject* bestHitObj = nullptr;
 	const MeshResource* bestHitRes = nullptr;
 	size_t		  nearbyMeshCount = 0;
@@ -619,13 +698,22 @@ bool FootIKComponent::TrySampleVisualGround(
 				continue;
 			}
 
+			const auto hitPoint =
+				DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
+			const float hitY = DirectX::XMVectorGetY(hitPoint);
+			constexpr float maxGroundAboveFoot = 0.12f;
+			if (hitY > worldPosition.y + maxGroundAboveFoot)
+			{
+				continue;
+			}
+
 			bestRayDistance = distance;
 			bestHitObj = meshObj;
 			bestHitRes = meshRes;
-			const auto hitPoint =
-				DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
 			DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
-
+			DirectX::XMStoreFloat3(&bestTriV0, v0);
+			DirectX::XMStoreFloat3(&bestTriV1, v1);
+			DirectX::XMStoreFloat3(&bestTriV2, v2);
 			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
 			const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
 			const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
@@ -650,14 +738,23 @@ bool FootIKComponent::TrySampleVisualGround(
 	outHit.position = bestHitPoint;
 	outHit.normal = bestHitNormal;
 	outHit.distance = bestRayDistance;
+	UpdateHitMarker(this, scene, bestHitPoint);
 	static uint32_t hitLogCounter = 0;
 	if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
 	{
-		//DEBUG_LOG_FMT(
-		//	"[FootIK] sample hit obj='{}' guid={} foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f}\n",
-		//	bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), worldPosition.x, worldPosition.y, worldPosition.z,
-		//	bestHitPoint.x, bestHitPoint.y, bestHitPoint.z, bestRayDistance
-		//);
+		std::filesystem::path meshPath;
+		const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
+		DEBUG_LOG_FMT(
+			"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f}\n",
+			bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
+			worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
+			bestRayDistance
+		);
+		DEBUG_LOG_FMT(
+			"[FootIK] hit tri v0=({:.3f},{:.3f},{:.3f}) v1=({:.3f},{:.3f},{:.3f}) v2=({:.3f},{:.3f},{:.3f}) normal=({:.3f},{:.3f},{:.3f})\n",
+			bestTriV0.x, bestTriV0.y, bestTriV0.z, bestTriV1.x, bestTriV1.y, bestTriV1.z, bestTriV2.x, bestTriV2.y,
+			bestTriV2.z, bestHitNormal.x, bestHitNormal.y, bestHitNormal.z
+		);
 	}
 	return true;
 }

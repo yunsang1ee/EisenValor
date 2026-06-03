@@ -38,7 +38,6 @@ private:
 
 	bool CacheBones(AnimationComponent& animation);
 	bool IsValidLegCache(const LegBoneCache& cache) const;
-	IKTarget BuildLegIKTarget(const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight) const;
 	bool TrySampleVisualGround(
 		const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
 	) const;
@@ -56,5 +55,5 @@ private:
 	float m_pelvisOffsetY = 0.0f;
 
 	float m_footSoleOffset = 0.0f;
-	float m_maxPelvisDrop = 0.25f;
+	float m_maxPelvisDrop = 0.8f;
 };
