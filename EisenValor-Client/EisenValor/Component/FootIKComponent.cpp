@@ -162,6 +162,7 @@ void FootIKComponent::OnLateUpdate(float)
 		return;
 	}
 
+	// 각 뼈의 Pre-IK 매트릭스를 가져옴 (원래 뼈 행렬)
 	DirectX::XMMATRIX leftFootMatrix;
 	DirectX::XMMATRIX leftThighMatrix;
 	DirectX::XMMATRIX leftCalfMatrix;
@@ -180,15 +181,6 @@ void FootIKComponent::OnLateUpdate(float)
 		!TryGetPreIKBoneMatrix(*animation, m_rightLeg.ikFoot, rightTargetMatrix))
 	{
 		return;
-	}
-
-	if (m_footSoleOffset == 0.0f)
-	{
-		m_footSoleOffset = 0.1f;
-		DEBUG_LOG_FMT(
-			"[FootIK] sole offset initialized applied={:.3f}\n",
-			m_footSoleOffset
-		);
 	}
 
 	static std::unordered_set<const FootIKComponent*> loggedComponents;
@@ -467,6 +459,7 @@ void FootIKComponent::OnLateUpdate(float)
 		}
 	}
 
+	// 발 위치를 월드 좌표로 변환
 	auto&	   ownerTransform = owner->GetTransform();
 	const auto leftFootWorld = TransformBonePositionToWorld(leftFootMatrix.r[3], ownerTransform);
 	const auto rightFootWorld = TransformBonePositionToWorld(rightFootMatrix.r[3], ownerTransform);
@@ -475,6 +468,7 @@ void FootIKComponent::OnLateUpdate(float)
 	DirectX::XMStoreFloat3(&leftFootWorldPosition, leftFootWorld);
 	DirectX::XMStoreFloat3(&rightFootWorldPosition, rightFootWorld);
 
+	// 발 위치에서 아래로 레이를 쏴서 지면과의 충돌을 검사하고, 충돌 지점과 거리를 계산
 	GroundHit leftGroundHit;
 	GroundHit rightGroundHit;
 	const bool leftHit = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
@@ -490,6 +484,7 @@ void FootIKComponent::OnLateUpdate(float)
 		rightGroundHit.position.x, rightGroundHit.position.y, rightGroundHit.position.z, rightGroundHit.distance
 	);*/
 
+	// 충돌한 지점과 발 위치의 높이 차이를 계산해서 골반 오프셋을 결정
 	float desiredPelvisOffsetY = 0.0f;
 	if (leftHit)
 	{
@@ -511,6 +506,14 @@ void FootIKComponent::OnLateUpdate(float)
 		);
 	}
 
+	// 발 크기만큼 발바닥 오프셋 적용
+	if (m_footSoleOffset == 0.0f)
+	{
+		m_footSoleOffset = 0.1f;
+		DEBUG_LOG_FMT("[FootIK] sole offset initialized applied={:.3f}\n", m_footSoleOffset);
+	}
+
+	// 각 발의 타겟 위치를 계산. 충돌이 감지된 경우에는 충돌 지점의 높이에 발바닥 오프셋을 더한 값을 사용
 	auto leftTargetPos = leftTargetMatrix.r[3];
 	auto rightTargetPos = rightTargetMatrix.r[3];
 	if (leftHit)
@@ -526,9 +529,11 @@ void FootIKComponent::OnLateUpdate(float)
 		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, desiredY);
 	}
 
+	// IK Weight 설정. 충돌이 감지된 발은 1.0f, 감지되지 않은 발은 0.0f으로 설정해서 IK가 적용될지 여부를 결정
 	m_leftWeight = leftHit ? 1.0f : 0.0f;
 	m_rightWeight = rightHit ? 1.0f : 0.0f;
 
+	// 각 발의 Pole Vector를 계산
 	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
 	const auto rightPoleVector =
 		DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(rightCalfMatrix.r[3], rightThighMatrix.r[3]));
