@@ -494,29 +494,27 @@ void FootIKComponent::OnLateUpdate(float)
 	// 골반
 	// 충돌한 지점과 발 위치의 높이 차이를 계산해서 골반 오프셋을 결정
 	// 지지발 기준으로만 offset을 적용
-	constexpr float kPelvisSupportMaxGroundGap = 0.5f;
+	constexpr float kPelvisSupportMaxTargetGap = 0.5f;
+	const float leftTargetWorldY = leftGroundHit.position.y + m_footSoleOffset;
+	const float rightTargetWorldY = rightGroundHit.position.y + m_footSoleOffset;
 	const auto isPelvisSupport =
-		[kPelvisSupportMaxGroundGap](bool hit, const DirectX::XMFLOAT3& footPosition, const GroundHit& groundHit)
+		[kPelvisSupportMaxTargetGap](bool hit, const DirectX::XMFLOAT3& footPosition, float targetWorldY)
 	{
-		return hit && (footPosition.y - groundHit.position.y) <= kPelvisSupportMaxGroundGap;
+		return hit && (footPosition.y - targetWorldY) <= kPelvisSupportMaxTargetGap;
 	};
-	const bool leftPelvisSupport = isPelvisSupport(leftHitValid, leftFootWorldPosition, leftGroundHit);
-	const bool rightPelvisSupport = isPelvisSupport(rightHitValid, rightFootWorldPosition, rightGroundHit);
+	const bool leftPelvisSupport = isPelvisSupport(leftHitValid, leftFootWorldPosition, leftTargetWorldY);
+	const bool rightPelvisSupport = isPelvisSupport(rightHitValid, rightFootWorldPosition, rightTargetWorldY);
 
 	float desiredPelvisOffsetY = 0.0f;
 	bool hasPelvisSupport = false;
 	if (leftPelvisSupport)
 	{
-		desiredPelvisOffsetY = std::min(
-			desiredPelvisOffsetY, (leftGroundHit.position.y + m_footSoleOffset) - leftFootWorldPosition.y
-		);
+		desiredPelvisOffsetY = leftTargetWorldY - leftFootWorldPosition.y;
 		hasPelvisSupport = true;
 	}
-	if (rightPelvisSupport)
+	else if (rightPelvisSupport)
 	{
-		desiredPelvisOffsetY = std::min(
-			desiredPelvisOffsetY, (rightGroundHit.position.y + m_footSoleOffset) - rightFootWorldPosition.y
-		);
+		desiredPelvisOffsetY = rightTargetWorldY - rightFootWorldPosition.y;
 		hasPelvisSupport = true;
 	}
 	if (hasPelvisSupport)
@@ -541,14 +539,14 @@ void FootIKComponent::OnLateUpdate(float)
 	if (leftHitValid)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
-		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
-		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, desiredY);
+		const float targetModelY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
+		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, targetModelY);
 	}
 	if (rightHitValid)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&rightGroundHit.position), ownerTransform);
-		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
-		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, desiredY);
+		const float targetModelY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
+		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, targetModelY);
 	}
 
 	// IK Weight 설정
