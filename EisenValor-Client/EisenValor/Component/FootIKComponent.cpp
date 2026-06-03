@@ -583,21 +583,6 @@ bool FootIKComponent::IsValidLegCache(const LegBoneCache& cache) const
 		   cache.ikFoot != kInvalidBoneIndex;
 }
 
-IKTarget FootIKComponent::BuildLegIKTarget(    
-	const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight
-) const
-{
-	IKTarget target;
-	target.rootBoneIndex = cache.thigh;
-	target.midBoneIndex = cache.calf;
-	target.boneIndex = cache.foot;
-	target.targetPos = targetPos;
-	target.poleVector = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	target.weight = weight;
-	target.active = true;
-	return target;
-}
-
 bool FootIKComponent::TrySampleVisualGround(
 	const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
 ) const
