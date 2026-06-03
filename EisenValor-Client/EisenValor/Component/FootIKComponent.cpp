@@ -492,22 +492,30 @@ void FootIKComponent::OnLateUpdate(float)
 	}
 
 	// 골반
-	// 충돌한 지점과 발 위치의 높이 차이를 계산해서 골반 오프셋을 결정
-	// 지지발 기준으로만 offset을 적용
-	constexpr float kPelvisSupportMaxTargetGap = 0.5f;
+	// 양발 targetGap이 모두 크면 공중, 비슷하면 양발 지지, 차이나면 더 가까운 발만 지지
+	constexpr float kPelvisAirborneTargetGap = 0.55f;
+	constexpr float kPelvisBothFeetGapTolerance = 0.10f;
 	const float leftTargetWorldY = leftGroundHit.position.y + m_footSoleOffset;
 	const float rightTargetWorldY = rightGroundHit.position.y + m_footSoleOffset;
-	const auto isPelvisSupport =
-		[kPelvisSupportMaxTargetGap](bool hit, const DirectX::XMFLOAT3& footPosition, float targetWorldY)
-	{
-		return hit && (footPosition.y - targetWorldY) <= kPelvisSupportMaxTargetGap;
-	};
-	const bool leftPelvisSupport = isPelvisSupport(leftHitValid, leftFootWorldPosition, leftTargetWorldY);
-	const bool rightPelvisSupport = isPelvisSupport(rightHitValid, rightFootWorldPosition, rightTargetWorldY);
+	const float leftTargetGap =
+		leftHitValid ? leftFootWorldPosition.y - leftTargetWorldY : std::numeric_limits<float>::max();
+	const float rightTargetGap =
+		rightHitValid ? rightFootWorldPosition.y - rightTargetWorldY : std::numeric_limits<float>::max();
+	const float closestTargetGap = std::min(leftTargetGap, rightTargetGap);
+	const float leftTargetGapDelta = m_hasPreviousTargetGap ? leftTargetGap - m_prevLeftTargetGap : 0.0f;
+	const float rightTargetGapDelta = m_hasPreviousTargetGap ? rightTargetGap - m_prevRightTargetGap : 0.0f;
+	const bool isPelvisAirborne =
+		leftTargetGap > kPelvisAirborneTargetGap && rightTargetGap > kPelvisAirborneTargetGap;
+	const bool hasSimilarTargetGaps =
+		std::abs(leftTargetGap - rightTargetGap) <= kPelvisBothFeetGapTolerance;
+	const bool leftPelvisSupport =
+		!isPelvisAirborne && leftHitValid && (hasSimilarTargetGaps || leftTargetGap == closestTargetGap);
+	const bool rightPelvisSupport =
+		!isPelvisAirborne && rightHitValid && (hasSimilarTargetGaps || rightTargetGap == closestTargetGap);
 
 	float desiredPelvisOffsetY = 0.0f;
 	bool hasPelvisSupport = false;
-	if (leftPelvisSupport)
+	if (leftPelvisSupport && (!rightPelvisSupport || leftTargetWorldY <= rightTargetWorldY))
 	{
 		desiredPelvisOffsetY = leftTargetWorldY - leftFootWorldPosition.y;
 		hasPelvisSupport = true;
@@ -527,11 +535,15 @@ void FootIKComponent::OnLateUpdate(float)
 	if ((++pelvisLogCounter % 30) == 0)
 	{
 		DEBUG_LOG_FMT(
-			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} leftHit={} rightHit={} leftSupport={} rightSupport={}\n",
+			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} leftHit={} rightHit={} leftSupport={} rightSupport={} leftGap={:.3f} rightGap={:.3f} leftGapDelta={:.3f} rightGapDelta={:.3f}\n",
 			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, leftHitValid, rightHitValid, leftPelvisSupport,
-			rightPelvisSupport
+			rightPelvisSupport, leftTargetGap, rightTargetGap, leftTargetGapDelta, rightTargetGapDelta
 		);
 	}
+
+	m_prevLeftTargetGap = leftTargetGap;
+	m_prevRightTargetGap = rightTargetGap;
+	m_hasPreviousTargetGap = true;
 
 	// 양발
 	auto leftTargetPos = leftTargetMatrix.r[3];
