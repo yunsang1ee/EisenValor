@@ -473,8 +473,10 @@ void FootIKComponent::OnLateUpdate(float)
 	// 발 위치에서 아래로 레이를 쏴서 지면과의 충돌을 검사하고, 충돌 지점과 거리를 계산
 	GroundHit leftGroundHit;
 	GroundHit rightGroundHit;
-	const bool leftHitValid = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
-	const bool rightHitValid = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
+	constexpr float kFootRayMaxUp = -0.05f;
+	constexpr float kFootRayMaxDown = 1.0f;
+	const bool leftHitValid = TrySampleVisualGround(leftFootWorldPosition, kFootRayMaxUp, kFootRayMaxDown, leftGroundHit);
+	const bool rightHitValid = TrySampleVisualGround(rightFootWorldPosition, kFootRayMaxUp, kFootRayMaxDown, rightGroundHit);
 	/*DEBUG_LOG_FMT(
 		"[FootIK] left sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
 		leftHitValid, leftFootWorldPosition.x, leftFootWorldPosition.y, leftFootWorldPosition.z, leftGroundHit.position.x,
