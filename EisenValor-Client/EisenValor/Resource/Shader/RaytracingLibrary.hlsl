@@ -209,10 +209,9 @@ void RayGenMain()
 [shader("closesthit")]
 void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    float3 lightDir = normalize(float3(0.5, 1.0, 0.3));
-	// Disabled while validating physically sourced light only.
-	// float3 lightColor = float3(1.0, 1.0, 1.0) * 3.0;
-    float3 lightColor = 0.0f.xxx;
+    float3 lightDir = GetEnvironmentSunDirection();
+    // Temporary NEE-style directional sample sourced from the same environment as the miss shader.
+    float3 lightRadiance = GetEnvironmentSunRadiance(g_environmentMode);
 	
     InstanceData inst = g_instanceBuffer[InstanceID()];
     GeoInfo geo = g_geoTable[inst.geoInfoBaseIdx + GeometryIndex()];
@@ -329,7 +328,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float denominator = 4.0 * NdotL * NdotVShading;
     float3 specular = numerator / max(denominator, EPSILON);
     float3 kD = (1.0 - F) * (1.0 - metallic);
-    float3 Lo = (kD * albedo / PI + specular) * lightColor * NdotL;
+    float3 Lo = (kD * albedo / PI + specular) * lightRadiance * NdotL;
 	
     uint rngSeed =
 		InstanceID() * 0xc2b2ae35u ^
@@ -343,14 +342,13 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     rngSeed ^= rngSeed >> 16;
 	
     float3 shadowOrigin = hitPos + geometricNormal * 0.1f;
-    float angularRadius = 0.1f;
 	
     float visibility = SoftShadowVisibilityDirLight(
 		g_scene,
 		shadowOrigin,
 		geometricNormal,
 		lightDir,
-		angularRadius,
+		GetEnvironmentSunAngularRadius(g_environmentMode),
 		0xFF,
 		rngSeed
 	);
@@ -394,13 +392,11 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         reflectedColor = reflectPayload.color * reflectF * (1.0f - roughness) * 0.5f;
     }
 	
-	// Temporary diffuse IBL approximation. This is sourced from the same environment as the miss shader.
-    float3 environmentDiffuse = kD * albedo * SampleEnvironment(normal, g_environmentMode) * ao;
     float3 emissive = (0 == payload.recursionDepth)
         ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
         : EvaluateMaterialEmission(mat, uv, g_sampler);
 	
-    payload.color = environmentDiffuse + Lo + reflectedColor + emissive;
+    payload.color = Lo + reflectedColor + emissive;
 }
 
 [shader("miss")]
