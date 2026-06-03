@@ -471,67 +471,90 @@ void FootIKComponent::OnLateUpdate(float)
 	// 발 위치에서 아래로 레이를 쏴서 지면과의 충돌을 검사하고, 충돌 지점과 거리를 계산
 	GroundHit leftGroundHit;
 	GroundHit rightGroundHit;
-	const bool leftHit = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
-	const bool rightHit = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
+	const bool leftHitValid = TrySampleVisualGround(leftFootWorldPosition, 0.5f, 1.0f, leftGroundHit);
+	const bool rightHitValid = TrySampleVisualGround(rightFootWorldPosition, 0.5f, 1.0f, rightGroundHit);
 	/*DEBUG_LOG_FMT(
 		"[FootIK] left sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
-		leftHit, leftFootWorldPosition.x, leftFootWorldPosition.y, leftFootWorldPosition.z, leftGroundHit.position.x,
+		leftHitValid, leftFootWorldPosition.x, leftFootWorldPosition.y, leftFootWorldPosition.z, leftGroundHit.position.x,
 		leftGroundHit.position.y, leftGroundHit.position.z, leftGroundHit.distance
 	);
 	DEBUG_LOG_FMT(
 		"[FootIK] right sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
-		rightHit, rightFootWorldPosition.x, rightFootWorldPosition.y, rightFootWorldPosition.z,
+		rightHitValid, rightFootWorldPosition.x, rightFootWorldPosition.y, rightFootWorldPosition.z,
 		rightGroundHit.position.x, rightGroundHit.position.y, rightGroundHit.position.z, rightGroundHit.distance
 	);*/
 
+	// 발 크기만큼 발바닥 오프셋 적용
+	if (m_footSoleOffset == 0.0f)
+	{
+		m_footSoleOffset = 0.1f;
+		// DEBUG_LOG_FMT("[FootIK] sole offset initialized applied={:.3f}\n", m_footSoleOffset);
+	}
+
+	// 골반
 	// 충돌한 지점과 발 위치의 높이 차이를 계산해서 골반 오프셋을 결정
+	// 지지발 기준으로만 offset을 적용
+	constexpr float kPelvisSupportMaxGroundGap = 0.5f;
+	const auto isPelvisSupport =
+		[kPelvisSupportMaxGroundGap](bool hit, const DirectX::XMFLOAT3& footPosition, const GroundHit& groundHit)
+	{
+		return hit && (footPosition.y - groundHit.position.y) <= kPelvisSupportMaxGroundGap;
+	};
+	const bool leftPelvisSupport = isPelvisSupport(leftHitValid, leftFootWorldPosition, leftGroundHit);
+	const bool rightPelvisSupport = isPelvisSupport(rightHitValid, rightFootWorldPosition, rightGroundHit);
+
 	float desiredPelvisOffsetY = 0.0f;
-	if (leftHit)
+	bool hasPelvisSupport = false;
+	if (leftPelvisSupport)
 	{
-		desiredPelvisOffsetY = std::min(desiredPelvisOffsetY, leftGroundHit.position.y - leftFootWorldPosition.y);
+		desiredPelvisOffsetY = std::min(
+			desiredPelvisOffsetY, (leftGroundHit.position.y + m_footSoleOffset) - leftFootWorldPosition.y
+		);
+		hasPelvisSupport = true;
 	}
-	if (rightHit)
+	if (rightPelvisSupport)
 	{
-		desiredPelvisOffsetY = std::min(desiredPelvisOffsetY, rightGroundHit.position.y - rightFootWorldPosition.y);
+		desiredPelvisOffsetY = std::min(
+			desiredPelvisOffsetY, (rightGroundHit.position.y + m_footSoleOffset) - rightFootWorldPosition.y
+		);
+		hasPelvisSupport = true;
 	}
-	m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY + m_footSoleOffset, -m_maxPelvisDrop, 0.0f);
+	if (hasPelvisSupport)
+	{
+		m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
+	}
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
 	if ((++pelvisLogCounter % 30) == 0)
 	{
 		DEBUG_LOG_FMT(
-			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} leftHit={} rightHit={}\n",
-			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, leftHit, rightHit
+			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} leftHit={} rightHit={} leftSupport={} rightSupport={}\n",
+			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, leftHitValid, rightHitValid, leftPelvisSupport,
+			rightPelvisSupport
 		);
 	}
 
-	// 발 크기만큼 발바닥 오프셋 적용
-	if (m_footSoleOffset == 0.0f)
-	{
-		m_footSoleOffset = 0.1f;
-		DEBUG_LOG_FMT("[FootIK] sole offset initialized applied={:.3f}\n", m_footSoleOffset);
-	}
-
-	// 각 발의 타겟 위치를 계산. 충돌이 감지된 경우에는 충돌 지점의 높이에 발바닥 오프셋을 더한 값을 사용
+	// 양발
 	auto leftTargetPos = leftTargetMatrix.r[3];
 	auto rightTargetPos = rightTargetMatrix.r[3];
-	if (leftHit)
+	if (leftHitValid)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
 		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
 		leftTargetPos = DirectX::XMVectorSetY(leftTargetPos, desiredY);
 	}
-	if (rightHit)
+	if (rightHitValid)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&rightGroundHit.position), ownerTransform);
 		const float desiredY = DirectX::XMVectorGetY(groundModel) + m_footSoleOffset;
 		rightTargetPos = DirectX::XMVectorSetY(rightTargetPos, desiredY);
 	}
 
-	// IK Weight 설정. 충돌이 감지된 발은 1.0f, 감지되지 않은 발은 0.0f으로 설정해서 IK가 적용될지 여부를 결정
-	m_leftWeight = leftHit ? 1.0f : 0.0f;
-	m_rightWeight = rightHit ? 1.0f : 0.0f;
+	// IK Weight 설정
+	// 지지하는 발이 있으면 그 발에 IK를 적용, 없으면 IK 비적용
+	m_leftWeight = leftPelvisSupport ? 1.0f : 0.0f;
+	m_rightWeight = rightPelvisSupport ? 1.0f : 0.0f;
 
 	// 각 발의 Pole Vector를 계산
 	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
