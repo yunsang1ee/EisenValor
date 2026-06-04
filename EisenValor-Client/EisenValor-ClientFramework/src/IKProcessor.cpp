@@ -72,7 +72,31 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
 
     // 회전 Plane 결정 - 목표 방향과 팔꿈치(poleVector) 이용
     XMVECTOR targetDir = XMVector3Normalize(XMVectorSubtract(targetPos, rootPos));
+    XMVECTOR currentMidDir = XMVector3Normalize(XMVectorSubtract(midPos, rootPos));
     XMVECTOR poleDir = XMVector3Normalize(target.poleVector);
+    poleDir = XMVectorSubtract(poleDir, XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(poleDir, targetDir))));
+    
+    // 원래 애니메이션에서 팔꿈치 방향 받아와서 가까운 방향으로 poleDir 조정
+    if (XMVectorGetX(XMVector3LengthSq(poleDir)) < 0.000001f)
+    {
+        poleDir = XMVectorSubtract(
+            currentMidDir,
+            XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(currentMidDir, targetDir)))
+        );
+    }
+	// 그래도 거의 0이면, targetDir과 수직인 임의의 방향 선택
+    if (XMVectorGetX(XMVector3LengthSq(poleDir)) < 0.000001f)
+    {
+        const XMVECTOR upAxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        const XMVECTOR rightAxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+        const XMVECTOR fallbackAxis =
+            std::abs(XMVectorGetX(XMVector3Dot(targetDir, upAxis))) < 0.95f ? upAxis : rightAxis;
+        poleDir = XMVectorSubtract(
+            fallbackAxis,
+            XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(fallbackAxis, targetDir)))
+        );
+    }
+    poleDir = XMVector3Normalize(poleDir);
     XMVECTOR sideDir = XMVector3Normalize(XMVector3Cross(targetDir, poleDir));
 
     // 어깨에서 팔꿈치로 향하는 새로운 벡터 계산
@@ -86,7 +110,7 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
     XMVECTOR newMidPos = midDistanceA <= midDistanceB ? midPosCandidateA : midPosCandidateB;
 
     // 어깨 행렬
-    XMVECTOR oldMidDir = XMVector3Normalize(XMVectorSubtract(midPos, rootPos));
+    XMVECTOR oldMidDir = currentMidDir;
     XMVECTOR rootRotQuat = GetRotationBetweenVectors(oldMidDir, newMidDir);
     XMMATRIX newRootWorld = rootWorld * XMMatrixRotationQuaternion(rootRotQuat);
     newRootWorld.r[3] = rootPos;
