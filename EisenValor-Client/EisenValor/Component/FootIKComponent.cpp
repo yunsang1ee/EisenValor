@@ -358,7 +358,7 @@ void FootIKComponent::OnLateUpdate(float)
 				// Ray를 이용한 충돌 검사로 후보군의 실제 높이 샘플링
 				const auto rayOrigin = DirectX::XMVectorSet(footCenter.x, footCenter.y + 0.5f, footCenter.z, 1.0f);
 				const auto rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f);
-				constexpr float rayMaxDistance = 1.5f;
+				constexpr float rayMaxDistance = 1.0f;
 				float bestRayDistance = std::numeric_limits<float>::max();
 				DirectX::XMFLOAT3 bestHitPoint = {};
 				const HeightCandidate* bestRayCandidate = nullptr;
@@ -498,8 +498,8 @@ void FootIKComponent::OnLateUpdate(float)
 	// 골반
 	// 양발 targetGap이 모두 크면 공중, 비슷하면 양발 지지, 차이나면 더 가까운 발만 지지
 	constexpr float kPelvisAirborneTargetGap = 0.55f;
-	constexpr float kPelvisBothFeetGapTolerance = 0.05f;
-	constexpr float kStationaryHorizontalSpeed = 1.0f;
+	constexpr float kPelvisBothFeetGapTolerance = 0.01f;
+	constexpr float kStationaryHorizontalSpeed = 0.9f;
 	const float leftTargetWorldY = leftGroundHit.position.y + m_footSoleOffset;
 	const float rightTargetWorldY = rightGroundHit.position.y + m_footSoleOffset;
 	const float leftTargetGap =
