@@ -64,6 +64,13 @@ float DistanceSqXZ(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
 	return dx * dx + dz * dz;
 }
 
+float SmoothApproach(float current, float target, float deltaTime, float speed)
+{
+	const float alpha = std::clamp(deltaTime * speed, 0.0f, 1.0f);
+	return current + (target - current) * alpha;
+}
+
+
 std::shared_ptr<EvAsset::MeshData> GetCachedMeshData(const EvAsset::Guid& guid, const std::filesystem::path& path)
 {
 	static std::unordered_map<EvAsset::Guid, std::shared_ptr<EvAsset::MeshData>, EvAsset::GuidHash> meshDataCache;
@@ -139,7 +146,7 @@ void FootIKComponent::OnStart()
 	}
 }
 
-void FootIKComponent::OnLateUpdate(float)
+void FootIKComponent::OnLateUpdate(float deltaTime)
 {
 	if (!m_ikEnabled)
 	{
@@ -499,7 +506,7 @@ void FootIKComponent::OnLateUpdate(float)
 	// 양발 targetGap이 모두 크면 공중, 비슷하면 양발 지지, 차이나면 더 가까운 발만 지지
 	constexpr float kPelvisAirborneTargetGap = 0.55f;
 	constexpr float kPelvisBothFeetGapTolerance = 0.01f;
-	constexpr float kStationaryHorizontalSpeed = 0.9f;
+	constexpr float kStationaryHorizontalSpeed = 0.5f;
 	const float leftTargetWorldY = leftGroundHit.position.y + m_footSoleOffset;
 	const float rightTargetWorldY = rightGroundHit.position.y + m_footSoleOffset;
 	const float leftTargetGap =
@@ -538,6 +545,7 @@ void FootIKComponent::OnLateUpdate(float)
 	{
 		m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
 	}
+	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, 12.0f);
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
@@ -572,8 +580,8 @@ void FootIKComponent::OnLateUpdate(float)
 
 	// IK Weight 설정
 	// 지지하는 발이 있으면 그 발에 IK를 적용, 없으면 IK 비적용
-	m_leftWeight = leftPelvisSupport ? 1.0f : 0.0f;
-	m_rightWeight = rightPelvisSupport ? 1.0f : 0.0f;
+	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, 18.0f);
+	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, 18.0f);
 
 	// 각 발의 Pole Vector를 계산
 	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
