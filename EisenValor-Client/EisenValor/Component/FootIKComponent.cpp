@@ -555,8 +555,8 @@ void FootIKComponent::OnLateUpdate(float)
 	m_hasPreviousTargetGap = true;
 
 	// 양발
-	auto leftTargetPos = leftTargetMatrix.r[3];
-	auto rightTargetPos = rightTargetMatrix.r[3];
+	auto leftTargetPos = leftFootMatrix.r[3];
+	auto rightTargetPos = rightFootMatrix.r[3];
 	if (leftHitValid)
 	{
 		const auto groundModel = TransformWorldPositionToModel(DirectX::XMLoadFloat3(&leftGroundHit.position), ownerTransform);
