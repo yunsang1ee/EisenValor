@@ -8,4 +8,4 @@
 #include "DxCommon.h"
 #include "DxUtils.h"
 
-#define APPLY_LOBBY_SERVER
+// #define APPLY_LOBBY_SERVER
