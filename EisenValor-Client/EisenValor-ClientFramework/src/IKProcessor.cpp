@@ -62,72 +62,92 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
     // 거리 제약 (팔을 너무 펴거나 굽히지 않도록)
     c = std::clamp(c, std::abs(a - b) + 0.001f, a + b - 0.001f);
 
-    // 코사인 법칙으로 팔꿈치 각도 구하기
-    float cosC = (a * a + b * b - c * c) / (2.0f * a * b);
-    float angleC = std::acos(std::clamp(cosC, -1.0f, 1.0f));
-
+    // 코사인 법칙으로 무릎이 얼마나 접혀야 하는지 구하기
     // 어깨 각도 구하기
     float cosA = (a * a + c * c - b * b) / (2.0f * a * c);
-    float angleA = std::acos(std::clamp(cosA, -1.0f, 1.0f));
+    cosA = std::clamp(cosA, -1.0f, 1.0f);
+    float angleA = std::acos(cosA);
 
-    // 회전 Plane 결정 - 목표 방향과 팔꿈치(poleVector) 이용
+    // 무릎이 꺾일 평면을 만들기 위한 기본 방향 잡기
     XMVECTOR targetDir = XMVector3Normalize(XMVectorSubtract(targetPos, rootPos));
     XMVECTOR currentMidDir = XMVector3Normalize(XMVectorSubtract(midPos, rootPos));
-    XMVECTOR poleDir = XMVector3Normalize(target.poleVector);
-    poleDir = XMVectorSubtract(poleDir, XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(poleDir, targetDir))));
+    XMVECTOR bendDir = XMVectorSubtract(
+        currentMidDir,
+        XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(currentMidDir, targetDir)))
+    );
     
-    // 원래 애니메이션에서 팔꿈치 방향 받아와서 가까운 방향으로 poleDir 조정
-    if (XMVectorGetX(XMVector3LengthSq(poleDir)) < 0.000001f)
+    // 원본 애니메이션의 무릎 방향을 먼저 기준으로 쓰기
+    if (XMVectorGetX(XMVector3LengthSq(bendDir)) < 0.000001f)
     {
-        poleDir = XMVectorSubtract(
-            currentMidDir,
-            XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(currentMidDir, targetDir)))
+        XMVECTOR poleDir = XMVector3Normalize(target.poleVector);
+        bendDir = XMVectorSubtract(
+            poleDir,
+            XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(poleDir, targetDir)))
         );
     }
-	// 그래도 거의 0이면, targetDir과 수직인 임의의 방향 선택
-    if (XMVectorGetX(XMVector3LengthSq(poleDir)) < 0.000001f)
+	// 그래도 거의 0이면, 목표 방향과 수직인 다른 방향을 대신 쓰기
+    if (XMVectorGetX(XMVector3LengthSq(bendDir)) < 0.000001f)
     {
         const XMVECTOR upAxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         const XMVECTOR rightAxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
         const XMVECTOR fallbackAxis =
             std::abs(XMVectorGetX(XMVector3Dot(targetDir, upAxis))) < 0.95f ? upAxis : rightAxis;
-        poleDir = XMVectorSubtract(
+        bendDir = XMVectorSubtract(
             fallbackAxis,
             XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(fallbackAxis, targetDir)))
         );
     }
-    poleDir = XMVector3Normalize(poleDir);
-    XMVECTOR sideDir = XMVector3Normalize(XMVector3Cross(targetDir, poleDir));
+    bendDir = XMVector3Normalize(bendDir);
 
-    // 어깨에서 팔꿈치로 향하는 새로운 벡터 계산
-    XMVECTOR midDirCandidateA = XMVector3Rotate(targetDir, XMQuaternionRotationAxis(sideDir, -angleA));
-    XMVECTOR midDirCandidateB = XMVector3Rotate(targetDir, XMQuaternionRotationAxis(sideDir, angleA));
-    XMVECTOR midPosCandidateA = XMVectorAdd(rootPos, XMVectorScale(midDirCandidateA, a));
-    XMVECTOR midPosCandidateB = XMVectorAdd(rootPos, XMVectorScale(midDirCandidateB, a));
-    float midDistanceA = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(midPosCandidateA, midPos)));
-    float midDistanceB = XMVectorGetX(XMVector3LengthSq(XMVectorSubtract(midPosCandidateB, midPos)));
-    XMVECTOR newMidDir = midDistanceA <= midDistanceB ? midDirCandidateA : midDirCandidateB;
-    XMVECTOR newMidPos = midDistanceA <= midDistanceB ? midPosCandidateA : midPosCandidateB;
+    // 무릎이 꺾일 방향을 하나만 계산하기
+    const float sinA = std::sqrt(std::max(0.0f, 1.0f - cosA * cosA));
+    XMVECTOR newMidDir = XMVector3Normalize(XMVectorAdd(
+        XMVectorScale(targetDir, cosA),
+        XMVectorScale(bendDir, sinA)
+    ));
+    XMVECTOR newMidPos = XMVectorAdd(rootPos, XMVectorScale(newMidDir, a));
 
-    // 어깨 행렬
+    // 중간 무릎 위치를 로그로 확인하기
+    static uint32_t ikDebugLogCounter = 0;
+    if ((++ikDebugLogCounter % 30) == 0)
+    {
+        XMFLOAT3 debugTargetDir;
+        XMFLOAT3 debugBendDir;
+        XMFLOAT3 debugCurrentMidPos;
+        XMFLOAT3 debugNewMidPos;
+        XMStoreFloat3(&debugTargetDir, targetDir);
+        XMStoreFloat3(&debugBendDir, bendDir);
+        XMStoreFloat3(&debugCurrentMidPos, midPos);
+        XMStoreFloat3(&debugNewMidPos, newMidPos);
+        DEBUG_LOG_FMT(
+            "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) angleA={:.3f}\n",
+            debugTargetDir.x, debugTargetDir.y, debugTargetDir.z, debugBendDir.x, debugBendDir.y, debugBendDir.z,
+            angleA
+        );
+        DEBUG_LOG_FMT(
+            "[IKProcessor] currentMid=({:.3f},{:.3f},{:.3f}) newMidPos=({:.3f},{:.3f},{:.3f})\n",
+            debugCurrentMidPos.x, debugCurrentMidPos.y, debugCurrentMidPos.z, debugNewMidPos.x,
+            debugNewMidPos.y, debugNewMidPos.z
+        );
+    }
     XMVECTOR oldMidDir = currentMidDir;
     XMVECTOR rootRotQuat = GetRotationBetweenVectors(oldMidDir, newMidDir);
     XMMATRIX newRootWorld = rootWorld * XMMatrixRotationQuaternion(rootRotQuat);
     newRootWorld.r[3] = rootPos;
 
-    // 팔꿈치 행렬
+    // 아래다리 행렬 다시 계산
     XMVECTOR oldEndDir = XMVector3Normalize(XMVectorSubtract(endPos, midPos));
     XMVECTOR newEndDir = XMVector3Normalize(XMVectorSubtract(targetPos, newMidPos));
     XMVECTOR midRotQuat = GetRotationBetweenVectors(oldEndDir, newEndDir);
     XMMATRIX newMidWorld = midWorld * XMMatrixRotationQuaternion(midRotQuat);
     newMidWorld.r[3] = newMidPos;
 
-    // Weight에 따른 최종 보간 및 저장
+    // weight에 따라 최종 행렬을 보간해서 저장하기
     float w = target.weight;
     XMStoreFloat4x4(&globalMatrices[target.rootBoneIndex], MatrixLerp(rootWorld, newRootWorld, w));
     XMStoreFloat4x4(&globalMatrices[target.midBoneIndex], MatrixLerp(midWorld, newMidWorld, w));
 
-    // 손목 위치 업데이트
+    // 발 끝 위치 업데이트
     XMMATRIX finalEnd = endWorld;
     finalEnd.r[3] = XMVectorLerp(endPos, targetPos, w);
     XMStoreFloat4x4(&globalMatrices[target.boneIndex], finalEnd);
