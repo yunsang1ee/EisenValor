@@ -2,6 +2,8 @@
 #include "IKProcessor.h"
 #include <cmath>
 #include <algorithm>
+#include <cstdint>
+#include <unordered_map>
 
 using namespace DirectX;
 
@@ -36,6 +38,15 @@ static XMMATRIX MatrixLerp(CXMMATRIX M1, CXMMATRIX M2, float t)
     res.r[2] = XMVectorLerp(M1.r[2], M2.r[2], t);
     res.r[3] = XMVectorLerp(M1.r[3], M2.r[3], t);
     return res;
+}
+
+static uint64_t MakeIKBendCacheKey(const std::vector<XMFLOAT4X4>& globalMatrices, const IKTarget& target)
+{
+    const auto matrixAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(globalMatrices.data()));
+    return matrixAddress ^
+        (static_cast<uint64_t>(target.rootBoneIndex) << 32) ^
+        (static_cast<uint64_t>(target.midBoneIndex) << 16) ^
+        static_cast<uint64_t>(target.boneIndex);
 }
 
 void IKProcessor::SolveTwoBoneIK(
@@ -127,6 +138,24 @@ void IKProcessor::SolveTwoBoneIK(
     }
     bendDir = XMVector3Normalize(bendDir);
 
+    static std::unordered_map<uint64_t, XMFLOAT3> previousBendDirs;
+    const uint64_t bendCacheKey = MakeIKBendCacheKey(globalMatrices, target);
+    float bendContinuity = 1.0f;
+    if (auto it = previousBendDirs.find(bendCacheKey); it != previousBendDirs.end())
+    {
+        XMVECTOR previousBendDir = XMLoadFloat3(&it->second);
+        if (XMVectorGetX(XMVector3LengthSq(previousBendDir)) >= 0.000001f)
+        {
+            previousBendDir = XMVector3Normalize(previousBendDir);
+            bendContinuity = std::clamp(XMVectorGetX(XMVector3Dot(previousBendDir, bendDir)), -1.0f, 1.0f);
+            if (bendContinuity < 0.85f)
+            {
+                bendDir = XMVector3Normalize(XMVectorLerp(previousBendDir, bendDir, 0.01f));
+            }
+        }
+    }
+    XMStoreFloat3(&previousBendDirs[bendCacheKey], bendDir);
+
     // 무릎이 꺾일 방향을 하나만 계산하기
     const float sinA = std::sqrt(std::max(0.0f, 1.0f - cosA * cosA));
     XMVECTOR newMidDir = XMVector3Normalize(XMVectorAdd(
@@ -150,10 +179,10 @@ void IKProcessor::SolveTwoBoneIK(
         XMStoreFloat3(&debugCurrentMidPos, midPos);
         XMStoreFloat3(&debugNewMidPos, newMidPos);
         DEBUG_LOG_FMT(
-            "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) preIKMidDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) angleA={:.3f}\n",
+            "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) preIKMidDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) bendContinuity={:.3f} angleA={:.3f}\n",
             debugTargetDir.x, debugTargetDir.y, debugTargetDir.z, debugPreIKMidDir.x, debugPreIKMidDir.y,
             debugPreIKMidDir.z, debugBendDir.x, debugBendDir.y, debugBendDir.z,
-            angleA
+            bendContinuity, angleA
         );
         DEBUG_LOG_FMT(
             "[IKProcessor] currentMid=({:.3f},{:.3f},{:.3f}) newMidPos=({:.3f},{:.3f},{:.3f})\n",
