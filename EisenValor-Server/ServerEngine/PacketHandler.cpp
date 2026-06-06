@@ -12,10 +12,22 @@ GameServerEngine::PacketHandler::~PacketHandler()
 {
 }
 
-bool GameServerEngine::PacketHandler::HandlePacket(const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer)
+bool GameServerEngine::PacketHandler::HandlePacket(const std::shared_ptr<GameServerEngine::PacketSession>& session, std::span<const char> buffer)
 {
-	const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer);
-	return std::invoke(m_packetHandlerFuncs[packetHeader.packetType], session, buffer + sizeof(PacketHeader));
+	if(buffer.size() < sizeof(PacketHeader))
+		return false;
+
+	PacketHeader packetHeader{};
+	memcpy_s(&packetHeader, sizeof(packetHeader), buffer.data(), sizeof(packetHeader));
+
+	if(packetHeader.packetSize != buffer.size())
+		return false;
+
+	return std::invoke(
+		m_packetHandlerFuncs[packetHeader.packetType],
+		session,
+		buffer.subspan(sizeof(PacketHeader))
+	);
 }
 
 std::shared_ptr<GameServerEngine::PacketBuffer> GameServerEngine::PacketHandler::MakePacketBuffer(const uint16 packetType, const flatbuffers::DetachedBuffer& packetData)
