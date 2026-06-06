@@ -268,9 +268,9 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	}
 	if (hasPelvisSupport)
 	{
-		m_pelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
+		desiredPelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
 	}
-	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, 5.0f);
+	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, 2.0f);
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
@@ -305,8 +305,8 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 
 	// IK Weight 설정
 	// 지지하는 발이 있으면 그 발에 IK를 적용, 없으면 IK 비적용
-	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, 5.0f);
-	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, 5.0f);
+	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, 2.0f);
+	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, 2.0f);
 
 	// 원본 애니메이션의 무릎 방향을 힌트로 넘기기
 	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
@@ -519,7 +519,7 @@ bool FootIKComponent::TrySampleVisualGround(
 	outHit.position = bestHitPoint;
 	outHit.normal = bestHitNormal;
 	outHit.distance = bestRayDistance;
-	UpdateHitMarker(this, scene, bestHitPoint);
+	//UpdateHitMarker(this, scene, bestHitPoint);
 	static uint32_t hitLogCounter = 0;
 	//if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
 	//{
