@@ -56,6 +56,8 @@ private:
 	float m_prevLeftTargetGap = 0.0f;
 	float m_prevRightTargetGap = 0.0f;
 	bool  m_hasPreviousTargetGap = false;
+	uint8_t m_prevAnimationKey = 0;
+	bool  m_hasPreviousAnimationKey = false;
 
 	float m_footSoleOffset = 0.0f;
 	float m_maxPelvisDrop = 0.8f;
