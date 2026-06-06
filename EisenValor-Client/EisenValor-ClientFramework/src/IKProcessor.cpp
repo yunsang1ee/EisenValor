@@ -38,7 +38,11 @@ static XMMATRIX MatrixLerp(CXMMATRIX M1, CXMMATRIX M2, float t)
     return res;
 }
 
-void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const IKTarget& target)
+void IKProcessor::SolveTwoBoneIK(
+    std::vector<XMFLOAT4X4>& globalMatrices,
+    const std::vector<XMFLOAT4X4>& preIKGlobalMatrices,
+    const IKTarget& target
+)
 {
     if (!target.active || target.weight <= 0.0f)
         return;
@@ -47,12 +51,18 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
     XMMATRIX rootWorld = XMLoadFloat4x4(&globalMatrices[target.rootBoneIndex]);
     XMMATRIX midWorld = XMLoadFloat4x4(&globalMatrices[target.midBoneIndex]);
     XMMATRIX endWorld = XMLoadFloat4x4(&globalMatrices[target.boneIndex]);
+    XMMATRIX preIKRootWorld = XMLoadFloat4x4(&preIKGlobalMatrices[target.rootBoneIndex]);
+    XMMATRIX preIKMidWorld = XMLoadFloat4x4(&preIKGlobalMatrices[target.midBoneIndex]);
+    XMMATRIX preIKEndWorld = XMLoadFloat4x4(&preIKGlobalMatrices[target.boneIndex]);
 
     // 각 관절의 월드 위치
     XMVECTOR rootPos = rootWorld.r[3];
     XMVECTOR midPos = midWorld.r[3];
     XMVECTOR endPos = endWorld.r[3];
     XMVECTOR targetPos = target.targetPos;
+    XMVECTOR preIKRootPos = preIKRootWorld.r[3];
+    XMVECTOR preIKMidPos = preIKMidWorld.r[3];
+    XMVECTOR preIKEndPos = preIKEndWorld.r[3];
 
     // 본의 길이 계산
     float a = XMVectorGetX(XMVector3Length(XMVectorSubtract(midPos, rootPos))); 
@@ -68,13 +78,31 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
     cosA = std::clamp(cosA, -1.0f, 1.0f);
     float angleA = std::acos(cosA);
 
-    // 무릎이 꺾일 평면을 만들기 위한 기본 방향 잡기
+    // IK 적용 전 원본 애니메이션의 무릎 방향을 평면 기준으로 쓰기
     XMVECTOR targetDir = XMVector3Normalize(XMVectorSubtract(targetPos, rootPos));
     XMVECTOR currentMidDir = XMVector3Normalize(XMVectorSubtract(midPos, rootPos));
+    XMVECTOR preIKRootToMid = XMVectorSubtract(preIKMidPos, preIKRootPos);
+    XMVECTOR preIKMidToEnd = XMVectorSubtract(preIKEndPos, preIKMidPos);
+    XMVECTOR preIKMidDir = XMVector3Normalize(preIKRootToMid);
     XMVECTOR bendDir = XMVectorSubtract(
-        currentMidDir,
-        XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(currentMidDir, targetDir)))
+        preIKMidDir,
+        XMVectorScale(targetDir, XMVectorGetX(XMVector3Dot(preIKMidDir, targetDir)))
     );
+    XMVECTOR preIKBendPlaneNormal = XMVector3Cross(preIKRootToMid, preIKMidToEnd);
+    if (XMVectorGetX(XMVector3LengthSq(preIKBendPlaneNormal)) >= 0.000001f)
+    {
+        preIKBendPlaneNormal = XMVector3Normalize(preIKBendPlaneNormal);
+        XMVECTOR planeBendDir = XMVector3Cross(targetDir, preIKBendPlaneNormal);
+        if (XMVectorGetX(XMVector3LengthSq(planeBendDir)) >= 0.000001f)
+        {
+            planeBendDir = XMVector3Normalize(planeBendDir);
+            if (XMVectorGetX(XMVector3Dot(planeBendDir, bendDir)) < 0.0f)
+            {
+                planeBendDir = XMVectorNegate(planeBendDir);
+            }
+            bendDir = planeBendDir;
+        }
+    }
     
     // 원본 애니메이션의 무릎 방향을 먼저 기준으로 쓰기
     if (XMVectorGetX(XMVector3LengthSq(bendDir)) < 0.000001f)
@@ -112,16 +140,19 @@ void IKProcessor::SolveTwoBoneIK(std::vector<XMFLOAT4X4>& globalMatrices, const 
     if ((++ikDebugLogCounter % 30) == 0)
     {
         XMFLOAT3 debugTargetDir;
+        XMFLOAT3 debugPreIKMidDir;
         XMFLOAT3 debugBendDir;
         XMFLOAT3 debugCurrentMidPos;
         XMFLOAT3 debugNewMidPos;
         XMStoreFloat3(&debugTargetDir, targetDir);
+        XMStoreFloat3(&debugPreIKMidDir, preIKMidDir);
         XMStoreFloat3(&debugBendDir, bendDir);
         XMStoreFloat3(&debugCurrentMidPos, midPos);
         XMStoreFloat3(&debugNewMidPos, newMidPos);
         DEBUG_LOG_FMT(
-            "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) angleA={:.3f}\n",
-            debugTargetDir.x, debugTargetDir.y, debugTargetDir.z, debugBendDir.x, debugBendDir.y, debugBendDir.z,
+            "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) preIKMidDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) angleA={:.3f}\n",
+            debugTargetDir.x, debugTargetDir.y, debugTargetDir.z, debugPreIKMidDir.x, debugPreIKMidDir.y,
+            debugPreIKMidDir.z, debugBendDir.x, debugBendDir.y, debugBendDir.z,
             angleA
         );
         DEBUG_LOG_FMT(

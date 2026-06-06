@@ -229,7 +229,7 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 
 	// 골반
 	// 양발 targetGap이 모두 크면 공중, 비슷하면 양발 지지, 차이나면 더 가까운 발만 지지
-	constexpr float kPelvisAirborneTargetGap = 0.55f;
+	constexpr float kPelvisAirborneTargetGap = 0.6f;
 	constexpr float kPelvisBothFeetGapTolerance = 0.01f;
 	constexpr float kStationaryHorizontalSpeed = 1.0f;
 	const float leftTargetWorldY = leftGroundHit.position.y + m_footSoleOffset;

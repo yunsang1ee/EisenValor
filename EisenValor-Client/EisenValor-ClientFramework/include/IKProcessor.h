@@ -24,6 +24,7 @@ public:
     // Two-Bone IK 계산 및 전역 행렬 수정
     void SolveTwoBoneIK(
         std::vector<DirectX::XMFLOAT4X4>& globalMatrices,
+        const std::vector<DirectX::XMFLOAT4X4>& preIKGlobalMatrices,
         const IKTarget& target
     );
 };

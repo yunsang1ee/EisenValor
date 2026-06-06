@@ -468,7 +468,7 @@ void AnimationComponent::UpdateBoneMatrices()
 	{
 		if (target.active && target.weight > 0.0f)
 		{
-			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, target);
+			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, m_preIKGlobalMatrices, target);
 			propagateDescendantsExcept(target.rootBoneIndex, target.midBoneIndex);
 			propagateDescendantsExcept(target.midBoneIndex, target.boneIndex);
 			propagateDescendants(target.boneIndex);
