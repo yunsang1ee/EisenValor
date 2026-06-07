@@ -397,7 +397,8 @@ void AnimationComponent::UpdateBoneMatrices()
 	// 1. 모든 본의 로컬 행렬 계산
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		BonePose pose = SampleBonePoseAtTime(bones[i], *m_currentAnimation, m_currentTime);
+		BonePose motionPose = SampleBonePoseAtTime(bones[i], *m_currentAnimation, m_currentTime);
+		BonePose pose = motionPose;
 		if (m_isBlending && m_blendFromAnimation)
 		{
 			BonePose fromPose = SampleBonePoseAtTime(bones[i], *m_blendFromAnimation, m_blendFromTime);
@@ -407,12 +408,13 @@ void AnimationComponent::UpdateBoneMatrices()
 		XMVECTOR pos = pose.pos;
 		XMVECTOR rot = pose.rot;
 		XMVECTOR scale = pose.scale;
+		XMVECTOR rootMotionPos = motionPose.pos;
 
 		// Root Motion 처리
 		if (i == 0 && m_enableRootMotion)
 		{
 			XMFLOAT3 currentRootPos;
-			XMStoreFloat3(&currentRootPos, pos);
+			XMStoreFloat3(&currentRootPos, rootMotionPos);
 
 
 			if (m_rootMotionFirstFrame)
@@ -424,7 +426,7 @@ void AnimationComponent::UpdateBoneMatrices()
 			else
 			{
 				// Delta 계산 (현재 위치 - 이전 위치)
-				XMVECTOR deltaVec = XMVectorSubtract(pos, XMLoadFloat3(&m_lastRootPos));
+				XMVECTOR deltaVec = XMVectorSubtract(rootMotionPos, XMLoadFloat3(&m_lastRootPos));
 
 				// 현재 회전
 				auto&	 transform = myGameObject->GetTransform();

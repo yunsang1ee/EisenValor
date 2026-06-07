@@ -34,11 +34,11 @@ void GeneralIdleState::Enter(FSMComponent* fsm)
 			{
 				uint8_t dir = fsm->GetCurAttackDir();
 				uint8_t idleKey = StateOffset::kIdleOffset + dir; // 61:TOP, 62:LEFT, 63:RIGHT
-				anim->Play(idleKey, true);
+				anim->PlayBlend(idleKey, StateOffset::kBlendDuration, true, true);
 			}
 			else
 			{
-				anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), true);
+				anim->PlayBlend(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), StateOffset::kBlendDuration, true, true);
 			}
 		}
 	}
@@ -64,7 +64,7 @@ void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 
 		if (anim->GetCurrentKey() != targetIdleKey)
 		{
-			anim->PlayBlend(targetIdleKey, 0.3f, true);
+			anim->PlayBlend(targetIdleKey, StateOffset::kBlendDuration, true, true);
 		}
 	}
 	else // 일반 태세일 때
@@ -72,7 +72,7 @@ void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 		uint8_t neutralIdleKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 		if (anim->GetCurrentKey() != neutralIdleKey)
 		{
-			anim->Play(neutralIdleKey, true);
+			anim->Play(neutralIdleKey, true, true);
 		}
 	}
 }
