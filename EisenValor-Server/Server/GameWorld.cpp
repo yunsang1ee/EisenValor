@@ -12,8 +12,6 @@
 #include "ServerEngineCore.h"
 #include "WorkerThread.h"
 #include "GameWorldThread.h"
-#include "SessionManager.h"
-#include "LobbyServerSession.h"
 #include "Movement.h"
 #include "NavAgent.h"
 
@@ -52,12 +50,12 @@ void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, Game
 
 	CreateGameWorldObjects();
 
-	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
-	if(lobbyServerSession) {
+	auto* const lobbySessionThread = MANAGER(GameServerEngine::ServerEngineCore)->GetLobbyServerSessionThread();
+	if(lobbySessionThread) {
 		const uint16 port{ GetGameWorldThread()->GetPort() };
 		const uint16 worldID{ GetID() };
 		auto pb{ ServerPackets::Make_SL_CREATE_GAME_WORLD_PACKET(worldID, "127.0.0.1", port) };
-		lobbyServerSession->Send(std::move(pb));
+		lobbySessionThread->PushJob(&GameServerEngine::WorkerThread::SendToLobbyServer, pb);
 	}
 }
 
@@ -164,13 +162,13 @@ void GameServer::Contents::GameWorld::LeaveSession(std::shared_ptr<GameServerEng
 	auto it = m_sessionToPlayer.find(id);
 	if(it == m_sessionToPlayer.end()) return;
 
-	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
-	if(lobbyServerSession && !m_isGameFinish) {
+	auto const lobbySessionThread = MANAGER(GameServerEngine::ServerEngineCore)->GetLobbyServerSessionThread();
+	if(lobbySessionThread && !m_isGameFinish) {
 		auto pb{ ServerPackets::Make_SL_MARK_USER_OFFLINE_FROM_GAME_PACKET(id, GetID()) };
-		lobbyServerSession->Send(std::move(pb));
+		lobbySessionThread->PushJob(&GameServerEngine::WorkerThread::SendToLobbyServer, pb);
 	}
 	else {
-		LOG_WARNING("Failed to mark user offline from game. Lobby server session is disconnected. UserID:{}, WorldID:{}", id, GetID());
+		LOG_WARNING("Failed to mark user offline from game. Lobby server session thread is unavailable. UserID:{}, WorldID:{}", id, GetID());
 	}
 
 	const uint64 playerID{ it->second };
@@ -1066,20 +1064,20 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 
 	m_isGameFinish = true;
 
-	const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
-	if(lobbyServerSession) {
+	auto const lobbySessionThread = MANAGER(GameServerEngine::ServerEngineCore)->GetLobbyServerSessionThread();
+	if(lobbySessionThread) {
 		auto resultPb = ServerPackets::Make_SL_GAME_RESULT_PACKET(GetID(), *winner, m_blueTeamScore, m_redTeamScore);
-		lobbyServerSession->Send(std::move(resultPb));
+		lobbySessionThread->PushJob(&GameServerEngine::WorkerThread::SendToLobbyServer, resultPb);
 	}
 
-	if(lobbyServerSession) {
+	if(lobbySessionThread) {
 		for(const auto& [userID, user] : m_users) {
 			auto pb{ ServerPackets::Make_SL_MARK_USER_TRANSFERRING_TO_LOBBY_PACKET(userID, GetID()) };
-			lobbyServerSession->Send(std::move(pb));
+			lobbySessionThread->PushJob(&GameServerEngine::WorkerThread::SendToLobbyServer, pb);
 		}
 	}
 	else {
-		LOG_WARNING("Failed to mark users transferring to lobby. Lobby server session is disconnected. WorldID:{}", GetID());
+		LOG_WARNING("Failed to mark users transferring to lobby. Lobby server session thread is unavailable. WorldID:{}", GetID());
 	}
 
 	auto finishPb = ServerPackets::Make_SC_GAME_FINISH_PACKET();

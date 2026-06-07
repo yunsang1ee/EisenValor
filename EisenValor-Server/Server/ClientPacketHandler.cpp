@@ -5,8 +5,7 @@
 #include "GameWorld.h"
 
 #include "GameWorldThread.h"
-#include "SessionManager.h"
-#include "LobbyServerSession.h"
+#include "ServerEngineCore.h"
 
 void GameServer::ClientPacketHandler::Init()
 {
@@ -149,15 +148,15 @@ bool GameServer::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const st
 			return true;
 		}
 
-		const auto lobbyServerSession = MANAGER(GameServer::SessionManager)->GetLobbyServerSession();
-		if(nullptr == lobbyServerSession) {
-			LOG_WARNING("Rejected game world enter. Lobby server session is disconnected. UserID:{}, WorldID:{}", lobbySessionID, worldID);
-			session->Disconnect("Lobby server disconnected");
+		auto const lobbySessionThread = MANAGER(GameServerEngine::ServerEngineCore)->GetLobbyServerSessionThread();
+		if(nullptr == lobbySessionThread) {
+			LOG_WARNING("Rejected game world enter. Lobby server session thread is unavailable. UserID:{}, WorldID:{}", lobbySessionID, worldID);
+			session->Disconnect("Lobby server session thread unavailable");
 			return true;
 		}
 
 		auto pb{ ServerPackets::Make_SL_MARK_USER_IN_GAME_PACKET(lobbySessionID, worldID) };
-		lobbyServerSession->Send(std::move(pb));
+		lobbySessionThread->PushJob(&GameServerEngine::WorkerThread::SendToLobbyServer, pb);
 		session->SetID(lobbySessionID);
 
 		std::cout << "Session ID: " << session->GetID() << std::endl;
