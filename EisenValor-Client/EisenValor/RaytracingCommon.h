@@ -64,7 +64,7 @@ struct GeoInfo
 	RAY_UINT vertexBase;
 	RAY_UINT indexBase;
 	RAY_UINT materialIdx;
-	RAY_UINT pad0;
+	RAY_UINT stableGeometryId;
 };
 
 struct InstanceData
@@ -95,7 +95,7 @@ struct MaterialGPUData
 	RAY_UINT emissiveTextureIdx;
 
 	RAY_UINT terrainSurfaceIdx;
-	RAY_UINT pad0;
+	RAY_UINT stableMaterialId;
 	RAY_UINT pad1;
 	RAY_UINT pad2;
 };

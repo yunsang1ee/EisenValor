@@ -41,7 +41,7 @@ cbuffer RestirCandidateConstants : register(b3, space0)
 SamplerState g_sampler : register(s0, space0);
 
 static const uint MAX_RECURSION_DEPTH = 6;
-static const uint SPP = 4;
+static const uint SPP = 1;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 static const float PT_OUTPUT_EXPOSURE = 0.75f;
 static const float PT_BLOOM_THRESHOLD = 1.0f;
@@ -321,8 +321,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         payload.primaryHitNormal = geometricNormal;
         payload.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID;
         payload.instanceId = inst.instanceID;
-        payload.materialId = geo.materialIdx;
-        payload.geometryId = inst.geoInfoBaseIdx + GeometryIndex();
+        payload.materialId = mat.stableMaterialId;
+        payload.geometryId = geo.stableGeometryId;
         payload.roughness = roughness;
     }
 

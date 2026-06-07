@@ -34,6 +34,12 @@ namespace
 {
 constexpr uint64_t kFnvOffsetBasis = 14695981039346656037ull;
 constexpr uint64_t kFnvPrime = 1099511628211ull;
+constexpr uint32_t kStableAssetMaterialIdSalt = 0x4d415441u;		  // MATA
+constexpr uint32_t kStableRuntimeMaterialIdSalt = 0x4d415452u;		  // MATR
+constexpr uint32_t kStableStaticAssetGeometryIdSalt = 0x47454f53u;	  // GEOS
+constexpr uint32_t kStableSkinnedAssetGeometryIdSalt = 0x47454f4bu;	  // GEOK
+constexpr uint32_t kStableStaticRuntimeGeometryIdSalt = 0x47455253u;  // GERS
+constexpr uint32_t kStableSkinnedRuntimeGeometryIdSalt = 0x4745524bu; // GERK
 
 std::wstring ExtractShaderName(const std::wstring& shaderPath)
 {
@@ -74,6 +80,30 @@ void HashBytes(uint64_t& hash, const void* data, size_t size)
 		hash ^= bytes[i];
 		hash *= kFnvPrime;
 	}
+}
+
+uint32_t MakeStableAssetId(uint32_t salt, const EvAsset::Guid& guid, uint32_t localIndex = ~0u)
+{
+	uint64_t hash = kFnvOffsetBasis;
+	HashBytes(hash, &salt, sizeof(salt));
+	HashBytes(hash, guid.data, sizeof(guid.data));
+	if (localIndex != ~0u)
+	{
+		HashBytes(hash, &localIndex, sizeof(localIndex));
+	}
+
+	uint32_t id = static_cast<uint32_t>(hash) ^ static_cast<uint32_t>(hash >> 32);
+	return id == ~0u ? ~1u : id;
+}
+
+uint32_t MakeStableRuntimeId(uint32_t salt, uint32_t ownerId, uint32_t localIndex)
+{
+	uint64_t hash = kFnvOffsetBasis;
+	HashBytes(hash, &salt, sizeof(salt));
+	HashBytes(hash, &ownerId, sizeof(ownerId));
+	HashBytes(hash, &localIndex, sizeof(localIndex));
+	uint32_t id = static_cast<uint32_t>(hash) ^ static_cast<uint32_t>(hash >> 32);
+	return id == ~0u ? ~1u : id;
 }
 
 uint32_t GetReadyTextureIndex(MaterialResource* material, std::string_view slotName)
@@ -528,20 +558,31 @@ void DxrRenderPass::CollectStaticMeshData(
 			continue;
 		}
 
-		uint32_t geoBaseIdx = static_cast<uint32_t>(geoTableData->syncBuffer.Size());
-		bool	 disableTriangleCull = false;
-		for (const auto& subMesh : meshRes->GetSubMeshes())
+		const uint32_t ownerId = meshComp.GetOwner().id;
+		uint32_t	   geoBaseIdx = static_cast<uint32_t>(geoTableData->syncBuffer.Size());
+		bool		   disableTriangleCull = false;
+		const auto&	   subMeshes = meshRes->GetSubMeshes();
+		for (uint32_t subMeshIndex = 0; subMeshIndex < static_cast<uint32_t>(subMeshes.size()); ++subMeshIndex)
 		{
-			auto* matRes = meshComp.GetMaterial(subMesh.materialSlot);
+			const auto& subMesh = subMeshes[subMeshIndex];
+			auto*		matRes = meshComp.GetMaterial(subMesh.materialSlot);
 			if (nullptr == matRes)
 			{
 				matRes = GLOBAL(ResourceGlobal).GetDefaultMaterial().get();
 			}
 			disableTriangleCull |= (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_DOUBLE_SIDED));
 
-			uint32_t	matIdx = 0;
-			const auto& matGuid = matRes->GetGuid();
-			const bool	isRuntimeMaterial = IsNullGuid(matGuid);
+			uint32_t	   matIdx = 0;
+			const auto&	   matGuid = matRes->GetGuid();
+			const bool	   isRuntimeMaterial = IsNullGuid(matGuid);
+			const uint32_t stableMaterialId =
+				isRuntimeMaterial ? MakeStableRuntimeId(kStableRuntimeMaterialIdSalt, ownerId, subMesh.materialSlot)
+								  : MakeStableAssetId(kStableAssetMaterialIdSalt, matGuid);
+			const auto&	   meshGuid = meshRes->GetGuid();
+			const bool	   isRuntimeMesh = IsNullGuid(meshGuid);
+			const uint32_t stableGeometryId =
+				isRuntimeMesh ? MakeStableRuntimeId(kStableStaticRuntimeGeometryIdSalt, ownerId, subMeshIndex)
+							  : MakeStableAssetId(kStableStaticAssetGeometryIdSalt, meshGuid, subMeshIndex);
 
 			if (!isRuntimeMaterial && materialData->materialToIndex.contains(matGuid))
 			{
@@ -565,6 +606,7 @@ void DxrRenderPass::CollectStaticMeshData(
 				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
 											   ? RegisterTerrainSurface(materialData, matRes)
 											   : ~0u;
+				gpuMat.stableMaterialId = stableMaterialId;
 
 				materialData->syncBuffer.Register(gpuMat);
 				if (!isRuntimeMaterial)
@@ -574,7 +616,10 @@ void DxrRenderPass::CollectStaticMeshData(
 			}
 
 			geoTableData->syncBuffer.Register(
-				{.vertexBase = 0, .indexBase = subMesh.indexOffset, .materialIdx = matIdx, .pad0 = 0}
+				{.vertexBase = 0,
+				 .indexBase = subMesh.indexOffset,
+				 .materialIdx = matIdx,
+				 .stableGeometryId = stableGeometryId}
 			);
 		}
 
@@ -587,7 +632,7 @@ void DxrRenderPass::CollectStaticMeshData(
 		inst.vertexBufferIdx = meshRes->GetVertexBuffer()->GetSRVIndex();
 		inst.indexBufferIdx = meshRes->GetIndexBuffer()->GetSRVIndex();
 		inst.geoInfoBaseIdx = geoBaseIdx;
-		inst.instanceID = meshComp.GetOwner().id;
+		inst.instanceID = ownerId;
 
 		instanceData->syncBuffer.Register(inst);
 		tlasInstances.push_back(
@@ -727,20 +772,31 @@ void DxrRenderPass::CollectSkinnedMeshData(
 
 		hasAnimatedInstances = true;
 
-		uint32_t geoBaseIdx = static_cast<uint32_t>(geoTableData->syncBuffer.Size());
-		bool	 disableTriangleCull = false;
-		for (const auto& subMesh : meshRes->GetSubMeshes())
+		const uint32_t ownerId = skinnedMeshComp.GetOwner().id;
+		uint32_t	   geoBaseIdx = static_cast<uint32_t>(geoTableData->syncBuffer.Size());
+		bool		   disableTriangleCull = false;
+		const auto&	   subMeshes = meshRes->GetSubMeshes();
+		for (uint32_t subMeshIndex = 0; subMeshIndex < static_cast<uint32_t>(subMeshes.size()); ++subMeshIndex)
 		{
-			auto* matRes = skinnedMeshComp.GetMaterialResource(subMesh.materialSlot);
+			const auto& subMesh = subMeshes[subMeshIndex];
+			auto*		matRes = skinnedMeshComp.GetMaterialResource(subMesh.materialSlot);
 			if (nullptr == matRes)
 			{
 				matRes = GLOBAL(ResourceGlobal).GetDefaultMaterial().get();
 			}
 			disableTriangleCull |= (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_DOUBLE_SIDED));
 
-			uint32_t	matIdx = 0;
-			const auto& matGuid = matRes->GetGuid();
-			const bool	isRuntimeMaterial = IsNullGuid(matGuid);
+			uint32_t	   matIdx = 0;
+			const auto&	   matGuid = matRes->GetGuid();
+			const bool	   isRuntimeMaterial = IsNullGuid(matGuid);
+			const uint32_t stableMaterialId =
+				isRuntimeMaterial ? MakeStableRuntimeId(kStableRuntimeMaterialIdSalt, ownerId, subMesh.materialSlot)
+								  : MakeStableAssetId(kStableAssetMaterialIdSalt, matGuid);
+			const auto&	   meshGuid = meshRes->GetGuid();
+			const bool	   isRuntimeMesh = IsNullGuid(meshGuid);
+			const uint32_t stableGeometryId =
+				isRuntimeMesh ? MakeStableRuntimeId(kStableSkinnedRuntimeGeometryIdSalt, ownerId, subMeshIndex)
+							  : MakeStableAssetId(kStableSkinnedAssetGeometryIdSalt, meshGuid, subMeshIndex);
 
 			if (!isRuntimeMaterial && materialData->materialToIndex.contains(matGuid))
 			{
@@ -764,6 +820,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 				gpuMat.terrainSurfaceIdx = (0 != (matRes->GetMaterialFlags() & MATERIAL_FLAG_TERRAIN_SPLAT))
 											   ? RegisterTerrainSurface(materialData, matRes)
 											   : ~0u;
+				gpuMat.stableMaterialId = stableMaterialId;
 
 				materialData->syncBuffer.Register(gpuMat);
 				if (!isRuntimeMaterial)
@@ -773,7 +830,10 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			}
 
 			geoTableData->syncBuffer.Register(
-				{.vertexBase = 0, .indexBase = subMesh.indexOffset, .materialIdx = matIdx, .pad0 = 0}
+				{.vertexBase = 0,
+				 .indexBase = subMesh.indexOffset,
+				 .materialIdx = matIdx,
+				 .stableGeometryId = stableGeometryId}
 			);
 		}
 
@@ -786,7 +846,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		inst.vertexBufferIdx = skinnedVB->GetSRVIndex();
 		inst.indexBufferIdx = meshRes->GetIndexBuffer()->GetSRVIndex();
 		inst.geoInfoBaseIdx = geoBaseIdx;
-		inst.instanceID = skinnedMeshComp.GetOwner().id;
+		inst.instanceID = ownerId;
 
 		instanceData->syncBuffer.Register(inst);
 		tlasInstances.push_back(
