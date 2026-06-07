@@ -109,6 +109,29 @@ BonePose SampleBonePose(
 
 	return pose;
 }
+
+// 현재 시점의 자세 꺼내기
+BonePose SampleBonePoseAtTime(const EvAsset::Bone& bone, const AnimationResource& animation, float time)
+{
+	float	 frameRate = animation.GetFrameRate();
+	uint32_t totalFrames = animation.GetTotalFrames();
+	float	 framePos = time * frameRate;
+	uint32_t frameIdx0 = static_cast<uint32_t>(std::floor(framePos)) % totalFrames;
+	uint32_t frameIdx1 = (frameIdx0 + 1) % totalFrames;
+	float	 alpha = framePos - std::floor(framePos);
+
+	return SampleBonePose(bone, animation.GetTracks(), frameIdx0, frameIdx1, alpha);
+}
+
+// 두 자세를 섞기
+BonePose BlendBonePose(const BonePose& from, const BonePose& to, float alpha)
+{
+	return {
+		XMVectorLerp(from.pos, to.pos, alpha),
+		XMQuaternionSlerp(from.rot, to.rot, alpha),
+		XMVectorLerp(from.scale, to.scale, alpha),
+	};
+}
 }
 
 void AnimationComponent::OnLateUpdate(float dt)
@@ -117,6 +140,16 @@ void AnimationComponent::OnLateUpdate(float dt)
 		return;
 
 	m_currentTime += dt;
+	if (m_isBlending)
+	{
+		m_blendTime += dt;
+		if (m_blendTime >= m_blendDuration)
+		{
+			m_isBlending = false;
+			m_blendFromAnimation.reset();
+		}
+	}
+
 	float duration = m_currentAnimation->GetDuration();
 
 	if (m_currentTime >= duration)
@@ -158,6 +191,33 @@ void AnimationComponent::Play(uint8_t key, bool loop, bool rootMotion)
 		return;
 		DEBUG_LOG_FMT("[AnimationComponent] Cannot find animation for key: {}\n", key);
 	}
+
+	m_isBlending = false;
+	m_blendFromAnimation.reset();
+	m_currentKey = key;
+	Play(it->second, loop, rootMotion);
+}
+
+void AnimationComponent::PlayBlend(uint8_t key, float duration, bool loop, bool rootMotion)
+{
+	auto it = m_animations.find(key);
+	if (it == m_animations.end())
+	{
+		return;
+		DEBUG_LOG_FMT("[AnimationComponent] Cannot find animation for key: {}\n", key);
+	}
+
+	if (!m_currentAnimation || m_currentKey == key || duration <= 0.0f)
+	{
+		Play(key, loop, rootMotion);
+		return;
+	}
+
+	m_blendFromAnimation = m_currentAnimation;
+	m_blendFromTime = m_currentTime;
+	m_blendTime = 0.0f;
+	m_blendDuration = duration;
+	m_isBlending = true;
 
 	m_currentKey = key;
 	Play(it->second, loop, rootMotion);
@@ -206,6 +266,8 @@ void AnimationComponent::Stop()
 {
 	m_isPlaying = false;
 	m_currentTime = 0.0f;
+	m_isBlending = false;
+	m_blendFromAnimation.reset();
 	m_animationQueue.clear();
 }
 
@@ -326,19 +388,22 @@ void AnimationComponent::UpdateBoneMatrices()
 		);*/
 	}
 
-	float	 frameRate = m_currentAnimation->GetFrameRate();
-	uint32_t totalFrames = m_currentAnimation->GetTotalFrames();
-	float	 framePos = m_currentTime * frameRate;
-	uint32_t frameIdx0 = static_cast<uint32_t>(std::floor(framePos)) % totalFrames;
-	uint32_t frameIdx1 = (frameIdx0 + 1) % totalFrames;
-	float	 alpha = framePos - std::floor(framePos);
-
-	const auto& tracks = m_currentAnimation->GetTracks();
+	float blendAlpha = 1.0f;
+	if (m_isBlending && m_blendFromAnimation && m_blendDuration > 0.0f)
+	{
+		blendAlpha = std::clamp(m_blendTime / m_blendDuration, 0.0f, 1.0f);
+	}
 
 	// 1. 모든 본의 로컬 행렬 계산
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		BonePose pose = SampleBonePose(bones[i], tracks, frameIdx0, frameIdx1, alpha);
+		BonePose pose = SampleBonePoseAtTime(bones[i], *m_currentAnimation, m_currentTime);
+		if (m_isBlending && m_blendFromAnimation)
+		{
+			BonePose fromPose = SampleBonePoseAtTime(bones[i], *m_blendFromAnimation, m_blendFromTime);
+			pose = BlendBonePose(fromPose, pose, blendAlpha);
+		}
+
 		XMVECTOR pos = pose.pos;
 		XMVECTOR rot = pose.rot;
 		XMVECTOR scale = pose.scale;

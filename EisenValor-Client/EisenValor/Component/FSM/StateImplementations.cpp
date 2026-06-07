@@ -64,7 +64,7 @@ void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 
 		if (anim->GetCurrentKey() != targetIdleKey)
 		{
-			anim->Play(targetIdleKey, true);
+			anim->PlayBlend(targetIdleKey, 0.3f, true);
 		}
 	}
 	else // 일반 태세일 때
