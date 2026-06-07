@@ -11,6 +11,106 @@
 
 using namespace DirectX;
 
+namespace
+{
+struct BonePose
+{
+	XMVECTOR pos;
+	XMVECTOR rot;
+	XMVECTOR scale;
+};
+
+// 주어진 뼈와 애니메이션 트랙에서 보간된 본 포즈를 계산하는 함수
+BonePose SampleBonePose(
+	const EvAsset::Bone& bone,
+	const std::vector<EvAsset::AnimationTrack>& tracks,
+	uint32_t frameIdx0,
+	uint32_t frameIdx1,
+	float alpha
+)
+{
+	BonePose pose{
+		XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bone.restPos)),
+		XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(bone.restRot)),
+		XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bone.restScale)),
+	};
+
+	for (const auto& track : tracks)
+	{
+		if (track.BoneNameHash != bone.nameHash)
+			continue;
+
+		// Position
+		if (track.Flags & EvAsset::HasPos)
+		{
+			if (track.Flags & EvAsset::IsConstPos)
+			{
+				pose.pos = XMVectorSet(track.Positions[0], track.Positions[1], track.Positions[2], 1.0f);
+			}
+			else
+			{
+				XMVECTOR p0 = XMVectorSet(
+					track.Positions[frameIdx0 * 3 + 0], track.Positions[frameIdx0 * 3 + 1],
+					track.Positions[frameIdx0 * 3 + 2], 1.0f
+				);
+				XMVECTOR p1 = XMVectorSet(
+					track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1],
+					track.Positions[frameIdx1 * 3 + 2], 1.0f
+				);
+				pose.pos = XMVectorLerp(p0, p1, alpha);
+			}
+			//// 유니티와 DX의 X축 반전 보정
+			// pose.pos = XMVectorSet(-XMVectorGetX(pose.pos), XMVectorGetY(pose.pos), XMVectorGetZ(pose.pos), 1.0f);
+		}
+
+		// Rotation
+		if (track.Flags & EvAsset::HasRot)
+		{
+			if (track.Flags & EvAsset::IsConstRot)
+			{
+				pose.rot = XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
+			}
+			else
+			{
+				XMVECTOR r0 = XMVectorSet(
+					track.Rotations[frameIdx0 * 4 + 0], track.Rotations[frameIdx0 * 4 + 1],
+					track.Rotations[frameIdx0 * 4 + 2], track.Rotations[frameIdx0 * 4 + 3]
+				);
+				XMVECTOR r1 = XMVectorSet(
+					track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1],
+					track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]
+				);
+				pose.rot = XMQuaternionSlerp(r0, r1, alpha);
+			}
+		}
+
+		if (track.Flags & EvAsset::HasScale)
+		{
+			if (track.Flags & EvAsset::IsConstScale)
+			{
+				pose.scale = XMVectorSet(track.Scales[0], track.Scales[1], track.Scales[2], 0.0f);
+			}
+			else
+			{
+				XMVECTOR s0 = XMVectorSet(
+					track.Scales[frameIdx0 * 3 + 0], track.Scales[frameIdx0 * 3 + 1],
+					track.Scales[frameIdx0 * 3 + 2], 0.0f
+				);
+				XMVECTOR s1 = XMVectorSet(
+					track.Scales[frameIdx1 * 3 + 0], track.Scales[frameIdx1 * 3 + 1],
+					track.Scales[frameIdx1 * 3 + 2], 0.0f
+				);
+				pose.scale = XMVectorLerp(s0, s1, alpha);
+			}
+		}
+
+		break;
+	}
+
+	return pose;
+}
+}
+
 void AnimationComponent::OnLateUpdate(float dt)
 {
 	if (!m_isPlaying || !m_currentAnimation)
@@ -238,84 +338,10 @@ void AnimationComponent::UpdateBoneMatrices()
 	// 1. 모든 본의 로컬 행렬 계산
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		XMVECTOR pos = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restPos));
-		XMVECTOR rot = XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(bones[i].restRot));
-		XMVECTOR scale = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restScale));
-
-		for (const auto& track : tracks)
-		{
-			if (track.BoneNameHash == bones[i].nameHash)
-			{
-				// Position
-				if (track.Flags & EvAsset::HasPos)
-				{
-					XMVECTOR p;
-					if (track.Flags & EvAsset::IsConstPos)
-					{
-						p = XMVectorSet(track.Positions[0], track.Positions[1], track.Positions[2], 1.0f);
-					}
-					else
-					{
-						XMVECTOR p0 = XMVectorSet(
-							track.Positions[frameIdx0 * 3 + 0], track.Positions[frameIdx0 * 3 + 1],
-							track.Positions[frameIdx0 * 3 + 2], 1.0f
-						);
-						XMVECTOR p1 = XMVectorSet(
-							track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1],
-							track.Positions[frameIdx1 * 3 + 2], 1.0f
-						);
-						p = XMVectorLerp(p0, p1, alpha);
-					}
-					//// 유니티와 DX의 X축 반전 보정
-					// pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
-					pos = p;
-				}
-
-				// Rotation
-				if (track.Flags & EvAsset::HasRot)
-				{
-					XMVECTOR r;
-					if (track.Flags & EvAsset::IsConstRot)
-					{
-						r = XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
-					}
-					else
-					{
-						XMVECTOR r0 = XMVectorSet(
-							track.Rotations[frameIdx0 * 4 + 0], track.Rotations[frameIdx0 * 4 + 1],
-							track.Rotations[frameIdx0 * 4 + 2], track.Rotations[frameIdx0 * 4 + 3]
-						);
-						XMVECTOR r1 = XMVectorSet(
-							track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1],
-							track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]
-						);
-						r = XMQuaternionSlerp(r0, r1, alpha);
-					}
-					rot = r;
-				}
-
-				if (track.Flags & EvAsset::HasScale)
-				{
-					if (track.Flags & EvAsset::IsConstScale)
-					{
-						scale = XMVectorSet(track.Scales[0], track.Scales[1], track.Scales[2], 0.0f);
-					}
-					else
-					{
-						XMVECTOR s0 = XMVectorSet(
-							track.Scales[frameIdx0 * 3 + 0], track.Scales[frameIdx0 * 3 + 1],
-							track.Scales[frameIdx0 * 3 + 2], 0.0f
-						);
-						XMVECTOR s1 = XMVectorSet(
-							track.Scales[frameIdx1 * 3 + 0], track.Scales[frameIdx1 * 3 + 1],
-							track.Scales[frameIdx1 * 3 + 2], 0.0f
-						);
-						scale = XMVectorLerp(s0, s1, alpha);
-					}
-				}
-				break;
-			}
-		}
+		BonePose pose = SampleBonePose(bones[i], tracks, frameIdx0, frameIdx1, alpha);
+		XMVECTOR pos = pose.pos;
+		XMVECTOR rot = pose.rot;
+		XMVECTOR scale = pose.scale;
 
 		// Root Motion 처리
 		if (i == 0 && m_enableRootMotion)
