@@ -707,7 +707,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					swordHandle,
 					[scene, playerObjHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Big_Sword.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
