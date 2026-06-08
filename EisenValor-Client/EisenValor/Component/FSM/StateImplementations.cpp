@@ -204,7 +204,7 @@ void GeneralDodgeState::Enter(FSMComponent* fsm)
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
 			uint8_t dodgeKey = 200;
-			auto dir = fsm->GetMoveDirection();
+			auto dir = fsm->GetDodgeDirection();
 			switch (dir)
 			{
 			case FB_ENUMS::MOVE_DIRECTION_TYPE_BWD:

@@ -468,16 +468,23 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	const bool dodgeBackward = input.GetInput(VK_DOWN);
 	const bool dodgeLeft = input.GetInput(VK_LEFT);
 	const bool dodgeRight = input.GetInput(VK_RIGHT);
-	if (!isNeutralStance && input.GetInputDown(VK_SPACE) && (dodgeForward || dodgeBackward || dodgeLeft || dodgeRight))
+	const bool isDodgeDirectionPressed = dodgeForward || dodgeBackward || dodgeLeft || dodgeRight;
+	const bool isDodgeDirectionDown =
+		input.GetInputDown(VK_UP) || input.GetInputDown(VK_DOWN) ||
+		input.GetInputDown(VK_LEFT) || input.GetInputDown(VK_RIGHT);
+	const bool isDodgeRequested =
+		(input.GetInputDown(VK_SPACE) && isDodgeDirectionPressed) ||
+		(input.GetInput(VK_SPACE) && isDodgeDirectionDown);
+	if (!isNeutralStance && isDodgeRequested)
 	{
 		if (dodgeForward)
-			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
 		else if (dodgeBackward)
-			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
 		else if (dodgeLeft)
-			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
 		else if (dodgeRight)
-			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
 
 		if (fsm->RequestState(FSMComponent::StateRequestType::Dodge))
 		{
