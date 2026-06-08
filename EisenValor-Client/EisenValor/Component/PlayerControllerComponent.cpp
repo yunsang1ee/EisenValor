@@ -22,6 +22,7 @@ using namespace FB_ENUMS;
 namespace
 {
 constexpr float kMinMouseDelta = 1e-4f;
+constexpr float kCombatSpaceDoubleTapTime = 0.3f;
 
 struct MovementInputState
 {
@@ -368,10 +369,29 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	if (!movement || !fsm)
 		return;
 
+	auto resetCombatSpaceTap = [this]()
+	{
+		m_hasPendingCombatSpaceTap = false;
+		m_combatSpaceTapElapsed = 0.0f;
+	};
+
 	uint8_t curState = fsm->GetCurStateType();
 
 	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 	{
+		resetCombatSpaceTap();
+		ClearMovementInput(movement);
+		return;
+	}
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DODGE)
+	{
+		resetCombatSpaceTap();
+		ClearMovementInput(movement);
+		return;
+	}
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
+	{
+		resetCombatSpaceTap();
 		ClearMovementInput(movement);
 		return;
 	}
@@ -457,6 +477,74 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	// Run
 	bool isNeutralStance = (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	moveInput.DetermineMovementState(isNeutralStance);
+
+	if (m_hasPendingCombatSpaceTap)
+	{
+		m_combatSpaceTapElapsed += deltaTime;
+		if (m_combatSpaceTapElapsed > kCombatSpaceDoubleTapTime)
+		{
+			resetCombatSpaceTap();
+		}
+	}
+
+	if (isNeutralStance)
+	{
+		resetCombatSpaceTap();
+	}
+
+	// Dodge
+	const bool dodgeForward = input.GetInput(VK_UP);
+	const bool dodgeBackward = input.GetInput(VK_DOWN);
+	const bool dodgeLeft = input.GetInput(VK_LEFT);
+	const bool dodgeRight = input.GetInput(VK_RIGHT);
+	const bool isDodgeDirectionPressed = dodgeForward || dodgeBackward || dodgeLeft || dodgeRight;
+	const bool isDodgeDirectionDown =
+		input.GetInputDown(VK_UP) || input.GetInputDown(VK_DOWN) ||
+		input.GetInputDown(VK_LEFT) || input.GetInputDown(VK_RIGHT);
+	const bool isDodgeRequested =
+		(input.GetInputDown(VK_SPACE) && isDodgeDirectionPressed) ||
+		(input.GetInput(VK_SPACE) && isDodgeDirectionDown);
+	if (!isNeutralStance && isDodgeRequested)
+	{
+		if (dodgeForward)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+		else if (dodgeBackward)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
+		else if (dodgeLeft)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
+		else if (dodgeRight)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
+
+		if (fsm->RequestState(FSMComponent::StateRequestType::Dodge))
+		{
+			resetCombatSpaceTap();
+			ClearMovementInput(movement);
+			return;
+		}
+	}
+
+	const bool isRollRequested =
+		!isNeutralStance &&
+		!isDodgeDirectionPressed &&
+		input.GetInputDown(VK_SPACE) &&
+		m_hasPendingCombatSpaceTap;
+	if (isRollRequested)
+	{
+		resetCombatSpaceTap();
+
+		if (fsm->RequestState(FSMComponent::StateRequestType::Roll))
+		{
+			ClearMovementInput(movement);
+			return;
+		}
+	}
+
+	if (!isNeutralStance && !isDodgeDirectionPressed && input.GetInputDown(VK_SPACE))
+	{
+		m_hasPendingCombatSpaceTap = true;
+		m_combatSpaceTapElapsed = 0.0f;
+	}
+
 	bool canMove =
 		!moveInput.isMoving || fsm->RequestState(FSMComponent::StateRequestType::Move, moveInput.moveStateType);
 	if (!canMove)
@@ -469,6 +557,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		movement->SetMoveSpeed(8.0f);
 	}
+
+	else if (!isNeutralStance)
+    {
+        movement->SetMoveSpeed(1.5f); // 컴뱃 모드 이동 속도
+    }
+
 	else
 	{
 		movement->SetMoveSpeed(4.5f);

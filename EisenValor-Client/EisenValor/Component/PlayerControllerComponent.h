@@ -64,6 +64,9 @@ private:
 	float m_minPitch = -89.0f;
 	float m_maxPitch = 89.0f;
 
+	bool  m_hasPendingCombatSpaceTap = false;
+	float m_combatSpaceTapElapsed = 0.0f;
+
 	dtNavMesh*		m_navMesh;
 	dtNavMeshQuery* m_navMeshQuery;
 	dtQueryFilter	m_queryFilter;

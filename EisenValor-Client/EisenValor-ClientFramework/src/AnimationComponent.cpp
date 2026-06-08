@@ -11,12 +11,145 @@
 
 using namespace DirectX;
 
+namespace
+{
+struct BonePose
+{
+	XMVECTOR pos;
+	XMVECTOR rot;
+	XMVECTOR scale;
+};
+
+// 주어진 뼈와 애니메이션 트랙에서 보간된 본 포즈를 계산하는 함수
+BonePose SampleBonePose(
+	const EvAsset::Bone& bone,
+	const std::vector<EvAsset::AnimationTrack>& tracks,
+	uint32_t frameIdx0,
+	uint32_t frameIdx1,
+	float alpha
+)
+{
+	BonePose pose{
+		XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bone.restPos)),
+		XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(bone.restRot)),
+		XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bone.restScale)),
+	};
+
+	for (const auto& track : tracks)
+	{
+		if (track.BoneNameHash != bone.nameHash)
+			continue;
+
+		// Position
+		if (track.Flags & EvAsset::HasPos)
+		{
+			if (track.Flags & EvAsset::IsConstPos)
+			{
+				pose.pos = XMVectorSet(track.Positions[0], track.Positions[1], track.Positions[2], 1.0f);
+			}
+			else
+			{
+				XMVECTOR p0 = XMVectorSet(
+					track.Positions[frameIdx0 * 3 + 0], track.Positions[frameIdx0 * 3 + 1],
+					track.Positions[frameIdx0 * 3 + 2], 1.0f
+				);
+				XMVECTOR p1 = XMVectorSet(
+					track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1],
+					track.Positions[frameIdx1 * 3 + 2], 1.0f
+				);
+				pose.pos = XMVectorLerp(p0, p1, alpha);
+			}
+			//// 유니티와 DX의 X축 반전 보정
+			// pose.pos = XMVectorSet(-XMVectorGetX(pose.pos), XMVectorGetY(pose.pos), XMVectorGetZ(pose.pos), 1.0f);
+		}
+
+		// Rotation
+		if (track.Flags & EvAsset::HasRot)
+		{
+			if (track.Flags & EvAsset::IsConstRot)
+			{
+				pose.rot = XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
+			}
+			else
+			{
+				XMVECTOR r0 = XMVectorSet(
+					track.Rotations[frameIdx0 * 4 + 0], track.Rotations[frameIdx0 * 4 + 1],
+					track.Rotations[frameIdx0 * 4 + 2], track.Rotations[frameIdx0 * 4 + 3]
+				);
+				XMVECTOR r1 = XMVectorSet(
+					track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1],
+					track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]
+				);
+				pose.rot = XMQuaternionSlerp(r0, r1, alpha);
+			}
+		}
+
+		if (track.Flags & EvAsset::HasScale)
+		{
+			if (track.Flags & EvAsset::IsConstScale)
+			{
+				pose.scale = XMVectorSet(track.Scales[0], track.Scales[1], track.Scales[2], 0.0f);
+			}
+			else
+			{
+				XMVECTOR s0 = XMVectorSet(
+					track.Scales[frameIdx0 * 3 + 0], track.Scales[frameIdx0 * 3 + 1],
+					track.Scales[frameIdx0 * 3 + 2], 0.0f
+				);
+				XMVECTOR s1 = XMVectorSet(
+					track.Scales[frameIdx1 * 3 + 0], track.Scales[frameIdx1 * 3 + 1],
+					track.Scales[frameIdx1 * 3 + 2], 0.0f
+				);
+				pose.scale = XMVectorLerp(s0, s1, alpha);
+			}
+		}
+
+		break;
+	}
+
+	return pose;
+}
+
+// 현재 시점의 자세 꺼내기
+BonePose SampleBonePoseAtTime(const EvAsset::Bone& bone, const AnimationResource& animation, float time)
+{
+	float	 frameRate = animation.GetFrameRate();
+	uint32_t totalFrames = animation.GetTotalFrames();
+	float	 framePos = time * frameRate;
+	uint32_t frameIdx0 = static_cast<uint32_t>(std::floor(framePos)) % totalFrames;
+	uint32_t frameIdx1 = (frameIdx0 + 1) % totalFrames;
+	float	 alpha = framePos - std::floor(framePos);
+
+	return SampleBonePose(bone, animation.GetTracks(), frameIdx0, frameIdx1, alpha);
+}
+
+// 두 자세를 섞기
+BonePose BlendBonePose(const BonePose& from, const BonePose& to, float alpha)
+{
+	return {
+		XMVectorLerp(from.pos, to.pos, alpha),
+		XMQuaternionSlerp(from.rot, to.rot, alpha),
+		XMVectorLerp(from.scale, to.scale, alpha),
+	};
+}
+}
+
 void AnimationComponent::OnLateUpdate(float dt)
 {
 	if (!m_isPlaying || !m_currentAnimation)
 		return;
 
 	m_currentTime += dt;
+	if (m_isBlending)
+	{
+		m_blendTime += dt;
+		if (m_blendTime >= m_blendDuration)
+		{
+			m_isBlending = false;
+			m_blendFromAnimation.reset();
+		}
+	}
+
 	float duration = m_currentAnimation->GetDuration();
 
 	if (m_currentTime >= duration)
@@ -58,6 +191,33 @@ void AnimationComponent::Play(uint8_t key, bool loop, bool rootMotion)
 		return;
 		DEBUG_LOG_FMT("[AnimationComponent] Cannot find animation for key: {}\n", key);
 	}
+
+	m_isBlending = false;
+	m_blendFromAnimation.reset();
+	m_currentKey = key;
+	Play(it->second, loop, rootMotion);
+}
+
+void AnimationComponent::PlayBlend(uint8_t key, float duration, bool loop, bool rootMotion)
+{
+	auto it = m_animations.find(key);
+	if (it == m_animations.end())
+	{
+		return;
+		DEBUG_LOG_FMT("[AnimationComponent] Cannot find animation for key: {}\n", key);
+	}
+
+	if (!m_currentAnimation || m_currentKey == key || duration <= 0.0f)
+	{
+		Play(key, loop, rootMotion);
+		return;
+	}
+
+	m_blendFromAnimation = m_currentAnimation;
+	m_blendFromTime = m_currentTime;
+	m_blendTime = 0.0f;
+	m_blendDuration = duration;
+	m_isBlending = true;
 
 	m_currentKey = key;
 	Play(it->second, loop, rootMotion);
@@ -106,6 +266,8 @@ void AnimationComponent::Stop()
 {
 	m_isPlaying = false;
 	m_currentTime = 0.0f;
+	m_isBlending = false;
+	m_blendFromAnimation.reset();
 	m_animationQueue.clear();
 }
 
@@ -226,102 +388,33 @@ void AnimationComponent::UpdateBoneMatrices()
 		);*/
 	}
 
-	float	 frameRate = m_currentAnimation->GetFrameRate();
-	uint32_t totalFrames = m_currentAnimation->GetTotalFrames();
-	float	 framePos = m_currentTime * frameRate;
-	uint32_t frameIdx0 = static_cast<uint32_t>(std::floor(framePos)) % totalFrames;
-	uint32_t frameIdx1 = (frameIdx0 + 1) % totalFrames;
-	float	 alpha = framePos - std::floor(framePos);
-
-	const auto& tracks = m_currentAnimation->GetTracks();
+	float blendAlpha = 1.0f;
+	if (m_isBlending && m_blendFromAnimation && m_blendDuration > 0.0f)
+	{
+		blendAlpha = std::clamp(m_blendTime / m_blendDuration, 0.0f, 1.0f);
+	}
 
 	// 1. 모든 본의 로컬 행렬 계산
 	for (size_t i = 0; i < boneCount; ++i)
 	{
-		XMVECTOR pos = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restPos));
-		XMVECTOR rot = XMLoadFloat4(reinterpret_cast<const XMFLOAT4*>(bones[i].restRot));
-		XMVECTOR scale = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(bones[i].restScale));
-
-		for (const auto& track : tracks)
+		BonePose motionPose = SampleBonePoseAtTime(bones[i], *m_currentAnimation, m_currentTime);
+		BonePose pose = motionPose;
+		if (m_isBlending && m_blendFromAnimation)
 		{
-			if (track.BoneNameHash == bones[i].nameHash)
-			{
-				// Position
-				if (track.Flags & EvAsset::HasPos)
-				{
-					XMVECTOR p;
-					if (track.Flags & EvAsset::IsConstPos)
-					{
-						p = XMVectorSet(track.Positions[0], track.Positions[1], track.Positions[2], 1.0f);
-					}
-					else
-					{
-						XMVECTOR p0 = XMVectorSet(
-							track.Positions[frameIdx0 * 3 + 0], track.Positions[frameIdx0 * 3 + 1],
-							track.Positions[frameIdx0 * 3 + 2], 1.0f
-						);
-						XMVECTOR p1 = XMVectorSet(
-							track.Positions[frameIdx1 * 3 + 0], track.Positions[frameIdx1 * 3 + 1],
-							track.Positions[frameIdx1 * 3 + 2], 1.0f
-						);
-						p = XMVectorLerp(p0, p1, alpha);
-					}
-					//// 유니티와 DX의 X축 반전 보정
-					// pos = XMVectorSet(-XMVectorGetX(p), XMVectorGetY(p), XMVectorGetZ(p), 1.0f);
-					pos = p;
-				}
-
-				// Rotation
-				if (track.Flags & EvAsset::HasRot)
-				{
-					XMVECTOR r;
-					if (track.Flags & EvAsset::IsConstRot)
-					{
-						r = XMVectorSet(track.Rotations[0], track.Rotations[1], track.Rotations[2], track.Rotations[3]);
-					}
-					else
-					{
-						XMVECTOR r0 = XMVectorSet(
-							track.Rotations[frameIdx0 * 4 + 0], track.Rotations[frameIdx0 * 4 + 1],
-							track.Rotations[frameIdx0 * 4 + 2], track.Rotations[frameIdx0 * 4 + 3]
-						);
-						XMVECTOR r1 = XMVectorSet(
-							track.Rotations[frameIdx1 * 4 + 0], track.Rotations[frameIdx1 * 4 + 1],
-							track.Rotations[frameIdx1 * 4 + 2], track.Rotations[frameIdx1 * 4 + 3]
-						);
-						r = XMQuaternionSlerp(r0, r1, alpha);
-					}
-					rot = r;
-				}
-
-				if (track.Flags & EvAsset::HasScale)
-				{
-					if (track.Flags & EvAsset::IsConstScale)
-					{
-						scale = XMVectorSet(track.Scales[0], track.Scales[1], track.Scales[2], 0.0f);
-					}
-					else
-					{
-						XMVECTOR s0 = XMVectorSet(
-							track.Scales[frameIdx0 * 3 + 0], track.Scales[frameIdx0 * 3 + 1],
-							track.Scales[frameIdx0 * 3 + 2], 0.0f
-						);
-						XMVECTOR s1 = XMVectorSet(
-							track.Scales[frameIdx1 * 3 + 0], track.Scales[frameIdx1 * 3 + 1],
-							track.Scales[frameIdx1 * 3 + 2], 0.0f
-						);
-						scale = XMVectorLerp(s0, s1, alpha);
-					}
-				}
-				break;
-			}
+			BonePose fromPose = SampleBonePoseAtTime(bones[i], *m_blendFromAnimation, m_blendFromTime);
+			pose = BlendBonePose(fromPose, pose, blendAlpha);
 		}
+
+		XMVECTOR pos = pose.pos;
+		XMVECTOR rot = pose.rot;
+		XMVECTOR scale = pose.scale;
+		XMVECTOR rootMotionPos = motionPose.pos;
 
 		// Root Motion 처리
 		if (i == 0 && m_enableRootMotion)
 		{
 			XMFLOAT3 currentRootPos;
-			XMStoreFloat3(&currentRootPos, pos);
+			XMStoreFloat3(&currentRootPos, rootMotionPos);
 
 
 			if (m_rootMotionFirstFrame)
@@ -333,7 +426,7 @@ void AnimationComponent::UpdateBoneMatrices()
 			else
 			{
 				// Delta 계산 (현재 위치 - 이전 위치)
-				XMVECTOR deltaVec = XMVectorSubtract(pos, XMLoadFloat3(&m_lastRootPos));
+				XMVECTOR deltaVec = XMVectorSubtract(rootMotionPos, XMLoadFloat3(&m_lastRootPos));
 
 				// 현재 회전
 				auto&	 transform = myGameObject->GetTransform();
@@ -447,11 +540,30 @@ void AnimationComponent::UpdateBoneMatrices()
 		}
 	};
 
+	auto propagateDescendantsExcept = [&](uint32_t parentIndex, uint32_t excludedChildIndex)
+	{
+		for (const uint32_t childIndex : childIndices[parentIndex])
+		{
+			if (childIndex == excludedChildIndex)
+			{
+				continue;
+			}
+
+			XMMATRIX local = XMLoadFloat4x4(&m_localMatrices[childIndex]);
+			XMMATRIX parentGlobal = XMLoadFloat4x4(&m_globalMatrices[parentIndex]);
+			XMMATRIX global = XMMatrixMultiply(local, parentGlobal);
+			XMStoreFloat4x4(&m_globalMatrices[childIndex], global);
+			propagateDescendants(childIndex);
+		}
+	};
+
 	for (const auto& target : m_ikTargets)
 	{
 		if (target.active && target.weight > 0.0f)
 		{
-			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, target);
+			m_ikProcessor.SolveTwoBoneIK(m_globalMatrices, m_preIKGlobalMatrices, target);
+			propagateDescendantsExcept(target.rootBoneIndex, target.midBoneIndex);
+			propagateDescendantsExcept(target.midBoneIndex, target.boneIndex);
 			propagateDescendants(target.boneIndex);
 		}
 	}
