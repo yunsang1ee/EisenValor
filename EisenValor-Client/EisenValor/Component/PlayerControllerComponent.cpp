@@ -68,6 +68,27 @@ void ClearMovementInput(MovementComponent* movement)
 	movement->SetInputRight(false);
 	movement->ResetVelocity();
 }
+
+bool TrySnapPositionToNavMesh(dtNavMeshQuery* navMeshQuery, XMFLOAT3& position)
+{
+	if (!navMeshQuery)
+		return false;
+
+	dtQueryFilter filter;
+	const float	  extents[3] = {0.5f, 2.5f, 0.5f};
+	const float	  targetPos[3] = {position.x, position.y, position.z};
+	dtPolyRef	  targetPoly = 0;
+	float		  nearestPos[3] = {};
+
+	if (!dtStatusSucceed(navMeshQuery->findNearestPoly(targetPos, extents, &filter, &targetPoly, nearestPos)) ||
+		targetPoly == 0)
+	{
+		return false;
+	}
+
+	position = XMFLOAT3{nearestPos[0], nearestPos[1], nearestPos[2]};
+	return true;
+}
 }
 
 void PlayerControllerComponent::SetMouseSensitivity(float x, float y)
@@ -194,20 +215,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 
 			XMFLOAT3 finalPos;
 			XMStoreFloat3(&finalPos, newWorldPos);
-			if (m_navMeshQuery)
-			{
-				dtQueryFilter filter;
-				const float	  extents[3] = {0.5f, 2.5f, 0.5f};
-				const float	  targetPos[3] = {finalPos.x, finalPos.y, finalPos.z};
-				dtPolyRef	  targetPoly = 0;
-				float		  nearestPos[3] = {};
-
-				if (dtStatusSucceed(m_navMeshQuery->findNearestPoly(targetPos, extents, &filter, &targetPoly, nearestPos)) &&
-					targetPoly != 0)
-				{
-					finalPos = XMFLOAT3{nearestPos[0], nearestPos[1], nearestPos[2]};
-				}
-			}
+			TrySnapPositionToNavMesh(m_navMeshQuery, finalPos);
 			transform.SetWorldPosition(finalPos);
 
 			// 이동 후 서버 패킷 보내기
@@ -692,16 +700,10 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	auto				pos = transform.GetPosition();
 	auto				rot = transform.GetRotation();
 
-	dtQueryFilter filter;
-	const float	  extents[3] = {0.5f, 2.5f, 0.5f};
+	XMFLOAT3 snappedPos{pos.x, pos.y, pos.z};
+	TrySnapPositionToNavMesh(m_navMeshQuery, snappedPos);
 
-	float      newPosArr[3] = { pos.x, pos.y, pos.z };
-	dtPolyRef  newPoly = 0;
-	float newNearestPt[3];
-	
-	m_navMeshQuery->findNearestPoly(newPosArr, extents, &filter, &newPoly, newNearestPt);
-
-	const Vec3 snapPos{newNearestPt[0], newNearestPt[1], newNearestPt[2]};
+	const Vec3 snapPos{snappedPos.x, snappedPos.y, snappedPos.z};
 	transform.SetPosition(snapPos);
 
 	FB_STRUCTS::PosInfo posInfo{{snapPos.x, snapPos.y, snapPos.z}, {rot.x, rot.y, rot.z}};

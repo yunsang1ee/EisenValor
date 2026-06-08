@@ -148,7 +148,7 @@ void IKProcessor::SolveTwoBoneIK(
         {
             previousBendDir = XMVector3Normalize(previousBendDir);
             bendContinuity = std::clamp(XMVectorGetX(XMVector3Dot(previousBendDir, bendDir)), -1.0f, 1.0f);
-            if (bendContinuity < -0.6f)
+            if (bendContinuity < -0.7f)
             {
 				const float bendContinuityAlpha = target.bendContinuityAlpha;
                 bendDir = XMVector3Normalize(XMVectorLerp(previousBendDir, bendDir, 0.01f));
@@ -167,7 +167,7 @@ void IKProcessor::SolveTwoBoneIK(
 
     // 중간 무릎 위치를 로그로 확인하기
     static uint32_t ikDebugLogCounter = 0;
-    if ((++ikDebugLogCounter % 30) == 0)
+    if ((++ikDebugLogCounter % 29) == 0)
     {
         XMFLOAT3 debugTargetDir;
         XMFLOAT3 debugPreIKMidDir;
