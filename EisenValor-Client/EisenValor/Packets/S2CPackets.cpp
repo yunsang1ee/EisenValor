@@ -453,6 +453,8 @@ bool NetBridge::S2C::Handle_LC_CONNECT_TO_GAME_SERVER_PACKET(
 		auto pb{C2S::Make_CS_ENTER_GAME_WORLD_PACKET(worldID, sessionID)};
 		GLOBAL(NetworkGlobal).SendGame(std::move(pb));
 	}
+
+	GLOBAL(NetworkGlobal).DisconnectLobbyServer();
 	return true;
 }
 
@@ -496,7 +498,7 @@ bool NetBridge::S2C::Handle_LC_GAME_RESULT_PACKET(const SOCKET& socket, const FB
 		break;
 	}
 
-	auto pb{NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET()};
+	auto pb{NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET(GLOBAL(SceneGlobal).GetSessionID())};
 	GLOBAL(NetBridge::NetworkGlobal).SendLobby(std::move(pb));
 
 	return true;
@@ -1808,6 +1810,21 @@ bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES
 	// Ping 패킷 수신 시, Pong 패킷 전송
 	auto pb = C2S::Make_CS_PONG_PACKET();
 	GLOBAL(NetworkGlobal).Send(std::move(pb));
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_GAME_FINISH_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_PACKET& recvPkt)
+{
+	const uint32 sessionID = GLOBAL(SceneGlobal).GetSessionID();
+	GLOBAL(NetBridge::NetworkGlobal).DisconnectGameServer();
+	if (false == GLOBAL(NetBridge::NetworkGlobal).ReconnectLobbyServer())
+	{
+		DEBUG_LOG_FMT("Failed to reconnect lobby server.\n");
+		return false;
+	}
+
+	auto pb{NetBridge::C2S::Make_CL_RETURN_TO_GAME_ROOM_PACKET(sessionID)};
+	GLOBAL(NetBridge::NetworkGlobal).SendLobby(std::move(pb));
 	return true;
 }
 

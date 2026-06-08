@@ -71,8 +71,9 @@ void Server::IOCPClientSession::OnDisconnected(const std::string_view reason)
 
 void Server::IOCPClientSession::ProcessPacket(const std::span<const char>& buffer)
 {
-	if(false == ClientPacketHandler::HandlePacket(std::static_pointer_cast<ClientSession>(shared_from_this()), buffer.data())) {
-		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buffer.data());
+	if(false == ClientPacketHandler::HandlePacket(std::static_pointer_cast<ClientSession>(shared_from_this()), buffer)) {
+		PacketHeader packetHeader{};
+		memcpy_s(&packetHeader, sizeof(packetHeader), buffer.data(), sizeof(packetHeader));
 		LOG_ERROR("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 		Disconnect("Recv Invalid Packet");
 	}
@@ -146,8 +147,9 @@ void GameServer::RIOClientSession::OnDisconnected(const std::string_view reason)
 
 void GameServer::RIOClientSession::OnRecvPacket(const std::span<const char>& buf)
 {
-	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf.data())) {
-		const PacketHeader packetHeader = *reinterpret_cast<const PacketHeader*>(buf.data());
+	if(false == m_packetHandler->HandlePacket(GetPacketSession(), buf)) {
+		PacketHeader packetHeader{};
+		memcpy_s(&packetHeader, sizeof(packetHeader), buf.data(), sizeof(packetHeader));
 		LOG_WARNING("Invalid Packet, Type:{}, Size:{}", packetHeader.packetType, packetHeader.packetSize);
 		Disconnect("Recv Invalid Packet");
 	}

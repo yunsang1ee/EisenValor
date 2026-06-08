@@ -6,6 +6,9 @@
 #include "ClientPacketHandler.h"
 #include "GameLobby.h"
 #include "GameRoom.h"
+#ifdef APPLY_DB
+#include "UserSessionStateStore.h"
+#endif
 
 LobbyServer::ClientSession::ClientSession()
 	:PacketSession{SESSION_TYPE::CLIENT}
@@ -33,6 +36,9 @@ void LobbyServer::ClientSession::OnDisconnected(const std::string_view reason)
 	
 	MANAGER(LobbyServer::SessionManager)->RemoveSession(GetClientSession());
 
+	if(SESSION_STATE::TRANSFERRING == GetState())
+		return;
+
 	switch(GetState()) {
 		case SESSION_STATE::IN_GAME_LOBBY:
 		{
@@ -53,6 +59,10 @@ void LobbyServer::ClientSession::OnDisconnected(const std::string_view reason)
 		default:
 			break;
 	}
+
+#ifdef APPLY_DB
+	UserSessionStateStore::SetOffline(GetID());
+#endif
 }
 
 void LobbyServer::ClientSession::OnSend(const uint32 bytesTrasnferred)
