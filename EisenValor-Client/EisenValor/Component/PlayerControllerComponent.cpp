@@ -582,7 +582,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 
 	else if (!isNeutralStance)
     {
-        movement->SetMoveSpeed(1.5f); // 컴뱃 모드 이동 속도
+        movement->SetMoveSpeed(2.0f); // 컴뱃 모드 이동 속도
     }
 
 	else
