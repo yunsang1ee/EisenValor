@@ -11,6 +11,7 @@ enum class StateRequestType : uint8_t {
 	AttackArea,
 	AttackDisarm,
 	Dodge,
+	Roll,
 	CancelAttack,
 	Stun,
 	Die,

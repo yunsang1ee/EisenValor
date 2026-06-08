@@ -234,6 +234,38 @@ void GeneralDodgeState::Exit(FSMComponent* fsm)
 {
 }
 
+// Roll
+// ==================================
+//		 GENERAL_ROLL_STATE
+// ==================================
+GeneralRollState::GeneralRollState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
+{
+	SetHasExitTime(true);
+	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+}
+
+void GeneralRollState::Enter(FSMComponent* fsm)
+{
+	if (!fsm) return;
+	DEBUG_LOG_FMT("[FSM] ROLL Enter\n");
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(204, false, true);
+		}
+	}
+}
+
+void GeneralRollState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void GeneralRollState::Exit(FSMComponent* fsm)
+{
+}
+
 
 // ==================================
 //		 GENERAL_PRE_DELAY_STATE

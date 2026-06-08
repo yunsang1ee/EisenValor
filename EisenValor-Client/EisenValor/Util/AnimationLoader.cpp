@@ -46,6 +46,7 @@ namespace AnimationLoader
 			anim->AddAnimation(201, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_B_Seq.evanim"));
 			anim->AddAnimation(202, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_L_Seq.evanim"));
 			anim->AddAnimation(203, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_R_Seq.evanim"));
+			anim->AddAnimation(204, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Roll/TwinDaggers_Roll_B.evanim"));
 			
 			// 락온 이동 (20~23)
 			anim->AddAnimation(20, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_F.evanim"));
