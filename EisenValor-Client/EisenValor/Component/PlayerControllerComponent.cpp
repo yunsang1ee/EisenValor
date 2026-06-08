@@ -194,6 +194,20 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 
 			XMFLOAT3 finalPos;
 			XMStoreFloat3(&finalPos, newWorldPos);
+			if (m_navMeshQuery)
+			{
+				dtQueryFilter filter;
+				const float	  extents[3] = {0.5f, 2.5f, 0.5f};
+				const float	  targetPos[3] = {finalPos.x, finalPos.y, finalPos.z};
+				dtPolyRef	  targetPoly = 0;
+				float		  nearestPos[3] = {};
+
+				if (dtStatusSucceed(m_navMeshQuery->findNearestPoly(targetPos, extents, &filter, &targetPoly, nearestPos)) &&
+					targetPoly != 0)
+				{
+					finalPos = XMFLOAT3{nearestPos[0], nearestPos[1], nearestPos[2]};
+				}
+			}
 			transform.SetWorldPosition(finalPos);
 
 			// 이동 후 서버 패킷 보내기
