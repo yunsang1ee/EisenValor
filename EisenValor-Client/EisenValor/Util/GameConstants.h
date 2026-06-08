@@ -9,5 +9,5 @@ namespace StateOffset
 	static constexpr uint8_t kAttackOffset  = 100;
 	static constexpr uint8_t kHurtOffset = 150;
 
-	static constexpr float kBlendDuration = 0.2f;
+	static constexpr float kBlendDuration = 0.25f;
 }

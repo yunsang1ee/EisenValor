@@ -9,7 +9,7 @@ class FootIKComponent : public ComponentBase<FootIKComponent>
 {
 public:
 	static constexpr const char* GetStaticTypeName() { return "FootIKComponent"; }
-	static constexpr int		 kPriority = -101;
+	static constexpr int		 kPriority = -99;
 
 	void OnStart() override;
 	void OnLateUpdate(float deltaTime);

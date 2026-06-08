@@ -197,7 +197,7 @@ GeneralDodgeState::GeneralDodgeState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DODGE
 void GeneralDodgeState::Enter(FSMComponent* fsm)
 {
 	if (!fsm) return;
-	DEBUG_LOG_FMT("[FSM] DODGE Enter\n");
+	//DEBUG_LOG_FMT("[FSM] DODGE Enter\n");
 
 	if (auto* obj = fsm->GetGameObject())
 	{
@@ -247,7 +247,7 @@ GeneralRollState::GeneralRollState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
 void GeneralRollState::Enter(FSMComponent* fsm)
 {
 	if (!fsm) return;
-	DEBUG_LOG_FMT("[FSM] ROLL Enter\n");
+	//DEBUG_LOG_FMT("[FSM] ROLL Enter\n");
 
 	if (auto* obj = fsm->GetGameObject())
 	{
