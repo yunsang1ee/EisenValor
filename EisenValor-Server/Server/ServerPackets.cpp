@@ -5,7 +5,7 @@
 
 namespace ServerPackets {
 	// ==================
-	//		세션
+	//		SESSION
 	// ==================
 #pragma region SESSION_PACKETS
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_PING_PACKET()
@@ -15,13 +15,22 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_PING_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_PING_PACKET));
 	}
 
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_GAME_FINISH_PACKET()
+	{
+		flatbuffers::FlatBufferBuilder builder;
+
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_GAME_FINISH_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GAME_FINISH_PACKET));
+	}
+
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_CHAT_PACKET(const std::string_view msg)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_CHAT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_CHAT_PACKETDirect, msg.data()));
 	}
 #pragma endregion
-
+	// =================
+	// 		LOBBY
+	// =================
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::string_view ip, const uint16 port)
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -34,8 +43,26 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_GAME_RESULT_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_GAME_RESULT_PACKET, worldID, winningTeam, blueScore, redScore));
 	}
 	
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_MARK_USER_IN_GAME_PACKET(const uint32 userID, const uint16 worldID)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_MARK_USER_IN_GAME_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_MARK_USER_IN_GAME_PACKET, userID, worldID));
+	}
+
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_MARK_USER_TRANSFERRING_TO_LOBBY_PACKET(const uint32 userID, const uint16 worldID)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_MARK_USER_TRANSFERRING_TO_LOBBY_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_MARK_USER_TRANSFERRING_TO_LOBBY_PACKET, userID, worldID));
+	}
+
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SL_MARK_USER_OFFLINE_FROM_GAME_PACKET(const uint32 userID, const uint16 worldID)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SL_MARK_USER_OFFLINE_FROM_GAME_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSL_MARK_USER_OFFLINE_FROM_GAME_PACKET, userID, worldID));
+	}
+	
 	// ==================
-	//		월드
+	//		WORLD
 	// ==================
 #pragma region WORLD_PACKETS
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_LOCAL_PLAYER(const uint64 id, const Transform& transform, const FB_ENUMS::TEAM_TYPE teamType, const uint32 maxHp, const uint32 currentHp, const uint32 maxStamina, const uint32 currentStamina, const FB_ENUMS::GENERAL_STANCE_TYPE stanceType)
@@ -163,7 +190,7 @@ namespace ServerPackets {
 #pragma endregion
 
 	// =================
-	//		테스트
+	//		TEST
 	// =================
 #pragma region TEST_PACKETS
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_TELEPORT_PACKET(const uint64 objID, const Transform& transform, const uint8 subState, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir)

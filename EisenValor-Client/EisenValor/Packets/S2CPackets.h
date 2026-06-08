@@ -94,6 +94,7 @@ bool Handle_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(
 );
 bool Handle_SC_RESPAWN_GENERAL_PACKET(const SOCKET& socket, const FB_TABLES::SC_RESPAWN_GENERAL_PACKET& recvPkt);
 bool Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES::SC_PING_PACKET& recvPkt);
+bool Handle_SC_GAME_FINISH_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_PACKET& recvPkt);
 
 bool Handle_SC_UPDATE_TEAM_SCORE_PACKET(const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt);
 

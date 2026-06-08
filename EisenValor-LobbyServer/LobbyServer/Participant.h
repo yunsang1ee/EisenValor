@@ -24,9 +24,14 @@ namespace LobbyServer {
 
 	public:
 		std::shared_ptr<ClientSession> GetSession() { return m_session.lock(); }
+		void SetSession(std::shared_ptr<ClientSession> clientSession);
+		const std::string& GetAccountID() const { return m_accountID; }
+		const std::string& GetName() const { return m_name; }
 
 	private:
 		std::weak_ptr<ClientSession> m_session;
+		std::string m_accountID;
+		std::string m_name;
 	};
 
 	class Bot : public Participant {

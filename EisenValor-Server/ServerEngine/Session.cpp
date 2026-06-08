@@ -742,15 +742,24 @@ uint32 GameServerEngine::PacketSession::OnRecv(std::span<const char> buf)
 	uint32 processed{};
 
 	while(buf.size() >= sizeof(PacketHeader)) {
-		const auto header{ *reinterpret_cast<const PacketHeader*>(buf.data()) };
+		PacketHeader header{};
+		memcpy_s(&header, sizeof(header), buf.data(), sizeof(header));
+
+		if(header.packetSize < sizeof(PacketHeader)) {
+			Disconnect("Invalid Packet Size");
+			return processed;
+		}
+
 		if(buf.size() < header.packetSize)
 			break;
 		
-		// OnRecvPacket(buf);
 		OnRecvPacket(buf.first(header.packetSize));
 
 		buf = buf.subspan(header.packetSize);
 		processed += header.packetSize;
+
+		if(false == IsConnected())
+			break;
 	}
 
 	return processed;

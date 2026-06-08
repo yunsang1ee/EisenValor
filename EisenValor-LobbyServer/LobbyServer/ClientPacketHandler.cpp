@@ -158,7 +158,7 @@ bool LobbyServer::ClientPacketHandler::Handle_CL_SIGN_UP_PACKET(const std::share
 		return true;
 	}
 
-	DBBind<3, 0> insertBind{ *dbConnection, L"INSERT INTO dbo.userInfo (id, pw, nickName, winCount, loseCount) VALUES (?, ?, ?, 0, 0)" };
+	DBBind<3, 0> insertBind{ *dbConnection, L"INSERT INTO dbo.userInfo (id, pw, nickName, winCount, loseCount, created_at) VALUES (?, ?, ?, 0, 0, DATEADD(hour, 9, SYSUTCDATETIME()))" };
 	insertBind.BindParam(0, signUpID);
 	insertBind.BindParam(1, signUpPW);
 	insertBind.BindParam(2, signUpNickName);
@@ -308,7 +308,7 @@ bool LobbyServer::ClientPacketHandler::Handle_CL_RETURN_TO_GAME_ROOM_PACKET(cons
 
 	const auto& clientSession = std::static_pointer_cast<ClientSession>(session);
 
-	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM, clientSession);
+	G_GAME_LOBBY->ExecAsync(&LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM, clientSession, recvPkt.user_id());
 
 	return true;
 }

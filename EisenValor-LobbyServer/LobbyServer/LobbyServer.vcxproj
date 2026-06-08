@@ -170,6 +170,7 @@
     <ClCompile Include="GameLobby.cpp" />
     <ClCompile Include="GameRoom.cpp" />
     <ClCompile Include="LobbyServerGlobalFuncs.cpp" />
+    <ClCompile Include="UserSessionStateStore.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -196,6 +197,7 @@
     <ClInclude Include="GameLobby.h" />
     <ClInclude Include="GameRoom.h" />
     <ClInclude Include="LobbyServerGlobalFuncs.h" />
+    <ClInclude Include="UserSessionStateStore.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ServerManager.h" />
   </ItemGroup>
