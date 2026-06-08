@@ -184,6 +184,7 @@ void GeneralRunState::Exit(FSMComponent* fsm)
 
 }
 
+// Dodge
 // ==================================
 //		 GENERAL_DODGE_STATE
 // ==================================
@@ -196,13 +197,15 @@ GeneralDodgeState::GeneralDodgeState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DODGE
 void GeneralDodgeState::Enter(FSMComponent* fsm)
 {
 	if (!fsm) return;
+	DEBUG_LOG_FMT("[FSM] DODGE Enter\n");
 
 	if (auto* obj = fsm->GetGameObject())
 	{
 		if (auto* anim = obj->GetComponent<AnimationComponent>())
 		{
 			uint8_t dodgeKey = 200;
-			switch (fsm->GetMoveDirection())
+			auto dir = fsm->GetMoveDirection();
+			switch (dir)
 			{
 			case FB_ENUMS::MOVE_DIRECTION_TYPE_BWD:
 				dodgeKey = 201;

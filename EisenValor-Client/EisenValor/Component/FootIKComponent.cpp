@@ -274,14 +274,14 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
-	if ((++pelvisLogCounter % 30) == 0)
-	{
-		DEBUG_LOG_FMT(
-			"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} stationary={} speedSq={:.4f} leftHit={} rightHit={} leftSupport={} rightSupport={} leftGap={:.3f} rightGap={:.3f} leftGapDelta={:.3f} rightGapDelta={:.3f}\n",
-			desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, isStationary, horizontalSpeedSq, leftHitValid, rightHitValid, leftPelvisSupport,
-			rightPelvisSupport, leftTargetGap, rightTargetGap, leftTargetGapDelta, rightTargetGapDelta
-		);
-	}
+	//if ((++pelvisLogCounter % 30) == 0)
+	//{
+	//	DEBUG_LOG_FMT(
+	//		"[FootIK] pelvis offset desired={:.3f} applied={:.3f} maxDrop={:.3f} stationary={} speedSq={:.4f} leftHit={} rightHit={} leftSupport={} rightSupport={} leftGap={:.3f} rightGap={:.3f} leftGapDelta={:.3f} rightGapDelta={:.3f}\n",
+	//		desiredPelvisOffsetY, m_pelvisOffsetY, m_maxPelvisDrop, isStationary, horizontalSpeedSq, leftHitValid, rightHitValid, leftPelvisSupport,
+	//		rightPelvisSupport, leftTargetGap, rightTargetGap, leftTargetGapDelta, rightTargetGapDelta
+	//	);
+	//}
 
 	m_prevLeftTargetGap = leftTargetGap;
 	m_prevRightTargetGap = rightTargetGap;

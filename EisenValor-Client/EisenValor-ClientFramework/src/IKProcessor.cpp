@@ -179,17 +179,17 @@ void IKProcessor::SolveTwoBoneIK(
         XMStoreFloat3(&debugBendDir, bendDir);
         XMStoreFloat3(&debugCurrentMidPos, midPos);
         XMStoreFloat3(&debugNewMidPos, newMidPos);
-        DEBUG_LOG_FMT(
-            "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) preIKMidDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) bendContinuity={:.3f} angleA={:.3f}\n",
-            debugTargetDir.x, debugTargetDir.y, debugTargetDir.z, debugPreIKMidDir.x, debugPreIKMidDir.y,
-            debugPreIKMidDir.z, debugBendDir.x, debugBendDir.y, debugBendDir.z,
-            bendContinuity, angleA
-        );
-        DEBUG_LOG_FMT(
-            "[IKProcessor] currentMid=({:.3f},{:.3f},{:.3f}) newMidPos=({:.3f},{:.3f},{:.3f})\n",
-            debugCurrentMidPos.x, debugCurrentMidPos.y, debugCurrentMidPos.z, debugNewMidPos.x,
-            debugNewMidPos.y, debugNewMidPos.z
-        );
+        //DEBUG_LOG_FMT(
+        //    "[IKProcessor] targetDir=({:.3f},{:.3f},{:.3f}) preIKMidDir=({:.3f},{:.3f},{:.3f}) bendDir=({:.3f},{:.3f},{:.3f}) bendContinuity={:.3f} angleA={:.3f}\n",
+        //    debugTargetDir.x, debugTargetDir.y, debugTargetDir.z, debugPreIKMidDir.x, debugPreIKMidDir.y,
+        //    debugPreIKMidDir.z, debugBendDir.x, debugBendDir.y, debugBendDir.z,
+        //    bendContinuity, angleA
+        //);
+        //DEBUG_LOG_FMT(
+        //    "[IKProcessor] currentMid=({:.3f},{:.3f},{:.3f}) newMidPos=({:.3f},{:.3f},{:.3f})\n",
+        //    debugCurrentMidPos.x, debugCurrentMidPos.y, debugCurrentMidPos.z, debugNewMidPos.x,
+        //    debugNewMidPos.y, debugNewMidPos.z
+        //);
     }
     XMVECTOR oldMidDir = currentMidDir;
     XMVECTOR rootRotQuat = GetRotationBetweenVectors(oldMidDir, newMidDir);

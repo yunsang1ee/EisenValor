@@ -41,6 +41,12 @@ namespace AnimationLoader
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Die_Seq.evanim")
 			);
 
+			// 회피 (200~203)
+			anim->AddAnimation(200, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_F_Seq.evanim"));
+			anim->AddAnimation(201, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_B_Seq.evanim"));
+			anim->AddAnimation(202, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_L_Seq.evanim"));
+			anim->AddAnimation(203, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Dodge/Dodge_R_Seq.evanim"));
+			
 			// 락온 이동 (20~23)
 			anim->AddAnimation(20, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_F.evanim"));
 			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_B.evanim"));

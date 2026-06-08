@@ -375,6 +375,11 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		ClearMovementInput(movement);
 		return;
 	}
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DODGE)
+	{
+		ClearMovementInput(movement);
+		return;
+	}
 
 	auto& input = GLOBAL(InputGlobal);
 
@@ -457,6 +462,30 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	// Run
 	bool isNeutralStance = (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	moveInput.DetermineMovementState(isNeutralStance);
+
+	// Dodge
+	const bool dodgeForward = input.GetInput(VK_UP);
+	const bool dodgeBackward = input.GetInput(VK_DOWN);
+	const bool dodgeLeft = input.GetInput(VK_LEFT);
+	const bool dodgeRight = input.GetInput(VK_RIGHT);
+	if (!isNeutralStance && input.GetInputDown(VK_SPACE) && (dodgeForward || dodgeBackward || dodgeLeft || dodgeRight))
+	{
+		if (dodgeForward)
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+		else if (dodgeBackward)
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
+		else if (dodgeLeft)
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
+		else if (dodgeRight)
+			fsm->SetMoveDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
+
+		if (fsm->RequestState(FSMComponent::StateRequestType::Dodge))
+		{
+			ClearMovementInput(movement);
+			return;
+		}
+	}
+
 	bool canMove =
 		!moveInput.isMoving || fsm->RequestState(FSMComponent::StateRequestType::Move, moveInput.moveStateType);
 	if (!canMove)
