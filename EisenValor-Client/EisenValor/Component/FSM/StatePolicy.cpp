@@ -13,11 +13,22 @@ namespace
 				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY));
 	}
 
+	// 이동 금지
 	bool IsPlayerMovementBlockedState(uint8_t stateType)
 	{
 		return (IsPlayerAttackSequenceState(stateType) ||
 				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
-				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD));
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DODGE));
+	}
+
+	// 회피 금지
+	bool IsPlayerDodgeBlockedState(uint8_t stateType)
+	{
+		return (IsPlayerAttackSequenceState(stateType) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DODGE));
 	}
 
 	StateTransitionDecision Accept(uint8_t nextStateType, bool ignoreExitTime = false)
@@ -56,8 +67,10 @@ StateTransitionDecision PlayerStatePolicy::Resolve(
 	case StateRequestType::AttackArea:
 	case StateRequestType::AttackDisarm:
 		if (IsPlayerAttackSequenceState(fsm.GetCurStateType())) return Reject();
-
 		return Accept(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY));
+	case StateRequestType::Dodge:
+		if (IsPlayerDodgeBlockedState(fsm.GetCurStateType())) return Reject();
+		return Accept(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DODGE), true);
 	case StateRequestType::CancelAttack:
 		return Accept(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), true);
 	case StateRequestType::Stun:

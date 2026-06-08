@@ -184,6 +184,53 @@ void GeneralRunState::Exit(FSMComponent* fsm)
 
 }
 
+// ==================================
+//		 GENERAL_DODGE_STATE
+// ==================================
+GeneralDodgeState::GeneralDodgeState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DODGE)
+{
+	SetHasExitTime(true);
+	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+}
+
+void GeneralDodgeState::Enter(FSMComponent* fsm)
+{
+	if (!fsm) return;
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			uint8_t dodgeKey = 200;
+			switch (fsm->GetMoveDirection())
+			{
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_BWD:
+				dodgeKey = 201;
+				break;
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_LFT:
+				dodgeKey = 202;
+				break;
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_RGT:
+				dodgeKey = 203;
+				break;
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_FWD:
+			default:
+				dodgeKey = 200;
+				break;
+			}
+			anim->Play(dodgeKey, false, true);
+		}
+	}
+}
+
+void GeneralDodgeState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void GeneralDodgeState::Exit(FSMComponent* fsm)
+{
+}
+
 
 // ==================================
 //		 GENERAL_PRE_DELAY_STATE

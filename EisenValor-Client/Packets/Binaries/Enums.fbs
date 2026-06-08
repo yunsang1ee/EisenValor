@@ -82,6 +82,7 @@ enum PLAYER_STATE_TYPE: ubyte {
 	ATTACK,
 	STUN,
 	DEAD,
+	DODGE,
 
 	PRE_DELAY = 10,
 	POST_DELAY,

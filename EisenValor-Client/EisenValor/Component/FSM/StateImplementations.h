@@ -35,6 +35,17 @@ class GeneralRunState : public State {
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
+// Dodge
+class GeneralDodgeState : public State {
+public:
+	GeneralDodgeState();
+	virtual ~GeneralDodgeState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
 // PreDelay
 class GeneralPreDelayState : public State {
 public:
