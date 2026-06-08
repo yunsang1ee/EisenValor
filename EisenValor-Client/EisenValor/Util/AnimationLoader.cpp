@@ -58,7 +58,7 @@ namespace AnimationLoader
 			// 2. 공격
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT),
-				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_1_Inplace1.evanim")
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/TwinDaggers_Attack1_1.evanim")
 			);
 
 			anim->AddAnimation(
@@ -73,6 +73,7 @@ namespace AnimationLoader
 					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3.evanim"
 				)
 			);
+
 
 			// 방향별 전투 Idle (60: NONE, 61:TOP, 62:LEFT, 63:RIGHT)
 			anim->AddAnimation(60, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/TwinDaggers_Idle.evanim"));
@@ -102,12 +103,12 @@ namespace AnimationLoader
 			// LEFT (120:Light, 121:Heavy, 122:Area)                                                                                                                                                                                                                                                                                                                                                                                                                                   
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 20,
-				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/Attack_02_Seq.evanim")
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_9.evanim")
 			);
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 21,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3_Inplace1.evanim"
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_6.evanim"
 				)
 			);
 			anim->AddAnimation(
@@ -124,7 +125,7 @@ namespace AnimationLoader
 			);
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 31,
-				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_B1.evanim")
+				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_7Combo_14.evanim")
 			);
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 32,
