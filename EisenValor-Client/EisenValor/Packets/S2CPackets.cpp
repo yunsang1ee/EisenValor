@@ -1881,6 +1881,15 @@ bool NetBridge::S2C::Handle_SC_SOLDIER_ATTACK_PACKET(
 	return true;
 }
 
+bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
+	const SOCKET& socket, const FB_TABLES::SC_GENERAL_GUARD_PACKET& recvPkt
+)
+{
+	// TODO: SC_GENERAL_GUARD_PACKET
+
+	return true;
+}
+
 bool NetBridge::S2C::Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt)
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();

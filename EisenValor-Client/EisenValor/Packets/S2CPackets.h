@@ -108,6 +108,8 @@ bool Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
 
 bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_SOLDIER_ATTACK_PACKET& recvPkt);
 
+bool Handle_SC_GENERAL_GUARD_PACKET(const SOCKET& socket, const FB_TABLES::SC_GENERAL_GUARD_PACKET& recvPkt);
+
 #pragma endregion
 
 #pragma region TEST_PACKETS

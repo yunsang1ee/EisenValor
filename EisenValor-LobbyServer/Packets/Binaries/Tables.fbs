@@ -380,6 +380,11 @@ table SC_SOLDIER_ATTACK_PACKET {
 	obj_id: uint64;
 }
 
+table SC_GENERAL_GUARD_PACKET {
+    defender_id: uint64;
+    attacker_id: uint64;
+}
+
 // ================================================
 //					    TEST
 // ================================================
