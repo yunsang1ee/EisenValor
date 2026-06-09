@@ -147,6 +147,8 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			const AttackInfo& attackerAtkInfo{ attackGeneral->GetAtkInfo() };
 
 			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				auto pb{ ServerPackets::Make_SC_GENERAL_GUARD_PACKET(GetID(), attacker->GetID()) };
+				world->Broadcast(std::move(pb));
 				return false;
 			}
 
@@ -169,6 +171,8 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				auto pb{ ServerPackets::Make_SC_GENERAL_GUARD_PACKET(GetID(), attacker->GetID()) };
+				world->Broadcast(std::move(pb));
 				return false;
 			}
 

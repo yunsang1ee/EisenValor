@@ -187,6 +187,12 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_SOLDIER_ATTACK_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_SOLDIER_ATTACK_PACKET, id));
 	}
 
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_GENERAL_GUARD_PACKET(const uint64 defenderID, const uint64 attackerID)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_GENERAL_GUARD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GENERAL_GUARD_PACKET, defenderID, attackerID));
+	}
+
 #pragma endregion
 
 	// =================
