@@ -51,6 +51,8 @@ bool NetBridge::NetworkGlobal::ConnectLobbyServer(const std::string_view ip, con
 		return false;
 	}
 
+	m_lobbyIP = ip;
+	m_lobbyPort = port;
 	return m_lobbySession->Connect(ip, port);
 }
 
@@ -63,6 +65,17 @@ bool NetBridge::NetworkGlobal::ConnectGameServer(const std::string_view ip, cons
 	}
 
 	return m_gameSession->Connect(ip, port);
+}
+
+bool NetBridge::NetworkGlobal::ReconnectLobbyServer()
+{
+	if (m_lobbyIP.empty() || 0 == m_lobbyPort)
+		return false;
+
+	if (nullptr == m_lobbySession)
+		return false;
+
+	return m_lobbySession->Connect(m_lobbyIP, m_lobbyPort);
 }
 
 void NetBridge::NetworkGlobal::DisconnectLobbyServer()

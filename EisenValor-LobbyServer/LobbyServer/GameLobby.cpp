@@ -3,6 +3,7 @@
 
 #include "ClientSession.h"
 #include "GameRoom.h"
+#include "UserSessionStateStore.h"
 
 LobbyServer::GameLobby::GameLobby()
 {
@@ -49,7 +50,7 @@ void LobbyServer::GameLobby::Handle_CS_LEAVE_GAME_LOBBY(const std::shared_ptr<Cl
 
 	auto pb{ LobbyServer::Make_LC_LEAVE_GAME_LOBBY_PACKET() };
 	clientSession->Send(std::move(pb));
-
+	
 	LeaveGameLobby(clientSession);
 }
 
@@ -97,6 +98,9 @@ void LobbyServer::GameLobby::EnterGameLobby(std::shared_ptr<ClientSession> clien
 	}
 
 	m_users.insert(std::make_pair(id, std::move(clientSession)));
+#ifdef APPLY_DB
+	UserSessionStateStore::SetLobby(id, m_users[id]->GetAccountID(), m_users[id]->GetName());
+#endif
 
 	std::cout << std::format("User: {}, Enter Lobby!", id) << std::endl;
 }
@@ -117,9 +121,7 @@ void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint
 	if(gameRoom) {
 		gameRoom->SetRoomState(FB_ENUMS::ROOM_STATE_TYPE_PLAYING);
 		m_playingWorldRooms[worldID] = roomID;
-
-		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(worldID, "127.0.0.1", port) };
-		gameRoom->Broadcast(std::move(pb));
+		gameRoom->TransferUsersToGameServer(worldID, "127.0.0.1", port);
 	}
 }
 
@@ -230,12 +232,27 @@ void LobbyServer::GameLobby::Handle_CS_START_GAME(const std::shared_ptr<ClientSe
 		gameRoom->StartGame(clientSession);
 }
 
-void LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
+void LobbyServer::GameLobby::Handle_CL_RETURN_TO_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession, const uint32 userID)
 {
-	const auto& gameRoom{ clientSession->GetGameRoom() };
+	if(0 == userID)
+		return;
 
-	if(gameRoom)
-		gameRoom->ReturnToGameRoom(clientSession);
+	UserSessionReturnState returnState;
+	if(false == UserSessionStateStore::LoadReturnState(userID, returnState)) {
+		LOG_WARNING("Return to game room failed. UserID:{} has no return state", userID);
+		return;
+	}
+
+	auto gameRoom{ FindGameRoom(returnState.roomID) };
+	if(nullptr == gameRoom) {
+		LOG_WARNING("Return to game room failed. RoomID:{} not found, UserID:{}", returnState.roomID, userID);
+		return;
+	}
+
+	clientSession->SetID(userID);
+	clientSession->SetAccountID(returnState.accountID);
+	clientSession->SetName(returnState.nickname);
+	gameRoom->ReturnToGameRoom(clientSession, userID);
 }
 
 void LobbyServer::GameLobby::Handle_CL_CHAT(const std::shared_ptr<ClientSession>& clientSession, const std::string_view msg)

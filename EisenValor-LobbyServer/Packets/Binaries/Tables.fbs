@@ -181,6 +181,7 @@ table LC_CONNECT_TO_GAME_SERVER_PACKET {
 }
 
 table CL_RETURN_TO_GAME_ROOM_PACKET {
+	user_id: uint32;
 }
 
 table LC_RETURN_TO_GAME_ROOM_PACKET {
@@ -202,6 +203,20 @@ table SL_GAME_RESULT_PACKET{
 	red_score: uint8;
 }
 
+table SL_MARK_USER_IN_GAME_PACKET {
+	user_id: uint32;
+	world_id: uint16;
+}
+
+table SL_MARK_USER_TRANSFERRING_TO_LOBBY_PACKET {
+	user_id: uint32;
+	world_id: uint16;
+}
+
+table SL_MARK_USER_OFFLINE_FROM_GAME_PACKET {
+	user_id: uint32;
+	world_id: uint16;
+}
 table LC_GAME_RESULT_PACKET {
 	winning_team: FB_ENUMS.TEAM_TYPE;
 	blue_score: uint8;
@@ -363,6 +378,11 @@ table SC_OCCUPATION_ZONE_GAUGE_PACKET {
 
 table SC_SOLDIER_ATTACK_PACKET {
 	obj_id: uint64;
+}
+
+table SC_GENERAL_GUARD_PACKET {
+    defender_id: uint64;
+    attacker_id: uint64;
 }
 
 // ================================================

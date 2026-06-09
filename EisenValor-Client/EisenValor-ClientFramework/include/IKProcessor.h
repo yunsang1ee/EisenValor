@@ -12,6 +12,7 @@ struct IKTarget {
     DirectX::XMVECTOR targetPos; // 목표 모델 공간 좌표 (Model Space)
     DirectX::XMVECTOR poleVector;// 팔꿈치가 향할 방향 (힌트, Elbow Hint)
     float weight = 0.0f;         // IK 적용 강도 (0: 미적용, 1: 완전 적용)
+    float bendContinuityAlpha = 0.01f;
     
     bool active = false;
 };
@@ -24,6 +25,7 @@ public:
     // Two-Bone IK 계산 및 전역 행렬 수정
     void SolveTwoBoneIK(
         std::vector<DirectX::XMFLOAT4X4>& globalMatrices,
+        const std::vector<DirectX::XMFLOAT4X4>& preIKGlobalMatrices,
         const IKTarget& target
     );
 };

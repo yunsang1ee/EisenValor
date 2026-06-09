@@ -71,6 +71,13 @@ void GameServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 		return;
 	}
 
+#ifdef APPLY_LOBBY_SERVER
+	if(WORKER_THREAD_TYPE::LOBBY_SESSION == m_type) {
+		m_lobbySession = session;
+		std::cout << "Lobby Session Registered in Lobby Thread!" << std::endl;
+	}
+#endif
+
 #ifndef APPLY_LOBBY_SERVER
 	static uint32 idGen{ 1 };
 	session->SetID(idGen);
@@ -78,6 +85,19 @@ void GameServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 	if(m_type == WORKER_THREAD_TYPE::GAME_WORLD) {
 		static_cast<GameWorldThread*>(this)->EnterWorld(session);
 	}
+#endif
+}
+
+void GameServerEngine::WorkerThread::SendToLobbyServer(std::shared_ptr<PacketBuffer> pb)
+{
+#ifdef APPLY_LOBBY_SERVER
+	auto lobbySession = GetLobbySession();
+	if(nullptr == lobbySession || SESSION_STATE::FREE == lobbySession->GetState()) {
+		LOG_WARNING("Failed to send packet. Lobby server session is disconnected.");
+		return;
+	}
+
+	lobbySession->Send(std::move(pb));
 #endif
 }
 

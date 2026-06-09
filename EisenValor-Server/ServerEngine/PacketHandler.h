@@ -6,7 +6,7 @@ namespace GameServerEngine {
 
 namespace GameServerEngine {
 	class PacketHandler {
-		using PacketHandlerFunc = bool (*)(const std::shared_ptr<GameServerEngine::PacketSession>&, const char*);
+		using PacketHandlerFunc = bool (*)(const std::shared_ptr<GameServerEngine::PacketSession>&, std::span<const char>);
 	public:
 		PacketHandler();
 		virtual ~PacketHandler();
@@ -15,15 +15,26 @@ namespace GameServerEngine {
 		virtual void Init() abstract;
 
 	public:
-		bool HandlePacket(const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer);
+		bool HandlePacket(const std::shared_ptr<GameServerEngine::PacketSession>& session, std::span<const char> buffer);
 
 	public:
-		static bool Handle_INVALID(const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer) { return false; }
+		static bool Handle_INVALID(const std::shared_ptr<GameServerEngine::PacketSession>& session, std::span<const char> buffer) { return false; }
 
 		template<typename PacketType, typename HandleFunc>
-		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* const buffer)
+		static bool HandlePacket(const HandleFunc handleFunc, const std::shared_ptr<GameServerEngine::PacketSession>& session, std::span<const char> buffer)
 		{
-			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer);
+			flatbuffers::Verifier verifier{
+				reinterpret_cast<const uint8_t*>(buffer.data()),
+				buffer.size()
+			};
+
+			if(false == verifier.VerifyBuffer<PacketType>())
+				return false;
+
+			const PacketType* const packet = flatbuffers::GetRoot<PacketType>(buffer.data());
+			if(nullptr == packet)
+				return false;
+
 			return handleFunc(session, *packet);
 		}
 

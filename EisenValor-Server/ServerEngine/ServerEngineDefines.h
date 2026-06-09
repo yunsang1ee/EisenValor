@@ -23,9 +23,7 @@ friend class Singleton;
 #define LOG_WSA_GET_LAST_ERROR	GameServerEngine::LogManager::PrintLastError
 #define LOG_SAVE	GameServerEngine::LogManager::Save
 
-#ifdef _USE_RIO
 #define REGISTER_PACKET(pkt, type, handler) \
 m_packetHandlerFuncs[static_cast<uint16>(pkt)] = \
-[](const std::shared_ptr<GameServerEngine::PacketSession>& session, const char* buffer) \
+[](const std::shared_ptr<GameServerEngine::PacketSession>& session, const std::span<const char> buffer) \
 { return PacketHandler::HandlePacket<type>(handler, session, buffer); };
-#endif

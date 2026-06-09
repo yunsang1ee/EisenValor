@@ -73,6 +73,7 @@ namespace GameServer {
 			void CheckCollision();
 			void Reset() { memset(m_check.data(), 0, m_check.size() * sizeof(uint32)); }
 			bool IsGameFinish() const { return m_isGameFinish; }
+			bool HasReservedParticipant(const uint32 userID) const { return m_reservedParticipantInfo.contains(userID); }
 		public:
 			void AddGameObject(std::shared_ptr<GameObject> obj) { m_pendingAddObjectQueue.push(std::move(obj)); }
 			void RemoveGameObject(std::shared_ptr<GameObject> gameObject) { m_pendingRemoveObjectQueue.push(gameObject); }
