@@ -40,6 +40,7 @@ public class SkinnedMeshExporter
         int boneCount = smr.bones.Length;
         int bindPoseCount = mesh.bindposes.Length;
         Debug.Log($"[SkinnedMeshExporter] Stats - Bones: {boneCount}, BindPoses: {bindPoseCount}");
+        LogLegWeightSummary(mesh, smr);
         if (boneCount != bindPoseCount)
         {
             Debug.LogWarning($"[SkinnedMeshExporter] 뼈 개수와 BindPose 개수가 일치하지 않습니다! (B:{boneCount}, P:{bindPoseCount})");
@@ -118,6 +119,77 @@ public class SkinnedMeshExporter
         }
     }
 
+    private static void LogLegWeightSummary(Mesh mesh, SkinnedMeshRenderer smr)
+    {
+        if (mesh == null || smr == null || smr.bones == null)
+            return;
+
+        BoneWeight[] weights = mesh.boneWeights;
+        if (weights == null || weights.Length == 0)
+        {
+            Debug.Log($"[SkinnedMeshExporter] LegWeightSummary mesh='{mesh.name}' has no bone weights.");
+            return;
+        }
+
+        Dictionary<string, float> totalWeights = new Dictionary<string, float>();
+        Dictionary<string, int> weightedVertices = new Dictionary<string, int>();
+
+        for (int i = 0; i < weights.Length; ++i)
+        {
+            AccumulateLegWeight(smr.bones, weights[i].boneIndex0, weights[i].weight0, totalWeights, weightedVertices);
+            AccumulateLegWeight(smr.bones, weights[i].boneIndex1, weights[i].weight1, totalWeights, weightedVertices);
+            AccumulateLegWeight(smr.bones, weights[i].boneIndex2, weights[i].weight2, totalWeights, weightedVertices);
+            AccumulateLegWeight(smr.bones, weights[i].boneIndex3, weights[i].weight3, totalWeights, weightedVertices);
+        }
+
+        if (totalWeights.Count == 0)
+        {
+            Debug.Log($"[SkinnedMeshExporter] LegWeightSummary mesh='{mesh.name}' no leg-bone weights found.");
+            return;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.Append($"[SkinnedMeshExporter] LegWeightSummary mesh='{mesh.name}' vertices={weights.Length}");
+        foreach (var pair in totalWeights)
+        {
+            builder.Append($" | {pair.Key}: verts={weightedVertices[pair.Key]}, total={pair.Value:F3}");
+        }
+        Debug.Log(builder.ToString());
+    }
+
+    private static void AccumulateLegWeight(
+        Transform[] bones,
+        int boneIndex,
+        float weight,
+        Dictionary<string, float> totalWeights,
+        Dictionary<string, int> weightedVertices
+    )
+    {
+        if (weight <= 0.0f || boneIndex < 0 || boneIndex >= bones.Length || bones[boneIndex] == null)
+            return;
+
+        string boneName = bones[boneIndex].name;
+        if (!IsLegBoneName(boneName))
+            return;
+
+        if (!totalWeights.ContainsKey(boneName))
+        {
+            totalWeights[boneName] = 0.0f;
+            weightedVertices[boneName] = 0;
+        }
+
+        totalWeights[boneName] += weight;
+        weightedVertices[boneName] += 1;
+    }
+
+    private static bool IsLegBoneName(string boneName)
+    {
+        string lowerName = boneName.ToLowerInvariant();
+        return lowerName.Contains("thigh") ||
+               lowerName.Contains("calf") ||
+               lowerName.Contains("foot") ||
+               lowerName.Contains("leg");
+    }
 
     private static void WriteGuidBytes(BinaryWriter bw, string guidStr)
     {

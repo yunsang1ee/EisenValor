@@ -22,6 +22,7 @@ using namespace FB_ENUMS;
 namespace
 {
 constexpr float kMinMouseDelta = 1e-4f;
+constexpr float kCombatSpaceDoubleTapTime = 0.3f;
 
 struct MovementInputState
 {
@@ -66,6 +67,27 @@ void ClearMovementInput(MovementComponent* movement)
 	movement->SetInputLeft(false);
 	movement->SetInputRight(false);
 	movement->ResetVelocity();
+}
+
+bool TrySnapPositionToNavMesh(dtNavMeshQuery* navMeshQuery, XMFLOAT3& position)
+{
+	if (!navMeshQuery)
+		return false;
+
+	dtQueryFilter filter;
+	const float	  extents[3] = {0.5f, 2.5f, 0.5f};
+	const float	  targetPos[3] = {position.x, position.y, position.z};
+	dtPolyRef	  targetPoly = 0;
+	float		  nearestPos[3] = {};
+
+	if (!dtStatusSucceed(navMeshQuery->findNearestPoly(targetPos, extents, &filter, &targetPoly, nearestPos)) ||
+		targetPoly == 0)
+	{
+		return false;
+	}
+
+	position = XMFLOAT3{nearestPos[0], nearestPos[1], nearestPos[2]};
+	return true;
 }
 }
 
@@ -193,6 +215,7 @@ void PlayerControllerComponent::OnUpdate(float deltaTime)
 
 			XMFLOAT3 finalPos;
 			XMStoreFloat3(&finalPos, newWorldPos);
+			TrySnapPositionToNavMesh(m_navMeshQuery, finalPos);
 			transform.SetWorldPosition(finalPos);
 
 			// 이동 후 서버 패킷 보내기
@@ -368,10 +391,29 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	if (!movement || !fsm)
 		return;
 
+	auto resetCombatSpaceTap = [this]()
+	{
+		m_hasPendingCombatSpaceTap = false;
+		m_combatSpaceTapElapsed = 0.0f;
+	};
+
 	uint8_t curState = fsm->GetCurStateType();
 
 	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 	{
+		resetCombatSpaceTap();
+		ClearMovementInput(movement);
+		return;
+	}
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_DODGE)
+	{
+		resetCombatSpaceTap();
+		ClearMovementInput(movement);
+		return;
+	}
+	if (curState == FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
+	{
+		resetCombatSpaceTap();
 		ClearMovementInput(movement);
 		return;
 	}
@@ -457,6 +499,74 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	// Run
 	bool isNeutralStance = (fsm->GetStance() == FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL);
 	moveInput.DetermineMovementState(isNeutralStance);
+
+	if (m_hasPendingCombatSpaceTap)
+	{
+		m_combatSpaceTapElapsed += deltaTime;
+		if (m_combatSpaceTapElapsed > kCombatSpaceDoubleTapTime)
+		{
+			resetCombatSpaceTap();
+		}
+	}
+
+	if (isNeutralStance)
+	{
+		resetCombatSpaceTap();
+	}
+
+	// Dodge
+	const bool dodgeForward = input.GetInput(VK_UP);
+	const bool dodgeBackward = input.GetInput(VK_DOWN);
+	const bool dodgeLeft = input.GetInput(VK_LEFT);
+	const bool dodgeRight = input.GetInput(VK_RIGHT);
+	const bool isDodgeDirectionPressed = dodgeForward || dodgeBackward || dodgeLeft || dodgeRight;
+	const bool isDodgeDirectionDown =
+		input.GetInputDown(VK_UP) || input.GetInputDown(VK_DOWN) ||
+		input.GetInputDown(VK_LEFT) || input.GetInputDown(VK_RIGHT);
+	const bool isDodgeRequested =
+		(input.GetInputDown(VK_SPACE) && isDodgeDirectionPressed) ||
+		(input.GetInput(VK_SPACE) && isDodgeDirectionDown);
+	if (!isNeutralStance && isDodgeRequested)
+	{
+		if (dodgeForward)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_FWD);
+		else if (dodgeBackward)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_BWD);
+		else if (dodgeLeft)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_LFT);
+		else if (dodgeRight)
+			fsm->SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE_RGT);
+
+		if (fsm->RequestState(FSMComponent::StateRequestType::Dodge))
+		{
+			resetCombatSpaceTap();
+			ClearMovementInput(movement);
+			return;
+		}
+	}
+
+	const bool isRollRequested =
+		!isNeutralStance &&
+		!isDodgeDirectionPressed &&
+		input.GetInputDown(VK_SPACE) &&
+		m_hasPendingCombatSpaceTap;
+	if (isRollRequested)
+	{
+		resetCombatSpaceTap();
+
+		if (fsm->RequestState(FSMComponent::StateRequestType::Roll))
+		{
+			ClearMovementInput(movement);
+			return;
+		}
+	}
+
+	if (!isNeutralStance && !isDodgeDirectionPressed && input.GetInputDown(VK_SPACE))
+	{
+		m_hasPendingCombatSpaceTap = true;
+		m_combatSpaceTapElapsed = 0.0f;
+	}
+
 	bool canMove =
 		!moveInput.isMoving || fsm->RequestState(FSMComponent::StateRequestType::Move, moveInput.moveStateType);
 	if (!canMove)
@@ -469,6 +579,12 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	{
 		movement->SetMoveSpeed(8.0f);
 	}
+
+	else if (!isNeutralStance)
+    {
+        movement->SetMoveSpeed(1.5f); // 컴뱃 모드 이동 속도
+    }
+
 	else
 	{
 		movement->SetMoveSpeed(4.5f);
@@ -584,16 +700,10 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	auto				pos = transform.GetPosition();
 	auto				rot = transform.GetRotation();
 
-	dtQueryFilter filter;
-	const float	  extents[3] = {0.5f, 2.5f, 0.5f};
+	XMFLOAT3 snappedPos{pos.x, pos.y, pos.z};
+	TrySnapPositionToNavMesh(m_navMeshQuery, snappedPos);
 
-	float      newPosArr[3] = { pos.x, pos.y, pos.z };
-	dtPolyRef  newPoly = 0;
-	float newNearestPt[3];
-	
-	m_navMeshQuery->findNearestPoly(newPosArr, extents, &filter, &newPoly, newNearestPt);
-
-	const Vec3 snapPos{newNearestPt[0], newNearestPt[1], newNearestPt[2]};
+	const Vec3 snapPos{snappedPos.x, snappedPos.y, snappedPos.z};
 	transform.SetPosition(snapPos);
 
 	FB_STRUCTS::PosInfo posInfo{{snapPos.x, snapPos.y, snapPos.z}, {rot.x, rot.y, rot.z}};

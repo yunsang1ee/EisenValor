@@ -34,11 +34,11 @@ void GeneralIdleState::Enter(FSMComponent* fsm)
 			{
 				uint8_t dir = fsm->GetCurAttackDir();
 				uint8_t idleKey = StateOffset::kIdleOffset + dir; // 61:TOP, 62:LEFT, 63:RIGHT
-				anim->Play(idleKey, true);
+				anim->PlayBlend(idleKey, StateOffset::kBlendDuration, true, true);
 			}
 			else
 			{
-				anim->Play(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), true);
+				anim->PlayBlend(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), StateOffset::kBlendDuration, true, true);
 			}
 		}
 	}
@@ -64,7 +64,7 @@ void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 
 		if (anim->GetCurrentKey() != targetIdleKey)
 		{
-			anim->Play(targetIdleKey, true);
+			anim->PlayBlend(targetIdleKey, StateOffset::kBlendDuration, true, true);
 		}
 	}
 	else // 일반 태세일 때
@@ -72,7 +72,7 @@ void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 		uint8_t neutralIdleKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
 		if (anim->GetCurrentKey() != neutralIdleKey)
 		{
-			anim->Play(neutralIdleKey, true);
+			anim->Play(neutralIdleKey, true, true);
 		}
 	}
 }
@@ -182,6 +182,88 @@ void GeneralRunState::Update(FSMComponent* fsm, float dt)
 void GeneralRunState::Exit(FSMComponent* fsm)
 {
 
+}
+
+// Dodge
+// ==================================
+//		 GENERAL_DODGE_STATE
+// ==================================
+GeneralDodgeState::GeneralDodgeState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DODGE)
+{
+	SetHasExitTime(true);
+	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+}
+
+void GeneralDodgeState::Enter(FSMComponent* fsm)
+{
+	if (!fsm) return;
+	//DEBUG_LOG_FMT("[FSM] DODGE Enter\n");
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			uint8_t dodgeKey = 200;
+			auto dir = fsm->GetDodgeDirection();
+			switch (dir)
+			{
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_BWD:
+				dodgeKey = 201;
+				break;
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_LFT:
+				dodgeKey = 202;
+				break;
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_RGT:
+				dodgeKey = 203;
+				break;
+			case FB_ENUMS::MOVE_DIRECTION_TYPE_FWD:
+			default:
+				dodgeKey = 200;
+				break;
+			}
+			anim->Play(dodgeKey, false, true);
+		}
+	}
+}
+
+void GeneralDodgeState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void GeneralDodgeState::Exit(FSMComponent* fsm)
+{
+}
+
+// Roll
+// ==================================
+//		 GENERAL_ROLL_STATE
+// ==================================
+GeneralRollState::GeneralRollState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
+{
+	SetHasExitTime(true);
+	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+}
+
+void GeneralRollState::Enter(FSMComponent* fsm)
+{
+	if (!fsm) return;
+	//DEBUG_LOG_FMT("[FSM] ROLL Enter\n");
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			anim->Play(204, false, true);
+		}
+	}
+}
+
+void GeneralRollState::Update(FSMComponent* fsm, float dt)
+{
+}
+
+void GeneralRollState::Exit(FSMComponent* fsm)
+{
 }
 
 
