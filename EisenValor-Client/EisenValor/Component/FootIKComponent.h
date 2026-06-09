@@ -9,7 +9,7 @@ class FootIKComponent : public ComponentBase<FootIKComponent>
 {
 public:
 	static constexpr const char* GetStaticTypeName() { return "FootIKComponent"; }
-	static constexpr int		 kPriority = -101;
+	static constexpr int		 kPriority = -99;
 
 	void OnStart() override;
 	void OnLateUpdate(float deltaTime);
@@ -38,7 +38,6 @@ private:
 
 	bool CacheBones(AnimationComponent& animation);
 	bool IsValidLegCache(const LegBoneCache& cache) const;
-	IKTarget BuildLegIKTarget(const LegBoneCache& cache, DirectX::FXMVECTOR targetPos, float weight) const;
 	bool TrySampleVisualGround(
 		const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
 	) const;
@@ -54,7 +53,12 @@ private:
 	float m_leftWeight = 0.0f;
 	float m_rightWeight = 0.0f;
 	float m_pelvisOffsetY = 0.0f;
+	float m_prevLeftTargetGap = 0.0f;
+	float m_prevRightTargetGap = 0.0f;
+	bool  m_hasPreviousTargetGap = false;
+	uint8_t m_prevAnimationKey = 0;
+	bool  m_hasPreviousAnimationKey = false;
 
 	float m_footSoleOffset = 0.0f;
-	float m_maxPelvisDrop = 0.25f;
+	float m_maxPelvisDrop = 0.8f;
 };

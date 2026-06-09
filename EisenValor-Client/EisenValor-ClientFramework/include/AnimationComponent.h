@@ -33,6 +33,7 @@ public:
 	// 애니메이션 등록 및 키 기반 재생
 	void AddAnimation(uint8_t key, std::shared_ptr<AnimationResource> animation);
 	void Play(uint8_t key, bool loop = true, bool rootMotion = false);
+	void PlayBlend(uint8_t key, float duration, bool loop = true, bool rootMotion = false);
 	void Play(std::shared_ptr<AnimationResource> animation, bool loop = true, bool rootMotion = false);
 
 	// Animation Queue System
@@ -81,6 +82,12 @@ private:
 	float m_currentTime = 0.0f;
 	bool m_isPlaying = false;
 	bool m_isLooping = true;
+
+	std::shared_ptr<AnimationResource> m_blendFromAnimation;
+	float m_blendFromTime = 0.0f;
+	float m_blendTime = 0.0f;
+	float m_blendDuration = 0.0f;
+	bool m_isBlending = false;
 
 	// 큐 시스템 데이터
 	struct AnimationQueueInfo {

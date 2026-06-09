@@ -1,17 +1,17 @@
 #pragma once
 
 /*
-	세션: 0 ~ 9
-	로그인: 10 ~ 99
-	로비: 100 ~ 999
-	룸: 1000 ~ 9999
-	월드: 10000 ~ 19999
-	테스트: 20000 ~ 65534
+	SESSION: 0 ~ 9
+	LOGIN: 10 ~ 99
+	LOBBY: 100 ~ 999
+	ROOM: 1000 ~ 9999
+	WORLD: 10000 ~ 19999
+	TEST: 20000 ~ 65534
 */
 
 enum class PACKET_TYPE : uint16 {
 	// ==================
-	//		세션
+	//		SESSION
 	// ==================
 #pragma region SESSION_PACKETS
 	CS_PONG_PKT = 0,
@@ -19,7 +19,7 @@ enum class PACKET_TYPE : uint16 {
 #pragma endregion
 
 	// ==================
-	//		로그인
+	//		LOGIN
 	// ==================
 #pragma region LOGIN_PACKETS
 	CL_LOGIN_PKT = 10,
@@ -32,7 +32,7 @@ enum class PACKET_TYPE : uint16 {
 #pragma endregion
 
 	// ==================
-	//		로비
+	//		LOBBY
 	// ==================
 #pragma region LOBBY_PACKETS
 	CL_ENTER_GAME_LOBBY_PKT = 100,
@@ -51,7 +51,7 @@ enum class PACKET_TYPE : uint16 {
 
 
 	// ==================
-	//		룸
+	//		ROOM
 	// ==================
 #pragma region ROOM_PACKETS
 	CL_ENTER_GAME_ROOM_PKT = 1000,
@@ -92,6 +92,10 @@ enum class PACKET_TYPE : uint16 {
 
 	SL_GAME_RESULT_PKT = 1024,
 	LC_GAME_RESULT_PKT = 1025,
+
+	SL_MARK_USER_IN_GAME_PKT = 1026,
+	SL_MARK_USER_TRANSFERRING_TO_LOBBY_PKT = 1027,
+	SL_MARK_USER_OFFLINE_FROM_GAME_PKT = 1028,
 #pragma endregion
 
 #pragma region TEST_PACKETS

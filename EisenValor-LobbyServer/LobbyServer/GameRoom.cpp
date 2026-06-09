@@ -8,6 +8,7 @@
 #ifdef APPLY_DB
 #include "DBConnectionPool.h"
 #include "DBBind.h"
+#include "UserSessionStateStore.h"
 #endif
 
 LobbyServer::GameRoom::GameRoom()
@@ -92,6 +93,9 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 
 	clientSession->SetGameRoom(shared_from_this());
 	clientSession->SetState(SESSION_STATE::IN_GAME_ROOM);
+#ifdef APPLY_DB
+	UserSessionStateStore::SetRoom(sessionID, clientSession->GetAccountID(), clientSession->GetName(), m_info.id);
+#endif
 
 	EnterParticipant(newUser);
 }
@@ -258,6 +262,44 @@ void LobbyServer::GameRoom::ReturnToGameRoom(const std::shared_ptr<ClientSession
 	clientSession->Send(std::move(pb));
 }
 
+void LobbyServer::GameRoom::ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession, const uint32 userID)
+{
+	auto iter{ m_users.find(userID) };
+	if(iter == m_users.end()) {
+		LOG_WARNING("Return to game room failed. UserID:{} is not in RoomID:{}", userID, m_info.id);
+		return;
+	}
+
+	iter->second->SetSession(clientSession);
+	clientSession->SetID(userID);
+	clientSession->SetGameRoom(shared_from_this());
+	ReturnToGameRoom(clientSession);
+
+#ifdef APPLY_DB
+	UserSessionStateStore::SetRoom(userID, clientSession->GetAccountID(), clientSession->GetName(), m_info.id);
+#endif
+}
+
+void LobbyServer::GameRoom::TransferUsersToGameServer(const uint16 worldID, const std::string_view ip, const uint16 port)
+{
+	for(const auto& [id, user] : m_users) {
+		auto session{ user->GetSession() };
+		if(nullptr == session)
+			continue;
+
+#ifdef APPLY_DB
+		if(false == UserSessionStateStore::SetTransferringToGame(id, session->GetAccountID(), session->GetName(), m_info.id, worldID)) {
+			LOG_WARNING("Failed to set transferring state. UserID:{}, RoomID:{}, WorldID:{}", id, m_info.id, worldID);
+			continue;
+		}
+#endif
+
+		session->SetState(SESSION_STATE::TRANSFERRING);
+		auto pb{ LobbyServer::Make_LC_CONNECT_TO_GAME_SERVER_PACKET(worldID, ip, port) };
+		session->Send(std::move(pb));
+	}
+}
+
 void LobbyServer::GameRoom::ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore)
 {
 	if(m_gameResultApplied)
@@ -287,10 +329,7 @@ void LobbyServer::GameRoom::ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTea
 
 	for(const auto& [id, user] : m_users) {
 		auto session{ user->GetSession() };
-		if(nullptr == session)
-			continue;
-
-		const std::string& accountID{ session->GetAccountID() };
+		const std::string& accountID{ session ? session->GetAccountID() : user->GetAccountID() };
 		if(accountID.empty())
 			continue;
 
@@ -311,8 +350,10 @@ void LobbyServer::GameRoom::ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTea
 		}
 #else
 		LOG_INFO("Game result DB update skipped. RoomID:{}, AccountID:{}, Result:{}", m_info.id, accountID, isWinner ? "Win" : "Lose");
-		auto pb{ LobbyServer::Make_LC_GAME_RESULT_PACKET(winningTeam, blueScore, redScore) };
-		session->Send(pb);
+		if(session) {
+			auto pb{ LobbyServer::Make_LC_GAME_RESULT_PACKET(winningTeam, blueScore, redScore) };
+			session->Send(pb);
+		}
 #endif
 	}
 

@@ -64,8 +64,11 @@ private:
 	float m_minPitch = -89.0f;
 	float m_maxPitch = 89.0f;
 
-	dtNavMesh*		m_navMesh;
-	dtNavMeshQuery* m_navMeshQuery;
+	bool  m_hasPendingCombatSpaceTap = false;
+	float m_combatSpaceTapElapsed = 0.0f;
+
+	dtNavMesh*		m_navMesh = nullptr;
+	dtNavMeshQuery* m_navMeshQuery = nullptr;
 	dtQueryFilter	m_queryFilter;
 
 	// Shoulder view vertical now provided by CameraConfig::kCameraHeight

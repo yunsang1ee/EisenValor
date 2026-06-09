@@ -30,6 +30,8 @@ namespace LobbyServer {
 		void ReadyGame(const std::shared_ptr<ClientSession>& clientSession);
 		void StartGame(const std::shared_ptr<ClientSession>& clientSession);
 		void ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession);
+		void ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession, const uint32 userID);
+		void TransferUsersToGameServer(const uint16 worldID, const std::string_view ip, const uint16 port);
 		void ApplyGameResult(const FB_ENUMS::TEAM_TYPE winningTeam, const uint8 blueScore, const uint8 redScore);
 
 		std::shared_ptr<User> GetSessionUser(const std::shared_ptr<ClientSession>& clientSession);

@@ -6,7 +6,7 @@
 #define ASSERT_CRASH(expr) assert(expr)
 #endif
 
-// #define APPLY_DB
+#define APPLY_DB
 
 #include "LobbyServerEnginePch.h"
 
@@ -29,3 +29,5 @@ extern std::shared_ptr<LobbyServer::GameLobby> G_GAME_LOBBY;
 
 #include <sql.h>
 #include <sqlext.h>
+
+#pragma comment(lib, "odbc32.lib")
