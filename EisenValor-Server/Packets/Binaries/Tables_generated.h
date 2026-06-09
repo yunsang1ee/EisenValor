@@ -243,6 +243,9 @@ struct SC_OCCUPATION_ZONE_GAUGE_PACKETBuilder;
 struct SC_SOLDIER_ATTACK_PACKET;
 struct SC_SOLDIER_ATTACK_PACKETBuilder;
 
+struct SC_GENERAL_GUARD_PACKET;
+struct SC_GENERAL_GUARD_PACKETBuilder;
+
 struct CS_TELEPORT_PACKET;
 struct CS_TELEPORT_PACKETBuilder;
 
@@ -3950,6 +3953,57 @@ inline ::flatbuffers::Offset<SC_SOLDIER_ATTACK_PACKET> CreateSC_SOLDIER_ATTACK_P
     uint64_t obj_id = 0) {
   SC_SOLDIER_ATTACK_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
+  return builder_.Finish();
+}
+
+struct SC_GENERAL_GUARD_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_GENERAL_GUARD_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DEFENDER_ID = 4,
+    VT_ATTACKER_ID = 6
+  };
+  uint64_t defender_id() const {
+    return GetField<uint64_t>(VT_DEFENDER_ID, 0);
+  }
+  uint64_t attacker_id() const {
+    return GetField<uint64_t>(VT_ATTACKER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DEFENDER_ID, 8) &&
+           VerifyField<uint64_t>(verifier, VT_ATTACKER_ID, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_GENERAL_GUARD_PACKETBuilder {
+  typedef SC_GENERAL_GUARD_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_defender_id(uint64_t defender_id) {
+    fbb_.AddElement<uint64_t>(SC_GENERAL_GUARD_PACKET::VT_DEFENDER_ID, defender_id, 0);
+  }
+  void add_attacker_id(uint64_t attacker_id) {
+    fbb_.AddElement<uint64_t>(SC_GENERAL_GUARD_PACKET::VT_ATTACKER_ID, attacker_id, 0);
+  }
+  explicit SC_GENERAL_GUARD_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_GENERAL_GUARD_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_GENERAL_GUARD_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_GENERAL_GUARD_PACKET> CreateSC_GENERAL_GUARD_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t defender_id = 0,
+    uint64_t attacker_id = 0) {
+  SC_GENERAL_GUARD_PACKETBuilder builder_(_fbb);
+  builder_.add_attacker_id(attacker_id);
+  builder_.add_defender_id(defender_id);
   return builder_.Finish();
 }
 
