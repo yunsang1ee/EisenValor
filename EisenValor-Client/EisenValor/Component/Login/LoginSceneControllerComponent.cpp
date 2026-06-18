@@ -1,10 +1,10 @@
 #include "stdafxClient.h"
-#include "LoginControllerComponent.h"
+#include "LoginSceneControllerComponent.h"
 #include "InputGlobal.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 
-void LoginControllerComponent::OnUpdate(float deltaTime)
+void LoginSceneControllerComponent::OnUpdate(float deltaTime)
 {
 	// L 키 입력
 #ifdef APPLY_LOBBY_SERVER
