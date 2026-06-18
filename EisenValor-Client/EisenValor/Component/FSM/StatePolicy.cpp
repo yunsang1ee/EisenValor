@@ -95,6 +95,10 @@ StateTransitionDecision PlayerStatePolicy::Resolve(
 		return Accept((targetStateOverride != 0)
 			? targetStateOverride
 			: static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE));
+	case StateRequestType::Guard:
+		if (fsm.GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)) return Reject();
+		if (targetStateOverride == 0) return Reject();
+		return Accept(targetStateOverride, true);
 	case StateRequestType::ForcedServerCorrection:
 		if (IsPlayerAttackSequenceState(fsm.GetCurStateType())) return Reject();
 
