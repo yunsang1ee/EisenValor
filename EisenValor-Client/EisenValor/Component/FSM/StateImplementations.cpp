@@ -468,13 +468,13 @@ void GeneralGuardState::Enter(FSMComponent* fsm)
 			switch (fsm->GetGuardRole())
 			{
 			case FSMComponent::GuardRole::Defender:
-				anim->Play(205, true, true);
+				anim->Play(210, false, true);
 				break;
 			case FSMComponent::GuardRole::Attacker:
 				anim->Play(161, false, true);
 				break;
 			default:
-				anim->Play(205, true, true);
+				anim->Play(210, false, true);
 				break;
 			}
 		}
