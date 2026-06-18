@@ -6,6 +6,7 @@
 
 void LobbySceneControllerComponent::OnUpdate(float deltaTime)
 {
+#ifdef APPLY_LOBBY_SERVER
 	// 로비에서 나가기
 	if (GLOBAL(InputGlobal).GetInputDown(VK_F1))
 	{
@@ -25,4 +26,5 @@ void LobbySceneControllerComponent::OnUpdate(float deltaTime)
 		auto pb{NetBridge::C2S::Make_CL_ENTER_GAME_ROOM_PACKET(roomID)};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
+#endif
 }
