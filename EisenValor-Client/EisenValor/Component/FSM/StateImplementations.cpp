@@ -448,6 +448,73 @@ void GeneralStunState::Exit(FSMComponent* fsm)
 }
 
 // ==================================
+//		  GENERAL_GUARD_STATE
+// ==================================
+GeneralGuardState::GeneralGuardState() : State(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+{
+	SetHasExitTime(false);
+}
+
+void GeneralGuardState::Enter(FSMComponent* fsm)
+{
+	if (!fsm) return;
+
+	fsm->SetStateTimer(0.0f);
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			switch (fsm->GetGuardRole())
+			{
+			case FSMComponent::GuardRole::Defender:
+				anim->Play(205, true, true);
+				break;
+			case FSMComponent::GuardRole::Attacker:
+				anim->Play(161, false, true);
+				break;
+			default:
+				anim->Play(205, true, true);
+				break;
+			}
+		}
+	}
+}
+
+void GeneralGuardState::Update(FSMComponent* fsm, float dt)
+{
+	if (!fsm) return;
+
+	auto* obj = fsm->GetGameObject();
+	if (!obj) return;
+
+	auto* anim = obj->GetComponent<AnimationComponent>();
+	if (!anim) return;
+
+	if (fsm->GetGuardRole() == FSMComponent::GuardRole::Attacker)
+	{
+		if (anim->IsAnimationEnd())
+		{
+			fsm->SetGuardRole(FSMComponent::GuardRole::None);
+			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		}
+		return;
+	}
+
+	if (anim->IsAnimationEnd())
+	{
+		fsm->SetGuardRole(FSMComponent::GuardRole::None);
+		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+	}
+}
+
+void GeneralGuardState::Exit(FSMComponent* fsm)
+{
+	if (!fsm) return;
+	fsm->SetGuardRole(FSMComponent::GuardRole::None);
+}
+
+// ==================================
 //		  GENERAL_DEAD_STATE
 // ==================================
 GeneralDeadState::GeneralDeadState() : State(FB_ENUMS::PLAYER_STATE_TYPE_DEAD)

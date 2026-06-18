@@ -1885,7 +1885,38 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_GENERAL_GUARD_PACKET& recvPkt
 )
 {
-	// TODO: SC_GENERAL_GUARD_PACKET
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	const uint64 defenderID = recvPkt.defender_id();
+	const uint64 attackerID = recvPkt.attacker_id();
+
+	if (auto* defenderObj = scene->FindGameObjectByServerID(defenderID))
+	{
+		if (auto* fsm = defenderObj->GetComponent<FSMComponent>())
+		{
+			fsm->SetGuardRole(FSMComponent::GuardRole::Defender);
+			fsm->RequestState(
+				FSMComponent::StateRequestType::Guard,
+				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+			);
+		}
+	}
+
+	if (auto* attackerObj = scene->FindGameObjectByServerID(attackerID))
+	{
+		if (auto* fsm = attackerObj->GetComponent<FSMComponent>())
+		{
+			fsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
+			fsm->RequestState(
+				FSMComponent::StateRequestType::Guard,
+				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+			);
+		}
+	}
 
 	return true;
 }

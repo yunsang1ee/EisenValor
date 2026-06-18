@@ -21,6 +21,7 @@ void StatePool::Initialize()
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DEAD] = std::make_unique<GeneralDeadState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_DODGE] = std::make_unique<GeneralDodgeState>();
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_ROLL] = std::make_unique<GeneralRollState>();
+	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_GUARD] = std::make_unique<GeneralGuardState>();
 
 	// 클라용
 	s_instanceMap[FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY] = std::make_unique<GeneralPreDelayState>();
