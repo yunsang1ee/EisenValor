@@ -6,6 +6,8 @@
 #include "WorkerThread.h"
 #include "RIOCore.h"
 
+// #define PRINT_SESSION_LOG
+
 GameServerEngine::Session::Session(const SESSION_TYPE type)
 	:m_socket{ 0 }, m_connected{ false }, m_clientAddr{}, m_state{ SESSION_STATE::FREE }, m_type{ type }, m_pingInterval { std::chrono::milliseconds(MANAGER(GameServerEngine::ServerEngineConfigManager)->GetSessionConfig().PING_INTERVAL_MS)},
 	m_timeoutInterval{ std::chrono::milliseconds(std::chrono::milliseconds(MANAGER(GameServerEngine::ServerEngineConfigManager)->GetSessionConfig().SESSION_TIMEOUT_MS)) }, m_lastPing{ std::chrono::high_resolution_clock::now() }
@@ -14,7 +16,9 @@ GameServerEngine::Session::Session(const SESSION_TYPE type)
 
 GameServerEngine::Session::~Session()
 {
+#ifdef PRINT_SESSION_LOG
 	std::cout << std::format("~Session, ID = {}", m_id) << std::endl;
+#endif
 	CloseSocket();
 }
 

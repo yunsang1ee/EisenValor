@@ -34,7 +34,9 @@ GameServer::Contents::GameWorld::GameWorld()
 
 GameServer::Contents::GameWorld::~GameWorld()
 {
+#ifdef PRINT_GAME_WORLD_LOG
 	std::cout << "~GameWorld" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GameWorld::Init(const std::unordered_map<uint32, GameWorldParticipantInfo>& info)
@@ -859,11 +861,15 @@ void GameServer::Contents::GameWorld::AddScore(const FB_ENUMS::TEAM_TYPE teamTyp
 {
 	if(FB_ENUMS::TEAM_TYPE_BLUE == teamType) {
 		m_blueTeamScore += amount;
+#ifdef PRINT_GAME_WORLD_LOG
 		std::cout << "Blue Team Score: " << static_cast<uint32>(m_blueTeamScore) << std::endl;
+#endif
 	}
 	else if(FB_ENUMS::TEAM_TYPE_RED == teamType) {
 		m_redTeamScore += amount;
+#ifdef PRINT_GAME_WORLD_LOG
 		std::cout << "Red Team Score: " << static_cast<uint32>(m_redTeamScore) << std::endl;
+#endif
 	}
 
 	auto pb = ServerPackets::Make_SC_UPDATE_TEAM_SCORE_PACKET(m_blueTeamScore, m_redTeamScore);
