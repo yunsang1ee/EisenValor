@@ -14,6 +14,7 @@
 #include "ComponentStorage.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "TextUIComponent.h"
 #include "TextureResource.h"
 #include "DxTexture.h"
 #include <algorithm>
@@ -295,6 +296,18 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 		if (btnStorage)
 		{
 			for (ButtonUIComponent& ui : btnStorage->GetList())
+			{
+				if (ui.GetGameObject()->IsActiveInHierarchy())
+				{
+					renderableUIs.push_back(&ui);
+				}
+			}
+		}
+
+		ComponentStorage<TextUIComponent>* textStorage = scene->GetStorage<TextUIComponent>();
+		if (textStorage)
+		{
+			for (TextUIComponent& ui : textStorage->GetList())
 			{
 				if (ui.GetGameObject()->IsActiveInHierarchy())
 				{

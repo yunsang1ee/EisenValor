@@ -363,12 +363,13 @@ enum PLAYER_STATE_TYPE : uint8_t {
   PLAYER_STATE_TYPE_ROLL = 8,
   PLAYER_STATE_TYPE_PRE_DELAY = 10,
   PLAYER_STATE_TYPE_POST_DELAY = 11,
-  PLAYER_STATE_TYPE_END = 12,
+  PLAYER_STATE_TYPE_GUARD = 12,
+  PLAYER_STATE_TYPE_END = 13,
   PLAYER_STATE_TYPE_MIN = PLAYER_STATE_TYPE_NONE,
   PLAYER_STATE_TYPE_MAX = PLAYER_STATE_TYPE_END
 };
 
-inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[12] {
+inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[13] {
   static const PLAYER_STATE_TYPE values[] = {
     PLAYER_STATE_TYPE_NONE,
     PLAYER_STATE_TYPE_IDLE,
@@ -381,13 +382,14 @@ inline const PLAYER_STATE_TYPE (&EnumValuesPLAYER_STATE_TYPE())[12] {
     PLAYER_STATE_TYPE_ROLL,
     PLAYER_STATE_TYPE_PRE_DELAY,
     PLAYER_STATE_TYPE_POST_DELAY,
+    PLAYER_STATE_TYPE_GUARD,
     PLAYER_STATE_TYPE_END
   };
   return values;
 }
 
 inline const char * const *EnumNamesPLAYER_STATE_TYPE() {
-  static const char * const names[14] = {
+  static const char * const names[15] = {
     "NONE",
     "IDLE",
     "WALK",
@@ -400,6 +402,7 @@ inline const char * const *EnumNamesPLAYER_STATE_TYPE() {
     "",
     "PRE_DELAY",
     "POST_DELAY",
+    "GUARD",
     "END",
     nullptr
   };

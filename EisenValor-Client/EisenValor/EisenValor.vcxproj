@@ -358,6 +358,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\LobbyScene.h" />
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
+    <ClInclude Include="Scene\StartScene.h" />
     <ClInclude Include="Scene\WorldScene.h" />
     <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
     <ClInclude Include="stdafxClient.h" />
@@ -464,6 +465,7 @@ exit /b 0</Command>
     <ClCompile Include="Scene\LobbyScene.cpp" />
     <ClCompile Include="Scene\LoginScene.cpp" />
     <ClCompile Include="Scene\RoomScene.cpp" />
+    <ClCompile Include="Scene\StartScene.cpp" />
     <ClCompile Include="Scene\WorldScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

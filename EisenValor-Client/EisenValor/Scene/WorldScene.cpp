@@ -26,6 +26,7 @@
 #include "MeshResource.h"
 
 // Resource
+#include "NetworkGlobal.h"
 #include "ResourceGlobal.h"
 #include "SceneResource.h"
 #include "SkinnedMeshResource.h"
@@ -110,6 +111,11 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
+
+	if (!GLOBAL(NetBridge::NetworkGlobal).Init("127.0.0.1", G_GAME_SERVER_PORT))
+	{
+		DEBUG_LOG_FMT("[WorldScene] Failed to connect game server.\n");
+	}
 
 	bool loadedScene = false;
 	if (auto sceneResource = GLOBAL(ResourceGlobal).Load<SceneResource>(std::filesystem::path(kDefaultMapScenePath)))

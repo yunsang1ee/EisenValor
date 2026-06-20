@@ -101,6 +101,17 @@ public:
 	virtual void Exit(FSMComponent* fsm) override;
 };
 
+// Guard
+class GeneralGuardState : public State {
+public:
+	GeneralGuardState();
+	virtual ~GeneralGuardState() = default;
+
+	virtual void Enter(FSMComponent* fsm) override;
+	virtual void Update(FSMComponent* fsm, float dt) override;
+	virtual void Exit(FSMComponent* fsm) override;
+};
+
 // Dead
 class GeneralDeadState : public State {
 public:

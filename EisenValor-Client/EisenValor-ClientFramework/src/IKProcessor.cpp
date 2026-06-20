@@ -148,11 +148,11 @@ void IKProcessor::SolveTwoBoneIK(
         {
             previousBendDir = XMVector3Normalize(previousBendDir);
             bendContinuity = std::clamp(XMVectorGetX(XMVector3Dot(previousBendDir, bendDir)), -1.0f, 1.0f);
-            if (bendContinuity < -0.7f)
-            {
-				const float bendContinuityAlpha = target.bendContinuityAlpha;
-                bendDir = XMVector3Normalize(XMVectorLerp(previousBendDir, bendDir, 0.01f));
-            }
+    //        if (bendContinuity < -0.7f)
+    //        {
+				//const float bendContinuityAlpha = target.bendContinuityAlpha;
+    //            bendDir = XMVector3Normalize(XMVectorLerp(previousBendDir, bendDir, 0.01f));
+    //        }
         }
     }
     XMStoreFloat3(&previousBendDirs[bendCacheKey], bendDir);

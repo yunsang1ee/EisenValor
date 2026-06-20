@@ -16,6 +16,7 @@ enum class StateRequestType : uint8_t {
 	Stun,
 	Die,
 	IdleRecovery,
+	Guard,
 	ForcedServerCorrection
 };
 

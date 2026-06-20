@@ -277,6 +277,9 @@
     <ClInclude Include="Component\World\WorldSceneControllerComponent.h">
       <Filter>Component\World</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\StartScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafxClient.cpp">
@@ -419,6 +422,9 @@
     </ClCompile>
     <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp">
       <Filter>Component\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\StartScene.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
