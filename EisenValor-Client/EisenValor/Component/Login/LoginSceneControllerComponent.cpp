@@ -243,11 +243,13 @@ void LoginSceneControllerComponent::OnUpdate(float deltaTime)
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			return;
 		}
-
-		DEBUG_LOG_FMT("[LoginSceneControllerComponent] Sending CL_SIGN_UP...\n");
-		const std::string nickname = "TestNickName" + std::to_string(GetCurrentProcessId());
-		auto pb = NetBridge::C2S::Make_CL_SIGN_UP_PACKET(result.id, result.password, nickname);
-		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		else if (result.action == LoginDialogAction::Register)
+		{
+			DEBUG_LOG_FMT("[LoginSceneControllerComponent] Sending CL_SIGN_UP...\n");
+			const std::string nickname = "TestNickName" + std::to_string(GetCurrentProcessId());
+			auto			  pb = NetBridge::C2S::Make_CL_SIGN_UP_PACKET(result.id, result.password, nickname);
+			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
+		}
 	}
 #endif
 }

@@ -17,11 +17,12 @@
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
 {
 #ifdef SERVER
-	//if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
-	//	return false;
-
+	#ifdef APPLY_LOBBY_SERVER
+	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
+	return false;
 	(void)serverAddress;
 	(void)serverPort;
+	#endif
 
 #endif
 
