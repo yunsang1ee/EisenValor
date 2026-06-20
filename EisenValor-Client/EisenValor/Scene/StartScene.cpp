@@ -54,10 +54,10 @@ void StartScene::OnStartImpl()
 	);
 
 	const StartMenuButtonDesc buttons[] = {
-		{"StartButton", L"Resource\\Texture\\Scene\\startbutton.evtex", L"Resource\\Texture\\Scene\\startbuttonselect.evtex", 570.0f},
-		{"OptionsButton", L"Resource\\Texture\\Scene\\optionsbutton.evtex", L"Resource\\Texture\\Scene\\optionsbuttonselect.evtex", 640.0f},
-		{"CreditButton", L"Resource\\Texture\\Scene\\creditsbutton.evtex", L"Resource\\Texture\\Scene\\creditsbuttonselect.evtex", 710.0f},
-		{"ExitButton", L"Resource\\Texture\\Scene\\quitbutton.evtex", L"Resource\\Texture\\Scene\\quitbuttonselect.evtex", 780.0f},
+		{"StartButton", L"Resource\\Texture\\Scene\\startbutton.evtex", L"Resource\\Texture\\Scene\\startbuttonselect.evtex", 700.0f},
+		{"OptionsButton", L"Resource\\Texture\\Scene\\optionsbutton.evtex", L"Resource\\Texture\\Scene\\optionsbuttonselect.evtex", 770.0f},
+		{"CreditButton", L"Resource\\Texture\\Scene\\creditsbutton.evtex", L"Resource\\Texture\\Scene\\creditsbuttonselect.evtex", 840.0f},
+		{"ExitButton", L"Resource\\Texture\\Scene\\quitbutton.evtex", L"Resource\\Texture\\Scene\\quitbuttonselect.evtex", 910.0f},
 	};
 
 	for (const auto& button : buttons)
