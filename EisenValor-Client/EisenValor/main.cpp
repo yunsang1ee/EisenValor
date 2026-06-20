@@ -13,6 +13,7 @@
 
 // Scene
 #include "Scene/WorldScene.h"
+#include "Scene/StartScene.h"
 #include "Scene/LoginScene.h"
 #include "Scene/LobbyScene.h"
 #include "Scene/RoomScene.h"
@@ -220,13 +221,14 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 	// Scene 등록
 	{
+		GLOBAL(SceneGlobal).RegisterScene<StartScene>("StartScene");
 		GLOBAL(SceneGlobal).RegisterScene<LoginScene>("LoginScene");
 		GLOBAL(SceneGlobal).RegisterScene<WorldScene>("WorldScene");
 		GLOBAL(SceneGlobal).RegisterScene<LobbyScene>("LobbyScene");
 		GLOBAL(SceneGlobal).RegisterScene<RoomScene>("RoomScene");
 		GLOBAL(SceneGlobal).RegisterScene<LoadingScene>("LoadingScene");
 
-		GLOBAL(SceneGlobal).LoadScene("LoginScene");
+		GLOBAL(SceneGlobal).LoadScene("StartScene");
 	}
 
 		while (not quit)

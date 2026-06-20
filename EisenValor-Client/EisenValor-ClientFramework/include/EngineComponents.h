@@ -10,6 +10,7 @@
 #include "MovementComponent.h" 
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "TextUIComponent.h"
 //.. Add other engine component includes here
 
 template <typename T>
@@ -33,6 +34,7 @@ using EngineComponents = std::tuple<
 	AnimationComponent,
 	MovementComponent,
 	ImageUIComponent,
-	ButtonUIComponent
+	ButtonUIComponent,
+	TextUIComponent
 	//.. Add other engine components here
 	>;

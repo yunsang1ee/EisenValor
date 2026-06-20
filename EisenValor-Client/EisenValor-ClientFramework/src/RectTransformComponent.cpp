@@ -10,19 +10,13 @@ RectTransformComponent::RectTransformComponent() {}
 
 RectTransformComponent::Rect RectTransformComponent::GetRect()
 {
-	if (m_isDirty)
-	{
-		UpdateLayout();
-	}
+	UpdateLayout();
 	return m_rect;
 }
 
 bool RectTransformComponent::Contains(Vec2 mousePos)
 {
-	if (m_isDirty)
-	{
-		UpdateLayout();
-	}
+	UpdateLayout();
 	return m_rect.Contains(mousePos);
 }
 
