@@ -1,5 +1,5 @@
 #include "stdafxClient.h"
-#include "LoginControllerComponent.h"
+#include "LoginSceneControllerComponent.h"
 #include "InputGlobal.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
@@ -209,7 +209,7 @@ namespace
 	}
 }
 
-void LoginControllerComponent::OnUpdate(float deltaTime)
+void LoginSceneControllerComponent::OnUpdate(float deltaTime)
 {
 #ifdef APPLY_LOBBY_SERVER
 	if (!m_firstFramePassed)
@@ -238,13 +238,13 @@ void LoginControllerComponent::OnUpdate(float deltaTime)
 
 		if (result.action == LoginDialogAction::Login)
 		{
-			DEBUG_LOG_FMT("[LoginControllerComponent] Sending CL_LOGIN...\n");
+			DEBUG_LOG_FMT("[LoginSceneControllerComponent] Sending CL_LOGIN...\n");
 			auto pb = NetBridge::C2S::Make_CL_LOGIN_PACKET(result.id, result.password);
 			GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			return;
 		}
 
-		DEBUG_LOG_FMT("[LoginControllerComponent] Sending CL_SIGN_UP...\n");
+		DEBUG_LOG_FMT("[LoginSceneControllerComponent] Sending CL_SIGN_UP...\n");
 		const std::string nickname = "TestNickName" + std::to_string(GetCurrentProcessId());
 		auto pb = NetBridge::C2S::Make_CL_SIGN_UP_PACKET(result.id, result.password, nickname);
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));

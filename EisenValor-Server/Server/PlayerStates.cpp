@@ -162,13 +162,17 @@ void GameServer::Contents::PlayerPredelayState::Update(const float dt)
 
 	if(atkInfo.skillData->name == "LIGHT") {
 		if(m_accDTForPreDelay >= 0.3f) {
+#ifdef PRINT_PLAYER_STATE_LOG
 			std::cout << "PlayerPredelayState Update, LIGHT Attack PreDelay End!" << std::endl;
+#endif
 			fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
 		}
 	}
 	else {
 		if(m_accDTForPreDelay >= 0.6f) {
+#ifdef PRINT_PLAYER_STATE_LOG
 			std::cout << "PlayerPredelayState Update, HEAVY Attack PreDelay End!" << std::endl;
+#endif
 			fsm->ChangeState(etou8(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK), dt, true);
 		}
 	}
@@ -286,7 +290,9 @@ void GameServer::Contents::PlayerAttackState::Update(const float dt)
 				return;
 			}
 
+#ifdef PRINT_PLAYER_STATE_LOG
 			std::cout << std::format("PlayerAttackState!, Target ID: {}", target->GetID()) << std::endl;
+#endif
 
 			if(owner->IsTargetInAttackRange(target)) {
 				if(target->OnDamaged(owner, dt)) {

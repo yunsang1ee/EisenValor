@@ -3,6 +3,8 @@
 
 #include "Creature.h"
 
+// #define PRINT_GAME_OBJECT_LOG
+
 GameServer::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE type)
 	:m_objType{ type }, m_teamType{ teamType }, m_scale{ 1.f }, m_isCreature{ false }, m_active{ true }, m_gameObjectData{ nullptr }, m_gameWorld{ nullptr }
 {
@@ -10,7 +12,9 @@ GameServer::Contents::GameObject::GameObject(const FB_ENUMS::TEAM_TYPE teamType,
 
 GameServer::Contents::GameObject::~GameObject()
 {
+#ifdef PRINT_GAME_OBJECT_LOG
 	std::cout << std::format("~GameObject! ID = {}", GetID()) << std::endl;	
+#endif
 }
 
 GameServer::Contents::Script* GameServer::Contents::GameObject::GetScript(const std::string_view name)

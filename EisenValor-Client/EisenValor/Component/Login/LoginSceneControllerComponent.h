@@ -1,7 +1,7 @@
 #pragma once
 #include <IComponent.h>
 
-class LoginControllerComponent final : public ComponentBase<LoginControllerComponent>
+class LoginSceneControllerComponent final : public ComponentBase<LoginSceneControllerComponent>
 {
 public:
 	static constexpr const char* GetStaticTypeName() { return "LoginControllerComponent"; }

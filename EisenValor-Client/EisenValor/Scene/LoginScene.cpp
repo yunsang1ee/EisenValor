@@ -1,6 +1,6 @@
 #include "stdafxClient.h"
 #include "LoginScene.h"
-#include "Component/Login/LoginControllerComponent.h"
+#include "Component/Login/LoginSceneControllerComponent.h"
 #include "ImageUIComponent.h"
 #include "RectTransformComponent.h"
 #include "ResourceGlobal.h"
@@ -8,7 +8,7 @@
 
 void LoginScene::OnRegisterCustomComponents() 
 {
-	RegisterComponent<LoginControllerComponent>();
+	RegisterComponent<LoginSceneControllerComponent>();
 }
 
 void LoginScene::OnStartImpl()
@@ -48,9 +48,9 @@ void LoginScene::OnStartImpl()
 		"LoginController", std::nullopt,
 		[this](GameObject* obj)
 		{
-			CreateComponentWithInit<LoginControllerComponent>(
+			CreateComponentWithInit<LoginSceneControllerComponent>(
 				obj->GetHandle(),
-				[](LoginControllerComponent* login)
+				[](LoginSceneControllerComponent* login)
 				{
 				}
 			);

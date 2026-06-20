@@ -184,7 +184,7 @@
     <ClInclude Include="Scene\LoginScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="Component\Login\LoginControllerComponent.h">
+    <ClInclude Include="Component\Login\LoginSceneControllerComponent.h">
       <Filter>Component\Login</Filter>
     </ClInclude>
     <ClInclude Include="Util\AnimationLoader.h">
@@ -348,7 +348,7 @@
     <ClCompile Include="Scene\LoginScene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="Component\Login\LoginControllerComponent.cpp">
+    <ClCompile Include="Component\Login\LoginSceneControllerComponent.cpp">
       <Filter>Component\Login</Filter>
     </ClCompile>
     <ClCompile Include="Util\AnimationLoader.cpp">

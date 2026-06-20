@@ -126,7 +126,9 @@ void GameServer::Contents::OccupationZone::CheckOccupationState(const float prev
 		const auto world = owner->GetGameWorld();
 		world->Broadcast(ServerPackets::Make_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(owner->GetID(), team));
 		world->AddScore(team, MANAGER(GameServer::Contents::MapDataManager)->GetOccupationZone("Map", GetName())->occupationScore);
+#ifdef PRINT_OCCUPATION_ZONE_LOG
 		std::cout << "Occupation Zone Captured by " << (team == FB_ENUMS::TEAM_TYPE_BLUE ? "Blue Team!" : "Red Team!") << std::endl;
+#endif
 		return;
 	}
 	

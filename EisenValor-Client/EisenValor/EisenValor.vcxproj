@@ -311,7 +311,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\FootIKComponent.h" />
     <ClInclude Include="Component\HealthComponent.h" />
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
-    <ClInclude Include="Component\Login\LoginControllerComponent.h" />
+    <ClInclude Include="Component\Login\LoginSceneControllerComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
     <ClInclude Include="Component\SocketComponent.h" />
@@ -376,7 +376,7 @@ exit /b 0</Command>
     <ClCompile Include="Component\FootIKComponent.cpp" />
     <ClCompile Include="Component\HealthComponent.cpp" />
     <ClCompile Include="Component\Lobby\LobbySceneControllerComponent.cpp" />
-    <ClCompile Include="Component\Login\LoginControllerComponent.cpp" />
+    <ClCompile Include="Component\Login\LoginSceneControllerComponent.cpp" />
     <ClCompile Include="Component\PlayerControllerComponent.cpp" />
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
     <ClCompile Include="Component\SocketComponent.cpp" />

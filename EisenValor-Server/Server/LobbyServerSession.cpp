@@ -4,6 +4,8 @@
 #include "SessionManager.h"
 #include "LobbyServerPacketHandler.h"
 
+// #define PRINT_LOBBY_SERVER_SESSION_LOG
+
 GameServer::RIOLobbyServerSession::RIOLobbyServerSession()
 	:PacketSession{SESSION_TYPE::LOBBY_SERVER}
 {
@@ -11,7 +13,9 @@ GameServer::RIOLobbyServerSession::RIOLobbyServerSession()
 
 GameServer::RIOLobbyServerSession::~RIOLobbyServerSession()
 {
+#ifdef PRINT_LOBBY_SERVER_SESSION_LOG
 	std::cout << "~LobbyServerSession" << std::endl;
+#endif
 }
 
 void GameServer::RIOLobbyServerSession::OnConnected()
