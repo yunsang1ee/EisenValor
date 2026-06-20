@@ -68,6 +68,8 @@ public:
 	virtual void GetRenderData(std::vector<UIRenderData>& outData) override;
 
 private:
+	void UpdateTextTextureIfNeeded();
+
 	std::wstring m_text;
 	std::wstring m_fontPath = L"Resource/Font/NotoSansKR-Medium.ttf";
 	float m_fontSize = 24.0f;
