@@ -4,16 +4,25 @@
 #include "ImageUIComponent.h"
 #include "RectTransformComponent.h"
 #include "ResourceGlobal.h"
+#include "SceneGlobal.h"
 #include "TextureResource.h"
 
 namespace
 {
+	enum class StartMenuAction
+	{
+		None,
+		Start,
+		Quit
+	};
+
 	struct StartMenuButtonDesc
 	{
 		const char* name;
 		const wchar_t* normalTexture;
 		const wchar_t* hoverTexture;
 		float centerY;
+		StartMenuAction action;
 	};
 }
 
@@ -54,10 +63,10 @@ void StartScene::OnStartImpl()
 	);
 
 	const StartMenuButtonDesc buttons[] = {
-		{"StartButton", L"Resource\\Texture\\Scene\\startbutton.evtex", L"Resource\\Texture\\Scene\\startbuttonselect.evtex", 700.0f},
-		{"OptionsButton", L"Resource\\Texture\\Scene\\optionsbutton.evtex", L"Resource\\Texture\\Scene\\optionsbuttonselect.evtex", 770.0f},
-		{"CreditButton", L"Resource\\Texture\\Scene\\creditsbutton.evtex", L"Resource\\Texture\\Scene\\creditsbuttonselect.evtex", 840.0f},
-		{"ExitButton", L"Resource\\Texture\\Scene\\quitbutton.evtex", L"Resource\\Texture\\Scene\\quitbuttonselect.evtex", 910.0f},
+		{"StartButton", L"Resource\\Texture\\Scene\\startbutton.evtex", L"Resource\\Texture\\Scene\\startbuttonselect.evtex", 700.0f, StartMenuAction::Start},
+		{"OptionsButton", L"Resource\\Texture\\Scene\\optionsbutton.evtex", L"Resource\\Texture\\Scene\\optionsbuttonselect.evtex", 770.0f, StartMenuAction::None},
+		{"CreditButton", L"Resource\\Texture\\Scene\\creditsbutton.evtex", L"Resource\\Texture\\Scene\\creditsbuttonselect.evtex", 840.0f, StartMenuAction::None},
+		{"ExitButton", L"Resource\\Texture\\Scene\\quitbutton.evtex", L"Resource\\Texture\\Scene\\quitbuttonselect.evtex", 910.0f, StartMenuAction::Quit},
 	};
 
 	for (const auto& button : buttons)
@@ -92,9 +101,25 @@ void StartScene::OnStartImpl()
 
 				CreateComponentWithInit<ButtonUIComponent>(
 					obj->GetHandle(),
-					[imageHandle](ButtonUIComponent* buttonComponent)
+					[imageHandle, button](ButtonUIComponent* buttonComponent)
 					{
 						buttonComponent->SetTargetImage(imageHandle);
+						buttonComponent->SetOnClick(
+							[button]()
+							{
+								switch (button.action)
+								{
+								case StartMenuAction::Start:
+									GLOBAL(SceneGlobal).LoadScene("LoginScene");
+									break;
+								case StartMenuAction::Quit:
+									PostQuitMessage(0);
+									break;
+								case StartMenuAction::None:
+									break;
+								}
+							}
+						);
 					}
 				);
 			}

@@ -9,6 +9,7 @@
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
 #include "ResourceGlobal.h"
+#include "UIGlobal.h"
 #include "PixProfiler.h"
 
 #define SERVER
@@ -276,6 +277,7 @@ void GameFramework::Update(float delta)
 		}
 	}
 
+	GLOBAL(UIGlobal).Update(delta);
 	GLOBAL(SceneGlobal).OnUpdate(delta);
 }
 
