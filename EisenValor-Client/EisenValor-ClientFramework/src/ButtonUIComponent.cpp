@@ -28,7 +28,7 @@ bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isM
 		return false;
 	}
 
-	// 마우스가 버튼 영역 안에 있는지 확인 (Contains 사용)
+	// 마우스가 버튼 영역 안에 있는지 확인
 	Vec2 vMousePos = {mousePos.x, mousePos.y};
 	bool isInside = rectTr->Contains(vMousePos);
 
@@ -36,14 +36,9 @@ bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isM
 
 	if (isInside)
 	{
-		if (isMouseDown)
+		if (isMouseUp)
 		{
-			// 눌린 상태
-			nextState = ButtonState::Pressed;
-		}
-		else if (isMouseUp)
-		{
-			// 눌렀다 뗐을 때 (클릭)
+			// 버튼 안에서 마우스를 뗐을 때 클릭 처리
 			if (m_state == ButtonState::Pressed || m_state == ButtonState::Hover)
 			{
 				if (m_onClick)
@@ -53,19 +48,24 @@ bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isM
 			}
 			nextState = ButtonState::Hover;
 		}
+		else if (isMouseDown)
+		{
+			// 눌린 상태
+			nextState = ButtonState::Pressed;
+		}
 		else
 		{
-			// 마우스만 올려져 있는 상태
+			// 마우스만 올라가 있는 상태
 			nextState = ButtonState::Hover;
 		}
 	}
 	else
 	{
-		// 마우스가 영역 밖에 있음
+		// 마우스가 버튼 영역 밖에 있음
 		nextState = ButtonState::Normal;
 	}
 
-	// 상태가 변했다면 시각적 업데이트 수행
+	// 상태가 바뀌면 연결된 이미지에 반영
 	if (nextState != m_state)
 	{
 		m_state = nextState;
@@ -92,6 +92,6 @@ void ButtonUIComponent::UpdateVisuals()
 	ImageUIComponent* imageComp = imageStorage->Get(m_targetImage);
 	if (!imageComp) return;
 
-	// ImageUI에게 현재 상태만 전달 (색상은 ImageUI가 알아서 결정)
+	// ImageUI에 현재 상태만 전달
 	imageComp->SetState(m_state);
 }

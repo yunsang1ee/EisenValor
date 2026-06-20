@@ -330,6 +330,7 @@
     <ClInclude Include="include\SkinnedMeshComponent.h" />
     <ClInclude Include="include\SkinnedMeshResource.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
+    <ClInclude Include="include\TextUIComponent.h" />
     <ClInclude Include="include\TextureResource.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Transform.h" />
@@ -393,6 +394,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\TextUIComponent.cpp" />
     <ClCompile Include="src\TextureResource.cpp" />
     <ClCompile Include="src\TimerGlobal.cpp" />
     <ClCompile Include="src\Transform.cpp" />

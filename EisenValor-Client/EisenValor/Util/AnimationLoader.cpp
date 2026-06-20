@@ -50,6 +50,9 @@ namespace AnimationLoader
 			// 구르기
 			anim->AddAnimation(204, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Roll/TwinDaggers_Roll_B.evanim"));
 			
+			// 방어
+			anim->AddAnimation(210, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/GreatSword_Revenge_Guard_All1.evanim"));
+			
 			// 락온 이동 (20~23)
 			anim->AddAnimation(20, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_F.evanim"));
 			anim->AddAnimation(21, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Walk/Walk_B.evanim"));
@@ -79,7 +82,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_AREA),
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/GreatSword_Attack_3Combo_3.evanim"
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_G_3.evanim"
 				)
 			);
 
@@ -105,7 +108,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 12,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/area_attack.evanim"
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_G_3.evanim"
 				)
 			);
 
@@ -123,7 +126,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 22,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/area_attack.evanim"
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_G_3.evanim"
 				)
 			);
 
@@ -139,7 +142,7 @@ namespace AnimationLoader
 			anim->AddAnimation(
 				StateOffset::kAttackOffset + 32,
 				res.Load<AnimationResource>(
-					"Resource/Animation/Shield_Sword/Attack/area_attack.evanim"
+					"Resource/Animation/Shield_Sword/Attack/GreatSword_Skill_G_3.evanim"
 				)
 			);
 

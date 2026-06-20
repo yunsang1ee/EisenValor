@@ -340,6 +340,7 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 					[this, imgHandle](ButtonUIComponent* btn)
 					{
 						btn->SetOrder(11);
+						btn->SetInteractable(false);
 						// Depth 정렬 목록 등록
 						m_managedButtons.push_back({btn->GetHandle(), 11});
 
@@ -836,7 +837,6 @@ void BattleUIControllerComponent::ProcessMouseInput()
 
 				// FSM 상태 전환
 				fsm->SetCurAttackDir(static_cast<uint8_t>(m_currentSelectedDir));
-				fsm->SetCurAttackType(static_cast<uint8_t>(finalType));
 
 				// 확정 후 즉시 초기화
 				m_accumulatedDeltaX = 0.0f;

@@ -9,6 +9,7 @@
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
 #include "ResourceGlobal.h"
+#include "UIGlobal.h"
 #include "PixProfiler.h"
 
 #define SERVER
@@ -16,8 +17,12 @@
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
 {
 #ifdef SERVER
-	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
-		return false;
+	//if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
+	//	return false;
+
+	(void)serverAddress;
+	(void)serverPort;
+
 #endif
 
 	m_hInstance = hInstance;
@@ -274,6 +279,7 @@ void GameFramework::Update(float delta)
 		}
 	}
 
+	GLOBAL(UIGlobal).Update(delta);
 	GLOBAL(SceneGlobal).OnUpdate(delta);
 }
 

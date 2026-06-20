@@ -8,6 +8,8 @@ public:
 
 	void OnUpdate(float deltaTime);
 
-	private:
+private:
 	std::string m_id;
+	bool m_firstFramePassed = false;
+	bool m_dialogShown = false;
 };

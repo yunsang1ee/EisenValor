@@ -323,6 +323,9 @@
     <ClInclude Include="include\Session.h">
       <Filter>NetBridge\00. Network\01. Session</Filter>
     </ClInclude>
+    <ClInclude Include="include\TextUIComponent.h">
+      <Filter>Component\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -482,6 +485,9 @@
     <ClCompile Include="src\IKProcessor.cpp" />
     <ClCompile Include="src\Session.cpp">
       <Filter>NetBridge\00. Network\01. Session</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TextUIComponent.cpp">
+      <Filter>Component\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

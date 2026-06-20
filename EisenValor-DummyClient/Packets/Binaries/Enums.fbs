@@ -87,6 +87,7 @@ enum PLAYER_STATE_TYPE: ubyte {
 
 	PRE_DELAY = 10,
 	POST_DELAY,
+	GUARD,
 
 	END
 }
