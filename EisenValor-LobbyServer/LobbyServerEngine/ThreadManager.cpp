@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "ThreadManager.h"
 
+// #define PRINT_THREAD_MANAGER_LOG
+
 bool LobbyServerEngine::ThreadManager::Init()
 {
 	m_workerThreadCount = 10;
@@ -44,7 +46,9 @@ void LobbyServerEngine::ThreadManager::InitTLS()
 
 void LobbyServerEngine::ThreadManager::DestroyTLS()
 {
+#ifdef PRINT_THREAD_MANAGER_LOG
 	std::osyncstream oss{ std::cout };
 	oss << TLS_THREAD_NAME << " Thread DestroyTLS" << std::endl;
+#endif
 }
 

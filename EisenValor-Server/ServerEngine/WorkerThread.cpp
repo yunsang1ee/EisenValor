@@ -8,6 +8,8 @@
 #include "Session.h"
 #include "GameWorldThread.h"
 
+// #define PRINT_WORKER_THREAD_LOG
+
 GameServerEngine::WorkerThread::WorkerThread(const WORKER_THREAD_TYPE type, std::unique_ptr<IOCore>&& ioCore)
 	: m_type{ type }, m_ioCore{ std::move(ioCore) }, m_dt{ 0.0f }
 {
@@ -74,7 +76,9 @@ void GameServerEngine::WorkerThread::Register(std::shared_ptr<Session> session)
 #ifdef APPLY_LOBBY_SERVER
 	if(WORKER_THREAD_TYPE::LOBBY_SESSION == m_type) {
 		m_lobbySession = session;
+#ifdef PRINT_WORKER_THREAD_LOG
 		std::cout << "Lobby Session Registered in Lobby Thread!" << std::endl;
+#endif
 	}
 #endif
 

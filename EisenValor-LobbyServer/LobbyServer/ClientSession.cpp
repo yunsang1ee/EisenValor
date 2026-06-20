@@ -10,6 +10,8 @@
 #include "UserSessionStateStore.h"
 #endif
 
+// #define PRINT_CLIENT_SESSION_LOG
+
 LobbyServer::ClientSession::ClientSession()
 	:PacketSession{SESSION_TYPE::CLIENT}
 {
@@ -17,7 +19,9 @@ LobbyServer::ClientSession::ClientSession()
 
 LobbyServer::ClientSession::~ClientSession()
 {
+#ifdef PRINT_CLIENT_SESSION_LOG
 	std::cout << "~ClientSession" << std::endl;
+#endif
 }
 
 void LobbyServer::ClientSession::OnConnected()

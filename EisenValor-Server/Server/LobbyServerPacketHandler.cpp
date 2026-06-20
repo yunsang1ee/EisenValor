@@ -5,7 +5,7 @@
 #include "ServerEngineCore.h"
 #include "GameWorldThread.h"
 
-#define PRINT_LOBBY_SERVER_PACKET_HANDLER_LOG
+// #define PRINT_LOBBY_SERVER_PACKET_HANDLER_LOG
 
 void GameServer::LobbyServerPacketHandler::Init()
 {
