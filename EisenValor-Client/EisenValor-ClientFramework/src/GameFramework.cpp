@@ -17,10 +17,12 @@
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
 {
 #ifdef SERVER
-	// StartScene needs to stay visible before the player chooses to connect.
-	// NetworkGlobal::Init() will be called from the start flow instead.
+	//if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
+	//	return false;
+
 	(void)serverAddress;
 	(void)serverPort;
+
 #endif
 
 	m_hInstance = hInstance;

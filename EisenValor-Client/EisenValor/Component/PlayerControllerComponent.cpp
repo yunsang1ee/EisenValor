@@ -462,7 +462,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
-				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_LIGHT));
 				DEBUG_LOG_FMT("[PlayerController] Neutral Quick Attack!\n");
 			}
 			ClearMovementInput(movement);
@@ -477,7 +476,6 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 				auto						  pb = NetBridge::C2S::Make_CS_GENERAL_ATTACK_PACKET(&attackInfo);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 
-				fsm->SetCurAttackType(static_cast<uint8_t>(GENERAL_ATTACK_TYPE_HEAVY));
 				DEBUG_LOG_FMT("[PlayerController] Neutral Heavy Attack!\n");
 			}
 			ClearMovementInput(movement);

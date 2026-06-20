@@ -110,7 +110,7 @@ void StartScene::OnStartImpl()
 								switch (button.action)
 								{
 								case StartMenuAction::Start:
-									GLOBAL(SceneGlobal).LoadScene("LoginScene");
+									GLOBAL(SceneGlobal).LoadScene("WorldScene");
 									break;
 								case StartMenuAction::Quit:
 									PostQuitMessage(0);

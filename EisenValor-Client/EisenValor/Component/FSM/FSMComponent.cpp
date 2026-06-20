@@ -159,6 +159,24 @@ bool FSMComponent::RequestState(StateRequestType request, uint8_t targetStateOve
 		return false;
 	}
 
+	switch (request)
+	{
+	case StateRequestType::AttackLight:
+		SetCurAttackType(static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT));
+		break;
+	case StateRequestType::AttackHeavy:
+		SetCurAttackType(static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY));
+		break;
+	case StateRequestType::AttackArea:
+		SetCurAttackType(static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_AREA));
+		break;
+	case StateRequestType::AttackDisarm:
+		SetCurAttackType(static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_DISARM));
+		break;
+	default:
+		break;
+	}
+
 	ChangeState(decision.nextStateType, decision.ignoreExitTime);
 	return true;
 }
