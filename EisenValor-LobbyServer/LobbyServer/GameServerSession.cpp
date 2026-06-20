@@ -3,6 +3,9 @@
 
 #include "GameServerPacketHandler.h"
 #include "SessionManager.h"
+
+// #define PRINT_GAME_SERVER_SESSION_LOG
+
 LobbyServer::GameServerSession::GameServerSession()
 	:PacketSession{ SESSION_TYPE::GAME_SERVER }, m_worldIdGenerator{}
 {
@@ -10,7 +13,9 @@ LobbyServer::GameServerSession::GameServerSession()
 
 LobbyServer::GameServerSession::~GameServerSession()
 {
+#ifdef PRINT_GAME_SERVER_SESSION_LOG
 	std::cout << "~GameServerSession" << std::endl;
+#endif
 }
 
 void LobbyServer::GameServerSession::OnConnected()

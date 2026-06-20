@@ -58,7 +58,7 @@ void GameServerEngine::GameWorldThread::CreateWorld(const uint16 worldID, const 
 	if(m_worlds.contains(worldID))
 		return;
 
-	std::cout << std::format("Thread ID {}: Create World {}", TLS_THREAD_ID, worldID) << std::endl;
+	LOG_INFO("Thread ID {}: Create World {}", TLS_THREAD_ID, worldID);
 
 	auto world{ m_worldFunc() };
 	world->SetID(worldID);

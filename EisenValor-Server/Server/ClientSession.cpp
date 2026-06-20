@@ -7,6 +7,8 @@
 #include "ServerEngineConfigManager.h"
 #include "ClientPacketHandler.h"
 
+// #define PRINT_CLIENT_SESSION_LOG
+
 // ========================================================
 //					IOCP CLIENT SESSION
 // ========================================================
@@ -104,7 +106,9 @@ GameServer::RIOClientSession::RIOClientSession()
 
 GameServer::RIOClientSession::~RIOClientSession()
 {
+#ifdef PRINT_CLIENT_SESSION_LOG
 	std::cout << "~ClientSesion" << std::endl;
+#endif
 }
 
 void GameServer::RIOClientSession::OnConnected()
