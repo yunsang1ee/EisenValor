@@ -61,7 +61,7 @@ void AudioGlobal::Release()
 	}
 }
 
-bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus)
+bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bool loop)
 {
 	if (!m_impl->engine || !m_impl->masteringVoice)
 		return false;
@@ -150,6 +150,7 @@ bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus)
 	buffer.AudioBytes = static_cast<UINT32>(audioData.size());
 	buffer.pAudioData = audioData.data();
 	buffer.Flags = XAUDIO2_END_OF_STREAM;
+	buffer.LoopCount = loop ? XAUDIO2_LOOP_INFINITE : 0;
 	if (FAILED(voice->SubmitSourceBuffer(&buffer)) || FAILED(voice->Start()))
 	{
 		voice->DestroyVoice();
@@ -168,6 +169,22 @@ void AudioGlobal::StopAll()
 		playing.voice->DestroyVoice();
 	}
 	m_impl->playingVoices.clear();
+}
+
+void AudioGlobal::StopBus(AudioBus bus)
+{
+	for (auto it = m_impl->playingVoices.begin(); it != m_impl->playingVoices.end();)
+	{
+		if (it->bus != bus)
+		{
+			++it;
+			continue;
+		}
+
+		it->voice->Stop();
+		it->voice->DestroyVoice();
+		it = m_impl->playingVoices.erase(it);
+	}
 }
 
 void AudioGlobal::SetBusVolume(AudioBus bus, float volume)

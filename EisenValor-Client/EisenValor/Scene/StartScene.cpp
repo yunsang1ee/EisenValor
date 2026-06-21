@@ -34,6 +34,7 @@ void StartScene::OnRegisterCustomComponents()
 void StartScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[StartScene] Enter Start Scene.\n");
+	GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/startscene.wav", AudioBus::BGM, true);
 
 	ReserveGameObject(
 		"StartSceneBackground", std::nullopt,
@@ -114,6 +115,8 @@ void StartScene::OnStartImpl()
 						buttonComponent->SetOnClick(
 							[button]()
 							{
+								GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/mouseclick.wav", AudioBus::UI);
+
 								switch (button.action)
 								{
 								case StartMenuAction::Start:
@@ -140,5 +143,6 @@ void StartScene::OnStartImpl()
 
 void StartScene::OnEndImpl()
 {
+	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	DEBUG_LOG_FMT("[StartScene] Scene Ended.\n");
 }
