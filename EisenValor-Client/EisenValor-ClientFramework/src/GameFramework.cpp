@@ -7,6 +7,7 @@
 #include "DxRendererGlobal.h"
 #include "DxSwapChain.h"
 #include "InputGlobal.h"
+#include "RectTransformComponent.h"
 #include "TimerGlobal.h"
 #include "ResourceGlobal.h"
 #include "UIGlobal.h"
@@ -170,6 +171,17 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 			renderer.OnResize(width, height);
 		}
 		GLOBAL(InputGlobal).OnResize(width, height);
+
+		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
+		{
+			if (auto* rectStorage = scene->GetStorage<RectTransformComponent>())
+			{
+				for (auto& rectTransform : rectStorage->GetList())
+				{
+					rectTransform.MarkDirty();
+				}
+			}
+		}
 
 		DEBUG_LOG_FMT("[GameFramework] Window resized: {}x{}\n", width, height);
 		break;
