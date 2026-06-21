@@ -274,6 +274,14 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
     RestirReservoir currentReservoir = g_restirReservoirInitial[pixelIndex];
     RestirPrimaryHit currentHit = g_restirPrimaryHitCurrent[pixelIndex];
 
+    if (RestirIsSkyEscapeReservoir(currentReservoir) && !RestirIsValidPrimaryHit(currentHit))
+    {
+        g_restirFinalReservoirWrite[pixelIndex] = currentReservoir;
+        g_restirReservoirHistoryWrite[pixelIndex] = currentReservoir;
+        g_restirPrimaryHitHistoryWrite[pixelIndex] = currentHit;
+        return;
+    }
+
     RestirReservoir outputReservoir = RestirMakeEmptyReservoir();
     RestirPathSample currentCandidate;
     float currentWeight;

@@ -142,6 +142,11 @@ bool RestirHasReconnectHitRef(RestirPathSample sample)
            sample.reconnectPrimitiveIndex != 0xffffffffu;
 }
 
+bool RestirIsSkyEscapeSample(RestirPathSample sample)
+{
+    return 0u != (asuint(sample.throughputPdf.y) & RESTIR_PATH_FLAG_SKY_ESCAPE);
+}
+
 float RestirGetLightPdf(RestirPathSample sample)
 {
     return sample.throughputPdf.x;
@@ -213,6 +218,11 @@ void RestirUpdateReservoir(inout RestirReservoir reservoir, RestirPathSample can
 bool RestirIsValidReservoir(RestirReservoir reservoir)
 {
     return 0u != (reservoir.flags & RESTIR_RESERVOIR_VALID);
+}
+
+bool RestirIsSkyEscapeReservoir(RestirReservoir reservoir)
+{
+    return RestirIsValidReservoir(reservoir) && RestirIsSkyEscapeSample(reservoir.sample);
 }
 
 bool RestirIsValidPrimaryHit(RestirPrimaryHit hit)

@@ -479,7 +479,14 @@ bool EvaluateRestirEmissiveNEE(
 
 void RestirUpdateReservoirFromPayload(inout RestirReservoir reservoir, RayPayload payload, inout uint rngSeed)
 {
-    if (0u == g_restirCandidateEnabled || 0u == (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
+    if (0u == g_restirCandidateEnabled)
+    {
+        return;
+    }
+
+    bool hasPrimaryHit = 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID);
+    bool isSkyEscape = 0u != (payload.pathFlags & RESTIR_PATH_FLAG_SKY_ESCAPE);
+    if (!hasPrimaryHit && !isSkyEscape)
     {
         return;
     }
