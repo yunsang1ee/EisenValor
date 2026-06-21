@@ -25,6 +25,7 @@
 #include "RenderPass/UIRenderPass.h"
 
 #include "UIGlobal.h"
+#include "AudioGlobal.h"
 #include "ResourceGlobal.h"
 #include "Component/FSM/StatePool.h"
 
@@ -215,6 +216,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		// 에셋 레지스트리 로드
 		GLOBAL(ResourceGlobal).LoadRegistry("Resource\\AssetRegistry.evreg");
 		GLOBAL(UIGlobal).Initialize();
+		GLOBAL(AudioGlobal).Initialize();
 
 		// FSM StatePool 초기화
 		StatePool::Initialize();
@@ -246,6 +248,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			if (not quit)
 				gameFramework.Run();
 		}
+		GLOBAL(AudioGlobal).Release();
 		gameFramework.Release();
 #if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
 		FreeConsole();
