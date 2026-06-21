@@ -14,6 +14,7 @@ cbuffer RestirFinalEvaluationConstants : register(b0, space0)
     uint g_pad1;
 };
 
+[shader("compute")]
 [numthreads(8, 8, 1)]
 void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
@@ -28,9 +29,8 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
 
     if (0u != g_restirDebugView)
     {
-        RestirPrimaryHit selectedHit = RestirPrimaryHitFromSample(reservoir.sample, reservoir.flags);
         RestirPrimaryHit currentHit = g_restirPrimaryHitCurrent[pixelIndex];
-        float3 debugColor = RestirDebugColor(reservoir, selectedHit, currentHit, g_restirDebugView);
+        float3 debugColor = RestirDebugColor(reservoir, currentHit, g_restirDebugView);
         g_output[pixelCoord] = float4(max(0.0f.xxx, debugColor), 1.0f);
         return;
     }
@@ -38,9 +38,7 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
     float3 color = 0.0f.xxx;
     if (0u != (reservoir.flags & RESTIR_RESERVOIR_VALID) && reservoir.sampleCount > 0u)
     {
-        float selectedTarget = max(reservoir.sample.weightTerms.x, EPSILON);
-        float normalization = reservoir.resamplingWeightSum / (selectedTarget * float(reservoir.sampleCount));
-        color = reservoir.sample.contributionTarget.rgb * normalization;
+        color = reservoir.sample.contributionTarget.rgb * RestirContributionWeightFromReservoir(reservoir);
     }
 
     g_output[pixelCoord] = float4(max(0.0f.xxx, color), 1.0f);

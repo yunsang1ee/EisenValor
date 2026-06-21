@@ -1,6 +1,8 @@
 #ifndef RESTIR_RESERVOIR_HLSLI
 #define RESTIR_RESERVOIR_HLSLI
 
+#include "RaytracingCommon.h"
+
 float RestirLuminance(float3 color)
 {
     return dot(max(0.0f.xxx, color), float3(0.2126f, 0.7152f, 0.0722f));
@@ -80,6 +82,18 @@ float RestirUnpackUnorm16(uint packed)
     return (float) (packed & 0xffffu) / 65535.0f;
 }
 
+uint RestirPackBarycentrics(float2 barycentrics)
+{
+    uint x = (uint) round(saturate(barycentrics.x) * 65535.0f);
+    uint y = (uint) round(saturate(barycentrics.y) * 65535.0f);
+    return x | (y << 16u);
+}
+
+float2 RestirUnpackBarycentrics(uint packed)
+{
+    return float2((float) (packed & 0xffffu), (float) ((packed >> 16u) & 0xffffu)) / 65535.0f;
+}
+
 RestirPrimaryHit RestirMakeInvalidPrimaryHit()
 {
     RestirPrimaryHit hit;
@@ -97,17 +111,16 @@ RestirPathSample RestirMakeEmptyPathSample()
 {
     RestirPathSample sample;
     sample.contributionTarget = 0.0f.xxxx;
-    sample.throughputPdf = float4(1.0f, 1.0f, 1.0f, 1.0f);
-    sample.firstHitPositionDistance = float4(0.0f, 0.0f, 0.0f, -1.0f);
+    sample.throughputPdf = float4(0.0f, asfloat(0u), 1.0f, 1.0f);
     sample.weightTerms = float4(0.0f, 1.0f, 1.0f, 1.0f);
-    sample.packedFirstHitNormal = RestirPackNormalOct16(float3(0.0f, 1.0f, 0.0f));
-    sample.packedFirstHitRoughness = RestirPackUnorm16(1.0f);
-    sample.instanceId = 0xffffffffu;
-    sample.materialId = 0xffffffffu;
-    sample.geometryId = 0xffffffffu;
     sample.pathLength = 0u;
     sample.sourceKind = RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH;
     sample.shiftKind = RESTIR_SHIFT_IDENTITY;
+    sample.reconnectInstanceGeneration = 0u;
+    sample.reconnectInstanceId = 0xffffffffu;
+    sample.reconnectGeometryIndex = 0xffffffffu;
+    sample.reconnectPrimitiveIndex = 0xffffffffu;
+    sample.reconnectBarycentrics = 0u;
     return sample;
 }
 
@@ -122,6 +135,30 @@ RestirReservoir RestirMakeEmptyReservoir()
     return reservoir;
 }
 
+bool RestirHasReconnectHitRef(RestirPathSample sample)
+{
+    return sample.reconnectInstanceId != 0xffffffffu &&
+           sample.reconnectGeometryIndex != 0xffffffffu &&
+           sample.reconnectPrimitiveIndex != 0xffffffffu;
+}
+
+float RestirGetLightPdf(RestirPathSample sample)
+{
+    return sample.throughputPdf.x;
+}
+
+uint RestirGetPathFlags(RestirPathSample sample)
+{
+    return asuint(sample.throughputPdf.y);
+}
+
+void RestirSetLightPdfAndPathFlags(inout RestirPathSample sample, float lightPdf, uint pathFlags)
+{
+    sample.throughputPdf.x = lightPdf;
+    sample.throughputPdf.y = asfloat(pathFlags);
+}
+
+#ifdef RESTIR_ENABLE_PAYLOAD_HELPERS
 RestirPathSample RestirMakeCandidateFromPayload(RayPayload payload)
 {
     RestirPathSample sample = RestirMakeEmptyPathSample();
@@ -129,19 +166,19 @@ RestirPathSample RestirMakeCandidateFromPayload(RayPayload payload)
     float sourcePdf = max(payload.sourcePdf, EPSILON);
     RestirWeightTerms terms = RestirMakeInitialCandidateWeightTerms(targetContribution, sourcePdf);
     sample.contributionTarget = float4(targetContribution, terms.target);
-    sample.throughputPdf = float4(1.0f, 1.0f, 1.0f, sourcePdf);
+    sample.throughputPdf = float4(payload.lightPdf, asfloat(payload.pathFlags), 1.0f, sourcePdf);
     sample.weightTerms = float4(terms.target, terms.contributionWeight, terms.misWeight, terms.shiftJacobian);
-    sample.firstHitPositionDistance = float4(payload.primaryHitPosition, payload.primaryHitDistance);
-    sample.packedFirstHitNormal = RestirPackNormalOct16(payload.primaryHitNormal);
-    sample.packedFirstHitRoughness = RestirPackUnorm16(payload.roughness);
-    sample.instanceId = payload.instanceId;
-    sample.materialId = payload.materialId;
-    sample.geometryId = payload.geometryId;
     sample.pathLength = payload.recursionDepth + 1u;
     sample.sourceKind = RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH;
     sample.shiftKind = RESTIR_SHIFT_IDENTITY;
+    sample.reconnectInstanceId = payload.reconnectInstanceId;
+    sample.reconnectInstanceGeneration = payload.reconnectInstanceGeneration;
+    sample.reconnectGeometryIndex = payload.reconnectGeometryIndex;
+    sample.reconnectPrimitiveIndex = payload.reconnectPrimitiveIndex;
+    sample.reconnectBarycentrics = payload.reconnectBarycentrics;
     return sample;
 }
+#endif
 
 RestirWeightTerms RestirGetWeightTerms(RestirPathSample sample)
 {
@@ -151,42 +188,6 @@ RestirWeightTerms RestirGetWeightTerms(RestirPathSample sample)
     terms.misWeight = sample.weightTerms.z;
     terms.shiftJacobian = sample.weightTerms.w;
     return terms;
-}
-
-RestirPrimaryHit RestirPrimaryHitFromPayload(RayPayload payload)
-{
-    if (0u == (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
-    {
-        return RestirMakeInvalidPrimaryHit();
-    }
-
-    RestirPrimaryHit hit;
-    hit.positionDistance = float4(payload.primaryHitPosition, payload.primaryHitDistance);
-    hit.packedNormal = RestirPackNormalOct16(payload.primaryHitNormal);
-    hit.packedRoughness = RestirPackUnorm16(payload.roughness);
-    hit.instanceId = payload.instanceId;
-    hit.materialId = payload.materialId;
-    hit.geometryId = payload.geometryId;
-    hit.flags = RESTIR_PRIMARY_HIT_VALID;
-    return hit;
-}
-
-RestirPrimaryHit RestirPrimaryHitFromSample(RestirPathSample sample, uint reservoirFlags)
-{
-    if (0u == (reservoirFlags & RESTIR_RESERVOIR_VALID))
-    {
-        return RestirMakeInvalidPrimaryHit();
-    }
-
-    RestirPrimaryHit hit;
-    hit.positionDistance = sample.firstHitPositionDistance;
-    hit.packedNormal = sample.packedFirstHitNormal;
-    hit.packedRoughness = sample.packedFirstHitRoughness;
-    hit.instanceId = sample.instanceId;
-    hit.materialId = sample.materialId;
-    hit.geometryId = sample.geometryId;
-    hit.flags = RESTIR_PRIMARY_HIT_VALID;
-    return hit;
 }
 
 void RestirUpdateReservoir(inout RestirReservoir reservoir, RestirPathSample candidate, float resamplingWeight, float randomValue)
@@ -209,10 +210,42 @@ void RestirUpdateReservoir(inout RestirReservoir reservoir, RestirPathSample can
     }
 }
 
-float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit selectedHit, RestirPrimaryHit currentHit, uint debugView)
+bool RestirIsValidReservoir(RestirReservoir reservoir)
+{
+    return 0u != (reservoir.flags & RESTIR_RESERVOIR_VALID);
+}
+
+bool RestirIsValidPrimaryHit(RestirPrimaryHit hit)
+{
+    return 0u != (hit.flags & RESTIR_PRIMARY_HIT_VALID);
+}
+
+// Temporary convention: sourceKind currently selects the final normalization path
+// for temporal GRIS output. Move this to reservoir-level flags with the v2 layout.
+bool RestirUsesGrisFinalize(RestirReservoir reservoir)
+{
+    return reservoir.sample.sourceKind == RESTIR_SOURCE_TEMPORAL_REUSE;
+}
+
+float RestirContributionWeightFromReservoir(RestirReservoir reservoir)
+{
+    if (!RestirIsValidReservoir(reservoir))
+    {
+        return 0.0f;
+    }
+
+    float target = max(reservoir.sample.weightTerms.x, EPSILON);
+    if (RestirUsesGrisFinalize(reservoir))
+    {
+        return reservoir.resamplingWeightSum / target;
+    }
+
+    return reservoir.resamplingWeightSum / (target * max(1.0f, float(reservoir.sampleCount)));
+}
+
+float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, uint debugView)
 {
     bool validReservoir = 0u != (reservoir.flags & RESTIR_RESERVOIR_VALID);
-    bool validSelectedHit = 0u != (selectedHit.flags & RESTIR_PRIMARY_HIT_VALID);
     bool validCurrentHit = 0u != (currentHit.flags & RESTIR_PRIMARY_HIT_VALID);
     float3 invalidColor = float3(0.35f, 0.0f, 0.0f);
 
@@ -235,7 +268,7 @@ float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit selectedHit,
     }
     if (4u == debugView)
     {
-        return (validReservoir && validSelectedHit) ? RestirUnpackNormalOct16(selectedHit.packedNormal) * 0.5f + 0.5f : invalidColor;
+        return validCurrentHit ? RestirUnpackNormalOct16(currentHit.packedNormal) * 0.5f + 0.5f : invalidColor;
     }
     if (5u == debugView)
     {
@@ -243,11 +276,11 @@ float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit selectedHit,
     }
     if (6u == debugView)
     {
-        if (!validReservoir || !validSelectedHit)
+        if (!validReservoir || !validCurrentHit)
         {
             return invalidColor;
         }
-        float roughness = RestirUnpackUnorm16(selectedHit.packedRoughness);
+        float roughness = RestirUnpackUnorm16(currentHit.packedRoughness);
         return float3(roughness, reservoir.sampleCount > 0u ? 1.0f : 0.0f, 0.0f);
     }
     if (7u == debugView)

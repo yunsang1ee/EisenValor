@@ -1,8 +1,8 @@
 #include "stdafxClient.h"
 #include "RestirFinalEvaluationPass.h"
 #include "RenderData/RaytracingOutputRenderData.h"
+#include "RenderData/RestirCandidateRenderData.h"
 #include "RenderData/RestirFinalReservoirRenderData.h"
-#include "RenderData/RestirPrimaryHitCurrentRenderData.h"
 #include <DxFrameResource.h>
 #include <RenderContext.h>
 #include <DxCommandContext.h>
@@ -22,25 +22,6 @@ constexpr uint32_t kThreadGroupSizeX = 8;
 constexpr uint32_t kThreadGroupSizeY = 8;
 constexpr uint32_t kRestirFinalDebugViewCount = 8;
 
-void TransitionResourceIfNeeded(
-	ID3D12GraphicsCommandList* cmdList, DxResource* resource, D3D12_RESOURCE_STATES targetState
-)
-{
-	if (nullptr == cmdList || nullptr == resource || nullptr == resource->GetResource())
-	{
-		return;
-	}
-
-	const auto currentState = resource->GetCurrentState();
-	if (currentState == targetState)
-	{
-		return;
-	}
-
-	auto barrier = DxUtils::CreateTransitionBarrier(resource->GetResource(), currentState, targetState);
-	cmdList->ResourceBarrier(1, &barrier);
-	resource->SetState(targetState);
-}
 } // namespace
 
 void RestirFinalEvaluationPass::Initialize()
@@ -66,7 +47,7 @@ void RestirFinalEvaluationPass::DeclareRenderData(RenderContext* renderContext)
 	renderContext->DeclareAccess<RestirFinalReservoirRenderData>(
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read
 	);
-	renderContext->DeclareAccess<RestirPrimaryHitCurrentRenderData>(
+	renderContext->DeclareAccess<RestirCandidateRenderData>(
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read
 	);
 	renderContext->DeclareAccess<RaytracingOutputRenderData>(
@@ -90,20 +71,20 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	}
 
 	auto* finalReservoirData = renderContext->Get<RestirFinalReservoirRenderData>();
-	auto* primaryHitData = renderContext->Get<RestirPrimaryHitCurrentRenderData>();
+	auto* candidateData = renderContext->Get<RestirCandidateRenderData>();
 	auto* outputData = renderContext->Get<RaytracingOutputRenderData>();
 	if (outputData)
 	{
 		outputData->bypassToneMap = false;
 	}
 	if (nullptr == finalReservoirData || nullptr == outputData || nullptr == finalReservoirData->reservoirBuffer ||
-		nullptr == primaryHitData || nullptr == primaryHitData->primaryHitBuffer || nullptr == outputData->outputTexture)
+		nullptr == candidateData || nullptr == candidateData->primaryHitBuffer || nullptr == outputData->outputTexture)
 	{
 		return;
 	}
 
 	auto* reservoirBuffer = finalReservoirData->reservoirBuffer.get();
-	auto* primaryHitBuffer = primaryHitData->primaryHitBuffer.get();
+	auto* primaryHitBuffer = candidateData->primaryHitBuffer.get();
 	auto* outputTexture = outputData->outputTexture.get();
 	if (!reservoirBuffer->HasSRV() || !primaryHitBuffer->HasSRV() || !outputTexture->HasUAV(0))
 	{
@@ -122,9 +103,9 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	auto*			 cmdList = context.CommandList();
 	DxScopedGpuEvent gpuEvent(context, L"RestirFinalEvaluation");
 
-	TransitionResourceIfNeeded(cmdList, reservoirBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	TransitionResourceIfNeeded(cmdList, primaryHitBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	TransitionResourceIfNeeded(cmdList, outputTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	DxUtils::TransitionResourceIfNeeded(cmdList, reservoirBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	DxUtils::TransitionResourceIfNeeded(cmdList, primaryHitBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	DxUtils::TransitionResourceIfNeeded(cmdList, outputTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	cmdList->SetPipelineState(m_pipelineState.Get());
 	cmdList->SetComputeRootSignature(m_rootSignature.Get());

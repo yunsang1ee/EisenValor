@@ -1,6 +1,12 @@
 #ifndef RAYTRACING_LIGHTING_HLSLI
 #define RAYTRACING_LIGHTING_HLSLI
 
+#include "RaytracingCommon.h"
+
+#ifdef RAYTRACING_ENABLE_GGX_SAMPLING
+#include "RaytracingSampling.hlsli"
+#endif
+
 float3 FresnelSchlick(float cosTheta, float3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);

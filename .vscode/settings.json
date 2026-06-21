@@ -1,1 +1,11 @@
-{}
+{
+    "C_Cpp.default.cppStandard": "c++23",
+
+    "shader-validator.includes": [
+        "${workspaceFolder}/EisenValor-Client/EisenValor",
+        "${workspaceFolder}/EisenValor-Client/EisenValor/Resource/Shader"
+    ],
+    "shader-validator.hlsl.shaderModel": "ShaderModel6_6",
+    "shader-validator.hlsl.version": "V2021",
+    "shader-validator.hlsl.enable16bitTypes": true
+}

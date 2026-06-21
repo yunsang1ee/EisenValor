@@ -1,9 +1,13 @@
 #define HLSL
 #include "RaytracingCommon.h"
+#include "RaytracingPayload.hlsli"
 #include "RaytracingMaterialEmission.hlsli"
 #include "RaytracingTerrain.hlsli"
 #include "RaytracingEnvironment.hlsli"
 #include "RaytracingNormal.hlsli"
+#include "RaytracingSampling.hlsli"
+
+typedef StandardRayPayload RayPayload;
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
@@ -31,22 +35,6 @@ SamplerState g_sampler : register(s0, space0);
 
 static const uint MAX_RECURSION_DEPTH = 3;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
-
-float RandomValue(inout uint seed)
-{
-	seed = seed * 747796405u + 2891336453u;
-	uint temp = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
-	temp = (temp >> 22u) ^ temp;
-	return float(temp) / 4294967296.0f;
-}
-
-float2 RandomPointInCircle(inout uint seed)
-{
-	float angle = RandomValue(seed) * 2.0f * PI;
-	float2 circle = float2(cos(angle), sin(angle));
-	float r = sqrt(RandomValue(seed));
-	return circle * r;
-}
 
 float3 CosineHemisphere(float3 normal, inout uint seed)
 {
@@ -187,7 +175,7 @@ void RayGenMain()
 	ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
 	ray.TMin = RAY_TMIN;
 	ray.TMax = RAY_TMAX;
-	RayPayload payload = MakeDefaultRayPayload(0);
+	RayPayload payload = MakeDefaultRayPayload<RayPayload>(0);
 	
 	TraceRay(
 		g_scene,
@@ -370,7 +358,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 		reflectRay.TMin = RAY_TMIN;
 		reflectRay.TMax = RAY_TMAX;
 		
-		RayPayload reflectPayload = MakeDefaultRayPayload(payload.recursionDepth + 1);
+		RayPayload reflectPayload = MakeDefaultRayPayload<RayPayload>(payload.recursionDepth + 1);
 		
 		TraceRay(
 			g_scene,

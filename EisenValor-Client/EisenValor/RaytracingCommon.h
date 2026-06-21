@@ -65,6 +65,15 @@ struct GeoInfo
 	RAY_UINT indexBase;
 	RAY_UINT materialIdx;
 	RAY_UINT stableGeometryId;
+	RAY_UINT emissiveEntryIdx;
+};
+
+struct RestirEmissiveLightData
+{
+	RAY_UINT instanceIndex;
+	RAY_UINT geometryIndex;
+	RAY_UINT triangleCount;
+	float	 selectionWeight;
 };
 
 struct InstanceData
@@ -76,6 +85,7 @@ struct InstanceData
 	RAY_UINT indexBufferIdx;
 	RAY_UINT geoInfoBaseIdx;
 	RAY_UINT instanceID;
+	RAY_UINT generation;
 };
 
 struct MaterialGPUData
@@ -84,10 +94,10 @@ struct MaterialGPUData
 	RAY_FLOAT4 emissive;
 	RAY_FLOAT4 visibleEmissive;
 
-	float	   roughness;
-	float	   metallic;
-	RAY_UINT   shadingModel;
-	RAY_UINT   materialFlags;
+	float	 roughness;
+	float	 metallic;
+	RAY_UINT shadingModel;
+	RAY_UINT materialFlags;
 
 	RAY_UINT albedoTextureIdx;
 	RAY_UINT normalTextureIdx;
@@ -128,10 +138,38 @@ struct TerrainSurfaceGPUData
 };
 
 #define RESTIR_PRIMARY_HIT_VALID (1 << 0)
+#define RESTIR_PRIMARY_HIT_NEE_CANDIDATE (1u << 31)
+#define RESTIR_PRIMARY_HIT_NEE_SUN (1u << 30)
+#define RESTIR_PRIMARY_HIT_NEE_EMISSIVE (1u << 29)
 #define RESTIR_RESERVOIR_VALID (1 << 0)
 
+#define RESTIR_PATH_FLAG_NEE (1u << 0)
+#define RESTIR_PATH_FLAG_NEE_SUN (1u << 1)
+#define RESTIR_PATH_FLAG_NEE_EMISSIVE (1u << 2)
+#define RESTIR_PATH_FLAG_EMISSIVE_HIT (1u << 3)
+#define RESTIR_PATH_FLAG_SKY_ESCAPE (1u << 4)
+#define RESTIR_PATH_FLAG_MIS_APPLIED (1u << 5)
+
 #define RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH 0
+#define RESTIR_SOURCE_TEMPORAL_REUSE 1
 #define RESTIR_SHIFT_IDENTITY 0
+#define RESTIR_SHIFT_RECONNECTION 1
+
+struct RestirTemporalConstants
+{
+	RAY_UINT screenWidth;
+	RAY_UINT screenHeight;
+	RAY_UINT frameSeed;
+	RAY_UINT historyValid;
+	float	 normalThreshold;
+	float	 positionThresholdScale;
+	float	 temporalMCap;
+	float	 jacobianRejectionThreshold;
+	RAY_UINT instanceCount;
+	RAY_UINT idToInstanceIndexCount;
+	RAY_UINT pad1;
+	RAY_UINT pad2;
+};
 
 struct RestirPrimaryHit
 {
@@ -148,19 +186,18 @@ struct RestirPrimaryHit
 struct RestirPathSample
 {
 	RAY_FLOAT4 contributionTarget; //.rgb = target contribution; .w = scalar target p_hat
-	RAY_FLOAT4 throughputPdf; //.w = source path pdf used to derive contributionWeight
-	RAY_FLOAT4 firstHitPositionDistance;
-	RAY_FLOAT4 weightTerms; //.x = target, .y = contributionWeight, .z = misWeight, .w = shiftJacobian
+	RAY_FLOAT4 throughputPdf;	   //.x = light pdf, .y = asfloat(pathFlags), .z = reserved, .w = source path pdf
+	RAY_FLOAT4 weightTerms;		   //.x = target, .y = contributionWeight, .z = misWeight, .w = shiftJacobian
 
-	RAY_UINT packedFirstHitNormal;
-	RAY_UINT packedFirstHitRoughness;
-	RAY_UINT instanceId;
-	RAY_UINT materialId;
-
-	RAY_UINT geometryId;
 	RAY_UINT pathLength;
 	RAY_UINT sourceKind;
 	RAY_UINT shiftKind;
+	RAY_UINT reconnectInstanceGeneration;
+
+	RAY_UINT reconnectInstanceId;
+	RAY_UINT reconnectGeometryIndex;
+	RAY_UINT reconnectPrimitiveIndex;
+	RAY_UINT reconnectBarycentrics;
 };
 
 struct RestirReservoir
@@ -174,49 +211,15 @@ struct RestirReservoir
 };
 
 #ifdef __cplusplus
+static_assert(sizeof(GeoInfo) == 20);
+static_assert(sizeof(RestirEmissiveLightData) == 16);
+static_assert(sizeof(RestirTemporalConstants) == 48);
 static_assert(sizeof(RestirPrimaryHit) == 40);
-static_assert(sizeof(RestirPathSample) == 96);
-static_assert(sizeof(RestirReservoir) == 112);
+static_assert(sizeof(RestirPathSample) == 80);
+static_assert(sizeof(RestirReservoir) == 96);
 #pragma pack(pop)
 #else
 // --- HLSL Only Helpers ---
-
-struct RayPayload
-{
-	float3 color;
-	uint   recursionDepth;
-
-	float3 targetContribution;
-	float  sourcePdf;
-
-	float3 primaryHitPosition;
-	float  primaryHitDistance;
-	float3 primaryHitNormal;
-	uint   primaryHitFlags;
-
-	uint  instanceId;
-	uint  materialId;
-	uint  geometryId;
-	float roughness;
-};
-
-RayPayload MakeDefaultRayPayload(uint recursionDepth)
-{
-	RayPayload payload;
-	payload.color = 0.0f.xxx;
-	payload.recursionDepth = recursionDepth;
-	payload.targetContribution = 0.0f.xxx;
-	payload.sourcePdf = 1.0f;
-	payload.primaryHitPosition = 0.0f.xxx;
-	payload.primaryHitDistance = -1.0f;
-	payload.primaryHitNormal = float3(0.0f, 1.0f, 0.0f);
-	payload.primaryHitFlags = 0u;
-	payload.instanceId = 0xffffffffu;
-	payload.materialId = 0xffffffffu;
-	payload.geometryId = 0xffffffffu;
-	payload.roughness = 1.0f;
-	return payload;
-}
 
 static const float PI = 3.14159265359f;
 static const float EPSILON = 0.0000001f;

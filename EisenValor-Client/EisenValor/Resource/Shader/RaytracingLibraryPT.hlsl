@@ -1,10 +1,14 @@
 #define HLSL
 #include "RaytracingCommon.h"
+#include "RaytracingPayload.hlsli"
 #include "RaytracingMaterialEmission.hlsli"
 #include "RaytracingTerrain.hlsli"
 #include "RaytracingEnvironment.hlsli"
 #include "RaytracingPostProcess.hlsli"
 #include "RaytracingNormal.hlsli"
+#include "RaytracingSampling.hlsli"
+
+typedef StandardRayPayload RayPayload;
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
@@ -40,102 +44,6 @@ static const float PT_VISIBLE_NORMAL_STRENGTH = 2.5f;
 // 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
 static const uint PT_DEBUG_VIEW = 0;
 
-// RNG (PCG)
-float RandomValue(inout uint seed)
-{
-    seed = seed * 747796405u + 2891336453u;
-    uint temp = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
-    temp = (temp >> 22u) ^ temp;
-    return float(temp) / 4294967296.0f;
-}
-
-// 원 내부의 임의 점 생성
-float2 RandomPointInCircle(inout uint seed)
-{
-    float angle = RandomValue(seed) * 2.0f * PI;
-    float2 circle = float2(cos(angle), sin(angle));
-    float r = sqrt(RandomValue(seed));
-    return circle * r;
-}
-
-void BuildOrthonormalBasis(float3 normal, out float3 tangent, out float3 bitangent)
-{
-    float sign = normal.z >= 0.0f ? 1.0f : -1.0f;
-    float a = -1.0f / (sign + normal.z);
-    float b = normal.x * normal.y * a;
-    tangent = float3(1.0f + sign * normal.x * normal.x * a, sign * b, -sign * normal.x);
-    bitangent = float3(b, sign + normal.y * normal.y * a, -normal.y);
-}
-
-float3 SampleDirectionalAreaSun(float3 lightDir, float angularRadius, inout uint seed)
-{
-    float2 disk = RandomPointInCircle(seed);
-    float3 tangent;
-    float3 bitangent;
-    BuildOrthonormalBasis(normalize(lightDir), tangent, bitangent);
-    return normalize(lightDir + disk.x * angularRadius * tangent + disk.y * angularRadius * bitangent);
-}
-
-inline float ShadowVisibility(
-    RaytracingAccelerationStructure accel,
-    float3 origin,
-    float3 dir,
-    float tMin,
-    float tMax,
-    uint mask)
-{
-    RayQuery <
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-        RAY_FLAG_FORCE_OPAQUE |
-        RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
-    > rq;
-
-    RayDesc ray;
-    ray.Origin = origin;
-    ray.Direction = dir;
-    ray.TMin = tMin;
-    ray.TMax = tMax;
-
-    rq.TraceRayInline(accel, RAY_FLAG_NONE, mask, ray);
-
-    while (rq.Proceed())
-    {
-        if (rq.CandidateType() == CANDIDATE_NON_OPAQUE_TRIANGLE)
-        {
-            rq.CommitNonOpaqueTriangleHit();
-        }
-    }
-
-    return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
-}
-
-float SoftShadowVisibilityDirLight(
-    RaytracingAccelerationStructure accel,
-    float3 origin,
-    float3 normal,
-    float3 lightDir,
-    float angularRadius,
-    uint mask,
-    inout uint seed)
-{
-    const uint NUM_SAMPLES = 4;
-    float visibility = 0.0f;
-
-    [unroll]
-    for (uint i = 0; i < NUM_SAMPLES; ++i)
-    {
-        float3 jitteredDir = SampleDirectionalAreaSun(lightDir, angularRadius, seed);
-        if (dot(jitteredDir, normal) <= 0.0f)
-        {
-            continue;
-        }
-
-        visibility += ShadowVisibility(accel, origin, jitteredDir, RAY_TMIN, RAY_TMAX, mask);
-    }
-
-    return visibility / NUM_SAMPLES;
-}
-
 float3 CosineHemisphere(float3 normal, inout uint seed)
 {
     float u1 = RandomValue(seed);
@@ -167,49 +75,7 @@ bool UsePhysicalRenderingMode()
 
 #define RAYTRACING_ENABLE_GGX_SAMPLING 1
 #include "RaytracingLighting.hlsli"
-
-float3 EvaluateTemporarySunNEE(
-    float3 hitPos,
-    float3 geometricNormal,
-    float3 shadingNormal,
-    float3 viewDir,
-    float3 albedo,
-    float metallic,
-    float roughness,
-    float ao,
-    float3 F0,
-    inout uint rngSeed)
-{
-    float3 lightDir = GetEnvironmentSunDirection();
-    float3 Li = GetEnvironmentSunRadiance(g_environmentMode);
-
-    float NdotL = max(dot(shadingNormal, lightDir), 0.0f);
-    float NdotV = max(dot(shadingNormal, viewDir), 0.0f);
-    if (NdotL <= 0.0f || NdotV <= 0.0f)
-    {
-        return 0.0f.xxx;
-    }
-
-    float3 H = normalize(viewDir + lightDir);
-    float NDF = DistributionGGX(shadingNormal, H, roughness);
-    float G = GeometrySmith(shadingNormal, viewDir, lightDir, roughness);
-    float3 F = FresnelSchlick(saturate(dot(H, viewDir)), F0);
-    float3 specular = (NDF * G * F) / max(4.0f * NdotV * NdotL, EPSILON);
-    float3 kD = (1.0f - F) * (1.0f - metallic);
-
-    float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
-    float visibility = SoftShadowVisibilityDirLight(
-        g_scene,
-        shadowOrigin,
-        geometricNormal,
-        lightDir,
-        GetEnvironmentSunAngularRadius(g_environmentMode),
-        0xFF,
-        rngSeed
-    );
-
-    return (kD * albedo * ao / PI + specular) * Li * NdotL * visibility;
-}
+#include "RaytracingNEE.hlsli"
 
 [shader("raygeneration")]
 void RayGenMain()
@@ -242,7 +108,7 @@ void RayGenMain()
         ray.TMin = 0.001f;
         ray.TMax = RAY_TMAX;
 
-        RayPayload payload = MakeDefaultRayPayload(0);
+        RayPayload payload = MakeDefaultRayPayload<RayPayload>(0);
 		
         TraceRay(g_scene,
 				 RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
@@ -452,7 +318,9 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     rngSeed ^= rngSeed >> 16;
 
     // Temporary PT NEE: take one extra environment-sun sample and test visibility.
-    float3 directSun = EvaluateTemporarySunNEE(
+    float3 directSun = EvaluateEnvironmentSunNEE(
+        g_scene,
+        g_environmentMode,
         hitPos,
         geometricNormal,
         visibleNormal,
@@ -462,6 +330,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         roughness,
         ao,
         F0,
+        4u,
         rngSeed
     );
 	
@@ -560,7 +429,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     nextRay.TMin = RAY_TMIN;
     nextRay.TMax = RAY_TMAX;
 
-    RayPayload child = MakeDefaultRayPayload(payload.recursionDepth + 1);
+    RayPayload child = MakeDefaultRayPayload<RayPayload>(payload.recursionDepth + 1);
 
     TraceRay(
 		g_scene,
