@@ -68,6 +68,11 @@ bool ButtonUIComponent::ProcessInput(const DirectX::XMFLOAT2& mousePos, bool isM
 	// 상태가 바뀌면 연결된 이미지에 반영
 	if (nextState != m_state)
 	{
+		if (m_state == ButtonState::Normal && nextState == ButtonState::Hover && m_onHover)
+		{
+			m_onHover();
+		}
+
 		m_state = nextState;
 		UpdateVisuals();
 	}

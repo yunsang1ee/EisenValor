@@ -3,6 +3,7 @@
 #include "ButtonUIComponent.h"
 #include "ImageUIComponent.h"
 #include "RectTransformComponent.h"
+#include "AudioGlobal.h"
 #include "ResourceGlobal.h"
 #include "SceneGlobal.h"
 #include "TextureResource.h"
@@ -104,6 +105,12 @@ void StartScene::OnStartImpl()
 					[imageHandle, button](ButtonUIComponent* buttonComponent)
 					{
 						buttonComponent->SetTargetImage(imageHandle);
+						buttonComponent->SetOnHover(
+							[]()
+							{
+								GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/click.wav", AudioBus::UI);
+							}
+						);
 						buttonComponent->SetOnClick(
 							[button]()
 							{
