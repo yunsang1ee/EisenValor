@@ -326,6 +326,9 @@
     <ClInclude Include="include\TextUIComponent.h">
       <Filter>Component\UI</Filter>
     </ClInclude>
+    <ClInclude Include="include\AudioGlobal.h">
+      <Filter>Resource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GlobalInterfaces.cpp">
@@ -488,6 +491,9 @@
     </ClCompile>
     <ClCompile Include="src\TextUIComponent.cpp">
       <Filter>Component\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AudioGlobal.cpp">
+      <Filter>Resource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

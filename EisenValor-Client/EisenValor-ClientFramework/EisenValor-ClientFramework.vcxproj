@@ -265,6 +265,7 @@
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\AnimationResource.h" />
     <ClInclude Include="include\AnimationComponent.h" />
+    <ClInclude Include="include\AudioGlobal.h" />
     <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\CameraRenderData.h" />
@@ -341,6 +342,7 @@
   <ItemGroup>
     <ClCompile Include="src\AnimationResource.cpp" />
     <ClCompile Include="src\AnimationComponent.cpp" />
+    <ClCompile Include="src\AudioGlobal.cpp" />
     <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\CommonUtils.cpp" />
