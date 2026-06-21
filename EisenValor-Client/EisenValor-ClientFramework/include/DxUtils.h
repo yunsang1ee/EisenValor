@@ -28,6 +28,10 @@ D3D12_RESOURCE_BARRIER CreateAutoTransitionBarrier(
 	DxResource& resource, D3D12_RESOURCE_STATES afterState, UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES
 );
 
+void TransitionResourceIfNeeded(
+	ID3D12GraphicsCommandList* cmdList, DxResource* resource, D3D12_RESOURCE_STATES targetState
+);
+
 // UAV 배리어 생성
 inline D3D12_RESOURCE_BARRIER CreateUAVBarrier(ID3D12Resource* resource)
 {

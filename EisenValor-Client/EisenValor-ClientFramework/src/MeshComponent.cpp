@@ -3,10 +3,20 @@
 #include "MeshResource.h"
 #include "MaterialResource.h"
 #include "ResourceGlobal.h"
+#include <atomic>
+
+namespace
+{
+std::atomic_uint64_t g_meshRenderRevision = 1;
+}
 
 void MeshComponent::SetMeshResource(std::shared_ptr<MeshResource> mesh, bool loadDefaultMaterials)
 {
 	m_meshResource = std::move(mesh);
+	if (m_mobility == RenderMobility::Static)
+	{
+		NotifyRenderStateChanged();
+	}
 
 	if (nullptr == m_meshResource)
 	{
@@ -50,6 +60,39 @@ void MeshComponent::SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialR
 		m_materials.resize(slot + 1);
 		m_materials[slot] = std::move(material);
 	}
+	if (m_mobility == RenderMobility::Static)
+	{
+		NotifyRenderStateChanged();
+	}
+}
+
+void MeshComponent::SetMobility(RenderMobility mobility)
+{
+	if (m_mobility == mobility)
+	{
+		return;
+	}
+
+	m_mobility = mobility;
+	NotifyRenderStateChanged();
+}
+
+void MeshComponent::OnDestroy()
+{
+	if (m_mobility == RenderMobility::Static)
+	{
+		NotifyRenderStateChanged();
+	}
+}
+
+uint64_t MeshComponent::GetGlobalRenderRevision()
+{
+	return g_meshRenderRevision.load(std::memory_order_relaxed);
+}
+
+void MeshComponent::NotifyRenderStateChanged()
+{
+	g_meshRenderRevision.fetch_add(1, std::memory_order_relaxed);
 }
 
 MaterialResource* MeshComponent::GetMaterial(uint32_t slot) const

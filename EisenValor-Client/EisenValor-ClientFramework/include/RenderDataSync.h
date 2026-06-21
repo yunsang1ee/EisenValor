@@ -31,9 +31,7 @@ public:
 		requires std::constructible_from<T, Args...> &&
 				 (sizeof...(Args) != 1 || !std::same_as<std::decay_t<Args>..., T>)
 	Handle Register(Args&&... args)
-	{
-		return m_list.Emplace(std::forward<Args>(args)...);
-	}
+	{ return m_list.Emplace(std::forward<Args>(args)...); }
 
 	void Unregister(Handle handle)
 	{
@@ -49,8 +47,11 @@ public:
 		}
 	}
 
-	[[nodiscard]] const T* TryGet(Handle handle) const { return m_list.TryGet(handle); }
-	void				   Clear() { m_list.Reset(); }
+	[[nodiscard]] const T*			 TryGet(Handle handle) const { return m_list.TryGet(handle); }
+	void							 Clear() { m_list.Clear(); }
+	void							 Assign(std::span<const T> values) { m_list.Assign(values); }
+	[[nodiscard]] std::span<const T> GetSpan() const { return m_list.GetSpan(); }
+
 
 	[[nodiscard]] bool NeedsDescriptorUpdate() const { return m_descriptorDirty; }
 	void			   MarkDescriptorUpdated() { m_descriptorDirty = false; }
@@ -106,19 +107,14 @@ private:
 		auto* cmdList = context.CommandList();
 		auto* destRes = m_gpuBuffer->GetResource();
 
-		auto barrier1 =
-			DxUtils::CreateTransitionBarrier(destRes, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-		cmdList->ResourceBarrier(1, &barrier1);
+		DxUtils::TransitionResourceIfNeeded(cmdList, m_gpuBuffer.get(), D3D12_RESOURCE_STATE_COPY_DEST);
 
 		auto alloc = uploadHeap.Allocate(sizeInBytes, 256);
 		std::memcpy(alloc.cpuAddress, m_list.data(), sizeInBytes);
 
 		cmdList->CopyBufferRegion(destRes, 0, uploadHeap.GetResource(), alloc.offset, sizeInBytes);
 
-		auto barrier2 = DxUtils::CreateTransitionBarrier(
-			destRes, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ
-		);
-		cmdList->ResourceBarrier(1, &barrier2);
+		DxUtils::TransitionResourceIfNeeded(cmdList, m_gpuBuffer.get(), D3D12_RESOURCE_STATE_GENERIC_READ);
 
 		// GRAPHICS_LOG_FMT("[RenderDataSync] Uploaded {} elements ({} bytes) to GPU\n", m_list.size(), sizeInBytes);
 	}

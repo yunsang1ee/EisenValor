@@ -433,3 +433,10 @@ FodyWeavers.xsd
 /Tools/Character_Export
 /GEMINI.md
 EisenValor-Server/Analysis
+
+# Local-only Claude skills (mirrored from .agents/skills)
+.claude/skills/
+
+# Local-only MCP config (converted from codex)
+.mcp.json
+/.codex

@@ -9,6 +9,7 @@
 #include "MeshComponent.h"
 #include "MeshResource.h"
 #include "MovementComponent.h"
+#include "PixProfiler.h"
 #include "ResourceGlobal.h"
 #include "Scene.h"
 #include "Transform.h"
@@ -148,6 +149,8 @@ void FootIKComponent::OnStart()
 
 void FootIKComponent::OnLateUpdate(float deltaTime)
 {
+	PixScopedCpuEvent lateUpdateEvent(L"FootIK.OnLateUpdate");
+
 	if (!m_ikEnabled)
 	{
 		return;
@@ -207,8 +210,17 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	GroundHit rightGroundHit;
 	constexpr float kFootRayMaxUp = -0.05f;
 	constexpr float kFootRayMaxDown = 1.0f;
-	const bool leftHitValid = TrySampleVisualGround(leftFootWorldPosition, kFootRayMaxUp, kFootRayMaxDown, leftGroundHit);
-	const bool rightHitValid = TrySampleVisualGround(rightFootWorldPosition, kFootRayMaxUp, kFootRayMaxDown, rightGroundHit);
+	bool leftHitValid;
+	{
+		PixScopedCpuEvent leftGroundQueryEvent(L"LeftGroundQuery");
+		leftHitValid = TrySampleVisualGround(leftFootWorldPosition, kFootRayMaxUp, kFootRayMaxDown, leftGroundHit);
+	}
+
+	bool rightHitValid;
+	{
+		PixScopedCpuEvent rightGroundQueryEvent(L"RightGroundQuery");
+		rightHitValid = TrySampleVisualGround(rightFootWorldPosition, kFootRayMaxUp, kFootRayMaxDown, rightGroundHit);
+	}
 	/*DEBUG_LOG_FMT(
 		"[FootIK] left sample hit={} foot=({:.3f}, {:.3f}, {:.3f}) ground=({:.3f}, {:.3f}, {:.3f}) distance={:.3f}\n",
 		leftHitValid, leftFootWorldPosition.x, leftFootWorldPosition.y, leftFootWorldPosition.z, leftGroundHit.position.x,
