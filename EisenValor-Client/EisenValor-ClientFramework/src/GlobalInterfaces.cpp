@@ -1,6 +1,7 @@
 #include "stdafxClientFramework.h"
 #include "InputGlobal.h"
 #include "TimerGlobal.h"
+#include "AudioGlobal.h"
 #include "SceneGlobal.h"
 #include "DxDeviceGlobal.h"
 #include "DxCommandQueueGlobal.h"
@@ -22,6 +23,7 @@ void Initialize(HWND hwnd)
 {
 	GLOBAL(InputGlobal).Initialize(hwnd);
 	GLOBAL(TimerGlobal).Initialize();
+	GLOBAL(AudioGlobal).Initialize();
 
 #ifdef _DEBUG
 	auto& debugG = GLOBAL(DxDebugGlobal);
@@ -79,6 +81,7 @@ void Shutdown()
 
 	GLOBAL(TimerGlobal).Release();
 	GLOBAL(InputGlobal).Release();
+	GLOBAL(AudioGlobal).Release();
 
 	GLOBAL(NetBridge::NetworkGlobal).Release();
 }

@@ -17,6 +17,7 @@ public:
 
 	// 버튼 클릭 시 호출
 	void SetOnClick(std::function<void()> callback) { m_onClick = callback; }
+	void SetOnHover(std::function<void()> callback) { m_onHover = callback; }
 
 	// 상태 호출
 	ButtonState GetState() const { return m_state; }
@@ -41,6 +42,7 @@ private:
 
 	// 이벤트 콜백
 	std::function<void()> m_onClick;
+	std::function<void()> m_onHover;
 
 	// 시각적 피드백을 줄 대상 이미지 (색상 로직은 ImageUI가 담당)
 	HandleOf<ImageUIComponent> m_targetImage;

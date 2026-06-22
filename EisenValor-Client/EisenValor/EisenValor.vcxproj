@@ -320,6 +320,9 @@ exit /b 0</Command>
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="Component\World\WorldSceneControllerComponent.h" />
+    <ClInclude Include="Component\World\WorldLoadingControllerComponent.h" />
+    <ClInclude Include="Component\World\QuestProgressComponent.h" />
+    <ClInclude Include="Component\World\QuestUIComponent.h" />
     <ClInclude Include="EisenValor.h" />
     <ClInclude Include="NavMesh\DetourAlloc.h" />
     <ClInclude Include="NavMesh\DetourAssert.h" />
@@ -355,6 +358,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\LoadingScene.h" />
+    <ClInclude Include="Scene\ScoreScene.h" />
     <ClInclude Include="Scene\LobbyScene.h" />
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
@@ -385,6 +389,9 @@ exit /b 0</Command>
     <ClCompile Include="Component\TeamComponent.cpp" />
     <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
     <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
+    <ClCompile Include="Component\World\WorldLoadingControllerComponent.cpp" />
+    <ClCompile Include="Component\World\QuestProgressComponent.cpp" />
+    <ClCompile Include="Component\World\QuestUIComponent.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafxClient.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -462,6 +469,7 @@ exit /b 0</Command>
     <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\LoadingScene.cpp" />
+    <ClCompile Include="Scene\ScoreScene.cpp" />
     <ClCompile Include="Scene\LobbyScene.cpp" />
     <ClCompile Include="Scene\LoginScene.cpp" />
     <ClCompile Include="Scene\RoomScene.cpp" />

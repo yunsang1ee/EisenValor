@@ -1,6 +1,7 @@
 #include "stdafxClient.h"
 #include "LoginSceneControllerComponent.h"
 #include "InputGlobal.h"
+#include "AudioGlobal.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 
@@ -104,6 +105,11 @@ namespace
 			}
 
 			const int controlID = LOWORD(wParam);
+			if (controlID == kLoginButtonID || controlID == kRegisterButtonID || controlID == kCancelButtonID)
+			{
+				GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/click.wav", AudioBus::UI);
+			}
+
 			if (controlID == kLoginButtonID)
 			{
 				FinishLoginDialog(hwnd, *result, LoginDialogAction::Login);
