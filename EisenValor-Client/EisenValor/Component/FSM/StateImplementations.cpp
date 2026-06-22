@@ -443,8 +443,7 @@ void GeneralPostDelayState::Exit(FSMComponent* fsm)
 // ==================================
 GeneralStunState::GeneralStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
-	SetHasExitTime(true);
-	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+	SetHasExitTime(false);
 }
 
 void GeneralStunState::Enter(FSMComponent* fsm)
@@ -482,7 +481,18 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 
 void GeneralStunState::Update(FSMComponent* fsm, float dt)
 {
-	// OnUpdate에서 자동 체크
+	if (!fsm) return;
+
+	auto* obj = fsm->GetGameObject();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	auto* anim = obj ? obj->GetComponent<AnimationComponent>() : nullptr;
+	if (!obj || !scene || !anim || !anim->IsAnimationEnd()) return;
+
+	const bool isLocalPlayer = obj->GetServerID() == scene->GetLocalID();
+	if (isLocalPlayer)
+	{
+		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+	}
 }
 
 void GeneralStunState::Exit(FSMComponent* fsm)
@@ -530,24 +540,19 @@ void GeneralGuardState::Update(FSMComponent* fsm, float dt)
 
 	auto* obj = fsm->GetGameObject();
 	if (!obj) return;
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
 
 	auto* anim = obj->GetComponent<AnimationComponent>();
 	if (!anim) return;
 
-	if (fsm->GetGuardRole() == FSMComponent::GuardRole::Attacker)
-	{
-		if (anim->IsAnimationEnd())
-		{
-			fsm->SetGuardRole(FSMComponent::GuardRole::None);
-			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
-		}
-		return;
-	}
-
 	if (anim->IsAnimationEnd())
 	{
-		fsm->SetGuardRole(FSMComponent::GuardRole::None);
-		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		const bool isLocalPlayer = obj->GetServerID() == scene->GetLocalID();
+		if (isLocalPlayer)
+		{
+			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		}
 	}
 }
 

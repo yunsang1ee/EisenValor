@@ -3,6 +3,7 @@
 #include "ButtonUIComponent.h"
 #include "ImageUIComponent.h"
 #include "RectTransformComponent.h"
+#include "AudioGlobal.h"
 #include "ResourceGlobal.h"
 #include "SceneGlobal.h"
 #include "TextureResource.h"
@@ -33,6 +34,7 @@ void StartScene::OnRegisterCustomComponents()
 void StartScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[StartScene] Enter Start Scene.\n");
+	GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/startscene.wav", AudioBus::BGM, true);
 
 	ReserveGameObject(
 		"StartSceneBackground", std::nullopt,
@@ -104,17 +106,21 @@ void StartScene::OnStartImpl()
 					[imageHandle, button](ButtonUIComponent* buttonComponent)
 					{
 						buttonComponent->SetTargetImage(imageHandle);
+						buttonComponent->SetOnHover(
+							[]()
+							{
+								GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/click.wav", AudioBus::UI);
+							}
+						);
 						buttonComponent->SetOnClick(
 							[button]()
 							{
+								GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/mouseclick.wav", AudioBus::UI);
+
 								switch (button.action)
 								{
 								case StartMenuAction::Start:
-									#ifdef APPLY_LOBBY_SERVER
 									GLOBAL(SceneGlobal).LoadScene("LoginScene");
-									#else
-									GLOBAL(SceneGlobal).LoadScene("WorldScene");
-									#endif
 									break;
 								case StartMenuAction::Quit:
 									PostQuitMessage(0);
@@ -133,5 +139,6 @@ void StartScene::OnStartImpl()
 
 void StartScene::OnEndImpl()
 {
+	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	DEBUG_LOG_FMT("[StartScene] Scene Ended.\n");
 }

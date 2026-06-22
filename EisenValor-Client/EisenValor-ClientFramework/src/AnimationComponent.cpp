@@ -139,6 +139,7 @@ void AnimationComponent::OnLateUpdate(float dt)
 	if (!m_isPlaying || !m_currentAnimation)
 		return;
 
+	const float previousTime = m_currentTime;
 	m_currentTime += dt;
 	if (m_isBlending)
 	{
@@ -152,11 +153,13 @@ void AnimationComponent::OnLateUpdate(float dt)
 
 	float duration = m_currentAnimation->GetDuration();
 
-	if (m_currentTime >= duration)
+	bool looped = false;
+	if (duration > 0.0f && m_currentTime >= duration)
 	{
 		// 큐에 다음 애니메이션이 있는지 확인
 		if (!m_animationQueue.empty())
 		{
+			DispatchAnimationEvents(previousTime, duration, duration, false);
 			auto next = m_animationQueue.front();
 			m_animationQueue.pop_front();
 			Play(next.key, next.loop, next.rootMotion);
@@ -166,6 +169,7 @@ void AnimationComponent::OnLateUpdate(float dt)
 		if (m_isLooping)
 		{
 			m_currentTime = std::fmod(m_currentTime, duration);
+			looped = true;
 			m_rootMotionFirstFrame = true;
 		}
 		else
@@ -175,12 +179,45 @@ void AnimationComponent::OnLateUpdate(float dt)
 		}
 	}
 
+	DispatchAnimationEvents(previousTime, m_currentTime, duration, looped);
 	UpdateBoneMatrices();
 }
 
 void AnimationComponent::AddAnimation(uint8_t key, std::shared_ptr<AnimationResource> animation)
 {
 	m_animations[key] = animation;
+}
+
+void AnimationComponent::AddAnimationEvent(uint8_t key, float time, std::function<void()> callback)
+{
+	if (time < 0.0f || !callback)
+		return;
+
+	auto& events = m_animationEvents[key];
+	events.push_back({time, std::move(callback)});
+	std::sort(events.begin(), events.end(), [](const AnimationEvent& a, const AnimationEvent& b)
+	{
+		return a.time < b.time;
+	});
+}
+
+void AnimationComponent::DispatchAnimationEvents(
+	float previousTime, float currentTime, float duration, bool looped
+)
+{
+	auto it = m_animationEvents.find(m_currentKey);
+	if (it == m_animationEvents.end() || duration <= 0.0f)
+		return;
+
+	for (const auto& event : it->second)
+	{
+		const bool crossedEvent = looped
+			? event.time > previousTime || event.time <= currentTime
+			: event.time > previousTime && event.time <= currentTime;
+
+		if (crossedEvent && event.callback)
+			event.callback();
+	}
 }
 
 void AnimationComponent::Play(uint8_t key, bool loop, bool rootMotion)

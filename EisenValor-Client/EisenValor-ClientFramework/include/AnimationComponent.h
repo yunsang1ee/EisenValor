@@ -9,6 +9,7 @@
 #include <optional>
 #include <deque>
 #include <array>
+#include <functional>
 
 // IK를 적용할 수 있는 부위
 enum class IK_TYPE : uint8_t {
@@ -32,6 +33,7 @@ public:
 
 	// 애니메이션 등록 및 키 기반 재생
 	void AddAnimation(uint8_t key, std::shared_ptr<AnimationResource> animation);
+	void AddAnimationEvent(uint8_t key, float time, std::function<void()> callback);
 	void Play(uint8_t key, bool loop = true, bool rootMotion = false);
 	void PlayBlend(uint8_t key, float duration, bool loop = true, bool rootMotion = false);
 	void Play(std::shared_ptr<AnimationResource> animation, bool loop = true, bool rootMotion = false);
@@ -74,9 +76,17 @@ public:
 
 private:
 	void UpdateBoneMatrices();
+	void DispatchAnimationEvents(float previousTime, float currentTime, float duration, bool looped);
 
 private:
+	struct AnimationEvent
+	{
+		float time = 0.0f;
+		std::function<void()> callback;
+	};
+
 	std::unordered_map<uint8_t, std::shared_ptr<AnimationResource>> m_animations;
+	std::unordered_map<uint8_t, std::vector<AnimationEvent>> m_animationEvents;
 	std::shared_ptr<AnimationResource> m_currentAnimation;
 	uint8_t m_currentKey = 0;
 	float m_currentTime = 0.0f;

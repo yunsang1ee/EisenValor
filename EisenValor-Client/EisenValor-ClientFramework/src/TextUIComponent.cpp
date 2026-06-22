@@ -48,32 +48,24 @@ namespace
 
 	ComPtr<IWICImagingFactory> GetWICFactory()
 	{
-		static ComPtr<IWICImagingFactory> factory;
-		if (factory)
+		static ComPtr<IWICImagingFactory> factory = []
 		{
-			return factory;
-		}
+			ComPtr<IWICImagingFactory> createdFactory;
+			CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
-		HRESULT hr = CoCreateInstance(
-			CLSID_WICImagingFactory,
-			nullptr,
-			CLSCTX_INPROC_SERVER,
-			IID_PPV_ARGS(factory.GetAddressOf())
-		);
-		if (FAILED(hr))
-		{
-			const HRESULT initHr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-			if (SUCCEEDED(initHr) || initHr == RPC_E_CHANGED_MODE)
+			const HRESULT hr = CoCreateInstance(
+				CLSID_WICImagingFactory,
+				nullptr,
+				CLSCTX_INPROC_SERVER,
+				IID_PPV_ARGS(createdFactory.GetAddressOf())
+			);
+			if (FAILED(hr))
 			{
-				CoCreateInstance(
-					CLSID_WICImagingFactory,
-					nullptr,
-					CLSCTX_INPROC_SERVER,
-					IID_PPV_ARGS(factory.ReleaseAndGetAddressOf())
-				);
+				createdFactory.Reset();
 			}
-		}
 
+			return createdFactory;
+		}();
 		return factory;
 	}
 
@@ -260,7 +252,7 @@ void TextUIComponent::GetRenderData(std::vector<UIRenderData>& outData)
 	data.uvMin = {0.0f, 0.0f};
 	data.uvMax = {1.0f, 1.0f};
 	data.rotationDegrees = rectTr->GetRotationDegrees();
-	data.color = {1.0f, 1.0f, 1.0f, 1.0f};
+	data.color = m_color;
 
 	outData.push_back(data);
 }
@@ -380,7 +372,7 @@ void TextUIComponent::UpdateTextTextureIfNeeded()
 
 	ComPtr<ID2D1SolidColorBrush> brush;
 	hr = renderTarget->CreateSolidColorBrush(
-		D2D1::ColorF(m_color.x, m_color.y, m_color.z, m_color.w),
+		D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f),
 		brush.GetAddressOf()
 	);
 	if (FAILED(hr))
