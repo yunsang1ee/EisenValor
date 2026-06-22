@@ -1,4 +1,4 @@
-#include "stdafxClient.h"
+﻿#include "stdafxClient.h"
 #include "WorldScene.h"
 #include "Scene\SceneComponentData\TorchEmitterSceneComponentData.h"
 
@@ -17,6 +17,8 @@
 #include "Component/FootIKComponent.h"
 #include "Component/World/WorldSceneControllerComponent.h"
 #include "Component/World/WorldLoadingControllerComponent.h"
+#include "Component/World/QuestProgressComponent.h"
+#include "Component/World/QuestUIComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -42,34 +44,6 @@ using Vertex = EvAsset::Vertex;
 
 namespace
 {
-class QuestMessageAnimationComponent final : public ComponentBase<QuestMessageAnimationComponent>
-{
-public:
-	static constexpr const char* GetStaticTypeName() { return "QuestMessageAnimationComponent"; }
-
-	void OnUpdate(float deltaTime)
-	{
-		m_elapsed += deltaTime;
-		const float progress = std::clamp(m_elapsed / 0.25f, 0.0f, 1.0f);
-		const float eased = 1.0f - (1.0f - progress) * (1.0f - progress);
-
-		if (auto* text = GetGameObject()->GetComponent<TextUIComponent>())
-		{
-			text->SetColor({1.0f, 1.0f, 1.0f, eased});
-		}
-
-		if (auto* rect = GetGameObject()->GetComponent<RectTransformComponent>())
-		{
-			const float y = 20.0f - 20.0f * eased;
-			rect->SetOffsetMin({-320.0f, -40.0f + y});
-			rect->SetOffsetMax({320.0f, 40.0f + y});
-		}
-	}
-
-private:
-	float m_elapsed = 0.0f;
-};
-
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
 constexpr float			   kTorchPreviewSphereScale = 0.5f;
 constexpr float			   kTorchTransportEmissionScale = 65.0f;
@@ -82,7 +56,7 @@ void WorldScene::OnRegisterCustomComponents()
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
 		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent,
-		WorldLoadingControllerComponent, QuestMessageAnimationComponent>();
+		WorldLoadingControllerComponent, QuestUIComponent, QuestProgressComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
@@ -184,7 +158,7 @@ void WorldScene::OnStartImpl()
 	{
 		CreateSceneObjects();
 
-		// 서버 없이 테스트를 위한 스트레스 테스트 오브젝트 생성
+		// ?쒕쾭 ?놁씠 ?뚯뒪?몃? ?꾪븳 ?ㅽ듃?덉뒪 ?뚯뒪???ㅻ툕?앺듃 ?앹꽦
 		// ReserveGameObject(
 		//	"StressTester", std::nullopt,
 		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
@@ -213,8 +187,20 @@ void WorldScene::OnStartImpl()
 				{
 					rect->SetAnchors({0.5f, 0.25f}, {0.5f, 0.25f});
 					rect->SetPivot({0.5f, 0.5f});
-					rect->SetOffsetMin({-320.0f, -20.0f});
-					rect->SetOffsetMax({320.0f, 60.0f});
+					rect->SetOffsetMin({-320.0f, -80.0f});
+					rect->SetOffsetMax({320.0f, 240.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
+						L"Resource\\Texture\\quest.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetColor({1.0f, 1.0f, 1.0f, 0.0f});
+					image->SetOrder(99998);
 				}
 			);
 
@@ -222,16 +208,17 @@ void WorldScene::OnStartImpl()
 				obj->GetHandle(),
 				[](TextUIComponent* text)
 				{
-					text->SetText(L"WASD로 이동하세요");
+					text->SetText(L"WASD\uB85C \uC774\uB3D9\uD558\uC138\uC694");
 					text->SetFontSize(32.0f);
 					text->SetHorizontalAlign(TextHorizontalAlign::Center);
 					text->SetVerticalAlign(TextVerticalAlign::Center);
 					text->SetColor({1.0f, 1.0f, 1.0f, 0.0f});
-					text->SetOrder(900);
+					text->SetOrder(99999);
 				}
 			);
 
-			CreateComponent<QuestMessageAnimationComponent>(obj->GetHandle());
+			CreateComponent<QuestUIComponent>(obj->GetHandle());
+			CreateComponent<QuestProgressComponent>(obj->GetHandle());
 		}
 	);
 }
@@ -293,3 +280,5 @@ void WorldScene::OnEndImpl()
 	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 1.0f);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
+
+

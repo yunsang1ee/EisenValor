@@ -280,6 +280,12 @@
     <ClInclude Include="Component\World\WorldLoadingControllerComponent.h">
       <Filter>Component\World</Filter>
     </ClInclude>
+    <ClInclude Include="Component\World\QuestProgressComponent.h">
+      <Filter>Component\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\World\QuestUIComponent.h">
+      <Filter>Component\World</Filter>
+    </ClInclude>
     <ClInclude Include="Scene\StartScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
@@ -427,6 +433,12 @@
       <Filter>Component\World</Filter>
     </ClCompile>
     <ClCompile Include="Component\World\WorldLoadingControllerComponent.cpp">
+      <Filter>Component\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\World\QuestProgressComponent.cpp">
+      <Filter>Component\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\World\QuestUIComponent.cpp">
       <Filter>Component\World</Filter>
     </ClCompile>
     <ClCompile Include="Scene\StartScene.cpp">
