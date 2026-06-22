@@ -24,6 +24,26 @@ D3D12_RESOURCE_BARRIER CreateAutoTransitionBarrier(
 	};
 }
 
+void TransitionResourceIfNeeded(
+	ID3D12GraphicsCommandList* cmdList, DxResource* resource, D3D12_RESOURCE_STATES targetState
+)
+{
+	if (nullptr == cmdList || nullptr == resource || nullptr == resource->GetResource())
+	{
+		return;
+	}
+
+	const auto currentState = resource->GetCurrentState();
+	if (currentState == targetState)
+	{
+		return;
+	}
+
+	auto barrier = CreateTransitionBarrier(resource->GetResource(), currentState, targetState);
+	cmdList->ResourceBarrier(1, &barrier);
+	resource->SetState(targetState);
+}
+
 
 size_t GetFormatSizeInBytes(DXGI_FORMAT format)
 {

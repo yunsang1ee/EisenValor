@@ -179,7 +179,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -191,6 +191,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
@@ -210,7 +211,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -224,6 +225,7 @@ exit /b 0</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
@@ -243,7 +245,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -257,6 +259,7 @@ exit /b 0</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
@@ -276,7 +279,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;PROFILE_BUILD;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;PROFILE_BUILD;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -290,6 +293,7 @@ exit /b 0</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>$(CALL) $(SolutionDir)Packets\Binaries\GenPackets.bat</Command>
@@ -352,8 +356,18 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
+    <ClInclude Include="RenderData\DlssOutputRenderData.h" />
+    <ClInclude Include="RenderData\RestirCandidateRenderData.h" />
+    <ClInclude Include="RenderData\RestirFinalReservoirRenderData.h" />
+    <ClInclude Include="RenderData\RestirLightRenderData.h" />
+    <ClInclude Include="RenderData\RestirTemporalHistoryRenderData.h" />
+    <ClInclude Include="RenderData\StaticSceneRenderData.h" />
+    <ClInclude Include="RenderData\TlasRenderData.h" />
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
+    <ClInclude Include="RenderPass\DlssUpscalePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h" />
+    <ClInclude Include="RenderPass\RestirTemporalReusePass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
@@ -403,61 +417,73 @@ exit /b 0</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourAssert.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourCommon.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourLocalBoundary.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourNavMesh.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourNavMeshBuilder.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourNavMeshQuery.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourNode.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourObstacleAvoidance.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourPathCorridor.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourPathQueue.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NavMesh\DetourProximityGrid.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Network\GameServerSession.cpp" />
     <ClCompile Include="Network\LobbyServerSession.cpp" />
@@ -465,7 +491,10 @@ exit /b 0</Command>
     <ClCompile Include="Packets\PacketHandler.cpp" />
     <ClCompile Include="Packets\S2CPackets.cpp" />
     <ClCompile Include="RenderPass\HdrResolvePass.cpp" />
+    <ClCompile Include="RenderPass\DlssUpscalePass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp" />
+    <ClCompile Include="RenderPass\RestirTemporalReusePass.cpp" />
     <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\LoadingScene.cpp" />
@@ -507,14 +536,21 @@ exit /b 0</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.clang-format" />
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibrary.hlsl" />
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl" />
+    <None Include="Resource\Shader\RaytracingRestirPT.hlsl" />
+    <None Include="Resource\Shader\RaytracingPayload.hlsli" />
+    <None Include="Resource\Shader\RestirFinalEvaluation.hlsl" />
+    <None Include="Resource\Shader\RestirTemporalReuse.hlsl" />
     <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli" />
     <None Include="Resource\Shader\RaytracingTerrain.hlsli" />
     <None Include="Resource\Shader\RaytracingEnvironment.hlsli" />
     <None Include="Resource\Shader\RaytracingLighting.hlsli" />
+    <None Include="Resource\Shader\RaytracingNEE.hlsli" />
+    <None Include="Resource\Shader\RaytracingSampling.hlsli" />
     <None Include="Resource\Shader\RaytracingPostProcess.hlsli" />
+    <None Include="Resource\Shader\RestirReservoir.hlsli" />
+    <None Include="Resource\Shader\RestirShading.hlsli" />
     <None Include="Resource\Shader\FullscreenToneMap.hlsl" />
     <None Include="Resource\Shader\UIVertexShader.hlsl" />
     <None Include="Resource\Shader\UIPixelShader.hlsl" />
@@ -532,6 +568,24 @@ exit /b 0</Command>
     <FxCompile Include="Resource\Shader\SkinningCompute.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <PropertyGroup>
+    <StreamlineSdkDir>$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1</StreamlineSdkDir>
+    <StreamlineRuntimeDir>$(StreamlineSdkDir)\bin\x64</StreamlineRuntimeDir>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Platform)'=='x64'">
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\sl.interposer.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\sl.common.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\sl.dlss.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\sl.dlss_d.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\sl.pcl.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\nvngx_dlss.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\nvngx_dlssd.dll" />
+    <StreamlineRuntime Include="$(StreamlineRuntimeDir)\nvngx_dlss.license.txt" />
+  </ItemGroup>
+  <Target Name="CopyStreamlineRuntime" AfterTargets="Build" Condition="'$(Platform)'=='x64'">
+    <Error Condition="!Exists('$(StreamlineRuntimeDir)\sl.interposer.dll')" Text="Streamline runtime not found under $(StreamlineRuntimeDir)." />
+    <Copy SourceFiles="@(StreamlineRuntime)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.618.5\build\native\Microsoft.Direct3D.D3D12.targets')" />
     <Import Project="..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets" Condition="Exists('..\packages\directxtex_uwp.2025.10.28.1\build\native\directxtex_uwp.targets')" />

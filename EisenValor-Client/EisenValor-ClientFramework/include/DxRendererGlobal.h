@@ -46,6 +46,8 @@ public:
 
 	void		 CreateSwapChain(HWND hwnd, uint32_t width, uint32_t height);
 	DxSwapChain* GetSwapChain() const { return m_swapChain.get(); }
+	uint32_t GetRenderWidth() const { return m_renderWidth; }
+	uint32_t GetRenderHeight() const { return m_renderHeight; }
 	void		 OnResize(uint32_t width, uint32_t height);
 
 	void ClearAllPasses();
@@ -62,9 +64,12 @@ private:
 	std::unique_ptr<DxSwapChain> m_swapChain;
 	ComPtr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
 	uint32_t					 m_rtvDescriptorSize = 0;
+	uint32_t					 m_renderWidth = 0;
+	uint32_t					 m_renderHeight = 0;
 
 	static constexpr uint32_t								  kFrameCount = 3;
 	uint32_t												  m_currentFrameIndex = 0;
+	uint32_t												  m_cameraJitterSequenceIndex = 0;
 	std::array<std::unique_ptr<DxFrameResource>, kFrameCount> m_frameResources;
 	RenderContext											  m_renderContext;
 	Transient<FrameRenderData>								  m_frameData;

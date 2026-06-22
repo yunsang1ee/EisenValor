@@ -40,14 +40,52 @@
 #include "MaterialResource.h"
 #include "RaytracingCommon.h"
 
+#include <array>
+
 using Vertex = EvAsset::Vertex;
 
 namespace
 {
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
-constexpr float			   kTorchPreviewSphereScale = 0.5f;
+constexpr std::string_view kDebugNavMeshMeshPath = "Resource/Models/Debug/NavMesh.evmesh";
+constexpr std::string_view kDebugMapObjMeshPath = "Resource/Models/Debug/MapObj.evmesh";
+constexpr bool			   kEnableDebugNavMeshPreview = true;
+constexpr bool			   kEnableDebugMapObjPreview = true;
+constexpr float			   kDebugNavMeshYOffset = 0.0f;
+constexpr float			   kDebugMapObjYOffset = 0.0f;
+constexpr float			   kTorchPreviewSphereScale = 1.5f;
+constexpr float			   kTorchPreviewSphereMinDiameter = 0.15f;
 constexpr float			   kTorchTransportEmissionScale = 65.0f;
 constexpr float			   kTorchVisibleEmissionScale = 2.5f;
+
+struct TorchPreviewColor
+{
+	float r;
+	float g;
+	float b;
+};
+
+TorchPreviewColor GetTorchPreviewColor(uint32_t nodeIndex)
+{
+	static constexpr std::array<TorchPreviewColor, 8> kPalette = {{
+		{1.00f, 0.17f, 0.18f},
+		{1.00f, 0.52f, 0.12f},
+		{1.00f, 0.88f, 0.20f},
+		{0.25f, 1.00f, 0.35f},
+		{0.15f, 0.95f, 0.85f},
+		{0.18f, 0.58f, 1.00f},
+		{0.48f, 0.25f, 1.00f},
+		{1.00f, 0.20f, 0.72f},
+	}};
+
+	uint32_t hash = nodeIndex + 0x9e3779b9u;
+	hash ^= hash >> 16u;
+	hash *= 0x7feb352du;
+	hash ^= hash >> 15u;
+	hash *= 0x846ca68bu;
+	hash ^= hash >> 16u;
+	return kPalette[hash % kPalette.size()];
+}
 } // namespace
 
 void WorldScene::OnRegisterCustomComponents()
@@ -65,19 +103,21 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 	RegisterSceneComponentDecoder<TorchEmitterSceneComponentData>(
 		[this](const TorchEmitterSceneComponentData& data, const SceneComponentLoadContext& context)
 		{
+			const TorchPreviewColor previewColor = GetTorchPreviewColor(context.nodeIndex);
 			ReserveGameObject(
 				"TorchEmitterPreview", std::nullopt,
 				[this, ownerHandle = context.ownerHandle, sourceRadius = data.GetSourceRadius(),
 				 transportIntensity = data.GetIntensity() * kTorchTransportEmissionScale,
-				 visibleIntensity = data.GetIntensity() * kTorchVisibleEmissionScale, colorR = data.GetColor()[0],
-				 colorG = data.GetColor()[1], colorB = data.GetColor()[2]](GameObject* obj)
+				 visibleIntensity = data.GetIntensity() * kTorchVisibleEmissionScale, colorR = previewColor.r,
+				 colorG = previewColor.g, colorB = previewColor.b](GameObject* obj)
 				{
 					if (auto* ownerObj = TryGetGameObject(ownerHandle))
 					{
 						obj->GetTransform().SetParent(ownerObj->GetTransform().GetHandle());
 					}
 
-					const float diameter = std::max(sourceRadius * 2.0f * kTorchPreviewSphereScale, 0.05f);
+					const float diameter =
+						std::max(sourceRadius * 2.0f * kTorchPreviewSphereScale, kTorchPreviewSphereMinDiameter);
 					obj->GetTransform().SetScale(diameter, diameter, diameter);
 
 					CreateComponentWithInit<MeshComponent>(
@@ -95,8 +135,8 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 
 							auto		material = std::make_shared<MaterialResource>();
 							const float albedo[4]{colorR, colorG, colorB, 1.0f};
-							const float emissiveColor[3]{1.0f, 0.17f, 0.18f};
-							const float visibleEmissiveColor[3]{1.0f, 0.17f, 0.18f};
+							const float emissiveColor[3]{colorR, colorG, colorB};
+							const float visibleEmissiveColor[3]{colorR, colorG, colorB};
 							material->SetData(
 								EvAsset::ShadingModel::LitPbr, MATERIAL_FLAG_DOUBLE_SIDED, albedo, 1.0f, 0.0f,
 								emissiveColor, std::max(transportIntensity, 0.0f), visibleEmissiveColor,

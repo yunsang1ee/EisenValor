@@ -127,6 +127,7 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 						return;
 					}
 
+					mesh->SetMobility(RenderMobility::Static);
 					mesh->SetMeshResource(meshRes);
 				}
 			);

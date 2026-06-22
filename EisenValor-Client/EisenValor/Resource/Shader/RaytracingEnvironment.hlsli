@@ -16,19 +16,19 @@ float3 SampleNightEnvironment(float3 rayDir)
 
 float3 GetEnvironmentSunDirection()
 {
-    return normalize(float3(0.35f, 0.75f, 0.45f));
+    return normalize(float3(0.35f, 0.45f, 0.55f));
 }
 
 float3 GetEnvironmentSunRadiance(uint environmentMode)
 {
     return (0u != environmentMode)
-        ? float3(1.0f, 0.95f, 0.8f) * 2.5f
+        ? float3(1.0f, 0.95f, 0.8f) * 4.0f
         : float3(5.0f, 18.0f, 62.0f) / 255.0f * 0.25f;
 }
 
 float GetEnvironmentSunAngularRadius(uint environmentMode)
 {
-    return (0u != environmentMode) ? 0.04f : 0.08f;
+    return (0u != environmentMode) ? 0.02f : 0.08f;
 }
 
 float3 AtmosphereGradient(float3 rayDir, float3 sunDir)
@@ -105,6 +105,17 @@ float3 SampleDaySkyEnvironment(float3 rayDir)
     return lerp(groundColor, sky + rayleigh + mie, groundToSkyT);
 }
 
+float3 SampleSunEnvironment(float3 rayDir, uint environmentMode)
+{
+    if (0u == environmentMode)
+    {
+        return 0.0f.xxx;
+    }
+
+    float3 sunDir = GetEnvironmentSunDirection();
+    return SunHalo(rayDir, sunDir) * 0.35f;
+}
+
 float CloudNoise(float3 rayDir)
 {
     float3 p = rayDir * 5.0f;
@@ -113,20 +124,19 @@ float CloudNoise(float3 rayDir)
 
 float3 SampleDayEnvironment(float3 rayDir)
 {
-    float3 sunDir = GetEnvironmentSunDirection();
     float3 sky = SampleDaySkyEnvironment(rayDir);
-    float3 sun = SunHalo(rayDir, sunDir) * 0.35f;
+    float3 sun = SampleSunEnvironment(rayDir, 1u);
     return sky + sun;
+}
+
+float3 SampleSkyEnvironment(float3 rayDir, uint environmentMode)
+{
+    return (0u != environmentMode) ? SampleDaySkyEnvironment(rayDir) : SampleNightEnvironment(rayDir);
 }
 
 float3 SampleEnvironment(float3 rayDir, uint environmentMode)
 {
-    return (0u != environmentMode) ? SampleDayEnvironment(rayDir) : SampleNightEnvironment(rayDir);
-}
-
-float3 SampleEnvironmentWithoutSun(float3 rayDir, uint environmentMode)
-{
-    return (0u != environmentMode) ? SampleDaySkyEnvironment(rayDir) : SampleNightEnvironment(rayDir);
+    return SampleSkyEnvironment(rayDir, environmentMode) + SampleSunEnvironment(rayDir, environmentMode);
 }
 
 #endif // RAYTRACING_ENVIRONMENT_HLSLI

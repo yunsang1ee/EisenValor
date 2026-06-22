@@ -167,12 +167,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;ENABLE_STREAMLINE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafxClientFramework.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\include;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -192,12 +192,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_STREAMLINE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafxClientFramework.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\include;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -217,12 +217,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_STREAMLINE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafxClientFramework.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\include;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -242,12 +242,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;PROFILE_BUILD;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;PROFILE_BUILD;ENABLE_STREAMLINE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafxClientFramework.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include\;$(SolutionDir)ThirdParty\streamline-sdk-v2.11.1\include;$(SolutionDir)..\EisenValor-Shared\EisenValor-AssetIO\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -285,7 +285,10 @@
     <ClInclude Include="include\DxFeatureCaps.h" />
     <ClInclude Include="include\DxFrameResource.h" />
     <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
+    <ClInclude Include="include\DxPipelineState.h" />
+    <ClInclude Include="include\DxRaytracingStateObjectBuilder.h" />
     <ClInclude Include="include\DxResource.h" />
+    <ClInclude Include="include\DxRootSignatureBuilder.h" />
     <ClInclude Include="include\DxRtPipelineState.h" />
     <ClInclude Include="include\DxRtShaderTable.h" />
     <ClInclude Include="include\DxSamplerHeapGlobal.h" />
@@ -332,6 +335,7 @@
     <ClInclude Include="include\SkinnedMeshResource.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
     <ClInclude Include="include\TextUIComponent.h" />
+    <ClInclude Include="include\StreamlineGlobal.h" />
     <ClInclude Include="include\TextureResource.h" />
     <ClInclude Include="include\TimerGlobal.h" />
     <ClInclude Include="include\Transform.h" />
@@ -356,7 +360,10 @@
     <ClCompile Include="src\DxFeatureCaps.cpp" />
     <ClCompile Include="src\DxFrameResource.cpp" />
     <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
+    <ClCompile Include="src\DxPipelineState.cpp" />
+    <ClCompile Include="src\DxRaytracingStateObjectBuilder.cpp" />
     <ClCompile Include="src\DxResource.cpp" />
+    <ClCompile Include="src\DxRootSignatureBuilder.cpp" />
     <ClCompile Include="src\DxRtPipelineState.cpp" />
     <ClCompile Include="src\DxRtShaderTable.cpp" />
     <ClCompile Include="src\DxSamplerHeapGlobal.cpp" />
@@ -396,6 +403,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugLog|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\StreamlineGlobal.cpp" />
     <ClCompile Include="src\TextUIComponent.cpp" />
     <ClCompile Include="src\TextureResource.cpp" />
     <ClCompile Include="src\TimerGlobal.cpp" />

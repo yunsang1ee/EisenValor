@@ -1,3 +1,6 @@
+#ifndef RAYTRACING_NORMAL_HLSLI
+#define RAYTRACING_NORMAL_HLSLI
+
 float3 SafeNormalizeRay(float3 value, float3 fallback)
 {
     float lenSq = dot(value, value);
@@ -35,3 +38,5 @@ float3 TangentNormalToWorld(float3 normalTS, float3 tangent, float3 bitangent, f
         normal
     );
 }
+
+#endif // RAYTRACING_NORMAL_HLSLI

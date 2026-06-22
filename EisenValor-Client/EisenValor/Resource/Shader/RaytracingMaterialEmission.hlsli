@@ -1,13 +1,15 @@
 #ifndef RAYTRACING_MATERIAL_EMISSION_HLSLI
 #define RAYTRACING_MATERIAL_EMISSION_HLSLI
 
+#include "RaytracingCommon.h"
+
 static const uint EMISSION_VIEW_ART_DIRECTED = 0u;
 static const uint EMISSION_VIEW_PHYSICAL = 1u;
 
 float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv, SamplerState materialSampler)
 {
     float3 emission = mat.emissive.rgb * mat.emissive.a;
-    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
+    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP) && mat.emissiveTextureIdx != 0xffffffffu)
     {
         Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
         float3 emissiveTexel = emissiveTexture.SampleLevel(materialSampler, uv, 0).rgb;
@@ -21,7 +23,7 @@ float3 EvaluateMaterialEmission(MaterialGPUData mat, float2 uv, SamplerState mat
 float3 EvaluateVisibleMaterialEmission(MaterialGPUData mat, float2 uv, SamplerState materialSampler)
 {
     float3 emission = mat.visibleEmissive.rgb * mat.visibleEmissive.a;
-    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP))
+    if (0 != (mat.materialFlags & MATERIAL_FLAG_EMISSIVE_MAP) && mat.emissiveTextureIdx != 0xffffffffu)
     {
         Texture2D emissiveTexture = ResourceDescriptorHeap[mat.emissiveTextureIdx];
         float3 emissiveTexel = emissiveTexture.SampleLevel(materialSampler, uv, 0).rgb;
