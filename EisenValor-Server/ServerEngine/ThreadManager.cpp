@@ -3,6 +3,8 @@
 
 #include "ServerEngineConfigManager.h"
 
+// #define PRINT_THREAD_MANAGER_LOG
+
 bool GameServerEngine::ThreadManager::Init()
 {
 	InitTLS();
@@ -44,7 +46,9 @@ void GameServerEngine::ThreadManager::InitTLS()
 
 void GameServerEngine::ThreadManager::DestroyTLS()
 {
+#ifdef PRINT_THREAD_MANAGER_LOG
 	std::osyncstream oss{ std::cout };
 	oss << TLS_THREAD_NAME << " Thread DestroyTLS" << std::endl;
+#endif
 }
 

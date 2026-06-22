@@ -265,6 +265,7 @@
     <ClInclude Include="..\Libraries\inc\SimpleMath.h" />
     <ClInclude Include="include\AnimationResource.h" />
     <ClInclude Include="include\AnimationComponent.h" />
+    <ClInclude Include="include\AudioGlobal.h" />
     <ClInclude Include="include\ButtonUIComponent.h" />
     <ClInclude Include="include\CameraComponent.h" />
     <ClInclude Include="include\CameraRenderData.h" />
@@ -333,6 +334,7 @@
     <ClInclude Include="include\SkinnedMeshComponent.h" />
     <ClInclude Include="include\SkinnedMeshResource.h" />
     <ClInclude Include="include\stdafxClientFramework.h" />
+    <ClInclude Include="include\TextUIComponent.h" />
     <ClInclude Include="include\StreamlineGlobal.h" />
     <ClInclude Include="include\TextureResource.h" />
     <ClInclude Include="include\TimerGlobal.h" />
@@ -344,6 +346,7 @@
   <ItemGroup>
     <ClCompile Include="src\AnimationResource.cpp" />
     <ClCompile Include="src\AnimationComponent.cpp" />
+    <ClCompile Include="src\AudioGlobal.cpp" />
     <ClCompile Include="src\ButtonUIComponent.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\CommonUtils.cpp" />
@@ -401,6 +404,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\StreamlineGlobal.cpp" />
+    <ClCompile Include="src\TextUIComponent.cpp" />
     <ClCompile Include="src\TextureResource.cpp" />
     <ClCompile Include="src\TimerGlobal.cpp" />
     <ClCompile Include="src\Transform.cpp" />

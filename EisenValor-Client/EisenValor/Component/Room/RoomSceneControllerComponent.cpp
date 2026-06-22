@@ -8,7 +8,7 @@
 void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 {
 	// TODO: 아래 기능들은 나중에 UI와 연동해야 합니다. 현재는 테스트용으로 F1~F4, R 키에 매핑되어 있습니다.
-
+#ifdef APPLY_LOBBY_SERVER
 	// 방 나가기(로비로 이동)
 	if(GLOBAL(InputGlobal).GetInputDown(VK_F1)) {
 		auto pb{NetBridge::C2S::Make_CL_LEAVE_GAME_ROOM_PACKET()};
@@ -41,4 +41,5 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 		auto pb{NetBridge::C2S::Make_CL_START_GAME_PACKET()};
 		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 	}
+#endif
 }

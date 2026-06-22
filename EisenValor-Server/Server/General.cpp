@@ -187,7 +187,6 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			if(0 == currentHP) {
 				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
 			}
-			break;
 		}
 		case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
 		{
@@ -195,11 +194,18 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
 			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
 			DecHP(damage, broadcast);
+
+
 			break;
 		}
 		default:
 			break;
 	}
 
+	if(damage > 0) {
+		const auto world{ GetGameWorld() };
+		auto pb{ ServerPackets::Make_SC_HIT_SOUND_PACKET(attacker->GetID()) };
+		world->Broadcast(std::move(pb));
+	}
 	return true;
 }

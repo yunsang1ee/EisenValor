@@ -5,6 +5,8 @@
 #include "ServerEngineCore.h"
 #include "GameWorldThread.h"
 
+// #define PRINT_LOBBY_SERVER_PACKET_HANDLER_LOG
+
 void GameServer::LobbyServerPacketHandler::Init()
 {
 #pragma region SESSION_PACKETS
@@ -27,7 +29,9 @@ bool GameServer::LobbyServerPacketHandler::Handle_CS_PONG_PACKET(const std::shar
 
 bool GameServer::LobbyServerPacketHandler::Handle_LS_CREATE_GAME_WORLD_PACKET(const std::shared_ptr<GameServerEngine::PacketSession>& session, const FB_TABLES::LS_CREATE_GAME_WORLD_PACKET& recvPkt)
 {
+#ifdef PRINT_LOBBY_SERVER_PACKET_HANDLER_LOG
 	std::cout << "LS_CREATE_GAME_WORLD_PACKET" << std::endl;
+#endif
 
 	auto const worker = MANAGER(GameServerEngine::ServerEngineCore)->GetLeisurelyWorker();
 
@@ -37,7 +41,9 @@ bool GameServer::LobbyServerPacketHandler::Handle_LS_CREATE_GAME_WORLD_PACKET(co
 	// 여기서 participants id는 lobby server에서의 session id임.
 	for(auto participant : *participants) {
 		GameWorldParticipantInfo participantInfo;
+#ifdef PRINT_LOBBY_SERVER_PACKET_HANDLER_LOG
 		std::cout << "participant id: " << participant->id() << std::endl;
+#endif
 		participantInfo.type = participant->type();
 		participantInfo.teamType = participant->team_type();
 		info.insert(std::make_pair(participant->id(), participantInfo));

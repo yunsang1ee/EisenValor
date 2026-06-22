@@ -7,8 +7,10 @@
 #include "DxRendererGlobal.h"
 #include "DxSwapChain.h"
 #include "InputGlobal.h"
+#include "RectTransformComponent.h"
 #include "TimerGlobal.h"
 #include "ResourceGlobal.h"
+#include "UIGlobal.h"
 #include "PixProfiler.h"
 
 #define SERVER
@@ -16,8 +18,13 @@
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
 {
 #ifdef SERVER
+	#ifdef APPLY_LOBBY_SERVER
 	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
-		return false;
+	return false;
+	(void)serverAddress;
+	(void)serverPort;
+	#endif
+
 #endif
 
 	m_hInstance = hInstance;
@@ -165,6 +172,17 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		}
 		GLOBAL(InputGlobal).OnResize(width, height);
 
+		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
+		{
+			if (auto* rectStorage = scene->GetStorage<RectTransformComponent>())
+			{
+				for (auto& rectTransform : rectStorage->GetList())
+				{
+					rectTransform.MarkDirty();
+				}
+			}
+		}
+
 		DEBUG_LOG_FMT("[GameFramework] Window resized: {}x{}\n", width, height);
 		break;
 	}
@@ -274,6 +292,7 @@ void GameFramework::Update(float delta)
 		}
 	}
 
+	GLOBAL(UIGlobal).Update(delta);
 	GLOBAL(SceneGlobal).OnUpdate(delta);
 }
 

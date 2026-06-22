@@ -7,6 +7,8 @@
 #include "GameWorldThread.h"
 #include "ServerEngineCore.h"
 
+// #define PRINT_CLIENT_PACKET_HANDLER_LOG
+
 void GameServer::ClientPacketHandler::Init()
 {
 #pragma region SESSION_PACKETS
@@ -23,6 +25,7 @@ void GameServer::ClientPacketHandler::Init()
 	REGISTER_PACKET(PACKET_TYPE::CS_CHANGE_GENERAL_ATTACK_DIR_PKT, FB_TABLES::CS_CHANGE_GENERAL_ATTACK_DIR_PACKET, ClientPacketHandler::Handle_CS_CHANGE_GENERAL_ATTACK_DIR_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_ENTER_GAME_WORLD_PKT, FB_TABLES::CS_ENTER_GAME_WORLD_PACKET, ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET);
 	REGISTER_PACKET(PACKET_TYPE::CS_UPDATE_PLAYER_STATE_PKT, FB_TABLES::CS_UPDATE_PLAYER_STATE_PACKET, ClientPacketHandler::Handle_CS_UPDATE_PLAYER_STATE_PACKET);
+	
 #pragma endregion
 
 #pragma region TEST_PACKETS
@@ -140,7 +143,9 @@ bool GameServer::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const st
 	auto world = static_cast<GameServer::Contents::GameWorld*>(static_cast<GameServerEngine::GameWorldThread*>(TLS_WOREKR_THREAD)->FindGameWorld(worldID));
 
 	if(world) {
+#ifdef PRINT_CLIENT_PACKET_HANDLER_LOG
 		std::cout << "CS_ENTER_GAME_WORLD_PACKET" << std::endl;
+#endif
 		const uint32 lobbySessionID{ recvPkt.player_id() };
 		if(false == world->HasReservedParticipant(lobbySessionID)) {
 			LOG_WARNING("Rejected game world enter. UserID:{}, WorldID:{}", lobbySessionID, worldID);
@@ -159,11 +164,15 @@ bool GameServer::ClientPacketHandler::Handle_CS_ENTER_GAME_WORLD_PACKET(const st
 		lobbySessionThread->PushJob(&GameServerEngine::WorkerThread::SendToLobbyServer, pb);
 		session->SetID(lobbySessionID);
 
+#ifdef PRINT_CLIENT_PACKET_HANDLER_LOG
 		std::cout << "Session ID: " << session->GetID() << std::endl;
+#endif
 		world->EnterSession(session);
 	}
 	else {
+#ifdef PRINT_CLIENT_PACKET_HANDLER_LOG
 		std::cout << "Failed Handle CS ENTER GAME WORLD" << std::endl;
+#endif
 	}
 
 	return true;

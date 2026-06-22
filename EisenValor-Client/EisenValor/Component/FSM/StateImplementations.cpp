@@ -17,6 +17,36 @@
 
 using namespace DirectX;
 
+namespace
+{
+struct AttackTiming
+{
+	float preDelay;
+	float attack;
+	float postDelay;
+};
+
+AttackTiming GetAttackTiming(GENERAL_ATTACK_TYPE type)
+{
+	switch (type)
+	{
+	case GENERAL_ATTACK_TYPE_HEAVY:
+		return {21.0f / 30.0f, 6.0f / 30.0f, 12.0f / 30.0f};
+	case GENERAL_ATTACK_TYPE_AREA:
+		return {30.0f / 30.0f, 6.0f / 30.0f, 21.0f / 30.0f};
+	default:
+		return {9.0f / 30.0f, 3.0f / 30.0f, 3.0f / 30.0f};
+	}
+}
+
+uint8_t GetAttackAnimationKey(FSMComponent* fsm)
+{
+	const uint8_t dir = fsm ? fsm->GetCurAttackDir() : 0;
+	const uint8_t attackType = fsm ? static_cast<uint8_t>(fsm->GetCurAttackType()) : 0;
+	return static_cast<uint8_t>(100 + (dir * 10) + attackType);
+}
+}
+
 // ==================================
 //		  GENERAL_IDLE_STATE
 // ==================================
@@ -34,11 +64,11 @@ void GeneralIdleState::Enter(FSMComponent* fsm)
 			{
 				uint8_t dir = fsm->GetCurAttackDir();
 				uint8_t idleKey = StateOffset::kIdleOffset + dir; // 61:TOP, 62:LEFT, 63:RIGHT
-				anim->PlayBlend(idleKey, StateOffset::kBlendDuration, true, true);
+				anim->PlayBlend(idleKey, AnimationOffset::kBlendDuration, true, true);
 			}
 			else
 			{
-				anim->PlayBlend(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), StateOffset::kBlendDuration, true, true);
+				anim->PlayBlend(static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE), AnimationOffset::kBlendDuration, true, true);
 			}
 		}
 	}
@@ -64,7 +94,7 @@ void GeneralIdleState::Update(FSMComponent* fsm, float dt)
 
 		if (anim->GetCurrentKey() != targetIdleKey)
 		{
-			anim->PlayBlend(targetIdleKey, StateOffset::kBlendDuration, true, true);
+			anim->PlayBlend(targetIdleKey, AnimationOffset::kBlendDuration, true, true);
 		}
 	}
 	else // 일반 태세일 때
@@ -279,6 +309,13 @@ void GeneralPreDelayState::Enter(FSMComponent* fsm)
 	if (fsm)
 	{
 		fsm->SetStateTimer(0.0f);
+		if (auto* go = fsm->GetGameObject())
+		{
+			if (auto* anim = go->GetComponent<AnimationComponent>())
+			{
+				anim->Play(GetAttackAnimationKey(fsm), false, true);
+			}
+		}
 		//DEBUG_LOG_FMT("[FSM] PRE_DELAY Enter\n");
 	}
 }
@@ -293,11 +330,10 @@ void GeneralPreDelayState::Update(FSMComponent* fsm, float dt)
 	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
 
 	// 약공격: 10FPS, 강공격: 20FPS
-	float targetTime = (type == GENERAL_ATTACK_TYPE_HEAVY) ? 0.6f : 0.3f;
+	const float targetTime = GetAttackTiming(type).preDelay;
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
-		std::cout << "Target Time Reached in PRE_DELAY: " << fsm->GetStateTimer() << "s, Transitioning to ATTACK\n";
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK);
 	}
 }
@@ -312,20 +348,14 @@ void GeneralPreDelayState::Exit(FSMComponent* fsm)
 // ==================================
 GeneralAttackState::GeneralAttackState() : State(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK)
 {
-	SetHasExitTime(true);
-
+	SetHasExitTime(false);
 }
 
 void GeneralAttackState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
-
-if (fsm->GetObjectType() == GAME_OBJECT_TYPE_PLAYER)
-		SetNextStateOnEnd(PLAYER_STATE_TYPE_POST_DELAY);
-	else
-		SetNextStateOnEnd(0);
-
+	return;
 
 	/*DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
 		fsm->GetCurAttackType(),
@@ -350,6 +380,19 @@ if (fsm->GetObjectType() == GAME_OBJECT_TYPE_PLAYER)
 
 void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 {
+	if (!fsm) return;
+
+	fsm->AddStateTimer(dt);
+
+	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
+	const float targetTime = GetAttackTiming(type).attack;
+
+	if (fsm->GetStateTimer() >= targetTime)
+	{
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
+		return;
+	}
+
 	// Onupdate에서 자동 체크
 }
 
@@ -382,7 +425,7 @@ void GeneralPostDelayState::Update(FSMComponent* fsm, float dt)
 
 	// 약공격: 5FPS, 강공격: 10FPS
 	// ?
-	float targetTime = (type == GENERAL_ATTACK_TYPE_HEAVY) ? (10.0f / 60.0f) : (5.0f / 60.0f);
+	const float targetTime = GetAttackTiming(type).postDelay;
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
@@ -400,8 +443,7 @@ void GeneralPostDelayState::Exit(FSMComponent* fsm)
 // ==================================
 GeneralStunState::GeneralStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
-	SetHasExitTime(true);
-	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+	SetHasExitTime(false);
 }
 
 void GeneralStunState::Enter(FSMComponent* fsm)
@@ -439,12 +481,85 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 
 void GeneralStunState::Update(FSMComponent* fsm, float dt)
 {
-	// OnUpdate에서 자동 체크
+	if (!fsm) return;
+
+	auto* obj = fsm->GetGameObject();
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	auto* anim = obj ? obj->GetComponent<AnimationComponent>() : nullptr;
+	if (!obj || !scene || !anim || !anim->IsAnimationEnd()) return;
+
+	const bool isLocalPlayer = obj->GetServerID() == scene->GetLocalID();
+	if (isLocalPlayer)
+	{
+		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+	}
 }
 
 void GeneralStunState::Exit(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] STUN Exit\n");
+}
+
+// ==================================
+//		  GENERAL_GUARD_STATE
+// ==================================
+GeneralGuardState::GeneralGuardState() : State(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+{
+	SetHasExitTime(false);
+}
+
+void GeneralGuardState::Enter(FSMComponent* fsm)
+{
+	if (!fsm) return;
+
+	fsm->SetStateTimer(0.0f);
+
+	if (auto* obj = fsm->GetGameObject())
+	{
+		if (auto* anim = obj->GetComponent<AnimationComponent>())
+		{
+			switch (fsm->GetGuardRole())
+			{
+			case FSMComponent::GuardRole::Defender:
+				anim->Play(210, false, true);
+				break;
+			case FSMComponent::GuardRole::Attacker:
+				anim->Play(161, false, true);
+				break;
+			default:
+				anim->Play(210, false, true);
+				break;
+			}
+		}
+	}
+}
+
+void GeneralGuardState::Update(FSMComponent* fsm, float dt)
+{
+	if (!fsm) return;
+
+	auto* obj = fsm->GetGameObject();
+	if (!obj) return;
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene) return;
+
+	auto* anim = obj->GetComponent<AnimationComponent>();
+	if (!anim) return;
+
+	if (anim->IsAnimationEnd())
+	{
+		const bool isLocalPlayer = obj->GetServerID() == scene->GetLocalID();
+		if (isLocalPlayer)
+		{
+			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		}
+	}
+}
+
+void GeneralGuardState::Exit(FSMComponent* fsm)
+{
+	if (!fsm) return;
+	fsm->SetGuardRole(FSMComponent::GuardRole::None);
 }
 
 // ==================================

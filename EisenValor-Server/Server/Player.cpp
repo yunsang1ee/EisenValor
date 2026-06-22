@@ -5,6 +5,8 @@
 #include "GameWorld.h"
 #include "FSM.h"
 
+// #define PRINT_PLAYER_LOG
+
 GameServer::Contents::Player::Player(const FB_ENUMS::TEAM_TYPE teamType)
 	:General(teamType, FB_ENUMS::GAME_OBJECT_TYPE_PLAYER), m_lookingTargetID{}
 {
@@ -12,7 +14,9 @@ GameServer::Contents::Player::Player(const FB_ENUMS::TEAM_TYPE teamType)
 
 GameServer::Contents::Player::~Player()
 {
-	std::cout << "~Player" << std::endl;
+#ifdef PRINT_PLAYER_LOG
+	std::cout << "~Player!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::Player::Update(const float dt)
@@ -52,6 +56,8 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 			const AttackInfo& attackerAtkInfo{ attackGeneral->GetAtkInfo() };
 
 			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				auto pb{ ServerPackets::Make_SC_GENERAL_GUARD_PACKET(GetID(), attacker->GetID()) };
+				world->Broadcast(std::move(pb));
 				return false;
 			}
 
@@ -69,6 +75,8 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 			const AttackInfo& attackerAtkInfo{ attackerPlayer->GetAtkInfo() };
 
 			if(m_atkInfo.dir == attackerAtkInfo.dir) {
+				auto pb{ ServerPackets::Make_SC_GENERAL_GUARD_PACKET(GetID(), attacker->GetID()) };
+				world->Broadcast(std::move(pb));
 				return false;
 			}
 
@@ -97,7 +105,14 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 	}
 	
 	DecHP(damage, broadcast);
+	if(damage > 0) {
+		const auto world{ GetGameWorld() };
+		auto pb{ ServerPackets::Make_SC_HIT_SOUND_PACKET(attacker->GetID()) };
+		world->Broadcast(std::move(pb));
+	}
+#ifdef PRINT_PLAYER_LOG
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
+#endif
 	
 	if(IsActive())
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_STUN, dt, true);
@@ -107,7 +122,9 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 
 void GameServer::Contents::Player::OnDeath()
 {
+#ifdef PRINT_PLAYER_LOG
 	std::cout << std::format("ID:{}, OnDeath!", GetID()) << std::endl;
+#endif
 	auto const world{ GetGameWorld() };
 	const float worldDT{ world->GetGameWorldDT() };
 	auto const fsm{ GetComponent<GameServer::Contents::FSM>() };
@@ -134,7 +151,9 @@ void GameServer::Contents::Player::OnRespawn()
 	auto pb{ ServerPackets::Make_SC_RESPAWN_GENERAL_PACKET(GetID(), GetTransform(), statInfo.maxHP, statInfo.currentHP, statInfo.maxStamina, statInfo.currentStamina, GetStanceType())};
 	world->Broadcast(std::move(pb));
 
+#ifdef PRINT_PLAYER_LOG
 	std::cout << "Player Respawn!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::Player::DecStamina(const uint32 amount, const bool broadcast)
@@ -165,6 +184,7 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 	const FB_ENUMS::GENERAL_ATTACK_DIR_TYPE dir{atkInfo.attack_dir()};
 	const FB_ENUMS::GENERAL_ATTACK_TYPE atkType{ atkInfo.attack_type() };
 
+#ifdef PRINT_PLAYER_LOG
 	switch(atkType) {
 		case FB_ENUMS::GENERAL_ATTACK_TYPE_LIGHT:
 			std::cout << "GENERAL_ATTACK_TYPE_LIGHT" << std::endl;
@@ -181,6 +201,7 @@ void GameServer::Contents::Player::Handle_CS_GENERAL_ATTACK(const FB_STRUCTS::Ge
 		default:
 			break;
 	}
+#endif
 
 	const SkillData* const skillData{ MANAGER(GameDataManager)->GetSkillData(atkType) };
 	SetAtkDir(dir);
@@ -252,8 +273,9 @@ void GameServer::Contents::Player::Handle_CS_PLAYER_FAKE()
 {	
 	if(false == IsActive())
 		return;
-
+#ifdef PRINT_PLAYER_LOG
 	std::cout << "Handle_CS_PLAYER_FAKE" << std::endl;
+#endif
 
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 
@@ -312,7 +334,9 @@ void GameServer::Contents::Player::Handle_CS_CHANGE_CAMERA_TARGET(const uint32 p
 		SetLookingTarget(bestTargetID);
 		auto pb{ ServerPackets::Make_SC_CHANGE_CAMERA_TARGET_PACKET(bestTargetID) };
 		session->Send(std::move(pb));
+#ifdef PRINT_PLAYER_LOG
 		std::cout << "Make_SC_CHANGE_CAMERA_TARGET_PACKET" << std::endl;
+#endif
 	}
 }
 
@@ -323,5 +347,7 @@ void GameServer::Contents::Player::Handle_CS_CHANGE_GENERAL_ATTACK_DIR(const FB_
 	auto pb{ ServerPackets::Make_SC_CHANGE_GENERAL_ATTACK_DIR_PACKET(GetID(), etou8(dirType)) };
 	world->Broadcast(std::move(pb));
 
+#ifdef PRINT_PLAYER_LOG
 	std::cout << "Handle_CS_SHOW_GENERAL_ATTACK_DIR" << std::endl;
+#endif
 }

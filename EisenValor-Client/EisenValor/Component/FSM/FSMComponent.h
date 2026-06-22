@@ -14,6 +14,11 @@ public:
 	static constexpr const char* GetStaticTypeName() { return "FSMComponent"; }
 
 	using StateRequestType = ::StateRequestType;
+	enum class GuardRole : uint8_t {
+		None,
+		Defender,
+		Attacker
+	};
 
 	FSMComponent() = default;
 	virtual ~FSMComponent() = default;
@@ -61,6 +66,9 @@ public:
 	void SetDodgeDirection(FB_ENUMS::MOVE_DIRECTION_TYPE dir) { m_dodgeDir = dir; }
 	FB_ENUMS::MOVE_DIRECTION_TYPE GetDodgeDirection() const { return m_dodgeDir; }
 
+	void SetGuardRole(GuardRole role) { m_guardRole = role; }
+	GuardRole GetGuardRole() const { return m_guardRole; }
+
 	// 락온 상태 설정/조회
 	void SetLockOn(bool lockOn) { m_isLockOn = lockOn; }
 	bool IsLockOn() const { return m_isLockOn; }
@@ -86,6 +94,7 @@ private:
 	uint8_t m_curAttackDir = 0;  // 현재 공격 조준 방향 (GENERAL_ATTACK_DIR_TYPE)
 	uint8_t m_objType = 0;       // 캐릭터 타입 (GAME_OBJECT_TYPE)
 	uint8_t m_stance = 0;        // 현재 자세 (GENERAL_STANCE_TYPE)
+	GuardRole m_guardRole = GuardRole::None;
 	FB_ENUMS::MOVE_DIRECTION_TYPE	 m_moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD; // 현재 이동 방향
 	FB_ENUMS::MOVE_DIRECTION_TYPE	 m_dodgeDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD; // 현재 회피 방향
 	bool    m_isLockOn = false;  // 현재 락온 상태 여부

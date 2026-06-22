@@ -10,6 +10,7 @@
 
 // Resource
 #include "ResourceGlobal.h"
+#include "AudioGlobal.h"
 #include "MeshComponent.h"
 #include "MeshResource.h"
 #include "SkinnedMeshComponent.h"
@@ -23,6 +24,7 @@
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "Component/World/QuestProgressComponent.h"
 #include "Util/CameraConfig.h"
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
@@ -32,9 +34,11 @@
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "TextUIComponent.h"
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
+#include "Scene/ScoreScene.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 #include <unordered_map>
@@ -44,6 +48,27 @@ using namespace NetBridge;
 namespace
 {
 	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
+	uint8 s_latestRedScore = 0;
+	uint8 s_latestBlueScore = 0;
+
+	void NotifyOccupationZoneReached(Scene* scene)
+	{
+		if (!scene)
+		{
+			return;
+		}
+
+		auto* localPlayer = scene->FindGameObjectByServerID(scene->GetLocalID());
+		if (!localPlayer)
+		{
+			return;
+		}
+
+		if (auto* quest = localPlayer->GetComponent<QuestProgressComponent>())
+		{
+			quest->SetOccupationZoneReached(true);
+		}
+	}
 
 	void ApplyPendingServerState(uint64 objID, FSMComponent* fsm)
 	{
@@ -54,6 +79,36 @@ namespace
 
 		fsm->SetServerState(iter->second);
 		s_pendingStateByObjectID.erase(iter);
+	}
+
+	TextUIComponent* FindRemainingTimeText(Scene* scene)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		auto* textStorage = scene->GetStorage<TextUIComponent>();
+		if (!textStorage)
+		{
+			return nullptr;
+		}
+
+		for (auto& text : textStorage->GetList())
+		{
+			auto* owner = text.GetGameObject();
+			if (!owner)
+			{
+				continue;
+			}
+
+			if (owner->GetName() == "RemainingTimeText")
+			{
+				return &text;
+			}
+		}
+
+		return nullptr;
 	}
 }
 
@@ -98,6 +153,7 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 
 #endif // !APPLY_LOBBY_SERVER
 
+	NotifyOccupationZoneReached(GLOBAL(SceneGlobal).GetActiveScene());
 	return true;
 }
 bool NetBridge::S2C::Handle_LC_SIGN_UP_FAIL_PACKET(
@@ -509,6 +565,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
+	s_latestRedScore = 0;
+	s_latestBlueScore = 0;
+
 	// GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
 
 	GLOBAL(SceneGlobal).SetLocalGameObjectID(recvPkt.player_id());
@@ -645,7 +704,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 
 			// Animation Component
 			scene->CreateComponentWithInit<AnimationComponent>(
-				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
+				playerObjHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight", true); }
 			);
 			
 			// Foot IK Component
@@ -707,7 +766,7 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 					swordHandle,
 					[scene, playerObjHandle](MeshComponent* mesh)
 					{
-						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sword.evmesh");
+						auto res = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Big_Sword.evmesh");
 						if (res)
 						{
 							mesh->SetMeshResource(res);
@@ -1623,6 +1682,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
+		//DEBUG_LOG_FMT(
+		//	"[RemoteState] objID={}, received={}, before={}\n",
+		//	objID,
+		//	static_cast<int>(nextState),
+		//	static_cast<int>(fsm->GetCurStateType())
+		//);
+
 		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 		{
 			return true;
@@ -1632,6 +1698,11 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 			return true;
 		}
 		fsm->SetServerState(nextState);
+		//DEBUG_LOG_FMT(
+		//	"[RemoteState] objID={}, after={}\n",
+		//	objID,
+		//	static_cast<int>(fsm->GetCurStateType())
+		//);
 		return true;
 	}
 
@@ -1659,10 +1730,17 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	// TODO: 게임 남은 시간을 화면에 표시하기
 
 	const uint32   remainingTime{recvPkt.remaining_time()};
-	const uint32_t totalSeconds = remainingTime / 1000;
+	const uint32_t totalSeconds = remainingTime;
 	const uint32_t minutes = totalSeconds / 60;
 	const uint32_t seconds = totalSeconds % 60;
-	// DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
+
+	if (auto* text = FindRemainingTimeText(GLOBAL(SceneGlobal).GetActiveScene()))
+	{
+		wchar_t buffer[16]{};
+		swprintf_s(buffer, L"%02u:%02u", minutes, seconds);
+		text->SetText(buffer);
+	}
+
 	return true;
 }
 
@@ -1680,6 +1758,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	}
 
 	const auto cameraTargetID = recvPkt.camera_target_id();
+	BattleUIControllerComponent::SetLockedTargetID(0);
 
 	if (cameraTargetID == 0)
 	{
@@ -1710,6 +1789,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 			cameraComp->SetLookAtTargetOffset({0.0f, CameraConfig::kLockOnViewOffsetY, 0.0f}
 			);										   // 대상을 바라볼 때 약간 위를 바라보도록 설정
 			cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
+			BattleUIControllerComponent::SetLockedTargetID(cameraTargetID);
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
 		}
 		else
@@ -1816,6 +1896,9 @@ bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES
 bool NetBridge::S2C::Handle_SC_GAME_FINISH_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_PACKET& recvPkt)
 {
 	const uint32 sessionID = GLOBAL(SceneGlobal).GetSessionID();
+	ScoreScene::SetScores(s_latestRedScore, s_latestBlueScore);
+	GLOBAL(SceneGlobal).LoadScene("ScoreScene");
+
 	GLOBAL(NetBridge::NetworkGlobal).DisconnectGameServer();
 	if (false == GLOBAL(NetBridge::NetworkGlobal).ReconnectLobbyServer())
 	{
@@ -1832,7 +1915,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
 )
 {
-	// TODO: 팀 점수 업데이트
+	s_latestBlueScore = recvPkt.blue_score();
+	s_latestRedScore = recvPkt.red_score();
 	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
 	return true;
 }
@@ -1885,7 +1969,46 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_GENERAL_GUARD_PACKET& recvPkt
 )
 {
-	// TODO: SC_GENERAL_GUARD_PACKET
+	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	const uint64 defenderID = recvPkt.defender_id();
+	const uint64 attackerID = recvPkt.attacker_id();
+
+	if (auto* defenderObj = scene->FindGameObjectByServerID(defenderID))
+	{
+		if (auto* fsm = defenderObj->GetComponent<FSMComponent>())
+		{
+			fsm->SetGuardRole(FSMComponent::GuardRole::Defender);
+			fsm->RequestState(
+				FSMComponent::StateRequestType::Guard,
+				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+			);
+		}
+	}
+
+	if (auto* attackerObj = scene->FindGameObjectByServerID(attackerID))
+	{
+		if (auto* fsm = attackerObj->GetComponent<FSMComponent>())
+		{
+			fsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
+			fsm->RequestState(
+				FSMComponent::StateRequestType::Guard,
+				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+			);
+		}
+	}
+
+	return true;
+}
+
+bool NetBridge::S2C::Handle_SC_HIT_SOUND_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_SOUND_PACKET& recvPkt)
+{
+	const auto attackerID{recvPkt.attacker_id()};
+	// TODO: 내 로컬 아이디와 attackerID 일치하면 HitSound 재생
 
 	return true;
 }
@@ -1923,7 +2046,37 @@ bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
 )
 {
-	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트해야합니다.
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	const float gauge = std::clamp(recvPkt.occupy_gauge(), -100.0f, 100.0f);
+	const float blueAmount = std::max(-gauge, 0.0f) / 100.0f;
+	const float redAmount = std::max(gauge, 0.0f) / 100.0f;
+
+	for (auto& rect : scene->GetStorage<RectTransformComponent>()->GetList())
+	{
+		auto* owner = rect.GetGameObject();
+		if (!owner)
+		{
+			continue;
+		}
+
+		if (owner->GetName() == "OccupationGaugeBlue")
+		{
+			rect.SetAnchors({0.5f - 0.5f * blueAmount, 0.0f}, {0.5f, 1.0f});
+			rect.SetOffsetMin({0.0f, 2.0f});
+			rect.SetOffsetMax({0.0f, -2.0f});
+		}
+		else if (owner->GetName() == "OccupationGaugeRed")
+		{
+			rect.SetAnchors({0.5f, 0.0f}, {0.5f + 0.5f * redAmount, 1.0f});
+			rect.SetOffsetMin({0.0f, 2.0f});
+			rect.SetOffsetMax({0.0f, -2.0f});
+		}
+	}
 
 	return true;
 }

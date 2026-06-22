@@ -165,7 +165,9 @@ bool GameServer::Contents::IsAttackCooldownReady::Check(const float dt)
 	m_acc += dt;
 	if(m_acc >= m_cycleSec) {
 		m_acc = 0.f;
+#ifdef PRINT_GENERAL_NODE_LOG
 		std::cout << "Attack Cooldown Ready! Next Cooldown: " << m_cycleSec << " sec" << std::endl;
+#endif
 		std::uniform_real_distribution<float> dist{ m_minSec, m_maxSec };
 		m_cycleSec = dist(mersenne);
 		return true;

@@ -8,7 +8,7 @@
 #include "GeneralNodes.h"
 #include "NavAgent.h"
 
-#define PRINT_GENERAL_STATE_LOG
+// #define PRINT_GENERAL_STATE_LOG
 
 GameServer::Contents::GeneralState::GeneralState(const uint8 stateType)
 	:State{stateType}
@@ -333,8 +333,8 @@ GameServer::Contents::GeneralAttackState::~GeneralAttackState()
 void GameServer::Contents::GeneralAttackState::Enter(const float dt)
 {
 #ifdef PRINT_GENERAL_STATE_LOG
-#endif
 	std::cout << "GeneralAttackState Enter!" << std::endl;
+#endif
 	if(m_root)
 		m_root->Reset();
 }
@@ -342,8 +342,8 @@ void GameServer::Contents::GeneralAttackState::Enter(const float dt)
 void GameServer::Contents::GeneralAttackState::Exit(const float dt)
 {
 #ifdef PRINT_GENERAL_STATE_LOG
-#endif
 	std::cout << "GeneralAttackState Exit!" << std::endl;
+#endif
 }
 
 void GameServer::Contents::GeneralAttackState::Update(const float dt)

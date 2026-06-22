@@ -13,6 +13,7 @@
 #include "ResourceGlobal.h"
 #include "Scene.h"
 #include "Transform.h"
+#include "Util/GameConstants.h"
 
 #include <DirectXCollision.h>
 #include <algorithm>
@@ -282,7 +283,7 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	{
 		desiredPelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
 	}
-	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, 5.0f);
+	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, AnimationOffset::kIKDuration);
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
@@ -317,8 +318,8 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 
 	// IK Weight 설정
 	// 지지하는 발이 있으면 그 발에 IK를 적용, 없으면 IK 비적용
-	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, 5.0f);
-	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, 5.0f);
+	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, AnimationOffset::kIKDuration);
+	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, AnimationOffset::kIKDuration);
 
 	// 원본 애니메이션의 무릎 방향을 힌트로 넘기기
 	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));

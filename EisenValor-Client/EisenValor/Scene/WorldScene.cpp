@@ -1,4 +1,4 @@
-#include "stdafxClient.h"
+﻿#include "stdafxClient.h"
 #include "WorldScene.h"
 #include "Scene\SceneComponentData\TorchEmitterSceneComponentData.h"
 
@@ -16,19 +16,25 @@
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
 #include "Component/World/WorldSceneControllerComponent.h"
+#include "Component/World/WorldLoadingControllerComponent.h"
+#include "Component/World/QuestProgressComponent.h"
+#include "Component/World/QuestUIComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
 #include "RectTransformComponent.h"
+#include "TextUIComponent.h"
+#include "AudioGlobal.h"
 
 #include "Transform.h"
 #include "MeshResource.h"
 
 // Resource
+#include "NetworkGlobal.h"
 #include "ResourceGlobal.h"
-#include "SceneResource.h"
 #include "SkinnedMeshResource.h"
+#include "TextureResource.h"
 
 #include "MeshComponent.h"
 #include "MaterialResource.h"
@@ -40,7 +46,6 @@ using Vertex = EvAsset::Vertex;
 
 namespace
 {
-constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/Map.evscene";
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
 constexpr std::string_view kDebugNavMeshMeshPath = "Resource/Models/Debug/NavMesh.evmesh";
 constexpr std::string_view kDebugMapObjMeshPath = "Resource/Models/Debug/MapObj.evmesh";
@@ -88,7 +93,8 @@ void WorldScene::OnRegisterCustomComponents()
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent>();
+		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent,
+		WorldLoadingControllerComponent, QuestUIComponent, QuestProgressComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
@@ -150,25 +156,56 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
+	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 0.1f);
 
-	bool loadedScene = false;
-	if (auto sceneResource = GLOBAL(ResourceGlobal).Load<SceneResource>(std::filesystem::path(kDefaultMapScenePath)))
+	if (!GLOBAL(NetBridge::NetworkGlobal).Init("127.0.0.1", G_GAME_SERVER_PORT))
 	{
-		LoadFromSceneResource(sceneResource);
-		loadedScene = true;
-		DEBUG_LOG_FMT("[WorldScene] Loaded scene resource: {}\n", kDefaultMapScenePath);
+		DEBUG_LOG_FMT("[WorldScene] Failed to connect game server.\n");
 	}
 
-	if (!loadedScene)
+	ReserveGameObject(
+		"WorldLoadingOverlay", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.0f, 0.0f}, {1.0f, 1.0f});
+					rect->SetPivot({0.5f, 0.5f});
+					rect->SetOffsetMin({0.0f, 0.0f});
+					rect->SetOffsetMax({0.0f, 0.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
+						L"Resource\\Texture\\Scene\\loadingscene.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetOrder(100000);
+				}
+			);
+
+			CreateComponent<WorldLoadingControllerComponent>(obj->GetHandle());
+		}
+	);
+
+#if 0
+	if (false)
 	{
 		CreateSceneObjects();
 
-		// 서버 없이 테스트를 위한 스트레스 테스트 오브젝트 생성
+		// ?쒕쾭 ?놁씠 ?뚯뒪?몃? ?꾪븳 ?ㅽ듃?덉뒪 ?뚯뒪???ㅻ툕?앺듃 ?앹꽦
 		// ReserveGameObject(
 		//	"StressTester", std::nullopt,
 		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
 		//);
 	}
+
+#endif
 
 	ReserveGameObject(
 		"WorldSceneController", std::nullopt,
@@ -176,6 +213,199 @@ void WorldScene::OnStartImpl()
 		{
 			CreateComponentWithInit<WorldSceneControllerComponent>(
 				obj->GetHandle(), [](WorldSceneControllerComponent* login) {}
+			);
+		}
+	);
+
+	ReserveGameObject(
+		"QuestMessage", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.25f}, {0.5f, 0.25f});
+					rect->SetPivot({0.5f, 0.5f});
+					rect->SetOffsetMin({-320.0f, -80.0f});
+					rect->SetOffsetMax({320.0f, 240.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
+						L"Resource\\Texture\\quest.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetColor({1.0f, 1.0f, 1.0f, 0.0f});
+					image->SetOrder(99998);
+				}
+			);
+
+			CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[](TextUIComponent* text)
+				{
+					text->SetText(L"WASD\uB85C \uC774\uB3D9\uD558\uC138\uC694");
+					text->SetFontSize(32.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({1.0f, 1.0f, 1.0f, 0.0f});
+					text->SetOrder(99999);
+				}
+			);
+
+			CreateComponent<QuestUIComponent>(obj->GetHandle());
+			CreateComponent<QuestProgressComponent>(obj->GetHandle());
+		}
+	);
+
+	ReserveGameObject(
+		"OccupationGaugeRoot", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.0f, 0.0f}, {0.0f, 0.0f});
+					rect->SetPivot({0.0f, 0.0f});
+					rect->SetOffsetMin({24.0f, 24.0f});
+					rect->SetOffsetMax({344.0f, 48.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					image->SetNormalColor({0.05f, 0.05f, 0.05f, 0.9f});
+					image->SetOrder(99990);
+				}
+			);
+
+			const auto rootHandle = obj->GetHandle();
+
+			ReserveGameObject(
+				"OccupationGaugeBlue", std::nullopt,
+				[this, rootHandle](GameObject* fillObj)
+				{
+					fillObj->GetTransform().SetParent(
+						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
+					);
+
+					CreateComponentWithInit<RectTransformComponent>(
+						fillObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.0f, 0.0f}, {0.5f, 1.0f});
+							rect->SetPivot({0.0f, 0.5f});
+							rect->SetOffsetMin({2.0f, 2.0f});
+							rect->SetOffsetMax({-1.0f, -2.0f});
+						}
+					);
+
+					CreateComponentWithInit<ImageUIComponent>(
+						fillObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({0.15f, 0.35f, 1.0f, 1.0f});
+							image->SetOrder(99991);
+						}
+					);
+				}
+			);
+
+			ReserveGameObject(
+				"OccupationGaugeRed", std::nullopt,
+				[this, rootHandle](GameObject* fillObj)
+				{
+					fillObj->GetTransform().SetParent(
+						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
+					);
+
+					CreateComponentWithInit<RectTransformComponent>(
+						fillObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.5f, 0.0f}, {1.0f, 1.0f});
+							rect->SetPivot({1.0f, 0.5f});
+							rect->SetOffsetMin({1.0f, 2.0f});
+							rect->SetOffsetMax({-2.0f, -2.0f});
+						}
+					);
+
+					CreateComponentWithInit<ImageUIComponent>(
+						fillObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({1.0f, 0.2f, 0.2f, 1.0f});
+							image->SetOrder(99991);
+						}
+					);
+				}
+			);
+
+			ReserveGameObject(
+				"OccupationGaugeCenterLine", std::nullopt,
+				[this, rootHandle](GameObject* lineObj)
+				{
+					lineObj->GetTransform().SetParent(
+						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
+					);
+
+					CreateComponentWithInit<RectTransformComponent>(
+						lineObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.5f, 0.0f}, {0.5f, 1.0f});
+							rect->SetPivot({0.5f, 0.5f});
+							rect->SetOffsetMin({-1.0f, 2.0f});
+							rect->SetOffsetMax({1.0f, -2.0f});
+						}
+					);
+
+					CreateComponentWithInit<ImageUIComponent>(
+						lineObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.85f});
+							image->SetOrder(99992);
+						}
+					);
+				}
+			);
+		}
+	);
+
+	ReserveGameObject(
+		"RemainingTimeText", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
+					rect->SetPivot({0.5f, 0.0f});
+					rect->SetOffsetMin({-120.0f, 16.0f});
+					rect->SetOffsetMax({120.0f, 60.0f});
+				}
+			);
+
+			CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[](TextUIComponent* text)
+				{
+					text->SetText(L"30:00");
+					text->SetFontSize(28.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({1.0f, 1.0f, 1.0f, 1.0f});
+					text->SetOrder(99995);
+				}
 			);
 		}
 	);
@@ -234,85 +464,9 @@ void WorldScene::CreateSceneObjects()
 
 void WorldScene::OnEndImpl()
 {
+	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
+	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 1.0f);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
 
-void WorldScene::CreateDebugNavMeshPreview()
-{
-	if (!kEnableDebugNavMeshPreview)
-	{
-		return;
-	}
 
-	ReserveGameObject(
-		"Debug_NavMesh", std::nullopt,
-		[this](GameObject* obj)
-		{
-			obj->GetTransform().SetPosition(0.0f, kDebugNavMeshYOffset, 0.0f);
-
-			CreateComponentWithInit<MeshComponent>(
-				obj->GetHandle(),
-				[](MeshComponent* mesh)
-				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(kDebugNavMeshMeshPath.data());
-					if (!meshRes)
-					{
-						DEBUG_LOG_FMT("[WorldScene] Debug NavMesh mesh not found: {}\n", kDebugNavMeshMeshPath);
-						return;
-					}
-
-					mesh->SetMeshResource(meshRes, false);
-
-					auto		material = std::make_shared<MaterialResource>();
-					const float albedo[4]{0.05f, 0.85f, 0.45f, 1.0f};
-					const float emissiveColor[3]{0.05f, 0.85f, 0.45f};
-					material->SetData(
-						EvAsset::ShadingModel::LitPbr, MATERIAL_FLAG_DOUBLE_SIDED, albedo, 1.0f, 0.0f, emissiveColor,
-						1.5f, emissiveColor, 1.5f
-					);
-					mesh->SetMaterialResource(0, std::move(material));
-				}
-			);
-		}
-	);
-}
-
-void WorldScene::CreateDebugMapObjPreview()
-{
-	if (!kEnableDebugMapObjPreview)
-	{
-		return;
-	}
-
-	ReserveGameObject(
-		"Debug_MapObj", std::nullopt,
-		[this](GameObject* obj)
-		{
-			obj->GetTransform().SetPosition(0.0f, kDebugMapObjYOffset, 0.0f);
-
-			CreateComponentWithInit<MeshComponent>(
-				obj->GetHandle(),
-				[](MeshComponent* mesh)
-				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(kDebugMapObjMeshPath.data());
-					if (!meshRes)
-					{
-						DEBUG_LOG_FMT("[WorldScene] Debug Map.obj mesh not found: {}\n", kDebugMapObjMeshPath);
-						return;
-					}
-
-					mesh->SetMeshResource(meshRes, false);
-
-					auto		material = std::make_shared<MaterialResource>();
-					const float albedo[4]{0.95f, 0.20f, 0.12f, 1.0f};
-					const float emissiveColor[3]{0.95f, 0.20f, 0.12f};
-					material->SetData(
-						EvAsset::ShadingModel::LitPbr, MATERIAL_FLAG_DOUBLE_SIDED, albedo, 1.0f, 0.0f, emissiveColor,
-						0.8f, emissiveColor, 0.8f
-					);
-					mesh->SetMaterialResource(0, std::move(material));
-				}
-			);
-		}
-	);
-}

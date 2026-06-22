@@ -6,8 +6,79 @@
 #include "NavAgent.h"
 #include "GameWorld.h"
 #include "Soldier.h"
+#include "OccupationZone.h"
 
 // #define PRINT_SOLDIER_STATE_LOG
+
+namespace {
+	bool IsInsideOccupationZoneXZ(
+		const GameServer::Contents::GameObject* zoneObject,
+		const GameServer::Contents::OccupationZone* zone,
+		const Vec3& position)
+	{
+		const Vec3 diff{ position - zoneObject->GetPosition() };
+		const float distXZSq{ diff.x * diff.x + diff.z * diff.z };
+		return distXZSq < zone->GetRangeSq();
+	}
+
+	bool IsInsideDestinationOccupationZone(
+		const std::shared_ptr<GameServer::Contents::Soldier>& soldier,
+		const Vec3& destination)
+	{
+		const auto world{ soldier->GetGameWorld() };
+		if(!world)
+			return false;
+
+		const auto& zones{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+		for(const auto& [id, zoneObject] : zones) {
+			if(!IsValidObj(zoneObject))
+				continue;
+
+			const Vec3 destinationDiff{ zoneObject->GetPosition() - destination };
+			constexpr float DESTINATION_MATCH_TOLERANCE_SQ{ 0.01f };
+			const float destinationDiffXZSq{
+				destinationDiff.x * destinationDiff.x + destinationDiff.z * destinationDiff.z };
+			if(destinationDiffXZSq > DESTINATION_MATCH_TOLERANCE_SQ)
+				continue;
+
+			auto const zone{ static_cast<GameServer::Contents::OccupationZone*>(
+				zoneObject->GetScript(zoneObject->GetName())) };
+			if(!zone)
+				return false;
+
+			return IsInsideOccupationZoneXZ(zoneObject.get(), zone, soldier->GetPosition());
+		}
+
+		return false;
+	}
+
+	bool AreInsideSameOccupationZone(
+		const std::shared_ptr<GameServer::Contents::Soldier>& soldier,
+		const std::shared_ptr<GameServer::Contents::Creature>& target)
+	{
+		const auto world{ soldier->GetGameWorld() };
+		if(!world)
+			return false;
+
+		const auto& zones{ world->GetGameObjectGroup(FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE) };
+		for(const auto& [id, zoneObject] : zones) {
+			if(!IsValidObj(zoneObject))
+				continue;
+
+			auto const zone{ static_cast<GameServer::Contents::OccupationZone*>(
+				zoneObject->GetScript(zoneObject->GetName())) };
+			if(!zone)
+				continue;
+
+			if(IsInsideOccupationZoneXZ(zoneObject.get(), zone, soldier->GetPosition())
+				&& IsInsideOccupationZoneXZ(zoneObject.get(), zone, target->GetPosition())) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
 
 // ============================================
 //					IDLE
@@ -63,7 +134,9 @@ void GameServer::Contents::SoldierIdleState::Update(const float dt)
 		return;
 
 	std::shared_ptr<Creature> target;
-	float closestDistSq{ 5.f };
+	float closestDistSq{ std::numeric_limits<float>::max() };
+	constexpr float IDLE_DETECTION_RANGE{ 5.f };
+	constexpr float IDLE_DETECTION_RANGE_SQ{ IDLE_DETECTION_RANGE * IDLE_DETECTION_RANGE };
 
 	for(const auto& group : world->GetGameObjectGroups()) {
 		for(const auto& [id, o] : group) {
@@ -76,7 +149,11 @@ void GameServer::Contents::SoldierIdleState::Update(const float dt)
 				continue;
 
 			const float distSq{ (obj->GetPosition() - owner->GetPosition()).LengthSquared() };
-			if(distSq < closestDistSq) {
+			const bool isEnemySoldierInSameZone{
+				FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER == obj->GetObjType()
+				&& AreInsideSameOccupationZone(owner, obj) };
+			if((distSq < IDLE_DETECTION_RANGE_SQ || isEnemySoldierInSameZone)
+				&& distSq < closestDistSq) {
 				closestDistSq = distSq;
 				target = obj;
 			}
@@ -139,11 +216,15 @@ void GameServer::Contents::SoldierMoveState::Update(const float dt)
 
 	auto diff = m_destPos - pos;
 	const float distXZSq = diff.x * diff.x + diff.z * diff.z;
-	if(distXZSq < 0.5f * 0.5f) {
-		owner->SetPosition(m_destPos);
+	const bool reachedDestination{
+		distXZSq < 0.5f * 0.5f || IsInsideDestinationOccupationZone(owner, m_destPos) };
+	if(reachedDestination) {
+		if(ag)
+			ag->StopMove();
 		GetFSM()->ChangeState(FB_ENUMS::SOLDIER_STATE_TYPE_IDLE, dt, true);
-		ag->StopMove();
+#ifdef PRINT_SOLDIER_STATE_LOG
 		std::cout << "Arrive!" << std::endl;
+#endif
 		return;
 	}
 

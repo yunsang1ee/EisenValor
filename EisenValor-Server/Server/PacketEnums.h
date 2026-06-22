@@ -84,6 +84,8 @@ CS_CHAT_PKT = 10050,
 SC_CHAT_PKT = 10051,
 
 SC_GAME_FINISH_PKT = 10052,
+
+SC_HIT_SOUND_PKT = 10053,
 #pragma endregion
 
 

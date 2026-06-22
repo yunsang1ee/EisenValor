@@ -5,6 +5,9 @@
 #include "Player.h"
 #include "FSM.h"
 #include "NavAgent.h"
+
+// #define PRINT_SOLDIER_LOG
+
 GameServer::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 	:Creature{teamType, FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER}
 {
@@ -12,7 +15,9 @@ GameServer::Contents::Soldier::Soldier(const FB_ENUMS::TEAM_TYPE teamType)
 
 GameServer::Contents::Soldier::~Soldier()
 {
+#ifdef PRINT_SOLDIER_LOG
 	std::cout << "~Soldier" << std::endl;
+#endif
 }
 
 void GameServer::Contents::Soldier::Update(const float dt)
@@ -56,6 +61,12 @@ bool GameServer::Contents::Soldier::OnDamaged(std::shared_ptr<Creature> const at
 	}
 
 	DecHP(damage, broadcast);
+
+	if(damage > 0) {
+		const auto world{ GetGameWorld() };
+		auto pb{ ServerPackets::Make_SC_HIT_SOUND_PACKET(attacker->GetID()) };
+		world->Broadcast(std::move(pb));
+	}
 
 	return true;
 }
