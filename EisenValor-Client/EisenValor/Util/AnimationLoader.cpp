@@ -48,6 +48,33 @@ namespace AnimationLoader
 				const uint8_t runKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
 				anim->AddAnimationEvent(runKey, 5.0f / 30.0f, playLeftFootstep);
 				anim->AddAnimationEvent(runKey, 16.0f / 30.0f, playRightFootstep);
+
+				anim->AddAnimationEvent(20, 3.0f / 30.0f, playLeftFootstep);
+				anim->AddAnimationEvent(20, 18.0f / 30.0f, playRightFootstep);
+				anim->AddAnimationEvent(22, 12.0f / 30.0f, playLeftFootstep);
+				anim->AddAnimationEvent(22, 30.0f / 30.0f, playRightFootstep);
+				anim->AddAnimationEvent(23, 11.0f / 30.0f, playLeftFootstep);
+				anim->AddAnimationEvent(23, 31.0f / 30.0f, playRightFootstep);
+				anim->AddAnimationEvent(21, 12.0f / 30.0f, playLeftFootstep);
+				anim->AddAnimationEvent(21, 30.0f / 30.0f, playRightFootstep);
+
+				const auto playLightSwing = []()
+				{
+					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/light_swing.wav", AudioBus::SFX);
+				};
+				anim->AddAnimationEvent(StateOffset::kAttackOffset, 10.0f / 30.0f, playLightSwing);
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 10, 10.0f / 30.0f, playLightSwing);
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 20, 10.0f / 30.0f, playLightSwing);
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 30, 10.0f / 30.0f, playLightSwing);
+
+				const auto playHeavySwing = []()
+				{
+					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/heavy_swing.wav", AudioBus::SFX);
+				};
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 1, 22.0f / 30.0f, playHeavySwing);
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 11, 22.0f / 30.0f, playHeavySwing);
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 21, 22.0f / 30.0f, playHeavySwing);
+				anim->AddAnimationEvent(StateOffset::kAttackOffset + 31, 22.0f / 30.0f, playHeavySwing);
 			}
 
 			anim->AddAnimation(
