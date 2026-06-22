@@ -358,6 +358,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\UIRenderPass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scene\LoadingScene.h" />
+    <ClInclude Include="Scene\ScoreScene.h" />
     <ClInclude Include="Scene\LobbyScene.h" />
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
@@ -468,6 +469,7 @@ exit /b 0</Command>
     <ClCompile Include="RenderPass\SkinningPass.cpp" />
     <ClCompile Include="RenderPass\UIRenderPass.cpp" />
     <ClCompile Include="Scene\LoadingScene.cpp" />
+    <ClCompile Include="Scene\ScoreScene.cpp" />
     <ClCompile Include="Scene\LobbyScene.cpp" />
     <ClCompile Include="Scene\LoginScene.cpp" />
     <ClCompile Include="Scene\RoomScene.cpp" />

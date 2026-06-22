@@ -38,6 +38,7 @@
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
+#include "Scene/ScoreScene.h"
 #include "ResourceGlobal.h"
 #include "MeshResource.h"
 #include <unordered_map>
@@ -47,6 +48,8 @@ using namespace NetBridge;
 namespace
 {
 	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
+	uint8 s_latestRedScore = 0;
+	uint8 s_latestBlueScore = 0;
 
 	void NotifyOccupationZoneReached(Scene* scene)
 	{
@@ -562,6 +565,9 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_LOCAL_PLAYER_PACKET& recvPkt
 )
 {
+	s_latestRedScore = 0;
+	s_latestBlueScore = 0;
+
 	// GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
 
 	GLOBAL(SceneGlobal).SetLocalGameObjectID(recvPkt.player_id());
@@ -1676,6 +1682,13 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 	// FSM 상태 동기화
 	if (auto* fsm = obj->GetComponent<FSMComponent>())
 	{
+		//DEBUG_LOG_FMT(
+		//	"[RemoteState] objID={}, received={}, before={}\n",
+		//	objID,
+		//	static_cast<int>(nextState),
+		//	static_cast<int>(fsm->GetCurStateType())
+		//);
+
 		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) && nextState == FB_ENUMS::SOLDIER_STATE_TYPE_ATTACK)
 		{
 			return true;
@@ -1685,6 +1698,11 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 			return true;
 		}
 		fsm->SetServerState(nextState);
+		//DEBUG_LOG_FMT(
+		//	"[RemoteState] objID={}, after={}\n",
+		//	objID,
+		//	static_cast<int>(fsm->GetCurStateType())
+		//);
 		return true;
 	}
 
@@ -1878,6 +1896,9 @@ bool NetBridge::S2C::Handle_SC_PING_PACKET(const SOCKET& socket, const FB_TABLES
 bool NetBridge::S2C::Handle_SC_GAME_FINISH_PACKET(const SOCKET& socket, const FB_TABLES::SC_GAME_FINISH_PACKET& recvPkt)
 {
 	const uint32 sessionID = GLOBAL(SceneGlobal).GetSessionID();
+	ScoreScene::SetScores(s_latestRedScore, s_latestBlueScore);
+	GLOBAL(SceneGlobal).LoadScene("ScoreScene");
+
 	GLOBAL(NetBridge::NetworkGlobal).DisconnectGameServer();
 	if (false == GLOBAL(NetBridge::NetworkGlobal).ReconnectLobbyServer())
 	{
@@ -1894,7 +1915,8 @@ bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_UPDATE_TEAM_SCORE_PACKET& recvPkt
 )
 {
-	// TODO: 팀 점수 업데이트
+	s_latestBlueScore = recvPkt.blue_score();
+	s_latestRedScore = recvPkt.red_score();
 	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
 	return true;
 }
@@ -2016,7 +2038,37 @@ bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
 )
 {
-	// TODO: ID로 점령지 오브젝트 찾아서 점령 게이지 업데이트해야합니다.
+	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	const float gauge = std::clamp(recvPkt.occupy_gauge(), -100.0f, 100.0f);
+	const float blueAmount = std::max(-gauge, 0.0f) / 100.0f;
+	const float redAmount = std::max(gauge, 0.0f) / 100.0f;
+
+	for (auto& rect : scene->GetStorage<RectTransformComponent>()->GetList())
+	{
+		auto* owner = rect.GetGameObject();
+		if (!owner)
+		{
+			continue;
+		}
+
+		if (owner->GetName() == "OccupationGaugeBlue")
+		{
+			rect.SetAnchors({0.5f - 0.5f * blueAmount, 0.0f}, {0.5f, 1.0f});
+			rect.SetOffsetMin({0.0f, 2.0f});
+			rect.SetOffsetMax({0.0f, -2.0f});
+		}
+		else if (owner->GetName() == "OccupationGaugeRed")
+		{
+			rect.SetAnchors({0.5f, 0.0f}, {0.5f + 0.5f * redAmount, 1.0f});
+			rect.SetOffsetMin({0.0f, 2.0f});
+			rect.SetOffsetMax({0.0f, -2.0f});
+		}
+	}
 
 	return true;
 }

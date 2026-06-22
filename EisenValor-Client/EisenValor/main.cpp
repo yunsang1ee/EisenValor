@@ -18,6 +18,7 @@
 #include "Scene/LobbyScene.h"
 #include "Scene/RoomScene.h"
 #include "Scene/LoadingScene.h"
+#include "Scene/ScoreScene.h"
 
 #include "RenderPass/SkinningPass.h"
 #include "RenderPass/DxrRenderPass.h"
@@ -229,6 +230,7 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 		GLOBAL(SceneGlobal).RegisterScene<LobbyScene>("LobbyScene");
 		GLOBAL(SceneGlobal).RegisterScene<RoomScene>("RoomScene");
 		GLOBAL(SceneGlobal).RegisterScene<LoadingScene>("LoadingScene");
+		GLOBAL(SceneGlobal).RegisterScene<ScoreScene>("ScoreScene");
 
 		GLOBAL(SceneGlobal).LoadScene("StartScene");
 	}
