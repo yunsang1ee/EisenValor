@@ -246,6 +246,9 @@ struct SC_SOLDIER_ATTACK_PACKETBuilder;
 struct SC_GENERAL_GUARD_PACKET;
 struct SC_GENERAL_GUARD_PACKETBuilder;
 
+struct SC_HIT_SOUND_PACKET;
+struct SC_HIT_SOUND_PACKETBuilder;
+
 struct CS_TELEPORT_PACKET;
 struct CS_TELEPORT_PACKETBuilder;
 
@@ -4004,6 +4007,47 @@ inline ::flatbuffers::Offset<SC_GENERAL_GUARD_PACKET> CreateSC_GENERAL_GUARD_PAC
   SC_GENERAL_GUARD_PACKETBuilder builder_(_fbb);
   builder_.add_attacker_id(attacker_id);
   builder_.add_defender_id(defender_id);
+  return builder_.Finish();
+}
+
+struct SC_HIT_SOUND_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SC_HIT_SOUND_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ATTACKER_ID = 4
+  };
+  uint64_t attacker_id() const {
+    return GetField<uint64_t>(VT_ATTACKER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_ATTACKER_ID, 8) &&
+           verifier.EndTable();
+  }
+};
+
+struct SC_HIT_SOUND_PACKETBuilder {
+  typedef SC_HIT_SOUND_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_attacker_id(uint64_t attacker_id) {
+    fbb_.AddElement<uint64_t>(SC_HIT_SOUND_PACKET::VT_ATTACKER_ID, attacker_id, 0);
+  }
+  explicit SC_HIT_SOUND_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SC_HIT_SOUND_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SC_HIT_SOUND_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SC_HIT_SOUND_PACKET> CreateSC_HIT_SOUND_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t attacker_id = 0) {
+  SC_HIT_SOUND_PACKETBuilder builder_(_fbb);
+  builder_.add_attacker_id(attacker_id);
   return builder_.Finish();
 }
 

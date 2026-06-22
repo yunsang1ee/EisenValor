@@ -385,6 +385,10 @@ table SC_GENERAL_GUARD_PACKET {
     attacker_id: uint64;
 }
 
+table SC_HIT_SOUND_PACKET {
+	attacker_id: uint64;
+}
+
 // ================================================
 //					    TEST
 // ================================================

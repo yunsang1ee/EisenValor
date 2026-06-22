@@ -1921,6 +1921,14 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 	return true;
 }
 
+bool NetBridge::S2C::Handle_SC_HIT_SOUND_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_SOUND_PACKET& recvPkt)
+{
+	const auto attackerID{recvPkt.attacker_id()};
+	// TODO: 내 로컬 아이디와 attackerID 일치하면 HitSound 재생
+
+	return true;
+}
+
 bool NetBridge::S2C::Handle_SC_TELEPORT_PACKET(const SOCKET& socket, const FB_TABLES::SC_TELEPORT_PACKET& recvPkt)
 {
 	auto scene = GLOBAL(SceneGlobal).GetActiveScene();
