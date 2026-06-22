@@ -35,7 +35,7 @@ void QuestProgressComponent::OnUpdate(float deltaTime)
 	{
 		if (GetMovedDistanceSq(pos) >= 20.0f)
 		{
-			AdvanceTo(1, L"Shift\uB97C \uB20C\uB7EC \uB2EC\uB9AC\uAE30\uD558\uC138\uC694.");
+			AdvanceTo(1, L"Shift를 눌러 달리기하세요.");
 		}
 	}
 	else if (m_stage == 1)
@@ -44,7 +44,7 @@ void QuestProgressComponent::OnUpdate(float deltaTime)
 		{
 			if (GetMovedDistanceSq(pos) >= 50.0f)
 			{
-				AdvanceTo(2, L"\uB9C8\uC6B0\uC2A4 \uC67C\uCABD \uBC84\uD2BC\uC73C\uB85C \uC57D\uACF5\uACA9\uC744 \uD558\uC138\uC694.");
+				AdvanceTo(2, L"마우스 왼쪽 버튼으로 약한 공격을 하세요.");
 			}
 		}
 		else
@@ -57,7 +57,7 @@ void QuestProgressComponent::OnUpdate(float deltaTime)
 	{
 		if (input.GetInputDown(VK_LBUTTON))
 		{
-			AdvanceTo(3, L"\uB9C8\uC6B0\uC2A4 \uC624\uB978\uCABD \uBC84\uD2BC\uC73C\uB85C \uAC15\uACF5\uACA9\uC744 \uD558\uC138\uC694.");
+			AdvanceTo(3, L"마우스 오른쪽 버튼으로 강한 공격을 하세요.");
 		}
 	}
 }

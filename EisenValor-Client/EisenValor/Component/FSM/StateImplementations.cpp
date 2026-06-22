@@ -444,7 +444,7 @@ void GeneralPostDelayState::Exit(FSMComponent* fsm)
 GeneralStunState::GeneralStunState() : State(FB_ENUMS::PLAYER_STATE_TYPE_STUN)
 {
 	SetHasExitTime(true);
-	SetNextStateOnEnd(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+	SetNextStateOnEnd(0);
 }
 
 void GeneralStunState::Enter(FSMComponent* fsm)
@@ -539,7 +539,7 @@ void GeneralGuardState::Update(FSMComponent* fsm, float dt)
 		if (anim->IsAnimationEnd())
 		{
 			fsm->SetGuardRole(FSMComponent::GuardRole::None);
-			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+			fsm->RequestState(FSMComponent::StateRequestType::ForcedServerCorrection, fsm->GetServerState());
 		}
 		return;
 	}
@@ -547,7 +547,7 @@ void GeneralGuardState::Update(FSMComponent* fsm, float dt)
 	if (anim->IsAnimationEnd())
 	{
 		fsm->SetGuardRole(FSMComponent::GuardRole::None);
-		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		fsm->RequestState(FSMComponent::StateRequestType::ForcedServerCorrection, fsm->GetServerState());
 	}
 }
 
