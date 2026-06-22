@@ -120,11 +120,7 @@ void StartScene::OnStartImpl()
 								switch (button.action)
 								{
 								case StartMenuAction::Start:
-									#ifdef APPLY_LOBBY_SERVER
-									GLOBAL(SceneGlobal).LoadScene("LoginScene");
-									#else
 									GLOBAL(SceneGlobal).LoadScene("WorldScene");
-									#endif
 									break;
 								case StartMenuAction::Quit:
 									PostQuitMessage(0);

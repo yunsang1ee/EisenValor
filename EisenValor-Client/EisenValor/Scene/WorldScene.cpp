@@ -16,6 +16,7 @@
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
 #include "Component/World/WorldSceneControllerComponent.h"
+#include "Component/World/WorldLoadingControllerComponent.h"
 
 // Engine
 #include "ImageUIComponent.h"
@@ -29,8 +30,8 @@
 // Resource
 #include "NetworkGlobal.h"
 #include "ResourceGlobal.h"
-#include "SceneResource.h"
 #include "SkinnedMeshResource.h"
+#include "TextureResource.h"
 
 #include "MeshComponent.h"
 #include "MaterialResource.h"
@@ -40,7 +41,6 @@ using Vertex = EvAsset::Vertex;
 
 namespace
 {
-constexpr std::string_view kDefaultMapScenePath = "Resource/Scenes/Map.evscene";
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
 constexpr float			   kTorchPreviewSphereScale = 0.5f;
 constexpr float			   kTorchTransportEmissionScale = 65.0f;
@@ -52,7 +52,8 @@ void WorldScene::OnRegisterCustomComponents()
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent>();
+		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent,
+		WorldLoadingControllerComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
@@ -113,22 +114,44 @@ void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
 	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 0.1f);
-	GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/worldscene.wav", AudioBus::BGM, true);
 
 	if (!GLOBAL(NetBridge::NetworkGlobal).Init("127.0.0.1", G_GAME_SERVER_PORT))
 	{
 		DEBUG_LOG_FMT("[WorldScene] Failed to connect game server.\n");
 	}
 
-	bool loadedScene = false;
-	if (auto sceneResource = GLOBAL(ResourceGlobal).Load<SceneResource>(std::filesystem::path(kDefaultMapScenePath)))
-	{
-		LoadFromSceneResource(sceneResource);
-		loadedScene = true;
-		DEBUG_LOG_FMT("[WorldScene] Loaded scene resource: {}\n", kDefaultMapScenePath);
-	}
+	ReserveGameObject(
+		"WorldLoadingOverlay", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.0f, 0.0f}, {1.0f, 1.0f});
+					rect->SetPivot({0.5f, 0.5f});
+					rect->SetOffsetMin({0.0f, 0.0f});
+					rect->SetOffsetMax({0.0f, 0.0f});
+				}
+			);
 
-	if (!loadedScene)
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
+						L"Resource\\Texture\\Scene\\loadingscene.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetOrder(1000);
+				}
+			);
+
+			CreateComponent<WorldLoadingControllerComponent>(obj->GetHandle());
+		}
+	);
+
+#if 0
+	if (false)
 	{
 		CreateSceneObjects();
 
@@ -138,6 +161,8 @@ void WorldScene::OnStartImpl()
 		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
 		//);
 	}
+
+#endif
 
 	ReserveGameObject(
 		"WorldSceneController", std::nullopt,
