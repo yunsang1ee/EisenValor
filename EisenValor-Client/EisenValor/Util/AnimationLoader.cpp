@@ -2,13 +2,14 @@
 #include "AnimationLoader.h"
 #include "AnimationComponent.h"
 #include "AnimationResource.h"
+#include "AudioGlobal.h"
 #include "ResourceGlobal.h"
 #include "Util/GameConstants.h"
 #include <Packets/Enums_generated.h>
 
 namespace AnimationLoader
 {
-	void AnimationApply(AnimationComponent* anim, const std::string& characterName)
+	void AnimationApply(AnimationComponent* anim, const std::string& characterName, bool enableAudioEvents)
 	{
 		if (!anim)
 			return;
@@ -26,11 +27,28 @@ namespace AnimationLoader
 				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK),
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Jog/Jog_F_Seq.evanim")
 			);
-
 			anim->AddAnimation(
 				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN),
 				res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Run_Seq.evanim")
 			);
+			if (enableAudioEvents)
+			{
+				const auto playLeftFootstep = []()
+				{
+					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/leftfootstep.wav", AudioBus::SFX);
+				};
+				const auto playRightFootstep = []()
+				{
+					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/rightfootstep.wav", AudioBus::SFX);
+				};
+				const uint8_t walkKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
+				anim->AddAnimationEvent(walkKey, 0.30f, playLeftFootstep);
+				anim->AddAnimationEvent(walkKey, 0.70f, playRightFootstep);
+
+				const uint8_t runKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_RUN);
+				anim->AddAnimationEvent(runKey, 5.0f / 30.0f, playLeftFootstep);
+				anim->AddAnimationEvent(runKey, 16.0f / 30.0f, playRightFootstep);
+			}
 
 			anim->AddAnimation(
 				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN),

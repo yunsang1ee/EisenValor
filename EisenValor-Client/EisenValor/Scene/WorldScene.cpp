@@ -21,6 +21,7 @@
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
 #include "RectTransformComponent.h"
+#include "AudioGlobal.h"
 
 #include "Transform.h"
 #include "MeshResource.h"
@@ -111,6 +112,8 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
+	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 0.1f);
+	GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/worldscene.wav", AudioBus::BGM, true);
 
 	if (!GLOBAL(NetBridge::NetworkGlobal).Init("127.0.0.1", G_GAME_SERVER_PORT))
 	{
@@ -200,5 +203,7 @@ void WorldScene::CreateSceneObjects()
 
 void WorldScene::OnEndImpl()
 {
+	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
+	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 1.0f);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
