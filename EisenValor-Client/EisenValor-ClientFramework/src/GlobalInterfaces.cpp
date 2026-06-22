@@ -10,6 +10,7 @@
 #include "DxSamplerHeapGlobal.h"
 #include "ResourceGlobal.h"
 #include "DxRendererGlobal.h"
+#include "StreamlineGlobal.h"
 
 #ifdef _DEBUG
 #include "DxDebugGlobal.h"
@@ -22,6 +23,7 @@ void Initialize(HWND hwnd)
 {
 	GLOBAL(InputGlobal).Initialize(hwnd);
 	GLOBAL(TimerGlobal).Initialize();
+	GLOBAL(StreamlineGlobal).Initialize();
 
 #ifdef _DEBUG
 	auto& debugG = GLOBAL(DxDebugGlobal);
@@ -29,6 +31,7 @@ void Initialize(HWND hwnd)
 #endif
 	auto& deviceG = GLOBAL(DxDeviceGlobal);
 	deviceG.Initialize();
+	GLOBAL(StreamlineGlobal).SetD3DDevice(deviceG.GetDevice(), deviceG.GetAdapter());
 #ifdef _DEBUG
 	debugG.SetupDebugMessages(deviceG.GetDevice());
 	debugG.SetBreakOnSeverity(true, false);
@@ -65,6 +68,7 @@ void Shutdown()
 
 	GLOBAL(DxRendererGlobal).Release();
 	GLOBAL(ResourceGlobal).Release();
+	GLOBAL(StreamlineGlobal).Release();
 	GLOBAL(DxGfxCommandQueueGlobal).Release();
 	GLOBAL(DxSamplerHeapGlobal).Release();
 	GLOBAL(DxDescriptorHeapGlobal).Release();

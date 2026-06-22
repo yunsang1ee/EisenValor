@@ -12,9 +12,6 @@ struct RestirRayPayload
     float3 color;
     uint recursionDepth;
 
-    float3 targetContribution;
-    float sourcePdf;
-
     float lightPdf;
     uint pathFlags;
     uint pixelIndex;
@@ -25,6 +22,13 @@ struct RestirRayPayload
     uint reconnectGeometryIndex;
     uint reconnectPrimitiveIndex;
     uint reconnectBarycentrics;
+
+    uint packedRcVertexWi;
+    uint packedRcVertexIrradianceXY;
+    uint packedRcVertexIrradianceZ;
+    float rcSourcePdfBefore;
+    float rcSourcePdfAfter;
+    float rcSourceGeometry;
 };
 
 void InitializeRayPayloadData(inout StandardRayPayload payload)
@@ -33,8 +37,6 @@ void InitializeRayPayloadData(inout StandardRayPayload payload)
 
 void InitializeRayPayloadData(inout RestirRayPayload payload)
 {
-    payload.targetContribution = 0.0f.xxx;
-    payload.sourcePdf = 1.0f;
     payload.lightPdf = 0.0f;
     payload.pathFlags = 0u;
     payload.pixelIndex = 0xffffffffu;
@@ -44,6 +46,12 @@ void InitializeRayPayloadData(inout RestirRayPayload payload)
     payload.reconnectGeometryIndex = 0xffffffffu;
     payload.reconnectPrimitiveIndex = 0xffffffffu;
     payload.reconnectBarycentrics = 0u;
+    payload.packedRcVertexWi = 0u;
+    payload.packedRcVertexIrradianceXY = 0u;
+    payload.packedRcVertexIrradianceZ = 0u;
+    payload.rcSourcePdfBefore = 0.0f;
+    payload.rcSourcePdfAfter = 0.0f;
+    payload.rcSourceGeometry = 0.0f;
 }
 
 template<typename TPayload>

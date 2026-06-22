@@ -1,5 +1,6 @@
 #include "stdafxClient.h"
 #include "RestirTemporalReusePass.h"
+#include "CameraRenderData.h"
 #include "DxBuffer.h"
 #include "DxCommandContext.h"
 #include "DxCommandQueueGlobal.h"
@@ -14,8 +15,11 @@
 #include "RenderContext.h"
 #include "RenderData/GeoTableRenderData.h"
 #include "RenderData/InstanceRenderData.h"
+#include "RenderData/MaterialRenderData.h"
 #include "RenderData/TlasRenderData.h"
 
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -24,6 +28,8 @@ namespace
 {
 constexpr uint32_t kRestirTemporalThreadGroupSizeX = 8;
 constexpr uint32_t kRestirTemporalThreadGroupSizeY = 8;
+constexpr float	  kCameraCutDirectionCosine = 0.70710678f;
+constexpr float	  kCameraProjectionEpsilon = 1.0e-4f;
 constexpr uint32_t kRestirTemporalConstantsDwordCount = sizeof(RestirTemporalConstants) / sizeof(uint32_t);
 static_assert(sizeof(RestirTemporalConstants) % sizeof(uint32_t) == 0);
 
@@ -79,7 +85,7 @@ void RestirTemporalReusePass::Release()
 	m_pipelineState.Reset();
 	m_rootSignature.Reset();
 	m_initialized = false;
-	m_historyValid = false;
+	InvalidateHistory();
 }
 
 void RestirTemporalReusePass::DeclareRenderData(RenderContext* renderContext)
@@ -92,10 +98,16 @@ void RestirTemporalReusePass::DeclareRenderData(RenderContext* renderContext)
 	renderContext->DeclareAccess<RestirCandidateRenderData>(
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read
 	);
+	renderContext->DeclareAccess<CameraRenderData>(
+		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read
+	);
 	renderContext->DeclareAccess<TlasRenderData>(
 		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
 	);
 	renderContext->DeclareAccess<InstanceRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
+	);
+	renderContext->DeclareAccess<MaterialRenderData>(
 		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
 	);
 	renderContext->DeclareAccess<GeoTableRenderData>(
@@ -120,16 +132,27 @@ void RestirTemporalReusePass::Execute(DxFrameResource* frame, Scene* scene, Rend
 	auto& finalReservoirData = m_finalReservoirData.Get();
 	finalReservoirData.reservoirBuffer.reset();
 
+	auto*	   cameraData = renderContext->Get<CameraRenderData>();
 	auto*	   candidateData = renderContext->Get<RestirCandidateRenderData>();
 	auto*	   tlasData = renderContext->Get<TlasRenderData>();
 	auto*	   instanceData = renderContext->Get<InstanceRenderData>();
+	auto*	   materialData = renderContext->Get<MaterialRenderData>();
 	auto*	   geoTableData = renderContext->Get<GeoTableRenderData>();
 	const bool currentCandidateReady = nullptr != candidateData && candidateData->validThisFrame &&
 									   candidateData->frameIndex == frame->GetFrameIndex();
 	if (!currentCandidateReady)
 	{
-		m_historyValid = false;
+		InvalidateHistory();
 		return;
+	}
+
+	if (nullptr != cameraData)
+	{
+		if (ShouldResetHistory(*cameraData, *candidateData))
+		{
+			m_historyValid = false;
+		}
+		RecordHistoryValidationState(*cameraData, *candidateData);
 	}
 
 	auto&			 context = *frame->GetMainContext();
@@ -137,10 +160,11 @@ void RestirTemporalReusePass::Execute(DxFrameResource* frame, Scene* scene, Rend
 
 	if (!m_initialized ||
 		!DispatchTemporalReuse(
-			context.CommandList(), candidateData, tlasData, instanceData, geoTableData, &finalReservoirData
+			context.CommandList(), cameraData, candidateData, tlasData, instanceData, materialData, geoTableData,
+			&finalReservoirData
 		))
 	{
-		m_historyValid = false;
+		InvalidateHistory();
 		PublishInitialReservoir(renderContext, candidateData, &finalReservoirData);
 		return;
 	}
@@ -153,7 +177,61 @@ void RestirTemporalReusePass::OnResize(uint32_t width, uint32_t height)
 	m_width = width;
 	m_height = height;
 	CreateHistoryResources(width, height);
+	InvalidateHistory();
+}
+
+bool RestirTemporalReusePass::ShouldResetHistory(
+	const CameraRenderData& cameraData, const RestirCandidateRenderData& candidateData
+) const
+{
+	if (!m_hasHistoryValidationState || candidateData.historySignature != m_lastHistorySignature)
+	{
+		return true;
+	}
+
+	const auto currentPosition = DirectX::XMLoadFloat3(&cameraData.cameraPosition);
+	const auto previousPosition = DirectX::XMLoadFloat3(&m_lastCameraPosition);
+	const float translation = DirectX::XMVectorGetX(
+		DirectX::XMVector3Length(DirectX::XMVectorSubtract(currentPosition, previousPosition))
+	);
+	const float translationLimit = std::clamp(cameraData.farZ * 0.005f, 1.0f, 10.0f);
+	if (!std::isfinite(translation) || translation > translationLimit)
+	{
+		return true;
+	}
+
+	const auto currentDirection = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&cameraData.cameraDirection));
+	const auto previousDirection = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&m_lastCameraDirection));
+	const float directionCosine = DirectX::XMVectorGetX(DirectX::XMVector3Dot(currentDirection, previousDirection));
+	if (!std::isfinite(directionCosine) || directionCosine < kCameraCutDirectionCosine)
+	{
+		return true;
+	}
+
+	return std::abs(cameraData.nearZ - m_lastCameraNearZ) > kCameraProjectionEpsilon ||
+		   std::abs(cameraData.farZ - m_lastCameraFarZ) > kCameraProjectionEpsilon ||
+		   std::abs(cameraData.fov - m_lastCameraFov) > kCameraProjectionEpsilon ||
+		   std::abs(cameraData.aspectRatio - m_lastCameraAspectRatio) > kCameraProjectionEpsilon;
+}
+
+void RestirTemporalReusePass::RecordHistoryValidationState(
+	const CameraRenderData& cameraData, const RestirCandidateRenderData& candidateData
+)
+{
+	m_lastHistorySignature = candidateData.historySignature;
+	m_lastCameraPosition = cameraData.cameraPosition;
+	m_lastCameraDirection = cameraData.cameraDirection;
+	m_lastCameraNearZ = cameraData.nearZ;
+	m_lastCameraFarZ = cameraData.farZ;
+	m_lastCameraFov = cameraData.fov;
+	m_lastCameraAspectRatio = cameraData.aspectRatio;
+	m_hasHistoryValidationState = true;
+}
+
+void RestirTemporalReusePass::InvalidateHistory()
+{
 	m_historyValid = false;
+	m_hasHistoryValidationState = false;
 }
 
 void RestirTemporalReusePass::CreatePipeline()
@@ -196,6 +274,11 @@ void RestirTemporalReusePass::CreatePipeline()
 						  .AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2)
 						  .AddDescriptorTable()
 						  .AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8)
+						  .AddDescriptorTable()
+						  .AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 9)
+						  .AddDescriptorTable()
+						  .AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10)
+						  .AddStaticSampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP)
 						  .SetFlags(D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED)
 						  .Build(device.GetDevice(), "RestirTemporalReuse_RootSignature");
 
@@ -212,7 +295,7 @@ void RestirTemporalReusePass::CreateHistoryResources(uint32_t width, uint32_t he
 	{
 		m_temporalHistory.Release();
 		m_finalReservoirBuffer.reset();
-		m_historyValid = false;
+		InvalidateHistory();
 		return;
 	}
 
@@ -238,20 +321,23 @@ void RestirTemporalReusePass::CreateHistoryResources(uint32_t width, uint32_t he
 	}
 
 	m_temporalHistory.Reset();
-	m_historyValid = false;
+	InvalidateHistory();
 }
 
 bool RestirTemporalReusePass::DispatchTemporalReuse(
 	ID3D12GraphicsCommandList*		cmdList,
+	CameraRenderData*				cameraData,
 	RestirCandidateRenderData*		candidateData,
 	TlasRenderData*					tlasData,
 	InstanceRenderData*				instanceData,
+	MaterialRenderData*				materialData,
 	GeoTableRenderData*				geoTableData,
 	RestirFinalReservoirRenderData* finalReservoirData
 )
 {
-	if (nullptr == cmdList || nullptr == candidateData || nullptr == tlasData || nullptr == instanceData ||
-		nullptr == geoTableData || nullptr == finalReservoirData || !m_pipelineState.IsValid() ||
+	if (nullptr == cmdList || nullptr == cameraData || nullptr == candidateData || nullptr == tlasData ||
+		nullptr == instanceData ||
+		nullptr == materialData || nullptr == geoTableData || nullptr == finalReservoirData || !m_pipelineState.IsValid() ||
 		nullptr == m_rootSignature.Get())
 	{
 		return false;
@@ -263,6 +349,8 @@ bool RestirTemporalReusePass::DispatchTemporalReuse(
 	auto* motionVectorTexture = candidateData->motionVectorTexture.get();
 	auto* instanceBuffer = instanceData->syncBuffer.GetBuffer();
 	auto* idToInstanceIndexBuffer = instanceData->idToInstanceIndexSync.GetBuffer();
+	auto* materialBuffer = materialData->syncBuffer.GetBuffer();
+	auto* terrainSurfaceBuffer = materialData->terrainSurfaceSyncBuffer.GetBuffer();
 	auto* geoTableBuffer = geoTableData->syncBuffer.GetBuffer();
 	auto* finalReservoirBuffer = m_finalReservoirBuffer.get();
 	auto* reservoirHistoryReadBuffer = m_temporalHistory.Read().reservoirBuffer.get();
@@ -271,12 +359,14 @@ bool RestirTemporalReusePass::DispatchTemporalReuse(
 	auto* primaryHitHistoryWriteBuffer = m_temporalHistory.Write().primaryHitBuffer.get();
 
 	if (nullptr == initialReservoirBuffer || nullptr == currentPrimaryHitBuffer || nullptr == motionVectorTexture ||
-		nullptr == instanceBuffer || nullptr == idToInstanceIndexBuffer || nullptr == geoTableBuffer ||
+		nullptr == instanceBuffer || nullptr == idToInstanceIndexBuffer || nullptr == materialBuffer ||
+		nullptr == terrainSurfaceBuffer || nullptr == geoTableBuffer ||
 		nullptr == finalReservoirBuffer || nullptr == tlas || !tlas->IsBuilt() ||
 		nullptr == reservoirHistoryReadBuffer || nullptr == primaryHitHistoryReadBuffer ||
 		nullptr == reservoirHistoryWriteBuffer || nullptr == primaryHitHistoryWriteBuffer ||
 		!initialReservoirBuffer->HasSRV() || !currentPrimaryHitBuffer->HasSRV() || !motionVectorTexture->HasSRV() ||
-		!instanceBuffer->HasSRV() || !idToInstanceIndexBuffer->HasSRV() || !geoTableBuffer->HasSRV() ||
+		!instanceBuffer->HasSRV() || !idToInstanceIndexBuffer->HasSRV() || !materialBuffer->HasSRV() ||
+		!terrainSurfaceBuffer->HasSRV() || !geoTableBuffer->HasSRV() ||
 		!finalReservoirBuffer->HasUAV() || !finalReservoirBuffer->HasSRV() || !reservoirHistoryReadBuffer->HasSRV() ||
 		!primaryHitHistoryReadBuffer->HasSRV() || !reservoirHistoryWriteBuffer->HasUAV() ||
 		!primaryHitHistoryWriteBuffer->HasUAV() || !reservoirHistoryWriteBuffer->HasSRV() ||
@@ -293,6 +383,10 @@ bool RestirTemporalReusePass::DispatchTemporalReuse(
 	);
 	DxUtils::TransitionResourceIfNeeded(cmdList, motionVectorTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	DxUtils::TransitionResourceIfNeeded(cmdList, instanceBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	DxUtils::TransitionResourceIfNeeded(cmdList, materialBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	DxUtils::TransitionResourceIfNeeded(
+		cmdList, terrainSurfaceBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+	);
 	DxUtils::TransitionResourceIfNeeded(cmdList, geoTableBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	DxUtils::TransitionResourceIfNeeded(
 		cmdList, reservoirHistoryReadBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
@@ -323,8 +417,12 @@ bool RestirTemporalReusePass::DispatchTemporalReuse(
 		10.0f,
 		static_cast<uint32_t>(instanceData->syncBuffer.Size()),
 		static_cast<uint32_t>(instanceData->idToInstanceIndexSync.Size()),
+		candidateData->shadingNormalStrength,
 		0u,
-		0u
+		cameraData->cameraPosition,
+		0.0f,
+		cameraData->previousCameraPosition,
+		0.0f
 	};
 
 	cmdList->SetComputeRoot32BitConstants(0, kRestirTemporalConstantsDwordCount, &constants, 0);
@@ -345,6 +443,10 @@ bool RestirTemporalReusePass::DispatchTemporalReuse(
 	);
 	cmdList->SetComputeRootDescriptorTable(
 		12, descHeap.GetGPUHandle(idToInstanceIndexBuffer->GetSRVHandle().GetIndex())
+	);
+	cmdList->SetComputeRootDescriptorTable(13, descHeap.GetGPUHandle(materialBuffer->GetSRVHandle().GetIndex()));
+	cmdList->SetComputeRootDescriptorTable(
+		14, descHeap.GetGPUHandle(terrainSurfaceBuffer->GetSRVHandle().GetIndex())
 	);
 
 	cmdList->Dispatch(

@@ -6,6 +6,7 @@
 #include "RaytracingEnvironment.hlsli"
 #include "RaytracingNormal.hlsli"
 #include "RaytracingSampling.hlsli"
+#include "RaytracingLighting.hlsli"
 
 typedef StandardRayPayload RayPayload;
 
@@ -15,6 +16,8 @@ RWTexture2D<float4> g_output : register(u0, space0);
 cbuffer CameraConstants : register(b0, space0)
 {
 	float4x4 g_viewProjInverse;
+	float2 g_cameraJitterPixels;
+	float2 g_cameraConstantsPad0;
 };
 
 // Bindless Base Buffers
@@ -150,9 +153,6 @@ float SoftShadowVisibilityDirLight(
 	return (NUM_SAMPLES > 0) ? visibility / NUM_SAMPLES : 0.0f;
 }
 
-#define RAYTRACING_ENABLE_GGX_SAMPLING 1
-#include "RaytracingLighting.hlsli"
-
 [shader("raygeneration")]
 void RayGenMain()
 {
@@ -161,18 +161,17 @@ void RayGenMain()
 	uint pixelIndex = pixelCoord.y * screenSize.x + pixelCoord.x;
 	uint rngSeed = pixelIndex * 9781u ^ pixelCoord.y * 6271u ^ screenSize.x * 7919u + 124623u;
 		
-	float2 jit = RandomPointInCircle(rngSeed) * 0.5f;
-	float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+	float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
 	ndc.y = -ndc.y;
 
-	float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-	worldPos /= worldPos.w;
-	float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
-	cameraPos /= cameraPos.w;
+	float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
+	nearPos /= nearPos.w;
+	float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+	farPos /= farPos.w;
 	
 	RayDesc ray;
-	ray.Origin = cameraPos.xyz;
-	ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
+	ray.Origin = nearPos.xyz;
+	ray.Direction = normalize(farPos.xyz - nearPos.xyz);
 	ray.TMin = RAY_TMIN;
 	ray.TMax = RAY_TMAX;
 	RayPayload payload = MakeDefaultRayPayload<RayPayload>(0);

@@ -121,11 +121,15 @@ float3 EvaluateEnvironmentSunNEE(
     float3 F0,
     uint visibilitySampleCount,
     out float lightPdf,
+    out float3 sampledLightDirection,
+    out float3 sampledIncidentRadiance,
     inout uint rngSeed)
 {
     float3 sunAxis = GetEnvironmentSunDirection();
     float angularRadius = GetEnvironmentSunAngularRadius(environmentMode);
     lightPdf = GetDirectionalAreaSunPdf(angularRadius);
+    sampledLightDirection = sunAxis;
+    sampledIncidentRadiance = 0.0f.xxx;
 
     float3 sunIntensity = GetEnvironmentSunRadiance(environmentMode);
     if (max(max(sunIntensity.x, sunIntensity.y), sunIntensity.z) <= 0.0f)
@@ -143,6 +147,10 @@ float3 EvaluateEnvironmentSunNEE(
     {
         float samplePdf;
         float3 lightDir = SampleDirectionalAreaSun(sunAxis, angularRadius, rngSeed, samplePdf);
+        if (i == 0u)
+        {
+            sampledLightDirection = lightDir;
+        }
 
         float NdotL = max(dot(shadingNormal, lightDir), 0.0f);
         float NdotV = max(dot(shadingNormal, viewDir), 0.0f);
@@ -159,10 +167,52 @@ float3 EvaluateEnvironmentSunNEE(
         float3 kD = (1.0f - F) * (1.0f - metallic);
 
         float visibility = ShadowVisibility(accel, shadowOrigin, lightDir, RAY_TMIN, RAY_TMAX, 0xFF);
+        if (i == 0u)
+        {
+            sampledIncidentRadiance = sunRadiance * visibility;
+        }
         lighting += (kD * albedo * ao / PI + specular) * sunRadiance * NdotL * visibility / max(samplePdf, EPSILON);
     }
 
     return lighting / float(resolvedSampleCount);
+}
+
+float3 EvaluateEnvironmentSunNEE(
+    RaytracingAccelerationStructure accel,
+    uint environmentMode,
+    float3 hitPos,
+    float3 geometricNormal,
+    float3 shadingNormal,
+    float3 viewDir,
+    float3 albedo,
+    float metallic,
+    float roughness,
+    float ao,
+    float3 F0,
+    uint visibilitySampleCount,
+    out float lightPdf,
+    inout uint rngSeed)
+{
+    float3 sampledLightDirection;
+    float3 sampledIncidentRadiance;
+    return EvaluateEnvironmentSunNEE(
+        accel,
+        environmentMode,
+        hitPos,
+        geometricNormal,
+        shadingNormal,
+        viewDir,
+        albedo,
+        metallic,
+        roughness,
+        ao,
+        F0,
+        visibilitySampleCount,
+        lightPdf,
+        sampledLightDirection,
+        sampledIncidentRadiance,
+        rngSeed
+    );
 }
 
 float3 EvaluateEnvironmentSunNEE(

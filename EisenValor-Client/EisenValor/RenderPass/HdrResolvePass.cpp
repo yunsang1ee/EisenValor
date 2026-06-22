@@ -1,6 +1,7 @@
 #include "stdafxClient.h"
 #include "HdrResolvePass.h"
 #include "RenderData/RaytracingOutputRenderData.h"
+#include "RenderData/DlssOutputRenderData.h"
 #include <DxFrameResource.h>
 #include <RenderContext.h>
 #include <DxSwapChain.h>
@@ -37,6 +38,9 @@ void HdrResolvePass::DeclareRenderData(RenderContext* renderContext)
 	renderContext->DeclareAccess<RaytracingOutputRenderData>(
 		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
 	);
+	renderContext->DeclareAccess<DlssOutputRenderData>(
+		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
+	);
 }
 
 void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
@@ -54,18 +58,16 @@ void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext
 		return;
 	}
 
+	auto* dlssOutputData = renderContext->Get<DlssOutputRenderData>();
 	auto* srcTexture = outputData->outputTexture.get();
+	bool bypassToneMap = outputData->bypassToneMap;
+	if (dlssOutputData && dlssOutputData->validThisFrame && dlssOutputData->outputTexture)
+	{
+		srcTexture = dlssOutputData->outputTexture.get();
+		bypassToneMap = false;
+	}
 	if (!srcTexture->HasSRV())
 	{
-		return;
-	}
-
-	if (srcTexture->GetWidth() != m_swapChain->GetWidth() || srcTexture->GetHeight() != m_swapChain->GetHeight())
-	{
-		GRAPHICS_LOG_FMT(
-			"[HdrResolvePass] ERROR: Size mismatch! Src: {}x{}, BackBuffer: {}x{}\n", srcTexture->GetWidth(),
-			srcTexture->GetHeight(), m_swapChain->GetWidth(), m_swapChain->GetHeight()
-		);
 		return;
 	}
 
@@ -109,7 +111,7 @@ void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext
 		uint32_t pad1;
 		uint32_t pad2;
 	};
-	Constants constants = {outputData->bypassToneMap ? 1u : 0u, 0u, 0u, 0u};
+	Constants constants = {bypassToneMap ? 1u : 0u, 0u, 0u, 0u};
 	cmdList->SetGraphicsRoot32BitConstants(1, 4, &constants, 0);
 
 	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

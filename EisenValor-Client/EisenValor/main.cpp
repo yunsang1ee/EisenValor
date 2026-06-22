@@ -22,6 +22,7 @@
 #include "RenderPass/DxrRenderPass.h"
 #include "RenderPass/RestirTemporalReusePass.h"
 #include "RenderPass/RestirFinalEvaluationPass.h"
+#include "RenderPass/DlssUpscalePass.h"
 #include "RenderPass/HdrResolvePass.h"
 #include "RenderPass/UIRenderPass.h"
 
@@ -195,20 +196,25 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 
 			auto width = swapChain->GetWidth();
 			auto height = swapChain->GetHeight();
+			auto renderWidth = renderer.GetRenderWidth();
+			auto renderHeight = renderer.GetRenderHeight();
 
 			// Skinning Pass 생성
 			auto  skinningPass = std::make_unique<SkinningPass>();
 			renderer.AddRenderPass("Skinning", std::move(skinningPass), RenderPassPriority::High);
 
 			// DXR Pass 생성
-			auto  dxrPass = std::make_unique<DxrRenderPass>(width, height);
+			auto  dxrPass = std::make_unique<DxrRenderPass>(renderWidth, renderHeight);
 			renderer.AddRenderPass("DXR", std::move(dxrPass));
 
-			auto restirTemporalReusePass = std::make_unique<RestirTemporalReusePass>(width, height);
+			auto restirTemporalReusePass = std::make_unique<RestirTemporalReusePass>(renderWidth, renderHeight);
 			renderer.AddRenderPass("RestirTemporalReuse", std::move(restirTemporalReusePass));
 
 			auto restirFinalEvaluationPass = std::make_unique<RestirFinalEvaluationPass>();
 			renderer.AddRenderPass("RestirFinalEvaluation", std::move(restirFinalEvaluationPass));
+
+			auto dlssUpscalePass = std::make_unique<DlssUpscalePass>(width, height);
+			renderer.AddRenderPass("DLSS", std::move(dlssUpscalePass));
 
 			// HDR Resolve Pass 생성
 			auto hdrResolvePass = std::make_unique<HdrResolvePass>(swapChain);

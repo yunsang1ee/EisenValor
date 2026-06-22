@@ -7,6 +7,8 @@
 #include "RaytracingPostProcess.hlsli"
 #include "RaytracingNormal.hlsli"
 #include "RaytracingSampling.hlsli"
+#include "RaytracingLighting.hlsli"
+#include "RaytracingNEE.hlsli"
 
 typedef StandardRayPayload RayPayload;
 
@@ -16,6 +18,8 @@ RWTexture2D<float4> g_output : register(u0, space0);
 cbuffer CameraConstants : register(b0, space0)
 {
     float4x4 g_viewProjInverse;
+    float2 g_cameraJitterPixels;
+    float2 g_cameraConstantsPad0;
 };
 
 StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
@@ -73,10 +77,6 @@ bool UsePhysicalRenderingMode()
     return EMISSION_VIEW_PHYSICAL == g_emissionViewMode;
 }
 
-#define RAYTRACING_ENABLE_GGX_SAMPLING 1
-#include "RaytracingLighting.hlsli"
-#include "RaytracingNEE.hlsli"
-
 [shader("raygeneration")]
 void RayGenMain()
 {
@@ -94,17 +94,16 @@ void RayGenMain()
 	
     for (uint bounce = 0; bounce < SPP; ++bounce)
     {
-        float2 jit = RandomPointInCircle(rngSeed) * 0.5f;
-        float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+        float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
-        float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-        worldPos /= worldPos.w;
-        float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
-        cameraPos /= cameraPos.w;
+        float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
+        nearPos /= nearPos.w;
+        float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+        farPos /= farPos.w;
 	
         RayDesc ray;
-        ray.Origin = cameraPos.xyz;
-        ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
+        ray.Origin = nearPos.xyz;
+        ray.Direction = normalize(farPos.xyz - nearPos.xyz);
         ray.TMin = 0.001f;
         ray.TMax = RAY_TMAX;
 

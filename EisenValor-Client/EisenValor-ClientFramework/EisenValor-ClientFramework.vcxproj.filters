@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClInclude Include="include\StreamlineGlobal.h">
+      <Filter>Graphics\Renderer</Filter>
+    </ClInclude>
     <Filter Include="Mocks">
       <UniqueIdentifier>{64fef551-cd17-4168-9fe2-3733a116bb6f}</UniqueIdentifier>
     </Filter>
@@ -105,6 +108,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\StreamlineGlobal.cpp">
+      <Filter>Graphics\Renderer</Filter>
+    </ClCompile>
     <ClInclude Include="include\Vec3.h">
       <Filter>Common\Math</Filter>
     </ClInclude>

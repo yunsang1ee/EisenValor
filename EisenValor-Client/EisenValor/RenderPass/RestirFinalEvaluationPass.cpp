@@ -20,7 +20,7 @@ namespace
 {
 constexpr uint32_t kThreadGroupSizeX = 8;
 constexpr uint32_t kThreadGroupSizeY = 8;
-constexpr uint32_t kRestirFinalDebugViewCount = 8;
+constexpr uint32_t kRestirFinalDebugViewCount = 9;
 
 } // namespace
 

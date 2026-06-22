@@ -21,11 +21,11 @@ struct RestirWeightTerms
     float shiftJacobian;
 };
 
-RestirWeightTerms RestirMakeInitialCandidateWeightTerms(float3 targetContribution, float sourcePdf)
+RestirWeightTerms RestirMakeInitialCandidateWeightTerms(float3 targetContribution)
 {
     RestirWeightTerms terms;
     terms.target = RestirTargetFromPathContribution(targetContribution);
-    terms.contributionWeight = rcp(max(sourcePdf, EPSILON));
+    terms.contributionWeight = 1.0f;
     terms.misWeight = 1.0f;
     terms.shiftJacobian = 1.0f;
     return terms;
@@ -72,6 +72,22 @@ float3 RestirUnpackNormalOct16(uint packed)
     return normalize(n);
 }
 
+void RestirPackRadianceHalf3(float3 radiance, out uint packedXY, out uint packedZ)
+{
+    float3 finiteRadiance = min(max(radiance, 0.0f.xxx), 65504.0f.xxx);
+    packedXY = f32tof16(finiteRadiance.x) | (f32tof16(finiteRadiance.y) << 16u);
+    packedZ = f32tof16(finiteRadiance.z);
+}
+
+float3 RestirUnpackRadianceHalf3(uint packedXY, uint packedZ)
+{
+    return float3(
+        f16tof32(packedXY & 0xffffu),
+        f16tof32(packedXY >> 16u),
+        f16tof32(packedZ & 0xffffu)
+    );
+}
+
 uint RestirPackUnorm16(float value)
 {
     return (uint) round(saturate(value) * 65535.0f);
@@ -80,6 +96,21 @@ uint RestirPackUnorm16(float value)
 float RestirUnpackUnorm16(uint packed)
 {
     return (float) (packed & 0xffffu) / 65535.0f;
+}
+
+uint RestirPackPrimaryHitRoughnessFlags(float roughness, uint flags)
+{
+    return RestirPackUnorm16(roughness) | ((flags & 0xffffu) << 16u);
+}
+
+float RestirGetPrimaryHitRoughness(RestirPrimaryHit hit)
+{
+    return RestirUnpackUnorm16(hit.packedRoughnessFlags);
+}
+
+uint RestirGetPrimaryHitFlags(RestirPrimaryHit hit)
+{
+    return hit.packedRoughnessFlags >> 16u;
 }
 
 uint RestirPackBarycentrics(float2 barycentrics)
@@ -94,16 +125,141 @@ float2 RestirUnpackBarycentrics(uint packed)
     return float2((float) (packed & 0xffffu), (float) ((packed >> 16u) & 0xffffu)) / 65535.0f;
 }
 
+uint RestirSetMetadataLobe(uint metadata, uint shift, uint lobeFlags)
+{
+    uint mask = RESTIR_METADATA_LOBE_MASK << shift;
+    return (metadata & ~mask) | ((lobeFlags & RESTIR_METADATA_LOBE_MASK) << shift);
+}
+
+uint RestirGetMetadataLobe(uint metadata, uint shift)
+{
+    return (metadata >> shift) & RESTIR_METADATA_LOBE_MASK;
+}
+
+uint RestirSetMetadataSourceKind(uint metadata, uint sourceKind)
+{
+    return (metadata & ~RESTIR_METADATA_SOURCE_KIND_MASK) |
+           ((sourceKind << RESTIR_METADATA_SOURCE_KIND_SHIFT) & RESTIR_METADATA_SOURCE_KIND_MASK);
+}
+
+uint RestirSetMetadataShiftKind(uint metadata, uint shiftKind)
+{
+    return (metadata & ~RESTIR_METADATA_SHIFT_KIND_MASK) |
+           ((shiftKind << RESTIR_METADATA_SHIFT_KIND_SHIFT) & RESTIR_METADATA_SHIFT_KIND_MASK);
+}
+
+uint RestirGetSampleMetadata(RestirPathSample sample)
+{
+    return asuint(sample.throughputPdf.y);
+}
+
+void RestirSetSampleMetadata(inout RestirPathSample sample, uint metadata)
+{
+    sample.throughputPdf.y = asfloat(metadata);
+}
+
+uint RestirGetSampleSourceKind(RestirPathSample sample)
+{
+    return (RestirGetSampleMetadata(sample) & RESTIR_METADATA_SOURCE_KIND_MASK) >>
+           RESTIR_METADATA_SOURCE_KIND_SHIFT;
+}
+
+void RestirSetSampleSourceKind(inout RestirPathSample sample, uint sourceKind)
+{
+    RestirSetSampleMetadata(sample, RestirSetMetadataSourceKind(RestirGetSampleMetadata(sample), sourceKind));
+}
+
+uint RestirGetSampleShiftKind(RestirPathSample sample)
+{
+    return (RestirGetSampleMetadata(sample) & RESTIR_METADATA_SHIFT_KIND_MASK) >>
+           RESTIR_METADATA_SHIFT_KIND_SHIFT;
+}
+
+void RestirSetSampleShiftKind(inout RestirPathSample sample, uint shiftKind)
+{
+    RestirSetSampleMetadata(sample, RestirSetMetadataShiftKind(RestirGetSampleMetadata(sample), shiftKind));
+}
+
+uint RestirGetLobeBeforeRc(RestirPathSample sample)
+{
+    return RestirGetMetadataLobe(RestirGetSampleMetadata(sample), RESTIR_METADATA_LOBE_BEFORE_SHIFT);
+}
+
+uint RestirGetLobeAfterRc(RestirPathSample sample)
+{
+    return RestirGetMetadataLobe(RestirGetSampleMetadata(sample), RESTIR_METADATA_LOBE_AFTER_SHIFT);
+}
+
+bool RestirHasShiftData(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_SHIFT_DATA_VALID);
+}
+
+bool RestirIsDeltaBeforeRc(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_DELTA_BEFORE_RC);
+}
+
+bool RestirIsDeltaAfterRc(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_DELTA_AFTER_RC);
+}
+
+bool RestirIsRcFinal(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_FINAL);
+}
+
+bool RestirIsRcNeeTerminal(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_NEE_TERMINAL);
+}
+
+bool RestirRcSuffixNeedsEmissiveMis(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_SUFFIX_EMISSIVE_MIS);
+}
+
+float3 RestirGetRcVertexWi(RestirPathSample sample)
+{
+    return RestirUnpackNormalOct16(sample.packedRcVertexWi);
+}
+
+float3 RestirGetRcVertexIrradiance(RestirPathSample sample)
+{
+    return RestirUnpackRadianceHalf3(
+        sample.packedRcVertexIrradianceXY,
+        sample.packedRcVertexIrradianceZ
+    );
+}
+
+float RestirGetSourcePdfBeforeRc(RestirPathSample sample)
+{
+    return sample.throughputPdf.z;
+}
+
+float RestirGetSourcePdfAfterRc(RestirPathSample sample)
+{
+    return sample.throughputPdf.w;
+}
+
+float RestirGetSourceGeometry(RestirPathSample sample)
+{
+    return sample.contributionTarget.w;
+}
+
 RestirPrimaryHit RestirMakeInvalidPrimaryHit()
 {
     RestirPrimaryHit hit;
     hit.positionDistance = float4(0.0f, 0.0f, 0.0f, -1.0f);
     hit.packedNormal = RestirPackNormalOct16(float3(0.0f, 1.0f, 0.0f));
-    hit.packedRoughness = RestirPackUnorm16(1.0f);
+    hit.packedRoughnessFlags = RestirPackPrimaryHitRoughnessFlags(1.0f, 0u);
     hit.instanceId = 0xffffffffu;
     hit.materialId = 0xffffffffu;
     hit.geometryId = 0xffffffffu;
-    hit.flags = 0u;
+    hit.geometryIndex = 0xffffffffu;
+    hit.primitiveIndex = 0xffffffffu;
+    hit.barycentrics = 0u;
     return hit;
 }
 
@@ -111,11 +267,13 @@ RestirPathSample RestirMakeEmptyPathSample()
 {
     RestirPathSample sample;
     sample.contributionTarget = 0.0f.xxxx;
-    sample.throughputPdf = float4(0.0f, asfloat(0u), 1.0f, 1.0f);
+    uint metadata = RestirSetMetadataSourceKind(0u, RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH);
+    metadata = RestirSetMetadataShiftKind(metadata, RESTIR_SHIFT_IDENTITY);
+    sample.throughputPdf = float4(0.0f, asfloat(metadata), 0.0f, 0.0f);
     sample.weightTerms = float4(0.0f, 1.0f, 1.0f, 1.0f);
-    sample.pathLength = 0u;
-    sample.sourceKind = RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH;
-    sample.shiftKind = RESTIR_SHIFT_IDENTITY;
+    sample.packedRcVertexWi = 0u;
+    sample.packedRcVertexIrradianceXY = 0u;
+    sample.packedRcVertexIrradianceZ = 0u;
     sample.reconnectInstanceGeneration = 0u;
     sample.reconnectInstanceId = 0xffffffffu;
     sample.reconnectGeometryIndex = 0xffffffffu;
@@ -154,28 +312,35 @@ float RestirGetLightPdf(RestirPathSample sample)
 
 uint RestirGetPathFlags(RestirPathSample sample)
 {
-    return asuint(sample.throughputPdf.y);
+    return RestirGetSampleMetadata(sample) & RESTIR_PATH_EVENT_MASK;
 }
 
 void RestirSetLightPdfAndPathFlags(inout RestirPathSample sample, float lightPdf, uint pathFlags)
 {
     sample.throughputPdf.x = lightPdf;
-    sample.throughputPdf.y = asfloat(pathFlags);
+    uint metadata = RestirGetSampleMetadata(sample);
+    RestirSetSampleMetadata(sample, (metadata & ~RESTIR_PATH_EVENT_MASK) | (pathFlags & RESTIR_PATH_EVENT_MASK));
 }
 
 #ifdef RESTIR_ENABLE_PAYLOAD_HELPERS
 RestirPathSample RestirMakeCandidateFromPayload(RayPayload payload)
 {
     RestirPathSample sample = RestirMakeEmptyPathSample();
-    float3 targetContribution = max(0.0f.xxx, payload.targetContribution);
-    float sourcePdf = max(payload.sourcePdf, EPSILON);
-    RestirWeightTerms terms = RestirMakeInitialCandidateWeightTerms(targetContribution, sourcePdf);
-    sample.contributionTarget = float4(targetContribution, terms.target);
-    sample.throughputPdf = float4(payload.lightPdf, asfloat(payload.pathFlags), 1.0f, sourcePdf);
+    float3 targetContribution = max(0.0f.xxx, payload.color);
+    RestirWeightTerms terms = RestirMakeInitialCandidateWeightTerms(targetContribution);
+    uint metadata = RestirSetMetadataSourceKind(payload.pathFlags, RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH);
+    metadata = RestirSetMetadataShiftKind(metadata, RESTIR_SHIFT_IDENTITY);
+    sample.contributionTarget = float4(targetContribution, max(payload.rcSourceGeometry, 0.0f));
+    sample.throughputPdf = float4(
+        payload.lightPdf,
+        asfloat(metadata),
+        max(payload.rcSourcePdfBefore, 0.0f),
+        max(payload.rcSourcePdfAfter, 0.0f)
+    );
     sample.weightTerms = float4(terms.target, terms.contributionWeight, terms.misWeight, terms.shiftJacobian);
-    sample.pathLength = payload.recursionDepth + 1u;
-    sample.sourceKind = RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH;
-    sample.shiftKind = RESTIR_SHIFT_IDENTITY;
+    sample.packedRcVertexWi = payload.packedRcVertexWi;
+    sample.packedRcVertexIrradianceXY = payload.packedRcVertexIrradianceXY;
+    sample.packedRcVertexIrradianceZ = payload.packedRcVertexIrradianceZ;
     sample.reconnectInstanceId = payload.reconnectInstanceId;
     sample.reconnectInstanceGeneration = payload.reconnectInstanceGeneration;
     sample.reconnectGeometryIndex = payload.reconnectGeometryIndex;
@@ -195,16 +360,26 @@ RestirWeightTerms RestirGetWeightTerms(RestirPathSample sample)
     return terms;
 }
 
-void RestirUpdateReservoir(inout RestirReservoir reservoir, RestirPathSample candidate, float resamplingWeight, float randomValue)
+void RestirUpdateReservoir(
+    inout RestirReservoir reservoir,
+    RestirPathSample candidate,
+    float resamplingWeight,
+    float randomValue)
 {
     ++reservoir.sampleCount;
 
-    if (resamplingWeight <= 0.0f)
+    static const float maxFinite = 3.402823466e+38f;
+    if (!(resamplingWeight > 0.0f && resamplingWeight < maxFinite))
     {
         return;
     }
 
-    reservoir.resamplingWeightSum += resamplingWeight;
+    float updatedWeightSum = reservoir.resamplingWeightSum + resamplingWeight;
+    if (!(updatedWeightSum > 0.0f && updatedWeightSum < maxFinite))
+    {
+        return;
+    }
+    reservoir.resamplingWeightSum = updatedWeightSum;
 
     float selectionProbability = resamplingWeight / max(reservoir.resamplingWeightSum, EPSILON);
     if (randomValue <= selectionProbability)
@@ -227,14 +402,13 @@ bool RestirIsSkyEscapeReservoir(RestirReservoir reservoir)
 
 bool RestirIsValidPrimaryHit(RestirPrimaryHit hit)
 {
-    return 0u != (hit.flags & RESTIR_PRIMARY_HIT_VALID);
+    return 0u != (RestirGetPrimaryHitFlags(hit) & RESTIR_PRIMARY_HIT_VALID);
 }
 
-// Temporary convention: sourceKind currently selects the final normalization path
-// for temporal GRIS output. Move this to reservoir-level flags with the v2 layout.
+// Temporal candidates use GRIS finalization; fresh candidates use identical-domain 1/M finalization.
 bool RestirUsesGrisFinalize(RestirReservoir reservoir)
 {
-    return reservoir.sample.sourceKind == RESTIR_SOURCE_TEMPORAL_REUSE;
+    return RestirGetSampleSourceKind(reservoir.sample) == RESTIR_SOURCE_TEMPORAL_REUSE;
 }
 
 float RestirContributionWeightFromReservoir(RestirReservoir reservoir)
@@ -245,18 +419,27 @@ float RestirContributionWeightFromReservoir(RestirReservoir reservoir)
     }
 
     float target = max(reservoir.sample.weightTerms.x, EPSILON);
+    float contributionWeight;
     if (RestirUsesGrisFinalize(reservoir))
     {
-        return reservoir.resamplingWeightSum / target;
+        contributionWeight = reservoir.resamplingWeightSum / target;
+    }
+    else
+    {
+        contributionWeight =
+            reservoir.resamplingWeightSum / (target * max(1.0f, float(reservoir.sampleCount)));
     }
 
-    return reservoir.resamplingWeightSum / (target * max(1.0f, float(reservoir.sampleCount)));
+    static const float maxFinite = 3.402823466e+38f;
+    return contributionWeight >= 0.0f && contributionWeight < maxFinite
+               ? contributionWeight
+               : 0.0f;
 }
 
 float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, uint debugView)
 {
     bool validReservoir = 0u != (reservoir.flags & RESTIR_RESERVOIR_VALID);
-    bool validCurrentHit = 0u != (currentHit.flags & RESTIR_PRIMARY_HIT_VALID);
+    bool validCurrentHit = RestirIsValidPrimaryHit(currentHit);
     float3 invalidColor = float3(0.35f, 0.0f, 0.0f);
 
     if (1u == debugView)
@@ -290,7 +473,7 @@ float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, 
         {
             return invalidColor;
         }
-        float roughness = RestirUnpackUnorm16(currentHit.packedRoughness);
+        float roughness = RestirGetPrimaryHitRoughness(currentHit);
         return float3(roughness, reservoir.sampleCount > 0u ? 1.0f : 0.0f, 0.0f);
     }
     if (7u == debugView)
@@ -299,8 +482,18 @@ float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, 
         {
             return invalidColor;
         }
-        float roughness = RestirUnpackUnorm16(currentHit.packedRoughness);
+        float roughness = RestirGetPrimaryHitRoughness(currentHit);
         return float3(roughness, 1.0f, 0.0f);
+    }
+
+    if (8u == debugView)
+    {
+        if (!validReservoir)
+        {
+            return invalidColor;
+        }
+        float m = saturate(float(reservoir.sampleCount) / 21.0f);
+        return float3(m, m, m);
     }
 
     return 0.0f.xxx;

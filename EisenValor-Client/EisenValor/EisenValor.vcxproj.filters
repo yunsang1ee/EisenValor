@@ -109,6 +109,9 @@
     <ClInclude Include="RenderPass\HdrResolvePass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\DlssUpscalePass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPass\DxrRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
@@ -185,6 +188,9 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\DlssOutputRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RestirCandidateRenderData.h">
@@ -313,6 +319,9 @@
       <Filter>Packets\PacketHandler</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\HdrResolvePass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\DlssUpscalePass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
@@ -506,6 +515,9 @@
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RestirReservoir.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirShading.hlsli">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\FullscreenToneMap.hlsl">

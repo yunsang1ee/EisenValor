@@ -149,11 +149,32 @@ struct TerrainSurfaceGPUData
 #define RESTIR_PATH_FLAG_EMISSIVE_HIT (1u << 3)
 #define RESTIR_PATH_FLAG_SKY_ESCAPE (1u << 4)
 #define RESTIR_PATH_FLAG_MIS_APPLIED (1u << 5)
+#define RESTIR_PATH_EVENT_MASK ((1u << 6) - 1u)
+
+#define RESTIR_BSDF_LOBE_DIFFUSE (1u << 0)
+#define RESTIR_BSDF_LOBE_SPECULAR (1u << 1)
+#define RESTIR_BSDF_LOBE_ALL (RESTIR_BSDF_LOBE_DIFFUSE | RESTIR_BSDF_LOBE_SPECULAR)
+
+#define RESTIR_METADATA_LOBE_BEFORE_SHIFT 6u
+#define RESTIR_METADATA_LOBE_AFTER_SHIFT 8u
+#define RESTIR_METADATA_LOBE_MASK 0x3u
+#define RESTIR_METADATA_DELTA_BEFORE_RC (1u << 10)
+#define RESTIR_METADATA_DELTA_AFTER_RC (1u << 11)
+#define RESTIR_METADATA_SHIFT_DATA_VALID (1u << 12)
+#define RESTIR_METADATA_RC_FINAL (1u << 13)
+#define RESTIR_METADATA_RC_NEE_TERMINAL (1u << 14)
+#define RESTIR_METADATA_SOURCE_KIND_SHIFT 15u
+#define RESTIR_METADATA_SOURCE_KIND_MASK (0x3u << RESTIR_METADATA_SOURCE_KIND_SHIFT)
+#define RESTIR_METADATA_SHIFT_KIND_SHIFT 17u
+#define RESTIR_METADATA_SHIFT_KIND_MASK (0x3u << RESTIR_METADATA_SHIFT_KIND_SHIFT)
+#define RESTIR_METADATA_RC_SUFFIX_EMISSIVE_MIS (1u << 19)
 
 #define RESTIR_SOURCE_CURRENT_PIXEL_FRESH_PATH 0
 #define RESTIR_SOURCE_TEMPORAL_REUSE 1
 #define RESTIR_SHIFT_IDENTITY 0
 #define RESTIR_SHIFT_RECONNECTION 1
+
+#define RESTIR_STYLIZED_NORMAL_STRENGTH 2.5f
 
 struct RestirTemporalConstants
 {
@@ -167,8 +188,12 @@ struct RestirTemporalConstants
 	float	 jacobianRejectionThreshold;
 	RAY_UINT instanceCount;
 	RAY_UINT idToInstanceIndexCount;
-	RAY_UINT pad1;
+	float	 shadingNormalStrength;
 	RAY_UINT pad2;
+	RAY_FLOAT3 cameraPosition;
+	float	 pad3;
+	RAY_FLOAT3 previousCameraPosition;
+	float	 pad4;
 };
 
 struct RestirPrimaryHit
@@ -176,22 +201,24 @@ struct RestirPrimaryHit
 	RAY_FLOAT4 positionDistance;
 
 	RAY_UINT packedNormal;
-	RAY_UINT packedRoughness;
+	RAY_UINT packedRoughnessFlags;
 	RAY_UINT instanceId;
 	RAY_UINT materialId;
 	RAY_UINT geometryId;
-	RAY_UINT flags;
+	RAY_UINT geometryIndex;
+	RAY_UINT primitiveIndex;
+	RAY_UINT barycentrics;
 };
 
 struct RestirPathSample
 {
-	RAY_FLOAT4 contributionTarget; //.rgb = target contribution; .w = scalar target p_hat
-	RAY_FLOAT4 throughputPdf;	   //.x = light pdf, .y = asfloat(pathFlags), .z = reserved, .w = source path pdf
+	RAY_FLOAT4 contributionTarget; //.rgb = target contribution; .w = source cos(rc)/distance^2
+	RAY_FLOAT4 throughputPdf;	   //.x = light pdf, .y = asfloat(metadata), .z/.w = source pdf before/after rc
 	RAY_FLOAT4 weightTerms;		   //.x = target, .y = contributionWeight, .z = misWeight, .w = shiftJacobian
 
-	RAY_UINT pathLength;
-	RAY_UINT sourceKind;
-	RAY_UINT shiftKind;
+	RAY_UINT packedRcVertexWi;			 // oct16x2
+	RAY_UINT packedRcVertexIrradianceXY; // half2
+	RAY_UINT packedRcVertexIrradianceZ;	 // low half
 	RAY_UINT reconnectInstanceGeneration;
 
 	RAY_UINT reconnectInstanceId;
@@ -213,8 +240,8 @@ struct RestirReservoir
 #ifdef __cplusplus
 static_assert(sizeof(GeoInfo) == 20);
 static_assert(sizeof(RestirEmissiveLightData) == 16);
-static_assert(sizeof(RestirTemporalConstants) == 48);
-static_assert(sizeof(RestirPrimaryHit) == 40);
+static_assert(sizeof(RestirTemporalConstants) == 80);
+static_assert(sizeof(RestirPrimaryHit) == 48);
 static_assert(sizeof(RestirPathSample) == 80);
 static_assert(sizeof(RestirReservoir) == 96);
 #pragma pack(pop)

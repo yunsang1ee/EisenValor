@@ -2,11 +2,11 @@
 #include "RaytracingCommon.h"
 #include "RaytracingPayload.hlsli"
 #include "RaytracingMaterialEmission.hlsli"
-#include "RaytracingTerrain.hlsli"
 #include "RaytracingEnvironment.hlsli"
 #include "RaytracingPostProcess.hlsli"
-#include "RaytracingNormal.hlsli"
 #include "RaytracingSampling.hlsli"
+#include "RaytracingLighting.hlsli"
+#include "RaytracingNEE.hlsli"
 
 typedef RestirRayPayload RayPayload;
 
@@ -19,10 +19,15 @@ RWStructuredBuffer<RestirPrimaryHit> g_restirPrimaryHitCurrent : register(u1, sp
 RWStructuredBuffer<RestirReservoir> g_restirReservoirInitial : register(u2, space0);
 RWTexture2D<float2> g_restirMotionVector : register(u3, space0);
 RWTexture2D<float> g_restirLinearDepth : register(u4, space0);
+RWTexture2D<float4> g_restirDiffuseAlbedo : register(u5, space0);
+RWTexture2D<float4> g_restirSpecularAlbedo : register(u6, space0);
+RWTexture2D<float4> g_restirNormalRoughness : register(u7, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
     float4x4 g_viewProjInverse;
+    float2 g_cameraJitterPixels;
+    float2 g_cameraConstantsPad0;
 };
 
 StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
@@ -58,18 +63,37 @@ cbuffer RestirCandidateCameraConstants : register(b4, space0)
 
 SamplerState g_sampler : register(s0, space0);
 
+#include "RestirShading.hlsli"
+
 static const uint MAX_RECURSION_DEPTH = 6;
 static const uint SPP = 1;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 static const float PT_OUTPUT_EXPOSURE = 0.75f;
 static const float PT_BLOOM_THRESHOLD = 1.0f;
 static const float PT_BLOOM_INTENSITY = 0.75f;
-static const float PT_VISIBLE_NORMAL_STRENGTH = 2.5f;
-static const float PT_CAMERA_JITTER_RADIUS_PIXELS = 0.5f;
-static const float PT_CAMERA_JITTER_PDF = 1.0f / (PI * PT_CAMERA_JITTER_RADIUS_PIXELS * PT_CAMERA_JITTER_RADIUS_PIXELS);
+static const float PT_VISIBLE_NORMAL_STRENGTH = RESTIR_STYLIZED_NORMAL_STRENGTH;
 
 // 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
 static const uint PT_DEBUG_VIEW = 0;
+
+void RestirSetPayloadRcIrradiance(inout RayPayload payload, float3 irradiance)
+{
+    RestirPackRadianceHalf3(
+        irradiance,
+        payload.packedRcVertexIrradianceXY,
+        payload.packedRcVertexIrradianceZ
+    );
+}
+
+void RestirSetPayloadLobe(inout RayPayload payload, bool beforeRc, uint lobeFlags, bool isDelta)
+{
+    uint lobeShift = beforeRc ? RESTIR_METADATA_LOBE_BEFORE_SHIFT : RESTIR_METADATA_LOBE_AFTER_SHIFT;
+    payload.pathFlags = RestirSetMetadataLobe(payload.pathFlags, lobeShift, lobeFlags);
+    if (isDelta)
+    {
+        payload.pathFlags |= beforeRc ? RESTIR_METADATA_DELTA_BEFORE_RC : RESTIR_METADATA_DELTA_AFTER_RC;
+    }
+}
 
 float3 CosineHemisphere(float3 normal, inout uint seed)
 {
@@ -88,11 +112,6 @@ float3 CosineHemisphere(float3 normal, inout uint seed)
     float3 v = cross(w, u);
 
     return normalize(u * x + v * z + w * y);
-}
-
-float3 StrengthenTangentSpaceNormal(float3 normalTS, float strength)
-{
-    return normalize(float3(normalTS.xy * strength, max(normalTS.z, 0.0f)));
 }
 
 bool TryClipToUv(float4 clip, out float2 uv)
@@ -136,6 +155,9 @@ void RestirWriteInvalidPrimaryOutputs(uint pixelIndex)
     g_restirPrimaryHitCurrent[pixelIndex] = RestirMakeInvalidPrimaryHit();
     g_restirMotionVector[pixelCoord] = 0.0f.xx;
     g_restirLinearDepth[pixelCoord] = -1.0f;
+    g_restirDiffuseAlbedo[pixelCoord] = 0.0f.xxxx;
+    g_restirSpecularAlbedo[pixelCoord] = 0.0f.xxxx;
+    g_restirNormalRoughness[pixelCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 void RestirWritePrimaryOutputs(
@@ -143,10 +165,16 @@ void RestirWritePrimaryOutputs(
     float3 hitPos,
     float hitDistance,
     float3 geometricNormal,
+    float3 shadingNormal,
+    float3 albedo,
+    float metallic,
     float roughness,
     InstanceData inst,
     MaterialGPUData mat,
-    GeoInfo geo)
+    GeoInfo geo,
+    uint geometryIndex,
+    uint primitiveIndex,
+    float2 barycentrics)
 {
     if (pixelIndex == 0xffffffffu || g_restirScreenWidth == 0u || g_restirScreenHeight == 0u)
     {
@@ -156,11 +184,14 @@ void RestirWritePrimaryOutputs(
     RestirPrimaryHit primaryHit;
     primaryHit.positionDistance = float4(hitPos, hitDistance);
     primaryHit.packedNormal = RestirPackNormalOct16(geometricNormal);
-    primaryHit.packedRoughness = RestirPackUnorm16(roughness);
+    primaryHit.packedRoughnessFlags =
+        RestirPackPrimaryHitRoughnessFlags(roughness, RESTIR_PRIMARY_HIT_VALID);
     primaryHit.instanceId = inst.instanceID;
     primaryHit.materialId = mat.stableMaterialId;
     primaryHit.geometryId = geo.stableGeometryId;
-    primaryHit.flags = RESTIR_PRIMARY_HIT_VALID;
+    primaryHit.geometryIndex = geometryIndex;
+    primaryHit.primitiveIndex = primitiveIndex;
+    primaryHit.barycentrics = RestirPackBarycentrics(barycentrics);
     g_restirPrimaryHitCurrent[pixelIndex] = primaryHit;
 
     uint2 pixelCoord = RestirPixelCoordFromIndex(pixelIndex);
@@ -170,69 +201,20 @@ void RestirWritePrimaryOutputs(
     if (TryClipToUv(previousClip, previousUv))
     {
         float2 currentUv = (float2(pixelCoord) + 0.5f) / float2(g_restirScreenWidth, g_restirScreenHeight);
-        motionVector = previousUv - currentUv;
+        float2 jitterUv = g_cameraJitterPixels / float2(g_restirScreenWidth, g_restirScreenHeight);
+        motionVector = previousUv - currentUv - jitterUv;
     }
 
     g_restirMotionVector[pixelCoord] = motionVector;
     g_restirLinearDepth[pixelCoord] = RestirComputeLinearDepth(hitPos);
+    g_restirDiffuseAlbedo[pixelCoord] = float4(albedo * (1.0f - metallic), 1.0f);
+    g_restirSpecularAlbedo[pixelCoord] = float4(lerp(0.04f.xxx, albedo, metallic), 1.0f);
+    g_restirNormalRoughness[pixelCoord] = float4(normalize(shadingNormal), roughness);
 }
 
 bool UsePhysicalRenderingMode()
 {
     return EMISSION_VIEW_PHYSICAL == g_emissionViewMode;
-}
-
-#define RAYTRACING_ENABLE_GGX_SAMPLING 1
-#include "RaytracingLighting.hlsli"
-#include "RaytracingNEE.hlsli"
-
-void RestirEvaluateBsdfForDirection(
-    float3 shadingNormal,
-    float3 viewDir,
-    float3 lightDir,
-    float3 albedo,
-    float metallic,
-    float roughness,
-    float ao,
-    float specProb,
-    float3 F0,
-    out float3 bsdf,
-    out float bsdfPdf)
-{
-    bsdf = 0.0f.xxx;
-    bsdfPdf = 0.0f;
-
-    float NdotL = max(dot(shadingNormal, lightDir), 0.0f);
-    float NdotV = max(dot(shadingNormal, viewDir), 0.0f);
-    if (NdotL <= 0.0f || NdotV <= 0.0f)
-    {
-        return;
-    }
-
-    float3 H = normalize(viewDir + lightDir);
-    float3 F = FresnelSchlick(saturate(dot(H, viewDir)), F0);
-    float3 kD = (1.0f - F) * (1.0f - metallic);
-    float3 diffuse = kD * albedo * ao / PI;
-
-    float NDF = DistributionGGX(shadingNormal, H, roughness);
-    float G = GeometrySmith(shadingNormal, viewDir, lightDir, roughness);
-    float3 specular = (NDF * G * F) / max(4.0f * NdotV * NdotL, EPSILON);
-
-    bsdf = diffuse + specular;
-
-    float diffusePdf = (1.0f - specProb) * NdotL / PI;
-    float specularPdf = 0.0f;
-    if (roughness >= 0.15f)
-    {
-        specularPdf = specProb * GGX_PDF(shadingNormal, H, viewDir, lightDir, roughness);
-    }
-    else
-    {
-        float3 mirrorDir = reflect(-viewDir, shadingNormal);
-        specularPdf = dot(mirrorDir, lightDir) > 0.999f ? specProb : 0.0f;
-    }
-
-    bsdfPdf = max(diffusePdf + specularPdf, 0.0f);
 }
 
 float RestirGetEmissiveLightWeight(RestirEmissiveLightData light)
@@ -352,16 +334,8 @@ float RestirComputeEmissiveHitNeePdfSolidAngle(
 }
 
 bool EvaluateRestirEmissiveNEE(
-    float3 hitPos,
-    float3 geometricNormal,
-    float3 shadingNormal,
+    RestirSurface surface,
     float3 viewDir,
-    float3 albedo,
-    float metallic,
-    float roughness,
-    float ao,
-    float specProb,
-    float3 F0,
     inout uint rngSeed,
     out float3 contribution,
     out float lightPdf,
@@ -369,8 +343,14 @@ bool EvaluateRestirEmissiveNEE(
     out uint lightInstanceGeneration,
     out uint lightGeometryIndex,
     out uint lightPrimitiveIndex,
-    out uint lightBarycentrics)
+    out uint lightBarycentrics,
+    out float3 rcIrradiance,
+    out float sourceBsdfPdf,
+    out float sourceGeometry)
 {
+    float3 hitPos = surface.position;
+    float3 geometricNormal = surface.geometricNormal;
+    float3 shadingNormal = surface.shadingNormal;
     contribution = 0.0f.xxx;
     lightPdf = 0.0f;
     lightInstanceId = 0xffffffffu;
@@ -378,6 +358,9 @@ bool EvaluateRestirEmissiveNEE(
     lightGeometryIndex = 0xffffffffu;
     lightPrimitiveIndex = 0xffffffffu;
     lightBarycentrics = 0u;
+    rcIrradiance = 0.0f.xxx;
+    sourceBsdfPdf = 0.0f;
+    sourceGeometry = 0.0f;
 
     uint lightIndex;
     float selectedWeight;
@@ -456,10 +439,11 @@ bool EvaluateRestirEmissiveNEE(
         return true;
     }
 
-    float3 bsdf;
-    float bsdfPdf;
-    RestirEvaluateBsdfForDirection(shadingNormal, viewDir, lightDir, albedo, metallic, roughness, ao, specProb, F0, bsdf, bsdfPdf);
-    if (max(max(bsdf.x, bsdf.y), bsdf.z) <= 0.0f)
+    float3 bsdfCos = RestirEvalBSDF(surface, viewDir, lightDir, RESTIR_BSDF_LOBE_ALL);
+    float bsdfPdf = RestirEvalPdfBSDF(surface, viewDir, lightDir, RESTIR_BSDF_LOBE_ALL);
+    sourceBsdfPdf = bsdfPdf;
+    sourceGeometry = lightCos / distanceSq;
+    if (max(max(bsdfCos.x, bsdfCos.y), bsdfCos.z) <= 0.0f)
     {
         return true;
     }
@@ -473,7 +457,8 @@ bool EvaluateRestirEmissiveNEE(
     float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
     float visibility = ShadowVisibility(g_scene, shadowOrigin, lightDir, RAY_TMIN, max(distance - 0.02f, RAY_TMIN), 0xFF);
 
-    contribution = bsdf * Le * NdotL * lightCos * visibility * misWeight / max(distanceSq * areaPdf, EPSILON);
+    rcIrradiance = Le * visibility;
+    contribution = bsdfCos * Le * lightCos * visibility * misWeight / max(distanceSq * areaPdf, EPSILON);
     return true;
 }
 
@@ -517,17 +502,16 @@ void RayGenMain()
 
     for (uint bounce = 0; bounce < SPP; ++bounce)
     {
-        float2 jit = RandomPointInCircle(rngSeed) * PT_CAMERA_JITTER_RADIUS_PIXELS;
-        float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+        float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
-        float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-        worldPos /= worldPos.w;
-        float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
-        cameraPos /= cameraPos.w;
+        float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
+        nearPos /= nearPos.w;
+        float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+        farPos /= farPos.w;
 
         RayDesc ray;
-        ray.Origin = cameraPos.xyz;
-        ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
+        ray.Origin = nearPos.xyz;
+        ray.Direction = normalize(farPos.xyz - nearPos.xyz);
         ray.TMin = 0.001f;
         ray.TMax = RAY_TMAX;
 
@@ -540,8 +524,6 @@ void RayGenMain()
                  0, 0, 0,
                  ray,
                  payload);
-        payload.targetContribution *= PT_CAMERA_JITTER_PDF;
-        payload.sourcePdf = max(PT_CAMERA_JITTER_PDF * payload.sourcePdf, EPSILON);
         finalColor += payload.color.rgb;
         primaryHitFlags |= payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID;
 
@@ -560,8 +542,6 @@ void RayGenMain()
                      ray,
                      sunPayload);
 
-            sunPayload.targetContribution *= PT_CAMERA_JITTER_PDF;
-            sunPayload.sourcePdf = max(PT_CAMERA_JITTER_PDF * sunPayload.sourcePdf, EPSILON);
             RestirUpdateReservoirFromPayload(restirReservoir, sunPayload, rngSeed);
 
             if (g_restirEmissiveLightCount > 0u)
@@ -578,8 +558,6 @@ void RayGenMain()
                          ray,
                          emissivePayload);
 
-                emissivePayload.targetContribution *= PT_CAMERA_JITTER_PDF;
-                emissivePayload.sourcePdf = max(PT_CAMERA_JITTER_PDF * emissivePayload.sourcePdf, EPSILON);
                 RestirUpdateReservoirFromPayload(restirReservoir, emissivePayload, rngSeed);
             }
         }
@@ -613,9 +591,9 @@ void MissMain(inout RayPayload payload)
 {
     float3 environment = SampleSkyEnvironment(WorldRayDirection(), g_environmentMode);
     payload.color = environment;
-    payload.targetContribution = environment;
-    payload.sourcePdf = 1.0f;
-    payload.pathFlags = RESTIR_PATH_FLAG_SKY_ESCAPE;
+    payload.pathFlags = RESTIR_PATH_FLAG_SKY_ESCAPE | RESTIR_METADATA_SHIFT_DATA_VALID;
+    payload.packedRcVertexWi = RestirPackNormalOct16(normalize(WorldRayDirection()));
+    RestirSetPayloadRcIrradiance(payload, environment);
 }
 
 [shader("closesthit")]
@@ -643,56 +621,13 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     Vertex v2 = vBuffer[i2];
 
     float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-
-    float3 normalObj = SafeNormalizeRay(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z, float3(0.0f, 1.0f, 0.0f));
-    float3 normal = SafeNormalizeRay(mul(normalObj, (float3x3)inst.worldInverse), float3(0.0f, 1.0f, 0.0f));
-    float3 geometricNormal = normal;
-    float3 visibleNormal = normal;
-    float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
-    float3 tangentObj = tangentPacked.xyz;
-    float tangentSign = tangentPacked.w;
-    float3 tangentCandidate = mul(tangentObj, (float3x3)inst.worldMatrix);
-    float3 tangent;
-    float3 bitangent;
-    BuildSafeTangentFrame(normal, tangentCandidate, tangentSign, tangent, bitangent);
-
-    float2 uv = v0.uv * bary.x + v1.uv * bary.y + v2.uv * bary.z;
-    TerrainSample terrainSample;
-    bool useTerrainSplat = 0 != (mat.materialFlags & MATERIAL_FLAG_TERRAIN_SPLAT);
     float visibleNormalStrength = UsePhysicalRenderingMode() ? 1.0f : PT_VISIBLE_NORMAL_STRENGTH;
-    if (useTerrainSplat)
-    {
-        terrainSample = SampleTerrainSplat(mat, uv, g_terrainSurfaces, g_sampler);
-        float3 visibleNormalTS = StrengthenTangentSpaceNormal(terrainSample.normalTS, visibleNormalStrength);
-        normal = TangentNormalToWorld(terrainSample.normalTS, tangent, bitangent, normal);
-        visibleNormal = normalize(
-            tangent * visibleNormalTS.x +
-            bitangent * visibleNormalTS.y +
-            geometricNormal * visibleNormalTS.z);
-    }
-    else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_NORMAL_MAP))
-    {
-        Texture2D normalTexture = ResourceDescriptorHeap[mat.normalTextureIdx];
-        float2 encodedXY = normalTexture.SampleLevel(g_sampler, uv, 0).xy * 2.0f - 1.0f;
-        float3 normalSample;
-        normalSample.xy = encodedXY;
-        normalSample.z = sqrt(saturate(1.0f - dot(encodedXY, encodedXY)));
-        float3 visibleNormalSample = StrengthenTangentSpaceNormal(normalSample, visibleNormalStrength);
-        normal = TangentNormalToWorld(normalSample, tangent, bitangent, normal);
-        visibleNormal = normalize(
-            tangent * visibleNormalSample.x +
-            bitangent * visibleNormalSample.y +
-            geometricNormal * visibleNormalSample.z);
-    }
+    RestirSurface surface;
+    RestirBuildSurface(inst, mat, v0, v1, v2, bary, hitPos, visibleNormalStrength, surface);
 
-    if (dot(normal, geometricNormal) < 0.0f)
-    {
-        normal = geometricNormal;
-    }
-    if (dot(visibleNormal, geometricNormal) < 0.0f)
-    {
-        visibleNormal = geometricNormal;
-    }
+    float3 geometricNormal = surface.geometricNormal;
+    float3 normal = surface.normal;
+    float3 visibleNormal = surface.shadingNormal;
     if (dot(normal, WorldRayDirection()) > 0.0f)
     {
         normal = -normal;
@@ -701,45 +636,14 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     {
         visibleNormal = -visibleNormal;
     }
+    surface.normal = normal;
+    surface.shadingNormal = visibleNormal;
 
-    float3 albedo = mat.albedo.rgb;
-    if (useTerrainSplat)
-    {
-        albedo *= terrainSample.albedo;
-    }
-    else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ALBEDO_MAP))
-    {
-        Texture2D albedoTexture = ResourceDescriptorHeap[mat.albedoTextureIdx];
-        albedo *= albedoTexture.SampleLevel(g_sampler, uv, 0).rgb;
-    }
-
-    float metallic = mat.metallic;
-    float roughness = mat.roughness;
-    float ao = 1.0f;
-    if (useTerrainSplat)
-    {
-        metallic = terrainSample.metallic;
-        roughness = terrainSample.roughness;
-        ao = terrainSample.ao;
-    }
-    else if (0 != (mat.materialFlags & MATERIAL_FLAG_USE_ORM_MAP))
-    {
-        Texture2D ormTexture = ResourceDescriptorHeap[mat.ormTextureIdx];
-        float4 p = ormTexture.SampleLevel(g_sampler, uv, 0);
-        if (0 != (mat.materialFlags & MATERIAL_FLAG_UNITY_PACKING))
-        {
-            metallic = p.r;
-            ao = p.g;
-            roughness = 1.0 - p.a;
-        }
-        else
-        {
-            ao = p.r;
-            metallic = p.b;
-            roughness = p.g;
-        }
-    }
-    roughness = max(roughness, 0.04);
+    float2 uv = surface.uv;
+    float3 albedo = surface.albedo;
+    float metallic = surface.metallic;
+    float roughness = surface.roughness;
+    float ao = surface.ao;
 
     if (payload.recursionDepth == 0)
     {
@@ -750,7 +654,20 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         if (0u != g_restirCandidateEnabled)
         {
             RestirWritePrimaryOutputs(
-                payload.pixelIndex, hitPos, RayTCurrent(), geometricNormal, roughness, inst, mat, geo);
+                payload.pixelIndex,
+                hitPos,
+                RayTCurrent(),
+                geometricNormal,
+                visibleNormal,
+                albedo,
+                metallic,
+                roughness,
+                inst,
+                mat,
+                geo,
+                GeometryIndex(),
+                PrimitiveIndex(),
+                attribs.barycentrics);
         }
     }
     else if (payload.recursionDepth == 1)
@@ -760,6 +677,10 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         payload.reconnectGeometryIndex = GeometryIndex();
         payload.reconnectPrimitiveIndex = PrimitiveIndex();
         payload.reconnectBarycentrics = RestirPackBarycentrics(attribs.barycentrics);
+        float reconnectDistanceSq = max(RayTCurrent() * RayTCurrent(), EPSILON);
+        float reconnectCos = abs(dot(surface.faceNormal, -normalize(WorldRayDirection())));
+        payload.rcSourceGeometry = reconnectCos / reconnectDistanceSq;
+        payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID;
     }
 
     float3 V = -normalize(WorldRayDirection());
@@ -801,8 +722,6 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         {
             payload.color = float3(metallic, roughness, ao);
         }
-        payload.targetContribution = payload.color;
-        payload.sourcePdf = 1.0f;
         return;
     }
 
@@ -811,25 +730,16 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         if (max(max(emissive.x, emissive.y), emissive.z) > 0.0f)
         {
             payload.color = 0.0f.xxx;
-            payload.targetContribution = 0.0f.xxx;
-            payload.sourcePdf = 1.0f;
             return;
         }
-
-        float3 indirectF = FresnelSchlick(NdotVShading, F0);
-        float3 kS_indirect = indirectF;
-        float3 kD_indirect = (1.0 - kS_indirect) * (1.0 - metallic);
-        float diffuseContrib = dot(kD_indirect * albedo, float3(0.299f, 0.587f, 0.114f));
-        float specContrib = dot(kS_indirect, float3(0.299f, 0.587f, 0.114f));
-        float totalContrib = diffuseContrib + specContrib;
-        float specProb = (totalContrib > 0.0001f) ? (specContrib / totalContrib) : 0.0f;
-        specProb = clamp(specProb, 0.01f, 0.99f);
 
         float3 directLighting = 0.0f.xxx;
         if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_SUN))
         {
             float sunLightPdf;
-            directLighting = EvaluateEnvironmentSunNEE(
+            float3 sampledSunDirection;
+            float3 sampledSunIrradiance;
+            EvaluateEnvironmentSunNEE(
                 g_scene,
                 g_environmentMode,
                 hitPos,
@@ -843,11 +753,34 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
                 F0,
                 1u,
                 sunLightPdf,
+                sampledSunDirection,
+                sampledSunIrradiance,
                 rngSeed);
+            directLighting = RestirEvalBSDF(
+                surface,
+                V,
+                sampledSunDirection,
+                RESTIR_BSDF_LOBE_ALL
+            ) * sampledSunIrradiance / max(sunLightPdf, EPSILON);
             payload.lightPdf = sunLightPdf;
             if (sunLightPdf > 0.0f)
             {
-                payload.pathFlags = RESTIR_PATH_FLAG_NEE | RESTIR_PATH_FLAG_NEE_SUN;
+                payload.pathFlags =
+                    RESTIR_PATH_FLAG_NEE |
+                    RESTIR_PATH_FLAG_NEE_SUN |
+                    RESTIR_METADATA_SHIFT_DATA_VALID |
+                    RESTIR_METADATA_RC_FINAL |
+                    RESTIR_METADATA_RC_NEE_TERMINAL;
+                RestirSetPayloadLobe(payload, true, RESTIR_BSDF_LOBE_ALL, false);
+                payload.packedRcVertexWi = RestirPackNormalOct16(sampledSunDirection);
+                RestirSetPayloadRcIrradiance(payload, sampledSunIrradiance);
+                payload.rcSourcePdfBefore = RestirEvalPdfBSDF(
+                    surface,
+                    V,
+                    sampledSunDirection,
+                    RESTIR_BSDF_LOBE_ALL
+                );
+                payload.rcSourceGeometry = 1.0f;
             }
         }
         else if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_EMISSIVE))
@@ -857,17 +790,12 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             uint lightGeometryIndex;
             uint lightPrimitiveIndex;
             uint lightBarycentrics;
+            float3 rcIrradiance;
+            float sourceBsdfPdf;
+            float sourceGeometry;
             bool sampledEmissive = EvaluateRestirEmissiveNEE(
-                hitPos,
-                geometricNormal,
-                visibleNormal,
+                surface,
                 V,
-                albedo,
-                metallic,
-                roughness,
-                ao,
-                specProb,
-                F0,
                 rngSeed,
                 directLighting,
                 payload.lightPdf,
@@ -875,22 +803,32 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
                 lightInstanceGeneration,
                 lightGeometryIndex,
                 lightPrimitiveIndex,
-                lightBarycentrics);
+                lightBarycentrics,
+                rcIrradiance,
+                sourceBsdfPdf,
+                sourceGeometry);
 
             if (sampledEmissive)
             {
-                payload.pathFlags = RESTIR_PATH_FLAG_NEE | RESTIR_PATH_FLAG_NEE_EMISSIVE;
+                payload.pathFlags =
+                    RESTIR_PATH_FLAG_NEE |
+                    RESTIR_PATH_FLAG_NEE_EMISSIVE |
+                    RESTIR_METADATA_SHIFT_DATA_VALID |
+                    RESTIR_METADATA_RC_FINAL |
+                    RESTIR_METADATA_RC_NEE_TERMINAL;
+                RestirSetPayloadLobe(payload, true, RESTIR_BSDF_LOBE_ALL, false);
                 payload.reconnectInstanceId = lightInstanceId;
                 payload.reconnectInstanceGeneration = lightInstanceGeneration;
                 payload.reconnectGeometryIndex = lightGeometryIndex;
                 payload.reconnectPrimitiveIndex = lightPrimitiveIndex;
                 payload.reconnectBarycentrics = lightBarycentrics;
+                payload.rcSourcePdfBefore = sourceBsdfPdf;
+                payload.rcSourceGeometry = sourceGeometry;
+                RestirSetPayloadRcIrradiance(payload, rcIrradiance);
             }
         }
 
         payload.color = directLighting;
-        payload.targetContribution = directLighting;
-        payload.sourcePdf = 1.0f;
         return;
     }
 
@@ -900,37 +838,32 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
                                           ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
                                           : emissive;
         payload.color = emissionContribution;
-        payload.targetContribution = emissionContribution;
-        payload.sourcePdf = 1.0f;
         payload.lightPdf = RestirComputeEmissiveHitNeePdfSolidAngle(inst, geo, mat, v0, v1, v2, hitPos, WorldRayOrigin());
-        payload.pathFlags = RESTIR_PATH_FLAG_EMISSIVE_HIT;
+        payload.pathFlags =
+            (payload.pathFlags & ~RESTIR_PATH_EVENT_MASK) |
+            RESTIR_PATH_FLAG_EMISSIVE_HIT;
+        if (payload.recursionDepth == 1)
+        {
+            payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID | RESTIR_METADATA_RC_FINAL;
+            RestirSetPayloadRcIrradiance(payload, emissive);
+        }
         return;
     }
 
     if (payload.recursionDepth >= MAX_RECURSION_DEPTH)
     {
         payload.color = emissive;
-        payload.targetContribution = emissive;
-        payload.sourcePdf = 1.0f;
         return;
     }
 
-    float3 indirectF = FresnelSchlick(NdotVShading, F0);
-    float3 kS_indirect = indirectF;
-    float3 kD_indirect = (1.0 - kS_indirect) * (1.0 - metallic);
-
-    float diffuseContrib = dot(kD_indirect * albedo, float3(0.299f, 0.587f, 0.114f));
-    float specContrib = dot(kS_indirect, float3(0.299f, 0.587f, 0.114f));
-
-    float totalContrib = diffuseContrib + specContrib;
-    float specProb = (totalContrib > 0.0001f) ? (specContrib / totalContrib) : 0.0f;
-    specProb = clamp(specProb, 0.01f, 0.99f);
+    float specProb = RestirComputeSpecularProbability(surface, V);
 
     float xi = RandomValue(rngSeed);
     bool chooseSpec = (xi < specProb);
+    uint sampledLobe = chooseSpec ? RESTIR_BSDF_LOBE_SPECULAR : RESTIR_BSDF_LOBE_DIFFUSE;
+    bool sampledDelta = chooseSpec && roughness < 0.15f;
 
     float3 L;
-    float3 f;      // BSDF value
     float pdf;     // Sampling pdf (mixture)
     float3 weight; // 1-step throughput
     float3 contributionNumerator;
@@ -942,19 +875,12 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         if (NdotL <= 0.0f)
         {
             payload.color = emissive;
-            payload.targetContribution = emissive;
-            payload.sourcePdf = 1.0f;
             return;
         }
 
-        float3 f_d = kD_indirect * albedo * ao / PI;
-        float pdf_lobe = NdotL / PI;
-        float branchProb = 1.0f - specProb;
-
-        pdf = max(branchProb * pdf_lobe, EPSILON);
-        f = f_d;
-        contributionNumerator = f * NdotL;
-        weight = f * NdotL / pdf;
+        contributionNumerator = RestirEvalBSDF(surface, V, L, RESTIR_BSDF_LOBE_DIFFUSE);
+        pdf = max(RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_DIFFUSE), EPSILON);
+        weight = contributionNumerator / pdf;
     }
     else
     {
@@ -965,15 +891,12 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             if (NdotL <= 0.0f)
             {
                 payload.color = emissive;
-                payload.targetContribution = emissive;
-                payload.sourcePdf = 1.0f;
                 return;
             }
 
-            float3 F = FresnelSchlick(NdotVShading, F0);
-            pdf = max(specProb, EPSILON);
-            contributionNumerator = F;
-            weight = F / pdf;
+            contributionNumerator = RestirEvalBSDF(surface, V, L, RESTIR_BSDF_LOBE_SPECULAR);
+            pdf = max(RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_SPECULAR), EPSILON);
+            weight = contributionNumerator / pdf;
         }
         else
         {
@@ -982,28 +905,12 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             if (NdotL <= 0.0f)
             {
                 payload.color = emissive;
-                payload.targetContribution = emissive;
-                payload.sourcePdf = 1.0f;
                 return;
             }
 
-            float3 H = normalize(V + L);
-
-            float NDF = DistributionGGX(visibleNormal, H, roughness);
-            float G = GeometrySmith(visibleNormal, V, L, roughness);
-            float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
-
-            float3 numerator = NDF * G * F;
-            float denominator = 4.0f * NdotVShading * NdotL;
-            float3 f_s = numerator / max(denominator, EPSILON);
-
-            float pdf_lobe = GGX_PDF(visibleNormal, H, V, L, roughness);
-            float branchProb = specProb;
-
-            pdf = max(branchProb * pdf_lobe, EPSILON);
-            f = f_s;
-            contributionNumerator = f * NdotL;
-            weight = f * NdotL / pdf;
+            contributionNumerator = RestirEvalBSDF(surface, V, L, RESTIR_BSDF_LOBE_SPECULAR);
+            pdf = max(RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_SPECULAR), EPSILON);
+            weight = contributionNumerator / pdf;
         }
     }
 
@@ -1011,8 +918,6 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     if (maxW < 1e-5f)
     {
         payload.color = emissive;
-        payload.targetContribution = emissive;
-        payload.sourcePdf = 1.0f;
         return;
     }
 
@@ -1043,19 +948,47 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         payload.reconnectBarycentrics = child.reconnectBarycentrics;
     }
 
-    if (0u != (child.pathFlags & RESTIR_PATH_FLAG_EMISSIVE_HIT) &&
+    if (payload.recursionDepth == 0)
+    {
+        payload.packedRcVertexWi = child.packedRcVertexWi;
+        payload.packedRcVertexIrradianceXY = child.packedRcVertexIrradianceXY;
+        payload.packedRcVertexIrradianceZ = child.packedRcVertexIrradianceZ;
+        payload.rcSourcePdfBefore = pdf;
+        payload.rcSourcePdfAfter = child.rcSourcePdfAfter;
+        payload.rcSourceGeometry = child.rcSourceGeometry;
+    }
+    else if (payload.recursionDepth == 1)
+    {
+        payload.packedRcVertexWi = RestirPackNormalOct16(normalize(L));
+        RestirSetPayloadRcIrradiance(payload, child.color);
+        payload.rcSourcePdfAfter = pdf;
+    }
+
+    bool applyEmissiveHitMis =
+        0u != (child.pathFlags & RESTIR_PATH_FLAG_EMISSIVE_HIT) &&
         0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED) &&
-        child.lightPdf > 0.0f)
+        child.lightPdf > 0.0f;
+    if (applyEmissiveHitMis)
     {
         float emissiveHitMisWeight = pdf / max(pdf + child.lightPdf, EPSILON);
         child.color *= emissiveHitMisWeight;
-        child.targetContribution *= emissiveHitMisWeight;
         child.pathFlags |= RESTIR_PATH_FLAG_MIS_APPLIED;
     }
 
     payload.color = emissive + weight * child.color;
-    payload.targetContribution = emissive + contributionNumerator * child.targetContribution;
-    payload.sourcePdf = max(pdf * child.sourcePdf, EPSILON);
     payload.lightPdf = child.lightPdf;
     payload.pathFlags = child.pathFlags;
+    if (payload.recursionDepth == 0)
+    {
+        RestirSetPayloadLobe(payload, true, sampledLobe, sampledDelta);
+    }
+    else if (payload.recursionDepth == 1)
+    {
+        payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID;
+        if (applyEmissiveHitMis)
+        {
+            payload.pathFlags |= RESTIR_METADATA_RC_SUFFIX_EMISSIVE_MIS;
+        }
+        RestirSetPayloadLobe(payload, false, sampledLobe, sampledDelta);
+    }
 }

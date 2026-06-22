@@ -5,6 +5,7 @@
 #include <DxTexture.h>
 #include <RenderDataPolicy.h>
 #include <DirectXMath.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -37,6 +38,7 @@ public:
 	void		DeclareRenderData(RenderContext* renderContext) override;
 	void		Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
 	void		OnResize(uint32_t width, uint32_t height) override;
+	RenderResolutionDomain GetResolutionDomain() const override { return RenderResolutionDomain::Render; }
 	const char* GetName() const override { return "DXR"; }
 
 private:
@@ -106,6 +108,7 @@ private:
 	bool	 m_useDayEnvironment = false;
 	bool	 m_hasPreviousViewProj = false;
 	uint32_t m_raytracingFrameSeed = 0;
+	uint64_t m_restirHistoryGeneration = 1;
 
 	Persistent<StaticSceneRenderData> m_staticSceneData;
 	std::vector<DxTLASInstance>		  m_tlasInstancesScratch;
