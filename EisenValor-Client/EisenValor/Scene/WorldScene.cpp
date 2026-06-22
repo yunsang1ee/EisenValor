@@ -22,6 +22,7 @@
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
 #include "RectTransformComponent.h"
+#include "TextUIComponent.h"
 #include "AudioGlobal.h"
 
 #include "Transform.h"
@@ -41,6 +42,34 @@ using Vertex = EvAsset::Vertex;
 
 namespace
 {
+class QuestMessageAnimationComponent final : public ComponentBase<QuestMessageAnimationComponent>
+{
+public:
+	static constexpr const char* GetStaticTypeName() { return "QuestMessageAnimationComponent"; }
+
+	void OnUpdate(float deltaTime)
+	{
+		m_elapsed += deltaTime;
+		const float progress = std::clamp(m_elapsed / 0.25f, 0.0f, 1.0f);
+		const float eased = 1.0f - (1.0f - progress) * (1.0f - progress);
+
+		if (auto* text = GetGameObject()->GetComponent<TextUIComponent>())
+		{
+			text->SetColor({1.0f, 1.0f, 1.0f, eased});
+		}
+
+		if (auto* rect = GetGameObject()->GetComponent<RectTransformComponent>())
+		{
+			const float y = 20.0f - 20.0f * eased;
+			rect->SetOffsetMin({-320.0f, -40.0f + y});
+			rect->SetOffsetMax({320.0f, 40.0f + y});
+		}
+	}
+
+private:
+	float m_elapsed = 0.0f;
+};
+
 constexpr std::string_view kTorchPreviewSphereMeshPath = "Resource/Models/Sphere.evmesh";
 constexpr float			   kTorchPreviewSphereScale = 0.5f;
 constexpr float			   kTorchTransportEmissionScale = 65.0f;
@@ -53,7 +82,7 @@ void WorldScene::OnRegisterCustomComponents()
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
 		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent,
-		WorldLoadingControllerComponent>();
+		WorldLoadingControllerComponent, QuestMessageAnimationComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
@@ -142,7 +171,7 @@ void WorldScene::OnStartImpl()
 					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
 						L"Resource\\Texture\\Scene\\loadingscene.evtex");
 					image->SetNormalTextureResource(texture);
-					image->SetOrder(1000);
+					image->SetOrder(100000);
 				}
 			);
 
@@ -171,6 +200,38 @@ void WorldScene::OnStartImpl()
 			CreateComponentWithInit<WorldSceneControllerComponent>(
 				obj->GetHandle(), [](WorldSceneControllerComponent* login) {}
 			);
+		}
+	);
+
+	ReserveGameObject(
+		"QuestMessage", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.25f}, {0.5f, 0.25f});
+					rect->SetPivot({0.5f, 0.5f});
+					rect->SetOffsetMin({-320.0f, -20.0f});
+					rect->SetOffsetMax({320.0f, 60.0f});
+				}
+			);
+
+			CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[](TextUIComponent* text)
+				{
+					text->SetText(L"WASD로 이동하세요");
+					text->SetFontSize(32.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({1.0f, 1.0f, 1.0f, 0.0f});
+					text->SetOrder(900);
+				}
+			);
+
+			CreateComponent<QuestMessageAnimationComponent>(obj->GetHandle());
 		}
 	);
 }

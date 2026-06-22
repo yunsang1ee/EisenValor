@@ -49,7 +49,7 @@ namespace AnimationLoader
 				anim->AddAnimationEvent(runKey, 5.0f / 30.0f, playLeftFootstep);
 				anim->AddAnimationEvent(runKey, 16.0f / 30.0f, playRightFootstep);
 
-				anim->AddAnimationEvent(20, 3.0f / 30.0f, playLeftFootstep);
+				anim->AddAnimationEvent(20, 2.8f / 30.0f, playLeftFootstep);
 				anim->AddAnimationEvent(20, 18.0f / 30.0f, playRightFootstep);
 				anim->AddAnimationEvent(22, 12.0f / 30.0f, playLeftFootstep);
 				anim->AddAnimationEvent(22, 30.0f / 30.0f, playRightFootstep);

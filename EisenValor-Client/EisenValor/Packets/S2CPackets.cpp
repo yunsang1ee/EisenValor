@@ -10,6 +10,7 @@
 
 // Resource
 #include "ResourceGlobal.h"
+#include "AudioGlobal.h"
 #include "MeshComponent.h"
 #include "MeshResource.h"
 #include "SkinnedMeshComponent.h"
