@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <chrono>
@@ -8,14 +9,27 @@
 #pragma region Utils
 namespace Utils
 {
+inline constexpr uint64_t kFnv1a64OffsetBasis = 14695981039346656037ULL;
+inline constexpr uint64_t kFnv1a64Prime = 1099511628211ULL;
+
+inline void AppendFnv1a64(uint64_t& hash, const void* data, size_t size)
+{
+	const auto* bytes = static_cast<const uint8_t*>(data);
+	for (size_t i = 0; i < size; ++i)
+	{
+		hash ^= bytes[i];
+		hash *= kFnv1a64Prime;
+	}
+}
+
 // FNV-1a Hash https://share.google/trFAqACv1zHhll7h8
 constexpr uint64_t HashString(std::string_view str)
 {
-	uint64_t hash = 14695981039346656037ULL;
+	uint64_t hash = kFnv1a64OffsetBasis;
 	for (char c : str)
 	{
 		hash ^= static_cast<uint8_t>(c);
-		hash *= 1099511628211ULL;
+		hash *= kFnv1a64Prime;
 	}
 	return hash;
 }

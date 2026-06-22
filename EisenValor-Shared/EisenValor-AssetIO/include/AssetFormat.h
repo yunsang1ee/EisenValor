@@ -23,6 +23,18 @@ struct Guid
 {
 	uint8_t data[16];
 
+	constexpr bool IsNull() const
+	{
+		for (uint8_t byte : data)
+		{
+			if (byte != 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	bool operator==(const Guid& other) const 
 	{ 
 		return 0 == std::memcmp(data, other.data, 16); 

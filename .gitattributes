@@ -57,4 +57,7 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+# Streamline runtime is intentionally stored as regular Git objects.
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/*.dll -filter -diff -merge -text
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/x64/*.lib -filter -diff -merge -text
 EisenValor_이윤상_윤성열_이다건.pptx filter=lfs diff=lfs merge=lfs -text

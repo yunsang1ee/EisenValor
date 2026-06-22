@@ -2,6 +2,14 @@
 
 Texture2D<float4> g_hdrInput : register(t0, space0);
 
+cbuffer FullscreenResolveConstants : register(b0, space0)
+{
+    uint g_bypassToneMap;
+    uint g_pad0;
+    uint g_pad1;
+    uint g_pad2;
+};
+
 struct VSOutput
 {
     float4 position : SV_POSITION;
@@ -26,6 +34,11 @@ float4 PSMain(VSOutput input) : SV_TARGET
 
     uint2 pixel = min(uint2(input.uv * float2(width, height)), uint2(width - 1u, height - 1u));
     float3 color = g_hdrInput.Load(int3(pixel, 0)).rgb;
+
+    if (0u != g_bypassToneMap)
+    {
+        return float4(saturate(color), 1.0f);
+    }
 
     color = ToneMapACES(color);
     color = pow(color, (1.0f / 2.2f).xxx);

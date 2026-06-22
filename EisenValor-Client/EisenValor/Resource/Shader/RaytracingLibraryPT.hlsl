@@ -1,33 +1,38 @@
 #define HLSL
 #include "RaytracingCommon.h"
+#include "RaytracingPayload.hlsli"
 #include "RaytracingMaterialEmission.hlsli"
 #include "RaytracingTerrain.hlsli"
 #include "RaytracingEnvironment.hlsli"
 #include "RaytracingPostProcess.hlsli"
 #include "RaytracingNormal.hlsli"
+#include "RaytracingSampling.hlsli"
+#include "RaytracingLighting.hlsli"
+#include "RaytracingNEE.hlsli"
+
+typedef StandardRayPayload RayPayload;
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
-RWTexture2D<float4> g_temporalAccumulation : register(u1, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
     float4x4 g_viewProjInverse;
+    float2 g_cameraJitterPixels;
+    float2 g_cameraConstantsPad0;
 };
 
 StructuredBuffer<InstanceData> g_instanceBuffer : register(t1, space0);
 StructuredBuffer<MaterialGPUData> g_materials : register(t2, space0);
 StructuredBuffer<GeoInfo> g_geoTable : register(t3, space0);
 StructuredBuffer<TerrainSurfaceGPUData> g_terrainSurfaces : register(t4, space0);
-Texture2D<float4> g_temporalHistory : register(t6, space0);
 
-cbuffer TemporalAccumulationConstants : register(b2, space0)
+cbuffer RaytracingFrameConstants : register(b2, space0)
 {
-    uint g_temporalFrameCount;
-    uint g_temporalAccumulationEnabled;
-    uint g_temporalAccumulationReset;
+    uint g_frameSeed;
     uint g_emissionViewMode;
     uint g_environmentMode;
+    uint g_frameConstantsPad0;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -42,102 +47,6 @@ static const float PT_VISIBLE_NORMAL_STRENGTH = 2.5f;
 
 // 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
 static const uint PT_DEBUG_VIEW = 0;
-
-// RNG (PCG)
-float RandomValue(inout uint seed)
-{
-    seed = seed * 747796405u + 2891336453u;
-    uint temp = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
-    temp = (temp >> 22u) ^ temp;
-    return float(temp) / 4294967296.0f;
-}
-
-// 원 내부의 임의 점 생성
-float2 RandomPointInCircle(inout uint seed)
-{
-    float angle = RandomValue(seed) * 2.0f * PI;
-    float2 circle = float2(cos(angle), sin(angle));
-    float r = sqrt(RandomValue(seed));
-    return circle * r;
-}
-
-void BuildOrthonormalBasis(float3 normal, out float3 tangent, out float3 bitangent)
-{
-    float sign = normal.z >= 0.0f ? 1.0f : -1.0f;
-    float a = -1.0f / (sign + normal.z);
-    float b = normal.x * normal.y * a;
-    tangent = float3(1.0f + sign * normal.x * normal.x * a, sign * b, -sign * normal.x);
-    bitangent = float3(b, sign + normal.y * normal.y * a, -normal.y);
-}
-
-float3 SampleDirectionalAreaSun(float3 lightDir, float angularRadius, inout uint seed)
-{
-    float2 disk = RandomPointInCircle(seed);
-    float3 tangent;
-    float3 bitangent;
-    BuildOrthonormalBasis(normalize(lightDir), tangent, bitangent);
-    return normalize(lightDir + disk.x * angularRadius * tangent + disk.y * angularRadius * bitangent);
-}
-
-inline float ShadowVisibility(
-    RaytracingAccelerationStructure accel,
-    float3 origin,
-    float3 dir,
-    float tMin,
-    float tMax,
-    uint mask)
-{
-    RayQuery <
-        RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH |
-        RAY_FLAG_FORCE_OPAQUE |
-        RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES
-    > rq;
-
-    RayDesc ray;
-    ray.Origin = origin;
-    ray.Direction = dir;
-    ray.TMin = tMin;
-    ray.TMax = tMax;
-
-    rq.TraceRayInline(accel, RAY_FLAG_NONE, mask, ray);
-
-    while (rq.Proceed())
-    {
-        if (rq.CandidateType() == CANDIDATE_NON_OPAQUE_TRIANGLE)
-        {
-            rq.CommitNonOpaqueTriangleHit();
-        }
-    }
-
-    return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
-}
-
-float SoftShadowVisibilityDirLight(
-    RaytracingAccelerationStructure accel,
-    float3 origin,
-    float3 normal,
-    float3 lightDir,
-    float angularRadius,
-    uint mask,
-    inout uint seed)
-{
-    const uint NUM_SAMPLES = 4;
-    float visibility = 0.0f;
-
-    [unroll]
-    for (uint i = 0; i < NUM_SAMPLES; ++i)
-    {
-        float3 jitteredDir = SampleDirectionalAreaSun(lightDir, angularRadius, seed);
-        if (dot(jitteredDir, normal) <= 0.0f)
-        {
-            continue;
-        }
-
-        visibility += ShadowVisibility(accel, origin, jitteredDir, RAY_TMIN, RAY_TMAX, mask);
-    }
-
-    return visibility / NUM_SAMPLES;
-}
 
 float3 CosineHemisphere(float3 normal, inout uint seed)
 {
@@ -168,52 +77,6 @@ bool UsePhysicalRenderingMode()
     return EMISSION_VIEW_PHYSICAL == g_emissionViewMode;
 }
 
-#define RAYTRACING_ENABLE_GGX_SAMPLING 1
-#include "RaytracingLighting.hlsli"
-
-float3 EvaluateTemporarySunNEE(
-    float3 hitPos,
-    float3 geometricNormal,
-    float3 shadingNormal,
-    float3 viewDir,
-    float3 albedo,
-    float metallic,
-    float roughness,
-    float ao,
-    float3 F0,
-    inout uint rngSeed)
-{
-    float3 lightDir = GetEnvironmentSunDirection();
-    float3 Li = GetEnvironmentSunRadiance(g_environmentMode);
-
-    float NdotL = max(dot(shadingNormal, lightDir), 0.0f);
-    float NdotV = max(dot(shadingNormal, viewDir), 0.0f);
-    if (NdotL <= 0.0f || NdotV <= 0.0f)
-    {
-        return 0.0f.xxx;
-    }
-
-    float3 H = normalize(viewDir + lightDir);
-    float NDF = DistributionGGX(shadingNormal, H, roughness);
-    float G = GeometrySmith(shadingNormal, viewDir, lightDir, roughness);
-    float3 F = FresnelSchlick(saturate(dot(H, viewDir)), F0);
-    float3 specular = (NDF * G * F) / max(4.0f * NdotV * NdotL, EPSILON);
-    float3 kD = (1.0f - F) * (1.0f - metallic);
-
-    float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
-    float visibility = SoftShadowVisibilityDirLight(
-        g_scene,
-        shadowOrigin,
-        geometricNormal,
-        lightDir,
-        GetEnvironmentSunAngularRadius(g_environmentMode),
-        0xFF,
-        rngSeed
-    );
-
-    return (kD * albedo * ao / PI + specular) * Li * NdotL * visibility;
-}
-
 [shader("raygeneration")]
 void RayGenMain()
 {
@@ -224,30 +87,27 @@ void RayGenMain()
     uint rngSeed = pixelIndex * 9781u
 					 ^ pixelCoord.y * 6271u
 					 ^ screenSize.x * 7919u
-                     ^ (g_temporalFrameCount + 1u) * 104729u
+                     ^ (g_frameSeed + 1u) * 104729u
                      ^ 124623u;
 	
     float3 finalColor = 0.0f.xxx;
 	
     for (uint bounce = 0; bounce < SPP; ++bounce)
     {
-        float2 jit = RandomPointInCircle(rngSeed) * 0.5f;
-        float2 ndc = (float2(pixelCoord) + jit + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+        float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
-        float4 worldPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-        worldPos /= worldPos.w;
-        float4 cameraPos = mul(float4(0, 0, 0, 1), g_viewProjInverse);
-        cameraPos /= cameraPos.w;
+        float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
+        nearPos /= nearPos.w;
+        float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+        farPos /= farPos.w;
 	
         RayDesc ray;
-        ray.Origin = cameraPos.xyz;
-        ray.Direction = normalize(worldPos.xyz - cameraPos.xyz);
+        ray.Origin = nearPos.xyz;
+        ray.Direction = normalize(farPos.xyz - nearPos.xyz);
         ray.TMin = 0.001f;
         ray.TMax = RAY_TMAX;
 
-        RayPayload payload;
-        payload.color = 0.0f.xxx;
-        payload.recursionDepth = 0;
+        RayPayload payload = MakeDefaultRayPayload<RayPayload>(0);
 		
         TraceRay(g_scene,
 				 RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
@@ -259,18 +119,6 @@ void RayGenMain()
     }
     finalColor /= SPP;
 
-    if (0 != g_temporalAccumulationEnabled)
-    {
-        uint historyCount = (0 != g_temporalAccumulationReset) ? 0u : g_temporalFrameCount;
-        if (historyCount > 0u)
-        {
-            float3 historyColor = g_temporalHistory.Load(int3(pixelCoord, 0)).rgb;
-            float blend = 1.0f / float(historyCount + 1u);
-            finalColor = lerp(historyColor, finalColor, blend);
-        }
-        g_temporalAccumulation[pixelCoord] = float4(finalColor, 1.0f);
-    }
-	
     float3 outputColor = finalColor;
     if (PT_DEBUG_VIEW == 0 && !UsePhysicalRenderingMode())
     {
@@ -285,7 +133,7 @@ void RayGenMain()
 [shader("miss")]
 void MissMain(inout RayPayload payload)
 {
-    payload.color = SampleEnvironmentWithoutSun(WorldRayDirection(), g_environmentMode);
+    payload.color = SampleSkyEnvironment(WorldRayDirection(), g_environmentMode);
 }
 
 [shader("closesthit")]
@@ -469,7 +317,9 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     rngSeed ^= rngSeed >> 16;
 
     // Temporary PT NEE: take one extra environment-sun sample and test visibility.
-    float3 directSun = EvaluateTemporarySunNEE(
+    float3 directSun = EvaluateEnvironmentSunNEE(
+        g_scene,
+        g_environmentMode,
         hitPos,
         geometricNormal,
         visibleNormal,
@@ -479,6 +329,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         roughness,
         ao,
         F0,
+        4u,
         rngSeed
     );
 	
@@ -577,9 +428,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     nextRay.TMin = RAY_TMIN;
     nextRay.TMax = RAY_TMAX;
 
-    RayPayload child;
-    child.color = 0.0f.xxx;
-    child.recursionDepth = payload.recursionDepth + 1;
+    RayPayload child = MakeDefaultRayPayload<RayPayload>(payload.recursionDepth + 1);
 
     TraceRay(
 		g_scene,
