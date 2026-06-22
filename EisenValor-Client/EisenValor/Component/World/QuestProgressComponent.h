@@ -10,6 +10,7 @@ public:
 	static constexpr const char* GetStaticTypeName() { return "QuestProgressComponent"; }
 
 	void OnUpdate(float deltaTime);
+	void SetOccupationZoneReached(bool reached) { m_occupationZoneReached = reached; }
 
 private:
 	void AdvanceTo(int nextStage, const std::wstring& message);
@@ -17,5 +18,6 @@ private:
 
 	int m_stage = 0;
 	bool m_hasStartPosition = false;
+	bool m_occupationZoneReached = false;
 	DX::XMFLOAT3 m_startPosition{};
 };

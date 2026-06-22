@@ -24,6 +24,7 @@
 #include "Component/PlayerControllerComponent.h"
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
+#include "Component/World/QuestProgressComponent.h"
 #include "Util/CameraConfig.h"
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
@@ -33,6 +34,7 @@
 #include "RectTransformComponent.h"
 #include "ImageUIComponent.h"
 #include "ButtonUIComponent.h"
+#include "TextUIComponent.h"
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
@@ -46,6 +48,25 @@ namespace
 {
 	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
 
+	void NotifyOccupationZoneReached(Scene* scene)
+	{
+		if (!scene)
+		{
+			return;
+		}
+
+		auto* localPlayer = scene->FindGameObjectByServerID(scene->GetLocalID());
+		if (!localPlayer)
+		{
+			return;
+		}
+
+		if (auto* quest = localPlayer->GetComponent<QuestProgressComponent>())
+		{
+			quest->SetOccupationZoneReached(true);
+		}
+	}
+
 	void ApplyPendingServerState(uint64 objID, FSMComponent* fsm)
 	{
 		if (!fsm) return;
@@ -55,6 +76,36 @@ namespace
 
 		fsm->SetServerState(iter->second);
 		s_pendingStateByObjectID.erase(iter);
+	}
+
+	TextUIComponent* FindRemainingTimeText(Scene* scene)
+	{
+		if (!scene)
+		{
+			return nullptr;
+		}
+
+		auto* textStorage = scene->GetStorage<TextUIComponent>();
+		if (!textStorage)
+		{
+			return nullptr;
+		}
+
+		for (auto& text : textStorage->GetList())
+		{
+			auto* owner = text.GetGameObject();
+			if (!owner)
+			{
+				continue;
+			}
+
+			if (owner->GetName() == "RemainingTimeText")
+			{
+				return &text;
+			}
+		}
+
+		return nullptr;
 	}
 }
 
@@ -99,6 +150,7 @@ bool NetBridge::S2C::Handle_LC_LOGIN_SUCCESS_PACKET(
 
 #endif // !APPLY_LOBBY_SERVER
 
+	NotifyOccupationZoneReached(GLOBAL(SceneGlobal).GetActiveScene());
 	return true;
 }
 bool NetBridge::S2C::Handle_LC_SIGN_UP_FAIL_PACKET(
@@ -1660,10 +1712,17 @@ bool NetBridge::S2C::Handle_SC_REMAINING_GAME_TIME_PACKET(
 	// TODO: 게임 남은 시간을 화면에 표시하기
 
 	const uint32   remainingTime{recvPkt.remaining_time()};
-	const uint32_t totalSeconds = remainingTime / 1000;
+	const uint32_t totalSeconds = remainingTime;
 	const uint32_t minutes = totalSeconds / 60;
 	const uint32_t seconds = totalSeconds % 60;
-	// DEBUG_LOG_FMT("Remaining Time: {:02d}M:{:02d}S\n", minutes, seconds);
+
+	if (auto* text = FindRemainingTimeText(GLOBAL(SceneGlobal).GetActiveScene()))
+	{
+		wchar_t buffer[16]{};
+		swprintf_s(buffer, L"%02u:%02u", minutes, seconds);
+		text->SetText(buffer);
+	}
+
 	return true;
 }
 

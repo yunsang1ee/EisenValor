@@ -221,6 +221,154 @@ void WorldScene::OnStartImpl()
 			CreateComponent<QuestProgressComponent>(obj->GetHandle());
 		}
 	);
+
+	ReserveGameObject(
+		"OccupationGaugeRoot", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.0f, 0.0f}, {0.0f, 0.0f});
+					rect->SetPivot({0.0f, 0.0f});
+					rect->SetOffsetMin({24.0f, 24.0f});
+					rect->SetOffsetMax({344.0f, 48.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					image->SetNormalColor({0.05f, 0.05f, 0.05f, 0.9f});
+					image->SetOrder(99990);
+				}
+			);
+
+			const auto rootHandle = obj->GetHandle();
+
+			ReserveGameObject(
+				"OccupationGaugeBlue", std::nullopt,
+				[this, rootHandle](GameObject* fillObj)
+				{
+					fillObj->GetTransform().SetParent(
+						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
+					);
+
+					CreateComponentWithInit<RectTransformComponent>(
+						fillObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.0f, 0.0f}, {0.5f, 1.0f});
+							rect->SetPivot({0.0f, 0.5f});
+							rect->SetOffsetMin({2.0f, 2.0f});
+							rect->SetOffsetMax({-1.0f, -2.0f});
+						}
+					);
+
+					CreateComponentWithInit<ImageUIComponent>(
+						fillObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({0.15f, 0.35f, 1.0f, 1.0f});
+							image->SetOrder(99991);
+						}
+					);
+				}
+			);
+
+			ReserveGameObject(
+				"OccupationGaugeRed", std::nullopt,
+				[this, rootHandle](GameObject* fillObj)
+				{
+					fillObj->GetTransform().SetParent(
+						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
+					);
+
+					CreateComponentWithInit<RectTransformComponent>(
+						fillObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.5f, 0.0f}, {1.0f, 1.0f});
+							rect->SetPivot({1.0f, 0.5f});
+							rect->SetOffsetMin({1.0f, 2.0f});
+							rect->SetOffsetMax({-2.0f, -2.0f});
+						}
+					);
+
+					CreateComponentWithInit<ImageUIComponent>(
+						fillObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({1.0f, 0.2f, 0.2f, 1.0f});
+							image->SetOrder(99991);
+						}
+					);
+				}
+			);
+
+			ReserveGameObject(
+				"OccupationGaugeCenterLine", std::nullopt,
+				[this, rootHandle](GameObject* lineObj)
+				{
+					lineObj->GetTransform().SetParent(
+						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
+					);
+
+					CreateComponentWithInit<RectTransformComponent>(
+						lineObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.5f, 0.0f}, {0.5f, 1.0f});
+							rect->SetPivot({0.5f, 0.5f});
+							rect->SetOffsetMin({-1.0f, 2.0f});
+							rect->SetOffsetMax({1.0f, -2.0f});
+						}
+					);
+
+					CreateComponentWithInit<ImageUIComponent>(
+						lineObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.85f});
+							image->SetOrder(99992);
+						}
+					);
+				}
+			);
+		}
+	);
+
+	ReserveGameObject(
+		"RemainingTimeText", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
+					rect->SetPivot({0.5f, 0.0f});
+					rect->SetOffsetMin({-120.0f, 16.0f});
+					rect->SetOffsetMax({120.0f, 60.0f});
+				}
+			);
+
+			CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[](TextUIComponent* text)
+				{
+					text->SetText(L"30:00");
+					text->SetFontSize(28.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({1.0f, 1.0f, 1.0f, 1.0f});
+					text->SetOrder(99995);
+				}
+			);
+		}
+	);
 }
 
 void WorldScene::CreateSceneObjects()
