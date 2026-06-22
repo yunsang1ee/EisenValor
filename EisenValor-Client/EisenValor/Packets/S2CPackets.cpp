@@ -1681,6 +1681,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 	}
 
 	const auto cameraTargetID = recvPkt.camera_target_id();
+	BattleUIControllerComponent::SetLockedTargetID(0);
 
 	if (cameraTargetID == 0)
 	{
@@ -1711,6 +1712,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 			cameraComp->SetLookAtTargetOffset({0.0f, CameraConfig::kLockOnViewOffsetY, 0.0f}
 			);										   // 대상을 바라볼 때 약간 위를 바라보도록 설정
 			cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
+			BattleUIControllerComponent::SetLockedTargetID(cameraTargetID);
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Set to ID: {}\n", cameraTargetID);
 		}
 		else

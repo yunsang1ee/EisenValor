@@ -20,6 +20,21 @@
 #include "Util/CameraConfig.h"
 #include <algorithm> // for std::clamp
 
+namespace
+{
+uint64 s_lockedTargetID = 0;
+}
+
+void BattleUIControllerComponent::SetLockedTargetID(uint64 targetID)
+{
+	s_lockedTargetID = targetID;
+}
+
+uint64 BattleUIControllerComponent::GetLockedTargetID()
+{
+	return s_lockedTargetID;
+}
+
 void BattleUIControllerComponent::OnAttach()
 {
 	GameObject* owner = GetGameObject();
@@ -157,6 +172,22 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 
 	// 스탠스 상태에 따라 UI 가시성 제어
 	bool isCombat = (GetStance() == GENERAL_STANCE_TYPE_COMBAT);
+	if (m_controlMode == ControlType::Remote)
+	{
+		bool isLocalCombat = false;
+		if (Scene* scene = owner->GetScene())
+		{
+			if (GameObject* localPlayer = scene->FindGameObjectByServerID(scene->GetLocalID()))
+			{
+				if (auto* localFSM = localPlayer->GetComponent<FSMComponent>())
+				{
+					isLocalCombat = (localFSM->GetStance() == static_cast<uint8_t>(GENERAL_STANCE_TYPE_COMBAT));
+				}
+			}
+		}
+
+		isCombat = isCombat && isLocalCombat && owner->GetServerID() == s_lockedTargetID;
+	}
 	ToggleUI(isCombat);
 	syncAttackDirectionVisibility();
 

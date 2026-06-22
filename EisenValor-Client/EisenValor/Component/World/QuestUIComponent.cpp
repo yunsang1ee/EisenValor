@@ -27,8 +27,8 @@ void QuestUIComponent::OnUpdate(float deltaTime)
 	if (auto* rect = GetGameObject()->GetComponent<RectTransformComponent>())
 	{
 		const float y = 40.0f - 20.0f * eased;
-		rect->SetOffsetMin({-320.0f, -80.0f + y});
-		rect->SetOffsetMax({320.0f, 240.0f + y});
+		rect->SetOffsetMin({-330.0f, -270.0f + y});
+		rect->SetOffsetMax({330.0f, -40.0f + y});
 	}
 }
 

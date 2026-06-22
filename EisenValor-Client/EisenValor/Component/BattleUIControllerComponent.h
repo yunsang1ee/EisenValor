@@ -38,7 +38,9 @@ public:
 	void InitStance(GENERAL_STANCE_TYPE stance); 
 	void TriggerAttackRemote(GENERAL_ATTACK_TYPE type, GENERAL_ATTACK_DIR_TYPE dir); // 원격 공격 피드백
 	void UpdateUISelection(GENERAL_ATTACK_DIR_TYPE selectedDir, std::optional<GENERAL_ATTACK_TYPE> attackType);
-	void ToggleUI(bool isActive); 
+	void ToggleUI(bool isActive);
+	static void SetLockedTargetID(uint64 targetID);
+	static uint64 GetLockedTargetID();
 	
 	// FSM에서 쓸 현재 공격 모드 가져오는 함수
 	std::optional<GENERAL_ATTACK_TYPE> GetCurrentAttackType() const { return m_currentAttackType; }
