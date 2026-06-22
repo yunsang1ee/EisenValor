@@ -110,6 +110,8 @@ bool Handle_SC_SOLDIER_ATTACK_PACKET(const SOCKET& socket, const FB_TABLES::SC_S
 
 bool Handle_SC_GENERAL_GUARD_PACKET(const SOCKET& socket, const FB_TABLES::SC_GENERAL_GUARD_PACKET& recvPkt);
 
+bool Handle_SC_HIT_SOUND_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_SOUND_PACKET& recvPkt);
+
 #pragma endregion
 
 #pragma region TEST_PACKETS

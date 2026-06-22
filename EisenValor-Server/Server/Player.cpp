@@ -105,6 +105,11 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 	}
 	
 	DecHP(damage, broadcast);
+	if(damage > 0) {
+		const auto world{ GetGameWorld() };
+		auto pb{ ServerPackets::Make_SC_HIT_SOUND_PACKET(attacker->GetID()) };
+		world->Broadcast(std::move(pb));
+	}
 #ifdef PRINT_PLAYER_LOG
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 #endif

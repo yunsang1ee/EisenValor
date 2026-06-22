@@ -193,6 +193,12 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_GENERAL_GUARD_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_GENERAL_GUARD_PACKET, defenderID, attackerID));
 	}
 
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_HIT_SOUND_PACKET(const uint64 attackerID)
+	{
+		flatbuffers::FlatBufferBuilder builder;
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_HIT_SOUND_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_HIT_SOUND_PACKET, attackerID));
+	}
+
 #pragma endregion
 
 	// =================
