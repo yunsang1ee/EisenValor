@@ -2,7 +2,6 @@
 #include "DxResource.h"
 #include "DxUtils.h"
 #include "DxGarbageCollectorGlobal.h"
-#include "DxCommandQueueGlobal.h"
 #include "DxDeviceGlobal.h"
 
 DxResource::~DxResource()
@@ -119,26 +118,10 @@ void DxResource::ReleaseResource()
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
 
-	// TODO: 멀티큐 이후에 수정 필요
-	uint64_t fenceValue = 0;
-	switch (m_lastUsedQueue)
-	{
-	case EQueueType::Graphics:
-		fenceValue = GLOBAL(DxGfxCommandQueueGlobal).GetCurrentFenceValue();
-		break;
-		// case EQueueType::Compute:
-		//	fenceValue = GLOBAL(DxComputeCommandQueueGlobal).GetCurrentFenceValue();
-		//	break;
-		// case EQueueType::Copy:
-		//	fenceValue = GLOBAL(DxCopyCommandQueueGlobal).GetCurrentFenceValue();
-		//	break;
-	}
-
-	FenceHandle currentFence(m_lastUsedQueue, fenceValue + 3);
-	gc.DeferResourceRelease(std::move(m_resource), currentFence, m_name);
+	gc.DeferResourceReleaseAfterCurrentFrame(std::move(m_resource), m_name);
 
 	if (!m_name.empty())
 	{
-		GRAPHICS_LOG_FMT("[DxResource] Resource queued for GC: {} (Fence={})\n", m_name, currentFence.value);
+		GRAPHICS_LOG_FMT("[DxResource] Resource queued for release after current frame: {}\n", m_name);
 	}
 }

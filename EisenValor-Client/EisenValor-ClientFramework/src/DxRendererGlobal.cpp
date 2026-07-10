@@ -308,7 +308,7 @@ void DxRendererGlobal::EndFrame()
 	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
-	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
+	gc.CommitCurrentFrameReleases(FenceHandle{EQueueType::Graphics, signaledFence});
 	{
 		PixScopedCpuEvent gcEvent(L"DxRenderer.ProcessCompletedReleases");
 		gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());

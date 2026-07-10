@@ -6,7 +6,6 @@
 
 #include <CameraRenderData.h>
 #include <DxCommandContext.h>
-#include <DxCommandQueueGlobal.h>
 #include <DxDescriptorHeapGlobal.h>
 #include <DxDeviceGlobal.h>
 #include <DxFrameResource.h>
@@ -159,7 +158,6 @@ void DlssUpscalePass::CreateOutputResources(uint32_t width, uint32_t height)
 
 	auto& device = GLOBAL(DxDeviceGlobal);
 	auto& descriptorHeap = GLOBAL(DxDescriptorHeapGlobal);
-	auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
 	for (uint32_t frameIndex = 0; frameIndex < 3u; ++frameIndex)
 	{
 		auto& texture = m_outputData[frameIndex].outputTexture;
@@ -169,9 +167,7 @@ void DlssUpscalePass::CreateOutputResources(uint32_t width, uint32_t height)
 		}
 		if (texture->HasSRV() || texture->HasAnyUAV())
 		{
-			texture->ReleaseAllViews(
-				descriptorHeap, FenceHandle{EQueueType::Graphics, commandQueue.GetCurrentFenceValue() + 3u}
-			);
+			texture->ReleaseAllViews(descriptorHeap);
 		}
 		texture->Initialize(
 			device.GetDevice(), width, height, DXGI_FORMAT_R16G16B16A16_FLOAT,

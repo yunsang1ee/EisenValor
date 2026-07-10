@@ -2,7 +2,6 @@
 #include "DxTexture.h"
 #include "DxUtils.h"
 #include "DxDescriptorHeapGlobal.h"
-#include "DxGarbageCollectorGlobal.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxRendererGlobal.h"
 #include "DxFrameResource.h"
@@ -17,14 +16,10 @@ DxTexture::~DxTexture()
 {
 	if (HasSRV() || HasAnyUAV())
 	{
-		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
+		auto& heap = GLOBAL(DxDescriptorHeapGlobal);
+		ReleaseAllViews(heap);
 
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
-		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
-
-		ReleaseAllViews(heap, fence);
-
-		GRAPHICS_LOG_FMT("[DxTexture] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
+		GRAPHICS_LOG_FMT("[DxTexture] Auto-released views for '{}' after current frame\n", GetName());
 	}
 }
 
@@ -440,31 +435,31 @@ void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, ui
 	);
 }
 
-void DxTexture::ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxTexture::ReleaseSRV(DxDescriptorHeapGlobal& heap)
 {
-	m_srvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_SRV");
+	m_srvHandle.Free(heap, std::string(GetName()) + "_SRV");
 }
 
-void DxTexture::ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, const uint32_t mipLevel)
+void DxTexture::ReleaseUAV(DxDescriptorHeapGlobal& heap, const uint32_t mipLevel)
 {
-	m_uavHandles[mipLevel].Free(heap, fenceHandle, std::string(GetName()) + "_UAV");
+	m_uavHandles[mipLevel].Free(heap, std::string(GetName()) + "_UAV");
 }
 
-void DxTexture::ReleaseAllUAVs(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxTexture::ReleaseAllUAVs(DxDescriptorHeapGlobal& heap)
 {
 	for (uint32_t i = 0; i < m_uavHandles.size(); ++i)
 	{
 		if (m_uavHandles[i].IsValid())
 		{
-			ReleaseUAV(heap, fenceHandle, i);
+			ReleaseUAV(heap, i);
 		}
 	}
 }
 
-void DxTexture::ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxTexture::ReleaseAllViews(DxDescriptorHeapGlobal& heap)
 {
-	ReleaseSRV(heap, fenceHandle);
-	ReleaseAllUAVs(heap, fenceHandle);
+	ReleaseSRV(heap);
+	ReleaseAllUAVs(heap);
 }
 
 uint32_t DxTexture::GetUAVIndex(uint32_t mipLevel) const

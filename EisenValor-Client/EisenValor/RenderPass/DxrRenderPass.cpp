@@ -5,7 +5,6 @@
 #include "DxCommandContext.h"
 #include "PixProfiler.h"
 #include "DxDescriptorHeapGlobal.h"
-#include "DxCommandQueueGlobal.h"
 #include "DxSamplerHeapGlobal.h"
 #include "DxRendererGlobal.h"
 #include "DxDeviceGlobal.h"
@@ -320,9 +319,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 		if (outputTex->HasUAV(0))
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			outputTex->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			outputTex->ReleaseAllViews(descHeap);
 		}
 
 		outputTex->Initialize(
@@ -382,27 +379,19 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 		if (primaryHitBuffer->HasUAV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			primaryHitBuffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			primaryHitBuffer->ReleaseAllViews(descHeap);
 		}
 		if (reservoirBuffer->HasUAV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			reservoirBuffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			reservoirBuffer->ReleaseAllViews(descHeap);
 		}
 		if (motionVectorTexture->HasAnyUAV() || motionVectorTexture->HasSRV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			motionVectorTexture->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			motionVectorTexture->ReleaseAllViews(descHeap);
 		}
 		if (linearDepthTexture->HasAnyUAV() || linearDepthTexture->HasSRV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			linearDepthTexture->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			linearDepthTexture->ReleaseAllViews(descHeap);
 		}
 		DxTexture* rrGuideTextures[] = {
 			diffuseAlbedoTexture.get(), specularAlbedoTexture.get(), normalRoughnessTexture.get()};
@@ -410,9 +399,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		{
 			if (texture->HasAnyUAV() || texture->HasSRV())
 			{
-				auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-				auto fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-				texture->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+				texture->ReleaseAllViews(descHeap);
 			}
 		}
 
