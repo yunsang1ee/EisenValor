@@ -88,7 +88,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 			{
 				if (auto* rect = img->GetGameObject()->GetComponent<RectTransformComponent>()) 
 				{
-					rect->SetAnchors({0.0f, 0.25f}, {ratio * 0.5f, 0.75f});
+					rect->SetAnchors({0.02f, 0.25f}, {0.02f + ratio * 0.96f, 0.75f});
 				}
 			}
 		}
@@ -108,7 +108,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 				{
 					if (auto* rect = img->GetGameObject()->GetComponent<RectTransformComponent>()) 
 					{
-						rect->SetAnchors({0.0f, 0.25f}, {ratio * 0.5f, 0.75f});
+						rect->SetAnchors({0.02f, 0.25f}, {0.02f + ratio * 0.96f, 0.75f});
 					}
 				}
 			}
@@ -210,8 +210,8 @@ void VitalUIControllerComponent::SetChildUIPositions(float scale)
 			float sSize = kFlagSize * scale;
 
 			// 위치 조절용 변수
-			float flagMarginX = -25.0f;
-			float flagOffsetY = 5.0f;
+			float flagMarginX = 80.0f;
+			float flagOffsetY = 3.0f;
 
 			rect->SetSizeDelta({sSize, sSize});
 			rect->SetOffsetMin({(-kFlagSize + flagMarginX) * scale, (-kFlagSize * 0.5f + flagOffsetY) * scale});
@@ -229,7 +229,7 @@ void VitalUIControllerComponent::SetChildUIPositions(float scale)
 		{
 			float sw = kHPBarWidth * scale;
 			float sh = kHPBarHeight * scale;
-			float yPos = -(sh * 0.5f + kPadding * scale * 0.5f);
+			float yPos = -(sh * 0.5f);
 			rect->SetSizeDelta({sw, sh});
 
 			// HP Bar
@@ -247,7 +247,7 @@ void VitalUIControllerComponent::SetChildUIPositions(float scale)
 			{
 				float sw = kStaminaBarWidth * scale;
 				float sh = kStaminaBarHeight * scale;
-				float yPos = (sh * 0.5f + kPadding * scale * 0.5f);
+				float yPos = (sh * 0.5f);
 				rect->SetSizeDelta({sw, sh});
 
 				// Stamina Bar
@@ -377,7 +377,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 
 			scene->CreateComponentWithInit<RectTransformComponent>(fillHandle, [](RectTransformComponent* rect) {
 				rect->SetPivot({ 0.0f, 0.5f });
-				rect->SetAnchors({ 0.0f, 0.25f }, { 0.5f, 0.75f });
+				rect->SetAnchors({ 0.02f, 0.25f }, { 0.98f, 0.75f });
 				rect->SetOffsetMin({ 0.0f, 0.0f });
 				rect->SetOffsetMax({ 0.0f, 0.0f });
 			});
@@ -445,7 +445,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 
 				scene->CreateComponentWithInit<RectTransformComponent>(fillHandle, [](RectTransformComponent* rect) {
 					rect->SetPivot({ 0.0f, 0.5f });
-					rect->SetAnchors({ 0.0f, 0.25f }, { 0.5f, 0.75f });
+					rect->SetAnchors({ 0.02f, 0.25f }, { 0.98f, 0.75f });
 					rect->SetOffsetMin({ 0.0f, 0.0f });
 					rect->SetOffsetMax({ 0.0f, 0.0f });
 				});

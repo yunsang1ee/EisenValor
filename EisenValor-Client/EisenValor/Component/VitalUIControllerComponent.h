@@ -32,10 +32,10 @@ private:
 	HandleOf<ImageUIComponent> m_flagIcon;
 
 	// UI 설정 상수
-	static constexpr float kHPBarWidth = 100.0f;
-	static constexpr float kHPBarHeight = 3.0f;
-	static constexpr float kStaminaBarWidth = 100.0f;
-	static constexpr float kStaminaBarHeight = 3.0f;
+	static constexpr float kHPBarWidth = 90.0f;
+	static constexpr float kHPBarHeight = 10.0f;
+	static constexpr float kStaminaBarWidth = 90.0f;
+	static constexpr float kStaminaBarHeight = 7.0f;
 	static constexpr float kFlagSize = 20.0f;
 	static constexpr float kPadding = -1.0f;
 	static constexpr float kVerticalOffset = 2.0f;
