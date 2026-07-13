@@ -88,7 +88,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 			{
 				if (auto* rect = img->GetGameObject()->GetComponent<RectTransformComponent>()) 
 				{
-					rect->SetAnchors({0.0f, 0.0f}, {ratio, 1.0f});
+					rect->SetAnchors({0.0f, 0.25f}, {ratio * 0.5f, 0.75f});
 				}
 			}
 		}
@@ -108,7 +108,7 @@ void VitalUIControllerComponent::OnUpdate(float deltaTime)
 				{
 					if (auto* rect = img->GetGameObject()->GetComponent<RectTransformComponent>()) 
 					{
-						rect->SetAnchors({0.0f, 0.0f}, {ratio, 1.0f});
+						rect->SetAnchors({0.0f, 0.25f}, {ratio * 0.5f, 0.75f});
 					}
 				}
 			}
@@ -359,7 +359,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 			img->SetOrder(20);
 			// 관리 목록 등록 (Back)
 			vitalComp->m_managedImages.push_back({img->GetHandle(), 20});
-			auto texRes = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\HPback.evtex");
+			auto texRes = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\Vitalback.evtex");
 			img->SetNormalTextureResource(texRes);
 		});
 
@@ -377,9 +377,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 
 			scene->CreateComponentWithInit<RectTransformComponent>(fillHandle, [](RectTransformComponent* rect) {
 				rect->SetPivot({ 0.0f, 0.5f });
-				rect->SetAnchors({ 0.0f, 0.0f }, { 1.0f, 1.0f });
-				rect->SetOffsetMin({ kPadding, kPadding });
-				rect->SetOffsetMax({ -kPadding, -kPadding });
+				rect->SetAnchors({ 0.0f, 0.25f }, { 0.5f, 0.75f });
+				rect->SetOffsetMin({ 0.0f, 0.0f });
+				rect->SetOffsetMax({ 0.0f, 0.0f });
 			});
 
 			vitalComp->m_hpFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [ownerHandle, scene](ImageUIComponent* img) {
@@ -391,7 +391,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				img->SetOrder(21);
 				// 관리 목록 등록 (Fill)
 				vitalComp->m_managedImages.push_back({img->GetHandle(), 21});
-				auto texRes = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\HP_fill.evtex");
+				auto texRes = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\HPFill.evtex");
 				img->SetNormalTextureResource(texRes);
 				img->SetNormalColor({ 1.0f, 1.0f, 1.0f, 1.0f }); // 하얀색
 			});
@@ -427,7 +427,7 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 				img->SetOrder(10);
 				// 관리 목록 등록 (Back)
 				vitalComp->m_managedImages.push_back({img->GetHandle(), 10});
-				auto texRes = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\Staminaback.evtex");
+				auto texRes = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\Vitalback.evtex");
 				img->SetNormalTextureResource(texRes);
 			});
 
@@ -445,9 +445,9 @@ void VitalUIControllerComponent::CreateAndSetupUI()
 
 				scene->CreateComponentWithInit<RectTransformComponent>(fillHandle, [](RectTransformComponent* rect) {
 					rect->SetPivot({ 0.0f, 0.5f });
-					rect->SetAnchors({ 0.0f, 0.0f }, { 1.0f, 1.0f });
-					rect->SetOffsetMin({ kPadding, kPadding });
-					rect->SetOffsetMax({ -kPadding, -kPadding });
+					rect->SetAnchors({ 0.0f, 0.25f }, { 0.5f, 0.75f });
+					rect->SetOffsetMin({ 0.0f, 0.0f });
+					rect->SetOffsetMax({ 0.0f, 0.0f });
 				});
 
 				vitalComp->m_staminaFill = scene->CreateComponentWithInit<ImageUIComponent>(fillHandle, [ownerHandle, scene](ImageUIComponent* img) {
