@@ -1,6 +1,9 @@
 #ifndef RAYTRACING_LIGHTING_HLSLI
 #define RAYTRACING_LIGHTING_HLSLI
 
+#include "RaytracingCommon.h"
+#include "RaytracingSampling.hlsli"
+
 float3 FresnelSchlick(float cosTheta, float3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
@@ -41,7 +44,6 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
     return ggx1 * ggx2;
 }
 
-#ifdef RAYTRACING_ENABLE_GGX_SAMPLING
 float3 SampleGGX(float3 N, float3 V, float roughness, inout uint seed)
 {
     float a = roughness * roughness;
@@ -69,7 +71,6 @@ float3 SampleGGXReflection(float3 V, float3 N, float roughness, inout uint seed)
 {
     return SampleGGX(N, V, roughness, seed);
 }
-#endif
 
 float GGX_PDF(float3 N, float3 H, float3 V, float3 L, float roughness)
 {

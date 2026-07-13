@@ -2,6 +2,7 @@
 #include "AnimationComponent.h"
 #include "GameObject.h"
 #include "GameObject.inl"
+#include "PixProfiler.h"
 #include "SkinnedMeshComponent.h"
 #include "AssetFormat.h"
 #include "DxMath.h"
@@ -136,6 +137,8 @@ BonePose BlendBonePose(const BonePose& from, const BonePose& to, float alpha)
 
 void AnimationComponent::OnLateUpdate(float dt)
 {
+	PixScopedCpuEvent lateUpdateEvent(L"Animation.OnLateUpdate");
+
 	if (!m_isPlaying || !m_currentAnimation)
 		return;
 

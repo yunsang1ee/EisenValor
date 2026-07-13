@@ -433,3 +433,39 @@ FodyWeavers.xsd
 /Tools/Character_Export
 /GEMINI.md
 EisenValor-Server/Analysis
+
+# Local-only Claude skills (mirrored from .agents/skills)
+.claude/skills/
+
+# Local-only MCP config (converted from codex)
+.mcp.json
+/.codex
+
+# Streamline 2.11.1 minimal redistributable subset.
+# Keep the SDK self-contained after a normal clone without Git LFS.
+/EisenValor-Client/ThirdParty/*
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/*
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/include/
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/include/**
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/*
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/x64/
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/x64/*
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/x64/.gitattributes
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/lib/x64/sl.interposer.lib
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/*
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/
+/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/*
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/.gitattributes
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/sl.interposer.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/sl.common.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/sl.dlss.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/sl.dlss_d.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/sl.pcl.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/nvngx_dlss.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/nvngx_dlssd.dll
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/nvngx_dlss.license.txt
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/license.txt
+!/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/3rd-party-licenses.md

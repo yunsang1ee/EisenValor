@@ -3,58 +3,132 @@
 #include "DxRtPipelineState.h"
 #include "DxUploadHeap.h"
 #include "DxUtils.h"
+#include <algorithm>
+#include <cstring>
+#include <limits>
+
+namespace
+{
+constexpr uint32_t kShaderIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+
+uint32_t ToUint32(size_t value)
+{
+	assert(value <= std::numeric_limits<uint32_t>::max());
+	return static_cast<uint32_t>(value);
+}
+
+uint32_t AlignUp32(uint32_t value, uint32_t alignment)
+{
+	return static_cast<uint32_t>(DxUtils::AlignUp(value, alignment));
+}
+
+uint32_t GetRecordSize(const DxRtShaderRecordDesc& record)
+{
+	return AlignUp32(
+		kShaderIdentifierSize + ToUint32(record.localRootArguments.size()),
+		D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
+	);
+}
+
+uint32_t GetRecordStride(std::span<const DxRtShaderRecordDesc> records)
+{
+	uint32_t stride = 0;
+	for (const auto& record : records)
+	{
+		stride = std::max(stride, GetRecordSize(record));
+	}
+	return stride;
+}
+
+void WriteRecord(
+	uint8_t* destination, const DxRtPipelineState* pipelineState, const DxRtShaderRecordDesc& record
+)
+{
+	assert(destination && pipelineState && "[DxRtShaderTable] Invalid record write parameters.");
+	assert(!record.exportName.empty() && "[DxRtShaderTable] Shader export name is empty.");
+
+	const void* shaderIdentifier = pipelineState->GetShaderIdentifier(record.exportName);
+	assert(shaderIdentifier && "[DxRtShaderTable] Shader identifier is null.");
+
+	memcpy(destination, shaderIdentifier, kShaderIdentifierSize);
+	if (!record.localRootArguments.empty())
+	{
+		memcpy(
+			destination + kShaderIdentifierSize,
+			record.localRootArguments.data(),
+			record.localRootArguments.size()
+		);
+	}
+}
+} // namespace
+
+DxRtShaderRecordDesc::DxRtShaderRecordDesc(
+	std::wstring exportNameParam, std::span<const std::byte> localRootArgumentsParam
+)
+	: exportName(std::move(exportNameParam)),
+	  localRootArguments(localRootArgumentsParam.begin(), localRootArgumentsParam.end())
+{
+}
 
 DxRtShaderTable::~DxRtShaderTable()
 {
 	GRAPHICS_LOG_FMT("[DxRtShaderTable] Destroyed\n");
 }
 
-void DxRtShaderTable::Build(ID3D12Device5* device, DxRtPipelineState* pipelineState, uint32_t numHitGroups)
+void DxRtShaderTable::Build(
+	ID3D12Device5*				 device,
+	const DxRtPipelineState*	 pipelineState,
+	const DxRtShaderTableDesc& desc,
+	std::string_view			 name
+)
 {
-	assert(device && pipelineState && "[DxRtShaderTable] Invalid parameters");
+	assert(device && pipelineState && "[DxRtShaderTable] Invalid parameters.");
+	assert(!desc.rayGen.exportName.empty() && "[DxRtShaderTable] RayGen export is required.");
 
-	m_numHitGroups = numHitGroups;
-	m_numMissShaders = 1;
+	m_numMissShaders = static_cast<uint32_t>(desc.missShaders.size());
+	m_numHitGroups = static_cast<uint32_t>(desc.hitGroups.size());
 
-	constexpr uint32_t shaderIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-
-	m_rayGenRecordSize = DxUtils::AlignUp(shaderIdentifierSize, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
-	m_missRecordSize = DxUtils::AlignUp(shaderIdentifierSize, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
-	m_hitGroupRecordSize = DxUtils::AlignUp(shaderIdentifierSize, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	m_rayGenRecordSize = GetRecordSize(desc.rayGen);
+	m_missRecordSize = GetRecordStride(desc.missShaders);
+	m_hitGroupRecordSize = GetRecordStride(desc.hitGroups);
 
 	m_rayGenOffset = 0;
-	m_missOffset = DxUtils::AlignUp(m_rayGenRecordSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+	m_missOffset = AlignUp32(m_rayGenRecordSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
-	uint32_t missTableSize = m_missRecordSize * m_numMissShaders;
-	m_hitGroupOffset = m_missOffset + DxUtils::AlignUp(missTableSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+	const uint32_t missTableSize = m_missRecordSize * m_numMissShaders;
+	m_hitGroupOffset = m_missOffset + AlignUp32(missTableSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
-	uint32_t hitGroupTableSize = m_hitGroupRecordSize * m_numHitGroups;
-	uint32_t totalSize = m_hitGroupOffset + hitGroupTableSize;
-	totalSize = DxUtils::AlignUp(totalSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+	const uint32_t hitGroupTableSize = m_hitGroupRecordSize * m_numHitGroups;
+	uint32_t	   totalSize = m_hitGroupOffset + hitGroupTableSize;
+	totalSize = AlignUp32(totalSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+
+	std::string heapName = name.empty() ? "ShaderTable_UploadHeap" : std::string(name);
+	if (!name.empty())
+	{
+		heapName += "_UploadHeap";
+	}
 
 	m_uploadHeap = std::make_unique<DxUploadHeap>();
-	m_uploadHeap->Initialize(device, totalSize, "ShaderTable_UploadHeap");
+	m_uploadHeap->Initialize(device, totalSize, heapName);
 
 	auto alloc = m_uploadHeap->Allocate(totalSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 	m_baseAddress = alloc.gpuAddress;
 
-	uint8_t* pData = static_cast<uint8_t*>(alloc.cpuAddress);
+	uint8_t* tableData = static_cast<uint8_t*>(alloc.cpuAddress);
+	memset(tableData, 0, totalSize);
 
-	const void* rayGenID = pipelineState->GetRayGenShaderIdentifier();
-	assert(rayGenID && "[DxRtShaderTable] RayGen shader identifier is null");
-	memcpy(pData + m_rayGenOffset, rayGenID, shaderIdentifierSize);
+	WriteRecord(tableData + m_rayGenOffset, pipelineState, desc.rayGen);
 
-	const void* missID = pipelineState->GetMissShaderIdentifier();
-	assert(missID && "[DxRtShaderTable] Miss shader identifier is null");
-	memcpy(pData + m_missOffset, missID, shaderIdentifierSize);
-
-	const void* hitGroupID = pipelineState->GetHitGroupIdentifier();
-	assert(hitGroupID && "[DxRtShaderTable] HitGroup identifier is null");
+	for (uint32_t i = 0; i < m_numMissShaders; ++i)
+	{
+		const uint32_t offset = m_missOffset + (i * m_missRecordSize);
+		WriteRecord(tableData + offset, pipelineState, desc.missShaders[i]);
+	}
 
 	for (uint32_t i = 0; i < m_numHitGroups; ++i)
 	{
-		uint32_t offset = m_hitGroupOffset + (i * m_hitGroupRecordSize);
-		memcpy(pData + offset, hitGroupID, shaderIdentifierSize);
+		const uint32_t offset = m_hitGroupOffset + (i * m_hitGroupRecordSize);
+		WriteRecord(tableData + offset, pipelineState, desc.hitGroups[i]);
 	}
 
 	GRAPHICS_LOG_FMT(

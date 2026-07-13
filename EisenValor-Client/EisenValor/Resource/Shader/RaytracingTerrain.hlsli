@@ -1,6 +1,8 @@
 #ifndef RAYTRACING_TERRAIN_HLSLI
 #define RAYTRACING_TERRAIN_HLSLI
 
+#include "RaytracingCommon.h"
+
 struct TerrainSample
 {
     float3 albedo;

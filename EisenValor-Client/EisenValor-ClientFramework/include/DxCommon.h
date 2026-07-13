@@ -9,10 +9,14 @@
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
+#if defined(ENABLE_STREAMLINE)
+#pragma comment(lib, "sl.interposer.lib")
+#else
 #pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
+#endif
 #pragma comment(lib, "dxcompiler.lib")
 #pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "dxgi.lib")
 
 namespace DX = DirectX;
 namespace DXP = DirectX::PackedVector;

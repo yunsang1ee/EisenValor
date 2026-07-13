@@ -31,6 +31,7 @@ cbuffer SkinningConstants : register(b0)
     uint Pad1;
 };
 
+[shader("compute")]
 [numthreads(256, 1, 1)]
 void main(uint3 dtid : SV_DispatchThreadID)
 {

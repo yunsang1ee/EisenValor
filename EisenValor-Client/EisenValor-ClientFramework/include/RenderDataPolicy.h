@@ -78,6 +78,12 @@ private:
 	uint32_t					m_currentIndex = 0;
 };
 
+enum class HistorySwapMode : uint8_t
+{
+	Manual,
+	AutoEndFrame
+};
+
 template <IsValidRenderData T>
 class PingPongHistory : public RenderDataStorageBase<T, RenderDataPolicy::PingPongHistory>
 {
@@ -85,8 +91,15 @@ public:
 	using DataType = T;
 
 	PingPongHistory() = default;
+	explicit PingPongHistory(HistorySwapMode swapMode) : m_swapMode(swapMode) {}
 
-	void EndFrame() override { Swap(); }
+	void EndFrame() override
+	{
+		if (HistorySwapMode::AutoEndFrame == m_swapMode)
+		{
+			Swap();
+		}
+	}
 	void OnResize(uint32_t width, uint32_t height) override
 	{
 		for (auto& slot : m_slots)
@@ -134,15 +147,18 @@ public:
 		m_frameCount = 0;
 	}
 
-	uint32_t ReadIndex() const { return m_readIndex; }
-	uint32_t WriteIndex() const { return m_writeIndex; }
-	uint32_t FrameCount() const { return m_frameCount; }
+	uint32_t		ReadIndex() const { return m_readIndex; }
+	uint32_t		WriteIndex() const { return m_writeIndex; }
+	uint32_t		FrameCount() const { return m_frameCount; }
+	HistorySwapMode SwapMode() const { return m_swapMode; }
+	void			SetSwapMode(HistorySwapMode swapMode) { m_swapMode = swapMode; }
 
 private:
 	std::array<DataType, 2> m_slots = {};
 	uint32_t				m_readIndex = 0;
 	uint32_t				m_writeIndex = 1;
 	uint32_t				m_frameCount = 0;
+	HistorySwapMode			m_swapMode = HistorySwapMode::Manual;
 };
 
 template <IsValidRenderData T>

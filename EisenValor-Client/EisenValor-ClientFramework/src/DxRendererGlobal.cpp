@@ -17,6 +17,30 @@
 #include "GameObject.h"
 #include "DxCommandContext.h"
 #include "PixProfiler.h"
+#include "StreamlineGlobal.h"
+
+namespace
+{
+float RadicalInverse(uint32_t index, uint32_t base)
+{
+	const float inverseBase = 1.0f / static_cast<float>(base);
+	float		result = 0.0f;
+	float		fraction = inverseBase;
+	while (index > 0u)
+	{
+		result += static_cast<float>(index % base) * fraction;
+		index /= base;
+		fraction *= inverseBase;
+	}
+	return result;
+}
+
+DirectX::XMFLOAT2 Halton23JitterPixels(uint32_t sequenceIndex)
+{
+	const uint32_t sampleIndex = sequenceIndex + 1u;
+	return {RadicalInverse(sampleIndex, 2u) - 0.5f, RadicalInverse(sampleIndex, 3u) - 0.5f};
+}
+} // namespace
 
 DxRendererGlobal::DxRendererGlobal() = default;
 
@@ -40,6 +64,7 @@ void DxRendererGlobal::Initialize()
 
 	m_isInitialized = true;
 	m_currentFrameIndex = 0;
+	m_cameraJitterSequenceIndex = 0;
 
 	// RTV Descriptor Heap 생성
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -80,8 +105,14 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		device.GetDevice(), device.GetFactory(), commandQueue, hwnd, width, height, kFrameCount,
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
+	const StreamlineResolution resolution = GLOBAL(StreamlineGlobal).GetOptimalResolution(width, height);
+	m_renderWidth = resolution.renderWidth;
+	m_renderHeight = resolution.renderHeight;
 
-	GRAPHICS_LOG_FMT("[DxRendererGlobal] SwapChain created: {}x{}\n", width, height);
+	GRAPHICS_LOG_FMT(
+		"[DxRendererGlobal] SwapChain created: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
+		m_renderHeight
+	);
 }
 
 void DxRendererGlobal::Release()
@@ -101,6 +132,8 @@ void DxRendererGlobal::Release()
 
 	m_swapChain.reset();
 	m_rtvDescriptorHeap.Reset();
+	m_renderWidth = 0;
+	m_renderHeight = 0;
 
 	GRAPHICS_LOG_FMT("[DxRendererGlobal] Released\n");
 }
@@ -203,6 +236,9 @@ void DxRendererGlobal::Render(Scene* scene)
 		if (nullptr != mainCamera)
 		{
 			auto& cameraData = m_cameraData.Get();
+			cameraData.previousJitterPixels = cameraData.jitterPixels;
+			cameraData.jitterSequenceIndex = m_cameraJitterSequenceIndex;
+			cameraData.jitterPixels = Halton23JitterPixels(m_cameraJitterSequenceIndex++);
 			cameraData.viewMatrix = mainCamera->GetViewMatrix();
 			cameraData.projectionMatrix = mainCamera->GetProjectionMatrix();
 			cameraData.viewProjInverse = DirectX::XMMatrixInverse(
@@ -210,6 +246,7 @@ void DxRendererGlobal::Render(Scene* scene)
 			);
 
 			auto& transform = mainCamera->GetGameObject()->GetTransform();
+			cameraData.previousCameraPosition = cameraData.cameraPosition;
 			cameraData.cameraPosition = transform.GetWorldPosition();
 			cameraData.cameraDirection = transform.GetForward();
 			cameraData.nearZ = mainCamera->GetNearZ();
@@ -316,13 +353,28 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
 	);
+	const StreamlineResolution resolution = GLOBAL(StreamlineGlobal).GetOptimalResolution(width, height);
+	m_renderWidth = resolution.renderWidth;
+	m_renderHeight = resolution.renderHeight;
+	GLOBAL(StreamlineGlobal).RequestHistoryReset();
+	m_cameraJitterSequenceIndex = 0;
 
 	for (auto& entry : m_renderPasses)
 	{
-		entry.pass->OnResize(width, height);
+		if (RenderResolutionDomain::Render == entry.pass->GetResolutionDomain())
+		{
+			entry.pass->OnResize(m_renderWidth, m_renderHeight);
+		}
+		else
+		{
+			entry.pass->OnResize(width, height);
+		}
 	}
 
-	GRAPHICS_LOG_FMT("[DxRendererGlobal] Resize handled: {}x{}\n", width, height);
+	GRAPHICS_LOG_FMT(
+		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
+		m_renderHeight
+	);
 }
 
 void DxRendererGlobal::ClearAllPasses()

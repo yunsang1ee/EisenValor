@@ -12,7 +12,9 @@ public:
 	void Release() override
 	{
 		outputTexture.reset();
+		bypassToneMap = false;
 	}
 
 	std::shared_ptr<DxTexture> outputTexture;
+	bool					   bypassToneMap = false;
 };

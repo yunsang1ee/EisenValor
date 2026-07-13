@@ -327,6 +327,31 @@ public:
 		}
 	}
 
+	void Assign(std::span<const T> values)
+		requires std::copy_constructible<T>
+	{
+		assert(values.size() < static_cast<size_type>(std::numeric_limits<uint32_t>::max()));
+		uint32_t maxGeneration = m_baseGeneration;
+		if (!m_generation.empty())
+		{
+			maxGeneration = std::max(maxGeneration, *std::max_element(m_generation.begin(), m_generation.end()));
+		}
+		m_baseGeneration = maxGeneration;
+		BumpGeneration(m_baseGeneration);
+
+		m_data.assign(values.begin(), values.end());
+		m_indexToId.resize(values.size());
+		m_idToIndex.resize(values.size());
+		m_generation.assign(values.size(), m_baseGeneration);
+		m_freeIds.clear();
+
+		for (uint32_t index = 0; index < static_cast<uint32_t>(values.size()); ++index)
+		{
+			m_indexToId[index] = index;
+			m_idToIndex[index] = index;
+		}
+	}
+
 	void Reset()
 	{
 		uint32_t maxGen = m_baseGeneration;

@@ -109,7 +109,16 @@
     <ClInclude Include="RenderPass\HdrResolvePass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\DlssUpscalePass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPass\DxrRenderPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RestirTemporalReusePass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="Scene\WorldScene.h">
@@ -179,6 +188,27 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\DlssOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RestirCandidateRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RestirFinalReservoirRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RestirLightRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RestirTemporalHistoryRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\StaticSceneRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\TlasRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="Scene\LoginScene.h">
@@ -303,7 +333,16 @@
     <ClCompile Include="RenderPass\HdrResolvePass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\DlssUpscalePass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RestirTemporalReusePass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="Scene\WorldScene.cpp">
@@ -466,7 +505,16 @@
     <None Include="Resource\Shader\RaytracingLibraryPT.hlsl">
       <Filter>Shaders\Raytracing</Filter>
     </None>
-    <None Include="Resource\Shader\RaytracingPrimary.hlsl">
+    <None Include="Resource\Shader\RaytracingRestirPT.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingPayload.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirFinalEvaluation.hlsl">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirTemporalReuse.hlsl">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\RaytracingMaterialEmission.hlsli">
@@ -481,7 +529,19 @@
     <None Include="Resource\Shader\RaytracingLighting.hlsli">
       <Filter>Shaders\Raytracing</Filter>
     </None>
+    <None Include="Resource\Shader\RaytracingNEE.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RaytracingSampling.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
     <None Include="Resource\Shader\RaytracingPostProcess.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirReservoir.hlsli">
+      <Filter>Shaders\Raytracing</Filter>
+    </None>
+    <None Include="Resource\Shader\RestirShading.hlsli">
       <Filter>Shaders\Raytracing</Filter>
     </None>
     <None Include="Resource\Shader\FullscreenToneMap.hlsl">
