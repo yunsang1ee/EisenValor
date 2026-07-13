@@ -121,7 +121,7 @@ void StartScene::OnStartImpl()
 								{
 								case StartMenuAction::Start:
 									#ifdef APPLY_LOBBY_SERVER
-									GLOBAL(SceneGlobal).LoadScene("WorldScene");
+									GLOBAL(SceneGlobal).LoadScene("LoginScene");
 									#else
 									GLOBAL(SceneGlobal).LoadScene("WorldScene");
 									#endif

@@ -1,7 +1,7 @@
 #pragma once
 #pragma warning(disable: 4819)
 
-#define APPLY_LOBBY_SERVER
+//#define APPLY_LOBBY_SERVER
 
 #include "ServerEngineDefines.h"
 
