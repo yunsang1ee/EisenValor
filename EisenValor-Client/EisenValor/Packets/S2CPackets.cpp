@@ -1532,7 +1532,7 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 				if (
 					objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL))
 				{
-					fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_ATTACK);
+					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
 			}
 			return true;
