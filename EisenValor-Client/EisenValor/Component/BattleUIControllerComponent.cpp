@@ -23,7 +23,21 @@
 namespace
 {
 uint64 s_lockedTargetID = 0;
-}
+
+// struct LockOnTargetFsmLogState
+// {
+// 	uint64 targetID = 0;
+// 	uint8_t curState = 0;
+// 	uint8_t serverState = 0;
+// 	uint8_t objType = 0;
+// 	uint8_t stance = 0;
+// 	bool lockOn = false;
+// 	bool hasFSM = false;
+// 	bool initialized = false;
+// };
+
+// LockOnTargetFsmLogState s_lastLockOnTargetFsmLog;
+// }
 
 void BattleUIControllerComponent::SetLockedTargetID(uint64 targetID)
 {
@@ -119,6 +133,60 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 	GameObject* owner = GetGameObject();
 	if (!owner)
 		return;
+
+	// if (m_controlMode == ControlType::Local)
+	// {
+	// 	Scene* scene = owner->GetScene();
+	// 	const uint64 targetID = GetLockedTargetID();
+	// 	GameObject* targetObj = scene ? scene->FindGameObjectByServerID(targetID) : nullptr;
+	// 	FSMComponent* targetFSM = targetObj ? targetObj->GetComponent<FSMComponent>() : nullptr;
+	// 	LockOnTargetFsmLogState currentLogState;
+	// 	currentLogState.targetID = targetID;
+	// 	currentLogState.hasFSM = (targetFSM != nullptr);
+
+	// 	if (targetFSM)
+	// 	{
+	// 		currentLogState.curState = targetFSM->GetCurStateType();
+	// 		currentLogState.serverState = targetFSM->GetServerState();
+	// 		currentLogState.objType = targetFSM->GetObjectType();
+	// 		currentLogState.stance = targetFSM->GetStance();
+	// 		currentLogState.lockOn = targetFSM->IsLockOn();
+	// 	}
+
+	// 	const bool changed =
+	// 		!s_lastLockOnTargetFsmLog.initialized ||
+	// 		s_lastLockOnTargetFsmLog.targetID != currentLogState.targetID ||
+	// 		s_lastLockOnTargetFsmLog.hasFSM != currentLogState.hasFSM ||
+	// 		s_lastLockOnTargetFsmLog.curState != currentLogState.curState ||
+	// 		s_lastLockOnTargetFsmLog.serverState != currentLogState.serverState ||
+	// 		s_lastLockOnTargetFsmLog.objType != currentLogState.objType ||
+	// 		s_lastLockOnTargetFsmLog.stance != currentLogState.stance ||
+	// 		s_lastLockOnTargetFsmLog.lockOn != currentLogState.lockOn;
+
+	// 	if (changed)
+	// 	{
+	// 		if (targetFSM)
+	// 		{
+	// 			DEBUG_LOG_FMT(
+	// 				"[LockOnTargetFSM] id={}, name={}, curState={}, serverState={}, objType={}, stance={}, lockOn={}\n",
+	// 				targetID,
+	// 				targetObj->GetName(),
+	// 				static_cast<int>(currentLogState.curState),
+	// 				static_cast<int>(currentLogState.serverState),
+	// 				static_cast<int>(currentLogState.objType),
+	// 				static_cast<int>(currentLogState.stance),
+	// 				currentLogState.lockOn
+	// 			);
+	// 		}
+	// 		else
+	// 		{
+	// 			DEBUG_LOG_FMT("[LockOnTargetFSM] target not found or has no FSM. id={}\n", targetID);
+	// 		}
+
+	// 		currentLogState.initialized = true;
+	// 		s_lastLockOnTargetFsmLog = currentLogState;
+	// 	}
+	// }
 
 	auto syncAttackDirectionVisibility = [this, owner]()
 	{
