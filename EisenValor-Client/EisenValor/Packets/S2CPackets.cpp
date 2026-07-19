@@ -50,6 +50,10 @@ namespace
 	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
 	uint8 s_latestRedScore = 0;
 	uint8 s_latestBlueScore = 0;
+	bool s_hasLatestAttackReaction = false;
+	uint64 s_latestAttackAttackerID = 0;
+	uint8_t s_latestAttackType = 0;
+	uint8_t s_latestAttackDir = 0;
 
 	void NotifyOccupationZoneReached(Scene* scene)
 	{
@@ -1499,11 +1503,6 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 	const uint64 localID = scene->GetLocalID();
 
 	// 서버 Echo 방지 (로컬 플레이어는 이미 입력 시점에 처리)
-	if (id == localID)
-	{
-		return true;
-	}
-
 	const auto attackInfo = recvPkt.attack_info();
 	if (!attackInfo)
 	{
@@ -1512,6 +1511,21 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 
 	const auto type = attackInfo->attack_type();
 	const auto dir = attackInfo->attack_dir();
+	s_hasLatestAttackReaction = true;
+	s_latestAttackAttackerID = id;
+	s_latestAttackType = static_cast<uint8_t>(type);
+	s_latestAttackDir = static_cast<uint8_t>(dir);
+	//DEBUG_LOG_FMT(
+	//	"[SC_GENERAL_ATTACK] attacker={}, attackType={}, attackDir={}\n",
+	//	id,
+	//	static_cast<int>(type),
+	//	static_cast<int>(dir)
+	//);
+
+	if (id == localID)
+	{
+		return true;
+	}
 
 	// 1. 공격자 오브젝트 찾기
 	if (auto* obj = scene->FindGameObjectByServerID(id))
@@ -1696,6 +1710,19 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		if (fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) && nextState == FB_ENUMS::GENERAL_STATE_TYPE_ATTACK)
 		{
 			return true;
+		}
+		if (s_hasLatestAttackReaction &&
+			(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::GENERAL_STATE_TYPE_STUN))
+		{
+			fsm->SetCurAttackType(s_latestAttackType);
+			fsm->SetCurAttackDir(s_latestAttackDir);
+			/*DEBUG_LOG_FMT(
+				"[HitReactSource] victim={}, attacker={}, attackType={}, attackDir={}\n",
+				objID,
+				s_latestAttackAttackerID,
+				static_cast<int>(s_latestAttackType),
+				static_cast<int>(s_latestAttackDir)
+			);*/
 		}
 		fsm->SetServerState(nextState);
 		//DEBUG_LOG_FMT(

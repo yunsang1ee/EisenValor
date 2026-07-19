@@ -37,7 +37,7 @@ uint64 s_lockedTargetID = 0;
 // };
 
 // LockOnTargetFsmLogState s_lastLockOnTargetFsmLog;
-// }
+}
 
 void BattleUIControllerComponent::SetLockedTargetID(uint64 targetID)
 {
