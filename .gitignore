@@ -469,3 +469,10 @@ EisenValor-Server/Analysis
 !/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/bin/x64/nvngx_dlss.license.txt
 !/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/license.txt
 !/EisenValor-Client/ThirdParty/streamline-sdk-v2.11.1/3rd-party-licenses.md
+포트폴리오/윤성열/EisenValor_Server_Architecture.png
+포트폴리오/윤성열/EisenValor_서버_아키텍처_설명.md
+EisenValor_Server_LobbyServer_Architecture.html
+EisenValor_Server_LobbyServer_Structure.html
+EisenValor-Server/docs/server-architecture.html
+EisenValor-Server/docs/rio-ring-buffer-diagram.html
+EisenValor-Server/docs/rio-ring-buffer-preview.png
