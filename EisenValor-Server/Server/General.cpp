@@ -152,7 +152,6 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 				return false;
 			}
 
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
 			if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
 				damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
 			}
@@ -162,6 +161,9 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			const uint32 currentHP{ DecHP(damage, broadcast) };
 			if(0 == currentHP) {
 				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+			}
+			else {
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
 			}
 			break;
 		}
@@ -176,7 +178,6 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 				return false;
 			}
 
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
 			if(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP == attackerAtkInfo.dir) {
 				damage = attackerAtkInfo.skillData->damage + attackerAtkInfo.skillData->extraDamage;
 			}
@@ -187,13 +188,19 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			if(0 == currentHP) {
 				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
 			}
+			else {
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			}
+			break;
 		}
 		case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
 		{
 			auto attackerPlayer = std::static_pointer_cast<Soldier>(attacker);
 			damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
-			fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
-			DecHP(damage, broadcast);
+			const uint32 currentHP{ DecHP(damage, broadcast) };
+			if(0 != currentHP) {
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+			}
 
 
 			break;

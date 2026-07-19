@@ -4048,7 +4048,6 @@ inline ::flatbuffers::Offset<SC_HIT_SOUND_PACKET> CreateSC_HIT_SOUND_PACKET(
     uint64_t attacker_id = 0) {
   SC_HIT_SOUND_PACKETBuilder builder_(_fbb);
   builder_.add_attacker_id(attacker_id);
-  builder_.add_defender_id(defender_id);
   return builder_.Finish();
 }
 
