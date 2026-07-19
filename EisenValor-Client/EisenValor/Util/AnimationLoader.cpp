@@ -203,10 +203,10 @@ namespace AnimationLoader
 			anim->AddAnimation(161, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_F.evanim"));
 			//// LEFT (170:Light, 171:Hard)
 			anim->AddAnimation(170, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_L_Seq.evanim"));
-			anim->AddAnimation(171, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_L.evanim"));
+			anim->AddAnimation(171, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_R.evanim"));
 			//// RIGHT (180:Light, 181:Hard)
 			anim->AddAnimation(180, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_R_Seq.evanim"));
-			anim->AddAnimation(181, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_R.evanim"));
+			anim->AddAnimation(181, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_L.evanim"));
 			//// BACK (190:Light, 191:Hard)
 			anim->AddAnimation(190, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/Hurt_Light_BW_Seq.evanim"));
 			anim->AddAnimation(191, res.Load<AnimationResource>("Resource/Animation/Shield_Sword/Hurt/TwinDaggers_Hit_B.evanim"));

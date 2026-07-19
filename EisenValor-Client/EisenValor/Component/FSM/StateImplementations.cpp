@@ -429,7 +429,15 @@ void GeneralPostDelayState::Update(FSMComponent* fsm, float dt)
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
-		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_IDLE);
+		auto* obj = fsm->GetGameObject();
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		const bool isLocalPlayer = obj && scene && obj->GetServerID() == scene->GetLocalID();
+		const uint8_t recoveryState = isLocalPlayer
+			? static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE)
+			: fsm->GetServerState();
+		fsm->ChangeState(recoveryState != 0
+			? recoveryState
+			: static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE));
 	}
 }
 
@@ -552,6 +560,13 @@ void GeneralGuardState::Update(FSMComponent* fsm, float dt)
 		if (isLocalPlayer)
 		{
 			fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		}
+		else
+		{
+			const uint8_t recoveryState = fsm->GetServerState();
+			fsm->ChangeState(recoveryState != 0
+				? recoveryState
+				: static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_IDLE));
 		}
 	}
 }

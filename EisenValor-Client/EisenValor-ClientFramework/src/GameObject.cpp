@@ -77,7 +77,10 @@ void GameObject::SetActive(bool active)
 	m_isActive = active;
 	RefreshActiveState();
 
-	DEBUG_LOG_FMT("[GameObject] {} set to {}\n", m_name, active ? "active" : "inactive");
+	if (m_name.rfind("VitalUIRoot_", 0) != 0)
+	{
+		DEBUG_LOG_FMT("[GameObject] {} set to {}\n", m_name, active ? "active" : "inactive");
+	}
 }
 
 void GameObject::RefreshActiveState()
