@@ -48,6 +48,8 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 	auto const world{ GetGameWorld() };
 	const auto fsm{ GetComponent<GameServer::Contents::FSM>() };
 	uint32 damage{};
+	FB_STRUCTS::HitReactInfo hitReactInfo{};
+	const FB_STRUCTS::HitReactInfo* hitReactInfoPtr = nullptr;
 
 	switch(const auto attackerType = attacker->GetObjType()) {
 		case FB_ENUMS::GAME_OBJECT_TYPE_GENERAL:
@@ -67,6 +69,12 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 			else {
 				damage = attackerAtkInfo.skillData->damage;
 			}
+			hitReactInfo = FB_STRUCTS::HitReactInfo{
+				attacker->GetID(),
+				static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(attackerAtkInfo.skillData->skillTypeID),
+				attackerAtkInfo.dir
+			};
+			hitReactInfoPtr = &hitReactInfo;
 			break;
 		}
 		case FB_ENUMS::GAME_OBJECT_TYPE_PLAYER:
@@ -86,6 +94,12 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 			else {
 				damage = attackerAtkInfo.skillData->damage;
 			}
+			hitReactInfo = FB_STRUCTS::HitReactInfo{
+				attacker->GetID(),
+				static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(attackerAtkInfo.skillData->skillTypeID),
+				attackerAtkInfo.dir
+			};
+			hitReactInfoPtr = &hitReactInfo;
 			break;
 		}
 		case FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER:
@@ -114,8 +128,11 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 #endif
 	
-	if(IsActive())
-		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_STUN, dt, true);
+	if(IsActive()) {
+		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_STUN, dt, false);
+		auto pb{ ServerPackets::Make_SC_UPDATE_STATE_PACKET(GetID(), FB_ENUMS::PLAYER_STATE_TYPE_STUN, hitReactInfoPtr) };
+		world->Broadcast(std::move(pb));
+	}
 	
 	return true;
 }

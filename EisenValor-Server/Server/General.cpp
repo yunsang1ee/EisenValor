@@ -163,7 +163,14 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
 			}
 			else {
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+				const FB_STRUCTS::HitReactInfo hitReactInfo{
+					attacker->GetID(),
+					static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(attackerAtkInfo.skillData->skillTypeID),
+					attackerAtkInfo.dir
+				};
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, false);
+				auto pb{ ServerPackets::Make_SC_UPDATE_STATE_PACKET(GetID(), FB_ENUMS::GENERAL_STATE_TYPE_STUN, &hitReactInfo) };
+				world->Broadcast(std::move(pb));
 			}
 			break;
 		}
@@ -189,7 +196,14 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
 			}
 			else {
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+				const FB_STRUCTS::HitReactInfo hitReactInfo{
+					attacker->GetID(),
+					static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(attackerAtkInfo.skillData->skillTypeID),
+					attackerAtkInfo.dir
+				};
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, false);
+				auto pb{ ServerPackets::Make_SC_UPDATE_STATE_PACKET(GetID(), FB_ENUMS::GENERAL_STATE_TYPE_STUN, &hitReactInfo) };
+				world->Broadcast(std::move(pb));
 			}
 			break;
 		}
@@ -199,7 +213,9 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			damage = MANAGER(GameDataManager)->GetGameObjectData(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)->atk;
 			const uint32 currentHP{ DecHP(damage, broadcast) };
 			if(0 != currentHP) {
-				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
+				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, false);
+				auto pb{ ServerPackets::Make_SC_UPDATE_STATE_PACKET(GetID(), FB_ENUMS::GENERAL_STATE_TYPE_STUN, nullptr) };
+				world->Broadcast(std::move(pb));
 			}
 
 

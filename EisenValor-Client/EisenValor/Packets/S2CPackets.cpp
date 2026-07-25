@@ -1711,18 +1711,25 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		{
 			return true;
 		}
-		if (s_hasLatestAttackReaction &&
-			(nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::GENERAL_STATE_TYPE_STUN))
+		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::GENERAL_STATE_TYPE_STUN)
 		{
-			fsm->SetCurAttackType(s_latestAttackType);
-			fsm->SetCurAttackDir(s_latestAttackDir);
-			/*DEBUG_LOG_FMT(
-				"[HitReactSource] victim={}, attacker={}, attackType={}, attackDir={}\n",
-				objID,
-				s_latestAttackAttackerID,
-				static_cast<int>(s_latestAttackType),
-				static_cast<int>(s_latestAttackDir)
-			);*/
+			if (const auto* hitReact = recvPkt.hit_react())
+			{
+				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(hitReact->attack_type()));
+				fsm->SetCurAttackDir(static_cast<uint8_t>(hitReact->attack_dir()));
+			}
+			else if (s_hasLatestAttackReaction)
+			{
+				fsm->SetCurAttackType(s_latestAttackType);
+				fsm->SetCurAttackDir(s_latestAttackDir);
+				/*DEBUG_LOG_FMT(
+					"[HitReactSource] victim={}, attacker={}, attackType={}, attackDir={}\n",
+					objID,
+					s_latestAttackAttackerID,
+					static_cast<int>(s_latestAttackType),
+					static_cast<int>(s_latestAttackDir)
+				);*/
+			}
 		}
 		fsm->SetServerState(nextState);
 		//DEBUG_LOG_FMT(

@@ -120,11 +120,11 @@ namespace ServerPackets {
 		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_UPDATE_VITAL_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_UPDATE_VITAL_PACKET, id, hp, stamina));
 	}
 
-	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_UPDATE_STATE_PACKET(const uint64 id, const uint8 stateType)
+	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_UPDATE_STATE_PACKET(const uint64 id, const uint8 stateType, const FB_STRUCTS::HitReactInfo* hitReactInfo)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 
-		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_UPDATE_STATE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_UPDATE_STATE_PACKET, id, stateType));
+		return GameServer::ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::SC_UPDATE_STATE_PKT), GameServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateSC_UPDATE_STATE_PACKET, id, stateType, hitReactInfo));
 	}
 
 	std::shared_ptr<GameServerEngine::PacketBuffer> Make_SC_REMANING_GAME_TIME_PACKET(const uint32 remainTime)

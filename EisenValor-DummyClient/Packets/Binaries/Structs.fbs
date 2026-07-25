@@ -31,3 +31,9 @@ struct GeneralAttackInfo {
 	attack_type: FB_ENUMS.GENERAL_ATTACK_TYPE;
 	attack_dir: FB_ENUMS.GENERAL_ATTACK_DIR_TYPE;
 }
+
+struct HitReactInfo {
+	attacker_id: ulong;
+	attack_type: FB_ENUMS.GENERAL_ATTACK_TYPE;
+	attack_dir: FB_ENUMS.GENERAL_ATTACK_DIR_TYPE;
+}

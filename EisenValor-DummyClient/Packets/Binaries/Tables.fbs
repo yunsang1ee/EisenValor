@@ -314,6 +314,7 @@ table SC_UPDATE_VITAL_PACKET {
 table SC_UPDATE_STATE_PACKET {
 	obj_id: uint64;
 	next_state: uint8;
+	hit_react: FB_STRUCTS.HitReactInfo;
 }
 
 table SC_REMAINING_GAME_TIME {

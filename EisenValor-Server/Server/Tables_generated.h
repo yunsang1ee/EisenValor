@@ -3271,7 +3271,8 @@ struct SC_UPDATE_STATE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   typedef SC_UPDATE_STATE_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OBJ_ID = 4,
-    VT_NEXT_STATE = 6
+    VT_NEXT_STATE = 6,
+    VT_HIT_REACT = 8
   };
   uint64_t obj_id() const {
     return GetField<uint64_t>(VT_OBJ_ID, 0);
@@ -3279,10 +3280,14 @@ struct SC_UPDATE_STATE_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   uint8_t next_state() const {
     return GetField<uint8_t>(VT_NEXT_STATE, 0);
   }
+  const FB_STRUCTS::HitReactInfo *hit_react() const {
+    return GetStruct<const FB_STRUCTS::HitReactInfo *>(VT_HIT_REACT);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_OBJ_ID, 8) &&
            VerifyField<uint8_t>(verifier, VT_NEXT_STATE, 1) &&
+           VerifyField<FB_STRUCTS::HitReactInfo>(verifier, VT_HIT_REACT, 8) &&
            verifier.EndTable();
   }
 };
@@ -3296,6 +3301,9 @@ struct SC_UPDATE_STATE_PACKETBuilder {
   }
   void add_next_state(uint8_t next_state) {
     fbb_.AddElement<uint8_t>(SC_UPDATE_STATE_PACKET::VT_NEXT_STATE, next_state, 0);
+  }
+  void add_hit_react(const FB_STRUCTS::HitReactInfo *hit_react) {
+    fbb_.AddStruct(SC_UPDATE_STATE_PACKET::VT_HIT_REACT, hit_react);
   }
   explicit SC_UPDATE_STATE_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -3311,9 +3319,11 @@ struct SC_UPDATE_STATE_PACKETBuilder {
 inline ::flatbuffers::Offset<SC_UPDATE_STATE_PACKET> CreateSC_UPDATE_STATE_PACKET(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t obj_id = 0,
-    uint8_t next_state = 0) {
+    uint8_t next_state = 0,
+    const FB_STRUCTS::HitReactInfo *hit_react = nullptr) {
   SC_UPDATE_STATE_PACKETBuilder builder_(_fbb);
   builder_.add_obj_id(obj_id);
+  builder_.add_hit_react(hit_react);
   builder_.add_next_state(next_state);
   return builder_.Finish();
 }
