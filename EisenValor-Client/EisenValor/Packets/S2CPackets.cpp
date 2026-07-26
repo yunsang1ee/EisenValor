@@ -85,6 +85,49 @@ namespace
 		s_pendingStateByObjectID.erase(iter);
 	}
 
+	bool IsTargetInPredictedAttackRange(
+		GameObject* attacker,
+		GameObject* target,
+		float attackRadius,
+		float attackDegree
+	)
+	{
+		if (!attacker || !target)
+		{
+			return false;
+		}
+
+		const float radiusSq = attackRadius * attackRadius;
+		const Vec3& attackerPos = attacker->GetPosition();
+		const Vec3& attackerRot = attacker->GetRotation();
+		Vec3 attackerDir{ sinf(attackerRot.y), 0.f, cosf(attackerRot.y) };
+		attackerDir.Normalize();
+
+		const float halfDegree = attackDegree * 0.5f;
+		const float cosHalfAngle = std::cosf(Deg2Rad(halfDegree));
+		const Vec3& targetPos = target->GetPosition();
+		const Vec3 toTargetDir = targetPos - attackerPos;
+		const float distToTargetSq =
+			toTargetDir.x * toTargetDir.x +
+			toTargetDir.y * toTargetDir.y +
+			toTargetDir.z * toTargetDir.z;
+
+		if (distToTargetSq >= radiusSq)
+		{
+			return false;
+		}
+
+		const float dotValue = attackerDir.Dot(toTargetDir);
+		const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+
+		if (dotValue <= 0.f)
+		{
+			return false;
+		}
+
+		return (dotValue * dotValue) >= (distToTargetSq * cosHalfAngleSq);
+	}
+
 	TextUIComponent* FindRemainingTimeText(Scene* scene)
 	{
 		if (!scene)
