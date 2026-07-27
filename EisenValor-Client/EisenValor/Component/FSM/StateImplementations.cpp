@@ -138,6 +138,16 @@ GameObject* FindPredictedAttackTarget(
 			continue;
 		}
 
+		const uint8_t candidateState = candidateFsm->GetCurStateType();
+		const bool isDeadState =
+			candidateState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+			candidateState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD) ||
+			candidateState == StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD);
+		if (isDeadState)
+		{
+			continue;
+		}
+
 		const uint8_t objectType = candidateFsm->GetObjectType();
 		const bool isAttackableType =
 			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) ||
@@ -521,22 +531,30 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 		{
 			auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 			const bool isLocalPlayer = scene && obj->GetServerID() == scene->GetLocalID();
-				if (!isLocalPlayer)
+			if (!isLocalPlayer)
+			{
+				s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
+				const AttackShape shape = GetAttackShape(type);
+				if (GameObject* target = FindPredictedAttackTarget(scene, obj, shape.radius, shape.degree))
 				{
-					s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
-					const AttackShape shape = GetAttackShape(type);
-					if (GameObject* target = FindPredictedAttackTarget(scene, obj, shape.radius, shape.degree))
+					if (auto* targetFsm = target->GetComponent<FSMComponent>())
 					{
-						DEBUG_LOG_FMT(
-							"[PredictedHitFrame] attacker={}, target={}, type={}, dir={}\n",
-							obj->GetServerID(),
-							target->GetServerID(),
-							static_cast<int>(fsm->GetCurAttackType()),
-							static_cast<int>(fsm->GetCurAttackDir())
-						);
+						targetFsm->SetCurAttackType(fsm->GetCurAttackType());
+						targetFsm->SetCurAttackDir(fsm->GetCurAttackDir());
+						if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
+						{
+							DEBUG_LOG_FMT(
+								"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
+								obj->GetServerID(),
+								target->GetServerID(),
+								static_cast<int>(fsm->GetCurAttackType()),
+								static_cast<int>(fsm->GetCurAttackDir())
+							);
+						}
 					}
 				}
 			}
+		}
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 		return;
 	}

@@ -310,6 +310,7 @@ exit /b 0</Command>
   <ItemGroup>
     <ClInclude Include="Component\FSM\FSMComponent.h" />
     <ClInclude Include="Component\FSM\StateImplementations.h" />
+    <ClInclude Include="Component\FSM\StatePolicy.h" />
     <ClInclude Include="Component\FSM\StatePool.h" />
     <ClInclude Include="Component\AttackRangeDebugComponent.h" />
     <ClInclude Include="Component\FootIKComponent.h" />
