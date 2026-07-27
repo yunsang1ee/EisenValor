@@ -14,11 +14,14 @@
 #include <Packets/C2SPackets.h>
 #include <Component/FSM/FSMComponent.h>
 #include "Util/GameConstants.h"
+#include <unordered_set>
 
 using namespace DirectX;
 
 namespace
 {
+std::unordered_set<uint64> s_predictedHitFrameFiredObjectIDs;
+
 struct AttackTiming
 {
 	float preDelay;
@@ -355,6 +358,10 @@ void GeneralAttackState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
+	if (auto* obj = fsm ? fsm->GetGameObject() : nullptr)
+	{
+		s_predictedHitFrameFiredObjectIDs.erase(obj->GetServerID());
+	}
 	return;
 
 	/*DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
@@ -389,6 +396,15 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
+		if (auto* obj = fsm->GetGameObject())
+		{
+			auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+			const bool isLocalPlayer = scene && obj->GetServerID() == scene->GetLocalID();
+			if (!isLocalPlayer)
+			{
+				s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
+			}
+		}
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 		return;
 	}
