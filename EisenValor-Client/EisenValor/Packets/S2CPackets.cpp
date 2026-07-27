@@ -45,9 +45,18 @@
 
 using namespace NetBridge;
 
-namespace
-{
+	namespace
+	{
+		struct PredictedAttackEvent
+		{
+			uint64 attackerID = 0;
+			uint8_t attackType = 0;
+			uint8_t attackDir = 0;
+			bool hitChecked = false;
+		};
+
 	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
+	std::unordered_map<uint64, PredictedAttackEvent> s_predictedAttackByAttackerID;
 	uint8 s_latestRedScore = 0;
 	uint8 s_latestBlueScore = 0;
 	bool s_hasLatestAttackReaction = false;
@@ -98,14 +107,15 @@ namespace
 		}
 
 		const float radiusSq = attackRadius * attackRadius;
-		const Vec3& attackerPos = attacker->GetPosition();
-		const Vec3& attackerRot = attacker->GetRotation();
-		Vec3 attackerDir{ sinf(attackerRot.y), 0.f, cosf(attackerRot.y) };
+		const Vec3 attackerPos = attacker->GetTransform().GetPosition();
+		const Vec3 attackerRot = attacker->GetTransform().GetRotation();
+		const float attackerYaw = DirectX::XMConvertToRadians(attackerRot.y);
+		Vec3 attackerDir{ sinf(attackerYaw), 0.f, cosf(attackerYaw) };
 		attackerDir.Normalize();
 
 		const float halfDegree = attackDegree * 0.5f;
-		const float cosHalfAngle = std::cosf(Deg2Rad(halfDegree));
-		const Vec3& targetPos = target->GetPosition();
+		const float cosHalfAngle = std::cosf(DirectX::XMConvertToRadians(halfDegree));
+		const Vec3 targetPos = target->GetTransform().GetPosition();
 		const Vec3 toTargetDir = targetPos - attackerPos;
 		const float distToTargetSq =
 			toTargetDir.x * toTargetDir.x +
@@ -160,7 +170,13 @@ namespace
 				continue;
 			}
 
-			const uint8_t objectType = candidate->GetType();
+			auto* candidateFsm = candidate->GetComponent<FSMComponent>();
+			if (!candidateFsm)
+			{
+				continue;
+			}
+
+			const uint8_t objectType = candidateFsm->GetObjectType();
 			const bool isAttackableType =
 				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) ||
 				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) ||
@@ -1628,6 +1644,13 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 	}
 
 	// 1. 공격자 오브젝트 찾기
+	s_predictedAttackByAttackerID[id] = PredictedAttackEvent{
+		id,
+		static_cast<uint8_t>(type),
+		static_cast<uint8_t>(dir),
+		false
+	};
+
 	if (auto* obj = scene->FindGameObjectByServerID(id))
 	{
 		// 2. 컴포넌트 가져오기
