@@ -128,6 +128,63 @@ namespace
 		return (dotValue * dotValue) >= (distToTargetSq * cosHalfAngleSq);
 	}
 
+	GameObject* FindPredictedAttackTarget(
+		Scene* scene,
+		GameObject* attacker,
+		float attackRadius,
+		float attackDegree
+	)
+	{
+		if (!scene || !attacker)
+		{
+			return nullptr;
+		}
+
+		auto* attackerTeam = attacker->GetComponent<TeamComponent>();
+		if (!attackerTeam)
+		{
+			return nullptr;
+		}
+
+		auto* transformStorage = scene->GetStorage<Transform>();
+		if (!transformStorage)
+		{
+			return nullptr;
+		}
+
+		for (auto& transform : transformStorage->GetList())
+		{
+			GameObject* candidate = transform.GetGameObject();
+			if (!candidate || candidate == attacker)
+			{
+				continue;
+			}
+
+			const uint8_t objectType = candidate->GetType();
+			const bool isAttackableType =
+				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) ||
+				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) ||
+				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+			if (!isAttackableType)
+			{
+				continue;
+			}
+
+			auto* candidateTeam = candidate->GetComponent<TeamComponent>();
+			if (!candidateTeam || candidateTeam->GetTeamType() == attackerTeam->GetTeamType())
+			{
+				continue;
+			}
+
+			if (IsTargetInPredictedAttackRange(attacker, candidate, attackRadius, attackDegree))
+			{
+				return candidate;
+			}
+		}
+
+		return nullptr;
+	}
+
 	TextUIComponent* FindRemainingTimeText(Scene* scene)
 	{
 		if (!scene)
