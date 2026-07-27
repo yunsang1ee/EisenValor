@@ -7,6 +7,9 @@
 #include "AnimationResource.h"
 #include "SceneGlobal.h"
 #include "CameraComponent.h"
+#include "Scene.h"
+#include "Transform.h"
+#include "Component/TeamComponent.h"
 #include <GameObject.h>
 #include <GameObject.inl>
 #include <Packets/Enums_generated.h>
@@ -29,6 +32,12 @@ struct AttackTiming
 	float postDelay;
 };
 
+struct AttackShape
+{
+	float radius;
+	float degree;
+};
+
 AttackTiming GetAttackTiming(GENERAL_ATTACK_TYPE type)
 {
 	switch (type)
@@ -40,6 +49,118 @@ AttackTiming GetAttackTiming(GENERAL_ATTACK_TYPE type)
 	default:
 		return {9.0f / 30.0f, 3.0f / 30.0f, 3.0f / 30.0f};
 	}
+}
+
+AttackShape GetAttackShape(GENERAL_ATTACK_TYPE type)
+{
+	switch (type)
+	{
+	case GENERAL_ATTACK_TYPE_AREA:
+		return {7.0f, 160.0f};
+	default:
+		return {7.0f, 120.0f};
+	}
+}
+
+bool IsTargetInPredictedAttackRange(
+	GameObject* attacker,
+	GameObject* target,
+	float attackRadius,
+	float attackDegree
+)
+{
+	if (!attacker || !target)
+	{
+		return false;
+	}
+
+	const Vec3 attackerPos = attacker->GetTransform().GetPosition();
+	const Vec3 attackerRot = attacker->GetTransform().GetRotation();
+	const float attackerYaw = XMConvertToRadians(attackerRot.y);
+	Vec3 attackerDir{ sinf(attackerYaw), 0.f, cosf(attackerYaw) };
+	attackerDir.Normalize();
+
+	const float radiusSq = attackRadius * attackRadius;
+	const float halfDegree = attackDegree * 0.5f;
+	const float cosHalfAngle = std::cosf(XMConvertToRadians(halfDegree));
+	const Vec3 targetPos = target->GetTransform().GetPosition();
+	const Vec3 toTargetDir = targetPos - attackerPos;
+	const float distToTargetSq =
+		toTargetDir.x * toTargetDir.x +
+		toTargetDir.y * toTargetDir.y +
+		toTargetDir.z * toTargetDir.z;
+
+	if (distToTargetSq >= radiusSq)
+	{
+		return false;
+	}
+
+	const float dotValue = attackerDir.Dot(toTargetDir);
+	if (dotValue <= 0.f)
+	{
+		return false;
+	}
+
+	const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+	return (dotValue * dotValue) >= (distToTargetSq * cosHalfAngleSq);
+}
+
+GameObject* FindPredictedAttackTarget(
+	Scene* scene,
+	GameObject* attacker,
+	float attackRadius,
+	float attackDegree
+)
+{
+	if (!scene || !attacker)
+	{
+		return nullptr;
+	}
+
+	auto* attackerTeam = attacker->GetComponent<TeamComponent>();
+	auto* transformStorage = scene->GetStorage<Transform>();
+	if (!attackerTeam || !transformStorage)
+	{
+		return nullptr;
+	}
+
+	for (auto& transform : transformStorage->GetList())
+	{
+		GameObject* candidate = transform.GetGameObject();
+		if (!candidate || candidate == attacker)
+		{
+			continue;
+		}
+
+		auto* candidateFsm = candidate->GetComponent<FSMComponent>();
+		if (!candidateFsm)
+		{
+			continue;
+		}
+
+		const uint8_t objectType = candidateFsm->GetObjectType();
+		const bool isAttackableType =
+			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) ||
+			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) ||
+			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		if (!isAttackableType)
+		{
+			continue;
+		}
+
+		auto* candidateTeam = candidate->GetComponent<TeamComponent>();
+		if (!candidateTeam || candidateTeam->GetTeamType() == attackerTeam->GetTeamType())
+		{
+			continue;
+		}
+
+		if (IsTargetInPredictedAttackRange(attacker, candidate, attackRadius, attackDegree))
+		{
+			return candidate;
+		}
+	}
+
+	return nullptr;
 }
 
 uint8_t GetAttackAnimationKey(FSMComponent* fsm)
@@ -400,11 +521,22 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 		{
 			auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 			const bool isLocalPlayer = scene && obj->GetServerID() == scene->GetLocalID();
-			if (!isLocalPlayer)
-			{
-				s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
+				if (!isLocalPlayer)
+				{
+					s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
+					const AttackShape shape = GetAttackShape(type);
+					if (GameObject* target = FindPredictedAttackTarget(scene, obj, shape.radius, shape.degree))
+					{
+						DEBUG_LOG_FMT(
+							"[PredictedHitFrame] attacker={}, target={}, type={}, dir={}\n",
+							obj->GetServerID(),
+							target->GetServerID(),
+							static_cast<int>(fsm->GetCurAttackType()),
+							static_cast<int>(fsm->GetCurAttackDir())
+						);
+					}
+				}
 			}
-		}
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 		return;
 	}

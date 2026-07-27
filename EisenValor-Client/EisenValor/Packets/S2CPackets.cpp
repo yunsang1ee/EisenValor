@@ -47,18 +47,9 @@ using namespace NetBridge;
 
 	namespace
 	{
-		struct PredictedAttackEvent
-		{
-			uint64 attackerID = 0;
-			uint8_t attackType = 0;
-			uint8_t attackDir = 0;
-			bool hitChecked = false;
-		};
-
-	std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
-	std::unordered_map<uint64, PredictedAttackEvent> s_predictedAttackByAttackerID;
-	uint8 s_latestRedScore = 0;
-	uint8 s_latestBlueScore = 0;
+		std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
+		uint8 s_latestRedScore = 0;
+		uint8 s_latestBlueScore = 0;
 	bool s_hasLatestAttackReaction = false;
 	uint64 s_latestAttackAttackerID = 0;
 	uint8_t s_latestAttackType = 0;
@@ -94,115 +85,8 @@ using namespace NetBridge;
 		s_pendingStateByObjectID.erase(iter);
 	}
 
-	bool IsTargetInPredictedAttackRange(
-		GameObject* attacker,
-		GameObject* target,
-		float attackRadius,
-		float attackDegree
-	)
-	{
-		if (!attacker || !target)
+		TextUIComponent* FindRemainingTimeText(Scene* scene)
 		{
-			return false;
-		}
-
-		const float radiusSq = attackRadius * attackRadius;
-		const Vec3 attackerPos = attacker->GetTransform().GetPosition();
-		const Vec3 attackerRot = attacker->GetTransform().GetRotation();
-		const float attackerYaw = DirectX::XMConvertToRadians(attackerRot.y);
-		Vec3 attackerDir{ sinf(attackerYaw), 0.f, cosf(attackerYaw) };
-		attackerDir.Normalize();
-
-		const float halfDegree = attackDegree * 0.5f;
-		const float cosHalfAngle = std::cosf(DirectX::XMConvertToRadians(halfDegree));
-		const Vec3 targetPos = target->GetTransform().GetPosition();
-		const Vec3 toTargetDir = targetPos - attackerPos;
-		const float distToTargetSq =
-			toTargetDir.x * toTargetDir.x +
-			toTargetDir.y * toTargetDir.y +
-			toTargetDir.z * toTargetDir.z;
-
-		if (distToTargetSq >= radiusSq)
-		{
-			return false;
-		}
-
-		const float dotValue = attackerDir.Dot(toTargetDir);
-		const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
-
-		if (dotValue <= 0.f)
-		{
-			return false;
-		}
-
-		return (dotValue * dotValue) >= (distToTargetSq * cosHalfAngleSq);
-	}
-
-	GameObject* FindPredictedAttackTarget(
-		Scene* scene,
-		GameObject* attacker,
-		float attackRadius,
-		float attackDegree
-	)
-	{
-		if (!scene || !attacker)
-		{
-			return nullptr;
-		}
-
-		auto* attackerTeam = attacker->GetComponent<TeamComponent>();
-		if (!attackerTeam)
-		{
-			return nullptr;
-		}
-
-		auto* transformStorage = scene->GetStorage<Transform>();
-		if (!transformStorage)
-		{
-			return nullptr;
-		}
-
-		for (auto& transform : transformStorage->GetList())
-		{
-			GameObject* candidate = transform.GetGameObject();
-			if (!candidate || candidate == attacker)
-			{
-				continue;
-			}
-
-			auto* candidateFsm = candidate->GetComponent<FSMComponent>();
-			if (!candidateFsm)
-			{
-				continue;
-			}
-
-			const uint8_t objectType = candidateFsm->GetObjectType();
-			const bool isAttackableType =
-				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) ||
-				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) ||
-				objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
-			if (!isAttackableType)
-			{
-				continue;
-			}
-
-			auto* candidateTeam = candidate->GetComponent<TeamComponent>();
-			if (!candidateTeam || candidateTeam->GetTeamType() == attackerTeam->GetTeamType())
-			{
-				continue;
-			}
-
-			if (IsTargetInPredictedAttackRange(attacker, candidate, attackRadius, attackDegree))
-			{
-				return candidate;
-			}
-		}
-
-		return nullptr;
-	}
-
-	TextUIComponent* FindRemainingTimeText(Scene* scene)
-	{
 		if (!scene)
 		{
 			return nullptr;
@@ -1644,14 +1528,7 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 	}
 
 	// 1. 공격자 오브젝트 찾기
-	s_predictedAttackByAttackerID[id] = PredictedAttackEvent{
-		id,
-		static_cast<uint8_t>(type),
-		static_cast<uint8_t>(dir),
-		false
-	};
-
-	if (auto* obj = scene->FindGameObjectByServerID(id))
+		if (auto* obj = scene->FindGameObjectByServerID(id))
 	{
 		// 2. 컴포넌트 가져오기
 		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())

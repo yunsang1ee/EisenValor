@@ -61,6 +61,20 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	}
 
 	// 정책 기반 요청으로 변경 (공격 중 무시 등은 StatePolicy에서 처리)
+	if (m_objType != FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+	{
+		if (serverState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN))
+		{
+			RequestState(StateRequestType::Stun, targetState);
+			return;
+		}
+		if (serverState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD))
+		{
+			RequestState(StateRequestType::Die, targetState);
+			return;
+		}
+	}
+
 	RequestState(StateRequestType::ForcedServerCorrection, targetState);
 }
 
