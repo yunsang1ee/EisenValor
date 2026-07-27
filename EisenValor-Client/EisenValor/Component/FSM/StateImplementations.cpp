@@ -666,6 +666,18 @@ void GeneralStunState::Update(FSMComponent* fsm, float dt)
 	if (isLocalPlayer)
 	{
 		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		return;
+	}
+
+	const uint8_t recoveryState = fsm->GetServerState();
+	const bool isServerStunOrDead =
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_STUN) ||
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD);
+	if (!isServerStunOrDead)
+	{
+		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery, recoveryState);
 	}
 }
 
