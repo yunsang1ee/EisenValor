@@ -42,17 +42,18 @@ public:
 		DxDescriptorHeapGlobal* heap, uint32_t descriptorIndex, std::string_view debugName
 	);
 	void DeferResourceRelease(
-		ComPtr<ID3D12Resource> resource, const FenceHandle& fenceHandle, std::string_view debugName = ""
+		ComPtr<ID3D12Resource> resource,
+		const FenceHandle&	   fenceHandle,
+		std::string_view	   debugName = "",
+		std::function<void()>  onFinalized = {}
 	);
 	void DeferResourceReleaseAfterCurrentFrame(
-		ComPtr<ID3D12Resource> resource, std::string_view debugName = ""
+		ComPtr<ID3D12Resource> resource, std::string_view debugName = "", std::function<void()> onFinalized = {}
 	);
 	void DeferRelease(
 		std::function<void()> releaseCallback, const FenceHandle& fenceHandle, std::string_view debugName = ""
 	);
-	void DeferReleaseAfterCurrentFrame(
-		std::function<void()> releaseCallback, std::string_view debugName = ""
-	);
+	void DeferReleaseAfterCurrentFrame(std::function<void()> releaseCallback, std::string_view debugName = "");
 	void CommitCurrentFrameReleases(const FenceHandle& frameFence);
 
 	void ProcessCompleted(const CompletedFences& completedFences);
@@ -62,6 +63,10 @@ public:
 	void LogStats() const;
 
 private:
+	static std::function<void()> MakeResourceReleaseCallback(
+		ComPtr<ID3D12Resource> resource, std::function<void()> onFinalized
+	);
+
 	struct ReleaseEntry
 	{
 		std::function<void()> releaseCallback;
@@ -72,6 +77,6 @@ private:
 	};
 
 	std::array<std::deque<ReleaseEntry>, 3> m_releaseQueue;
-	std::deque<ReleaseEntry>                 m_currentFrameReleaseQueue;
+	std::deque<ReleaseEntry>				m_currentFrameReleaseQueue;
 	uint32_t								m_totalProcessed = 0;
 };

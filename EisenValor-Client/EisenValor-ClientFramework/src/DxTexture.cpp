@@ -174,8 +174,7 @@ void DxTexture::InitializeFromResource(
 {
 	assert(device && resource);
 
-	m_resource = std::move(resource);
-	SetName(name);
+	AdoptResource(device, std::move(resource), initialState, D3D12_HEAP_TYPE_DEFAULT, name);
 
 	auto desc = m_resource->GetDesc();
 	m_width = static_cast<uint32_t>(desc.Width);
@@ -186,10 +185,6 @@ void DxTexture::InitializeFromResource(
 	m_format = desc.Format;
 	m_isCubeMap = (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D && desc.DepthOrArraySize == 6);
 
-	m_currentState = initialState;
-	
-	D3D12_RESOURCE_ALLOCATION_INFO allocInfo = device->GetResourceAllocationInfo(0, 1, &desc);
-	m_sizeInBytes = allocInfo.SizeInBytes;
 	m_uavHandles.resize(m_mipLevels);
 
 	CreateSRV(device, GLOBAL(DxDescriptorHeapGlobal));
@@ -219,12 +214,18 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 	}
 
 	// 텍스처 리소스 생성
-	hr = DirectX::CreateTexture(device, image.GetMetadata(), &m_resource);
+	ComPtr<ID3D12Resource> textureResource;
+	hr = DirectX::CreateTexture(device, image.GetMetadata(), &textureResource);
 	if (FAILED(hr))
 	{
 		GRAPHICS_LOG_FMT("[DxTexture] Failed to create texture resource\n");
 		return;
 	}
+
+	AdoptResource(
+		device, std::move(textureResource), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_DEFAULT,
+		std::string(filePath.begin(), filePath.end())
+	);
 
 	// 메타데이터 갱신
 	const auto& meta = image.GetMetadata();
@@ -235,8 +236,6 @@ void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
 	m_format = meta.format;
 	m_arraySize = static_cast<uint32_t>(meta.arraySize);
 	m_isCubeMap = meta.miscFlags & DirectX::TEX_MISC_TEXTURECUBE;
-
-	SetName(std::string(filePath.begin(), filePath.end()));
 
 	// GetCopyableFootprints를 사용하여 레이아웃 계산 후 복사
 	UINT   numSubresources = static_cast<UINT>(meta.mipLevels * meta.arraySize);

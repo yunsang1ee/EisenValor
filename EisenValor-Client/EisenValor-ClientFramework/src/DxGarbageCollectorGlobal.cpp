@@ -3,14 +3,18 @@
 #include "DxDescriptorHeapGlobal.h"
 #include <string_view>
 
-namespace
+std::function<void()> DxGarbageCollectorGlobal::MakeResourceReleaseCallback(
+	ComPtr<ID3D12Resource> resource, std::function<void()> onFinalized
+)
 {
-std::function<void()> MakeResourceReleaseCallback(ComPtr<ID3D12Resource> resource)
-{
-	return [resource = std::move(resource)]() mutable
+	return [resource = std::move(resource), onFinalized = std::move(onFinalized)]() mutable
 	{
 		if (!resource)
 		{
+			if (onFinalized)
+			{
+				onFinalized();
+			}
 			return;
 		}
 
@@ -25,13 +29,21 @@ std::function<void()> MakeResourceReleaseCallback(ComPtr<ID3D12Resource> resourc
 					static_cast<uint32_t>(hr)
 				);
 				resource.Detach();
+				if (onFinalized)
+				{
+					onFinalized();
+				}
 				return;
 			}
 		}
 		resource.Reset();
+
+		if (onFinalized)
+		{
+			onFinalized();
+		}
 	};
 }
-} // namespace
 
 void DxGarbageCollectorGlobal::Initialize()
 {
@@ -60,7 +72,10 @@ void DxGarbageCollectorGlobal::DeferDescriptorFreeAfterCurrentFrame(
 }
 
 void DxGarbageCollectorGlobal::DeferResourceRelease(
-	ComPtr<ID3D12Resource> resource, const FenceHandle& fenceHandle, std::string_view debugName
+	ComPtr<ID3D12Resource> resource,
+	const FenceHandle&	   fenceHandle,
+	std::string_view	   debugName,
+	std::function<void()>  onFinalized
 )
 {
 	if (!resource)
@@ -69,11 +84,11 @@ void DxGarbageCollectorGlobal::DeferResourceRelease(
 		return;
 	}
 
-	DeferRelease(MakeResourceReleaseCallback(std::move(resource)), fenceHandle, debugName);
+	DeferRelease(MakeResourceReleaseCallback(std::move(resource), std::move(onFinalized)), fenceHandle, debugName);
 }
 
 void DxGarbageCollectorGlobal::DeferResourceReleaseAfterCurrentFrame(
-	ComPtr<ID3D12Resource> resource, std::string_view debugName
+	ComPtr<ID3D12Resource> resource, std::string_view debugName, std::function<void()> onFinalized
 )
 {
 	if (!resource)
@@ -82,7 +97,7 @@ void DxGarbageCollectorGlobal::DeferResourceReleaseAfterCurrentFrame(
 		return;
 	}
 
-	DeferReleaseAfterCurrentFrame(MakeResourceReleaseCallback(std::move(resource)), debugName);
+	DeferReleaseAfterCurrentFrame(MakeResourceReleaseCallback(std::move(resource), std::move(onFinalized)), debugName);
 }
 
 void DxGarbageCollectorGlobal::DeferRelease(
