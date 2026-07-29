@@ -2041,13 +2041,6 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 
 bool NetBridge::S2C::Handle_SC_HIT_SOUND_PACKET(const SOCKET& socket, const FB_TABLES::SC_HIT_SOUND_PACKET& recvPkt)
 {
-	const auto attackerID{recvPkt.attacker_id()};
-	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (scene && attackerID == scene->GetLocalID())
-	{
-		GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/sword_hurt.wav", AudioBus::SFX);
-	}
-
 	return true;
 }
 
