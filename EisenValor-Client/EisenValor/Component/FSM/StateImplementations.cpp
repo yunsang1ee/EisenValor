@@ -533,12 +533,21 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 			s_predictedHitFrameFiredObjectIDs.contains(obj->GetServerID());
 		if (!isPredictedImpactFired)
 		{
-			auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-			const bool isLocalPlayer = scene && obj->GetServerID() == scene->GetLocalID();
-			if (!isLocalPlayer)
+			s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
+			const AttackShape shape = GetAttackShape(type);
+			//DEBUG_LOG_FMT(
+			//	"[PredictedAttackImpact] attacker={}, type={}, dir={}, radius={}, degree={}\n",
+			//	obj->GetServerID(),
+			//	static_cast<int>(fsm->GetCurAttackType()),
+			//	static_cast<int>(fsm->GetCurAttackDir()),
+			//	shape.radius,
+			//	shape.degree
+			//);
+
+			GameObject* target = FindPredictedAttackTarget(scene, obj, shape.radius, shape.degree);
+			// 타겟이 없을 때
+			if (!target)
 			{
-				s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
-				const AttackShape shape = GetAttackShape(type);
 				/*DEBUG_LOG_FMT("[PredictedStunSkip] attacker={}, reason=no_target\n", obj->GetServerID());*/
 				return;
 			}
