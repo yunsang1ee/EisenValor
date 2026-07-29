@@ -525,9 +525,13 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
 	const float targetTime = GetAttackTiming(type).attack;
 
-	if (fsm->GetStateTimer() >= targetTime)
+	// 공격자가 ATTACK 상태에 들어왔을 때,클라에서 맞을 대상을 찾아서 그 대상을 미리 STUN
+	if (auto* obj = fsm->GetGameObject())
 	{
-		if (auto* obj = fsm->GetGameObject())
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		const bool isPredictedImpactFired =
+			s_predictedHitFrameFiredObjectIDs.contains(obj->GetServerID());
+		if (!isPredictedImpactFired)
 		{
 			auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 			const bool isLocalPlayer = scene && obj->GetServerID() == scene->GetLocalID();
@@ -535,26 +539,50 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 			{
 				s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
 				const AttackShape shape = GetAttackShape(type);
-				if (GameObject* target = FindPredictedAttackTarget(scene, obj, shape.radius, shape.degree))
+				/*DEBUG_LOG_FMT("[PredictedStunSkip] attacker={}, reason=no_target\n", obj->GetServerID());*/
+				return;
+			}
+			// 타겟이 있을 때
+			else if (auto* targetFsm = target->GetComponent<FSMComponent>())
+			{
+				targetFsm->SetCurAttackType(fsm->GetCurAttackType());
+				targetFsm->SetCurAttackDir(fsm->GetCurAttackDir());
+				// 타겟의 FSM이 STUN 상태로 전이 가능한지 확인 후 전이
+				if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
 				{
-					if (auto* targetFsm = target->GetComponent<FSMComponent>())
-					{
-						targetFsm->SetCurAttackType(fsm->GetCurAttackType());
-						targetFsm->SetCurAttackDir(fsm->GetCurAttackDir());
-						if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
-						{
-							DEBUG_LOG_FMT(
-								"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
-								obj->GetServerID(),
-								target->GetServerID(),
-								static_cast<int>(fsm->GetCurAttackType()),
-								static_cast<int>(fsm->GetCurAttackDir())
-							);
-						}
-					}
+					DEBUG_LOG_FMT(
+						"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
+						obj->GetServerID(),
+						target->GetServerID(),
+						static_cast<int>(fsm->GetCurAttackType()),
+						static_cast<int>(fsm->GetCurAttackDir())
+					);
+				}
+				else
+				{
+					DEBUG_LOG_FMT(
+						"[PredictedStunSkip] attacker={}, target={}, reason=request_rejected, targetState={}\n",
+						obj->GetServerID(),
+						target->GetServerID(),
+						static_cast<int>(targetFsm->GetCurStateType())
+					);
 				}
 			}
+			// 타겟의 FSM이 없을 때
+			else
+			{
+				//DEBUG_LOG_FMT(
+				//	"[PredictedStunSkip] attacker={}, target={}, reason=no_fsm\n",
+				//	obj->GetServerID(),
+				//	target->GetServerID()
+				//);
+				return;
+			}
 		}
+	}
+
+	if (fsm->GetStateTimer() >= targetTime)
+	{
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_POST_DELAY);
 		return;
 	}
