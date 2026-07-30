@@ -27,8 +27,6 @@ struct ParticipantInfo;
 
 struct GeneralAttackInfo;
 
-struct HitReactInfo;
-
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
   float x_;
@@ -183,44 +181,6 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) GeneralAttackInfo FLATBUFFERS_FINAL_CLASS
   }
 };
 FLATBUFFERS_STRUCT_END(GeneralAttackInfo, 2);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) HitReactInfo FLATBUFFERS_FINAL_CLASS {
- private:
-  uint64_t attacker_id_;
-  uint8_t attack_type_;
-  uint8_t attack_dir_;
-  int16_t padding0__;  int32_t padding1__;
-
- public:
-  HitReactInfo()
-      : attacker_id_(0),
-        attack_type_(0),
-        attack_dir_(0),
-        padding0__(0),
-        padding1__(0) {
-    (void)padding0__;
-    (void)padding1__;
-  }
-  HitReactInfo(uint64_t _attacker_id, FB_ENUMS::GENERAL_ATTACK_TYPE _attack_type, FB_ENUMS::GENERAL_ATTACK_DIR_TYPE _attack_dir)
-      : attacker_id_(::flatbuffers::EndianScalar(_attacker_id)),
-        attack_type_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_attack_type))),
-        attack_dir_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_attack_dir))),
-        padding0__(0),
-        padding1__(0) {
-    (void)padding0__;
-    (void)padding1__;
-  }
-  uint64_t attacker_id() const {
-    return ::flatbuffers::EndianScalar(attacker_id_);
-  }
-  FB_ENUMS::GENERAL_ATTACK_TYPE attack_type() const {
-    return static_cast<FB_ENUMS::GENERAL_ATTACK_TYPE>(::flatbuffers::EndianScalar(attack_type_));
-  }
-  FB_ENUMS::GENERAL_ATTACK_DIR_TYPE attack_dir() const {
-    return static_cast<FB_ENUMS::GENERAL_ATTACK_DIR_TYPE>(::flatbuffers::EndianScalar(attack_dir_));
-  }
-};
-FLATBUFFERS_STRUCT_END(HitReactInfo, 16);
 
 }  // namespace FB_STRUCTS
 

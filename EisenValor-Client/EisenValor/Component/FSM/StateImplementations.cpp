@@ -555,8 +555,31 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 			// 타겟이 있을 때
 			else if (auto* targetFsm = target->GetComponent<FSMComponent>())
 			{
+				// 타겟의 FSM이 있을 때 공격 방향이 같으면 Guard 상태로 전이
+				const uint8_t attackerDir = fsm->GetCurAttackDir();
+				const uint8_t defenderDir = targetFsm->GetCurAttackDir();
+				if (attackerDir != static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_NONE) &&
+					attackerDir == defenderDir)
+				{
+					targetFsm->SetGuardRole(FSMComponent::GuardRole::Defender);
+					fsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
+					const uint8_t guardState = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD);
+					const bool defenderGuarded = targetFsm->RequestState(FSMComponent::StateRequestType::Guard, guardState);
+					const bool attackerGuarded = fsm->RequestState(FSMComponent::StateRequestType::Guard, guardState);
+					if (defenderGuarded || attackerGuarded)
+					{
+						DEBUG_LOG_FMT(
+							"[PredictedGuard] defender={}, attacker={}, dir={}\n",
+							target->GetServerID(),
+							obj->GetServerID(),
+							static_cast<int>(attackerDir)
+						);
+					}
+					return;
+				}
+
 				targetFsm->SetCurAttackType(fsm->GetCurAttackType());
-				targetFsm->SetCurAttackDir(fsm->GetCurAttackDir());
+				targetFsm->SetCurAttackDir(attackerDir);
 				// 타겟의 FSM이 STUN 상태로 전이 가능한지 확인 후 전이
 				if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
 				{

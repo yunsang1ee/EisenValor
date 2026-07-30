@@ -1461,10 +1461,22 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const Vec3 pos{recvPkt.pos_info()->pos().x(), recvPkt.pos_info()->pos().y(), recvPkt.pos_info()->pos().z()};
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 	auto*	   fsm = obj->GetComponent<FSMComponent>();
-
+	
+	// Soldier가 죽은 상태일 때는 이동 패킷을 무시
 	if (fsm &&
 		fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
 		fsm->GetCurStateType() == StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD))
+	{
+		return true;
+	}
+	
+	// Guard 상태일 때는 이동 패킷을 무시
+	if (fsm &&
+		(fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD) ||
+		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_STUN) ||
+		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)))
 	{
 		return true;
 	}
@@ -1713,12 +1725,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		}
 		if (nextState == FB_ENUMS::PLAYER_STATE_TYPE_STUN || nextState == FB_ENUMS::GENERAL_STATE_TYPE_STUN)
 		{
-			if (const auto* hitReact = recvPkt.hit_react())
-			{
-				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(hitReact->attack_type()));
-				fsm->SetCurAttackDir(static_cast<uint8_t>(hitReact->attack_dir()));
-			}
-			else if (s_hasLatestAttackReaction)
+			if (s_hasLatestAttackReaction)
 			{
 				fsm->SetCurAttackType(s_latestAttackType);
 				fsm->SetCurAttackDir(s_latestAttackDir);
