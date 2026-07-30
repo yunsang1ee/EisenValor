@@ -1545,23 +1545,25 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 		// 2. 컴포넌트 가져오기
 		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
 		{
-			// UI 갱신
-			uiController->TriggerAttackRemote(type, dir);
-			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type),
-			// static_cast<int>(dir));
 
 			// FSM 상태 동기화: 공격 타입 설정
 			if (auto* fsm = obj->GetComponent<FSMComponent>())
 			{
 				fsm->SetCurAttackType(static_cast<GENERAL_ATTACK_TYPE>(type));
+				// 안전장치
+				fsm->SetCurAttackDir(static_cast<uint8_t>(dir));
 				const auto objectType = fsm->GetObjectType();
-				if (
-					objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL))
+				if (objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL))
 				{
 					fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY);
 				}
 			}
 			return true;
+
+			// UI 갱신
+			uiController->TriggerAttackRemote(type, dir);
+			// DEBUG_LOG_FMT("[SC_PLAYER_ATTACK] ID: {}, Type: {}, Dir: {}\n", id, static_cast<int>(type),
+			// static_cast<int>(dir));
 		}
 	}
 
@@ -2018,6 +2020,20 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 
 	const uint64 defenderID = recvPkt.defender_id();
 	const uint64 attackerID = recvPkt.attacker_id();
+	auto* attackerObj = scene->FindGameObjectByServerID(attackerID);
+	auto* attackerFsm = attackerObj ? attackerObj->GetComponent<FSMComponent>() : nullptr;
+	if (!attackerFsm)
+	{
+		return true;
+	}
+
+	const uint8_t attackerState = attackerFsm->GetCurStateType();	
+	// 공격자가 선딜이거나 attack 일 때만 guard 정정 적용
+	if (attackerState != static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_PRE_DELAY) &&
+		attackerState != static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ATTACK))
+	{
+		return true;
+	}
 
 	if (auto* defenderObj = scene->FindGameObjectByServerID(defenderID))
 	{
@@ -2031,16 +2047,13 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 		}
 	}
 
-	if (auto* attackerObj = scene->FindGameObjectByServerID(attackerID))
+	if (attackerObj)
 	{
-		if (auto* fsm = attackerObj->GetComponent<FSMComponent>())
-		{
-			fsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
-			fsm->RequestState(
-				FSMComponent::StateRequestType::Guard,
-				static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
-			);
-		}
+		attackerFsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
+		attackerFsm->RequestState(
+			FSMComponent::StateRequestType::Guard,
+			static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+		);
 	}
 
 	return true;
