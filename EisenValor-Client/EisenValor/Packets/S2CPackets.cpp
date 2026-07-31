@@ -1729,8 +1729,7 @@ bool NetBridge::S2C::Handle_SC_UPDATE_STATE_PACKET(
 		{
 			if (s_hasLatestAttackReaction)
 			{
-				fsm->SetCurAttackType(s_latestAttackType);
-				fsm->SetCurAttackDir(s_latestAttackDir);
+				fsm->SetHitReact(s_latestAttackType, s_latestAttackDir);
 				/*DEBUG_LOG_FMT(
 					"[HitReactSource] victim={}, attacker={}, attackType={}, attackDir={}\n",
 					objID,

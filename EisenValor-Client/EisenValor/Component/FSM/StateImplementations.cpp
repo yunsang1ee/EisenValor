@@ -558,6 +558,15 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 				// 타겟의 FSM이 있을 때 공격 방향이 같으면 Guard 상태로 전이
 				const uint8_t attackerDir = fsm->GetCurAttackDir();
 				const uint8_t defenderDir = targetFsm->GetCurAttackDir();
+				const uint8_t targetState = targetFsm->GetCurStateType();
+				/*DEBUG_LOG_FMT(
+					"[PredictedGuardCheck] attacker={}, target={}, attackerDir={}, defenderDir={}, targetState={}\n",
+					obj->GetServerID(),
+					target->GetServerID(),
+					static_cast<int>(attackerDir),
+					static_cast<int>(defenderDir),
+					static_cast<int>(targetState)
+				);*/
 				if (attackerDir != static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_NONE) &&
 					attackerDir == defenderDir)
 				{
@@ -578,28 +587,34 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 					return;
 				}
 
-				targetFsm->SetCurAttackType(fsm->GetCurAttackType());
-				targetFsm->SetCurAttackDir(attackerDir);
+				if (targetState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD))
+				{
+					return;
+				}
+
+				targetFsm->SetHitReact(fsm->GetCurAttackType(), attackerDir);
 				// 타겟의 FSM이 STUN 상태로 전이 가능한지 확인 후 전이
 				if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
 				{
 					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/sword_hurt.wav", AudioBus::SFX);
-					DEBUG_LOG_FMT(
-						"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
-						obj->GetServerID(),
-						target->GetServerID(),
-						static_cast<int>(fsm->GetCurAttackType()),
-						static_cast<int>(fsm->GetCurAttackDir())
-					);
+					//DEBUG_LOG_FMT(
+					//	"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
+					//	obj->GetServerID(),
+					//	target->GetServerID(),
+					//	static_cast<int>(fsm->GetCurAttackType()),
+					//	static_cast<int>(fsm->GetCurAttackDir())
+					//);
 				}
 				else
 				{
-					DEBUG_LOG_FMT(
-						"[PredictedStunSkip] attacker={}, target={}, reason=request_rejected, targetState={}\n",
-						obj->GetServerID(),
-						target->GetServerID(),
-						static_cast<int>(targetFsm->GetCurStateType())
-					);
+					// 타겟의 FSM이 STUN 상태로 전이 불가할 때
+					//DEBUG_LOG_FMT(
+					//	"[PredictedStunSkip] attacker={}, target={}, reason=request_rejected, targetState={}\n",
+					//	obj->GetServerID(),
+					//	target->GetServerID(),
+					//	static_cast<int>(targetFsm->GetCurStateType())
+					//);
+					return;
 				}
 			}
 			// 타겟의 FSM이 없을 때
@@ -693,8 +708,8 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 		{
 			//// 피격 방향(1, 2, 3) & 공격 강도(0:Light, 1:Heavy) 반영
 			// 기본 STUN
-			uint8_t dir = fsm->GetCurAttackDir();
-			uint8_t type = static_cast<uint8_t>(fsm->GetCurAttackType());
+			uint8_t dir = fsm->GetHitReactDir();
+			uint8_t type = fsm->GetHitReactType();
 
 			uint8_t stunKey = StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN);
 			if (dir >= 1 && dir <= 4)
