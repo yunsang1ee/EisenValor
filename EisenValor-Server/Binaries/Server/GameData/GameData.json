@@ -16,7 +16,7 @@
       "name": "LIGHT",
       "damage": 5,
       "extra_damage": 2,
-      "attack_radius": 7.0,
+      "attack_radius": 3.0,
       "attack_degree": 120.0,
       "stamina_cost": 10
     },
@@ -25,7 +25,7 @@
       "name": "HEAVY",
       "damage": 10,
       "extra_damage": 3,
-      "attack_radius": 7.0,
+      "attack_radius": 2.0,
       "attack_degree": 120.0,
       "stamina_cost": 10
     },
@@ -43,7 +43,7 @@
       "name": "DISARM",
       "damage": 5,
       "extra_damage": 0,
-      "attack_radius": 7.0,
+      "attack_radius": 5.0,
       "attack_degree": 120.0,
       "stamina_cost": 10
     }

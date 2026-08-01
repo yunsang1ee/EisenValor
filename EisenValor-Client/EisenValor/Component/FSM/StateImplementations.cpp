@@ -59,8 +59,10 @@ AttackShape GetAttackShape(GENERAL_ATTACK_TYPE type)
 	{
 	case GENERAL_ATTACK_TYPE_AREA:
 		return {7.0f, 160.0f};
+	case GENERAL_ATTACK_TYPE_HEAVY:
+		return {2.0f, 160.0f};
 	default:
-		return {7.0f, 120.0f};
+		return {3.0f, 120.0f};
 	}
 }
 
