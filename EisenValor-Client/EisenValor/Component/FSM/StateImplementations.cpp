@@ -8,6 +8,7 @@
 #include "SceneGlobal.h"
 #include "AudioGlobal.h"
 #include "CameraComponent.h"
+#include "NetworkGlobal.h"
 #include "Scene.h"
 #include "Transform.h"
 #include "Component/TeamComponent.h"
@@ -742,6 +743,14 @@ void GeneralStunState::Update(FSMComponent* fsm, float dt)
 	const bool isLocalPlayer = obj->GetServerID() == scene->GetLocalID();
 	if (isLocalPlayer)
 	{
+		// 안전장치
+		auto& transform = obj->GetTransform();
+		const auto pos = transform.GetWorldPosition();
+		const auto rot = transform.GetRotation();
+		FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
+
 		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
 		return;
 	}

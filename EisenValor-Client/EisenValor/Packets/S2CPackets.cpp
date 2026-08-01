@@ -1470,7 +1470,7 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 		return true;
 	}
 	
-	// Guard 상태일 때는 이동 패킷을 무시
+	// guard, stun dead: 이동 패킷을 무시
 	if (fsm &&
 		(fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD) ||
 		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
