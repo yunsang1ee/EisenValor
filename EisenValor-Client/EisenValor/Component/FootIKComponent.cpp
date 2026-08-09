@@ -210,7 +210,7 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	GroundHit leftGroundHit;
 	GroundHit rightGroundHit;
 	constexpr float kFootRayMaxUp = -0.05f;
-	constexpr float kFootRayMaxDown = 1.0f;
+	constexpr float kFootRayMaxDown = 1.5f;
 	bool leftHitValid;
 	{
 		PixScopedCpuEvent leftGroundQueryEvent(L"LeftGroundQuery");
@@ -283,7 +283,9 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	{
 		desiredPelvisOffsetY = std::clamp(desiredPelvisOffsetY, -m_maxPelvisDrop, 0.0f);
 	}
-	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, AnimationOffset::kIKDuration);
+	constexpr float kPelvisOffsetSpeed = AnimationOffset::kPelvisIKDuration;
+	constexpr float kFootIKWeightSpeed = AnimationOffset::kFootIKDuration;
+	m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, desiredPelvisOffsetY, deltaTime, kPelvisOffsetSpeed);
 	animation->SetModelRootOffsetY(m_pelvisOffsetY);
 	static uint32_t pelvisLogCounter = 0;
 	// m_pelvisOffsetY가 얼마인지 출력
@@ -318,8 +320,8 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 
 	// IK Weight 설정
 	// 지지하는 발이 있으면 그 발에 IK를 적용, 없으면 IK 비적용
-	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, AnimationOffset::kIKDuration);
-	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, AnimationOffset::kIKDuration);
+	m_leftWeight = SmoothApproach(m_leftWeight, leftPelvisSupport ? 1.0f : 0.0f, deltaTime, kFootIKWeightSpeed);
+	m_rightWeight = SmoothApproach(m_rightWeight, rightPelvisSupport ? 1.0f : 0.0f, deltaTime, kFootIKWeightSpeed);
 
 	// 원본 애니메이션의 무릎 방향을 힌트로 넘기기
 	const auto leftPoleVector = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(leftCalfMatrix.r[3], leftThighMatrix.r[3]));
@@ -389,7 +391,7 @@ bool FootIKComponent::TrySampleVisualGround(
 		return false;
 	}
 
-	constexpr float nearbyRadius = 15.0f;
+	constexpr float nearbyRadius = 5.0f;
 	constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
 	const auto	  rayOrigin = DirectX::XMVectorSet(worldPosition.x, worldPosition.y + maxUp, worldPosition.z, 1.0f);
 	const auto	  rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f);
