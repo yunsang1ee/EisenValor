@@ -148,6 +148,11 @@ size_t CountGroundQuerySourceMeshes(Scene* scene)
 	return count;
 }
 
+bool ShouldRebuildGroundQueryCache(const GroundQueryCache& cache, const Scene* scene, size_t sourceMeshCount)
+{
+	return !cache.isValid || cache.scene != scene || cache.sourceMeshCount != sourceMeshCount;
+}
+
 float SmoothApproach(float current, float target, float deltaTime, float speed)
 {
 	const float alpha = std::clamp(deltaTime * speed, 0.0f, 1.0f);
