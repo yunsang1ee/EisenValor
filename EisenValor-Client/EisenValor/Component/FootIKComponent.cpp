@@ -210,7 +210,7 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	GroundHit leftGroundHit;
 	GroundHit rightGroundHit;
 	constexpr float kFootRayMaxUp = -0.05f;
-	constexpr float kFootRayMaxDown = 1.5f;
+	constexpr float kFootRayMaxDown = 1.0f;
 	bool leftHitValid;
 	{
 		PixScopedCpuEvent leftGroundQueryEvent(L"LeftGroundQuery");
@@ -391,24 +391,24 @@ bool FootIKComponent::TrySampleVisualGround(
 		return false;
 	}
 
-	constexpr float nearbyRadius = 5.0f;
-	constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius;
-	const auto	  rayOrigin = DirectX::XMVectorSet(worldPosition.x, worldPosition.y + maxUp, worldPosition.z, 1.0f);
-	const auto	  rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f);
-	const float	  rayMaxDistance = maxUp + maxDown;
-	float		  bestRayDistance = std::numeric_limits<float>::max();
-	DirectX::XMFLOAT3 bestHitPoint = {};
-	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f};
-	DirectX::XMFLOAT3 bestTriV0 = {};
+	constexpr float nearbyRadius = 8.0f; // 발 주변에서 이 거리 안에 있는 메시만 바닥 후보로 봄
+	constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius; // 거리 비교를 빠르게 하려고 제곱 거리로 저장
+	const auto	  rayOrigin = DirectX::XMVectorSet(worldPosition.x, worldPosition.y + maxUp, worldPosition.z, 1.0f); // 발보다 위에서 아래로 쏠 레이 시작점
+	const auto	  rayDir = DirectX::XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f); // 레이가 향하는 아래쪽 방향
+	const float	  rayMaxDistance = maxUp + maxDown; 
+	float		  bestRayDistance = std::numeric_limits<float>::max(); // 지금까지 찾은 바닥 중 레이 시작점에서 가장 가까운 거리
+	DirectX::XMFLOAT3 bestHitPoint = {}; // 최종으로 선택된 바닥 충돌 위치
+	DirectX::XMFLOAT3 bestHitNormal = {0.0f, 1.0f, 0.0f}; // 최종 바닥의 기울기 방향. 기본값은 위쪽
+	DirectX::XMFLOAT3 bestTriV0 = {}; // 최종으로 맞은 삼각형의 꼭짓점
 	DirectX::XMFLOAT3 bestTriV1 = {};
 	DirectX::XMFLOAT3 bestTriV2 = {};
-	const GameObject* bestHitObj = nullptr;
-	const MeshResource* bestHitRes = nullptr;
-	size_t		  nearbyMeshCount = 0;
-	size_t		  pathResolvedCount = 0;
-	size_t		  loadedMeshCount = 0;
-	size_t		  triangleTestCount = 0;
-	size_t		  triangleIntersectCount = 0;
+	const GameObject* bestHitObj = nullptr; // 최종으로 맞은 바닥 메시를 가진 오브젝트
+	const MeshResource* bestHitRes = nullptr; // 최종으로 맞은 바닥 메시 리소스
+	size_t		  nearbyMeshCount = 0; // 발 근처라고 통과된 메시 개수
+	size_t		  pathResolvedCount = 0; // 메시 파일 경로를 찾는 데 성공한 개수
+	size_t		  loadedMeshCount = 0; // 실제 메시 데이터를 캐시에서 가져오거나 로드한 개수
+	size_t		  triangleTestCount = 0; // 레이와 삼각형 충돌 검사를 실행한 횟수
+	size_t		  triangleIntersectCount = 0; // 충돌 검사 결과 실제로 레이에 맞은 삼각형 개수
 
 	for (const auto& meshComp : meshStorage->GetList())
 	{
@@ -522,11 +522,11 @@ bool FootIKComponent::TrySampleVisualGround(
 		static uint32_t missLogCounter = 0;
 		if ((++missLogCounter % 30) == 0)
 		{
-			//DEBUG_LOG_FMT(
-			//	"[FootIK] sample miss foot=({:.3f},{:.3f},{:.3f}) up={:.2f} down={:.2f} nearby={} path={} loaded={} triTest={} triHit={}\n",
-			//	worldPosition.x, worldPosition.y, worldPosition.z, maxUp, maxDown, nearbyMeshCount, pathResolvedCount,
-			//	loadedMeshCount, triangleTestCount, triangleIntersectCount
-			//);
+			DEBUG_LOG_FMT(
+				"[FootIK] sample miss foot=({:.3f},{:.3f},{:.3f}) up={:.2f} down={:.2f} nearby={} path={} loaded={} triTest={} triHit={}\n",
+				worldPosition.x, worldPosition.y, worldPosition.z, maxUp, maxDown, nearbyMeshCount, pathResolvedCount,
+				loadedMeshCount, triangleTestCount, triangleIntersectCount
+			);
 		}
 		return false;
 	}
@@ -536,21 +536,22 @@ bool FootIKComponent::TrySampleVisualGround(
 	outHit.distance = bestRayDistance;
 	//UpdateHitMarker(this, scene, bestHitPoint);
 	static uint32_t hitLogCounter = 0;
-	//if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
-	//{
-	//	std::filesystem::path meshPath;
-	//	const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
-	//	DEBUG_LOG_FMT(
-	//		"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f}\n",
-	//		bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
-	//		worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
-	//		bestRayDistance
-	//	);
+	if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
+	{
+		std::filesystem::path meshPath;
+		const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
+		DEBUG_LOG_FMT(
+			"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f} nearby={} path={} loaded={} triTest={} triHit={}\n",
+			bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
+			worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
+			bestRayDistance, nearbyMeshCount, pathResolvedCount, loadedMeshCount, triangleTestCount,
+			triangleIntersectCount
+		);
 	//	DEBUG_LOG_FMT(
 	//		"[FootIK] hit tri v0=({:.3f},{:.3f},{:.3f}) v1=({:.3f},{:.3f},{:.3f}) v2=({:.3f},{:.3f},{:.3f}) normal=({:.3f},{:.3f},{:.3f})\n",
 	//		bestTriV0.x, bestTriV0.y, bestTriV0.z, bestTriV1.x, bestTriV1.y, bestTriV1.z, bestTriV2.x, bestTriV2.y,
 	//		bestTriV2.z, bestHitNormal.x, bestHitNormal.y, bestHitNormal.z
 	//	);
-	//}
+	}
 	return true;
 }
