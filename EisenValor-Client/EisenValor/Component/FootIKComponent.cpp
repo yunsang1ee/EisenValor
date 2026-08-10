@@ -115,6 +115,39 @@ GroundQueryCache& GetGroundQueryCache()
 	return cache;
 }
 
+// 지형 캐시 초기화
+void ResetGroundQueryCache(GroundQueryCache& cache)
+{
+	cache.scene = nullptr;
+	cache.sourceMeshCount = 0;
+	cache.triangles.clear();
+	cache.cells.clear();
+	cache.isValid = false;
+}
+
+// 현재 Scene에서 바닥 검사에 쓸 수 있는 메시가 몇 개인지 셈
+size_t CountGroundQuerySourceMeshes(Scene* scene)
+{
+	auto* meshStorage = scene ? scene->GetStorage<MeshComponent>() : nullptr;
+	if (!meshStorage)
+	{
+		return 0;
+	}
+
+	size_t count = 0;
+	for (const auto& meshComp : meshStorage->GetList())
+	{
+		if (!meshComp.IsValid() || !meshComp.GetGameObject() || !meshComp.GetMeshResource())
+		{
+			continue;
+		}
+
+		++count;
+	}
+
+	return count;
+}
+
 float SmoothApproach(float current, float target, float deltaTime, float speed)
 {
 	const float alpha = std::clamp(deltaTime * speed, 0.0f, 1.0f);
