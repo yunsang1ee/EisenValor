@@ -66,6 +66,55 @@ float DistanceSqXZ(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
 	return dx * dx + dz * dz;
 }
 
+// 삼각형 구조체
+struct GroundQueryTriangle
+{
+	DirectX::XMFLOAT3	v0 = {};
+	DirectX::XMFLOAT3	v1 = {};
+	DirectX::XMFLOAT3	v2 = {};
+	DirectX::XMFLOAT3	normal = {0.0f, 1.0f, 0.0f};
+	const GameObject*	sourceObject = nullptr;
+	const MeshResource* sourceMesh = nullptr;
+};
+
+// 셀 안에 있는 삼각형 번호
+struct GroundQueryCell
+{
+	std::vector<size_t> triangleIndices;
+};
+
+constexpr float kGroundQueryCellSize = 2.0f;
+
+// 땅 좌표를 셀 좌표로 변환
+std::int32_t ToGroundQueryCellCoord(float value)
+{
+	return static_cast<std::int32_t>(std::floor(value / kGroundQueryCellSize));
+}
+
+// 셀 좌표 키로 만드는 함수
+std::int64_t MakeGroundQueryCellKey(std::int32_t cellX, std::int32_t cellZ)
+{
+	const auto packedX = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cellX));
+	const auto packedZ = static_cast<std::uint64_t>(static_cast<std::uint32_t>(cellZ));
+	return static_cast<std::int64_t>((packedX << 32) | packedZ);
+}
+
+// 지형 쿼리 캐시 구조체
+struct GroundQueryCache
+{
+	const Scene* scene = nullptr;
+	size_t sourceMeshCount = 0;
+	std::vector<GroundQueryTriangle> triangles;
+	std::unordered_map<std::int64_t, GroundQueryCell> cells;
+	bool isValid = false;
+};
+
+GroundQueryCache& GetGroundQueryCache()
+{
+	static GroundQueryCache cache;
+	return cache;
+}
+
 float SmoothApproach(float current, float target, float deltaTime, float speed)
 {
 	const float alpha = std::clamp(deltaTime * speed, 0.0f, 1.0f);
