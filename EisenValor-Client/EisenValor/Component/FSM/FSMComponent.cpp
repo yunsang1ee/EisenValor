@@ -61,6 +61,25 @@ void FSMComponent::SetServerState(uint8_t serverState)
 	}
 
 	// 정책 기반 요청으로 변경 (공격 중 무시 등은 StatePolicy에서 처리)
+	if (m_objType != FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER)
+	{
+		if (serverState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN))
+		{
+			// STUN일 때 또 STUN이 오면 return
+			if (m_curStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN))
+			{
+				return;
+			}
+			RequestState(StateRequestType::Stun, targetState);
+			return;
+		}
+		if (serverState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD))
+		{
+			RequestState(StateRequestType::Die, targetState);
+			return;
+		}
+	}
+
 	RequestState(StateRequestType::ForcedServerCorrection, targetState);
 }
 
@@ -76,7 +95,12 @@ void FSMComponent::ChangeState(uint8_t nextStateType, bool ignoreExitTime)
 	//DEBUG_LOG_FMT("[FSM] ChangeState: {} -> {} (ObjType: {}, IgnoreExitTime: {})\n", (int)m_curStateType, (int)nextStateType, (int)m_objType, ignoreExitTime);
 
 	// 같은 상태일 때 애니메이션을 다시 틀지 않도록 방어
-	if (m_curStateType == nextStateType) return;
+	const bool isSameState = m_curStateType == nextStateType;
+	const bool canReplayStun =
+		ignoreExitTime &&
+		(nextStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+		 nextStateType == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_STUN));
+	if (isSameState && !canReplayStun) return;
 
 	// Dead 확인
 	bool isNextDead = (nextStateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||

@@ -55,6 +55,13 @@ public:
 		m_curAttackDir = dir;
 	}
 	uint8_t GetCurAttackDir() const { return m_curAttackDir; }
+	void SetHitReact(uint8_t type, uint8_t dir)
+	{
+		m_hitReactType = type;
+		m_hitReactDir = dir;
+	}
+	uint8_t GetHitReactType() const { return m_hitReactType; }
+	uint8_t GetHitReactDir() const { return m_hitReactDir; }
 
 	// 캐릭터 타입
 	void    SetObjectType(uint8_t type) { m_objType = type; }
@@ -94,6 +101,8 @@ private:
 	uint8_t m_curAttackDir = 0;  // 현재 공격 조준 방향 (GENERAL_ATTACK_DIR_TYPE)
 	uint8_t m_objType = 0;       // 캐릭터 타입 (GAME_OBJECT_TYPE)
 	uint8_t m_stance = 0;        // 현재 자세 (GENERAL_STANCE_TYPE)
+	uint8_t m_hitReactType = 0;
+	uint8_t m_hitReactDir = 0;
 	GuardRole m_guardRole = GuardRole::None;
 	FB_ENUMS::MOVE_DIRECTION_TYPE	 m_moveDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD; // 현재 이동 방향
 	FB_ENUMS::MOVE_DIRECTION_TYPE	 m_dodgeDir = FB_ENUMS::MOVE_DIRECTION_TYPE_FWD; // 현재 회피 방향

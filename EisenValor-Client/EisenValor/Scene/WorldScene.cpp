@@ -211,6 +211,7 @@ void WorldScene::OnStartImpl()
 		}
 	);
 
+	/*
 	ReserveGameObject(
 		"QuestMessage", std::nullopt,
 		[this](GameObject* obj)
@@ -254,6 +255,7 @@ void WorldScene::OnStartImpl()
 			CreateComponent<QuestProgressComponent>(obj->GetHandle());
 		}
 	);
+	*/
 
 	ReserveGameObject(
 		"OccupationGaugeRoot", std::nullopt,

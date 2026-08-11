@@ -20,7 +20,8 @@ namespace
 				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
 				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
 				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DODGE) ||
-				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ROLL));
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_ROLL) ||
+				stateType == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD));
 	}
 
 	// 회피 금지
