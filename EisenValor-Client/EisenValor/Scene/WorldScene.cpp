@@ -1,4 +1,4 @@
-﻿#include "stdafxClient.h"
+#include "stdafxClient.h"
 #include "WorldScene.h"
 #include "Scene\SceneComponentData\TorchEmitterSceneComponentData.h"
 
@@ -16,6 +16,7 @@
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
 #include "Component/World/WorldSceneControllerComponent.h"
+#include "StreamlineGlobal.h"
 #include "Component/World/WorldLoadingControllerComponent.h"
 #include "Component/World/QuestProgressComponent.h"
 #include "Component/World/QuestUIComponent.h"
@@ -55,7 +56,7 @@ constexpr float			   kDebugNavMeshYOffset = 0.0f;
 constexpr float			   kDebugMapObjYOffset = 0.0f;
 constexpr float			   kTorchPreviewSphereScale = 1.5f;
 constexpr float			   kTorchPreviewSphereMinDiameter = 0.15f;
-constexpr float			   kTorchTransportEmissionScale = 65.0f;
+constexpr float			   kTorchTransportEmissionScale = 195.0f;
 constexpr float			   kTorchVisibleEmissionScale = 2.5f;
 
 struct TorchPreviewColor
@@ -93,8 +94,8 @@ void WorldScene::OnRegisterCustomComponents()
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent,
-		WorldLoadingControllerComponent, QuestUIComponent, QuestProgressComponent>();
+		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent, WorldLoadingControllerComponent,
+		QuestUIComponent, QuestProgressComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
@@ -157,11 +158,15 @@ void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
 	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 0.1f);
+	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
+	GLOBAL(StreamlineGlobal).RequestFeatureWarmup();
 
+#ifndef APPLY_LOBBY_SERVER
 	if (!GLOBAL(NetBridge::NetworkGlobal).Init("127.0.0.1", G_GAME_SERVER_PORT))
 	{
 		DEBUG_LOG_FMT("[WorldScene] Failed to connect game server.\n");
 	}
+#endif
 
 	ReserveGameObject(
 		"WorldLoadingOverlay", std::nullopt,
@@ -182,30 +187,19 @@ void WorldScene::OnStartImpl()
 				obj->GetHandle(),
 				[](ImageUIComponent* image)
 				{
-					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
-						L"Resource\\Texture\\Scene\\loadingscene.evtex");
+					auto texture =
+						GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\Scene\\loadingscene.evtex");
 					image->SetNormalTextureResource(texture);
 					image->SetOrder(100000);
 				}
 			);
 
-			CreateComponent<WorldLoadingControllerComponent>(obj->GetHandle());
+			CreateComponentWithInit<WorldLoadingControllerComponent>(
+				obj->GetHandle(),
+				[this](WorldLoadingControllerComponent* controller) { controller->SetWorldScene(*this); }
+			);
 		}
 	);
-
-#if 0
-	if (false)
-	{
-		CreateSceneObjects();
-
-		// ?쒕쾭 ?놁씠 ?뚯뒪?몃? ?꾪븳 ?ㅽ듃?덉뒪 ?뚯뒪???ㅻ툕?앺듃 ?앹꽦
-		// ReserveGameObject(
-		//	"StressTester", std::nullopt,
-		//	[this](GameObject* obj) { CreateComponent<StressTestComponent>(obj->GetHandle()); }
-		//);
-	}
-
-#endif
 
 	ReserveGameObject(
 		"WorldSceneController", std::nullopt,
@@ -236,8 +230,7 @@ void WorldScene::OnStartImpl()
 				obj->GetHandle(),
 				[](ImageUIComponent* image)
 				{
-					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(
-						L"Resource\\Texture\\quest.evtex");
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\quest.evtex");
 					image->SetNormalTextureResource(texture);
 					image->SetColor({1.0f, 1.0f, 1.0f, 0.0f});
 					image->SetOrder(99998);
@@ -292,9 +285,7 @@ void WorldScene::OnStartImpl()
 				"OccupationGaugeBlue", std::nullopt,
 				[this, rootHandle](GameObject* fillObj)
 				{
-					fillObj->GetTransform().SetParent(
-						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
-					);
+					fillObj->GetTransform().SetParent(TryGetGameObject(rootHandle)->GetComponentHandle<Transform>());
 
 					CreateComponentWithInit<RectTransformComponent>(
 						fillObj->GetHandle(),
@@ -322,9 +313,7 @@ void WorldScene::OnStartImpl()
 				"OccupationGaugeRed", std::nullopt,
 				[this, rootHandle](GameObject* fillObj)
 				{
-					fillObj->GetTransform().SetParent(
-						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
-					);
+					fillObj->GetTransform().SetParent(TryGetGameObject(rootHandle)->GetComponentHandle<Transform>());
 
 					CreateComponentWithInit<RectTransformComponent>(
 						fillObj->GetHandle(),
@@ -352,9 +341,7 @@ void WorldScene::OnStartImpl()
 				"OccupationGaugeCenterLine", std::nullopt,
 				[this, rootHandle](GameObject* lineObj)
 				{
-					lineObj->GetTransform().SetParent(
-						TryGetGameObject(rootHandle)->GetComponentHandle<Transform>()
-					);
+					lineObj->GetTransform().SetParent(TryGetGameObject(rootHandle)->GetComponentHandle<Transform>());
 
 					CreateComponentWithInit<RectTransformComponent>(
 						lineObj->GetHandle(),
@@ -381,6 +368,152 @@ void WorldScene::OnStartImpl()
 	);
 
 	ReserveGameObject(
+		"OccupationGaugeRootB", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.0f, 0.0f}, {0.0f, 0.0f});
+					rect->SetPivot({0.0f, 0.0f});
+					rect->SetOffsetMin({24.0f, 60.0f});
+					rect->SetOffsetMax({344.0f, 84.0f});
+				}
+			);
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					image->SetNormalColor({0.05f, 0.05f, 0.05f, 0.9f});
+					image->SetOrder(99990);
+				}
+			);
+
+			const auto rootHandle = obj->GetHandle();
+			ReserveGameObject(
+				"OccupationGaugeBlueB", std::nullopt,
+				[this, rootHandle](GameObject* fillObj)
+				{
+					fillObj->GetTransform().SetParent(TryGetGameObject(rootHandle)->GetComponentHandle<Transform>());
+					CreateComponentWithInit<RectTransformComponent>(
+						fillObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.0f, 0.0f}, {0.5f, 1.0f});
+							rect->SetPivot({0.0f, 0.5f});
+							rect->SetOffsetMin({2.0f, 2.0f});
+							rect->SetOffsetMax({-1.0f, -2.0f});
+						}
+					);
+					CreateComponentWithInit<ImageUIComponent>(
+						fillObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({0.15f, 0.35f, 1.0f, 1.0f});
+							image->SetOrder(99991);
+						}
+					);
+				}
+			);
+
+			ReserveGameObject(
+				"OccupationGaugeRedB", std::nullopt,
+				[this, rootHandle](GameObject* fillObj)
+				{
+					fillObj->GetTransform().SetParent(TryGetGameObject(rootHandle)->GetComponentHandle<Transform>());
+					CreateComponentWithInit<RectTransformComponent>(
+						fillObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.5f, 0.0f}, {1.0f, 1.0f});
+							rect->SetPivot({1.0f, 0.5f});
+							rect->SetOffsetMin({1.0f, 2.0f});
+							rect->SetOffsetMax({-2.0f, -2.0f});
+						}
+					);
+					CreateComponentWithInit<ImageUIComponent>(
+						fillObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({1.0f, 0.2f, 0.2f, 1.0f});
+							image->SetOrder(99991);
+						}
+					);
+				}
+			);
+
+			ReserveGameObject(
+				"OccupationGaugeCenterLineB", std::nullopt,
+				[this, rootHandle](GameObject* lineObj)
+				{
+					lineObj->GetTransform().SetParent(TryGetGameObject(rootHandle)->GetComponentHandle<Transform>());
+					CreateComponentWithInit<RectTransformComponent>(
+						lineObj->GetHandle(),
+						[](RectTransformComponent* rect)
+						{
+							rect->SetAnchors({0.5f, 0.0f}, {0.5f, 1.0f});
+							rect->SetPivot({0.5f, 0.5f});
+							rect->SetOffsetMin({-1.0f, 2.0f});
+							rect->SetOffsetMax({1.0f, -2.0f});
+						}
+					);
+					CreateComponentWithInit<ImageUIComponent>(
+						lineObj->GetHandle(),
+						[](ImageUIComponent* image)
+						{
+							image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.85f});
+							image->SetOrder(99992);
+						}
+					);
+				}
+			);
+		}
+	);
+
+	for (size_t zoneIndex = 0; zoneIndex < 2; ++zoneIndex)
+	{
+		const std::string name = "OccupationGaugeLabel" + std::to_string(zoneIndex);
+		ReserveGameObject(
+			name, std::nullopt,
+			[this, zoneIndex](GameObject* obj)
+			{
+				CreateComponentWithInit<RectTransformComponent>(
+					obj->GetHandle(),
+					[zoneIndex](RectTransformComponent* rect)
+					{
+						const float y = 24.0f + static_cast<float>(zoneIndex) * 36.0f;
+						rect->SetAnchors({0.0f, 0.0f}, {0.0f, 0.0f});
+						rect->SetPivot({0.0f, 0.0f});
+						rect->SetOffsetMin({352.0f, y});
+						rect->SetOffsetMax({392.0f, y + 24.0f});
+					}
+				);
+				CreateComponentWithInit<ImageUIComponent>(
+					obj->GetHandle(),
+					[](ImageUIComponent* image)
+					{
+						image->SetNormalColor({0.05f, 0.05f, 0.05f, 0.95f});
+						image->SetOrder(99992);
+					}
+				);
+				CreateComponentWithInit<TextUIComponent>(
+					obj->GetHandle(),
+					[zoneIndex](TextUIComponent* text)
+					{
+						text->SetText(zoneIndex == 0 ? L"A" : L"B");
+						text->SetFontSize(20.0f);
+						text->SetHorizontalAlign(TextHorizontalAlign::Center);
+						text->SetVerticalAlign(TextVerticalAlign::Center);
+						text->SetColor({1.0f, 1.0f, 1.0f, 1.0f});
+						text->SetOrder(99993);
+					}
+				);
+			}
+		);
+	}
+
+	ReserveGameObject(
 		"RemainingTimeText", std::nullopt,
 		[this](GameObject* obj)
 		{
@@ -392,6 +525,17 @@ void WorldScene::OnStartImpl()
 					rect->SetPivot({0.5f, 0.0f});
 					rect->SetOffsetMin({-120.0f, 16.0f});
 					rect->SetOffsetMax({120.0f, 60.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\UIback.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.95f});
+					image->SetOrder(99994);
 				}
 			);
 
@@ -437,36 +581,13 @@ void WorldScene::CreateSceneObjects()
 		}
 	);
 
-	/*ReserveGameObject(
-		"TestSphere", std::nullopt,
-		[this](GameObject* obj)
-		{
-			auto& tr = obj->GetTransform();
-			tr.SetPosition(0.0f, 2.0f, 0.0f);
-			tr.SetScale(2.0f);
-
-			CreateComponentWithInit<MeshComponent>(
-				obj->GetHandle(),
-				[](MeshComponent* mesh)
-				{
-					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>("Resource/Models/Sphere.evmesh");
-					if (nullptr != meshRes)
-					{
-						mesh->SetMeshResource(meshRes);
-					}
-				}
-			);
-		}
-	);*/
-
 	DEBUG_LOG_FMT("[WorldScene] Scene objects created and assets linked\n");
 }
 
 void WorldScene::OnEndImpl()
 {
+	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 1.0f);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
-
-

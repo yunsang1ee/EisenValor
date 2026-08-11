@@ -314,6 +314,7 @@ exit /b 0</Command>
     <ClInclude Include="Component\AttackRangeDebugComponent.h" />
     <ClInclude Include="Component\FootIKComponent.h" />
     <ClInclude Include="Component\HealthComponent.h" />
+    <ClInclude Include="Component\Lobby\LobbyClientState.h" />
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
     <ClInclude Include="Component\Login\LoginSceneControllerComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />

@@ -18,7 +18,8 @@
 
 DlssUpscalePass::DlssUpscalePass(uint32_t displayWidth, uint32_t displayHeight)
 	: m_displayWidth(displayWidth), m_displayHeight(displayHeight)
-{}
+{
+}
 
 void DlssUpscalePass::Initialize()
 {
@@ -69,22 +70,75 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	auto& outputData = m_outputData.GetCurrent();
 	outputData.validThisFrame = false;
 	outputData.usedRayReconstruction = false;
+	outputData.status = DlssOutputStatus::NotRun;
+	outputData.missingInputMask = DlssMissingInputMask::None;
 	renderContext->Set(m_outputData);
 
 	auto& streamline = GLOBAL(StreamlineGlobal);
 	if (!streamline.IsEnabled())
 	{
+		outputData.status = DlssOutputStatus::Disabled;
+		outputData.missingInputMask = DlssMissingInputMask::None;
 		return;
 	}
 
-	auto* raytracingOutput = renderContext->Get<RaytracingOutputRenderData>();
-	auto* candidateData = renderContext->Get<RestirCandidateRenderData>();
-	auto* cameraData = renderContext->Get<CameraRenderData>();
-	if (nullptr == raytracingOutput || nullptr == candidateData || nullptr == cameraData ||
-		raytracingOutput->bypassToneMap || !candidateData->validThisFrame || nullptr == raytracingOutput->outputTexture ||
-		nullptr == outputData.outputTexture || nullptr == candidateData->linearDepthTexture ||
-		nullptr == candidateData->motionVectorTexture)
+	auto*	 raytracingOutput = renderContext->Get<RaytracingOutputRenderData>();
+	auto*	 candidateData = renderContext->Get<RestirCandidateRenderData>();
+	auto*	 cameraData = renderContext->Get<CameraRenderData>();
+	uint32_t missingInputMask = DlssMissingInputMask::None;
+	if (nullptr == raytracingOutput)
 	{
+		missingInputMask |= DlssMissingInputMask::NoRaytracingOutput;
+	}
+	if (nullptr == candidateData)
+	{
+		missingInputMask |= DlssMissingInputMask::NoCandidateData;
+	}
+	if (nullptr == cameraData)
+	{
+		missingInputMask |= DlssMissingInputMask::NoCameraData;
+	}
+	if (raytracingOutput)
+	{
+		if (raytracingOutput->bypassToneMap)
+		{
+			missingInputMask |= DlssMissingInputMask::BypassToneMap;
+		}
+		if (nullptr == raytracingOutput->outputTexture)
+		{
+			missingInputMask |= DlssMissingInputMask::NoColorInput;
+		}
+	}
+	if (nullptr == outputData.outputTexture)
+	{
+		missingInputMask |= DlssMissingInputMask::NoColorOutput;
+	}
+	if (candidateData)
+	{
+		if (!candidateData->validThisFrame)
+		{
+			missingInputMask |= DlssMissingInputMask::CandidateInvalid;
+		}
+		if (nullptr == candidateData->linearDepthTexture)
+		{
+			missingInputMask |= DlssMissingInputMask::NoDepth;
+		}
+		if (nullptr == candidateData->motionVectorTexture)
+		{
+			missingInputMask |= DlssMissingInputMask::NoMotionVectors;
+		}
+	}
+	const bool warmupActive = streamline.IsFeatureWarmupActive();
+	if (warmupActive && !streamline.IsFeatureWarmupAllowed())
+	{
+		outputData.status = DlssOutputStatus::WarmingUp;
+		return;
+	}
+
+	if (DlssMissingInputMask::None != missingInputMask)
+	{
+		outputData.status = DlssOutputStatus::MissingInput;
+		outputData.missingInputMask = missingInputMask;
 		return;
 	}
 
@@ -97,11 +151,25 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	auto* normalRoughness = candidateData->normalRoughnessTexture.get();
 	if (nullptr == diffuseAlbedo || nullptr == specularAlbedo || nullptr == normalRoughness)
 	{
+		if (nullptr == diffuseAlbedo)
+		{
+			missingInputMask |= DlssMissingInputMask::NoDiffuseAlbedo;
+		}
+		if (nullptr == specularAlbedo)
+		{
+			missingInputMask |= DlssMissingInputMask::NoSpecularAlbedo;
+		}
+		if (nullptr == normalRoughness)
+		{
+			missingInputMask |= DlssMissingInputMask::NoNormalRoughness;
+		}
+		outputData.status = DlssOutputStatus::MissingGuideInput;
+		outputData.missingInputMask = missingInputMask;
 		return;
 	}
 
-	auto& context = *frame->GetMainContext();
-	auto* commandList = context.CommandList();
+	auto&			 context = *frame->GetMainContext();
+	auto*			 commandList = context.CommandList();
 	DxScopedGpuEvent gpuEvent(context, L"DLSS.Evaluate");
 
 	DxUtils::TransitionResourceIfNeeded(commandList, colorInput, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
@@ -114,6 +182,8 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 
 	StreamlineEvaluateDesc evaluateDesc = {};
 	evaluateDesc.commandList = commandList;
+	evaluateDesc.completionFence = frame->GetFence();
+	evaluateDesc.completionFenceValue = frame->GetFenceValue() + 1u;
 	evaluateDesc.colorInput = colorInput->GetResource();
 	evaluateDesc.colorOutput = colorOutput->GetResource();
 	evaluateDesc.linearDepth = linearDepth->GetResource();
@@ -131,13 +201,18 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 
 	if (!streamline.Evaluate(evaluateDesc))
 	{
+		outputData.status = DlssOutputStatus::EvaluateFailed;
+		outputData.missingInputMask = DlssMissingInputMask::None;
 		return;
 	}
 
 	const D3D12_RESOURCE_BARRIER outputBarrier = DxUtils::CreateUAVBarrier(colorOutput->GetResource());
 	commandList->ResourceBarrier(1, &outputBarrier);
+
 	outputData.validThisFrame = true;
 	outputData.usedRayReconstruction = streamline.IsRayReconstructionEnabled();
+	outputData.status = DlssOutputStatus::Valid;
+	outputData.missingInputMask = DlssMissingInputMask::None;
 	m_resetHistory = false;
 }
 

@@ -103,7 +103,7 @@ private:
 
 	bool	 m_initialized = false;
 	bool	 m_usePathTracing = false;
-	bool	 m_useRestirPT = false;
+	bool	 m_useRestirPT = true;
 	bool	 m_usePhysicalEmissionView = false;
 	bool	 m_useDayEnvironment = false;
 	bool	 m_hasPreviousViewProj = false;
