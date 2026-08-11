@@ -115,6 +115,26 @@ GroundQueryCache& GetGroundQueryCache()
 	return cache;
 }
 
+// Mesh Data Caching
+std::shared_ptr<EvAsset::MeshData> GetCachedMeshData(const EvAsset::Guid& guid, const std::filesystem::path& path)
+{
+	static std::unordered_map<EvAsset::Guid, std::shared_ptr<EvAsset::MeshData>, EvAsset::GuidHash> meshDataCache;
+
+	if (auto it = meshDataCache.find(guid); it != meshDataCache.end())
+	{
+		return it->second;
+	}
+
+	auto meshData = std::make_shared<EvAsset::MeshData>();
+	if (!EvAsset::AssetLoader::Load(path, *meshData))
+	{
+		return nullptr;
+	}
+
+	meshDataCache[guid] = meshData;
+	return meshData;
+}
+
 // 지형 캐시 초기화
 void ResetGroundQueryCache(GroundQueryCache& cache)
 {
@@ -241,7 +261,6 @@ bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
 			DirectX::XMStoreFloat3(&triNormal, normal);
 
 			// 삼각형 인덱스
-			const size_t		triangleIndex = cache.triangles.size();
 			const size_t triangleIndex = cache.triangles.size();
 			GroundQueryTriangle triangle;
 			triangle.v0 = triV0;
@@ -305,26 +324,6 @@ float SmoothApproach(float current, float target, float deltaTime, float speed)
 {
 	const float alpha = std::clamp(deltaTime * speed, 0.0f, 1.0f);
 	return current + (target - current) * alpha;
-}
-
-
-std::shared_ptr<EvAsset::MeshData> GetCachedMeshData(const EvAsset::Guid& guid, const std::filesystem::path& path)
-{
-	static std::unordered_map<EvAsset::Guid, std::shared_ptr<EvAsset::MeshData>, EvAsset::GuidHash> meshDataCache;
-
-	if (auto it = meshDataCache.find(guid); it != meshDataCache.end())
-	{
-		return it->second;
-	}
-
-	auto meshData = std::make_shared<EvAsset::MeshData>();
-	if (!EvAsset::AssetLoader::Load(path, *meshData))
-	{
-		return nullptr;
-	}
-
-	meshDataCache[guid] = meshData;
-	return meshData;
 }
 
 void UpdateHitMarker(const FootIKComponent* ownerComponent, Scene* scene, const DirectX::XMFLOAT3& worldPosition)
@@ -445,7 +444,7 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	GroundHit leftGroundHit;
 	GroundHit rightGroundHit;
 	constexpr float kFootRayMaxUp = -0.05f;
-	constexpr float kFootRayMaxDown = 1.0f;
+	constexpr float kFootRayMaxDown = 1.5f;
 	bool leftHitValid;
 	{
 		PixScopedCpuEvent leftGroundQueryEvent(L"LeftGroundQuery");
@@ -648,6 +647,7 @@ bool FootIKComponent::TrySampleVisualGround(
 	size_t		  triangleTestCount = 0; // 레이와 삼각형 충돌 검사를 실행한 횟수
 	size_t		  triangleIntersectCount = 0; // 충돌 검사 결과 실제로 레이에 맞은 삼각형 개수
 
+	// 메시 삼각형 캐싱해서 사용하기
 	const std::int32_t queryCellX = ToGroundQueryCellCoord(worldPosition.x);
 	const std::int32_t queryCellZ = ToGroundQueryCellCoord(worldPosition.z);
 	const auto queryCellKey = MakeGroundQueryCellKey(queryCellX, queryCellZ);
@@ -664,86 +664,20 @@ bool FootIKComponent::TrySampleVisualGround(
 	{
 		for (const size_t triangleIndex : queryCell->triangleIndexesInThisCell)
 		{
-			(void)triangleIndex;
-			++cachedTriangleCandidateCount;
-		}
-	}
-	(void)cachedTriangleCandidateCount;
-
-	for (const auto& meshComp : meshStorage->GetList())
-	{
-		if (!meshComp.IsValid())
-		{
-			continue;
-		}
-
-		auto* meshObj = meshComp.GetGameObject();
-		auto* meshRes = meshComp.GetMeshResource();
-		if (!meshObj || !meshRes)
-		{
-			continue;
-		}
-
-		const auto worldPos = meshObj->GetTransform().GetWorldPosition();
-		if (DistanceSqXZ(worldPos, worldPosition) > nearbyRadiusSq)
-		{
-			continue;
-		}
-		// Mesh object origins are not reliable surface heights, so keep only the XZ proximity filter here.
-		++nearbyMeshCount;
-
-		std::filesystem::path meshPath;
-		if (!GLOBAL(ResourceGlobal).TryGetPath(meshRes->GetGuid(), meshPath))
-		{
-			continue;
-		}
-		++pathResolvedCount;
-
-		auto meshData = GetCachedMeshData(meshRes->GetGuid(), meshPath);
-		if (!meshData)
-		{
-			continue;
-		}
-		++loadedMeshCount;
-
-		const auto worldMatrix = meshObj->GetTransform().GetWorldMatrix();
-		const auto world = DirectX::XMLoadFloat4x4(&worldMatrix);
-
-		for (size_t index = 0; index + 2 < meshData->indices.size(); index += 3)
-		{
-			const uint32_t i0 = meshData->indices[index];
-			const uint32_t i1 = meshData->indices[index + 1];
-			const uint32_t i2 = meshData->indices[index + 2];
-			if (i0 >= meshData->vertices.size() || i1 >= meshData->vertices.size() || i2 >= meshData->vertices.size())
+			if (!groundCache || triangleIndex >= groundCache->triangles.size())
 			{
 				continue;
 			}
 
-			const auto v0 = DirectX::XMVector3TransformCoord(
-				DirectX::XMVectorSet(
-					meshData->vertices[i0].position[0], meshData->vertices[i0].position[1],
-					meshData->vertices[i0].position[2], 1.0f
-				),
-				world
-			);
-			const auto v1 = DirectX::XMVector3TransformCoord(
-				DirectX::XMVectorSet(
-					meshData->vertices[i1].position[0], meshData->vertices[i1].position[1],
-					meshData->vertices[i1].position[2], 1.0f
-				),
-				world
-			);
-			const auto v2 = DirectX::XMVector3TransformCoord(
-				DirectX::XMVectorSet(
-					meshData->vertices[i2].position[0], meshData->vertices[i2].position[1],
-					meshData->vertices[i2].position[2], 1.0f
-				),
-				world
-			);
+			const auto& cachedTriangle = groundCache->triangles[triangleIndex];
+			const auto cachedV0 = DirectX::XMLoadFloat3(&cachedTriangle.v0);
+			const auto cachedV1 = DirectX::XMLoadFloat3(&cachedTriangle.v1);
+			const auto cachedV2 = DirectX::XMLoadFloat3(&cachedTriangle.v2);
+			++cachedTriangleCandidateCount;
 
 			float distance = 0.0f;
 			++triangleTestCount;
-			if (!DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, distance))
+			if (!DirectX::TriangleTests::Intersects(rayOrigin, rayDir, cachedV0, cachedV1, cachedV2, distance))
 			{
 				continue;
 			}
@@ -764,17 +698,127 @@ bool FootIKComponent::TrySampleVisualGround(
 			}
 
 			bestRayDistance = distance;
-			bestHitObj = meshObj;
-			bestHitRes = meshRes;
+			bestHitObj = cachedTriangle.sourceObject;
+			bestHitRes = cachedTriangle.sourceMesh;
 			DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
-			DirectX::XMStoreFloat3(&bestTriV0, v0);
-			DirectX::XMStoreFloat3(&bestTriV1, v1);
-			DirectX::XMStoreFloat3(&bestTriV2, v2);
-			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
-			const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
-			const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
-			DirectX::XMStoreFloat3(&bestHitNormal, normal);
+			bestHitNormal = cachedTriangle.normal;
+			bestTriV0 = cachedTriangle.v0;
+			bestTriV1 = cachedTriangle.v1;
+			bestTriV2 = cachedTriangle.v2;
 		}
+	}
+	(void)cachedTriangleCandidateCount;
+
+	if (bestRayDistance == std::numeric_limits<float>::max())
+	{
+		// 기존 루프
+		for (const auto& meshComp : meshStorage->GetList())
+		{
+			if (!meshComp.IsValid())
+			{
+				continue;
+			}
+
+			auto* meshObj = meshComp.GetGameObject();
+			auto* meshRes = meshComp.GetMeshResource();
+			if (!meshObj || !meshRes)
+			{
+				continue;
+			}
+
+			const auto worldPos = meshObj->GetTransform().GetWorldPosition();
+			if (DistanceSqXZ(worldPos, worldPosition) > nearbyRadiusSq)
+			{
+				continue;
+			}
+			// Mesh object origins are not reliable surface heights, so keep only the XZ proximity filter here.
+			++nearbyMeshCount;
+
+			std::filesystem::path meshPath;
+			if (!GLOBAL(ResourceGlobal).TryGetPath(meshRes->GetGuid(), meshPath))
+			{
+				continue;
+			}
+			++pathResolvedCount;
+
+			auto meshData = GetCachedMeshData(meshRes->GetGuid(), meshPath);
+			if (!meshData)
+			{
+				continue;
+			}
+			++loadedMeshCount;
+
+			const auto worldMatrix = meshObj->GetTransform().GetWorldMatrix();
+			const auto world = DirectX::XMLoadFloat4x4(&worldMatrix);
+
+			for (size_t index = 0; index + 2 < meshData->indices.size(); index += 3)
+			{
+				const uint32_t i0 = meshData->indices[index];
+				const uint32_t i1 = meshData->indices[index + 1];
+				const uint32_t i2 = meshData->indices[index + 2];
+				if (i0 >= meshData->vertices.size() || i1 >= meshData->vertices.size() || i2 >= meshData->vertices.size())
+				{
+					continue;
+				}
+
+				const auto v0 = DirectX::XMVector3TransformCoord(
+					DirectX::XMVectorSet(
+						meshData->vertices[i0].position[0], meshData->vertices[i0].position[1],
+						meshData->vertices[i0].position[2], 1.0f
+					),
+					world
+				);
+				const auto v1 = DirectX::XMVector3TransformCoord(
+					DirectX::XMVectorSet(
+						meshData->vertices[i1].position[0], meshData->vertices[i1].position[1],
+						meshData->vertices[i1].position[2], 1.0f
+					),
+					world
+				);
+				const auto v2 = DirectX::XMVector3TransformCoord(
+					DirectX::XMVectorSet(
+						meshData->vertices[i2].position[0], meshData->vertices[i2].position[1],
+						meshData->vertices[i2].position[2], 1.0f
+					),
+					world
+				);
+
+				float distance = 0.0f;
+				++triangleTestCount;
+				if (!DirectX::TriangleTests::Intersects(rayOrigin, rayDir, v0, v1, v2, distance))
+				{
+					continue;
+				}
+				++triangleIntersectCount;
+
+				if (distance < 0.0f || distance > rayMaxDistance || distance >= bestRayDistance)
+				{
+					continue;
+				}
+
+				const auto hitPoint =
+					DirectX::XMVectorMultiplyAdd(rayDir, DirectX::XMVectorReplicate(distance), rayOrigin);
+				const float hitY = DirectX::XMVectorGetY(hitPoint);
+				constexpr float maxGroundAboveFoot = 0.12f;
+				if (hitY > worldPosition.y + maxGroundAboveFoot)
+				{
+					continue;
+				}
+
+				bestRayDistance = distance;
+				bestHitObj = meshObj;
+				bestHitRes = meshRes;
+				DirectX::XMStoreFloat3(&bestHitPoint, hitPoint);
+				DirectX::XMStoreFloat3(&bestTriV0, v0);
+				DirectX::XMStoreFloat3(&bestTriV1, v1);
+				DirectX::XMStoreFloat3(&bestTriV2, v2);
+				const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
+				const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
+				const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
+				DirectX::XMStoreFloat3(&bestHitNormal, normal);
+			}
+		}
+		///
 	}
 
 	if (bestRayDistance == std::numeric_limits<float>::max())
