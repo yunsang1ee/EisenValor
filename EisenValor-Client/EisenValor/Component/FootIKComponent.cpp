@@ -80,7 +80,7 @@ struct GroundQueryTriangle
 // 셀 안에 있는 삼각형 번호
 struct GroundQueryCell
 {
-	std::vector<size_t> triangleIndices;
+	std::vector<size_t> triangleIndexesInThisCell;
 };
 
 constexpr float kGroundQueryCellSize = 2.0f;
@@ -105,7 +105,7 @@ struct GroundQueryCache
 	const Scene* scene = nullptr;
 	size_t sourceMeshCount = 0;
 	std::vector<GroundQueryTriangle> triangles;
-	std::unordered_map<std::int64_t, GroundQueryCell> cells;
+	std::unordered_map<std::int64_t, GroundQueryCell> gridCellsByKey;
 	bool isValid = false;
 };
 
@@ -121,7 +121,7 @@ void ResetGroundQueryCache(GroundQueryCache& cache)
 	cache.scene = nullptr;
 	cache.sourceMeshCount = 0;
 	cache.triangles.clear();
-	cache.cells.clear();
+	cache.gridCellsByKey.clear();
 	cache.isValid = false;
 }
 
@@ -233,7 +233,7 @@ bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
 			DirectX::XMStoreFloat3(&triV0, v0);
 			DirectX::XMStoreFloat3(&triV1, v1);
 			DirectX::XMStoreFloat3(&triV2, v2);
-
+			
 			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
 			const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
 			const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
@@ -242,6 +242,7 @@ bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
 
 			// 삼각형 인덱스
 			const size_t		triangleIndex = cache.triangles.size();
+			const size_t triangleIndex = cache.triangles.size();
 			GroundQueryTriangle triangle;
 			triangle.v0 = triV0;
 			triangle.v1 = triV1;
@@ -250,14 +251,54 @@ bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
 			triangle.sourceObject = meshObj;
 			triangle.sourceMesh = meshRes;
 			cache.triangles.push_back(triangle);
+
+			// XZ 셀 범위 계산, 각 셀에 TriangleIndex를 추가
+			const float		   minX = std::min({triV0.x, triV1.x, triV2.x});
+			const float		   maxX = std::max({triV0.x, triV1.x, triV2.x});
+			const float		   minZ = std::min({triV0.z, triV1.z, triV2.z});
+			const float		   maxZ = std::max({triV0.z, triV1.z, triV2.z});
+			const std::int32_t minCellX = ToGroundQueryCellCoord(minX);
+			const std::int32_t maxCellX = ToGroundQueryCellCoord(maxX);
+			const std::int32_t minCellZ = ToGroundQueryCellCoord(minZ);
+			const std::int32_t maxCellZ = ToGroundQueryCellCoord(maxZ);
+
+			for (std::int32_t cellZ = minCellZ; cellZ <= maxCellZ; ++cellZ)
+			{
+				for (std::int32_t cellX = minCellX; cellX <= maxCellX; ++cellX)
+				{
+					const auto cellKey = MakeGroundQueryCellKey(cellX, cellZ);
+					cache.gridCellsByKey[cellKey].triangleIndexesInThisCell.push_back(triangleIndex);
+				}
+			}
 		}
 	}
 
 	// 만든 삼각형을 캐시에 저장
 	cache.scene = scene;
+	// 캐시가 비어 있으면 실패 처리
+	if (cache.triangles.empty() || cache.gridCellsByKey.empty())
+	{
+		ResetGroundQueryCache(cache);
+		return false;
+	}
+
+	cache.scene = scene;
 	cache.sourceMeshCount = sourceMeshCount;
 	cache.isValid = true;
 	return true;
+}
+
+// Scene에 대한 GroundQueryCache를 준비하고 필요하면 재빌드
+GroundQueryCache* PrepareGroundQueryCache(Scene* scene)
+{
+	auto& cache = GetGroundQueryCache();
+	const size_t sourceMeshCount = CountGroundQuerySourceMeshes(scene);
+	if (ShouldRebuildGroundQueryCache(cache, scene, sourceMeshCount) && !BuildGroundQueryCache(scene, cache))
+	{
+		return nullptr;
+	}
+
+	return cache.isValid ? &cache : nullptr;
 }
 
 float SmoothApproach(float current, float target, float deltaTime, float speed)
