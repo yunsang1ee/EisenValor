@@ -153,6 +153,113 @@ bool ShouldRebuildGroundQueryCache(const GroundQueryCache& cache, const Scene* s
 	return !cache.isValid || cache.scene != scene || cache.sourceMeshCount != sourceMeshCount;
 }
 
+bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
+{
+	ResetGroundQueryCache(cache);
+
+	const size_t sourceMeshCount = CountGroundQuerySourceMeshes(scene);
+	if (!scene || sourceMeshCount == 0)
+	{
+		return false;
+	}
+
+	auto* meshStorage = scene->GetStorage<MeshComponent>();
+	if (!meshStorage)
+	{
+		return false;
+	}
+
+	for (const auto& meshComp : meshStorage->GetList())
+	{
+		if (!meshComp.IsValid() || !meshComp.GetGameObject() || !meshComp.GetMeshResource())
+		{
+			continue;
+		}
+
+		auto* meshObj = meshComp.GetGameObject();
+		auto* meshRes = meshComp.GetMeshResource();
+
+		std::filesystem::path meshPath;
+		if (!GLOBAL(ResourceGlobal).TryGetPath(meshRes->GetGuid(), meshPath))
+		{
+			continue;
+		}
+
+		auto meshData = GetCachedMeshData(meshRes->GetGuid(), meshPath);
+		if (!meshData)
+		{
+			continue;
+		}
+
+		const auto worldMatrix = meshObj->GetTransform().GetWorldMatrix();
+		const auto world = DirectX::XMLoadFloat4x4(&worldMatrix);
+
+		for (size_t index = 0; index + 2 < meshData->indices.size(); index += 3)
+		{
+			const uint32_t i0 = meshData->indices[index];
+			const uint32_t i1 = meshData->indices[index + 1];
+			const uint32_t i2 = meshData->indices[index + 2];
+			if (i0 >= meshData->vertices.size() || i1 >= meshData->vertices.size() || i2 >= meshData->vertices.size())
+			{
+				continue;
+			}
+
+			const auto v0 = DirectX::XMVector3TransformCoord(
+				DirectX::XMVectorSet(
+					meshData->vertices[i0].position[0], meshData->vertices[i0].position[1],
+					meshData->vertices[i0].position[2], 1.0f
+				),
+				world
+			);
+			const auto v1 = DirectX::XMVector3TransformCoord(
+				DirectX::XMVectorSet(
+					meshData->vertices[i1].position[0], meshData->vertices[i1].position[1],
+					meshData->vertices[i1].position[2], 1.0f
+				),
+				world
+			);
+			const auto v2 = DirectX::XMVector3TransformCoord(
+				DirectX::XMVectorSet(
+					meshData->vertices[i2].position[0], meshData->vertices[i2].position[1],
+					meshData->vertices[i2].position[2], 1.0f
+				),
+				world
+			);
+
+			// float3으로 변환
+			DirectX::XMFLOAT3 triV0 = {};
+			DirectX::XMFLOAT3 triV1 = {};
+			DirectX::XMFLOAT3 triV2 = {};
+			DirectX::XMStoreFloat3(&triV0, v0);
+			DirectX::XMStoreFloat3(&triV1, v1);
+			DirectX::XMStoreFloat3(&triV2, v2);
+
+			const auto edge01 = DirectX::XMVectorSubtract(v1, v0);
+			const auto edge02 = DirectX::XMVectorSubtract(v2, v0);
+			const auto normal = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge01, edge02));
+			DirectX::XMFLOAT3 triNormal = {0.0f, 1.0f, 0.0f};
+			DirectX::XMStoreFloat3(&triNormal, normal);
+
+			// 삼각형 인덱스
+			const size_t		triangleIndex = cache.triangles.size();
+			GroundQueryTriangle triangle;
+			triangle.v0 = triV0;
+			triangle.v1 = triV1;
+			triangle.v2 = triV2;
+			triangle.normal = triNormal;
+			triangle.sourceObject = meshObj;
+			triangle.sourceMesh = meshRes;
+			cache.triangles.push_back(triangle);
+		}
+	}
+
+	// 만든 삼각형을 캐시에 저장
+	cache.scene = scene;
+	cache.sourceMeshCount = sourceMeshCount;
+	cache.isValid = true;
+	return true;
+}
+
 float SmoothApproach(float current, float target, float deltaTime, float speed)
 {
 	const float alpha = std::clamp(deltaTime * speed, 0.0f, 1.0f);
