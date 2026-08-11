@@ -626,6 +626,9 @@ bool FootIKComponent::TrySampleVisualGround(
 		return false;
 	}
 
+	auto* groundCache = PrepareGroundQueryCache(scene);
+	(void)groundCache;
+
 	constexpr float nearbyRadius = 8.0f; // 발 주변에서 이 거리 안에 있는 메시만 바닥 후보로 봄
 	constexpr float nearbyRadiusSq = nearbyRadius * nearbyRadius; // 거리 비교를 빠르게 하려고 제곱 거리로 저장
 	const auto	  rayOrigin = DirectX::XMVectorSet(worldPosition.x, worldPosition.y + maxUp, worldPosition.z, 1.0f); // 발보다 위에서 아래로 쏠 레이 시작점
@@ -644,6 +647,28 @@ bool FootIKComponent::TrySampleVisualGround(
 	size_t		  loadedMeshCount = 0; // 실제 메시 데이터를 캐시에서 가져오거나 로드한 개수
 	size_t		  triangleTestCount = 0; // 레이와 삼각형 충돌 검사를 실행한 횟수
 	size_t		  triangleIntersectCount = 0; // 충돌 검사 결과 실제로 레이에 맞은 삼각형 개수
+
+	const std::int32_t queryCellX = ToGroundQueryCellCoord(worldPosition.x);
+	const std::int32_t queryCellZ = ToGroundQueryCellCoord(worldPosition.z);
+	const auto queryCellKey = MakeGroundQueryCellKey(queryCellX, queryCellZ);
+	const GroundQueryCell* queryCell = nullptr;
+	if (groundCache)
+	{
+		if (auto it = groundCache->gridCellsByKey.find(queryCellKey); it != groundCache->gridCellsByKey.end())
+		{
+			queryCell = &it->second;
+		}
+	}
+	size_t cachedTriangleCandidateCount = 0;
+	if (queryCell)
+	{
+		for (const size_t triangleIndex : queryCell->triangleIndexesInThisCell)
+		{
+			(void)triangleIndex;
+			++cachedTriangleCandidateCount;
+		}
+	}
+	(void)cachedTriangleCandidateCount;
 
 	for (const auto& meshComp : meshStorage->GetList())
 	{
