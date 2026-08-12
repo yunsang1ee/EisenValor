@@ -210,10 +210,12 @@ void LobbyServer::GameLobby::Handle_CS_ENTER_GAME_ROOM(const std::shared_ptr<Cli
 	if(nullptr == gameRoom)
 		return;
 
+	if(false == gameRoom->EnterGameRoom(clientSession))
+		return;
+
 	LeaveGameLobby(clientSession);
 
-	if(gameRoom->EnterGameRoom(clientSession))
-		BroadcastRoomInfo(gameRoom->GetRoomInfo());
+	BroadcastRoomInfo(gameRoom->GetRoomInfo());
 }
 
 void LobbyServer::GameLobby::Handle_CS_LEAVE_GAME_ROOM(const std::shared_ptr<ClientSession>& clientSession)
