@@ -20,13 +20,15 @@ namespace LobbyServer {
 		
 	public:
 		void Broadcast(std::shared_ptr<LobbyServerEngine::PacketBuffer> pb);
-		void EnterGameRoom(const std::shared_ptr<ClientSession>& clientSession);
-		void LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession);
+		// 방 인원이 실제로 바뀌었으면 true. 호출한 쪽에서 로비에 방 정보를 다시 뿌리는 데 쓴다.
+		bool EnterGameRoom(const std::shared_ptr<ClientSession>& clientSession);
+		bool LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession);
 
 	public:
 		void ChangeTeam(const std::shared_ptr<ClientSession>& clientSession);
-		void AddBot(const std::shared_ptr <ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE botTeamType);
-		void RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID);
+		// 방 인원이 실제로 바뀌었으면 true. 호출한 쪽에서 로비에 방 정보를 다시 뿌리는 데 쓴다.
+		bool AddBot(const std::shared_ptr <ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE botTeamType);
+		bool RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID);
 		void ReadyGame(const std::shared_ptr<ClientSession>& clientSession);
 		void StartGame(const std::shared_ptr<ClientSession>& clientSession);
 		void ReturnToGameRoom(const std::shared_ptr<ClientSession>& clientSession);
@@ -43,9 +45,12 @@ namespace LobbyServer {
 		void SetRoomInfo(const RoomInfo& info) { m_info = info; }
 		void SetRoomState(const FB_ENUMS::ROOM_STATE_TYPE stateType) { m_info.stateType = stateType; }
 		const RoomInfo& GetRoomInfo() const { return m_info; }
+		bool IsEmpty() const { return m_users.empty(); }
 
 	private:
 		void EnterParticipant(std::shared_ptr<Participant> participant);
+		void PromoteNextHost();
+		void RefreshParticipantCount();
 
 	private:
 		RoomInfo													m_info;

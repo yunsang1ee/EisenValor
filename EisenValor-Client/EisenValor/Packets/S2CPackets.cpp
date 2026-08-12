@@ -317,6 +317,37 @@ bool NetBridge::S2C::Handle_LC_MAKE_GAME_ROOM_PACKET(
 		);
 	return true;
 }
+
+bool NetBridge::S2C::Handle_LC_DELETE_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_DELETE_GAME_ROOM_PACKET& recvPkt
+)
+{
+	// 마지막 유저가 나가서 방이 없어짐
+	DEBUG_LOG_FMT("[LC_DELETE_GAME_ROOM_PACKET] ");
+	DEBUG_LOG_FMT("Room ID: {}\n", recvPkt.room_id());
+	GLOBAL(LobbyClientState).RemoveRoom(recvPkt.room_id());
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_UPDATE_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_UPDATE_GAME_ROOM_PACKET& recvPkt
+)
+{
+	// 방 상태나 인원이 바뀜 (게임 시작/종료 등)
+	DEBUG_LOG_FMT("[LC_UPDATE_GAME_ROOM_PACKET] ");
+	const auto& roomInfo = recvPkt.room_info();
+	if (!roomInfo)
+	{
+		return false;
+	}
+
+	DEBUG_LOG_FMT("Room ID: {}, State: {}\n", roomInfo->id(), static_cast<uint32>(roomInfo->state()));
+	GLOBAL(LobbyClientState)
+		.AddOrUpdateRoom(
+			{roomInfo->id(), roomInfo->state(), roomInfo->current_participants(), roomInfo->max_marticipants()}
+		);
+	return true;
+}
 #pragma endregion
 
 #pragma region ROOM_PACKETS
@@ -532,6 +563,15 @@ bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB
 		DEBUG_LOG_FMT("User ID: {} Change Team To RED\n", recvPkt.user_id());
 	}
 	GLOBAL(LobbyClientState).SetParticipantTeam(recvPkt.user_id(), recvPkt.team_type());
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_CHANGE_HOST_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_HOST_PACKET& recvPkt)
+{
+	// 기존 방장이 나가서 방장이 교체됨
+	DEBUG_LOG_FMT("[LC_CHANGE_HOST_PACKET] ");
+	DEBUG_LOG_FMT("New Host ID: {}\n", recvPkt.user_id());
+	GLOBAL(LobbyClientState).SetHost(recvPkt.user_id());
 	return true;
 }
 

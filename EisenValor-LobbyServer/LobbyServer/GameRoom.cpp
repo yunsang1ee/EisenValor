@@ -20,29 +20,23 @@ LobbyServer::GameRoom::~GameRoom()
 {
 }
 
-void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& clientSession)
+bool LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& clientSession)
 {
 	const uint32 sessionID{ clientSession->GetID() };
 
 	if(FB_ENUMS::ROOM_STATE_TYPE_PLAYING == m_info.stateType) {
 		auto pb{ LobbyServer::Make_LC_ENTER_GAME_ROOM_FAIL_PACKET("Already Playing") };
 		clientSession->Send(std::move(pb));
-		return;
+		return false;
 	}
 
 	if(m_info.currentParticipants >= m_info.maxParticipants) {
 		auto pb{ LobbyServer::Make_LC_ENTER_GAME_ROOM_FAIL_PACKET("Over max participants") };
 		clientSession->Send(std::move(pb));
-		return;
+		return false;
 	}
 
-	FB_ENUMS::PARTICIPANT_TYPE participantType;
-	if(m_info.currentParticipants == 0)
-		participantType = FB_ENUMS::PARTICIPANT_TYPE_HOST;
-	else
-		participantType = FB_ENUMS::PARTICIPANT_TYPE_USER;
-
-	m_info.currentParticipants++;
+	const FB_ENUMS::PARTICIPANT_TYPE participantType{ m_users.empty() ? FB_ENUMS::PARTICIPANT_TYPE_HOST : FB_ENUMS::PARTICIPANT_TYPE_USER };
 
 	static FB_ENUMS::TEAM_TYPE teamType{ FB_ENUMS::TEAM_TYPE_BLUE };
 
@@ -98,23 +92,29 @@ void LobbyServer::GameRoom::EnterGameRoom(const std::shared_ptr<ClientSession>& 
 #endif
 
 	EnterParticipant(newUser);
+
+	return true;
 }
 
-void LobbyServer::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession)
+bool LobbyServer::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& clientSession)
 {
 	const uint32 sessionID{ clientSession->GetID() };
 
-	if(false == m_users.contains(sessionID))
-		return;
+	const auto iter{ m_users.find(sessionID) };
+	if(iter == m_users.end())
+		return false;
 
-	// 내가 방에서 나간다고 나한테 알림
+	const bool wasHost{ iter->second == m_host };
+
 	{
 		auto pb{ LobbyServer::Make_LC_LEAVE_GAME_ROOM_PACKET() };
 		clientSession->Send(std::move(pb));
 	}
 
-	m_users.erase(sessionID);
-	// 방에 있는 유저들에게 이 유저가 나간다고 알림
+	m_users.erase(iter);
+	clientSession->SetGameRoom(nullptr);
+	RefreshParticipantCount();
+
 	{
 		auto pb{ LobbyServer::Make_LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(sessionID) };
 		Broadcast(std::move(pb));
@@ -122,8 +122,10 @@ void LobbyServer::GameRoom::LeaveGameRoom(const std::shared_ptr<ClientSession>& 
 
 	std::cout << std::format("UserID: {}, Leave Game Room!", sessionID) << std::endl;
 
-	// TODO: lobby에 있는 유저들에게 이 방 인원 줄었다고 보내줘야 함.
-	m_info.currentParticipants--;
+	if(wasHost)
+		PromoteNextHost();
+
+	return true;
 }
 
 void LobbyServer::GameRoom::ChangeTeam(const std::shared_ptr<ClientSession>& clientSession)
@@ -145,18 +147,27 @@ void LobbyServer::GameRoom::ChangeTeam(const std::shared_ptr<ClientSession>& cli
 		std::cout << std::format("UserID: {}, Change Team! Team: Offense", userID) << std::endl;
 	}
 
-	// 방에 있는 유저들에게 이 유저가 팀 바꿨다고 알림
 	{
 		auto pb{ LobbyServer::Make_LC_CHANGE_TEAM_PACKET(userID, user->GetTeamType()) };
 		Broadcast(std::move(pb));
 	}
 }
 
-void LobbyServer::GameRoom::AddBot(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE botTeamType)
+bool LobbyServer::GameRoom::AddBot(const std::shared_ptr<ClientSession>& clientSession, const FB_ENUMS::TEAM_TYPE botTeamType)
 {
 	auto user{ GetSessionUser(clientSession) };
 
-	if(user != m_host) return;
+	if(user != m_host) return false;
+
+	if(FB_ENUMS::ROOM_STATE_TYPE_PLAYING == m_info.stateType) {
+		std::cout << std::format("RoomID: {}, Add Bot Failed! Already playing", m_info.id) << std::endl;
+		return false;
+	}
+
+	if(m_info.currentParticipants >= m_info.maxParticipants) {
+		std::cout << std::format("RoomID: {}, Add Bot Failed! Over max participants", m_info.id) << std::endl;
+		return false;
+	}
 
 	const auto botID{ GetNewBotID() };
 	auto newBot{ std::make_shared<Bot>(botID, botTeamType) };
@@ -169,11 +180,34 @@ void LobbyServer::GameRoom::AddBot(const std::shared_ptr<ClientSession>& clientS
 	EnterParticipant(newBot);
 
 	std::cout << std::format("BotID: {}, Add Bot! Team: {}", botID, botTeamType == FB_ENUMS::TEAM_TYPE_BLUE ? "BLUE" : "RED") << std::endl;
+
+	return true;
 }
 
-void LobbyServer::GameRoom::RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID)
+bool LobbyServer::GameRoom::RemoveBot(const std::shared_ptr<ClientSession>& clientSession, const uint32 botID)
 {
-	// TODO: 일단 보류
+	auto user{ GetSessionUser(clientSession) };
+
+	if(user != m_host) return false;
+
+	if(FB_ENUMS::ROOM_STATE_TYPE_PLAYING == m_info.stateType) {
+		std::cout << std::format("RoomID: {}, Remove Bot Failed! Already playing", m_info.id) << std::endl;
+		return false;
+	}
+
+	if(0 == m_bots.erase(botID))
+		return false;
+
+	RefreshParticipantCount();
+
+	{
+		auto pb{ LobbyServer::Make_LC_REMOVE_BOT_PACKET(botID) };
+		Broadcast(std::move(pb));
+	}
+
+	std::cout << std::format("BotID: {}, Remove Bot! RoomID: {}", botID, m_info.id) << std::endl;
+
+	return true;
 }
 
 void LobbyServer::GameRoom::ReadyGame(const std::shared_ptr<ClientSession>& clientSession)
@@ -193,7 +227,6 @@ void LobbyServer::GameRoom::ReadyGame(const std::shared_ptr<ClientSession>& clie
 		std::cout << std::format("User ID: {}, Ready Game!", userID) << std::endl;
 	}
 
-	// 방에 있는 유저들에게 이 유저가 준비 상태 바꿨다고 알림
 	{
 		auto pb{ LobbyServer::Make_LC_READY_GAME_PACKET(userID, user->GetStateType()) };
 		Broadcast(std::move(pb));
@@ -387,8 +420,37 @@ void LobbyServer::GameRoom::EnterParticipant(std::shared_ptr<Participant> partic
 		}
 	}
 
-	m_info.currentParticipants++;
-	// TODO: lobby에 있는 유저들에게 이 방 인원 늘렸다고 보내줘야 함.
+	RefreshParticipantCount();
+}
+
+void LobbyServer::GameRoom::PromoteNextHost()
+{
+	m_host = nullptr;
+
+	if(m_users.empty())
+		return;
+
+	std::shared_ptr<User> nextHost{ m_users.begin()->second };
+	for(const auto& [id, user] : m_users) {
+		if(id < nextHost->GetID())
+			nextHost = user;
+	}
+
+	nextHost->SetType(FB_ENUMS::PARTICIPANT_TYPE_HOST);
+	nextHost->SetStateType(FB_ENUMS::PARTICIPANT_STATE_TYPE_READY);
+	m_host = nextHost;
+
+	{
+		auto pb{ LobbyServer::Make_LC_CHANGE_HOST_PACKET(nextHost->GetID()) };
+		Broadcast(std::move(pb));
+	}
+
+	std::cout << std::format("UserID: {}, Change Host! RoomID: {}", nextHost->GetID(), m_info.id) << std::endl;
+}
+
+void LobbyServer::GameRoom::RefreshParticipantCount()
+{
+	m_info.currentParticipants = static_cast<uint8>(m_users.size() + m_bots.size());
 }
 
 void LobbyServer::GameRoom::Broadcast(std::shared_ptr<LobbyServerEngine::PacketBuffer> pb)

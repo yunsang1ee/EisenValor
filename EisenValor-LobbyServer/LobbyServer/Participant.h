@@ -6,6 +6,7 @@ namespace LobbyServer {
 		explicit Participant(const uint32 id, const FB_ENUMS::PARTICIPANT_TYPE type, const FB_ENUMS::TEAM_TYPE teamType);
 
 	public:
+		void SetType(const FB_ENUMS::PARTICIPANT_TYPE type) { m_info.type = type; }
 		void SetTeamType(const FB_ENUMS::TEAM_TYPE teamType) { m_info.teamType = teamType; }
 		void SetStateType(const FB_ENUMS::PARTICIPANT_STATE_TYPE stateType) { m_info.stateType = stateType; }
 		uint32 GetID() const { return m_info.id; }

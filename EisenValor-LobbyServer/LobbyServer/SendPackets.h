@@ -22,6 +22,8 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_ENTER_USER_IN_GAME_LOBBY_PACKET(const std::string_view user, const uint32 id);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_LEAVE_USER_IN_GAME_LOBBY_PACKET(const uint32 id);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_MAKE_GAME_ROOM_PACKET(const RoomInfo& room);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_DELETE_GAME_ROOM_PACKET(const uint16 roomID);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_UPDATE_GAME_ROOM_PACKET(const RoomInfo& room);
 #pragma endregion
 
 #pragma region ROOM_PACKETS
@@ -31,7 +33,9 @@ namespace LobbyServer {
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_ENTER_PARTICIPANT_IN_GAME_ROOM_PACKET(const ParticipantInfo& participant);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(const uint32 participantID);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHANGE_TEAM_PACKET(const uint32 participantID, const FB_ENUMS::TEAM_TYPE teamType);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_CHANGE_HOST_PACKET(const uint32 userID);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_ADD_BOT_PACKET(const ParticipantInfo& bot);
+	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_REMOVE_BOT_PACKET(const uint32 botID);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_READY_GAME_PACKET(const uint32 participantID, const FB_ENUMS::PARTICIPANT_STATE_TYPE state);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LC_START_GAME_FAIL_PACKET(const std::string_view failMsg);
 	std::shared_ptr<LobbyServerEngine::PacketBuffer> Make_LS_CREATE_GAME_WORLD_PACKET(const uint16 worldID, const std::vector<ParticipantInfo>& participants);

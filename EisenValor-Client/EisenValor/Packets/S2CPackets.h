@@ -28,6 +28,8 @@ bool Handle_LC_LEAVE_USER_IN_GAME_LOBBY_PACKET(
 );
 
 bool Handle_LC_MAKE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::LC_MAKE_GAME_ROOM_PACKET& recvPkt);
+bool Handle_LC_DELETE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::LC_DELETE_GAME_ROOM_PACKET& recvPkt);
+bool Handle_LC_UPDATE_GAME_ROOM_PACKET(const SOCKET& socket, const FB_TABLES::LC_UPDATE_GAME_ROOM_PACKET& recvPkt);
 #pragma endregion
 
 #pragma region ROOM_PACKETS
@@ -49,6 +51,8 @@ bool Handle_LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_LEAVE_PARTICIPANT_IN_GAME_ROOM_PACKET& recvPkt
 );
 bool Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_TEAM_PACKET& recvPkt);
+
+bool Handle_LC_CHANGE_HOST_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_HOST_PACKET& recvPkt);
 
 bool Handle_LC_ADD_BOT_PACKET(const SOCKET& socket, const FB_TABLES::LC_ADD_BOT_PACKET& recvPkt);
 
