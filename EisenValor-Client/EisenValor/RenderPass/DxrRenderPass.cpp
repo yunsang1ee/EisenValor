@@ -5,7 +5,6 @@
 #include "DxCommandContext.h"
 #include "PixProfiler.h"
 #include "DxDescriptorHeapGlobal.h"
-#include "DxCommandQueueGlobal.h"
 #include "DxSamplerHeapGlobal.h"
 #include "DxRendererGlobal.h"
 #include "DxDeviceGlobal.h"
@@ -137,11 +136,10 @@ float EstimateRestirEmissiveLightSelectionWeight(const MaterialResource* materia
 	}
 
 	const auto	emissive = material->GetEmissive();
-	const float emissionLuminance =
-		(0.2126f * std::max(emissive.x, 0.0f) + 0.7152f * std::max(emissive.y, 0.0f) +
-		 0.0722f * std::max(emissive.z, 0.0f)) *
-		std::max(emissive.w, 0.0f);
-	const bool hasEmissiveMap = 0 != (material->GetMaterialFlags() & MATERIAL_FLAG_EMISSIVE_MAP);
+	const float emissionLuminance = (0.2126f * std::max(emissive.x, 0.0f) + 0.7152f * std::max(emissive.y, 0.0f) +
+									 0.0722f * std::max(emissive.z, 0.0f)) *
+									std::max(emissive.w, 0.0f);
+	const bool	hasEmissiveMap = 0 != (material->GetMaterialFlags() & MATERIAL_FLAG_EMISSIVE_MAP);
 	const float resolvedLuminance = hasEmissiveMap ? std::max(emissionLuminance, 1.0f) : emissionLuminance;
 	return std::max(resolvedLuminance * static_cast<float>(triangleCount), 0.0001f);
 }
@@ -163,7 +161,7 @@ void AppendRestirHistoryInstanceHash(uint64_t& hash, std::span<const DxTLASInsta
 	Utils::AppendFnv1a64(hash, &instanceCount, sizeof(instanceCount));
 	for (const auto& instance : instances)
 	{
-		const auto handle = instance.obj ? instance.obj->GetHandle() : GameObject::Handle::Invalid();
+		const auto	   handle = instance.obj ? instance.obj->GetHandle() : GameObject::Handle::Invalid();
 		const uint32_t flags = static_cast<uint32_t>(instance.flags);
 		Utils::AppendFnv1a64(hash, &handle.id, sizeof(handle.id));
 		Utils::AppendFnv1a64(hash, &handle.generation, sizeof(handle.generation));
@@ -173,11 +171,11 @@ void AppendRestirHistoryInstanceHash(uint64_t& hash, std::span<const DxTLASInsta
 
 uint64_t BuildRestirHistorySignature(
 	std::span<const DxTLASInstance> instances,
-	uint64_t staticSceneVersion,
-	const MaterialRenderData& materialData,
-	const GeoTableRenderData& geoTableData,
-	const RestirLightRenderData& lightData,
-	uint64_t historyGeneration
+	uint64_t						staticSceneVersion,
+	const MaterialRenderData&		materialData,
+	const GeoTableRenderData&		geoTableData,
+	const RestirLightRenderData&	lightData,
+	uint64_t						historyGeneration
 )
 {
 	uint64_t hash = Utils::kFnv1a64OffsetBasis;
@@ -320,9 +318,7 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 		if (outputTex->HasUAV(0))
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			outputTex->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			outputTex->ReleaseAllViews(descHeap);
 		}
 
 		outputTex->Initialize(
@@ -382,37 +378,28 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 
 		if (primaryHitBuffer->HasUAV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			primaryHitBuffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			primaryHitBuffer->ReleaseAllViews(descHeap);
 		}
 		if (reservoirBuffer->HasUAV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			reservoirBuffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			reservoirBuffer->ReleaseAllViews(descHeap);
 		}
 		if (motionVectorTexture->HasAnyUAV() || motionVectorTexture->HasSRV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			motionVectorTexture->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			motionVectorTexture->ReleaseAllViews(descHeap);
 		}
 		if (linearDepthTexture->HasAnyUAV() || linearDepthTexture->HasSRV())
 		{
-			auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-			auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-			linearDepthTexture->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+			linearDepthTexture->ReleaseAllViews(descHeap);
 		}
 		DxTexture* rrGuideTextures[] = {
-			diffuseAlbedoTexture.get(), specularAlbedoTexture.get(), normalRoughnessTexture.get()};
+			diffuseAlbedoTexture.get(), specularAlbedoTexture.get(), normalRoughnessTexture.get()
+		};
 		for (DxTexture* texture : rrGuideTextures)
 		{
 			if (texture->HasAnyUAV() || texture->HasSRV())
 			{
-				auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-				auto fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-				texture->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+				texture->ReleaseAllViews(descHeap);
 			}
 		}
 
@@ -520,11 +507,11 @@ std::unique_ptr<DxRtPipelineState> DxrRenderPass::BuildDxrPipeline(
 
 	DxRaytracingStateObjectBuilder stateObjectBuilder;
 	auto						   stateObject = stateObjectBuilder.AddDxilLibrary(shaderBlob.Get())
-													 .AddHitGroup(L"HitGroup", L"ClosestHitMain")
-													 .SetShaderConfig(maxPayloadSizeBytes, 2 * sizeof(float))
-													 .SetPipelineConfig(maxRecursionDepth)
-													 .SetGlobalRootSignature(rootSignature.Get())
-													 .Build(m_device5.Get(), pipelineName + "_StateObject");
+						   .AddHitGroup(L"HitGroup", L"ClosestHitMain")
+						   .SetShaderConfig(maxPayloadSizeBytes, 2 * sizeof(float))
+						   .SetPipelineConfig(maxRecursionDepth)
+						   .SetGlobalRootSignature(rootSignature.Get())
+						   .Build(m_device5.Get(), pipelineName + "_StateObject");
 
 	auto pipeline = std::make_unique<DxRtPipelineState>();
 	pipeline->SetStateObjects(rootSignature, stateObject);
@@ -600,7 +587,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	const uint64_t meshRevision = MeshComponent::GetGlobalRenderRevision();
 	const bool	   pendingLoadsCompleted = staticSceneData.pendingLoadsActive && !pendingLoadsActive;
 	const bool incompleteCacheReadyToRetry = staticSceneData.valid && !staticSceneData.complete && !pendingLoadsActive;
-	bool rebuildStaticCache = !staticSceneData.valid || staticSceneData.scene != scene ||
+	bool	   rebuildStaticCache = !staticSceneData.valid || staticSceneData.scene != scene ||
 							  staticSceneData.meshRevision != meshRevision ||
 							  staticSceneData.meshComponentCount != staticMeshComponentCount || pendingLoadsCompleted ||
 							  incompleteCacheReadyToRetry;
@@ -666,8 +653,8 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 			const auto objectHandle = instance.obj->GetHandle();
 			const auto meshComponentHandle = instance.obj->GetComponentHandle<MeshComponent>();
 			staticSceneData.tlasInstances.push_back(
-				{objectHandle.GetValue(), meshComponentHandle.GetValue(), instance.blas->GetGPUAddress(),
-				 instance.flags}
+				{objectHandle.GetValue(), meshComponentHandle.GetValue(), instance.blas->GetGPUAddress(), instance.flags
+				}
 			);
 		}
 		staticSceneData.instanceIdLookup = m_instanceIdLookupScratch;
@@ -725,9 +712,9 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 
 		const uint32_t currentInstanceCount = static_cast<uint32_t>(m_tlasInstancesScratch.size());
 		const bool	   topologyChanged = !tlas->IsBuilt() || tlas->GetInstanceCount() != currentInstanceCount ||
-										 tlasFrame.lastInstanceCount != currentInstanceCount ||
-										 tlasFrame.lastTopologyHash != topologyHash;
-		const bool	   transformsChanged = tlasFrame.lastTransformHash != transformHash;
+									 tlasFrame.lastInstanceCount != currentInstanceCount ||
+									 tlasFrame.lastTopologyHash != topologyHash;
+		const bool transformsChanged = tlasFrame.lastTransformHash != transformHash;
 
 		if (topologyChanged)
 		{
@@ -1218,16 +1205,19 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	auto* restirMotionVectorTexture = restirCandidateData ? restirCandidateData->motionVectorTexture.get() : nullptr;
 	auto* restirLinearDepthTexture = restirCandidateData ? restirCandidateData->linearDepthTexture.get() : nullptr;
 	auto* restirDiffuseAlbedoTexture = restirCandidateData ? restirCandidateData->diffuseAlbedoTexture.get() : nullptr;
-	auto* restirSpecularAlbedoTexture = restirCandidateData ? restirCandidateData->specularAlbedoTexture.get() : nullptr;
-	auto* restirNormalRoughnessTexture = restirCandidateData ? restirCandidateData->normalRoughnessTexture.get() : nullptr;
+	auto* restirSpecularAlbedoTexture =
+		restirCandidateData ? restirCandidateData->specularAlbedoTexture.get() : nullptr;
+	auto* restirNormalRoughnessTexture =
+		restirCandidateData ? restirCandidateData->normalRoughnessTexture.get() : nullptr;
 	const bool restirCandidateResourcesReady =
 		restirPrimaryHitBuffer && restirPrimaryHitBuffer->HasUAV() && restirPrimaryHitBuffer->HasSRV() &&
 		restirReservoirBuffer && restirReservoirBuffer->HasUAV() && restirReservoirBuffer->HasSRV() &&
 		restirMotionVectorTexture && restirMotionVectorTexture->HasUAV(0) && restirMotionVectorTexture->HasSRV() &&
 		restirLinearDepthTexture && restirLinearDepthTexture->HasUAV(0) && restirLinearDepthTexture->HasSRV() &&
 		restirDiffuseAlbedoTexture && restirDiffuseAlbedoTexture->HasUAV(0) && restirDiffuseAlbedoTexture->HasSRV() &&
-		restirSpecularAlbedoTexture && restirSpecularAlbedoTexture->HasUAV(0) && restirSpecularAlbedoTexture->HasSRV() &&
-		restirNormalRoughnessTexture && restirNormalRoughnessTexture->HasUAV(0) && restirNormalRoughnessTexture->HasSRV();
+		restirSpecularAlbedoTexture && restirSpecularAlbedoTexture->HasUAV(0) &&
+		restirSpecularAlbedoTexture->HasSRV() && restirNormalRoughnessTexture &&
+		restirNormalRoughnessTexture->HasUAV(0) && restirNormalRoughnessTexture->HasSRV();
 	const bool restirCandidateEnabled = restirCandidateMode && restirCandidateResourcesReady;
 
 	{
@@ -1421,9 +1411,11 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 				DxrRootRestirLinearDepth, descHeap.GetGPUHandle(restirLinearDepthTexture->GetUAVIndex(0))
 			);
 			DxTexture* rrGuideTextures[] = {
-				restirDiffuseAlbedoTexture, restirSpecularAlbedoTexture, restirNormalRoughnessTexture};
+				restirDiffuseAlbedoTexture, restirSpecularAlbedoTexture, restirNormalRoughnessTexture
+			};
 			const DxrRootParameter rrGuideRoots[] = {
-				DxrRootRestirDiffuseAlbedo, DxrRootRestirSpecularAlbedo, DxrRootRestirNormalRoughness};
+				DxrRootRestirDiffuseAlbedo, DxrRootRestirSpecularAlbedo, DxrRootRestirNormalRoughness
+			};
 			for (uint32_t guideIndex = 0; guideIndex < 3u; ++guideIndex)
 			{
 				DxUtils::TransitionResourceIfNeeded(
@@ -1447,19 +1439,19 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			uint32_t screenWidth;
 			uint32_t screenHeight;
 			float	 cameraNearZ;
+			float	 cameraFarZ;
 			uint32_t emissiveLightCount;
 			float	 emissiveLightWeightSum;
 			uint32_t pad1;
-			uint32_t pad2;
 		};
 		RestirCandidateConstants restirConstants = {
 			restirCandidateEnabled ? 1u : 0u,
 			m_width,
 			m_height,
 			cameraData ? cameraData->nearZ : 0.1f,
+			cameraData ? cameraData->farZ : 1000.0f,
 			restirLightData->emissiveLightCount,
 			restirLightData->emissiveLightWeightSum,
-			0u,
 			0u
 		};
 		cmdList4->SetComputeRoot32BitConstants(DxrRootRestirCandidateConstants, 8, &restirConstants, 0);
@@ -1531,8 +1523,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		);
 		restirCandidateData->validThisFrame = true;
 		restirCandidateData->frameIndex = frameIndex;
-		restirCandidateData->shadingNormalStrength =
-			m_usePhysicalEmissionView ? 1.0f : RESTIR_STYLIZED_NORMAL_STRENGTH;
+		restirCandidateData->shadingNormalStrength = m_usePhysicalEmissionView ? 1.0f : RESTIR_STYLIZED_NORMAL_STRENGTH;
 	}
 
 	if (nullptr != cameraData)

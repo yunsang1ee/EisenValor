@@ -229,6 +229,9 @@
     <ClInclude Include="Scene\LoadingScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Lobby\LobbyClientState.h">
+      <Filter>Component\Lobby</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h">
       <Filter>Component\Lobby</Filter>
     </ClInclude>
@@ -318,6 +321,12 @@
     </ClInclude>
     <ClInclude Include="Scene\StartScene.h">
       <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\ScoreScene.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\FSM\StatePolicy.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -482,6 +491,9 @@
     </ClCompile>
     <ClCompile Include="Scene\StartScene.cpp">
       <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\ScoreScene.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

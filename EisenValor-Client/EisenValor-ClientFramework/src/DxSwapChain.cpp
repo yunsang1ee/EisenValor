@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "DxSwapChain.h"
+#include "DxResourceAllocationTracker.h"
 #include "DxUtils.h"
 #include <DxCommandQueueGlobal.h>
 #include <DxDeviceGlobal.h>
@@ -89,6 +90,7 @@ void DxSwapChain::ReleaseBackBuffers()
 	{
 		if (backBuffer)
 		{
+			DxResourceAllocationTracker::Untrack(backBuffer.Get());
 			backBuffer.Reset();
 		}
 	}
@@ -182,6 +184,13 @@ void DxSwapChain::CreateResources(
 
 		std::wstring bufferName = L"SwapChainBackBuffer_" + std::to_wstring(i);
 		DxUtils::SetDebugName(m_backBuffers[i].Get(), bufferName);
+
+		const auto desc = m_backBuffers[i]->GetDesc();
+		const auto allocInfo = device->GetResourceAllocationInfo(0, 1, &desc);
+		DxResourceAllocationTracker::Track(
+			m_backBuffers[i].Get(), Utils::WideToUtf8(bufferName.c_str()), allocInfo.SizeInBytes,
+			D3D12_HEAP_TYPE_DEFAULT, desc.Dimension
+		);
 	}
 
 	m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();

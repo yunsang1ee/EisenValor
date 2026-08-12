@@ -440,6 +440,7 @@ EisenValor-Server/Analysis
 # Local-only MCP config (converted from codex)
 .mcp.json
 /.codex
+/.omd
 
 # Streamline 2.11.1 minimal redistributable subset.
 # Keep the SDK self-contained after a normal clone without Git LFS.

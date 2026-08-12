@@ -4,11 +4,11 @@
 #include "DxUtils.h"
 #include <string>
 
-void DxDescriptorHandles::Free(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, std::string_view debugName)
+void DxDescriptorHandles::Free(DxDescriptorHeapGlobal& heap, std::string_view debugName)
 {
 	if (IsValid())
 	{
-		heap.Free(m_index, fenceHandle, debugName);
+		heap.Free(m_index, debugName);
 		Invalidate();
 	}
 }
@@ -231,14 +231,14 @@ void DxDescriptorHeapGlobal::FreeImmediate(uint32_t index)
 	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] Freed slot: Index={} (available: {})\n", index, m_freeSlots.size());
 }
 
-void DxDescriptorHeapGlobal::Free(uint32_t index, const FenceHandle& fenceHandle, std::string_view debugName)
+void DxDescriptorHeapGlobal::Free(uint32_t index, std::string_view debugName)
 {
 	if (index == kInvalidIndex)
 	{
 		return;
 	}
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
-	gc.DeferDescriptorFree(this, index, fenceHandle, debugName);
+	gc.DeferDescriptorFreeAfterCurrentFrame(this, index, debugName);
 }
 
 DxDescriptorRange DxDescriptorHeapGlobal::ReserveRange(uint32_t count)
@@ -318,12 +318,12 @@ void DxDescriptorHeapGlobal::FreeRangeImmediate(uint32_t startIndex, uint32_t co
 	);
 }
 
-void DxDescriptorHeapGlobal::FreeRange(
-	uint32_t startIndex, uint32_t count, const FenceHandle& fenceHandle, std::string_view debugName
-)
+void DxDescriptorHeapGlobal::FreeRange(uint32_t startIndex, uint32_t count, std::string_view debugName)
 {
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
-	gc.DeferRelease([this, startIndex, count] { this->FreeRangeImmediate(startIndex, count); }, fenceHandle, debugName);
+	gc.DeferReleaseAfterCurrentFrame(
+		[this, startIndex, count] { this->FreeRangeImmediate(startIndex, count); }, debugName
+	);
 }
 
 DxDescriptorHandles DxDescriptorHeapGlobal::CreateSRV(

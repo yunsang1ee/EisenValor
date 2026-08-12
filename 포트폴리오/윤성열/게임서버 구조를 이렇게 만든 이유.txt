@@ -1,0 +1,11 @@
+이 게임은 로비서버에서 게임서버로 넘어가는 구조다.
+
+MO 게임서버에서는 하나의 쓰레드가, 여러개의 게임 방들을 업데이트 하는 구조가 이상적인 구조라고 배웠다.
+지금 게임서버에서는 게임 룸 쓰레드가 여러 개의 고정된 게임 룸들을 업데이트한다(1번 쓰레드가 1번부터 4번까지, 2번 쓰레드가 5번 부터 8번까지...1번 쓰레드가 5번부터 8번까지의 방을 건들일은 없다.) 게임 룸 안에서는 게임 업데이트 및 해당 게임 방에 접속해있는 유저들에 대한 I/O가 이루어진다.
+
+로비에서 방장이 게임 시작 버튼을 누를 경우, 로비서버에서 클라이언트들에게 게임서버IP:PORT로 접속하라고 알려준다. 이때 만약 게임서버쪽에서 접속하는 포트가 한 개라면 서버쪽에선 접속 후 세션 생성 및 RequestQueue 생성 후 Receive함수를 호출해야 한다. RequestQueue 생성시, WorkerThread의 CompletionQueue와 연결이 되야한다.
+RIO특성상, Session같은 경우 RequestQueue에 대고 I/O, WorkerThread 같은 경우 들고 있는 CompletionQueue에서 DequeCompletion을 하게된다.
+처음 게임서버에 접속하게 되면, 클라이언트 쪽으로 내가 몇번 방에 들어가야 하는지 패킷을 보내주게 된다. 이때 맨 처음 등록한 WorkerThread가 받게 되면, 이 WorkerThread는 패킷을 읽고 얘가 어떤 방에 들어가야 하는지, 알려주게 되는데 
+그 방을 관리하고 있는 쓰레드는 그 방을 업데이트 해야할 뿐 아니라 그 유저의 I/O도 해줘야 한다. 이때, 그 유저의 I/O를 해주려면 그 방을 관리 하고 있는 쓰레드의 CompletionQueue에 다시 등록을 해줘야 하는데, 이때 ReqeustQueue와 CompletionQueue간의 충돌이 발생했고, 그 결과 Receive와 Send 함수 호출 시 에러가 났다.
+
+따라서 내가 찾은 방법은 여러 개의 GameRoomThread마다 AcceptThread가 존재하고, 로비서버는 적절한 GameRoomThread 찾아서, 그.쓰레드가 소유한 AcceptThread의 Port번호를 넘겨준 뒤, 클라이언트들은 해당 Port로 접속하게 된다. 이때 GameRoomThread는 로비서버로부터 전달받은 정보를 토대로 방을 만들고(이때 RDBMS를 썼어야 했나 생각이 들기도 하다), 유저 정보를 방 안에 저장해준다. 그 후 AcceptThread가 Accept 후, 자기 주인의 GameRoomThread로 넘겨주게 된 뒤, 클라이언트한테 방 번호 패킷을 받은 다음, 자기가 갖고 있는 방에다가 넣어주게 된다.

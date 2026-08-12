@@ -62,10 +62,10 @@ public:
 	void CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap);
 	void CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel = 0);
 
-	void ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
-	void ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, const uint32_t mipLevel);
-	void ReleaseAllUAVs(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
-	void ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
+	void ReleaseSRV(DxDescriptorHeapGlobal& heap);
+	void ReleaseUAV(DxDescriptorHeapGlobal& heap, const uint32_t mipLevel);
+	void ReleaseAllUAVs(DxDescriptorHeapGlobal& heap);
+	void ReleaseAllViews(DxDescriptorHeapGlobal& heap);
 
 	// Getters
 	[[nodiscard]] DxDescriptorHandles* GetSRVHandle() { return &m_srvHandle; }

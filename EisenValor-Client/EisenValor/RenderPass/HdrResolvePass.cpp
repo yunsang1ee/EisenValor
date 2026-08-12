@@ -3,6 +3,7 @@
 #include "RenderData/RaytracingOutputRenderData.h"
 #include "RenderData/DlssOutputRenderData.h"
 #include <DxFrameResource.h>
+#include <FrameRenderData.h>
 #include <RenderContext.h>
 #include <DxSwapChain.h>
 #include <DxCommandContext.h>
@@ -12,6 +13,127 @@
 #include <DxDeviceGlobal.h>
 #include <DxShaderCompilerGlobal.h>
 #include <DxDescriptorHeapGlobal.h>
+
+#include <cstdio>
+
+namespace
+{
+void AppendMissingInputFlag(char* buffer, size_t bufferSize, uint32_t mask, uint32_t flag, const char* name)
+{
+	if (0u == (mask & flag))
+	{
+		return;
+	}
+
+	if ('\0' != buffer[0])
+	{
+		strncat_s(buffer, bufferSize, "|", _TRUNCATE);
+	}
+	strncat_s(buffer, bufferSize, name, _TRUNCATE);
+}
+
+const char* ToMissingInputString(uint32_t mask, char* buffer, size_t bufferSize)
+{
+	if (0u == mask)
+	{
+		return "-";
+	}
+
+	buffer[0] = '\0';
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoRaytracingOutput, "NoRaytracingOutput");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoCandidateData, "NoCandidateData");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoCameraData, "NoCameraData");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::BypassToneMap, "BypassToneMap");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::CandidateInvalid, "CandidateInvalid");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoColorInput, "NoColorInput");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoColorOutput, "NoColorOutput");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoDepth, "NoDepth");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoMotionVectors, "NoMotionVectors");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoDiffuseAlbedo, "NoDiffuseAlbedo");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoSpecularAlbedo, "NoSpecularAlbedo");
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoNormalRoughness, "NoNormalRoughness");
+	return buffer;
+}
+
+const char* ToDebugString(DlssOutputStatus status)
+{
+	switch (status)
+	{
+	case DlssOutputStatus::NotRun:
+		return "NotRun";
+	case DlssOutputStatus::Disabled:
+		return "Disabled";
+	case DlssOutputStatus::MissingInput:
+		return "MissingInput";
+	case DlssOutputStatus::MissingGuideInput:
+		return "MissingGuideInput";
+	case DlssOutputStatus::EvaluateFailed:
+		return "EvaluateFailed";
+	case DlssOutputStatus::Valid:
+		return "Valid";
+	case DlssOutputStatus::WarmingUp:
+		return "WarmingUp";
+	default:
+		return "Unknown";
+	}
+}
+
+void OutputDlssResolveState(
+	bool usingDlss, const DlssOutputRenderData* dlssOutputData, const DxTexture* srcTexture, float frameMs
+)
+{
+	static bool				s_hasLastState = false;
+	static bool				s_lastUsingDlss = false;
+	static DlssOutputStatus s_lastStatus = DlssOutputStatus::NotRun;
+	static ULONGLONG		s_lastResolveTickMs = 0u;
+
+	const DlssOutputStatus status = dlssOutputData ? dlssOutputData->status : DlssOutputStatus::NotRun;
+	const uint32_t		   width = srcTexture ? srcTexture->GetWidth() : 0u;
+	const uint32_t		   height = srcTexture ? srcTexture->GetHeight() : 0u;
+	const uint32_t		   valid = dlssOutputData && dlssOutputData->validThisFrame ? 1u : 0u;
+	const uint32_t		   rr = dlssOutputData && dlssOutputData->usedRayReconstruction ? 1u : 0u;
+	const uint32_t missingInputMask = dlssOutputData ? dlssOutputData->missingInputMask : DlssMissingInputMask::None;
+
+	static uint32_t	 s_lastMissingInputMask = UINT32_MAX;
+	static uint32_t	 s_lastWidth = 0u;
+	static uint32_t	 s_lastHeight = 0u;
+	static ULONGLONG s_lastLogTickMs = 0u;
+
+	const ULONGLONG nowMs = GetTickCount64();
+	const double	resolveGapMs = 0u == s_lastResolveTickMs ? 0.0 : static_cast<double>(nowMs - s_lastResolveTickMs);
+	s_lastResolveTickMs = nowMs;
+
+	const bool changed = !s_hasLastState || s_lastUsingDlss != usingDlss || s_lastStatus != status ||
+						 s_lastMissingInputMask != missingInputMask || s_lastWidth != width || s_lastHeight != height;
+	if (!changed && nowMs - s_lastLogTickMs < 2000u)
+	{
+		return;
+	}
+
+	s_hasLastState = true;
+	s_lastUsingDlss = usingDlss;
+	s_lastStatus = status;
+	s_lastMissingInputMask = missingInputMask;
+	s_lastWidth = width;
+	s_lastHeight = height;
+	s_lastLogTickMs = nowMs;
+
+	char missingInputText[256] = {};
+	char message[512] = {};
+	std::snprintf(
+		message, sizeof(message),
+		"[DLSS.Resolve] source=%s status=%s valid=%u rr=%u src=%ux%u frameMs=%.2f resolveGapMs=%.2f "
+		"missing=0x%X(%s)\n",
+		usingDlss ? "DLSS" : "RawFallback", ToDebugString(status), valid, rr, width, height, frameMs, resolveGapMs,
+		missingInputMask, ToMissingInputString(missingInputMask, missingInputText, sizeof(missingInputText))
+	);
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
+	DEBUG_LOG_FMT("{}", message);
+#else
+	OutputDebugStringA(message);
+#endif
+}
+} // namespace
 
 HdrResolvePass::HdrResolvePass(DxSwapChain* swapChain) : m_swapChain(swapChain) {}
 
@@ -41,6 +163,7 @@ void HdrResolvePass::DeclareRenderData(RenderContext* renderContext)
 	renderContext->DeclareAccess<DlssOutputRenderData>(
 		GetName(), RenderDataPolicy::FrameBuffered, RenderDataAccessMode::Read
 	);
+	renderContext->DeclareAccess<FrameRenderData>(GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read);
 }
 
 void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
@@ -58,14 +181,18 @@ void HdrResolvePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext
 		return;
 	}
 
-	auto* dlssOutputData = renderContext->Get<DlssOutputRenderData>();
-	auto* srcTexture = outputData->outputTexture.get();
-	bool bypassToneMap = outputData->bypassToneMap;
-	if (dlssOutputData && dlssOutputData->validThisFrame && dlssOutputData->outputTexture)
+	auto*	   dlssOutputData = renderContext->Get<DlssOutputRenderData>();
+	auto*	   frameData = renderContext->Get<FrameRenderData>();
+	auto*	   srcTexture = outputData->outputTexture.get();
+	bool	   bypassToneMap = outputData->bypassToneMap;
+	const bool usingDlss = dlssOutputData && dlssOutputData->validThisFrame && dlssOutputData->outputTexture;
+	if (usingDlss)
 	{
 		srcTexture = dlssOutputData->outputTexture.get();
 		bypassToneMap = false;
 	}
+	const float frameMs = frameData ? frameData->deltaTime * 1000.0f : -1.0f;
+	OutputDlssResolveState(usingDlss, dlssOutputData, srcTexture, frameMs);
 	if (!srcTexture->HasSRV())
 	{
 		return;

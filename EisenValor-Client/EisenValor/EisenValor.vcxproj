@@ -245,7 +245,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -310,10 +310,12 @@ exit /b 0</Command>
   <ItemGroup>
     <ClInclude Include="Component\FSM\FSMComponent.h" />
     <ClInclude Include="Component\FSM\StateImplementations.h" />
+    <ClInclude Include="Component\FSM\StatePolicy.h" />
     <ClInclude Include="Component\FSM\StatePool.h" />
     <ClInclude Include="Component\AttackRangeDebugComponent.h" />
     <ClInclude Include="Component\FootIKComponent.h" />
     <ClInclude Include="Component\HealthComponent.h" />
+    <ClInclude Include="Component\Lobby\LobbyClientState.h" />
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h" />
     <ClInclude Include="Component\Login\LoginSceneControllerComponent.h" />
     <ClInclude Include="Component\PlayerControllerComponent.h" />

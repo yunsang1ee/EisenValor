@@ -1,12 +1,42 @@
 #include "stdafxClient.h"
 #include "WorldSceneControllerComponent.h"
+#include "GameObject.h"
 #include "InputGlobal.h"
+#include "ImageUIComponent.h"
 #include "NetworkGlobal.h"
+#include "RectTransformComponent.h"
+#include "ResourceGlobal.h"
+#include "Scene.h"
 #include "SceneGlobal.h"
+#include "TextureResource.h"
+#include "Util/GameConstants.h"
 #include "Packets/C2SPackets.h"
+
+namespace
+{
+std::wstring FormatBlueScore(uint8_t score)
+{
+	return L"BLUE  " + std::to_wstring(score) + L" / " + std::to_wstring(MatchRule::kScoreToWin);
+}
+
+std::wstring FormatRedScore(uint8_t score)
+{
+	return std::to_wstring(score) + L" / " + std::to_wstring(MatchRule::kScoreToWin) + L"  RED";
+}
+} // namespace
+
+void WorldSceneControllerComponent::OnStart()
+{
+	CreateTeamScoreUI();
+}
 
 void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 {
+	if (m_scoreTextDirty)
+	{
+		m_scoreTextDirty = !RefreshTeamScoreText();
+	}
+
 #ifdef APPLY_LOBBY_SERVER
 	if (GLOBAL(InputGlobal).GetInputDown('L'))
 	{
@@ -16,4 +46,160 @@ void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 		GLOBAL(NetBridge::NetworkGlobal).SendLobby(std::move(pb));
 	}
 #endif
+}
+
+void WorldSceneControllerComponent::SetTeamScores(uint8_t blueScore, uint8_t redScore)
+{
+	m_blueScore = blueScore;
+	m_redScore = redScore;
+	m_scoreTextDirty = true;
+}
+
+void WorldSceneControllerComponent::CreateTeamScoreUI()
+{
+	auto* scene = GetGameObject()->GetScene();
+	if (!scene)
+	{
+		return;
+	}
+
+	scene->ReserveGameObject(
+		"TeamScorePanel", std::nullopt,
+		[scene](GameObject* obj)
+		{
+			scene->CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
+					rect->SetPivot({0.5f, 0.0f});
+					rect->SetOffsetMin({-360.0f, 16.0f});
+					rect->SetOffsetMax({360.0f, 60.0f});
+				}
+			);
+
+			scene->CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\UIback.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.95f});
+					image->SetOrder(99994);
+				}
+			);
+		}
+	);
+
+	scene->ReserveGameObject(
+		"BlueTeamScoreText", std::nullopt,
+		[this, scene](GameObject* obj)
+		{
+			scene->CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
+					rect->SetPivot({0.5f, 0.0f});
+					rect->SetOffsetMin({-344.0f, 16.0f});
+					rect->SetOffsetMax({-72.0f, 60.0f});
+				}
+			);
+
+			m_blueTeamScoreTextHandle = scene->CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[this](TextUIComponent* text)
+				{
+					text->SetText(FormatBlueScore(m_blueScore));
+					text->SetFontSize(23.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({0.35f, 0.55f, 1.0f, 1.0f});
+					text->SetOrder(99995);
+				}
+			);
+		}
+	);
+
+	scene->ReserveGameObject(
+		"TeamScoreDivider", std::nullopt,
+		[scene](GameObject* obj)
+		{
+			scene->CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
+					rect->SetPivot({0.5f, 0.5f});
+					rect->SetOffsetMin({-56.0f, 37.0f});
+					rect->SetOffsetMax({56.0f, 39.0f});
+				}
+			);
+
+			scene->CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					image->SetNormalColor({0.85f, 0.72f, 0.32f, 0.9f});
+					image->SetOrder(99995);
+				}
+			);
+		}
+	);
+
+	scene->ReserveGameObject(
+		"RedTeamScoreText", std::nullopt,
+		[this, scene](GameObject* obj)
+		{
+			scene->CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
+					rect->SetPivot({0.5f, 0.0f});
+					rect->SetOffsetMin({72.0f, 16.0f});
+					rect->SetOffsetMax({344.0f, 60.0f});
+				}
+			);
+
+			m_redTeamScoreTextHandle = scene->CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[this](TextUIComponent* text)
+				{
+					text->SetText(FormatRedScore(m_redScore));
+					text->SetFontSize(23.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({1.0f, 0.35f, 0.35f, 1.0f});
+					text->SetOrder(99995);
+				}
+			);
+		}
+	);
+}
+
+bool WorldSceneControllerComponent::RefreshTeamScoreText()
+{
+	auto* scene = GetGameObject()->GetScene();
+	if (!scene)
+	{
+		return false;
+	}
+
+	auto* textStorage = scene->GetStorage<TextUIComponent>();
+	if (!textStorage)
+	{
+		return false;
+	}
+
+	auto* blueText = textStorage->Get(m_blueTeamScoreTextHandle);
+	auto* redText = textStorage->Get(m_redTeamScoreTextHandle);
+	if (!blueText || !redText)
+	{
+		return false;
+	}
+
+	blueText->SetText(FormatBlueScore(m_blueScore));
+	redText->SetText(FormatRedScore(m_redScore));
+	return true;
 }

@@ -6,7 +6,12 @@
 #include "ResourceGlobal.h"
 #include "AnimationResource.h"
 #include "SceneGlobal.h"
+#include "AudioGlobal.h"
 #include "CameraComponent.h"
+#include "NetworkGlobal.h"
+#include "Scene.h"
+#include "Transform.h"
+#include "Component/TeamComponent.h"
 #include <GameObject.h>
 #include <GameObject.inl>
 #include <Packets/Enums_generated.h>
@@ -14,16 +19,25 @@
 #include <Packets/C2SPackets.h>
 #include <Component/FSM/FSMComponent.h>
 #include "Util/GameConstants.h"
+#include <unordered_set>
 
 using namespace DirectX;
 
 namespace
 {
+std::unordered_set<uint64> s_predictedHitFrameFiredObjectIDs;
+
 struct AttackTiming
 {
 	float preDelay;
 	float attack;
 	float postDelay;
+};
+
+struct AttackShape
+{
+	float radius;
+	float degree;
 };
 
 AttackTiming GetAttackTiming(GENERAL_ATTACK_TYPE type)
@@ -37,6 +51,130 @@ AttackTiming GetAttackTiming(GENERAL_ATTACK_TYPE type)
 	default:
 		return {9.0f / 30.0f, 3.0f / 30.0f, 3.0f / 30.0f};
 	}
+}
+
+AttackShape GetAttackShape(GENERAL_ATTACK_TYPE type)
+{
+	switch (type)
+	{
+	case GENERAL_ATTACK_TYPE_AREA:
+		return {7.0f, 160.0f};
+	case GENERAL_ATTACK_TYPE_HEAVY:
+		return {2.0f, 160.0f};
+	default:
+		return {3.0f, 120.0f};
+	}
+}
+
+bool IsTargetInPredictedAttackRange(
+	GameObject* attacker,
+	GameObject* target,
+	float attackRadius,
+	float attackDegree
+)
+{
+	if (!attacker || !target)
+	{
+		return false;
+	}
+
+	const Vec3 attackerPos = attacker->GetTransform().GetPosition();
+	const Vec3 attackerRot = attacker->GetTransform().GetRotation();
+	const float attackerYaw = XMConvertToRadians(attackerRot.y);
+	Vec3 attackerDir{ sinf(attackerYaw), 0.f, cosf(attackerYaw) };
+	attackerDir.Normalize();
+
+	const float radiusSq = attackRadius * attackRadius;
+	const float halfDegree = attackDegree * 0.5f;
+	const float cosHalfAngle = std::cosf(XMConvertToRadians(halfDegree));
+	const Vec3 targetPos = target->GetTransform().GetPosition();
+	const Vec3 toTargetDir = targetPos - attackerPos;
+	const float distToTargetSq =
+		toTargetDir.x * toTargetDir.x +
+		toTargetDir.y * toTargetDir.y +
+		toTargetDir.z * toTargetDir.z;
+
+	if (distToTargetSq >= radiusSq)
+	{
+		return false;
+	}
+
+	const float dotValue = attackerDir.Dot(toTargetDir);
+	if (dotValue <= 0.f)
+	{
+		return false;
+	}
+
+	const float cosHalfAngleSq = cosHalfAngle * cosHalfAngle;
+	return (dotValue * dotValue) >= (distToTargetSq * cosHalfAngleSq);
+}
+
+GameObject* FindPredictedAttackTarget(
+	Scene* scene,
+	GameObject* attacker,
+	float attackRadius,
+	float attackDegree
+)
+{
+	if (!scene || !attacker)
+	{
+		return nullptr;
+	}
+
+	auto* attackerTeam = attacker->GetComponent<TeamComponent>();
+	auto* transformStorage = scene->GetStorage<Transform>();
+	if (!attackerTeam || !transformStorage)
+	{
+		return nullptr;
+	}
+
+	for (auto& transform : transformStorage->GetList())
+	{
+		GameObject* candidate = transform.GetGameObject();
+		if (!candidate || candidate == attacker)
+		{
+			continue;
+		}
+
+		auto* candidateFsm = candidate->GetComponent<FSMComponent>();
+		if (!candidateFsm)
+		{
+			continue;
+		}
+
+		const uint8_t candidateState = candidateFsm->GetCurStateType();
+		const bool isDeadState =
+			candidateState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+			candidateState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD) ||
+			candidateState == StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD);
+		if (isDeadState)
+		{
+			continue;
+		}
+
+		const uint8_t objectType = candidateFsm->GetObjectType();
+		const bool isAttackableType =
+			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_PLAYER) ||
+			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_GENERAL) ||
+			objectType == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER);
+		if (!isAttackableType)
+		{
+			continue;
+		}
+
+		auto* candidateTeam = candidate->GetComponent<TeamComponent>();
+		if (!candidateTeam || candidateTeam->GetTeamType() == attackerTeam->GetTeamType())
+		{
+			continue;
+		}
+
+		if (IsTargetInPredictedAttackRange(attacker, candidate, attackRadius, attackDegree))
+		{
+			return candidate;
+		}
+	}
+
+	return nullptr;
 }
 
 uint8_t GetAttackAnimationKey(FSMComponent* fsm)
@@ -355,6 +493,10 @@ void GeneralAttackState::Enter(FSMComponent* fsm)
 {
 	//DEBUG_LOG_FMT("[FSM] ATTACK Enter!\n");
 	fsm->SetStateTimer(0.0f);
+	if (auto* obj = fsm ? fsm->GetGameObject() : nullptr)
+	{
+		s_predictedHitFrameFiredObjectIDs.erase(obj->GetServerID());
+	}
 	return;
 
 	/*DEBUG_LOG_FMT("\n[FSM] Playing Attack Animation - Type: {}, Dir: {}, LockOn: {}\n", 
@@ -386,6 +528,110 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 
 	GENERAL_ATTACK_TYPE type = static_cast<GENERAL_ATTACK_TYPE>(fsm->GetCurAttackType());
 	const float targetTime = GetAttackTiming(type).attack;
+
+	// 공격자가 ATTACK 상태에 들어왔을 때,클라에서 맞을 대상을 찾아서 그 대상을 미리 STUN
+	if (auto* obj = fsm->GetGameObject())
+	{
+		auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
+		const bool isPredictedImpactFired =
+			s_predictedHitFrameFiredObjectIDs.contains(obj->GetServerID());
+		if (!isPredictedImpactFired)
+		{
+			s_predictedHitFrameFiredObjectIDs.insert(obj->GetServerID());
+			const AttackShape shape = GetAttackShape(type);
+			//DEBUG_LOG_FMT(
+			//	"[PredictedAttackImpact] attacker={}, type={}, dir={}, radius={}, degree={}\n",
+			//	obj->GetServerID(),
+			//	static_cast<int>(fsm->GetCurAttackType()),
+			//	static_cast<int>(fsm->GetCurAttackDir()),
+			//	shape.radius,
+			//	shape.degree
+			//);
+
+			GameObject* target = FindPredictedAttackTarget(scene, obj, shape.radius, shape.degree);
+			// 타겟이 없을 때
+			if (!target)
+			{
+				/*DEBUG_LOG_FMT("[PredictedStunSkip] attacker={}, reason=no_target\n", obj->GetServerID());*/
+				return;
+			}
+			// 타겟이 있을 때
+			else if (auto* targetFsm = target->GetComponent<FSMComponent>())
+			{
+				// 타겟의 FSM이 있을 때 공격 방향이 같으면 Guard 상태로 전이
+				const uint8_t attackerDir = fsm->GetCurAttackDir();
+				const uint8_t defenderDir = targetFsm->GetCurAttackDir();
+				const uint8_t targetState = targetFsm->GetCurStateType();
+				/*DEBUG_LOG_FMT(
+					"[PredictedGuardCheck] attacker={}, target={}, attackerDir={}, defenderDir={}, targetState={}\n",
+					obj->GetServerID(),
+					target->GetServerID(),
+					static_cast<int>(attackerDir),
+					static_cast<int>(defenderDir),
+					static_cast<int>(targetState)
+				);*/
+				if (attackerDir != static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_NONE) &&
+					attackerDir == defenderDir)
+				{
+					targetFsm->SetGuardRole(FSMComponent::GuardRole::Defender);
+					fsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
+					const uint8_t guardState = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD);
+					const bool defenderGuarded = targetFsm->RequestState(FSMComponent::StateRequestType::Guard, guardState);
+					const bool attackerGuarded = fsm->RequestState(FSMComponent::StateRequestType::Guard, guardState);
+					if (defenderGuarded || attackerGuarded)
+					{
+						DEBUG_LOG_FMT(
+							"[PredictedGuard] defender={}, attacker={}, dir={}\n",
+							target->GetServerID(),
+							obj->GetServerID(),
+							static_cast<int>(attackerDir)
+						);
+					}
+					return;
+				}
+
+				if (targetState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD))
+				{
+					return;
+				}
+
+				targetFsm->SetHitReact(fsm->GetCurAttackType(), attackerDir);
+				// 타겟의 FSM이 STUN 상태로 전이 가능한지 확인 후 전이
+				if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
+				{
+					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/sword_hurt.wav", AudioBus::SFX);
+					//DEBUG_LOG_FMT(
+					//	"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
+					//	obj->GetServerID(),
+					//	target->GetServerID(),
+					//	static_cast<int>(fsm->GetCurAttackType()),
+					//	static_cast<int>(fsm->GetCurAttackDir())
+					//);
+				}
+				else
+				{
+					// 타겟의 FSM이 STUN 상태로 전이 불가할 때
+					//DEBUG_LOG_FMT(
+					//	"[PredictedStunSkip] attacker={}, target={}, reason=request_rejected, targetState={}\n",
+					//	obj->GetServerID(),
+					//	target->GetServerID(),
+					//	static_cast<int>(targetFsm->GetCurStateType())
+					//);
+					return;
+				}
+			}
+			// 타겟의 FSM이 없을 때
+			else
+			{
+				//DEBUG_LOG_FMT(
+				//	"[PredictedStunSkip] attacker={}, target={}, reason=no_fsm\n",
+				//	obj->GetServerID(),
+				//	target->GetServerID()
+				//);
+				return;
+			}
+		}
+	}
 
 	if (fsm->GetStateTimer() >= targetTime)
 	{
@@ -465,8 +711,8 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 		{
 			//// 피격 방향(1, 2, 3) & 공격 강도(0:Light, 1:Heavy) 반영
 			// 기본 STUN
-			uint8_t dir = fsm->GetCurAttackDir();
-			uint8_t type = static_cast<uint8_t>(fsm->GetCurAttackType());
+			uint8_t dir = fsm->GetHitReactDir();
+			uint8_t type = fsm->GetHitReactType();
 
 			uint8_t stunKey = StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN);
 			if (dir >= 1 && dir <= 4)
@@ -499,7 +745,27 @@ void GeneralStunState::Update(FSMComponent* fsm, float dt)
 	const bool isLocalPlayer = obj->GetServerID() == scene->GetLocalID();
 	if (isLocalPlayer)
 	{
+		// 안전장치
+		auto& transform = obj->GetTransform();
+		const auto pos = transform.GetWorldPosition();
+		const auto rot = transform.GetRotation();
+		FB_STRUCTS::PosInfo posInfo{{pos.x, pos.y, pos.z}, {rot.x, rot.y, rot.z}};
+		auto pbMove = NetBridge::C2S::Make_CS_MOVE_PACKET(&posInfo, fsm->GetMoveDirection());
+		GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pbMove));
+
 		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery);
+		return;
+	}
+
+	const uint8_t recoveryState = fsm->GetServerState();
+	const bool isServerStunOrDead =
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_STUN) ||
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+		recoveryState == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD);
+	if (!isServerStunOrDead)
+	{
+		fsm->RequestState(FSMComponent::StateRequestType::IdleRecovery, recoveryState);
 	}
 }
 

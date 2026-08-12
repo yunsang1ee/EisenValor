@@ -103,9 +103,9 @@ private:
 
 	bool	 m_initialized = false;
 	bool	 m_usePathTracing = false;
-	bool	 m_useRestirPT = false;
+	bool	 m_useRestirPT = true;
 	bool	 m_usePhysicalEmissionView = false;
-	bool	 m_useDayEnvironment = false;
+	bool	 m_useDayEnvironment = true;
 	bool	 m_hasPreviousViewProj = false;
 	uint32_t m_raytracingFrameSeed = 0;
 	uint64_t m_restirHistoryGeneration = 1;

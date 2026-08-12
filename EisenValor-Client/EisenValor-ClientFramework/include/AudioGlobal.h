@@ -24,7 +24,9 @@ public:
 	void Initialize() override;
 	void Release() override;
 
-	bool Play2D(const std::filesystem::path& filePath, AudioBus bus = AudioBus::SFX, bool loop = false);
+	bool Play2D(
+		const std::filesystem::path& filePath, AudioBus bus = AudioBus::SFX, bool loop = false, float volumeScale = 1.0f
+	);
 	void StopAll();
 	void StopBus(AudioBus bus);
 	void SetBusVolume(AudioBus bus, float volume);

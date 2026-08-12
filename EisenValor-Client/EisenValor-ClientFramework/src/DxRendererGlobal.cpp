@@ -7,6 +7,7 @@
 #include "DxFeatureCaps.h"
 #include "DxGarbageCollectorGlobal.h"
 #include "DxFrameResource.h"
+#include "DxResourceAllocationTracker.h"
 #include "DxSwapChain.h"
 #include "DxCommandContext.h"
 #include "CameraRenderData.h"
@@ -65,6 +66,9 @@ void DxRendererGlobal::Initialize()
 	m_isInitialized = true;
 	m_currentFrameIndex = 0;
 	m_cameraJitterSequenceIndex = 0;
+#if ENABLE_GRAPHICS_DEBUG_LOG
+	m_nextMemoryLogTime = 0.0f;
+#endif
 
 	// RTV Descriptor Heap 생성
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -90,7 +94,7 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 	{
 		GRAPHICS_LOG_FMT("[DxRendererGlobal] WARNING: SwapChain already exists!\n");
 		return;
-	}	
+	}
 
 	if (!m_rtvDescriptorHeap)
 	{
@@ -113,6 +117,9 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		"[DxRendererGlobal] SwapChain created: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
 		m_renderHeight
 	);
+#if ENABLE_GRAPHICS_DEBUG_LOG
+	LogVideoMemoryStats("CreateSwapChain");
+#endif
 }
 
 void DxRendererGlobal::Release()
@@ -308,7 +315,7 @@ void DxRendererGlobal::EndFrame()
 	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
-	gc.SetCurrentFrameFence(FenceHandle{EQueueType::Graphics, signaledFence});
+	gc.CommitCurrentFrameReleases(FenceHandle{EQueueType::Graphics, signaledFence});
 	{
 		PixScopedCpuEvent gcEvent(L"DxRenderer.ProcessCompletedReleases");
 		gc.ProcessCompletedReleases(commandQueue.GetCompletedFenceValue());
@@ -318,6 +325,15 @@ void DxRendererGlobal::EndFrame()
 		PixScopedCpuEvent contextEvent(L"DxRenderer.EndRenderContextFrame");
 		m_renderContext.EndFrame();
 	}
+
+#if ENABLE_GRAPHICS_DEBUG_LOG
+	const float runtime = GLOBAL(TimerGlobal).GetRuntime();
+	if (runtime >= m_nextMemoryLogTime)
+	{
+		LogVideoMemoryStats("Periodic");
+		m_nextMemoryLogTime = runtime + 5.0f;
+	}
+#endif
 }
 
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
@@ -375,6 +391,9 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
 		m_renderHeight
 	);
+#if ENABLE_GRAPHICS_DEBUG_LOG
+	LogVideoMemoryStats("PostResize");
+#endif
 }
 
 void DxRendererGlobal::ClearAllPasses()
@@ -405,4 +424,10 @@ DxFrameResource* DxRendererGlobal::GetCurrentFrame() const
 		return nullptr;
 	}
 	return m_frameResources[m_currentFrameIndex].get();
+}
+
+void DxRendererGlobal::LogVideoMemoryStats(std::string_view reason) const
+{
+	auto& device = GLOBAL(DxDeviceGlobal);
+	DxResourceAllocationTracker::LogStats(device.GetAdapter(), reason, 20);
 }

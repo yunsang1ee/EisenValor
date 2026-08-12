@@ -15,3 +15,8 @@ namespace AnimationOffset
 	static constexpr float kBlendDuration = 0.25f;
 	static constexpr float kIKDuration = 6.0f;
 }
+
+namespace MatchRule
+{
+	static constexpr uint16_t kScoreToWin = 150;
+}

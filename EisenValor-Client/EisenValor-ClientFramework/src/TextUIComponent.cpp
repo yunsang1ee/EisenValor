@@ -2,6 +2,7 @@
 #include "TextUIComponent.h"
 #include "DxCommandQueueGlobal.h"
 #include "DxDeviceGlobal.h"
+#include "DxGarbageCollectorGlobal.h"
 #include "DxTexture.h"
 #include "RectTransformComponent.h"
 #include "TextureResource.h"
@@ -206,7 +207,17 @@ namespace
 		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
 		ID3D12CommandList* commandLists[] = {commandList.Get()};
 		queue.GetQueue()->ExecuteCommandLists(1, commandLists);
-		queue.WaitForIdle();
+
+		const uint64_t uploadFenceValue = queue.SignalFence();
+		GLOBAL(DxGarbageCollectorGlobal).DeferRelease(
+			[upload, allocator, commandList]() mutable
+			{
+				commandList.Reset();
+				allocator.Reset();
+				upload.Reset();
+			},
+			FenceHandle(EQueueType::Graphics, uploadFenceValue), "TextUITextureUpload"
+		);
 
 		auto dxTexture = std::make_unique<DxTexture>();
 		dxTexture->InitializeFromResource(
