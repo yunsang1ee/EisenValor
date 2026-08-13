@@ -35,11 +35,15 @@ namespace AnimationLoader
 			{
 				const auto playLeftFootstep = []()
 				{
-					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/leftfootstep.wav", AudioBus::SFX);
+					GLOBAL(AudioGlobal).Play2D(
+						L"Resource/Sounds/leftfootstep.wav", AudioBus::SFX, false, AudioBalance::kFootstepVolume
+					);
 				};
 				const auto playRightFootstep = []()
 				{
-					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/rightfootstep.wav", AudioBus::SFX);
+					GLOBAL(AudioGlobal).Play2D(
+						L"Resource/Sounds/rightfootstep.wav", AudioBus::SFX, false, AudioBalance::kFootstepVolume
+					);
 				};
 				const uint8_t walkKey = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
 				anim->AddAnimationEvent(walkKey, 0.30f, playLeftFootstep);
@@ -60,7 +64,8 @@ namespace AnimationLoader
 
 				const auto playLightSwing = []()
 				{
-					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/light_swing.wav", AudioBus::SFX);
+					GLOBAL(AudioGlobal)
+						.Play2D(L"Resource/Sounds/light_swing.wav", AudioBus::SFX, false, AudioBalance::kAttackVolume);
 				};
 				anim->AddAnimationEvent(StateOffset::kAttackOffset, 10.0f / 30.0f, playLightSwing);
 				anim->AddAnimationEvent(StateOffset::kAttackOffset + 10, 10.0f / 30.0f, playLightSwing);
@@ -69,7 +74,8 @@ namespace AnimationLoader
 
 				const auto playHeavySwing = []()
 				{
-					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/heavy_swing.wav", AudioBus::SFX);
+					GLOBAL(AudioGlobal)
+						.Play2D(L"Resource/Sounds/heavy_swing.wav", AudioBus::SFX, false, AudioBalance::kAttackVolume);
 				};
 				anim->AddAnimationEvent(StateOffset::kAttackOffset + 1, 22.0f / 30.0f, playHeavySwing);
 				anim->AddAnimationEvent(StateOffset::kAttackOffset + 11, 22.0f / 30.0f, playHeavySwing);

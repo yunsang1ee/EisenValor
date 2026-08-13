@@ -157,7 +157,7 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
-	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 0.1f);
+	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(StreamlineGlobal).RequestFeatureWarmup();
 
@@ -590,6 +590,5 @@ void WorldScene::OnEndImpl()
 {
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
-	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 1.0f);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }
