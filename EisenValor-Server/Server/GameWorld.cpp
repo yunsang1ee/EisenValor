@@ -947,6 +947,8 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			t.gameWorld = this;
 			t.radius = occupationZone.radius;
 			t.scoreTime = occupationZone.scoreTime;
+			t.scorePerTenSec = occupationZone.scorePerTenSec;
+			t.recaptureGraceSec = occupationZone.recaptureGraceSec;
 			t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
 			auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
 			AddGameObject(std::move(oz));

@@ -44,8 +44,8 @@ namespace GameServer {
 			std::string zoneName;
 			int64		scoreTime;
 			float		radius;
+			float		recaptureGraceSec;
 			uint8		scorePerTenSec;
-			uint8		occupationScore;
 		};
 
 		struct SoldierSpanwerTemplate : public GameObjectTemplate {
