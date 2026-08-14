@@ -104,7 +104,8 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 		}
 	}
 	
-	DecHP(damage, broadcast);
+	const bool wasAlive{ IsActive() };
+	const uint32 currentHP{ DecHP(damage, broadcast) };
 	if(damage > 0) {
 		const auto world{ GetGameWorld() };
 		auto pb{ ServerPackets::Make_SC_HIT_SOUND_PACKET(attacker->GetID()) };
@@ -113,10 +114,14 @@ bool GameServer::Contents::Player::OnDamaged(std::shared_ptr<Creature> const att
 #ifdef PRINT_PLAYER_LOG
 	std::cout << std::format("ID:{}, OnDamaged!, hp:{}", GetID(), GetHP()) << std::endl;
 #endif
-	
-	if(IsActive())
+
+	if(wasAlive && 0 == currentHP) {
+		AddKillScoreToAttacker(attacker);
+	}
+	else if(IsActive()) {
 		fsm->ChangeState(FB_ENUMS::PLAYER_STATE_TYPE_STUN, dt, true);
-	
+	}
+
 	return true;
 }
 

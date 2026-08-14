@@ -8,6 +8,10 @@
 
 // #define PRINT_GENERAL_LOG
 
+namespace {
+	constexpr uint8 GENERAL_KILL_SCORE{ 2 };
+}
+
 GameServer::Contents::General::General(const FB_ENUMS::TEAM_TYPE teamType, const FB_ENUMS::GAME_OBJECT_TYPE objType)
 	:Creature(teamType, objType), m_stanceType{ FB_ENUMS::GENERAL_STANCE_TYPE_NEUTRAL }, m_accDTForStaminaRecovery{}, m_accDTForRespawn{}
 {
@@ -160,7 +164,7 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			}
 			const uint32 currentHP{ DecHP(damage, broadcast) };
 			if(0 == currentHP) {
-				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+				AddKillScoreToAttacker(attacker);
 			}
 			else {
 				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
@@ -186,7 +190,7 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 			}
 			const uint32 currentHP{ DecHP(damage, broadcast) };
 			if(0 == currentHP) {
-				attacker->GetGameWorld()->AddScore(attacker->GetTeamType(), 2);
+				AddKillScoreToAttacker(attacker);
 			}
 			else {
 				fsm->ChangeState(FB_ENUMS::GENERAL_STATE_TYPE_STUN, dt, true);
@@ -215,4 +219,16 @@ bool GameServer::Contents::General::OnDamaged(std::shared_ptr<Creature> const at
 		world->Broadcast(std::move(pb));
 	}
 	return true;
+}
+
+void GameServer::Contents::General::AddKillScoreToAttacker(std::shared_ptr<Creature> const attacker) const
+{
+	if(!attacker)
+		return;
+
+	auto const world{ attacker->GetGameWorld() };
+	if(!world)
+		return;
+
+	world->AddScore(attacker->GetTeamType(), GENERAL_KILL_SCORE);
 }

@@ -138,6 +138,7 @@ namespace GameServer {
 			Vec3																				m_redTeamLastBasePos;
 
 			const uint32																		m_scoreToWin;
+			FB_ENUMS::TEAM_TYPE																	m_firstScoreToWinTeamType;	// 승리 점수에 먼저 도달한 팀
 
 			bool																				m_isGameFinish;
 		};

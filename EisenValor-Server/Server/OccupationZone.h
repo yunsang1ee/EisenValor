@@ -23,6 +23,7 @@ namespace GameServer {
 		private:
 			FB_ENUMS::TEAM_TYPE GetDominantTeamType() const;
 			void UpdateOwnerScore(const float dt);
+			bool UpdateGauge(const FB_ENUMS::TEAM_TYPE dominantTeamType, const float dt);
 			bool CanMoveGauge(const FB_ENUMS::TEAM_TYPE dominantTeamType, const float dt);
 			void MoveGauge(const FB_ENUMS::TEAM_TYPE dominantTeamType, const float dt);
 			void CheckOccupationState(const float prev, const float curr);
@@ -43,8 +44,8 @@ namespace GameServer {
 
 			float									m_lastSentGauge;
 			float									m_syncAccDT;
-			float									m_scoreAccDT;	// 소유 팀 유지 점수 타이머
-			float									m_graceAccDT;	// 재점령 유예시간 타이머
+			float									m_scoreAccDT;
+			float									m_graceAccDT;
 		};
 	}
 }
