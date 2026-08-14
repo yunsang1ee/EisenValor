@@ -18,7 +18,7 @@ namespace AnimationOffset
 
 namespace MatchRule
 {
-	static constexpr uint16_t kScoreToWin = 150;
+	static constexpr uint16_t kScoreToWin = 100;
 }
 
 namespace AudioBalance
