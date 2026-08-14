@@ -541,17 +541,6 @@ void WorldScene::OnStartImpl()
 				}
 			);
 
-			CreateComponentWithInit<ImageUIComponent>(
-				obj->GetHandle(),
-				[](ImageUIComponent* image)
-				{
-					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\UIback.evtex");
-					image->SetNormalTextureResource(texture);
-					image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.95f});
-					image->SetOrder(99994);
-				}
-			);
-
 			CreateComponentWithInit<TextUIComponent>(
 				obj->GetHandle(),
 				[](TextUIComponent* text)

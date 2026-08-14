@@ -68,23 +68,6 @@ std::wstring MakeParticipantLabel(const RoomParticipantView& participant, uint32
 }
 } // namespace
 
-	label += std::to_wstring(participant.id);
-	if (participant.id == localID)
-	{
-		label += L"  (YOU)";
-	}
-	if (participant.type == FB_ENUMS::PARTICIPANT_TYPE_BOT)
-	{
-		label += L"        REMOVE";
-	}
-	else if (participant.type != FB_ENUMS::PARTICIPANT_TYPE_HOST)
-	{
-		label += participant.state == FB_ENUMS::PARTICIPANT_STATE_TYPE_READY ? L"        READY" : L"        NOT READY";
-	}
-	return label;
-}
-} // namespace
-
 void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 {
 	auto& state = GLOBAL(LobbyClientState);

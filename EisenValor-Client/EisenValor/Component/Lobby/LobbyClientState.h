@@ -107,7 +107,7 @@ public:
 		m_rooms.erase(m_rooms.begin() + static_cast<ptrdiff_t>(removedIndex));
 		m_roomIndexByID.erase(iter);
 
-		// ?�쪽 방들???�덱?��? ?�나???�겨졌으므�?같이 보정?�다.
+		// 뒤쪽 방들의 인덱스가 하나씩 당겨졌으므로 같이 보정한다.
 		for (auto& [roomID, index] : m_roomIndexByID)
 		{
 			if (index > removedIndex)
