@@ -69,6 +69,12 @@ struct CL_MAKE_GAME_ROOM_PACKETBuilder;
 struct LC_MAKE_GAME_ROOM_PACKET;
 struct LC_MAKE_GAME_ROOM_PACKETBuilder;
 
+struct LC_DELETE_GAME_ROOM_PACKET;
+struct LC_DELETE_GAME_ROOM_PACKETBuilder;
+
+struct LC_UPDATE_GAME_ROOM_PACKET;
+struct LC_UPDATE_GAME_ROOM_PACKETBuilder;
+
 struct CL_ENTER_GAME_ROOM_PACKET;
 struct CL_ENTER_GAME_ROOM_PACKETBuilder;
 
@@ -95,6 +101,9 @@ struct CL_CHANGE_TEAM_PACKETBuilder;
 
 struct LC_CHANGE_TEAM_PACKET;
 struct LC_CHANGE_TEAM_PACKETBuilder;
+
+struct LC_CHANGE_HOST_PACKET;
+struct LC_CHANGE_HOST_PACKETBuilder;
 
 struct CL_ADD_BOT_PACKET;
 struct CL_ADD_BOT_PACKETBuilder;
@@ -1049,6 +1058,88 @@ inline ::flatbuffers::Offset<LC_MAKE_GAME_ROOM_PACKET> CreateLC_MAKE_GAME_ROOM_P
   return builder_.Finish();
 }
 
+struct LC_DELETE_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_DELETE_GAME_ROOM_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ROOM_ID = 4
+  };
+  uint16_t room_id() const {
+    return GetField<uint16_t>(VT_ROOM_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_ROOM_ID, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_DELETE_GAME_ROOM_PACKETBuilder {
+  typedef LC_DELETE_GAME_ROOM_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_room_id(uint16_t room_id) {
+    fbb_.AddElement<uint16_t>(LC_DELETE_GAME_ROOM_PACKET::VT_ROOM_ID, room_id, 0);
+  }
+  explicit LC_DELETE_GAME_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_DELETE_GAME_ROOM_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_DELETE_GAME_ROOM_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_DELETE_GAME_ROOM_PACKET> CreateLC_DELETE_GAME_ROOM_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t room_id = 0) {
+  LC_DELETE_GAME_ROOM_PACKETBuilder builder_(_fbb);
+  builder_.add_room_id(room_id);
+  return builder_.Finish();
+}
+
+struct LC_UPDATE_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_UPDATE_GAME_ROOM_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ROOM_INFO = 4
+  };
+  const FB_STRUCTS::RoomInfo *room_info() const {
+    return GetStruct<const FB_STRUCTS::RoomInfo *>(VT_ROOM_INFO);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<FB_STRUCTS::RoomInfo>(verifier, VT_ROOM_INFO, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_UPDATE_GAME_ROOM_PACKETBuilder {
+  typedef LC_UPDATE_GAME_ROOM_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_room_info(const FB_STRUCTS::RoomInfo *room_info) {
+    fbb_.AddStruct(LC_UPDATE_GAME_ROOM_PACKET::VT_ROOM_INFO, room_info);
+  }
+  explicit LC_UPDATE_GAME_ROOM_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_UPDATE_GAME_ROOM_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_UPDATE_GAME_ROOM_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_UPDATE_GAME_ROOM_PACKET> CreateLC_UPDATE_GAME_ROOM_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const FB_STRUCTS::RoomInfo *room_info = nullptr) {
+  LC_UPDATE_GAME_ROOM_PACKETBuilder builder_(_fbb);
+  builder_.add_room_info(room_info);
+  return builder_.Finish();
+}
+
 struct CL_ENTER_GAME_ROOM_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef CL_ENTER_GAME_ROOM_PACKETBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1421,6 +1512,47 @@ inline ::flatbuffers::Offset<LC_CHANGE_TEAM_PACKET> CreateLC_CHANGE_TEAM_PACKET(
   LC_CHANGE_TEAM_PACKETBuilder builder_(_fbb);
   builder_.add_user_id(user_id);
   builder_.add_team_type(team_type);
+  return builder_.Finish();
+}
+
+struct LC_CHANGE_HOST_PACKET FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef LC_CHANGE_HOST_PACKETBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_USER_ID = 4
+  };
+  uint32_t user_id() const {
+    return GetField<uint32_t>(VT_USER_ID, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_USER_ID, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct LC_CHANGE_HOST_PACKETBuilder {
+  typedef LC_CHANGE_HOST_PACKET Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_user_id(uint32_t user_id) {
+    fbb_.AddElement<uint32_t>(LC_CHANGE_HOST_PACKET::VT_USER_ID, user_id, 0);
+  }
+  explicit LC_CHANGE_HOST_PACKETBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<LC_CHANGE_HOST_PACKET> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<LC_CHANGE_HOST_PACKET>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<LC_CHANGE_HOST_PACKET> CreateLC_CHANGE_HOST_PACKET(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t user_id = 0) {
+  LC_CHANGE_HOST_PACKETBuilder builder_(_fbb);
+  builder_.add_user_id(user_id);
   return builder_.Finish();
 }
 

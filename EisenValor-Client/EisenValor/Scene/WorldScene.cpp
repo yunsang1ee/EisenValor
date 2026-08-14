@@ -157,7 +157,7 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 void WorldScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
-	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 0.1f);
+	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(StreamlineGlobal).RequestFeatureWarmup();
 
@@ -525,8 +525,19 @@ void WorldScene::OnStartImpl()
 				{
 					rect->SetAnchors({0.5f, 0.0f}, {0.5f, 0.0f});
 					rect->SetPivot({0.5f, 0.0f});
-					rect->SetOffsetMin({-120.0f, 16.0f});
-					rect->SetOffsetMax({120.0f, 60.0f});
+					rect->SetOffsetMin({-120.0f, 66.0f});
+					rect->SetOffsetMax({120.0f, 110.0f});
+				}
+			);
+
+			CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\UIback.evtex");
+					image->SetNormalTextureResource(texture);
+					image->SetNormalColor({1.0f, 1.0f, 1.0f, 0.95f});
+					image->SetOrder(99994);
 				}
 			);
 
@@ -590,6 +601,5 @@ void WorldScene::OnEndImpl()
 {
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
-	GLOBAL(AudioGlobal).SetBusVolume(AudioBus::BGM, 1.0f);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
 }

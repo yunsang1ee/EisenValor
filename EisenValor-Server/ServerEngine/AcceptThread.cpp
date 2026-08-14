@@ -85,8 +85,8 @@ void GameServerEngine::AcceptThread::Run(const std::stop_token st)
 
 void GameServerEngine::AcceptThread::SetSocketOptions(SOCKET& socket)
 {
-	u_long arg{ 1 };
-	ioctlsocket(socket, FIONBIO, &arg);
+	// u_long arg{ 1 };
+	// ioctlsocket(socket, FIONBIO, &arg);
 
 	// NAGLE Algorithm off
 	int opt{ 1 };

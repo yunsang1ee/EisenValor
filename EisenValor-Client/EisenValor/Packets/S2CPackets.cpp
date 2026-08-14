@@ -25,6 +25,7 @@
 #include "Component/HealthComponent.h"
 #include "Component/BattleUIControllerComponent.h"
 #include "Component/World/QuestProgressComponent.h"
+#include "Component/World/WorldSceneControllerComponent.h"
 #include "Util/CameraConfig.h"
 #include "Component/TeamComponent.h"
 #include "Component/VitalUIControllerComponent.h"
@@ -38,6 +39,7 @@
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
+#include "Component/Login/LoginSceneControllerComponent.h"
 #include "Component/Lobby/LobbyClientState.h"
 #include "Scene/ScoreScene.h"
 #include "ResourceGlobal.h"
@@ -123,6 +125,46 @@ TextUIComponent* FindRemainingTimeText(Scene* scene)
 
 	return nullptr;
 }
+
+WorldSceneControllerComponent* FindWorldSceneController(Scene* scene)
+{
+	if (!scene)
+	{
+		return nullptr;
+	}
+
+	auto* storage = scene->GetStorage<WorldSceneControllerComponent>();
+	if (!storage || storage->GetList().empty())
+	{
+		return nullptr;
+	}
+
+	return &*storage->GetList().begin();
+}
+
+LoginSceneControllerComponent* FindLoginSceneController(Scene* scene)
+{
+	if (!scene)
+	{
+		return nullptr;
+	}
+
+	auto* storage = scene->GetStorage<LoginSceneControllerComponent>();
+	if (!storage || storage->GetList().empty())
+	{
+		return nullptr;
+	}
+
+	return &*storage->GetList().begin();
+}
+
+void RequestLoginDialog(std::string message, const bool isError)
+{
+	if (auto* controller = FindLoginSceneController(GLOBAL(SceneGlobal).GetActiveScene()))
+	{
+		controller->RequestDialog(std::move(message), isError);
+	}
+}
 } // namespace
 
 bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const PacketHeader&)
@@ -133,9 +175,10 @@ bool NetBridge::S2C::Handle_Invalid(const SOCKET&, const char* const, const Pack
 #pragma region LOGIN_PACKETS
 bool NetBridge::S2C::Handle_LC_LOGIN_FAIL_PACKET(const SOCKET& socket, const FB_TABLES::LC_LOGIN_FAIL_PACKET& recvPkt)
 {
-	// TODO: 로그인 실패 알림
+	const std::string failMessage = recvPkt.fail_msg() ? recvPkt.fail_msg()->str() : "Login failed.";
 	DEBUG_LOG_FMT("[SC_LOGIN_FAIL_PACKET] ");
-	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+	DEBUG_LOG_FMT("Fail Reason: {}\n", failMessage);
+	RequestLoginDialog(failMessage, true);
 	return true;
 }
 
@@ -173,8 +216,10 @@ bool NetBridge::S2C::Handle_LC_SIGN_UP_FAIL_PACKET(
 	const SOCKET& socket, const FB_TABLES::LC_SIGN_UP_FAIL_PACKET& recvPkt
 )
 {
+	const std::string failMessage = recvPkt.fail_msg() ? recvPkt.fail_msg()->str() : "Account registration failed.";
 	DEBUG_LOG_FMT("[SC_SIGN_UP_FAIL_PACKET] ");
-	DEBUG_LOG_FMT("Fail Reason: {}\n", recvPkt.fail_msg()->c_str());
+	DEBUG_LOG_FMT("Fail Reason: {}\n", failMessage);
+	RequestLoginDialog(failMessage, true);
 
 	return true;
 }
@@ -183,6 +228,7 @@ bool NetBridge::S2C::Handle_LC_SIGN_UP_SUCCESS_PACKET(
 )
 {
 	DEBUG_LOG_FMT("[SC_SIGN_UP_SUCCESS_PACKET] Sign Up Success! ");
+	RequestLoginDialog("Account registration succeeded. Please log in.", false);
 	return true;
 }
 #pragma endregion
@@ -294,6 +340,37 @@ bool NetBridge::S2C::Handle_LC_MAKE_GAME_ROOM_PACKET(
 	DEBUG_LOG_FMT("[SC_MAKE_GAME_ROOM_PACKET] ");
 	const auto& roomInfo = recvPkt.room_info();
 	DEBUG_LOG_FMT("Room ID: {}\n", roomInfo->id());
+	GLOBAL(LobbyClientState)
+		.AddOrUpdateRoom(
+			{roomInfo->id(), roomInfo->state(), roomInfo->current_participants(), roomInfo->max_marticipants()}
+		);
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_DELETE_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_DELETE_GAME_ROOM_PACKET& recvPkt
+)
+{
+	// 마지막 유저가 나가서 방이 없어짐
+	DEBUG_LOG_FMT("[LC_DELETE_GAME_ROOM_PACKET] ");
+	DEBUG_LOG_FMT("Room ID: {}\n", recvPkt.room_id());
+	GLOBAL(LobbyClientState).RemoveRoom(recvPkt.room_id());
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_UPDATE_GAME_ROOM_PACKET(
+	const SOCKET& socket, const FB_TABLES::LC_UPDATE_GAME_ROOM_PACKET& recvPkt
+)
+{
+	// 방 상태나 인원이 바뀜 (게임 시작/종료 등)
+	DEBUG_LOG_FMT("[LC_UPDATE_GAME_ROOM_PACKET] ");
+	const auto& roomInfo = recvPkt.room_info();
+	if (!roomInfo)
+	{
+		return false;
+	}
+
+	DEBUG_LOG_FMT("Room ID: {}, State: {}\n", roomInfo->id(), static_cast<uint32>(roomInfo->state()));
 	GLOBAL(LobbyClientState)
 		.AddOrUpdateRoom(
 			{roomInfo->id(), roomInfo->state(), roomInfo->current_participants(), roomInfo->max_marticipants()}
@@ -515,6 +592,15 @@ bool NetBridge::S2C::Handle_LC_CHANGE_TEAM_PACKET(const SOCKET& socket, const FB
 		DEBUG_LOG_FMT("User ID: {} Change Team To RED\n", recvPkt.user_id());
 	}
 	GLOBAL(LobbyClientState).SetParticipantTeam(recvPkt.user_id(), recvPkt.team_type());
+	return true;
+}
+
+bool NetBridge::S2C::Handle_LC_CHANGE_HOST_PACKET(const SOCKET& socket, const FB_TABLES::LC_CHANGE_HOST_PACKET& recvPkt)
+{
+	// 기존 방장이 나가서 방장이 교체됨
+	DEBUG_LOG_FMT("[LC_CHANGE_HOST_PACKET] ");
+	DEBUG_LOG_FMT("New Host ID: {}\n", recvPkt.user_id());
+	GLOBAL(LobbyClientState).SetHost(recvPkt.user_id());
 	return true;
 }
 
@@ -1516,20 +1602,18 @@ bool NetBridge::S2C::Handle_SC_MOVE_PACKET(const SOCKET& socket, const FB_TABLES
 	const Vec3 rot{recvPkt.pos_info()->rot().x(), recvPkt.pos_info()->rot().y(), recvPkt.pos_info()->rot().z()};
 	auto*	   fsm = obj->GetComponent<FSMComponent>();
 	// Soldier가 죽은 상태일 때는 이동 패킷을 무시
-	if (fsm &&
-		fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
+	if (fsm && fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
 		fsm->GetCurStateType() == StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD))
 	{
 		return true;
 	}
 
 	// guard, stun dead: 이동 패킷을 무시
-	if (fsm &&
-		(fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD) ||
-		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
-		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_STUN) ||
-		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
-		 fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)))
+	if (fsm && (fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD) ||
+				fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN) ||
+				fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_STUN) ||
+				fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_DEAD) ||
+				fsm->GetCurStateType() == static_cast<uint8_t>(FB_ENUMS::GENERAL_STATE_TYPE_DEAD)))
 	{
 		return true;
 	}
@@ -1580,7 +1664,7 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 	s_latestAttackAttackerID = id;
 	s_latestAttackType = static_cast<uint8_t>(type);
 	s_latestAttackDir = static_cast<uint8_t>(dir);
-	//DEBUG_LOG_FMT(
+	// DEBUG_LOG_FMT(
 	//	"[SC_GENERAL_ATTACK] attacker={}, attackType={}, attackDir={}\n",
 	//	id,
 	//	static_cast<int>(type),
@@ -1598,7 +1682,6 @@ bool NetBridge::S2C::Handle_SC_GENERAL_ATTACK_PACKET(
 		// 2. 컴포넌트 가져오기
 		if (auto* uiController = obj->GetComponent<BattleUIControllerComponent>())
 		{
-
 			// FSM 상태 동기화: 공격 타입 설정
 			if (auto* fsm = obj->GetComponent<FSMComponent>())
 			{
@@ -2014,6 +2097,10 @@ bool NetBridge::S2C::Handle_SC_UPDATE_TEAM_SCORE_PACKET(
 {
 	s_latestBlueScore = recvPkt.blue_score();
 	s_latestRedScore = recvPkt.red_score();
+	if (auto* controller = FindWorldSceneController(GLOBAL(SceneGlobal).GetActiveScene()))
+	{
+		controller->SetTeamScores(s_latestBlueScore, s_latestRedScore);
+	}
 	std::cout << std::format("Blue Team: {}, Red Team: {}\n", recvPkt.blue_score(), recvPkt.red_score()) << std::endl;
 	return true;
 }
@@ -2074,8 +2161,8 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 
 	const uint64 defenderID = recvPkt.defender_id();
 	const uint64 attackerID = recvPkt.attacker_id();
-	auto* attackerObj = scene->FindGameObjectByServerID(attackerID);
-	auto* attackerFsm = attackerObj ? attackerObj->GetComponent<FSMComponent>() : nullptr;
+	auto*		 attackerObj = scene->FindGameObjectByServerID(attackerID);
+	auto*		 attackerFsm = attackerObj ? attackerObj->GetComponent<FSMComponent>() : nullptr;
 	if (!attackerFsm)
 	{
 		return true;
@@ -2104,8 +2191,7 @@ bool NetBridge::S2C::Handle_SC_GENERAL_GUARD_PACKET(
 	{
 		attackerFsm->SetGuardRole(FSMComponent::GuardRole::Attacker);
 		attackerFsm->RequestState(
-			FSMComponent::StateRequestType::Guard,
-			static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
+			FSMComponent::StateRequestType::Guard, static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_GUARD)
 		);
 	}
 

@@ -8,9 +8,12 @@
 #include "Packets/C2SPackets.h"
 #include "Scene.h"
 #include "TextUIComponent.h"
+#include "Util/GameConstants.h"
 
 namespace
 {
+constexpr size_t kTeamCapacity = 3;
+
 void SetButtonEnabled(ButtonUIComponent* button, bool enabled)
 {
 	if (!button)
@@ -20,6 +23,16 @@ void SetButtonEnabled(ButtonUIComponent* button, bool enabled)
 
 	button->SetInteractable(enabled);
 	button->SetState(enabled ? ButtonState::Normal : ButtonState::Disabled);
+}
+
+std::wstring MakeTeamTitle(const wchar_t* teamName, size_t participantCount)
+{
+	std::wstring title{teamName};
+	title += L"  ";
+	title += std::to_wstring(participantCount);
+	title += L" / ";
+	title += std::to_wstring(kTeamCapacity);
+	return title;
 }
 
 std::wstring MakeParticipantLabel(const RoomParticipantView& participant, uint32 localID)
@@ -55,6 +68,23 @@ std::wstring MakeParticipantLabel(const RoomParticipantView& participant, uint32
 }
 } // namespace
 
+	label += std::to_wstring(participant.id);
+	if (participant.id == localID)
+	{
+		label += L"  (YOU)";
+	}
+	if (participant.type == FB_ENUMS::PARTICIPANT_TYPE_BOT)
+	{
+		label += L"        REMOVE";
+	}
+	else if (participant.type != FB_ENUMS::PARTICIPANT_TYPE_HOST)
+	{
+		label += participant.state == FB_ENUMS::PARTICIPANT_STATE_TYPE_READY ? L"        READY" : L"        NOT READY";
+	}
+	return label;
+}
+} // namespace
+
 void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 {
 	auto& state = GLOBAL(LobbyClientState);
@@ -72,7 +102,7 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 	}
 
 	const auto* localParticipant = state.GetLocalParticipant();
-	const bool isHost = localParticipant && localParticipant->type == FB_ENUMS::PARTICIPANT_TYPE_HOST;
+	const bool	isHost = localParticipant && localParticipant->type == FB_ENUMS::PARTICIPANT_TYPE_HOST;
 	std::vector<const RoomParticipantView*> blueParticipants;
 	std::vector<const RoomParticipantView*> redParticipants;
 	for (const auto& participant : state.GetParticipants())
@@ -84,6 +114,23 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 		else if (participant.team == FB_ENUMS::TEAM_TYPE_RED)
 		{
 			redParticipants.push_back(&participant);
+		}
+	}
+
+	const size_t totalParticipantCount = state.GetParticipants().size();
+	const bool	 roomFull = totalParticipantCount >= kTeamCapacity * 2;
+	const bool	 blueTeamFull = blueParticipants.size() >= kTeamCapacity;
+	const bool	 redTeamFull = redParticipants.size() >= kTeamCapacity;
+	bool		 targetTeamFull = true;
+	if (localParticipant)
+	{
+		if (localParticipant->team == FB_ENUMS::TEAM_TYPE_BLUE)
+		{
+			targetTeamFull = redTeamFull;
+		}
+		else if (localParticipant->team == FB_ENUMS::TEAM_TYPE_RED)
+		{
+			targetTeamFull = blueTeamFull;
 		}
 	}
 
@@ -101,6 +148,16 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 			text.SetText(std::wstring(state.GetStatusMessage().begin(), state.GetStatusMessage().end()));
 			continue;
 		}
+		if (name == "RoomBlueTitle")
+		{
+			text.SetText(MakeTeamTitle(L"BLUE TEAM", blueParticipants.size()));
+			continue;
+		}
+		if (name == "RoomRedTitle")
+		{
+			text.SetText(MakeTeamTitle(L"RED TEAM", redParticipants.size()));
+			continue;
+		}
 		if (name == "RoomReadyButton")
 		{
 			text.SetText(
@@ -116,9 +173,22 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 			SetButtonEnabled(owner->GetComponent<ButtonUIComponent>(), isHost && !state.IsStartPending());
 			continue;
 		}
-		if (name == "RoomAddBlueButton" || name == "RoomAddRedButton")
+		if (name == "RoomAddBlueButton")
 		{
-			SetButtonEnabled(owner->GetComponent<ButtonUIComponent>(), isHost && state.GetParticipants().size() < 6);
+			text.SetText(blueTeamFull ? L"BLUE TEAM FULL" : roomFull ? L"ROOM FULL" : L"ADD BLUE BOT");
+			SetButtonEnabled(owner->GetComponent<ButtonUIComponent>(), isHost && !roomFull && !blueTeamFull);
+			continue;
+		}
+		if (name == "RoomAddRedButton")
+		{
+			text.SetText(redTeamFull ? L"RED TEAM FULL" : roomFull ? L"ROOM FULL" : L"ADD RED BOT");
+			SetButtonEnabled(owner->GetComponent<ButtonUIComponent>(), isHost && !roomFull && !redTeamFull);
+			continue;
+		}
+		if (name == "RoomTeamButton")
+		{
+			text.SetText(targetTeamFull ? L"TARGET TEAM FULL" : L"CHANGE TEAM");
+			SetButtonEnabled(owner->GetComponent<ButtonUIComponent>(), localParticipant && !targetTeamFull);
 			continue;
 		}
 
@@ -150,7 +220,7 @@ void RoomSceneControllerComponent::OnUpdate(float deltaTime)
 				[participantID]()
 				{
 					GLOBAL(AudioGlobal).Play2D(
-						L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false, 0.05f
+						L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
 					);
 					auto pb{NetBridge::C2S::Make_CL_REMOVE_BOT_PACKET(participantID)};
 					GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));

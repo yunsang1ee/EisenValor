@@ -599,7 +599,8 @@ void GeneralAttackState::Update(FSMComponent* fsm, float dt)
 				// 타겟의 FSM이 STUN 상태로 전이 가능한지 확인 후 전이
 				if (targetFsm->RequestState(FSMComponent::StateRequestType::Stun))
 				{
-					GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/sword_hurt.wav", AudioBus::SFX);
+					GLOBAL(AudioGlobal)
+						.Play2D(L"Resource/Sounds/sword_hurt.wav", AudioBus::SFX, false, AudioBalance::kAttackVolume);
 					//DEBUG_LOG_FMT(
 					//	"[PredictedStun] attacker={}, target={}, type={}, dir={}\n",
 					//	obj->GetServerID(),

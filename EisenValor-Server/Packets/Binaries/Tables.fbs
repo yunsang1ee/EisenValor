@@ -85,6 +85,13 @@ table LC_MAKE_GAME_ROOM_PACKET {
 	room_info: FB_STRUCTS.RoomInfo;
 }
 
+table LC_DELETE_GAME_ROOM_PACKET {
+      room_id: uint16;
+}
+
+table LC_UPDATE_GAME_ROOM_PACKET {
+      room_info: FB_STRUCTS.RoomInfo;
+}
 
 // ================================================
 //					  GAME_ROOM
@@ -127,6 +134,10 @@ table CL_CHANGE_TEAM_PACKET {
 table LC_CHANGE_TEAM_PACKET{
 	user_id: uint;
 	team_type: FB_ENUMS.TEAM_TYPE;
+}
+
+table LC_CHANGE_HOST_PACKET {
+      user_id: uint32;
 }
 
 table CL_ADD_BOT_PACKET {

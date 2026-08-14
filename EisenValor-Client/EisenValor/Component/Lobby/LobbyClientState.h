@@ -95,6 +95,29 @@ public:
 		Touch();
 	}
 
+	void RemoveRoom(uint16 id)
+	{
+		const auto iter = m_roomIndexByID.find(id);
+		if (iter == m_roomIndexByID.end())
+		{
+			return;
+		}
+
+		const size_t removedIndex = iter->second;
+		m_rooms.erase(m_rooms.begin() + static_cast<ptrdiff_t>(removedIndex));
+		m_roomIndexByID.erase(iter);
+
+		// ?¤ìª½ ë°©ë“¤???¸ë±?¤ê? ?˜ë‚˜???¹ê²¨ì¡Œìœ¼ë¯€ë¡?ê°™ì´ ë³´ì •?œë‹¤.
+		for (auto& [roomID, index] : m_roomIndexByID)
+		{
+			if (index > removedIndex)
+			{
+				--index;
+			}
+		}
+		Touch();
+	}
+
 	void AddOrUpdateUser(uint32 id, std::string name)
 	{
 		m_usersByID.insert_or_assign(id, LobbyUserView{id, std::move(name)});
@@ -149,6 +172,16 @@ public:
 		if (auto* participant = FindParticipant(id))
 		{
 			participant->state = state;
+			Touch();
+		}
+	}
+
+	void SetHost(uint32 id)
+	{
+		if (auto* participant = FindParticipant(id))
+		{
+			participant->type = FB_ENUMS::PARTICIPANT_TYPE_HOST;
+			participant->state = FB_ENUMS::PARTICIPANT_STATE_TYPE_READY;
 			Touch();
 		}
 	}

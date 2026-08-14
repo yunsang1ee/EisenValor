@@ -5,6 +5,7 @@
 #include "SceneResource.h"
 #include "Scene/WorldScene.h"
 #include "StreamlineGlobal.h"
+#include "Util/GameConstants.h"
 
 namespace
 {
@@ -125,7 +126,8 @@ void WorldLoadingControllerComponent::OnUpdate(float deltaTime)
 	}
 
 	case Phase::RevealWorld:
-		GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/worldscene.wav", AudioBus::BGM, true);
+		GLOBAL(AudioGlobal)
+			.Play2D(L"Resource/Sounds/worldscene.wav", AudioBus::BGM, true, AudioBalance::kInGameBgmVolume);
 		m_worldScene->DestroyGameObject(GetOwner());
 		m_phase = Phase::Complete;
 		break;

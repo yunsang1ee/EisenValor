@@ -12,6 +12,7 @@
 #include "ResourceGlobal.h"
 #include "TextUIComponent.h"
 #include "TextureResource.h"
+#include "Util/GameConstants.h"
 
 void LobbyScene::OnRegisterCustomComponents()
 {
@@ -157,13 +158,20 @@ void LobbyScene::OnStartImpl()
 						button->SetTargetImage(imageHandle);
 						button->SetOnHover(
 							[]()
-							{ GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/click.wav", AudioBus::UI, false, 0.05f); }
+							{
+								GLOBAL(AudioGlobal).Play2D(
+									L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
+								);
+							}
 						);
 						button->SetOnClick(
 							[onClick = std::move(onClick)]()
 							{
 								GLOBAL(AudioGlobal)
-									.Play2D(L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false, 0.05f);
+									.Play2D(
+										L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false,
+										AudioBalance::kUIButtonVolume
+									);
 								onClick();
 							}
 						);

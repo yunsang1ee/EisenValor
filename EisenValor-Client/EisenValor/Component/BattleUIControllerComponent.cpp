@@ -279,8 +279,9 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			// Alt 키: 카메라 락온 타겟 변경 요청
 			if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
 			{
-				// TODO: 수정
-				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(0);
+				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(
+					static_cast<uint32>(GetLockedTargetID())
+				);
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			}
 
