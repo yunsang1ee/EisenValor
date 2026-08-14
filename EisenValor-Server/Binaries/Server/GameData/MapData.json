@@ -29,7 +29,7 @@
       "radius": 5.0,
       "scoreTime": 10,
       "scorePerTenSec" :  2,
-      "occupationScore": 50
+      "recaptureGraceSec": 5.0
     },
     {
       "name": "EAST",
@@ -43,7 +43,7 @@
       "radius": 5.0,
       "scoreTime": 10,
       "scorePerTenSec": 2,
-      "occupationScore": 50
+      "recaptureGraceSec": 5.0
     }
   ],
   "soldierSpawns": {

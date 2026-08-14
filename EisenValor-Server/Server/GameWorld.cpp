@@ -25,6 +25,7 @@ GameServer::Contents::GameWorld::GameWorld()
 	m_blueTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition },
 	m_redTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition },
 	m_scoreToWin{ MANAGER(GameDataManager)->GetGameWorldData().scoreToWin },
+	m_firstScoreToWinTeamType{ FB_ENUMS::TEAM_TYPE_NONE },
 	m_isGameFinish{ false }
 {
 #ifdef PRINT_GAME_WORLD_LOG
@@ -355,7 +356,6 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	else
 		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 
-	// combat range(5m)보다 바깥에 스폰해 추격 → 공격 사거리 진입 흐름을 타게 한다.
 	constexpr float distance{ 7.0f };
 
 	Vec3 spawnPos;
@@ -848,6 +848,15 @@ void GameServer::Contents::GameWorld::AddScore(const FB_ENUMS::TEAM_TYPE teamTyp
 #endif
 	}
 
+	if(FB_ENUMS::TEAM_TYPE_NONE == m_firstScoreToWinTeamType) {
+		if(FB_ENUMS::TEAM_TYPE_BLUE == teamType && m_blueTeamScore >= m_scoreToWin) {
+			m_firstScoreToWinTeamType = FB_ENUMS::TEAM_TYPE_BLUE;
+		}
+		else if(FB_ENUMS::TEAM_TYPE_RED == teamType && m_redTeamScore >= m_scoreToWin) {
+			m_firstScoreToWinTeamType = FB_ENUMS::TEAM_TYPE_RED;
+		}
+	}
+
 	auto pb = ServerPackets::Make_SC_UPDATE_TEAM_SCORE_PACKET(m_blueTeamScore, m_redTeamScore);
 	Broadcast(std::move(pb));
 }
@@ -947,6 +956,8 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			t.gameWorld = this;
 			t.radius = occupationZone.radius;
 			t.scoreTime = occupationZone.scoreTime;
+			t.scorePerTenSec = occupationZone.scorePerTenSec;
+			t.recaptureGraceSec = occupationZone.recaptureGraceSec;
 			t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
 			auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
 			AddGameObject(std::move(oz));
@@ -1024,11 +1035,8 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 
 	std::optional<FB_ENUMS::TEAM_TYPE> winner;
 
-	if(m_blueTeamScore >= m_scoreToWin) {
-		winner = FB_ENUMS::TEAM_TYPE_BLUE;
-	}
-	else if(m_redTeamScore >= m_scoreToWin) {
-		winner = FB_ENUMS::TEAM_TYPE_RED;
+	if(FB_ENUMS::TEAM_TYPE_NONE != m_firstScoreToWinTeamType) {
+		winner = m_firstScoreToWinTeamType;
 	}
 	else if(m_remainingTimeSec.count() <= 0) {
 		if(m_blueTeamScore > m_redTeamScore) {

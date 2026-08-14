@@ -31,7 +31,10 @@ namespace GameServer {
 			FB_ENUMS::GENERAL_STANCE_TYPE GetStanceType() const { return m_stanceType; }
 			const AttackInfo& GetAtkInfo() const { return m_atkInfo; }
 
-			void SetRespawnPos(const Vec3& pos) { m_respawnPos = pos; }	
+			void SetRespawnPos(const Vec3& pos) { m_respawnPos = pos; }
+
+		protected:
+			void AddKillScoreToAttacker(std::shared_ptr<Creature> const attacker) const;
 
 		protected:
 			FB_ENUMS::MOVE_DIRECTION_TYPE			m_moveDir;

@@ -14,8 +14,9 @@ struct OccupationZoneData {
     Vec3        position;
     float       radius;
     int64       scoreTime;
+    // 점령된 거점에서 적 팀이 우세해진 뒤 게이지가 움직이기 시작할 때까지의 유예시간(초)
+    float       recaptureGraceSec{ 5.f };
     uint8       scorePerTenSec;
-    uint8       occupationScore;
 };
 
 struct SoldierSpawnerData {
