@@ -23,6 +23,7 @@
 
 // Engine
 #include "ImageUIComponent.h"
+#include "InputGlobal.h"
 #include "ButtonUIComponent.h"
 #include "RectTransformComponent.h"
 #include "TextUIComponent.h"
@@ -588,6 +589,7 @@ void WorldScene::CreateSceneObjects()
 
 void WorldScene::OnEndImpl()
 {
+	GLOBAL(InputGlobal).SetMouseLocked(false);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");

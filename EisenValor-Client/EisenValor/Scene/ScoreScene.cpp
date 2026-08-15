@@ -5,6 +5,7 @@
 #include "ButtonUIComponent.h"
 #include "Component/Lobby/LobbyClientState.h"
 #include "ImageUIComponent.h"
+#include "InputGlobal.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
 #include "RectTransformComponent.h"
@@ -28,6 +29,7 @@ void ScoreScene::OnRegisterCustomComponents() {}
 
 void ScoreScene::OnStartImpl()
 {
+	GLOBAL(InputGlobal).SetMouseLocked(false);
 	m_returnPending = false;
 
 	ReserveGameObject(
