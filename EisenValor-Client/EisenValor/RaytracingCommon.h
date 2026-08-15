@@ -22,6 +22,10 @@
 #define RAY_UINT uint
 #endif
 
+#ifndef RESTIR_ENABLE_DEBUG_VIEWS
+#define RESTIR_ENABLE_DEBUG_VIEWS 0
+#endif
+
 // --- Material Flags ---
 #define MATERIAL_FLAG_NONE 0
 #define MATERIAL_FLAG_USE_ALBEDO_MAP (1 << 0)
@@ -141,7 +145,17 @@ struct TerrainSurfaceGPUData
 #define RESTIR_PRIMARY_HIT_NEE_CANDIDATE (1u << 31)
 #define RESTIR_PRIMARY_HIT_NEE_SUN (1u << 30)
 #define RESTIR_PRIMARY_HIT_NEE_EMISSIVE (1u << 29)
-#define RESTIR_RESERVOIR_VALID (1 << 0)
+#define RESTIR_RESERVOIR_VALID (1u << 0u)
+#if RESTIR_ENABLE_DEBUG_VIEWS
+#define RESTIR_TEMPORAL_ATTEMPTED (1u << 1u)
+#define RESTIR_TEMPORAL_ACCEPTED (1u << 2u)
+#define RESTIR_TEMPORAL_REJECT_NO_HISTORY (1u << 3u)
+#define RESTIR_TEMPORAL_REJECT_CURRENT_SURFACE (1u << 4u)
+#define RESTIR_TEMPORAL_REJECT_REPROJECTION_BOUNDS (1u << 5u)
+#define RESTIR_TEMPORAL_REJECT_SURFACE_MISMATCH (1u << 6u)
+#define RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR (1u << 7u)
+#define RESTIR_TEMPORAL_REJECT_RECONNECTION (1u << 8u)
+#endif
 
 #define RESTIR_PATH_FLAG_NEE (1u << 0)
 #define RESTIR_PATH_FLAG_NEE_SUN (1u << 1)
@@ -178,22 +192,22 @@ struct TerrainSurfaceGPUData
 
 struct RestirTemporalConstants
 {
-	RAY_UINT screenWidth;
-	RAY_UINT screenHeight;
-	RAY_UINT frameSeed;
-	RAY_UINT historyValid;
-	float	 normalThreshold;
-	float	 positionThresholdScale;
-	float	 temporalMCap;
-	float	 jacobianRejectionThreshold;
-	RAY_UINT instanceCount;
-	RAY_UINT idToInstanceIndexCount;
-	float	 shadingNormalStrength;
-	RAY_UINT pad2;
+	RAY_UINT   screenWidth;
+	RAY_UINT   screenHeight;
+	RAY_UINT   frameSeed;
+	RAY_UINT   historyValid;
+	float	   normalThreshold;
+	float	   positionThresholdScale;
+	float	   temporalMCap;
+	float	   jacobianRejectionThreshold;
+	RAY_UINT   instanceCount;
+	RAY_UINT   idToInstanceIndexCount;
+	float	   shadingNormalStrength;
+	RAY_UINT   pad2;
 	RAY_FLOAT3 cameraPosition;
-	float	 pad3;
+	float	   pad3;
 	RAY_FLOAT3 previousCameraPosition;
-	float	 pad4;
+	float	   pad4;
 };
 
 struct RestirPrimaryHit

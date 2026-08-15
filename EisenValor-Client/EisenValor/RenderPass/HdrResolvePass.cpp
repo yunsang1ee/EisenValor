@@ -43,7 +43,9 @@ const char* ToMissingInputString(uint32_t mask, char* buffer, size_t bufferSize)
 	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoRaytracingOutput, "NoRaytracingOutput");
 	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoCandidateData, "NoCandidateData");
 	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoCameraData, "NoCameraData");
-	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::BypassToneMap, "BypassToneMap");
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::BypassRequested, "BypassRequested");
+#endif
 	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::CandidateInvalid, "CandidateInvalid");
 	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoColorInput, "NoColorInput");
 	AppendMissingInputFlag(buffer, bufferSize, mask, DlssMissingInputMask::NoColorOutput, "NoColorOutput");

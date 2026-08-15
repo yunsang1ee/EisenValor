@@ -15,10 +15,20 @@ public:
 
 private:
 	void CreateTeamScoreUI();
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	void CreateRestirDebugOverlayUI();
+#endif
 	bool RefreshTeamScoreText();
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	bool RefreshRestirDebugOverlay();
+#endif
 
 	HandleOf<TextUIComponent> m_blueTeamScoreTextHandle;
 	HandleOf<TextUIComponent> m_redTeamScoreTextHandle;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	HandleOf<TextUIComponent> m_restirDebugTextHandle;
+	uint64					  m_lastRestirDebugRevision = ~uint64{0};
+#endif
 	uint8_t					  m_blueScore = 0;
 	uint8_t					  m_redScore = 0;
 	bool					  m_scoreTextDirty = true;

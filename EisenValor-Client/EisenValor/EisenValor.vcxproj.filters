@@ -115,6 +115,9 @@
     <ClInclude Include="RenderPass\DxrRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\RestirDebugGlobal.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>

@@ -583,9 +583,24 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
     RestirPrimaryHit previousHit = RestirMakeInvalidPrimaryHit();
     RestirReservoir previousReservoir = RestirMakeEmptyReservoir();
     uint rngSeed = pixelIndex * 9781u ^ g_restirTemporalConstants.frameSeed * 104729u ^ 0x9e3779b9u;
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    uint temporalDebugFlags = 0u;
+#define RESTIR_RECORD_TEMPORAL_DEBUG(flag) temporalDebugFlags |= flag
+#else
+#define RESTIR_RECORD_TEMPORAL_DEBUG(flag)
+#endif
 
-    if (0u != g_restirTemporalConstants.historyValid && hasCurrentSurface)
+    if (0u == g_restirTemporalConstants.historyValid)
     {
+        RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_NO_HISTORY);
+    }
+    else if (!hasCurrentSurface)
+    {
+        RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_CURRENT_SURFACE);
+    }
+    else
+    {
+        RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_ATTEMPTED);
         float2 motionVector = g_restirMotionVector.Load(int3(pixelCoord, 0));
         float2 previousPixelFloat = float2(pixelCoord) +
                                     motionVector * float2(
@@ -603,19 +618,43 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
             previousHit = g_restirPrimaryHitHistoryRead[previousIndex];
             previousReservoir = g_restirReservoirHistoryRead[previousIndex];
 
-            if (RestirValidateTemporalSurface(currentHit, previousHit) && RestirIsValidReservoir(previousReservoir))
+            if (!RestirValidateTemporalSurface(currentHit, previousHit))
+            {
+                RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_SURFACE_MISMATCH);
+            }
+            else if (!RestirIsValidReservoir(previousReservoir))
+            {
+                RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR);
+            }
+            else
             {
                 float currentM = max(1.0f, float(currentReservoir.sampleCount));
                 cappedHistoryM =
                     min(float(previousReservoir.sampleCount), g_restirTemporalConstants.temporalMCap * currentM);
                 hasPreviousDomain = cappedHistoryM > 0.0f;
-                hasReconnectedCandidate = RestirMakeReconnectedTemporalCandidate(
-                    previousReservoir,
-                    currentHit,
-                    reconnectedCandidate,
-                    reconnectedWeight
-                );
+                if (!hasPreviousDomain)
+                {
+                    RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR);
+                }
+                else
+                {
+                    hasReconnectedCandidate = RestirMakeReconnectedTemporalCandidate(
+                        previousReservoir,
+                        currentHit,
+                        reconnectedCandidate,
+                        reconnectedWeight
+                    );
+                    RESTIR_RECORD_TEMPORAL_DEBUG(
+                        hasReconnectedCandidate
+                            ? RESTIR_TEMPORAL_ACCEPTED
+                            : RESTIR_TEMPORAL_REJECT_RECONNECTION
+                    );
+                }
             }
+        }
+        else
+        {
+            RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_REPROJECTION_BOUNDS);
         }
     }
 
@@ -688,6 +727,10 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
         );
     }
 
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    outputReservoir.flags |= temporalDebugFlags;
+#endif
+#undef RESTIR_RECORD_TEMPORAL_DEBUG
     g_restirFinalReservoirWrite[pixelIndex] = outputReservoir;
     // The stored sample is already expressed in the current pixel domain by the Talbot combine.
     g_restirReservoirHistoryWrite[pixelIndex] = outputReservoir;

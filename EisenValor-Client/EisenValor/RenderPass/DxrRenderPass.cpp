@@ -25,6 +25,10 @@
 #include "CameraRenderData.h"
 #include "FrameRenderData.h"
 #include "RaytracingCommon.h"
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+#include "RestirDebugGlobal.h"
+#include "StreamlineGlobal.h"
+#endif
 
 #include <unordered_map>
 #include <algorithm>
@@ -1175,18 +1179,29 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	auto* restirCandidateData = &m_restirCandidateData.Get();
 	auto& tlasFrame = m_tlas.GetCurrent();
 	auto* tlas = tlasFrame.Get();
-	outputData.bypassToneMap = false;
 	restirCandidateData->validThisFrame = false;
 	restirCandidateData->frameIndex = frameIndex;
 
 	auto& input = GLOBAL(InputGlobal);
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto&		   debug = GLOBAL(RestirDebugGlobal);
+	const bool	   previousOverrideActive = debug.IsOverrideActive();
+	const auto	   previousSource = debug.GetSource();
+	const uint64_t previousDebugRevision = debug.GetRevision();
+#endif
 	if (input.GetInputDown(VK_F6))
 	{
 		m_usePathTracing = !m_usePathTracing;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+		debug.DisableOverride();
+#endif
 	}
 	if (input.GetInputDown(VK_F7))
 	{
 		m_useRestirPT = !m_useRestirPT;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+		debug.DisableOverride();
+#endif
 		++m_restirHistoryGeneration;
 	}
 	if (input.GetInputDown(VK_F8))
@@ -1199,9 +1214,44 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		m_useDayEnvironment = !m_useDayEnvironment;
 		++m_restirHistoryGeneration;
 	}
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	const int32_t debugStep = input.GetInput(VK_SHIFT) ? -1 : 1;
+	if (input.GetInputDown(VK_F12))
+	{
+		debug.StepSource(debugStep);
+	}
+	if (input.GetInputDown(VK_F10))
+	{
+		debug.StepView(debugStep);
+	}
+
+	if (previousDebugRevision != debug.GetRevision())
+	{
+		const bool sourceChanged =
+			previousOverrideActive != debug.IsOverrideActive() || previousSource != debug.GetSource();
+		if (sourceChanged)
+		{
+			++m_restirHistoryGeneration;
+		}
+		GLOBAL(StreamlineGlobal).RequestHistoryReset();
+		GRAPHICS_LOG_FMT(
+			"[ReSTIR.Debug] override={} source={} view={} dlss={}\n", debug.IsOverrideActive(),
+			debug.GetSourceLogName(), debug.GetViewLogName(), debug.BypassDlss() ? "BYPASSED" : "REQUESTED"
+		);
+	}
+
+	outputData.bypassDlss = debug.IsOverrideActive() && debug.BypassDlss();
+	outputData.bypassToneMap = debug.IsOverrideActive() && debug.BypassToneMap();
+	const bool restirCandidateMode = debug.IsOverrideActive() ? debug.UsesRestirCandidate() : m_useRestirPT;
+	const bool usePathTracing =
+		debug.IsOverrideActive() ? RestirDebugSource::ReferencePathTracingRaw == debug.GetSource() : m_usePathTracing;
+#else
+	outputData.bypassToneMap = false;
 	const bool restirCandidateMode = m_useRestirPT;
-	auto*	   restirPrimaryHitBuffer = restirCandidateData ? restirCandidateData->primaryHitBuffer.get() : nullptr;
-	auto*	   restirReservoirBuffer = restirCandidateData ? restirCandidateData->reservoirBuffer.get() : nullptr;
+	const bool usePathTracing = m_usePathTracing;
+#endif
+	auto* restirPrimaryHitBuffer = restirCandidateData ? restirCandidateData->primaryHitBuffer.get() : nullptr;
+	auto* restirReservoirBuffer = restirCandidateData ? restirCandidateData->reservoirBuffer.get() : nullptr;
 	auto* restirMotionVectorTexture = restirCandidateData ? restirCandidateData->motionVectorTexture.get() : nullptr;
 	auto* restirLinearDepthTexture = restirCandidateData ? restirCandidateData->linearDepthTexture.get() : nullptr;
 	auto* restirDiffuseAlbedoTexture = restirCandidateData ? restirCandidateData->diffuseAlbedoTexture.get() : nullptr;
@@ -1311,7 +1361,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			cmdList4->SetPipelineState1(m_restirCandidatePipeline->GetStateObject());
 			cmdList4->SetComputeRootSignature(m_restirCandidatePipeline->GetGlobalRootSignature());
 		}
-		else if (m_usePathTracing)
+		else if (usePathTracing)
 		{
 			cmdList4->SetPipelineState1(m_ptPipeline->GetStateObject());
 			cmdList4->SetComputeRootSignature(m_ptPipeline->GetGlobalRootSignature());
@@ -1471,7 +1521,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	}
 
 	auto*					 shaderTable = restirCandidateMode ? m_restirCandidateShaderTable.get()
-										   : m_usePathTracing  ? m_ptShaderTable.get()
+										   : usePathTracing	   ? m_ptShaderTable.get()
 															   : m_rtShaderTable.get();
 	D3D12_DISPATCH_RAYS_DESC desc = {
 		.RayGenerationShaderRecord = shaderTable->GetRayGenRecord(),
