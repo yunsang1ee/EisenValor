@@ -319,12 +319,12 @@ GroundQueryCache* PrepareGroundQueryCache(Scene* scene)
 	if (shouldRebuild)
 	{
 		const size_t sourceMeshCount = CountGroundQuerySourceMeshes(scene);
-		DEBUG_LOG_FMT(
+		/*DEBUG_LOG_FMT(
 			"[FootIK] ground cache rebuild reason invalid={} sceneChanged={} meshCountChanged={} oldScene={} newScene={} oldMeshCount={} newMeshCount={} oldTriangles={} oldCells={}\n",
 			!cache.isValid, cache.scene != scene, cache.sourceMeshCount != sourceMeshCount,
 			static_cast<const void*>(cache.scene), static_cast<const void*>(scene),
 			cache.sourceMeshCount, sourceMeshCount, cache.triangles.size(), cache.gridCellsByKey.size()
-		);
+		);*/
 
 		if (sourceMeshCount < kMinGroundQuerySourceMeshCount)
 		{
@@ -709,12 +709,12 @@ bool FootIKComponent::TrySampleVisualGround(
 			return;
 		}
 
-		DEBUG_LOG_FMT(
+		/*DEBUG_LOG_FMT(
 			"[FootIK] slow ground sample result={} elapsedMs={:.3f} foot=({:.3f},{:.3f},{:.3f}) cell=({}, {}) cacheValid={} cachedCandidates={} triTest={} triHit={} nearby={} path={} loaded={}\n",
 			result, elapsed, worldPosition.x, worldPosition.y, worldPosition.z, queryCellX, queryCellZ,
 			groundCache != nullptr, cachedTriangleCandidateCount, triangleTestCount, triangleIntersectCount,
 			nearbyMeshCount, pathResolvedCount, loadedMeshCount
-		);
+		);*/
 	};
 	if (queryCell)
 	{
