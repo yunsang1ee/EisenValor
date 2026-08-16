@@ -1005,20 +1005,23 @@ void BattleUIControllerComponent::NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, s
 	//	DEBUG_LOG_FMT("[BattleUI Notify] Calling! This: {}, Listeners: {}\n", (void*)this, m_listeners.size());
 	// }
 
-	for (auto it = m_listeners.begin(); it != m_listeners.end();)
+	const auto listeners = m_listeners;
+	for (const auto& listener : listeners)
 	{
 		// 관찰자(UI 오브젝트 등)가 여전히 살아있는지 핸들 체크
-		if (scene->TryGetGameObject(it->observerHandle))
+		if (scene->TryGetGameObject(listener.observerHandle))
 		{
-			it->callback(dir, type);
-			++it;
-		}
-		else
-		{
-			// 죽은 관찰자는 목록에서 제거 (Lazy Removal)
-			it = m_listeners.erase(it);
+			listener.callback(dir, type);
 		}
 	}
+
+	std::erase_if(
+		m_listeners,
+		[scene](const StanceChangeListener& listener)
+		{
+			return !scene->TryGetGameObject(listener.observerHandle);
+		}
+	);
 }
 
 void BattleUIControllerComponent::OnGuardDirectionConfirmed(

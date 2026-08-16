@@ -1043,6 +1043,7 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "CursedKnight"); }
 				);
 
+				scene->CreateComponentWithInit<FootIKComponent>(objHandle, [](FootIKComponent*) {});
 
 				// Shield
 				auto shieldHandle = scene->ReserveGameObject(objectName + "_Shield");
@@ -1216,6 +1217,8 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 				scene->CreateComponentWithInit<AnimationComponent>(
 					objHandle, [](AnimationComponent* anim) { AnimationLoader::AnimationApply(anim, "Knight_Armored"); }
 				);
+
+				scene->CreateComponentWithInit<FootIKComponent>(objHandle, [](FootIKComponent*) {});
 
 				// FSMComponent
 				scene->CreateComponentWithInit<FSMComponent>(

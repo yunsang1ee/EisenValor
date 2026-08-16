@@ -3,6 +3,7 @@
 
 #include "AnimationComponent.h"
 #include "AssetLoader.h"
+#include "BattleUIControllerComponent.h"
 #include "GameObject.h"
 #include "GameObject.inl"
 #include "MeshData.h"
@@ -17,6 +18,7 @@
 
 #include <DirectXCollision.h>
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -84,6 +86,8 @@ struct GroundQueryCell
 };
 
 constexpr float kGroundQueryCellSize = 2.0f;
+constexpr size_t kMinGroundQuerySourceMeshCount = 100;
+constexpr double kSlowGroundSampleMs = 1.0;
 
 // 땅 좌표를 셀 좌표로 변환
 std::int32_t ToGroundQueryCellCoord(float value)
@@ -168,9 +172,9 @@ size_t CountGroundQuerySourceMeshes(Scene* scene)
 	return count;
 }
 
-bool ShouldRebuildGroundQueryCache(const GroundQueryCache& cache, const Scene* scene, size_t sourceMeshCount)
+bool ShouldRebuildGroundQueryCache(const GroundQueryCache& cache, const Scene* scene)
 {
-	return !cache.isValid || cache.scene != scene || cache.sourceMeshCount != sourceMeshCount;
+	return !cache.isValid || cache.scene != scene;
 }
 
 bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
@@ -311,8 +315,28 @@ bool BuildGroundQueryCache(Scene* scene, GroundQueryCache& cache)
 GroundQueryCache* PrepareGroundQueryCache(Scene* scene)
 {
 	auto& cache = GetGroundQueryCache();
-	const size_t sourceMeshCount = CountGroundQuerySourceMeshes(scene);
-	if (ShouldRebuildGroundQueryCache(cache, scene, sourceMeshCount) && !BuildGroundQueryCache(scene, cache))
+	const bool shouldRebuild = ShouldRebuildGroundQueryCache(cache, scene);
+	if (shouldRebuild)
+	{
+		const size_t sourceMeshCount = CountGroundQuerySourceMeshes(scene);
+		DEBUG_LOG_FMT(
+			"[FootIK] ground cache rebuild reason invalid={} sceneChanged={} meshCountChanged={} oldScene={} newScene={} oldMeshCount={} newMeshCount={} oldTriangles={} oldCells={}\n",
+			!cache.isValid, cache.scene != scene, cache.sourceMeshCount != sourceMeshCount,
+			static_cast<const void*>(cache.scene), static_cast<const void*>(scene),
+			cache.sourceMeshCount, sourceMeshCount, cache.triangles.size(), cache.gridCellsByKey.size()
+		);
+
+		if (sourceMeshCount < kMinGroundQuerySourceMeshCount)
+		{
+			DEBUG_LOG_FMT(
+				"[FootIK] ground cache rebuild deferred sourceMeshCount={} minRequired={}\n",
+				sourceMeshCount, kMinGroundQuerySourceMeshCount
+			);
+			return nullptr;
+		}
+	}
+
+	if (shouldRebuild && !BuildGroundQueryCache(scene, cache))
 	{
 		return nullptr;
 	}
@@ -395,6 +419,20 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	auto* animation = owner ? owner->GetComponent<AnimationComponent>() : nullptr;
 	if (!animation)
 	{
+		return;
+	}
+
+	auto* scene = owner->GetScene();
+	const uint64 ownerID = owner->GetServerID();
+	const bool	 isLocalPlayer = scene && ownerID == scene->GetLocalID();
+	const uint64 lockedTargetID = BattleUIControllerComponent::GetLockedTargetID();
+	if (!isLocalPlayer && (lockedTargetID == 0 || ownerID != lockedTargetID))
+	{
+		animation->ClearIKTargets();
+		m_leftWeight = SmoothApproach(m_leftWeight, 0.0f, deltaTime, AnimationOffset::kFootIKDuration);
+		m_rightWeight = SmoothApproach(m_rightWeight, 0.0f, deltaTime, AnimationOffset::kFootIKDuration);
+		m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, 0.0f, deltaTime, AnimationOffset::kPelvisIKDuration);
+		animation->SetModelRootOffsetY(m_pelvisOffsetY);
 		return;
 	}
 
@@ -617,6 +655,7 @@ bool FootIKComponent::TrySampleVisualGround(
 	const DirectX::XMFLOAT3& worldPosition, float maxUp, float maxDown, GroundHit& outHit
 ) const
 {
+	const auto sampleStartTime = std::chrono::steady_clock::now();
 	auto* owner = GetGameObject();
 	auto* scene = owner ? owner->GetScene() : nullptr;
 	auto* meshStorage = scene ? scene->GetStorage<MeshComponent>() : nullptr;
@@ -660,6 +699,23 @@ bool FootIKComponent::TrySampleVisualGround(
 		}
 	}
 	size_t cachedTriangleCandidateCount = 0;
+	auto logSlowSample = [&](const char* result)
+	{
+		const auto elapsed = std::chrono::duration<double, std::milli>(
+			std::chrono::steady_clock::now() - sampleStartTime
+		).count();
+		if (elapsed < kSlowGroundSampleMs)
+		{
+			return;
+		}
+
+		DEBUG_LOG_FMT(
+			"[FootIK] slow ground sample result={} elapsedMs={:.3f} foot=({:.3f},{:.3f},{:.3f}) cell=({}, {}) cacheValid={} cachedCandidates={} triTest={} triHit={} nearby={} path={} loaded={}\n",
+			result, elapsed, worldPosition.x, worldPosition.y, worldPosition.z, queryCellX, queryCellZ,
+			groundCache != nullptr, cachedTriangleCandidateCount, triangleTestCount, triangleIntersectCount,
+			nearbyMeshCount, pathResolvedCount, loadedMeshCount
+		);
+	};
 	if (queryCell)
 	{
 		for (const size_t triangleIndex : queryCell->triangleIndexesInThisCell)
@@ -707,7 +763,21 @@ bool FootIKComponent::TrySampleVisualGround(
 			bestTriV2 = cachedTriangle.v2;
 		}
 	}
-	(void)cachedTriangleCandidateCount;
+	if (groundCache && bestRayDistance == std::numeric_limits<float>::max())
+	{
+		logSlowSample("cachedMiss");
+		static uint32_t cachedMissLogCounter = 0;
+		if ((++cachedMissLogCounter % 30) == 0)
+		{
+			DEBUG_LOG_FMT(
+				"[FootIK] cached sample miss foot=({:.3f},{:.3f},{:.3f}) cell=({}, {}) cachedCandidates={} triTest={} triHit={}\n",
+				worldPosition.x, worldPosition.y, worldPosition.z, queryCellX, queryCellZ,
+				cachedTriangleCandidateCount, triangleTestCount, triangleIntersectCount
+			);
+		}
+		logSlowSample("miss");
+		return false;
+	}
 
 	if (bestRayDistance == std::numeric_limits<float>::max())
 	{
@@ -845,10 +915,10 @@ bool FootIKComponent::TrySampleVisualGround(
 		std::filesystem::path meshPath;
 		const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
 		DEBUG_LOG_FMT(
-			"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f} nearby={} path={} loaded={} triTest={} triHit={}\n",
+			"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f} cachedCandidates={} nearby={} path={} loaded={} triTest={} triHit={}\n",
 			bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
 			worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
-			bestRayDistance, nearbyMeshCount, pathResolvedCount, loadedMeshCount, triangleTestCount,
+			bestRayDistance, cachedTriangleCandidateCount, nearbyMeshCount, pathResolvedCount, loadedMeshCount, triangleTestCount,
 			triangleIntersectCount
 		);
 	//	DEBUG_LOG_FMT(
@@ -857,5 +927,6 @@ bool FootIKComponent::TrySampleVisualGround(
 	//		bestTriV2.z, bestHitNormal.x, bestHitNormal.y, bestHitNormal.z
 	//	);
 	}
+	logSlowSample("hit");
 	return true;
 }
