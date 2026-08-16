@@ -25,6 +25,7 @@ GameServer::Contents::GameWorld::GameWorld()
 	m_blueTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "blue")->summonStartPosition },
 	m_redTeamLastBasePos{ MANAGER(GameServer::Contents::MapDataManager)->GetTeamBase("Map", "red")->summonStartPosition },
 	m_scoreToWin{ MANAGER(GameDataManager)->GetGameWorldData().scoreToWin },
+	m_firstScoreToWinTeamType{ FB_ENUMS::TEAM_TYPE_NONE },
 	m_isGameFinish{ false }
 {
 #ifdef PRINT_GAME_WORLD_LOG
@@ -203,7 +204,6 @@ void GameServer::Contents::GameWorld::Broadcast(std::shared_ptr<GameServerEngine
 
 void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<ClientSession>& clientSession, const Transform& transform, const FB_ENUMS::MOVE_DIRECTION_TYPE moveDir, const bool teleport)
 {
-	// TODO: NavMesh 클라이언트로 이식해야함.
 	auto it = m_sessionToPlayer.find(clientSession->GetID());
 	if(it == m_sessionToPlayer.end()) return;
 
@@ -237,46 +237,23 @@ void GameServer::Contents::GameWorld::Handle_CS_MOVE(const std::shared_ptr<Clien
 	dtQueryFilter filter;
 	const float extents[3] = { 0.5f, 2.5f, 0.5f };  // 계단 높이에 맞게 조정
 
-	// 3-1. 목표 위치가 NavMesh 위에 있는가?
 	float      newPosArr[3] = { newPos.x, newPos.y, newPos.z };
 	dtPolyRef  newPoly = 0;
 	float newNearestPt[3];
 
-	// findNearestPoly: 가장 가까운 NavMesh 폴리곤ID인 newPoly를 반환, nearestPt에 가장 가까운 점의 좌표 반환
 	navQuery->findNearestPoly(newPosArr, extents, &filter, &newPoly, newNearestPt);
 
 	if(newPoly == 0) {
-		// NavMesh 밖 → 보정 후 차단
 		SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotationDegree());
 		return;
 	}
 
-	// 3-2. Raycast: 이전 위치 → 새 위치 사이에 벽이 있는가?
-	//float     prevPosArr[3] = { prevPos.x, prevPos.y, prevPos.z };
-	//dtPolyRef prevPoly = 0;
-	//float prevNearestPt[3];
-	//navQuery->findNearestPoly(prevPosArr, extents, &filter, &prevPoly, prevNearestPt);
-
-	//if(prevPoly != 0) {
-	//	float t, hitNormal[3];
-	//	dtStatus rayStatus = navQuery->raycast(prevPoly, prevPosArr, newPosArr, &filter, &t, hitNormal, nullptr, nullptr, 0);
-
-	//	if(dtStatusSucceed(rayStatus) && t < 1.0f) {
-	//		// 벽 통과 시도 → 차단
-	//		SendPositionCorrection(clientSession, playerID, prevPos, transform.GetRotation());
-	//		return;
-	//	}
-	//}
-
-	// 3-3. NavMesh에 스냅 (Y축 보정)
 	const Vec3 snapPos{ newNearestPt[0], newNearestPt[1], newNearestPt[2] };
 
-	// ── 4. 위치 확정 ───────────────────────────────────────────
 	player->SetPosition(snapPos);
 	player->SetRotation(transform.GetRotationDegree());
 	player->SetMoveDir(moveDir);
 
-	// ── 5. Crowd에 플레이어 위치 동기화 ──────────────────────────
 	auto navAgent = player->GetComponent<NavAgent>();
 	if(navAgent) {
 		navAgent->SyncPosition(snapPos, prevPos, m_lastDT);
@@ -379,7 +356,6 @@ void GameServer::Contents::GameWorld::Handle_CS_GEN_NPC_GENERAL(const uint32 ses
 	else
 		teamType = FB_ENUMS::TEAM_TYPE_BLUE;
 
-	// combat range(5m)보다 바깥에 스폰해 추격 → 공격 사거리 진입 흐름을 타게 한다.
 	constexpr float distance{ 7.0f };
 
 	Vec3 spawnPos;
@@ -872,6 +848,15 @@ void GameServer::Contents::GameWorld::AddScore(const FB_ENUMS::TEAM_TYPE teamTyp
 #endif
 	}
 
+	if(FB_ENUMS::TEAM_TYPE_NONE == m_firstScoreToWinTeamType) {
+		if(FB_ENUMS::TEAM_TYPE_BLUE == teamType && m_blueTeamScore >= m_scoreToWin) {
+			m_firstScoreToWinTeamType = FB_ENUMS::TEAM_TYPE_BLUE;
+		}
+		else if(FB_ENUMS::TEAM_TYPE_RED == teamType && m_redTeamScore >= m_scoreToWin) {
+			m_firstScoreToWinTeamType = FB_ENUMS::TEAM_TYPE_RED;
+		}
+	}
+
 	auto pb = ServerPackets::Make_SC_UPDATE_TEAM_SCORE_PACKET(m_blueTeamScore, m_redTeamScore);
 	Broadcast(std::move(pb));
 }
@@ -971,6 +956,8 @@ void GameServer::Contents::GameWorld::CreateGameWorldObjects()
 			t.gameWorld = this;
 			t.radius = occupationZone.radius;
 			t.scoreTime = occupationZone.scoreTime;
+			t.scorePerTenSec = occupationZone.scorePerTenSec;
+			t.recaptureGraceSec = occupationZone.recaptureGraceSec;
 			t.teamType = FB_ENUMS::TEAM_TYPE_NONE;
 			auto oz{ GameServer::Contents::GameObjectFactory::CreateOccupationZone(t) };
 			AddGameObject(std::move(oz));
@@ -1048,11 +1035,8 @@ void GameServer::Contents::GameWorld::CheckGameFinish()
 
 	std::optional<FB_ENUMS::TEAM_TYPE> winner;
 
-	if(m_blueTeamScore >= m_scoreToWin) {
-		winner = FB_ENUMS::TEAM_TYPE_BLUE;
-	}
-	else if(m_redTeamScore >= m_scoreToWin) {
-		winner = FB_ENUMS::TEAM_TYPE_RED;
+	if(FB_ENUMS::TEAM_TYPE_NONE != m_firstScoreToWinTeamType) {
+		winner = m_firstScoreToWinTeamType;
 	}
 	else if(m_remainingTimeSec.count() <= 0) {
 		if(m_blueTeamScore > m_redTeamScore) {

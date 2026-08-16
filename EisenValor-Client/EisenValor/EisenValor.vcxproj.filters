@@ -229,6 +229,9 @@
     <ClInclude Include="Scene\LoadingScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Component\Lobby\LobbyClientState.h">
+      <Filter>Component\Lobby</Filter>
+    </ClInclude>
     <ClInclude Include="Component\Lobby\LobbySceneControllerComponent.h">
       <Filter>Component\Lobby</Filter>
     </ClInclude>

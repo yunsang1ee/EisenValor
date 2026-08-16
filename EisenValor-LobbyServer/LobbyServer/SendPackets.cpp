@@ -92,6 +92,21 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_MAKE_GAME_
 
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_MAKE_GAME_ROOM_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_MAKE_GAME_ROOM_PACKET, &roomInfo));
 }
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_DELETE_GAME_ROOM_PACKET(const uint16 roomID)
+{
+	flatbuffers::FlatBufferBuilder builder;
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_DELETE_GAME_ROOM_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_DELETE_GAME_ROOM_PACKET, roomID));
+}
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_UPDATE_GAME_ROOM_PACKET(const RoomInfo& room)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	const FB_STRUCTS::RoomInfo roomInfo{ room.id, room.stateType, room.currentParticipants, room.maxParticipants };
+
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_UPDATE_GAME_ROOM_PKT), LobbyServer::ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_UPDATE_GAME_ROOM_PACKET, &roomInfo));
+}
 #pragma endregion
 
 #pragma region ROOM_PACKETS
@@ -139,10 +154,22 @@ std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CHANGE_TEA
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CHANGE_TEAM_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CHANGE_TEAM_PACKET, participantID, teamType));
 }
 
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_CHANGE_HOST_PACKET(const uint32 userID)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_CHANGE_HOST_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_CHANGE_HOST_PACKET, userID));
+}
+
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_ADD_BOT_PACKET(const ParticipantInfo& bot)
 {
 	flatbuffers::FlatBufferBuilder builder;
 	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_ADD_BOT_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_ADD_BOT_PACKET, bot.id, bot.teamType));
+}
+
+std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_REMOVE_BOT_PACKET(const uint32 botID)
+{
+	flatbuffers::FlatBufferBuilder builder;
+	return ClientPacketHandler::MakePacketBuffer(static_cast<uint16>(PACKET_TYPE::LC_REMOVE_BOT_PKT), ClientPacketHandler::Serialization(builder, FB_TABLES::CreateLC_REMOVE_BOT_PACKET, botID));
 }
 
 std::shared_ptr<LobbyServerEngine::PacketBuffer> LobbyServer::Make_LC_ENTER_PARTICIPANT_IN_GAME_ROOM_PACKET(const ParticipantInfo& participant)

@@ -50,10 +50,10 @@ cbuffer RestirCandidateConstants : register(b3, space0)
     uint g_restirScreenWidth;
     uint g_restirScreenHeight;
     float g_restirCameraNearZ;
+    float g_restirCameraFarZ;
     uint g_restirEmissiveLightCount;
     float g_restirEmissiveLightWeightSum;
     uint g_restirCandidatePad1;
-    uint g_restirCandidatePad2;
 };
 
 cbuffer RestirCandidateCameraConstants : register(b4, space0)
@@ -154,7 +154,7 @@ void RestirWriteInvalidPrimaryOutputs(uint pixelIndex)
     uint2 pixelCoord = RestirPixelCoordFromIndex(pixelIndex);
     g_restirPrimaryHitCurrent[pixelIndex] = RestirMakeInvalidPrimaryHit();
     g_restirMotionVector[pixelCoord] = 0.0f.xx;
-    g_restirLinearDepth[pixelCoord] = -1.0f;
+    g_restirLinearDepth[pixelCoord] = max(g_restirCameraFarZ, g_restirCameraNearZ);
     g_restirDiffuseAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirSpecularAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirNormalRoughness[pixelCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -329,7 +329,7 @@ float RestirComputeEmissiveHitNeePdfSolidAngle(
     }
 
     float entryPdf = selectedWeight / weightSum;
-    float areaPdf = entryPdf / max((float)light.triangleCount * area, EPSILON);
+    float areaPdf = entryPdf / max((float) light.triangleCount * area, EPSILON);
     return areaPdf * distanceSq / max(lightCos, EPSILON);
 }
 
@@ -382,7 +382,7 @@ bool EvaluateRestirEmissiveNEE(
     StructuredBuffer<Vertex> lightVB = ResourceDescriptorHeap[lightInst.vertexBufferIdx];
     Buffer<uint> lightIB = ResourceDescriptorHeap[lightInst.indexBufferIdx];
 
-    uint triLocalIndex = min((uint)(RandomValue(rngSeed) * (float)light.triangleCount), light.triangleCount - 1u);
+    uint triLocalIndex = min((uint) (RandomValue(rngSeed) * (float) light.triangleCount), light.triangleCount - 1u);
     uint i0 = lightIB[lightGeo.indexBase + triLocalIndex * 3u + 0u];
     uint i1 = lightIB[lightGeo.indexBase + triLocalIndex * 3u + 1u];
     uint i2 = lightIB[lightGeo.indexBase + triLocalIndex * 3u + 2u];
@@ -449,7 +449,7 @@ bool EvaluateRestirEmissiveNEE(
     }
 
     float entryPdf = selectedWeight / max(weightSum, EPSILON);
-    float areaPdf = entryPdf / max((float)light.triangleCount * area, EPSILON);
+    float areaPdf = entryPdf / max((float) light.triangleCount * area, EPSILON);
     float neePdfSolidAngle = areaPdf * distanceSq / max(lightCos, EPSILON);
     lightPdf = neePdfSolidAngle;
     float misWeight = neePdfSolidAngle / max(neePdfSolidAngle + bsdfPdf, EPSILON);
@@ -515,7 +515,7 @@ void RayGenMain()
         ray.TMin = 0.001f;
         ray.TMax = RAY_TMAX;
 
-        RayPayload payload = MakeDefaultRayPayload<RayPayload>(0);
+        RayPayload payload = MakeDefaultRayPayload < RayPayload > (0);
         payload.pixelIndex = pixelIndex;
 
         TraceRay(g_scene,
@@ -531,7 +531,7 @@ void RayGenMain()
 
         if (0u != g_restirCandidateEnabled && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
         {
-            RayPayload sunPayload = MakeDefaultRayPayload<RayPayload>(0);
+            RayPayload sunPayload = MakeDefaultRayPayload < RayPayload > (0);
             sunPayload.pixelIndex = pixelIndex;
             sunPayload.primaryHitFlags = RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN;
 
@@ -546,7 +546,7 @@ void RayGenMain()
 
             if (g_restirEmissiveLightCount > 0u)
             {
-                RayPayload emissivePayload = MakeDefaultRayPayload<RayPayload>(0);
+                RayPayload emissivePayload = MakeDefaultRayPayload < RayPayload > (0);
                 emissivePayload.pixelIndex = pixelIndex;
                 emissivePayload.primaryHitFlags =
                     RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_EMISSIVE;
@@ -864,7 +864,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     bool sampledDelta = chooseSpec && roughness < 0.15f;
 
     float3 L;
-    float pdf;     // Sampling pdf (mixture)
+    float pdf; // Sampling pdf (mixture)
     float3 weight; // 1-step throughput
     float3 contributionNumerator;
 
@@ -927,7 +927,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     nextRay.TMin = RAY_TMIN;
     nextRay.TMax = RAY_TMAX;
 
-    RayPayload child = MakeDefaultRayPayload<RayPayload>(payload.recursionDepth + 1);
+    RayPayload child = MakeDefaultRayPayload < RayPayload > (payload.recursionDepth + 1);
 
     TraceRay(
         g_scene,

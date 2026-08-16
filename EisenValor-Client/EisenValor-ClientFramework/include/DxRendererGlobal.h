@@ -4,6 +4,7 @@
 #include "RenderContext.h"
 #include "CameraRenderData.h"
 #include "FrameRenderData.h"
+#include <string_view>
 
 class Scene;
 class DxFrameResource;
@@ -58,6 +59,7 @@ public:
 
 private:
 	void RebuildRenderDataDeclarations();
+	void LogVideoMemoryStats(std::string_view reason) const;
 
 	bool						 m_isInitialized = false;
 	DxFeatureCaps				 m_featureCaps;
@@ -66,6 +68,7 @@ private:
 	uint32_t					 m_rtvDescriptorSize = 0;
 	uint32_t					 m_renderWidth = 0;
 	uint32_t					 m_renderHeight = 0;
+	float						 m_nextMemoryLogTime = 0.0f;
 
 	static constexpr uint32_t								  kFrameCount = 3;
 	uint32_t												  m_currentFrameIndex = 0;

@@ -49,6 +49,8 @@ namespace LobbyServer {
 	private:
 		void EnterGameLobby(std::shared_ptr<ClientSession> clientSession);
 		std::shared_ptr<GameRoom> FindGameRoom(const uint16 roomID);
+		void DeleteGameRoom(const uint16 roomID);
+		void BroadcastRoomInfo(const RoomInfo& roomInfo);
 
 
 	private:

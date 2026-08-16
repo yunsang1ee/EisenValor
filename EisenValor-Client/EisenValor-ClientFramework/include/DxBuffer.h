@@ -104,10 +104,10 @@ public:
 	);
 	// clang-format on
 
-	void ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
-	void ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
-	void ReleaseCBV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
-	void ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle);
+	void ReleaseSRV(DxDescriptorHeapGlobal& heap);
+	void ReleaseUAV(DxDescriptorHeapGlobal& heap);
+	void ReleaseCBV(DxDescriptorHeapGlobal& heap);
+	void ReleaseAllViews(DxDescriptorHeapGlobal& heap);
 
 	[[nodiscard]] const DxDescriptorHandles& GetSRVHandle() const { return m_srvHandle; }
 	[[nodiscard]] const DxDescriptorHandles& GetUAVHandle() const { return m_uavHandle; }

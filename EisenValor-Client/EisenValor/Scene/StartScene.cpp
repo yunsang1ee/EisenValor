@@ -7,6 +7,7 @@
 #include "ResourceGlobal.h"
 #include "SceneGlobal.h"
 #include "TextureResource.h"
+#include "Util/GameConstants.h"
 
 namespace
 {
@@ -34,7 +35,8 @@ void StartScene::OnRegisterCustomComponents()
 void StartScene::OnStartImpl()
 {
 	DEBUG_LOG_FMT("[StartScene] Enter Start Scene.\n");
-	GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/startscene.wav", AudioBus::BGM, true);
+	GLOBAL(AudioGlobal)
+		.Play2D(L"Resource/Sounds/startscene.wav", AudioBus::BGM, true, AudioBalance::kFrontEndBgmVolume);
 
 	ReserveGameObject(
 		"StartSceneBackground", std::nullopt,
@@ -109,13 +111,16 @@ void StartScene::OnStartImpl()
 						buttonComponent->SetOnHover(
 							[]()
 							{
-								GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/click.wav", AudioBus::UI);
+								GLOBAL(AudioGlobal)
+									.Play2D(L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume);
 							}
 						);
 						buttonComponent->SetOnClick(
 							[button]()
 							{
-								GLOBAL(AudioGlobal).Play2D(L"Resource/Sounds/mouseclick.wav", AudioBus::UI);
+								GLOBAL(AudioGlobal).Play2D(
+									L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
+								);
 
 								switch (button.action)
 								{
@@ -143,6 +148,5 @@ void StartScene::OnStartImpl()
 
 void StartScene::OnEndImpl()
 {
-	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	DEBUG_LOG_FMT("[StartScene] Scene Ended.\n");
 }

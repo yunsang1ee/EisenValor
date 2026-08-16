@@ -221,7 +221,7 @@ std::shared_ptr<GameServer::Contents::GameObject> GameServer::Contents::GameObje
 	ozObj->SetTransform(t.transform);
 	ozObj->SetGameObjectData(t.gameObjectData);
 	
-	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.radius * t.radius, t.scoreTime))};
+	auto const oz{ ozObj->AddScript(std::make_unique<OccupationZone>(t.radius * t.radius, t.scoreTime, t.recaptureGraceSec))};
 	oz->SetName(t.zoneName);
 	oz->SetOwner(ozObj);
 	

@@ -35,7 +35,7 @@ public:
 	}
 
 public:
-	void Free(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle, std::string_view debugName);
+	void Free(DxDescriptorHeapGlobal& heap, std::string_view debugName);
 	void FreeImmediate(DxDescriptorHeapGlobal& heap);
 
 	bool						IsValid() const { return m_index != kInvalidIndex; }
@@ -108,11 +108,11 @@ public:
 
 	DxDescriptorHandles Allocate();
 	void				FreeImmediate(uint32_t index);
-	void				Free(uint32_t index, const FenceHandle& fenceHandle, std::string_view debugName);
+	void				Free(uint32_t index, std::string_view debugName);
 
 	DxDescriptorRange ReserveRange(uint32_t count);
 	void			  FreeRangeImmediate(uint32_t startIndex, uint32_t count);
-	void FreeRange(uint32_t startIndex, uint32_t count, const FenceHandle& fenceHandle, std::string_view debugName);
+	void FreeRange(uint32_t startIndex, uint32_t count, std::string_view debugName);
 
 
 	DxDescriptorHandles CreateSRV(

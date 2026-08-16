@@ -165,25 +165,16 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		const uint32_t width = static_cast<uint32_t>(LOWORD(lParam));
 		const uint32_t height = static_cast<uint32_t>(HIWORD(lParam));
 
-		auto& renderer = GLOBAL(DxRendererGlobal);
-		if (renderer.GetSwapChain())
-		{
-			renderer.OnResize(width, height);
-		}
 		GLOBAL(InputGlobal).OnResize(width, height);
 
-		if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
+		if (m_inSizeMove)
 		{
-			if (auto* rectStorage = scene->GetStorage<RectTransformComponent>())
-			{
-				for (auto& rectTransform : rectStorage->GetList())
-				{
-					rectTransform.MarkDirty();
-				}
-			}
+			m_pendingResize = ResizeExtent{width, height};
 		}
-
-		DEBUG_LOG_FMT("[GameFramework] Window resized: {}x{}\n", width, height);
+		else
+		{
+			ApplyResize(width, height);
+		}
 		break;
 	}
 
@@ -234,11 +225,20 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 		break;
 
 	case WM_ENTERSIZEMOVE:
+		m_inSizeMove = true;
+		m_pendingResize.reset();
 		SetTimer(m_hWnd, 1, 1, NULL);
 		break;
 
 	case WM_EXITSIZEMOVE:
 		KillTimer(m_hWnd, 1);
+		m_inSizeMove = false;
+		if (m_pendingResize)
+		{
+			const ResizeExtent pendingResize = *m_pendingResize;
+			m_pendingResize.reset();
+			ApplyResize(pendingResize.width, pendingResize.height);
+		}
 		break;
 
 	case WM_TIMER:
@@ -258,6 +258,44 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+void GameFramework::ApplyResize(uint32_t width, uint32_t height)
+{
+	if (0u == width || 0u == height)
+	{
+		return;
+	}
+
+	auto& renderer = GLOBAL(DxRendererGlobal);
+	auto* swapChain = renderer.GetSwapChain();
+	if (nullptr == swapChain)
+	{
+		return;
+	}
+
+	if (swapChain->GetWidth() == width && swapChain->GetHeight() == height)
+	{
+		return;
+	}
+
+	renderer.OnResize(width, height);
+	MarkRectTransformsDirty();
+	DEBUG_LOG_FMT("[GameFramework] Window resized: {}x{}\n", width, height);
+}
+
+void GameFramework::MarkRectTransformsDirty()
+{
+	if (auto* scene = GLOBAL(SceneGlobal).GetActiveScene())
+	{
+		if (auto* rectStorage = scene->GetStorage<RectTransformComponent>())
+		{
+			for (auto& rectTransform : rectStorage->GetList())
+			{
+				rectTransform.MarkDirty();
+			}
+		}
+	}
 }
 
 void GameFramework::Update(float delta)

@@ -28,6 +28,13 @@ public:
 	void	   SetLastUsedQueue(EQueueType queue) { m_lastUsedQueue = queue; }
 
 protected:
+	void AdoptResource(
+		ID3D12Device*		   device,
+		ComPtr<ID3D12Resource> resource,
+		D3D12_RESOURCE_STATES  initialState,
+		D3D12_HEAP_TYPE		   heapType,
+		std::string_view	   name
+	);
 	void InitializeResource(
 		ID3D12Device*				 device,
 		const D3D12_HEAP_PROPERTIES& heapProps,

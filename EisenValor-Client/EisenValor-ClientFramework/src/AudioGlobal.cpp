@@ -12,14 +12,15 @@ public:
 	struct PlayingVoice
 	{
 		IXAudio2SourceVoice* voice = nullptr;
-		std::vector<BYTE> audioData;
-		AudioBus bus = AudioBus::SFX;
+		std::vector<BYTE>	 audioData;
+		AudioBus			 bus = AudioBus::SFX;
+		float				 volumeScale = 1.0f;
 	};
 
-	IXAudio2* engine = nullptr;
-	IXAudio2MasteringVoice* masteringVoice = nullptr;
+	IXAudio2*				  engine = nullptr;
+	IXAudio2MasteringVoice*	  masteringVoice = nullptr;
 	std::vector<PlayingVoice> playingVoices;
-	std::array<float, 3> busVolumes{1.0f, 1.0f, 1.0f};
+	std::array<float, 3>	  busVolumes{1.0f, 1.0f, 1.0f};
 };
 
 AudioGlobal::AudioGlobal() : m_impl(std::make_unique<Impl>()) {}
@@ -61,7 +62,7 @@ void AudioGlobal::Release()
 	}
 }
 
-bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bool loop)
+bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bool loop, float volumeScale)
 {
 	if (!m_impl->engine || !m_impl->masteringVoice)
 		return false;
@@ -85,14 +86,12 @@ bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bo
 	if (!file)
 		return false;
 
-	auto readFourCC = [&file](char (&value)[4]) { return static_cast<bool>(file.read(value, sizeof(value))); };
+	auto readFourCC = [&file](char(&value)[4]) { return static_cast<bool>(file.read(value, sizeof(value))); };
 	auto readUInt32 = [&file](uint32_t& value)
-	{
-		return static_cast<bool>(file.read(reinterpret_cast<char*>(&value), sizeof(value)));
-	};
+	{ return static_cast<bool>(file.read(reinterpret_cast<char*>(&value), sizeof(value))); };
 
-	char riff[4]{};
-	char wave[4]{};
+	char	 riff[4]{};
+	char	 wave[4]{};
 	uint32_t riffSize = 0;
 	if (!readFourCC(riff) || !readUInt32(riffSize) || !readFourCC(wave) || std::memcmp(riff, "RIFF", 4) != 0 ||
 		std::memcmp(wave, "WAVE", 4) != 0)
@@ -104,7 +103,7 @@ bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bo
 	std::vector<BYTE> audioData;
 	while (file && (formatData.empty() || audioData.empty()))
 	{
-		char chunkId[4]{};
+		char	 chunkId[4]{};
 		uint32_t chunkSize = 0;
 		if (!readFourCC(chunkId) || !readUInt32(chunkSize))
 			break;
@@ -136,15 +135,14 @@ bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bo
 		return false;
 
 	IXAudio2SourceVoice* voice = nullptr;
-	if (FAILED(m_impl->engine->CreateSourceVoice(
-			&voice, reinterpret_cast<const WAVEFORMATEX*>(formatData.data())
-		)))
+	if (FAILED(m_impl->engine->CreateSourceVoice(&voice, reinterpret_cast<const WAVEFORMATEX*>(formatData.data()))))
 	{
 		return false;
 	}
 
 	const size_t busIndex = static_cast<size_t>(bus);
-	voice->SetVolume(m_impl->busVolumes[busIndex]);
+	const float	 clampedVolumeScale = std::clamp(volumeScale, 0.0f, 1.0f);
+	voice->SetVolume(m_impl->busVolumes[busIndex] * clampedVolumeScale);
 
 	XAUDIO2_BUFFER buffer{};
 	buffer.AudioBytes = static_cast<UINT32>(audioData.size());
@@ -157,7 +155,7 @@ bool AudioGlobal::Play2D(const std::filesystem::path& filePath, AudioBus bus, bo
 		return false;
 	}
 
-	m_impl->playingVoices.push_back({voice, std::move(audioData), bus});
+	m_impl->playingVoices.push_back({voice, std::move(audioData), bus, clampedVolumeScale});
 	return true;
 }
 
@@ -194,6 +192,6 @@ void AudioGlobal::SetBusVolume(AudioBus bus, float volume)
 	for (auto& playing : m_impl->playingVoices)
 	{
 		if (playing.bus == bus)
-			playing.voice->SetVolume(clampedVolume);
+			playing.voice->SetVolume(clampedVolume * playing.volumeScale);
 	}
 }

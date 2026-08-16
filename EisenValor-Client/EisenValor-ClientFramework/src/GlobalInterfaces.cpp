@@ -71,11 +71,11 @@ void Shutdown()
 	GLOBAL(DxRendererGlobal).Release();
 	GLOBAL(ResourceGlobal).Release();
 	GLOBAL(StreamlineGlobal).Release();
+	GLOBAL(DxGarbageCollectorGlobal).Release();
 	GLOBAL(DxGfxCommandQueueGlobal).Release();
 	GLOBAL(DxSamplerHeapGlobal).Release();
 	GLOBAL(DxDescriptorHeapGlobal).Release();
 	GLOBAL(DxShaderCompilerGlobal).Release();
-	GLOBAL(DxGarbageCollectorGlobal).Release();
 #ifdef _DEBUG
 	auto& debugG = GLOBAL(DxDebugGlobal);
 	debugG.PrintDebugMessages();

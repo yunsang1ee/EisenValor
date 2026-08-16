@@ -46,6 +46,9 @@ enum class PACKET_TYPE : uint16_t
 
 	CL_MAKE_GAME_ROOM_PKT = 107,
 	LC_MAKE_GAME_ROOM_PKT = 108,
+	LC_DELETE_GAME_ROOM_PKT = 109,
+	LC_UPDATE_GAME_ROOM_PKT = 110,
+
 #pragma endregion
 
 
@@ -88,7 +91,9 @@ enum class PACKET_TYPE : uint16_t
 
 	CL_RETURN_TO_GAME_ROOM_PKT = 1022,
 	LC_RETURN_TO_GAME_ROOM_PKT = 1023,
-		LC_GAME_RESULT_PKT = 1025,
+	LC_GAME_RESULT_PKT = 1025,
+	LC_CHANGE_HOST_PKT = 1029,
+
 #pragma endregion
 
 	// ==================

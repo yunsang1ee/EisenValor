@@ -2,21 +2,15 @@
 #include "DxBuffer.h"
 #include "DxUtils.h"
 #include "DxDescriptorHeapGlobal.h"
-#include "DxGarbageCollectorGlobal.h"
-#include "DxCommandQueueGlobal.h"
 
 DxBuffer::~DxBuffer()
 {
 	if (HasSRV() || HasUAV() || HasCBV())
 	{
-		auto& queue = GLOBAL(DxGfxCommandQueueGlobal);
+		auto& heap = GLOBAL(DxDescriptorHeapGlobal);
+		ReleaseAllViews(heap);
 
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
-		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
-
-		ReleaseAllViews(heap, fence);
-
-		GRAPHICS_LOG_FMT("[DxBuffer] Auto-released views for '{}' (Fence={})\n", GetName(), fence.value);
+		GRAPHICS_LOG_FMT("[DxBuffer] Auto-released views for '{}' after current frame\n", GetName());
 	}
 }
 
@@ -32,11 +26,9 @@ void DxBuffer::Initialize(
 
 	if (IsValid() && (HasSRV() || HasUAV() || HasCBV()))
 	{
-		auto&		queue = GLOBAL(DxGfxCommandQueueGlobal);
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
-		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
+		auto& heap = GLOBAL(DxDescriptorHeapGlobal);
 
-		ReleaseAllViews(heap, fence);
+		ReleaseAllViews(heap);
 
 		if (needsAutoRecreate)
 		{
@@ -138,11 +130,9 @@ void DxBuffer::Initialize(
 
 	if (IsValid() && (HasSRV() || HasUAV() || HasCBV()))
 	{
-		auto&		queue = GLOBAL(DxGfxCommandQueueGlobal);
-		FenceHandle fence(EQueueType::Graphics, queue.GetCurrentFenceValue() + 3);
-		auto&		heap = GLOBAL(DxDescriptorHeapGlobal);
+		auto& heap = GLOBAL(DxDescriptorHeapGlobal);
 
-		ReleaseAllViews(heap, fence);
+		ReleaseAllViews(heap);
 
 		if (needsAutoRecreate)
 		{
@@ -479,29 +469,29 @@ void DxBuffer::CreateCBVWithAutoRecreate(ID3D12Device* device, DxDescriptorHeapG
 	);
 }
 
-void DxBuffer::ReleaseSRV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxBuffer::ReleaseSRV(DxDescriptorHeapGlobal& heap)
 {
-	m_srvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_SRV");
-	GRAPHICS_LOG_FMT("[DxBuffer] SRV released: {} (Fence={})\n", GetName(), fenceHandle.value);
+	m_srvHandle.Free(heap, std::string(GetName()) + "_SRV");
+	GRAPHICS_LOG_FMT("[DxBuffer] SRV queued for release: {}\n", GetName());
 }
 
-void DxBuffer::ReleaseUAV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxBuffer::ReleaseUAV(DxDescriptorHeapGlobal& heap)
 {
-	m_uavHandle.Free(heap, fenceHandle, std::string(GetName()) + "_UAV");
-	GRAPHICS_LOG_FMT("[DxBuffer] UAV released: {} (Fence={})\n", GetName(), fenceHandle.value);
+	m_uavHandle.Free(heap, std::string(GetName()) + "_UAV");
+	GRAPHICS_LOG_FMT("[DxBuffer] UAV queued for release: {}\n", GetName());
 }
 
-void DxBuffer::ReleaseCBV(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxBuffer::ReleaseCBV(DxDescriptorHeapGlobal& heap)
 {
-	m_cbvHandle.Free(heap, fenceHandle, std::string(GetName()) + "_CBV");
-	GRAPHICS_LOG_FMT("[DxBuffer] CBV released: {} (Fence={})\n", GetName(), fenceHandle.value);
+	m_cbvHandle.Free(heap, std::string(GetName()) + "_CBV");
+	GRAPHICS_LOG_FMT("[DxBuffer] CBV queued for release: {}\n", GetName());
 }
 
-void DxBuffer::ReleaseAllViews(DxDescriptorHeapGlobal& heap, const FenceHandle& fenceHandle)
+void DxBuffer::ReleaseAllViews(DxDescriptorHeapGlobal& heap)
 {
-	ReleaseSRV(heap, fenceHandle);
-	ReleaseUAV(heap, fenceHandle);
-	ReleaseCBV(heap, fenceHandle);
+	ReleaseSRV(heap);
+	ReleaseUAV(heap);
+	ReleaseCBV(heap);
 
 	GRAPHICS_LOG_FMT("[DxBuffer] All views released: {}\n", GetName());
 }

@@ -187,6 +187,9 @@
     <ClInclude Include="include\DxResource.h">
       <Filter>Graphics\Resource\Low Resource</Filter>
     </ClInclude>
+    <ClInclude Include="include\DxResourceAllocationTracker.h">
+      <Filter>Graphics\Resource\LifeTime/State</Filter>
+    </ClInclude>
     <ClInclude Include="include\DxBuffer.h">
       <Filter>Graphics\Resource\Low Resource</Filter>
     </ClInclude>
@@ -403,6 +406,9 @@
     </ClCompile>
     <ClCompile Include="src\DxResource.cpp">
       <Filter>Graphics\Resource\Low Resource</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxResourceAllocationTracker.cpp">
+      <Filter>Graphics\Resource\LifeTime/State</Filter>
     </ClCompile>
     <ClCompile Include="src\DxBuffer.cpp">
       <Filter>Graphics\Resource\Low Resource</Filter>

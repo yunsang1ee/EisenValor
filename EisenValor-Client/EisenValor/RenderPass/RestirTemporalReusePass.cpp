@@ -3,7 +3,6 @@
 #include "CameraRenderData.h"
 #include "DxBuffer.h"
 #include "DxCommandContext.h"
-#include "DxCommandQueueGlobal.h"
 #include "DxDescriptorHeapGlobal.h"
 #include "DxDeviceGlobal.h"
 #include "DxFrameResource.h"
@@ -54,9 +53,7 @@ void CreateRestirStructuredBuffer(
 
 	if (buffer->HasUAV())
 	{
-		auto& commandQueue = GLOBAL(DxGfxCommandQueueGlobal);
-		auto  fenceValue = commandQueue.GetCurrentFenceValue() + 3;
-		buffer->ReleaseAllViews(descHeap, FenceHandle{EQueueType::Graphics, fenceValue});
+		buffer->ReleaseAllViews(descHeap);
 	}
 
 	buffer->Initialize(

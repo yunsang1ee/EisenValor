@@ -1,9 +1,15 @@
 #include "stdafxClientFramework.h"
 #include "DxUploadHeap.h"
+#include "DxResourceAllocationTracker.h"
 #include "DxUtils.h"
 
 DxUploadHeap::~DxUploadHeap()
 {
+	if (m_resource)
+	{
+		DxResourceAllocationTracker::Untrack(m_resource.Get());
+	}
+
 	if (m_resource && m_mappedData)
 	{
 		m_resource->Unmap(0, nullptr);
@@ -44,6 +50,10 @@ void DxUploadHeap::Initialize(ID3D12Device* device, uint64_t sizeInBytes, const 
 	}
 
 	m_gpuStart = m_resource->GetGPUVirtualAddress();
+	const D3D12_RESOURCE_ALLOCATION_INFO allocationInfo = device->GetResourceAllocationInfo(0, 1, &desc);
+	DxResourceAllocationTracker::Track(
+		m_resource.Get(), name, allocationInfo.SizeInBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_DIMENSION_BUFFER
+	);
 
 	D3D12_RANGE readRange{0, 0}; // CPU read 안함
 	ThrowIfFailed(m_resource->Map(0, &readRange, &m_mappedData));
