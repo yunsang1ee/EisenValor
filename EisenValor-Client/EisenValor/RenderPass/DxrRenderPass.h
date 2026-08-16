@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 #include "RenderData/InstanceRenderData.h"
 #include "RenderData/MaterialRenderData.h"
@@ -76,6 +77,11 @@ private:
 	);
 
 	void RegisterInstanceIdLookup(uint32_t ownerId, uint32_t instanceIndex);
+	void BeginInstanceMotionFrame(Scene* scene);
+	void ApplyInstanceMotionHistory(
+		InstanceData& instance, bool usePreviousSkinnedVertices, uint32_t previousVertexBufferIndex
+	);
+	void CommitInstanceMotionFrame(uint32_t frameIndex);
 
 private:
 	std::unique_ptr<DxRtPipelineState> m_rtPipeline;
@@ -113,4 +119,9 @@ private:
 	Persistent<StaticSceneRenderData> m_staticSceneData;
 	std::vector<DxTLASInstance>		  m_tlasInstancesScratch;
 	std::vector<uint32_t>			  m_instanceIdLookupScratch;
+	std::unordered_map<uint64_t, DirectX::XMFLOAT4X4> m_previousInstanceWorldMatrices;
+	std::unordered_map<uint64_t, DirectX::XMFLOAT4X4> m_currentInstanceWorldMatrices;
+	Scene*	 m_instanceMotionScene = nullptr;
+	uint32_t m_previousInstanceFrameIndex = 0;
+	bool	 m_hasPreviousInstanceFrame = false;
 };

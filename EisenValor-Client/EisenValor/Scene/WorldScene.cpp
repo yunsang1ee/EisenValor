@@ -95,8 +95,8 @@ void WorldScene::OnRegisterCustomComponents()
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
 		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent, WorldLoadingControllerComponent,
-		QuestUIComponent, QuestProgressComponent>();
+		AttackRangeDebugComponent, WorldSceneControllerComponent, OccupationZoneRegistrationComponent, FootIKComponent,
+		WorldLoadingControllerComponent, QuestUIComponent, QuestProgressComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 

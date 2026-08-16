@@ -598,6 +598,10 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
     {
         RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_CURRENT_SURFACE);
     }
+    else if (0u == (RestirGetPrimaryHitFlags(currentHit) & RESTIR_PRIMARY_HIT_MOTION_VALID))
+    {
+        RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_NO_MOTION);
+    }
     else
     {
         RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_ATTEMPTED);

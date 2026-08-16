@@ -51,7 +51,6 @@ using namespace NetBridge;
 namespace
 {
 std::unordered_map<uint64, uint8_t> s_pendingStateByObjectID;
-std::unordered_map<uint64, uint8_t> s_occupationZoneSlotByObjectID;
 uint8								s_latestRedScore = 0;
 uint8								s_latestBlueScore = 0;
 bool								s_hasLatestAttackReaction = false;
@@ -704,7 +703,6 @@ bool NetBridge::S2C::Handle_SC_LOCAL_PLAYER_PACKET(
 {
 	s_latestRedScore = 0;
 	s_latestBlueScore = 0;
-	s_occupationZoneSlotByObjectID.clear();
 
 	// GLOBAL(SceneGlobal).SetLocalNetworkID(recvPkt.player_id());
 
@@ -1084,11 +1082,6 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 		break;
 	}
 
-	// TODO: objType이 점령지일 경우, 내부적으로 dominantTeamType을 가지고 있어야 합니다.(현재 점령중인 팀)
-	// SC_OCCUPATION_ZONE_GAUGE_PACKET이 오면 해당 점령지의 게이지 값을 바로 업데이트 해주면 됩니다.
-	// 그게 아니라면 매 프레임마다 점령지 오브젝트가 자신의 dominantTeamType을 확인해서 게이지를 5.f만큼 업데이트 해주면
-	// 됩니다.
-
 	auto objectHandle = scene->ReserveGameObject(
 		objectName, id,
 		[scene, pos, rot, objType, teamType, maxHP = recvPkt.max_hp(), currentHP = recvPkt.current_hp(),
@@ -1098,6 +1091,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			auto& tr = obj->GetTransform();
 			tr.SetPosition(pos.x, pos.y, pos.z);
 			tr.SetRotation(rot.x, rot.y, rot.z);
+
+			if (objType == FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE)
+			{
+				return;
+			}
 
 			auto objHandle = obj->GetHandle();
 
@@ -1540,6 +1538,11 @@ bool NetBridge::S2C::Handle_SC_ADD_OBJ_PACKET(const SOCKET& socket, const FB_TAB
 			DEBUG_LOG_FMT("Created at ({:.2f}, {:.2f}, {:.2f}), HP: {}/{}\n", pos.x, pos.y, pos.z, currentHP, maxHP);
 		}
 	);
+
+	if (objType == FB_ENUMS::GAME_OBJECT_TYPE_OCCUPATION_ZONE)
+	{
+		scene->CreateComponent<OccupationZoneRegistrationComponent>(objectHandle);
+	}
 
 	return true;
 }
@@ -2096,8 +2099,10 @@ bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_OCCUPIED_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_OCCUPIED_PACKET& recvPkt
 )
 {
-	// TODO: ID로 점령지 오브젝트 찾아서 점령 상태 업데이트하기
-
+	if (auto* controller = FindWorldSceneController(GLOBAL(SceneGlobal).GetActiveScene()))
+	{
+		controller->SetOccupationZoneOwner(recvPkt.obj_id(), recvPkt.team_type());
+	}
 	return true;
 }
 
@@ -2223,49 +2228,9 @@ bool NetBridge::S2C::Handle_SC_OCCUPATION_ZONE_GAUGE_PACKET(
 	const SOCKET& socket, const FB_TABLES::SC_OCCUPATION_ZONE_GAUGE_PACKET& recvPkt
 )
 {
-	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-	if (!scene)
+	if (auto* controller = FindWorldSceneController(GLOBAL(SceneGlobal).GetActiveScene()))
 	{
-		return false;
+		controller->SetOccupationZoneGauge(recvPkt.obj_id(), recvPkt.occupy_gauge(), recvPkt.team_type());
 	}
-
-	const float	 gauge = std::clamp(recvPkt.occupy_gauge(), -100.0f, 100.0f);
-	const float	 blueAmount = std::max(-gauge, 0.0f) / 100.0f;
-	const float	 redAmount = std::max(gauge, 0.0f) / 100.0f;
-	const uint64 zoneID = recvPkt.obj_id();
-	auto		 slotIter = s_occupationZoneSlotByObjectID.find(zoneID);
-	if (slotIter == s_occupationZoneSlotByObjectID.end())
-	{
-		if (s_occupationZoneSlotByObjectID.size() >= 2)
-		{
-			return false;
-		}
-		const uint8 slot = static_cast<uint8>(s_occupationZoneSlotByObjectID.size());
-		slotIter = s_occupationZoneSlotByObjectID.emplace(zoneID, slot).first;
-	}
-	const bool useSecondSlot = slotIter->second == 1;
-
-	for (auto& rect : scene->GetStorage<RectTransformComponent>()->GetList())
-	{
-		auto* owner = rect.GetGameObject();
-		if (!owner)
-		{
-			continue;
-		}
-
-		if (owner->GetName() == (useSecondSlot ? "OccupationGaugeBlueB" : "OccupationGaugeBlue"))
-		{
-			rect.SetAnchors({0.5f - 0.5f * blueAmount, 0.0f}, {0.5f, 1.0f});
-			rect.SetOffsetMin({0.0f, 2.0f});
-			rect.SetOffsetMax({0.0f, -2.0f});
-		}
-		else if (owner->GetName() == (useSecondSlot ? "OccupationGaugeRedB" : "OccupationGaugeRed"))
-		{
-			rect.SetAnchors({0.5f, 0.0f}, {0.5f + 0.5f * redAmount, 1.0f});
-			rect.SetOffsetMin({0.0f, 2.0f});
-			rect.SetOffsetMax({0.0f, -2.0f});
-		}
-	}
-
 	return true;
 }

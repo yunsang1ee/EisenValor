@@ -516,6 +516,10 @@ float3 RestirDebugColor(RestirReservoir reservoir, uint debugView)
         {
             return float3(0.2f, 0.3f, 1.0f);
         }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_NO_MOTION))
+        {
+            return float3(0.0f, 0.5f, 1.0f);
+        }
         return 0.0f.xxx;
     }
 

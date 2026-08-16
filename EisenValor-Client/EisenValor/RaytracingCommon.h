@@ -39,6 +39,9 @@
 #define MATERIAL_FLAG_IGNORE_LIGHTING (1 << 8)
 #define MATERIAL_FLAG_TERRAIN_SPLAT (1 << 9)
 
+#define INSTANCE_MOTION_HAS_PREVIOUS (1u << 0u)
+#define INSTANCE_MOTION_PREVIOUS_SKINNED (1u << 1u)
+
 #ifdef __cplusplus
 #pragma pack(push, 1)
 #endif
@@ -84,12 +87,16 @@ struct InstanceData
 {
 	RAY_MATRIX worldMatrix;
 	RAY_MATRIX worldInverse;
+	RAY_MATRIX previousWorldMatrix;
 
 	RAY_UINT vertexBufferIdx;
+	RAY_UINT previousVertexBufferIdx;
 	RAY_UINT indexBufferIdx;
 	RAY_UINT geoInfoBaseIdx;
 	RAY_UINT instanceID;
 	RAY_UINT generation;
+	RAY_UINT motionFlags;
+	RAY_UINT motionPad0;
 };
 
 struct MaterialGPUData
@@ -142,6 +149,7 @@ struct TerrainSurfaceGPUData
 };
 
 #define RESTIR_PRIMARY_HIT_VALID (1 << 0)
+#define RESTIR_PRIMARY_HIT_MOTION_VALID (1 << 1)
 #define RESTIR_PRIMARY_HIT_NEE_CANDIDATE (1u << 31)
 #define RESTIR_PRIMARY_HIT_NEE_SUN (1u << 30)
 #define RESTIR_PRIMARY_HIT_NEE_EMISSIVE (1u << 29)
@@ -155,6 +163,7 @@ struct TerrainSurfaceGPUData
 #define RESTIR_TEMPORAL_REJECT_SURFACE_MISMATCH (1u << 6u)
 #define RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR (1u << 7u)
 #define RESTIR_TEMPORAL_REJECT_RECONNECTION (1u << 8u)
+#define RESTIR_TEMPORAL_REJECT_NO_MOTION (1u << 9u)
 #endif
 
 #define RESTIR_PATH_FLAG_NEE (1u << 0)
@@ -253,6 +262,7 @@ struct RestirReservoir
 
 #ifdef __cplusplus
 static_assert(sizeof(GeoInfo) == 20);
+static_assert(sizeof(InstanceData) == 224);
 static_assert(sizeof(RestirEmissiveLightData) == 16);
 static_assert(sizeof(RestirTemporalConstants) == 80);
 static_assert(sizeof(RestirPrimaryHit) == 48);

@@ -45,6 +45,9 @@ constexpr uint32_t kStableSkinnedAssetGeometryIdSalt = 0x47454f4bu;	  // GEOK
 constexpr uint32_t kStableStaticRuntimeGeometryIdSalt = 0x47455253u;  // GERS
 constexpr uint32_t kStableSkinnedRuntimeGeometryIdSalt = 0x4745524bu; // GERK
 
+constexpr float kInstanceMotionTeleportDistance = 10.0f;
+constexpr float kInstanceMotionTeleportDistanceSq = kInstanceMotionTeleportDistance * kInstanceMotionTeleportDistance;
+
 constexpr uint32_t kRestirPrimaryHitUavRegister = 1;
 constexpr uint32_t kRestirReservoirUavRegister = 2;
 constexpr uint32_t kRestirMotionVectorUavRegister = 3;
@@ -118,6 +121,19 @@ uint32_t MakeStableRuntimeId(uint32_t salt, uint32_t ownerId, uint32_t localInde
 	Utils::AppendFnv1a64(hash, &localIndex, sizeof(localIndex));
 	uint32_t id = static_cast<uint32_t>(hash) ^ static_cast<uint32_t>(hash >> 32);
 	return id == ~0u ? ~1u : id;
+}
+
+uint64_t MakeInstanceMotionKey(uint32_t ownerId, uint32_t generation)
+{
+	return static_cast<uint64_t>(ownerId) | (static_cast<uint64_t>(generation) << 32u);
+}
+
+bool IsContinuousInstanceMotion(const DirectX::XMFLOAT4X4& previousWorld, const DirectX::XMFLOAT4X4& currentWorld)
+{
+	const float deltaX = currentWorld._41 - previousWorld._41;
+	const float deltaY = currentWorld._42 - previousWorld._42;
+	const float deltaZ = currentWorld._43 - previousWorld._43;
+	return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ <= kInstanceMotionTeleportDistanceSq;
 }
 
 bool IsRestirEmissiveLightMaterial(const MaterialResource* material)
@@ -262,6 +278,10 @@ void DxrRenderPass::Release()
 	m_staticSceneData.Release();
 	m_tlasInstancesScratch.clear();
 	m_instanceIdLookupScratch.clear();
+	m_previousInstanceWorldMatrices.clear();
+	m_currentInstanceWorldMatrices.clear();
+	m_instanceMotionScene = nullptr;
+	m_hasPreviousInstanceFrame = false;
 	m_device5.Reset();
 
 	m_initialized = false;
@@ -558,6 +578,54 @@ void DxrRenderPass::RegisterInstanceIdLookup(uint32_t ownerId, uint32_t instance
 	m_instanceIdLookupScratch[ownerId] = instanceIndex;
 }
 
+void DxrRenderPass::BeginInstanceMotionFrame(Scene* scene)
+{
+	if (m_instanceMotionScene != scene)
+	{
+		m_previousInstanceWorldMatrices.clear();
+		m_hasPreviousInstanceFrame = false;
+		m_instanceMotionScene = scene;
+	}
+
+	m_currentInstanceWorldMatrices.clear();
+}
+
+void DxrRenderPass::ApplyInstanceMotionHistory(
+	InstanceData& instance, bool usePreviousSkinnedVertices, uint32_t previousVertexBufferIndex
+)
+{
+	instance.previousWorldMatrix = instance.worldMatrix;
+	instance.previousVertexBufferIdx = instance.vertexBufferIdx;
+	instance.motionFlags = 0u;
+	instance.motionPad0 = 0u;
+
+	const uint64_t motionKey = MakeInstanceMotionKey(instance.instanceID, instance.generation);
+	const auto	   previousWorld = m_previousInstanceWorldMatrices.find(motionKey);
+	const bool	   hasPreviousGeometry = !usePreviousSkinnedVertices || previousVertexBufferIndex != 0xffffffffu;
+	if (m_hasPreviousInstanceFrame && previousWorld != m_previousInstanceWorldMatrices.end() && hasPreviousGeometry &&
+		IsContinuousInstanceMotion(previousWorld->second, instance.worldMatrix))
+	{
+		instance.previousWorldMatrix = previousWorld->second;
+		instance.previousVertexBufferIdx =
+			usePreviousSkinnedVertices ? previousVertexBufferIndex : instance.vertexBufferIdx;
+		instance.motionFlags = INSTANCE_MOTION_HAS_PREVIOUS;
+		if (usePreviousSkinnedVertices)
+		{
+			instance.motionFlags |= INSTANCE_MOTION_PREVIOUS_SKINNED;
+		}
+	}
+
+	m_currentInstanceWorldMatrices.insert_or_assign(motionKey, instance.worldMatrix);
+}
+
+void DxrRenderPass::CommitInstanceMotionFrame(uint32_t frameIndex)
+{
+	m_previousInstanceWorldMatrices.swap(m_currentInstanceWorldMatrices);
+	m_currentInstanceWorldMatrices.clear();
+	m_previousInstanceFrameIndex = frameIndex;
+	m_hasPreviousInstanceFrame = true;
+}
+
 void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition)
 {
 	PixScopedCpuEvent cpuEvent(L"DXR.PrepareRenderData");
@@ -683,7 +751,12 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	else
 	{
 		PixScopedCpuEvent restoreStaticCacheEvent(L"DXR.RestoreStaticSceneCache");
-		instanceData->syncBuffer.Assign(staticSceneData.instances);
+		instanceData->syncBuffer.Clear();
+		for (auto cachedInstance : staticSceneData.instances)
+		{
+			ApplyInstanceMotionHistory(cachedInstance, false, cachedInstance.vertexBufferIdx);
+			instanceData->syncBuffer.Register(std::move(cachedInstance));
+		}
 		materialData->syncBuffer.Assign(staticSceneData.materials);
 		materialData->terrainSurfaceSyncBuffer.Assign(staticSceneData.terrainSurfaces);
 		geoTableData->syncBuffer.Assign(staticSceneData.geometry);
@@ -890,6 +963,7 @@ void DxrRenderPass::CollectMeshData(
 		inst.geoInfoBaseIdx = geoBaseIdx;
 		inst.instanceID = ownerId;
 		inst.generation = meshComp.GetOwner().generation;
+		ApplyInstanceMotionHistory(inst, false, inst.vertexBufferIdx);
 
 		instanceData->syncBuffer.Register(inst);
 		RegisterInstanceIdLookup(ownerId, mappedInstanceIndex);
@@ -1126,6 +1200,17 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		inst.instanceID = ownerId;
 		inst.generation = skinnedMeshComp.GetOwner().generation;
 
+		uint32_t previousVertexBufferIndex = 0xffffffffu;
+		if (m_hasPreviousInstanceFrame && m_previousInstanceFrameIndex != frameIndex)
+		{
+			auto* previousSkinnedVB = skinnedMeshComp.GetSkinnedVertexBuffer(m_previousInstanceFrameIndex);
+			if (nullptr != previousSkinnedVB && previousSkinnedVB->HasSRV())
+			{
+				previousVertexBufferIndex = previousSkinnedVB->GetSRVIndex();
+			}
+		}
+		ApplyInstanceMotionHistory(inst, true, previousVertexBufferIndex);
+
 		instanceData->syncBuffer.Register(inst);
 		RegisterInstanceIdLookup(ownerId, mappedInstanceIndex);
 		tlasInstances.push_back(
@@ -1163,6 +1248,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	}
 
 	const uint32_t frameIndex = frame->GetFrameIndex();
+	BeginInstanceMotionFrame(scene);
 	m_instanceData.BeginFrame(frameIndex);
 	m_materialData.BeginFrame(frameIndex);
 	m_geoTableData.BeginFrame(frameIndex);
@@ -1492,7 +1578,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			float	 cameraFarZ;
 			uint32_t emissiveLightCount;
 			float	 emissiveLightWeightSum;
-			uint32_t pad1;
+			uint32_t hasPreviousFrame;
 		};
 		RestirCandidateConstants restirConstants = {
 			restirCandidateEnabled ? 1u : 0u,
@@ -1502,7 +1588,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			cameraData ? cameraData->farZ : 1000.0f,
 			restirLightData->emissiveLightCount,
 			restirLightData->emissiveLightWeightSum,
-			0u
+			m_hasPreviousViewProj && m_hasPreviousInstanceFrame ? 1u : 0u
 		};
 		cmdList4->SetComputeRoot32BitConstants(DxrRootRestirCandidateConstants, 8, &restirConstants, 0);
 
@@ -1581,4 +1667,5 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		DirectX::XMStoreFloat4x4(&m_previousViewProj, currentViewProj);
 		m_hasPreviousViewProj = true;
 	}
+	CommitInstanceMotionFrame(frameIndex);
 }
