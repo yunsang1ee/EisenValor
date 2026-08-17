@@ -395,7 +395,7 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
 	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
 	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_strong.evtex");
-	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\area.evtex");
+	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_area.evtex");
 	m_disarmTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\disarm.evtex");
 
 	// 3. 자식 UI 오브젝트들 생성
