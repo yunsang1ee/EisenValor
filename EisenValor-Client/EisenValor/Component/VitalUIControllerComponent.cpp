@@ -260,6 +260,8 @@ void VitalUIControllerComponent::SetChildUIPositions(float scale)
 
 void VitalUIControllerComponent::ToggleUI(bool isActive)
 {
+	m_isUIVisible = isActive;
+
 	if (auto rootObj = GetGameObject()->GetScene()->TryGetGameObject(m_rootUI))
 	{
 		rootObj->SetActive(isActive);

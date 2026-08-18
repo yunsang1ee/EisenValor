@@ -15,6 +15,7 @@
 #include "Scene.h"
 #include "Transform.h"
 #include "Util/GameConstants.h"
+#include "VitalUIControllerComponent.h"
 
 #include <DirectXCollision.h>
 #include <algorithm>
@@ -431,10 +432,53 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 		animation->ClearIKTargets();
 		m_leftWeight = SmoothApproach(m_leftWeight, 0.0f, deltaTime, AnimationOffset::kFootIKDuration);
 		m_rightWeight = SmoothApproach(m_rightWeight, 0.0f, deltaTime, AnimationOffset::kFootIKDuration);
-		m_pelvisOffsetY = SmoothApproach(m_pelvisOffsetY, 0.0f, deltaTime, AnimationOffset::kPelvisIKDuration);
+		const auto* vitalUI = owner->GetComponent<VitalUIControllerComponent>();
+		// 시야에 없는 캐릭터는 IK 적용 안 함
+		if (!vitalUI || !vitalUI->IsUIVisible())
+		{
+			m_visualGroundTargetOffsetY = 0.0f;
+			m_visualGroundOffsetY = SmoothApproach(
+				m_visualGroundOffsetY, 0.0f, deltaTime, AnimationOffset::kPelvisIKDuration
+			);
+			m_pelvisOffsetY = m_visualGroundOffsetY;
+			animation->SetModelRootOffsetY(m_pelvisOffsetY);
+			return;
+		}
+
+		constexpr float kVisualGroundSampleInterval = 0.15f;
+		constexpr float kVisualGroundRayMaxUp = 1.0f;
+		constexpr float kVisualGroundRayMaxDown = 3.0f;
+		constexpr float kVisualGroundSnapSpeed = AnimationOffset::kPelvisIKDuration;
+		//일정 시간 간격으로만 몸 중심 기준 지면 높이를 샘플링
+		m_visualGroundSampleTimer -= deltaTime;
+		if (m_visualGroundSampleTimer <= 0.0f)
+		{
+			m_visualGroundSampleTimer = kVisualGroundSampleInterval;
+
+			GroundHit ownerGroundHit;
+			const auto ownerWorldPosition = owner->GetTransform().GetWorldPosition();
+			if (TrySampleVisualGround(ownerWorldPosition, kVisualGroundRayMaxUp, kVisualGroundRayMaxDown, ownerGroundHit))
+			{ // 샘플링 성공 시 목표 offset 설정
+				m_visualGroundTargetOffsetY =
+					std::clamp(ownerGroundHit.position.y - ownerWorldPosition.y, -m_maxPelvisDrop, 0.0f);
+			}
+			else
+			{
+				m_visualGroundTargetOffsetY = 0.0f;
+			}
+		}
+
+		m_visualGroundOffsetY = SmoothApproach(
+			m_visualGroundOffsetY, m_visualGroundTargetOffsetY, deltaTime, kVisualGroundSnapSpeed
+		);
+		m_pelvisOffsetY = m_visualGroundOffsetY;
 		animation->SetModelRootOffsetY(m_pelvisOffsetY);
 		return;
 	}
+
+	m_visualGroundOffsetY = 0.0f;
+	m_visualGroundTargetOffsetY = 0.0f;
+	m_visualGroundSampleTimer = 0.0f;
 
 	if (!m_bonesCached)
 	{
