@@ -13,6 +13,8 @@ namespace StateOffset
 namespace AnimationOffset
 {
 	static constexpr float kBlendDuration = 0.25f;
+	static constexpr float kPelvisIKDuration = 10.0f;
+	static constexpr float kFootIKDuration = 30.0f;
 	static constexpr float kIKDuration = 6.0f;
 }
 
