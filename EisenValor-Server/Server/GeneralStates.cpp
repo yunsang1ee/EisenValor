@@ -52,7 +52,7 @@ GameServer::Contents::GeneralIdleState::GeneralIdleState(const std::shared_ptr<G
 	//    - MoveToOZ가 점령되지 않은 점령지가 없으면 전체 점령지 중 랜덤을 선택한다.
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
-		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(3.f));
+		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(4.5f));
 		seq->AddChild(std::make_unique<GameServer::Contents::MoveToOZ>());
 		seq->AddChild(std::make_unique<GameServer::Contents::ChangeState>(FB_ENUMS::GENERAL_STATE_TYPE_RUN));
 		rootSelector->AddChild(std::move(seq));
@@ -167,7 +167,7 @@ GameServer::Contents::GeneralWalkState::GeneralWalkState(const std::shared_ptr<G
 	// 5) 추격 (타겟 위치로 이동하며 응시, 기본 속도 복귀)
 	{
 		auto seq = std::make_unique<GameServer::Contents::SequenceNode>();
-		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(3.f));
+		seq->AddChild(std::make_unique<GameServer::Contents::SetMaxSpeed>(4.5f));
 		seq->AddChild(std::make_unique<GameServer::Contents::LookAtTarget>());
 		seq->AddChild(std::make_unique<GameServer::Contents::MoveToTarget>());
 		rootSelector->AddChild(std::move(seq));
