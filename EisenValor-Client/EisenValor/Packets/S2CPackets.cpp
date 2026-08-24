@@ -1771,6 +1771,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 			{
 				cameraComp->SetLookAtTarget(localPlayer->GetHandle());
 				cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f}); // 오프셋 초기화
+				cameraComp->SetLookAtRotationOffset({0.0f, 0.0f, 0.0f});
 				cameraComp->SetEnableLookAtRotation(false);			   // 자유 시점
 				cameraComp->SetFollowOffsetLocal(
 					{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ
@@ -1782,6 +1783,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 			{
 				cameraComp->ClearLookAtTarget();
 				cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f});
+				cameraComp->SetLookAtRotationOffset({0.0f, 0.0f, 0.0f});
 				DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
 			}
 		}
@@ -1790,6 +1792,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_GENERAL_STANCE_PACKET(
 			if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
 			{
 				cameraComp->SetLookAtTarget(targetObj->GetHandle());
+				cameraComp->SetLookAtRotationOffset({0.0f, 0.0f, 0.0f});
 				cameraComp->SetLookAtTargetOffset({0.0f, CameraConfig::kLockOnViewOffsetY, 0.0f}
 				);										   // 대상을 바라볼 때 약간 위를 바라보도록 설정
 				cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정
@@ -1951,6 +1954,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		{
 			cameraComp->SetLookAtTarget(localPlayer->GetHandle());
 			cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f}); // 오프셋 초기화
+			cameraComp->SetLookAtRotationOffset({0.0f, 0.0f, 0.0f});
 			cameraComp->SetEnableLookAtRotation(false);			   // 자유 시점
 			cameraComp->SetFollowOffsetLocal(
 				{CameraConfig::kDefaultLocalOffsetX, CameraConfig::kCameraHeight, CameraConfig::kDefaultLocalOffsetZ}
@@ -1961,6 +1965,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		{
 			cameraComp->ClearLookAtTarget();
 			cameraComp->SetLookAtTargetOffset({0.0f, 0.0f, 0.0f});
+			cameraComp->SetLookAtRotationOffset({0.0f, 0.0f, 0.0f});
 			DEBUG_LOG_FMT("[SC_CHANGE_CAMERA_TARGET_PACKET] Camera Target Cleared (LocalPlayer not found)\n");
 		}
 	}
@@ -1969,6 +1974,7 @@ bool NetBridge::S2C::Handle_SC_CHANGE_CAMERA_TARGET_PACKET(
 		if (auto targetObj = scene->FindGameObjectByServerID(cameraTargetID))
 		{
 			cameraComp->SetLookAtTarget(targetObj->GetHandle());
+			cameraComp->SetLookAtRotationOffset({0.0f, 0.0f, 0.0f});
 			cameraComp->SetLookAtTargetOffset({0.0f, CameraConfig::kLockOnViewOffsetY, 0.0f}
 			);										   // 대상을 바라볼 때 약간 위를 바라보도록 설정
 			cameraComp->SetEnableLookAtRotation(true); // 락온 시에 회전 고정

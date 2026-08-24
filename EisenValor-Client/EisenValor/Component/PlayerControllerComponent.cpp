@@ -922,6 +922,12 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMFLOAT3 offsetF;
 		XMStoreFloat3(&offsetF, offset);
 
+		constexpr float kLockOnShoulderOffsetBlend = 0.1f;
+		const XMFLOAT3 currentOffset = camComp->GetFollowOffset();
+		offsetF.x = std::lerp(currentOffset.x, offsetF.x, kLockOnShoulderOffsetBlend);
+		offsetF.y = std::lerp(currentOffset.y, offsetF.y, kLockOnShoulderOffsetBlend);
+		offsetF.z = std::lerp(currentOffset.z, offsetF.z, kLockOnShoulderOffsetBlend);
+
 		camComp->SetFollowOffset(offsetF);
 	}
 }
