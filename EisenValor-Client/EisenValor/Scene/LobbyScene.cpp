@@ -181,7 +181,7 @@ void LobbyScene::OnStartImpl()
 		);
 	};
 
-	reserveText("LobbyTitleText", {-500.0f, -330.0f}, {500.0f, -250.0f}, L"EISENVALOR  /  GAME LOBBY", 40.0f);
+	reserveText("LobbyTitleText", {-500.0f, -330.0f}, {500.0f, -250.0f}, L"LOBBY", 40.0f);
 	reserveText("LobbySummaryText", {-500.0f, -250.0f}, {500.0f, -200.0f}, L"PLAYERS  0     ROOMS  0", 22.0f);
 	reserveText("LobbyMessageText", {-500.0f, 350.0f}, {500.0f, 385.0f}, L"", 18.0f);
 

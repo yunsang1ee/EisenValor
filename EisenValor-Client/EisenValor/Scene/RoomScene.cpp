@@ -183,7 +183,7 @@ void RoomScene::OnStartImpl()
 		);
 	};
 
-	reserveText("RoomTitleText", {-580.0f, -350.0f}, {580.0f, -285.0f}, L"EISENVALOR  /  BATTLE ROOM", 38.0f);
+	reserveText("RoomTitleText", {-580.0f, -350.0f}, {580.0f, -285.0f}, L"BATTLE ROOM", 38.0f);
 	reserveText(
 		"RoomBlueTitle", {-580.0f, -270.0f}, {-40.0f, -215.0f}, L"BLUE TEAM", 28.0f, {0.15f, 0.35f, 1.0f, 1.0f}
 	);
