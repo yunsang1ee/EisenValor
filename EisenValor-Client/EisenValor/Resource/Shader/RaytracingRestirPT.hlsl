@@ -53,7 +53,7 @@ cbuffer RestirCandidateConstants : register(b3, space0)
     float g_restirCameraFarZ;
     uint g_restirEmissiveLightCount;
     float g_restirEmissiveLightWeightSum;
-    uint g_restirCandidatePad1;
+    uint g_restirHasPreviousFrame;
 };
 
 cbuffer RestirCandidateCameraConstants : register(b4, space0)
@@ -174,7 +174,8 @@ void RestirWritePrimaryOutputs(
     GeoInfo geo,
     uint geometryIndex,
     uint primitiveIndex,
-    float2 barycentrics)
+    uint3 triangleVertexIndices,
+    float3 barycentrics)
 {
     if (pixelIndex == 0xffffffffu || g_restirScreenWidth == 0u || g_restirScreenHeight == 0u)
     {
@@ -184,27 +185,59 @@ void RestirWritePrimaryOutputs(
     RestirPrimaryHit primaryHit;
     primaryHit.positionDistance = float4(hitPos, hitDistance);
     primaryHit.packedNormal = RestirPackNormalOct16(geometricNormal);
-    primaryHit.packedRoughnessFlags =
-        RestirPackPrimaryHitRoughnessFlags(roughness, RESTIR_PRIMARY_HIT_VALID);
     primaryHit.instanceId = inst.instanceID;
     primaryHit.materialId = mat.stableMaterialId;
     primaryHit.geometryId = geo.stableGeometryId;
     primaryHit.geometryIndex = geometryIndex;
     primaryHit.primitiveIndex = primitiveIndex;
-    primaryHit.barycentrics = RestirPackBarycentrics(barycentrics);
-    g_restirPrimaryHitCurrent[pixelIndex] = primaryHit;
+    primaryHit.barycentrics = RestirPackBarycentrics(barycentrics.yz);
 
     uint2 pixelCoord = RestirPixelCoordFromIndex(pixelIndex);
     float2 motionVector = 0.0f.xx;
-    float4 previousClip = mul(float4(hitPos, 1.0f), g_previousViewProj);
-    float2 previousUv;
-    if (TryClipToUv(previousClip, previousUv))
+    bool motionVectorValid = false;
+    bool hasPreviousPosition =
+        0u != g_restirHasPreviousFrame && 0u != (inst.motionFlags & INSTANCE_MOTION_HAS_PREVIOUS);
+    if (hasPreviousPosition)
     {
-        float2 currentUv = (float2(pixelCoord) + 0.5f) / float2(g_restirScreenWidth, g_restirScreenHeight);
-        float2 jitterUv = g_cameraJitterPixels / float2(g_restirScreenWidth, g_restirScreenHeight);
-        motionVector = previousUv - currentUv - jitterUv;
+        float3 previousObjectPosition;
+        if (0u != (inst.motionFlags & INSTANCE_MOTION_PREVIOUS_SKINNED))
+        {
+            StructuredBuffer<Vertex> previousVertexBuffer =
+                ResourceDescriptorHeap[inst.previousVertexBufferIdx];
+            Vertex previousV0 = previousVertexBuffer[triangleVertexIndices.x];
+            Vertex previousV1 = previousVertexBuffer[triangleVertexIndices.y];
+            Vertex previousV2 = previousVertexBuffer[triangleVertexIndices.z];
+            previousObjectPosition =
+                previousV0.position * barycentrics.x +
+                previousV1.position * barycentrics.y +
+                previousV2.position * barycentrics.z;
+        }
+        else
+        {
+            previousObjectPosition = mul(float4(hitPos, 1.0f), inst.worldInverse).xyz;
+        }
+
+        float3 previousWorldPosition =
+            mul(float4(previousObjectPosition, 1.0f), inst.previousWorldMatrix).xyz;
+        float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        float2 previousUv;
+        if (TryClipToUv(previousClip, previousUv))
+        {
+            float2 currentUv =
+                (float2(pixelCoord) + 0.5f) / float2(g_restirScreenWidth, g_restirScreenHeight);
+            float2 jitterUv = g_cameraJitterPixels / float2(g_restirScreenWidth, g_restirScreenHeight);
+            motionVector = previousUv - currentUv - jitterUv;
+            motionVectorValid = true;
+        }
     }
 
+    uint primaryHitFlags = RESTIR_PRIMARY_HIT_VALID;
+    if (motionVectorValid)
+    {
+        primaryHitFlags |= RESTIR_PRIMARY_HIT_MOTION_VALID;
+    }
+    primaryHit.packedRoughnessFlags = RestirPackPrimaryHitRoughnessFlags(roughness, primaryHitFlags);
+    g_restirPrimaryHitCurrent[pixelIndex] = primaryHit;
     g_restirMotionVector[pixelCoord] = motionVector;
     g_restirLinearDepth[pixelCoord] = RestirComputeLinearDepth(hitPos);
     g_restirDiffuseAlbedo[pixelCoord] = float4(albedo * (1.0f - metallic), 1.0f);
@@ -667,7 +700,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
                 geo,
                 GeometryIndex(),
                 PrimitiveIndex(),
-                attribs.barycentrics);
+                uint3(i0, i1, i2),
+                bary);
         }
     }
     else if (payload.recursionDepth == 1)
