@@ -1,9 +1,54 @@
 #include "stdafxClientFramework.h"
 #include "MovementComponent.h"
 #include "GameObject.h"
+#include "Scene.h"
 #include "Transform.h"
 
 using namespace DirectX;
+
+namespace
+{
+void ResolveMovementOverlap(MovementComponent& movement)
+{
+	auto* myGameObject = movement.GetGameObject();
+	if (!myGameObject)
+		return;
+
+	auto* scene = myGameObject->GetScene();
+	auto* storage = scene ? scene->GetStorage<MovementComponent>() : nullptr;
+	if (!storage)
+		return;
+
+	auto& transform = myGameObject->GetTransform();
+	XMFLOAT3 myPos = transform.GetWorldPosition();
+
+	for (auto& otherMovement : storage->GetList())
+	{
+		if (&otherMovement == &movement)
+			continue;
+
+		auto* otherObject = otherMovement.GetGameObject();
+		if (!otherObject || !otherObject->IsActiveInHierarchy())
+			continue;
+
+		const XMFLOAT3 otherPos = otherObject->GetTransform().GetWorldPosition();
+		const float dx = myPos.x - otherPos.x;
+		const float dz = myPos.z - otherPos.z;
+		const float minDist = movement.GetCollisionRadius() + otherMovement.GetCollisionRadius();
+		const float distSq = dx * dx + dz * dz;
+
+		if (distSq <= 0.0001f || distSq >= minDist * minDist)
+			continue;
+
+		const float dist = sqrtf(distSq);
+		const float push = minDist - dist;
+		myPos.x += (dx / dist) * push;
+		myPos.z += (dz / dist) * push;
+	}
+
+	transform.SetWorldPosition(myPos);
+}
+}
 
 bool MovementComponent::IsAnyInputActive() const
 {
@@ -103,6 +148,7 @@ void MovementComponent::OnUpdate(float deltaTime)
 	XMStoreFloat3(&newPos, newPosVec);
 
 	transform.SetWorldPosition(newPos);
+	ResolveMovementOverlap(*this);
 
 
 	switch (m_movementMode)
