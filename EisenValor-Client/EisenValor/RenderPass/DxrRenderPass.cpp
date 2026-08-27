@@ -136,6 +136,14 @@ bool IsContinuousInstanceMotion(const DirectX::XMFLOAT4X4& previousWorld, const 
 	return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ <= kInstanceMotionTeleportDistanceSq;
 }
 
+void InitializeStaticInstanceMotion(InstanceData& instance)
+{
+	instance.previousWorldMatrix = instance.worldMatrix;
+	instance.previousVertexBufferIdx = instance.vertexBufferIdx;
+	instance.motionFlags = INSTANCE_MOTION_HAS_PREVIOUS;
+	instance.motionPad0 = 0u;
+}
+
 bool IsRestirEmissiveLightMaterial(const MaterialResource* material)
 {
 	if (nullptr == material)
@@ -189,23 +197,86 @@ void AppendRestirHistoryInstanceHash(uint64_t& hash, std::span<const DxTLASInsta
 	}
 }
 
+template <typename T>
+std::span<const T> GetRestirHistoryDynamicSuffix(std::span<const T> values, size_t staticElementCount)
+{
+	assert(staticElementCount <= values.size() && "[ReSTIR] Static history prefix exceeds current frame table");
+	return values.subspan(std::min(staticElementCount, values.size()));
+}
+
+uint64_t BuildStaticRestirHistorySignature(
+	std::span<const DxTLASInstance> staticInstances,
+	uint64_t						staticSceneVersion,
+	std::span<const MaterialGPUData> staticMaterials,
+	std::span<const TerrainSurfaceGPUData> staticTerrainSurfaces,
+	std::span<const GeoInfo>		staticGeometry,
+	std::span<const RestirEmissiveLightData> staticEmissiveLights
+)
+{
+	PixScopedCpuEvent signatureEvent(L"DXR.BuildStaticRestirHistorySignature");
+	uint64_t hash = Utils::kFnv1a64OffsetBasis;
+	AppendRestirHistoryInstanceHash(hash, staticInstances);
+	Utils::AppendFnv1a64(hash, &staticSceneVersion, sizeof(staticSceneVersion));
+	AppendRestirHistoryTableHash(hash, staticMaterials);
+	AppendRestirHistoryTableHash(hash, staticTerrainSurfaces);
+	AppendRestirHistoryTableHash(hash, staticGeometry);
+	AppendRestirHistoryTableHash(hash, staticEmissiveLights);
+	return hash;
+}
+
 uint64_t BuildRestirHistorySignature(
 	std::span<const DxTLASInstance> instances,
-	uint64_t						staticSceneVersion,
+	const StaticSceneRenderData&	staticSceneData,
 	const MaterialRenderData&		materialData,
 	const GeoTableRenderData&		geoTableData,
 	const RestirLightRenderData&	lightData,
 	uint64_t						historyGeneration
 )
 {
+	PixScopedCpuEvent signatureEvent(L"DXR.BuildRestirHistorySignature");
 	uint64_t hash = Utils::kFnv1a64OffsetBasis;
-	AppendRestirHistoryInstanceHash(hash, instances);
-	Utils::AppendFnv1a64(hash, &staticSceneVersion, sizeof(staticSceneVersion));
-	Utils::AppendFnv1a64(hash, &historyGeneration, sizeof(historyGeneration));
-	AppendRestirHistoryTableHash(hash, materialData.syncBuffer.GetSpan());
-	AppendRestirHistoryTableHash(hash, materialData.terrainSurfaceSyncBuffer.GetSpan());
-	AppendRestirHistoryTableHash(hash, geoTableData.syncBuffer.GetSpan());
-	AppendRestirHistoryTableHash(hash, lightData.emissiveLightSync.GetSpan());
+	{
+		PixScopedCpuEvent staticSeedEvent(L"DXR.BuildRestirHistorySignature.StaticSeed");
+		Utils::AppendFnv1a64(
+			hash, &staticSceneData.restirHistorySignatureSeed, sizeof(staticSceneData.restirHistorySignatureSeed)
+		);
+		Utils::AppendFnv1a64(hash, &historyGeneration, sizeof(historyGeneration));
+	}
+	{
+		PixScopedCpuEvent instancesEvent(L"DXR.BuildRestirHistorySignature.DynamicInstances");
+		AppendRestirHistoryInstanceHash(
+			hash, GetRestirHistoryDynamicSuffix(instances, staticSceneData.tlasInstances.size())
+		);
+	}
+	{
+		PixScopedCpuEvent materialsEvent(L"DXR.BuildRestirHistorySignature.DynamicMaterials");
+		AppendRestirHistoryTableHash(
+			hash,
+			GetRestirHistoryDynamicSuffix(materialData.syncBuffer.GetSpan(), staticSceneData.materials.size())
+		);
+	}
+	{
+		PixScopedCpuEvent terrainEvent(L"DXR.BuildRestirHistorySignature.DynamicTerrainSurfaces");
+		AppendRestirHistoryTableHash(
+			hash,
+			GetRestirHistoryDynamicSuffix(
+				materialData.terrainSurfaceSyncBuffer.GetSpan(), staticSceneData.terrainSurfaces.size()
+			)
+		);
+	}
+	{
+		PixScopedCpuEvent geometryEvent(L"DXR.BuildRestirHistorySignature.DynamicGeometry");
+		AppendRestirHistoryTableHash(
+			hash, GetRestirHistoryDynamicSuffix(geoTableData.syncBuffer.GetSpan(), staticSceneData.geometry.size())
+		);
+	}
+	{
+		PixScopedCpuEvent emissiveEvent(L"DXR.BuildRestirHistorySignature.DynamicEmissiveLights");
+		AppendRestirHistoryTableHash(
+			hash,
+			GetRestirHistoryDynamicSuffix(lightData.emissiveLightSync.GetSpan(), staticSceneData.emissiveLights.size())
+		);
+	}
 	return hash;
 }
 
@@ -741,6 +812,13 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 		}
 		const uint64_t staticSceneVersion = m_staticSceneData.Version();
 		Utils::AppendFnv1a64(staticSceneData.topologyHash, &staticSceneVersion, sizeof(staticSceneVersion));
+		staticSceneData.restirHistorySignatureSeed = BuildStaticRestirHistorySignature(
+			std::span<const DxTLASInstance>{m_tlasInstancesScratch}, staticSceneVersion,
+			std::span<const MaterialGPUData>{staticSceneData.materials},
+			std::span<const TerrainSurfaceGPUData>{staticSceneData.terrainSurfaces},
+			std::span<const GeoInfo>{staticSceneData.geometry},
+			std::span<const RestirEmissiveLightData>{staticSceneData.emissiveLights}
+		);
 
 		staticSceneData.scene = scene;
 		staticSceneData.meshRevision = meshRevision;
@@ -751,20 +829,33 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	else
 	{
 		PixScopedCpuEvent restoreStaticCacheEvent(L"DXR.RestoreStaticSceneCache");
-		instanceData->syncBuffer.Clear();
-		for (auto cachedInstance : staticSceneData.instances)
 		{
-			ApplyInstanceMotionHistory(cachedInstance, false, cachedInstance.vertexBufferIdx);
-			instanceData->syncBuffer.Register(std::move(cachedInstance));
+			PixScopedCpuEvent instanceEvent(L"DXR.RestoreStaticSceneCache.InstanceTable");
+			instanceData->syncBuffer.Assign(staticSceneData.instances);
 		}
-		materialData->syncBuffer.Assign(staticSceneData.materials);
-		materialData->terrainSurfaceSyncBuffer.Assign(staticSceneData.terrainSurfaces);
-		geoTableData->syncBuffer.Assign(staticSceneData.geometry);
-		restirLightData->emissiveLightSync.Assign(staticSceneData.emissiveLights);
-		restirLightData->emissiveLightCount = static_cast<uint32_t>(staticSceneData.emissiveLights.size());
-		restirLightData->emissiveLightWeightSum = staticSceneData.emissiveLightWeightSum;
-		materialData->materialToIndex = staticSceneData.materialToIndex;
-		m_instanceIdLookupScratch = staticSceneData.instanceIdLookup;
+		{
+			PixScopedCpuEvent materialEvent(L"DXR.RestoreStaticSceneCache.MaterialTable");
+			materialData->syncBuffer.Assign(staticSceneData.materials);
+		}
+		{
+			PixScopedCpuEvent terrainEvent(L"DXR.RestoreStaticSceneCache.TerrainSurfaceTable");
+			materialData->terrainSurfaceSyncBuffer.Assign(staticSceneData.terrainSurfaces);
+		}
+		{
+			PixScopedCpuEvent geometryEvent(L"DXR.RestoreStaticSceneCache.GeometryTable");
+			geoTableData->syncBuffer.Assign(staticSceneData.geometry);
+		}
+		{
+			PixScopedCpuEvent emissiveEvent(L"DXR.RestoreStaticSceneCache.EmissiveLightTable");
+			restirLightData->emissiveLightSync.Assign(staticSceneData.emissiveLights);
+			restirLightData->emissiveLightCount = static_cast<uint32_t>(staticSceneData.emissiveLights.size());
+			restirLightData->emissiveLightWeightSum = staticSceneData.emissiveLightWeightSum;
+		}
+		{
+			PixScopedCpuEvent lookupEvent(L"DXR.RestoreStaticSceneCache.LookupTables");
+			materialData->materialToIndex = staticSceneData.materialToIndex;
+			m_instanceIdLookupScratch = staticSceneData.instanceIdLookup;
+		}
 	}
 	staticSceneData.pendingLoadsActive = pendingLoadsActive;
 
@@ -787,6 +878,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 			HashTlasInstance(topologyHash, transformHash, m_tlasInstancesScratch[i]);
 		}
 
+		const uint32_t staticInstanceCount = static_cast<uint32_t>(staticSceneData.tlasInstances.size());
 		const uint32_t currentInstanceCount = static_cast<uint32_t>(m_tlasInstancesScratch.size());
 		const bool	   topologyChanged = !tlas->IsBuilt() || tlas->GetInstanceCount() != currentInstanceCount ||
 									 tlasFrame.lastInstanceCount != currentInstanceCount ||
@@ -795,13 +887,19 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 
 		if (topologyChanged)
 		{
-			DxScopedGpuEvent buildEvent(context, L"DXR.BuildTLAS");
-			tlas->Build(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch);
+			PixScopedCpuEvent buildCpuEvent(L"DXR.BuildTLAS.CPU");
+			DxScopedGpuEvent buildGpuEvent(context, L"DXR.BuildTLAS.GPU");
+			tlas->Build(
+				m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch, staticInstanceCount
+			);
 		}
 		else if (transformsChanged || hasAnimatedInstances)
 		{
-			DxScopedGpuEvent refitEvent(context, L"DXR.RefitTLAS");
-			tlas->Refit(m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch);
+			PixScopedCpuEvent refitCpuEvent(L"DXR.RefitTLAS.CPU");
+			DxScopedGpuEvent refitGpuEvent(context, L"DXR.RefitTLAS.GPU");
+			tlas->Refit(
+				m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch, staticInstanceCount
+			);
 		}
 
 		tlasFrame.lastInstanceCount = currentInstanceCount;
@@ -963,7 +1061,14 @@ void DxrRenderPass::CollectMeshData(
 		inst.geoInfoBaseIdx = geoBaseIdx;
 		inst.instanceID = ownerId;
 		inst.generation = meshComp.GetOwner().generation;
-		ApplyInstanceMotionHistory(inst, false, inst.vertexBufferIdx);
+		if (RenderMobility::Static == mobility)
+		{
+			InitializeStaticInstanceMotion(inst);
+		}
+		else
+		{
+			ApplyInstanceMotionHistory(inst, false, inst.vertexBufferIdx);
+		}
 
 		instanceData->syncBuffer.Register(inst);
 		RegisterInstanceIdLookup(ownerId, mappedInstanceIndex);
@@ -1389,22 +1494,30 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	DxScopedGpuEvent passEvent(context, L"DxrRenderPass");
 
 	PrepareRenderData(frame, scene, cameraPosition);
-	restirLightData->emissiveLightCount = static_cast<uint32_t>(restirLightData->emissiveLightSync.Size());
-	if (0 == materialData->terrainSurfaceSyncBuffer.Size())
 	{
-		materialData->terrainSurfaceSyncBuffer.Register(TerrainSurfaceGPUData{});
-	}
-	if (0 == restirLightData->emissiveLightCount)
-	{
-		restirLightData->emissiveLightSync.Register(RestirEmissiveLightData{});
-	}
-	restirCandidateData->historySignature = 0;
-	if (restirCandidateEnabled)
-	{
-		restirCandidateData->historySignature = BuildRestirHistorySignature(
-			std::span<const DxTLASInstance>{m_tlasInstancesScratch}, m_staticSceneData.Version(), *materialData,
-			*geoTableData, *restirLightData, m_restirHistoryGeneration
-		);
+		PixScopedCpuEvent finalizeEvent(L"DXR.FinalizePreparedRenderData");
+		{
+			PixScopedCpuEvent fallbackEvent(L"DXR.EnsureFallbackRenderData");
+			restirLightData->emissiveLightCount =
+				static_cast<uint32_t>(restirLightData->emissiveLightSync.Size());
+			if (0 == materialData->terrainSurfaceSyncBuffer.Size())
+			{
+				materialData->terrainSurfaceSyncBuffer.Register(TerrainSurfaceGPUData{});
+			}
+			if (0 == restirLightData->emissiveLightCount)
+			{
+				restirLightData->emissiveLightSync.Register(RestirEmissiveLightData{});
+			}
+		}
+
+		restirCandidateData->historySignature = 0;
+		if (restirCandidateEnabled)
+		{
+			restirCandidateData->historySignature = BuildRestirHistorySignature(
+				std::span<const DxTLASInstance>{m_tlasInstancesScratch}, m_staticSceneData.Get(), *materialData,
+				*geoTableData, *restirLightData, m_restirHistoryGeneration
+			);
+		}
 	}
 
 	{

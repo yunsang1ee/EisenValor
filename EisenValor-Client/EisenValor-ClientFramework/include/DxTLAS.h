@@ -7,8 +7,8 @@ class DxUploadHeap;
 
 struct DxTLASInstance
 {
-	GameObject* obj = nullptr;
-	class DxBLAS* blas = nullptr;
+	GameObject*						obj = nullptr;
+	class DxBLAS*					blas = nullptr;
 	D3D12_RAYTRACING_INSTANCE_FLAGS flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 };
 
@@ -26,18 +26,21 @@ public:
 
 	void Initialize(ID3D12Device5* device, uint32_t maxInstances = 50'000);
 
+	// instances[0, staticInstanceCount) must remain topology- and transform-stable until the next Build().
 	void Build(
-		struct ID3D12Device5*											device,
-		struct ID3D12GraphicsCommandList4*								cmdList,
-		class DxUploadHeap*												uploadHeap,
-		const std::vector<DxTLASInstance>& instances
+		struct ID3D12Device5*			   device,
+		struct ID3D12GraphicsCommandList4* cmdList,
+		class DxUploadHeap*				   uploadHeap,
+		const std::vector<DxTLASInstance>& instances,
+		uint32_t						   staticInstanceCount
 	);
 
 	void Refit(
-		struct ID3D12Device5*											device,
-		struct ID3D12GraphicsCommandList4*								cmdList,
-		class DxUploadHeap*												uploadHeap,
-		const std::vector<DxTLASInstance>& instances
+		struct ID3D12Device5*			   device,
+		struct ID3D12GraphicsCommandList4* cmdList,
+		class DxUploadHeap*				   uploadHeap,
+		const std::vector<DxTLASInstance>& instances,
+		uint32_t						   staticInstanceCount
 	);
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const { return GetActiveTlasBuffer().GetGPUAddress(); }
@@ -48,23 +51,28 @@ public:
 
 private:
 	void BuildInternal(
-		ID3D12Device5*										device,
-		ID3D12GraphicsCommandList4*							cmdList,
-		class DxUploadHeap*									uploadHeap,
+		ID3D12Device5*					   device,
+		ID3D12GraphicsCommandList4*		   cmdList,
+		class DxUploadHeap*				   uploadHeap,
 		const std::vector<DxTLASInstance>& instances,
-		bool												isRefit
+		uint32_t						   staticInstanceCount,
+		bool							   canRefit
 	);
 
-	DxBuffer& GetActiveTlasBuffer() { return m_tlasBuffers[m_activeTlasBufferIndex]; }
+	DxBuffer&		GetActiveTlasBuffer() { return m_tlasBuffers[m_activeTlasBufferIndex]; }
 	const DxBuffer& GetActiveTlasBuffer() const { return m_tlasBuffers[m_activeTlasBufferIndex]; }
-	DxBuffer& GetInactiveTlasBuffer() { return m_tlasBuffers[1 - m_activeTlasBufferIndex]; }
-	void EnsureTlasResultBuffer(DxBuffer& buffer, ID3D12Device5* device, uint64_t requiredSizeInBytes, std::string_view name);
+	DxBuffer&		GetInactiveTlasBuffer() { return m_tlasBuffers[1 - m_activeTlasBufferIndex]; }
+	void			EnsureTlasResultBuffer(
+				   DxBuffer& buffer, ID3D12Device5* device, uint64_t requiredSizeInBytes, std::string_view name
+			   );
 
-	DxBuffer m_tlasBuffers[2];
-	DxBuffer m_scratchBuffer;
-	DxBuffer m_instanceDescBuffer;
-	uint32_t m_instanceCount = 0;
-	uint32_t m_maxInstances = 0;
-	uint32_t m_activeTlasBufferIndex = 0;
-	bool	 m_isBuilt = false;
+	DxBuffer									m_tlasBuffers[2];
+	DxBuffer									m_scratchBuffer;
+	DxBuffer									m_instanceDescBuffer;
+	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> m_instanceDescs;
+	uint32_t									m_instanceCount = 0;
+	uint32_t									m_maxInstances = 0;
+	uint32_t									m_staticInstanceCount = 0;
+	uint32_t									m_activeTlasBufferIndex = 0;
+	bool										m_isBuilt = false;
 };
