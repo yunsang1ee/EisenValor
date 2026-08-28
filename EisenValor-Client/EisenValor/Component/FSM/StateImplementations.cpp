@@ -12,6 +12,7 @@
 #include "Scene.h"
 #include "Transform.h"
 #include "Component/TeamComponent.h"
+#include "RenderData/EffectRenderData.h"
 #include <GameObject.h>
 #include <GameObject.inl>
 #include <Packets/Enums_generated.h>
@@ -39,6 +40,57 @@ struct AttackShape
 	float radius;
 	float degree;
 };
+
+//  피 방향 정규화
+XMFLOAT3 NormalizeBloodDirection(const XMFLOAT3& dir)
+XMFLOAT3 NormalizeBloodDirection(const XMFLOAT3& dir)
+{
+	const XMVECTOR v = XMLoadFloat3(&dir);
+	const float	   lenSq = XMVectorGetX(XMVector3LengthSq(v));
+	if (lenSq <= 0.0001f)
+	{
+		return {0.0f, 0.2f, -1.0f};
+	}
+
+	XMFLOAT3 normalized{};
+	XMStoreFloat3(&normalized, XMVector3Normalize(v));
+	return normalized;
+}
+
+// 피 방향 계산
+XMFLOAT3 GetBloodSprayDirection(Transform& transform, uint8_t hitDir)
+{
+	const XMFLOAT3 forward = transform.GetForward();
+	const XMFLOAT3 right = transform.GetRight();
+
+	switch (hitDir)
+	{
+	case static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_LEFT):
+		return NormalizeBloodDirection({right.x, 0.15f, right.z});
+	case static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_RIGHT):
+		return NormalizeBloodDirection({-right.x, 0.15f, -right.z});
+	case static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_DIR_TYPE_TOP):
+		return NormalizeBloodDirection({forward.x, -0.25f, forward.z});
+	default:
+		return NormalizeBloodDirection({-forward.x, 0.2f, -forward.z});
+	}
+}
+
+EffectEvent MakeBloodSprayEvent(GameObject* obj, const XMFLOAT3& direction, uint8_t hitType)
+{
+	EffectEvent event{};
+	if (!obj)
+	{
+		return event;
+	}
+
+	const XMFLOAT3 pos = obj->GetTransform().GetWorldPosition();
+	event.position = {pos.x, pos.y + 1.2f, pos.z};
+	event.direction = direction;
+	event.intensity = hitType == static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY) ? 1.5f : 1.0f;
+	event.particleCount = hitType == static_cast<uint8_t>(FB_ENUMS::GENERAL_ATTACK_TYPE_HEAVY) ? 16 : 8;
+	return event;
+}
 
 AttackTiming GetAttackTiming(GENERAL_ATTACK_TYPE type)
 {
@@ -714,6 +766,9 @@ void GeneralStunState::Enter(FSMComponent* fsm)
 			// 기본 STUN
 			uint8_t dir = fsm->GetHitReactDir();
 			uint8_t type = fsm->GetHitReactType();
+			const XMFLOAT3 bloodDir = GetBloodSprayDirection(obj->GetTransform(), dir);
+			// 피격 시 Blood Spray 이벤트를 큐에 추가
+			EffectEventQueue::Push(MakeBloodSprayEvent(obj, bloodDir, type));
 
 			uint8_t stunKey = StateOffset::kHurtOffset + static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_STUN);
 			if (dir >= 1 && dir <= 4)
