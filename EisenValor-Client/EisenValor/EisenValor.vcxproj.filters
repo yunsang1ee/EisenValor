@@ -109,6 +109,9 @@
     <ClInclude Include="RenderPass\HdrResolvePass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\EffectRenderPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPass\DlssUpscalePass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
@@ -176,6 +179,9 @@
       <Filter>RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\InstanceRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\EffectRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\MaterialRenderData.h">
@@ -343,6 +349,9 @@
       <Filter>Packets\PacketHandler</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\HdrResolvePass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\EffectRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\DlssUpscalePass.cpp">

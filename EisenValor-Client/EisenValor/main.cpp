@@ -26,6 +26,7 @@
 #include "RenderPass/RestirFinalEvaluationPass.h"
 #include "RenderPass/DlssUpscalePass.h"
 #include "RenderPass/HdrResolvePass.h"
+#include "RenderPass/EffectRenderPass.h"
 #include "RenderPass/UIRenderPass.h"
 
 #include "UIGlobal.h"
@@ -222,6 +223,9 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			// HDR Resolve Pass 생성
 			auto hdrResolvePass = std::make_unique<HdrResolvePass>(swapChain);
 			renderer.AddRenderPass("HdrResolve", std::move(hdrResolvePass));
+
+			auto effectPass = std::make_unique<EffectRenderPass>();
+			renderer.AddRenderPass("Effect", std::move(effectPass));
 
 			// UI Pass 생성
 			auto uiPass = std::make_unique<UIRenderPass>();

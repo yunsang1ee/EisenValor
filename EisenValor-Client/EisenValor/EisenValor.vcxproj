@@ -354,6 +354,7 @@ exit /b 0</Command>
     <ClInclude Include="Packets\Structs_generated.h" />
     <ClInclude Include="Packets\Tables_generated.h" />
     <ClInclude Include="RaytracingCommon.h" />
+    <ClInclude Include="RenderData\EffectRenderData.h" />
     <ClInclude Include="RenderData\GeoTableRenderData.h" />
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
@@ -365,6 +366,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\RestirTemporalHistoryRenderData.h" />
     <ClInclude Include="RenderData\StaticSceneRenderData.h" />
     <ClInclude Include="RenderData\TlasRenderData.h" />
+    <ClInclude Include="RenderPass\EffectRenderPass.h" />
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
     <ClInclude Include="RenderPass\DlssUpscalePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
@@ -493,6 +495,7 @@ exit /b 0</Command>
     <ClCompile Include="Packets\C2SPackets.cpp" />
     <ClCompile Include="Packets\PacketHandler.cpp" />
     <ClCompile Include="Packets\S2CPackets.cpp" />
+    <ClCompile Include="RenderPass\EffectRenderPass.cpp" />
     <ClCompile Include="RenderPass\HdrResolvePass.cpp" />
     <ClCompile Include="RenderPass\DlssUpscalePass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />

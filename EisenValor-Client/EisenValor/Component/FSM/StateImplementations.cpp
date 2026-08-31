@@ -43,7 +43,6 @@ struct AttackShape
 
 //  피 방향 정규화
 XMFLOAT3 NormalizeBloodDirection(const XMFLOAT3& dir)
-XMFLOAT3 NormalizeBloodDirection(const XMFLOAT3& dir)
 {
 	const XMVECTOR v = XMLoadFloat3(&dir);
 	const float	   lenSq = XMVectorGetX(XMVector3LengthSq(v));
