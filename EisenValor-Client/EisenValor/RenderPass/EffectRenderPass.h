@@ -22,6 +22,17 @@ public:
 private:
 	static constexpr uint32_t kMaxParticles = 512;
 
+	struct EffectParticleInstanceData
+	{
+		DirectX::XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
+		float			  size = 0.18f;
+		DirectX::XMFLOAT4 color = {0.55f, 0.0f, 0.0f, 1.0f};
+		float			  rotation = 0.0f;
+		float			  ageRatio = 0.0f;
+		uint32_t		  type = 0;
+		uint32_t		  padding = 0;
+	};
+
 	struct EffectParticle
 	{
 		EffectType		  type = EffectType::BloodSpray;
@@ -39,6 +50,7 @@ private:
 
 	std::unique_ptr<DxBuffer> m_particleBuffer;
 	std::vector<EffectParticle> m_particles;
+	std::vector<EffectParticleInstanceData> m_instanceData;
 	uint32_t				  m_screenWidth = 0;
 	uint32_t				  m_screenHeight = 0;
 	bool					  m_initialized = false;

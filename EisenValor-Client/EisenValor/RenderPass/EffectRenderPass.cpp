@@ -3,6 +3,8 @@
 #include "RenderData/EffectRenderData.h"
 #include <PixProfiler.h>
 #include <TimerGlobal.h>
+#include <DxFrameResource.h>
+#include <DxUploadHeap.h>
 #include <algorithm>
 
 namespace
@@ -31,6 +33,7 @@ void EffectRenderPass::Release()
 {
 	m_particleBuffer.reset();
 	m_particles.clear();
+	m_instanceData.clear();
 	m_initialized = false;
 }
 
@@ -38,11 +41,10 @@ void EffectRenderPass::Release()
 void EffectRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
 	PixScopedCpuEvent cpuEvent(L"EffectRenderPass.Execute");
-	(void)frame;
 	(void)scene;
 	(void)renderContext;
 
-	if (!m_initialized)
+	if (!m_initialized || !frame)
 	{
 		return;
 	}
@@ -93,6 +95,36 @@ void EffectRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderConte
 			particle.rotation = spread;
 			m_particles.push_back(particle);
 		}
+	}
+
+	m_instanceData.clear();
+	m_instanceData.reserve(m_particles.size());
+	for (const auto& particle : m_particles)
+	{
+		const float ageRatio =
+			particle.lifetime > 0.0f ? std::clamp(particle.age / particle.lifetime, 0.0f, 1.0f) : 1.0f;
+
+		EffectParticleInstanceData instance{};
+		instance.position = particle.position;
+		instance.size = particle.size;
+		instance.color = particle.color;
+		instance.rotation = particle.rotation;
+		instance.ageRatio = ageRatio;
+		instance.type = static_cast<uint32_t>(particle.type);
+		m_instanceData.push_back(instance);
+	}
+
+	if (m_instanceData.empty())
+	{
+		return;
+	}
+
+	{
+		PixScopedCpuEvent uploadEvent(L"Effect.UploadInstances");
+		auto* uploadHeap = frame->GetUploadHeap();
+		uploadHeap->UploadRawData(
+			m_instanceData.data(), m_instanceData.size() * sizeof(EffectParticleInstanceData), 16
+		);
 	}
 }
 
