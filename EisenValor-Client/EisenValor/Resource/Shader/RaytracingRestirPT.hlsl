@@ -46,7 +46,7 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
 
 cbuffer RestirCandidateConstants : register(b3, space0)
 {
-    uint g_restirCandidateEnabled;
+    uint g_restirCandidateMask;
     uint g_restirScreenWidth;
     uint g_restirScreenHeight;
     float g_restirCameraNearZ;
@@ -73,8 +73,20 @@ static const float PT_BLOOM_THRESHOLD = 1.0f;
 static const float PT_BLOOM_INTENSITY = 0.75f;
 static const float PT_VISIBLE_NORMAL_STRENGTH = RESTIR_STYLIZED_NORMAL_STRENGTH;
 
-// 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
+// Debug view modes:
+// 0: None
+// 1:
 static const uint PT_DEBUG_VIEW = 0;
+
+bool RestirCandidateMaskHas(uint candidateType)
+{
+    return 0u != (g_restirCandidateMask & candidateType);
+}
+
+uint RestirGetEmissiveProfileStage()
+{
+    return g_restirCandidateMask & RESTIR_EMISSIVE_PROFILE_STAGE_MASK;
+}
 
 void RestirSetPayloadRcIrradiance(inout RayPayload payload, float3 irradiance)
 {
@@ -369,6 +381,7 @@ float RestirComputeEmissiveHitNeePdfSolidAngle(
 bool EvaluateRestirEmissiveNEE(
     RestirSurface surface,
     float3 viewDir,
+    bool evaluateVisibility,
     inout uint rngSeed,
     out float3 contribution,
     out float lightPdf,
@@ -487,8 +500,19 @@ bool EvaluateRestirEmissiveNEE(
     lightPdf = neePdfSolidAngle;
     float misWeight = neePdfSolidAngle / max(neePdfSolidAngle + bsdfPdf, EPSILON);
 
-    float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
-    float visibility = ShadowVisibility(g_scene, shadowOrigin, lightDir, RAY_TMIN, max(distance - 0.02f, RAY_TMIN), 0xFF);
+    float visibility = 1.0f;
+    if (evaluateVisibility)
+    {
+        float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
+        visibility = ShadowVisibility(
+            g_scene,
+            shadowOrigin,
+            lightDir,
+            RAY_TMIN,
+            max(distance - 0.02f, RAY_TMIN),
+            0xFF
+        );
+    }
 
     rcIrradiance = Le * visibility;
     contribution = bsdfCos * Le * lightCos * visibility * misWeight / max(distanceSq * areaPdf, EPSILON);
@@ -497,7 +521,7 @@ bool EvaluateRestirEmissiveNEE(
 
 void RestirUpdateReservoirFromPayload(inout RestirReservoir reservoir, RayPayload payload, inout uint rngSeed)
 {
-    if (0u == g_restirCandidateEnabled)
+    if (0u == g_restirCandidateMask)
     {
         return;
     }
@@ -560,30 +584,34 @@ void RayGenMain()
         finalColor += payload.color.rgb;
         primaryHitFlags |= payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID;
 
-        RestirUpdateReservoirFromPayload(restirReservoir, payload, rngSeed);
-
-        if (0u != g_restirCandidateEnabled && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
+        if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
         {
-            RayPayload sunPayload = MakeDefaultRayPayload < RayPayload > (0);
-            sunPayload.pixelIndex = pixelIndex;
-            sunPayload.primaryHitFlags = RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN;
+            RestirUpdateReservoirFromPayload(restirReservoir, payload, rngSeed);
+        }
 
-            TraceRay(g_scene,
-                     RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-                     0xFF,
-                     0, 0, 0,
-                     ray,
-                     sunPayload);
+        if (0u != g_restirCandidateMask && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
+        {
+            if (RestirCandidateMaskHas(RESTIR_CANDIDATE_SUN_NEE))
+            {
+                RayPayload sunPayload = MakeDefaultRayPayload < RayPayload > (0);
+                sunPayload.pixelIndex = pixelIndex;
+                sunPayload.primaryHitFlags = RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN;
+                TraceRay(g_scene,
+                         RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+                         0xFF,
+                         0, 0, 0,
+                         ray,
+                         sunPayload);
 
-            RestirUpdateReservoirFromPayload(restirReservoir, sunPayload, rngSeed);
+                RestirUpdateReservoirFromPayload(restirReservoir, sunPayload, rngSeed);
+            }
 
-            if (g_restirEmissiveLightCount > 0u)
+            if (RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) && g_restirEmissiveLightCount > 0u)
             {
                 RayPayload emissivePayload = MakeDefaultRayPayload < RayPayload > (0);
                 emissivePayload.pixelIndex = pixelIndex;
                 emissivePayload.primaryHitFlags =
                     RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_EMISSIVE;
-
                 TraceRay(g_scene,
                          RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
                          0xFF,
@@ -597,7 +625,7 @@ void RayGenMain()
     }
     finalColor /= SPP;
 
-    if (0u != g_restirCandidateEnabled)
+    if (0u != g_restirCandidateMask)
     {
         g_restirReservoirInitial[pixelIndex] = restirReservoir;
         if (0u == (primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
@@ -684,7 +712,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             (payload.primaryHitFlags &
              (RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN | RESTIR_PRIMARY_HIT_NEE_EMISSIVE)) |
             RESTIR_PRIMARY_HIT_VALID;
-        if (0u != g_restirCandidateEnabled)
+        bool isNeeCandidate = 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_CANDIDATE);
+        if (0u != g_restirCandidateMask && !isNeeCandidate)
         {
             RestirWritePrimaryOutputs(
                 payload.pixelIndex,
@@ -720,7 +749,6 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     float3 V = -normalize(WorldRayDirection());
     float NdotVGeom = max(dot(geometricNormal, V), 0.0f);
     float NdotVShading = max(dot(visibleNormal, V), 0.0f);
-    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
     float3 emissive = EvaluateMaterialEmission(mat, uv, g_sampler);
     uint rngSeed =
         InstanceID() * 0xc2b2ae35u ^
@@ -773,19 +801,13 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             float sunLightPdf;
             float3 sampledSunDirection;
             float3 sampledSunIrradiance;
-            EvaluateEnvironmentSunNEE(
+            SampleEnvironmentSunNEEIncident(
                 g_scene,
                 g_environmentMode,
                 hitPos,
                 geometricNormal,
                 visibleNormal,
                 V,
-                albedo,
-                metallic,
-                roughness,
-                ao,
-                F0,
-                1u,
                 sunLightPdf,
                 sampledSunDirection,
                 sampledSunIrradiance,
@@ -819,6 +841,14 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         }
         else if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_EMISSIVE))
         {
+            uint emissiveProfileStage = RestirGetEmissiveProfileStage();
+            if (RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE == emissiveProfileStage)
+            {
+                payload.color = albedo + abs(visibleNormal) * 0.000001f + emissive * 0.000001f;
+                payload.lightPdf = metallic + roughness + ao;
+                return;
+            }
+
             uint lightInstanceId;
             uint lightInstanceGeneration;
             uint lightGeometryIndex;
@@ -830,6 +860,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             bool sampledEmissive = EvaluateRestirEmissiveNEE(
                 surface,
                 V,
+                RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY != emissiveProfileStage,
                 rngSeed,
                 directLighting,
                 payload.lightPdf,

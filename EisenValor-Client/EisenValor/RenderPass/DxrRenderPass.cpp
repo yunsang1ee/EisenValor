@@ -27,6 +27,8 @@
 #include "RaytracingCommon.h"
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 #include "RestirDebugGlobal.h"
+#endif
+#if defined(ENABLE_STREAMLINE)
 #include "StreamlineGlobal.h"
 #endif
 
@@ -56,6 +58,57 @@ constexpr uint32_t kRestirDiffuseAlbedoUavRegister = 5;
 constexpr uint32_t kRestirSpecularAlbedoUavRegister = 6;
 constexpr uint32_t kRestirNormalRoughnessUavRegister = 7;
 constexpr uint32_t kRestirRayPayloadSizeBytes = 19u * sizeof(uint32_t);
+static_assert(0u == (RESTIR_CANDIDATE_ALL & RESTIR_EMISSIVE_PROFILE_STAGE_MASK));
+
+const char* GetRestirCandidateProfileName(uint32_t candidateMask)
+{
+	const uint32_t candidateTypes = candidateMask & RESTIR_CANDIDATE_ALL;
+	if (RESTIR_CANDIDATE_PATH == candidateTypes)
+	{
+		return "PATH";
+	}
+	if ((RESTIR_CANDIDATE_PATH | RESTIR_CANDIDATE_SUN_NEE) == candidateTypes)
+	{
+		return "PATH+SUN";
+	}
+	return "PATH+SUN+EMISSIVE";
+}
+
+const char* GetRestirEmissiveProfileStageName(uint32_t profileStage)
+{
+	switch (profileStage & RESTIR_EMISSIVE_PROFILE_STAGE_MASK)
+	{
+	case RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE:
+		return "RETRACE_SURFACE";
+	case RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY:
+		return "SAMPLE_NO_VISIBILITY";
+	default:
+		return "FULL";
+	}
+}
+
+const wchar_t* GetRestirCandidateProfilePixName(uint32_t candidateMask, uint32_t emissiveProfileStage)
+{
+	const uint32_t candidateTypes = candidateMask & RESTIR_CANDIDATE_ALL;
+	if (RESTIR_CANDIDATE_PATH == candidateTypes)
+	{
+		return L"DXR.Candidate.PATH";
+	}
+	if ((RESTIR_CANDIDATE_PATH | RESTIR_CANDIDATE_SUN_NEE) == candidateTypes)
+	{
+		return L"DXR.Candidate.PATH_SUN";
+	}
+
+	switch (emissiveProfileStage & RESTIR_EMISSIVE_PROFILE_STAGE_MASK)
+	{
+	case RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE:
+		return L"DXR.Candidate.PATH_SUN_EMISSIVE_RETRACE_SURFACE";
+	case RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY:
+		return L"DXR.Candidate.PATH_SUN_EMISSIVE_SAMPLE_NO_VISIBILITY";
+	default:
+		return L"DXR.Candidate.PATH_SUN_EMISSIVE_FULL";
+	}
+}
 
 enum DxrRootParameter : uint32_t
 {
@@ -205,16 +258,16 @@ std::span<const T> GetRestirHistoryDynamicSuffix(std::span<const T> values, size
 }
 
 uint64_t BuildStaticRestirHistorySignature(
-	std::span<const DxTLASInstance> staticInstances,
-	uint64_t						staticSceneVersion,
-	std::span<const MaterialGPUData> staticMaterials,
-	std::span<const TerrainSurfaceGPUData> staticTerrainSurfaces,
-	std::span<const GeoInfo>		staticGeometry,
+	std::span<const DxTLASInstance>			 staticInstances,
+	uint64_t								 staticSceneVersion,
+	std::span<const MaterialGPUData>		 staticMaterials,
+	std::span<const TerrainSurfaceGPUData>	 staticTerrainSurfaces,
+	std::span<const GeoInfo>				 staticGeometry,
 	std::span<const RestirEmissiveLightData> staticEmissiveLights
 )
 {
 	PixScopedCpuEvent signatureEvent(L"DXR.BuildStaticRestirHistorySignature");
-	uint64_t hash = Utils::kFnv1a64OffsetBasis;
+	uint64_t		  hash = Utils::kFnv1a64OffsetBasis;
 	AppendRestirHistoryInstanceHash(hash, staticInstances);
 	Utils::AppendFnv1a64(hash, &staticSceneVersion, sizeof(staticSceneVersion));
 	AppendRestirHistoryTableHash(hash, staticMaterials);
@@ -234,7 +287,7 @@ uint64_t BuildRestirHistorySignature(
 )
 {
 	PixScopedCpuEvent signatureEvent(L"DXR.BuildRestirHistorySignature");
-	uint64_t hash = Utils::kFnv1a64OffsetBasis;
+	uint64_t		  hash = Utils::kFnv1a64OffsetBasis;
 	{
 		PixScopedCpuEvent staticSeedEvent(L"DXR.BuildRestirHistorySignature.StaticSeed");
 		Utils::AppendFnv1a64(
@@ -251,17 +304,15 @@ uint64_t BuildRestirHistorySignature(
 	{
 		PixScopedCpuEvent materialsEvent(L"DXR.BuildRestirHistorySignature.DynamicMaterials");
 		AppendRestirHistoryTableHash(
-			hash,
-			GetRestirHistoryDynamicSuffix(materialData.syncBuffer.GetSpan(), staticSceneData.materials.size())
+			hash, GetRestirHistoryDynamicSuffix(materialData.syncBuffer.GetSpan(), staticSceneData.materials.size())
 		);
 	}
 	{
 		PixScopedCpuEvent terrainEvent(L"DXR.BuildRestirHistorySignature.DynamicTerrainSurfaces");
 		AppendRestirHistoryTableHash(
-			hash,
-			GetRestirHistoryDynamicSuffix(
-				materialData.terrainSurfaceSyncBuffer.GetSpan(), staticSceneData.terrainSurfaces.size()
-			)
+			hash, GetRestirHistoryDynamicSuffix(
+					  materialData.terrainSurfaceSyncBuffer.GetSpan(), staticSceneData.terrainSurfaces.size()
+				  )
 		);
 	}
 	{
@@ -711,6 +762,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	auto*		   tlas = tlasFrame.Get();
 	auto&		   staticSceneData = m_staticSceneData.Get();
 	bool		   hasAnimatedInstances = false;
+	uint32_t	   animatedBlasCount = 0;
 
 	auto*							   cmdList = context.CommandList();
 	ComPtr<ID3D12GraphicsCommandList4> cmdList4;
@@ -866,8 +918,11 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	}
 	{
 		PixScopedCpuEvent skinnedEvent(L"DXR.CollectSkinnedMeshData");
-		CollectSkinnedMeshData(scene, cmdList4.Get(), m_tlasInstancesScratch, frameIndex, hasAnimatedInstances);
+		CollectSkinnedMeshData(
+			scene, cmdList4.Get(), m_tlasInstancesScratch, frameIndex, hasAnimatedInstances, animatedBlasCount
+		);
 	}
+	m_lastAnimatedBlasCount = animatedBlasCount;
 
 	if (nullptr != tlas && false == m_tlasInstancesScratch.empty())
 	{
@@ -888,7 +943,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 		if (topologyChanged)
 		{
 			PixScopedCpuEvent buildCpuEvent(L"DXR.BuildTLAS.CPU");
-			DxScopedGpuEvent buildGpuEvent(context, L"DXR.BuildTLAS.GPU");
+			DxScopedGpuEvent  buildGpuEvent(context, L"DXR.BuildTLAS.GPU");
 			tlas->Build(
 				m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch, staticInstanceCount
 			);
@@ -896,7 +951,7 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 		else if (transformsChanged || hasAnimatedInstances)
 		{
 			PixScopedCpuEvent refitCpuEvent(L"DXR.RefitTLAS.CPU");
-			DxScopedGpuEvent refitGpuEvent(context, L"DXR.RefitTLAS.GPU");
+			DxScopedGpuEvent  refitGpuEvent(context, L"DXR.RefitTLAS.GPU");
 			tlas->Refit(
 				m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch, staticInstanceCount
 			);
@@ -1125,7 +1180,8 @@ void DxrRenderPass::CollectSkinnedMeshData(
 	ID3D12GraphicsCommandList4*	 cmdList,
 	std::vector<DxTLASInstance>& tlasInstances,
 	uint32_t					 frameIndex,
-	bool&						 hasAnimatedInstances
+	bool&						 hasAnimatedInstances,
+	uint32_t&					 animatedBlasCount
 )
 {
 	PixScopedCpuEvent event(L"DXR.CollectSkinnedMeshes");
@@ -1209,6 +1265,7 @@ void DxrRenderPass::CollectSkinnedMeshData(
 		}
 
 		hasAnimatedInstances = true;
+		++animatedBlasCount;
 
 		const uint32_t ownerId = skinnedMeshComp.GetOwner().id;
 		const uint32_t mappedInstanceIndex = static_cast<uint32_t>(instanceData->syncBuffer.Size());
@@ -1395,16 +1452,66 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 #endif
 		++m_restirHistoryGeneration;
 	}
-	if (input.GetInputDown(VK_F8))
-	{
-		m_usePhysicalEmissionView = !m_usePhysicalEmissionView;
-		++m_restirHistoryGeneration;
-	}
+	// if (input.GetInputDown(VK_F8))
+	//{
+	//	m_usePhysicalEmissionView = !m_usePhysicalEmissionView;
+	//	++m_restirHistoryGeneration;
+	// }
 	if (input.GetInputDown(VK_F9))
 	{
 		m_useDayEnvironment = !m_useDayEnvironment;
 		++m_restirHistoryGeneration;
 	}
+#if defined(ENABLE_RENDER_DEBUG_VIEWS) || defined(PROFILE_BUILD)
+	if (input.GetInputDown(VK_F8))
+	{
+		const int32_t profileStep = input.GetInput(VK_SHIFT) ? -1 : 1;
+		if (input.GetInput(VK_CONTROL))
+		{
+			constexpr uint32_t profileStages[] = {
+				RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE, RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY,
+				RESTIR_EMISSIVE_PROFILE_FULL
+			};
+			int32_t currentStageIndex = 0;
+			for (int32_t index = 0; index < static_cast<int32_t>(std::size(profileStages)); ++index)
+			{
+				if (profileStages[index] == m_restirEmissiveProfileStage)
+				{
+					currentStageIndex = index;
+					break;
+				}
+			}
+			const int32_t stageCount = static_cast<int32_t>(std::size(profileStages));
+			currentStageIndex = (currentStageIndex + profileStep + stageCount) % stageCount;
+			m_restirEmissiveProfileStage = profileStages[currentStageIndex];
+			m_restirCandidateMask = RESTIR_CANDIDATE_ALL;
+		}
+		else
+		{
+			constexpr uint32_t candidateModes[] = {
+				RESTIR_CANDIDATE_PATH, RESTIR_CANDIDATE_PATH | RESTIR_CANDIDATE_SUN_NEE, RESTIR_CANDIDATE_ALL
+			};
+			int32_t currentModeIndex = 0;
+			for (int32_t index = 0; index < static_cast<int32_t>(std::size(candidateModes)); ++index)
+			{
+				if (candidateModes[index] == m_restirCandidateMask)
+				{
+					currentModeIndex = index;
+					break;
+				}
+			}
+			const int32_t modeCount = static_cast<int32_t>(std::size(candidateModes));
+			currentModeIndex = (currentModeIndex + profileStep + modeCount) % modeCount;
+			m_restirCandidateMask = candidateModes[currentModeIndex];
+		}
+		m_restirProfileLogPending = true;
+
+		++m_restirHistoryGeneration;
+#if defined(ENABLE_STREAMLINE)
+		GLOBAL(StreamlineGlobal).RequestHistoryReset();
+#endif
+	}
+#endif
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	const int32_t debugStep = input.GetInput(VK_SHIFT) ? -1 : 1;
 	if (input.GetInputDown(VK_F12))
@@ -1498,8 +1605,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		PixScopedCpuEvent finalizeEvent(L"DXR.FinalizePreparedRenderData");
 		{
 			PixScopedCpuEvent fallbackEvent(L"DXR.EnsureFallbackRenderData");
-			restirLightData->emissiveLightCount =
-				static_cast<uint32_t>(restirLightData->emissiveLightSync.Size());
+			restirLightData->emissiveLightCount = static_cast<uint32_t>(restirLightData->emissiveLightSync.Size());
 			if (0 == materialData->terrainSurfaceSyncBuffer.Size())
 			{
 				materialData->terrainSurfaceSyncBuffer.Register(TerrainSurfaceGPUData{});
@@ -1518,6 +1624,19 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 				*geoTableData, *restirLightData, m_restirHistoryGeneration
 			);
 		}
+	}
+	if (m_restirProfileLogPending)
+	{
+		PROFILE_LOG_FMT(
+			"[ReSTIR.Profile] candidateMode={} emissiveStage={} render={}x{} emissiveLights={} "
+			"emissiveWeightSum={:.6f} animatedBLAS={} totalTLASInstances={} staticTLASInstances={} "
+			"historyGeneration={}\n",
+			GetRestirCandidateProfileName(m_restirCandidateMask),
+			GetRestirEmissiveProfileStageName(m_restirEmissiveProfileStage), m_width, m_height,
+			restirLightData->emissiveLightCount, restirLightData->emissiveLightWeightSum, m_lastAnimatedBlasCount,
+			m_tlasInstancesScratch.size(), m_staticSceneData.Get().tlasInstances.size(), m_restirHistoryGeneration
+		);
+		m_restirProfileLogPending = false;
 	}
 
 	{
@@ -1684,7 +1803,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 
 		struct RestirCandidateConstants
 		{
-			uint32_t enabled;
+			uint32_t candidateMask;
 			uint32_t screenWidth;
 			uint32_t screenHeight;
 			float	 cameraNearZ;
@@ -1693,8 +1812,9 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			float	 emissiveLightWeightSum;
 			uint32_t hasPreviousFrame;
 		};
+		static_assert(sizeof(RestirCandidateConstants) == 8u * sizeof(uint32_t));
 		RestirCandidateConstants restirConstants = {
-			restirCandidateEnabled ? 1u : 0u,
+			restirCandidateEnabled ? m_restirCandidateMask | m_restirEmissiveProfileStage : 0u,
 			m_width,
 			m_height,
 			cameraData ? cameraData->nearZ : 0.1f,
@@ -1734,6 +1854,11 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	{
 		PixScopedCpuEvent dispatchCpuEvent(L"DXR.DispatchRays");
 		DxScopedGpuEvent  dispatchEvent(context, L"DXR.DispatchRays");
+		const wchar_t*	  candidateProfileEventName =
+			   restirCandidateEnabled
+				   ? GetRestirCandidateProfilePixName(m_restirCandidateMask, m_restirEmissiveProfileStage)
+				   : nullptr;
+		PixScopedCommandListEvent candidateProfileEvent(cmdList4.Get(), candidateProfileEventName);
 		cmdList4->DispatchRays(&desc);
 	}
 

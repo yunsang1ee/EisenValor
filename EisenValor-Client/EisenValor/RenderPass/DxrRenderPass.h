@@ -34,29 +34,27 @@ public:
 	DxrRenderPass(uint32_t width, uint32_t height);
 	~DxrRenderPass() override = default;
 
-	void		Initialize() override;
-	void		Release() override;
-	void		DeclareRenderData(RenderContext* renderContext) override;
-	void		Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
-	void		OnResize(uint32_t width, uint32_t height) override;
+	void				   Initialize() override;
+	void				   Release() override;
+	void				   DeclareRenderData(RenderContext* renderContext) override;
+	void				   Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
+	void				   OnResize(uint32_t width, uint32_t height) override;
 	RenderResolutionDomain GetResolutionDomain() const override { return RenderResolutionDomain::Render; }
-	const char* GetName() const override { return "DXR"; }
+	const char*			   GetName() const override { return "DXR"; }
 
 private:
 	void						CreateRaytracingPipeline();
 	void						CreateRaytracingResources(uint32_t width, uint32_t height);
-	ComPtr<ID3D12RootSignature> BuildDxrGlobalRootSignature(
-		bool enableRestirCandidateRoot, std::string_view name
-	) const;
+	ComPtr<ID3D12RootSignature> BuildDxrGlobalRootSignature(bool enableRestirCandidateRoot, std::string_view name)
+		const;
 	std::unique_ptr<DxRtPipelineState> BuildDxrPipeline(
 		const std::wstring& shaderPath,
 		uint32_t			maxRecursionDepth,
 		uint32_t			maxPayloadSizeBytes,
 		bool				enableRestirCandidateRoot
 	);
-	std::unique_ptr<DxRtShaderTable> BuildDxrShaderTable(
-		const DxRtPipelineState* pipelineState, std::string_view name
-	) const;
+	std::unique_ptr<DxRtShaderTable> BuildDxrShaderTable(const DxRtPipelineState* pipelineState, std::string_view name)
+		const;
 
 	void	 PrepareRenderData(DxFrameResource* frame, Scene* scene, const DX::XMFLOAT3* cameraPosition);
 	uint32_t RegisterTerrainSurface(MaterialRenderData* materialData, MaterialResource* material) const;
@@ -73,7 +71,8 @@ private:
 		ID3D12GraphicsCommandList4*	 cmdList,
 		std::vector<DxTLASInstance>& tlasInstances,
 		uint32_t					 frameIndex,
-		bool&						 hasAnimatedInstances
+		bool&						 hasAnimatedInstances,
+		uint32_t&					 animatedBlasCount
 	);
 
 	void RegisterInstanceIdLookup(uint32_t ownerId, uint32_t instanceIndex);
@@ -113,15 +112,19 @@ private:
 	bool	 m_usePhysicalEmissionView = false;
 	bool	 m_useDayEnvironment = true;
 	bool	 m_hasPreviousViewProj = false;
+	uint32_t m_restirCandidateMask = RESTIR_CANDIDATE_ALL;
+	uint32_t m_restirEmissiveProfileStage = RESTIR_EMISSIVE_PROFILE_FULL;
+	uint32_t m_lastAnimatedBlasCount = 0;
+	bool	 m_restirProfileLogPending = true;
 	uint32_t m_raytracingFrameSeed = 0;
 	uint64_t m_restirHistoryGeneration = 1;
 
-	Persistent<StaticSceneRenderData> m_staticSceneData;
-	std::vector<DxTLASInstance>		  m_tlasInstancesScratch;
-	std::vector<uint32_t>			  m_instanceIdLookupScratch;
+	Persistent<StaticSceneRenderData>				  m_staticSceneData;
+	std::vector<DxTLASInstance>						  m_tlasInstancesScratch;
+	std::vector<uint32_t>							  m_instanceIdLookupScratch;
 	std::unordered_map<uint64_t, DirectX::XMFLOAT4X4> m_previousInstanceWorldMatrices;
 	std::unordered_map<uint64_t, DirectX::XMFLOAT4X4> m_currentInstanceWorldMatrices;
-	Scene*	 m_instanceMotionScene = nullptr;
-	uint32_t m_previousInstanceFrameIndex = 0;
-	bool	 m_hasPreviousInstanceFrame = false;
+	Scene*											  m_instanceMotionScene = nullptr;
+	uint32_t										  m_previousInstanceFrameIndex = 0;
+	bool											  m_hasPreviousInstanceFrame = false;
 };
