@@ -154,9 +154,12 @@
     <ClInclude Include="Component\TeamComponent.h">
       <Filter>Component\Vital</Filter>
     </ClInclude>
-    <ClInclude Include="Component\BattleUIControllerComponent.h">
-      <Filter>Component\UI</Filter>
-    </ClInclude>
+	<ClInclude Include="Component\BattleUIControllerComponent.h">
+	  <Filter>Component\UI</Filter>
+	</ClInclude>
+	<ClInclude Include="Component\OptionsMenuComponent.h">
+	  <Filter>Component\UI</Filter>
+	</ClInclude>
     <ClInclude Include="Component\VitalUIControllerComponent.h">
       <Filter>Component\UI</Filter>
     </ClInclude>
@@ -183,9 +186,6 @@
     </ClInclude>
     <ClInclude Include="RenderData\GeoTableRenderData.h">
       <Filter>RenderData</Filter>
-    </ClInclude>
-    <ClInclude Include="Component\StressTestComponent.h">
-      <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="Component\AttackRangeDebugComponent.h">
       <Filter>Component</Filter>
@@ -378,9 +378,12 @@
     <ClCompile Include="Component\TeamComponent.cpp">
       <Filter>Component\Vital</Filter>
     </ClCompile>
-    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
-      <Filter>Component\UI</Filter>
-    </ClCompile>
+	<ClCompile Include="Component\BattleUIControllerComponent.cpp">
+	  <Filter>Component\UI</Filter>
+	</ClCompile>
+	<ClCompile Include="Component\OptionsMenuComponent.cpp">
+	  <Filter>Component\UI</Filter>
+	</ClCompile>
     <ClCompile Include="Component\VitalUIControllerComponent.cpp">
       <Filter>Component\UI</Filter>
     </ClCompile>
@@ -398,9 +401,6 @@
     </ClCompile>
     <ClCompile Include="RenderPass\SkinningPass.cpp">
       <Filter>RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\StressTestComponent.cpp">
-      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Component\AttackRangeDebugComponent.cpp">
       <Filter>Component</Filter>

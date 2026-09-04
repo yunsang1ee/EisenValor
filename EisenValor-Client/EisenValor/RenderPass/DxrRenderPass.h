@@ -42,7 +42,15 @@ public:
 	RenderResolutionDomain GetResolutionDomain() const override { return RenderResolutionDomain::Render; }
 	const char*			   GetName() const override { return "DXR"; }
 
+	void TogglePathTracing();
+	void ToggleRestirPT();
+	void ToggleDayEnvironment();
+	bool IsPathTracingEnabled() const { return m_usePathTracing; }
+	bool IsRestirPTEnabled() const { return m_useRestirPT; }
+	bool IsDayEnvironmentEnabled() const { return m_useDayEnvironment; }
+
 private:
+	void						TogglePhysicalRenderingBaseline();
 	void						CreateRaytracingPipeline();
 	void						CreateRaytracingResources(uint32_t width, uint32_t height);
 	ComPtr<ID3D12RootSignature> BuildDxrGlobalRootSignature(bool enableRestirCandidateRoot, std::string_view name)
@@ -109,7 +117,7 @@ private:
 	bool	 m_initialized = false;
 	bool	 m_usePathTracing = false;
 	bool	 m_useRestirPT = true;
-	bool	 m_usePhysicalEmissionView = false;
+	bool	 m_usePhysicalRenderingBaseline = false;
 	bool	 m_useDayEnvironment = true;
 	bool	 m_hasPreviousViewProj = false;
 	uint32_t m_restirCandidateMask = RESTIR_CANDIDATE_ALL;

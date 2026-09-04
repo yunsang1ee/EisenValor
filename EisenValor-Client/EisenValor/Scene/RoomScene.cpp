@@ -4,6 +4,7 @@
 #include "AudioGlobal.h"
 #include "ButtonUIComponent.h"
 #include "Component/Lobby/LobbyClientState.h"
+#include "Component/OptionsMenuComponent.h"
 #include "Component/Room/RoomSceneControllerComponent.h"
 #include "ImageUIComponent.h"
 #include "NetworkGlobal.h"
@@ -16,7 +17,7 @@
 
 void RoomScene::OnRegisterCustomComponents()
 {
-	RegisterComponent<RoomSceneControllerComponent>();
+	RegisterComponents<RoomSceneControllerComponent, OptionsMenuComponent>();
 }
 
 void RoomScene::OnStartImpl()
@@ -161,9 +162,10 @@ void RoomScene::OnStartImpl()
 						button->SetOnHover(
 							[]()
 							{
-								GLOBAL(AudioGlobal).Play2D(
-									L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
-								);
+								GLOBAL(AudioGlobal)
+									.Play2D(
+										L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
+									);
 							}
 						);
 						button->SetOnClick(
@@ -259,6 +261,10 @@ void RoomScene::OnStartImpl()
 	ReserveGameObject(
 		"RoomSceneController", std::nullopt,
 		[this](GameObject* obj) { CreateComponent<RoomSceneControllerComponent>(obj->GetHandle()); }
+	);
+	ReserveGameObject(
+		"OptionsMenuController", std::nullopt,
+		[this](GameObject* obj) { CreateComponent<OptionsMenuComponent>(obj->GetHandle()); }
 	);
 }
 

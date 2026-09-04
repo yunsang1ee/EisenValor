@@ -18,12 +18,12 @@
 bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
 {
 #ifdef SERVER
-	#ifdef APPLY_LOBBY_SERVER
+#ifdef APPLY_LOBBY_SERVER
 	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
-	return false;
+		return false;
 	(void)serverAddress;
 	(void)serverPort;
-	#endif
+#endif
 
 #endif
 
@@ -303,32 +303,15 @@ void GameFramework::Update(float delta)
 	PixScopedCpuEvent event(L"Scene.Update");
 
 	auto& input = GLOBAL(InputGlobal);
-	if (input.GetInputDown(VK_ESCAPE))
-	{
-		DEBUG_LOG_FMT("close\n");
-		::DestroyWindow(m_hWnd);
-	}
 	if (input.GetInputDown(VK_F5))
 	{
 		// FUTURE: Runtime Shader Compilation
 	}
 
-	//if (input.GetInputDown(VK_F9))
+	// if (input.GetInputDown(VK_F9))
 	//{
 	//	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
-	//}
-
-	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
-	{
-		if (input.GetInputDown(VK_F11))
-		{
-			swapChain->ToggleBorderlessFullscreen();
-		}
-		if (input.GetInput(VK_MENU) && input.GetInputDown(VK_RETURN))
-		{
-			swapChain->ToggleFullscreen();
-		}
-	}
+	// }
 
 	GLOBAL(UIGlobal).Update(delta);
 	GLOBAL(SceneGlobal).OnUpdate(delta);

@@ -4,6 +4,7 @@
 #include "ImageUIComponent.h"
 #include "RectTransformComponent.h"
 #include "AudioGlobal.h"
+#include "Component/OptionsMenuComponent.h"
 #include "ResourceGlobal.h"
 #include "SceneGlobal.h"
 #include "TextureResource.h"
@@ -11,25 +12,27 @@
 
 namespace
 {
-	enum class StartMenuAction
-	{
-		None,
-		Start,
-		Quit
-	};
+enum class StartMenuAction
+{
+	None,
+	Start,
+	Options,
+	Quit
+};
 
-	struct StartMenuButtonDesc
-	{
-		const char* name;
-		const wchar_t* normalTexture;
-		const wchar_t* hoverTexture;
-		float centerY;
-		StartMenuAction action;
-	};
-}
+struct StartMenuButtonDesc
+{
+	const char*		name;
+	const wchar_t*	normalTexture;
+	const wchar_t*	hoverTexture;
+	float			centerY;
+	StartMenuAction action;
+};
+} // namespace
 
 void StartScene::OnRegisterCustomComponents()
 {
+	RegisterComponent<OptionsMenuComponent>();
 }
 
 void StartScene::OnStartImpl()
@@ -37,6 +40,16 @@ void StartScene::OnStartImpl()
 	DEBUG_LOG_FMT("[StartScene] Enter Start Scene.\n");
 	GLOBAL(AudioGlobal)
 		.Play2D(L"Resource/Sounds/startscene.wav", AudioBus::BGM, true, AudioBalance::kFrontEndBgmVolume);
+
+	ReserveGameObject(
+		"OptionsMenuController", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<OptionsMenuComponent>(
+				obj->GetHandle(), [](OptionsMenuComponent* menu) { menu->SetEscapeOpenEnabled(false); }
+			);
+		}
+	);
 
 	ReserveGameObject(
 		"StartSceneBackground", std::nullopt,
@@ -57,7 +70,8 @@ void StartScene::OnStartImpl()
 				obj->GetHandle(),
 				[](ImageUIComponent* image)
 				{
-					auto texture = GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\Scene\\startscene.evtex");
+					auto texture =
+						GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource\\Texture\\Scene\\startscene.evtex");
 					image->SetNormalTextureResource(texture);
 					image->SetNormalColor({1.0f, 1.0f, 1.0f, 1.0f});
 					image->SetOrder(0);
@@ -67,10 +81,14 @@ void StartScene::OnStartImpl()
 	);
 
 	const StartMenuButtonDesc buttons[] = {
-		{"StartButton", L"Resource\\Texture\\Scene\\startbutton.evtex", L"Resource\\Texture\\Scene\\startbuttonselect.evtex", 700.0f, StartMenuAction::Start},
-		{"OptionsButton", L"Resource\\Texture\\Scene\\optionsbutton.evtex", L"Resource\\Texture\\Scene\\optionsbuttonselect.evtex", 770.0f, StartMenuAction::None},
-		{"CreditButton", L"Resource\\Texture\\Scene\\creditsbutton.evtex", L"Resource\\Texture\\Scene\\creditsbuttonselect.evtex", 840.0f, StartMenuAction::None},
-		{"ExitButton", L"Resource\\Texture\\Scene\\quitbutton.evtex", L"Resource\\Texture\\Scene\\quitbuttonselect.evtex", 910.0f, StartMenuAction::Quit},
+		{"StartButton", L"Resource\\Texture\\Scene\\startbutton.evtex",
+		 L"Resource\\Texture\\Scene\\startbuttonselect.evtex", 700.0f, StartMenuAction::Start},
+		{"OptionsButton", L"Resource\\Texture\\Scene\\optionsbutton.evtex",
+		 L"Resource\\Texture\\Scene\\optionsbuttonselect.evtex", 770.0f, StartMenuAction::Options},
+		{"CreditButton", L"Resource\\Texture\\Scene\\creditsbutton.evtex",
+		 L"Resource\\Texture\\Scene\\creditsbuttonselect.evtex", 840.0f, StartMenuAction::None},
+		{"ExitButton", L"Resource\\Texture\\Scene\\quitbutton.evtex",
+		 L"Resource\\Texture\\Scene\\quitbuttonselect.evtex", 910.0f, StartMenuAction::Quit},
 	};
 
 	for (const auto& button : buttons)
@@ -112,24 +130,31 @@ void StartScene::OnStartImpl()
 							[]()
 							{
 								GLOBAL(AudioGlobal)
-									.Play2D(L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume);
+									.Play2D(
+										L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
+									);
 							}
 						);
 						buttonComponent->SetOnClick(
 							[button]()
 							{
-								GLOBAL(AudioGlobal).Play2D(
-									L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
-								);
+								GLOBAL(AudioGlobal)
+									.Play2D(
+										L"Resource/Sounds/mouseclick.wav", AudioBus::UI, false,
+										AudioBalance::kUIButtonVolume
+									);
 
 								switch (button.action)
 								{
 								case StartMenuAction::Start:
-									#ifdef APPLY_LOBBY_SERVER
+#ifdef APPLY_LOBBY_SERVER
 									GLOBAL(SceneGlobal).LoadScene("LoginScene");
-									#else
+#else
 									GLOBAL(SceneGlobal).LoadScene("WorldScene");
-									#endif
+#endif
+									break;
+								case StartMenuAction::Options:
+									OptionsMenuComponent::OpenActive();
 									break;
 								case StartMenuAction::Quit:
 									PostQuitMessage(0);

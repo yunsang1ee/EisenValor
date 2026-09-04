@@ -30,6 +30,11 @@ public:
 
 	void SetText(std::wstring text)
 	{
+		if (m_text == text)
+		{
+			return;
+		}
+
 		m_text = std::move(text);
 		m_isDirty = true;
 	}

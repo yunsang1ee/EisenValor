@@ -355,6 +355,53 @@ DxrRenderPass::DxrRenderPass(uint32_t width, uint32_t height) : m_width(width), 
 	GRAPHICS_LOG_FMT("[DxrRenderPass] Constructor: {}x{}\n", width, height);
 }
 
+void DxrRenderPass::TogglePathTracing()
+{
+	m_usePathTracing = !m_usePathTracing;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto& debug = GLOBAL(RestirDebugGlobal);
+	if (debug.IsOverrideActive())
+	{
+		debug.DisableOverride();
+		++m_restirHistoryGeneration;
+#if defined(ENABLE_STREAMLINE)
+		GLOBAL(StreamlineGlobal).RequestHistoryReset();
+#endif
+	}
+#endif
+}
+
+void DxrRenderPass::ToggleRestirPT()
+{
+	m_useRestirPT = !m_useRestirPT;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto& debug = GLOBAL(RestirDebugGlobal);
+	debug.DisableOverride();
+#endif
+	++m_restirHistoryGeneration;
+#if defined(ENABLE_STREAMLINE)
+	GLOBAL(StreamlineGlobal).RequestHistoryReset();
+#endif
+}
+
+void DxrRenderPass::ToggleDayEnvironment()
+{
+	m_useDayEnvironment = !m_useDayEnvironment;
+	++m_restirHistoryGeneration;
+}
+
+void DxrRenderPass::TogglePhysicalRenderingBaseline()
+{
+	m_usePhysicalRenderingBaseline = !m_usePhysicalRenderingBaseline;
+	++m_restirHistoryGeneration;
+#if defined(ENABLE_STREAMLINE)
+	GLOBAL(StreamlineGlobal).RequestHistoryReset();
+#endif
+	DEBUG_LOG_FMT(
+		"[DXR.Debug] Rendering look: {}\n", m_usePhysicalRenderingBaseline ? "PHYSICAL_BASELINE" : "ART_DIRECTED"
+	);
+}
+
 void DxrRenderPass::Initialize()
 {
 	GRAPHICS_LOG_FMT("[DxrRenderPass] Initializing with resolution: {}x{}\n", m_width, m_height);
@@ -1430,38 +1477,15 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	restirCandidateData->validThisFrame = false;
 	restirCandidateData->frameIndex = frameIndex;
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS) || defined(PROFILE_BUILD)
 	auto& input = GLOBAL(InputGlobal);
+#endif
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	auto&		   debug = GLOBAL(RestirDebugGlobal);
 	const bool	   previousOverrideActive = debug.IsOverrideActive();
 	const auto	   previousSource = debug.GetSource();
 	const uint64_t previousDebugRevision = debug.GetRevision();
 #endif
-	if (input.GetInputDown(VK_F6))
-	{
-		m_usePathTracing = !m_usePathTracing;
-#if defined(ENABLE_RENDER_DEBUG_VIEWS)
-		debug.DisableOverride();
-#endif
-	}
-	if (input.GetInputDown(VK_F7))
-	{
-		m_useRestirPT = !m_useRestirPT;
-#if defined(ENABLE_RENDER_DEBUG_VIEWS)
-		debug.DisableOverride();
-#endif
-		++m_restirHistoryGeneration;
-	}
-	// if (input.GetInputDown(VK_F8))
-	//{
-	//	m_usePhysicalEmissionView = !m_usePhysicalEmissionView;
-	//	++m_restirHistoryGeneration;
-	// }
-	if (input.GetInputDown(VK_F9))
-	{
-		m_useDayEnvironment = !m_useDayEnvironment;
-		++m_restirHistoryGeneration;
-	}
 #if defined(ENABLE_RENDER_DEBUG_VIEWS) || defined(PROFILE_BUILD)
 	if (input.GetInputDown(VK_F8))
 	{
@@ -1514,6 +1538,10 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 #endif
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	const int32_t debugStep = input.GetInput(VK_SHIFT) ? -1 : 1;
+	if (input.GetInputDown(VK_F9))
+	{
+		TogglePhysicalRenderingBaseline();
+	}
 	if (input.GetInputDown(VK_F12))
 	{
 		debug.StepSource(debugStep);
@@ -1702,7 +1730,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		uint32_t pad0;
 	};
 	RaytracingFrameConstants frameConstants = {
-		m_raytracingFrameSeed++, m_usePhysicalEmissionView ? 1u : 0u, m_useDayEnvironment ? 1u : 0u, 0u
+		m_raytracingFrameSeed++, m_usePhysicalRenderingBaseline ? 1u : 0u, m_useDayEnvironment ? 1u : 0u, 0u
 	};
 	cmdList4->SetComputeRoot32BitConstants(DxrRootFrameConstants, 4, &frameConstants, 0);
 
@@ -1897,7 +1925,8 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		);
 		restirCandidateData->validThisFrame = true;
 		restirCandidateData->frameIndex = frameIndex;
-		restirCandidateData->shadingNormalStrength = m_usePhysicalEmissionView ? 1.0f : RESTIR_STYLIZED_NORMAL_STRENGTH;
+		restirCandidateData->shadingNormalStrength =
+			m_usePhysicalRenderingBaseline ? 1.0f : RESTIR_STYLIZED_NORMAL_STRENGTH;
 	}
 
 	if (nullptr != cameraData)

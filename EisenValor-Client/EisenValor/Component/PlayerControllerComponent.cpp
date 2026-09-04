@@ -1,5 +1,6 @@
 #include "stdafxClient.h"
 #include "PlayerControllerComponent.h"
+#include "OptionsMenuComponent.h"
 #include "GameObject.h"
 #include "InputGlobal.h"
 #include "Transform.h"
@@ -26,16 +27,16 @@ constexpr float kCombatSpaceDoubleTapTime = 0.3f;
 
 struct MovementInputState
 {
-	bool forward = false;
-	bool backward = false;
-	bool left = false;
-	bool right = false;
-	bool shift = false;
-	bool isMoving = false;
-	bool isRunning = false;
+	bool	forward = false;
+	bool	backward = false;
+	bool	left = false;
+	bool	right = false;
+	bool	shift = false;
+	bool	isMoving = false;
+	bool	isRunning = false;
 	uint8_t moveStateType = static_cast<uint8_t>(FB_ENUMS::PLAYER_STATE_TYPE_WALK);
-	bool hasJustReleased = false;
-	bool hasJustPressed = false;
+	bool	hasJustReleased = false;
+	bool	hasJustPressed = false;
 
 	void DetermineMovementState(bool isNeutralStance)
 	{
@@ -89,7 +90,7 @@ bool TrySnapPositionToNavMesh(dtNavMeshQuery* navMeshQuery, XMFLOAT3& position)
 	position = XMFLOAT3{nearestPos[0], nearestPos[1], nearestPos[2]};
 	return true;
 }
-}
+} // namespace
 
 void PlayerControllerComponent::SetMouseSensitivity(float x, float y)
 {
@@ -178,17 +179,18 @@ void PlayerControllerComponent::OnDestroy()
 
 void PlayerControllerComponent::OnUpdate(float deltaTime)
 {
-	auto& input = GLOBAL(InputGlobal);
-	if (input.GetInputDown(VK_F1))
-	{
-		input.ToggleMouseLock();
-	}
-
 	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
 	{
 		return;
 	}
+	if (OptionsMenuComponent::IsOpenInActiveScene())
+	{
+		ClearMovementInput(myGameObject->GetComponent<MovementComponent>());
+		return;
+	}
+
+	auto& input = GLOBAL(InputGlobal);
 
 	auto* fsm = myGameObject->GetComponent<FSMComponent>();
 	if (!fsm)
@@ -301,7 +303,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	if (isLookAtLocked)
 	{
 		// (락온 시) 카메라 오프셋을 0으로 보간하여 적을 정면으로 보게 함
-		float lerpFactor = 1.0f - expf(-10.0f * deltaTime);
+		float	 lerpFactor = 1.0f - expf(-10.0f * deltaTime);
 		XMFLOAT3 currentOffset = camComp->GetLookAtRotationOffset();
 		currentOffset.x = std::lerp(currentOffset.x, 0.0f, lerpFactor);
 		currentOffset.y = std::lerp(currentOffset.y, 0.0f, lerpFactor);
@@ -350,7 +352,7 @@ void PlayerControllerComponent::ProcessMouseRotation(float deltaTime)
 	// 비락온 시 월드 오프셋 적용 (SetFollowOffset 사용)
 	camComp->SetFollowOffset(finalOffset);
 
-		auto* myGameObject = GetGameObject();
+	auto* myGameObject = GetGameObject();
 	if (!myGameObject)
 	{
 		return;
@@ -518,12 +520,10 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	const bool dodgeLeft = input.GetInput(VK_LEFT);
 	const bool dodgeRight = input.GetInput(VK_RIGHT);
 	const bool isDodgeDirectionPressed = dodgeForward || dodgeBackward || dodgeLeft || dodgeRight;
-	const bool isDodgeDirectionDown =
-		input.GetInputDown(VK_UP) || input.GetInputDown(VK_DOWN) ||
-		input.GetInputDown(VK_LEFT) || input.GetInputDown(VK_RIGHT);
+	const bool isDodgeDirectionDown = input.GetInputDown(VK_UP) || input.GetInputDown(VK_DOWN) ||
+									  input.GetInputDown(VK_LEFT) || input.GetInputDown(VK_RIGHT);
 	const bool isDodgeRequested =
-		(input.GetInputDown(VK_SPACE) && isDodgeDirectionPressed) ||
-		(input.GetInput(VK_SPACE) && isDodgeDirectionDown);
+		(input.GetInputDown(VK_SPACE) && isDodgeDirectionPressed) || (input.GetInput(VK_SPACE) && isDodgeDirectionDown);
 	if (!isNeutralStance && isDodgeRequested)
 	{
 		if (dodgeForward)
@@ -544,10 +544,7 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	}
 
 	const bool isRollRequested =
-		!isNeutralStance &&
-		!isDodgeDirectionPressed &&
-		input.GetInputDown(VK_SPACE) &&
-		m_hasPendingCombatSpaceTap;
+		!isNeutralStance && !isDodgeDirectionPressed && input.GetInputDown(VK_SPACE) && m_hasPendingCombatSpaceTap;
 	if (isRollRequested)
 	{
 		resetCombatSpaceTap();
@@ -579,9 +576,9 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 	}
 
 	else if (!isNeutralStance)
-    {
-        movement->SetMoveSpeed(2.0f); // 컴뱃 모드 이동 속도
-    }
+	{
+		movement->SetMoveSpeed(2.0f); // 컴뱃 모드 이동 속도
+	}
 
 	else
 	{
@@ -694,9 +691,9 @@ void PlayerControllerComponent::ProcessMovementInput(float deltaTime)
 		return;
 	}
 
-	auto&				transform = myGameObject->GetTransform();
-	auto				pos = transform.GetPosition();
-	auto				rot = transform.GetRotation();
+	auto& transform = myGameObject->GetTransform();
+	auto  pos = transform.GetPosition();
+	auto  rot = transform.GetRotation();
 
 	XMFLOAT3 snappedPos{pos.x, pos.y, pos.z};
 	TrySnapPositionToNavMesh(m_navMeshQuery, snappedPos);
@@ -923,7 +920,7 @@ void PlayerControllerComponent::UpdateCameraShoulderView(CameraComponent* camCom
 		XMStoreFloat3(&offsetF, offset);
 
 		constexpr float kLockOnShoulderOffsetBlend = 0.1f;
-		const XMFLOAT3 currentOffset = camComp->GetFollowOffset();
+		const XMFLOAT3	currentOffset = camComp->GetFollowOffset();
 		offsetF.x = std::lerp(currentOffset.x, offsetF.x, kLockOnShoulderOffsetBlend);
 		offsetF.y = std::lerp(currentOffset.y, offsetF.y, kLockOnShoulderOffsetBlend);
 		offsetF.z = std::lerp(currentOffset.z, offsetF.z, kLockOnShoulderOffsetBlend);
