@@ -262,9 +262,17 @@ bool UsePhysicalRenderingMode()
     return EMISSION_VIEW_PHYSICAL == g_emissionViewMode;
 }
 
-float RestirGetEmissiveLightWeight(RestirEmissiveLightData light)
+float RestirGetEmissiveLightCumulativeWeight(uint lightIndex)
 {
-    return max(light.selectionWeight, 0.0f);
+    return max(g_restirEmissiveLights[lightIndex].cumulativeWeight, 0.0f);
+}
+
+float RestirGetEmissiveLightWeight(uint lightIndex)
+{
+    float cumulativeWeight = RestirGetEmissiveLightCumulativeWeight(lightIndex);
+    float previousCumulativeWeight =
+        lightIndex > 0u ? RestirGetEmissiveLightCumulativeWeight(lightIndex - 1u) : 0.0f;
+    return max(cumulativeWeight - previousCumulativeWeight, 0.0f);
 }
 
 float RestirGetEmissiveLightWeightSum()
@@ -282,23 +290,25 @@ bool RestirSelectEmissiveLight(inout uint rngSeed, out uint lightIndex, out floa
         return false;
     }
 
-    float r = RandomValue(rngSeed) * weightSum;
-    float prefix = 0.0f;
+    float targetWeight = RandomValue(rngSeed) * weightSum;
+    uint lowerBound = 0u;
+    uint upperBound = g_restirEmissiveLightCount;
     [loop]
-    for (uint i = 0u; i < g_restirEmissiveLightCount; ++i)
+    while (lowerBound < upperBound)
     {
-        float weight = RestirGetEmissiveLightWeight(g_restirEmissiveLights[i]);
-        prefix += weight;
-        if (r <= prefix)
+        uint middle = lowerBound + (upperBound - lowerBound) / 2u;
+        if (targetWeight < RestirGetEmissiveLightCumulativeWeight(middle))
         {
-            lightIndex = i;
-            selectedWeight = weight;
-            return weight > 0.0f;
+            upperBound = middle;
+        }
+        else
+        {
+            lowerBound = middle + 1u;
         }
     }
 
-    lightIndex = g_restirEmissiveLightCount - 1u;
-    selectedWeight = RestirGetEmissiveLightWeight(g_restirEmissiveLights[lightIndex]);
+    lightIndex = min(lowerBound, g_restirEmissiveLightCount - 1u);
+    selectedWeight = RestirGetEmissiveLightWeight(lightIndex);
     return selectedWeight > 0.0f;
 }
 
@@ -342,7 +352,7 @@ float RestirComputeEmissiveHitNeePdfSolidAngle(
     }
 
     float weightSum = RestirGetEmissiveLightWeightSum();
-    float selectedWeight = RestirGetEmissiveLightWeight(light);
+    float selectedWeight = RestirGetEmissiveLightWeight(geo.emissiveEntryIdx);
     if (weightSum <= EPSILON || selectedWeight <= 0.0f)
     {
         return 0.0f;

@@ -34,7 +34,9 @@
 
 #include <unordered_map>
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
+#include <limits>
 #include <span>
 #include <string_view>
 
@@ -223,6 +225,18 @@ float EstimateRestirEmissiveLightSelectionWeight(const MaterialResource* materia
 	const bool	hasEmissiveMap = 0 != (material->GetMaterialFlags() & MATERIAL_FLAG_EMISSIVE_MAP);
 	const float resolvedLuminance = hasEmissiveMap ? std::max(emissionLuminance, 1.0f) : emissionLuminance;
 	return std::max(resolvedLuminance * static_cast<float>(triangleCount), 0.0001f);
+}
+
+float AppendRestirEmissiveLightCdf(float& weightSum, float selectionWeight)
+{
+	const float previousWeightSum = weightSum;
+	float		cumulativeWeight = previousWeightSum + std::max(selectionWeight, 0.0f);
+	if (selectionWeight > 0.0f && cumulativeWeight <= previousWeightSum)
+	{
+		cumulativeWeight = std::nextafter(previousWeightSum, std::numeric_limits<float>::infinity());
+	}
+	weightSum = cumulativeWeight;
+	return cumulativeWeight;
 }
 
 template <typename T>
@@ -1142,13 +1156,14 @@ void DxrRenderPass::CollectMeshData(
 			if (isEmissiveLight)
 			{
 				const float selectionWeight = EstimateRestirEmissiveLightSelectionWeight(matRes, triangleCount);
+				const float cumulativeWeight =
+					AppendRestirEmissiveLightCdf(restirLightData->emissiveLightWeightSum, selectionWeight);
 				restirLightData->emissiveLightSync.Register(
 					{.instanceIndex = mappedInstanceIndex,
 					 .geometryIndex = subMeshIndex,
 					 .triangleCount = triangleCount,
-					 .selectionWeight = selectionWeight}
+					 .cumulativeWeight = cumulativeWeight}
 				);
-				restirLightData->emissiveLightWeightSum += selectionWeight;
 			}
 		}
 
@@ -1387,13 +1402,14 @@ void DxrRenderPass::CollectSkinnedMeshData(
 			if (isEmissiveLight)
 			{
 				const float selectionWeight = EstimateRestirEmissiveLightSelectionWeight(matRes, triangleCount);
+				const float cumulativeWeight =
+					AppendRestirEmissiveLightCdf(restirLightData->emissiveLightWeightSum, selectionWeight);
 				restirLightData->emissiveLightSync.Register(
 					{.instanceIndex = mappedInstanceIndex,
 					 .geometryIndex = subMeshIndex,
 					 .triangleCount = triangleCount,
-					 .selectionWeight = selectionWeight}
+					 .cumulativeWeight = cumulativeWeight}
 				);
-				restirLightData->emissiveLightWeightSum += selectionWeight;
 			}
 		}
 

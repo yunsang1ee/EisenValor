@@ -80,7 +80,7 @@ struct RestirEmissiveLightData
 	RAY_UINT instanceIndex;
 	RAY_UINT geometryIndex;
 	RAY_UINT triangleCount;
-	float	 selectionWeight;
+	float	 cumulativeWeight;
 };
 
 struct InstanceData
