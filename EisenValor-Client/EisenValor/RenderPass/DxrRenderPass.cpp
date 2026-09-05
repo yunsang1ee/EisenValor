@@ -80,8 +80,8 @@ const char* GetRestirEmissiveProfileStageName(uint32_t profileStage)
 {
 	switch (profileStage & RESTIR_EMISSIVE_PROFILE_STAGE_MASK)
 	{
-	case RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE:
-		return "RETRACE_SURFACE";
+	case RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY:
+		return "SURFACE_ONLY";
 	case RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY:
 		return "SAMPLE_NO_VISIBILITY";
 	default:
@@ -94,21 +94,21 @@ const wchar_t* GetRestirCandidateProfilePixName(uint32_t candidateMask, uint32_t
 	const uint32_t candidateTypes = candidateMask & RESTIR_CANDIDATE_ALL;
 	if (RESTIR_CANDIDATE_PATH == candidateTypes)
 	{
-		return L"DXR.Candidate.PATH";
+		return L"DXR.Candidate.SharedPrimary.PATH";
 	}
 	if ((RESTIR_CANDIDATE_PATH | RESTIR_CANDIDATE_SUN_NEE) == candidateTypes)
 	{
-		return L"DXR.Candidate.PATH_SUN";
+		return L"DXR.Candidate.SharedPrimary.PATH_SUN";
 	}
 
 	switch (emissiveProfileStage & RESTIR_EMISSIVE_PROFILE_STAGE_MASK)
 	{
-	case RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE:
-		return L"DXR.Candidate.PATH_SUN_EMISSIVE_RETRACE_SURFACE";
+	case RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY:
+		return L"DXR.Candidate.SharedPrimary.PATH_SUN_EMISSIVE_SURFACE_ONLY";
 	case RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY:
-		return L"DXR.Candidate.PATH_SUN_EMISSIVE_SAMPLE_NO_VISIBILITY";
+		return L"DXR.Candidate.SharedPrimary.PATH_SUN_EMISSIVE_SAMPLE_NO_VISIBILITY";
 	default:
-		return L"DXR.Candidate.PATH_SUN_EMISSIVE_FULL";
+		return L"DXR.Candidate.SharedPrimary.PATH_SUN_EMISSIVE_FULL";
 	}
 }
 
@@ -1509,7 +1509,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		if (input.GetInput(VK_CONTROL))
 		{
 			constexpr uint32_t profileStages[] = {
-				RESTIR_EMISSIVE_PROFILE_RETRACE_SURFACE, RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY,
+				RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY, RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY,
 				RESTIR_EMISSIVE_PROFILE_FULL
 			};
 			int32_t currentStageIndex = 0;
@@ -1672,7 +1672,7 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	if (m_restirProfileLogPending)
 	{
 		PROFILE_LOG_FMT(
-			"[ReSTIR.Profile] candidateMode={} emissiveStage={} render={}x{} emissiveLights={} "
+			"[ReSTIR.Profile] primarySurface=SHARED candidateMode={} emissiveStage={} render={}x{} emissiveLights={} "
 			"emissiveWeightSum={:.6f} animatedBLAS={} totalTLASInstances={} staticTLASInstances={} "
 			"historyGeneration={}\n",
 			GetRestirCandidateProfileName(m_restirCandidateMask),
