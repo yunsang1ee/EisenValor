@@ -80,7 +80,7 @@ struct RestirEmissiveLightData
 	RAY_UINT instanceIndex;
 	RAY_UINT geometryIndex;
 	RAY_UINT triangleCount;
-	float	 selectionWeight;
+	float	 cumulativeWeight;
 };
 
 struct InstanceData
@@ -153,6 +153,14 @@ struct TerrainSurfaceGPUData
 #define RESTIR_PRIMARY_HIT_NEE_CANDIDATE (1u << 31)
 #define RESTIR_PRIMARY_HIT_NEE_SUN (1u << 30)
 #define RESTIR_PRIMARY_HIT_NEE_EMISSIVE (1u << 29)
+#define RESTIR_CANDIDATE_PATH (1u << 0u)
+#define RESTIR_CANDIDATE_SUN_NEE (1u << 1u)
+#define RESTIR_CANDIDATE_EMISSIVE_NEE (1u << 2u)
+#define RESTIR_CANDIDATE_ALL (RESTIR_CANDIDATE_PATH | RESTIR_CANDIDATE_SUN_NEE | RESTIR_CANDIDATE_EMISSIVE_NEE)
+#define RESTIR_EMISSIVE_PROFILE_FULL 0u
+#define RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY (1u << 8u)
+#define RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY (2u << 8u)
+#define RESTIR_EMISSIVE_PROFILE_STAGE_MASK (3u << 8u)
 #define RESTIR_RESERVOIR_VALID (1u << 0u)
 #if RESTIR_ENABLE_DEBUG_VIEWS
 #define RESTIR_TEMPORAL_ATTEMPTED (1u << 1u)
