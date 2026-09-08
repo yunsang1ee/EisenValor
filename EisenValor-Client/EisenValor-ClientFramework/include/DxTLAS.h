@@ -43,6 +43,8 @@ public:
 		uint32_t						   staticInstanceCount
 	);
 
+	void Invalidate();
+
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const { return GetActiveTlasBuffer().GetGPUAddress(); }
 	ID3D12Resource*			  GetResource() const { return GetActiveTlasBuffer().GetResource(); }
 	bool					  IsBuilt() const { return m_isBuilt; }

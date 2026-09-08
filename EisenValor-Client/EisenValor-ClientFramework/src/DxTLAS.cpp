@@ -81,6 +81,14 @@ void DxTLAS::Refit(
 	BuildInternal(device, cmdList, uploadHeap, instances, staticInstanceCount, true);
 }
 
+void DxTLAS::Invalidate()
+{
+	m_instanceDescs.clear();
+	m_instanceCount = 0;
+	m_staticInstanceCount = 0;
+	m_isBuilt = false;
+}
+
 void DxTLAS::EnsureTlasResultBuffer(
 	DxBuffer& deviceBuffer, ID3D12Device5* device, uint64_t requiredSizeInBytes, std::string_view name
 )
@@ -114,6 +122,7 @@ void DxTLAS::BuildInternal(
 
 	if (instances.empty())
 	{
+		Invalidate();
 		return;
 	}
 
@@ -183,6 +192,7 @@ void DxTLAS::BuildInternal(
 
 	if (m_instanceDescs.empty())
 	{
+		Invalidate();
 		return;
 	}
 

@@ -985,7 +985,21 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 	}
 	m_lastAnimatedBlasCount = animatedBlasCount;
 
-	if (nullptr != tlas && false == m_tlasInstancesScratch.empty())
+	instanceData->tlasDescriptorIndex = 0;
+	instanceData->tlasAddress = 0;
+	if (m_tlasInstancesScratch.empty())
+	{
+		if (nullptr != tlas)
+		{
+			tlas->Invalidate();
+		}
+		tlasFrame.lastInstanceCount = 0;
+		tlasFrame.lastTopologyHash = 0;
+		tlasFrame.lastTransformHash = 0;
+		return;
+	}
+
+	if (nullptr != tlas)
 	{
 		uint64_t topologyHash = staticSceneData.topologyHash;
 		uint64_t transformHash = staticSceneData.transformHash;
@@ -1016,6 +1030,14 @@ void DxrRenderPass::PrepareRenderData(DxFrameResource* frame, Scene* scene, cons
 			tlas->Refit(
 				m_device5.Get(), cmdList4.Get(), frame->GetUploadHeap(), m_tlasInstancesScratch, staticInstanceCount
 			);
+		}
+
+		if (!tlas->IsBuilt())
+		{
+			tlasFrame.lastInstanceCount = 0;
+			tlasFrame.lastTopologyHash = 0;
+			tlasFrame.lastTransformHash = 0;
+			return;
 		}
 
 		tlasFrame.lastInstanceCount = currentInstanceCount;
