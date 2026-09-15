@@ -16,6 +16,7 @@ struct RestirRayPayload
     uint pathFlags;
     uint pixelIndex;
     uint primaryHitFlags;
+    uint primaryTrialIndex;
 
     uint reconnectInstanceId;
     uint reconnectInstanceGeneration;
@@ -41,6 +42,7 @@ void InitializeRayPayloadData(inout RestirRayPayload payload)
     payload.pathFlags = 0u;
     payload.pixelIndex = 0xffffffffu;
     payload.primaryHitFlags = 0u;
+    payload.primaryTrialIndex = 0u;
     payload.reconnectInstanceId = 0xffffffffu;
     payload.reconnectInstanceGeneration = 0u;
     payload.reconnectGeometryIndex = 0xffffffffu;

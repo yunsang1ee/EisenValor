@@ -368,6 +368,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\DlssUpscalePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
     <ClInclude Include="RenderPass\RestirDebugGlobal.h" />
+    <ClInclude Include="RenderPass\RestirHdrCapture.h" />
     <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h" />
     <ClInclude Include="RenderPass\RestirTemporalReusePass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />

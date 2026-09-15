@@ -121,6 +121,7 @@ private:
 	bool	 m_useDayEnvironment = true;
 	bool	 m_hasPreviousViewProj = false;
 	uint32_t m_restirCandidateMask = RESTIR_CANDIDATE_ALL;
+	uint32_t m_restirPrimarySpp = 1u;
 	uint32_t m_restirEmissiveProfileStage = RESTIR_EMISSIVE_PROFILE_FULL;
 	uint32_t m_lastAnimatedBlasCount = 0;
 	bool	 m_restirProfileLogPending = true;

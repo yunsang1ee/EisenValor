@@ -13,6 +13,7 @@ public:
 	DirectX::XMMATRIX viewProjInverse = DirectX::XMMatrixIdentity();
 	// Top-left-origin subpixel offset, in render pixels. This is the shared camera-jitter
 	// contract for ray generation, motion vectors, and future DLSS/Streamline consumers.
+	// These are ray sample offsets. Streamline's projection jitter uses the opposite sign.
 	DirectX::XMFLOAT2 jitterPixels = {0.0f, 0.0f};
 	DirectX::XMFLOAT2 previousJitterPixels = {0.0f, 0.0f};
 	uint32_t		  jitterSequenceIndex = 0;

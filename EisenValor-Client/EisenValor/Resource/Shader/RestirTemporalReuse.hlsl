@@ -375,7 +375,7 @@ bool RestirEvaluateReconnectionShift(
                           max(destinationLightPdf + destinationPdfBefore, EPSILON);
         result.contribution = shiftedBsdfBefore * rcIrradiance * misWeight /
                               max(destinationLightPdf, EPSILON);
-        result.jacobian = geometryRatio;
+        result.jacobian = 1.0f;
         result.destinationLightPdf = destinationLightPdf;
     }
     else if (RestirIsRcFinal(sourceSample))
@@ -390,8 +390,10 @@ bool RestirEvaluateReconnectionShift(
         if (sourceLightPdf > 0.0f)
         {
             destinationLightPdf = sourceLightPdf * sourceGeometry / currentGeometry;
-            misWeight = destinationPdfBefore /
-                        max(destinationPdfBefore + destinationLightPdf, EPSILON);
+            float competingBsdfPdf = RestirEvalPdfBSDF(
+                currentSurface, primaryView, connectionDirection, RESTIR_BSDF_LOBE_ALL);
+            misWeight = competingBsdfPdf /
+                        max(competingBsdfPdf + destinationLightPdf, EPSILON);
         }
 
         result.contribution = shiftedBsdfBefore * rcIrradiance * misWeight /
@@ -606,11 +608,14 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
     {
         RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_ATTEMPTED);
         float2 motionVector = g_restirMotionVector.Load(int3(pixelCoord, 0));
+        float2 jitterDeltaPixels = float2(
+            g_restirTemporalConstants.jitterDeltaPixelsX,
+            g_restirTemporalConstants.jitterDeltaPixelsY);
         float2 previousPixelFloat = float2(pixelCoord) +
                                     motionVector * float2(
                                         g_restirTemporalConstants.screenWidth,
                                         g_restirTemporalConstants.screenHeight
-                                    );
+                                    ) + jitterDeltaPixels;
         float2 reprojectionRandom = float2(RestirRandom(rngSeed), RestirRandom(rngSeed));
         int2 previousPixel = int2(floor(previousPixelFloat + reprojectionRandom));
 
@@ -626,17 +631,13 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
             {
                 RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_SURFACE_MISMATCH);
             }
-            else if (!RestirIsValidReservoir(previousReservoir))
-            {
-                RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR);
-            }
             else
             {
                 float currentM = max(1.0f, float(currentReservoir.sampleCount));
                 cappedHistoryM =
                     min(float(previousReservoir.sampleCount), g_restirTemporalConstants.temporalMCap * currentM);
                 hasPreviousDomain = cappedHistoryM > 0.0f;
-                if (!hasPreviousDomain)
+                if (!hasPreviousDomain || !RestirIsValidReservoir(previousReservoir))
                 {
                     RESTIR_RECORD_TEMPORAL_DEBUG(RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR);
                 }
@@ -724,12 +725,11 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
             );
         }
 
-        outputReservoir.sampleCount = max(
-            1u,
-            (hasCurrentSurface ? currentReservoir.sampleCount : 0u) +
-                (hasReconnectedCandidate ? (uint) max(1.0f, cappedHistoryM) : 0u)
-        );
     }
+    
+    outputReservoir.sampleCount =
+        (hasCurrentSurface ? currentReservoir.sampleCount : 0u) +
+        (hasPreviousDomain ? (uint)cappedHistoryM : 0u);
 
 #if RESTIR_ENABLE_DEBUG_VIEWS
     outputReservoir.flags |= temporalDebugFlags;

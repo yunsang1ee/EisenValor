@@ -437,9 +437,9 @@ bool RestirTemporalReusePass::DispatchTemporalReuse(
 		candidateData->shadingNormalStrength,
 		0u,
 		cameraData->cameraPosition,
-		0.0f,
+		cameraData->jitterPixels.x - cameraData->previousJitterPixels.x,
 		cameraData->previousCameraPosition,
-		0.0f
+		cameraData->jitterPixels.y - cameraData->previousJitterPixels.y
 	};
 
 	cmdList->SetComputeRoot32BitConstants(0, kRestirTemporalConstantsDwordCount, &constants, 0);

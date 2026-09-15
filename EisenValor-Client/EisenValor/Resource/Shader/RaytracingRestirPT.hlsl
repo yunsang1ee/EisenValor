@@ -22,6 +22,7 @@ RWTexture2D<float> g_restirLinearDepth : register(u4, space0);
 RWTexture2D<float4> g_restirDiffuseAlbedo : register(u5, space0);
 RWTexture2D<float4> g_restirSpecularAlbedo : register(u6, space0);
 RWTexture2D<float4> g_restirNormalRoughness : register(u7, space0);
+RWTexture2D<float> g_restirSpecularHitDistance : register(u8, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -41,7 +42,7 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
     uint g_frameSeed;
     uint g_emissionViewMode;
     uint g_environmentMode;
-    uint g_frameConstantsPad0;
+    uint g_restirPrimarySpp;
 };
 
 cbuffer RestirCandidateConstants : register(b3, space0)
@@ -66,11 +67,6 @@ SamplerState g_sampler : register(s0, space0);
 #include "RestirShading.hlsli"
 
 static const uint MAX_RECURSION_DEPTH = 6;
-#define RESTIR_PRIMARY_SPP 1
-#if RESTIR_PRIMARY_SPP != 1
-#error Shared-primary reservoir output currently requires one primary sample per pixel.
-#endif
-static const uint SPP = RESTIR_PRIMARY_SPP;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 static const float PT_OUTPUT_EXPOSURE = 0.75f;
 static const float PT_BLOOM_THRESHOLD = 1.0f;
@@ -174,6 +170,58 @@ void RestirWriteInvalidPrimaryOutputs(uint pixelIndex)
     g_restirDiffuseAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirSpecularAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirNormalRoughness[pixelCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    g_restirSpecularHitDistance[pixelCoord] = 0.0f;
+}
+
+float RestirTraceSpecularGuideDistance(float3 position, float3 geometricNormal, float3 shadingNormal)
+{
+    // A dense, deterministic first-reflection guide, independent of the lighting
+    // reservoir's lobe/NEE selection. Uses the dominant mirror direction; rough
+    // reflections are approximated, rather than encoding a diffuse/NEE distance.
+    float3 direction = normalize(reflect(WorldRayDirection(), normalize(shadingNormal)));
+    if (dot(direction, geometricNormal) <= 0.0f)
+    {
+        return 0.0f;
+    }
+    RayDesc ray;
+    ray.Origin = position + geometricNormal * 0.01f;
+    ray.Direction = direction;
+    ray.TMin = RAY_TMIN;
+    ray.TMax = RAY_TMAX;
+    // Closest hit is required, not ACCEPT_FIRST_HIT used by shadow queries.
+    RayQuery<RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES> query;
+    query.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
+    while (query.Proceed()) {}
+    if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+    {
+        float3 hitPosition = ray.Origin + direction * query.CommittedRayT();
+        return length(hitPosition - position);
+    }
+    // Finite environment-distance sentinel in world units; no surface uses zero.
+    return RAY_TMAX;
+}
+
+float3 RestirEvalRrSpecularAlbedo(float3 F0, float roughness, float NdotV)
+{
+    float v = saturate(abs(NdotV));
+    float v2 = v * v;
+    float v3 = v2 * v;
+    float alpha = saturate(roughness) * saturate(roughness);
+    float a3 = alpha * alpha * alpha;
+
+    float biasNumerator = (0.99044f - 1.28514f * v) + alpha * (1.29678f - 0.755907f * v);
+    float biasDenominator = (1.0f + 2.92338f * v + 59.4188f * v3) +
+        alpha * (20.3225f - 27.0302f * v + 222.592f * v3) +
+        a3 * (121.563f + 626.13f * v + 316.627f * v3);
+    float scaleNumerator = (0.0365463f + 3.32707f * v) + alpha * (9.0632f - 9.04756f * v);
+    float scaleDenominator = (1.0f + 3.59685f * v2 - 1.36772f * v3) +
+        alpha * (9.04401f - 16.3174f * v2 + 9.22949f * v3) +
+        a3 * (5.56589f + 19.7886f * v2 - 20.2123f * v3);
+
+    float bias = biasNumerator / biasDenominator;
+    float scale = scaleNumerator / scaleDenominator;
+    bias *= saturate(F0.g * 50.0f);
+    return F0 * max(scale, 0.0f) + max(bias, 0.0f);
 }
 
 void RestirWritePrimaryOutputs(
@@ -257,7 +305,9 @@ void RestirWritePrimaryOutputs(
     g_restirMotionVector[pixelCoord] = motionVector;
     g_restirLinearDepth[pixelCoord] = RestirComputeLinearDepth(hitPos);
     g_restirDiffuseAlbedo[pixelCoord] = float4(albedo * (1.0f - metallic), 1.0f);
-    g_restirSpecularAlbedo[pixelCoord] = float4(lerp(0.04f.xxx, albedo, metallic), 1.0f);
+    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
+    float NdotV = dot(normalize(shadingNormal), -normalize(WorldRayDirection()));
+    g_restirSpecularAlbedo[pixelCoord] = float4(RestirEvalRrSpecularAlbedo(F0, roughness, NdotV), 1.0f);
     g_restirNormalRoughness[pixelCoord] = float4(normalize(shadingNormal), roughness);
 }
 
@@ -559,17 +609,18 @@ void RestirUpdateReservoirFromPayload(inout RestirReservoir reservoir, RayPayloa
 }
 
 
-uint RestirPrimaryReservoirSeed(uint pixelIndex)
+uint RestirPrimaryReservoirSeed(uint pixelIndex, uint primaryTrialIndex)
 {
     uint width = DispatchRaysDimensions().x;
     uint y = pixelIndex / width;
-    return pixelIndex * 9781u ^ y * 6271u ^ width * 7919u ^ (g_frameSeed + 1u) * 104729u ^ 124623u;
+    return pixelIndex * 9781u ^ y * 6271u ^ width * 7919u ^ (g_frameSeed + 1u) * 104729u ^
+           primaryTrialIndex * 0x9e3779b9u ^ 124623u;
 }
 
 void RestirWritePathOnlyReservoir(RayPayload payload)
 {
-    RestirReservoir reservoir = RestirMakeEmptyReservoir();
-    uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex);
+    RestirReservoir reservoir = g_restirReservoirInitial[payload.pixelIndex];
+    uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex, payload.primaryTrialIndex);
     if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
     {
         RestirUpdateReservoirFromPayload(reservoir, payload, reservoirSeed);
@@ -792,6 +843,7 @@ void RestirTraceBsdfPath(
     nextRay.TMax = RAY_TMAX;
 
     RayPayload child = MakeDefaultRayPayload < RayPayload > (payload.recursionDepth + 1);
+    child.primaryTrialIndex = payload.primaryTrialIndex;
 
     TraceRay(
         g_scene,
@@ -828,15 +880,25 @@ void RestirTraceBsdfPath(
         payload.rcSourcePdfAfter = pdf;
     }
 
-    bool applyEmissiveHitMis =
+    bool unresolvedEmissiveHit =
         0u != (child.pathFlags & RESTIR_PATH_FLAG_EMISSIVE_HIT) &&
-        0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED) &&
-        child.lightPdf > 0.0f;
+        0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED);
+    bool applyEmissiveHitMis = unresolvedEmissiveHit &&
+        payload.recursionDepth == 0 && !sampledDelta &&
+        RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) && child.lightPdf > 0.0f;
     if (applyEmissiveHitMis)
     {
-        float emissiveHitMisWeight = pdf / max(pdf + child.lightPdf, EPSILON);
+        float competingBsdfPdf = RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_ALL);
+        float emissiveHitMisWeight = competingBsdfPdf / max(competingBsdfPdf + child.lightPdf, EPSILON);
         child.color *= emissiveHitMisWeight;
+    }
+    if (unresolvedEmissiveHit)
+    {
         child.pathFlags |= RESTIR_PATH_FLAG_MIS_APPLIED;
+        if (!applyEmissiveHitMis)
+        {
+            child.lightPdf = 0.0f;
+        }
     }
 
     payload.color = emissive + weight * child.color;
@@ -866,8 +928,14 @@ void RayGenMain()
 
     float3 finalColor = 0.0f.xxx;
     uint primaryHitFlags = 0u;
+    uint completedPrimaryTrials = 0u;
+    uint primarySpp = clamp(g_restirPrimarySpp, 1u, 4u);
+    if (0u != g_restirCandidateMask)
+    {
+        g_restirReservoirInitial[pixelIndex] = RestirMakeEmptyReservoir();
+    }
 
-    for (uint bounce = 0; bounce < SPP; ++bounce)
+    for (uint trialIndex = 0; trialIndex < primarySpp; ++trialIndex)
     {
         float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
@@ -884,6 +952,7 @@ void RayGenMain()
 
         RayPayload payload = MakeDefaultRayPayload < RayPayload > (0);
         payload.pixelIndex = pixelIndex;
+        payload.primaryTrialIndex = trialIndex;
 
         TraceRay(g_scene,
                  RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
@@ -891,14 +960,19 @@ void RayGenMain()
                  0, 0, 0,
                  ray,
                  payload);
+        ++completedPrimaryTrials;
         finalColor += payload.color.rgb;
         primaryHitFlags |= payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID;
 
     }
-    finalColor /= SPP;
+    finalColor /= primarySpp;
 
     if (0u != g_restirCandidateMask)
     {
+        RestirReservoir reservoir = g_restirReservoirInitial[pixelIndex];
+        reservoir.sampleCount += completedPrimaryTrials;
+        g_restirReservoirInitial[pixelIndex] = reservoir;
+
         if (0u == (primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
         {
             RestirWriteInvalidPrimaryOutputs(pixelIndex);
@@ -986,6 +1060,11 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         payload.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID;
         if (0u != g_restirCandidateMask)
         {
+            if (payload.primaryTrialIndex == 0u)
+            {
+                g_restirSpecularHitDistance[RestirPixelCoordFromIndex(payload.pixelIndex)] =
+                    RestirTraceSpecularGuideDistance(hitPos, geometricNormal, visibleNormal);
+            }
             RestirWritePrimaryOutputs(
                 payload.pixelIndex,
                 hitPos,
@@ -1025,6 +1104,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         InstanceID() * 0xc2b2ae35u ^
         PrimitiveIndex() * 0x85ebca6bu ^
         payload.recursionDepth * 0x27d4eb2du ^
+        payload.primaryTrialIndex * 0xd1b54a35u ^
         (g_frameSeed + 1u) * 0x165667b1u ^
         (asuint(hitPos.x) + asuint(hitPos.y) * 0x9e3779b9u + asuint(hitPos.z));
     rngSeed ^= rngSeed >> 16;
@@ -1088,8 +1168,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
     if (payload.recursionDepth == 0 && g_restirCandidateMask != 0u)
     {
-        RestirReservoir reservoir = RestirMakeEmptyReservoir();
-        uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex);
+        RestirReservoir reservoir = g_restirReservoirInitial[payload.pixelIndex];
+        uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex, payload.primaryTrialIndex);
         if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
         {
             RestirUpdateReservoirFromPayload(reservoir, payload, reservoirSeed);
