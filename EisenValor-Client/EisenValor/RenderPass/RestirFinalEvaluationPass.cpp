@@ -186,6 +186,20 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 
 	auto barrier = DxUtils::CreateUAVBarrier(outputTexture->GetResource());
 	cmdList->ResourceBarrier(1, &barrier);
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	try
+	{
+		m_hdrCapture.Execute(frame, outputTexture, cameraData, debug.GetCaptureRequest(), debug.GetRevision(),
+			candidateData->historySignature, debug.GetSourceLogName(), debug.GetCaptureSpp(), debugOverrideActive &&
+			debugView == 0u && (debug.GetSource() == RestirDebugSource::CandidateRaw ||
+			debug.GetSource() == RestirDebugSource::FinalRaw));
+	}
+	catch (const std::exception& error)
+	{
+		m_hdrCapture.Cancel();
+		DEBUG_LOG_FMT("[ReSTIR.Capture] failed: {}\n", error.what());
+	}
+#endif
 }
 
 void RestirFinalEvaluationPass::OnResize(uint32_t width, uint32_t height) {}

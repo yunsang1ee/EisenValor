@@ -145,7 +145,7 @@ void WorldSceneControllerComponent::CreateRestirDebugOverlayUI()
 					rect->SetAnchors({1.0f, 0.0f}, {1.0f, 0.0f});
 					rect->SetPivot({1.0f, 0.0f});
 					rect->SetOffsetMin({-470.0f, 18.0f});
-					rect->SetOffsetMax({-18.0f, 132.0f});
+					rect->SetOffsetMax({-18.0f, 172.0f});
 				}
 			);
 
@@ -198,7 +198,7 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 	}
 
 	auto& debug = GLOBAL(RestirDebugGlobal);
-	if (m_lastRestirDebugRevision == debug.GetRevision())
+	if (m_lastRestirDebugRevision == debug.GetOverlayRevision())
 	{
 		return true;
 	}
@@ -219,10 +219,13 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 		status += debug.GetViewName();
 		status += L"\n  DLSS   : ";
 		status += debug.BypassDlss() ? L"BYPASSED" : L"REQUESTED";
+		status += L"\n  HDR    : ";
+		status += debug.GetCaptureStatusText();
 		status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
+		status += L"\n  CTRL+F12 CAPTURE / RESTART";
 		text->SetText(std::move(status));
 	}
-	m_lastRestirDebugRevision = debug.GetRevision();
+	m_lastRestirDebugRevision = debug.GetOverlayRevision();
 	return true;
 }
 #endif

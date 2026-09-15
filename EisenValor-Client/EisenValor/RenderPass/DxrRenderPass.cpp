@@ -1589,7 +1589,22 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	}
 	if (input.GetInputDown(VK_F12))
 	{
-		debug.StepSource(debugStep);
+		if (input.GetInput(VK_CONTROL))
+		{
+			if (debug.RequestHdrCapture(m_restirPrimarySpp))
+			{
+				++m_restirHistoryGeneration;
+				DEBUG_LOG_FMT("[ReSTIR.Capture] requested source={} spp={}\n", debug.GetSourceLogName(), m_restirPrimarySpp);
+			}
+			else
+			{
+				DEBUG_LOG_FMT("[ReSTIR.Capture] Select CANDIDATE RAW or FINAL RAW, BEAUTY first.\n");
+			}
+		}
+		else
+		{
+			debug.StepSource(debugStep);
+		}
 	}
 	if (input.GetInputDown(VK_F10))
 	{

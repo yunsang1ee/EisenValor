@@ -3,6 +3,7 @@
 #include <Singleton.h>
 
 #include <cstdint>
+#include <string>
 
 enum class RestirDebugSource : uint32_t
 {
@@ -39,6 +40,34 @@ private:
 	~RestirDebugGlobal() override = default;
 
 public:
+	bool RequestHdrCapture(uint32_t spp)
+	{
+		if (!m_overrideActive || m_view != RestirDebugView::Beauty ||
+			(m_source != RestirDebugSource::CandidateRaw && m_source != RestirDebugSource::FinalRaw))
+		{
+			SetCaptureStatus(L"SELECT RAW + BEAUTY", 0);
+			return false;
+		}
+		++m_captureRequest;
+		m_captureSpp = spp;
+		SetCaptureStatus(L"STARTING", 0);
+		return true;
+	}
+	[[nodiscard]] uint64_t GetCaptureRequest() const { return m_captureRequest; }
+	[[nodiscard]] uint32_t GetCaptureSpp() const { return m_captureSpp; }
+	void SetCaptureStatus(const wchar_t* status, uint32_t frames)
+	{
+		m_captureStatus = status;
+		m_captureFrames = frames;
+		++m_captureStatusRevision;
+	}
+	[[nodiscard]] std::wstring GetCaptureStatusText() const
+	{
+		return m_captureStatus + L"  " + std::to_wstring(m_captureFrames) + L" / 512";
+	}
+	// Progress is UI-only: never invalidate temporal history or the capture itself.
+	[[nodiscard]] uint64_t GetOverlayRevision() const { return m_revision + m_captureStatusRevision; }
+
 	void StepSource(int32_t direction)
 	{
 		const auto count = static_cast<int32_t>(RestirDebugSource::Count);
@@ -199,5 +228,10 @@ private:
 	RestirDebugSource m_source = RestirDebugSource::FinalWithRayReconstruction;
 	RestirDebugView	  m_view = RestirDebugView::Beauty;
 	uint64_t		  m_revision = 0;
+	uint64_t		  m_captureRequest = 0;
+	uint32_t		  m_captureSpp = 1;
+	uint64_t m_captureStatusRevision = 0;
+	uint32_t m_captureFrames = 0;
+	std::wstring m_captureStatus = L"READY";
 	bool			  m_overrideActive = false;
 };
