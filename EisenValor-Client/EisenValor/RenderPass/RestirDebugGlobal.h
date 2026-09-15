@@ -28,6 +28,7 @@ enum class RestirDebugView : uint32_t
 	NormalRoughness,
 	DiffuseAlbedo,
 	SpecularAlbedo,
+	SpecularHitDistance,
 	Count,
 };
 
@@ -186,6 +187,8 @@ public:
 			return L"DIFFUSE ALBEDO";
 		case RestirDebugView::SpecularAlbedo:
 			return L"SPECULAR ALBEDO";
+		case RestirDebugView::SpecularHitDistance:
+			return L"SPECULAR HIT DISTANCE";
 		default:
 			return L"UNKNOWN";
 		}
@@ -219,6 +222,8 @@ public:
 			return "DIFFUSE_ALBEDO";
 		case RestirDebugView::SpecularAlbedo:
 			return "SPECULAR_ALBEDO";
+		case RestirDebugView::SpecularHitDistance:
+			return "SPECULAR_HIT_DISTANCE";
 		default:
 			return "UNKNOWN";
 		}

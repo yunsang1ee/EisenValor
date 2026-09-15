@@ -286,7 +286,8 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	}
 
 	const bool useRayReconstruction = IsRayReconstructionEnabled() && nullptr != desc.diffuseAlbedo &&
-									  nullptr != desc.specularAlbedo && nullptr != desc.normalRoughness;
+									  nullptr != desc.specularAlbedo && nullptr != desc.normalRoughness &&
+									  nullptr != desc.specularHitDistance;
 	const sl::DLSSMode mode = ToDLSSMode(m_qualityMode);
 
 	const DirectX::XMMATRIX view = desc.camera->viewMatrix;
@@ -323,27 +324,7 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 			return false;
 		}
 
-		if (useRayReconstruction)
-		{
-			sl::DLSSDOptions rrOptions = {};
-			rrOptions.mode = mode;
-			rrOptions.outputWidth = desc.displayWidth;
-			rrOptions.outputHeight = desc.displayHeight;
-			rrOptions.colorBuffersHDR = sl::Boolean::eTrue;
-			rrOptions.normalRoughnessMode = sl::DLSSDNormalRoughnessMode::ePacked;
-			rrOptions.alphaUpscalingEnabled = sl::Boolean::eFalse;
-			rrOptions.dlaaPreset = sl::DLSSDPreset::ePresetD;
-			rrOptions.qualityPreset = sl::DLSSDPreset::ePresetD;
-			rrOptions.balancedPreset = sl::DLSSDPreset::ePresetD;
-			rrOptions.performancePreset = sl::DLSSDPreset::ePresetD;
-			rrOptions.ultraPerformancePreset = sl::DLSSDPreset::ePresetD;
-			if (!CheckResult(slDLSSDSetOptions(kMainViewport, rrOptions), "slDLSSDSetOptions"))
-			{
-				return false;
-			}
-			m_rayReconstructionOptionsActive = true;
-		}
-		else if (m_rayReconstructionOptionsActive)
+		if (!useRayReconstruction && m_rayReconstructionOptionsActive)
 		{
 			sl::DLSSDOptions rrOptions = {};
 			rrOptions.mode = sl::DLSSMode::eOff;
@@ -372,6 +353,31 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		);
 	}
 
+	// Hit-distance reflection reprojection requires current camera matrices every
+	// frame. Updating these is not a feature reallocation or a history reset.
+	if (useRayReconstruction)
+	{
+		sl::DLSSDOptions rrOptions = {};
+		rrOptions.mode = mode;
+		rrOptions.outputWidth = desc.displayWidth;
+		rrOptions.outputHeight = desc.displayHeight;
+		rrOptions.colorBuffersHDR = sl::Boolean::eTrue;
+		rrOptions.normalRoughnessMode = sl::DLSSDNormalRoughnessMode::ePacked;
+		rrOptions.alphaUpscalingEnabled = sl::Boolean::eFalse;
+		rrOptions.dlaaPreset = sl::DLSSDPreset::ePresetD;
+		rrOptions.qualityPreset = sl::DLSSDPreset::ePresetD;
+		rrOptions.balancedPreset = sl::DLSSDPreset::ePresetD;
+		rrOptions.performancePreset = sl::DLSSDPreset::ePresetD;
+		rrOptions.ultraPerformancePreset = sl::DLSSDPreset::ePresetD;
+		rrOptions.worldToCameraView = ToStreamlineMatrix(view);
+		rrOptions.cameraViewToWorld = ToStreamlineMatrix(inverseView);
+		if (!CheckResult(slDLSSDSetOptions(kMainViewport, rrOptions), "slDLSSDSetOptions"))
+		{
+			return false;
+		}
+		m_rayReconstructionOptionsActive = true;
+	}
+
 	sl::FrameToken* frameToken = nullptr;
 	if (!CheckResult(slGetNewFrameToken(frameToken, &desc.frameIndex), "slGetNewFrameToken") || nullptr == frameToken)
 	{
@@ -383,7 +389,11 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	constants.clipToCameraView = ToStreamlineMatrix(inverseProjection);
 	constants.clipToPrevClip = ToStreamlineMatrix(clipToPreviousClip);
 	constants.prevClipToClip = ToStreamlineMatrix(previousClipToClip);
-	constants.jitterOffset = {desc.camera->jitterPixels.x, desc.camera->jitterPixels.y};
+	// CameraRenderData stores ray sample offsets: pixelCenter + jitterPixels.
+	// Streamline expects the projection/image offset (as in Donut PlanarView),
+	// whose inverse projection samples pixelCenter - jitterOffset.
+	// https://github.com/NVIDIA-RTX/Streamline_Sample/blob/main/src/StreamlineSample.cpp
+	constants.jitterOffset = {-desc.camera->jitterPixels.x, -desc.camera->jitterPixels.y};
 	constants.mvecScale = {1.0f, 1.0f};
 	constants.cameraPos = {desc.camera->cameraPosition.x, desc.camera->cameraPosition.y, desc.camera->cameraPosition.z};
 	DirectX::XMFLOAT4X4 inverseViewStored;
@@ -421,6 +431,7 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	sl::Resource diffuseAlbedo(sl::ResourceType::eTex2d, desc.diffuseAlbedo, inputState);
 	sl::Resource specularAlbedo(sl::ResourceType::eTex2d, desc.specularAlbedo, inputState);
 	sl::Resource normalRoughness(sl::ResourceType::eTex2d, desc.normalRoughness, inputState);
+	sl::Resource specularHitDistance(sl::ResourceType::eTex2d, desc.specularHitDistance, inputState);
 
 	sl::ResourceTag tags[] = {
 		{&colorInput, sl::kBufferTypeScalingInputColor, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
@@ -429,7 +440,8 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		{&motionVectors, sl::kBufferTypeMotionVectors, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
 		{&diffuseAlbedo, sl::kBufferTypeAlbedo, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
 		{&specularAlbedo, sl::kBufferTypeSpecularAlbedo, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&normalRoughness, sl::kBufferTypeNormalRoughness, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent}
+		{&normalRoughness, sl::kBufferTypeNormalRoughness, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
+		{&specularHitDistance, sl::kBufferTypeSpecularHitDistance, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent}
 	};
 	const uint32_t tagCount = useRayReconstruction ? static_cast<uint32_t>(std::size(tags)) : 4u;
 	if (!CheckResult(

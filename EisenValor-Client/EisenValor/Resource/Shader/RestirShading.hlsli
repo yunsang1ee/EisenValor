@@ -160,7 +160,7 @@ void RestirBuildSurface(
         float3(0.0f, 1.0f, 0.0f)
     );
     surface.geometricNormal = SafeNormalizeRay(
-        mul(normalObj, (float3x3)inst.worldInverse),
+        mul(normalObj, transpose((float3x3)inst.worldInverse)),
         float3(0.0f, 1.0f, 0.0f)
     );
     float3 p0 = mul(float4(v0.position, 1.0f), inst.worldMatrix).xyz;

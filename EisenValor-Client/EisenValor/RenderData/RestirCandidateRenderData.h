@@ -20,6 +20,7 @@ public:
 		diffuseAlbedoTexture.reset();
 		specularAlbedoTexture.reset();
 		normalRoughnessTexture.reset();
+		specularHitDistanceTexture.reset();
 		validThisFrame = false;
 		frameIndex = 0;
 		shadingNormalStrength = 1.0f;
@@ -33,6 +34,7 @@ public:
 	std::shared_ptr<DxTexture> diffuseAlbedoTexture;
 	std::shared_ptr<DxTexture> specularAlbedoTexture;
 	std::shared_ptr<DxTexture> normalRoughnessTexture;
+	std::shared_ptr<DxTexture> specularHitDistanceTexture;
 	bool					   validThisFrame = false;
 	uint32_t				   frameIndex = 0;
 	float					   shadingNormalStrength = 1.0f;

@@ -9,6 +9,7 @@ Texture2D<float> g_restirLinearDepth : register(t3, space0);
 Texture2D<float4> g_restirDiffuseAlbedo : register(t4, space0);
 Texture2D<float4> g_restirSpecularAlbedo : register(t5, space0);
 Texture2D<float4> g_restirNormalRoughness : register(t6, space0);
+Texture2D<float> g_restirSpecularHitDistance : register(t7, space0);
 #endif
 RWTexture2D<float4> g_output : register(u0, space0);
 
@@ -66,6 +67,11 @@ void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
         else if (11u == g_restirDebugView)
         {
             debugColor = saturate(g_restirSpecularAlbedo.Load(int3(pixelCoord, 0)).rgb);
+        }
+        else if (12u == g_restirDebugView)
+        {
+            float distance = g_restirSpecularHitDistance.Load(int3(pixelCoord, 0));
+            debugColor = saturate(log2(1.0f + max(distance, 0.0f)) / log2(1.0f + RAY_TMAX)).xxx;
         }
         g_output[pixelCoord] = float4(max(0.0f.xxx, debugColor), 1.0f);
         return;

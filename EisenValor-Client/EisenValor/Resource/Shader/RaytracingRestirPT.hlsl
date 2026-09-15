@@ -22,6 +22,7 @@ RWTexture2D<float> g_restirLinearDepth : register(u4, space0);
 RWTexture2D<float4> g_restirDiffuseAlbedo : register(u5, space0);
 RWTexture2D<float4> g_restirSpecularAlbedo : register(u6, space0);
 RWTexture2D<float4> g_restirNormalRoughness : register(u7, space0);
+RWTexture2D<float> g_restirSpecularHitDistance : register(u8, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -169,6 +170,58 @@ void RestirWriteInvalidPrimaryOutputs(uint pixelIndex)
     g_restirDiffuseAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirSpecularAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirNormalRoughness[pixelCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    g_restirSpecularHitDistance[pixelCoord] = 0.0f;
+}
+
+float RestirTraceSpecularGuideDistance(float3 position, float3 geometricNormal, float3 shadingNormal)
+{
+    // A dense, deterministic first-reflection guide, independent of the lighting
+    // reservoir's lobe/NEE selection. Uses the dominant mirror direction; rough
+    // reflections are approximated, rather than encoding a diffuse/NEE distance.
+    float3 direction = normalize(reflect(WorldRayDirection(), normalize(shadingNormal)));
+    if (dot(direction, geometricNormal) <= 0.0f)
+    {
+        return 0.0f;
+    }
+    RayDesc ray;
+    ray.Origin = position + geometricNormal * 0.01f;
+    ray.Direction = direction;
+    ray.TMin = RAY_TMIN;
+    ray.TMax = RAY_TMAX;
+    // Closest hit is required, not ACCEPT_FIRST_HIT used by shadow queries.
+    RayQuery<RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES> query;
+    query.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
+    while (query.Proceed()) {}
+    if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+    {
+        float3 hitPosition = ray.Origin + direction * query.CommittedRayT();
+        return length(hitPosition - position);
+    }
+    // Finite environment-distance sentinel in world units; no surface uses zero.
+    return RAY_TMAX;
+}
+
+float3 RestirEvalRrSpecularAlbedo(float3 F0, float roughness, float NdotV)
+{
+    float v = saturate(abs(NdotV));
+    float v2 = v * v;
+    float v3 = v2 * v;
+    float alpha = saturate(roughness) * saturate(roughness);
+    float a3 = alpha * alpha * alpha;
+
+    float biasNumerator = (0.99044f - 1.28514f * v) + alpha * (1.29678f - 0.755907f * v);
+    float biasDenominator = (1.0f + 2.92338f * v + 59.4188f * v3) +
+        alpha * (20.3225f - 27.0302f * v + 222.592f * v3) +
+        a3 * (121.563f + 626.13f * v + 316.627f * v3);
+    float scaleNumerator = (0.0365463f + 3.32707f * v) + alpha * (9.0632f - 9.04756f * v);
+    float scaleDenominator = (1.0f + 3.59685f * v2 - 1.36772f * v3) +
+        alpha * (9.04401f - 16.3174f * v2 + 9.22949f * v3) +
+        a3 * (5.56589f + 19.7886f * v2 - 20.2123f * v3);
+
+    float bias = biasNumerator / biasDenominator;
+    float scale = scaleNumerator / scaleDenominator;
+    bias *= saturate(F0.g * 50.0f);
+    return F0 * max(scale, 0.0f) + max(bias, 0.0f);
 }
 
 void RestirWritePrimaryOutputs(
@@ -252,7 +305,9 @@ void RestirWritePrimaryOutputs(
     g_restirMotionVector[pixelCoord] = motionVector;
     g_restirLinearDepth[pixelCoord] = RestirComputeLinearDepth(hitPos);
     g_restirDiffuseAlbedo[pixelCoord] = float4(albedo * (1.0f - metallic), 1.0f);
-    g_restirSpecularAlbedo[pixelCoord] = float4(lerp(0.04f.xxx, albedo, metallic), 1.0f);
+    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
+    float NdotV = dot(normalize(shadingNormal), -normalize(WorldRayDirection()));
+    g_restirSpecularAlbedo[pixelCoord] = float4(RestirEvalRrSpecularAlbedo(F0, roughness, NdotV), 1.0f);
     g_restirNormalRoughness[pixelCoord] = float4(normalize(shadingNormal), roughness);
 }
 
@@ -1005,6 +1060,11 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         payload.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID;
         if (0u != g_restirCandidateMask)
         {
+            if (payload.primaryTrialIndex == 0u)
+            {
+                g_restirSpecularHitDistance[RestirPixelCoordFromIndex(payload.pixelIndex)] =
+                    RestirTraceSpecularGuideDistance(hitPos, geometricNormal, visibleNormal);
+            }
             RestirWritePrimaryOutputs(
                 payload.pixelIndex,
                 hitPos,

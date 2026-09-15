@@ -1,7 +1,7 @@
 """Scalar counterexamples for the ReSTIR equation audit, not a GPU test.
 
 Run from any directory. Checks algebraic invariants and reports the consequences
-of the current M/visibility/geometry policies. Does not estimate scene incidence.
+of the legacy M policy and current visibility/geometry policies. Does not estimate scene incidence.
 """
 
 import json
@@ -22,7 +22,7 @@ def main():
     # forward shift, but the current path can shift backward, with unit targets/J.
     # Current MIS = 1/(1+20); historical contribution = 0.
     source_weight = 1 / 21
-    current_stored_m = 1
+    legacy_stored_m = 1
     domain_stored_m = 21
 
     # Next frame: both shifts succeed, unit targets/J, current estimate = 1.
@@ -51,9 +51,9 @@ def main():
         'fresh_additive_mean_1_2_4_spp': total,
         'rejected_history': {
             'current_mis': source_weight,
-            'stored_M_current': current_stored_m,
+            'stored_M_legacy_success_only': legacy_stored_m,
             'stored_M_domain_count': domain_stored_m,
-            'next_output_current': next_output(current_stored_m),
+            'next_output_legacy_success_only': next_output(legacy_stored_m),
             'next_output_preserving_domain_M': next_output(domain_stored_m),
         },
         'visibility_counterexample': {

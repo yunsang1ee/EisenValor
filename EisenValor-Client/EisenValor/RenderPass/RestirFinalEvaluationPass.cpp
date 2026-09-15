@@ -88,7 +88,8 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	}
 	if (nullptr == candidateData || nullptr == candidateData->motionVectorTexture ||
 		nullptr == candidateData->linearDepthTexture || nullptr == candidateData->diffuseAlbedoTexture ||
-		nullptr == candidateData->specularAlbedoTexture || nullptr == candidateData->normalRoughnessTexture)
+		nullptr == candidateData->specularAlbedoTexture || nullptr == candidateData->normalRoughnessTexture ||
+		nullptr == candidateData->specularHitDistanceTexture)
 	{
 		return;
 	}
@@ -106,6 +107,7 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	auto* diffuseAlbedoTexture = candidateData->diffuseAlbedoTexture.get();
 	auto* specularAlbedoTexture = candidateData->specularAlbedoTexture.get();
 	auto* normalRoughnessTexture = candidateData->normalRoughnessTexture.get();
+	auto* specularHitDistanceTexture = candidateData->specularHitDistanceTexture.get();
 #endif
 	auto* outputTexture = outputData->outputTexture.get();
 	if (!reservoirBuffer->HasSRV() || !outputTexture->HasUAV(0))
@@ -114,7 +116,7 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	}
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	if (!motionVectorTexture->HasSRV() || !linearDepthTexture->HasSRV() || !diffuseAlbedoTexture->HasSRV() ||
-		!specularAlbedoTexture->HasSRV() || !normalRoughnessTexture->HasSRV())
+		!specularAlbedoTexture->HasSRV() || !normalRoughnessTexture->HasSRV() || !specularHitDistanceTexture->HasSRV())
 	{
 		return;
 	}
@@ -139,6 +141,7 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	DxUtils::TransitionResourceIfNeeded(
 		cmdList, normalRoughnessTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 	);
+	DxUtils::TransitionResourceIfNeeded(cmdList, specularHitDistanceTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 #endif
 	DxUtils::TransitionResourceIfNeeded(cmdList, outputTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -175,7 +178,8 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	cmdList->SetComputeRootDescriptorTable(4, descHeap.GetGPUHandle(diffuseAlbedoTexture->GetSRVIndex()));
 	cmdList->SetComputeRootDescriptorTable(5, descHeap.GetGPUHandle(specularAlbedoTexture->GetSRVIndex()));
 	cmdList->SetComputeRootDescriptorTable(6, descHeap.GetGPUHandle(normalRoughnessTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(7, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
+	cmdList->SetComputeRootDescriptorTable(7, descHeap.GetGPUHandle(specularHitDistanceTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(8, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
 #else
 	cmdList->SetComputeRootDescriptorTable(2, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
 #endif
@@ -238,6 +242,7 @@ void RestirFinalEvaluationPass::CreatePipeline()
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4);
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 6);
+	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 7);
 #endif
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 	m_rootSignature = rootSignatureBuilder.Build(device.GetDevice(), "RestirFinalEvaluation_RootSignature");

@@ -34,6 +34,7 @@ inline constexpr uint32_t NoMotionVectors = 1u << 8u;
 inline constexpr uint32_t NoDiffuseAlbedo = 1u << 9u;
 inline constexpr uint32_t NoSpecularAlbedo = 1u << 10u;
 inline constexpr uint32_t NoNormalRoughness = 1u << 11u;
+inline constexpr uint32_t NoSpecularHitDistance = 1u << 12u;
 } // namespace DlssMissingInputMask
 
 class DlssOutputRenderData : public RenderDataBase<DlssOutputRenderData>

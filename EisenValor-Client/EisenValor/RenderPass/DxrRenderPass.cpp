@@ -59,6 +59,7 @@ constexpr uint32_t kRestirLinearDepthUavRegister = 4;
 constexpr uint32_t kRestirDiffuseAlbedoUavRegister = 5;
 constexpr uint32_t kRestirSpecularAlbedoUavRegister = 6;
 constexpr uint32_t kRestirNormalRoughnessUavRegister = 7;
+constexpr uint32_t kRestirSpecularHitDistanceUavRegister = 8;
 constexpr uint32_t kRestirRayPayloadSizeBytes = 20u * sizeof(uint32_t);
 static_assert(0u == (RESTIR_CANDIDATE_ALL & RESTIR_EMISSIVE_PROFILE_STAGE_MASK));
 
@@ -131,7 +132,8 @@ enum DxrRootParameter : uint32_t
 	DxrRootRestirSpecularAlbedo,
 	DxrRootRestirNormalRoughness,
 	DxrRootRestirCandidateCameraConstants,
-	DxrRootRestirEmissiveLights
+	DxrRootRestirEmissiveLights,
+	DxrRootRestirSpecularHitDistance
 };
 
 void HashTlasInstance(uint64_t& topologyHash, uint64_t& transformHash, const DxTLASInstance& instance)
@@ -553,6 +555,11 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		auto& diffuseAlbedoTexture = candidateData.diffuseAlbedoTexture;
 		auto& specularAlbedoTexture = candidateData.specularAlbedoTexture;
 		auto& normalRoughnessTexture = candidateData.normalRoughnessTexture;
+		auto& specularHitDistanceTexture = candidateData.specularHitDistanceTexture;
+		if (!specularHitDistanceTexture)
+		{
+			specularHitDistanceTexture = std::make_shared<DxTexture>();
+		}
 
 		if (!primaryHitBuffer)
 		{
@@ -600,7 +607,8 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 			linearDepthTexture->ReleaseAllViews(descHeap);
 		}
 		DxTexture* rrGuideTextures[] = {
-			diffuseAlbedoTexture.get(), specularAlbedoTexture.get(), normalRoughnessTexture.get()
+			diffuseAlbedoTexture.get(), specularAlbedoTexture.get(), normalRoughnessTexture.get(),
+			specularHitDistanceTexture.get()
 		};
 		for (DxTexture* texture : rrGuideTextures)
 		{
@@ -652,6 +660,12 @@ void DxrRenderPass::CreateRaytracingResources(uint32_t width, uint32_t height)
 		initializeRRGuide(diffuseAlbedoTexture, "DxrRenderPass_RestirDiffuseAlbedo");
 		initializeRRGuide(specularAlbedoTexture, "DxrRenderPass_RestirSpecularAlbedo");
 		initializeRRGuide(normalRoughnessTexture, "DxrRenderPass_RestirNormalRoughness");
+		specularHitDistanceTexture->Initialize(
+			device.GetDevice(), width, height, DXGI_FORMAT_R32_FLOAT, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+			1, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, "DxrRenderPass_RestirSpecularHitDistance"
+		);
+		specularHitDistanceTexture->CreateSRV(device.GetDevice(), descHeap);
+		specularHitDistanceTexture->CreateUAV(device.GetDevice(), descHeap, 0);
 	}
 }
 
@@ -689,7 +703,9 @@ ComPtr<ID3D12RootSignature> DxrRenderPass::BuildDxrGlobalRootSignature(
 			.AddDescriptorTable()
 			.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, kRestirNormalRoughnessUavRegister)
 			.AddCBV(4)
-			.AddSRV(5);
+			.AddSRV(5)
+			.AddDescriptorTable()
+			.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, kRestirSpecularHitDistanceUavRegister);
 	}
 
 	return builder.AddStaticSampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP)
@@ -1645,6 +1661,8 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		restirCandidateData ? restirCandidateData->specularAlbedoTexture.get() : nullptr;
 	auto* restirNormalRoughnessTexture =
 		restirCandidateData ? restirCandidateData->normalRoughnessTexture.get() : nullptr;
+	auto* restirSpecularHitDistanceTexture =
+		restirCandidateData ? restirCandidateData->specularHitDistanceTexture.get() : nullptr;
 	const bool restirCandidateResourcesReady =
 		restirPrimaryHitBuffer && restirPrimaryHitBuffer->HasUAV() && restirPrimaryHitBuffer->HasSRV() &&
 		restirReservoirBuffer && restirReservoirBuffer->HasUAV() && restirReservoirBuffer->HasSRV() &&
@@ -1653,7 +1671,9 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		restirDiffuseAlbedoTexture && restirDiffuseAlbedoTexture->HasUAV(0) && restirDiffuseAlbedoTexture->HasSRV() &&
 		restirSpecularAlbedoTexture && restirSpecularAlbedoTexture->HasUAV(0) &&
 		restirSpecularAlbedoTexture->HasSRV() && restirNormalRoughnessTexture &&
-		restirNormalRoughnessTexture->HasUAV(0) && restirNormalRoughnessTexture->HasSRV();
+		restirNormalRoughnessTexture->HasUAV(0) && restirNormalRoughnessTexture->HasSRV() &&
+		restirSpecularHitDistanceTexture && restirSpecularHitDistanceTexture->HasUAV(0) &&
+		restirSpecularHitDistanceTexture->HasSRV();
 	const bool restirCandidateEnabled = restirCandidateMode && restirCandidateResourcesReady;
 
 	{
@@ -1870,12 +1890,14 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 				DxrRootRestirLinearDepth, descHeap.GetGPUHandle(restirLinearDepthTexture->GetUAVIndex(0))
 			);
 			DxTexture* rrGuideTextures[] = {
-				restirDiffuseAlbedoTexture, restirSpecularAlbedoTexture, restirNormalRoughnessTexture
+				restirDiffuseAlbedoTexture, restirSpecularAlbedoTexture, restirNormalRoughnessTexture,
+				restirSpecularHitDistanceTexture
 			};
 			const DxrRootParameter rrGuideRoots[] = {
-				DxrRootRestirDiffuseAlbedo, DxrRootRestirSpecularAlbedo, DxrRootRestirNormalRoughness
+				DxrRootRestirDiffuseAlbedo, DxrRootRestirSpecularAlbedo, DxrRootRestirNormalRoughness,
+				DxrRootRestirSpecularHitDistance
 			};
-			for (uint32_t guideIndex = 0; guideIndex < 3u; ++guideIndex)
+			for (uint32_t guideIndex = 0; guideIndex < std::size(rrGuideTextures); ++guideIndex)
 			{
 				DxUtils::TransitionResourceIfNeeded(
 					cmdList4.Get(), rrGuideTextures[guideIndex], D3D12_RESOURCE_STATE_UNORDERED_ACCESS
@@ -1962,7 +1984,8 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 			DxUtils::CreateUAVBarrier(restirLinearDepthTexture->GetResource()),
 			DxUtils::CreateUAVBarrier(restirDiffuseAlbedoTexture->GetResource()),
 			DxUtils::CreateUAVBarrier(restirSpecularAlbedoTexture->GetResource()),
-			DxUtils::CreateUAVBarrier(restirNormalRoughnessTexture->GetResource())
+			DxUtils::CreateUAVBarrier(restirNormalRoughnessTexture->GetResource()),
+			DxUtils::CreateUAVBarrier(restirSpecularHitDistanceTexture->GetResource())
 		};
 		cmdList4->ResourceBarrier(static_cast<UINT>(std::size(restirBarriers)), restirBarriers);
 		DxUtils::TransitionResourceIfNeeded(
@@ -1985,6 +2008,9 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		);
 		DxUtils::TransitionResourceIfNeeded(
 			cmdList4.Get(), restirNormalRoughnessTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+		);
+		DxUtils::TransitionResourceIfNeeded(
+			cmdList4.Get(), restirSpecularHitDistanceTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 		);
 		restirCandidateData->validThisFrame = true;
 		restirCandidateData->frameIndex = frameIndex;
