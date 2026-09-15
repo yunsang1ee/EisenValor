@@ -38,6 +38,7 @@
 #include "Network/LobbyServerSession.h"
 #include "Network/GameServerSession.h"
 #include <TimerGlobal.h>
+#include <fstream>
 
 
 constexpr size_t MAX_LOADSTRING = 100;
@@ -108,6 +109,60 @@ bool RegisterWindowClass(HINSTANCE hInstance)
 	return RegisterClassExW(&wcex);
 }
 
+namespace
+{
+constexpr std::string_view kNetworkConfigPath{"Network/NetworkConfig.json"};
+
+// Network/NetworkConfig.json에서 로비 서버 주소와 포트를 읽어온다.
+bool LoadNetworkConfig(std::string& outIP, uint16& outPort)
+{
+	std::ifstream ifs{kNetworkConfigPath.data()};
+
+	if (!ifs)
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] 파일을 열 수 없습니다: {}\n", kNetworkConfigPath);
+		return false;
+	}
+
+	rapidjson::IStreamWrapper isw{ifs};
+	rapidjson::Document		  doc;
+	doc.ParseStream(isw);
+
+	if (doc.HasParseError())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] JSON 파싱에 실패했습니다.\n");
+		return false;
+	}
+
+	if (!doc.HasMember("LobbyServer") || !doc["LobbyServer"].IsObject())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] LobbyServer 항목이 없습니다.\n");
+		return false;
+	}
+
+	const rapidjson::Value& lobbyServer = doc["LobbyServer"];
+
+	if (!lobbyServer.HasMember("IP") || !lobbyServer["IP"].IsString())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] LobbyServer.IP 항목이 없습니다.\n");
+		return false;
+	}
+
+	if (!lobbyServer.HasMember("Port") || !lobbyServer["Port"].IsUint())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] LobbyServer.Port 항목이 없습니다.\n");
+		return false;
+	}
+
+	outIP = lobbyServer["IP"].GetString();
+	outPort = static_cast<uint16>(lobbyServer["Port"].GetUint());
+
+	DEBUG_LOG_FMT("[NetworkConfig] LobbyServer {}:{}\n", outIP, outPort);
+
+	return true;
+}
+} // namespace
+
 bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd = CreateWindowW(
@@ -120,13 +175,21 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
-	std::string_view ipAddress{"127.0.0.1"};
-	
+	std::string ipAddress{"127.0.0.1"};
+	uint16		port{G_LOBBY_SERVER_PORT};
+
+	if (!LoadNetworkConfig(ipAddress, port))
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] 기본값으로 접속합니다: {}:{}\n", ipAddress, port);
+	}
+
+	G_LOBBY_SERVER_PORT = port;
+
 	#ifdef APPLY_LOBBY_SERVER
-		const uint16 port{G_LOBBY_SERVER_PORT};	// lobby port
+		port = G_LOBBY_SERVER_PORT; // 로비 서버 포트
 		GLOBAL(NetBridge::NetworkGlobal).SetLobbySession(std::make_unique<NetBridge::LobbyServerSession>());
 	#else
-		const uint16 port{G_GAME_SERVER_PORT};	// game server 1st worldThread port
+		port = G_GAME_SERVER_PORT; // 게임 서버 포트
 	#endif
 
 	GLOBAL(NetBridge::NetworkGlobal).SetGameSession(std::make_unique<NetBridge::GameServerSession>());
