@@ -59,7 +59,7 @@ constexpr uint32_t kRestirLinearDepthUavRegister = 4;
 constexpr uint32_t kRestirDiffuseAlbedoUavRegister = 5;
 constexpr uint32_t kRestirSpecularAlbedoUavRegister = 6;
 constexpr uint32_t kRestirNormalRoughnessUavRegister = 7;
-constexpr uint32_t kRestirRayPayloadSizeBytes = 19u * sizeof(uint32_t);
+constexpr uint32_t kRestirRayPayloadSizeBytes = 20u * sizeof(uint32_t);
 static_assert(0u == (RESTIR_CANDIDATE_ALL & RESTIR_EMISSIVE_PROFILE_STAGE_MASK));
 
 const char* GetRestirCandidateProfileName(uint32_t candidateMask)
@@ -1528,7 +1528,14 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	if (input.GetInputDown(VK_F8))
 	{
 		const int32_t profileStep = input.GetInput(VK_SHIFT) ? -1 : 1;
-		if (input.GetInput(VK_CONTROL))
+		if (input.GetInput(VK_MENU))
+		{
+			m_restirPrimarySpp = profileStep > 0
+				? (m_restirPrimarySpp == 4u ? 1u : m_restirPrimarySpp * 2u)
+				: (m_restirPrimarySpp == 1u ? 4u : m_restirPrimarySpp / 2u);
+			DEBUG_LOG_FMT("[ReSTIR] SPP={} (Alt+F8: 1/2/4)\n", m_restirPrimarySpp);
+		}
+		else if (input.GetInput(VK_CONTROL))
 		{
 			constexpr uint32_t profileStages[] = {
 				RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY, RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY,
@@ -1694,10 +1701,11 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 	if (m_restirProfileLogPending)
 	{
 		PROFILE_LOG_FMT(
-			"[ReSTIR.Profile] primarySurface=SHARED candidateMode={} emissiveStage={} render={}x{} emissiveLights={} "
+			"[ReSTIR.Profile] primarySurface=SHARED spp={} candidateMode={} emissiveStage={} render={}x{} "
+			"emissiveLights={} "
 			"emissiveWeightSum={:.6f} animatedBLAS={} totalTLASInstances={} staticTLASInstances={} "
 			"historyGeneration={}\n",
-			GetRestirCandidateProfileName(m_restirCandidateMask),
+			m_restirPrimarySpp, GetRestirCandidateProfileName(m_restirCandidateMask),
 			GetRestirEmissiveProfileStageName(m_restirEmissiveProfileStage), m_width, m_height,
 			restirLightData->emissiveLightCount, restirLightData->emissiveLightWeightSum, m_lastAnimatedBlasCount,
 			m_tlasInstancesScratch.size(), m_staticSceneData.Get().tlasInstances.size(), m_restirHistoryGeneration
@@ -1765,10 +1773,12 @@ void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext*
 		uint32_t frameSeed;
 		uint32_t emissionViewMode;
 		uint32_t environmentMode;
-		uint32_t pad0;
+		uint32_t restirPrimarySpp;
 	};
+	static_assert(sizeof(RaytracingFrameConstants) == 4u * sizeof(uint32_t));
 	RaytracingFrameConstants frameConstants = {
-		m_raytracingFrameSeed++, m_usePhysicalRenderingBaseline ? 1u : 0u, m_useDayEnvironment ? 1u : 0u, 0u
+		m_raytracingFrameSeed++, m_usePhysicalRenderingBaseline ? 1u : 0u, m_useDayEnvironment ? 1u : 0u,
+		m_restirPrimarySpp
 	};
 	cmdList4->SetComputeRoot32BitConstants(DxrRootFrameConstants, 4, &frameConstants, 0);
 

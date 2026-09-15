@@ -366,8 +366,6 @@ void RestirUpdateReservoir(
     float resamplingWeight,
     float randomValue)
 {
-    ++reservoir.sampleCount;
-
     static const float maxFinite = 3.402823466e+38f;
     if (!(resamplingWeight > 0.0f && resamplingWeight < maxFinite))
     {

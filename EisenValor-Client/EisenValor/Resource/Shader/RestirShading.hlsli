@@ -77,7 +77,7 @@ float3 RestirEvalBSDF(
         if (surface.roughness < 0.15f)
         {
             float3 mirrorDirection = reflect(-V, surface.shadingNormal);
-            if (dot(mirrorDirection, L) > 0.999f)
+            if (lobeFlags == RESTIR_BSDF_LOBE_SPECULAR && dot(mirrorDirection, L) > 0.999f)
             {
                 result += FresnelSchlick(NdotV, F0);
             }
@@ -120,7 +120,10 @@ float RestirEvalPdfBSDF(
         if (surface.roughness < 0.15f)
         {
             float3 mirrorDirection = reflect(-V, surface.shadingNormal);
-            pdf += dot(mirrorDirection, L) > 0.999f ? specularProbability : 0.0f;
+            if (lobeFlags == RESTIR_BSDF_LOBE_SPECULAR && dot(mirrorDirection, L) > 0.999f)
+            {
+                pdf += specularProbability;
+            }
         }
         else
         {

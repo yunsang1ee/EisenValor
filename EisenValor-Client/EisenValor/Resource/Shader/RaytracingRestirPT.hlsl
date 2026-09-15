@@ -41,7 +41,7 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
     uint g_frameSeed;
     uint g_emissionViewMode;
     uint g_environmentMode;
-    uint g_frameConstantsPad0;
+    uint g_restirPrimarySpp;
 };
 
 cbuffer RestirCandidateConstants : register(b3, space0)
@@ -66,11 +66,6 @@ SamplerState g_sampler : register(s0, space0);
 #include "RestirShading.hlsli"
 
 static const uint MAX_RECURSION_DEPTH = 6;
-#define RESTIR_PRIMARY_SPP 1
-#if RESTIR_PRIMARY_SPP != 1
-#error Shared-primary reservoir output currently requires one primary sample per pixel.
-#endif
-static const uint SPP = RESTIR_PRIMARY_SPP;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 static const float PT_OUTPUT_EXPOSURE = 0.75f;
 static const float PT_BLOOM_THRESHOLD = 1.0f;
@@ -559,17 +554,18 @@ void RestirUpdateReservoirFromPayload(inout RestirReservoir reservoir, RayPayloa
 }
 
 
-uint RestirPrimaryReservoirSeed(uint pixelIndex)
+uint RestirPrimaryReservoirSeed(uint pixelIndex, uint primaryTrialIndex)
 {
     uint width = DispatchRaysDimensions().x;
     uint y = pixelIndex / width;
-    return pixelIndex * 9781u ^ y * 6271u ^ width * 7919u ^ (g_frameSeed + 1u) * 104729u ^ 124623u;
+    return pixelIndex * 9781u ^ y * 6271u ^ width * 7919u ^ (g_frameSeed + 1u) * 104729u ^
+           primaryTrialIndex * 0x9e3779b9u ^ 124623u;
 }
 
 void RestirWritePathOnlyReservoir(RayPayload payload)
 {
-    RestirReservoir reservoir = RestirMakeEmptyReservoir();
-    uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex);
+    RestirReservoir reservoir = g_restirReservoirInitial[payload.pixelIndex];
+    uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex, payload.primaryTrialIndex);
     if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
     {
         RestirUpdateReservoirFromPayload(reservoir, payload, reservoirSeed);
@@ -792,6 +788,7 @@ void RestirTraceBsdfPath(
     nextRay.TMax = RAY_TMAX;
 
     RayPayload child = MakeDefaultRayPayload < RayPayload > (payload.recursionDepth + 1);
+    child.primaryTrialIndex = payload.primaryTrialIndex;
 
     TraceRay(
         g_scene,
@@ -828,15 +825,25 @@ void RestirTraceBsdfPath(
         payload.rcSourcePdfAfter = pdf;
     }
 
-    bool applyEmissiveHitMis =
+    bool unresolvedEmissiveHit =
         0u != (child.pathFlags & RESTIR_PATH_FLAG_EMISSIVE_HIT) &&
-        0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED) &&
-        child.lightPdf > 0.0f;
+        0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED);
+    bool applyEmissiveHitMis = unresolvedEmissiveHit &&
+        payload.recursionDepth == 0 && !sampledDelta &&
+        RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) && child.lightPdf > 0.0f;
     if (applyEmissiveHitMis)
     {
-        float emissiveHitMisWeight = pdf / max(pdf + child.lightPdf, EPSILON);
+        float competingBsdfPdf = RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_ALL);
+        float emissiveHitMisWeight = competingBsdfPdf / max(competingBsdfPdf + child.lightPdf, EPSILON);
         child.color *= emissiveHitMisWeight;
+    }
+    if (unresolvedEmissiveHit)
+    {
         child.pathFlags |= RESTIR_PATH_FLAG_MIS_APPLIED;
+        if (!applyEmissiveHitMis)
+        {
+            child.lightPdf = 0.0f;
+        }
     }
 
     payload.color = emissive + weight * child.color;
@@ -866,8 +873,14 @@ void RayGenMain()
 
     float3 finalColor = 0.0f.xxx;
     uint primaryHitFlags = 0u;
+    uint completedPrimaryTrials = 0u;
+    uint primarySpp = clamp(g_restirPrimarySpp, 1u, 4u);
+    if (0u != g_restirCandidateMask)
+    {
+        g_restirReservoirInitial[pixelIndex] = RestirMakeEmptyReservoir();
+    }
 
-    for (uint bounce = 0; bounce < SPP; ++bounce)
+    for (uint trialIndex = 0; trialIndex < primarySpp; ++trialIndex)
     {
         float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
         ndc.y = -ndc.y;
@@ -884,6 +897,7 @@ void RayGenMain()
 
         RayPayload payload = MakeDefaultRayPayload < RayPayload > (0);
         payload.pixelIndex = pixelIndex;
+        payload.primaryTrialIndex = trialIndex;
 
         TraceRay(g_scene,
                  RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
@@ -891,14 +905,19 @@ void RayGenMain()
                  0, 0, 0,
                  ray,
                  payload);
+        ++completedPrimaryTrials;
         finalColor += payload.color.rgb;
         primaryHitFlags |= payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID;
 
     }
-    finalColor /= SPP;
+    finalColor /= primarySpp;
 
     if (0u != g_restirCandidateMask)
     {
+        RestirReservoir reservoir = g_restirReservoirInitial[pixelIndex];
+        reservoir.sampleCount += completedPrimaryTrials;
+        g_restirReservoirInitial[pixelIndex] = reservoir;
+
         if (0u == (primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
         {
             RestirWriteInvalidPrimaryOutputs(pixelIndex);
@@ -1025,6 +1044,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         InstanceID() * 0xc2b2ae35u ^
         PrimitiveIndex() * 0x85ebca6bu ^
         payload.recursionDepth * 0x27d4eb2du ^
+        payload.primaryTrialIndex * 0xd1b54a35u ^
         (g_frameSeed + 1u) * 0x165667b1u ^
         (asuint(hitPos.x) + asuint(hitPos.y) * 0x9e3779b9u + asuint(hitPos.z));
     rngSeed ^= rngSeed >> 16;
@@ -1088,8 +1108,8 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 
     if (payload.recursionDepth == 0 && g_restirCandidateMask != 0u)
     {
-        RestirReservoir reservoir = RestirMakeEmptyReservoir();
-        uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex);
+        RestirReservoir reservoir = g_restirReservoirInitial[payload.pixelIndex];
+        uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex, payload.primaryTrialIndex);
         if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
         {
             RestirUpdateReservoirFromPayload(reservoir, payload, reservoirSeed);

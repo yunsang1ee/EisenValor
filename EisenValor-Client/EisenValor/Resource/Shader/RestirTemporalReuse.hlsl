@@ -375,7 +375,7 @@ bool RestirEvaluateReconnectionShift(
                           max(destinationLightPdf + destinationPdfBefore, EPSILON);
         result.contribution = shiftedBsdfBefore * rcIrradiance * misWeight /
                               max(destinationLightPdf, EPSILON);
-        result.jacobian = geometryRatio;
+        result.jacobian = 1.0f;
         result.destinationLightPdf = destinationLightPdf;
     }
     else if (RestirIsRcFinal(sourceSample))
@@ -390,8 +390,10 @@ bool RestirEvaluateReconnectionShift(
         if (sourceLightPdf > 0.0f)
         {
             destinationLightPdf = sourceLightPdf * sourceGeometry / currentGeometry;
-            misWeight = destinationPdfBefore /
-                        max(destinationPdfBefore + destinationLightPdf, EPSILON);
+            float competingBsdfPdf = RestirEvalPdfBSDF(
+                currentSurface, primaryView, connectionDirection, RESTIR_BSDF_LOBE_ALL);
+            misWeight = competingBsdfPdf /
+                        max(competingBsdfPdf + destinationLightPdf, EPSILON);
         }
 
         result.contribution = shiftedBsdfBefore * rcIrradiance * misWeight /
