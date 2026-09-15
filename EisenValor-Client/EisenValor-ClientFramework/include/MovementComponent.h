@@ -28,7 +28,9 @@ public:
 	void  SetMoveSpeed(float speed) { m_moveSpeed = speed; }
 	void  SetMaxSpeed(float speed) { m_maxSpeed = speed; }
 	void  SetAcceleration(float accel) { m_acceleration = accel; }
+	void  SetCollisionRadius(float radius) { m_collisionRadius = radius; }
 	float GetMoveSpeed() const { return m_moveSpeed; }
+	float GetCollisionRadius() const { return m_collisionRadius; }
 
 	// 입력 상태 설정
 	void SetInputForward(bool pressed) { m_isMovingForward = pressed; }
@@ -62,6 +64,7 @@ private:
 	float m_moveSpeed = 5.0f;
 	float m_maxSpeed = 10.0f;
 	float m_acceleration = 10.0f;
+	float m_collisionRadius = 0.6f;
 
 	// 현재 속도
 	DX::XMFLOAT3 m_velocity{0.0f, 0.0f, 0.0f};

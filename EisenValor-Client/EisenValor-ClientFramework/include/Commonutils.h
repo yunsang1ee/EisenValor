@@ -67,11 +67,11 @@ inline std::string WideToUtf8(const wchar_t* wstr)
 
 #pragma region DebugHelpers
 
-#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG) || defined(PROFILE_BUILD)
 #include <fstream>
 #include <iostream>
 #include <format>
-#include <mutex>	
+#include <mutex>
 #include <windows.h>
 namespace Utils
 {
@@ -111,9 +111,18 @@ inline void DebugLogFmt(std::format_string<Args...> fmt, Args&&... args)
 	LogToFile(msg);
 }
 } // namespace Utils
+#endif
+
+#if defined(_DEBUG) || defined(ENABLE_DEBUG_LOG)
 #define DEBUG_LOG_FMT(...) Utils::DebugLogFmt(__VA_ARGS__)
 #else
 #define DEBUG_LOG_FMT(...) ((void)0)
+#endif
+
+#if defined(PROFILE_BUILD)
+#define PROFILE_LOG_FMT(...) Utils::DebugLogFmt(__VA_ARGS__)
+#else
+#define PROFILE_LOG_FMT(...) ((void)0)
 #endif
 
 #if ENABLE_GRAPHICS_DEBUG_LOG

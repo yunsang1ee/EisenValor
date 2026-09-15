@@ -1,5 +1,8 @@
 #include "stdafxClient.h"
 #include "RestirTemporalReusePass.h"
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+#include "RestirDebugGlobal.h"
+#endif
 #include "CameraRenderData.h"
 #include "DxBuffer.h"
 #include "DxCommandContext.h"
@@ -143,6 +146,16 @@ void RestirTemporalReusePass::Execute(DxFrameResource* frame, Scene* scene, Rend
 		return;
 	}
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto& debug = GLOBAL(RestirDebugGlobal);
+	if (debug.IsOverrideActive() && !debug.UsesTemporalReuse())
+	{
+		InvalidateHistory();
+		PublishInitialReservoir(renderContext, candidateData, &finalReservoirData);
+		return;
+	}
+#endif
+
 	if (nullptr != cameraData)
 	{
 		if (ShouldResetHistory(*cameraData, *candidateData))
@@ -236,9 +249,16 @@ void RestirTemporalReusePass::CreatePipeline()
 	auto& device = GLOBAL(DxDeviceGlobal);
 	auto& shaderCompiler = GLOBAL(DxShaderCompilerGlobal);
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	const std::pair<std::wstring, std::wstring> shaderDefines[] = {{L"RESTIR_ENABLE_DEBUG_VIEWS", L"1"}};
+	auto csBlob = shaderCompiler.CompileShaderFromFile(
+		L"RestirTemporalReuse", L"Resource/Shader/RestirTemporalReuse.hlsl", "CSMain", "cs_6_6", shaderDefines
+	);
+#else
 	auto csBlob = shaderCompiler.CompileShaderFromFile(
 		L"RestirTemporalReuse", L"Resource/Shader/RestirTemporalReuse.hlsl", "CSMain", "cs_6_6"
 	);
+#endif
 	if (!csBlob)
 	{
 		GRAPHICS_LOG_FMT("[RestirTemporalReusePass] ERROR: Failed to compile RestirTemporalReuse.hlsl\n");

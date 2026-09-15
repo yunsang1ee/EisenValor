@@ -53,6 +53,9 @@ private:
 	float m_leftWeight = 0.0f;
 	float m_rightWeight = 0.0f;
 	float m_pelvisOffsetY = 0.0f;
+	float m_visualGroundOffsetY = 0.0f;
+	float m_visualGroundTargetOffsetY = 0.0f;
+	float m_visualGroundSampleTimer = 0.0f;
 	float m_prevLeftTargetGap = 0.0f;
 	float m_prevRightTargetGap = 0.0f;
 	bool  m_hasPreviousTargetGap = false;

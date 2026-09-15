@@ -100,10 +100,12 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	}
 	if (raytracingOutput)
 	{
-		if (raytracingOutput->bypassToneMap)
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+		if (raytracingOutput->bypassDlss)
 		{
-			missingInputMask |= DlssMissingInputMask::BypassToneMap;
+			missingInputMask |= DlssMissingInputMask::BypassRequested;
 		}
+#endif
 		if (nullptr == raytracingOutput->outputTexture)
 		{
 			missingInputMask |= DlssMissingInputMask::NoColorInput;

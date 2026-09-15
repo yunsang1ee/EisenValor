@@ -31,6 +31,7 @@ public:
 		pendingLoadsActive = false;
 		topologyHash = 0;
 		transformHash = 0;
+		restirHistorySignatureSeed = 0;
 		emissiveLightWeightSum = 0.0f;
 
 		std::vector<InstanceData>().swap(instances);
@@ -54,6 +55,7 @@ public:
 	bool	 pendingLoadsActive = false;
 	uint64_t topologyHash = 0;
 	uint64_t transformHash = 0;
+	uint64_t restirHistorySignatureSeed = 0;
 	float	 emissiveLightWeightSum = 0.0f;
 
 	std::vector<InstanceData>									   instances;

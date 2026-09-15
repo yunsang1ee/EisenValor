@@ -17,6 +17,8 @@ public:
 	void OnUpdate(float deltaTime);
 	void OnDestroy() override;
 
+	bool IsUIVisible() const { return m_isUIVisible; }
+
 private:
 	// UI 루트 및 하위 요소 핸들
 	HandleOf<GameObject> m_rootUI;
@@ -43,6 +45,7 @@ private:
 
 	bool m_isPlayer = false;
 	bool m_flagInitialized = false; // 깃발 초기화 여부
+	bool m_isUIVisible = false;
 
 	// Order 관리용 ImageComponent (핸들 + 기본 Order)
 	std::vector<std::pair<HandleOf<ImageUIComponent>, int32_t>> m_managedImages;

@@ -139,7 +139,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;ENABLE_RENDER_DEBUG_VIEWS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -179,7 +179,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;ENABLE_RENDER_DEBUG_VIEWS;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -245,7 +245,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_RENDER_DEBUG_VIEWS;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -322,7 +322,6 @@ exit /b 0</Command>
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
     <ClInclude Include="Component\SocketComponent.h" />
     <ClInclude Include="Component\StaminaComponent.h" />
-    <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="Component\World\WorldSceneControllerComponent.h" />
@@ -368,6 +367,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
     <ClInclude Include="RenderPass\DlssUpscalePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\RestirDebugGlobal.h" />
     <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h" />
     <ClInclude Include="RenderPass\RestirTemporalReusePass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />
@@ -381,8 +381,9 @@ exit /b 0</Command>
     <ClInclude Include="Scene\StartScene.h" />
     <ClInclude Include="Scene\WorldScene.h" />
     <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
-    <ClInclude Include="stdafxClient.h" />
-    <ClInclude Include="Component\BattleUIControllerComponent.h" />
+	<ClInclude Include="stdafxClient.h" />
+	<ClInclude Include="Component\OptionsMenuComponent.h" />
+	<ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="Util\AnimationLoader.h" />
     <ClInclude Include="Util\CameraConfig.h" />
     <ClInclude Include="Util\GameConstants.h" />
@@ -401,10 +402,10 @@ exit /b 0</Command>
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
     <ClCompile Include="Component\SocketComponent.cpp" />
     <ClCompile Include="Component\StaminaComponent.cpp" />
-    <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
-    <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
-    <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
+	<ClCompile Include="Component\VitalUIControllerComponent.cpp" />
+	<ClCompile Include="Component\OptionsMenuComponent.cpp" />
+	<ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
     <ClCompile Include="Component\World\WorldLoadingControllerComponent.cpp" />
     <ClCompile Include="Component\World\QuestProgressComponent.cpp" />
     <ClCompile Include="Component\World\QuestUIComponent.cpp" />

@@ -10,9 +10,11 @@ struct PSInput
 Texture2D g_textures[] : register(t0, space0);
 SamplerState g_sampler : register(s0);
 
+static const uint kNoTextureIndex = 0xffffffffu;
+
 float4 main(PSInput input) : SV_TARGET
 {
-    if (input.textureIndex == 0)
+    if (input.textureIndex == kNoTextureIndex)
     {
         // 텍스처 없음 - 단색 렌더링
         return input.color;

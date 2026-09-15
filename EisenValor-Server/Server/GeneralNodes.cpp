@@ -143,7 +143,7 @@ bool GameServer::Contents::IsTargetInAttackRange::Check(const float dt)
 	const auto owner{ GetOwner() };
 	const auto target{ owner->GetTarget() };
 	if(false == IsValidObj(target)) return false;
-	constexpr float range{ 5.f };
+	constexpr float range{ 3.f };
 	return owner->IsTargetInRange(target, range * range);
 }
 

@@ -23,7 +23,9 @@ inline constexpr uint32_t None = 0u;
 inline constexpr uint32_t NoRaytracingOutput = 1u << 0u;
 inline constexpr uint32_t NoCandidateData = 1u << 1u;
 inline constexpr uint32_t NoCameraData = 1u << 2u;
-inline constexpr uint32_t BypassToneMap = 1u << 3u;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+inline constexpr uint32_t BypassRequested = 1u << 3u;
+#endif
 inline constexpr uint32_t CandidateInvalid = 1u << 4u;
 inline constexpr uint32_t NoColorInput = 1u << 5u;
 inline constexpr uint32_t NoColorOutput = 1u << 6u;

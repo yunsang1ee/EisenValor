@@ -1,5 +1,6 @@
 #include "stdafxClient.h"
 #include "BattleUIControllerComponent.h"
+#include "OptionsMenuComponent.h"
 #include "HealthComponent.h"
 #include "Scene.h"
 #include "SceneGlobal.h"
@@ -37,7 +38,7 @@ uint64 s_lockedTargetID = 0;
 // };
 
 // LockOnTargetFsmLogState s_lastLockOnTargetFsmLog;
-}
+} // namespace
 
 void BattleUIControllerComponent::SetLockedTargetID(uint64 targetID)
 {
@@ -92,7 +93,10 @@ void BattleUIControllerComponent::OnStart()
 			[ownerHandle](GENERAL_ATTACK_DIR_TYPE dir, std::optional<GENERAL_ATTACK_TYPE> type)
 			{
 				auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
-				if (!scene) return;
+				if (!scene)
+				{
+					return;
+				}
 
 				if (auto* ownerObj = scene->TryGetGameObject(ownerHandle))
 				{
@@ -114,6 +118,11 @@ void BattleUIControllerComponent::OnStart()
 
 void BattleUIControllerComponent::OnUpdate(float deltaTime)
 {
+	if (OptionsMenuComponent::IsOpenInActiveScene())
+	{
+		return;
+	}
+
 	// 지연 초기화: 모든 UI 핸들 유효 시 리스너 등록
 	if (!m_isUIInitialized)
 	{
@@ -195,14 +204,13 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			return;
 
 		GENERAL_ATTACK_DIR_TYPE visibleDir = m_currentSelectedDir;
-		bool lockToAttackDir = false;
+		bool					lockToAttackDir = false;
 
 		if (auto* fsm = owner->GetComponent<FSMComponent>())
 		{
 			uint8_t state = fsm->GetCurStateType();
-			lockToAttackDir =
-				state == static_cast<uint8_t>(PLAYER_STATE_TYPE_PRE_DELAY) ||
-				state == static_cast<uint8_t>(PLAYER_STATE_TYPE_ATTACK);
+			lockToAttackDir = state == static_cast<uint8_t>(PLAYER_STATE_TYPE_PRE_DELAY) ||
+							  state == static_cast<uint8_t>(PLAYER_STATE_TYPE_ATTACK);
 			visibleDir = static_cast<GENERAL_ATTACK_DIR_TYPE>(fsm->GetCurAttackDir());
 		}
 
@@ -279,9 +287,7 @@ void BattleUIControllerComponent::OnUpdate(float deltaTime)
 			// Alt 키: 카메라 락온 타겟 변경 요청
 			if (GLOBAL(InputGlobal).GetInputDown(VK_MENU))
 			{
-				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(
-					static_cast<uint32>(GetLockedTargetID())
-				);
+				auto pb = NetBridge::C2S::Make_CS_CHANGE_CAMERA_TARGET_PACKET(static_cast<uint32>(GetLockedTargetID()));
 				GLOBAL(NetBridge::NetworkGlobal).Send(std::move(pb));
 			}
 
@@ -324,8 +330,8 @@ void BattleUIControllerComponent::OnStanceChanged(uint8_t stance)
 		UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
 	}
 
-	//DEBUG_LOG_FMT("[BattleUI] OnStanceChanged Called! New Stance: {}\n", static_cast<int>(stanceType));
-	//ToggleUI(stanceType == GENERAL_STANCE_TYPE_COMBAT);
+	// DEBUG_LOG_FMT("[BattleUI] OnStanceChanged Called! New Stance: {}\n", static_cast<int>(stanceType));
+	// ToggleUI(stanceType == GENERAL_STANCE_TYPE_COMBAT);
 }
 
 GENERAL_STANCE_TYPE BattleUIControllerComponent::GetStance() const
@@ -395,7 +401,7 @@ void BattleUIControllerComponent::CreateAndSetupUI()
 	m_hoverTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
 	m_lightAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_hovering.evtex");
 	m_strongAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_strong.evtex");
-	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\area.evtex");
+	m_areaAttackTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\S_area.evtex");
 	m_disarmTexResource = resGlobal.Load<TextureResource>(L"Resource\\Texture\\disarm.evtex");
 
 	// 3. 자식 UI 오브젝트들 생성
@@ -804,7 +810,7 @@ void BattleUIControllerComponent::ProcessMouseInput()
 	{
 		m_accumulatedDeltaX = 0.0f;
 		m_accumulatedDeltaY = 0.0f;
-		//UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
+		// UpdateUISelection(GENERAL_ATTACK_DIR_TYPE_NONE, std::nullopt);
 		return;
 	}
 
@@ -1006,20 +1012,20 @@ void BattleUIControllerComponent::NotifyListeners(GENERAL_ATTACK_DIR_TYPE dir, s
 	//	DEBUG_LOG_FMT("[BattleUI Notify] Calling! This: {}, Listeners: {}\n", (void*)this, m_listeners.size());
 	// }
 
-	for (auto it = m_listeners.begin(); it != m_listeners.end();)
+	const auto listeners = m_listeners;
+	for (const auto& listener : listeners)
 	{
 		// 관찰자(UI 오브젝트 등)가 여전히 살아있는지 핸들 체크
-		if (scene->TryGetGameObject(it->observerHandle))
+		if (scene->TryGetGameObject(listener.observerHandle))
 		{
-			it->callback(dir, type);
-			++it;
-		}
-		else
-		{
-			// 죽은 관찰자는 목록에서 제거 (Lazy Removal)
-			it = m_listeners.erase(it);
+			listener.callback(dir, type);
 		}
 	}
+
+	std::erase_if(
+		m_listeners,
+		[scene](const StanceChangeListener& listener) { return !scene->TryGetGameObject(listener.observerHandle); }
+	);
 }
 
 void BattleUIControllerComponent::OnGuardDirectionConfirmed(

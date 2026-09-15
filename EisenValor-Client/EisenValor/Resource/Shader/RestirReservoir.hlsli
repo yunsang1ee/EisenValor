@@ -436,19 +436,25 @@ float RestirContributionWeightFromReservoir(RestirReservoir reservoir)
                : 0.0f;
 }
 
-float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, uint debugView)
+#if RESTIR_ENABLE_DEBUG_VIEWS
+float3 RestirDebugColor(RestirReservoir reservoir, uint debugView)
 {
     bool validReservoir = 0u != (reservoir.flags & RESTIR_RESERVOIR_VALID);
-    bool validCurrentHit = RestirIsValidPrimaryHit(currentHit);
     float3 invalidColor = float3(0.35f, 0.0f, 0.0f);
 
     if (1u == debugView)
     {
-        return validReservoir ? reservoir.sample.contributionTarget.rgb : invalidColor;
+        return validReservoir ? float3(0.1f, 1.0f, 0.2f) : invalidColor;
     }
     if (2u == debugView)
     {
-        return validReservoir ? float3(0.1f, 1.0f, 0.2f) : invalidColor;
+        if (!validReservoir)
+        {
+            return invalidColor;
+        }
+        return RestirGetSampleShiftKind(reservoir.sample) == RESTIR_SHIFT_RECONNECTION
+                   ? float3(0.1f, 0.75f, 1.0f)
+                   : float3(1.0f, 0.65f, 0.1f);
     }
     if (3u == debugView)
     {
@@ -461,33 +467,6 @@ float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, 
     }
     if (4u == debugView)
     {
-        return validCurrentHit ? RestirUnpackNormalOct16(currentHit.packedNormal) * 0.5f + 0.5f : invalidColor;
-    }
-    if (5u == debugView)
-    {
-        return validCurrentHit ? RestirUnpackNormalOct16(currentHit.packedNormal) * 0.5f + 0.5f : invalidColor;
-    }
-    if (6u == debugView)
-    {
-        if (!validReservoir || !validCurrentHit)
-        {
-            return invalidColor;
-        }
-        float roughness = RestirGetPrimaryHitRoughness(currentHit);
-        return float3(roughness, reservoir.sampleCount > 0u ? 1.0f : 0.0f, 0.0f);
-    }
-    if (7u == debugView)
-    {
-        if (!validCurrentHit)
-        {
-            return invalidColor;
-        }
-        float roughness = RestirGetPrimaryHitRoughness(currentHit);
-        return float3(roughness, 1.0f, 0.0f);
-    }
-
-    if (8u == debugView)
-    {
         if (!validReservoir)
         {
             return invalidColor;
@@ -495,8 +474,57 @@ float3 RestirDebugColor(RestirReservoir reservoir, RestirPrimaryHit currentHit, 
         float m = saturate(float(reservoir.sampleCount) / 21.0f);
         return float3(m, m, m);
     }
+    if (5u == debugView)
+    {
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_ACCEPTED))
+        {
+            return float3(0.1f, 1.0f, 0.2f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_ATTEMPTED))
+        {
+            return float3(1.0f, 0.1f, 0.1f);
+        }
+        return float3(0.25f, 0.25f, 0.25f);
+    }
+    if (6u == debugView)
+    {
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_ACCEPTED))
+        {
+            return float3(0.1f, 1.0f, 0.2f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_NO_HISTORY))
+        {
+            return float3(0.25f, 0.25f, 0.25f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_CURRENT_SURFACE))
+        {
+            return float3(1.0f, 0.0f, 1.0f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_REPROJECTION_BOUNDS))
+        {
+            return float3(1.0f, 1.0f, 0.0f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_SURFACE_MISMATCH))
+        {
+            return float3(1.0f, 0.1f, 0.1f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_PREVIOUS_RESERVOIR))
+        {
+            return float3(0.0f, 1.0f, 1.0f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_RECONNECTION))
+        {
+            return float3(0.2f, 0.3f, 1.0f);
+        }
+        if (0u != (reservoir.flags & RESTIR_TEMPORAL_REJECT_NO_MOTION))
+        {
+            return float3(0.0f, 0.5f, 1.0f);
+        }
+        return 0.0f.xxx;
+    }
 
     return 0.0f.xxx;
 }
+#endif
 
 #endif // RESTIR_RESERVOIR_HLSLI

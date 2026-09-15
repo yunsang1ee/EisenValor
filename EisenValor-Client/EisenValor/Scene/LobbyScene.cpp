@@ -5,6 +5,7 @@
 #include "ButtonUIComponent.h"
 #include "Component/Lobby/LobbyClientState.h"
 #include "Component/Lobby/LobbySceneControllerComponent.h"
+#include "Component/OptionsMenuComponent.h"
 #include "ImageUIComponent.h"
 #include "NetworkGlobal.h"
 #include "Packets/C2SPackets.h"
@@ -16,7 +17,7 @@
 
 void LobbyScene::OnRegisterCustomComponents()
 {
-	RegisterComponent<LobbySceneControllerComponent>();
+	RegisterComponents<LobbySceneControllerComponent, OptionsMenuComponent>();
 }
 
 void LobbyScene::OnStartImpl()
@@ -159,9 +160,10 @@ void LobbyScene::OnStartImpl()
 						button->SetOnHover(
 							[]()
 							{
-								GLOBAL(AudioGlobal).Play2D(
-									L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
-								);
+								GLOBAL(AudioGlobal)
+									.Play2D(
+										L"Resource/Sounds/click.wav", AudioBus::UI, false, AudioBalance::kUIButtonVolume
+									);
 							}
 						);
 						button->SetOnClick(
@@ -237,6 +239,10 @@ void LobbyScene::OnStartImpl()
 	ReserveGameObject(
 		"LobbySceneController", std::nullopt,
 		[this](GameObject* obj) { CreateComponent<LobbySceneControllerComponent>(obj->GetHandle()); }
+	);
+	ReserveGameObject(
+		"OptionsMenuController", std::nullopt,
+		[this](GameObject* obj) { CreateComponent<OptionsMenuComponent>(obj->GetHandle()); }
 	);
 }
 

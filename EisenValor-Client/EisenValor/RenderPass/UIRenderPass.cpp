@@ -19,6 +19,11 @@
 #include "DxTexture.h"
 #include <algorithm>
 
+namespace
+{
+constexpr uint32_t kNoTextureIndex = ~0u;
+}
+
 UIRenderPass::UIRenderPass() {}
 
 UIRenderPass::~UIRenderPass() {}
@@ -365,7 +370,7 @@ void UIRenderPass::RenderAllUIInstanced(DxFrameResource* frame, Scene* scene)
 				}
 				else
 				{
-					inst.textureIndex = 0;
+					inst.textureIndex = kNoTextureIndex;
 				}
 
 				instanceBufferData.push_back(inst);

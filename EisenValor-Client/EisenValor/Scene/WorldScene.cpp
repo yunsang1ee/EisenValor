@@ -11,10 +11,10 @@
 #include "Component/StaminaComponent.h"
 #include "Component/FSM/FSMComponent.h"
 #include "Component/FSM/StatePool.h"
-#include "Component/StressTestComponent.h"
 #include "Component/SocketComponent.h"
 #include "Component/AttackRangeDebugComponent.h"
 #include "Component/FootIKComponent.h"
+#include "Component/OptionsMenuComponent.h"
 #include "Component/World/WorldSceneControllerComponent.h"
 #include "StreamlineGlobal.h"
 #include "Component/World/WorldLoadingControllerComponent.h"
@@ -23,6 +23,7 @@
 
 // Engine
 #include "ImageUIComponent.h"
+#include "InputGlobal.h"
 #include "ButtonUIComponent.h"
 #include "RectTransformComponent.h"
 #include "TextUIComponent.h"
@@ -93,9 +94,9 @@ void WorldScene::OnRegisterCustomComponents()
 {
 	RegisterComponents<
 		PlayerControllerComponent, HealthComponent, BattleUIControllerComponent, TeamComponent,
-		VitalUIControllerComponent, StaminaComponent, FSMComponent, StressTestComponent, SocketComponent,
-		AttackRangeDebugComponent, WorldSceneControllerComponent, FootIKComponent, WorldLoadingControllerComponent,
-		QuestUIComponent, QuestProgressComponent>();
+		VitalUIControllerComponent, StaminaComponent, FSMComponent, SocketComponent, AttackRangeDebugComponent,
+		WorldSceneControllerComponent, OccupationZoneRegistrationComponent, FootIKComponent,
+		WorldLoadingControllerComponent, QuestUIComponent, QuestProgressComponent, OptionsMenuComponent>();
 	DEBUG_LOG_FMT("[WorldScene] Custom components registered\n");
 }
 
@@ -209,6 +210,11 @@ void WorldScene::OnStartImpl()
 				obj->GetHandle(), [](WorldSceneControllerComponent* login) {}
 			);
 		}
+	);
+
+	ReserveGameObject(
+		"OptionsMenuController", std::nullopt,
+		[this](GameObject* obj) { CreateComponent<OptionsMenuComponent>(obj->GetHandle()); }
 	);
 
 	/*
@@ -588,6 +594,7 @@ void WorldScene::CreateSceneObjects()
 
 void WorldScene::OnEndImpl()
 {
+	GLOBAL(InputGlobal).SetMouseLocked(false);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	DEBUG_LOG_FMT("[WorldScene] OnEnd called\n");
