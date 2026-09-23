@@ -34,6 +34,7 @@ struct StreamlineEvaluateDesc
 	ID3D12Resource*			   diffuseAlbedo = nullptr;
 	ID3D12Resource*			   specularAlbedo = nullptr;
 	ID3D12Resource*			   normalRoughness = nullptr;
+	ID3D12Resource*			   specularHitDistance = nullptr;
 	const CameraRenderData*	   camera = nullptr;
 	uint32_t				   frameIndex = 0;
 	uint32_t				   renderWidth = 0;

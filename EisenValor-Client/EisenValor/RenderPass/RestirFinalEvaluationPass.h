@@ -1,6 +1,9 @@
 #pragma once
 #include <DxPipelineState.h>
 #include <IRenderPass.h>
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+#include "RestirHdrCapture.h"
+#endif
 
 class RestirFinalEvaluationPass : public IRenderPass
 {
@@ -19,6 +22,9 @@ private:
 	void CreatePipeline();
 
 private:
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	RestirHdrCapture m_hdrCapture;
+#endif
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	DxPipelineState				m_pipelineState;
 	bool						m_initialized = false;

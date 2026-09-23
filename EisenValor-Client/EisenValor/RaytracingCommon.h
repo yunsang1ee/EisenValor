@@ -18,7 +18,7 @@
 #define RAY_FLOAT4 float4
 #define RAY_FLOAT3 float3
 #define RAY_FLOAT2 float2
-#define RAY_MATRIX float4x4
+#define RAY_MATRIX row_major float4x4
 #define RAY_UINT uint
 #endif
 
@@ -222,9 +222,9 @@ struct RestirTemporalConstants
 	float	   shadingNormalStrength;
 	RAY_UINT   pad2;
 	RAY_FLOAT3 cameraPosition;
-	float	   pad3;
+	float	   jitterDeltaPixelsX;
 	RAY_FLOAT3 previousCameraPosition;
-	float	   pad4;
+	float	   jitterDeltaPixelsY;
 };
 
 struct RestirPrimaryHit
