@@ -49,7 +49,7 @@ bool LobbyServer::ServerManager::Init()
 		return false;
 	}
 
-	if(false == MANAGER(DBConnectionPool)->Connect(MANAGER(LobbyServerEngine::LobbyServerEngineCore)->GetWorkerThreadCount(), L"DSN=EisenValor-DB_ODBC;Trusted_Connection=yes;")) {
+	if(false == MANAGER(DBConnectionPool)->Connect(MANAGER(LobbyServerEngine::LobbyServerEngineCore)->GetWorkerThreadCount(), L"DSN=EisenValor-DB_ODBC;Database=EisenValor-DB;Trusted_Connection=yes;")) {
 		LOG_ERROR("DBConnectionPool Connect Failed");
 		return false;
 	}
