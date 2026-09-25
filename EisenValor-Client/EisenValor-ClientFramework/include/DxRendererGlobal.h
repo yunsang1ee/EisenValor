@@ -10,8 +10,6 @@ class Scene;
 class DxFrameResource;
 class DxSwapChain;
 class IRenderPass;
-
-// 우선순위 배정
 enum class RenderPassPriority : int32_t
 {
 	High = 0,
@@ -52,6 +50,12 @@ public:
 	void		 OnResize(uint32_t width, uint32_t height);
 
 	void ClearAllPasses();
+	void ToggleDebugCameraFreeze()
+	{
+		m_debugCameraFrozen = !m_debugCameraFrozen;
+		m_debugCameraValid = false;
+	}
+	bool IsDebugCameraFrozen() const { return m_debugCameraFrozen; }
 
 	DxFrameResource*	 GetCurrentFrame() const;
 	const RenderContext* GetRenderContext() const { return &m_renderContext; }
@@ -85,6 +89,9 @@ private:
 		RenderPassPriority			 priority;
 	};
 	std::vector<RenderPassEntry> m_renderPasses;
-	// 더티 플래그
 	bool m_renderPassesDirty = false;
+	bool			 m_debugCameraFrozen = false;
+	bool			 m_debugCameraValid = false;
+	Scene*			 m_debugCameraScene = nullptr;
+	CameraRenderData m_debugCameraSnapshot{};
 };

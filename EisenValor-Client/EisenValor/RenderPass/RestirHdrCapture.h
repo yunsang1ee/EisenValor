@@ -9,6 +9,7 @@
 #include <CameraRenderData.h>
 #include <DirectXPackedVector.h>
 #include <array>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstring>
@@ -30,14 +31,25 @@ class RestirHdrCapture
 	};
 
 public:
+	void PollCompleted() { Poll(); }
 	void Cancel()
 	{
 		m_active = false;
-		GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"FAILED", m_received);
+		GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"FAILED", m_received, m_targetFrames);
 	}
 
-	void Execute(DxFrameResource* frame, DxTexture* texture, const CameraRenderData* camera,
-		uint64_t request, uint64_t revision, uint64_t signature, const char* source, uint32_t spp, bool allowed)
+	void Execute(
+		DxFrameResource*		frame,
+		DxTexture*				texture,
+		const CameraRenderData* camera,
+		uint64_t				request,
+		uint64_t				revision,
+		uint64_t				signature,
+		const char*				source,
+		uint32_t				spp,
+		bool					allowed,
+		bool					rrSnapshot = false
+	)
 	{
 		if (m_active && (!allowed || !camera || revision != m_revision || signature != m_signature ||
 			texture->GetWidth() != m_width || texture->GetHeight() != m_height ||
@@ -46,7 +58,7 @@ public:
 		{
 			DEBUG_LOG_FMT("[ReSTIR.Capture] cancelled: camera, mode, scene, or settings changed.\n");
 			m_active = false;
-			GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CANCELLED: SCENE CHANGED", m_received);
+			GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CANCELLED: SCENE CHANGED", m_received, m_targetFrames);
 		}
 		Poll();
 		if (request != m_request)
@@ -55,6 +67,7 @@ public:
 			m_active = false;
 			if (allowed && camera && texture->GetFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT)
 			{
+				m_targetFrames = rrSnapshot ? 1u : 512u;
 				++m_session;
 				m_revision = revision;
 				m_signature = signature;
@@ -67,22 +80,24 @@ public:
 				m_peak = 0.0;
 				m_sum.assign(size_t(m_width) * m_height * 3, 0.0);
 				const auto stamp = std::chrono::system_clock::now().time_since_epoch().count();
-				m_directory = std::filesystem::path("Captures") / "RestirHDR" /
-					(std::to_string(stamp) + "_" + source);
+				m_directory = std::filesystem::path("Captures") / (rrSnapshot ? "RR" : "RestirHDR") /
+							  (std::to_string(stamp) + "_" + source);
 				std::filesystem::create_directories(m_directory);
 				std::ofstream metadata(m_directory / "capture.txt");
 				metadata.exceptions(std::ios::failbit | std::ios::badbit);
-				metadata << "source=" << source << "\nformat=linear RGB from R16G16B16A16_FLOAT, before RR/tonemap"
-					<< "\nwidth=" << m_width << "\nheight=" << m_height
-					<< "\nhistory_signature=" << signature
-					<< "\nspp=" << spp
-					<< "\ncamera=" << camera->cameraPosition.x << ',' << camera->cameraPosition.y << ',' << camera->cameraPosition.z
-					<< "\ndirection=" << camera->cameraDirection.x << ',' << camera->cameraDirection.y << ',' << camera->cameraDirection.z
-					<< "\nfov=" << camera->fov << "\naspect=" << camera->aspectRatio
-					<< "\nAnimated objects are NOT frozen. Frame variance includes animation and jitter.\n";
+				metadata << "source=" << source
+						 << (rrSnapshot ? "\nformat=linear RGB after RR, before tonemap; requested preset (driver "
+										  "override not detected)"
+										: "\nformat=linear RGB from R16G16B16A16_FLOAT, before RR/tonemap")
+						 << "\nwidth=" << m_width << "\nheight=" << m_height << "\nhistory_signature=" << signature
+						 << "\nspp=" << spp << "\ncamera=" << camera->cameraPosition.x << ','
+						 << camera->cameraPosition.y << ',' << camera->cameraPosition.z
+						 << "\ndirection=" << camera->cameraDirection.x << ',' << camera->cameraDirection.y << ','
+						 << camera->cameraDirection.z << "\nfov=" << camera->fov << "\naspect=" << camera->aspectRatio
+						 << "\nAnimated objects are NOT frozen. Frame variance includes animation and jitter.\n";
 				metadata.close();
 				m_active = true;
-				GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CAPTURING", 0);
+				GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CAPTURING", 0, m_targetFrames);
 				DEBUG_LOG_FMT("[ReSTIR.Capture] started: {}\n", m_directory.string());
 			}
 			else
@@ -90,7 +105,7 @@ public:
 				GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"UNAVAILABLE", 0);
 			}
 		}
-		if (!m_active || m_submitted == 512)
+		if (!m_active || m_submitted == m_targetFrames)
 		{
 			return;
 		}
@@ -138,9 +153,8 @@ public:
 			slot.pending = true;
 			return;
 		}
-		// Reject a run with gaps instead of calling nonconsecutive frames a sequence.
 		m_active = false;
-		GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CANCELLED: READBACK FULL", m_received);
+		GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CANCELLED: READBACK FULL", m_received, m_targetFrames);
 		DEBUG_LOG_FMT("[ReSTIR.Capture] cancelled: readback queue full.\n");
 	}
 
@@ -192,15 +206,16 @@ private:
 			next->buffer->Unmap(0, &written);
 			next->pending = false;
 			++m_received;
-			GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CAPTURING", m_received);
-			if (m_received == 1 || m_received == 32 || m_received == 128 || m_received == 512)
+			GLOBAL(RestirDebugGlobal).SetCaptureStatus(L"CAPTURING", m_received, m_targetFrames);
+			if (m_received == 1 || m_received == 32 || m_received == 128 || m_received == m_targetFrames)
 			{
 				Save();
 			}
-			if (m_received == 512)
+			if (m_received == m_targetFrames)
 			{
 				m_active = false;
-				GLOBAL(RestirDebugGlobal).SetCaptureStatus(m_invalid ? L"INVALID HDR VALUES" : L"SAVED", m_received);
+				GLOBAL(RestirDebugGlobal)
+					.SetCaptureStatus(m_invalid ? L"INVALID HDR VALUES" : L"SAVED", m_received, m_targetFrames);
 				DEBUG_LOG_FMT("[ReSTIR.Capture] complete: {}\n", m_directory.string());
 			}
 		}
@@ -227,6 +242,40 @@ private:
 			}
 		}
 		image.close();
+		if (m_targetFrames == 1)
+		{
+			BITMAPFILEHEADER fileHeader{};
+			BITMAPINFOHEADER info{};
+			info.biSize = sizeof(info);
+			info.biWidth = static_cast<LONG>(m_width);
+			info.biHeight = static_cast<LONG>(m_height);
+			info.biPlanes = 1;
+			info.biBitCount = 32;
+			info.biCompression = BI_RGB;
+			info.biSizeImage = m_width * m_height * 4;
+			fileHeader.bfType = 0x4d42;
+			fileHeader.bfOffBits = sizeof(fileHeader) + sizeof(info);
+			fileHeader.bfSize = fileHeader.bfOffBits + info.biSizeImage;
+			std::ofstream preview(m_directory / "preview.bmp", std::ios::binary);
+			preview.exceptions(std::ios::failbit | std::ios::badbit);
+			preview.write(reinterpret_cast<const char*>(&fileHeader), sizeof(fileHeader));
+			preview.write(reinterpret_cast<const char*>(&info), sizeof(info));
+			std::vector<uint8_t> row(size_t(m_width) * 4, 255);
+			for (uint32_t y = m_height; y-- > 0;)
+			{
+				for (uint32_t x = 0; x < m_width; ++x)
+				{
+					for (uint32_t c = 0; c < 3; ++c)
+					{
+						const double v = (std::max)(0.0, m_sum[(size_t(y) * m_width + x) * 3 + c]);
+						const double aces = std::clamp((v * (2.51 * v + .03)) / (v * (2.43 * v + .59) + .14), 0.0, 1.0);
+						row[x * 4 + 2 - c] = static_cast<uint8_t>(std::pow(aces, 1.0 / 2.2) * 255.0 + .5);
+					}
+				}
+				preview.write(reinterpret_cast<const char*>(row.data()), row.size());
+			}
+			preview.close();
+		}
 		std::ofstream stats(m_directory / (stem + ".txt"));
 		stats.exceptions(std::ios::failbit | std::ios::badbit);
 		stats << "frames=" << m_received << "\nmean_luminance=" << meanLuminance / (double(m_width) * m_height)
@@ -241,6 +290,7 @@ private:
 	std::filesystem::path m_directory;
 	DirectX::XMMATRIX m_view{}, m_projection{};
 	uint64_t m_request = 0, m_session = 0, m_revision = 0, m_signature = 0, m_invalid = 0;
+	uint32_t			  m_targetFrames = 512;
 	uint32_t m_width = 0, m_height = 0, m_submitted = 0, m_received = 0;
 	double m_peak = 0.0;
 	bool m_active = false;

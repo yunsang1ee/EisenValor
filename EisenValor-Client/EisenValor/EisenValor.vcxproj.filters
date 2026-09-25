@@ -115,6 +115,21 @@
     <ClInclude Include="RenderPass\DxrRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\RaytracingPreparePass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RaytracingControls.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RaytracingPassCommon.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\ReferencePathTracingPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RestirCandidatePass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPass\RestirDebugGlobal.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
@@ -191,6 +206,9 @@
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RaytracingFrameRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\DlssOutputRenderData.h">
@@ -349,6 +367,21 @@
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RaytracingPreparePass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RaytracingControls.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RaytracingPassCommon.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\ReferencePathTracingPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RestirCandidatePass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp">

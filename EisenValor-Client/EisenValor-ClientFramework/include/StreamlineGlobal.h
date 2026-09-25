@@ -48,7 +48,6 @@ enum class StreamlineFeatureWarmupState : uint8_t
 {
 	Idle = 0,
 	WaitingForOptions,
-	WaitingForAllocation,
 	WaitingForEvaluation,
 	WaitingForGpu,
 	Ready,
@@ -56,6 +55,9 @@ enum class StreamlineFeatureWarmupState : uint8_t
 
 struct StreamlineOptionsSignature
 {
+	uint32_t			  renderWidth = 0;
+	uint32_t			  renderHeight = 0;
+	bool				  rrPresetE = false;
 	bool				  useRayReconstruction = false;
 	StreamlineQualityMode qualityMode = StreamlineQualityMode::Quality;
 	uint32_t			  displayWidth = 0;
@@ -94,16 +96,33 @@ public:
 	[[nodiscard]] bool						   IsFeatureWarmupAllowed() const { return m_featureWarmupAllowed; }
 	void SetFeatureWarmupAllowed(bool allowed) { m_featureWarmupAllowed = allowed; }
 	void RequestFeatureWarmup();
+	bool PrepareForResourceChange();
 
 	void SetEnabled(bool enabled);
 	void SetPreferRayReconstruction(bool enabled);
 	void SetQualityMode(StreamlineQualityMode mode);
-	void RequestHistoryReset() { m_historyResetRequested = true; }
+	void RequestHistoryReset()
+	{
+		m_historyResetRequested = true;
+		m_rrEvaluatedFrames = 0;
+	}
+	void SetRayReconstructionPresetE(bool enabled)
+	{
+		if (m_rrPresetE == enabled)
+			return;
+		m_rrPresetE = enabled;
+		ResetFeatureConfiguration();
+		RequestHistoryReset();
+	}
+	bool	 IsRayReconstructionPresetE() const { return m_rrPresetE; }
+	uint32_t GetRayReconstructionEvaluatedFrames() const { return m_rrEvaluatedFrames; }
 
 private:
 	void ResetFeatureConfiguration();
 	void RefreshFeatureWarmupState();
 
+	bool						 m_rrPresetE = false;
+	uint32_t					 m_rrEvaluatedFrames = 0;
 	StreamlineQualityMode		 m_qualityMode = StreamlineQualityMode::Quality;
 	DirectX::XMFLOAT4X4			 m_previousViewProjection = {};
 	bool						 m_initialized = false;
@@ -117,7 +136,8 @@ private:
 	bool						 m_rayReconstructionOptionsActive = false;
 	bool						 m_featureWarmupAllowed = false;
 	bool						 m_featureResourcesAllocated = false;
-	bool						 m_allocationFailureLogged = false;
+	bool						 m_featureResourcesLive = false;
+	bool						 m_liveFeatureIsRayReconstruction = false;
 	StreamlineFeatureWarmupState m_featureWarmupState = StreamlineFeatureWarmupState::Idle;
 	ComPtr<ID3D12Fence>			 m_featureWarmupFence;
 	uint64_t					 m_featureWarmupFenceValue = 0;

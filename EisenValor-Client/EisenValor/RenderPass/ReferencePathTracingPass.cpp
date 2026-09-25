@@ -1,37 +1,37 @@
 #include "stdafxClient.h"
-#include "DxrRenderPass.h"
+#include "ReferencePathTracingPass.h"
 #include "RaytracingPassCommon.h"
 #include "RenderData/RaytracingFrameRenderData.h"
 #include <DxDeviceGlobal.h>
 #include <RenderContext.h>
 
-void DxrRenderPass::Initialize()
+void ReferencePathTracingPass::Initialize()
 {
 	ComPtr<ID3D12Device5> device;
 	ThrowIfFailed(GLOBAL(DxDeviceGlobal).GetDevice()->QueryInterface(IID_PPV_ARGS(&device)));
-	m_pipeline = BuildRaytracingPipeline(device.Get(), L"Resource/Shader/RaytracingLibrary.hlsl", 4, 16, false);
-	m_shaderTable = BuildRaytracingShaderTable(device.Get(), m_pipeline.get(), "RaytracingLibrary_ShaderTable");
+	m_pipeline = BuildRaytracingPipeline(device.Get(), L"Resource/Shader/RaytracingLibraryPT.hlsl", 19, 16, false);
+	m_shaderTable = BuildRaytracingShaderTable(device.Get(), m_pipeline.get(), "RaytracingLibraryPT_ShaderTable");
 }
 
-void DxrRenderPass::Release()
+void ReferencePathTracingPass::Release()
 {
 	m_shaderTable.reset();
 	m_pipeline.reset();
 }
 
-void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
+void ReferencePathTracingPass::DeclareRenderData(RenderContext* renderContext)
 {
 	DeclareRaytracingInputs(renderContext, GetName());
 }
 
-void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
+void ReferencePathTracingPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
 	if (!frame || !renderContext || !m_pipeline || !m_shaderTable)
 	{
 		return;
 	}
 	auto* frameData = renderContext->Get<RaytracingFrameRenderData>();
-	if (!frameData || !frameData->ready || frameData->path != RaytracingPath::Realtime)
+	if (!frameData || !frameData->ready || frameData->path != RaytracingPath::Reference)
 	{
 		return;
 	}

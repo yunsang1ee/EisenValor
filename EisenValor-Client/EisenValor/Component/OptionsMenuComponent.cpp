@@ -10,7 +10,7 @@
 #include "InputGlobal.h"
 #include "PlayerControllerComponent.h"
 #include "RectTransformComponent.h"
-#include "RenderPass/DxrRenderPass.h"
+#include "RenderPass/RaytracingPreparePass.h"
 #include "Scene.h"
 #include "SceneGlobal.h"
 #include "TextUIComponent.h"
@@ -32,9 +32,9 @@ void ParentTo(Scene& scene, GameObject& child, HandleOf<GameObject> parentHandle
 	}
 }
 
-DxrRenderPass* GetDxrRenderPass()
+RaytracingPreparePass* GetRaytracingPreparePass()
 {
-	return static_cast<DxrRenderPass*>(GLOBAL(DxRendererGlobal).GetRenderPass("DXR"));
+	return static_cast<RaytracingPreparePass*>(GLOBAL(DxRendererGlobal).GetRenderPass("RaytracingPrepare"));
 }
 
 OptionsMenuComponent* GetActiveOptionsMenu()
@@ -117,8 +117,7 @@ void OptionsMenuComponent::SetOpen(bool open)
 			root->SetActive(open);
 		}
 
-		const auto mouseIndex = ToIndex(Action::MouseCapture);
-		if (auto* mouseButton = scene->TryGetGameObject(m_actionObjectHandles[mouseIndex]))
+		if (auto* mouseButton = scene->TryGetGameObject(m_actionObjectHandles[ToIndex(Action::MouseCapture)]))
 		{
 			mouseButton->SetActive(open && m_hasGameplayControls);
 		}
@@ -394,21 +393,21 @@ void OptionsMenuComponent::ExecuteAction(Action action)
 		}
 		break;
 	case Action::PathTracing:
-		if (auto* dxr = GetDxrRenderPass())
+		if (auto* dxr = GetRaytracingPreparePass())
 		{
-			dxr->TogglePathTracing();
+			dxr->GetControls().TogglePathTracing();
 		}
 		break;
 	case Action::RestirPT:
-		if (auto* dxr = GetDxrRenderPass())
+		if (auto* dxr = GetRaytracingPreparePass())
 		{
-			dxr->ToggleRestirPT();
+			dxr->GetControls().ToggleRestirPT();
 		}
 		break;
 	case Action::Environment:
-		if (auto* dxr = GetDxrRenderPass())
+		if (auto* dxr = GetRaytracingPreparePass())
 		{
-			dxr->ToggleDayEnvironment();
+			dxr->GetControls().ToggleDayEnvironment();
 		}
 		break;
 	case Action::MouseCapture:
@@ -442,14 +441,18 @@ void OptionsMenuComponent::RefreshLabels()
 		SetActionLabel(Action::DisplayMode, L"DISPLAY MODE  /  UNAVAILABLE");
 	}
 
-	if (auto* dxr = GetDxrRenderPass())
+	if (auto* dxr = GetRaytracingPreparePass())
 	{
 		SetActionLabel(
-			Action::PathTracing, dxr->IsPathTracingEnabled() ? L"PATH TRACING  /  ON" : L"PATH TRACING  /  OFF"
+			Action::PathTracing,
+			dxr->GetControls().GetSettings().usePathTracing ? L"PATH TRACING  /  ON" : L"PATH TRACING  /  OFF"
 		);
-		SetActionLabel(Action::RestirPT, dxr->IsRestirPTEnabled() ? L"RESTIR PT  /  ON" : L"RESTIR PT  /  OFF");
 		SetActionLabel(
-			Action::Environment, dxr->IsDayEnvironmentEnabled() ? L"ENVIRONMENT  /  DAY" : L"ENVIRONMENT  /  NIGHT"
+			Action::RestirPT, dxr->GetControls().GetSettings().useRestirPT ? L"RESTIR PT  /  ON" : L"RESTIR PT  /  OFF"
+		);
+		SetActionLabel(
+			Action::Environment,
+			dxr->GetControls().GetSettings().useDayEnvironment ? L"ENVIRONMENT  /  DAY" : L"ENVIRONMENT  /  NIGHT"
 		);
 	}
 	else

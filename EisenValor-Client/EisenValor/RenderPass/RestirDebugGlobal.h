@@ -41,6 +41,22 @@ private:
 	~RestirDebugGlobal() override = default;
 
 public:
+	bool	 rrComparisonVisible = false;
+	uint64_t rrCaptureRequest = 0;
+	void	 TouchOverlay() { ++m_captureStatusRevision; }
+	void	 UpdateRrOverlayState(uint32_t frames, bool enabled, bool presetE, bool cameraFixed)
+	{
+		const uint32_t progress = frames >= 64u ? 64u : (frames / 8u) * 8u;
+		const uint32_t signature =
+			progress | (uint32_t(enabled) << 8u) | (uint32_t(presetE) << 9u) | (uint32_t(cameraFixed) << 10u);
+		if (signature != m_rrOverlaySignature)
+		{
+			m_rrOverlaySignature = signature;
+			m_rrDisplayFrames = progress;
+			TouchOverlay();
+		}
+	}
+	uint32_t GetRrDisplayFrames() const { return m_rrDisplayFrames; }
 	bool RequestHdrCapture(uint32_t spp)
 	{
 		if (!m_overrideActive || m_view != RestirDebugView::Beauty ||
@@ -56,17 +72,17 @@ public:
 	}
 	[[nodiscard]] uint64_t GetCaptureRequest() const { return m_captureRequest; }
 	[[nodiscard]] uint32_t GetCaptureSpp() const { return m_captureSpp; }
-	void SetCaptureStatus(const wchar_t* status, uint32_t frames)
+	void				   SetCaptureStatus(const wchar_t* status, uint32_t frames, uint32_t target = 512)
 	{
 		m_captureStatus = status;
 		m_captureFrames = frames;
+		m_captureTarget = target;
 		++m_captureStatusRevision;
 	}
 	[[nodiscard]] std::wstring GetCaptureStatusText() const
 	{
-		return m_captureStatus + L"  " + std::to_wstring(m_captureFrames) + L" / 512";
+		return m_captureStatus + L"  " + std::to_wstring(m_captureFrames) + L" / " + std::to_wstring(m_captureTarget);
 	}
-	// Progress is UI-only: never invalidate temporal history or the capture itself.
 	[[nodiscard]] uint64_t GetOverlayRevision() const { return m_revision + m_captureStatusRevision; }
 
 	void StepSource(int32_t direction)
@@ -236,6 +252,9 @@ private:
 	uint64_t		  m_captureRequest = 0;
 	uint32_t		  m_captureSpp = 1;
 	uint64_t m_captureStatusRevision = 0;
+	uint32_t		  m_rrOverlaySignature = 0xffffffffu;
+	uint32_t		  m_rrDisplayFrames = 0;
+	uint32_t		  m_captureTarget = 512;
 	uint32_t m_captureFrames = 0;
 	std::wstring m_captureStatus = L"READY";
 	bool			  m_overrideActive = false;

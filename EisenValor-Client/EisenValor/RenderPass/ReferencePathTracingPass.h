@@ -4,7 +4,7 @@
 #include <DxRtShaderTable.h>
 #include <memory>
 
-class DxrRenderPass : public IRenderPass
+class ReferencePathTracingPass : public IRenderPass
 {
 public:
 	void				   Initialize() override;
@@ -13,7 +13,7 @@ public:
 	void				   Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
 	void				   OnResize(uint32_t width, uint32_t height) override {}
 	RenderResolutionDomain GetResolutionDomain() const override { return RenderResolutionDomain::Render; }
-	const char*			   GetName() const override { return "DXR"; }
+	const char*			   GetName() const override { return "ReferencePT"; }
 
 private:
 	std::unique_ptr<DxRtPipelineState> m_pipeline;

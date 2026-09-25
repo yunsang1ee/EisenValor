@@ -47,6 +47,12 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view 
 void GameFramework::Run()
 {
 	PixScopedCpuEvent frameEvent(L"Frame");
+	if (!m_inSizeMove && m_pendingResize)
+	{
+		const auto pending = *m_pendingResize;
+		m_pendingResize.reset();
+		ApplyResize(pending.width, pending.height);
+	}
 
 #ifdef SERVER
 	{
@@ -82,7 +88,6 @@ void GameFramework::Run()
 		const float fps = static_cast<float>(frameCount) / timeElapsed;
 		const float ms = (timeElapsed * 1000.0f) / static_cast<float>(frameCount);
 
-		// DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f} ({:.2f} ms)\n", fps, ms);
 
 		std::string windowTitle = std::format("EisenValor (FPS: {:.0f})", fps);
 		SetWindowTextA(m_hWnd, windowTitle.c_str());
@@ -91,7 +96,6 @@ void GameFramework::Run()
 		frameCount = 0;
 	}
 
-	// BeginFrame -> FixedUpdate -> Update -> LateUpate -> Render -> EndFrame -> AfterUpdate
 
 	GLOBAL(SceneGlobal).OnBeginFrame();
 
@@ -167,14 +171,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 
 		GLOBAL(InputGlobal).OnResize(width, height);
 
-		if (m_inSizeMove)
-		{
-			m_pendingResize = ResizeExtent{width, height};
-		}
-		else
-		{
-			ApplyResize(width, height);
-		}
+		m_pendingResize = ResizeExtent{width, height};
 		break;
 	}
 
@@ -233,12 +230,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	case WM_EXITSIZEMOVE:
 		KillTimer(m_hWnd, 1);
 		m_inSizeMove = false;
-		if (m_pendingResize)
-		{
-			const ResizeExtent pendingResize = *m_pendingResize;
-			m_pendingResize.reset();
-			ApplyResize(pendingResize.width, pendingResize.height);
-		}
+
 		break;
 
 	case WM_TIMER:
@@ -308,10 +300,6 @@ void GameFramework::Update(float delta)
 		// FUTURE: Runtime Shader Compilation
 	}
 
-	// if (input.GetInputDown(VK_F9))
-	//{
-	//	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
-	// }
 
 	GLOBAL(UIGlobal).Update(delta);
 	GLOBAL(SceneGlobal).OnUpdate(delta);

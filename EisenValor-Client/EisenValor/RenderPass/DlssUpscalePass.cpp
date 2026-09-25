@@ -65,6 +65,22 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 		return;
 	}
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto&	   captureDebug = GLOBAL(RestirDebugGlobal);
+	const bool captureRequested = captureDebug.rrCaptureRequest != m_seenRrCaptureRequest;
+	m_seenRrCaptureRequest = captureDebug.rrCaptureRequest;
+	if (captureRequested)
+		captureDebug.SetCaptureStatus(L"RR CAPTURE UNAVAILABLE", 0, 1);
+	try
+	{
+		m_rrCapture.PollCompleted();
+	}
+	catch (const std::exception& error)
+	{
+		m_rrCapture.Cancel();
+		DEBUG_LOG_FMT("[RR.Capture] {}\n", error.what());
+	}
+#endif
 	const uint32_t frameIndex = frame->GetFrameIndex();
 	m_outputData.BeginFrame(frameIndex);
 	auto& outputData = m_outputData.GetCurrent();
@@ -228,6 +244,24 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	outputData.status = DlssOutputStatus::Valid;
 	outputData.missingInputMask = DlssMissingInputMask::None;
 	m_resetHistory = false;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto& debug = GLOBAL(RestirDebugGlobal);
+	try
+	{
+		if (captureRequested)
+			m_rrCapture.Execute(
+				frame, colorOutput, cameraData, debug.rrCaptureRequest,
+				streamline.IsRayReconstructionPresetE() ? 1u : 0u, candidateData->historySignature,
+				streamline.IsRayReconstructionPresetE() ? "RR_E" : "RR_D", 0,
+				outputData.usedRayReconstruction && streamline.GetRayReconstructionEvaluatedFrames() >= 64, true
+			);
+	}
+	catch (const std::exception& error)
+	{
+		m_rrCapture.Cancel();
+		DEBUG_LOG_FMT("[RR.Capture] {}\n", error.what());
+	}
+#endif
 }
 
 void DlssUpscalePass::OnResize(uint32_t width, uint32_t height)

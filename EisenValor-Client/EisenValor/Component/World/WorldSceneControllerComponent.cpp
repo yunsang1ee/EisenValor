@@ -18,6 +18,7 @@
 #include <limits>
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 #include "RenderPass/RestirDebugGlobal.h"
+#include <StreamlineGlobal.h>
 #endif
 
 namespace
@@ -34,7 +35,6 @@ std::wstring FormatRedScore(uint8_t score)
 
 constexpr size_t kInvalidOccupationZoneSlot = std::numeric_limits<size_t>::max();
 constexpr size_t kOccupationMarkerGaugeSegmentCount = 4;
-// Keep the badge one marker-height above the projected occupation-zone anchor.
 constexpr float  kOccupationMarkerCenterY = -64.0f;
 constexpr float  kOccupationMarkerHalfDiagonal = 34.65f;
 constexpr float  kOccupationMarkerSideLength = 49.0f;
@@ -145,7 +145,7 @@ void WorldSceneControllerComponent::CreateRestirDebugOverlayUI()
 					rect->SetAnchors({1.0f, 0.0f}, {1.0f, 0.0f});
 					rect->SetPivot({1.0f, 0.0f});
 					rect->SetOffsetMin({-470.0f, 18.0f});
-					rect->SetOffsetMax({-18.0f, 172.0f});
+					rect->SetOffsetMax({-18.0f, 232.0f});
 				}
 			);
 
@@ -198,6 +198,11 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 	}
 
 	auto& debug = GLOBAL(RestirDebugGlobal);
+	auto& streamline = GLOBAL(StreamlineGlobal);
+	debug.UpdateRrOverlayState(
+		streamline.GetRayReconstructionEvaluatedFrames(), streamline.IsRayReconstructionEnabled(),
+		streamline.IsRayReconstructionPresetE(), GLOBAL(DxRendererGlobal).IsDebugCameraFrozen()
+	);
 	if (m_lastRestirDebugRevision == debug.GetOverlayRevision())
 	{
 		return true;
@@ -209,7 +214,7 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 		return false;
 	}
 
-	const bool visible = debug.IsOverrideActive();
+	const bool visible = debug.IsOverrideActive() || debug.rrComparisonVisible;
 	owner->SetActive(visible);
 	if (visible)
 	{
@@ -219,10 +224,16 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 		status += debug.GetViewName();
 		status += L"\n  DLSS   : ";
 		status += debug.BypassDlss() ? L"BYPASSED" : L"REQUESTED";
+		status += streamline.IsRayReconstructionPresetE() ? L" / RR E REQUESTED" : L" / RR D REQUESTED";
+		status += L"\n  RR FRAMES : " + std::to_wstring(debug.GetRrDisplayFrames());
+		status += debug.GetRrDisplayFrames() >= 64u ? L"+" : L" / 64";
+		status += streamline.IsRayReconstructionEnabled() ? L" / ENABLED" : L" / OFF OR UNSUPPORTED";
+		status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L" / CAMERA FIXED" : L" / CAMERA LIVE";
 		status += L"\n  HDR    : ";
 		status += debug.GetCaptureStatusText();
 		status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
-		status += L"\n  CTRL+F12 CAPTURE / RESTART";
+		status += L"\n  CTRL+F12 RAW CAPTURE / RESTART";
+		status += L"\n  F11 D/E | SHIFT+F11 CAMERA | CTRL+F11 SNAP";
 		text->SetText(std::move(status));
 	}
 	m_lastRestirDebugRevision = debug.GetOverlayRevision();
@@ -287,7 +298,6 @@ void WorldSceneControllerComponent::SetOccupationZoneGauge(uint64 zoneID, float 
 	}
 	else if (state.graceActive && gaugeChanged)
 	{
-		// The server only changes the gauge after its grace period has completed.
 		state.graceActive = false;
 		state.graceRemaining = 0.0f;
 		state.displayedGraceTenths = -1;
@@ -556,7 +566,6 @@ void WorldSceneControllerComponent::ResolveOccupationZoneOrder()
 		return;
 	}
 
-	// The current map contract defines WEST as A and EAST as B.
 	m_occupationZoneIDs[0] = westZoneID;
 	m_occupationZoneIDs[1] = eastZoneID;
 	m_occupationZoneOrderReady = true;

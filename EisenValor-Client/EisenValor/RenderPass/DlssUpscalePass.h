@@ -2,6 +2,9 @@
 
 #include "RenderData/DlssOutputRenderData.h"
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+#include "RestirHdrCapture.h"
+#endif
 #include <IRenderPass.h>
 #include <RenderDataPolicy.h>
 
@@ -20,6 +23,10 @@ public:
 
 private:
 	void CreateOutputResources(uint32_t width, uint32_t height);
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	RestirHdrCapture m_rrCapture;
+	uint64_t		 m_seenRrCaptureRequest = 0;
+#endif
 
 	FrameBuffered<DlssOutputRenderData, 3> m_outputData;
 	uint32_t							   m_displayWidth = 0;
