@@ -70,6 +70,7 @@ RestirCandidatePass::RestirCandidatePass(uint32_t width, uint32_t height) : m_wi
 
 void RestirCandidatePass::Initialize()
 {
+	m_resourcesReady = false;
 	ComPtr<ID3D12Device5> device;
 	ThrowIfFailed(GLOBAL(DxDeviceGlobal).GetDevice()->QueryInterface(IID_PPV_ARGS(&device)));
 	m_pipeline = BuildRaytracingPipeline(
@@ -81,6 +82,7 @@ void RestirCandidatePass::Initialize()
 
 void RestirCandidatePass::Release()
 {
+	m_resourcesReady = false;
 	m_restirCandidateData.Release();
 	m_shaderTable.reset();
 	m_pipeline.reset();
@@ -89,6 +91,7 @@ void RestirCandidatePass::Release()
 
 void RestirCandidatePass::OnResize(uint32_t width, uint32_t height)
 {
+	m_resourcesReady = false;
 	m_width = width;
 	m_height = height;
 	m_restirCandidateData.Get().validThisFrame = false;
@@ -216,6 +219,26 @@ void RestirCandidatePass::OnResize(uint32_t width, uint32_t height)
 		);
 		specularHitDistanceTexture->CreateSRV(device.GetDevice(), descHeap);
 		specularHitDistanceTexture->CreateUAV(device.GetDevice(), descHeap, 0);
+
+		for (auto* buffer : {primaryHitBuffer.get(), reservoirBuffer.get()})
+		{
+			if (!buffer->HasSRV() || !buffer->HasUAV())
+			{
+				GRAPHICS_LOG_FMT("[RestirCandidatePass] Missing buffer views: {}\n", buffer->GetName());
+				return;
+			}
+		}
+		for (auto* texture :
+			 {motionVectorTexture.get(), linearDepthTexture.get(), diffuseAlbedoTexture.get(),
+			  specularAlbedoTexture.get(), normalRoughnessTexture.get(), specularHitDistanceTexture.get()})
+		{
+			if (!texture->HasSRV() || !texture->HasUAV(0))
+			{
+				GRAPHICS_LOG_FMT("[RestirCandidatePass] Missing texture views: {}\n", texture->GetName());
+				return;
+			}
+		}
+		m_resourcesReady = true;
 	}
 }
 
@@ -234,7 +257,22 @@ void RestirCandidatePass::DeclareRenderData(RenderContext* renderContext)
 	);
 }
 
-void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
+bool RestirCandidatePass::ShouldExecute(const RenderContext* renderContext) const
+{
+	if (!renderContext || !m_pipeline || !m_shaderTable || !m_resourcesReady)
+	{
+		return false;
+	}
+	const auto* frameData = renderContext->Get<RaytracingFrameRenderData>();
+	return frameData && frameData->ready && frameData->path == RaytracingPath::RestirCandidate;
+}
+
+void RestirCandidatePass::OnSkipped(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
+{
+	PublishInvalidCandidate(frame, renderContext);
+}
+
+void RestirCandidatePass::PublishInvalidCandidate(DxFrameResource* frame, RenderContext* renderContext)
 {
 	if (!frame || !renderContext)
 	{
@@ -246,36 +284,26 @@ void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderCo
 	data.frameIndex = frame->GetFrameIndex();
 	data.historySignature = 0;
 	renderContext->Set(m_restirCandidateData);
-	auto* frameData = renderContext->Get<RaytracingFrameRenderData>();
-	if (!frameData || !frameData->ready || frameData->path != RaytracingPath::RestirCandidate || !m_pipeline ||
-		!m_shaderTable)
+}
+
+void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
+{
+	if (!frame || !renderContext)
 	{
 		return;
 	}
-	auto*	   restirCandidateData = &m_restirCandidateData.Get();
-	auto*	   restirPrimaryHitBuffer = restirCandidateData->primaryHitBuffer.get();
-	auto*	   restirReservoirBuffer = restirCandidateData->reservoirBuffer.get();
-	auto*	   restirMotionVectorTexture = restirCandidateData->motionVectorTexture.get();
-	auto*	   restirLinearDepthTexture = restirCandidateData->linearDepthTexture.get();
-	auto*	   restirDiffuseAlbedoTexture = restirCandidateData->diffuseAlbedoTexture.get();
-	auto*	   restirSpecularAlbedoTexture = restirCandidateData->specularAlbedoTexture.get();
-	auto*	   restirNormalRoughnessTexture = restirCandidateData->normalRoughnessTexture.get();
-	auto*	   restirSpecularHitDistanceTexture = restirCandidateData->specularHitDistanceTexture.get();
-	const bool restirCandidateResourcesReady =
-		restirPrimaryHitBuffer && restirPrimaryHitBuffer->HasUAV() && restirPrimaryHitBuffer->HasSRV() &&
-		restirReservoirBuffer && restirReservoirBuffer->HasUAV() && restirReservoirBuffer->HasSRV() &&
-		restirMotionVectorTexture && restirMotionVectorTexture->HasUAV(0) && restirMotionVectorTexture->HasSRV() &&
-		restirLinearDepthTexture && restirLinearDepthTexture->HasUAV(0) && restirLinearDepthTexture->HasSRV() &&
-		restirDiffuseAlbedoTexture && restirDiffuseAlbedoTexture->HasUAV(0) && restirDiffuseAlbedoTexture->HasSRV() &&
-		restirSpecularAlbedoTexture && restirSpecularAlbedoTexture->HasUAV(0) &&
-		restirSpecularAlbedoTexture->HasSRV() && restirNormalRoughnessTexture &&
-		restirNormalRoughnessTexture->HasUAV(0) && restirNormalRoughnessTexture->HasSRV() &&
-		restirSpecularHitDistanceTexture && restirSpecularHitDistanceTexture->HasUAV(0) &&
-		restirSpecularHitDistanceTexture->HasSRV();
-	if (!restirCandidateResourcesReady)
-	{
-		return;
-	}
+	assert(m_resourcesReady);
+	PublishInvalidCandidate(frame, renderContext);
+	const auto*	   frameData = renderContext->Get<RaytracingFrameRenderData>();
+	auto*		   restirCandidateData = &m_restirCandidateData.Get();
+	auto*		   restirPrimaryHitBuffer = restirCandidateData->primaryHitBuffer.get();
+	auto*		   restirReservoirBuffer = restirCandidateData->reservoirBuffer.get();
+	auto*		   restirMotionVectorTexture = restirCandidateData->motionVectorTexture.get();
+	auto*		   restirLinearDepthTexture = restirCandidateData->linearDepthTexture.get();
+	auto*		   restirDiffuseAlbedoTexture = restirCandidateData->diffuseAlbedoTexture.get();
+	auto*		   restirSpecularAlbedoTexture = restirCandidateData->specularAlbedoTexture.get();
+	auto*		   restirNormalRoughnessTexture = restirCandidateData->normalRoughnessTexture.get();
+	auto*		   restirSpecularHitDistanceTexture = restirCandidateData->specularHitDistanceTexture.get();
 	auto*		   cameraData = renderContext->Get<CameraRenderData>();
 	auto*		   restirLightData = renderContext->Get<RestirLightRenderData>();
 	auto*		   uploadHeap = frame->GetUploadHeap();

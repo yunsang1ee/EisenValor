@@ -982,6 +982,15 @@ void RaytracingPreparePass::CommitRenderedFrame()
 	++m_frameSeed;
 }
 
+void RaytracingPreparePass::OnEndFrame(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
+{
+	if (!frame || !renderContext || renderContext->Get<RaytracingFrameRenderData>() != &m_frameData.Get())
+	{
+		return;
+	}
+	CommitRenderedFrame();
+}
+
 uint64_t RaytracingPreparePass::BuildHistorySignature(uint64_t generation) const
 {
 	return BuildRestirHistorySignature(
@@ -1138,7 +1147,6 @@ RaytracingPreparePass::RaytracingPreparePass(uint32_t width, uint32_t height) : 
 
 void RaytracingPreparePass::OnResize(uint32_t width, uint32_t height)
 {
-	CommitRenderedFrame();
 	m_width = width;
 	m_height = height;
 	m_hasPreviousViewProj = false;
@@ -1152,7 +1160,6 @@ void RaytracingPreparePass::Execute(DxFrameResource* frame, Scene* scene, Render
 	{
 		return;
 	}
-	CommitRenderedFrame();
 	const uint32_t frameIndex = frame->GetFrameIndex();
 	BeginFrame(frameIndex, scene);
 	m_outputData.BeginFrame(frameIndex);

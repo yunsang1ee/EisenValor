@@ -7,6 +7,7 @@
 class ReferencePathTracingPass : public IRenderPass
 {
 public:
+	bool				   ShouldExecute(const RenderContext* renderContext) const override;
 	void				   Initialize() override;
 	void				   Release() override;
 	void				   DeclareRenderData(RenderContext* renderContext) override;

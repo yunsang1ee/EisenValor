@@ -230,7 +230,7 @@ void DxRendererGlobal::Render(Scene* scene)
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 	{
 		PixScopedCpuEvent dataEvent(L"DxRenderer.PrepareFrameData");
-		auto& frameData = m_frameData.Get();
+		auto&			  frameData = m_frameData.Get();
 		frameData.deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
 		frameData.totalTime = GLOBAL(TimerGlobal).GetRuntime();
 		frameData.frameIndex = frame->GetFrameIndex();
@@ -298,11 +298,24 @@ void DxRendererGlobal::Render(Scene* scene)
 		DxScopedGpuEvent renderPassesGpuEvent(*frame->GetMainContext(), L"Render.RenderPasses");
 		for (auto& entry : m_renderPasses)
 		{
-			const std::string markerName = "RenderPass." + entry.name;
+			if (!entry.pass->ShouldExecute(&m_renderContext))
+			{
+				entry.pass->OnSkipped(frame, scene, &m_renderContext);
+				continue;
+			}
+
+			const std::string  markerName = "RenderPass." + entry.name;
 			const std::wstring passGpuMarker(markerName.begin(), markerName.end());
-			DxScopedGpuEvent passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
-			PixScopedCpuEvent passEvent(markerName.c_str());
+			DxScopedGpuEvent   passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
+			PixScopedCpuEvent  passEvent(markerName.c_str());
 			entry.pass->Execute(frame, scene, &m_renderContext);
+		}
+	}
+	{
+		PixScopedCpuEvent endPassesEvent(L"Render.EndPasses");
+		for (auto& entry : m_renderPasses)
+		{
+			entry.pass->OnEndFrame(frame, scene, &m_renderContext);
 		}
 	}
 }
@@ -409,8 +422,7 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 	}
 
 	GRAPHICS_LOG_FMT(
-		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
-		m_renderHeight
+		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth, m_renderHeight
 	);
 #if ENABLE_GRAPHICS_DEBUG_LOG
 	LogVideoMemoryStats("PostResize");

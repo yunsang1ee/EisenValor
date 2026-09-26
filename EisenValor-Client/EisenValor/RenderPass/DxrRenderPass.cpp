@@ -24,14 +24,19 @@ void DxrRenderPass::DeclareRenderData(RenderContext* renderContext)
 	DeclareRaytracingInputs(renderContext, GetName());
 }
 
+bool DxrRenderPass::ShouldExecute(const RenderContext* renderContext) const
+{
+	if (!renderContext || !m_pipeline || !m_shaderTable)
+	{
+		return false;
+	}
+	const auto* frameData = renderContext->Get<RaytracingFrameRenderData>();
+	return frameData && frameData->ready && frameData->path == RaytracingPath::Realtime;
+}
+
 void DxrRenderPass::Execute(DxFrameResource* frame, Scene* scene, RenderContext* renderContext)
 {
-	if (!frame || !renderContext || !m_pipeline || !m_shaderTable)
-	{
-		return;
-	}
-	auto* frameData = renderContext->Get<RaytracingFrameRenderData>();
-	if (!frameData || !frameData->ready || frameData->path != RaytracingPath::Realtime)
+	if (!frame || !renderContext)
 	{
 		return;
 	}

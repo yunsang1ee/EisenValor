@@ -30,6 +30,7 @@ enum class RenderMobility : uint8_t;
 class RaytracingPreparePass : public IRenderPass
 {
 public:
+	void OnEndFrame(DxFrameResource* frame, Scene* scene, RenderContext* renderContext) override;
 	RaytracingPreparePass(uint32_t width, uint32_t height);
 	void				   Initialize() override;
 	void				   Release() override;
