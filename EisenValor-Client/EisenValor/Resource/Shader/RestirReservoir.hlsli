@@ -220,6 +220,11 @@ bool RestirRcSuffixNeedsEmissiveMis(RestirPathSample sample)
     return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_SUFFIX_EMISSIVE_MIS);
 }
 
+bool RestirIsRcOutgoingNee(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_OUTGOING_NEE);
+}
+
 float3 RestirGetRcVertexWi(RestirPathSample sample)
 {
     return RestirUnpackNormalOct16(sample.packedRcVertexWi);

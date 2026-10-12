@@ -145,7 +145,7 @@ void WorldSceneControllerComponent::CreateRestirDebugOverlayUI()
 					rect->SetAnchors({1.0f, 0.0f}, {1.0f, 0.0f});
 					rect->SetPivot({1.0f, 0.0f});
 					rect->SetOffsetMin({-470.0f, 18.0f});
-					rect->SetOffsetMax({-18.0f, 232.0f});
+					rect->SetOffsetMax({-18.0f, 284.0f});
 				}
 			);
 
@@ -229,11 +229,22 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 		status += debug.GetRrDisplayFrames() >= 64u ? L"+" : L" / 64";
 		status += streamline.IsRayReconstructionEnabled() ? L" / ENABLED" : L" / OFF OR UNSUPPORTED";
 		status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L" / CAMERA FIXED" : L" / CAMERA LIVE";
-		status += L"\n  HDR    : ";
-		status += debug.GetCaptureStatusText();
+		status += L"\n  RR FRESH : " + std::to_wstring(debug.GetRrDecorrelationPercent()) + L"%";
+		status += debug.IsSecondaryNeeEnabled() ? L"\n  SECONDARY NEE : ON  |  F7 TOGGLE"
+												: L"\n  SECONDARY NEE : OFF  |  F7 TOGGLE";
+		if (debug.GetView() == RestirDebugView::SecondaryNeeShare)
+		{
+			status += L"\n  SHARE: BLACK 0% / WHITE 100%";
+		}
+		else
+		{
+			status += L"\n  HDR    : ";
+			status += debug.GetCaptureStatusText();
+		}
 		status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
 		status += L"\n  CTRL+F12 RAW CAPTURE / RESTART";
 		status += L"\n  F11 D/E | SHIFT+F11 CAMERA | CTRL+F11 SNAP";
+		status += L"\n  F6 FRESH 0/50/100% | SHIFT+F6 REVERSE";
 		text->SetText(std::move(status));
 	}
 	m_lastRestirDebugRevision = debug.GetOverlayRevision();

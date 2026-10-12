@@ -78,6 +78,9 @@ ComPtr<ID3D12RootSignature> BuildRaytracingRootSignature(
 			.AddSRV(5)
 			.AddDescriptorTable()
 			.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, kRestirSpecularHitDistanceUavRegister);
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+		builder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 9);
+#endif
 	}
 
 	return builder.AddStaticSampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP)
@@ -97,8 +100,20 @@ std::unique_ptr<DxRtPipelineState> BuildRaytracingPipeline(
 	auto& compiler = GLOBAL(DxShaderCompilerGlobal);
 
 	const std::wstring shaderName = std::filesystem::path(shaderPath).stem().wstring();
-	auto			   shaderBlob = compiler.CompileRTShader(shaderName, shaderPath, {});
-	const std::string  pipelineName = Utils::WideToUtf8(shaderName.c_str());
+	ComPtr<IDxcBlob>   shaderBlob;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	if (enableRestirCandidateRoot)
+	{
+		const std::pair<std::wstring, std::wstring> defines[] = {{L"RESTIR_ENABLE_DEBUG_VIEWS", L"1"}};
+		// Compiler caches are keyed by name, so keep this resource layout separate.
+		shaderBlob = compiler.CompileRTShader(shaderName + L"_DebugViews", shaderPath, {}, defines);
+	}
+	else
+#endif
+	{
+		shaderBlob = compiler.CompileRTShader(shaderName, shaderPath, {});
+	}
+	const std::string pipelineName = Utils::WideToUtf8(shaderName.c_str());
 
 	auto rootSignature =
 		BuildRaytracingRootSignature(device, enableRestirCandidateRoot, pipelineName + "_GlobalRootSig");

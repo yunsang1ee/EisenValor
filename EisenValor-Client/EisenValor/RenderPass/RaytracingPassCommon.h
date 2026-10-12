@@ -27,7 +27,10 @@ enum DxrRootParameter : uint32_t
 	DxrRootRestirNormalRoughness,
 	DxrRootRestirCandidateCameraConstants,
 	DxrRootRestirEmissiveLights,
-	DxrRootRestirSpecularHitDistance
+	DxrRootRestirSpecularHitDistance,
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	DxrRootRestirSecondaryNee,
+#endif
 };
 
 

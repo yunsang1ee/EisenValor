@@ -29,6 +29,8 @@ enum class RestirDebugView : uint32_t
 	DiffuseAlbedo,
 	SpecularAlbedo,
 	SpecularHitDistance,
+	SecondaryNee,
+	SecondaryNeeShare,
 	Count,
 };
 
@@ -57,6 +59,25 @@ public:
 		}
 	}
 	uint32_t GetRrDisplayFrames() const { return m_rrDisplayFrames; }
+	bool	 IsSecondaryNeeEnabled() const { return m_secondaryNeeEnabled; }
+	void	 ToggleSecondaryNee()
+	{
+		m_secondaryNeeEnabled = !m_secondaryNeeEnabled;
+		rrComparisonVisible = true;
+		++m_revision;
+	}
+	uint32_t GetRrDecorrelationPercent() const { return m_rrDecorrelationMode * 50u; }
+	float	 GetRrDecorrelationFactor() const { return float(m_rrDecorrelationMode) * 0.5f; }
+	void	 StepRrDecorrelation(int32_t direction)
+	{
+		constexpr int32_t modeCount = 3;
+		m_rrDecorrelationMode = uint32_t((int32_t(m_rrDecorrelationMode) + direction + modeCount) % modeCount);
+		m_source = RestirDebugSource::FinalWithRayReconstruction;
+		m_view = RestirDebugView::Beauty;
+		m_overrideActive = true;
+		rrComparisonVisible = true;
+		++m_revision;
+	}
 	bool RequestHdrCapture(uint32_t spp)
 	{
 		if (!m_overrideActive || m_view != RestirDebugView::Beauty ||
@@ -136,7 +157,10 @@ public:
 	{
 		return RestirDebugSource::FinalWithRayReconstruction != m_source || RestirDebugView::Beauty != m_view;
 	}
-	[[nodiscard]] bool				BypassToneMap() const { return RestirDebugView::Beauty != m_view; }
+	[[nodiscard]] bool BypassToneMap() const
+	{
+		return RestirDebugView::Beauty != m_view && RestirDebugView::SecondaryNee != m_view;
+	}
 	[[nodiscard]] RestirDebugSource GetSource() const { return m_source; }
 	[[nodiscard]] RestirDebugView	GetView() const { return m_view; }
 	[[nodiscard]] uint64_t			GetRevision() const { return m_revision; }
@@ -205,6 +229,10 @@ public:
 			return L"SPECULAR ALBEDO";
 		case RestirDebugView::SpecularHitDistance:
 			return L"SPECULAR HIT DISTANCE";
+		case RestirDebugView::SecondaryNee:
+			return L"SECONDARY NEE / FRESH";
+		case RestirDebugView::SecondaryNeeShare:
+			return L"SECONDARY NEE SHARE / FRESH";
 		default:
 			return L"UNKNOWN";
 		}
@@ -240,6 +268,10 @@ public:
 			return "SPECULAR_ALBEDO";
 		case RestirDebugView::SpecularHitDistance:
 			return "SPECULAR_HIT_DISTANCE";
+		case RestirDebugView::SecondaryNee:
+			return "SECONDARY_NEE_FRESH";
+		case RestirDebugView::SecondaryNeeShare:
+			return "SECONDARY_NEE_SHARE_FRESH";
 		default:
 			return "UNKNOWN";
 		}
@@ -251,11 +283,14 @@ private:
 	uint64_t		  m_revision = 0;
 	uint64_t		  m_captureRequest = 0;
 	uint32_t		  m_captureSpp = 1;
-	uint64_t m_captureStatusRevision = 0;
+	uint64_t		  m_captureStatusRevision = 0;
 	uint32_t		  m_rrOverlaySignature = 0xffffffffu;
 	uint32_t		  m_rrDisplayFrames = 0;
-	uint32_t		  m_captureTarget = 512;
-	uint32_t m_captureFrames = 0;
+	// Temporary default until the persistent color speckles are resolved.
+	uint32_t	 m_rrDecorrelationMode = 2u;
+	bool		 m_secondaryNeeEnabled = true;
+	uint32_t	 m_captureTarget = 512;
+	uint32_t	 m_captureFrames = 0;
 	std::wstring m_captureStatus = L"READY";
-	bool			  m_overrideActive = false;
+	bool		 m_overrideActive = false;
 };

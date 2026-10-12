@@ -401,6 +401,30 @@ bool RestirEvaluateReconnectionShift(
         result.jacobian = geometryRatio * destinationPdfBefore / sourcePdfBefore;
         result.destinationLightPdf = destinationLightPdf;
     }
+    else if (RestirIsRcOutgoingNee(sourceSample))
+    {
+        if (sourcePdfBefore <= 0.0f || sourceLightPdf <= 0.0f)
+        {
+            return false;
+        }
+        float3 reconnectView = -connectionDirection;
+        RestirOrientSurfaceToView(reconnectSurface, reconnectView);
+        float3 shiftedBsdfAfter = RestirEvalBSDF(
+            reconnectSurface, reconnectView, rcWi, RESTIR_BSDF_LOBE_ALL);
+        float misWeight = 1.0f;
+        if (0u != (pathFlags & RESTIR_PATH_FLAG_NEE_EMISSIVE))
+        {
+            float competingPdf = RestirEvalPdfBSDF(
+                reconnectSurface, reconnectView, rcWi, RESTIR_BSDF_LOBE_ALL);
+            misWeight = sourceLightPdf / max(sourceLightPdf + competingPdf, EPSILON);
+        }
+        result.contribution = (shiftedBsdfBefore / destinationPdfBefore) *
+            shiftedBsdfAfter * rcIrradiance * misWeight / sourceLightPdf;
+        // The rc and its sampled light are fixed. Only the primary BSDF edge is shifted.
+        result.jacobian = geometryRatio * destinationPdfBefore / sourcePdfBefore;
+        result.destinationLightPdf = sourceLightPdf;
+        result.destinationPdfAfter = 0.0f;
+    }
     else
     {
         uint lobeAfter = RestirGetLobeAfterRc(sourceSample);
@@ -434,8 +458,9 @@ bool RestirEvaluateReconnectionShift(
             rcIrradiance;
         if (RestirRcSuffixNeedsEmissiveMis(sourceSample) && sourceLightPdf > 0.0f)
         {
-            float misWeight = destinationPdfAfter /
-                              max(destinationPdfAfter + sourceLightPdf, EPSILON);
+            float competingBsdfPdf = RestirEvalPdfBSDF(
+                reconnectSurface, reconnectView, rcWi, RESTIR_BSDF_LOBE_ALL);
+            float misWeight = competingBsdfPdf / max(competingBsdfPdf + sourceLightPdf, EPSILON);
             result.contribution *= misWeight;
         }
         result.jacobian =

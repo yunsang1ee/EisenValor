@@ -128,6 +128,20 @@ void RaytracingControls::Update()
 #endif
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	const int32_t debugStep = input.GetInput(VK_SHIFT) ? -1 : 1;
+	if (input.GetInputDown(VK_F6))
+	{
+		debug.StepRrDecorrelation(debugStep);
+		auto& streamline = GLOBAL(StreamlineGlobal);
+		streamline.SetEnabled(true);
+		streamline.SetPreferRayReconstruction(true);
+		GRAPHICS_LOG_FMT("[ReSTIR.RR] fresh={}%, RR history reset requested\n", debug.GetRrDecorrelationPercent());
+	}
+	if (input.GetInputDown(VK_F7))
+	{
+		debug.ToggleSecondaryNee();
+		++m_settings.restirHistoryGeneration;
+		GRAPHICS_LOG_FMT("[ReSTIR] secondary NEE={}\n", debug.IsSecondaryNeeEnabled() ? "ON" : "OFF");
+	}
 	if (input.GetInputDown(VK_F11))
 	{
 		debug.rrComparisonVisible = true;

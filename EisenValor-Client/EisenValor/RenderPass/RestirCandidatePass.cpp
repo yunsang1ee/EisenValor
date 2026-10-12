@@ -10,6 +10,9 @@
 #include "DxUtils.h"
 #include "CameraRenderData.h"
 #include "RenderContext.h"
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+#include "RestirDebugGlobal.h"
+#endif
 
 namespace
 {
@@ -220,6 +223,27 @@ void RestirCandidatePass::OnResize(uint32_t width, uint32_t height)
 		specularHitDistanceTexture->CreateSRV(device.GetDevice(), descHeap);
 		specularHitDistanceTexture->CreateUAV(device.GetDevice(), descHeap, 0);
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+		auto& secondaryNeeTexture = candidateData.secondaryNeeTexture;
+		if (!secondaryNeeTexture)
+		{
+			secondaryNeeTexture = std::make_shared<DxTexture>();
+		}
+		secondaryNeeTexture->ReleaseAllViews(descHeap);
+		secondaryNeeTexture->Initialize(
+			device.GetDevice(), width, height, DXGI_FORMAT_R32G32B32A32_FLOAT,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, 1, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			"DxrRenderPass_RestirSecondaryNee"
+		);
+		secondaryNeeTexture->CreateSRV(device.GetDevice(), descHeap);
+		secondaryNeeTexture->CreateUAV(device.GetDevice(), descHeap, 0);
+		if (!secondaryNeeTexture->HasSRV() || !secondaryNeeTexture->HasUAV(0))
+		{
+			GRAPHICS_LOG_FMT("[RestirCandidatePass] Missing secondary NEE texture views\n");
+			return;
+		}
+#endif
+
 		for (auto* buffer : {primaryHitBuffer.get(), reservoirBuffer.get()})
 		{
 			if (!buffer->HasSRV() || !buffer->HasUAV())
@@ -294,16 +318,19 @@ void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderCo
 	}
 	assert(m_resourcesReady);
 	PublishInvalidCandidate(frame, renderContext);
-	const auto*	   frameData = renderContext->Get<RaytracingFrameRenderData>();
-	auto*		   restirCandidateData = &m_restirCandidateData.Get();
-	auto*		   restirPrimaryHitBuffer = restirCandidateData->primaryHitBuffer.get();
-	auto*		   restirReservoirBuffer = restirCandidateData->reservoirBuffer.get();
-	auto*		   restirMotionVectorTexture = restirCandidateData->motionVectorTexture.get();
-	auto*		   restirLinearDepthTexture = restirCandidateData->linearDepthTexture.get();
-	auto*		   restirDiffuseAlbedoTexture = restirCandidateData->diffuseAlbedoTexture.get();
-	auto*		   restirSpecularAlbedoTexture = restirCandidateData->specularAlbedoTexture.get();
-	auto*		   restirNormalRoughnessTexture = restirCandidateData->normalRoughnessTexture.get();
-	auto*		   restirSpecularHitDistanceTexture = restirCandidateData->specularHitDistanceTexture.get();
+	const auto* frameData = renderContext->Get<RaytracingFrameRenderData>();
+	auto*		restirCandidateData = &m_restirCandidateData.Get();
+	auto*		restirPrimaryHitBuffer = restirCandidateData->primaryHitBuffer.get();
+	auto*		restirReservoirBuffer = restirCandidateData->reservoirBuffer.get();
+	auto*		restirMotionVectorTexture = restirCandidateData->motionVectorTexture.get();
+	auto*		restirLinearDepthTexture = restirCandidateData->linearDepthTexture.get();
+	auto*		restirDiffuseAlbedoTexture = restirCandidateData->diffuseAlbedoTexture.get();
+	auto*		restirSpecularAlbedoTexture = restirCandidateData->specularAlbedoTexture.get();
+	auto*		restirNormalRoughnessTexture = restirCandidateData->normalRoughnessTexture.get();
+	auto*		restirSpecularHitDistanceTexture = restirCandidateData->specularHitDistanceTexture.get();
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto* secondaryNeeTexture = restirCandidateData->secondaryNeeTexture.get();
+#endif
 	auto*		   cameraData = renderContext->Get<CameraRenderData>();
 	auto*		   restirLightData = renderContext->Get<RestirLightRenderData>();
 	auto*		   uploadHeap = frame->GetUploadHeap();
@@ -368,6 +395,12 @@ void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderCo
 			rrGuideRoots[guideIndex], descHeap.GetGPUHandle(rrGuideTextures[guideIndex]->GetUAVIndex(0))
 		);
 	}
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	DxUtils::TransitionResourceIfNeeded(cmdList4.Get(), secondaryNeeTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	cmdList4->SetComputeRootDescriptorTable(
+		DxrRootRestirSecondaryNee, descHeap.GetGPUHandle(secondaryNeeTexture->GetUAVIndex(0))
+	);
+#endif
 	if (auto* emissiveLightBuffer = restirLightData->emissiveLightSync.GetBuffer())
 	{
 		cmdList4->SetComputeRootShaderResourceView(
@@ -397,6 +430,12 @@ void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderCo
 		restirLightData->emissiveLightWeightSum,
 		frameData->hasPreviousFrame ? 1u : 0u
 	};
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	if (!GLOBAL(RestirDebugGlobal).IsSecondaryNeeEnabled())
+	{
+		restirConstants.candidateMask |= RESTIR_CANDIDATE_DISABLE_SECONDARY_NEE;
+	}
+#endif
 	cmdList4->SetComputeRoot32BitConstants(DxrRootRestirCandidateConstants, 8, &restirConstants, 0);
 
 	struct RestirCandidateCameraConstants
@@ -429,6 +468,13 @@ void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderCo
 		DxUtils::CreateUAVBarrier(restirSpecularHitDistanceTexture->GetResource())
 	};
 	cmdList4->ResourceBarrier(static_cast<UINT>(std::size(restirBarriers)), restirBarriers);
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto secondaryNeeBarrier = DxUtils::CreateUAVBarrier(secondaryNeeTexture->GetResource());
+	cmdList4->ResourceBarrier(1, &secondaryNeeBarrier);
+	DxUtils::TransitionResourceIfNeeded(
+		cmdList4.Get(), secondaryNeeTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+	);
+#endif
 	DxUtils::TransitionResourceIfNeeded(
 		cmdList4.Get(), restirPrimaryHitBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 	);
