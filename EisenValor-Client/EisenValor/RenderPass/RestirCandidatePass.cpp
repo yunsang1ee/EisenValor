@@ -441,11 +441,16 @@ void RestirCandidatePass::Execute(DxFrameResource* frame, Scene* scene, RenderCo
 	struct RestirCandidateCameraConstants
 	{
 		DX::XMFLOAT4X4 previousViewProj;
+		DX::XMFLOAT4X4 currentViewProj;
 	};
-	static_assert(sizeof(RestirCandidateCameraConstants) == 16u * sizeof(uint32_t));
+	static_assert(sizeof(RestirCandidateCameraConstants) == 32u * sizeof(uint32_t));
 
 	RestirCandidateCameraConstants restirCameraConstants = {};
 	DirectX::XMStoreFloat4x4(&restirCameraConstants.previousViewProj, DirectX::XMMatrixTranspose(previousViewProj));
+	DirectX::XMStoreFloat4x4(
+		&restirCameraConstants.currentViewProj,
+		DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&frameData->viewProjection))
+	);
 	const auto restirCameraAllocation = uploadHeap->UploadConstantBuffer(restirCameraConstants);
 	cmdList4->SetComputeRootConstantBufferView(
 		DxrRootRestirCandidateCameraConstants, restirCameraAllocation.gpuAddress

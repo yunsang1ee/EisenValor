@@ -124,7 +124,8 @@ private:
 	bool						 m_rrPresetE = false;
 	uint32_t					 m_rrEvaluatedFrames = 0;
 	StreamlineQualityMode		 m_qualityMode = StreamlineQualityMode::Quality;
-	DirectX::XMFLOAT4X4			 m_previousViewProjection = {};
+	DirectX::XMFLOAT4X4			 m_previousView = {};
+	DirectX::XMFLOAT4X4			 m_previousProjection = {};
 	bool						 m_initialized = false;
 	bool						 m_deviceReady = false;
 	bool						 m_dlssSupported = false;
@@ -132,7 +133,7 @@ private:
 	bool						 m_enabled = true;
 	bool						 m_preferRayReconstruction = true;
 	bool						 m_historyResetRequested = true;
-	bool						 m_hasPreviousViewProjection = false;
+	bool						 m_hasPreviousCamera = false;
 	bool						 m_rayReconstructionOptionsActive = false;
 	bool						 m_featureWarmupAllowed = false;
 	bool						 m_featureResourcesAllocated = false;

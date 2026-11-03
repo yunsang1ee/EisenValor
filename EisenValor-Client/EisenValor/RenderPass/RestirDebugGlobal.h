@@ -2,6 +2,7 @@
 
 #include <Singleton.h>
 
+#include <array>
 #include <cstdint>
 #include <string>
 
@@ -59,18 +60,38 @@ public:
 		}
 	}
 	uint32_t GetRrDisplayFrames() const { return m_rrDisplayFrames; }
+	void SetReferenceAccumulationFrames(uint32_t frames, uint32_t target = 1024)
+	{
+		if (frames != m_referenceAccumulationFrames || target != m_referenceAccumulationTarget)
+		{
+			m_referenceAccumulationFrames = frames;
+			m_referenceAccumulationTarget = target;
+			TouchOverlay();
+		}
+	}
+	[[nodiscard]] uint32_t GetReferenceAccumulationFrames() const { return m_referenceAccumulationFrames; }
+	[[nodiscard]] uint32_t GetReferenceAccumulationTarget() const { return m_referenceAccumulationTarget; }
+	void RequestReferenceAccumulationReset()
+	{
+		++m_referenceAccumulationResetRequest;
+		TouchOverlay();
+	}
+	[[nodiscard]] uint64_t GetReferenceAccumulationResetRequest() const
+	{
+		return m_referenceAccumulationResetRequest;
+	}
 	bool	 IsSecondaryNeeEnabled() const { return m_secondaryNeeEnabled; }
-	void	 ToggleSecondaryNee()
+	void ToggleSecondaryNee()
 	{
 		m_secondaryNeeEnabled = !m_secondaryNeeEnabled;
 		rrComparisonVisible = true;
 		++m_revision;
 	}
-	uint32_t GetRrDecorrelationPercent() const { return m_rrDecorrelationMode * 50u; }
-	float	 GetRrDecorrelationFactor() const { return float(m_rrDecorrelationMode) * 0.5f; }
+	uint32_t GetRrDecorrelationPercent() const { return kRrDecorrelationPercents[m_rrDecorrelationMode]; }
+	float	 GetRrDecorrelationFactor() const { return float(GetRrDecorrelationPercent()) / 100.0f; }
 	void	 StepRrDecorrelation(int32_t direction)
 	{
-		constexpr int32_t modeCount = 3;
+		constexpr int32_t modeCount = static_cast<int32_t>(kRrDecorrelationPercents.size());
 		m_rrDecorrelationMode = uint32_t((int32_t(m_rrDecorrelationMode) + direction + modeCount) % modeCount);
 		m_source = RestirDebugSource::FinalWithRayReconstruction;
 		m_view = RestirDebugView::Beauty;
@@ -286,8 +307,12 @@ private:
 	uint64_t		  m_captureStatusRevision = 0;
 	uint32_t		  m_rrOverlaySignature = 0xffffffffu;
 	uint32_t		  m_rrDisplayFrames = 0;
-	// Temporary default until the persistent color speckles are resolved.
-	uint32_t	 m_rrDecorrelationMode = 2u;
+	uint32_t		  m_referenceAccumulationFrames = 0;
+	uint32_t		  m_referenceAccumulationTarget = 1024;
+	uint64_t		  m_referenceAccumulationResetRequest = 0;
+	static constexpr std::array<uint32_t, 5> kRrDecorrelationPercents = {0u, 50u, 60u, 70u, 100u};
+	// Start at 70% fresh; retain the endpoints for temporal/fresh comparison.
+	uint32_t	 m_rrDecorrelationMode = 3u;
 	bool		 m_secondaryNeeEnabled = true;
 	uint32_t	 m_captureTarget = 512;
 	uint32_t	 m_captureFrames = 0;

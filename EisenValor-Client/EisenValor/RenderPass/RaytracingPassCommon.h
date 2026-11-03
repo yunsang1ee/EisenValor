@@ -33,13 +33,17 @@ enum DxrRootParameter : uint32_t
 #endif
 };
 
+// Reference PT extends the common roots independently of the ReSTIR layout.
+inline constexpr uint32_t DxrRootReferenceAccumulation = DxrRootRestirPrimaryHit;
+inline constexpr uint32_t DxrRootReferenceConstants = DxrRootRestirReservoir;
 
 std::unique_ptr<DxRtPipelineState> BuildRaytracingPipeline(
 	ID3D12Device5*		device,
 	const std::wstring& shaderPath,
 	uint32_t			maxRecursionDepth,
 	uint32_t			maxPayloadSizeBytes,
-	bool				candidate
+	bool				candidate,
+	bool				referenceAccumulation = false
 );
 std::unique_ptr<DxRtShaderTable> BuildRaytracingShaderTable(
 	ID3D12Device5* device, const DxRtPipelineState* pipeline, std::string_view name

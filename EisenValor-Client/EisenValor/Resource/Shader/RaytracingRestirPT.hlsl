@@ -63,6 +63,7 @@ cbuffer RestirCandidateConstants : register(b3, space0)
 cbuffer RestirCandidateCameraConstants : register(b4, space0)
 {
     float4x4 g_previousViewProj;
+    float4x4 g_currentViewProj;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -244,6 +245,7 @@ float3 RestirEvalRrSpecularAlbedo(float3 F0, float roughness, float NdotV)
 void RestirWritePrimaryOutputs(
     uint pixelIndex,
     float3 hitPos,
+    float3 objectPosition,
     float hitDistance,
     float3 geometricNormal,
     float3 shadingNormal,
@@ -295,19 +297,22 @@ void RestirWritePrimaryOutputs(
         }
         else
         {
-            previousObjectPosition = mul(float4(hitPos, 1.0f), inst.worldInverse).xyz;
+            previousObjectPosition = objectPosition;
         }
 
         float3 previousWorldPosition =
             mul(float4(previousObjectPosition, 1.0f), inst.previousWorldMatrix).xyz;
-        float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        float3 currentWorldPosition = mul(float4(objectPosition, 1.0f), inst.worldMatrix).xyz;
+        precise float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        precise float4 currentClip = mul(float4(currentWorldPosition, 1.0f), g_currentViewProj);
         float2 previousUv;
-        if (TryClipToUv(previousClip, previousUv))
+        float2 currentUv;
+        if (TryClipToUv(previousClip, previousUv) && TryClipToUv(currentClip, currentUv))
         {
-            float2 currentUv =
-                (float2(pixelCoord) + 0.5f) / float2(g_restirScreenWidth, g_restirScreenHeight);
-            float2 jitterUv = g_cameraJitterPixels / float2(g_restirScreenWidth, g_restirScreenHeight);
-            motionVector = previousUv - currentUv - jitterUv;
+            // Project the same barycentric point in both frames. Comparing an inverse-VP
+            // ray hit with the ideal pixel center leaves a static floating-point drift.
+            // Both matrices are unjittered, so this difference already excludes jitter.
+            motionVector = previousUv - currentUv;
             motionVectorValid = true;
         }
     }
@@ -1190,6 +1195,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             RestirWritePrimaryOutputs(
                 payload.pixelIndex,
                 hitPos,
+                v0.position * bary.x + v1.position * bary.y + v2.position * bary.z,
                 RayTCurrent(),
                 geometricNormal,
                 visibleNormal,

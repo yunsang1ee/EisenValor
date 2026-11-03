@@ -4,16 +4,30 @@
 #include "RaytracingMaterialEmission.hlsli"
 #include "RaytracingTerrain.hlsli"
 #include "RaytracingEnvironment.hlsli"
-#include "RaytracingPostProcess.hlsli"
 #include "RaytracingNormal.hlsli"
 #include "RaytracingSampling.hlsli"
 #include "RaytracingLighting.hlsli"
 #include "RaytracingNEE.hlsli"
 
-typedef StandardRayPayload RayPayload;
+struct RayPayload
+{
+    float3 color;
+    uint recursionDepth;
+    uint rngSeed;
+};
+
+RayPayload MakeReferenceRayPayload(uint recursionDepth, uint rngSeed)
+{
+    RayPayload payload;
+    payload.color = 0.0f.xxx;
+    payload.recursionDepth = recursionDepth;
+    payload.rngSeed = rngSeed;
+    return payload;
+}
 
 RaytracingAccelerationStructure g_scene : register(t0, space0);
 RWTexture2D<float4> g_output : register(u0, space0);
+RWStructuredBuffer<float4> g_referenceAccumulation : register(u1, space0);
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -35,14 +49,18 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
     uint g_frameConstantsPad0;
 };
 
+cbuffer ReferenceAccumulationConstants : register(b3, space0)
+{
+    uint g_referenceHistoryFrames;
+    uint g_referenceMaxFrames;
+    uint g_referencePad0;
+    uint g_referencePad1;
+};
+
 SamplerState g_sampler : register(s0, space0);
 
 static const uint MAX_RECURSION_DEPTH = 6;
-static const uint SPP = 4;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
-static const float PT_OUTPUT_EXPOSURE = 0.75f;
-static const float PT_BLOOM_THRESHOLD = 1.0f;
-static const float PT_BLOOM_INTENSITY = 0.75f;
 static const float PT_VISIBLE_NORMAL_STRENGTH = 2.5f;
 
 // 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
@@ -83,51 +101,59 @@ void RayGenMain()
     uint2 pixelCoord = DispatchRaysIndex().xy;
     uint2 screenSize = DispatchRaysDimensions().xy;
     uint pixelIndex = pixelCoord.y * screenSize.x + pixelCoord.x;
+
+    if (g_referenceHistoryFrames >= max(1u, g_referenceMaxFrames))
+    {
+        g_output[pixelCoord] = g_referenceAccumulation[pixelIndex];
+        return;
+    }
 	
     uint rngSeed = pixelIndex * 9781u
 					 ^ pixelCoord.y * 6271u
 					 ^ screenSize.x * 7919u
                      ^ (g_frameSeed + 1u) * 104729u
                      ^ 124623u;
-	
-    float3 finalColor = 0.0f.xxx;
-	
-    for (uint bounce = 0; bounce < SPP; ++bounce)
-    {
-        float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
-        ndc.y = -ndc.y;
-        float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
-        nearPos /= nearPos.w;
-        float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-        farPos /= farPos.w;
-	
-        RayDesc ray;
-        ray.Origin = nearPos.xyz;
-        ray.Direction = normalize(farPos.xyz - nearPos.xyz);
-        ray.TMin = 0.001f;
-        ray.TMax = RAY_TMAX;
+    rngSeed ^= rngSeed >> 16;
+    rngSeed *= 0x7feb352du;
+    rngSeed ^= rngSeed >> 15;
+    rngSeed *= 0x846ca68bu;
+    rngSeed ^= rngSeed >> 16;
 
-        RayPayload payload = MakeDefaultRayPayload<RayPayload>(0);
-		
-        TraceRay(g_scene,
-				 RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-				 0xFF,
-				 0, 0, 0,
-				 ray,
-				 payload);
-        finalColor += payload.color.rgb;
-    }
-    finalColor /= SPP;
+    // One new path per pixel and frame. Halton jitter supplies the film sample;
+    // the payload carries independent frame/pixel RNG through every path bounce.
+    float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+    ndc.y = -ndc.y;
+    float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
+    nearPos /= nearPos.w;
+    float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+    farPos /= farPos.w;
 
-    float3 outputColor = finalColor;
-    if (PT_DEBUG_VIEW == 0 && !UsePhysicalRenderingMode())
+    RayDesc ray;
+    ray.Origin = nearPos.xyz;
+    ray.Direction = normalize(farPos.xyz - nearPos.xyz);
+    ray.TMin = 0.001f;
+    ray.TMax = RAY_TMAX;
+
+    RayPayload payload = MakeReferenceRayPayload(0u, rngSeed);
+    TraceRay(g_scene,
+             RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+             0xFF,
+             0, 0, 0,
+             ray,
+             payload);
+
+    float3 meanColor = max(0.0f.xxx, payload.color);
+    if (g_referenceHistoryFrames != 0u)
     {
-        outputColor *= PT_OUTPUT_EXPOSURE;
-        float3 bloom = max(0.0f.xxx, outputColor - PT_BLOOM_THRESHOLD.xxx) * PT_BLOOM_INTENSITY;
-        outputColor += bloom;
+        float3 previousMean = g_referenceAccumulation[pixelIndex].rgb;
+        meanColor = previousMean + (meanColor - previousMean) / float(g_referenceHistoryFrames + 1u);
     }
 
-    g_output[pixelCoord] = float4(max(0.0f.xxx, outputColor), 1.0f);
+    // Accumulate transport in FP32 before the shared HdrResolve tone mapping.
+    // A zero history count overwrites the buffer without reading its old contents.
+    float4 accumulatedColor = float4(meanColor, 1.0f);
+    g_referenceAccumulation[pixelIndex] = accumulatedColor;
+    g_output[pixelCoord] = accumulatedColor;
 }
 
 [shader("miss")]
@@ -305,16 +331,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         return;
     }
 	
-    uint rngSeed =
-	InstanceID() * 0xc2b2ae35u ^
-	PrimitiveIndex() * 0x85ebca6bu ^
-	payload.recursionDepth * 0x27d4eb2du ^
-	(asuint(hitPos.x) + asuint(hitPos.y) * 0x9e3779b9u + asuint(hitPos.z));
-    rngSeed ^= rngSeed >> 16;
-    rngSeed *= 0x7feb352d;
-    rngSeed ^= rngSeed >> 15;
-    rngSeed *= 0x846ca68b;
-    rngSeed ^= rngSeed >> 16;
+    uint rngSeed = payload.rngSeed;
 
     // Temporary PT NEE: take one extra environment-sun sample and test visibility.
     float3 directSun = EvaluateEnvironmentSunNEE(
@@ -428,7 +445,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     nextRay.TMin = RAY_TMIN;
     nextRay.TMax = RAY_TMAX;
 
-    RayPayload child = MakeDefaultRayPayload<RayPayload>(payload.recursionDepth + 1);
+    RayPayload child = MakeReferenceRayPayload(payload.recursionDepth + 1u, rngSeed);
 
     TraceRay(
 		g_scene,

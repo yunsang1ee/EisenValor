@@ -1,5 +1,6 @@
 #include "stdafxClientFramework.h"
 #include "StreamlineGlobal.h"
+#include "DxMath.h"
 #include "DxCommandQueueGlobal.h"
 #include "PixProfiler.h"
 #include <chrono>
@@ -109,7 +110,8 @@ void StreamlineGlobal::Initialize()
 		return;
 	}
 
-	DirectX::XMStoreFloat4x4(&m_previousViewProjection, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&m_previousView, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&m_previousProjection, DirectX::XMMatrixIdentity());
 	m_initialized = true;
 	GRAPHICS_LOG_FMT("[Streamline] Initialized SDK {}.{}.{}\n", SL_VERSION_MAJOR, SL_VERSION_MINOR, SL_VERSION_PATCH);
 }
@@ -126,7 +128,7 @@ void StreamlineGlobal::Release()
 	m_deviceReady = false;
 	m_dlssSupported = false;
 	m_rayReconstructionSupported = false;
-	m_hasPreviousViewProjection = false;
+	m_hasPreviousCamera = false;
 	m_rayReconstructionOptionsActive = false;
 	m_featureWarmupAllowed = false;
 	m_featureResourcesAllocated = false;
@@ -223,7 +225,7 @@ bool StreamlineGlobal::PrepareForResourceChange()
 	}
 	ResetFeatureConfiguration();
 	RequestHistoryReset();
-	m_hasPreviousViewProjection = false;
+	m_hasPreviousCamera = false;
 	return true;
 }
 
@@ -319,14 +321,8 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 
 	const DirectX::XMMATRIX view = desc.camera->viewMatrix;
 	const DirectX::XMMATRIX projection = desc.camera->projectionMatrix;
-	const DirectX::XMMATRIX viewProjection = DirectX::XMMatrixMultiply(view, projection);
 	const DirectX::XMMATRIX inverseView = DirectX::XMMatrixInverse(nullptr, view);
 	const DirectX::XMMATRIX inverseProjection = DirectX::XMMatrixInverse(nullptr, projection);
-	const DirectX::XMMATRIX previousViewProjection =
-		m_hasPreviousViewProjection ? DirectX::XMLoadFloat4x4(&m_previousViewProjection) : viewProjection;
-	const DirectX::XMMATRIX clipToPreviousClip =
-		DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, viewProjection), previousViewProjection);
-	const DirectX::XMMATRIX previousClipToClip = DirectX::XMMatrixInverse(nullptr, clipToPreviousClip);
 
 	const bool optionsChanged =
 		!m_optionsSignature.valid || m_optionsSignature.useRayReconstruction != useRayReconstruction ||
@@ -344,7 +340,7 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		if (!PrepareForResourceChange())
 			return false;
 		PixScopedCpuEvent optionsEvent(L"DLSS.SetOptions");
-		sl::DLSSOptions dlssOptions = {};
+		sl::DLSSOptions	  dlssOptions = {};
 		dlssOptions.mode = mode;
 		dlssOptions.outputWidth = desc.displayWidth;
 		dlssOptions.outputHeight = desc.displayHeight;
@@ -422,6 +418,15 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		return false;
 	}
 
+	// SetOptions can invalidate history above; select the previous camera only afterwards.
+	const bool				resetCameraHistory = desc.reset || m_historyResetRequested || !m_hasPreviousCamera;
+	const DirectX::XMMATRIX previousView = resetCameraHistory ? view : DirectX::XMLoadFloat4x4(&m_previousView);
+	const DirectX::XMMATRIX previousProjection =
+		resetCameraHistory ? projection : DirectX::XMLoadFloat4x4(&m_previousProjection);
+	const DirectX::XMMATRIX clipToPreviousClip =
+		Matrix4x4::ClipToPreviousClip(view, projection, previousView, previousProjection);
+	const DirectX::XMMATRIX previousClipToClip = DirectX::XMMatrixInverse(nullptr, clipToPreviousClip);
+
 	sl::Constants constants = {};
 	constants.cameraViewToClip = ToStreamlineMatrix(projection);
 	constants.clipToCameraView = ToStreamlineMatrix(inverseProjection);
@@ -443,8 +448,7 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	constants.depthInverted = sl::Boolean::eFalse;
 	constants.cameraMotionIncluded = sl::Boolean::eTrue;
 	constants.motionVectors3D = sl::Boolean::eFalse;
-	constants.reset = (desc.reset || m_historyResetRequested || !m_hasPreviousViewProjection) ? sl::Boolean::eTrue
-																							  : sl::Boolean::eFalse;
+	constants.reset = resetCameraHistory ? sl::Boolean::eTrue : sl::Boolean::eFalse;
 	constants.orthographicProjection = sl::Boolean::eFalse;
 	constants.motionVectorsDilated = sl::Boolean::eFalse;
 	constants.motionVectorsJittered = sl::Boolean::eFalse;
@@ -486,7 +490,7 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	}
 
 	const sl::Feature feature = useRayReconstruction ? sl::kFeatureDLSS_RR : sl::kFeatureDLSS;
-	const bool initializing = !m_featureResourcesAllocated;
+	const bool		  initializing = !m_featureResourcesAllocated;
 	m_featureResourcesLive = true;
 	m_liveFeatureIsRayReconstruction = useRayReconstruction;
 	const auto				 evaluateStart = std::chrono::steady_clock::now();
@@ -515,8 +519,9 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	}
 	m_featureResourcesAllocated = true;
 
-	DirectX::XMStoreFloat4x4(&m_previousViewProjection, viewProjection);
-	m_hasPreviousViewProjection = true;
+	DirectX::XMStoreFloat4x4(&m_previousView, view);
+	DirectX::XMStoreFloat4x4(&m_previousProjection, projection);
+	m_hasPreviousCamera = true;
 	if (evaluated)
 	{
 		if (desc.reset || m_historyResetRequested)

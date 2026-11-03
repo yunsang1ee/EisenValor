@@ -214,37 +214,58 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 		return false;
 	}
 
-	const bool visible = debug.IsOverrideActive() || debug.rrComparisonVisible;
+	const bool referenceActive =
+		(debug.IsOverrideActive() && debug.GetSource() == RestirDebugSource::ReferencePathTracingRaw) ||
+		debug.GetReferenceAccumulationFrames() > 0u;
+	const bool visible = debug.IsOverrideActive() || debug.rrComparisonVisible || referenceActive;
 	owner->SetActive(visible);
 	if (visible)
 	{
 		std::wstring status = L"  SOURCE : ";
-		status += debug.GetSourceName();
+		status += referenceActive ? L"REFERENCE PT" : debug.GetSourceName();
 		status += L"\n  VIEW   : ";
-		status += debug.GetViewName();
+		status += referenceActive ? L"BEAUTY" : debug.GetViewName();
 		status += L"\n  DLSS   : ";
-		status += debug.BypassDlss() ? L"BYPASSED" : L"REQUESTED";
-		status += streamline.IsRayReconstructionPresetE() ? L" / RR E REQUESTED" : L" / RR D REQUESTED";
-		status += L"\n  RR FRAMES : " + std::to_wstring(debug.GetRrDisplayFrames());
-		status += debug.GetRrDisplayFrames() >= 64u ? L"+" : L" / 64";
-		status += streamline.IsRayReconstructionEnabled() ? L" / ENABLED" : L" / OFF OR UNSUPPORTED";
-		status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L" / CAMERA FIXED" : L" / CAMERA LIVE";
-		status += L"\n  RR FRESH : " + std::to_wstring(debug.GetRrDecorrelationPercent()) + L"%";
-		status += debug.IsSecondaryNeeEnabled() ? L"\n  SECONDARY NEE : ON  |  F7 TOGGLE"
-												: L"\n  SECONDARY NEE : OFF  |  F7 TOGGLE";
-		if (debug.GetView() == RestirDebugView::SecondaryNeeShare)
+		status += referenceActive || debug.BypassDlss() ? L"BYPASSED" : L"REQUESTED";
+		if (referenceActive)
 		{
-			status += L"\n  SHARE: BLACK 0% / WHITE 100%";
+			const bool complete = debug.GetReferenceAccumulationFrames() >= debug.GetReferenceAccumulationTarget();
+			status += L"\n  PT ACCUM : " + std::to_wstring(debug.GetReferenceAccumulationFrames()) + L" / " +
+					  std::to_wstring(debug.GetReferenceAccumulationTarget());
+			status += complete ? L" / HELD" : L" / ACCUMULATING";
+			status += L"\n  1 FRESH PATH / PIXEL / FRAME";
+			status += L"\n  STATIC SCENE / LINEAR HDR AVERAGE";
+			status += L"\n  MOTION NOT COMPENSATED";
+			status += L"\n  F12 SOURCE  |  SHIFT REVERSE";
+			status += L"\n  CTRL+F12 RESTART PT";
+			status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L"\n  SHIFT+F11 CAMERA : FIXED"
+																		: L"\n  SHIFT+F11 CAMERA : LIVE";
+			status += L"\n  F10 RESTIR VIEWS";
 		}
 		else
 		{
-			status += L"\n  HDR    : ";
-			status += debug.GetCaptureStatusText();
+			status += streamline.IsRayReconstructionPresetE() ? L" / RR E REQUESTED" : L" / RR D REQUESTED";
+			status += L"\n  RR FRAMES : " + std::to_wstring(debug.GetRrDisplayFrames());
+			status += debug.GetRrDisplayFrames() >= 64u ? L"+" : L" / 64";
+			status += streamline.IsRayReconstructionEnabled() ? L" / ENABLED" : L" / OFF OR UNSUPPORTED";
+			status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L" / CAMERA FIXED" : L" / CAMERA LIVE";
+			status += L"\n  RR FRESH : " + std::to_wstring(debug.GetRrDecorrelationPercent()) + L"%";
+			status += debug.IsSecondaryNeeEnabled() ? L"\n  SECONDARY NEE : ON  |  F7 TOGGLE"
+													  : L"\n  SECONDARY NEE : OFF  |  F7 TOGGLE";
+			if (debug.GetView() == RestirDebugView::SecondaryNeeShare)
+			{
+				status += L"\n  SHARE: BLACK 0% / WHITE 100%";
+			}
+			else
+			{
+				status += L"\n  HDR    : ";
+				status += debug.GetCaptureStatusText();
+			}
+			status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
+			status += L"\n  CTRL+F12 RAW CAPTURE / RESTART";
+			status += L"\n  F11 D/E | SHIFT+F11 CAMERA | CTRL+F11 SNAP";
+			status += L"\n  F6 FRESH 0/50/60/70/100% | SHIFT+F6 REVERSE";
 		}
-		status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
-		status += L"\n  CTRL+F12 RAW CAPTURE / RESTART";
-		status += L"\n  F11 D/E | SHIFT+F11 CAMERA | CTRL+F11 SNAP";
-		status += L"\n  F6 FRESH 0/50/100% | SHIFT+F6 REVERSE";
 		text->SetText(std::move(status));
 	}
 	m_lastRestirDebugRevision = debug.GetOverlayRevision();

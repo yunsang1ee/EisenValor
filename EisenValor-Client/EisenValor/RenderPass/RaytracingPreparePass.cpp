@@ -1199,7 +1199,7 @@ void RaytracingPreparePass::Execute(DxFrameResource* frame, Scene* scene, Render
 	frameData.previousViewProjection = m_hasPreviousViewProj ? m_previousViewProj : frameData.viewProjection;
 	frameData.hasCamera = cameraData != nullptr;
 	frameData.hasPreviousFrame = m_hasPreviousViewProj && m_hasPreviousInstanceFrame;
-	if (frameData.path == RaytracingPath::RestirCandidate)
+	if (frameData.path == RaytracingPath::RestirCandidate || frameData.path == RaytracingPath::Reference)
 	{
 		frameData.historySignature = BuildHistorySignature(frameData.settings.restirHistoryGeneration);
 	}

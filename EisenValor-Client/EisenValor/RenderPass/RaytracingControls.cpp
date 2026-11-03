@@ -136,7 +136,7 @@ void RaytracingControls::Update()
 		streamline.SetPreferRayReconstruction(true);
 		GRAPHICS_LOG_FMT("[ReSTIR.RR] fresh={}%, RR history reset requested\n", debug.GetRrDecorrelationPercent());
 	}
-	if (input.GetInputDown(VK_F7))
+	if (input.GetInputDown(VK_F7) && !input.GetInput(VK_CONTROL))
 	{
 		debug.ToggleSecondaryNee();
 		++m_settings.restirHistoryGeneration;
@@ -176,7 +176,12 @@ void RaytracingControls::Update()
 	{
 		if (input.GetInput(VK_CONTROL))
 		{
-			if (debug.RequestHdrCapture(m_settings.restirPrimarySpp))
+			if (GetPath() == RaytracingPath::Reference)
+			{
+				debug.RequestReferenceAccumulationReset();
+				DEBUG_LOG_FMT("[ReferencePT] accumulation restart requested\n");
+			}
+			else if (debug.RequestHdrCapture(m_settings.restirPrimarySpp))
 			{
 				++m_settings.restirHistoryGeneration;
 				DEBUG_LOG_FMT(

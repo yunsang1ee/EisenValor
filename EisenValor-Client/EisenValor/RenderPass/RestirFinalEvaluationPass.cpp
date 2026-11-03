@@ -56,7 +56,7 @@ static_assert(
 void RestirFinalEvaluationPass::Initialize()
 {
 	m_finalShadingFrameSeed = 0;
-	GRAPHICS_LOG_FMT("[ReSTIR.RR] final-shading decorrelation defaults to 100% fresh\n");
+	GRAPHICS_LOG_FMT("[ReSTIR.RR] final-shading decorrelation defaults to 70% fresh\n");
 	CreatePipeline();
 	m_initialized = nullptr != m_rootSignature.Get() && m_pipelineState.IsValid();
 }
@@ -193,7 +193,7 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 
 	auto& streamline = GLOBAL(StreamlineGlobal);
 	bool  useRrDecorrelation = streamline.IsRayReconstructionEnabled() && streamline.IsFeatureWarmupAllowed();
-	float rrDecorrelationFactor = 1.0f;
+	float rrDecorrelationFactor = 0.7f;
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	useRrDecorrelation = useRrDecorrelation && !outputData->bypassDlss && debugView == 0u;
 	rrDecorrelationFactor = debug.GetRrDecorrelationFactor();

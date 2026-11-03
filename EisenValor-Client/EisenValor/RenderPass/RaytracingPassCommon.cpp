@@ -42,7 +42,7 @@ static_assert(0u == (RESTIR_CANDIDATE_ALL & RESTIR_EMISSIVE_PROFILE_STAGE_MASK))
 namespace
 {
 ComPtr<ID3D12RootSignature> BuildRaytracingRootSignature(
-	ID3D12Device5* device, bool enableRestirCandidateRoot, std::string_view name
+	ID3D12Device5* device, bool enableRestirCandidateRoot, bool referenceAccumulation, std::string_view name
 )
 {
 	DxRootSignatureBuilder builder;
@@ -82,6 +82,12 @@ ComPtr<ID3D12RootSignature> BuildRaytracingRootSignature(
 		builder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 9);
 #endif
 	}
+	else if (referenceAccumulation)
+	{
+		builder.AddDescriptorTable()
+			.AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1)
+			.Add32BitConstants(4, 3);
+	}
 
 	return builder.AddStaticSampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP)
 		.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED)
@@ -94,7 +100,8 @@ std::unique_ptr<DxRtPipelineState> BuildRaytracingPipeline(
 	const std::wstring& shaderPath,
 	uint32_t			maxRecursionDepth,
 	uint32_t			maxPayloadSizeBytes,
-	bool				enableRestirCandidateRoot
+	bool				enableRestirCandidateRoot,
+	bool				referenceAccumulation
 )
 {
 	auto& compiler = GLOBAL(DxShaderCompilerGlobal);
@@ -115,8 +122,9 @@ std::unique_ptr<DxRtPipelineState> BuildRaytracingPipeline(
 	}
 	const std::string pipelineName = Utils::WideToUtf8(shaderName.c_str());
 
-	auto rootSignature =
-		BuildRaytracingRootSignature(device, enableRestirCandidateRoot, pipelineName + "_GlobalRootSig");
+	auto rootSignature = BuildRaytracingRootSignature(
+		device, enableRestirCandidateRoot, referenceAccumulation, pipelineName + "_GlobalRootSig"
+	);
 
 	DxRaytracingStateObjectBuilder stateObjectBuilder;
 	auto						   stateObject = stateObjectBuilder.AddDxilLibrary(shaderBlob.Get())
