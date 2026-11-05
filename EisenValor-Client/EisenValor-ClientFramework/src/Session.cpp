@@ -29,7 +29,7 @@ bool NetBridge::Session::Connect(std::string_view ip, uint16 port)
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(port);
 
-	const std::string ipText{ip};
+	const std::string ipText{ip.data()};
 	if (1 != inet_pton(AF_INET, ipText.c_str(), &serverAddr.sin_addr))
 	{
 		std::println("inet_pton failed = {}", WSAGetLastError());
