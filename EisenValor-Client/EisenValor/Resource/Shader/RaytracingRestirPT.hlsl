@@ -23,6 +23,9 @@ RWTexture2D<float4> g_restirDiffuseAlbedo : register(u5, space0);
 RWTexture2D<float4> g_restirSpecularAlbedo : register(u6, space0);
 RWTexture2D<float4> g_restirNormalRoughness : register(u7, space0);
 RWTexture2D<float> g_restirSpecularHitDistance : register(u8, space0);
+#if RESTIR_ENABLE_DEBUG_VIEWS
+RWTexture2D<float4> g_restirSecondaryNee : register(u9, space0);
+#endif
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -60,6 +63,7 @@ cbuffer RestirCandidateConstants : register(b3, space0)
 cbuffer RestirCandidateCameraConstants : register(b4, space0)
 {
     float4x4 g_previousViewProj;
+    float4x4 g_currentViewProj;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -86,6 +90,20 @@ bool RestirCandidateMaskHas(uint candidateType)
 uint RestirGetEmissiveProfileStage()
 {
     return g_restirCandidateMask & RESTIR_EMISSIVE_PROFILE_STAGE_MASK;
+}
+
+bool RestirSecondaryNeeEnabled()
+{
+    return RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH) &&
+           !RestirCandidateMaskHas(RESTIR_CANDIDATE_DISABLE_SECONDARY_NEE);
+}
+
+bool RestirHasEmissiveNeeAtDepth(uint depth)
+{
+    return RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) &&
+           g_restirEmissiveLightCount > 0u &&
+           RestirGetEmissiveProfileStage() != RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY &&
+           (depth == 0u || (RestirSecondaryNeeEnabled() && depth < MAX_RECURSION_DEPTH));
 }
 
 void RestirSetPayloadRcIrradiance(inout RayPayload payload, float3 irradiance)
@@ -227,6 +245,7 @@ float3 RestirEvalRrSpecularAlbedo(float3 F0, float roughness, float NdotV)
 void RestirWritePrimaryOutputs(
     uint pixelIndex,
     float3 hitPos,
+    float3 objectPosition,
     float hitDistance,
     float3 geometricNormal,
     float3 shadingNormal,
@@ -278,19 +297,22 @@ void RestirWritePrimaryOutputs(
         }
         else
         {
-            previousObjectPosition = mul(float4(hitPos, 1.0f), inst.worldInverse).xyz;
+            previousObjectPosition = objectPosition;
         }
 
         float3 previousWorldPosition =
             mul(float4(previousObjectPosition, 1.0f), inst.previousWorldMatrix).xyz;
-        float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        float3 currentWorldPosition = mul(float4(objectPosition, 1.0f), inst.worldMatrix).xyz;
+        precise float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        precise float4 currentClip = mul(float4(currentWorldPosition, 1.0f), g_currentViewProj);
         float2 previousUv;
-        if (TryClipToUv(previousClip, previousUv))
+        float2 currentUv;
+        if (TryClipToUv(previousClip, previousUv) && TryClipToUv(currentClip, currentUv))
         {
-            float2 currentUv =
-                (float2(pixelCoord) + 0.5f) / float2(g_restirScreenWidth, g_restirScreenHeight);
-            float2 jitterUv = g_cameraJitterPixels / float2(g_restirScreenWidth, g_restirScreenHeight);
-            motionVector = previousUv - currentUv - jitterUv;
+            // Project the same barycentric point in both frames. Comparing an inverse-VP
+            // ray hit with the ideal pixel center leaves a static floating-point drift.
+            // Both matrices are unjittered, so this difference already excludes jitter.
+            motionVector = previousUv - currentUv;
             motionVectorValid = true;
         }
     }
@@ -455,6 +477,7 @@ bool EvaluateRestirEmissiveNEE(
     out uint lightPrimitiveIndex,
     out uint lightBarycentrics,
     out float3 rcIrradiance,
+    out float3 sampledLightDirection,
     out float sourceBsdfPdf,
     out float sourceGeometry)
 {
@@ -469,6 +492,7 @@ bool EvaluateRestirEmissiveNEE(
     lightPrimitiveIndex = 0xffffffffu;
     lightBarycentrics = 0u;
     rcIrradiance = 0.0f.xxx;
+    sampledLightDirection = surface.shadingNormal;
     sourceBsdfPdf = 0.0f;
     sourceGeometry = 0.0f;
 
@@ -536,6 +560,7 @@ bool EvaluateRestirEmissiveNEE(
 
     float distance = sqrt(distanceSq);
     float3 lightDir = toLight / distance;
+    sampledLightDirection = lightDir;
     float NdotL = max(dot(shadingNormal, lightDir), 0.0f);
     if (NdotL <= 0.0f)
     {
@@ -628,7 +653,7 @@ void RestirWritePathOnlyReservoir(RayPayload payload)
     g_restirReservoirInitial[payload.pixelIndex] = reservoir;
 }
 
-void RestirEvaluatePrimaryNee(
+void RestirEvaluateSurfaceNee(
     RestirSurface surface, float3 V, uint rngSeed, inout RayPayload payload)
 {
     float3 hitPos = surface.position;
@@ -692,6 +717,7 @@ void RestirEvaluatePrimaryNee(
         uint lightPrimitiveIndex;
         uint lightBarycentrics;
         float3 rcIrradiance;
+        float3 sampledLightDirection;
         float sourceBsdfPdf;
         float sourceGeometry;
         bool sampledEmissive = EvaluateRestirEmissiveNEE(
@@ -707,6 +733,7 @@ void RestirEvaluatePrimaryNee(
             lightPrimitiveIndex,
             lightBarycentrics,
             rcIrradiance,
+            sampledLightDirection,
             sourceBsdfPdf,
             sourceGeometry);
 
@@ -726,6 +753,7 @@ void RestirEvaluatePrimaryNee(
             payload.reconnectBarycentrics = lightBarycentrics;
             payload.rcSourcePdfBefore = sourceBsdfPdf;
             payload.rcSourceGeometry = sourceGeometry;
+            payload.packedRcVertexWi = RestirPackNormalOct16(sampledLightDirection);
             RestirSetPayloadRcIrradiance(payload, rcIrradiance);
         }
     }
@@ -744,7 +772,7 @@ void RestirUpdatePrimaryNeeReservoir(
         candidate.pixelIndex = pixelIndex;
         candidate.primaryHitFlags =
             RESTIR_PRIMARY_HIT_VALID | RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN;
-        RestirEvaluatePrimaryNee(surface, V, primarySeed, candidate);
+        RestirEvaluateSurfaceNee(surface, V, primarySeed, candidate);
         RestirUpdateReservoirFromPayload(reservoir, candidate, reservoirSeed);
     }
     if (RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) && g_restirEmissiveLightCount > 0u)
@@ -753,9 +781,86 @@ void RestirUpdatePrimaryNeeReservoir(
         candidate.pixelIndex = pixelIndex;
         candidate.primaryHitFlags =
             RESTIR_PRIMARY_HIT_VALID | RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_EMISSIVE;
-        RestirEvaluatePrimaryNee(surface, V, primarySeed, candidate);
+        RestirEvaluateSurfaceNee(surface, V, primarySeed, candidate);
         RestirUpdateReservoirFromPayload(reservoir, candidate, reservoirSeed);
     }
+}
+
+// At the reconnection vertex (depth 1), NEE is a separate complete-path
+// candidate. Deeper NEE terms share the fixed suffix and can be added to it.
+float3 RestirEvaluateSecondaryNee(RestirSurface surface, float3 V, uint rngSeed, RayPayload incoming)
+{
+    if (!RestirSecondaryNeeEnabled() || incoming.recursionDepth == 0u ||
+        incoming.recursionDepth >= MAX_RECURSION_DEPTH)
+    {
+        return 0.0f.xxx;
+    }
+
+    float3 directLighting = 0.0f.xxx;
+    bool atReconnectVertex = incoming.recursionDepth == 1u;
+    RestirReservoir reservoir = RestirMakeEmptyReservoir();
+    uint reservoirSeed = 0u;
+    if (atReconnectVertex)
+    {
+        reservoir = g_restirReservoirInitial[incoming.pixelIndex];
+        reservoirSeed = RestirPrimaryReservoirSeed(incoming.pixelIndex, incoming.primaryTrialIndex) ^ 0x6a09e667u;
+    }
+
+    [unroll]
+    for (uint lightKind = 0u; lightKind < 2u; ++lightKind)
+    {
+        bool isSun = lightKind == 0u;
+        if ((isSun && !RestirCandidateMaskHas(RESTIR_CANDIDATE_SUN_NEE)) ||
+            (!isSun && !RestirHasEmissiveNeeAtDepth(incoming.recursionDepth)))
+        {
+            continue;
+        }
+
+        RayPayload candidate = MakeDefaultRayPayload < RayPayload > (incoming.recursionDepth);
+        candidate.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID | RESTIR_PRIMARY_HIT_NEE_CANDIDATE |
+            (isSun ? RESTIR_PRIMARY_HIT_NEE_SUN : RESTIR_PRIMARY_HIT_NEE_EMISSIVE);
+        uint lightSeed = rngSeed ^ (isSun ? 0x510e527fu : 0x1f83d9abu);
+        RestirEvaluateSurfaceNee(surface, V, lightSeed, candidate);
+#if RESTIR_ENABLE_DEBUG_VIEWS
+        // Record every secondary light sample before reservoir selection. Each
+        // pixel has one sequential path walk, so no cross-thread atomic is needed.
+        uint2 debugPixel = RestirPixelCoordFromIndex(incoming.pixelIndex);
+        float3 debugContribution = incoming.color * candidate.color;
+        g_restirSecondaryNee[debugPixel] += float4(debugContribution, 0.0f);
+#endif
+        if (!atReconnectVertex)
+        {
+            directLighting += candidate.color;
+            continue;
+        }
+
+        // color enters the depth-1 trace as primary BSDF / selected-lobe PDF.
+        // Store the secondary hit as rc, not the NEE light's terminal vertex.
+        candidate.color *= incoming.color;
+        candidate.pixelIndex = incoming.pixelIndex;
+        candidate.primaryTrialIndex = incoming.primaryTrialIndex;
+        uint beforeMask = (RESTIR_METADATA_LOBE_MASK << RESTIR_METADATA_LOBE_BEFORE_SHIFT) |
+                          RESTIR_METADATA_DELTA_BEFORE_RC;
+        candidate.pathFlags = (candidate.pathFlags & RESTIR_PATH_EVENT_MASK) |
+            (incoming.pathFlags & beforeMask) | RESTIR_METADATA_SHIFT_DATA_VALID | RESTIR_METADATA_RC_OUTGOING_NEE;
+        RestirSetPayloadLobe(candidate, false, RESTIR_BSDF_LOBE_ALL, false);
+        candidate.reconnectInstanceId = incoming.reconnectInstanceId;
+        candidate.reconnectInstanceGeneration = incoming.reconnectInstanceGeneration;
+        candidate.reconnectGeometryIndex = incoming.reconnectGeometryIndex;
+        candidate.reconnectPrimitiveIndex = incoming.reconnectPrimitiveIndex;
+        candidate.reconnectBarycentrics = incoming.reconnectBarycentrics;
+        candidate.rcSourceGeometry = incoming.rcSourceGeometry;
+        candidate.rcSourcePdfBefore = incoming.rcSourcePdfBefore;
+        candidate.rcSourcePdfAfter = 0.0f; // rc->light is light-sampled, not BSDF-sampled.
+        RestirUpdateReservoirFromPayload(reservoir, candidate, reservoirSeed);
+    }
+
+    if (atReconnectVertex)
+    {
+        // RayGen counts completed primary trials; adding NEE techniques must not increment M.
+        g_restirReservoirInitial[incoming.pixelIndex] = reservoir;
+    }
+    return directLighting;
 }
 
 void RestirTraceBsdfPath(
@@ -844,6 +949,22 @@ void RestirTraceBsdfPath(
 
     RayPayload child = MakeDefaultRayPayload < RayPayload > (payload.recursionDepth + 1);
     child.primaryTrialIndex = payload.primaryTrialIndex;
+    if (payload.recursionDepth == 0u)
+    {
+        child.pixelIndex = payload.pixelIndex;
+        child.color = weight;
+        child.rcSourcePdfBefore = pdf;
+        RestirSetPayloadLobe(child, true, sampledLobe, sampledDelta);
+    }
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    else
+    {
+        // Input color carries camera-to-vertex throughput until closest-hit
+        // records NEE; the normal path return overwrites it with radiance.
+        child.pixelIndex = payload.pixelIndex;
+        child.color = payload.color * weight;
+    }
+#endif
 
     TraceRay(
         g_scene,
@@ -884,8 +1005,7 @@ void RestirTraceBsdfPath(
         0u != (child.pathFlags & RESTIR_PATH_FLAG_EMISSIVE_HIT) &&
         0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED);
     bool applyEmissiveHitMis = unresolvedEmissiveHit &&
-        payload.recursionDepth == 0 && !sampledDelta &&
-        RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) && child.lightPdf > 0.0f;
+        !sampledDelta && RestirHasEmissiveNeeAtDepth(payload.recursionDepth) && child.lightPdf > 0.0f;
     if (applyEmissiveHitMis)
     {
         float competingBsdfPdf = RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_ALL);
@@ -930,6 +1050,9 @@ void RayGenMain()
     uint primaryHitFlags = 0u;
     uint completedPrimaryTrials = 0u;
     uint primarySpp = clamp(g_restirPrimarySpp, 1u, 4u);
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    g_restirSecondaryNee[pixelCoord] = 0.0f.xxxx;
+#endif
     if (0u != g_restirCandidateMask)
     {
         g_restirReservoirInitial[pixelIndex] = RestirMakeEmptyReservoir();
@@ -966,6 +1089,10 @@ void RayGenMain()
 
     }
     finalColor /= primarySpp;
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    // Average over all primary trials, including misses and zero contributions.
+    g_restirSecondaryNee[pixelCoord] = float4(g_restirSecondaryNee[pixelCoord].rgb / primarySpp, 1.0f);
+#endif
 
     if (0u != g_restirCandidateMask)
     {
@@ -1068,6 +1195,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             RestirWritePrimaryOutputs(
                 payload.pixelIndex,
                 hitPos,
+                v0.position * bary.x + v1.position * bary.y + v2.position * bary.z,
                 RayTCurrent(),
                 geometricNormal,
                 visibleNormal,
@@ -1164,7 +1292,9 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         return;
     }
 
+    float3 secondaryLighting = RestirEvaluateSecondaryNee(surface, V, rngSeed, payload);
     RestirTraceBsdfPath(payload, surface, emissive, V, rngSeed);
+    payload.color += secondaryLighting;
 
     if (payload.recursionDepth == 0 && g_restirCandidateMask != 0u)
     {

@@ -18,16 +18,45 @@
 #include <DxRootSignatureBuilder.h>
 #include <DxShaderCompilerGlobal.h>
 #include <DxDescriptorHeapGlobal.h>
+#include <StreamlineGlobal.h>
 
 namespace
 {
 constexpr uint32_t kThreadGroupSizeX = 8;
 constexpr uint32_t kThreadGroupSizeY = 8;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+static_assert(static_cast<uint32_t>(RestirDebugView::SecondaryNee) == 13u);
+static_assert(static_cast<uint32_t>(RestirDebugView::SecondaryNeeShare) == 14u);
+#endif
+
+struct RestirFinalConstants
+{
+	uint32_t width;
+	uint32_t height;
+	uint32_t frameSeed;
+	float	 rrDecorrelationFactor;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	uint32_t debugView;
+	float	 cameraFarZ;
+#endif
+};
+
+constexpr uint32_t kFinalConstantsDwordCount = sizeof(RestirFinalConstants) / sizeof(uint32_t);
+static_assert(
+	sizeof(RestirFinalConstants) ==
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	24
+#else
+	16
+#endif
+);
 
 } // namespace
 
 void RestirFinalEvaluationPass::Initialize()
 {
+	m_finalShadingFrameSeed = 0;
+	GRAPHICS_LOG_FMT("[ReSTIR.RR] final-shading decorrelation defaults to 70% fresh\n");
 	CreatePipeline();
 	m_initialized = nullptr != m_rootSignature.Get() && m_pipelineState.IsValid();
 }
@@ -49,10 +78,10 @@ void RestirFinalEvaluationPass::DeclareRenderData(RenderContext* renderContext)
 	renderContext->DeclareAccess<RestirFinalReservoirRenderData>(
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read
 	);
-#if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	renderContext->DeclareAccess<RestirCandidateRenderData>(
 		GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read
 	);
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	renderContext->DeclareAccess<CameraRenderData>(GetName(), RenderDataPolicy::Transient, RenderDataAccessMode::Read);
 #endif
 	renderContext->DeclareAccess<RaytracingOutputRenderData>(
@@ -71,8 +100,8 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 
 	auto* finalReservoirData = renderContext->Get<RestirFinalReservoirRenderData>();
 	auto* outputData = renderContext->Get<RaytracingOutputRenderData>();
+	auto* candidateData = renderContext->Get<RestirCandidateRenderData>();
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
-	auto*		   candidateData = renderContext->Get<RestirCandidateRenderData>();
 	auto*		   cameraData = renderContext->Get<CameraRenderData>();
 	auto&		   debug = GLOBAL(RestirDebugGlobal);
 	const bool	   debugOverrideActive = debug.IsOverrideActive();
@@ -89,18 +118,20 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	if (nullptr == candidateData || nullptr == candidateData->motionVectorTexture ||
 		nullptr == candidateData->linearDepthTexture || nullptr == candidateData->diffuseAlbedoTexture ||
 		nullptr == candidateData->specularAlbedoTexture || nullptr == candidateData->normalRoughnessTexture ||
-		nullptr == candidateData->specularHitDistanceTexture)
+		nullptr == candidateData->specularHitDistanceTexture || nullptr == candidateData->secondaryNeeTexture)
 	{
 		return;
 	}
 #endif
 	if (nullptr == finalReservoirData || nullptr == outputData || nullptr == finalReservoirData->reservoirBuffer ||
-		nullptr == outputData->outputTexture)
+		nullptr == outputData->outputTexture || nullptr == candidateData || !candidateData->validThisFrame ||
+		candidateData->frameIndex != frame->GetFrameIndex() || nullptr == candidateData->reservoirBuffer)
 	{
 		return;
 	}
 
 	auto* reservoirBuffer = finalReservoirData->reservoirBuffer.get();
+	auto* initialReservoirBuffer = candidateData->reservoirBuffer.get();
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	auto* motionVectorTexture = candidateData->motionVectorTexture.get();
 	auto* linearDepthTexture = candidateData->linearDepthTexture.get();
@@ -108,15 +139,17 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	auto* specularAlbedoTexture = candidateData->specularAlbedoTexture.get();
 	auto* normalRoughnessTexture = candidateData->normalRoughnessTexture.get();
 	auto* specularHitDistanceTexture = candidateData->specularHitDistanceTexture.get();
+	auto* secondaryNeeTexture = candidateData->secondaryNeeTexture.get();
 #endif
 	auto* outputTexture = outputData->outputTexture.get();
-	if (!reservoirBuffer->HasSRV() || !outputTexture->HasUAV(0))
+	if (!reservoirBuffer->HasSRV() || !initialReservoirBuffer->HasSRV() || !outputTexture->HasUAV(0))
 	{
 		return;
 	}
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	if (!motionVectorTexture->HasSRV() || !linearDepthTexture->HasSRV() || !diffuseAlbedoTexture->HasSRV() ||
-		!specularAlbedoTexture->HasSRV() || !normalRoughnessTexture->HasSRV() || !specularHitDistanceTexture->HasSRV())
+		!specularAlbedoTexture->HasSRV() || !normalRoughnessTexture->HasSRV() ||
+		!specularHitDistanceTexture->HasSRV() || !secondaryNeeTexture->HasSRV())
 	{
 		return;
 	}
@@ -133,6 +166,9 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	DxScopedGpuEvent gpuEvent(context, L"RestirFinalEvaluation");
 
 	DxUtils::TransitionResourceIfNeeded(cmdList, reservoirBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	DxUtils::TransitionResourceIfNeeded(
+		cmdList, initialReservoirBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+	);
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	DxUtils::TransitionResourceIfNeeded(cmdList, motionVectorTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	DxUtils::TransitionResourceIfNeeded(cmdList, linearDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
@@ -141,7 +177,10 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	DxUtils::TransitionResourceIfNeeded(
 		cmdList, normalRoughnessTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 	);
-	DxUtils::TransitionResourceIfNeeded(cmdList, specularHitDistanceTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	DxUtils::TransitionResourceIfNeeded(
+		cmdList, specularHitDistanceTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+	);
+	DxUtils::TransitionResourceIfNeeded(cmdList, secondaryNeeTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 #endif
 	DxUtils::TransitionResourceIfNeeded(cmdList, outputTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -152,36 +191,36 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 	ID3D12DescriptorHeap* heaps[] = {descHeap.GetHeap()};
 	cmdList->SetDescriptorHeaps(1, heaps);
 
+	auto& streamline = GLOBAL(StreamlineGlobal);
+	bool  useRrDecorrelation = streamline.IsRayReconstructionEnabled() && streamline.IsFeatureWarmupAllowed();
+	float rrDecorrelationFactor = 0.7f;
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
-	struct Constants
-	{
-		uint32_t width;
-		uint32_t height;
-		uint32_t debugView;
-		float	 cameraFarZ;
-	};
-	Constants constants = {width, height, debugView, cameraData ? cameraData->farZ : 1000.0f};
-	cmdList->SetComputeRoot32BitConstants(0, 4, &constants, 0);
-#else
-	struct Constants
-	{
-		uint32_t width;
-		uint32_t height;
-	};
-	Constants constants = {width, height};
-	cmdList->SetComputeRoot32BitConstants(0, 2, &constants, 0);
+	useRrDecorrelation = useRrDecorrelation && !outputData->bypassDlss && debugView == 0u;
+	rrDecorrelationFactor = debug.GetRrDecorrelationFactor();
 #endif
-	cmdList->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(reservoirBuffer->GetSRVIndex()));
+	RestirFinalConstants constants = {};
+	constants.width = width;
+	constants.height = height;
+	constants.frameSeed = m_finalShadingFrameSeed++;
+	constants.rrDecorrelationFactor = useRrDecorrelation ? rrDecorrelationFactor : 0.0f;
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
-	cmdList->SetComputeRootDescriptorTable(2, descHeap.GetGPUHandle(motionVectorTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(3, descHeap.GetGPUHandle(linearDepthTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(4, descHeap.GetGPUHandle(diffuseAlbedoTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(5, descHeap.GetGPUHandle(specularAlbedoTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(6, descHeap.GetGPUHandle(normalRoughnessTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(7, descHeap.GetGPUHandle(specularHitDistanceTexture->GetSRVIndex()));
-	cmdList->SetComputeRootDescriptorTable(8, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
+	constants.debugView = debugView;
+	constants.cameraFarZ = cameraData ? cameraData->farZ : 1000.0f;
+#endif
+	cmdList->SetComputeRoot32BitConstants(0, kFinalConstantsDwordCount, &constants, 0);
+	cmdList->SetComputeRootDescriptorTable(1, descHeap.GetGPUHandle(reservoirBuffer->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(2, descHeap.GetGPUHandle(initialReservoirBuffer->GetSRVIndex()));
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	cmdList->SetComputeRootDescriptorTable(3, descHeap.GetGPUHandle(motionVectorTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(4, descHeap.GetGPUHandle(linearDepthTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(5, descHeap.GetGPUHandle(diffuseAlbedoTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(6, descHeap.GetGPUHandle(specularAlbedoTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(7, descHeap.GetGPUHandle(normalRoughnessTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(8, descHeap.GetGPUHandle(specularHitDistanceTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(9, descHeap.GetGPUHandle(secondaryNeeTexture->GetSRVIndex()));
+	cmdList->SetComputeRootDescriptorTable(10, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
 #else
-	cmdList->SetComputeRootDescriptorTable(2, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
+	cmdList->SetComputeRootDescriptorTable(3, descHeap.GetGPUHandle(outputTexture->GetUAVIndex(0)));
 #endif
 
 	cmdList->Dispatch(
@@ -193,10 +232,13 @@ void RestirFinalEvaluationPass::Execute(DxFrameResource* frame, Scene* scene, Re
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	try
 	{
-		m_hdrCapture.Execute(frame, outputTexture, cameraData, debug.GetCaptureRequest(), debug.GetRevision(),
-			candidateData->historySignature, debug.GetSourceLogName(), debug.GetCaptureSpp(), debugOverrideActive &&
-			debugView == 0u && (debug.GetSource() == RestirDebugSource::CandidateRaw ||
-			debug.GetSource() == RestirDebugSource::FinalRaw));
+		m_hdrCapture.Execute(
+			frame, outputTexture, cameraData, debug.GetCaptureRequest(), debug.GetRevision(),
+			candidateData->historySignature, debug.GetSourceLogName(), debug.GetCaptureSpp(),
+			debugOverrideActive && debugView == 0u &&
+				(debug.GetSource() == RestirDebugSource::CandidateRaw ||
+				 debug.GetSource() == RestirDebugSource::FinalRaw)
+		);
 	}
 	catch (const std::exception& error)
 	{
@@ -230,12 +272,9 @@ void RestirFinalEvaluationPass::CreatePipeline()
 	}
 
 	DxRootSignatureBuilder rootSignatureBuilder;
-#if defined(ENABLE_RENDER_DEBUG_VIEWS)
-	rootSignatureBuilder.Add32BitConstants(4, 0);
-#else
-	rootSignatureBuilder.Add32BitConstants(2, 0);
-#endif
+	rootSignatureBuilder.Add32BitConstants(kFinalConstantsDwordCount, 0);
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);
@@ -243,6 +282,7 @@ void RestirFinalEvaluationPass::CreatePipeline()
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 6);
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 7);
+	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8);
 #endif
 	rootSignatureBuilder.AddDescriptorTable().AddTableRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 	m_rootSignature = rootSignatureBuilder.Build(device.GetDevice(), "RestirFinalEvaluation_RootSignature");

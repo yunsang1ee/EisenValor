@@ -57,8 +57,9 @@ constexpr float			   kDebugNavMeshYOffset = 0.0f;
 constexpr float			   kDebugMapObjYOffset = 0.0f;
 constexpr float			   kTorchPreviewSphereScale = 1.5f;
 constexpr float			   kTorchPreviewSphereMinDiameter = 0.15f;
-constexpr float			   kTorchTransportEmissionScale = 195.0f;
-constexpr float			   kTorchVisibleEmissionScale = 2.5f;
+constexpr float			   kTorchTransportEmissionScale = 60.0f;
+constexpr float			   kTorchVisibleEmissionScale = 1.0f;
+constexpr float kTorchNeutralHalfWidth = 12.0f;
 
 struct TorchPreviewColor
 {
@@ -67,17 +68,25 @@ struct TorchPreviewColor
 	float b;
 };
 
-TorchPreviewColor GetTorchPreviewColor(uint32_t nodeIndex)
+TorchPreviewColor GetTorchPreviewColor(uint32_t nodeIndex, float worldZ)
 {
-	static constexpr std::array<TorchPreviewColor, 8> kPalette = {{
-		{1.00f, 0.17f, 0.18f},
-		{1.00f, 0.52f, 0.12f},
-		{1.00f, 0.88f, 0.20f},
-		{0.25f, 1.00f, 0.35f},
-		{0.15f, 0.95f, 0.85f},
-		{0.18f, 0.58f, 1.00f},
-		{0.48f, 0.25f, 1.00f},
-		{1.00f, 0.20f, 0.72f},
+	static constexpr std::array<TorchPreviewColor, 4> kRedPalette = {{
+		{1.00f, 0.22f, 0.12f},
+		{1.00f, 0.28f, 0.14f},
+		{1.00f, 0.34f, 0.16f},
+		{1.00f, 0.40f, 0.18f},
+	}};
+	static constexpr std::array<TorchPreviewColor, 4> kBluePalette = {{
+		{0.14f, 0.34f, 1.00f},
+		{0.18f, 0.40f, 1.00f},
+		{0.22f, 0.46f, 1.00f},
+		{0.28f, 0.52f, 1.00f},
+	}};
+	static constexpr std::array<TorchPreviewColor, 4> kNeutralPalette = {{
+		{1.00f, 0.78f, 0.52f},
+		{1.00f, 0.84f, 0.64f},
+		{1.00f, 0.90f, 0.75f},
+		{1.00f, 0.96f, 0.86f},
 	}};
 
 	uint32_t hash = nodeIndex + 0x9e3779b9u;
@@ -86,7 +95,15 @@ TorchPreviewColor GetTorchPreviewColor(uint32_t nodeIndex)
 	hash ^= hash >> 15u;
 	hash *= 0x846ca68bu;
 	hash ^= hash >> 16u;
-	return kPalette[hash % kPalette.size()];
+	if (worldZ > kTorchNeutralHalfWidth)
+	{
+		return kRedPalette[hash % kRedPalette.size()];
+	}
+	if (worldZ < -kTorchNeutralHalfWidth)
+	{
+		return kBluePalette[hash % kBluePalette.size()];
+	}
+	return kNeutralPalette[hash % kNeutralPalette.size()];
 }
 } // namespace
 
@@ -105,18 +122,20 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 	RegisterSceneComponentDecoder<TorchEmitterSceneComponentData>(
 		[this](const TorchEmitterSceneComponentData& data, const SceneComponentLoadContext& context)
 		{
-			const TorchPreviewColor previewColor = GetTorchPreviewColor(context.nodeIndex);
 			ReserveGameObject(
 				"TorchEmitterPreview", std::nullopt,
-				[this, ownerHandle = context.ownerHandle, sourceRadius = data.GetSourceRadius(),
+				[this, ownerHandle = context.ownerHandle, nodeIndex = context.nodeIndex,
+				 sourceRadius = data.GetSourceRadius(),
 				 transportIntensity = data.GetIntensity() * kTorchTransportEmissionScale,
-				 visibleIntensity = data.GetIntensity() * kTorchVisibleEmissionScale, colorR = previewColor.r,
-				 colorG = previewColor.g, colorB = previewColor.b](GameObject* obj)
+				 visibleIntensity = data.GetIntensity() * kTorchVisibleEmissionScale](GameObject* obj)
 				{
 					if (auto* ownerObj = TryGetGameObject(ownerHandle))
 					{
 						obj->GetTransform().SetParent(ownerObj->GetTransform().GetHandle());
 					}
+
+					const TorchPreviewColor previewColor =
+						GetTorchPreviewColor(nodeIndex, obj->GetTransform().GetWorldPosition().z);
 
 					const float diameter =
 						std::max(sourceRadius * 2.0f * kTorchPreviewSphereScale, kTorchPreviewSphereMinDiameter);
@@ -124,7 +143,8 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 
 					CreateComponentWithInit<MeshComponent>(
 						obj->GetHandle(),
-						[transportIntensity, visibleIntensity, colorR, colorG, colorB](MeshComponent* mesh)
+						[transportIntensity, visibleIntensity, colorR = previewColor.r,
+						 colorG = previewColor.g, colorB = previewColor.b](MeshComponent* mesh)
 						{
 							auto meshRes =
 								GLOBAL(ResourceGlobal).Load<MeshResource>(kTorchPreviewSphereMeshPath.data());

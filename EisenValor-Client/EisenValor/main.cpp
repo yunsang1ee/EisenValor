@@ -21,7 +21,10 @@
 #include "Scene/ScoreScene.h"
 
 #include "RenderPass/SkinningPass.h"
+#include "RenderPass/RaytracingPreparePass.h"
 #include "RenderPass/DxrRenderPass.h"
+#include "RenderPass/ReferencePathTracingPass.h"
+#include "RenderPass/RestirCandidatePass.h"
 #include "RenderPass/RestirTemporalReusePass.h"
 #include "RenderPass/RestirFinalEvaluationPass.h"
 #include "RenderPass/DlssUpscalePass.h"
@@ -269,9 +272,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			auto  skinningPass = std::make_unique<SkinningPass>();
 			renderer.AddRenderPass("Skinning", std::move(skinningPass), RenderPassPriority::High);
 
-			// DXR Pass 생성
-			auto  dxrPass = std::make_unique<DxrRenderPass>(renderWidth, renderHeight);
-			renderer.AddRenderPass("DXR", std::move(dxrPass));
+			renderer.AddRenderPass("RaytracingPrepare", std::make_unique<RaytracingPreparePass>(renderWidth, renderHeight));
+			renderer.AddRenderPass("DXR", std::make_unique<DxrRenderPass>());
+			renderer.AddRenderPass("ReferencePT", std::make_unique<ReferencePathTracingPass>());
+			renderer.AddRenderPass("RestirCandidate", std::make_unique<RestirCandidatePass>(renderWidth, renderHeight));
 
 			auto restirTemporalReusePass = std::make_unique<RestirTemporalReusePass>(renderWidth, renderHeight);
 			renderer.AddRenderPass("RestirTemporalReuse", std::move(restirTemporalReusePass));

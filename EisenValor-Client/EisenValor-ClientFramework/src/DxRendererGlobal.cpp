@@ -69,16 +69,12 @@ void DxRendererGlobal::Initialize()
 #if ENABLE_GRAPHICS_DEBUG_LOG
 	m_nextMemoryLogTime = 0.0f;
 #endif
-
-	// RTV Descriptor Heap 생성
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.NumDescriptors = kFrameCount;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	// Frame Resources 생성
 	for (uint32_t i = 0; i < kFrameCount; ++i)
 	{
 		m_frameResources[i] = std::make_unique<DxFrameResource>();
@@ -109,6 +105,7 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		device.GetDevice(), device.GetFactory(), commandQueue, hwnd, width, height, kFrameCount,
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
+	m_debugCameraFrozen = m_debugCameraValid = false;
 	const StreamlineResolution resolution = GLOBAL(StreamlineGlobal).GetOptimalResolution(width, height);
 	m_renderWidth = resolution.renderWidth;
 	m_renderHeight = resolution.renderHeight;
@@ -233,7 +230,7 @@ void DxRendererGlobal::Render(Scene* scene)
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 	{
 		PixScopedCpuEvent dataEvent(L"DxRenderer.PrepareFrameData");
-		auto& frameData = m_frameData.Get();
+		auto&			  frameData = m_frameData.Get();
 		frameData.deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
 		frameData.totalTime = GLOBAL(TimerGlobal).GetRuntime();
 		frameData.frameIndex = frame->GetFrameIndex();
@@ -260,6 +257,27 @@ void DxRendererGlobal::Render(Scene* scene)
 			cameraData.farZ = mainCamera->GetFarZ();
 			cameraData.fov = mainCamera->GetFOV();
 			cameraData.aspectRatio = mainCamera->GetAspectRatio();
+			if (m_debugCameraScene != scene)
+			{
+				m_debugCameraScene = scene;
+				m_debugCameraFrozen = m_debugCameraValid = false;
+			}
+			if (m_debugCameraFrozen)
+			{
+				if (!m_debugCameraValid)
+				{
+					m_debugCameraSnapshot = cameraData;
+					m_debugCameraValid = true;
+				}
+				const auto jitter = cameraData.jitterPixels;
+				const auto previousJitter = cameraData.previousJitterPixels;
+				const auto sequence = cameraData.jitterSequenceIndex;
+				cameraData = m_debugCameraSnapshot;
+				cameraData.previousCameraPosition = cameraData.cameraPosition;
+				cameraData.jitterPixels = jitter;
+				cameraData.previousJitterPixels = previousJitter;
+				cameraData.jitterSequenceIndex = sequence;
+			}
 
 			m_renderContext.Set(m_cameraData);
 		}
@@ -280,11 +298,24 @@ void DxRendererGlobal::Render(Scene* scene)
 		DxScopedGpuEvent renderPassesGpuEvent(*frame->GetMainContext(), L"Render.RenderPasses");
 		for (auto& entry : m_renderPasses)
 		{
-			const std::string markerName = "RenderPass." + entry.name;
+			if (!entry.pass->ShouldExecute(&m_renderContext))
+			{
+				entry.pass->OnSkipped(frame, scene, &m_renderContext);
+				continue;
+			}
+
+			const std::string  markerName = "RenderPass." + entry.name;
 			const std::wstring passGpuMarker(markerName.begin(), markerName.end());
-			DxScopedGpuEvent passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
-			PixScopedCpuEvent passEvent(markerName.c_str());
+			DxScopedGpuEvent   passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
+			PixScopedCpuEvent  passEvent(markerName.c_str());
 			entry.pass->Execute(frame, scene, &m_renderContext);
+		}
+	}
+	{
+		PixScopedCpuEvent endPassesEvent(L"Render.EndPasses");
+		for (auto& entry : m_renderPasses)
+		{
+			entry.pass->OnEndFrame(frame, scene, &m_renderContext);
 		}
 	}
 }
@@ -355,20 +386,23 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 
 	if (!commandQueue.WaitForIdle(5'000))
 	{
-		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: WaitForIdle timeout during resize!\n");
-
-		HRESULT hr = device.GetDevice()->GetDeviceRemovedReason();
-		if (FAILED(hr))
-		{
-			GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr));
-			return;
-		}
+		GRAPHICS_LOG_FMT(
+			"[DxRendererGlobal] Resize aborted: GPU idle timeout, deviceResult=0x{:X}\n",
+			static_cast<uint32_t>(device.GetDevice()->GetDeviceRemovedReason())
+		);
+		return;
+	}
+	if (!GLOBAL(StreamlineGlobal).PrepareForResourceChange())
+	{
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] Resize aborted: Streamline resource release failed.\n");
+		return;
 	}
 
 	m_swapChain->OnResize(
 		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
 	);
+	m_debugCameraFrozen = m_debugCameraValid = false;
 	const StreamlineResolution resolution = GLOBAL(StreamlineGlobal).GetOptimalResolution(width, height);
 	m_renderWidth = resolution.renderWidth;
 	m_renderHeight = resolution.renderHeight;
@@ -388,8 +422,7 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 	}
 
 	GRAPHICS_LOG_FMT(
-		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
-		m_renderHeight
+		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth, m_renderHeight
 	);
 #if ENABLE_GRAPHICS_DEBUG_LOG
 	LogVideoMemoryStats("PostResize");

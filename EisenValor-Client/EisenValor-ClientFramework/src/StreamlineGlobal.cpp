@@ -1,5 +1,9 @@
 #include "stdafxClientFramework.h"
 #include "StreamlineGlobal.h"
+#include "DxMath.h"
+#include "DxCommandQueueGlobal.h"
+#include "PixProfiler.h"
+#include <chrono>
 
 #include <sl.h>
 #include <sl_dlss.h>
@@ -106,7 +110,8 @@ void StreamlineGlobal::Initialize()
 		return;
 	}
 
-	DirectX::XMStoreFloat4x4(&m_previousViewProjection, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&m_previousView, DirectX::XMMatrixIdentity());
+	DirectX::XMStoreFloat4x4(&m_previousProjection, DirectX::XMMatrixIdentity());
 	m_initialized = true;
 	GRAPHICS_LOG_FMT("[Streamline] Initialized SDK {}.{}.{}\n", SL_VERSION_MAJOR, SL_VERSION_MINOR, SL_VERSION_PATCH);
 }
@@ -123,11 +128,11 @@ void StreamlineGlobal::Release()
 	m_deviceReady = false;
 	m_dlssSupported = false;
 	m_rayReconstructionSupported = false;
-	m_hasPreviousViewProjection = false;
+	m_hasPreviousCamera = false;
 	m_rayReconstructionOptionsActive = false;
 	m_featureWarmupAllowed = false;
 	m_featureResourcesAllocated = false;
-	m_allocationFailureLogged = false;
+	m_featureResourcesLive = false;
 	m_featureWarmupState = StreamlineFeatureWarmupState::Idle;
 	m_featureWarmupFence.Reset();
 	m_featureWarmupFenceValue = 0;
@@ -188,10 +193,6 @@ void StreamlineGlobal::RequestFeatureWarmup()
 	{
 		m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForOptions;
 	}
-	else if (!m_featureResourcesAllocated)
-	{
-		m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForAllocation;
-	}
 	else
 	{
 		m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForEvaluation;
@@ -199,11 +200,39 @@ void StreamlineGlobal::RequestFeatureWarmup()
 	RequestHistoryReset();
 }
 
+bool StreamlineGlobal::PrepareForResourceChange()
+{
+	if (m_featureResourcesLive)
+	{
+		PixScopedCpuEvent event(L"DLSS.Reconfigure.WaitAndFree");
+		if (!GLOBAL(DxGfxCommandQueueGlobal).WaitForIdle(5'000))
+		{
+			GRAPHICS_LOG_FMT("[Streamline] Reconfiguration deferred: GPU idle timeout. Resources retained.\n");
+			return false;
+		}
+		const auto feature = m_liveFeatureIsRayReconstruction ? sl::kFeatureDLSS_RR : sl::kFeatureDLSS;
+		const auto start = std::chrono::steady_clock::now();
+		if (!CheckResult(slFreeResources(feature, kMainViewport), "slFreeResources"))
+		{
+			m_enabled = false;
+			return false;
+		}
+		GRAPHICS_LOG_FMT(
+			"[Streamline] Previous feature released: rr={}, cpuMs={:.3f}\n", m_liveFeatureIsRayReconstruction ? 1u : 0u,
+			std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()
+		);
+		m_featureResourcesLive = false;
+	}
+	ResetFeatureConfiguration();
+	RequestHistoryReset();
+	m_hasPreviousCamera = false;
+	return true;
+}
+
 void StreamlineGlobal::ResetFeatureConfiguration()
 {
 	m_optionsSignature = {};
 	m_featureResourcesAllocated = false;
-	m_allocationFailureLogged = false;
 	m_featureWarmupFence.Reset();
 	m_featureWarmupFenceValue = 0;
 	m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForOptions;
@@ -292,22 +321,26 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 
 	const DirectX::XMMATRIX view = desc.camera->viewMatrix;
 	const DirectX::XMMATRIX projection = desc.camera->projectionMatrix;
-	const DirectX::XMMATRIX viewProjection = DirectX::XMMatrixMultiply(view, projection);
 	const DirectX::XMMATRIX inverseView = DirectX::XMMatrixInverse(nullptr, view);
 	const DirectX::XMMATRIX inverseProjection = DirectX::XMMatrixInverse(nullptr, projection);
-	const DirectX::XMMATRIX previousViewProjection =
-		m_hasPreviousViewProjection ? DirectX::XMLoadFloat4x4(&m_previousViewProjection) : viewProjection;
-	const DirectX::XMMATRIX clipToPreviousClip =
-		DirectX::XMMatrixMultiply(DirectX::XMMatrixInverse(nullptr, viewProjection), previousViewProjection);
-	const DirectX::XMMATRIX previousClipToClip = DirectX::XMMatrixInverse(nullptr, clipToPreviousClip);
 
 	const bool optionsChanged =
 		!m_optionsSignature.valid || m_optionsSignature.useRayReconstruction != useRayReconstruction ||
 		m_optionsSignature.qualityMode != m_qualityMode || m_optionsSignature.displayWidth != desc.displayWidth ||
-		m_optionsSignature.displayHeight != desc.displayHeight;
+		m_optionsSignature.displayHeight != desc.displayHeight || m_optionsSignature.renderWidth != desc.renderWidth ||
+		m_optionsSignature.renderHeight != desc.renderHeight ||
+		(useRayReconstruction && m_optionsSignature.rrPresetE != m_rrPresetE);
 	if (optionsChanged)
 	{
-		sl::DLSSOptions dlssOptions = {};
+		GRAPHICS_LOG_FMT(
+			"[Streamline] Reconfigure requested: frame={}, rr={}, preset={}, render={}x{}, display={}x{}\n",
+			desc.frameIndex, useRayReconstruction ? 1u : 0u, m_rrPresetE ? "E" : "D", desc.renderWidth,
+			desc.renderHeight, desc.displayWidth, desc.displayHeight
+		);
+		if (!PrepareForResourceChange())
+			return false;
+		PixScopedCpuEvent optionsEvent(L"DLSS.SetOptions");
+		sl::DLSSOptions	  dlssOptions = {};
 		dlssOptions.mode = mode;
 		dlssOptions.outputWidth = desc.displayWidth;
 		dlssOptions.outputHeight = desc.displayHeight;
@@ -341,20 +374,20 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		m_optionsSignature.qualityMode = m_qualityMode;
 		m_optionsSignature.displayWidth = desc.displayWidth;
 		m_optionsSignature.displayHeight = desc.displayHeight;
+		m_optionsSignature.renderWidth = desc.renderWidth;
+		m_optionsSignature.renderHeight = desc.renderHeight;
+		m_optionsSignature.rrPresetE = m_rrPresetE;
 		m_optionsSignature.valid = true;
 		m_featureResourcesAllocated = false;
-		m_allocationFailureLogged = false;
 		m_featureWarmupFence.Reset();
 		m_featureWarmupFenceValue = 0;
-		m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForAllocation;
+		m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForEvaluation;
 		DEBUG_LOG_FMT(
-			"[Streamline] SetOptions updated: rr={}, mode={}, output={}x{}. Waiting for explicit allocation.\n",
+			"[Streamline] SetOptions updated: rr={}, mode={}, output={}x{}. Waiting for frame-token evaluation.\n",
 			useRayReconstruction ? 1u : 0u, static_cast<uint32_t>(mode), desc.displayWidth, desc.displayHeight
 		);
 	}
 
-	// Hit-distance reflection reprojection requires current camera matrices every
-	// frame. Updating these is not a feature reallocation or a history reset.
 	if (useRayReconstruction)
 	{
 		sl::DLSSDOptions rrOptions = {};
@@ -364,11 +397,12 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		rrOptions.colorBuffersHDR = sl::Boolean::eTrue;
 		rrOptions.normalRoughnessMode = sl::DLSSDNormalRoughnessMode::ePacked;
 		rrOptions.alphaUpscalingEnabled = sl::Boolean::eFalse;
-		rrOptions.dlaaPreset = sl::DLSSDPreset::ePresetD;
-		rrOptions.qualityPreset = sl::DLSSDPreset::ePresetD;
-		rrOptions.balancedPreset = sl::DLSSDPreset::ePresetD;
-		rrOptions.performancePreset = sl::DLSSDPreset::ePresetD;
-		rrOptions.ultraPerformancePreset = sl::DLSSDPreset::ePresetD;
+		const auto preset = m_rrPresetE ? sl::DLSSDPreset::ePresetE : sl::DLSSDPreset::ePresetD;
+		rrOptions.dlaaPreset = preset;
+		rrOptions.qualityPreset = preset;
+		rrOptions.balancedPreset = preset;
+		rrOptions.performancePreset = preset;
+		rrOptions.ultraPerformancePreset = preset;
 		rrOptions.worldToCameraView = ToStreamlineMatrix(view);
 		rrOptions.cameraViewToWorld = ToStreamlineMatrix(inverseView);
 		if (!CheckResult(slDLSSDSetOptions(kMainViewport, rrOptions), "slDLSSDSetOptions"))
@@ -384,15 +418,20 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		return false;
 	}
 
+	// SetOptions can invalidate history above; select the previous camera only afterwards.
+	const bool				resetCameraHistory = desc.reset || m_historyResetRequested || !m_hasPreviousCamera;
+	const DirectX::XMMATRIX previousView = resetCameraHistory ? view : DirectX::XMLoadFloat4x4(&m_previousView);
+	const DirectX::XMMATRIX previousProjection =
+		resetCameraHistory ? projection : DirectX::XMLoadFloat4x4(&m_previousProjection);
+	const DirectX::XMMATRIX clipToPreviousClip =
+		Matrix4x4::ClipToPreviousClip(view, projection, previousView, previousProjection);
+	const DirectX::XMMATRIX previousClipToClip = DirectX::XMMatrixInverse(nullptr, clipToPreviousClip);
+
 	sl::Constants constants = {};
 	constants.cameraViewToClip = ToStreamlineMatrix(projection);
 	constants.clipToCameraView = ToStreamlineMatrix(inverseProjection);
 	constants.clipToPrevClip = ToStreamlineMatrix(clipToPreviousClip);
 	constants.prevClipToClip = ToStreamlineMatrix(previousClipToClip);
-	// CameraRenderData stores ray sample offsets: pixelCenter + jitterPixels.
-	// Streamline expects the projection/image offset (as in Donut PlanarView),
-	// whose inverse projection samples pixelCenter - jitterOffset.
-	// https://github.com/NVIDIA-RTX/Streamline_Sample/blob/main/src/StreamlineSample.cpp
 	constants.jitterOffset = {-desc.camera->jitterPixels.x, -desc.camera->jitterPixels.y};
 	constants.mvecScale = {1.0f, 1.0f};
 	constants.cameraPos = {desc.camera->cameraPosition.x, desc.camera->cameraPosition.y, desc.camera->cameraPosition.z};
@@ -409,8 +448,7 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	constants.depthInverted = sl::Boolean::eFalse;
 	constants.cameraMotionIncluded = sl::Boolean::eTrue;
 	constants.motionVectors3D = sl::Boolean::eFalse;
-	constants.reset = (desc.reset || m_historyResetRequested || !m_hasPreviousViewProjection) ? sl::Boolean::eTrue
-																							  : sl::Boolean::eFalse;
+	constants.reset = resetCameraHistory ? sl::Boolean::eTrue : sl::Boolean::eFalse;
 	constants.orthographicProjection = sl::Boolean::eFalse;
 	constants.motionVectorsDilated = sl::Boolean::eFalse;
 	constants.motionVectorsJittered = sl::Boolean::eFalse;
@@ -452,29 +490,11 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	}
 
 	const sl::Feature feature = useRayReconstruction ? sl::kFeatureDLSS_RR : sl::kFeatureDLSS;
-	if (StreamlineFeatureWarmupState::WaitingForAllocation == m_featureWarmupState)
-	{
-		const sl::Result allocateResult = slAllocateResources(desc.commandList, feature, kMainViewport);
-		if (sl::Result::eOk != allocateResult)
-		{
-			if (!m_allocationFailureLogged)
-			{
-				GRAPHICS_LOG_FMT(
-					"[Streamline] slAllocateResources failed after constants and tags (result={}). "
-					"Skipping lazy evaluation and keeping raw fallback.\n",
-					static_cast<int32_t>(allocateResult)
-				);
-				m_allocationFailureLogged = true;
-			}
-			return false;
-		}
-
-		m_featureResourcesAllocated = true;
-		m_allocationFailureLogged = false;
-		m_featureWarmupState = StreamlineFeatureWarmupState::WaitingForEvaluation;
-		DEBUG_LOG_FMT("[Streamline] Explicit feature allocation completed. Waiting for real-world evaluation.\n");
-	}
-
+	const bool		  initializing = !m_featureResourcesAllocated;
+	m_featureResourcesLive = true;
+	m_liveFeatureIsRayReconstruction = useRayReconstruction;
+	const auto				 evaluateStart = std::chrono::steady_clock::now();
+	PixScopedCpuEvent		 evaluateEvent(L"DLSS.EvaluateFeature");
 	const sl::BaseStructure* evaluateInputs[] = {&kMainViewport};
 	const bool				 evaluated = CheckResult(
 		  slEvaluateFeature(
@@ -483,10 +503,31 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 		  "slEvaluateFeature"
 	  );
 
-	DirectX::XMStoreFloat4x4(&m_previousViewProjection, viewProjection);
-	m_hasPreviousViewProjection = true;
+	if (initializing || !evaluated)
+	{
+		GRAPHICS_LOG_FMT(
+			"[Streamline] Frame-token initialization: frame={}, rr={}, preset={}, ok={}, cpuMs={:.3f}\n",
+			desc.frameIndex, useRayReconstruction ? 1u : 0u, m_rrPresetE ? "E" : "D", evaluated ? 1u : 0u,
+			std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - evaluateStart).count()
+		);
+	}
+	if (!evaluated)
+	{
+		m_enabled = false;
+		m_featureWarmupState = StreamlineFeatureWarmupState::Idle;
+		return false;
+	}
+	m_featureResourcesAllocated = true;
+
+	DirectX::XMStoreFloat4x4(&m_previousView, view);
+	DirectX::XMStoreFloat4x4(&m_previousProjection, projection);
+	m_hasPreviousCamera = true;
 	if (evaluated)
 	{
+		if (desc.reset || m_historyResetRequested)
+			m_rrEvaluatedFrames = 0;
+		if (useRayReconstruction)
+			++m_rrEvaluatedFrames;
 		m_historyResetRequested = false;
 		if (StreamlineFeatureWarmupState::WaitingForEvaluation == m_featureWarmupState)
 		{

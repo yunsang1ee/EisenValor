@@ -28,4 +28,5 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	DxPipelineState				m_pipelineState;
 	bool						m_initialized = false;
+	uint32_t					m_finalShadingFrameSeed = 0;
 };

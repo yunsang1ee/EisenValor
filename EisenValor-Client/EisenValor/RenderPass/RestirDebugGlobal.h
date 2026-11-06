@@ -2,6 +2,7 @@
 
 #include <Singleton.h>
 
+#include <array>
 #include <cstdint>
 #include <string>
 
@@ -29,6 +30,8 @@ enum class RestirDebugView : uint32_t
 	DiffuseAlbedo,
 	SpecularAlbedo,
 	SpecularHitDistance,
+	SecondaryNee,
+	SecondaryNeeShare,
 	Count,
 };
 
@@ -41,6 +44,61 @@ private:
 	~RestirDebugGlobal() override = default;
 
 public:
+	bool	 rrComparisonVisible = false;
+	uint64_t rrCaptureRequest = 0;
+	void	 TouchOverlay() { ++m_captureStatusRevision; }
+	void	 UpdateRrOverlayState(uint32_t frames, bool enabled, bool presetE, bool cameraFixed)
+	{
+		const uint32_t progress = frames >= 64u ? 64u : (frames / 8u) * 8u;
+		const uint32_t signature =
+			progress | (uint32_t(enabled) << 8u) | (uint32_t(presetE) << 9u) | (uint32_t(cameraFixed) << 10u);
+		if (signature != m_rrOverlaySignature)
+		{
+			m_rrOverlaySignature = signature;
+			m_rrDisplayFrames = progress;
+			TouchOverlay();
+		}
+	}
+	uint32_t GetRrDisplayFrames() const { return m_rrDisplayFrames; }
+	void SetReferenceAccumulationFrames(uint32_t frames, uint32_t target = 1024)
+	{
+		if (frames != m_referenceAccumulationFrames || target != m_referenceAccumulationTarget)
+		{
+			m_referenceAccumulationFrames = frames;
+			m_referenceAccumulationTarget = target;
+			TouchOverlay();
+		}
+	}
+	[[nodiscard]] uint32_t GetReferenceAccumulationFrames() const { return m_referenceAccumulationFrames; }
+	[[nodiscard]] uint32_t GetReferenceAccumulationTarget() const { return m_referenceAccumulationTarget; }
+	void RequestReferenceAccumulationReset()
+	{
+		++m_referenceAccumulationResetRequest;
+		TouchOverlay();
+	}
+	[[nodiscard]] uint64_t GetReferenceAccumulationResetRequest() const
+	{
+		return m_referenceAccumulationResetRequest;
+	}
+	bool	 IsSecondaryNeeEnabled() const { return m_secondaryNeeEnabled; }
+	void ToggleSecondaryNee()
+	{
+		m_secondaryNeeEnabled = !m_secondaryNeeEnabled;
+		rrComparisonVisible = true;
+		++m_revision;
+	}
+	uint32_t GetRrDecorrelationPercent() const { return kRrDecorrelationPercents[m_rrDecorrelationMode]; }
+	float	 GetRrDecorrelationFactor() const { return float(GetRrDecorrelationPercent()) / 100.0f; }
+	void	 StepRrDecorrelation(int32_t direction)
+	{
+		constexpr int32_t modeCount = static_cast<int32_t>(kRrDecorrelationPercents.size());
+		m_rrDecorrelationMode = uint32_t((int32_t(m_rrDecorrelationMode) + direction + modeCount) % modeCount);
+		m_source = RestirDebugSource::FinalWithRayReconstruction;
+		m_view = RestirDebugView::Beauty;
+		m_overrideActive = true;
+		rrComparisonVisible = true;
+		++m_revision;
+	}
 	bool RequestHdrCapture(uint32_t spp)
 	{
 		if (!m_overrideActive || m_view != RestirDebugView::Beauty ||
@@ -56,17 +114,17 @@ public:
 	}
 	[[nodiscard]] uint64_t GetCaptureRequest() const { return m_captureRequest; }
 	[[nodiscard]] uint32_t GetCaptureSpp() const { return m_captureSpp; }
-	void SetCaptureStatus(const wchar_t* status, uint32_t frames)
+	void				   SetCaptureStatus(const wchar_t* status, uint32_t frames, uint32_t target = 512)
 	{
 		m_captureStatus = status;
 		m_captureFrames = frames;
+		m_captureTarget = target;
 		++m_captureStatusRevision;
 	}
 	[[nodiscard]] std::wstring GetCaptureStatusText() const
 	{
-		return m_captureStatus + L"  " + std::to_wstring(m_captureFrames) + L" / 512";
+		return m_captureStatus + L"  " + std::to_wstring(m_captureFrames) + L" / " + std::to_wstring(m_captureTarget);
 	}
-	// Progress is UI-only: never invalidate temporal history or the capture itself.
 	[[nodiscard]] uint64_t GetOverlayRevision() const { return m_revision + m_captureStatusRevision; }
 
 	void StepSource(int32_t direction)
@@ -120,7 +178,10 @@ public:
 	{
 		return RestirDebugSource::FinalWithRayReconstruction != m_source || RestirDebugView::Beauty != m_view;
 	}
-	[[nodiscard]] bool				BypassToneMap() const { return RestirDebugView::Beauty != m_view; }
+	[[nodiscard]] bool BypassToneMap() const
+	{
+		return RestirDebugView::Beauty != m_view && RestirDebugView::SecondaryNee != m_view;
+	}
 	[[nodiscard]] RestirDebugSource GetSource() const { return m_source; }
 	[[nodiscard]] RestirDebugView	GetView() const { return m_view; }
 	[[nodiscard]] uint64_t			GetRevision() const { return m_revision; }
@@ -189,6 +250,10 @@ public:
 			return L"SPECULAR ALBEDO";
 		case RestirDebugView::SpecularHitDistance:
 			return L"SPECULAR HIT DISTANCE";
+		case RestirDebugView::SecondaryNee:
+			return L"SECONDARY NEE / FRESH";
+		case RestirDebugView::SecondaryNeeShare:
+			return L"SECONDARY NEE SHARE / FRESH";
 		default:
 			return L"UNKNOWN";
 		}
@@ -224,6 +289,10 @@ public:
 			return "SPECULAR_ALBEDO";
 		case RestirDebugView::SpecularHitDistance:
 			return "SPECULAR_HIT_DISTANCE";
+		case RestirDebugView::SecondaryNee:
+			return "SECONDARY_NEE_FRESH";
+		case RestirDebugView::SecondaryNeeShare:
+			return "SECONDARY_NEE_SHARE_FRESH";
 		default:
 			return "UNKNOWN";
 		}
@@ -235,8 +304,18 @@ private:
 	uint64_t		  m_revision = 0;
 	uint64_t		  m_captureRequest = 0;
 	uint32_t		  m_captureSpp = 1;
-	uint64_t m_captureStatusRevision = 0;
-	uint32_t m_captureFrames = 0;
+	uint64_t		  m_captureStatusRevision = 0;
+	uint32_t		  m_rrOverlaySignature = 0xffffffffu;
+	uint32_t		  m_rrDisplayFrames = 0;
+	uint32_t		  m_referenceAccumulationFrames = 0;
+	uint32_t		  m_referenceAccumulationTarget = 1024;
+	uint64_t		  m_referenceAccumulationResetRequest = 0;
+	static constexpr std::array<uint32_t, 5> kRrDecorrelationPercents = {0u, 50u, 60u, 70u, 100u};
+	// Start at 70% fresh; retain the endpoints for temporal/fresh comparison.
+	uint32_t	 m_rrDecorrelationMode = 3u;
+	bool		 m_secondaryNeeEnabled = true;
+	uint32_t	 m_captureTarget = 512;
+	uint32_t	 m_captureFrames = 0;
 	std::wstring m_captureStatus = L"READY";
-	bool			  m_overrideActive = false;
+	bool		 m_overrideActive = false;
 };

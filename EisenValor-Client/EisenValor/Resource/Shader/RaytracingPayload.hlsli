@@ -9,6 +9,9 @@ struct StandardRayPayload
 
 struct RestirRayPayload
 {
+    // Output radiance; depth-1 input carries primary BSDF/PDF for NEE streaming.
+    // Debug builds also pass accumulated camera throughput into deeper hits
+    // for the secondary NEE AOV, before overwriting it with output radiance.
     float3 color;
     uint recursionDepth;
 

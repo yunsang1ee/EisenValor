@@ -357,6 +357,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
+    <ClInclude Include="RenderData\RaytracingFrameRenderData.h" />
     <ClInclude Include="RenderData\DlssOutputRenderData.h" />
     <ClInclude Include="RenderData\RestirCandidateRenderData.h" />
     <ClInclude Include="RenderData\RestirFinalReservoirRenderData.h" />
@@ -367,6 +368,11 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
     <ClInclude Include="RenderPass\DlssUpscalePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\RaytracingPreparePass.h" />
+    <ClInclude Include="RenderPass\RaytracingControls.h" />
+    <ClInclude Include="RenderPass\RaytracingPassCommon.h" />
+    <ClInclude Include="RenderPass\ReferencePathTracingPass.h" />
+    <ClInclude Include="RenderPass\RestirCandidatePass.h" />
     <ClInclude Include="RenderPass\RestirDebugGlobal.h" />
     <ClInclude Include="RenderPass\RestirHdrCapture.h" />
     <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h" />
@@ -497,6 +503,11 @@ exit /b 0</Command>
     <ClCompile Include="RenderPass\HdrResolvePass.cpp" />
     <ClCompile Include="RenderPass\DlssUpscalePass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\RaytracingPreparePass.cpp" />
+    <ClCompile Include="RenderPass\RaytracingControls.cpp" />
+    <ClCompile Include="RenderPass\RaytracingPassCommon.cpp" />
+    <ClCompile Include="RenderPass\ReferencePathTracingPass.cpp" />
+    <ClCompile Include="RenderPass\RestirCandidatePass.cpp" />
     <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp" />
     <ClCompile Include="RenderPass\RestirTemporalReusePass.cpp" />
     <ClCompile Include="RenderPass\SkinningPass.cpp" />

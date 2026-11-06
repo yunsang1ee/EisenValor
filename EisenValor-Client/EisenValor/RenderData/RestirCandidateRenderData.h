@@ -21,6 +21,9 @@ public:
 		specularAlbedoTexture.reset();
 		normalRoughnessTexture.reset();
 		specularHitDistanceTexture.reset();
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+		secondaryNeeTexture.reset();
+#endif
 		validThisFrame = false;
 		frameIndex = 0;
 		shadingNormalStrength = 1.0f;
@@ -35,8 +38,11 @@ public:
 	std::shared_ptr<DxTexture> specularAlbedoTexture;
 	std::shared_ptr<DxTexture> normalRoughnessTexture;
 	std::shared_ptr<DxTexture> specularHitDistanceTexture;
-	bool					   validThisFrame = false;
-	uint32_t				   frameIndex = 0;
-	float					   shadingNormalStrength = 1.0f;
-	uint64_t				   historySignature = 0;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	std::shared_ptr<DxTexture> secondaryNeeTexture;
+#endif
+	bool	 validThisFrame = false;
+	uint32_t frameIndex = 0;
+	float	 shadingNormalStrength = 1.0f;
+	uint64_t historySignature = 0;
 };
