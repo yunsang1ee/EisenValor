@@ -12,6 +12,9 @@ public:
 	void OnEndImpl() override;
 
 private:
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	bool m_previousPerformanceTracking = false;
+#endif
 	void CreateDebugNavMeshPreview();
 	void CreateDebugMapObjPreview();
 };

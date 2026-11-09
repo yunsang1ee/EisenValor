@@ -19,6 +19,11 @@
 #include "DxCommandContext.h"
 #include "PixProfiler.h"
 #include "StreamlineGlobal.h"
+#include <chrono>
+#include <cmath>
+#include <psapi.h>
+
+#pragma comment(lib, "Psapi.lib")
 
 namespace
 {
@@ -79,6 +84,14 @@ void DxRendererGlobal::Initialize()
 	{
 		m_frameResources[i] = std::make_unique<DxFrameResource>();
 		m_frameResources[i]->Initialize(device.GetDevice(), i);
+	}
+	m_gpuTimestampFrequency = 0;
+	if (auto* queue = GLOBAL(DxGfxCommandQueueGlobal).GetQueue())
+	{
+		if (FAILED(queue->GetTimestampFrequency(&m_gpuTimestampFrequency)))
+		{
+			m_gpuTimestampFrequency = 0;
+		}
 	}
 
 	GRAPHICS_LOG_FMT("[DxRendererGlobal] Initialized (SwapChain not created yet - call CreateSwapChain)\n");
@@ -202,6 +215,7 @@ IRenderPass* DxRendererGlobal::GetRenderPass(const std::string& name) const
 void DxRendererGlobal::BeginFrame()
 {
 	PixScopedCpuEvent event(L"DxRenderer.BeginFrame");
+	m_cpuFrameWaitMs = 0.0;
 
 	if (!m_isInitialized || !m_swapChain)
 	{
@@ -213,7 +227,16 @@ void DxRendererGlobal::BeginFrame()
 
 	m_currentFrameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
-	frame->BeginFrame();
+	const bool measureGpu = m_trackPerformance && m_gpuTimestampFrequency != 0;
+	frame->BeginFrame(measureGpu);
+	m_cpuFrameWaitMs = frame->GetCpuFenceWaitMs();
+	const auto ticks = frame->GetCompletedGpuTicks();
+	if (measureGpu && m_acceptGpuTiming[m_currentFrameIndex] && ticks.has_value())
+	{
+		m_performanceStats.gpuFrameMs = static_cast<double>(*ticks) * 1000.0 / m_gpuTimestampFrequency;
+		++m_performanceStats.gpuSamples;
+	}
+	m_acceptGpuTiming[m_currentFrameIndex] = measureGpu;
 	m_renderContext.BeginFrame();
 }
 
@@ -342,7 +365,10 @@ void DxRendererGlobal::EndFrame()
 
 	{
 		PixScopedCpuEvent presentEvent(L"DxRenderer.Present");
+		const auto presentStart = std::chrono::steady_clock::now();
 		m_swapChain->PresentMaxPerformance();
+		m_cpuFrameWaitMs += std::chrono::duration<double, std::milli>(
+			std::chrono::steady_clock::now() - presentStart).count();
 	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
@@ -365,6 +391,47 @@ void DxRendererGlobal::EndFrame()
 		m_nextMemoryLogTime = runtime + 5.0f;
 	}
 #endif
+}
+
+void DxRendererGlobal::SetPerformanceTrackingEnabled(bool enabled)
+{
+	if (m_trackPerformance == enabled)
+	{
+		return;
+	}
+	m_trackPerformance = enabled;
+	m_performanceStats = {};
+	m_acceptGpuTiming.fill(false);
+}
+
+void DxRendererGlobal::RecordCpuFrameTime(double frameWorkMs)
+{
+	if (m_trackPerformance && std::isfinite(frameWorkMs))
+	{
+		m_performanceStats.cpuWorkMs = std::max(frameWorkMs, 0.0);
+		++m_performanceStats.cpuSamples;
+	}
+}
+
+ProcessMemoryStats DxRendererGlobal::QueryProcessMemoryStats() const
+{
+	ProcessMemoryStats result;
+	PROCESS_MEMORY_COUNTERS_EX counters{};
+	counters.cb = sizeof(counters);
+	if (GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters)))
+	{
+		result.cpuWorkingSetBytes = counters.WorkingSetSize;
+		result.cpuValid = true;
+	}
+	DXGI_QUERY_VIDEO_MEMORY_INFO local{};
+	if (auto* adapter = GLOBAL(DxDeviceGlobal).GetAdapter();
+		adapter && SUCCEEDED(adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &local)))
+	{
+		result.gpuLocalBytes = local.CurrentUsage;
+		result.gpuLocalBudgetBytes = local.Budget;
+		result.gpuValid = true;
+	}
+	return result;
 }
 
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)

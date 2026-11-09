@@ -43,6 +43,9 @@
 #include "RaytracingCommon.h"
 
 #include <array>
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+#include "DxRendererGlobal.h"
+#endif
 
 using Vertex = EvAsset::Vertex;
 
@@ -177,6 +180,10 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 
 void WorldScene::OnStartImpl()
 {
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	m_previousPerformanceTracking = GLOBAL(DxRendererGlobal).IsPerformanceTrackingEnabled();
+	GLOBAL(DxRendererGlobal).SetPerformanceTrackingEnabled(true);
+#endif
 	DEBUG_LOG_FMT("[WorldScene] OnStart called\n");
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
@@ -614,6 +621,9 @@ void WorldScene::CreateSceneObjects()
 
 void WorldScene::OnEndImpl()
 {
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	GLOBAL(DxRendererGlobal).SetPerformanceTrackingEnabled(m_previousPerformanceTracking);
+#endif
 	GLOBAL(InputGlobal).SetMouseLocked(false);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(false);
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);

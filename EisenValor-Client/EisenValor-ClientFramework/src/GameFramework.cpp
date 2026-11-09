@@ -15,11 +15,12 @@
 
 #define SERVER
 
-bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
+bool GameFramework::Initialize(
+	HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort, bool connectToServer)
 {
 #ifdef SERVER
 #ifdef APPLY_LOBBY_SERVER
-	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
+	if (connectToServer && !GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
 		return false;
 	(void)serverAddress;
 	(void)serverPort;
@@ -53,6 +54,10 @@ void GameFramework::Run()
 		m_pendingResize.reset();
 		ApplyResize(pending.width, pending.height);
 	}
+	auto& renderer = GLOBAL(DxRendererGlobal);
+	const bool measureCpu = renderer.IsPerformanceTrackingEnabled();
+	using CpuClock = std::chrono::steady_clock;
+	const auto cpuStart = measureCpu ? CpuClock::now() : CpuClock::time_point{};
 
 #ifdef SERVER
 	{
@@ -72,10 +77,12 @@ void GameFramework::Run()
 
 	static float runTime{};
 	float		 dt = 0.0f;
+	const auto timerStart = measureCpu ? CpuClock::now() : CpuClock::time_point{};
 	{
 		PixScopedCpuEvent event(L"Timer.Update");
 		dt = GLOBAL(TimerGlobal).Update();
 	}
+	const auto timerEnd = measureCpu ? CpuClock::now() : CpuClock::time_point{};
 
 	static float timeElapsed = 0.0f;
 	static int	 frameCount = 0;
@@ -116,6 +123,12 @@ void GameFramework::Run()
 #ifdef _DEBUG
 	GLOBAL(DxDebugGlobal).PrintDebugMessages();
 #endif
+	if (measureCpu)
+	{
+		const double elapsedMs = std::chrono::duration<double, std::milli>(CpuClock::now() - cpuStart).count();
+		const double limiterMs = std::chrono::duration<double, std::milli>(timerEnd - timerStart).count();
+		renderer.RecordCpuFrameTime(elapsedMs - limiterMs - renderer.GetCpuFrameWaitMs());
+	}
 }
 
 void GameFramework::Release()
@@ -145,8 +158,10 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	switch (message)
 	{
 	case WM_ACTIVATE:
+		GLOBAL(InputGlobal).SetWindowFocused(LOWORD(wParam) != WA_INACTIVE);
+		break;
 	case WM_ACTIVATEAPP:
-		GLOBAL(InputGlobal).SetWindowFocused(WA_ACTIVE == LOWORD(wParam));
+		GLOBAL(InputGlobal).SetWindowFocused(wParam != FALSE);
 		break;
 
 	case WM_SETFOCUS:

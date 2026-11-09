@@ -1,0 +1,19 @@
+Stanford Dragon - rendering research demonstration
+
+Source: Stanford University Computer Graphics Laboratory
+Repository and usage terms: https://graphics.stanford.edu/data/3Dscanrep/
+Archive: https://graphics.stanford.edu/pub/3Dscanrep/dragon/dragon_recon.tar.gz
+Member: dragon_recon/dragon_vrip_res2.ply
+Conversion: Tools/PathTracingDemo/import_stanford_dragon.py
+
+The original mesh is converted to EVMH v2, normalized to unit height, centered
+on X/Z and grounded at Y=0, with handedness conversion and smooth vertex normals.
+The sculpture stays static; only the surrounding door is animated.
+
+Stanford permits research use and free redistribution with source acknowledgement.
+Commercial use or inclusion in a product for sale requires Stanford's permission.
+Keep this attribution with the converted asset. Do not treat the model as CC0.
+
+The Box, Sphere, Torus and LightPanel meshes are generated specifically for this
+project by Tools/PathTracingDemo/generate_meshes.py. Castle props reuse the game's
+existing MCastle assets and their existing materials.

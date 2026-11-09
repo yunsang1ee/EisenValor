@@ -2,6 +2,7 @@
 #include "DxCommon.h"
 #include "DxBuffer.h"
 #include "DxUploadHeap.h"
+#include <optional>
 
 class DxCommandContext;
 
@@ -25,9 +26,12 @@ public:
 		/*uint32_t				numWorkers = 0*/ // Multi-thread 시 향후 추가
 	);
 
-	void BeginFrame();
+	void BeginFrame(bool measureGpuTime = false);
 	void ExecuteAndSignal(ID3D12CommandQueue* queue);
 	void WaitForCompletion();
+	bool IsGpuTimingSupported() const { return m_timestampHeap && m_timestampReadback; }
+	std::optional<uint64_t> GetCompletedGpuTicks() const { return m_completedGpuTicks; }
+	double GetCpuFenceWaitMs() const { return m_cpuFenceWaitMs; }
 
 	DxUploadHeap*	  GetUploadHeap() const { return m_uploadHeap.get(); }
 	DxCommandContext* GetMainContext() const { return m_mainContext.get(); }
@@ -52,6 +56,12 @@ private:
 	ComPtr<ID3D12Fence> m_fence;
 	uint64_t			m_fenceValue = 0;
 	HANDLE				m_fenceEvent = nullptr;
+	ComPtr<ID3D12QueryHeap> m_timestampHeap;
+	ComPtr<ID3D12Resource> m_timestampReadback;
+	std::optional<uint64_t> m_completedGpuTicks;
+	double m_cpuFenceWaitMs = 0.0;
+	bool m_recordGpuTime = false;
+	bool m_timestampPending = false;
 
 	// TODO: DxFrameDescriptorAllocator 등
 };

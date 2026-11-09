@@ -1,0 +1,36 @@
+{
+  "source": "EisenValor-Client/EisenValor/Resource/Texture/Map/Map/MCastle_StoneSlabs_Indoor_Albedo_618b6a36.evtex",
+  "source_sha256": "bebadd29a7c780da86f3f37593e3e476a1acaebdf64fe81448d8278cae23f553",
+  "outputs": {
+    "WashedStoneAlbedo.evtex": {
+      "sha256": "4af9a2f9db01207353b9715e737f5e7cfb8d08d2cd13132246033daf4056a326",
+      "srgb": true,
+      "usage": 0,
+      "size": [
+        512,
+        512
+      ],
+      "mips": 10
+    },
+    "StoneGroutEmission.evtex": {
+      "sha256": "59051ab5734712e707080169d12129b72c0a855df65c0be6d21c9b0685a787ed",
+      "srgb": false,
+      "usage": 3,
+      "size": [
+        512,
+        512
+      ],
+      "mips": 10
+    },
+    "PolishedStoneORMS.evtex": {
+      "sha256": "eead49d27eaeca4941c01a13e3acd7fb47492a5683642ff66fb106cc0dd98e59",
+      "srgb": false,
+      "usage": 2,
+      "size": [
+        512,
+        512
+      ],
+      "mips": 10
+    }
+  }
+}

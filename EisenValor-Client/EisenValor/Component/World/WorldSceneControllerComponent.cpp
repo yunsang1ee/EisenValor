@@ -101,6 +101,9 @@ void WorldSceneControllerComponent::OnStart()
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	CreateRestirDebugOverlayUI();
 #endif
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	CreatePerformanceOverlayUI();
+#endif
 }
 
 void WorldSceneControllerComponent::OnUpdate(float deltaTime)
@@ -113,6 +116,9 @@ void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	RefreshRestirDebugOverlay();
 #endif
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	UpdatePerformanceOverlay(deltaTime);
+#endif
 
 #ifdef APPLY_LOBBY_SERVER
 	if (GLOBAL(InputGlobal).GetInputDown('L'))
@@ -124,6 +130,122 @@ void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 	}
 #endif
 }
+
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+void WorldSceneControllerComponent::CreatePerformanceOverlayUI()
+{
+	auto* scene = GetGameObject()->GetScene();
+	if (!scene)
+	{
+		return;
+	}
+	m_performanceRoot = scene->ReserveGameObject(
+		"WorldPerformanceOverlay", std::nullopt,
+		[this, scene](GameObject* obj)
+		{
+			scene->CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({1, 0}, {1, 0});
+					rect->SetOffsetMin({-470, 18});
+					rect->SetOffsetMax({-18, 242});
+				}
+			);
+			scene->CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					image->SetNormalTextureResource(
+						GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource/Texture/UIback.evtex")
+					);
+					image->SetNormalColor({0.18f, 0.16f, 0.12f, 0.92f});
+					image->SetOrder(99996);
+				}
+			);
+			for (const bool metrics : {true, false})
+			{
+				scene->ReserveGameObject(
+					metrics ? "WorldPerformanceValues" : "WorldPerformanceScope", std::nullopt,
+					[this, scene, parent = obj->GetHandle(), metrics](GameObject* label)
+					{
+						if (auto* root = scene->TryGetGameObject(parent))
+						{
+							label->GetTransform().SetParent(root->GetTransform().GetHandle());
+						}
+						scene->CreateComponentWithInit<RectTransformComponent>(
+							label->GetHandle(),
+							[metrics](RectTransformComponent* rect)
+							{
+								rect->SetAnchors(metrics ? Vec2{0, 0} : Vec2{0, 1}, {1, 1});
+								rect->SetOffsetMin(metrics ? Vec2{20, 12} : Vec2{20, -64});
+								rect->SetOffsetMax(metrics ? Vec2{-20, -64} : Vec2{-20, -12});
+							}
+						);
+						const auto handle = scene->CreateComponentWithInit<TextUIComponent>(
+							label->GetHandle(),
+							[metrics](TextUIComponent* text)
+							{
+								text->SetText(
+									metrics ? PerformanceStatsText::InitialText : PerformanceStatsText::ScopeText
+								);
+								text->SetFontSize(metrics ? 18.0f : 12.0f);
+								text->SetHorizontalAlign(TextHorizontalAlign::Left);
+								text->SetVerticalAlign(TextVerticalAlign::Center);
+								text->SetColor({0.93f, 0.86f, 0.65f, 1});
+								text->SetOrder(99997);
+							}
+						);
+						if (metrics)
+						{
+							m_performanceText = handle;
+						}
+					}
+				);
+			}
+		}
+	);
+}
+
+void WorldSceneControllerComponent::UpdatePerformanceOverlay(float deltaTime)
+{
+	auto* scene = GetGameObject()->GetScene();
+	if (!scene)
+	{
+		return;
+	}
+	auto* textStorage = scene->GetStorage<TextUIComponent>();
+	auto* text = textStorage ? textStorage->Get(m_performanceText) : nullptr;
+	if (!text)
+	{
+		return;
+	}
+	bool debugVisible = false;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	if (auto* debugText = textStorage->Get(m_restirDebugTextHandle))
+	{
+		debugVisible = debugText->GetGameObject() && debugText->GetGameObject()->IsActiveInHierarchy();
+	}
+#endif
+	const float top = debugVisible ? 304.0f : 18.0f;
+	if (top != m_performanceTop)
+	{
+		if (auto* root = scene->TryGetGameObject(m_performanceRoot))
+		{
+			if (auto* rect = root->GetComponent<RectTransformComponent>())
+			{
+				rect->SetOffsetMin({-470, top});
+				rect->SetOffsetMax({-18, top + 224});
+				m_performanceTop = top;
+			}
+		}
+	}
+	if (auto value = m_performanceStats.Update(deltaTime))
+	{
+		text->SetText(std::move(*value));
+	}
+}
+#endif
 
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 void WorldSceneControllerComponent::CreateRestirDebugOverlayUI()

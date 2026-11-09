@@ -5,10 +5,13 @@
 #include "RectTransformComponent.h"
 #include "AudioGlobal.h"
 #include "Component/OptionsMenuComponent.h"
+#include "NetworkGlobal.h"
 #include "ResourceGlobal.h"
 #include "SceneGlobal.h"
 #include "TextureResource.h"
+#include "TextUIComponent.h"
 #include "Util/GameConstants.h"
+#include "Util/SceneNavigation.h"
 
 namespace
 {
@@ -123,7 +126,7 @@ void StartScene::OnStartImpl()
 
 				CreateComponentWithInit<ButtonUIComponent>(
 					obj->GetHandle(),
-					[imageHandle, button](ButtonUIComponent* buttonComponent)
+					[this, imageHandle, button](ButtonUIComponent* buttonComponent)
 					{
 						buttonComponent->SetTargetImage(imageHandle);
 						buttonComponent->SetOnHover(
@@ -136,7 +139,7 @@ void StartScene::OnStartImpl()
 							}
 						);
 						buttonComponent->SetOnClick(
-							[button]()
+							[this, button]()
 							{
 								GLOBAL(AudioGlobal)
 									.Play2D(
@@ -148,9 +151,16 @@ void StartScene::OnStartImpl()
 								{
 								case StartMenuAction::Start:
 #ifdef APPLY_LOBBY_SERVER
-									GLOBAL(SceneGlobal).LoadScene("LoginScene");
+									if (!GLOBAL(NetBridge::NetworkGlobal).Init(m_lobbyAddress, G_LOBBY_SERVER_PORT))
+									{
+										MessageBoxW(GetActiveWindow(),
+											L"Cannot connect to the lobby server. Try again, or open PATH TRACING DEMO.",
+											L"Connection Failed", MB_OK | MB_ICONERROR);
+										break;
+									}
+									SceneNavigation::Request("LoginScene");
 #else
-									GLOBAL(SceneGlobal).LoadScene("WorldScene");
+									SceneNavigation::Request("WorldScene");
 #endif
 									break;
 								case StartMenuAction::Options:
@@ -169,6 +179,60 @@ void StartScene::OnStartImpl()
 			}
 		);
 	}
+
+	ReserveGameObject(
+		"PathTracingDemoButton", std::nullopt,
+		[this](GameObject* obj)
+		{
+			CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({0.0f, 1.0f}, {0.0f, 1.0f});
+					rect->SetOffsetMin({40.0f, -100.0f});
+					rect->SetOffsetMax({400.0f, -40.0f});
+				}
+			);
+			const auto image = CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* component)
+				{
+					component->SetNormalColor({0.05f, 0.05f, 0.05f, 0.94f});
+					component->SetHoverColor({0.15f, 0.35f, 1.0f, 1.0f});
+					component->SetPressedColor({0.15f, 0.35f, 1.0f, 1.0f});
+					component->SetOrder(10);
+				}
+			);
+			CreateComponentWithInit<TextUIComponent>(
+				obj->GetHandle(),
+				[](TextUIComponent* text)
+				{
+					text->SetText(L"PATH TRACING DEMO");
+					text->SetFontSize(24.0f);
+					text->SetHorizontalAlign(TextHorizontalAlign::Center);
+					text->SetVerticalAlign(TextVerticalAlign::Center);
+					text->SetColor({1, 1, 1, 1});
+					text->SetOrder(11);
+				}
+			);
+			CreateComponentWithInit<ButtonUIComponent>(
+				obj->GetHandle(),
+				[image](ButtonUIComponent* button)
+				{
+					button->SetTargetImage(image);
+					button->SetOrder(10);
+					button->SetOnClick(
+						[]()
+						{
+							if (!OptionsMenuComponent::IsOpenInActiveScene())
+							{
+								SceneNavigation::Request("PathTracingDemoScene");
+							}
+						});
+				}
+			);
+		}
+	);
 }
 
 void StartScene::OnEndImpl()

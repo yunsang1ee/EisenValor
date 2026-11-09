@@ -245,7 +245,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_RENDER_DEBUG_VIEWS;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_RENDER_DEBUG_VIEWS;ENABLE_INGAME_PERFORMANCE_OVERLAY;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -386,6 +386,11 @@ exit /b 0</Command>
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
     <ClInclude Include="Scene\StartScene.h" />
+    <ClInclude Include="Scene\PathTracingDemoScene.h" />
+    <ClInclude Include="Component\PathTracingDemoControllerComponent.h" />
+    <ClInclude Include="Component\PathTracingDemoDoorComponent.h" />
+    <ClInclude Include="Util\SceneNavigation.h" />
+    <ClInclude Include="Util\PerformanceStatsText.h" />
     <ClInclude Include="Scene\WorldScene.h" />
     <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
 	<ClInclude Include="stdafxClient.h" />
@@ -518,6 +523,9 @@ exit /b 0</Command>
     <ClCompile Include="Scene\LoginScene.cpp" />
     <ClCompile Include="Scene\RoomScene.cpp" />
     <ClCompile Include="Scene\StartScene.cpp" />
+    <ClCompile Include="Scene\PathTracingDemoScene.cpp" />
+    <ClCompile Include="Component\PathTracingDemoControllerComponent.cpp" />
+    <ClCompile Include="Component\PathTracingDemoDoorComponent.cpp" />
     <ClCompile Include="Scene\WorldScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
