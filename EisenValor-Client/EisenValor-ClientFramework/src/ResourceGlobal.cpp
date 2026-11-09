@@ -476,6 +476,8 @@ std::shared_ptr<MeshResource> ResourceGlobal::LoadInternal<MeshResource>(const s
 		data.boundsInfo, std::move(data.subMeshes), std::move(data.materialGuids),
 		static_cast<uint32_t>(data.vertices.size()), static_cast<uint32_t>(data.indices.size()), data.indexFormat
 	);
+	// Retain only positions/indices for CPU queries; build the shared local BVH lazily.
+	res->SetQueryGeometry(data.vertices, std::move(data.indices));
 
 	m_pendingLoads.push({res, data.assetGuid, path, MeshResource::StaticRuntimeTypeID()});
 

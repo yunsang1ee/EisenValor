@@ -41,6 +41,7 @@
 #include "MeshComponent.h"
 #include "MaterialResource.h"
 #include "RaytracingCommon.h"
+#include "Util/CameraConfig.h"
 
 #include <array>
 #if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
@@ -180,6 +181,7 @@ void WorldScene::OnRegisterCustomSceneComponentDecoders()
 
 void WorldScene::OnStartImpl()
 {
+	SetLoadedMeshQueryMask(CameraConfig::kCameraQueryMask);
 #if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
 	m_previousPerformanceTracking = GLOBAL(DxRendererGlobal).IsPerformanceTrackingEnabled();
 	GLOBAL(DxRendererGlobal).SetPerformanceTrackingEnabled(true);
@@ -610,6 +612,8 @@ void WorldScene::CreateSceneObjects()
 					if (nullptr != meshRes)
 					{
 						mesh->SetMeshResource(meshRes);
+						mesh->SetMobility(RenderMobility::Static);
+						mesh->SetQueryMask(CameraConfig::kCameraQueryMask);
 					}
 				}
 			);

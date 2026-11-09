@@ -78,8 +78,25 @@ HandleOf<GameObject> AddMesh(
 	);
 }
 
+HandleOf<GameObject> AddBox(
+	PathTracingDemoScene&					 scene,
+	const std::string&						 name,
+	const std::shared_ptr<MeshResource>&	 mesh,
+	const std::shared_ptr<MaterialResource>& material,
+	DX::XMFLOAT3							 position,
+	DX::XMFLOAT3							 scale,
+	DX::XMFLOAT3							 rotation = {},
+	RenderMobility							 mobility = RenderMobility::Static,
+	HandleOf<GameObject>					 parent = {}
+)
+{
+	const auto handle = AddMesh(scene, name, mesh, material, position, scale, rotation, mobility, parent);
+	scene.RegisterCameraBlocker(handle, {0, 0, 0}, {0.5f, 0.5f, 0.5f});
+	return handle;
+}
+
 void AddFittedProp(
-	Scene&									 scene,
+	PathTracingDemoScene&					 scene,
 	const std::string&						 name,
 	const std::shared_ptr<MeshResource>&	 mesh,
 	DX::XMFLOAT3							 center,
@@ -99,7 +116,14 @@ void AddFittedProp(
 		center.y - 0.5f * (bounds.aabbmin[1] + bounds.aabbmax[1]) * scale.y,
 		center.z - 0.5f * (bounds.aabbmin[2] + bounds.aabbmax[2]) * scale.z
 	};
-	AddMesh(scene, name, mesh, material, position, scale, {}, mobility, parent);
+	const auto handle = AddMesh(scene, name, mesh, material, position, scale, {}, mobility, parent);
+	scene.RegisterCameraBlocker(
+		handle,
+		{0.5f * (bounds.aabbmin[0] + bounds.aabbmax[0]), 0.5f * (bounds.aabbmin[1] + bounds.aabbmax[1]),
+		 0.5f * (bounds.aabbmin[2] + bounds.aabbmax[2])},
+		{0.5f * (bounds.aabbmax[0] - bounds.aabbmin[0]), 0.5f * (bounds.aabbmax[1] - bounds.aabbmin[1]),
+		 0.5f * (bounds.aabbmax[2] - bounds.aabbmin[2])}
+	);
 }
 } // namespace
 
@@ -110,6 +134,8 @@ void PathTracingDemoScene::OnRegisterCustomComponents()
 
 void PathTracingDemoScene::OnStartImpl()
 {
+	m_cameraBlockers.clear();
+	m_cameraQueryBoxes.clear();
 	GLOBAL(AudioGlobal).StopBus(AudioBus::BGM);
 	GLOBAL(InputGlobal).SetMouseLocked(false);
 	m_previousPerformanceTracking = GLOBAL(DxRendererGlobal).IsPerformanceTrackingEnabled();
@@ -182,7 +208,7 @@ void PathTracingDemoScene::CreateExhibits()
 		resources.Load<MeshResource>(L"Resource/Models/Map/Map/MCastle_GiantPillar_01_LOD2_e7b19f7d.evmesh");
 	if (!box || !sphere || !dragon || !panel || !castleDoor || !pillar)
 	{
-		throw std::runtime_error("Path tracing demo assets are missing. See Tools/PathTracingDemo.");
+		throw std::runtime_error("Path tracing demo assets are missing. Restore the client Resource folder.");
 	}
 
 	const auto plaster = MakeMaterial({0.72f, 0.72f, 0.68f}, 0.82f);
@@ -199,20 +225,17 @@ void PathTracingDemoScene::CreateExhibits()
 	const auto warmLight = MakeMaterial({1.0f, 0.18f, 0.045f}, 1, 0, 40);
 	const auto coolLight = MakeMaterial({0.07f, 0.3f, 1.0f}, 1, 0, 40);
 
-	AddMesh(*this, "RoomFloor", box, floor, {0, -0.15f, 1.5f}, {12.4f, 0.3f, 19.4f});
-	AddMesh(*this, "RoomCeiling", box, plaster, {0, 6.15f, 1.5f}, {12.4f, 0.3f, 19.4f});
-	AddMesh(*this, "RoomFloor", box, floor, {0, -0.15f, 1.5f}, {12.4f, 0.3f, 19.4f});
-	AddMesh(*this, "RoomCeiling", box, plaster, {0, 6.15f, 1.5f}, {12.4f, 0.3f, 19.4f});
-	AddMesh(*this, "RedBounceWall", box, red, {-6.15f, 3, 1.5f}, {0.3f, 6, 19});
-	AddMesh(*this, "BluePassageLintel", box, blue, {6.15f, 5.3f, -5}, {0.3f, 1.4f, 2});
-	AddMesh(*this, "BlueBounceWallFront", box, blue, {6.15f, 3, -7}, {0.3f, 6, 2});
-	AddMesh(*this, "BlueBounceWallBack", box, blue, {6.15f, 3, 3.5f}, {0.3f, 6, 15});
-	AddMesh(*this, "BluePassageLintel", box, blue, {6.15f, 5.3f, -5}, {0.3f, 1.4f, 2});
-	AddMesh(*this, "LightChamberBack", box, plaster, {0, 3, 11.15f}, {12.4f, 6, 0.3f});
-	AddMesh(*this, "CameraWall", box, plaster, {0, 3, -8.15f}, {12.4f, 6, 0.3f});
-	AddMesh(*this, "DoorWallLeft", box, plaster, {-3.9f, 3, 5.1f}, {4.2f, 6, 0.4f});
-	AddMesh(*this, "DoorWallRight", box, plaster, {3.9f, 3, 5.1f}, {4.2f, 6, 0.4f});
-	AddMesh(*this, "DoorWallLintel", box, plaster, {0, 5.3f, 5.1f}, {3.6f, 1.4f, 0.4f});
+	AddBox(*this, "RoomFloor", box, floor, {0, -0.15f, 1.5f}, {12.4f, 0.3f, 19.4f});
+	AddBox(*this, "RoomCeiling", box, plaster, {0, 6.15f, 1.5f}, {12.4f, 0.3f, 19.4f});
+	AddBox(*this, "RedBounceWall", box, red, {-6.15f, 3, 1.5f}, {0.3f, 6, 19});
+	AddBox(*this, "BlueBounceWallFront", box, blue, {6.15f, 3, -7}, {0.3f, 6, 2});
+	AddBox(*this, "BlueBounceWallBack", box, blue, {6.15f, 3, 3.5f}, {0.3f, 6, 15});
+	AddBox(*this, "BluePassageLintel", box, blue, {6.15f, 5.3f, -5}, {0.3f, 1.4f, 2});
+	AddBox(*this, "LightChamberBack", box, plaster, {0, 3, 11.15f}, {12.4f, 6, 0.3f});
+	AddBox(*this, "CameraWall", box, plaster, {0, 3, -8.15f}, {12.4f, 6, 0.3f});
+	AddBox(*this, "DoorWallLeft", box, plaster, {-3.9f, 3, 5.1f}, {4.2f, 6, 0.4f});
+	AddBox(*this, "DoorWallRight", box, plaster, {3.9f, 3, 5.1f}, {4.2f, 6, 0.4f});
+	AddBox(*this, "DoorWallLintel", box, plaster, {0, 5.3f, 5.1f}, {3.6f, 1.4f, 0.4f});
 
 	AddMesh(*this, "OutsideWhiteEmitter", panel, whiteLight, {0, 5.8f, 8.0f}, {6, 1, 4});
 	AddMesh(*this, "OutsideWarmEmitter", panel, warmLight, {-2.05f, 3, 10.85f}, {3.8f, 1, 5}, {90, 0, 0});
@@ -220,9 +243,9 @@ void PathTracingDemoScene::CreateExhibits()
 
 	AddFittedProp(*this, "CastlePillarLeft", pillar, {-3.0f, 2.45f, 4.6f}, {1.0f, 4.9f, 1.0f});
 	AddFittedProp(*this, "CastlePillarRight", pillar, {3.0f, 2.45f, 4.6f}, {1.0f, 4.9f, 1.0f});
-	AddMesh(*this, "DoorFrameLeft", box, charcoal, {-1.91f, 2.35f, 4.84f}, {0.22f, 4.7f, 0.22f});
-	AddMesh(*this, "DoorFrameRight", box, charcoal, {1.91f, 2.35f, 4.84f}, {0.22f, 4.7f, 0.22f});
-	AddMesh(*this, "DoorFrameTop", box, charcoal, {0, 4.71f, 4.84f}, {4.04f, 0.22f, 0.22f});
+	AddBox(*this, "DoorFrameLeft", box, charcoal, {-1.91f, 2.35f, 4.84f}, {0.22f, 4.7f, 0.22f});
+	AddBox(*this, "DoorFrameRight", box, charcoal, {1.91f, 2.35f, 4.84f}, {0.22f, 4.7f, 0.22f});
+	AddBox(*this, "DoorFrameTop", box, charcoal, {0, 4.71f, 4.84f}, {4.04f, 0.22f, 0.22f});
 	m_doorRoot = ReserveGameObject(
 		"AnimatedDoorHinge", std::nullopt,
 		[this](GameObject* obj)
@@ -231,7 +254,7 @@ void PathTracingDemoScene::CreateExhibits()
 			CreateComponent<PathTracingDemoDoorComponent>(obj->GetHandle());
 		}
 	);
-	AddMesh(
+	AddBox(
 		*this, "DoorLightSeal", box, woodSeal, {1.8f, 2.3f, 0.1f}, {3.68f, 4.64f, 0.16f}, {}, RenderMobility::Movable,
 		m_doorRoot
 	);
@@ -246,20 +269,19 @@ void PathTracingDemoScene::CreateExhibits()
 
 	AddMesh(*this, "BronzeDragonPlinth", box, charcoal, {0, 0.35f, 0.8f}, {4.5f, 0.7f, 2.7f});
 	AddMesh(*this, "BronzeStanfordDragon", dragon, bronze, {0, 0.7f, 0.8f}, {2.65f, 2.65f, 2.65f}, {0, 15, 0});
-	AddMesh(*this, "PorcelainDragonPlinth", box, plaster, {-3.8f, 0.25f, 1.6f}, {2.8f, 0.5f, 1.8f});
+	AddBox(*this, "PorcelainDragonPlinth", box, plaster, {-3.8f, 0.25f, 1.6f}, {2.8f, 0.5f, 1.8f});
 	AddMesh(
 		*this, "PorcelainStanfordDragon", dragon, porcelain, {-3.8f, 0.5f, 1.6f}, {1.75f, 1.75f, 1.75f}, {0, 15, 0}
 	);
-	AddMesh(*this, "ChromeDragonPlinth", box, charcoal, {3.8f, 0.25f, 1.6f}, {2.8f, 0.5f, 1.8f});
+	AddBox(*this, "ChromeDragonPlinth", box, charcoal, {3.8f, 0.25f, 1.6f}, {2.8f, 0.5f, 1.8f});
 	AddMesh(*this, "ChromeStanfordDragon", dragon, chrome, {3.8f, 0.5f, 1.6f}, {1.75f, 1.75f, 1.75f}, {0, -15, 0});
 
-	AddMesh(*this, "MirrorFrame", box, charcoal, {5.9f, 2.6f, -0.6f}, {0.18f, 4.6f, 5.6f});
-	AddMesh(*this, "MirrorFrame", box, charcoal, {5.9f, 2.6f, -0.6f}, {0.18f, 4.6f, 5.6f});
-	AddMesh(*this, "SideMirror", box, mirror, {5.79f, 2.6f, -0.6f}, {0.025f, 4.2f, 5.2f});
-	AddMesh(*this, "BounceShelf", box, plaster, {-5.0f, 2.75f, -1.0f}, {2.0f, 0.2f, 2.2f});
+	AddBox(*this, "MirrorFrame", box, charcoal, {5.9f, 2.6f, -0.6f}, {0.18f, 4.6f, 5.6f});
+	AddBox(*this, "SideMirror", box, mirror, {5.79f, 2.6f, -0.6f}, {0.025f, 4.2f, 5.2f});
+	AddBox(*this, "BounceShelf", box, plaster, {-5.0f, 2.75f, -1.0f}, {2.0f, 0.2f, 2.2f});
 	AddMesh(*this, "ShelteredReceiver", sphere, porcelain, {-5.0f, 0.65f, -1.0f}, {1.3f, 1.3f, 1.3f});
 
-	AddMesh(*this, "RoughnessBench", box, charcoal, {0, 0.22f, -2.8f}, {6.3f, 0.44f, 1.3f});
+	AddBox(*this, "RoughnessBench", box, charcoal, {0, 0.22f, -2.8f}, {6.3f, 0.44f, 1.3f});
 	constexpr float roughness[] = {0.07f, 0.2f, 0.4f, 0.7f, 1.0f};
 	for (size_t index = 0; index < std::size(roughness); ++index)
 	{
@@ -300,7 +322,7 @@ void PathTracingDemoScene::CreateColorRoom()
 	if (!box || !sphere || !dragon || !panel || !floorTile || !pillar || !lowWall || !barrel || !torch ||
 		!washedAlbedo || !polishedOrm || !groutEmission || !stoneNormal)
 	{
-		throw std::runtime_error("Color room assets missing. Run Tools/PathTracingDemo/generate_texture_variants.py.");
+		throw std::runtime_error("Color room assets are missing. Restore the client Resource folder.");
 	}
 
 	m_colorLights.clear();
@@ -320,21 +342,20 @@ void PathTracingDemoScene::CreateColorRoom()
 	stone->SetTexture("NRML", stoneNormal);
 	stone->SetTexture("ORMS", polishedOrm);
 
-	AddMesh(*this, "PassageFloor", box, dark, {8, -0.15f, -3}, {4.3f, 0.3f, 6.3f});
-	AddMesh(*this, "PassageFloor", box, dark, {8, -0.15f, -3}, {4.3f, 0.3f, 6.3f});
-	AddMesh(*this, "PassageCeiling", box, dark, {8, 4.75f, -3}, {4.3f, 0.3f, 6.3f});
-	AddMesh(*this, "PassageFront", box, dark, {8, 2.3f, -6.15f}, {4.3f, 4.6f, 0.3f});
-	AddMesh(*this, "PassageBack", box, dark, {8, 2.3f, 0.15f}, {4.3f, 4.6f, 0.3f});
-	AddMesh(*this, "PassageLightBaffle", box, dark, {8, 2.3f, -4.2f}, {0.2f, 4.6f, 3.6f});
+	AddBox(*this, "PassageFloor", box, dark, {8, -0.15f, -3}, {4.3f, 0.3f, 6.3f});
+	AddBox(*this, "PassageCeiling", box, dark, {8, 4.75f, -3}, {4.3f, 0.3f, 6.3f});
+	AddBox(*this, "PassageFront", box, dark, {8, 2.3f, -6.15f}, {4.3f, 4.6f, 0.3f});
+	AddBox(*this, "PassageBack", box, dark, {8, 2.3f, 0.15f}, {4.3f, 4.6f, 0.3f});
+	AddBox(*this, "PassageLightBaffle", box, dark, {8, 2.3f, -4.2f}, {0.2f, 4.6f, 3.6f});
 
-	AddMesh(*this, "ColorRoomFloorSeal", box, dark, {17, -0.2f, -1.25f}, {14.4f, 0.3f, 13.9f});
-	AddMesh(*this, "ColorRoomCeiling", box, white, {17, 6.15f, -1.25f}, {14.4f, 0.3f, 13.9f});
-	AddMesh(*this, "ColorRoomFront", box, white, {17, 3, -8.15f}, {14.4f, 6, 0.3f});
-	AddMesh(*this, "ColorRoomBack", box, white, {17, 3, 5.65f}, {14.4f, 6, 0.3f});
-	AddMesh(*this, "ColorRoomRight", box, white, {24.15f, 3, -1.25f}, {0.3f, 6, 13.5f});
-	AddMesh(*this, "ColorRoomLeftFront", box, white, {10.15f, 3, -5}, {0.3f, 6, 6});
-	AddMesh(*this, "ColorRoomLeftBack", box, white, {10.15f, 3, 2.75f}, {0.3f, 6, 5.5f});
-	AddMesh(*this, "ColorRoomPortalLintel", box, white, {10.15f, 5.3f, -1}, {0.3f, 1.4f, 2});
+	AddBox(*this, "ColorRoomFloorSeal", box, dark, {17, -0.2f, -1.25f}, {14.4f, 0.3f, 13.9f});
+	AddBox(*this, "ColorRoomCeiling", box, white, {17, 6.15f, -1.25f}, {14.4f, 0.3f, 13.9f});
+	AddBox(*this, "ColorRoomFront", box, white, {17, 3, -8.15f}, {14.4f, 6, 0.3f});
+	AddBox(*this, "ColorRoomBack", box, white, {17, 3, 5.65f}, {14.4f, 6, 0.3f});
+	AddBox(*this, "ColorRoomRight", box, white, {24.15f, 3, -1.25f}, {0.3f, 6, 13.5f});
+	AddBox(*this, "ColorRoomLeftFront", box, white, {10.15f, 3, -5}, {0.3f, 6, 6});
+	AddBox(*this, "ColorRoomLeftBack", box, white, {10.15f, 3, 2.75f}, {0.3f, 6, 5.5f});
+	AddBox(*this, "ColorRoomPortalLintel", box, white, {10.15f, 5.3f, -1}, {0.3f, 1.4f, 2});
 
 	for (int z = 0; z < 4; ++z)
 	{
@@ -376,7 +397,7 @@ void PathTracingDemoScene::CreateColorRoom()
 		float		 intensity;
 		uint32_t	 mask;
 	};
-	
+
 	const ColorSource sources[] = {
 		{{1.0f, 0.025f, 0.015f}, {10.45f, 3.6f, 1.0f}, {2.6f, 1, 4}, {0, 0, 90}, {12.7f, 1.1f, 0.4f}, 22, 1},
 		{{0.025f, 1.0f, 0.055f}, {17, 4.0f, 5.42f}, {4, 1, 2.6f}, {90, 0, 0}, {17, 1.1f, 4.2f}, 14, 2},
@@ -392,7 +413,7 @@ void PathTracingDemoScene::CreateColorRoom()
 		m_colorLights.push_back({light, emitter, source.mask});
 		AddFittedProp(*this, std::format("ColorCastleTorch{}", index), torch, source.torchPosition, {0.8f, 2.2f, 0.8f});
 		const auto glow = MakeMaterial(source.color, 1, 0, 0.5f);
-		const auto lamp = AddMesh(
+		const auto lamp = AddBox(
 			*this, std::format("ColorTorchGlow{}", index), box, glow,
 			{source.torchPosition.x, 2.28f, source.torchPosition.z}, {0.25f, 0.24f, 0.25f}
 		);
@@ -414,13 +435,13 @@ void PathTracingDemoScene::CreateColorRoom()
 		m_colorLights.push_back({frieze, carved, source.mask});
 	}
 
-	AddMesh(*this, "ColorMixReceiver", box, chalk, {17, 0.25f, -0.1f}, {6.4f, 0.22f, 5.0f});
+	AddBox(*this, "ColorMixReceiver", box, chalk, {17, 0.25f, -0.1f}, {6.4f, 0.22f, 5.0f});
 	AddMesh(*this, "ColorWhiteDragon", dragon, white, {17, 0.36f, 0.8f}, {2.0f, 2.0f, 2.0f}, {0, 15, 0});
-	AddMesh(*this, "ColorShadowColumnA", box, chalk, {15.0f, 1.16f, -0.9f}, {0.24f, 1.6f, 0.24f});
-	AddMesh(*this, "ColorShadowColumnB", box, chalk, {18.9f, 1.46f, -0.7f}, {0.32f, 2.2f, 0.32f});
-	AddMesh(*this, "ColorMirrorPlinth", box, dark, {21.1f, 0.35f, -2.1f}, {2, 0.7f, 2});
+	AddBox(*this, "ColorShadowColumnA", box, chalk, {15.0f, 1.16f, -0.9f}, {0.24f, 1.6f, 0.24f});
+	AddBox(*this, "ColorShadowColumnB", box, chalk, {18.9f, 1.46f, -0.7f}, {0.32f, 2.2f, 0.32f});
+	AddBox(*this, "ColorMirrorPlinth", box, dark, {21.1f, 0.35f, -2.1f}, {2, 0.7f, 2});
 	AddMesh(*this, "ColorMirrorSphere", sphere, chrome, {21.1f, 1.5f, -2.1f}, {1.6f, 1.6f, 1.6f});
-	AddMesh(*this, "ColorIndirectCanopy", box, white, {12.1f, 2.7f, 2.4f}, {2.8f, 0.18f, 2.3f});
+	AddBox(*this, "ColorIndirectCanopy", box, white, {12.1f, 2.7f, 2.4f}, {2.8f, 0.18f, 2.3f});
 	AddMesh(*this, "ColorShelteredSphere", sphere, chalk, {12.1f, 0.8f, 2.4f}, {1.3f, 1.3f, 1.3f});
 }
 
@@ -451,8 +472,46 @@ void PathTracingDemoScene::CycleColorLighting()
 	GLOBAL(StreamlineGlobal).RequestHistoryReset();
 }
 
+void PathTracingDemoScene::RegisterCameraBlocker(
+	HandleOf<GameObject> object, const DirectX::XMFLOAT3& localCenter, const DirectX::XMFLOAT3& localHalfExtents
+)
+{
+	m_cameraBlockers.push_back({object, localCenter, localHalfExtents});
+}
+
+DirectX::XMFLOAT3 PathTracingDemoScene::MoveCamera(
+	const DirectX::XMFLOAT3& start, const DirectX::XMFLOAT3& displacement, float radius
+)
+{
+	m_cameraQueryBoxes.clear();
+	m_cameraQueryBoxes.reserve(m_cameraBlockers.size());
+	for (const auto& blocker : m_cameraBlockers)
+	{
+		auto* object = TryGetGameObject(blocker.object);
+		if (!object || !object->IsActiveInHierarchy())
+			continue;
+		auto&		  transform = object->GetTransform();
+		const auto	  matrix = transform.GetWorldMatrix();
+		const auto	  scale = transform.GetWorldScale();
+		SceneQueryBox box;
+		DX::XMStoreFloat3(
+			&box.center,
+			DX::XMVector3TransformCoord(DX::XMLoadFloat3(&blocker.localCenter), DX::XMLoadFloat4x4(&matrix))
+		);
+		box.halfExtents = {
+			std::abs(scale.x) * blocker.localHalfExtents.x, std::abs(scale.y) * blocker.localHalfExtents.y,
+			std::abs(scale.z) * blocker.localHalfExtents.z
+		};
+		box.orientation = transform.GetWorldRotationQuaternion();
+		m_cameraQueryBoxes.push_back(box);
+	}
+	return BoxSceneQuery::MoveAndSlide(start, displacement, radius, m_cameraQueryBoxes);
+}
+
 void PathTracingDemoScene::OnEndImpl()
 {
+	m_cameraBlockers.clear();
+	m_cameraQueryBoxes.clear();
 	GLOBAL(InputGlobal).SetMouseLocked(false);
 	GLOBAL(DxRendererGlobal).SetPerformanceTrackingEnabled(m_previousPerformanceTracking);
 	GLOBAL(StreamlineGlobal).SetFeatureWarmupAllowed(m_previousWarmupAllowed);

@@ -202,6 +202,18 @@
     <ClInclude Include="include\DxFrameResource.h">
       <Filter>Graphics\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="include\BoxSceneQuery.h">
+      <Filter>Common\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneQueryBvh.h">
+      <Filter>Common\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TriangleSceneQuery.h">
+      <Filter>Common\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneQueryWorld.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
     <ClInclude Include="include\DxBLAS.h">
       <Filter>Graphics\Raytracing</Filter>
     </ClInclude>
@@ -421,6 +433,15 @@
     </ClCompile>
     <ClCompile Include="src\DxFrameResource.cpp">
       <Filter>Graphics\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BoxSceneQuery.cpp">
+      <Filter>Common\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TriangleSceneQuery.cpp">
+      <Filter>Common\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneQueryWorld.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\DxBLAS.cpp">
       <Filter>Graphics\Raytracing</Filter>

@@ -14,7 +14,10 @@ public:
 	static constexpr const char* GetStaticTypeName() { return "PathTracingDemoControllerComponent"; }
 	void						 OnStart() override;
 	void						 OnUpdate(float deltaTime);
-	void						 SetDoorObject(HandleOf<GameObject> door) { m_doorObject = door; }
+
+	static constexpr int kPriority = 50;
+	void				 OnLateUpdate(float deltaTime);
+	void				 SetDoorObject(HandleOf<GameObject> door) { m_doorObject = door; }
 
 private:
 	void						  SetView(uint32_t index);
@@ -56,4 +59,5 @@ private:
 	float							  m_pitch = 0.0f;
 	float							  m_yaw = 0.0f;
 	float							  m_labelElapsed = 0.0f;
+	DirectX::XMFLOAT3				  m_requestedMovement{};
 };

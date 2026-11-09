@@ -284,6 +284,10 @@
     <ClInclude Include="include\DxDeviceGlobal.h" />
     <ClInclude Include="include\DxFeatureCaps.h" />
     <ClInclude Include="include\DxFrameResource.h" />
+    <ClInclude Include="include\BoxSceneQuery.h" />
+    <ClInclude Include="include\SceneQueryBvh.h" />
+    <ClInclude Include="include\TriangleSceneQuery.h" />
+    <ClInclude Include="include\SceneQueryWorld.h" />
     <ClInclude Include="include\DxGarbageCollectorGlobal.h" />
     <ClInclude Include="include\DxPipelineState.h" />
     <ClInclude Include="include\DxRaytracingStateObjectBuilder.h" />
@@ -360,6 +364,9 @@
     <ClCompile Include="src\DxDeviceGlobal.cpp" />
     <ClCompile Include="src\DxFeatureCaps.cpp" />
     <ClCompile Include="src\DxFrameResource.cpp" />
+    <ClCompile Include="src\BoxSceneQuery.cpp" />
+    <ClCompile Include="src\TriangleSceneQuery.cpp" />
+    <ClCompile Include="src\SceneQueryWorld.cpp" />
     <ClCompile Include="src\DxGarbageCollectorGlobal.cpp" />
     <ClCompile Include="src\DxPipelineState.cpp" />
     <ClCompile Include="src\DxRaytracingStateObjectBuilder.cpp" />

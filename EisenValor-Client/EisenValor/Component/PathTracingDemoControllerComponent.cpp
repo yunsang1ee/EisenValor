@@ -152,6 +152,7 @@ void PathTracingDemoControllerComponent::ToggleDoorOpen()
 
 void PathTracingDemoControllerComponent::OnUpdate(float deltaTime)
 {
+	m_requestedMovement = {};
 	auto& input = GLOBAL(InputGlobal);
 	UpdatePerformanceStats(deltaTime);
 	if (auto* camera = GetGameObject()->GetComponent<CameraComponent>())
@@ -256,13 +257,27 @@ void PathTracingDemoControllerComponent::OnUpdate(float deltaTime)
 	if (length > 0.0001f)
 	{
 		const float step = (input.GetInput(VK_SHIFT) ? 6.0f : 2.0f) * std::clamp(deltaTime, 0.0f, 0.05f) / length;
-		auto		position = transform.GetPosition();
-		// Both rooms and the connecting passage are reachable; Home/1-6 recover composed views.
-		position.x = std::clamp(position.x + movement.x * step, -5.7f, 23.7f);
-		position.y = std::clamp(position.y + movement.y * step, 0.3f, 5.6f);
-		position.z = std::clamp(position.z + movement.z * step, -7.6f, 10.5f);
-		transform.SetPosition(position);
+		m_requestedMovement = {movement.x * step, movement.y * step, movement.z * step};
 	}
+}
+
+void PathTracingDemoControllerComponent::OnLateUpdate(float deltaTime)
+{
+	(void)deltaTime;
+	auto* owner = GetGameObject();
+	auto* camera = owner ? owner->GetComponent<CameraComponent>() : nullptr;
+	if (!camera)
+		return;
+	const float halfHeight = camera->GetNearZ() * std::tan(camera->GetFOV() * 0.5f);
+	const float halfWidth = halfHeight * camera->GetAspectRatio();
+	const float nearCorner =
+		std::sqrt(camera->GetNearZ() * camera->GetNearZ() + halfHeight * halfHeight + halfWidth * halfWidth);
+	const float radius = std::max(0.22f, nearCorner + 0.01f);
+	auto&		transform = owner->GetTransform();
+	const auto	position = static_cast<PathTracingDemoScene*>(owner->GetScene())
+							  ->MoveCamera(transform.GetWorldPosition(), m_requestedMovement, radius);
+	transform.SetWorldPosition(position);
+	m_requestedMovement = {};
 }
 
 void PathTracingDemoControllerComponent::CycleColorLighting()

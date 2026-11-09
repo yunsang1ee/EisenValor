@@ -294,6 +294,13 @@ void CameraComponent::SetSmoothFollow(bool enable, float positionSpeed, float ro
 	);
 }
 
+void CameraComponent::SetFollowCollision(uint32_t queryMask, float radius, const XMFLOAT3& pivotOffset)
+{
+	m_collisionQueryMask = queryMask;
+	m_collisionRadius = std::max(radius, 0.0f);
+	m_collisionPivotOffset = pivotOffset;
+}
+
 void CameraComponent::SetFollowTarget(DenseListHandle<Transform> targetTransform)
 {
 	m_follow.targetHandle = targetTransform;
@@ -331,6 +338,7 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 
 	// 2. Follow 타겟 (위치 기준) - 없으면 LookAt 타겟을 따라감
 	auto* followTransform = transformStorage->Get(m_follow.targetHandle);
+	const bool hasExplicitFollowTarget = followTransform != nullptr;
 	if (!followTransform)
 	{
 		followTransform = lookAtTransform;
@@ -356,6 +364,28 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	}
 	XMVECTOR desiredCameraPosVec = XMVectorAdd(followPosVec, offsetVec);
 
+	// Collision uses the followed player's pivot, independently of an enemy lock-on look-at target.
+	const auto pivotVec = followPosVec + XMLoadFloat3(&m_collisionPivotOffset);
+	XMFLOAT3 pivot;
+	XMStoreFloat3(&pivot, pivotVec);
+	const float nearHalfY = m_nearZ * std::tan(m_perspective.fov * 0.5f);
+	const float nearHalfX = nearHalfY * m_perspective.aspectRatio;
+	const float collisionRadius = std::max(m_collisionRadius,
+		std::sqrt(m_nearZ * m_nearZ + nearHalfX * nearHalfX + nearHalfY * nearHalfY) + 0.01f);
+	const auto constrain = [&](XMVECTOR desired)
+	{
+		if (m_collisionQueryMask == 0 || !hasExplicitFollowTarget) return desired;
+		XMFLOAT3 end;
+		XMStoreFloat3(&end, desired);
+		float fraction = 1.0f;
+		if (!scene->GetSceneQueryWorld().SweepSphere(*scene, pivot, end, collisionRadius, m_collisionQueryMask, fraction))
+			return desired;
+		const auto arm = desired - pivotVec;
+		const float length = XMVectorGetX(XMVector3Length(arm));
+		return length > 1e-6f ? pivotVec + arm * std::max(0.0f, fraction - 0.01f / length) : pivotVec;
+	};
+	desiredCameraPosVec = constrain(desiredCameraPosVec);
+
 	// Smooth Follow Position
 	const XMFLOAT3 currentCameraPos = cameraTransform.GetWorldPosition();
 	XMVECTOR	   currentCameraPosVec = XMLoadFloat3(&currentCameraPos);
@@ -369,6 +399,9 @@ void CameraComponent::UpdateLookAtTarget(float deltaTime)
 	}
 
 	XMFLOAT3 finalCameraPos;
+	// Also constrain the interpolation result: smoothing must never leave the camera behind a wall.
+	// On release, ordinary follow interpolation provides the gradual return to full arm length.
+	finalCameraPosVec = constrain(finalCameraPosVec);
 	XMStoreFloat3(&finalCameraPos, finalCameraPosVec);
 	cameraTransform.SetWorldPosition(finalCameraPos);
 
