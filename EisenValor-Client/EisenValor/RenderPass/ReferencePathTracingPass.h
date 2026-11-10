@@ -20,8 +20,9 @@ public:
 	RenderResolutionDomain GetResolutionDomain() const override { return RenderResolutionDomain::Render; }
 	const char*			   GetName() const override { return "ReferencePT"; }
 
-private:
 	void ResetAccumulation();
+
+private:
 	void CreateAccumulationBuffer(uint32_t width, uint32_t height);
 
 	static constexpr uint32_t		   kMaxAccumulationFrames = 1024;

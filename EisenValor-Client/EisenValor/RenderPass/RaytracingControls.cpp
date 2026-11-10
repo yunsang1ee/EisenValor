@@ -10,6 +10,21 @@
 #include "StreamlineGlobal.h"
 #endif
 
+void RaytracingControls::SetSettings(const RaytracingSettings& settings)
+{
+	const uint64_t nextGeneration = m_settings.restirHistoryGeneration + 1;
+	const uint64_t nextProfileRevision = m_settings.profileRevision + 1;
+	m_settings = settings;
+	m_settings.restirHistoryGeneration = nextGeneration;
+	m_settings.profileRevision = nextProfileRevision;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	GLOBAL(RestirDebugGlobal).DisableOverride();
+#endif
+#if defined(ENABLE_STREAMLINE)
+	GLOBAL(StreamlineGlobal).RequestHistoryReset();
+#endif
+}
+
 void RaytracingControls::TogglePathTracing()
 {
 	m_settings.usePathTracing = !m_settings.usePathTracing;

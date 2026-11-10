@@ -10,6 +10,23 @@ class Scene;
 class DxFrameResource;
 class DxSwapChain;
 class IRenderPass;
+
+struct FramePerformanceStats
+{
+	double cpuWorkMs = 0.0;
+	double gpuFrameMs = 0.0;
+	uint64_t cpuSamples = 0;
+	uint64_t gpuSamples = 0;
+};
+
+struct ProcessMemoryStats
+{
+	uint64_t cpuWorkingSetBytes = 0;
+	uint64_t gpuLocalBytes = 0;
+	uint64_t gpuLocalBudgetBytes = 0;
+	bool cpuValid = false;
+	bool gpuValid = false;
+};
 enum class RenderPassPriority : int32_t
 {
 	High = 0,
@@ -42,6 +59,12 @@ public:
 	void BeginFrame();
 	void Render(Scene* scene);
 	void EndFrame();
+	void SetPerformanceTrackingEnabled(bool enabled);
+	bool IsPerformanceTrackingEnabled() const { return m_trackPerformance; }
+	const FramePerformanceStats& GetPerformanceStats() const { return m_performanceStats; }
+	ProcessMemoryStats QueryProcessMemoryStats() const;
+	void RecordCpuFrameTime(double frameWorkMs);
+	double GetCpuFrameWaitMs() const { return m_cpuFrameWaitMs; }
 
 	void		 CreateSwapChain(HWND hwnd, uint32_t width, uint32_t height);
 	DxSwapChain* GetSwapChain() const { return m_swapChain.get(); }
@@ -94,4 +117,9 @@ private:
 	bool			 m_debugCameraValid = false;
 	Scene*			 m_debugCameraScene = nullptr;
 	CameraRenderData m_debugCameraSnapshot{};
+	FramePerformanceStats m_performanceStats;
+	uint64_t m_gpuTimestampFrequency = 0;
+	double m_cpuFrameWaitMs = 0.0;
+	bool m_trackPerformance = false;
+	std::array<bool, kFrameCount> m_acceptGpuTiming{};
 };

@@ -10,6 +10,7 @@ public:
 	RaytracingPath			  GetPath() const;
 	void					  ApplyOutputSettings(RaytracingOutputRenderData& output) const;
 	const RaytracingSettings& GetSettings() const { return m_settings; }
+	void					  SetSettings(const RaytracingSettings& settings);
 	void					  TogglePathTracing();
 	void					  ToggleRestirPT();
 	void					  ToggleDayEnvironment();

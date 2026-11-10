@@ -7,6 +7,9 @@
 #include "TextUIComponent.h"
 #include <array>
 #include <unordered_map>
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+#include "Util/PerformanceStatsText.h"
+#endif
 
 class OccupationZoneRegistrationComponent final : public ComponentBase<OccupationZoneRegistrationComponent>
 {
@@ -29,6 +32,14 @@ public:
 	void SetOccupationZoneGauge(uint64 zoneID, float gauge, FB_ENUMS::TEAM_TYPE dominantTeam);
 
 private:
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	void CreatePerformanceOverlayUI();
+	void UpdatePerformanceOverlay(float deltaTime);
+	HandleOf<GameObject> m_performanceRoot;
+	HandleOf<TextUIComponent> m_performanceText;
+	PerformanceStatsText m_performanceStats;
+	float m_performanceTop = 18.0f;
+#endif
 	static constexpr size_t kOccupationZoneCount = 2;
 	// TODO(packet): Replace this client estimate with the server's grace_remaining_ms snapshot.
 	static constexpr float kRecaptureGraceSeconds = 5.0f;

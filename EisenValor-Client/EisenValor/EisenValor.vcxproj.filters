@@ -343,6 +343,21 @@
     <ClInclude Include="Scene\StartScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\PathTracingDemoScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\PathTracingDemoControllerComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\PathTracingDemoDoorComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\SceneNavigation.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\PerformanceStatsText.h">
+      <Filter>Util</Filter>
+    </ClInclude>
     <ClInclude Include="Scene\ScoreScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -527,6 +542,15 @@
     </ClCompile>
     <ClCompile Include="Scene\StartScene.cpp">
       <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\PathTracingDemoScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PathTracingDemoControllerComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PathTracingDemoDoorComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Scene\ScoreScene.cpp">
       <Filter>소스 파일</Filter>

@@ -19,6 +19,8 @@
 #include "Scene/RoomScene.h"
 #include "Scene/LoadingScene.h"
 #include "Scene/ScoreScene.h"
+#include "Scene/PathTracingDemoScene.h"
+#include "Util/SceneNavigation.h"
 
 #include "RenderPass/SkinningPass.h"
 #include "RenderPass/RaytracingPreparePass.h"
@@ -61,6 +63,7 @@ extern "C"
 
 
 GameFramework* g_Framework = nullptr;
+std::string g_lobbyAddress = "127.0.0.1";
 
 
 LRESULT CALLBACK WndProc(HWND hWnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
@@ -187,6 +190,7 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	G_LOBBY_SERVER_PORT = port;
+	g_lobbyAddress = ipAddress;
 
 	#ifdef APPLY_LOBBY_SERVER
 		port = G_LOBBY_SERVER_PORT; // 로비 서버 포트
@@ -197,7 +201,8 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 
 	GLOBAL(NetBridge::NetworkGlobal).SetGameSession(std::make_unique<NetBridge::GameServerSession>());
 
-	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port))
+	// The front end and rendering demo are offline. StartScene connects when Start is selected.
+	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port, false))
 	{
 		return FALSE;
 	}
@@ -306,12 +311,14 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	// Scene 등록
 	{
 		GLOBAL(SceneGlobal).RegisterScene<StartScene>("StartScene");
+		static_cast<StartScene*>(GLOBAL(SceneGlobal).GetScene("StartScene"))->SetLobbyAddress(g_lobbyAddress);
 		GLOBAL(SceneGlobal).RegisterScene<LoginScene>("LoginScene");
 		GLOBAL(SceneGlobal).RegisterScene<WorldScene>("WorldScene");
 		GLOBAL(SceneGlobal).RegisterScene<LobbyScene>("LobbyScene");
 		GLOBAL(SceneGlobal).RegisterScene<RoomScene>("RoomScene");
 		GLOBAL(SceneGlobal).RegisterScene<LoadingScene>("LoadingScene");
 		GLOBAL(SceneGlobal).RegisterScene<ScoreScene>("ScoreScene");
+		GLOBAL(SceneGlobal).RegisterScene<PathTracingDemoScene>("PathTracingDemoScene");
 
 		GLOBAL(SceneGlobal).LoadScene("StartScene");
 	}
@@ -329,7 +336,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 				}
 			}
 			if (not quit)
+			{
 				gameFramework.Run();
+				SceneNavigation::ApplyPending();
+			}
 		}
 		GLOBAL(AudioGlobal).Release();
 		gameFramework.Release();
