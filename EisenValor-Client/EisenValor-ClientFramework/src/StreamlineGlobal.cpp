@@ -471,22 +471,26 @@ bool StreamlineGlobal::Evaluate(const StreamlineEvaluateDesc& desc)
 	sl::Resource normalRoughness(sl::ResourceType::eTex2d, desc.normalRoughness, inputState);
 	sl::Resource specularHitDistance(sl::ResourceType::eTex2d, desc.specularHitDistance, inputState);
 
+	constexpr auto lifetime = sl::ResourceLifecycle::eValidUntilEvaluate;
 	sl::ResourceTag tags[] = {
-		{&colorInput, sl::kBufferTypeScalingInputColor, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&colorOutput, sl::kBufferTypeScalingOutputColor, sl::ResourceLifecycle::eOnlyValidNow, &outputExtent},
-		{&linearDepth, sl::kBufferTypeLinearDepth, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&motionVectors, sl::kBufferTypeMotionVectors, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&diffuseAlbedo, sl::kBufferTypeAlbedo, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&specularAlbedo, sl::kBufferTypeSpecularAlbedo, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&normalRoughness, sl::kBufferTypeNormalRoughness, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent},
-		{&specularHitDistance, sl::kBufferTypeSpecularHitDistance, sl::ResourceLifecycle::eOnlyValidNow, &inputExtent}
+		{&colorInput, sl::kBufferTypeScalingInputColor, lifetime, &inputExtent},
+		{&colorOutput, sl::kBufferTypeScalingOutputColor, lifetime, &outputExtent},
+		{&linearDepth, sl::kBufferTypeLinearDepth, lifetime, &inputExtent},
+		{&motionVectors, sl::kBufferTypeMotionVectors, lifetime, &inputExtent},
+		{&diffuseAlbedo, sl::kBufferTypeAlbedo, lifetime, &inputExtent},
+		{&specularAlbedo, sl::kBufferTypeSpecularAlbedo, lifetime, &inputExtent},
+		{&normalRoughness, sl::kBufferTypeNormalRoughness, lifetime, &inputExtent},
+		{&specularHitDistance, sl::kBufferTypeSpecularHitDistance, lifetime, &inputExtent}
 	};
 	const uint32_t tagCount = useRayReconstruction ? static_cast<uint32_t>(std::size(tags)) : 4u;
-	if (!CheckResult(
-			slSetTagForFrame(*frameToken, kMainViewport, tags, tagCount, desc.commandList), "slSetTagForFrame"
-		))
 	{
-		return false;
+		PixScopedCpuEvent tagEvent(L"DLSS.SetTagForFrame");
+		if (!CheckResult(
+				slSetTagForFrame(*frameToken, kMainViewport, tags, tagCount, desc.commandList), "slSetTagForFrame"
+			))
+		{
+			return false;
+		}
 	}
 
 	const sl::Feature feature = useRayReconstruction ? sl::kFeatureDLSS_RR : sl::kFeatureDLSS;
