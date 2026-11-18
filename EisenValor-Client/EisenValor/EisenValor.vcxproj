@@ -389,6 +389,7 @@ exit /b 0</Command>
     <ClInclude Include="Scene\PathTracingDemoScene.h" />
     <ClInclude Include="Component\PathTracingDemoControllerComponent.h" />
     <ClInclude Include="Component\PathTracingDemoDoorComponent.h" />
+    <ClInclude Include="Component\PathTracingDemoLightComponent.h" />
     <ClInclude Include="Util\SceneNavigation.h" />
     <ClInclude Include="Util\PerformanceStatsText.h" />
     <ClInclude Include="Scene\WorldScene.h" />
@@ -526,6 +527,7 @@ exit /b 0</Command>
     <ClCompile Include="Scene\PathTracingDemoScene.cpp" />
     <ClCompile Include="Component\PathTracingDemoControllerComponent.cpp" />
     <ClCompile Include="Component\PathTracingDemoDoorComponent.cpp" />
+    <ClCompile Include="Component\PathTracingDemoLightComponent.cpp" />
     <ClCompile Include="Scene\WorldScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

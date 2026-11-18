@@ -7,6 +7,7 @@
 #include <functional>
 
 class PathTracingDemoDoorComponent;
+enum class PathTracingDemoRoom;
 
 class PathTracingDemoControllerComponent final : public ComponentBase<PathTracingDemoControllerComponent>
 {
@@ -27,23 +28,30 @@ private:
 	void						  UpdatePerformanceStats(float deltaTime);
 	void						  UpdateButtonAvailability();
 	PathTracingDemoDoorComponent* GetDoor() const;
-	void						  ToggleDoorAnimation();
-	void						  ToggleDoorOpen();
-	void						  CycleColorLighting();
-	void						  ReserveWidget(
-								 const char*				name,
-								 Vec2						anchor,
-								 Vec2						minimum,
-								 Vec2						maximum,
-								 const wchar_t*				label,
-								 float						fontSize,
-								 std::function<void()>		action = {},
-								 HandleOf<TextUIComponent>* textHandle = nullptr
-							 );
+	PathTracingDemoRoom			  GetCurrentRoom() const;
+	bool						  CanUseRoomControls() const;
+	void						  ToggleRoomAnimation();
+	void						  ChangeRoomMotion();
+	void						  CycleRoomLighting();
+	HandleOf<GameObject>		  ReserveWidget(
+				 const char*				name,
+				 Vec2						anchor,
+				 Vec2						minimum,
+				 Vec2						maximum,
+				 const wchar_t*				label,
+				 float						fontSize,
+				 std::function<void()>		action = {},
+				 HandleOf<TextUIComponent>* textHandle = nullptr
+			 );
 
 	HandleOf<GameObject>			  m_hudRoot;
 	HandleOf<GameObject>			  m_doorObject;
+	HandleOf<GameObject>			  m_lightButton;
+	HandleOf<GameObject>			  m_animationButton;
+	HandleOf<GameObject>			  m_doorOpenButton;
+	HandleOf<TextUIComponent>		  m_titleText;
 	HandleOf<TextUIComponent>		  m_doorText;
+	HandleOf<TextUIComponent>		  m_doorOpenText;
 	HandleOf<TextUIComponent>		  m_colorLightText;
 	std::vector<HandleOf<GameObject>> m_buttonObjects;
 	HandleOf<TextUIComponent>		  m_viewText;
@@ -59,5 +67,6 @@ private:
 	float							  m_pitch = 0.0f;
 	float							  m_yaw = 0.0f;
 	float							  m_labelElapsed = 0.0f;
+	PathTracingDemoRoom				  m_room{};
 	DirectX::XMFLOAT3				  m_requestedMovement{};
 };

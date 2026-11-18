@@ -5,26 +5,42 @@
 #include "BoxSceneQuery.h"
 
 class MaterialResource;
+class PathTracingDemoLightComponent;
+
+enum class PathTracingDemoRoom
+{
+	Passage,
+	Dragon,
+	Color,
+	Dynamic
+};
 
 class PathTracingDemoScene final : public Scene
 {
 public:
-	void		   OnStartImpl() override;
-	void		   OnEndImpl() override;
-	void		   CycleColorLighting();
-	const wchar_t* GetColorLightingLabel() const;
-	void		   RegisterCameraBlocker(
-				  HandleOf<GameObject> object, const DirectX::XMFLOAT3& localCenter, const DirectX::XMFLOAT3& localHalfExtents
-			  );
+	void						   OnStartImpl() override;
+	void						   OnEndImpl() override;
+	void						   CycleColorLighting();
+	const wchar_t*				   GetColorLightingLabel() const;
+	static PathTracingDemoRoom	   GetRoomAtPosition(const DirectX::XMFLOAT3& position);
+	PathTracingDemoLightComponent* GetDynamicLight();
+	void						   CycleDynamicLighting();
+	void						   ToggleDynamicAnimation();
+	void						   CycleDynamicOrbitSpeed();
+	void						   RegisterCameraBlocker(
+								  HandleOf<GameObject> object, const DirectX::XMFLOAT3& localCenter, const DirectX::XMFLOAT3& localHalfExtents
+							  );
 	DirectX::XMFLOAT3 MoveCamera(const DirectX::XMFLOAT3& start, const DirectX::XMFLOAT3& displacement, float radius);
 
 protected:
 	void OnRegisterCustomComponents() override;
 
 private:
-	void				 CreateExhibits();
-	HandleOf<GameObject> m_doorRoot;
-	void				 CreateColorRoom();
+	void							  CreateExhibits();
+	HandleOf<GameObject>			  m_doorRoot;
+	void							  CreateColorRoom();
+	void							  CreateDynamicRoom();
+	std::vector<HandleOf<GameObject>> m_dynamicLights;
 	struct CameraBlocker
 	{
 		HandleOf<GameObject> object;

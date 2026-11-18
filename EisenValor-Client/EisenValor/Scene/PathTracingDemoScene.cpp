@@ -5,6 +5,7 @@
 #include "Component/OptionsMenuComponent.h"
 #include "Component/PathTracingDemoControllerComponent.h"
 #include "Component/PathTracingDemoDoorComponent.h"
+#include "Component/PathTracingDemoLightComponent.h"
 #include "DxRendererGlobal.h"
 #include "InputGlobal.h"
 #include "MaterialResource.h"
@@ -129,7 +130,9 @@ void AddFittedProp(
 
 void PathTracingDemoScene::OnRegisterCustomComponents()
 {
-	RegisterComponents<OptionsMenuComponent, PathTracingDemoControllerComponent, PathTracingDemoDoorComponent>();
+	RegisterComponents<
+		OptionsMenuComponent, PathTracingDemoControllerComponent, PathTracingDemoDoorComponent,
+		PathTracingDemoLightComponent>();
 }
 
 void PathTracingDemoScene::OnStartImpl()
@@ -175,6 +178,7 @@ void PathTracingDemoScene::OnStartImpl()
 
 	CreateExhibits();
 	CreateColorRoom();
+	CreateDynamicRoom();
 	ReserveGameObject(
 		"DemoCamera", std::nullopt,
 		[this](GameObject* obj)
@@ -352,7 +356,9 @@ void PathTracingDemoScene::CreateColorRoom()
 	AddBox(*this, "ColorRoomCeiling", box, white, {17, 6.15f, -1.25f}, {14.4f, 0.3f, 13.9f});
 	AddBox(*this, "ColorRoomFront", box, white, {17, 3, -8.15f}, {14.4f, 6, 0.3f});
 	AddBox(*this, "ColorRoomBack", box, white, {17, 3, 5.65f}, {14.4f, 6, 0.3f});
-	AddBox(*this, "ColorRoomRight", box, white, {24.15f, 3, -1.25f}, {0.3f, 6, 13.5f});
+	AddBox(*this, "ColorRoomRightFront", box, white, {24.15f, 3, -7}, {0.3f, 6, 2});
+	AddBox(*this, "ColorRoomRightBack", box, white, {24.15f, 3, 0.75f}, {0.3f, 6, 9.5f});
+	AddBox(*this, "ColorRoomExitLintel", box, white, {24.15f, 5.3f, -5}, {0.3f, 1.4f, 2});
 	AddBox(*this, "ColorRoomLeftFront", box, white, {10.15f, 3, -5}, {0.3f, 6, 6});
 	AddBox(*this, "ColorRoomLeftBack", box, white, {10.15f, 3, 2.75f}, {0.3f, 6, 5.5f});
 	AddBox(*this, "ColorRoomPortalLintel", box, white, {10.15f, 5.3f, -1}, {0.3f, 1.4f, 2});
@@ -445,6 +451,125 @@ void PathTracingDemoScene::CreateColorRoom()
 	AddMesh(*this, "ColorShelteredSphere", sphere, chalk, {12.1f, 0.8f, 2.4f}, {1.3f, 1.3f, 1.3f});
 }
 
+void PathTracingDemoScene::CreateDynamicRoom()
+{
+	auto&	   resources = GLOBAL(ResourceGlobal);
+	const auto box = resources.Load<MeshResource>(L"Resource/Models/PathTracingDemo/Box.evmesh");
+	const auto sphere = resources.Load<MeshResource>(L"Resource/Models/PathTracingDemo/Sphere.evmesh");
+	const auto dragon = resources.Load<MeshResource>(L"Resource/Models/PathTracingDemo/StanfordDragon.evmesh");
+	if (!box || !sphere || !dragon)
+	{
+		throw std::runtime_error("Dynamic light room assets are missing. Restore the client Resource folder.");
+	}
+	const auto white = MakeMaterial({0.78f, 0.78f, 0.78f}, 0.8f);
+	const auto floor = MakeMaterial({0.5f, 0.5f, 0.5f}, 0.28f);
+	const auto dark = MakeMaterial({0.06f, 0.065f, 0.07f}, 0.6f);
+	const auto chrome = MakeMaterial({0.93f, 0.93f, 0.93f}, 0.09f, 1);
+
+	// Offset entrances and a baffle keep the RGB room's light out of the moving-light study.
+	AddBox(*this, "DynamicPassageFloor", box, dark, {26, -0.15f, -3}, {4.3f, 0.3f, 6.3f});
+	AddBox(*this, "DynamicPassageCeiling", box, dark, {26, 4.75f, -3}, {4.3f, 0.3f, 6.3f});
+	AddBox(*this, "DynamicPassageFront", box, dark, {26, 2.3f, -6.15f}, {4.3f, 4.6f, 0.3f});
+	AddBox(*this, "DynamicPassageBack", box, dark, {26, 2.3f, 0.15f}, {4.3f, 4.6f, 0.3f});
+	AddBox(*this, "DynamicPassageBaffle", box, dark, {26, 2.3f, -4.2f}, {0.2f, 4.6f, 3.6f});
+	AddBox(*this, "DynamicRoomFloor", box, floor, {35, -0.15f, -1.25f}, {14.4f, 0.3f, 13.9f});
+	AddBox(*this, "DynamicRoomCeiling", box, white, {35, 6.15f, -1.25f}, {14.4f, 0.3f, 13.9f});
+	AddBox(*this, "DynamicRoomFront", box, white, {35, 3, -8.15f}, {14.4f, 6, 0.3f});
+	AddBox(*this, "DynamicRoomBack", box, white, {35, 3, 5.65f}, {14.4f, 6, 0.3f});
+	AddBox(*this, "DynamicRoomRight", box, white, {42.15f, 3, -1.25f}, {0.3f, 6, 13.5f});
+	AddBox(*this, "DynamicRoomLeftFront", box, white, {28.15f, 3, -5}, {0.3f, 6, 6});
+	AddBox(*this, "DynamicRoomLeftBack", box, white, {28.15f, 3, 2.75f}, {0.3f, 6, 5.5f});
+	AddBox(*this, "DynamicRoomEntranceLintel", box, white, {28.15f, 5.3f, -1}, {0.3f, 1.4f, 2});
+
+	AddBox(*this, "DynamicReceiver", box, white, {35, 0.15f, -1.25f}, {8.8f, 0.3f, 8.8f});
+	AddMesh(*this, "DynamicWhiteDragon", dragon, white, {35, 0.3f, -1.25f}, {2, 2, 2}, {0, 15, 0});
+	AddBox(*this, "DynamicShadowColumnA", box, white, {33.2f, 1.3f, -2.6f}, {0.3f, 2, 0.3f});
+	AddBox(*this, "DynamicShadowColumnB", box, white, {36.8f, 1.6f, -0.1f}, {0.4f, 2.6f, 0.4f});
+	AddBox(*this, "DynamicMirrorPlinth", box, dark, {39.8f, 0.35f, -2.6f}, {2, 0.7f, 2});
+	AddMesh(*this, "DynamicMirrorSphere", sphere, chrome, {39.8f, 1.5f, -2.6f}, {1.6f, 1.6f, 1.6f});
+	AddBox(*this, "DynamicIndirectCanopy", box, white, {30.2f, 2.6f, 2.6f}, {2.6f, 0.2f, 2.2f});
+	AddMesh(*this, "DynamicShelteredSphere", sphere, white, {30.2f, 0.7f, 2.6f}, {1.2f, 1.2f, 1.2f});
+
+	m_dynamicLights.clear();
+	constexpr uint32_t lightCount = 3;
+	for (uint32_t index = 0; index < lightCount; ++index)
+	{
+		// Each light owns its material so its offset color animation can mix with the other two.
+		// The light component initializes emission before the first rendered frame.
+		const auto	emission = MakeMaterial({1, 1, 1}, 1);
+		const float phaseOffset = static_cast<float>(index) / lightCount;
+		const auto	object = AddMesh(
+			 *this, std::format("DynamicOrbitLight{}", index), sphere, emission, {35, 3.8f, -1.25f},
+			 {0.45f, 0.45f, 0.45f}, {}, RenderMobility::Movable
+		 );
+		m_dynamicLights.push_back(object);
+		CreateComponentWithInit<PathTracingDemoLightComponent>(
+			object, [emission, phaseOffset](PathTracingDemoLightComponent* light)
+			{ light->Configure(emission, {35, 3.8f, -1.25f}, phaseOffset); }
+		);
+	}
+}
+
+PathTracingDemoRoom PathTracingDemoScene::GetRoomAtPosition(const DirectX::XMFLOAT3& position)
+{
+	if (position.y < 0 || position.y > 6 || position.z < -8)
+		return PathTracingDemoRoom::Passage;
+	if (position.x >= -6 && position.x <= 6 && position.z <= 11)
+		return PathTracingDemoRoom::Dragon;
+	if (position.z <= 5.5f)
+	{
+		if (position.x >= 10.3f && position.x <= 24)
+			return PathTracingDemoRoom::Color;
+		if (position.x >= 28.3f && position.x <= 42)
+			return PathTracingDemoRoom::Dynamic;
+	}
+	return PathTracingDemoRoom::Passage;
+}
+
+PathTracingDemoLightComponent* PathTracingDemoScene::GetDynamicLight()
+{
+	// Room controls keep all three modes and playback states synchronized.
+	auto* object = m_dynamicLights.empty() ? nullptr : TryGetGameObject(m_dynamicLights.front());
+	return object ? object->GetComponent<PathTracingDemoLightComponent>() : nullptr;
+}
+
+void PathTracingDemoScene::CycleDynamicLighting()
+{
+	for (const auto handle : m_dynamicLights)
+	{
+		if (auto* object = TryGetGameObject(handle))
+		{
+			if (auto* light = object->GetComponent<PathTracingDemoLightComponent>())
+				light->CycleColor();
+		}
+	}
+	GLOBAL(StreamlineGlobal).RequestHistoryReset();
+}
+
+void PathTracingDemoScene::ToggleDynamicAnimation()
+{
+	for (const auto handle : m_dynamicLights)
+	{
+		if (auto* object = TryGetGameObject(handle))
+		{
+			if (auto* light = object->GetComponent<PathTracingDemoLightComponent>())
+				light->ToggleAnimation();
+		}
+	}
+}
+
+void PathTracingDemoScene::CycleDynamicOrbitSpeed()
+{
+	for (const auto handle : m_dynamicLights)
+	{
+		if (auto* object = TryGetGameObject(handle))
+		{
+			if (auto* light = object->GetComponent<PathTracingDemoLightComponent>())
+				light->CycleOrbitSpeed();
+		}
+	}
+}
+
 const wchar_t* PathTracingDemoScene::GetColorLightingLabel() const
 {
 	return kColorNames[m_colorPreset];
@@ -510,6 +635,7 @@ DirectX::XMFLOAT3 PathTracingDemoScene::MoveCamera(
 
 void PathTracingDemoScene::OnEndImpl()
 {
+	m_dynamicLights.clear();
 	m_cameraBlockers.clear();
 	m_cameraQueryBoxes.clear();
 	GLOBAL(InputGlobal).SetMouseLocked(false);

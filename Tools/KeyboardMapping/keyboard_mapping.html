@@ -597,7 +597,7 @@
 {
   "meta": {
     "title": "EisenValor Input Mapping",
-    "version": "2026-11-10",
+    "version": "2026-11-17",
     "description": "\ud604\uc7ac \ud074\ub77c\uc774\uc5b8\ud2b8 \ucf54\ub4dc \uae30\uc900 \uc52c\ubcc4 \ud0a4\u00b7\ub9c8\uc6b0\uc2a4 \ub9e4\ud551. \ube4c\ub4dc \ubc0f \uc785\ub825 \uc0c1\ud0dc \uc870\uac74\uc740 \uac01 \ud56d\ubaa9\uc758 Note\ub97c \ud655\uc778\ud558\uc138\uc694."
   },
   "categories": {
@@ -1522,10 +1522,11 @@
     },
     "PathTracingDemoScene": {
       "label": "PathTracingDemoScene",
-      "description": "Offline dragon room with existing castle door/pillar art. All area lights are outside the viewing room; the hinged door automatically opens/closes. Three static Stanford Dragon instances use bronze, porcelain and chrome. Default: ReSTIR PT, 2 SPP, physical rendering, night. Pause the door with Space for reference accumulation. Back to Menu restores previous renderer settings. A second RGB color-mixing room is connected by an offset, baffled passage. It reuses castle floor slabs, pilasters, dado, torch stands and wooden barrels. Demo EVTX albedo/ORM/emission variants preserve the indoor stone atlas. 5/6 jump to color-room views; L cycles individual and paired lights. Camera movement now uses CPU box-proxy casts with clearance, surface sliding and dynamic-door overlap recovery.",
+      "description": "Offline light study: dragon/door room, RGB color-mixing room, and a three-light dynamic color-mixing room to its right, connected by baffled passages. Default ReSTIR PT, 2 SPP, physical rendering, night. 1-4/5-6/7-8 select room views; free flight uses CPU box collision and sliding. L, Space and O use the actual camera room, including after free flight; passages have no room controls. HUD shows the current room, light mode and animation state. Each room retains its settings. Back to Menu restores renderer settings. Reference accumulation requires both the dragon door and three dynamic lights to be paused. Dynamic-room comparisons: white motion, fixed RGB motion, and slow 20-second rainbow colors. O selects orbit speed independently of the color cycle; reduced emission makes shadow edges and reflected colors easier to inspect.",
       "components": [
         "PathTracingDemoControllerComponent",
         "PathTracingDemoDoorComponent",
+        "PathTracingDemoLightComponent",
         "OptionsMenuComponent"
       ],
       "bindings": {
@@ -1533,37 +1534,37 @@
           "action": "Fly forward",
           "category": "movement",
           "component": "PathTracingDemoControllerComponent",
-          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-6 teleport to safe view presets."
+          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-8 teleport to safe view presets."
         },
         "KeyS": {
           "action": "Fly backward",
           "category": "movement",
           "component": "PathTracingDemoControllerComponent",
-          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-6 teleport to safe view presets."
+          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-8 teleport to safe view presets."
         },
         "KeyA": {
           "action": "Fly left",
           "category": "movement",
           "component": "PathTracingDemoControllerComponent",
-          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-6 teleport to safe view presets."
+          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-8 teleport to safe view presets."
         },
         "KeyD": {
           "action": "Fly right",
           "category": "movement",
           "component": "PathTracingDemoControllerComponent",
-          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-6 teleport to safe view presets."
+          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-8 teleport to safe view presets."
         },
         "KeyQ": {
           "action": "Fly down",
           "category": "movement",
           "component": "PathTracingDemoControllerComponent",
-          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-6 teleport to safe view presets."
+          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-8 teleport to safe view presets."
         },
         "KeyE": {
           "action": "Fly up",
           "category": "movement",
           "component": "PathTracingDemoControllerComponent",
-          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-6 teleport to safe view presets."
+          "note": "PathTracingDemoControllerComponent::OnUpdate()/OnLateUpdate(), PathTracingDemoScene::MoveCamera(): focused demo, Options closed. WASD/Q/E fly independently of RMB; Q/E use world up. CPU segment casts against expanded OBB proxies stop at room walls, floor/ceiling, moving door and fitted castle props, and slide along surfaces. Minimum clearance 0.22 units, enlarged to protect the near-plane corners. Door overlap correction runs after animation and before the camera view update. Detailed dragon/sphere meshes are visual-only. Home/1-8 teleport to safe view presets."
         },
         "ShiftLeft": {
           "action": "Faster flight",
@@ -1611,7 +1612,7 @@
           "action": "Hide/show demo HUD",
           "category": "system",
           "component": "PathTracingDemoControllerComponent",
-          "note": "OnUpdate(): hides/shows all demo HUD objects and disables hidden buttons. 1-6/Home, L, Space/O and Escape remain available. Focused demo, Options closed. The performance panel hides with the HUD; CPU/GPU timing collection continues while hidden and memory/text refresh at 0.5-second intervals."
+          "note": "OnUpdate(): hides/shows all demo HUD objects and disables hidden buttons. 1-8/Home, L, Space/O and Escape remain available. Focused demo, Options closed. The performance panel hides with the HUD; CPU/GPU timing collection continues while hidden and memory/text refresh at 0.5-second intervals."
         },
         "Escape": {
           "action": "Open/close Options",
@@ -1620,16 +1621,16 @@
           "note": "OptionsMenuComponent::OnUpdate(); demo camera input is suspended and cursor unlocked while open. Escape does not exit. Tab restores the HUD if Back to Menu is hidden."
         },
         "Space": {
-          "action": "Pause/resume door animation",
+          "action": "Pause/resume current room animation",
           "category": "render",
-          "component": "PathTracingDemoControllerComponent / PathTracingDemoDoorComponent",
-          "note": "OnUpdate()/ToggleAutomatic(): focused demo and Options closed. Space stops auto/manual motion at the current angle; pressing again resumes automatic open/close. 0-95 degrees, 2.5-second smooth travel, 4-second open hold and 2-second closed hold. Default auto; loading/warm-up and Options pause the timer. Moving door meshes use RenderMobility::Movable. Reference PT resets each moving frame; ReSTIR retains its normal dynamic history."
+          "component": "PathTracingDemoControllerComponent / PathTracingDemoDoorComponent / PathTracingDemoLightComponent",
+          "note": "EisenValor-Client/EisenValor/Component/PathTracingDemoControllerComponent.cpp - ToggleRoomAnimation(): actual camera in DRAGON room pauses/resumes the door (0-95 degrees, 2.5-second smooth travel, 4-second open/2-second closed hold, default automatic). In DYNAMIC room pauses/resumes all three lights together, holding both orbit and color at their current phases (default running). No action in COLOR room or passages. Focus required, Options closed, resources ready and warm-up inactive; same action as the room-animation HUD button. Options/loading/warm-up suspend the door and all light timers. Movable meshes publish each frame; Reference PT resets while the door or any light moves, so pause the door and all three lights for static accumulation."
         },
         "KeyO": {
-          "action": "Open/close door manually",
+          "action": "Current room: door open/close or orbit speed",
           "category": "render",
-          "component": "PathTracingDemoControllerComponent / PathTracingDemoDoorComponent",
-          "note": "OnUpdate()/ToggleOpen(): turns auto off and smoothly travels to the opposite end; another press while moving reverses direction. Focused demo, Options closed. Space can hold the current angle."
+          "component": "PathTracingDemoControllerComponent / PathTracingDemoDoorComponent / PathTracingDemoLightComponent",
+          "note": "EisenValor-Client/EisenValor/Component/PathTracingDemoControllerComponent.cpp - ChangeRoomMotion(): camera in DRAGON room turns door auto off and travels to the opposite end; pressing again reverses direction. Camera in DYNAMIC room calls PathTracingDemoScene::CycleDynamicOrbitSpeed()/PathTracingDemoLightComponent::CycleOrbitSpeed(): 1x -> 2x -> 0.5x -> 1x (default 1x), corresponding to 12/6/24 animation seconds per orbit. All three light positions and color phases are preserved; only angular velocity changes. Rainbow color period stays 20 seconds at every orbit speed. Does not request an RR history reset. Speed can be selected while Space has paused the lights. No action in COLOR room or passages. Focus required, Options closed, resources ready, warm-up inactive. Same action as the contextual motion button; current speed is shown immediately in the HUD."
         },
         "Digit5": {
           "action": "Color room overview",
@@ -1644,10 +1645,22 @@
           "note": "SetView(): focused demo and Options closed. Teleports to the RGB room, updates pose/FOV, clears debug camera freeze and resets RR/reference history. Works with the HUD hidden. Overlap correction applies at the destination; preset changes remain intentional teleports."
         },
         "KeyL": {
-          "action": "Cycle RGB light mixture",
+          "action": "Change current room lighting",
           "category": "render",
-          "component": "PathTracingDemoControllerComponent / PathTracingDemoScene",
-          "note": "OnUpdate()/CycleColorLighting(): ALL RGB -> RED -> GREEN -> BLUE -> RED+GREEN -> GREEN+BLUE -> BLUE+RED -> ALL RGB. Default ALL RGB. Changes only second-room area lights, torch glow and emissive stone panels together. Static mesh material changes rebuild the light table/ReSTIR/reference signature and request an RR reset. Focused demo, Options closed; unavailable while assets load. Current mixture shown at top right."
+          "component": "PathTracingDemoControllerComponent / PathTracingDemoScene / PathTracingDemoLightComponent",
+          "note": "EisenValor-Client/EisenValor/Component/PathTracingDemoControllerComponent.cpp - CycleRoomLighting()/GetCurrentRoom(); Scene/PathTracingDemoScene.cpp - GetRoomAtPosition()/CycleColorLighting(); Scene/PathTracingDemoScene.cpp - CycleDynamicLighting(); Component/PathTracingDemoLightComponent.cpp - CycleColor(): camera in COLOR room cycles ALL RGB -> RED -> GREEN -> BLUE -> RED+GREEN -> GREEN+BLUE -> BLUE+RED -> ALL RGB (default ALL RGB). Camera in DYNAMIC room cycles WHITE -> FIXED RGB -> RAINBOW -> WHITE (default WHITE). FIXED RGB keeps one red, one green and one blue light for motion-only comparison; RAINBOW smoothly loops over 20 animation seconds. Warm/cool palettes were removed. Transport intensity is 24 (previously 80); camera-visible intensity is 1 (previously 2). Three independent emitters orbit at radius 3.4, every 24/12/6 seconds at 0.5x/1x/2x speed (default 1x), separated by 120 degrees; rainbow color phases are offset by one third of a cycle so their colors blend. Each sphere scale is 0.45, half the first single-light version. L changes all three together without changing the RGB room. Only the current room changes; settings persist when leaving. No action in the dragon room or passages. Focused demo, Options closed, resources ready and DLSS warm-up inactive. Works with HUD hidden. Same action as the top-right light button; label updates immediately. Explicit mode changes request an RR reset; movable emission uses the existing renderer history-signature policy."
+        },
+        "Digit7": {
+          "action": "Dynamic light room overview",
+          "category": "render",
+          "component": "PathTracingDemoControllerComponent",
+          "note": "EisenValor-Client/EisenValor/Component/PathTracingDemoControllerComponent.cpp - SetView()/OnUpdate(): focused demo, Options closed. Teleports to the dynamic light room, updates pose/FOV, clears debug camera freeze and resets RR/reference history. Updates room-dependent controls immediately without changing either room lighting setting. Works with HUD hidden. Camera overlap correction applies at the destination."
+        },
+        "Digit8": {
+          "action": "Moving shadows and reflections view",
+          "category": "render",
+          "component": "PathTracingDemoControllerComponent",
+          "note": "EisenValor-Client/EisenValor/Component/PathTracingDemoControllerComponent.cpp - SetView()/OnUpdate(): focused demo, Options closed. Teleports to the dynamic light room, updates pose/FOV, clears debug camera freeze and resets RR/reference history. Updates room-dependent controls immediately without changing either room lighting setting. Works with HUD hidden. Camera overlap correction applies at the destination."
         }
       },
       "mouseBindings": {
@@ -1661,7 +1674,7 @@
           "action": "Demo buttons / Options",
           "category": "system",
           "component": "PathTracingDemoControllerComponent",
-          "note": "CreateHUD(): View cycles four poses; Renderer switches ReSTIR PT / Reference PT; Door pauses/resumes; Open/Close controls the door manually; Options and Back to Menu remain available. Buttons are non-interactable with hidden HUD or open Options. Scene changes wait until the current frame completes. Top-right controls cycle the RGB mixture or jump to the color room; View now cycles six poses."
+          "note": "EisenValor-Client/EisenValor/Component/PathTracingDemoControllerComponent.cpp - CreateHUD()/UpdateButtonAvailability(): Next View cycles eight poses; Renderer switches ReSTIR PT / Reference PT; Color Room and Dynamic Light Room jump to presets 5/7. Light and animation buttons use the actual camera room exactly like L/Space; The O button opens/closes the dragon door or cycles dynamic-room orbit speed, with a contextual label. Inapplicable or loading/warm-up room controls are disabled; unavailable room actions display explanatory labels. All buttons require visible HUD, focused window and closed Options. Options and Back to Menu remain available. Scene changes wait for the current frame to complete."
         }
       }
     }

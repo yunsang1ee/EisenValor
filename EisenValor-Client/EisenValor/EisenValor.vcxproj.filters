@@ -352,6 +352,9 @@
     <ClInclude Include="Component\PathTracingDemoDoorComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
+    <ClInclude Include="Component\PathTracingDemoLightComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
     <ClInclude Include="Util\SceneNavigation.h">
       <Filter>Util</Filter>
     </ClInclude>
@@ -550,6 +553,9 @@
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Component\PathTracingDemoDoorComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PathTracingDemoLightComponent.cpp">
       <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Scene\ScoreScene.cpp">

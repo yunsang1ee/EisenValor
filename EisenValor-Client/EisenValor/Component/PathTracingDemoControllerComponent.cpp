@@ -1,6 +1,7 @@
 #include "stdafxClient.h"
 #include "PathTracingDemoControllerComponent.h"
 #include "PathTracingDemoDoorComponent.h"
+#include "PathTracingDemoLightComponent.h"
 #include "OptionsMenuComponent.h"
 #include "ButtonUIComponent.h"
 #include "CameraComponent.h"
@@ -63,6 +64,16 @@ constexpr DemoView kViews[] = {
 	 L"Compare the colored penumbrae, reflected light and glowing stone joints. L changes lights.",
 	 {17.6f, 4.2f, -3.7f},
 	 {17, 0.6f, -0.1f},
+	 62.0f},
+	{L"DYNAMIC LIGHTS",
+	 L"Three orbiting lights: compare moving shadows and reflections. L changes the comparison; Space pauses.",
+	 {35, 3.0f, -7.1f},
+	 {35, 2.0f, -0.7f},
+	 62.0f},
+	{L"MOVING SHADOWS",
+	 L"Watch moving shadows and reflections. L cycles WHITE / FIXED RGB / RAINBOW.",
+	 {39.8f, 3.2f, 1.8f},
+	 {35, 1.4f, -1.25f},
 	 62.0f},
 };
 
@@ -132,20 +143,45 @@ PathTracingDemoDoorComponent* PathTracingDemoControllerComponent::GetDoor() cons
 	return object ? object->GetComponent<PathTracingDemoDoorComponent>() : nullptr;
 }
 
-void PathTracingDemoControllerComponent::ToggleDoorAnimation()
+PathTracingDemoRoom PathTracingDemoControllerComponent::GetCurrentRoom() const
 {
-	if (auto* door = GetDoor())
+	return PathTracingDemoScene::GetRoomAtPosition(GetGameObject()->GetTransform().GetWorldPosition());
+}
+
+bool PathTracingDemoControllerComponent::CanUseRoomControls() const
+{
+	return GLOBAL(InputGlobal).IsWindowFocused() && !OptionsMenuComponent::IsOpenInActiveScene() &&
+		   !GLOBAL(ResourceGlobal).HasPendingLoads() && !GLOBAL(StreamlineGlobal).IsFeatureWarmupActive();
+}
+
+void PathTracingDemoControllerComponent::ToggleRoomAnimation()
+{
+	if (!CanUseRoomControls())
+		return;
+	if (GetCurrentRoom() == PathTracingDemoRoom::Dragon)
 	{
-		door->ToggleAutomatic();
+		if (auto* door = GetDoor())
+			door->ToggleAutomatic();
+	}
+	else if (GetCurrentRoom() == PathTracingDemoRoom::Dynamic)
+	{
+		static_cast<PathTracingDemoScene*>(GetGameObject()->GetScene())->ToggleDynamicAnimation();
 	}
 	RefreshLabels();
 }
 
-void PathTracingDemoControllerComponent::ToggleDoorOpen()
+void PathTracingDemoControllerComponent::ChangeRoomMotion()
 {
-	if (auto* door = GetDoor())
+	if (!CanUseRoomControls())
+		return;
+	if (GetCurrentRoom() == PathTracingDemoRoom::Dragon)
 	{
-		door->ToggleOpen();
+		if (auto* door = GetDoor())
+			door->ToggleOpen();
+	}
+	else if (GetCurrentRoom() == PathTracingDemoRoom::Dynamic)
+	{
+		static_cast<PathTracingDemoScene*>(GetGameObject()->GetScene())->CycleDynamicOrbitSpeed();
 	}
 	RefreshLabels();
 }
@@ -216,17 +252,17 @@ void PathTracingDemoControllerComponent::OnUpdate(float deltaTime)
 	if (input.GetUnConsumedInputDown(VK_SPACE))
 	{
 		input.SetConsumed(VK_SPACE);
-		ToggleDoorAnimation();
+		ToggleRoomAnimation();
 	}
 	if (input.GetUnConsumedInputDown('O'))
 	{
 		input.SetConsumed('O');
-		ToggleDoorOpen();
+		ChangeRoomMotion();
 	}
 	if (input.GetUnConsumedInputDown('L'))
 	{
 		input.SetConsumed('L');
-		CycleColorLighting();
+		CycleRoomLighting();
 	}
 
 	const bool looking = input.GetUnConsumedInput(VK_RBUTTON);
@@ -278,15 +314,29 @@ void PathTracingDemoControllerComponent::OnLateUpdate(float deltaTime)
 							  ->MoveCamera(transform.GetWorldPosition(), m_requestedMovement, radius);
 	transform.SetWorldPosition(position);
 	m_requestedMovement = {};
+	if (GetCurrentRoom() != m_room)
+	{
+		RefreshLabels();
+	}
 }
 
-void PathTracingDemoControllerComponent::CycleColorLighting()
+void PathTracingDemoControllerComponent::CycleRoomLighting()
 {
-	static_cast<PathTracingDemoScene*>(GetGameObject()->GetScene())->CycleColorLighting();
+	if (!CanUseRoomControls())
+		return;
+	auto* scene = static_cast<PathTracingDemoScene*>(GetGameObject()->GetScene());
+	if (GetCurrentRoom() == PathTracingDemoRoom::Color)
+	{
+		scene->CycleColorLighting();
+	}
+	else if (GetCurrentRoom() == PathTracingDemoRoom::Dynamic)
+	{
+		scene->CycleDynamicLighting();
+	}
 	RefreshLabels();
 }
 
-void PathTracingDemoControllerComponent::ReserveWidget(
+HandleOf<GameObject> PathTracingDemoControllerComponent::ReserveWidget(
 	const char*				   name,
 	Vec2					   anchor,
 	Vec2					   minimum,
@@ -322,6 +372,7 @@ void PathTracingDemoControllerComponent::ReserveWidget(
 					component->SetNormalColor({0.05f, 0.05f, 0.05f, 0.94f});
 					component->SetHoverColor({0.15f, 0.35f, 1.0f, 1.0f});
 					component->SetPressedColor({0.15f, 0.35f, 1.0f, 1.0f});
+					component->SetDisabledColor({0.05f, 0.05f, 0.05f, 0.94f});
 					component->SetOrder(100);
 				}
 			);
@@ -367,6 +418,7 @@ void PathTracingDemoControllerComponent::ReserveWidget(
 	{
 		m_buttonObjects.push_back(object);
 	}
+	return object;
 }
 
 void PathTracingDemoControllerComponent::UpdateButtonAvailability()
@@ -374,13 +426,28 @@ void PathTracingDemoControllerComponent::UpdateButtonAvailability()
 	auto&	   scene = *GetGameObject()->GetScene();
 	const bool enabled =
 		m_hudVisible && GLOBAL(InputGlobal).IsWindowFocused() && !OptionsMenuComponent::IsOpenInActiveScene();
+	const auto room = GetCurrentRoom();
 	for (auto handle : m_buttonObjects)
 	{
+		bool available = enabled;
+		if (handle == m_lightButton)
+			available &=
+				CanUseRoomControls() && (room == PathTracingDemoRoom::Color || room == PathTracingDemoRoom::Dynamic);
+		else if (handle == m_animationButton)
+			available &=
+				CanUseRoomControls() && (room == PathTracingDemoRoom::Dragon || room == PathTracingDemoRoom::Dynamic);
+		else if (handle == m_doorOpenButton)
+			available &=
+				CanUseRoomControls() && (room == PathTracingDemoRoom::Dragon || room == PathTracingDemoRoom::Dynamic);
 		if (auto* object = scene.TryGetGameObject(handle))
 		{
 			if (auto* button = object->GetComponent<ButtonUIComponent>())
 			{
-				button->SetInteractable(enabled);
+				button->SetInteractable(available);
+			}
+			if (auto* text = object->GetComponent<TextUIComponent>())
+			{
+				text->SetColor(available ? DX::XMFLOAT4{1, 1, 1, 1} : DX::XMFLOAT4{0.68f, 0.68f, 0.68f, 0.3f});
 			}
 		}
 	}
@@ -390,51 +457,55 @@ void PathTracingDemoControllerComponent::CreateHUD()
 {
 	auto& scene = *GetGameObject()->GetScene();
 	m_hudRoot = scene.ReserveGameObject("DemoHUD", std::nullopt);
-	ReserveWidget("DemoTitle", {0, 0}, {40, 40}, {900, 100}, L"PATH TRACING / LIGHT STUDY", 38);
-	ReserveWidget("DemoDescription", {0, 0}, {40, 100}, {900, 150}, kViews[0].description, 18, {}, &m_descriptionText);
-	ReserveWidget("DemoStatus", {0, 0}, {40, 150}, {900, 200}, L"Preparing lighting...", 18, {}, &m_statusText);
+	ReserveWidget("DemoTitle", {0, 0}, {40, 40}, {800, 100}, L"LIGHT STUDY / DRAGON ROOM", 38, {}, &m_titleText);
+	ReserveWidget("DemoDescription", {0, 0}, {40, 100}, {800, 160}, kViews[0].description, 18, {}, &m_descriptionText);
+	ReserveWidget("DemoStatus", {0, 0}, {40, 160}, {800, 220}, L"Preparing lighting...", 18, {}, &m_statusText);
 	ReserveWidget(
-		"DemoHelp", {0.5f, 1}, {-800, -192}, {800, -144},
-		L"WASD  Move    Q / E  Vertical    RMB  Look    Shift  Faster    1-4  Dragon    5-6  Color    Tab  UI    Esc  "
-		L"Options",
+		"DemoHelp", {0.5f, 1}, {-600, -192}, {600, -144},
+		L"WASD  Move    Q / E  Vertical    RMB  Look    Shift  Faster    Tab  UI    Esc  Options\n"
+		L"1-4  Dragon room    5-6  Color room    7-8  Dynamic light room    L / O / Space  Current room",
 		18
 	);
-	ReserveWidget(
-		"DemoColorLights", {1, 0}, {-560, 40}, {-40, 100}, L"COLOR LIGHTS / ALL RGB  [L]", 21,
-		[this]() { CycleColorLighting(); }, &m_colorLightText
+	m_lightButton = ReserveWidget(
+		"DemoRoomLights", {1, 0}, {-400, 40}, {-40, 100}, L"L / NO LIGHT CONTROL HERE", 20,
+		[this]() { CycleRoomLighting(); }, &m_colorLightText
 	);
 	ReserveWidget(
-		"DemoColorRoomJump", {1, 0}, {-560, 120}, {-40, 172}, L"GO TO COLOR ROOM  [5]", 21, [this]() { SetView(4); }
+		"DemoColorRoomJump", {1, 0}, {-400, 120}, {-40, 172}, L"COLOR ROOM  [5]", 21, [this]() { SetView(4); }
 	);
 	ReserveWidget(
-		"DemoPerformance", {1, 0}, {-560, 212}, {-40, 388}, PerformanceStatsText::InitialText, 21, {},
+		"DemoDynamicRoomJump", {1, 0}, {-400, 192}, {-40, 244}, L"DYNAMIC LIGHT ROOM  [7]", 21, [this]() { SetView(6); }
+	);
+	ReserveWidget(
+		"DemoPerformance", {1, 0}, {-400, 264}, {-40, 440}, PerformanceStatsText::InitialText, 18, {},
 		&m_performanceText
 	);
-	ReserveWidget("DemoPerformanceScope", {1, 0}, {-560, 388}, {-40, 460}, PerformanceStatsText::ScopeText, 14);
-	ReserveWidget(
-		"DemoDoor", {0.5f, 1}, {-800, -132}, {-300, -80}, L"DOOR / AUTO", 21, [this]() { ToggleDoorAnimation(); },
-		&m_doorText
+	ReserveWidget("DemoPerformanceScope", {1, 0}, {-400, 440}, {-40, 500}, PerformanceStatsText::ScopeText, 14);
+	m_animationButton = ReserveWidget(
+		"DemoRoomAnimation", {0.5f, 1}, {-600, -132}, {-200, -80}, L"DOOR / AUTO", 20,
+		[this]() { ToggleRoomAnimation(); }, &m_doorText
+	);
+	m_doorOpenButton = ReserveWidget(
+		"DemoRoomMotion", {0.5f, 1}, {-180, -132}, {100, -80}, L"OPEN / CLOSE  [O]", 20,
+		[this]() { ChangeRoomMotion(); }, &m_doorOpenText
 	);
 	ReserveWidget(
-		"DemoDoorOpen", {0.5f, 1}, {-280, -132}, {100, -80}, L"OPEN / CLOSE  [O]", 21, [this]() { ToggleDoorOpen(); }
+		"DemoCredit", {0.5f, 1}, {120, -132}, {600, -80}, L"Stanford Dragon / Stanford Computer Graphics Laboratory", 14
 	);
 	ReserveWidget(
-		"DemoCredit", {0.5f, 1}, {120, -132}, {800, -80}, L"Stanford Dragon / Stanford Computer Graphics Laboratory", 16
-	);
-	ReserveWidget(
-		"DemoView", {0.5f, 1}, {-800, -64}, {-420, -12}, L"VIEW / DRAGON ROOM", 21,
+		"DemoView", {0.5f, 1}, {-600, -64}, {-320, -12}, L"VIEW / DRAGON ROOM", 20,
 		[this]() { SetView(m_viewIndex + 1); }, &m_viewText
 	);
 	ReserveWidget(
-		"DemoRenderer", {0.5f, 1}, {-400, -64}, {100, -12}, L"RENDERER / RESTIR PT", 21, [this]() { CycleRenderer(); },
+		"DemoRenderer", {0.5f, 1}, {-300, -64}, {40, -12}, L"RENDERER / RESTIR PT", 20, [this]() { CycleRenderer(); },
 		&m_rendererText
 	);
 	ReserveWidget(
-		"DemoOptionsButton", {0.5f, 1}, {120, -64}, {400, -12}, L"OPTIONS", 21,
+		"DemoOptionsButton", {0.5f, 1}, {60, -64}, {280, -12}, L"OPTIONS", 21,
 		[]() { OptionsMenuComponent::OpenActive(); }
 	);
 	ReserveWidget(
-		"DemoMenuButton", {0.5f, 1}, {420, -64}, {800, -12}, L"BACK TO MENU", 21,
+		"DemoMenuButton", {0.5f, 1}, {300, -64}, {600, -12}, L"BACK TO MENU", 21,
 		[]() { SceneNavigation::Request("StartScene"); }
 	);
 }
@@ -458,23 +529,66 @@ void PathTracingDemoControllerComponent::RefreshLabels()
 	{
 		return;
 	}
+	auto* demo = static_cast<PathTracingDemoScene*>(scene);
+	m_room = GetCurrentRoom();
+	const wchar_t* roomName = L"PASSAGE";
+	const wchar_t* description = L"Enter a room to use its controls. 5: color room. 7: dynamic light room.";
+	const wchar_t* animationLabel = L"SPACE / NO ANIMATION HERE";
+	std::wstring   lightLabel = L"L / NO LIGHT CONTROL HERE";
+	switch (m_room)
+	{
+	case PathTracingDemoRoom::Dragon:
+		roomName = L"DRAGON ROOM";
+		description = kViews[0].description;
+		break;
+	case PathTracingDemoRoom::Color:
+		roomName = L"COLOR ROOM";
+		description = L"L changes the RGB mixture. The passage on the right leads to the dynamic light room.";
+		lightLabel = std::format(L"COLOR / {}  [L]", demo->GetColorLightingLabel());
+		break;
+	case PathTracingDemoRoom::Dynamic:
+		roomName = L"DYNAMIC LIGHTS";
+		description = kViews[6].description;
+		if (auto* light = demo->GetDynamicLight())
+		{
+			description = light->GetComparisonHint();
+			lightLabel = std::format(L"3 LIGHTS / {}  [L]", light->GetColorLabel());
+			animationLabel =
+				light->IsAnimating() ? L"ORBIT + COLOR / RUNNING  [SPACE]" : L"ORBIT + COLOR / PAUSED  [SPACE]";
+		}
+		break;
+	case PathTracingDemoRoom::Passage:
+		break;
+	}
+	if (auto* text = storage->Get(m_titleText))
+		text->SetText(std::format(L"LIGHT STUDY / {}", roomName));
 	if (auto* text = storage->Get(m_viewText))
 	{
-		text->SetText(std::format(L"VIEW / {}", kViews[m_viewIndex].name));
+		text->SetText(std::format(L"NEXT VIEW / {}  >", (m_viewIndex + 1) % std::size(kViews) + 1));
 	}
 	if (auto* text = storage->Get(m_descriptionText))
 	{
-		text->SetText(kViews[m_viewIndex].description);
+		text->SetText(
+			m_room != PathTracingDemoRoom::Dynamic &&
+					GetCurrentRoom() == PathTracingDemoScene::GetRoomAtPosition(kViews[m_viewIndex].position)
+				? kViews[m_viewIndex].description
+				: description
+		);
 	}
 	if (auto* text = storage->Get(m_colorLightText))
 	{
-		text->SetText(
-			std::format(L"COLOR LIGHTS / {}  [L]", static_cast<PathTracingDemoScene*>(scene)->GetColorLightingLabel())
-		);
+		text->SetText(std::move(lightLabel));
 	}
-	if (auto* door = GetDoor())
+	if (auto* text = storage->Get(m_doorOpenText))
 	{
-		if (auto* text = storage->Get(m_doorText))
+		text->SetText(m_room == PathTracingDemoRoom::Dragon ? L"OPEN / CLOSE  [O]" : L"O / NO MOTION CONTROL HERE");
+		if (auto* light = demo->GetDynamicLight(); light && m_room == PathTracingDemoRoom::Dynamic)
+			text->SetText(std::format(L"ORBIT / {}  [O]", light->GetOrbitSpeedLabel()));
+	}
+	if (auto* text = storage->Get(m_doorText))
+	{
+		text->SetText(animationLabel);
+		if (auto* door = GetDoor(); door && m_room == PathTracingDemoRoom::Dragon)
 		{
 			text->SetText(std::format(
 				L"DOOR / {} / {:.0f}%  [SPACE]",
@@ -498,7 +612,7 @@ void PathTracingDemoControllerComponent::RefreshLabels()
 			text->SetText(std::format(L"RENDERER / {}", mode));
 		}
 		std::wstring status = path == RaytracingPath::Reference
-								  ? L"REFERENCE PT | Space holds the door; keep the camera still."
+								  ? L"REFERENCE PT | Pause door + orbit; keep the camera still."
 								  : std::format(
 										L"{} | {} SPP | {}", mode, settings.restirPrimarySpp,
 										GLOBAL(StreamlineGlobal).IsRayReconstructionEnabled() ? L"RR" : L"RAW / SR"
@@ -508,7 +622,7 @@ void PathTracingDemoControllerComponent::RefreshLabels()
 		if (path == RaytracingPath::Reference)
 		{
 			status = std::format(
-				L"REFERENCE PT | {} / {} frames | Space holds door", debug.GetReferenceAccumulationFrames(),
+				L"REFERENCE PT | {} / {} frames | Pause door + orbit", debug.GetReferenceAccumulationFrames(),
 				debug.GetReferenceAccumulationTarget()
 			);
 		}
@@ -527,4 +641,5 @@ void PathTracingDemoControllerComponent::RefreshLabels()
 			text->SetText(std::move(status));
 		}
 	}
+	UpdateButtonAvailability();
 }
