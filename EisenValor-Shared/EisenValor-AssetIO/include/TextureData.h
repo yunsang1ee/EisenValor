@@ -1,18 +1,23 @@
 #pragma once
 #include "AssetFormat.h"
 #include "AssetFile.h"
-#include <vector>
-#include <cstring>
+#include <memory>
+#include <span>
 
 namespace EvAsset
 {
-struct TextureData : public AssetData
+class TextureData : public AssetData
 {
-	bool				   isSRGB = false;
-	TextureUsage		   usage = TextureUsage::Other;
-	std::vector<std::byte> ddsBuffer;
+public:
+	bool		 isSRGB = false;
+	TextureUsage usage = TextureUsage::Other;
 
 	bool Deserialize(AssetFile& file) override;
-	bool IsValid() const { return !ddsBuffer.empty(); }
+	bool IsValid() const { return nullptr != m_dds; }
+	std::span<const std::byte> GetDDSBytes() const { return {m_dds.get(), m_dds ? m_ddsSize : 0}; }
+
+private:
+	std::shared_ptr<const std::byte> m_dds;
+	size_t							 m_ddsSize = 0;
 };
 } // namespace EvAsset

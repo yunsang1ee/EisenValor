@@ -13,6 +13,11 @@ class Scene
 public:
 	using ServerID = uint64_t;
 	using ComponentRawHandle = uint64_t;
+	enum class NodeLoadMode
+	{
+		AllNodes,
+		ComponentOwnersAndAncestors
+	};
 
 public:
 	Scene() = default;
@@ -21,7 +26,7 @@ public:
 	void Initialize();
 
 	// .evscene 리소스를 사용하여 Scene 구성
-	void LoadFromSceneResource(std::shared_ptr<class SceneResource> resource);
+	void LoadFromSceneResource(std::shared_ptr<class SceneResource> resource, NodeLoadMode mode = NodeLoadMode::AllNodes);
 	void SetLoadedMeshQueryMask(uint32_t mask) { m_loadedMeshQueryMask = mask; }
 	SceneQueryWorld& GetSceneQueryWorld() { return m_sceneQueryWorld; }
 

@@ -33,7 +33,7 @@ void WorldLoadingControllerComponent::OnUpdate(float deltaTime)
 		if (auto sceneResource =
 				GLOBAL(ResourceGlobal).Load<SceneResource>(std::filesystem::path(kDefaultMapScenePath)))
 		{
-			m_worldScene->LoadFromSceneResource(sceneResource);
+			m_worldScene->LoadFromSceneResource(sceneResource, Scene::NodeLoadMode::ComponentOwnersAndAncestors);
 			DEBUG_LOG_FMT("[WorldScene] Loaded scene resource: {}\n", kDefaultMapScenePath);
 		}
 		else

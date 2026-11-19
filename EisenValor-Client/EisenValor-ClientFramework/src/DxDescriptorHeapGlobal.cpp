@@ -333,7 +333,7 @@ DxDescriptorHandles DxDescriptorHeapGlobal::CreateSRV(
 	auto handles = Allocate();
 	device->CreateShaderResourceView(resource, desc, handles.GetCPUHandle());
 
-	GRAPHICS_LOG_FMT("[DxDescriptorHeapGlobal] SRV created: GlobalIndex={}\n", handles.GetIndex());
+	RESOURCE_LOG_FMT("[DxDescriptorHeapGlobal] SRV created: GlobalIndex={}\n", handles.GetIndex());
 
 	return handles;
 }

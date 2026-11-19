@@ -5,6 +5,17 @@ namespace EvAsset
 {
 bool TextureData::Deserialize(AssetFile& file)
 {
+	const auto* dataEntry = file.GetChunkEntry("DATA");
+	m_ddsSize = 0;
+	m_dds = dataEntry && 1 == dataEntry->version ? file.ShareChunkData("DATA", m_ddsSize) : nullptr;
+
+	isSRGB = false;
+	usage = TextureUsage::Other;
+	if (!IsValid())
+	{
+		return false;
+	}
+
 	// 1. META (Texture Metadata)
 	const ChunkEntry* metaEntry = file.GetChunkEntry("META");
 	if (metaEntry && 1 == metaEntry->version)
@@ -23,20 +34,6 @@ bool TextureData::Deserialize(AssetFile& file)
 		}
 	}
 
-	// 2. DATA (Raw DDS Binary)
-	const ChunkEntry* dataEntry = file.GetChunkEntry("DATA");
-	if (dataEntry && 1 == dataEntry->version)
-	{
-		size_t		size = 0;
-		const void* ptr = file.GetChunkDataPtr("DATA", size);
-
-		if (nullptr != ptr && 0 < size)
-		{
-			ddsBuffer.resize(size);
-			std::memcpy(ddsBuffer.data(), ptr, size);
-		}
-	}
-
-	return IsValid();
+	return true;
 }
 } // namespace EvAsset

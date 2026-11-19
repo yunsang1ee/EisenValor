@@ -189,7 +189,7 @@ void DxTexture::InitializeFromResource(
 
 	CreateSRV(device, GLOBAL(DxDescriptorHeapGlobal));
 
-	GRAPHICS_LOG_FMT("[DxTexture] Initialized from external resource: {} ({}x{})\n", name, m_width, m_height);
+	RESOURCE_LOG_FMT("[DxTexture] Initialized from external resource: {} ({}x{})\n", name, m_width, m_height);
 }
 
 void DxTexture::LoadFromFile(ID3D12Device* device, const std::wstring& filePath)
@@ -382,7 +382,7 @@ void DxTexture::CreateSRV(ID3D12Device* device, DxDescriptorHeapGlobal& heap)
 
 	m_srvHandle = heap.CreateSRV(device, GetResource(), &srvDesc);
 
-	GRAPHICS_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvHandle.GetIndex(), GetName());
+	RESOURCE_LOG_FMT("[DxTexture] SRV created: Index={}, Name='{}'\n", m_srvHandle.GetIndex(), GetName());
 }
 
 void DxTexture::CreateUAV(ID3D12Device* device, DxDescriptorHeapGlobal& heap, uint32_t mipLevel)

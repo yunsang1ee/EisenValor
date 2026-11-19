@@ -27,7 +27,7 @@ void Scene::Initialize()
 	DEBUG_LOG_FMT("[Scene] Initialized (Components registered, waiting for LoadScene)\n");
 }
 
-void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
+void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource, NodeLoadMode mode)
 {
 	if (!resource)
 	{
@@ -38,25 +38,51 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 	const auto& nodes = resource->GetNodes();
 	const auto& componentEntries = resource->GetComponents();
 
-	// 1. 모든 노드 핸들을 미리 예약하여 보관 (부모 연결을 위해서)
-	std::vector<GameObject::Handle> nodeHandles;
-	nodeHandles.reserve(nodes.size());
-	for (size_t i = 0; i < nodes.size(); ++i)
+	std::vector<uint8_t> keepNode(nodes.size(), NodeLoadMode::AllNodes == mode);
+	if (NodeLoadMode::ComponentOwnersAndAncestors == mode)
 	{
-		nodeHandles.push_back(m_gameObjects.ReserveHandle());
+		for (const auto& entry : componentEntries)
+		{
+			size_t index = entry.NodeIndex;
+			while (index < nodes.size() && !keepNode[index])
+			{
+				keepNode[index] = true;
+				const auto parentIndex = nodes[index].ParentIndex;
+				if (0 > parentIndex)
+					break;
+				index = static_cast<size_t>(parentIndex);
+			}
+		}
 	}
 
-	DEBUG_LOG_FMT("[Scene] LoadFromSceneResource: Spawning {} nodes from '{}'\n", nodes.size(), resource->GetName());
-
-	// 2. 예약된 핸들로 실제 생성 요청
+	// 부모 연결과 커스텀 컴포넌트 디코더는 원본 NODE 인덱스를 사용한다.
+	std::vector<GameObject::Handle> nodeHandles(nodes.size());
+	size_t							retainedCount = 0;
 	for (size_t i = 0; i < nodes.size(); ++i)
 	{
-		const auto&		   nodeData = nodes[i];
-		GameObject::Handle myHandle = nodeHandles[i];
+		if (keepNode[i])
+		{
+			nodeHandles[i] = m_gameObjects.ReserveHandle();
+			++retainedCount;
+		}
+	}
 
-		// 부모 핸들 미리 알려줌
-		GameObject::Handle parentHandle =
-			(nodeData.ParentIndex != -1) ? nodeHandles[nodeData.ParentIndex] : GameObject::Handle::Invalid();
+	DEBUG_LOG_FMT(
+		"[Scene] LoadFromSceneResource: Spawning {} nodes from '{}' ({} source nodes)\n", retainedCount,
+		resource->GetName(), nodes.size()
+	);
+
+	for (size_t i = 0; i < nodes.size(); ++i)
+	{
+		const auto myHandle = nodeHandles[i];
+		if (!myHandle.IsValid())
+		{
+			continue;
+		}
+
+		const auto& nodeData = nodes[i];
+		const auto	parentIndex = static_cast<size_t>(nodeData.ParentIndex);
+		const auto parentHandle = parentIndex < nodes.size() ? nodeHandles[parentIndex] : GameObject::Handle::Invalid();
 
 		std::string nodeName = std::format("Node_{}", i);
 
@@ -99,15 +125,15 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 
 		GameObject::Handle ownerHandle = nodeHandles[entry.NodeIndex];
 
-		if (entry.ComponentVersion == 0)
+		if (0 == entry.ComponentVersion)
 		{
 			DEBUG_LOG_FMT("[Scene] Warning: Component version 0 for node index {}\n", entry.NodeIndex);
 		}
 
-		if (entry.TypeID == MeshComponent::StaticStableTypeHash())
+		if (MeshComponent::StaticStableTypeHash() == entry.TypeID)
 		{
-			if (entry.ComponentVersion != 1 || entry.Size != sizeof(EvAsset::Guid) ||
-				entry.Data.size() != sizeof(EvAsset::Guid))
+			if (1 != entry.ComponentVersion || sizeof(EvAsset::Guid) != entry.Size ||
+				sizeof(EvAsset::Guid) != entry.Data.size())
 			{
 				DEBUG_LOG_FMT("[Scene] Failed to parse mesh scene component payload for node {}\n", entry.NodeIndex);
 				continue;
@@ -152,7 +178,7 @@ GameObject::Handle Scene::ReserveGameObject(
 {
 	GameObject::Handle handle = m_gameObjects.ReserveHandle();
 
-	//DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
+	// DEBUG_LOG_FMT("[Scene] GameObject reserved: {} (Handle={})\n", name, handle.GetValue());
 
 	if (serverID.has_value())
 	{

@@ -120,15 +120,19 @@ void ResourceGlobal::ProcessPendingLoads()
 	RESOURCE_LOG_FMT("[ResourceGlobal] Processing {} pending loads\n", m_pendingLoads.size());
 
 	const uint64_t reservedFrameUploadBudget = 64ull * 1024ull * 1024ull;
-	const uint64_t maxUploadBudget = (uploadHeap->Capacity() > reservedFrameUploadBudget)
+	const uint64_t maxUploadBudget = (reservedFrameUploadBudget < uploadHeap->Capacity())
 										 ? (uploadHeap->Capacity() - reservedFrameUploadBudget)
 										 : uploadHeap->Capacity();
 
 	auto canFitAllocation = [maxUploadBudget](uint64_t& simulatedOffset, uint64_t sizeInBytes, uint64_t alignment)
 	{
+		if (maxUploadBudget < sizeInBytes)
+		{
+			return false;
+		}
 		const uint64_t alignedOffset = DxUtils::AlignUp(simulatedOffset, alignment);
 		const uint64_t alignedSize = DxUtils::AlignUp(sizeInBytes, alignment);
-		if (alignedOffset + alignedSize > maxUploadBudget)
+		if (maxUploadBudget < alignedOffset + alignedSize)
 		{
 			return false;
 		}
@@ -137,7 +141,6 @@ void ResourceGlobal::ProcessPendingLoads()
 		return true;
 	};
 
-	// ���� data �ε��� GPU ���ε�
 	while (!m_pendingLoads.empty())
 	{
 		LoadingTask task = m_pendingLoads.front();
@@ -309,12 +312,13 @@ void ResourceGlobal::ProcessPendingLoads()
 
 			auto texRes = std::static_pointer_cast<TextureResource>(task.targetResource);
 
-			DirectX::TexMetadata  metadata;
-			DirectX::ScratchImage image;
-			if (FAILED(DirectX::LoadFromDDSMemory(
-					reinterpret_cast<const uint8_t*>(data.ddsBuffer.data()), data.ddsBuffer.size(),
-					DirectX::DDS_FLAGS_NONE, &metadata, image
-				)))
+			const auto           ddsBytes = data.GetDDSBytes();
+			const auto*          dds = reinterpret_cast<const uint8_t*>(ddsBytes.data());
+			DirectX::TexMetadata metadata;
+			if (FAILED(DirectX::GetMetadataFromDDSMemory(dds, ddsBytes.size(), DirectX::DDS_FLAGS_NONE, metadata)) ||
+				D3D12_REQ_MIP_LEVELS < metadata.mipLevels ||
+				D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION < metadata.arraySize ||
+				D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION < metadata.depth)
 			{
 				m_pendingLoads.pop();
 				continue;
@@ -322,10 +326,10 @@ void ResourceGlobal::ProcessPendingLoads()
 
 			D3D12_RESOURCE_DESC texDesc = {};
 			texDesc.Dimension =
-				(metadata.depth > 1) ? D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+				(1 < metadata.depth) ? D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 			texDesc.Width = static_cast<uint64_t>(metadata.width);
 			texDesc.Height = static_cast<uint32_t>(metadata.height);
-			texDesc.DepthOrArraySize = (metadata.depth > 1) ? static_cast<uint16_t>(metadata.depth)
+			texDesc.DepthOrArraySize = (1 < metadata.depth) ? static_cast<uint16_t>(metadata.depth)
 															: static_cast<uint16_t>(metadata.arraySize);
 			texDesc.MipLevels = static_cast<uint16_t>(metadata.mipLevels);
 			texDesc.Format = metadata.format;
@@ -376,6 +380,13 @@ void ResourceGlobal::ProcessPendingLoads()
 				break;
 			}
 
+			DirectX::ScratchImage image;
+			if (FAILED(DirectX::LoadFromDDSMemory(dds, ddsBytes.size(), DirectX::DDS_FLAGS_NONE, nullptr, image)))
+			{
+				m_pendingLoads.pop();
+				continue;
+			}
+
 			D3D12_HEAP_PROPERTIES  heapProps = {.Type = D3D12_HEAP_TYPE_DEFAULT};
 			ComPtr<ID3D12Resource> rawTex;
 			if (FAILED(device->CreateCommittedResource(
@@ -415,7 +426,9 @@ void ResourceGlobal::ProcessPendingLoads()
 			cmdList->ResourceBarrier(1, &barrier);
 
 			auto dxTex = std::make_unique<DxTexture>();
-			dxTex->InitializeFromResource(device, rawTex, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, data.name);
+			dxTex->InitializeFromResource(
+				device, rawTex, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, texRes->GetName()
+			);
 			texRes->SetTexture(std::move(dxTex));
 			m_pendingLoads.pop();
 		}
@@ -453,7 +466,7 @@ void ResourceGlobal::DumpLoadedMaterials()
 		for (const auto& slot : mat->GetTextureSlots())
 		{
 			const char* texName = slot.resource ? slot.resource->GetName().c_str() : "<null>";
-			DEBUG_LOG_FMT("  Slot '{}' Tex='{}' Ready={}\n", slot.name.c_str(), texName, (slot.resource != nullptr));
+			DEBUG_LOG_FMT("  Slot '{}' Tex='{}' Ready={}\n", slot.name.c_str(), texName, (nullptr != slot.resource));
 		}
 	}
 #endif
@@ -524,7 +537,7 @@ std::shared_ptr<TextureResource> ResourceGlobal::LoadInternal<TextureResource>(c
 	res->SetName(data.name);
 	res->SetMeta(data.isSRGB, data.usage);
 
-	m_pendingLoads.push({res, data.assetGuid, path, TextureResource::StaticRuntimeTypeID()});
+	m_pendingLoads.push({res, res->GetGuid(), path, TextureResource::StaticRuntimeTypeID()});
 
 	return res;
 }

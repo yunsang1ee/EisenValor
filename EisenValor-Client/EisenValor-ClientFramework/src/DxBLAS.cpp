@@ -143,7 +143,7 @@ void DxBLAS::Build(
 	buildDesc.DestAccelerationStructureData = m_blasBuffer->GetGPUAddress();
 	buildDesc.ScratchAccelerationStructureData = m_scratchBuffer->GetGPUAddress();
 
-	GRAPHICS_LOG_FMT(
+	RESOURCE_LOG_FMT(
 		"[DxBLAS] BuildRTAS '{}': GeoDescs={}, VB={}, IB={}, VertexCount={}, IndexCount={}, Dest={}, Scratch={}\n",
 		name, geoDescs.size(), vertexBuffer, indexBuffer, vertexCount, totalIndexCount, buildDesc.DestAccelerationStructureData,
 		buildDesc.ScratchAccelerationStructureData
@@ -155,7 +155,7 @@ void DxBLAS::Build(
 	cmdList->ResourceBarrier(1, &uavBarrier);
 	m_isBuilt = true;
 
-	GRAPHICS_LOG_FMT(
+	RESOURCE_LOG_FMT(
 		"[DxBLAS] Built BLAS '{}' (SubMeshes: {}) - Size: {} bytes\n", name, subMeshes.size(),
 		prebuildInfo.ResultDataMaxSizeInBytes
 	);

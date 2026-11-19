@@ -55,15 +55,16 @@ bool AssetFile::Load(const std::filesystem::path& path)
 		return false;
 	}
 
-	m_mappedView = ::MapViewOfFile(m_hMapping, FILE_MAP_READ, 0, 0, 0);
-	if (!m_mappedView)
+	const auto* view = static_cast<const std::byte*>(::MapViewOfFile(m_hMapping, FILE_MAP_READ, 0, 0, 0));
+	if (!view)
 	{
 		std::print("[AssetFile] Failed to map view of file: {}\n", path.string());
 		Unload();
 		return false;
 	}
 
-	std::memcpy(&m_header, m_mappedView, sizeof(AssetHeader));
+	m_mappedView = {view, ::UnmapViewOfFile};
+	std::memcpy(&m_header, view, sizeof(AssetHeader));
 
 	if (2 > m_header.version)
 	{
@@ -95,10 +96,8 @@ bool AssetFile::Load(const std::filesystem::path& path)
 			return false;
 		}
 
-		const std::byte* viewBase = static_cast<const std::byte*>(m_mappedView);
-
 		m_chunkTable.resize(m_header.chunkCount);
-		std::memcpy(m_chunkTable.data(), viewBase + m_header.headerSize, tableSize);
+		std::memcpy(m_chunkTable.data(), view + m_header.headerSize, tableSize);
 
 		for (size_t i = 0; i < m_chunkTable.size(); ++i)
 		{
@@ -112,11 +111,7 @@ bool AssetFile::Load(const std::filesystem::path& path)
 
 void AssetFile::Unload()
 {
-	if (m_mappedView)
-	{
-		::UnmapViewOfFile(m_mappedView);
-		m_mappedView = nullptr;
-	}
+	m_mappedView.reset();
 
 	if (m_hMapping)
 	{
@@ -159,13 +154,24 @@ const void* AssetFile::GetChunkDataPtr(const char type[4], size_t& outSize) cons
 		return nullptr;
 	}
 
-	if (entry->offset + entry->size > m_fileSize)
+	if (entry->offset > m_fileSize || entry->size > m_fileSize - entry->offset)
 	{
 		outSize = 0;
 		return nullptr;
 	}
 
 	outSize = static_cast<size_t>(entry->size);
-	return static_cast<const std::byte*>(m_mappedView) + entry->offset;
+	return m_mappedView.get() + entry->offset;
+}
+
+std::shared_ptr<const std::byte> AssetFile::ShareChunkData(const char type[4], size_t& outSize) const
+{
+	const auto* data = static_cast<const std::byte*>(GetChunkDataPtr(type, outSize));
+	if (!data || 0 == outSize)
+	{
+		return {};
+	}
+
+	return {m_mappedView, data};
 }
 } // namespace EvAsset
