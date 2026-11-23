@@ -7,5 +7,8 @@
     "Port": 8888,
     "WorkerThread": 16,
     "MaxSession": 1000
+  },
+  "GameServerToClient": {
+    "IP": "127.0.0.1"
   }
 }

@@ -221,7 +221,7 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
 	float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 	
 	float3 normalObj = SafeNormalizeRay(v0.normal * bary.x + v1.normal * bary.y + v2.normal * bary.z, float3(0.0f, 1.0f, 0.0f));
-	float3 normal = SafeNormalizeRay(mul(normalObj, (float3x3) inst.worldInverse), float3(0.0f, 1.0f, 0.0f));
+	float3 normal = SafeNormalizeRay(mul(normalObj, transpose((float3x3) inst.worldInverse)), float3(0.0f, 1.0f, 0.0f));
 	float3 geometricNormal = normal;
 	float4 tangentPacked = v0.tangent * bary.x + v1.tangent * bary.y + v2.tangent * bary.z;
 	float3 tangentObj = tangentPacked.xyz;

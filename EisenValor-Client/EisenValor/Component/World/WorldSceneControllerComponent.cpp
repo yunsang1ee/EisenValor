@@ -18,6 +18,7 @@
 #include <limits>
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 #include "RenderPass/RestirDebugGlobal.h"
+#include <StreamlineGlobal.h>
 #endif
 
 namespace
@@ -34,7 +35,6 @@ std::wstring FormatRedScore(uint8_t score)
 
 constexpr size_t kInvalidOccupationZoneSlot = std::numeric_limits<size_t>::max();
 constexpr size_t kOccupationMarkerGaugeSegmentCount = 4;
-// Keep the badge one marker-height above the projected occupation-zone anchor.
 constexpr float  kOccupationMarkerCenterY = -64.0f;
 constexpr float  kOccupationMarkerHalfDiagonal = 34.65f;
 constexpr float  kOccupationMarkerSideLength = 49.0f;
@@ -101,6 +101,9 @@ void WorldSceneControllerComponent::OnStart()
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	CreateRestirDebugOverlayUI();
 #endif
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	CreatePerformanceOverlayUI();
+#endif
 }
 
 void WorldSceneControllerComponent::OnUpdate(float deltaTime)
@@ -113,6 +116,9 @@ void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 	RefreshRestirDebugOverlay();
 #endif
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+	UpdatePerformanceOverlay(deltaTime);
+#endif
 
 #ifdef APPLY_LOBBY_SERVER
 	if (GLOBAL(InputGlobal).GetInputDown('L'))
@@ -124,6 +130,122 @@ void WorldSceneControllerComponent::OnUpdate(float deltaTime)
 	}
 #endif
 }
+
+#if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
+void WorldSceneControllerComponent::CreatePerformanceOverlayUI()
+{
+	auto* scene = GetGameObject()->GetScene();
+	if (!scene)
+	{
+		return;
+	}
+	m_performanceRoot = scene->ReserveGameObject(
+		"WorldPerformanceOverlay", std::nullopt,
+		[this, scene](GameObject* obj)
+		{
+			scene->CreateComponentWithInit<RectTransformComponent>(
+				obj->GetHandle(),
+				[](RectTransformComponent* rect)
+				{
+					rect->SetAnchors({1, 0}, {1, 0});
+					rect->SetOffsetMin({-470, 18});
+					rect->SetOffsetMax({-18, 242});
+				}
+			);
+			scene->CreateComponentWithInit<ImageUIComponent>(
+				obj->GetHandle(),
+				[](ImageUIComponent* image)
+				{
+					image->SetNormalTextureResource(
+						GLOBAL(ResourceGlobal).Load<TextureResource>(L"Resource/Texture/UIback.evtex")
+					);
+					image->SetNormalColor({0.18f, 0.16f, 0.12f, 0.92f});
+					image->SetOrder(99996);
+				}
+			);
+			for (const bool metrics : {true, false})
+			{
+				scene->ReserveGameObject(
+					metrics ? "WorldPerformanceValues" : "WorldPerformanceScope", std::nullopt,
+					[this, scene, parent = obj->GetHandle(), metrics](GameObject* label)
+					{
+						if (auto* root = scene->TryGetGameObject(parent))
+						{
+							label->GetTransform().SetParent(root->GetTransform().GetHandle());
+						}
+						scene->CreateComponentWithInit<RectTransformComponent>(
+							label->GetHandle(),
+							[metrics](RectTransformComponent* rect)
+							{
+								rect->SetAnchors(metrics ? Vec2{0, 0} : Vec2{0, 1}, {1, 1});
+								rect->SetOffsetMin(metrics ? Vec2{20, 12} : Vec2{20, -64});
+								rect->SetOffsetMax(metrics ? Vec2{-20, -64} : Vec2{-20, -12});
+							}
+						);
+						const auto handle = scene->CreateComponentWithInit<TextUIComponent>(
+							label->GetHandle(),
+							[metrics](TextUIComponent* text)
+							{
+								text->SetText(
+									metrics ? PerformanceStatsText::InitialText : PerformanceStatsText::ScopeText
+								);
+								text->SetFontSize(metrics ? 18.0f : 12.0f);
+								text->SetHorizontalAlign(TextHorizontalAlign::Left);
+								text->SetVerticalAlign(TextVerticalAlign::Center);
+								text->SetColor({0.93f, 0.86f, 0.65f, 1});
+								text->SetOrder(99997);
+							}
+						);
+						if (metrics)
+						{
+							m_performanceText = handle;
+						}
+					}
+				);
+			}
+		}
+	);
+}
+
+void WorldSceneControllerComponent::UpdatePerformanceOverlay(float deltaTime)
+{
+	auto* scene = GetGameObject()->GetScene();
+	if (!scene)
+	{
+		return;
+	}
+	auto* textStorage = scene->GetStorage<TextUIComponent>();
+	auto* text = textStorage ? textStorage->Get(m_performanceText) : nullptr;
+	if (!text)
+	{
+		return;
+	}
+	bool debugVisible = false;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	if (auto* debugText = textStorage->Get(m_restirDebugTextHandle))
+	{
+		debugVisible = debugText->GetGameObject() && debugText->GetGameObject()->IsActiveInHierarchy();
+	}
+#endif
+	const float top = debugVisible ? 304.0f : 18.0f;
+	if (top != m_performanceTop)
+	{
+		if (auto* root = scene->TryGetGameObject(m_performanceRoot))
+		{
+			if (auto* rect = root->GetComponent<RectTransformComponent>())
+			{
+				rect->SetOffsetMin({-470, top});
+				rect->SetOffsetMax({-18, top + 224});
+				m_performanceTop = top;
+			}
+		}
+	}
+	if (auto value = m_performanceStats.Update(deltaTime))
+	{
+		text->SetText(std::move(*value));
+	}
+}
+#endif
 
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
 void WorldSceneControllerComponent::CreateRestirDebugOverlayUI()
@@ -145,7 +267,7 @@ void WorldSceneControllerComponent::CreateRestirDebugOverlayUI()
 					rect->SetAnchors({1.0f, 0.0f}, {1.0f, 0.0f});
 					rect->SetPivot({1.0f, 0.0f});
 					rect->SetOffsetMin({-470.0f, 18.0f});
-					rect->SetOffsetMax({-18.0f, 132.0f});
+					rect->SetOffsetMax({-18.0f, 284.0f});
 				}
 			);
 
@@ -198,7 +320,12 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 	}
 
 	auto& debug = GLOBAL(RestirDebugGlobal);
-	if (m_lastRestirDebugRevision == debug.GetRevision())
+	auto& streamline = GLOBAL(StreamlineGlobal);
+	debug.UpdateRrOverlayState(
+		streamline.GetRayReconstructionEvaluatedFrames(), streamline.IsRayReconstructionEnabled(),
+		streamline.IsRayReconstructionPresetE(), GLOBAL(DxRendererGlobal).IsDebugCameraFrozen()
+	);
+	if (m_lastRestirDebugRevision == debug.GetOverlayRevision())
 	{
 		return true;
 	}
@@ -209,20 +336,61 @@ bool WorldSceneControllerComponent::RefreshRestirDebugOverlay()
 		return false;
 	}
 
-	const bool visible = debug.IsOverrideActive();
+	const bool referenceActive =
+		(debug.IsOverrideActive() && debug.GetSource() == RestirDebugSource::ReferencePathTracingRaw) ||
+		debug.GetReferenceAccumulationFrames() > 0u;
+	const bool visible = debug.IsOverrideActive() || debug.rrComparisonVisible || referenceActive;
 	owner->SetActive(visible);
 	if (visible)
 	{
 		std::wstring status = L"  SOURCE : ";
-		status += debug.GetSourceName();
+		status += referenceActive ? L"REFERENCE PT" : debug.GetSourceName();
 		status += L"\n  VIEW   : ";
-		status += debug.GetViewName();
+		status += referenceActive ? L"BEAUTY" : debug.GetViewName();
 		status += L"\n  DLSS   : ";
-		status += debug.BypassDlss() ? L"BYPASSED" : L"REQUESTED";
-		status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
+		status += referenceActive || debug.BypassDlss() ? L"BYPASSED" : L"REQUESTED";
+		if (referenceActive)
+		{
+			const bool complete = debug.GetReferenceAccumulationFrames() >= debug.GetReferenceAccumulationTarget();
+			status += L"\n  PT ACCUM : " + std::to_wstring(debug.GetReferenceAccumulationFrames()) + L" / " +
+					  std::to_wstring(debug.GetReferenceAccumulationTarget());
+			status += complete ? L" / HELD" : L" / ACCUMULATING";
+			status += L"\n  1 FRESH PATH / PIXEL / FRAME";
+			status += L"\n  STATIC SCENE / LINEAR HDR AVERAGE";
+			status += L"\n  MOTION NOT COMPENSATED";
+			status += L"\n  F12 SOURCE  |  SHIFT REVERSE";
+			status += L"\n  CTRL+F12 RESTART PT";
+			status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L"\n  SHIFT+F11 CAMERA : FIXED"
+																		: L"\n  SHIFT+F11 CAMERA : LIVE";
+			status += L"\n  F10 RESTIR VIEWS";
+		}
+		else
+		{
+			status += streamline.IsRayReconstructionPresetE() ? L" / RR E REQUESTED" : L" / RR D REQUESTED";
+			status += L"\n  RR FRAMES : " + std::to_wstring(debug.GetRrDisplayFrames());
+			status += debug.GetRrDisplayFrames() >= 64u ? L"+" : L" / 64";
+			status += streamline.IsRayReconstructionEnabled() ? L" / ENABLED" : L" / OFF OR UNSUPPORTED";
+			status += GLOBAL(DxRendererGlobal).IsDebugCameraFrozen() ? L" / CAMERA FIXED" : L" / CAMERA LIVE";
+			status += L"\n  RR FRESH : " + std::to_wstring(debug.GetRrDecorrelationPercent()) + L"%";
+			status += debug.IsSecondaryNeeEnabled() ? L"\n  SECONDARY NEE : ON  |  F7 TOGGLE"
+													  : L"\n  SECONDARY NEE : OFF  |  F7 TOGGLE";
+			if (debug.GetView() == RestirDebugView::SecondaryNeeShare)
+			{
+				status += L"\n  SHARE: BLACK 0% / WHITE 100%";
+			}
+			else
+			{
+				status += L"\n  HDR    : ";
+				status += debug.GetCaptureStatusText();
+			}
+			status += L"\n  F12 SOURCE  |  F10 VIEW  |  SHIFT REVERSE";
+			status += L"\n  CTRL+F12 RAW CAPTURE / RESTART";
+			status += L"\n  F11 D/E | SHIFT+F11 CAMERA | CTRL+F11 SNAP";
+			status += L"\n  F6 FRESH 0/50/60/70/100% | SHIFT+F6 REVERSE";
+		}
 		text->SetText(std::move(status));
 	}
-	m_lastRestirDebugRevision = debug.GetRevision();
+	m_lastRestirDebugRevision = debug.GetOverlayRevision();
 	return true;
 }
 #endif
@@ -284,7 +452,6 @@ void WorldSceneControllerComponent::SetOccupationZoneGauge(uint64 zoneID, float 
 	}
 	else if (state.graceActive && gaugeChanged)
 	{
-		// The server only changes the gauge after its grace period has completed.
 		state.graceActive = false;
 		state.graceRemaining = 0.0f;
 		state.displayedGraceTenths = -1;
@@ -553,7 +720,6 @@ void WorldSceneControllerComponent::ResolveOccupationZoneOrder()
 		return;
 	}
 
-	// The current map contract defines WEST as A and EAST as B.
 	m_occupationZoneIDs[0] = westZoneID;
 	m_occupationZoneIDs[1] = eastZoneID;
 	m_occupationZoneOrderReady = true;

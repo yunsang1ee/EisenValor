@@ -245,7 +245,7 @@ exit /b 0</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_RENDER_DEBUG_VIEWS;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENABLE_DEBUG_LOG;ENABLE_GRAPHICS_DEBUG_LOG;ENABLE_RENDER_DEBUG_VIEWS;ENABLE_INGAME_PERFORMANCE_OVERLAY;ENABLE_STREAMLINE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafxClient.h</PrecompiledHeaderFile>
@@ -322,7 +322,6 @@ exit /b 0</Command>
     <ClInclude Include="Component\Room\RoomSceneControllerComponent.h" />
     <ClInclude Include="Component\SocketComponent.h" />
     <ClInclude Include="Component\StaminaComponent.h" />
-    <ClInclude Include="Component\StressTestComponent.h" />
     <ClInclude Include="Component\TeamComponent.h" />
     <ClInclude Include="Component\VitalUIControllerComponent.h" />
     <ClInclude Include="Component\World\WorldSceneControllerComponent.h" />
@@ -359,6 +358,7 @@ exit /b 0</Command>
     <ClInclude Include="RenderData\InstanceRenderData.h" />
     <ClInclude Include="RenderData\MaterialRenderData.h" />
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h" />
+    <ClInclude Include="RenderData\RaytracingFrameRenderData.h" />
     <ClInclude Include="RenderData\DlssOutputRenderData.h" />
     <ClInclude Include="RenderData\RestirCandidateRenderData.h" />
     <ClInclude Include="RenderData\RestirFinalReservoirRenderData.h" />
@@ -370,7 +370,13 @@ exit /b 0</Command>
     <ClInclude Include="RenderPass\HdrResolvePass.h" />
     <ClInclude Include="RenderPass\DlssUpscalePass.h" />
     <ClInclude Include="RenderPass\DxrRenderPass.h" />
+    <ClInclude Include="RenderPass\RaytracingPreparePass.h" />
+    <ClInclude Include="RenderPass\RaytracingControls.h" />
+    <ClInclude Include="RenderPass\RaytracingPassCommon.h" />
+    <ClInclude Include="RenderPass\ReferencePathTracingPass.h" />
+    <ClInclude Include="RenderPass\RestirCandidatePass.h" />
     <ClInclude Include="RenderPass\RestirDebugGlobal.h" />
+    <ClInclude Include="RenderPass\RestirHdrCapture.h" />
     <ClInclude Include="RenderPass\RestirFinalEvaluationPass.h" />
     <ClInclude Include="RenderPass\RestirTemporalReusePass.h" />
     <ClInclude Include="RenderPass\SkinningPass.h" />
@@ -382,10 +388,16 @@ exit /b 0</Command>
     <ClInclude Include="Scene\LoginScene.h" />
     <ClInclude Include="Scene\RoomScene.h" />
     <ClInclude Include="Scene\StartScene.h" />
+    <ClInclude Include="Scene\PathTracingDemoScene.h" />
+    <ClInclude Include="Component\PathTracingDemoControllerComponent.h" />
+    <ClInclude Include="Component\PathTracingDemoDoorComponent.h" />
+    <ClInclude Include="Util\SceneNavigation.h" />
+    <ClInclude Include="Util\PerformanceStatsText.h" />
     <ClInclude Include="Scene\WorldScene.h" />
     <ClInclude Include="Scene\SceneComponentData\TorchEmitterSceneComponentData.h" />
-    <ClInclude Include="stdafxClient.h" />
-    <ClInclude Include="Component\BattleUIControllerComponent.h" />
+	<ClInclude Include="stdafxClient.h" />
+	<ClInclude Include="Component\OptionsMenuComponent.h" />
+	<ClInclude Include="Component\BattleUIControllerComponent.h" />
     <ClInclude Include="Util\AnimationLoader.h" />
     <ClInclude Include="Util\CameraConfig.h" />
     <ClInclude Include="Util\GameConstants.h" />
@@ -404,10 +416,10 @@ exit /b 0</Command>
     <ClCompile Include="Component\Room\RoomSceneControllerComponent.cpp" />
     <ClCompile Include="Component\SocketComponent.cpp" />
     <ClCompile Include="Component\StaminaComponent.cpp" />
-    <ClCompile Include="Component\StressTestComponent.cpp" />
     <ClCompile Include="Component\TeamComponent.cpp" />
-    <ClCompile Include="Component\VitalUIControllerComponent.cpp" />
-    <ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
+	<ClCompile Include="Component\VitalUIControllerComponent.cpp" />
+	<ClCompile Include="Component\OptionsMenuComponent.cpp" />
+	<ClCompile Include="Component\World\WorldSceneControllerComponent.cpp" />
     <ClCompile Include="Component\World\WorldLoadingControllerComponent.cpp" />
     <ClCompile Include="Component\World\QuestProgressComponent.cpp" />
     <ClCompile Include="Component\World\QuestUIComponent.cpp" />
@@ -499,6 +511,11 @@ exit /b 0</Command>
     <ClCompile Include="RenderPass\HdrResolvePass.cpp" />
     <ClCompile Include="RenderPass\DlssUpscalePass.cpp" />
     <ClCompile Include="RenderPass\DxrRenderPass.cpp" />
+    <ClCompile Include="RenderPass\RaytracingPreparePass.cpp" />
+    <ClCompile Include="RenderPass\RaytracingControls.cpp" />
+    <ClCompile Include="RenderPass\RaytracingPassCommon.cpp" />
+    <ClCompile Include="RenderPass\ReferencePathTracingPass.cpp" />
+    <ClCompile Include="RenderPass\RestirCandidatePass.cpp" />
     <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp" />
     <ClCompile Include="RenderPass\RestirTemporalReusePass.cpp" />
     <ClCompile Include="RenderPass\SkinningPass.cpp" />
@@ -509,6 +526,9 @@ exit /b 0</Command>
     <ClCompile Include="Scene\LoginScene.cpp" />
     <ClCompile Include="Scene\RoomScene.cpp" />
     <ClCompile Include="Scene\StartScene.cpp" />
+    <ClCompile Include="Scene\PathTracingDemoScene.cpp" />
+    <ClCompile Include="Component\PathTracingDemoControllerComponent.cpp" />
+    <ClCompile Include="Component\PathTracingDemoDoorComponent.cpp" />
     <ClCompile Include="Scene\WorldScene.cpp" />
     <ClCompile Include="stdafxClient.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -255,6 +255,40 @@ inline XMFLOAT4 Add(const XMFLOAT4& xmf4Vector1, const XMFLOAT4& xmf4Vector2)
 namespace Matrix4x4
 {
 using namespace DirectX;
+inline bool IsEqual(const XMMATRIX& a, const XMMATRIX& b)
+{
+	return XMVector4Equal(a.r[0], b.r[0]) && XMVector4Equal(a.r[1], b.r[1]) &&
+		   XMVector4Equal(a.r[2], b.r[2]) && XMVector4Equal(a.r[3], b.r[3]);
+}
+
+inline XMMATRIX ClipToPreviousClip(
+	const XMMATRIX& view,
+	const XMMATRIX& projection,
+	const XMMATRIX& previousView,
+	const XMMATRIX& previousProjection
+)
+{
+	const bool sameView = IsEqual(view, previousView);
+	if (sameView && IsEqual(projection, previousProjection))
+	{
+		return XMMatrixIdentity();
+	}
+
+	XMMATRIX cameraToPreviousCamera = XMMatrixIdentity();
+	if (!sameView)
+	{
+		XMMATRIX cameraToWorld = XMMatrixInverse(nullptr, view);
+		XMMATRIX previousCameraToWorld = XMMatrixInverse(nullptr, previousView);
+		previousCameraToWorld.r[3] =
+			XMVectorSetW(XMVectorSubtract(previousCameraToWorld.r[3], cameraToWorld.r[3]), 1.0f);
+		cameraToWorld.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+		cameraToPreviousCamera = XMMatrixMultiply(cameraToWorld, XMMatrixInverse(nullptr, previousCameraToWorld));
+	}
+	return XMMatrixMultiply(
+		XMMatrixMultiply(XMMatrixInverse(nullptr, projection), cameraToPreviousCamera), previousProjection
+	);
+}
+
 inline XMFLOAT4X4 Identity()
 {
 	XMFLOAT4X4 xmmtx4x4Result;

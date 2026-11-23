@@ -19,6 +19,11 @@
 #include "DxCommandContext.h"
 #include "PixProfiler.h"
 #include "StreamlineGlobal.h"
+#include <chrono>
+#include <cmath>
+#include <psapi.h>
+
+#pragma comment(lib, "Psapi.lib")
 
 namespace
 {
@@ -69,20 +74,24 @@ void DxRendererGlobal::Initialize()
 #if ENABLE_GRAPHICS_DEBUG_LOG
 	m_nextMemoryLogTime = 0.0f;
 #endif
-
-	// RTV Descriptor Heap 생성
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.NumDescriptors = kFrameCount;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(device.GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvDescriptorHeap)));
 	m_rtvDescriptorSize = device.GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	// Frame Resources 생성
 	for (uint32_t i = 0; i < kFrameCount; ++i)
 	{
 		m_frameResources[i] = std::make_unique<DxFrameResource>();
 		m_frameResources[i]->Initialize(device.GetDevice(), i);
+	}
+	m_gpuTimestampFrequency = 0;
+	if (auto* queue = GLOBAL(DxGfxCommandQueueGlobal).GetQueue())
+	{
+		if (FAILED(queue->GetTimestampFrequency(&m_gpuTimestampFrequency)))
+		{
+			m_gpuTimestampFrequency = 0;
+		}
 	}
 
 	GRAPHICS_LOG_FMT("[DxRendererGlobal] Initialized (SwapChain not created yet - call CreateSwapChain)\n");
@@ -109,6 +118,7 @@ void DxRendererGlobal::CreateSwapChain(HWND hwnd, uint32_t width, uint32_t heigh
 		device.GetDevice(), device.GetFactory(), commandQueue, hwnd, width, height, kFrameCount,
 		DXGI_FORMAT_R8G8B8A8_UNORM, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvDescriptorSize
 	);
+	m_debugCameraFrozen = m_debugCameraValid = false;
 	const StreamlineResolution resolution = GLOBAL(StreamlineGlobal).GetOptimalResolution(width, height);
 	m_renderWidth = resolution.renderWidth;
 	m_renderHeight = resolution.renderHeight;
@@ -205,6 +215,7 @@ IRenderPass* DxRendererGlobal::GetRenderPass(const std::string& name) const
 void DxRendererGlobal::BeginFrame()
 {
 	PixScopedCpuEvent event(L"DxRenderer.BeginFrame");
+	m_cpuFrameWaitMs = 0.0;
 
 	if (!m_isInitialized || !m_swapChain)
 	{
@@ -216,7 +227,16 @@ void DxRendererGlobal::BeginFrame()
 
 	m_currentFrameIndex = m_swapChain->GetCurrentBackBufferIndex();
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
-	frame->BeginFrame();
+	const bool measureGpu = m_trackPerformance && m_gpuTimestampFrequency != 0;
+	frame->BeginFrame(measureGpu);
+	m_cpuFrameWaitMs = frame->GetCpuFenceWaitMs();
+	const auto ticks = frame->GetCompletedGpuTicks();
+	if (measureGpu && m_acceptGpuTiming[m_currentFrameIndex] && ticks.has_value())
+	{
+		m_performanceStats.gpuFrameMs = static_cast<double>(*ticks) * 1000.0 / m_gpuTimestampFrequency;
+		++m_performanceStats.gpuSamples;
+	}
+	m_acceptGpuTiming[m_currentFrameIndex] = measureGpu;
 	m_renderContext.BeginFrame();
 }
 
@@ -233,7 +253,7 @@ void DxRendererGlobal::Render(Scene* scene)
 	auto* frame = m_frameResources[m_currentFrameIndex].get();
 	{
 		PixScopedCpuEvent dataEvent(L"DxRenderer.PrepareFrameData");
-		auto& frameData = m_frameData.Get();
+		auto&			  frameData = m_frameData.Get();
 		frameData.deltaTime = GLOBAL(TimerGlobal).GetDeltaTime();
 		frameData.totalTime = GLOBAL(TimerGlobal).GetRuntime();
 		frameData.frameIndex = frame->GetFrameIndex();
@@ -260,6 +280,27 @@ void DxRendererGlobal::Render(Scene* scene)
 			cameraData.farZ = mainCamera->GetFarZ();
 			cameraData.fov = mainCamera->GetFOV();
 			cameraData.aspectRatio = mainCamera->GetAspectRatio();
+			if (m_debugCameraScene != scene)
+			{
+				m_debugCameraScene = scene;
+				m_debugCameraFrozen = m_debugCameraValid = false;
+			}
+			if (m_debugCameraFrozen)
+			{
+				if (!m_debugCameraValid)
+				{
+					m_debugCameraSnapshot = cameraData;
+					m_debugCameraValid = true;
+				}
+				const auto jitter = cameraData.jitterPixels;
+				const auto previousJitter = cameraData.previousJitterPixels;
+				const auto sequence = cameraData.jitterSequenceIndex;
+				cameraData = m_debugCameraSnapshot;
+				cameraData.previousCameraPosition = cameraData.cameraPosition;
+				cameraData.jitterPixels = jitter;
+				cameraData.previousJitterPixels = previousJitter;
+				cameraData.jitterSequenceIndex = sequence;
+			}
 
 			m_renderContext.Set(m_cameraData);
 		}
@@ -280,11 +321,24 @@ void DxRendererGlobal::Render(Scene* scene)
 		DxScopedGpuEvent renderPassesGpuEvent(*frame->GetMainContext(), L"Render.RenderPasses");
 		for (auto& entry : m_renderPasses)
 		{
-			const std::string markerName = "RenderPass." + entry.name;
+			if (!entry.pass->ShouldExecute(&m_renderContext))
+			{
+				entry.pass->OnSkipped(frame, scene, &m_renderContext);
+				continue;
+			}
+
+			const std::string  markerName = "RenderPass." + entry.name;
 			const std::wstring passGpuMarker(markerName.begin(), markerName.end());
-			DxScopedGpuEvent passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
-			PixScopedCpuEvent passEvent(markerName.c_str());
+			DxScopedGpuEvent   passGpuEvent(*frame->GetMainContext(), passGpuMarker.c_str());
+			PixScopedCpuEvent  passEvent(markerName.c_str());
 			entry.pass->Execute(frame, scene, &m_renderContext);
+		}
+	}
+	{
+		PixScopedCpuEvent endPassesEvent(L"Render.EndPasses");
+		for (auto& entry : m_renderPasses)
+		{
+			entry.pass->OnEndFrame(frame, scene, &m_renderContext);
 		}
 	}
 }
@@ -311,7 +365,10 @@ void DxRendererGlobal::EndFrame()
 
 	{
 		PixScopedCpuEvent presentEvent(L"DxRenderer.Present");
+		const auto presentStart = std::chrono::steady_clock::now();
 		m_swapChain->PresentMaxPerformance();
+		m_cpuFrameWaitMs += std::chrono::duration<double, std::milli>(
+			std::chrono::steady_clock::now() - presentStart).count();
 	}
 
 	auto& gc = GLOBAL(DxGarbageCollectorGlobal);
@@ -336,6 +393,47 @@ void DxRendererGlobal::EndFrame()
 #endif
 }
 
+void DxRendererGlobal::SetPerformanceTrackingEnabled(bool enabled)
+{
+	if (m_trackPerformance == enabled)
+	{
+		return;
+	}
+	m_trackPerformance = enabled;
+	m_performanceStats = {};
+	m_acceptGpuTiming.fill(false);
+}
+
+void DxRendererGlobal::RecordCpuFrameTime(double frameWorkMs)
+{
+	if (m_trackPerformance && std::isfinite(frameWorkMs))
+	{
+		m_performanceStats.cpuWorkMs = std::max(frameWorkMs, 0.0);
+		++m_performanceStats.cpuSamples;
+	}
+}
+
+ProcessMemoryStats DxRendererGlobal::QueryProcessMemoryStats() const
+{
+	ProcessMemoryStats result;
+	PROCESS_MEMORY_COUNTERS_EX counters{};
+	counters.cb = sizeof(counters);
+	if (GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters)))
+	{
+		result.cpuWorkingSetBytes = counters.WorkingSetSize;
+		result.cpuValid = true;
+	}
+	DXGI_QUERY_VIDEO_MEMORY_INFO local{};
+	if (auto* adapter = GLOBAL(DxDeviceGlobal).GetAdapter();
+		adapter && SUCCEEDED(adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &local)))
+	{
+		result.gpuLocalBytes = local.CurrentUsage;
+		result.gpuLocalBudgetBytes = local.Budget;
+		result.gpuValid = true;
+	}
+	return result;
+}
+
 void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 {
 	if (!m_swapChain)
@@ -355,20 +453,23 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 
 	if (!commandQueue.WaitForIdle(5'000))
 	{
-		GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: WaitForIdle timeout during resize!\n");
-
-		HRESULT hr = device.GetDevice()->GetDeviceRemovedReason();
-		if (FAILED(hr))
-		{
-			GRAPHICS_LOG_FMT("[DxRendererGlobal] ERROR: Device removed (HRESULT=0x{:X})\n", static_cast<uint32_t>(hr));
-			return;
-		}
+		GRAPHICS_LOG_FMT(
+			"[DxRendererGlobal] Resize aborted: GPU idle timeout, deviceResult=0x{:X}\n",
+			static_cast<uint32_t>(device.GetDevice()->GetDeviceRemovedReason())
+		);
+		return;
+	}
+	if (!GLOBAL(StreamlineGlobal).PrepareForResourceChange())
+	{
+		GRAPHICS_LOG_FMT("[DxRendererGlobal] Resize aborted: Streamline resource release failed.\n");
+		return;
 	}
 
 	m_swapChain->OnResize(
 		device.GetDevice(), width, height, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_rtvDescriptorSize
 	);
+	m_debugCameraFrozen = m_debugCameraValid = false;
 	const StreamlineResolution resolution = GLOBAL(StreamlineGlobal).GetOptimalResolution(width, height);
 	m_renderWidth = resolution.renderWidth;
 	m_renderHeight = resolution.renderHeight;
@@ -388,8 +489,7 @@ void DxRendererGlobal::OnResize(uint32_t width, uint32_t height)
 	}
 
 	GRAPHICS_LOG_FMT(
-		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth,
-		m_renderHeight
+		"[DxRendererGlobal] Resize handled: display={}x{}, render={}x{}\n", width, height, m_renderWidth, m_renderHeight
 	);
 #if ENABLE_GRAPHICS_DEBUG_LOG
 	LogVideoMemoryStats("PostResize");

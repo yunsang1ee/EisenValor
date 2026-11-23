@@ -22,7 +22,13 @@ public:
 
 	virtual void DeclareRenderData(RenderContext* context) {}
 
+	virtual bool ShouldExecute(const RenderContext* context) const { return true; }
+
 	virtual void Execute(DxFrameResource* frame, Scene* scene, RenderContext* context) = 0;
+
+	virtual void OnSkipped(DxFrameResource* frame, Scene* scene, RenderContext* context) {}
+
+	virtual void OnEndFrame(DxFrameResource* frame, Scene* scene, RenderContext* context) {}
 
 	virtual void OnResize(uint32_t width, uint32_t height) = 0;
 

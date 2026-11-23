@@ -22,6 +22,10 @@ RWTexture2D<float> g_restirLinearDepth : register(u4, space0);
 RWTexture2D<float4> g_restirDiffuseAlbedo : register(u5, space0);
 RWTexture2D<float4> g_restirSpecularAlbedo : register(u6, space0);
 RWTexture2D<float4> g_restirNormalRoughness : register(u7, space0);
+RWTexture2D<float> g_restirSpecularHitDistance : register(u8, space0);
+#if RESTIR_ENABLE_DEBUG_VIEWS
+RWTexture2D<float4> g_restirSecondaryNee : register(u9, space0);
+#endif
 
 cbuffer CameraConstants : register(b0, space0)
 {
@@ -41,12 +45,12 @@ cbuffer RaytracingFrameConstants : register(b2, space0)
     uint g_frameSeed;
     uint g_emissionViewMode;
     uint g_environmentMode;
-    uint g_frameConstantsPad0;
+    uint g_restirPrimarySpp;
 };
 
 cbuffer RestirCandidateConstants : register(b3, space0)
 {
-    uint g_restirCandidateEnabled;
+    uint g_restirCandidateMask;
     uint g_restirScreenWidth;
     uint g_restirScreenHeight;
     float g_restirCameraNearZ;
@@ -59,6 +63,7 @@ cbuffer RestirCandidateConstants : register(b3, space0)
 cbuffer RestirCandidateCameraConstants : register(b4, space0)
 {
     float4x4 g_previousViewProj;
+    float4x4 g_currentViewProj;
 };
 
 SamplerState g_sampler : register(s0, space0);
@@ -66,15 +71,40 @@ SamplerState g_sampler : register(s0, space0);
 #include "RestirShading.hlsli"
 
 static const uint MAX_RECURSION_DEPTH = 6;
-static const uint SPP = 1;
 static const uint INVALID_TEXTURE_INDEX = 0xffffffffu;
 static const float PT_OUTPUT_EXPOSURE = 0.75f;
 static const float PT_BLOOM_THRESHOLD = 1.0f;
 static const float PT_BLOOM_INTENSITY = 0.75f;
 static const float PT_VISIBLE_NORMAL_STRENGTH = RESTIR_STYLIZED_NORMAL_STRENGTH;
 
-// 0: off, 1: shading normal, 2: geometric normal, 3: NdotV(shading/geom), 4: albedo, 5: metallic/roughness/ao.
+// Debug view modes:
+// 0: None
+// 1:
 static const uint PT_DEBUG_VIEW = 0;
+
+bool RestirCandidateMaskHas(uint candidateType)
+{
+    return 0u != (g_restirCandidateMask & candidateType);
+}
+
+uint RestirGetEmissiveProfileStage()
+{
+    return g_restirCandidateMask & RESTIR_EMISSIVE_PROFILE_STAGE_MASK;
+}
+
+bool RestirSecondaryNeeEnabled()
+{
+    return RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH) &&
+           !RestirCandidateMaskHas(RESTIR_CANDIDATE_DISABLE_SECONDARY_NEE);
+}
+
+bool RestirHasEmissiveNeeAtDepth(uint depth)
+{
+    return RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) &&
+           g_restirEmissiveLightCount > 0u &&
+           RestirGetEmissiveProfileStage() != RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY &&
+           (depth == 0u || (RestirSecondaryNeeEnabled() && depth < MAX_RECURSION_DEPTH));
+}
 
 void RestirSetPayloadRcIrradiance(inout RayPayload payload, float3 irradiance)
 {
@@ -158,11 +188,64 @@ void RestirWriteInvalidPrimaryOutputs(uint pixelIndex)
     g_restirDiffuseAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirSpecularAlbedo[pixelCoord] = 0.0f.xxxx;
     g_restirNormalRoughness[pixelCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    g_restirSpecularHitDistance[pixelCoord] = 0.0f;
+}
+
+float RestirTraceSpecularGuideDistance(float3 position, float3 geometricNormal, float3 shadingNormal)
+{
+    // A dense, deterministic first-reflection guide, independent of the lighting
+    // reservoir's lobe/NEE selection. Uses the dominant mirror direction; rough
+    // reflections are approximated, rather than encoding a diffuse/NEE distance.
+    float3 direction = normalize(reflect(WorldRayDirection(), normalize(shadingNormal)));
+    if (dot(direction, geometricNormal) <= 0.0f)
+    {
+        return 0.0f;
+    }
+    RayDesc ray;
+    ray.Origin = position + geometricNormal * 0.01f;
+    ray.Direction = direction;
+    ray.TMin = RAY_TMIN;
+    ray.TMax = RAY_TMAX;
+    // Closest hit is required, not ACCEPT_FIRST_HIT used by shadow queries.
+    RayQuery<RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES> query;
+    query.TraceRayInline(g_scene, RAY_FLAG_NONE, 0xFF, ray);
+    while (query.Proceed()) {}
+    if (query.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+    {
+        float3 hitPosition = ray.Origin + direction * query.CommittedRayT();
+        return length(hitPosition - position);
+    }
+    // Finite environment-distance sentinel in world units; no surface uses zero.
+    return RAY_TMAX;
+}
+
+float3 RestirEvalRrSpecularAlbedo(float3 F0, float roughness, float NdotV)
+{
+    float v = saturate(abs(NdotV));
+    float v2 = v * v;
+    float v3 = v2 * v;
+    float alpha = saturate(roughness) * saturate(roughness);
+    float a3 = alpha * alpha * alpha;
+
+    float biasNumerator = (0.99044f - 1.28514f * v) + alpha * (1.29678f - 0.755907f * v);
+    float biasDenominator = (1.0f + 2.92338f * v + 59.4188f * v3) +
+        alpha * (20.3225f - 27.0302f * v + 222.592f * v3) +
+        a3 * (121.563f + 626.13f * v + 316.627f * v3);
+    float scaleNumerator = (0.0365463f + 3.32707f * v) + alpha * (9.0632f - 9.04756f * v);
+    float scaleDenominator = (1.0f + 3.59685f * v2 - 1.36772f * v3) +
+        alpha * (9.04401f - 16.3174f * v2 + 9.22949f * v3) +
+        a3 * (5.56589f + 19.7886f * v2 - 20.2123f * v3);
+
+    float bias = biasNumerator / biasDenominator;
+    float scale = scaleNumerator / scaleDenominator;
+    bias *= saturate(F0.g * 50.0f);
+    return F0 * max(scale, 0.0f) + max(bias, 0.0f);
 }
 
 void RestirWritePrimaryOutputs(
     uint pixelIndex,
     float3 hitPos,
+    float3 objectPosition,
     float hitDistance,
     float3 geometricNormal,
     float3 shadingNormal,
@@ -214,19 +297,22 @@ void RestirWritePrimaryOutputs(
         }
         else
         {
-            previousObjectPosition = mul(float4(hitPos, 1.0f), inst.worldInverse).xyz;
+            previousObjectPosition = objectPosition;
         }
 
         float3 previousWorldPosition =
             mul(float4(previousObjectPosition, 1.0f), inst.previousWorldMatrix).xyz;
-        float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        float3 currentWorldPosition = mul(float4(objectPosition, 1.0f), inst.worldMatrix).xyz;
+        precise float4 previousClip = mul(float4(previousWorldPosition, 1.0f), g_previousViewProj);
+        precise float4 currentClip = mul(float4(currentWorldPosition, 1.0f), g_currentViewProj);
         float2 previousUv;
-        if (TryClipToUv(previousClip, previousUv))
+        float2 currentUv;
+        if (TryClipToUv(previousClip, previousUv) && TryClipToUv(currentClip, currentUv))
         {
-            float2 currentUv =
-                (float2(pixelCoord) + 0.5f) / float2(g_restirScreenWidth, g_restirScreenHeight);
-            float2 jitterUv = g_cameraJitterPixels / float2(g_restirScreenWidth, g_restirScreenHeight);
-            motionVector = previousUv - currentUv - jitterUv;
+            // Project the same barycentric point in both frames. Comparing an inverse-VP
+            // ray hit with the ideal pixel center leaves a static floating-point drift.
+            // Both matrices are unjittered, so this difference already excludes jitter.
+            motionVector = previousUv - currentUv;
             motionVectorValid = true;
         }
     }
@@ -241,7 +327,9 @@ void RestirWritePrimaryOutputs(
     g_restirMotionVector[pixelCoord] = motionVector;
     g_restirLinearDepth[pixelCoord] = RestirComputeLinearDepth(hitPos);
     g_restirDiffuseAlbedo[pixelCoord] = float4(albedo * (1.0f - metallic), 1.0f);
-    g_restirSpecularAlbedo[pixelCoord] = float4(lerp(0.04f.xxx, albedo, metallic), 1.0f);
+    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
+    float NdotV = dot(normalize(shadingNormal), -normalize(WorldRayDirection()));
+    g_restirSpecularAlbedo[pixelCoord] = float4(RestirEvalRrSpecularAlbedo(F0, roughness, NdotV), 1.0f);
     g_restirNormalRoughness[pixelCoord] = float4(normalize(shadingNormal), roughness);
 }
 
@@ -250,9 +338,17 @@ bool UsePhysicalRenderingMode()
     return EMISSION_VIEW_PHYSICAL == g_emissionViewMode;
 }
 
-float RestirGetEmissiveLightWeight(RestirEmissiveLightData light)
+float RestirGetEmissiveLightCumulativeWeight(uint lightIndex)
 {
-    return max(light.selectionWeight, 0.0f);
+    return max(g_restirEmissiveLights[lightIndex].cumulativeWeight, 0.0f);
+}
+
+float RestirGetEmissiveLightWeight(uint lightIndex)
+{
+    float cumulativeWeight = RestirGetEmissiveLightCumulativeWeight(lightIndex);
+    float previousCumulativeWeight =
+        lightIndex > 0u ? RestirGetEmissiveLightCumulativeWeight(lightIndex - 1u) : 0.0f;
+    return max(cumulativeWeight - previousCumulativeWeight, 0.0f);
 }
 
 float RestirGetEmissiveLightWeightSum()
@@ -270,23 +366,25 @@ bool RestirSelectEmissiveLight(inout uint rngSeed, out uint lightIndex, out floa
         return false;
     }
 
-    float r = RandomValue(rngSeed) * weightSum;
-    float prefix = 0.0f;
+    float targetWeight = RandomValue(rngSeed) * weightSum;
+    uint lowerBound = 0u;
+    uint upperBound = g_restirEmissiveLightCount;
     [loop]
-    for (uint i = 0u; i < g_restirEmissiveLightCount; ++i)
+    while (lowerBound < upperBound)
     {
-        float weight = RestirGetEmissiveLightWeight(g_restirEmissiveLights[i]);
-        prefix += weight;
-        if (r <= prefix)
+        uint middle = lowerBound + (upperBound - lowerBound) / 2u;
+        if (targetWeight < RestirGetEmissiveLightCumulativeWeight(middle))
         {
-            lightIndex = i;
-            selectedWeight = weight;
-            return weight > 0.0f;
+            upperBound = middle;
+        }
+        else
+        {
+            lowerBound = middle + 1u;
         }
     }
 
-    lightIndex = g_restirEmissiveLightCount - 1u;
-    selectedWeight = RestirGetEmissiveLightWeight(g_restirEmissiveLights[lightIndex]);
+    lightIndex = min(lowerBound, g_restirEmissiveLightCount - 1u);
+    selectedWeight = RestirGetEmissiveLightWeight(lightIndex);
     return selectedWeight > 0.0f;
 }
 
@@ -330,7 +428,7 @@ float RestirComputeEmissiveHitNeePdfSolidAngle(
     }
 
     float weightSum = RestirGetEmissiveLightWeightSum();
-    float selectedWeight = RestirGetEmissiveLightWeight(light);
+    float selectedWeight = RestirGetEmissiveLightWeight(geo.emissiveEntryIdx);
     if (weightSum <= EPSILON || selectedWeight <= 0.0f)
     {
         return 0.0f;
@@ -369,6 +467,7 @@ float RestirComputeEmissiveHitNeePdfSolidAngle(
 bool EvaluateRestirEmissiveNEE(
     RestirSurface surface,
     float3 viewDir,
+    bool evaluateVisibility,
     inout uint rngSeed,
     out float3 contribution,
     out float lightPdf,
@@ -378,6 +477,7 @@ bool EvaluateRestirEmissiveNEE(
     out uint lightPrimitiveIndex,
     out uint lightBarycentrics,
     out float3 rcIrradiance,
+    out float3 sampledLightDirection,
     out float sourceBsdfPdf,
     out float sourceGeometry)
 {
@@ -392,6 +492,7 @@ bool EvaluateRestirEmissiveNEE(
     lightPrimitiveIndex = 0xffffffffu;
     lightBarycentrics = 0u;
     rcIrradiance = 0.0f.xxx;
+    sampledLightDirection = surface.shadingNormal;
     sourceBsdfPdf = 0.0f;
     sourceGeometry = 0.0f;
 
@@ -459,6 +560,7 @@ bool EvaluateRestirEmissiveNEE(
 
     float distance = sqrt(distanceSq);
     float3 lightDir = toLight / distance;
+    sampledLightDirection = lightDir;
     float NdotL = max(dot(shadingNormal, lightDir), 0.0f);
     if (NdotL <= 0.0f)
     {
@@ -487,8 +589,19 @@ bool EvaluateRestirEmissiveNEE(
     lightPdf = neePdfSolidAngle;
     float misWeight = neePdfSolidAngle / max(neePdfSolidAngle + bsdfPdf, EPSILON);
 
-    float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
-    float visibility = ShadowVisibility(g_scene, shadowOrigin, lightDir, RAY_TMIN, max(distance - 0.02f, RAY_TMIN), 0xFF);
+    float visibility = 1.0f;
+    if (evaluateVisibility)
+    {
+        float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
+        visibility = ShadowVisibility(
+            g_scene,
+            shadowOrigin,
+            lightDir,
+            RAY_TMIN,
+            max(distance - 0.02f, RAY_TMIN),
+            0xFF
+        );
+    }
 
     rcIrradiance = Le * visibility;
     contribution = bsdfCos * Le * lightCos * visibility * misWeight / max(distanceSq * areaPdf, EPSILON);
@@ -497,7 +610,7 @@ bool EvaluateRestirEmissiveNEE(
 
 void RestirUpdateReservoirFromPayload(inout RestirReservoir reservoir, RayPayload payload, inout uint rngSeed)
 {
-    if (0u == g_restirCandidateEnabled)
+    if (0u == g_restirCandidateMask)
     {
         return;
     }
@@ -520,370 +633,243 @@ void RestirUpdateReservoirFromPayload(inout RestirReservoir reservoir, RayPayloa
     RestirUpdateReservoir(reservoir, candidate, resamplingWeight, RandomValue(rngSeed));
 }
 
-[shader("raygeneration")]
-void RayGenMain()
+
+uint RestirPrimaryReservoirSeed(uint pixelIndex, uint primaryTrialIndex)
 {
-    uint2 pixelCoord = DispatchRaysIndex().xy;
-    uint2 screenSize = DispatchRaysDimensions().xy;
-    uint pixelIndex = pixelCoord.y * screenSize.x + pixelCoord.x;
-
-    uint rngSeed = pixelIndex * 9781u ^ pixelCoord.y * 6271u ^ screenSize.x * 7919u ^ (g_frameSeed + 1u) * 104729u ^ 124623u;
-
-    float3 finalColor = 0.0f.xxx;
-    RestirReservoir restirReservoir = RestirMakeEmptyReservoir();
-    uint primaryHitFlags = 0u;
-
-    for (uint bounce = 0; bounce < SPP; ++bounce)
-    {
-        float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
-        ndc.y = -ndc.y;
-        float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
-        nearPos /= nearPos.w;
-        float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
-        farPos /= farPos.w;
-
-        RayDesc ray;
-        ray.Origin = nearPos.xyz;
-        ray.Direction = normalize(farPos.xyz - nearPos.xyz);
-        ray.TMin = 0.001f;
-        ray.TMax = RAY_TMAX;
-
-        RayPayload payload = MakeDefaultRayPayload < RayPayload > (0);
-        payload.pixelIndex = pixelIndex;
-
-        TraceRay(g_scene,
-                 RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-                 0xFF,
-                 0, 0, 0,
-                 ray,
-                 payload);
-        finalColor += payload.color.rgb;
-        primaryHitFlags |= payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID;
-
-        RestirUpdateReservoirFromPayload(restirReservoir, payload, rngSeed);
-
-        if (0u != g_restirCandidateEnabled && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
-        {
-            RayPayload sunPayload = MakeDefaultRayPayload < RayPayload > (0);
-            sunPayload.pixelIndex = pixelIndex;
-            sunPayload.primaryHitFlags = RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN;
-
-            TraceRay(g_scene,
-                     RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-                     0xFF,
-                     0, 0, 0,
-                     ray,
-                     sunPayload);
-
-            RestirUpdateReservoirFromPayload(restirReservoir, sunPayload, rngSeed);
-
-            if (g_restirEmissiveLightCount > 0u)
-            {
-                RayPayload emissivePayload = MakeDefaultRayPayload < RayPayload > (0);
-                emissivePayload.pixelIndex = pixelIndex;
-                emissivePayload.primaryHitFlags =
-                    RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_EMISSIVE;
-
-                TraceRay(g_scene,
-                         RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
-                         0xFF,
-                         0, 0, 0,
-                         ray,
-                         emissivePayload);
-
-                RestirUpdateReservoirFromPayload(restirReservoir, emissivePayload, rngSeed);
-            }
-        }
-    }
-    finalColor /= SPP;
-
-    if (0u != g_restirCandidateEnabled)
-    {
-        g_restirReservoirInitial[pixelIndex] = restirReservoir;
-        if (0u == (primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
-        {
-            RestirWriteInvalidPrimaryOutputs(pixelIndex);
-        }
-
-        return;
-    }
-
-    float3 outputColor = finalColor;
-    if (PT_DEBUG_VIEW == 0 && !UsePhysicalRenderingMode())
-    {
-        outputColor *= PT_OUTPUT_EXPOSURE;
-        float3 bloom = max(0.0f.xxx, outputColor - PT_BLOOM_THRESHOLD.xxx) * PT_BLOOM_INTENSITY;
-        outputColor += bloom;
-    }
-
-    g_output[pixelCoord] = float4(max(0.0f.xxx, outputColor), 1.0f);
+    uint width = DispatchRaysDimensions().x;
+    uint y = pixelIndex / width;
+    return pixelIndex * 9781u ^ y * 6271u ^ width * 7919u ^ (g_frameSeed + 1u) * 104729u ^
+           primaryTrialIndex * 0x9e3779b9u ^ 124623u;
 }
 
-[shader("miss")]
-void MissMain(inout RayPayload payload)
+void RestirWritePathOnlyReservoir(RayPayload payload)
 {
-    float3 environment = SampleSkyEnvironment(WorldRayDirection(), g_environmentMode);
-    payload.color = environment;
-    payload.pathFlags = RESTIR_PATH_FLAG_SKY_ESCAPE | RESTIR_METADATA_SHIFT_DATA_VALID;
-    payload.packedRcVertexWi = RestirPackNormalOct16(normalize(WorldRayDirection()));
-    RestirSetPayloadRcIrradiance(payload, environment);
+    RestirReservoir reservoir = g_restirReservoirInitial[payload.pixelIndex];
+    uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex, payload.primaryTrialIndex);
+    if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
+    {
+        RestirUpdateReservoirFromPayload(reservoir, payload, reservoirSeed);
+    }
+    g_restirReservoirInitial[payload.pixelIndex] = reservoir;
 }
 
-[shader("closesthit")]
-void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+void RestirEvaluateSurfaceNee(
+    RestirSurface surface, float3 V, uint rngSeed, inout RayPayload payload)
 {
-    InstanceData inst = g_instanceBuffer[InstanceID()];
-    GeoInfo geo = g_geoTable[inst.geoInfoBaseIdx + GeometryIndex()];
-    MaterialGPUData mat = g_materials[geo.materialIdx];
-
-    StructuredBuffer<Vertex> vBuffer = ResourceDescriptorHeap[inst.vertexBufferIdx];
-    Buffer<uint> iBuffer = ResourceDescriptorHeap[inst.indexBufferIdx];
-
-    float3 bary;
-    bary.x = 1.0f - attribs.barycentrics.x - attribs.barycentrics.y;
-    bary.y = attribs.barycentrics.x;
-    bary.z = attribs.barycentrics.y;
-
-    uint triIdx = PrimitiveIndex();
-    uint i0 = iBuffer[geo.indexBase + triIdx * 3 + 0];
-    uint i1 = iBuffer[geo.indexBase + triIdx * 3 + 1];
-    uint i2 = iBuffer[geo.indexBase + triIdx * 3 + 2];
-
-    Vertex v0 = vBuffer[i0];
-    Vertex v1 = vBuffer[i1];
-    Vertex v2 = vBuffer[i2];
-
-    float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-    float visibleNormalStrength = UsePhysicalRenderingMode() ? 1.0f : PT_VISIBLE_NORMAL_STRENGTH;
-    RestirSurface surface;
-    RestirBuildSurface(inst, mat, v0, v1, v2, bary, hitPos, visibleNormalStrength, surface);
-
+    float3 hitPos = surface.position;
     float3 geometricNormal = surface.geometricNormal;
-    float3 normal = surface.normal;
     float3 visibleNormal = surface.shadingNormal;
-    if (dot(normal, WorldRayDirection()) > 0.0f)
+    float3 directLighting = 0.0f.xxx;
+    if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_SUN))
     {
-        normal = -normal;
-    }
-    if (dot(visibleNormal, WorldRayDirection()) > 0.0f)
-    {
-        visibleNormal = -visibleNormal;
-    }
-    surface.normal = normal;
-    surface.shadingNormal = visibleNormal;
-
-    float2 uv = surface.uv;
-    float3 albedo = surface.albedo;
-    float metallic = surface.metallic;
-    float roughness = surface.roughness;
-    float ao = surface.ao;
-
-    if (payload.recursionDepth == 0)
-    {
-        payload.primaryHitFlags =
-            (payload.primaryHitFlags &
-             (RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN | RESTIR_PRIMARY_HIT_NEE_EMISSIVE)) |
-            RESTIR_PRIMARY_HIT_VALID;
-        if (0u != g_restirCandidateEnabled)
+        float sunLightPdf;
+        float3 sampledSunDirection;
+        float3 sampledSunIrradiance;
+        SampleEnvironmentSunNEEIncident(
+            g_scene,
+            g_environmentMode,
+            hitPos,
+            geometricNormal,
+            visibleNormal,
+            V,
+            sunLightPdf,
+            sampledSunDirection,
+            sampledSunIrradiance,
+            rngSeed);
+        directLighting = RestirEvalBSDF(
+            surface,
+            V,
+            sampledSunDirection,
+            RESTIR_BSDF_LOBE_ALL
+        ) * sampledSunIrradiance / max(sunLightPdf, EPSILON);
+        payload.lightPdf = sunLightPdf;
+        if (sunLightPdf > 0.0f)
         {
-            RestirWritePrimaryOutputs(
-                payload.pixelIndex,
-                hitPos,
-                RayTCurrent(),
-                geometricNormal,
-                visibleNormal,
-                albedo,
-                metallic,
-                roughness,
-                inst,
-                mat,
-                geo,
-                GeometryIndex(),
-                PrimitiveIndex(),
-                uint3(i0, i1, i2),
-                bary);
-        }
-    }
-    else if (payload.recursionDepth == 1)
-    {
-        payload.reconnectInstanceId = inst.instanceID;
-        payload.reconnectInstanceGeneration = inst.generation;
-        payload.reconnectGeometryIndex = GeometryIndex();
-        payload.reconnectPrimitiveIndex = PrimitiveIndex();
-        payload.reconnectBarycentrics = RestirPackBarycentrics(attribs.barycentrics);
-        float reconnectDistanceSq = max(RayTCurrent() * RayTCurrent(), EPSILON);
-        float reconnectCos = abs(dot(surface.faceNormal, -normalize(WorldRayDirection())));
-        payload.rcSourceGeometry = reconnectCos / reconnectDistanceSq;
-        payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID;
-    }
-
-    float3 V = -normalize(WorldRayDirection());
-    float NdotVGeom = max(dot(geometricNormal, V), 0.0f);
-    float NdotVShading = max(dot(visibleNormal, V), 0.0f);
-    float3 F0 = lerp(0.04f.xxx, albedo, metallic);
-    float3 emissive = EvaluateMaterialEmission(mat, uv, g_sampler);
-    uint rngSeed =
-        InstanceID() * 0xc2b2ae35u ^
-        PrimitiveIndex() * 0x85ebca6bu ^
-        payload.recursionDepth * 0x27d4eb2du ^
-        (g_frameSeed + 1u) * 0x165667b1u ^
-        (asuint(hitPos.x) + asuint(hitPos.y) * 0x9e3779b9u + asuint(hitPos.z));
-    rngSeed ^= rngSeed >> 16;
-    rngSeed *= 0x7feb352d;
-    rngSeed ^= rngSeed >> 15;
-    rngSeed *= 0x846ca68b;
-    rngSeed ^= rngSeed >> 16;
-
-    if (payload.recursionDepth == 0 && PT_DEBUG_VIEW != 0)
-    {
-        if (PT_DEBUG_VIEW == 1)
-        {
-            payload.color = visibleNormal * 0.5f + 0.5f;
-        }
-        else if (PT_DEBUG_VIEW == 2)
-        {
-            payload.color = geometricNormal * 0.5f + 0.5f;
-        }
-        else if (PT_DEBUG_VIEW == 3)
-        {
-            payload.color = float3(NdotVShading, NdotVGeom, 0.0f);
-        }
-        else if (PT_DEBUG_VIEW == 4)
-        {
-            payload.color = albedo;
-        }
-        else
-        {
-            payload.color = float3(metallic, roughness, ao);
-        }
-        return;
-    }
-
-    if (payload.recursionDepth == 0 && 0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_CANDIDATE))
-    {
-        if (max(max(emissive.x, emissive.y), emissive.z) > 0.0f)
-        {
-            payload.color = 0.0f.xxx;
-            return;
-        }
-
-        float3 directLighting = 0.0f.xxx;
-        if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_SUN))
-        {
-            float sunLightPdf;
-            float3 sampledSunDirection;
-            float3 sampledSunIrradiance;
-            EvaluateEnvironmentSunNEE(
-                g_scene,
-                g_environmentMode,
-                hitPos,
-                geometricNormal,
-                visibleNormal,
-                V,
-                albedo,
-                metallic,
-                roughness,
-                ao,
-                F0,
-                1u,
-                sunLightPdf,
-                sampledSunDirection,
-                sampledSunIrradiance,
-                rngSeed);
-            directLighting = RestirEvalBSDF(
+            payload.pathFlags =
+                RESTIR_PATH_FLAG_NEE |
+                RESTIR_PATH_FLAG_NEE_SUN |
+                RESTIR_METADATA_SHIFT_DATA_VALID |
+                RESTIR_METADATA_RC_FINAL |
+                RESTIR_METADATA_RC_NEE_TERMINAL;
+            RestirSetPayloadLobe(payload, true, RESTIR_BSDF_LOBE_ALL, false);
+            payload.packedRcVertexWi = RestirPackNormalOct16(sampledSunDirection);
+            RestirSetPayloadRcIrradiance(payload, sampledSunIrradiance);
+            payload.rcSourcePdfBefore = RestirEvalPdfBSDF(
                 surface,
                 V,
                 sampledSunDirection,
                 RESTIR_BSDF_LOBE_ALL
-            ) * sampledSunIrradiance / max(sunLightPdf, EPSILON);
-            payload.lightPdf = sunLightPdf;
-            if (sunLightPdf > 0.0f)
-            {
-                payload.pathFlags =
-                    RESTIR_PATH_FLAG_NEE |
-                    RESTIR_PATH_FLAG_NEE_SUN |
-                    RESTIR_METADATA_SHIFT_DATA_VALID |
-                    RESTIR_METADATA_RC_FINAL |
-                    RESTIR_METADATA_RC_NEE_TERMINAL;
-                RestirSetPayloadLobe(payload, true, RESTIR_BSDF_LOBE_ALL, false);
-                payload.packedRcVertexWi = RestirPackNormalOct16(sampledSunDirection);
-                RestirSetPayloadRcIrradiance(payload, sampledSunIrradiance);
-                payload.rcSourcePdfBefore = RestirEvalPdfBSDF(
-                    surface,
-                    V,
-                    sampledSunDirection,
-                    RESTIR_BSDF_LOBE_ALL
-                );
-                payload.rcSourceGeometry = 1.0f;
-            }
+            );
+            payload.rcSourceGeometry = 1.0f;
         }
-        else if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_EMISSIVE))
-        {
-            uint lightInstanceId;
-            uint lightInstanceGeneration;
-            uint lightGeometryIndex;
-            uint lightPrimitiveIndex;
-            uint lightBarycentrics;
-            float3 rcIrradiance;
-            float sourceBsdfPdf;
-            float sourceGeometry;
-            bool sampledEmissive = EvaluateRestirEmissiveNEE(
-                surface,
-                V,
-                rngSeed,
-                directLighting,
-                payload.lightPdf,
-                lightInstanceId,
-                lightInstanceGeneration,
-                lightGeometryIndex,
-                lightPrimitiveIndex,
-                lightBarycentrics,
-                rcIrradiance,
-                sourceBsdfPdf,
-                sourceGeometry);
-
-            if (sampledEmissive)
-            {
-                payload.pathFlags =
-                    RESTIR_PATH_FLAG_NEE |
-                    RESTIR_PATH_FLAG_NEE_EMISSIVE |
-                    RESTIR_METADATA_SHIFT_DATA_VALID |
-                    RESTIR_METADATA_RC_FINAL |
-                    RESTIR_METADATA_RC_NEE_TERMINAL;
-                RestirSetPayloadLobe(payload, true, RESTIR_BSDF_LOBE_ALL, false);
-                payload.reconnectInstanceId = lightInstanceId;
-                payload.reconnectInstanceGeneration = lightInstanceGeneration;
-                payload.reconnectGeometryIndex = lightGeometryIndex;
-                payload.reconnectPrimitiveIndex = lightPrimitiveIndex;
-                payload.reconnectBarycentrics = lightBarycentrics;
-                payload.rcSourcePdfBefore = sourceBsdfPdf;
-                payload.rcSourceGeometry = sourceGeometry;
-                RestirSetPayloadRcIrradiance(payload, rcIrradiance);
-            }
-        }
-
-        payload.color = directLighting;
-        return;
     }
-
-    if (max(max(emissive.x, emissive.y), emissive.z) > 0.0f)
+    else if (0u != (payload.primaryHitFlags & RESTIR_PRIMARY_HIT_NEE_EMISSIVE))
     {
-        float3 emissionContribution = (0 == payload.recursionDepth)
-                                          ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
-                                          : emissive;
-        payload.color = emissionContribution;
-        payload.lightPdf = RestirComputeEmissiveHitNeePdfSolidAngle(inst, geo, mat, v0, v1, v2, hitPos, WorldRayOrigin());
-        payload.pathFlags =
-            (payload.pathFlags & ~RESTIR_PATH_EVENT_MASK) |
-            RESTIR_PATH_FLAG_EMISSIVE_HIT;
-        if (payload.recursionDepth == 1)
+        uint emissiveProfileStage = RestirGetEmissiveProfileStage();
+        if (RESTIR_EMISSIVE_PROFILE_SURFACE_ONLY == emissiveProfileStage)
         {
-            payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID | RESTIR_METADATA_RC_FINAL;
-            RestirSetPayloadRcIrradiance(payload, emissive);
+            return;
         }
-        return;
+
+        uint lightInstanceId;
+        uint lightInstanceGeneration;
+        uint lightGeometryIndex;
+        uint lightPrimitiveIndex;
+        uint lightBarycentrics;
+        float3 rcIrradiance;
+        float3 sampledLightDirection;
+        float sourceBsdfPdf;
+        float sourceGeometry;
+        bool sampledEmissive = EvaluateRestirEmissiveNEE(
+            surface,
+            V,
+            RESTIR_EMISSIVE_PROFILE_SAMPLE_NO_VISIBILITY != emissiveProfileStage,
+            rngSeed,
+            directLighting,
+            payload.lightPdf,
+            lightInstanceId,
+            lightInstanceGeneration,
+            lightGeometryIndex,
+            lightPrimitiveIndex,
+            lightBarycentrics,
+            rcIrradiance,
+            sampledLightDirection,
+            sourceBsdfPdf,
+            sourceGeometry);
+
+        if (sampledEmissive)
+        {
+            payload.pathFlags =
+                RESTIR_PATH_FLAG_NEE |
+                RESTIR_PATH_FLAG_NEE_EMISSIVE |
+                RESTIR_METADATA_SHIFT_DATA_VALID |
+                RESTIR_METADATA_RC_FINAL |
+                RESTIR_METADATA_RC_NEE_TERMINAL;
+            RestirSetPayloadLobe(payload, true, RESTIR_BSDF_LOBE_ALL, false);
+            payload.reconnectInstanceId = lightInstanceId;
+            payload.reconnectInstanceGeneration = lightInstanceGeneration;
+            payload.reconnectGeometryIndex = lightGeometryIndex;
+            payload.reconnectPrimitiveIndex = lightPrimitiveIndex;
+            payload.reconnectBarycentrics = lightBarycentrics;
+            payload.rcSourcePdfBefore = sourceBsdfPdf;
+            payload.rcSourceGeometry = sourceGeometry;
+            payload.packedRcVertexWi = RestirPackNormalOct16(sampledLightDirection);
+            RestirSetPayloadRcIrradiance(payload, rcIrradiance);
+        }
     }
 
+    payload.color = directLighting;
+    return;
+}
+
+void RestirUpdatePrimaryNeeReservoir(
+    inout RestirReservoir reservoir, RestirSurface surface, float3 V,
+    uint pixelIndex, uint primarySeed, inout uint reservoirSeed)
+{
+    if (RestirCandidateMaskHas(RESTIR_CANDIDATE_SUN_NEE))
+    {
+        RayPayload candidate = MakeDefaultRayPayload < RayPayload > (0);
+        candidate.pixelIndex = pixelIndex;
+        candidate.primaryHitFlags =
+            RESTIR_PRIMARY_HIT_VALID | RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_SUN;
+        RestirEvaluateSurfaceNee(surface, V, primarySeed, candidate);
+        RestirUpdateReservoirFromPayload(reservoir, candidate, reservoirSeed);
+    }
+    if (RestirCandidateMaskHas(RESTIR_CANDIDATE_EMISSIVE_NEE) && g_restirEmissiveLightCount > 0u)
+    {
+        RayPayload candidate = MakeDefaultRayPayload < RayPayload > (0);
+        candidate.pixelIndex = pixelIndex;
+        candidate.primaryHitFlags =
+            RESTIR_PRIMARY_HIT_VALID | RESTIR_PRIMARY_HIT_NEE_CANDIDATE | RESTIR_PRIMARY_HIT_NEE_EMISSIVE;
+        RestirEvaluateSurfaceNee(surface, V, primarySeed, candidate);
+        RestirUpdateReservoirFromPayload(reservoir, candidate, reservoirSeed);
+    }
+}
+
+// At the reconnection vertex (depth 1), NEE is a separate complete-path
+// candidate. Deeper NEE terms share the fixed suffix and can be added to it.
+float3 RestirEvaluateSecondaryNee(RestirSurface surface, float3 V, uint rngSeed, RayPayload incoming)
+{
+    if (!RestirSecondaryNeeEnabled() || incoming.recursionDepth == 0u ||
+        incoming.recursionDepth >= MAX_RECURSION_DEPTH)
+    {
+        return 0.0f.xxx;
+    }
+
+    float3 directLighting = 0.0f.xxx;
+    bool atReconnectVertex = incoming.recursionDepth == 1u;
+    RestirReservoir reservoir = RestirMakeEmptyReservoir();
+    uint reservoirSeed = 0u;
+    if (atReconnectVertex)
+    {
+        reservoir = g_restirReservoirInitial[incoming.pixelIndex];
+        reservoirSeed = RestirPrimaryReservoirSeed(incoming.pixelIndex, incoming.primaryTrialIndex) ^ 0x6a09e667u;
+    }
+
+    [unroll]
+    for (uint lightKind = 0u; lightKind < 2u; ++lightKind)
+    {
+        bool isSun = lightKind == 0u;
+        if ((isSun && !RestirCandidateMaskHas(RESTIR_CANDIDATE_SUN_NEE)) ||
+            (!isSun && !RestirHasEmissiveNeeAtDepth(incoming.recursionDepth)))
+        {
+            continue;
+        }
+
+        RayPayload candidate = MakeDefaultRayPayload < RayPayload > (incoming.recursionDepth);
+        candidate.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID | RESTIR_PRIMARY_HIT_NEE_CANDIDATE |
+            (isSun ? RESTIR_PRIMARY_HIT_NEE_SUN : RESTIR_PRIMARY_HIT_NEE_EMISSIVE);
+        uint lightSeed = rngSeed ^ (isSun ? 0x510e527fu : 0x1f83d9abu);
+        RestirEvaluateSurfaceNee(surface, V, lightSeed, candidate);
+#if RESTIR_ENABLE_DEBUG_VIEWS
+        // Record every secondary light sample before reservoir selection. Each
+        // pixel has one sequential path walk, so no cross-thread atomic is needed.
+        uint2 debugPixel = RestirPixelCoordFromIndex(incoming.pixelIndex);
+        float3 debugContribution = incoming.color * candidate.color;
+        g_restirSecondaryNee[debugPixel] += float4(debugContribution, 0.0f);
+#endif
+        if (!atReconnectVertex)
+        {
+            directLighting += candidate.color;
+            continue;
+        }
+
+        // color enters the depth-1 trace as primary BSDF / selected-lobe PDF.
+        // Store the secondary hit as rc, not the NEE light's terminal vertex.
+        candidate.color *= incoming.color;
+        candidate.pixelIndex = incoming.pixelIndex;
+        candidate.primaryTrialIndex = incoming.primaryTrialIndex;
+        uint beforeMask = (RESTIR_METADATA_LOBE_MASK << RESTIR_METADATA_LOBE_BEFORE_SHIFT) |
+                          RESTIR_METADATA_DELTA_BEFORE_RC;
+        candidate.pathFlags = (candidate.pathFlags & RESTIR_PATH_EVENT_MASK) |
+            (incoming.pathFlags & beforeMask) | RESTIR_METADATA_SHIFT_DATA_VALID | RESTIR_METADATA_RC_OUTGOING_NEE;
+        RestirSetPayloadLobe(candidate, false, RESTIR_BSDF_LOBE_ALL, false);
+        candidate.reconnectInstanceId = incoming.reconnectInstanceId;
+        candidate.reconnectInstanceGeneration = incoming.reconnectInstanceGeneration;
+        candidate.reconnectGeometryIndex = incoming.reconnectGeometryIndex;
+        candidate.reconnectPrimitiveIndex = incoming.reconnectPrimitiveIndex;
+        candidate.reconnectBarycentrics = incoming.reconnectBarycentrics;
+        candidate.rcSourceGeometry = incoming.rcSourceGeometry;
+        candidate.rcSourcePdfBefore = incoming.rcSourcePdfBefore;
+        candidate.rcSourcePdfAfter = 0.0f; // rc->light is light-sampled, not BSDF-sampled.
+        RestirUpdateReservoirFromPayload(reservoir, candidate, reservoirSeed);
+    }
+
+    if (atReconnectVertex)
+    {
+        // RayGen counts completed primary trials; adding NEE techniques must not increment M.
+        g_restirReservoirInitial[incoming.pixelIndex] = reservoir;
+    }
+    return directLighting;
+}
+
+void RestirTraceBsdfPath(
+    inout RayPayload payload, RestirSurface surface, float3 emissive, float3 V, uint rngSeed)
+{
+    float3 hitPos = surface.position;
+    float3 geometricNormal = surface.geometricNormal;
+    float3 visibleNormal = surface.shadingNormal;
+    float roughness = surface.roughness;
     if (payload.recursionDepth >= MAX_RECURSION_DEPTH)
     {
         payload.color = emissive;
@@ -962,6 +948,23 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
     nextRay.TMax = RAY_TMAX;
 
     RayPayload child = MakeDefaultRayPayload < RayPayload > (payload.recursionDepth + 1);
+    child.primaryTrialIndex = payload.primaryTrialIndex;
+    if (payload.recursionDepth == 0u)
+    {
+        child.pixelIndex = payload.pixelIndex;
+        child.color = weight;
+        child.rcSourcePdfBefore = pdf;
+        RestirSetPayloadLobe(child, true, sampledLobe, sampledDelta);
+    }
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    else
+    {
+        // Input color carries camera-to-vertex throughput until closest-hit
+        // records NEE; the normal path return overwrites it with radiance.
+        child.pixelIndex = payload.pixelIndex;
+        child.color = payload.color * weight;
+    }
+#endif
 
     TraceRay(
         g_scene,
@@ -998,15 +1001,24 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
         payload.rcSourcePdfAfter = pdf;
     }
 
-    bool applyEmissiveHitMis =
+    bool unresolvedEmissiveHit =
         0u != (child.pathFlags & RESTIR_PATH_FLAG_EMISSIVE_HIT) &&
-        0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED) &&
-        child.lightPdf > 0.0f;
+        0u == (child.pathFlags & RESTIR_PATH_FLAG_MIS_APPLIED);
+    bool applyEmissiveHitMis = unresolvedEmissiveHit &&
+        !sampledDelta && RestirHasEmissiveNeeAtDepth(payload.recursionDepth) && child.lightPdf > 0.0f;
     if (applyEmissiveHitMis)
     {
-        float emissiveHitMisWeight = pdf / max(pdf + child.lightPdf, EPSILON);
+        float competingBsdfPdf = RestirEvalPdfBSDF(surface, V, L, RESTIR_BSDF_LOBE_ALL);
+        float emissiveHitMisWeight = competingBsdfPdf / max(competingBsdfPdf + child.lightPdf, EPSILON);
         child.color *= emissiveHitMisWeight;
+    }
+    if (unresolvedEmissiveHit)
+    {
         child.pathFlags |= RESTIR_PATH_FLAG_MIS_APPLIED;
+        if (!applyEmissiveHitMis)
+        {
+            child.lightPdf = 0.0f;
+        }
     }
 
     payload.color = emissive + weight * child.color;
@@ -1024,5 +1036,276 @@ void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttr
             payload.pathFlags |= RESTIR_METADATA_RC_SUFFIX_EMISSIVE_MIS;
         }
         RestirSetPayloadLobe(payload, false, sampledLobe, sampledDelta);
+    }
+}
+
+[shader("raygeneration")]
+void RayGenMain()
+{
+    uint2 pixelCoord = DispatchRaysIndex().xy;
+    uint2 screenSize = DispatchRaysDimensions().xy;
+    uint pixelIndex = pixelCoord.y * screenSize.x + pixelCoord.x;
+
+    float3 finalColor = 0.0f.xxx;
+    uint primaryHitFlags = 0u;
+    uint completedPrimaryTrials = 0u;
+    uint primarySpp = clamp(g_restirPrimarySpp, 1u, 4u);
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    g_restirSecondaryNee[pixelCoord] = 0.0f.xxxx;
+#endif
+    if (0u != g_restirCandidateMask)
+    {
+        g_restirReservoirInitial[pixelIndex] = RestirMakeEmptyReservoir();
+    }
+
+    for (uint trialIndex = 0; trialIndex < primarySpp; ++trialIndex)
+    {
+        float2 ndc = (float2(pixelCoord) + g_cameraJitterPixels + 0.5f) / float2(screenSize) * 2.0f - 1.0f;
+        ndc.y = -ndc.y;
+        float4 nearPos = mul(float4(ndc, 0.0f, 1.0f), g_viewProjInverse);
+        nearPos /= nearPos.w;
+        float4 farPos = mul(float4(ndc, 1.0f, 1.0f), g_viewProjInverse);
+        farPos /= farPos.w;
+
+        RayDesc ray;
+        ray.Origin = nearPos.xyz;
+        ray.Direction = normalize(farPos.xyz - nearPos.xyz);
+        ray.TMin = 0.001f;
+        ray.TMax = RAY_TMAX;
+
+        RayPayload payload = MakeDefaultRayPayload < RayPayload > (0);
+        payload.pixelIndex = pixelIndex;
+        payload.primaryTrialIndex = trialIndex;
+
+        TraceRay(g_scene,
+                 RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+                 0xFF,
+                 0, 0, 0,
+                 ray,
+                 payload);
+        ++completedPrimaryTrials;
+        finalColor += payload.color.rgb;
+        primaryHitFlags |= payload.primaryHitFlags & RESTIR_PRIMARY_HIT_VALID;
+
+    }
+    finalColor /= primarySpp;
+#if RESTIR_ENABLE_DEBUG_VIEWS
+    // Average over all primary trials, including misses and zero contributions.
+    g_restirSecondaryNee[pixelCoord] = float4(g_restirSecondaryNee[pixelCoord].rgb / primarySpp, 1.0f);
+#endif
+
+    if (0u != g_restirCandidateMask)
+    {
+        RestirReservoir reservoir = g_restirReservoirInitial[pixelIndex];
+        reservoir.sampleCount += completedPrimaryTrials;
+        g_restirReservoirInitial[pixelIndex] = reservoir;
+
+        if (0u == (primaryHitFlags & RESTIR_PRIMARY_HIT_VALID))
+        {
+            RestirWriteInvalidPrimaryOutputs(pixelIndex);
+        }
+
+        return;
+    }
+
+    float3 outputColor = finalColor;
+    if (PT_DEBUG_VIEW == 0 && !UsePhysicalRenderingMode())
+    {
+        outputColor *= PT_OUTPUT_EXPOSURE;
+        float3 bloom = max(0.0f.xxx, outputColor - PT_BLOOM_THRESHOLD.xxx) * PT_BLOOM_INTENSITY;
+        outputColor += bloom;
+    }
+
+    g_output[pixelCoord] = float4(max(0.0f.xxx, outputColor), 1.0f);
+}
+
+[shader("miss")]
+void MissMain(inout RayPayload payload)
+{
+    float3 environment = SampleSkyEnvironment(WorldRayDirection(), g_environmentMode);
+    payload.color = environment;
+    payload.pathFlags = RESTIR_PATH_FLAG_SKY_ESCAPE | RESTIR_METADATA_SHIFT_DATA_VALID;
+    payload.packedRcVertexWi = RestirPackNormalOct16(normalize(WorldRayDirection()));
+    RestirSetPayloadRcIrradiance(payload, environment);
+    if (payload.recursionDepth == 0 && g_restirCandidateMask != 0u)
+    {
+        RestirWritePathOnlyReservoir(payload);
+    }
+}
+
+[shader("closesthit")]
+void ClosestHitMain(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    InstanceData inst = g_instanceBuffer[InstanceID()];
+    GeoInfo geo = g_geoTable[inst.geoInfoBaseIdx + GeometryIndex()];
+    MaterialGPUData mat = g_materials[geo.materialIdx];
+
+    StructuredBuffer<Vertex> vBuffer = ResourceDescriptorHeap[inst.vertexBufferIdx];
+    Buffer<uint> iBuffer = ResourceDescriptorHeap[inst.indexBufferIdx];
+
+    float3 bary;
+    bary.x = 1.0f - attribs.barycentrics.x - attribs.barycentrics.y;
+    bary.y = attribs.barycentrics.x;
+    bary.z = attribs.barycentrics.y;
+
+    uint triIdx = PrimitiveIndex();
+    uint i0 = iBuffer[geo.indexBase + triIdx * 3 + 0];
+    uint i1 = iBuffer[geo.indexBase + triIdx * 3 + 1];
+    uint i2 = iBuffer[geo.indexBase + triIdx * 3 + 2];
+
+    Vertex v0 = vBuffer[i0];
+    Vertex v1 = vBuffer[i1];
+    Vertex v2 = vBuffer[i2];
+
+    float3 hitPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+    float visibleNormalStrength = UsePhysicalRenderingMode() ? 1.0f : PT_VISIBLE_NORMAL_STRENGTH;
+    RestirSurface surface;
+    RestirBuildSurface(inst, mat, v0, v1, v2, bary, hitPos, visibleNormalStrength, surface);
+
+    float3 geometricNormal = surface.geometricNormal;
+    float3 normal = surface.normal;
+    float3 visibleNormal = surface.shadingNormal;
+    if (dot(normal, WorldRayDirection()) > 0.0f)
+    {
+        normal = -normal;
+    }
+    if (dot(visibleNormal, WorldRayDirection()) > 0.0f)
+    {
+        visibleNormal = -visibleNormal;
+    }
+    surface.normal = normal;
+    surface.shadingNormal = visibleNormal;
+
+    float2 uv = surface.uv;
+    float3 albedo = surface.albedo;
+    float metallic = surface.metallic;
+    float roughness = surface.roughness;
+    float ao = surface.ao;
+
+    if (payload.recursionDepth == 0)
+    {
+        payload.primaryHitFlags = RESTIR_PRIMARY_HIT_VALID;
+        if (0u != g_restirCandidateMask)
+        {
+            if (payload.primaryTrialIndex == 0u)
+            {
+                g_restirSpecularHitDistance[RestirPixelCoordFromIndex(payload.pixelIndex)] =
+                    RestirTraceSpecularGuideDistance(hitPos, geometricNormal, visibleNormal);
+            }
+            RestirWritePrimaryOutputs(
+                payload.pixelIndex,
+                hitPos,
+                v0.position * bary.x + v1.position * bary.y + v2.position * bary.z,
+                RayTCurrent(),
+                geometricNormal,
+                visibleNormal,
+                albedo,
+                metallic,
+                roughness,
+                inst,
+                mat,
+                geo,
+                GeometryIndex(),
+                PrimitiveIndex(),
+                uint3(i0, i1, i2),
+                bary);
+        }
+    }
+    else if (payload.recursionDepth == 1)
+    {
+        payload.reconnectInstanceId = inst.instanceID;
+        payload.reconnectInstanceGeneration = inst.generation;
+        payload.reconnectGeometryIndex = GeometryIndex();
+        payload.reconnectPrimitiveIndex = PrimitiveIndex();
+        payload.reconnectBarycentrics = RestirPackBarycentrics(attribs.barycentrics);
+        float reconnectDistanceSq = max(RayTCurrent() * RayTCurrent(), EPSILON);
+        float reconnectCos = abs(dot(surface.faceNormal, -normalize(WorldRayDirection())));
+        payload.rcSourceGeometry = reconnectCos / reconnectDistanceSq;
+        payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID;
+    }
+
+    float3 V = -normalize(WorldRayDirection());
+    float NdotVGeom = max(dot(geometricNormal, V), 0.0f);
+    float NdotVShading = max(dot(visibleNormal, V), 0.0f);
+    float3 emissive = EvaluateMaterialEmission(mat, uv, g_sampler);
+    uint rngSeed =
+        InstanceID() * 0xc2b2ae35u ^
+        PrimitiveIndex() * 0x85ebca6bu ^
+        payload.recursionDepth * 0x27d4eb2du ^
+        payload.primaryTrialIndex * 0xd1b54a35u ^
+        (g_frameSeed + 1u) * 0x165667b1u ^
+        (asuint(hitPos.x) + asuint(hitPos.y) * 0x9e3779b9u + asuint(hitPos.z));
+    rngSeed ^= rngSeed >> 16;
+    rngSeed *= 0x7feb352d;
+    rngSeed ^= rngSeed >> 15;
+    rngSeed *= 0x846ca68b;
+    rngSeed ^= rngSeed >> 16;
+
+    if (payload.recursionDepth == 0 && PT_DEBUG_VIEW != 0)
+    {
+        if (PT_DEBUG_VIEW == 1)
+        {
+            payload.color = visibleNormal * 0.5f + 0.5f;
+        }
+        else if (PT_DEBUG_VIEW == 2)
+        {
+            payload.color = geometricNormal * 0.5f + 0.5f;
+        }
+        else if (PT_DEBUG_VIEW == 3)
+        {
+            payload.color = float3(NdotVShading, NdotVGeom, 0.0f);
+        }
+        else if (PT_DEBUG_VIEW == 4)
+        {
+            payload.color = albedo;
+        }
+        else
+        {
+            payload.color = float3(metallic, roughness, ao);
+        }
+        if (g_restirCandidateMask != 0u)
+        {
+            RestirWritePathOnlyReservoir(payload);
+        }
+        return;
+    }
+
+    if (max(max(emissive.x, emissive.y), emissive.z) > 0.0f)
+    {
+        float3 emissionContribution = (0 == payload.recursionDepth)
+                                          ? EvaluateCameraVisibleMaterialEmission(mat, uv, g_emissionViewMode, g_sampler)
+                                          : emissive;
+        payload.color = emissionContribution;
+        payload.lightPdf = RestirComputeEmissiveHitNeePdfSolidAngle(inst, geo, mat, v0, v1, v2, hitPos, WorldRayOrigin());
+        payload.pathFlags =
+            (payload.pathFlags & ~RESTIR_PATH_EVENT_MASK) |
+            RESTIR_PATH_FLAG_EMISSIVE_HIT;
+        if (payload.recursionDepth == 1)
+        {
+            payload.pathFlags |= RESTIR_METADATA_SHIFT_DATA_VALID | RESTIR_METADATA_RC_FINAL;
+            RestirSetPayloadRcIrradiance(payload, emissive);
+        }
+        if (payload.recursionDepth == 0 && g_restirCandidateMask != 0u)
+        {
+            RestirWritePathOnlyReservoir(payload);
+        }
+        return;
+    }
+
+    float3 secondaryLighting = RestirEvaluateSecondaryNee(surface, V, rngSeed, payload);
+    RestirTraceBsdfPath(payload, surface, emissive, V, rngSeed);
+    payload.color += secondaryLighting;
+
+    if (payload.recursionDepth == 0 && g_restirCandidateMask != 0u)
+    {
+        RestirReservoir reservoir = g_restirReservoirInitial[payload.pixelIndex];
+        uint reservoirSeed = RestirPrimaryReservoirSeed(payload.pixelIndex, payload.primaryTrialIndex);
+        if (RestirCandidateMaskHas(RESTIR_CANDIDATE_PATH))
+        {
+            RestirUpdateReservoirFromPayload(reservoir, payload, reservoirSeed);
+        }
+        RestirUpdatePrimaryNeeReservoir(
+            reservoir, surface, V, payload.pixelIndex, rngSeed, reservoirSeed);
+        g_restirReservoirInitial[payload.pixelIndex] = reservoir;
     }
 }

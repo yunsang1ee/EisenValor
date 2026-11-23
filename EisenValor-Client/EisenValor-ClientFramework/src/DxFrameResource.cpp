@@ -6,6 +6,8 @@
 #include "DxDescriptorHeapGlobal.h"
 #include "DxGarbageCollectorGlobal.h"
 #include "PixProfiler.h"
+#include <chrono>
+#include <cstring>
 
 DxFrameResource::DxFrameResource() = default;
 
@@ -50,25 +52,87 @@ void DxFrameResource::Initialize(
 		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
 	}
 
+	if (type == D3D12_COMMAND_LIST_TYPE_DIRECT)
+	{
+		D3D12_QUERY_HEAP_DESC queryDesc{};
+		queryDesc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+		queryDesc.Count = 2;
+		D3D12_HEAP_PROPERTIES heapProperties{};
+		heapProperties.Type = D3D12_HEAP_TYPE_READBACK;
+		heapProperties.CreationNodeMask = heapProperties.VisibleNodeMask = 1;
+		D3D12_RESOURCE_DESC bufferDesc{};
+		bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		bufferDesc.Width = sizeof(uint64_t) * 2;
+		bufferDesc.Height = bufferDesc.DepthOrArraySize = bufferDesc.MipLevels = 1;
+		bufferDesc.SampleDesc.Count = 1;
+		bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		if (FAILED(device->CreateQueryHeap(&queryDesc, IID_PPV_ARGS(&m_timestampHeap))) ||
+			FAILED(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+				D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_timestampReadback))))
+		{
+			m_timestampHeap.Reset();
+			m_timestampReadback.Reset();
+			GRAPHICS_LOG_FMT("[DxFrameResource] GPU timing unavailable for frame {}\n", frameIndex);
+		}
+		else
+		{
+			m_timestampHeap->SetName((L"FrameTimestampQueries_" + std::to_wstring(frameIndex)).c_str());
+			m_timestampReadback->SetName((L"FrameTimestampReadback_" + std::to_wstring(frameIndex)).c_str());
+		}
+	}
+
 	GRAPHICS_LOG_FMT(
 		"[DxFrameResource] Frame {} initialized (Type: {}, UploadHeap: {} MB)\n", frameIndex, static_cast<int>(type),
 		uploadHeapSize / (1024 * 1024)
 	);
 }
 
-void DxFrameResource::BeginFrame()
+void DxFrameResource::BeginFrame(bool measureGpuTime)
 {
 	assert(IsInitialized() && "[DxFrameResource] Not initialized");
+	const auto waitStart = std::chrono::steady_clock::now();
 	WaitForCompletion();
+	m_cpuFenceWaitMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - waitStart).count();
+	m_completedGpuTicks.reset();
+	if (m_timestampPending && m_timestampReadback)
+	{
+		void* data = nullptr;
+		const D3D12_RANGE readRange{0, sizeof(uint64_t) * 2};
+		if (SUCCEEDED(m_timestampReadback->Map(0, &readRange, &data)))
+		{
+			uint64_t timestamps[2]{};
+			std::memcpy(timestamps, data, sizeof(timestamps));
+			const D3D12_RANGE writtenRange{0, 0};
+			m_timestampReadback->Unmap(0, &writtenRange);
+			if (timestamps[1] >= timestamps[0])
+			{
+				m_completedGpuTicks = timestamps[1] - timestamps[0];
+			}
+		}
+	}
+	m_timestampPending = false;
 	m_mainContext->Reset();
 	// TODO: 프레임 임시 디스크립터 Reset
 	m_uploadHeap->Reset();
+	m_recordGpuTime = measureGpuTime && IsGpuTimingSupported();
+	if (m_recordGpuTime)
+	{
+		m_mainContext->CommandList()->EndQuery(m_timestampHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0);
+	}
 }
 
 void DxFrameResource::ExecuteAndSignal(ID3D12CommandQueue* queue)
 {
 	assert(IsInitialized() && "[DxFrameResource] Not initialized");
 	assert(queue && "[DxFrameResource] CommandQueue is null");
+	if (m_recordGpuTime && m_mainContext->IsRecording())
+	{
+		auto* list = m_mainContext->CommandList();
+		list->EndQuery(m_timestampHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 1);
+		list->ResolveQueryData(m_timestampHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, 2, m_timestampReadback.Get(), 0);
+		m_timestampPending = true;
+	}
+	m_recordGpuTime = false;
 
 	if (m_mainContext->IsRecording())
 		m_mainContext->Close();

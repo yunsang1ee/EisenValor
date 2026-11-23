@@ -118,6 +118,21 @@
     <ClInclude Include="RenderPass\DxrRenderPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPass\RaytracingPreparePass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RaytracingControls.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RaytracingPassCommon.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\ReferencePathTracingPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\RestirCandidatePass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPass\RestirDebugGlobal.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
@@ -157,9 +172,12 @@
     <ClInclude Include="Component\TeamComponent.h">
       <Filter>Component\Vital</Filter>
     </ClInclude>
-    <ClInclude Include="Component\BattleUIControllerComponent.h">
-      <Filter>Component\UI</Filter>
-    </ClInclude>
+	<ClInclude Include="Component\BattleUIControllerComponent.h">
+	  <Filter>Component\UI</Filter>
+	</ClInclude>
+	<ClInclude Include="Component\OptionsMenuComponent.h">
+	  <Filter>Component\UI</Filter>
+	</ClInclude>
     <ClInclude Include="Component\VitalUIControllerComponent.h">
       <Filter>Component\UI</Filter>
     </ClInclude>
@@ -190,13 +208,13 @@
     <ClInclude Include="RenderData\GeoTableRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
-    <ClInclude Include="Component\StressTestComponent.h">
-      <Filter>Component</Filter>
-    </ClInclude>
     <ClInclude Include="Component\AttackRangeDebugComponent.h">
       <Filter>Component</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\RaytracingOutputRenderData.h">
+      <Filter>RenderData</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData\RaytracingFrameRenderData.h">
       <Filter>RenderData</Filter>
     </ClInclude>
     <ClInclude Include="RenderData\DlssOutputRenderData.h">
@@ -331,6 +349,21 @@
     <ClInclude Include="Scene\StartScene.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\PathTracingDemoScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\PathTracingDemoControllerComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\PathTracingDemoDoorComponent.h">
+      <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\SceneNavigation.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Util\PerformanceStatsText.h">
+      <Filter>Util</Filter>
+    </ClInclude>
     <ClInclude Include="Scene\ScoreScene.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -360,6 +393,21 @@
     <ClCompile Include="RenderPass\DxrRenderPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPass\RaytracingPreparePass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RaytracingControls.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RaytracingPassCommon.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\ReferencePathTracingPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\RestirCandidatePass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
     <ClCompile Include="RenderPass\RestirFinalEvaluationPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
@@ -387,9 +435,12 @@
     <ClCompile Include="Component\TeamComponent.cpp">
       <Filter>Component\Vital</Filter>
     </ClCompile>
-    <ClCompile Include="Component\BattleUIControllerComponent.cpp">
-      <Filter>Component\UI</Filter>
-    </ClCompile>
+	<ClCompile Include="Component\BattleUIControllerComponent.cpp">
+	  <Filter>Component\UI</Filter>
+	</ClCompile>
+	<ClCompile Include="Component\OptionsMenuComponent.cpp">
+	  <Filter>Component\UI</Filter>
+	</ClCompile>
     <ClCompile Include="Component\VitalUIControllerComponent.cpp">
       <Filter>Component\UI</Filter>
     </ClCompile>
@@ -407,9 +458,6 @@
     </ClCompile>
     <ClCompile Include="RenderPass\SkinningPass.cpp">
       <Filter>RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="Component\StressTestComponent.cpp">
-      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Component\AttackRangeDebugComponent.cpp">
       <Filter>Component</Filter>
@@ -503,6 +551,15 @@
     </ClCompile>
     <ClCompile Include="Scene\StartScene.cpp">
       <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\PathTracingDemoScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PathTracingDemoControllerComponent.cpp">
+      <Filter>Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\PathTracingDemoDoorComponent.cpp">
+      <Filter>Component</Filter>
     </ClCompile>
     <ClCompile Include="Scene\ScoreScene.cpp">
       <Filter>소스 파일</Filter>

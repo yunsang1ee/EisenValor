@@ -954,23 +954,23 @@ bool FootIKComponent::TrySampleVisualGround(
 	outHit.distance = bestRayDistance;
 	//UpdateHitMarker(this, scene, bestHitPoint);
 	static uint32_t hitLogCounter = 0;
-	if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
-	{
-		std::filesystem::path meshPath;
-		const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
-		DEBUG_LOG_FMT(
-			"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f} cachedCandidates={} nearby={} path={} loaded={} triTest={} triHit={}\n",
-			bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
-			worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
-			bestRayDistance, cachedTriangleCandidateCount, nearbyMeshCount, pathResolvedCount, loadedMeshCount, triangleTestCount,
-			triangleIntersectCount
-		);
+	//if (bestHitObj && bestHitRes && (++hitLogCounter % 30) == 0)
+	//{
+	//	std::filesystem::path meshPath;
+	//	const bool hasPath = GLOBAL(ResourceGlobal).TryGetPath(bestHitRes->GetGuid(), meshPath);
 	//	DEBUG_LOG_FMT(
-	//		"[FootIK] hit tri v0=({:.3f},{:.3f},{:.3f}) v1=({:.3f},{:.3f},{:.3f}) v2=({:.3f},{:.3f},{:.3f}) normal=({:.3f},{:.3f},{:.3f})\n",
-	//		bestTriV0.x, bestTriV0.y, bestTriV0.z, bestTriV1.x, bestTriV1.y, bestTriV1.z, bestTriV2.x, bestTriV2.y,
-	//		bestTriV2.z, bestHitNormal.x, bestHitNormal.y, bestHitNormal.z
+	//		"[FootIK] sample hit obj='{}' guid={} path='{}' foot=({:.3f},{:.3f},{:.3f}) ground=({:.3f},{:.3f},{:.3f}) distance={:.3f} cachedCandidates={} nearby={} path={} loaded={} triTest={} triHit={}\n",
+	//		bestHitObj->GetName().c_str(), bestHitRes->GetGuid(), hasPath ? meshPath.string() : "<unresolved>",
+	//		worldPosition.x, worldPosition.y, worldPosition.z, bestHitPoint.x, bestHitPoint.y, bestHitPoint.z,
+	//		bestRayDistance, cachedTriangleCandidateCount, nearbyMeshCount, pathResolvedCount, loadedMeshCount, triangleTestCount,
+	//		triangleIntersectCount
 	//	);
-	}
+	////	DEBUG_LOG_FMT(
+	////		"[FootIK] hit tri v0=({:.3f},{:.3f},{:.3f}) v1=({:.3f},{:.3f},{:.3f}) v2=({:.3f},{:.3f},{:.3f}) normal=({:.3f},{:.3f},{:.3f})\n",
+	////		bestTriV0.x, bestTriV0.y, bestTriV0.z, bestTriV1.x, bestTriV1.y, bestTriV1.z, bestTriV2.x, bestTriV2.y,
+	////		bestTriV2.z, bestHitNormal.x, bestHitNormal.y, bestHitNormal.z
+	////	);
+	//}
 	logSlowSample("hit");
 	return true;
 }

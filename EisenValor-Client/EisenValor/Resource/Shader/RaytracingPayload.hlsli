@@ -9,6 +9,9 @@ struct StandardRayPayload
 
 struct RestirRayPayload
 {
+    // Output radiance; depth-1 input carries primary BSDF/PDF for NEE streaming.
+    // Debug builds also pass accumulated camera throughput into deeper hits
+    // for the secondary NEE AOV, before overwriting it with output radiance.
     float3 color;
     uint recursionDepth;
 
@@ -16,6 +19,7 @@ struct RestirRayPayload
     uint pathFlags;
     uint pixelIndex;
     uint primaryHitFlags;
+    uint primaryTrialIndex;
 
     uint reconnectInstanceId;
     uint reconnectInstanceGeneration;
@@ -41,6 +45,7 @@ void InitializeRayPayloadData(inout RestirRayPayload payload)
     payload.pathFlags = 0u;
     payload.pixelIndex = 0xffffffffu;
     payload.primaryHitFlags = 0u;
+    payload.primaryTrialIndex = 0u;
     payload.reconnectInstanceId = 0xffffffffu;
     payload.reconnectInstanceGeneration = 0u;
     payload.reconnectGeometryIndex = 0xffffffffu;

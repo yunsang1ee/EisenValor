@@ -2,6 +2,8 @@
 
 namespace CameraConfig
 {
+	static constexpr uint32_t kCameraQueryMask = 1u;
+	static constexpr float kCollisionRadius = 0.25f;
 	// Camera Y height used across different camera modes (lock-on, shoulder, default)
 	static constexpr float kCameraHeight = 1.5f;
 

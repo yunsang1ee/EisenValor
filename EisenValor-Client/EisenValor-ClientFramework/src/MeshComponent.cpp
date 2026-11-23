@@ -77,6 +77,15 @@ void MeshComponent::SetMobility(RenderMobility mobility)
 	NotifyRenderStateChanged();
 }
 
+void MeshComponent::SetQueryMask(uint32_t mask)
+{
+	if (m_queryMask != mask)
+	{
+		m_queryMask = mask;
+		NotifyRenderStateChanged();
+	}
+}
+
 void MeshComponent::OnDestroy()
 {
 	if (m_mobility == RenderMobility::Static)

@@ -66,6 +66,7 @@ public:
 	void SetFollowOffset(const DX::XMFLOAT3& offset);
 	void SetFollowOffsetLocal(const DX::XMFLOAT3& localOffset);
 	void SetSmoothFollow(bool enable, float positionSpeed = 5.0f, float rotationSpeed = 5.0f);
+	void SetFollowCollision(uint32_t queryMask, float radius, const DX::XMFLOAT3& pivotOffset);
 
 	const DX::XMFLOAT3& GetFollowOffset() const { return m_follow.offset; }
 	bool				IsSmoothFollowEnabled() const { return m_follow.smoothEnabled; }
@@ -155,6 +156,9 @@ private:
 	// Camera Control
 	LookAtSettings m_lookAt;
 	FollowSettings m_follow;
+	uint32_t m_collisionQueryMask = 0;
+	float m_collisionRadius = 0.25f;
+	DX::XMFLOAT3 m_collisionPivotOffset{};
 
 	// Flags
 	bool m_viewDirty = true;

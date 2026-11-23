@@ -65,6 +65,22 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 		return;
 	}
 
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto&	   captureDebug = GLOBAL(RestirDebugGlobal);
+	const bool captureRequested = captureDebug.rrCaptureRequest != m_seenRrCaptureRequest;
+	m_seenRrCaptureRequest = captureDebug.rrCaptureRequest;
+	if (captureRequested)
+		captureDebug.SetCaptureStatus(L"RR CAPTURE UNAVAILABLE", 0, 1);
+	try
+	{
+		m_rrCapture.PollCompleted();
+	}
+	catch (const std::exception& error)
+	{
+		m_rrCapture.Cancel();
+		DEBUG_LOG_FMT("[RR.Capture] {}\n", error.what());
+	}
+#endif
 	const uint32_t frameIndex = frame->GetFrameIndex();
 	m_outputData.BeginFrame(frameIndex);
 	auto& outputData = m_outputData.GetCurrent();
@@ -151,6 +167,13 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	auto* diffuseAlbedo = candidateData->diffuseAlbedoTexture.get();
 	auto* specularAlbedo = candidateData->specularAlbedoTexture.get();
 	auto* normalRoughness = candidateData->normalRoughnessTexture.get();
+	auto* specularHitDistance = candidateData->specularHitDistanceTexture.get();
+	if (streamline.IsRayReconstructionEnabled() && nullptr == specularHitDistance)
+	{
+		outputData.status = DlssOutputStatus::MissingGuideInput;
+		outputData.missingInputMask = DlssMissingInputMask::NoSpecularHitDistance;
+		return;
+	}
 	if (nullptr == diffuseAlbedo || nullptr == specularAlbedo || nullptr == normalRoughness)
 	{
 		if (nullptr == diffuseAlbedo)
@@ -180,6 +203,10 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	DxUtils::TransitionResourceIfNeeded(commandList, diffuseAlbedo, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	DxUtils::TransitionResourceIfNeeded(commandList, specularAlbedo, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	DxUtils::TransitionResourceIfNeeded(commandList, normalRoughness, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	if (specularHitDistance)
+	{
+		DxUtils::TransitionResourceIfNeeded(commandList, specularHitDistance, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	}
 	DxUtils::TransitionResourceIfNeeded(commandList, colorOutput, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	StreamlineEvaluateDesc evaluateDesc = {};
@@ -193,6 +220,7 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	evaluateDesc.diffuseAlbedo = diffuseAlbedo->GetResource();
 	evaluateDesc.specularAlbedo = specularAlbedo->GetResource();
 	evaluateDesc.normalRoughness = normalRoughness->GetResource();
+	evaluateDesc.specularHitDistance = specularHitDistance ? specularHitDistance->GetResource() : nullptr;
 	evaluateDesc.camera = cameraData;
 	evaluateDesc.frameIndex = m_streamlineFrameIndex++;
 	evaluateDesc.renderWidth = colorInput->GetWidth();
@@ -216,6 +244,24 @@ void DlssUpscalePass::Execute(DxFrameResource* frame, Scene* scene, RenderContex
 	outputData.status = DlssOutputStatus::Valid;
 	outputData.missingInputMask = DlssMissingInputMask::None;
 	m_resetHistory = false;
+#if defined(ENABLE_RENDER_DEBUG_VIEWS)
+	auto& debug = GLOBAL(RestirDebugGlobal);
+	try
+	{
+		if (captureRequested)
+			m_rrCapture.Execute(
+				frame, colorOutput, cameraData, debug.rrCaptureRequest,
+				streamline.IsRayReconstructionPresetE() ? 1u : 0u, candidateData->historySignature,
+				streamline.IsRayReconstructionPresetE() ? "RR_E" : "RR_D", 0,
+				outputData.usedRayReconstruction && streamline.GetRayReconstructionEvaluatedFrames() >= 64, true
+			);
+	}
+	catch (const std::exception& error)
+	{
+		m_rrCapture.Cancel();
+		DEBUG_LOG_FMT("[RR.Capture] {}\n", error.what());
+	}
+#endif
 }
 
 void DlssUpscalePass::OnResize(uint32_t width, uint32_t height)

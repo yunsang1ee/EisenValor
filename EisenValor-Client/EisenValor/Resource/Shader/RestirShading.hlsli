@@ -77,7 +77,7 @@ float3 RestirEvalBSDF(
         if (surface.roughness < 0.15f)
         {
             float3 mirrorDirection = reflect(-V, surface.shadingNormal);
-            if (dot(mirrorDirection, L) > 0.999f)
+            if (lobeFlags == RESTIR_BSDF_LOBE_SPECULAR && dot(mirrorDirection, L) > 0.999f)
             {
                 result += FresnelSchlick(NdotV, F0);
             }
@@ -120,7 +120,10 @@ float RestirEvalPdfBSDF(
         if (surface.roughness < 0.15f)
         {
             float3 mirrorDirection = reflect(-V, surface.shadingNormal);
-            pdf += dot(mirrorDirection, L) > 0.999f ? specularProbability : 0.0f;
+            if (lobeFlags == RESTIR_BSDF_LOBE_SPECULAR && dot(mirrorDirection, L) > 0.999f)
+            {
+                pdf += specularProbability;
+            }
         }
         else
         {
@@ -157,7 +160,7 @@ void RestirBuildSurface(
         float3(0.0f, 1.0f, 0.0f)
     );
     surface.geometricNormal = SafeNormalizeRay(
-        mul(normalObj, (float3x3)inst.worldInverse),
+        mul(normalObj, transpose((float3x3)inst.worldInverse)),
         float3(0.0f, 1.0f, 0.0f)
     );
     float3 p0 = mul(float4(v0.position, 1.0f), inst.worldMatrix).xyz;

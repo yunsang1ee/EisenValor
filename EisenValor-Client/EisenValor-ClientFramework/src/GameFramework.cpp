@@ -15,15 +15,16 @@
 
 #define SERVER
 
-bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort)
+bool GameFramework::Initialize(
+	HINSTANCE hInstance, HWND hwnd, std::string_view serverAddress, uint16_t serverPort, bool connectToServer)
 {
 #ifdef SERVER
-	#ifdef APPLY_LOBBY_SERVER
-	if (false == GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
-	return false;
+#ifdef APPLY_LOBBY_SERVER
+	if (connectToServer && !GLOBAL(NetBridge::NetworkGlobal).Init(serverAddress, serverPort))
+		return false;
 	(void)serverAddress;
 	(void)serverPort;
-	#endif
+#endif
 
 #endif
 
@@ -47,6 +48,16 @@ bool GameFramework::Initialize(HINSTANCE hInstance, HWND hwnd, std::string_view 
 void GameFramework::Run()
 {
 	PixScopedCpuEvent frameEvent(L"Frame");
+	if (!m_inSizeMove && m_pendingResize)
+	{
+		const auto pending = *m_pendingResize;
+		m_pendingResize.reset();
+		ApplyResize(pending.width, pending.height);
+	}
+	auto& renderer = GLOBAL(DxRendererGlobal);
+	const bool measureCpu = renderer.IsPerformanceTrackingEnabled();
+	using CpuClock = std::chrono::steady_clock;
+	const auto cpuStart = measureCpu ? CpuClock::now() : CpuClock::time_point{};
 
 #ifdef SERVER
 	{
@@ -66,10 +77,12 @@ void GameFramework::Run()
 
 	static float runTime{};
 	float		 dt = 0.0f;
+	const auto timerStart = measureCpu ? CpuClock::now() : CpuClock::time_point{};
 	{
 		PixScopedCpuEvent event(L"Timer.Update");
 		dt = GLOBAL(TimerGlobal).Update();
 	}
+	const auto timerEnd = measureCpu ? CpuClock::now() : CpuClock::time_point{};
 
 	static float timeElapsed = 0.0f;
 	static int	 frameCount = 0;
@@ -82,7 +95,6 @@ void GameFramework::Run()
 		const float fps = static_cast<float>(frameCount) / timeElapsed;
 		const float ms = (timeElapsed * 1000.0f) / static_cast<float>(frameCount);
 
-		// DEBUG_LOG_FMT("[GameFramework] FPS: {:.2f} ({:.2f} ms)\n", fps, ms);
 
 		std::string windowTitle = std::format("EisenValor (FPS: {:.0f})", fps);
 		SetWindowTextA(m_hWnd, windowTitle.c_str());
@@ -91,7 +103,6 @@ void GameFramework::Run()
 		frameCount = 0;
 	}
 
-	// BeginFrame -> FixedUpdate -> Update -> LateUpate -> Render -> EndFrame -> AfterUpdate
 
 	GLOBAL(SceneGlobal).OnBeginFrame();
 
@@ -112,6 +123,12 @@ void GameFramework::Run()
 #ifdef _DEBUG
 	GLOBAL(DxDebugGlobal).PrintDebugMessages();
 #endif
+	if (measureCpu)
+	{
+		const double elapsedMs = std::chrono::duration<double, std::milli>(CpuClock::now() - cpuStart).count();
+		const double limiterMs = std::chrono::duration<double, std::milli>(timerEnd - timerStart).count();
+		renderer.RecordCpuFrameTime(elapsedMs - limiterMs - renderer.GetCpuFrameWaitMs());
+	}
 }
 
 void GameFramework::Release()
@@ -141,8 +158,10 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	switch (message)
 	{
 	case WM_ACTIVATE:
+		GLOBAL(InputGlobal).SetWindowFocused(LOWORD(wParam) != WA_INACTIVE);
+		break;
 	case WM_ACTIVATEAPP:
-		GLOBAL(InputGlobal).SetWindowFocused(WA_ACTIVE == LOWORD(wParam));
+		GLOBAL(InputGlobal).SetWindowFocused(wParam != FALSE);
 		break;
 
 	case WM_SETFOCUS:
@@ -167,14 +186,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 
 		GLOBAL(InputGlobal).OnResize(width, height);
 
-		if (m_inSizeMove)
-		{
-			m_pendingResize = ResizeExtent{width, height};
-		}
-		else
-		{
-			ApplyResize(width, height);
-		}
+		m_pendingResize = ResizeExtent{width, height};
 		break;
 	}
 
@@ -233,12 +245,7 @@ LRESULT GameFramework::OnWindowMessage(HWND hWnd, uint32_t message, WPARAM wPara
 	case WM_EXITSIZEMOVE:
 		KillTimer(m_hWnd, 1);
 		m_inSizeMove = false;
-		if (m_pendingResize)
-		{
-			const ResizeExtent pendingResize = *m_pendingResize;
-			m_pendingResize.reset();
-			ApplyResize(pendingResize.width, pendingResize.height);
-		}
+
 		break;
 
 	case WM_TIMER:
@@ -303,32 +310,11 @@ void GameFramework::Update(float delta)
 	PixScopedCpuEvent event(L"Scene.Update");
 
 	auto& input = GLOBAL(InputGlobal);
-	if (input.GetInputDown(VK_ESCAPE))
-	{
-		DEBUG_LOG_FMT("close\n");
-		::DestroyWindow(m_hWnd);
-	}
 	if (input.GetInputDown(VK_F5))
 	{
 		// FUTURE: Runtime Shader Compilation
 	}
 
-	//if (input.GetInputDown(VK_F9))
-	//{
-	//	GLOBAL(ResourceGlobal).DumpLoadedMaterials();
-	//}
-
-	if (auto* swapChain = GLOBAL(DxRendererGlobal).GetSwapChain()) [[likely]]
-	{
-		if (input.GetInputDown(VK_F11))
-		{
-			swapChain->ToggleBorderlessFullscreen();
-		}
-		if (input.GetInput(VK_MENU) && input.GetInputDown(VK_RETURN))
-		{
-			swapChain->ToggleFullscreen();
-		}
-	}
 
 	GLOBAL(UIGlobal).Update(delta);
 	GLOBAL(SceneGlobal).OnUpdate(delta);

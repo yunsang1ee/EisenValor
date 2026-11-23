@@ -1,5 +1,6 @@
-﻿#include "stdafxClient.h"
+#include "stdafxClient.h"
 #include "QuestProgressComponent.h"
+#include "Component/OptionsMenuComponent.h"
 
 #include "GameObject.h"
 #include "InputGlobal.h"
@@ -32,7 +33,7 @@ bool IsEnemyVisible(GameObject* localPlayer, Scene* scene)
 
 	const auto localTeam = localTeamComp->GetTeamType();
 	const auto localPos = localPlayer->GetTransform().GetPosition();
-	auto forward = localPlayer->GetTransform().GetForward();
+	auto	   forward = localPlayer->GetTransform().GetForward();
 
 	forward.y = 0.0f;
 	const float forwardLenSq = forward.x * forward.x + forward.z * forward.z;
@@ -59,7 +60,7 @@ bool IsEnemyVisible(GameObject* localPlayer, Scene* scene)
 			continue;
 		}
 
-		const auto enemyPos = owner->GetTransform().GetPosition();
+		const auto	enemyPos = owner->GetTransform().GetPosition();
 		const float dx = enemyPos.x - localPos.x;
 		const float dz = enemyPos.z - localPos.z;
 		const float distanceSq = dx * dx + dz * dz;
@@ -81,11 +82,15 @@ bool IsEnemyVisible(GameObject* localPlayer, Scene* scene)
 
 	return false;
 }
-}
+} // namespace
 
 void QuestProgressComponent::OnUpdate(float deltaTime)
 {
 	(void)deltaTime;
+	if (OptionsMenuComponent::IsOpenInActiveScene())
+	{
+		return;
+	}
 
 	auto* scene = GLOBAL(SceneGlobal).GetActiveScene();
 	if (!scene)
@@ -181,9 +186,7 @@ void QuestProgressComponent::OnUpdate(float deltaTime)
 			AdvanceTo(4, L"점령지를 찾아 이동하세요.");
 		}
 	}
-	else if (m_stage == 7)
-	{
-	}
+	else if (m_stage == 7) {}
 }
 
 void QuestProgressComponent::AdvanceTo(int nextStage, const std::wstring& message)

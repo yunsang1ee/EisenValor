@@ -4,6 +4,7 @@
 #include "ComponentStorage.h"
 #include "SceneComponentData.h"
 #include "EngineComponents.h"
+#include "SceneQueryWorld.h"
 #include <tuple>
 #include <queue>
 
@@ -21,6 +22,8 @@ public:
 
 	// .evscene 리소스를 사용하여 Scene 구성
 	void LoadFromSceneResource(std::shared_ptr<class SceneResource> resource);
+	void SetLoadedMeshQueryMask(uint32_t mask) { m_loadedMeshQueryMask = mask; }
+	SceneQueryWorld& GetSceneQueryWorld() { return m_sceneQueryWorld; }
 
 	//========================================================================
 	// GameObject Lifecycle
@@ -288,6 +291,8 @@ protected:
 	}
 
 private:
+	SceneQueryWorld m_sceneQueryWorld;
+	uint32_t m_loadedMeshQueryMask = 0;
 	struct CreateRequest
 	{
 		std::string						 name;

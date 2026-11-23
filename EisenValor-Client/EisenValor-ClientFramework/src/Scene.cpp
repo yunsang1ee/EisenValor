@@ -118,7 +118,7 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 
 			CreateComponentWithInit<MeshComponent>(
 				ownerHandle,
-				[meshGuid](MeshComponent* mesh)
+				[meshGuid, queryMask = m_loadedMeshQueryMask](MeshComponent* mesh)
 				{
 					auto meshRes = GLOBAL(ResourceGlobal).Load<MeshResource>(meshGuid);
 					if (nullptr == meshRes)
@@ -129,6 +129,7 @@ void Scene::LoadFromSceneResource(std::shared_ptr<SceneResource> resource)
 
 					mesh->SetMobility(RenderMobility::Static);
 					mesh->SetMeshResource(meshRes);
+					mesh->SetQueryMask(queryMask);
 				}
 			);
 			continue;
@@ -199,6 +200,7 @@ void Scene::OnEnd()
 
 void Scene::ClearSceneData()
 {
+	m_sceneQueryWorld.Clear();
 	m_gameObjects.Clear();
 	for (const auto& strg : m_componentsStorage)
 	{

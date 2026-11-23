@@ -19,4 +19,10 @@
 extern uint16 G_LOBBY_SERVER_PORT;
 extern uint16 G_GAME_SERVER_PORT;
 
+// inc
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 #define APPLY_LOBBY_SERVER

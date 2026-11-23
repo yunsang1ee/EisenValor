@@ -2,14 +2,17 @@
 #include "IResource.h"
 #include <vector>
 #include <memory>
+#include <span>
 
 class DxBuffer;
 class DxBLAS;
+class TriangleSceneQuery;
 
 namespace EvAsset
 {
 struct SubMesh;
 struct Bounds;
+struct Vertex;
 } // namespace EvAsset
 
 class MeshResource final : public ResourceBase<MeshResource>
@@ -31,6 +34,8 @@ public:
 	uint32_t GetVertexCount() const { return m_vertexCount; }
 	uint32_t GetIndexCount() const { return m_indexCount; }
 	uint32_t GetIndexFormat() const { return m_indexFormat; }
+	void SetQueryGeometry(std::span<const EvAsset::Vertex> vertices, std::vector<uint32_t> indices);
+	const TriangleSceneQuery* GetQueryGeometry() const { return m_queryGeometry.get(); }
 
 	void SetGPUResources(std::unique_ptr<DxBuffer> vb, std::unique_ptr<DxBuffer> ib, std::unique_ptr<DxBLAS> blas);
 
@@ -47,6 +52,7 @@ private:
 	std::unique_ptr<DxBuffer> m_vertexBuffer;
 	std::unique_ptr<DxBuffer> m_indexBuffer;
 	std::unique_ptr<DxBLAS>	  m_blas;
+	std::unique_ptr<TriangleSceneQuery> m_queryGeometry;
 
 	std::vector<EvAsset::SubMesh> m_subMeshes;
 	std::vector<EvAsset::Guid>	  m_defaultMaterialGuids;

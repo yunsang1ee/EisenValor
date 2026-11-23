@@ -4,6 +4,7 @@
 #include "ClientSession.h"
 #include "GameRoom.h"
 #include "UserSessionStateStore.h"
+#include "ConfigManager.h"
 
 LobbyServer::GameLobby::GameLobby()
 {
@@ -118,7 +119,10 @@ void LobbyServer::GameLobby::ConnectToGameServer(const uint16 roomID, const uint
 	if(gameRoom) {
 		gameRoom->SetRoomState(FB_ENUMS::ROOM_STATE_TYPE_PLAYING);
 		m_playingWorldRooms[worldID] = roomID;
-		gameRoom->TransferUsersToGameServer(worldID, "127.0.0.1", port);
+		
+		const std::string_view ip{ MANAGER(LobbyServerEngine::ConfigManager).GetString("GameServerToClient", "IP") };
+
+		gameRoom->TransferUsersToGameServer(worldID, ip.data(), port);
 
 		BroadcastRoomInfo(gameRoom->GetRoomInfo());
 	}

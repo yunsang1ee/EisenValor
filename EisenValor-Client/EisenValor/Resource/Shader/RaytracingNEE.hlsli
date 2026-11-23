@@ -78,6 +78,50 @@ inline float ShadowVisibility(
     return (rq.CommittedStatus() == COMMITTED_NOTHING) ? 1.0f : 0.0f;
 }
 
+void SampleEnvironmentSunNEEIncident(
+    RaytracingAccelerationStructure accel,
+    uint environmentMode,
+    float3 hitPos,
+    float3 geometricNormal,
+    float3 shadingNormal,
+    float3 viewDir,
+    out float lightPdf,
+    out float3 sampledLightDirection,
+    out float3 sampledIncidentRadiance,
+    inout uint rngSeed)
+{
+    float3 sunAxis = GetEnvironmentSunDirection();
+    float angularRadius = GetEnvironmentSunAngularRadius(environmentMode);
+    lightPdf = GetDirectionalAreaSunPdf(angularRadius);
+    sampledLightDirection = sunAxis;
+    sampledIncidentRadiance = 0.0f.xxx;
+
+    float3 sunIntensity = GetEnvironmentSunRadiance(environmentMode);
+    if (max(max(sunIntensity.x, sunIntensity.y), sunIntensity.z) <= 0.0f)
+    {
+        return;
+    }
+
+    sampledLightDirection = SampleDirectionalAreaSun(sunAxis, angularRadius, rngSeed, lightPdf);
+    float NdotL = max(dot(shadingNormal, sampledLightDirection), 0.0f);
+    float NdotV = max(dot(shadingNormal, viewDir), 0.0f);
+    if (NdotL <= 0.0f || NdotV <= 0.0f)
+    {
+        return;
+    }
+
+    float3 shadowOrigin = hitPos + geometricNormal * 0.01f;
+    float visibility = ShadowVisibility(
+        accel,
+        shadowOrigin,
+        sampledLightDirection,
+        RAY_TMIN,
+        RAY_TMAX,
+        0xFF
+    );
+    sampledIncidentRadiance = sunIntensity * lightPdf * visibility;
+}
+
 float SoftShadowVisibilityDirLight(
     RaytracingAccelerationStructure accel,
     float3 origin,

@@ -24,6 +24,8 @@ public:
 	void SetMeshResource(std::shared_ptr<MeshResource> meshRes, bool loadDefaultMaterials = true);
 	void SetMaterialResource(uint32_t slot, std::shared_ptr<MaterialResource> material);
 	void SetMobility(RenderMobility mobility);
+	void SetQueryMask(uint32_t mask);
+	uint32_t GetQueryMask() const { return m_queryMask; }
 
 	MeshResource*	  GetMeshResource() const { return m_meshResource.get(); }
 	MaterialResource* GetMaterial(uint32_t slot) const;
@@ -39,6 +41,7 @@ private:
 	static void NotifyRenderStateChanged();
 
 	RenderMobility								   m_mobility = RenderMobility::Movable;
+	uint32_t m_queryMask = 0;
 	std::shared_ptr<MeshResource>				   m_meshResource;
 	std::vector<std::shared_ptr<MaterialResource>> m_materials;
 };

@@ -19,9 +19,14 @@
 #include "Scene/RoomScene.h"
 #include "Scene/LoadingScene.h"
 #include "Scene/ScoreScene.h"
+#include "Scene/PathTracingDemoScene.h"
+#include "Util/SceneNavigation.h"
 
 #include "RenderPass/SkinningPass.h"
+#include "RenderPass/RaytracingPreparePass.h"
 #include "RenderPass/DxrRenderPass.h"
+#include "RenderPass/ReferencePathTracingPass.h"
+#include "RenderPass/RestirCandidatePass.h"
 #include "RenderPass/RestirTemporalReusePass.h"
 #include "RenderPass/RestirFinalEvaluationPass.h"
 #include "RenderPass/DlssUpscalePass.h"
@@ -39,6 +44,7 @@
 #include "Network/LobbyServerSession.h"
 #include "Network/GameServerSession.h"
 #include <TimerGlobal.h>
+#include <fstream>
 
 
 constexpr size_t MAX_LOADSTRING = 100;
@@ -58,6 +64,7 @@ extern "C"
 
 
 GameFramework* g_Framework = nullptr;
+std::string g_lobbyAddress = "127.0.0.1";
 
 
 LRESULT CALLBACK WndProc(HWND hWnd, uint32_t msg, WPARAM wParam, LPARAM lParam)
@@ -109,6 +116,60 @@ bool RegisterWindowClass(HINSTANCE hInstance)
 	return RegisterClassExW(&wcex);
 }
 
+namespace
+{
+constexpr std::string_view kNetworkConfigPath{"Network/NetworkConfig.json"};
+
+// Network/NetworkConfig.json에서 로비 서버 주소와 포트를 읽어온다.
+bool LoadNetworkConfig(std::string& outIP, uint16& outPort)
+{
+	std::ifstream ifs{kNetworkConfigPath.data()};
+
+	if (!ifs)
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] 파일을 열 수 없습니다: {}\n", kNetworkConfigPath);
+		return false;
+	}
+
+	rapidjson::IStreamWrapper isw{ifs};
+	rapidjson::Document		  doc;
+	doc.ParseStream(isw);
+
+	if (doc.HasParseError())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] JSON 파싱에 실패했습니다.\n");
+		return false;
+	}
+
+	if (!doc.HasMember("LobbyServer") || !doc["LobbyServer"].IsObject())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] LobbyServer 항목이 없습니다.\n");
+		return false;
+	}
+
+	const rapidjson::Value& lobbyServer = doc["LobbyServer"];
+
+	if (!lobbyServer.HasMember("IP") || !lobbyServer["IP"].IsString())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] LobbyServer.IP 항목이 없습니다.\n");
+		return false;
+	}
+
+	if (!lobbyServer.HasMember("Port") || !lobbyServer["Port"].IsUint())
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] LobbyServer.Port 항목이 없습니다.\n");
+		return false;
+	}
+
+	outIP = lobbyServer["IP"].GetString();
+	outPort = static_cast<uint16>(lobbyServer["Port"].GetUint());
+
+	DEBUG_LOG_FMT("[NetworkConfig] LobbyServer {}:{}\n", outIP, outPort);
+
+	return true;
+}
+} // namespace
+
 bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 {
 	HWND hWnd = CreateWindowW(
@@ -121,18 +182,28 @@ bool CreateAppWindow(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
-	std::string_view ipAddress{"127.0.0.1"};
-	
+	std::string ipAddress{"127.0.0.1"};
+	uint16		port{G_LOBBY_SERVER_PORT};
+
+	if (!LoadNetworkConfig(ipAddress, port))
+	{
+		DEBUG_LOG_FMT("[NetworkConfig] 기본값으로 접속합니다: {}:{}\n", ipAddress, port);
+	}
+
+	G_LOBBY_SERVER_PORT = port;
+	g_lobbyAddress = ipAddress;
+
 	#ifdef APPLY_LOBBY_SERVER
-		const uint16 port{G_LOBBY_SERVER_PORT};	// lobby port
+		port = G_LOBBY_SERVER_PORT; // 로비 서버 포트
 		GLOBAL(NetBridge::NetworkGlobal).SetLobbySession(std::make_unique<NetBridge::LobbyServerSession>());
 	#else
-		const uint16 port{G_GAME_SERVER_PORT};	// game server 1st worldThread port
+		port = G_GAME_SERVER_PORT; // 게임 서버 포트
 	#endif
 
 	GLOBAL(NetBridge::NetworkGlobal).SetGameSession(std::make_unique<NetBridge::GameServerSession>());
 
-	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port))
+	// The front end and rendering demo are offline. StartScene connects when Start is selected.
+	if (!g_Framework->Initialize(hInstance, hWnd, ipAddress, port, false))
 	{
 		return FALSE;
 	}
@@ -207,9 +278,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 			auto  skinningPass = std::make_unique<SkinningPass>();
 			renderer.AddRenderPass("Skinning", std::move(skinningPass), RenderPassPriority::High);
 
-			// DXR Pass 생성
-			auto  dxrPass = std::make_unique<DxrRenderPass>(renderWidth, renderHeight);
-			renderer.AddRenderPass("DXR", std::move(dxrPass));
+			renderer.AddRenderPass("RaytracingPrepare", std::make_unique<RaytracingPreparePass>(renderWidth, renderHeight));
+			renderer.AddRenderPass("DXR", std::make_unique<DxrRenderPass>());
+			renderer.AddRenderPass("ReferencePT", std::make_unique<ReferencePathTracingPass>());
+			renderer.AddRenderPass("RestirCandidate", std::make_unique<RestirCandidatePass>(renderWidth, renderHeight));
 
 			auto restirTemporalReusePass = std::make_unique<RestirTemporalReusePass>(renderWidth, renderHeight);
 			renderer.AddRenderPass("RestirTemporalReuse", std::move(restirTemporalReusePass));
@@ -243,12 +315,14 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 	// Scene 등록
 	{
 		GLOBAL(SceneGlobal).RegisterScene<StartScene>("StartScene");
+		static_cast<StartScene*>(GLOBAL(SceneGlobal).GetScene("StartScene"))->SetLobbyAddress(g_lobbyAddress);
 		GLOBAL(SceneGlobal).RegisterScene<LoginScene>("LoginScene");
 		GLOBAL(SceneGlobal).RegisterScene<WorldScene>("WorldScene");
 		GLOBAL(SceneGlobal).RegisterScene<LobbyScene>("LobbyScene");
 		GLOBAL(SceneGlobal).RegisterScene<RoomScene>("RoomScene");
 		GLOBAL(SceneGlobal).RegisterScene<LoadingScene>("LoadingScene");
 		GLOBAL(SceneGlobal).RegisterScene<ScoreScene>("ScoreScene");
+		GLOBAL(SceneGlobal).RegisterScene<PathTracingDemoScene>("PathTracingDemoScene");
 
 		GLOBAL(SceneGlobal).LoadScene("StartScene");
 	}
@@ -266,7 +340,10 @@ wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR
 				}
 			}
 			if (not quit)
+			{
 				gameFramework.Run();
+				SceneNavigation::ApplyPending();
+			}
 		}
 		GLOBAL(AudioGlobal).Release();
 		gameFramework.Release();

@@ -3,6 +3,19 @@
 #include "DxBuffer.h"
 #include "DxBLAS.h"
 #include "DxUtils.h"
+#include "TriangleSceneQuery.h"
+
+void MeshResource::SetQueryGeometry(std::span<const EvAsset::Vertex> vertices, std::vector<uint32_t> indices)
+{
+	std::vector<DirectX::XMFLOAT3> positions;
+	positions.reserve(vertices.size());
+	for (const auto& vertex : vertices)
+	{
+		positions.emplace_back(vertex.position[0], vertex.position[1], vertex.position[2]);
+	}
+	m_queryGeometry = std::make_unique<TriangleSceneQuery>();
+	m_queryGeometry->SetGeometry(std::move(positions), std::move(indices));
+}
 
 MeshResource::MeshResource() = default;
 MeshResource::~MeshResource() = default;

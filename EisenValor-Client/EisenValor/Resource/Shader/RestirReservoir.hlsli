@@ -220,6 +220,11 @@ bool RestirRcSuffixNeedsEmissiveMis(RestirPathSample sample)
     return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_SUFFIX_EMISSIVE_MIS);
 }
 
+bool RestirIsRcOutgoingNee(RestirPathSample sample)
+{
+    return 0u != (RestirGetSampleMetadata(sample) & RESTIR_METADATA_RC_OUTGOING_NEE);
+}
+
 float3 RestirGetRcVertexWi(RestirPathSample sample)
 {
     return RestirUnpackNormalOct16(sample.packedRcVertexWi);
@@ -366,8 +371,6 @@ void RestirUpdateReservoir(
     float resamplingWeight,
     float randomValue)
 {
-    ++reservoir.sampleCount;
-
     static const float maxFinite = 3.402823466e+38f;
     if (!(resamplingWeight > 0.0f && resamplingWeight < maxFinite))
     {
