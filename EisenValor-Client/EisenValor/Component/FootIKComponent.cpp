@@ -4,6 +4,7 @@
 #include "AnimationComponent.h"
 #include "AssetLoader.h"
 #include "BattleUIControllerComponent.h"
+#include "FSM/FSMComponent.h"
 #include "GameObject.h"
 #include "GameObject.inl"
 #include "MeshData.h"
@@ -472,6 +473,31 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 			m_visualGroundOffsetY, m_visualGroundTargetOffsetY, deltaTime, kVisualGroundSnapSpeed
 		);
 		m_pelvisOffsetY = m_visualGroundOffsetY;
+		animation->SetModelRootOffsetY(m_pelvisOffsetY);
+		return;
+	}
+
+	// 구를 때
+	const auto* fsm = owner->GetComponent<FSMComponent>();
+	if (fsm && fsm->GetCurStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
+	{
+		// 구르면서 들린 발 대신 캐릭터 기준 위치로 지면 높이만 맞춘다.
+		animation->ClearIKTargets();
+		m_leftWeight = 0.0f;
+		m_rightWeight = 0.0f;
+		m_hasPreviousTargetGap = false;
+
+		GroundHit ownerGroundHit;
+		const auto ownerWorldPosition = owner->GetTransform().GetWorldPosition();
+		if (TrySampleVisualGround(ownerWorldPosition, 1.0f, 3.0f, ownerGroundHit))
+		{
+			m_visualGroundTargetOffsetY =
+				std::clamp(ownerGroundHit.position.y - ownerWorldPosition.y, -m_maxPelvisDrop, 0.0f);
+		}
+
+		m_pelvisOffsetY = SmoothApproach(
+			m_pelvisOffsetY, m_visualGroundTargetOffsetY, deltaTime, AnimationOffset::kPelvisIKDuration
+		);
 		animation->SetModelRootOffsetY(m_pelvisOffsetY);
 		return;
 	}
