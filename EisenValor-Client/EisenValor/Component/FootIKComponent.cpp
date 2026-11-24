@@ -428,7 +428,11 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 	const uint64 ownerID = owner->GetServerID();
 	const bool	 isLocalPlayer = scene && ownerID == scene->GetLocalID();
 	const uint64 lockedTargetID = BattleUIControllerComponent::GetLockedTargetID();
-	if (!isLocalPlayer && (lockedTargetID == 0 || ownerID != lockedTargetID))
+	const auto* fsm = owner->GetComponent<FSMComponent>();
+	const bool isDeadSoldier =
+		fsm && fsm->GetObjectType() == static_cast<uint8_t>(FB_ENUMS::GAME_OBJECT_TYPE_SOLDIER) &&
+		fsm->GetCurStateType() == StateOffset::kSoldierOffset + static_cast<uint8_t>(FB_ENUMS::SOLDIER_STATE_TYPE_DEAD);
+	if (!isDeadSoldier && !isLocalPlayer && (lockedTargetID == 0 || ownerID != lockedTargetID))
 	{
 		animation->ClearIKTargets();
 		m_leftWeight = SmoothApproach(m_leftWeight, 0.0f, deltaTime, AnimationOffset::kFootIKDuration);
@@ -477,11 +481,10 @@ void FootIKComponent::OnLateUpdate(float deltaTime)
 		return;
 	}
 
-	// 구를 때
-	const auto* fsm = owner->GetComponent<FSMComponent>();
-	if (fsm && fsm->GetCurStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ROLL)
+	// 구르기와 병사 사망 중에는 발 자세로 몸 높이를 결정하지 않는다.
+	if (isDeadSoldier || (fsm && fsm->GetCurStateType() == FB_ENUMS::PLAYER_STATE_TYPE_ROLL))
 	{
-		// 구르면서 들린 발 대신 캐릭터 기준 위치로 지면 높이만 맞춘다.
+		// 캐릭터 기준 위치로 지면 높이만 맞춘다.
 		animation->ClearIKTargets();
 		m_leftWeight = 0.0f;
 		m_rightWeight = 0.0f;

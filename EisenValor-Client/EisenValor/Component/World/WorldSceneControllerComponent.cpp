@@ -99,10 +99,10 @@ void WorldSceneControllerComponent::OnStart()
 	CreateTeamScoreUI();
 	CreateOccupationZoneUI();
 #if defined(ENABLE_RENDER_DEBUG_VIEWS)
-	CreateRestirDebugOverlayUI();
+	//CreateRestirDebugOverlayUI();
 #endif
 #if defined(ENABLE_INGAME_PERFORMANCE_OVERLAY)
-	CreatePerformanceOverlayUI();
+	//CreatePerformanceOverlayUI();
 #endif
 }
 
